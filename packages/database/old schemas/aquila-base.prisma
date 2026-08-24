@@ -1,0 +1,349 @@
+model Favorite {
+    id        String       @id @default(nanoid())
+    userId    String
+    type      FavoriteType
+    mediaId   String
+    createdAt DateTime     @default(now())
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([userId, type, mediaId])
+    @@index([userId])
+}
+
+model AquilaMediaSubmission {
+    id              String  @id @default(nanoid())
+    mediaType       String
+    actionType      String // CREATE or EDIT
+    mediaId         Int?
+    data            Json    @db.Json
+    status          String  @default("PENDING") // PENDING, APPROVED, REJECTED
+    rejectionReason String? @db.Text
+
+    submittedById String
+    submittedBy   User   @relation("SubmittedMediaSubmissions", fields: [submittedById], references: [id], onDelete: Cascade)
+
+    reviewedById String?
+    reviewedBy   User?   @relation("ReviewedMediaSubmissions", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([submittedById])
+    @@index([reviewedById])
+    @@index([status])
+    @@index([mediaType])
+}
+
+model AquilaMediaRelationV2 {
+    id         Int          @id @default(autoincrement())
+    sourceType MediaType
+    sourceId   Int
+    targetType MediaType
+    targetId   Int
+    type       RelationType
+
+    @@index([sourceType, sourceId])
+    @@index([targetType, targetId])
+}
+
+model AquilaMediaStudioV2 {
+    id        Int       @id @default(autoincrement())
+    mediaType MediaType @default(ANIME)
+    mediaId   Int
+    studioId  Int
+    isMain    Boolean   @default(false) // Main Animation Studio vs Publisher/Producer
+
+    animeId Int?
+    mangaId Int?
+    movieId Int?
+    tvId    Int?
+    gameId  Int?
+    bookId  Int?
+
+    anime  AquilaAnimeV2? @relation(fields: [animeId], references: [id], onDelete: Cascade)
+    manga  AquilaMangaV2? @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+    movie  AquilaMovieV2? @relation(fields: [movieId], references: [id], onDelete: Cascade)
+    tv     AquilaTvV2?    @relation(fields: [tvId], references: [id], onDelete: Cascade)
+    game   AquilaGameV2?  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    book   AquilaBookV2?  @relation(fields: [bookId], references: [id], onDelete: Cascade)
+    studio AquilaStudioV2 @relation(fields: [studioId], references: [id], onDelete: Cascade)
+
+    @@unique([mediaType, mediaId, studioId])
+    @@index([mediaType, mediaId])
+    @@index([studioId])
+}
+
+model AquilaMediaCharacterV2 {
+    id          Int       @id @default(autoincrement())
+    mediaType   MediaType
+    mediaId     Int
+    characterId Int
+    actorId     Int?
+
+    role  CharacterRole @default(MAIN)
+    order Int?
+
+    animeId Int?
+    mangaId Int?
+    movieId Int?
+    tvId    Int?
+    gameId  Int?
+    bookId  Int?
+
+    anime     AquilaAnimeV2?    @relation(fields: [animeId], references: [id], onDelete: Cascade)
+    manga     AquilaMangaV2?    @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+    movie     AquilaMovieV2?    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+    tv        AquilaTvV2?       @relation(fields: [tvId], references: [id], onDelete: Cascade)
+    game      AquilaGameV2?     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    book      AquilaBookV2?     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+    character AquilaCharacterV2 @relation(fields: [characterId], references: [id], onDelete: Cascade)
+    actor     AquilaActorV2?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+    @@unique([mediaType, mediaId, characterId, actorId])
+    @@index([mediaType, mediaId])
+    @@index([characterId])
+    @@index([actorId])
+}
+
+model AquilaCharacterV2 {
+    id        Int  @id @default(autoincrement())
+    anilistId Int? @unique
+    malId     Int? @unique
+    aniDBId   Int? @unique
+    tvDBId    Int? @unique
+    bangumiId Int? @unique
+
+    namePrimary            String   @db.Text
+    nameNative             String?  @db.Text
+    nameAlternative        String[] @db.Text
+    nameAlternativeSpoiler String[] @db.Text
+
+    image       String? @db.Text
+    images      Json?   @db.JsonB // Multi-source character image gallery (AniList, MAL, AniDB, TVDB)
+    description String? @db.Text
+    gender      String?
+    age         String?
+    bloodType   String?
+
+    dateOfBirthYear  Int?
+    dateOfBirthMonth Int?
+    dateOfBirthDay   Int?
+
+    favorites   Int? @default(0)
+    alFavorites Int?
+
+    sources Json? @db.JsonB // Data origins & community submittedById
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    mediaCharacters AquilaMediaCharacterV2[]
+
+    @@index([namePrimary])
+}
+
+model AquilaStudioV2 {
+    id        Int  @id @default(autoincrement())
+    anilistId Int? @unique
+    malId     Int? @unique
+    aniDBId   Int? @unique
+    tvDBId    Int? @unique
+    bangumiId Int? @unique
+
+    name              String  @db.Text
+    isAnimationStudio Boolean @default(false)
+    siteUrl           String? @db.Text
+
+    favorites   Int? @default(0)
+    alFavorites Int?
+
+    sources Json? @db.JsonB // Data origins & community submittedById
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    mediaStudios AquilaMediaStudioV2[]
+
+    @@index([name])
+}
+
+model AquilaMediaStaffV2 {
+    id         Int       @id @default(autoincrement())
+    mediaType  MediaType @default(ANIME)
+    mediaId    Int
+    staffId    Int
+    role       StaffRole @default(OTHER)
+    customRole String? // e.g., "Key Animator", "Episode 1 Director"
+
+    animeId Int?
+    mangaId Int?
+    movieId Int?
+    tvId    Int?
+    gameId  Int?
+    bookId  Int?
+
+    anime AquilaAnimeV2? @relation(fields: [animeId], references: [id], onDelete: Cascade)
+    manga AquilaMangaV2? @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+    movie AquilaMovieV2? @relation(fields: [movieId], references: [id], onDelete: Cascade)
+    tv    AquilaTvV2?    @relation(fields: [tvId], references: [id], onDelete: Cascade)
+    game  AquilaGameV2?  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    book  AquilaBookV2?  @relation(fields: [bookId], references: [id], onDelete: Cascade)
+    staff AquilaActorV2  @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+    @@unique([mediaType, mediaId, staffId, role])
+    @@index([mediaType, mediaId])
+    @@index([staffId])
+}
+
+model AquilaActorV2 {
+    id        Int  @id @default(autoincrement())
+    anilistId Int? @unique
+    malId     Int? @unique
+    aniDBId   Int? @unique
+    tvDBId    Int? @unique
+    bangumiId Int? @unique
+
+    namePrimary     String   @db.Text
+    nameNative      String?  @db.Text
+    nameAlternative String[] @db.Text
+
+    image       String? @db.Text
+    images      Json?   @db.JsonB // Multi-source actor photo gallery (AniList, MAL, AniDB, TVDB)
+    description String? @db.Text
+    language    String? // e.g., Japanese, English
+
+    sources Json? @db.JsonB // Data origins & community submittedById
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    mediaCharacters AquilaMediaCharacterV2[]
+    mediaStaff      AquilaMediaStaffV2[]
+
+    @@index([namePrimary])
+}
+
+enum FavoriteType {
+    ANIME
+    MANGA
+    MOVIE
+    TV
+    BOOK
+    GAME
+    USER
+    CHARACTER
+    ACTOR
+    STAFF
+    STUDIO
+    MUSIC
+}
+
+enum StaffRole {
+    DIRECTOR
+    EPISODE_DIRECTOR
+    CHIEF_ANIMATION_DIRECTOR
+    CHARACTER_DESIGN
+    ART_DIRECTOR
+    COMPOSER // Music Composer (e.g. Hiroyuki Sawano)
+    SOUND_DIRECTOR
+    ORIGINAL_CREATOR // Author / Mangaka
+    SCRIPT // Screenplay / Series Composition
+    KEY_ANIMATION
+    COLOR_DESIGN
+    PRODUCER
+    EXECUTIVE_PRODUCER
+    OTHER
+}
+
+enum CharacterRole {
+    MAIN
+    SUPPORTING
+    BACKGROUND
+}
+
+enum MediaType {
+    ANIME
+    MANGA
+    MOVIE
+    TV
+    GAME
+    BOOK
+    MUSIC
+    OTHER
+    UNKNOWN
+}
+
+enum RelationType {
+    PREQUEL
+    SEQUEL
+    ADAPTATION
+    SIDE_STORY
+    SPIN_OFF
+    SUMMARY
+    ALTERNATIVE
+    CHARACTER
+    OTHER
+    UNKNOWN
+}
+
+enum ScoreFormat {
+    POINT_100 // 0 - 100 (e.g., 85.5)
+    POINT_10_DECIMAL // 0.0 - 10.0 (e.g., 8.5)
+    POINT_10 // 1 - 10 (e.g., 8)
+    POINT_5_STAR // 0.5 - 5.0 (e.g., 4.5 stars)
+    SMILEY // 1 (Sad), 2 (Neutral), 3 (Happy)
+}
+
+enum RecommendationVoteType {
+    UPVOTE
+    DOWNVOTE
+}
+
+model AquilaRecommendation {
+    id         Int       @id @default(autoincrement())
+    userId     String
+    user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    sourceType MediaType
+    sourceId   Int
+
+    targetType MediaType
+    targetId   Int
+
+    body       String?   @db.Text
+
+    upvotes    Int       @default(0)
+    downvotes  Int       @default(0)
+    score      Int       @default(0)
+
+    votes      AquilaRecommendationVote[]
+
+    createdAt  DateTime  @default(now())
+    updatedAt  DateTime  @updatedAt
+
+    @@unique([userId, sourceType, sourceId, targetType, targetId])
+    @@index([sourceType, sourceId])
+    @@index([targetType, targetId])
+    @@index([userId])
+    @@index([score])
+}
+
+model AquilaRecommendationVote {
+    id               Int                    @id @default(autoincrement())
+    recommendationId Int
+    recommendation   AquilaRecommendation  @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+
+    userId           String
+    user             User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    voteType         RecommendationVoteType
+
+    createdAt        DateTime               @default(now())
+    updatedAt        DateTime               @updatedAt
+
+    @@unique([recommendationId, userId])
+    @@index([recommendationId])
+    @@index([userId])
+}
+

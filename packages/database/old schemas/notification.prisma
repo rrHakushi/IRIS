@@ -1,0 +1,41 @@
+model Notification {
+    id        String             @id @default(nanoid())
+    userId    String
+    title     String
+    message   String
+    type      NotificationType   @default(INFO)
+    status    NotificationStatus @default(PENDING)
+    metadata  Json?              @db.Json
+    createdAt DateTime           @default(now())
+    user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+}
+
+enum NotificationType {
+    INFO
+    CONFIRMATION
+    PROMPT
+    INTERACTIVE
+}
+
+enum NotificationStatus {
+    PENDING
+    APPROVED
+    DENIED
+    READ
+}
+
+model CannedResponse {
+    id           String   @id @default(nanoid())
+    username     String
+    name         String
+    subject      String?
+    bodyText     String
+    encryptedKey Json?    @db.Json
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+    user         User     @relation(fields: [username], references: [username], onDelete: Cascade)
+
+    @@index([username])
+}

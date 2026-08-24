@@ -1,0 +1,85 @@
+kind: pipeline
+type: docker
+name: default
+
+services:
+  - name: IRIS-database
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: IRIS-dev
+    ports:
+      - 5432
+
+  - name: IRIS-cache
+    image: redis:latest
+    ports:
+      - 6379
+
+steps:
+  - name: Enviroment
+    image: node:22-alpine
+    environment:
+      ENV_FILE:
+        from_secret: ENV_FILE
+    commands:
+      - apk add --no-cache libc6-compat openssl
+      - echo "$ENV_FILE" > .env
+      - corepack enable
+      - pnpm install --frozen-lockfile
+
+  - name: Lint
+    image: node:22-alpine
+    commands:
+      - corepack enable
+      - pnpm lint
+
+  - name: Prisma push
+    image: node:22-alpine
+    commands:
+      - apk add --no-cache libc6-compat openssl
+      - corepack enable
+      - pnpm db:push
+
+  - name: Prisma generate
+    image: node:22-alpine
+    commands:
+      - apk add --no-cache libc6-compat openssl
+      - corepack enable
+      - pnpm db:generate
+
+  - name: Nestia sdk
+    image: node:22-alpine
+    commands:
+      - corepack enable
+      - pnpm sdk
+
+  - name: Nestia Swagger
+    image: node:22-alpine
+    commands:
+      - corepack enable
+      - pnpm swagger
+
+  - name: Nestia e2e
+    image: node:22-alpine
+    commands:
+      - corepack enable
+      - pnpm --filter @IRIS/server test:e2e
+
+  - name: Server build
+    image: node:22-alpine
+    commands:
+      - corepack enable
+      - pnpm --filter @IRIS/server build
+
+  - name: WEb build
+    image: node:22-alpine
+    commands:
+      - corepack enable
+      - pnpm --filter web build
+
+  - name: cleanup
+    image: node:22-alpine
+    commands:
+      - rm -rf .turbo node_modules/.cache

@@ -1,0 +1,40 @@
+{
+  "name": "@IRIS/cache",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./nestjs": {
+      "types": "./dist/nestjs/index.d.ts",
+      "import": "./dist/nestjs/index.js",
+      "require": "./dist/nestjs/index.js",
+      "default": "./dist/nestjs/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "tsc && node --test dist/test/*.spec.js"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.2.1",
+    "@nestjs/core": "^11.2.1",
+    "ioredis": "^5.11.1",
+    "lru-cache": "^11.2.6",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "@workspace/typescript-config": "workspace:*",
+    "typescript": "^7.0.2"
+  }
+}

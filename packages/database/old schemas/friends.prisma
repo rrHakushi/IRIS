@@ -1,0 +1,30 @@
+model FriendRequest {
+    id         String   @id @default(nanoid())
+    senderId   String
+    receiverId String
+    createdAt  DateTime @default(now())
+
+    sender   User @relation("SentFriendRequests", fields: [senderId], references: [id], onDelete: Cascade)
+    receiver User @relation("ReceivedFriendRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+
+    @@unique([senderId, receiverId])
+    @@index([senderId])
+    @@index([receiverId])
+}
+
+model Friend {
+    id        String   @id @default(nanoid())
+    userId    String
+    friendId  String
+    nickname  String?
+    note      String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user   User @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
+    friend User @relation("FriendUsers", fields: [friendId], references: [id], onDelete: Cascade)
+
+    @@unique([userId, friendId])
+    @@index([userId])
+    @@index([friendId])
+}

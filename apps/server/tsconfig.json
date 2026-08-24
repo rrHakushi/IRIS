@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "removeComments": false,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2023",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "noFallthroughCasesInSwitch": false,
+    "strict": true,
+    "types": ["node"],
+    "paths": {
+      "@IRIS/cache": ["../../packages/cache/dist/index.d.ts"],
+      "@IRIS/cache/nestjs": ["../../packages/cache/dist/nestjs/index.d.ts"],
+      "@IRIS/permissions": ["../../packages/permissions/dist/index.d.ts"],
+      "@IRIS/permissions/nestjs": ["../../packages/permissions/dist/nestjs/index.d.ts"],
+      "@IRIS/auth": ["../../packages/auth/dist/index.d.ts"],
+      "@IRIS/auth/verify": ["../../packages/auth/dist/verify.d.ts"],
+      "@IRIS/database": ["../../packages/database/dist/index.d.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "nestia.config.ts"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "test"]
+}

@@ -1,0 +1,10 @@
+{
+  "category": "General",
+  "guid": "f9a4c810-7213-4d43-9821-2e65d8a9b12d",
+  "name": "IRIS List",
+  "description": "Media Tracking Integration for Jellyfin",
+  "owner": "rrHakushi",
+  "overview": "Media Tracking Integration for Jellyfin",
+  "targetAbi": "10.11.11.0",
+  "version": "0.1.0"
+}

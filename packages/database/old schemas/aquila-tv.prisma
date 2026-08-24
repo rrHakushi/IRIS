@@ -1,0 +1,271 @@
+enum TvListStatus {
+    WATCHING
+    PLANNING
+    COMPLETED
+    ON_HOLD
+    DROPPED
+}
+
+model AquilaTvV2 {
+    id       Int     @id @default(autoincrement())
+    tvDBId   Int?    @unique
+    imdbId   String? @unique
+    tmdbId   Int?    @unique
+    traktId  Int?    @unique
+    tvmazeId Int?    @unique
+    tvrageId Int?    @unique
+
+    titlePrimary   String  @db.Text // Primary English title (or fallback)
+    titleSecondary String? @db.Text
+    titleNative    String? @db.Text
+    tagline        String? @db.Text
+
+    coverImage  String? @db.Text
+    bannerImage String? @db.Text
+    images      Json?   @db.JsonB // Multi-source galleries: { tvdb: { posters: [], backdrops: [], logos: [] }, tvmaze: { ... } }
+
+    description      String? @db.Text
+    originalLanguage String? // e.g. "en", "ja", "fr"
+    countryOfOrigin  String? // e.g. "US", "JP"
+    episodeCount     Int? // Total episodes
+    seasonCount      Int? // Total seasons
+    averageRuntime   Int? // Average episode runtime in minutes
+    homepage         String? @db.Text
+    siteUrl          String? @db.Text
+    showType         String? // e.g. "Scripted", "Reality", "Animation", "Documentary"
+
+    broadcastTime String? // e.g. "22:00"
+    broadcastDays String[] @db.Text // e.g. ["Sunday"]
+
+    firstAiredYear  Int?
+    firstAiredMonth Int?
+    firstAiredDay   Int?
+
+    lastAiredYear  Int?
+    lastAiredMonth Int?
+    lastAiredDay   Int?
+
+    genres   String[] @db.Text
+    tags     String[] @db.Text // Rich tags e.g. ["Critically Acclaimed", "Dark Comedy", "Psychological Thriller"]
+    networks String[] @db.Text // Broadcast networks (e.g. HBO, Netflix, AMC)
+    studios  String[] @db.Text // Production companies / studios
+
+    status   TvStatus @default(UNKNOWN)
+    isAdult  Boolean  @default(false)
+    synonyms String[] @db.Text
+    trailers Json?    @db.JsonB // Video trailers & teasers
+    locked   Boolean  @default(false)
+
+    averageScore        Float?
+    imdbRating          Float?
+    imdbVotes           Int?
+    tvmazeRating        Float?
+    rottenTomatoesScore Float?
+    awards              String? @db.Text // Detailed awards e.g. "Won 16 Primetime Emmys..."
+
+    favorites          Int  @default(0)
+    popularity         Int  @default(0)
+    totalScoreSum      Int? @db.Integer
+    scoredCount        Int? @db.Integer
+    statusDistribution Json @default("{}") @db.JsonB
+    scoreDistribution  Json @default("{}") @db.JsonB
+
+    sources Json? @db.JsonB // Data origins: [{ provider: "THETVDB", externalId: "...", fieldsProvided: [...] }]
+
+    ageRating      String? // e.g. "TV-MA", "TV-14", "PG-13"
+    ageRatingGuide String? // Content warnings e.g. "Violence, Language"
+    contentRatings Json?   @db.JsonB // Multi-country ratings array: [{ country: "gbr", name: "18" }, { country: "usa", name: "TV-MA" }]
+
+    imdbUpdatedAt   Int?
+    tvdbUpdatedAt   Int?
+    tvmazeUpdatedAt Int?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    seasons             AquilaTvSeasonV2[]
+    episodes            AquilaTvEpisodeV2[]
+    characters          AquilaMediaCharacterV2[]
+    studiosList         AquilaMediaStudioV2[]
+    staff               AquilaMediaStaffV2[]
+    userLists           AquilaTvUserListV2[]
+    reviews             AquilaTvReview[]
+    recommendationsFrom AquilaTvRecommendationV2[] @relation("TvRecommendationSource")
+    recommendationsTo   AquilaTvRecommendationV2[] @relation("TvRecommendationTarget")
+
+    @@index([titlePrimary])
+    @@index([status])
+    @@index([popularity(sort: Desc)])
+    @@index([averageScore(sort: Desc)])
+}
+
+model AquilaTvSeasonV2 {
+    id             Int        @id @default(autoincrement())
+    tvId           Int
+    seasonNumber   Int
+    tvdbSeasonId   Int?
+    tvmazeSeasonId Int?
+    tv             AquilaTvV2 @relation(fields: [tvId], references: [id], onDelete: Cascade)
+
+    titlePrimary   String? @db.Text
+    titleSecondary String? @db.Text
+    description    String? @db.Text
+    posterImage    String? @db.Text
+
+    airDateYear  Int?
+    airDateMonth Int?
+    airDateDay   Int?
+    episodeCount Int?
+
+    trailers Json? @db.JsonB
+    sources  Json? @db.JsonB
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    episodes AquilaTvEpisodeV2[]
+
+    @@unique([tvId, seasonNumber])
+    @@index([tvId])
+}
+
+model AquilaTvEpisodeV2 {
+    id            Int               @id @default(autoincrement())
+    tvId          Int
+    seasonId      Int?
+    seasonNumber  Int
+    episodeNumber Int
+    tv            AquilaTvV2        @relation(fields: [tvId], references: [id], onDelete: Cascade)
+    season        AquilaTvSeasonV2? @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+    titlePrimary   String  @db.Text
+    titleSecondary String? @db.Text
+    titleNative    String? @db.Text
+
+    description    String?   @db.Text
+    duration       Int? // Runtime in minutes
+    airDate        DateTime?
+    airTime        String?
+    airstamp       DateTime?
+    rating         Float?
+    episodeType    String? // e.g. "regular", "special", "finale"
+    thumbnail      String?   @db.Text
+    isFiller       Boolean   @default(false)
+    isRecap        Boolean   @default(false)
+    streamingLinks Json?     @db.JsonB
+
+    // Skip timestamps (in seconds)
+    opStart    Int?
+    opEnd      Int?
+    edStart    Int?
+    edEnd      Int?
+    recapStart Int?
+    recapEnd   Int?
+
+    skipTimestamps Json? @db.JsonB
+    sources        Json? @db.JsonB
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    watchedEpisodes AquilaTvWatchedEpisodeV2[]
+
+    @@unique([tvId, seasonNumber, episodeNumber])
+    @@index([tvId])
+    @@index([seasonId])
+}
+
+model AquilaTvUserListV2 {
+    id          Int          @id @default(autoincrement())
+    username    String
+    tvId        Int
+    status      TvListStatus @default(PLANNING)
+    score       Float?
+    scoreFormat ScoreFormat  @default(POINT_10)
+    progress    Int?         @default(0) // Total episodes watched
+    notes       String?      @db.Text
+    rewatched   Int          @default(0)
+    private     Boolean      @default(false)
+    customLists String[]     @db.Text // Custom folder names
+
+    startDate DateTime?
+    endDate   DateTime?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    connections Json? @db.JsonB
+
+    user            User                       @relation(fields: [username], references: [username], onDelete: Cascade)
+    tv              AquilaTvV2                 @relation(fields: [tvId], references: [id], onDelete: Cascade)
+    watchedEpisodes AquilaTvWatchedEpisodeV2[]
+
+    @@unique([username, tvId])
+    @@index([username])
+    @@index([tvId])
+    @@index([status])
+    @@index([username, status])
+    @@index([username, score(sort: Desc)])
+}
+
+model AquilaTvWatchedEpisodeV2 {
+    id         Int      @id @default(autoincrement())
+    listId     Int
+    seasonNum  Int
+    episodeNum Int
+    episodeId  Int?
+    watchedAt  DateTime @default(now())
+
+    list    AquilaTvUserListV2 @relation(fields: [listId], references: [id], onDelete: Cascade)
+    episode AquilaTvEpisodeV2? @relation(fields: [episodeId], references: [id], onDelete: SetNull)
+
+    @@unique([listId, seasonNum, episodeNum])
+    @@index([listId])
+    @@index([episodeId])
+}
+
+model AquilaTvReview {
+    id        Int     @id @default(autoincrement())
+    username  String
+    tvId      Int
+    summary   String  @db.Text // Headline summary
+    body      String  @db.Text // Full review
+    score     Float // 1-10 or 1-100 rating
+    upvotes   Int     @default(0)
+    isSpoiler Boolean @default(false)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user User       @relation(fields: [username], references: [username], onDelete: Cascade)
+    tv   AquilaTvV2 @relation(fields: [tvId], references: [id], onDelete: Cascade)
+
+    @@unique([username, tvId])
+    @@index([tvId])
+    @@index([username])
+    @@index([score(sort: Desc)])
+}
+
+model AquilaTvRecommendationV2 {
+    id          Int     @id @default(autoincrement())
+    tvId        Int // Source TV Show
+    relatedTvId Int // Recommended TV Show
+    rating      Int     @default(1) // Upvotes
+    userNotes   String? @db.Text // "Why you should watch this"
+
+    tv        AquilaTvV2 @relation("TvRecommendationSource", fields: [tvId], references: [id], onDelete: Cascade)
+    relatedTv AquilaTvV2 @relation("TvRecommendationTarget", fields: [relatedTvId], references: [id], onDelete: Cascade)
+
+    @@unique([tvId, relatedTvId])
+    @@index([tvId])
+    @@index([relatedTvId])
+}
+
+enum TvStatus {
+    RETURNING_SERIES
+    ENDED
+    CANCELED
+    IN_PRODUCTION
+    UPCOMING
+    UNKNOWN
+}

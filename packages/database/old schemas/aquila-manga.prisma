@@ -1,0 +1,184 @@
+model AquilaMangaV2 {
+    id             Int     @id @default(autoincrement())
+    anilistId      Int?    @unique
+    malId          Int?    @unique
+    mangaUpdatesId String? @unique
+
+    titlePrimary   String  @db.Text // primarly ENGLISH titles, but if theres none, then instert either secondary or native
+    titleSecondary String? @db.Text
+    titleNative    String? @db.Text
+
+    coverImage  String? @db.Text
+    bannerImage String? @db.Text
+    images      Json?   @db.JsonB // Array galleries per provider: { tvdb: { posters: [], banners: [], backgrounds: [] }, mal: { pictures: [] }, anilist: { cover, banner } }
+
+    description     String? @db.Text
+    hashtag         String? // TWITTER hashtag
+    countryOfOrigin String?
+
+    volumeCount  Int?
+    chapterCount Int?
+
+    serialization    String?  @db.Text // Magazine e.g. "Weekly Shonen Jump" (MAL/Jikan API)
+    imprint          String?  @db.Text // Light Novel imprint/label e.g. "Dengeki Bunko", "MF Bunko J", "Yen On"
+    publishers       String[] @db.Text // e.g. ["Shueisha", "VIZ Media", "J-Novel Club"]
+    demographics     String[] @db.Text // e.g. ["Shounen", "Seinen", "Shoujo", "Josei"] (MAL/Jikan API)
+    readingDirection String? // e.g. "RIGHT_TO_LEFT", "LEFT_TO_RIGHT", "TOP_TO_BOTTOM" (MangaDex API)
+
+    startDateYear  Int?
+    startDateMonth Int?
+    startDateDay   Int?
+
+    endDateYear  Int?
+    endDateMonth Int?
+    endDateDay   Int?
+
+    genres String[]    @db.Text
+    source AnimeSource @default(UNKNOWN)
+    format MangaFormat @default(UNKNOWN)
+    status MangaStatus @default(UNKNOWN)
+
+    averageScore       Float?
+    favorites          Int    @default(0)
+    popularity         Int    @default(0)
+    totalScoreSum      Int?   @db.Integer
+    scoredCount        Int?   @db.Integer
+    statusDistribution Json   @default("{}") @db.JsonB
+    scoreDistribution  Json   @default("{}") @db.JsonB
+
+    alAverageScore Int?
+    alFavorites    Int?
+    alPopularity   Int?
+
+    malAverageScore Int?
+    malFavorites    Int?
+    malPopularity   Int?
+
+    isAdult  Boolean  @default(false)
+    synonyms String[] @db.Text
+    locked   Boolean  @default(false)
+
+    siteUrl       String? @db.Text
+    externalLinks Json?   @db.JsonB
+    sources       Json?   @db.JsonB // Array of data origins: [{ provider: "ANILIST", url: "...", externalId: "...", submittedById: "...", fieldsProvided: [...] }]
+
+    ageRating      String? // e.g. "PG-13", "R-17+" (from MAL/AniDB/TVDB)
+    ageRatingGuide String? // e.g. "Violence, Profanity"
+
+    alUpdatedAt  Int?
+    malUpdatedAt Int?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    characters          AquilaMediaCharacterV2[]
+    studios             AquilaMediaStudioV2[]
+    staff               AquilaMediaStaffV2[]
+    userLists           AquilaMangaUserListV2[]
+    reviews             AquilaMangaReview[]
+    recommendationsFrom AquilaMangaRecommendationV2[] @relation("MangaRecommendationSource")
+    recommendationsTo   AquilaMangaRecommendationV2[] @relation("MangaRecommendationTarget")
+
+    @@index([titlePrimary])
+    @@index([status])
+    @@index([format])
+    @@index([popularity(sort: Desc)])
+    @@index([averageScore(sort: Desc)])
+}
+
+model AquilaMangaUserListV2 {
+    id               Int             @id @default(autoincrement())
+    username         String
+    mangaId          Int
+    status           MangaListStatus @default(PLANNING)
+    chaptersProgress Int             @default(0)
+    volumesProgress  Int             @default(0)
+    score            Float?
+    scoreFormat      ScoreFormat     @default(POINT_10)
+    notes            String?         @db.Text
+    reread           Int             @default(0)
+    private          Boolean         @default(false)
+    customLists      String[]        @db.Text // Custom folder/list names
+
+    startDate DateTime?
+    endDate   DateTime?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    connections Json? @db.JsonB
+
+    user  User          @relation(fields: [username], references: [username], onDelete: Cascade)
+    manga AquilaMangaV2 @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+
+    @@unique([username, mangaId])
+    @@index([username])
+    @@index([mangaId])
+    @@index([status])
+    @@index([username, status])
+    @@index([username, score(sort: Desc)])
+}
+
+model AquilaMangaReview {
+    id        Int     @id @default(autoincrement())
+    username  String
+    mangaId   Int
+    summary   String  @db.Text // Short review headline
+    body      String  @db.Text // Full markdown review content
+    score     Float // 1-10 or 1-100 rating
+    upvotes   Int     @default(0)
+    isSpoiler Boolean @default(false)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user  User          @relation(fields: [username], references: [username], onDelete: Cascade)
+    manga AquilaMangaV2 @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+
+    @@unique([username, mangaId])
+    @@index([mangaId])
+    @@index([username])
+    @@index([score(sort: Desc)])
+}
+
+model AquilaMangaRecommendationV2 {
+    id             Int     @id @default(autoincrement())
+    mangaId        Int // Source Manga
+    relatedMangaId Int // Recommended Manga
+    rating         Int     @default(1) // Upvote / agreement score
+    userNotes      String? @db.Text // "Why you should read this if you liked X"
+
+    manga        AquilaMangaV2 @relation("MangaRecommendationSource", fields: [mangaId], references: [id], onDelete: Cascade)
+    relatedManga AquilaMangaV2 @relation("MangaRecommendationTarget", fields: [relatedMangaId], references: [id], onDelete: Cascade)
+
+    @@unique([mangaId, relatedMangaId])
+    @@index([mangaId])
+    @@index([relatedMangaId])
+}
+
+enum MangaFormat {
+    MANGA
+    NOVEL
+    LIGHT_NOVEL
+    ONE_SHOT
+    MANHWA
+    MANHUA
+    UNKNOWN
+}
+
+enum MangaStatus {
+    FINISHED
+    RELEASING
+    NOT_YET_RELEASED
+    CANCELLED
+    HIATUS
+    UNKNOWN
+}
+
+enum MangaListStatus {
+    PLANNING
+    READING
+    COMPLETED
+    ON_HOLD
+    DROPPED
+}

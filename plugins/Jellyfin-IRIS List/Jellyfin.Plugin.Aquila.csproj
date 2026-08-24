@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <RootNamespace>Jellyfin.Plugin.Aquila</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <Nullable>enable</Nullable>
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    <AssemblyVersion>10.11.11.0</AssemblyVersion>
+    <FileVersion>10.11.11.0</FileVersion>
+    <Version>10.11.11.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Jellyfin.Controller" Version="10.11.11">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="Jellyfin.Model" Version="10.11.11">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="meta.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Remove="Configuration\configPage.html" />
+    <None Remove="Web\aquila-web-injection.js" />
+    <None Remove="Web\aquila-modal.css" />
+    <EmbeddedResource Include="Configuration\configPage.html" />
+    <EmbeddedResource Include="Web\aquila-web-injection.js" />
+    <EmbeddedResource Include="Web\aquila-modal.css" />
+  </ItemGroup>
+
+</Project>

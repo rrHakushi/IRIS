@@ -1,0 +1,287 @@
+model AquilaAnimeV2 {
+    id        Int  @id @default(autoincrement())
+    anilistId Int? @unique
+    malId     Int? @unique
+    aniDBId   Int? @unique
+    tvDBId    Int?
+    bangumiId Int? @unique
+
+    titlePrimary   String  @db.Text // primarly ENGLISH titles, but if theres none, then instert either secondary or native
+    titleSecondary String? @db.Text
+    titleNative    String? @db.Text
+
+    coverImage  String? @db.Text
+    bannerImage String? @db.Text
+    images      Json?   @db.JsonB // Array galleries per provider: { tvdb: { posters: [], banners: [], backgrounds: [] }, mal: { pictures: [] }, anilist: { cover, banner } }
+
+    description     String? @db.Text
+    hashtag         String? // TWITTER hashtag
+    countryOfOrigin String?
+
+    episodeCount    Int?
+    episodeDuration Int?
+    episodes        AquilaAnimeEpisode[]
+    airingSchedule  AquilaAnimeAiringSchedule[]
+
+    startDateYear  Int
+    startDateMonth Int?
+    startDateDay   Int?
+
+    endDateYear  Int?
+    endDateMonth Int?
+    endDateDay   Int?
+
+    genres       String[]    @db.Text
+    source       AnimeSource @default(UNKNOWN)
+    format       AnimeFormat @default(UNKNOWN)
+    status       AnimeStatus @default(UNKNOWN)
+    seasonSeason AnimeSeason @default(UNKNOWN)
+    seasonYear   Int
+
+    averageScore       Float?
+    favorites          Int    @default(0)
+    popularity         Int    @default(0)
+    totalScoreSum      Int?   @db.Integer
+    scoredCount        Int?   @db.Integer
+    statusDistribution Json   @default("{}") @db.JsonB
+    scoreDistribution  Json   @default("{}") @db.JsonB
+
+    alAverageScore Int?
+    alFavorites    Int?
+    alPopularity   Int?
+
+    malAverageScore Int?
+    malFavorites    Int?
+    malPopularity   Int?
+
+    isAdult  Boolean  @default(false)
+    synonyms String[] @db.Text
+    trailers Json?    @db.JsonB
+    locked   Boolean  @default(false)
+
+    siteUrl       String? @db.Text
+    externalLinks Json?   @db.JsonB
+    sources       Json?   @db.JsonB // Array of data origins: [{ provider: "ANILIST", url: "...", externalId: "...", submittedById: "...", fieldsProvided: [...] }]
+
+    themeSongs Json? @db.JsonB
+
+    ageRating      String? // e.g. "PG-13", "R-17+" (from MAL/AniDB/TVDB)
+    ageRatingGuide String? // e.g. "Violence, Profanity"
+
+    nextAiringEpisodeNumber Int?
+    nextAiringAt            DateTime?
+
+    alUpdatedAt    Int?
+    malUpdatedAt   Int?
+    anidbUpdatedAt Int?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    characters          AquilaMediaCharacterV2[]
+    studios             AquilaMediaStudioV2[]
+    staff               AquilaMediaStaffV2[]
+    userLists           AquilaAnimeUserListV2[]
+    reviews             AquilaAnimeReview[]
+    recommendationsFrom AquilaAnimeRecommendationV2[] @relation("RecommendationSource")
+    recommendationsTo   AquilaAnimeRecommendationV2[] @relation("RecommendationTarget")
+
+    @@index([titlePrimary])
+    @@index([status])
+    @@index([format])
+    @@index([seasonYear, seasonSeason])
+    @@index([popularity(sort: Desc)])
+    @@index([averageScore(sort: Desc)])
+    @@index([nextAiringAt])
+    @@index([tvDBId])
+}
+
+model AquilaAnimeEpisode {
+    id      Int           @id @default(autoincrement())
+    animeId Int
+    anime   AquilaAnimeV2 @relation(fields: [animeId], references: [id], onDelete: Cascade)
+    number  Int // Episode number (1, 2, 3...)
+    type    EpisodeType   @default(REGULAR)
+
+    titlePrimary   String  @db.Text
+    titleSecondary String? @db.Text
+    titleNative    String? @db.Text
+
+    description    String?   @db.Text
+    duration       Int? // Duration (in minutes)
+    airDate        DateTime? // Airing time for this episode
+    thumbnail      String?   @db.Text
+    isFiller       Boolean   @default(false)
+    isRecap        Boolean   @default(false)
+    streamingLinks Json?     @db.Json
+
+    // Automated Player Skip Timestamps (in seconds)
+    opStart    Int?
+    opEnd      Int?
+    edStart    Int?
+    edEnd      Int?
+    recapStart Int?
+    recapEnd   Int?
+
+    // Skip Timestamps Data Provenance (e.g. AniSkip API, Community User Submissions)
+    skipTimestamps Json? @db.JsonB
+
+    // Source tracking for MAL with AniDB fallbacks
+    malEpisodeId   Int?
+    anidbEpisodeId Int?
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt
+
+    @@unique([animeId, number, type])
+    @@index([animeId])
+    @@index([airDate])
+}
+
+model AquilaAnimeAiringSchedule {
+    id              Int           @id @default(autoincrement())
+    animeId         Int
+    anime           AquilaAnimeV2 @relation(fields: [animeId], references: [id], onDelete: Cascade)
+    episodeNumber   Int
+    airingAt        DateTime
+    // AniList specific schedule ID for deduplication/updates
+    anilistAiringId Int?          @unique
+    createdAt       DateTime      @default(now())
+    updatedAt       DateTime      @updatedAt
+
+    @@unique([animeId, episodeNumber])
+    @@index([animeId])
+    @@index([airingAt])
+}
+
+model AquilaAnimeUserListV2 {
+    id          Int             @id @default(autoincrement())
+    username    String
+    animeId     Int
+    status      AnimeListStatus @default(PLANNING)
+    progress    Int             @default(0)
+    score       Float?
+    scoreFormat ScoreFormat     @default(POINT_10)
+    notes       String?         @db.Text
+    rewatched   Int             @default(0)
+    private     Boolean         @default(false)
+    customLists String[]        @db.Text // Custom folder/list names (e.g. ["Favorites 2026", "Watching with Friends"])
+
+    startDate DateTime?
+    endDate   DateTime?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    connections Json? @db.JsonB
+
+    user  User          @relation(fields: [username], references: [username], onDelete: Cascade)
+    anime AquilaAnimeV2 @relation(fields: [animeId], references: [id], onDelete: Cascade)
+
+    @@unique([username, animeId])
+    @@index([username])
+    @@index([animeId])
+    @@index([status])
+    @@index([username, status])
+    @@index([username, score(sort: Desc)])
+}
+
+model AquilaAnimeReview {
+    id        Int     @id @default(autoincrement())
+    username  String
+    animeId   Int
+    summary   String  @db.Text // Short review headline
+    body      String  @db.Text // Full markdown review content
+    score     Float // 1-10 or 1-100 rating
+    upvotes   Int     @default(0)
+    isSpoiler Boolean @default(false)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user  User          @relation(fields: [username], references: [username], onDelete: Cascade)
+    anime AquilaAnimeV2 @relation(fields: [animeId], references: [id], onDelete: Cascade)
+
+    @@unique([username, animeId])
+    @@index([animeId])
+    @@index([username])
+    @@index([score(sort: Desc)])
+}
+
+model AquilaAnimeRecommendationV2 {
+    id             Int     @id @default(autoincrement())
+    animeId        Int // Source Anime
+    relatedAnimeId Int // Recommended Anime
+    rating         Int     @default(1) // Upvote / agreement score
+    userNotes      String? @db.Text // "Why you should watch this if you liked X"
+
+    anime        AquilaAnimeV2 @relation("RecommendationSource", fields: [animeId], references: [id], onDelete: Cascade)
+    relatedAnime AquilaAnimeV2 @relation("RecommendationTarget", fields: [relatedAnimeId], references: [id], onDelete: Cascade)
+
+    @@unique([animeId, relatedAnimeId])
+    @@index([animeId])
+    @@index([relatedAnimeId])
+}
+
+enum AnimeStatus {
+    FINISHED
+    RELEASING
+    NOT_YET_RELEASED
+    CANCELLED
+    HIATUS
+    UNKNOWN
+}
+
+enum AnimeListStatus {
+    PLANNING
+    WATCHING
+    COMPLETED
+    ON_HOLD
+    DROPPED
+}
+
+enum AnimeSeason {
+    WINTER
+    SPRING
+    SUMMER
+    FALL
+    UNKNOWN
+}
+
+enum AnimeSource {
+    ORIGINAL
+    MANGA
+    LIGHT_NOVEL
+    VISUAL_NOVEL
+    VIDEO_GAME
+    OTHER
+    NOVEL
+    DOUJINSHI
+    ANIME
+    WEB_NOVEL
+    LIVE_ACTION
+    GAME
+    COMIC
+    MULTIMEDIA_PROJECT
+    PICTURE_BOOK
+    UNKNOWN
+}
+
+enum AnimeFormat {
+    TV
+    TV_SHORT
+    MOVIE
+    SPECIAL
+    OVA
+    ONA
+    MUSIC
+    UNKNOWN
+}
+
+enum EpisodeType {
+    REGULAR
+    SPECIAL
+    OVA
+    ONA
+    MOVIE
+    OTHER
+}

@@ -1,0 +1,51 @@
+{
+  "//": "Drop into the project root. The `plugins` array is what makes nestia work — without them, the @TypedBody/@TypedRoute decorators silently no-op at runtime. After dropping this in, run `npm run prepare` (which runs ts-patch install && typia patch) once.",
+
+  "compilerOptions": {
+    "//strict": "Mandatory. typia generates validators from type info; with strict off, the validators silently let invalid data through.",
+    "strict": true,
+    "strictNullChecks": true,
+
+    "//plugins": "These run via ts-patch during tsc. Order matters: typia first, then @nestia/core, then @nestia/sdk.",
+    "plugins": [
+      { "transform": "typia/lib/transform" },
+      {
+        "transform": "@nestia/core/lib/transform",
+        "//validate": "What @TypedBody runs on incoming requests. 'validate' returns every error; 'assert' throws on first; 'validateEquals' rejects extras; 'assertPrune' silently strips extras.",
+        "validate": "validate",
+        "//stringify": "What @TypedRoute runs on responses. 'assert' validates+serializes (~200x faster than JSON.stringify); 'validate.log' validates without throwing (production-safe).",
+        "stringify": "assert"
+      },
+      {
+        "//comment": "Required only when building swagger at runtime via NestiaSwaggerComposer. Leave in if unsure — it's a no-op when not used.",
+        "transform": "@nestia/sdk/lib/transform"
+      }
+    ],
+
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    "outDir": "./dist",
+    "rootDir": "./src",
+
+    "declaration": true,
+    "sourceMap": true,
+    "removeComments": false,
+
+    "//paths": "Optional path aliases — adjust to match the project.",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@api/*": ["src/api/*"]
+    }
+  },
+  "include": ["src/**/*", "test/**/*", "nestia.config.ts"],
+  "exclude": ["node_modules", "dist"]
+}

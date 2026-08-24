@@ -1,0 +1,68 @@
+# Dependencies
+node_modules
+.pnpm-store
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Git & IDE
+.git
+.gitignore
+.gitattributes
+.github
+.agents
+.vscode
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Build outputs & caches
+.next
+dist
+build
+out
+coverage
+.turbo
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Database artifacts
+packages/database/old schemas
+packages/database/generated-client
+
+# OS & Temp
+.DS_Store
+Thumbs.db
+*.pem
+*.key
+*.cert
+
+# CI/CD & Compose
+.drone.yml
+docker-compose*.yml
+
+# Docs & metadata
+README.md
+LICENSE
+AGENTS.md
+skills-lock.json

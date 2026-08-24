@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "skills": {
+    "cicd-pipeline-generator": {
+      "source": "ailabs-393/ai-labs-claude-skills",
+      "sourceType": "github",
+      "skillPath": "packages/skills/cicd-pipeline-generator/SKILL.md",
+      "computedHash": "44bc43aad27639bcd52ebe4d71376aad7adc15d9a88ba81e13e2529f0dfbf713"
+    },
+    "multi-stage-dockerfile": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/multi-stage-dockerfile/SKILL.md",
+      "computedHash": "698bf93a84dae18fd7bd0b1d35c21427307fde78fbdf4624be9726f5f98189ca"
+    },
+    "nestia": {
+      "source": "mktawileh/nestia-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "7190d9025ca71a1eb292883748f3ef443feff37fd73a7e2e1bf12e13e799e515"
+    },
+    "nextauth": {
+      "source": "claude-dev-suite/claude-dev-suite",
+      "sourceType": "github",
+      "skillPath": "skills/authentication/nextauth/SKILL.md",
+      "computedHash": "8711d137ef1576321eae5f754a590c0945060faebb25564f057826cad6504ef8"
+    },
+    "shadcn": {
+      "source": "shadcn/ui",
+      "sourceType": "github",
+      "skillPath": "skills/shadcn/SKILL.md",
+      "computedHash": "f99ef49d9909d380ca683ceb8dc8c25775c20ee38140112c394e037d8c11ee18"
+    },
+    "skill-creator": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/skill-creator/SKILL.md",
+      "computedHash": "7e3c9cd74e9e2b4828527a857170e86310f2dab5ea8030a9043df2c7e6c88857"
+    }
+  }
+}

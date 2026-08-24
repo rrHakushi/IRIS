@@ -1,0 +1,34 @@
+{
+  "//": "Drop these into the project's package.json `scripts` block. Adjust as needed.",
+  "scripts": {
+    "//prepare": "Required. Runs once after `npm install`; activates the typia + @nestia/core transforms and re-enables JSDoc parsing on TypeScript 5.3+. Without this, nestia silently no-ops.",
+    "prepare": "ts-patch install && typia patch",
+
+    "//build": "Plain tsc — must NOT be SWC, esbuild, or Babel. Nestia needs type info at compile time.",
+    "build": "tsc",
+
+    "//start": "Standard Nest start commands.",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:prod": "node dist/main",
+
+    "//sdk": "Regenerate the SDK from controllers. Run on every controller change.",
+    "sdk": "nestia sdk",
+
+    "//swagger": "Regenerate swagger.json. Often paired with `sdk`.",
+    "swagger": "nestia swagger",
+
+    "//e2e-gen": "Scaffold E2E test files for new routes (preserves existing files).",
+    "e2e-gen": "nestia e2e",
+
+    "//all": "Regenerate SDK + swagger + e2e in one go.",
+    "all": "nestia all",
+
+    "//prebuild": "Make sure the SDK and swagger are fresh before every build.",
+    "prebuild": "npm run sdk && npm run swagger",
+
+    "//test": "Plain Jest. The auto-generated E2E files in test/features/api/ are picked up by DynamicExecutor.validate, not Jest — see references/e2e-testing.md.",
+    "test": "jest",
+    "test:e2e": "ts-node test/index.ts"
+  }
+}

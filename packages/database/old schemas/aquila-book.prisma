@@ -1,0 +1,172 @@
+enum BookListStatus {
+    PLANNING
+    READING
+    COMPLETED
+    ON_HOLD
+    DROPPED
+}
+
+model AquilaBookV2 {
+    id           Int     @id @default(autoincrement())
+    googleBookId String? @unique
+    isbn10       String? @unique
+    isbn13       String? @unique
+
+    titlePrimary   String  @db.Text
+    titleSecondary String? @db.Text
+    subtitle       String? @db.Text
+    slug           String?
+    tagline        String? @db.Text
+
+    coverImage  String? @db.Text
+    bannerImage String? @db.Text
+    images      Json?   @db.JsonB
+
+    description      String? @db.Text
+    originalLanguage String?
+    countryOfOrigin  String?
+    series           String? @db.Text
+    seriesPosition   Float?
+    format           String?
+    website          String? @db.Text
+    siteUrl          String? @db.Text
+    previewLink      String? @db.Text
+    infoLink         String? @db.Text
+    buyLink          String? @db.Text
+
+    releaseDateYear  Int?
+    releaseDateMonth Int?
+    releaseDateDay   Int?
+    releaseDate      DateTime?
+
+    pageCount    Int?
+    chapterCount Int?
+    volumeCount  Int?
+
+    genres     String[]   @db.Text
+    subjects   String[]   @db.Text
+    tags       String[]   @db.Text
+    publishers String[]   @db.Text
+    authors    String[]   @db.Text
+    status     BookStatus @default(UNKNOWN)
+    isAdult    Boolean    @default(false)
+    synonyms   String[]   @db.Text
+    locked     Boolean    @default(false)
+
+    // Ratings & Metrics
+    averageScore            Float?
+    googleBooksRating       Float?
+    googleBooksRatingsCount Int?
+
+    favorites          Int  @default(0)
+    popularity         Int  @default(0)
+    totalScoreSum      Int? @db.Integer
+    scoredCount        Int? @db.Integer
+    statusDistribution Json @default("{}") @db.JsonB
+    scoreDistribution  Json @default("{}") @db.JsonB
+
+    sources Json? @db.JsonB
+
+    retailPrice         Float?
+    retailPriceCurrency String?
+    ageRating           String?
+    ageRatingGuide      String?
+    contentRatings      Json?   @db.JsonB
+
+    googleBooksUpdatedAt Int?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    characters          AquilaMediaCharacterV2[]
+    studios             AquilaMediaStudioV2[]
+    staff               AquilaMediaStaffV2[]
+    userLists           AquilaBookUserListV2[]
+    reviews             AquilaBookReview[]
+    recommendationsFrom AquilaBookRecommendationV2[] @relation("BookRecommendationSource")
+    recommendationsTo   AquilaBookRecommendationV2[] @relation("BookRecommendationTarget")
+
+    @@index([titlePrimary])
+    @@index([status])
+    @@index([popularity(sort: Desc)])
+    @@index([averageScore(sort: Desc)])
+}
+
+model AquilaBookUserListV2 {
+    id               Int            @id @default(autoincrement())
+    username         String
+    bookId           Int
+    status           BookListStatus @default(PLANNING)
+    score            Float?
+    scoreFormat      ScoreFormat    @default(POINT_10)
+    progressPages    Int?           @default(0)
+    progressChapters Int?           @default(0)
+    progressVolumes  Int?           @default(0)
+    notes            String?        @db.Text
+    reread           Int            @default(0)
+    private          Boolean        @default(false)
+    customLists      String[]       @db.Text
+
+    startDate DateTime?
+    endDate   DateTime?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    connections Json? @db.JsonB
+
+    user User         @relation(fields: [username], references: [username], onDelete: Cascade)
+    book AquilaBookV2 @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+    @@unique([username, bookId])
+    @@index([username])
+    @@index([bookId])
+    @@index([status])
+    @@index([username, status])
+    @@index([username, score(sort: Desc)])
+}
+
+model AquilaBookReview {
+    id        Int     @id @default(autoincrement())
+    username  String
+    bookId    Int
+    summary   String  @db.Text
+    body      String  @db.Text
+    score     Float
+    upvotes   Int     @default(0)
+    isSpoiler Boolean @default(false)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user User         @relation(fields: [username], references: [username], onDelete: Cascade)
+    book AquilaBookV2 @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+    @@unique([username, bookId])
+    @@index([bookId])
+    @@index([username])
+    @@index([score(sort: Desc)])
+}
+
+model AquilaBookRecommendationV2 {
+    id            Int     @id @default(autoincrement())
+    bookId        Int
+    relatedBookId Int
+    rating        Int     @default(1)
+    userNotes     String? @db.Text
+
+    book        AquilaBookV2 @relation("BookRecommendationSource", fields: [bookId], references: [id], onDelete: Cascade)
+    relatedBook AquilaBookV2 @relation("BookRecommendationTarget", fields: [relatedBookId], references: [id], onDelete: Cascade)
+
+    @@unique([bookId, relatedBookId])
+    @@index([bookId])
+    @@index([relatedBookId])
+}
+
+enum BookStatus {
+    PUBLISHED
+    RELEASING
+    CANCELLED
+    ON_HIATUS
+    UNKNOWN
+}

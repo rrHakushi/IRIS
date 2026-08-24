@@ -1,0 +1,185 @@
+model LynxHomeworkExists {
+    id             Int    @id @default(autoincrement())
+    superID        String
+    title          String
+    forumChannelID String
+    forumID        String
+    guilID         String
+
+    @@index([superID])
+    @@index([forumChannelID])
+    @@index([forumID])
+    @@index([guilID])
+}
+
+model LynxHomeWorkChannels {
+    guildId  String @id
+    channels Json   @db.Json
+
+    @@index([guildId])
+}
+
+model LynxRngRigConfig {
+    id             String @id @default(nanoid())
+    ignoredNumbers Json   @db.Json
+}
+
+model LynxKickHistory {
+    id        String   @id @default(nanoid())
+    userId    String
+    guildId   String
+    moderator String
+    reason    String
+    createdAt DateTime @default(now())
+
+    @@index([userId])
+    @@index([guildId])
+}
+
+model LynxBanHistory {
+    id        String    @id @default(nanoid())
+    userId    String
+    guildId   String
+    moderator String
+    reason    String
+    duration  Int
+    until     DateTime?
+    createdAt DateTime  @default(now())
+
+    @@index([userId])
+    @@index([guildId])
+}
+
+model LynxClearBatch {
+    id          String               @id @default(nanoid())
+    guildId     String
+    channelId   String
+    moderatorId String
+    createdAt   DateTime             @default(now())
+    messages    LynxClearedMessage[]
+
+    @@index([guildId])
+    @@index([channelId])
+}
+
+model LynxClearedMessage {
+    id          String         @id @default(nanoid())
+    batchId     String
+    authorId    String
+    username    String
+    avatarUrl   String?
+    content     String?
+    embeds      Json?          @db.Json
+    attachments Json?          @db.Json
+    createdAt   DateTime       @default(now())
+    timestamp   DateTime
+    batch       LynxClearBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+    @@index([batchId])
+}
+
+model LynxLogs {
+    id        Int         @id @default(autoincrement())
+    type      LynxLogType
+    message   String
+    context   String?
+    metadata  Json?       @db.Json
+    createdAt DateTime    @default(now())
+}
+
+enum LynxLogType {
+    INFO
+    WARN
+    ERROR
+    DEBUG
+    VERBOSE
+}
+
+model LynxUserYearlyStats {
+    id                      String   @id @default(nanoid())
+    guildId                 String
+    userId                  String
+    year                    Int
+    messagesSent            Int      @default(0)
+    messagesEdited          Int      @default(0)
+    messagesDeleted         Int      @default(0)
+    totalWordCount          BigInt   @default(0)
+    totalCharCount          BigInt   @default(0)
+    commandsUsed            Int      @default(0)
+    totalVoiceSeconds       Int      @default(0)
+    longestVcSessionSeconds Int      @default(0)
+    topVoiceChannelId       String?
+    topVcCompanionUserId    String?
+    mostActiveChannelId     String?
+    peakHourOfDay           Int?
+    peakDayOfWeek           Int?
+    activeStreakDays        Int      @default(0)
+    reactionsAdded          Int      @default(0)
+    reactionsReceived       Int      @default(0)
+    mentionsSent            Int      @default(0)
+    mentionsReceived        Int      @default(0)
+    attachmentsSent         Int      @default(0)
+    mediaCount              Int      @default(0)
+    streamingSeconds        Int      @default(0)
+    cameraSeconds           Int      @default(0)
+    mutedSeconds            Int      @default(0)
+    deafenedSeconds         Int      @default(0)
+    onlineSeconds           Int      @default(0)
+    idleSeconds             Int      @default(0)
+    dndSeconds              Int      @default(0)
+    invitesCount            Int      @default(0)
+    messagesClearedCount    Int      @default(0)
+    moderationActionsCount  Int      @default(0)
+    topGameName             String?
+    topGameSeconds          Int      @default(0)
+    gameActivity            Json?    @db.Json
+    spotifySeconds          Int      @default(0)
+    topSpotifyTrack         String?
+    topSpotifyArtist        String?
+    spotifyTracks           Json?    @db.Json
+    spotifyArtists          Json?    @db.Json
+    customStatusQuotes      Json?    @db.Json
+    boostingSeconds         Int      @default(0)
+    isBooster               Boolean  @default(false)
+    topEmojis               Json?    @db.Json
+    hourlyActivity          Json?    @db.Json
+    dailyActivity           Json?    @db.Json
+    createdAt               DateTime @default(now())
+    updatedAt               DateTime @updatedAt
+
+
+
+    @@unique([guildId, userId, year])
+    @@index([guildId, year])
+    @@index([userId])
+}
+
+model LynxVoiceSession {
+    id        String   @id @default(nanoid())
+    guildId   String
+    channelId String
+    userId    String
+    joinedAt  DateTime
+
+    @@index([guildId, userId])
+}
+
+model LynxCommandUsage {
+    id          String @id @default(nanoid())
+    guildId     String
+    userId      String
+    year        Int
+    commandName String
+    count       Int    @default(0)
+
+    @@unique([guildId, userId, year, commandName])
+    @@index([guildId, userId, year])
+}
+
+model LynxRewindConfig {
+    guildId                String   @id
+    announcementChannelId String?
+    enabled                Boolean  @default(true)
+    updatedAt              DateTime @updatedAt
+}
+

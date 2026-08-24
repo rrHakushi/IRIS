@@ -1,0 +1,193 @@
+enum GameListStatus {
+    PLANNING
+    PLAYING
+    COMPLETED
+    ON_HOLD
+    DROPPED
+}
+
+model AquilaGameV2 {
+    id          Int     @id @default(autoincrement())
+    rawgId      Int?    @unique
+    igdbId      Int?    @unique
+    steamAppId  Int?    @unique
+    giantbombId String? @unique
+    vndbId      String? @unique
+
+    titlePrimary   String  @db.Text // Primary English title (or fallback)
+    titleSecondary String? @db.Text
+    titleNative    String? @db.Text
+    slug           String?
+    tagline        String? @db.Text
+
+    coverImage      String? @db.Text
+    bannerImage     String? @db.Text
+    backgroundImage String? @db.Text
+    images          Json?   @db.JsonB // Multi-source image galleries
+
+    description      String? @db.Text
+    originalLanguage String?
+    countryOfOrigin  String?
+    website          String? @db.Text
+    siteUrl          String? @db.Text
+
+    releaseDateYear  Int?
+    releaseDateMonth Int?
+    releaseDateDay   Int?
+    releaseDate      DateTime?
+
+    genres             String[]   @db.Text
+    tags               String[]   @db.Text
+    platforms          String[]   @db.Text
+    developers         String[]   @db.Text
+    publishers         String[]   @db.Text
+    franchise          String?    @db.Text
+    gameModes          String[]   @db.Text // e.g. ["Single-player", "Multiplayer", "Co-op"]
+    playerPerspectives String[]   @db.Text // e.g. ["First-person", "Third-person", "Isometric"]
+    status             GameStatus @default(UNKNOWN)
+    isAdult            Boolean    @default(false)
+    synonyms           String[]   @db.Text
+    trailers           Json?      @db.JsonB
+    locked             Boolean    @default(false)
+
+    // Scores & Rating Metrics
+    averageScore         Float?
+    metacriticScore      Int?
+    metacriticUserScore  Float?
+    rawgRating           Float?
+    rawgRatingsCount     Int?
+    igdbRating           Float?
+    igdbRatingCount      Int?
+    steamRating          Float?
+    steamPositivePercent Int?
+
+    // HowLongToBeat Stats (playtime estimates in hours)
+    hltbMainStory     Int?
+    hltbExtraStory    Int?
+    hltbCompletionist Int?
+
+    // Extended IGDB & Platform Metadata
+    requirements      Json?    @db.JsonB
+    languages         String[] @db.Text
+    controllerSupport String?
+    achievements      Json?    @db.JsonB
+
+    favorites          Int  @default(0)
+    popularity         Int  @default(0)
+    totalScoreSum      Int? @db.Integer
+    scoredCount        Int? @db.Integer
+    statusDistribution Json @default("{}") @db.JsonB
+    scoreDistribution  Json @default("{}") @db.JsonB
+
+    // Playtime Stats (calculated from user list progress column in hours)
+    averagePlaytime  Float?
+    totalPlaytimeSum Float? @default(0)
+    playtimeCount    Int?   @default(0)
+
+    sources Json? @db.JsonB // Data origins: [{ provider: "RAWG", externalId: "...", fieldsProvided: [...] }]
+
+    esrbRating     String? // e.g. "Everyone", "Teen", "Mature 17+"
+    pegiRating     String? // e.g. "PEGI 12", "PEGI 18"
+    ageRating      String? // General rating label
+    ageRatingGuide String? // Content warnings
+    contentRatings Json?   @db.JsonB // Multi-country ratings array
+
+    rawgUpdatedAt  Int?
+    igdbUpdatedAt  Int?
+    steamUpdatedAt Int?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    characters          AquilaMediaCharacterV2[]
+    studios             AquilaMediaStudioV2[]
+    staff               AquilaMediaStaffV2[]
+    userLists           AquilaGameUserListV2[]
+    reviews             AquilaGameReview[]
+    recommendationsFrom AquilaGameRecommendationV2[] @relation("GameRecommendationSource")
+    recommendationsTo   AquilaGameRecommendationV2[] @relation("GameRecommendationTarget")
+
+    @@index([titlePrimary])
+    @@index([status])
+    @@index([popularity(sort: Desc)])
+    @@index([averageScore(sort: Desc)])
+}
+
+model AquilaGameUserListV2 {
+    id          Int            @id @default(autoincrement())
+    username    String
+    gameId      Int
+    status      GameListStatus @default(PLANNING)
+    score       Float?
+    scoreFormat ScoreFormat    @default(POINT_10)
+    progress    Int?           @default(0) // Playtime in hours
+    notes       String?        @db.Text
+    replayed    Int            @default(0)
+    private     Boolean        @default(false)
+    customLists String[]       @db.Text
+
+    startDate DateTime?
+    endDate   DateTime?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    connections Json? @db.JsonB
+
+    user User         @relation(fields: [username], references: [username], onDelete: Cascade)
+    game AquilaGameV2 @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+    @@unique([username, gameId])
+    @@index([username])
+    @@index([gameId])
+    @@index([status])
+    @@index([username, status])
+    @@index([username, score(sort: Desc)])
+}
+
+model AquilaGameReview {
+    id        Int     @id @default(autoincrement())
+    username  String
+    gameId    Int
+    summary   String  @db.Text
+    body      String  @db.Text
+    score     Float
+    upvotes   Int     @default(0)
+    isSpoiler Boolean @default(false)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user User         @relation(fields: [username], references: [username], onDelete: Cascade)
+    game AquilaGameV2 @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+    @@unique([username, gameId])
+    @@index([gameId])
+    @@index([username])
+    @@index([score(sort: Desc)])
+}
+
+model AquilaGameRecommendationV2 {
+    id            Int     @id @default(autoincrement())
+    gameId        Int
+    relatedGameId Int
+    rating        Int     @default(1)
+    userNotes     String? @db.Text
+
+    game        AquilaGameV2 @relation("GameRecommendationSource", fields: [gameId], references: [id], onDelete: Cascade)
+    relatedGame AquilaGameV2 @relation("GameRecommendationTarget", fields: [relatedGameId], references: [id], onDelete: Cascade)
+
+    @@unique([gameId, relatedGameId])
+    @@index([gameId])
+    @@index([relatedGameId])
+}
+
+enum GameStatus {
+    RELEASED
+    EARLY_ACCESS
+    ANNOUNCED
+    IN_DEVELOPMENT
+    DELAYED
+    CANCELLED
+    UNKNOWN
+}

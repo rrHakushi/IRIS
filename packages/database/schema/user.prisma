@@ -1,0 +1,60 @@
+model User {
+    id String @id @default(uuid())
+
+    username          String    @unique @db.Char(32)
+    email             String    @unique
+    passwordHash      String    @db.Text
+    passwordChangedAt DateTime?
+
+    customization Json? @db.Json
+
+    settings    Json? @db.Json
+    permissions Int[] @default([])
+
+    // MFA
+    TOTPSecret      String?
+    TOTPEnabled     Boolean   @default(false)
+    emailMfaEnabled Boolean   @default(false)
+    backupCodes     String[]  @default([])
+    passkeys        Passkey[]
+    apiKeys         ApiKey[]
+
+    // ENCRYPTION KEYS
+    publicKey           String?
+    encryptedPrivateKey String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([username])
+    @@index([email])
+}
+
+model Passkey {
+    id         String   @id @default(uuid())
+    publicKey  String // The base64url encoded public key
+    counter    Int // Credential counter
+    transports String[] // Transports (usb, nfc, ble, internal, hybrid)
+    name       String? // label for the passkey
+    createdAt  DateTime @default(now())
+    userId     String
+    user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+}
+
+model ApiKey {
+    id         String    @id @default(uuid())
+    hash       String    @db.Text
+    prefix     String    @db.Char(16)
+    name       String
+    lastUsedAt DateTime?
+    expiresAt  DateTime?
+    createdAt  DateTime  @default(now())
+    updatedAt  DateTime  @updatedAt
+    userId     String
+    user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([hash])
+    @@index([userId])
+}

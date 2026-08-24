@@ -1,0 +1,188 @@
+model User {
+    id                String    @id @default(nanoid())
+    createdAt         DateTime  @default(now())
+    updatedAt         DateTime  @updatedAt
+    email             String    @unique
+    username          String    @unique
+    passwordHash      String
+    passwordChangedAt DateTime?
+    privacy           Json?     @db.Json
+    permissions       Int[]     @default([])
+
+    displayName              String?
+    avatarUrl                String?
+    bannerUrl                String?
+    sidebarCardBackgroundUrl String?
+    profileSettings          Json?         @db.Json
+    apiKeys                  ApiKey[]
+    connections              Connections[]
+    userStats                UserStats[]
+    favorites                Favorite[]
+
+    // MEDIA LISTS
+    animeList AquilaAnimeUserListV2[]
+    mangaList AquilaMangaUserListV2[]
+    movieList AquilaMovieUserListV2[]
+    tvList    AquilaTvUserListV2[]
+
+    gameList AquilaGameUserListV2[]
+    bookList AquilaBookUserListV2[]
+
+    // REVIEWS
+    aquilaAnimeReviews AquilaAnimeReview[]
+    aquilaMangaReviews AquilaMangaReview[]
+    aquilaMovieReviews AquilaMovieReview[]
+    aquilaTvReviews    AquilaTvReview[]
+    aquilaGameReviews  AquilaGameReview[]
+    aquilaBookReviews  AquilaBookReview[]
+
+    // RECOMMENDATIONS
+    aquilaRecommendations     AquilaRecommendation[]
+    aquilaRecommendationVotes AquilaRecommendationVote[]
+
+    polarisBookmarks          PolarisUserBookMarks[]
+    polarisCalendarSources    PolarisCalendarSource[]
+    polarisCalendarEvents     PolarisCalendarEvent[]
+    calendarExportToken       String?                 @unique
+    emailAccounts             UserEmailAccount[]
+    cannedResponses           CannedResponse[]
+    devices                   Device[]
+    notifications             Notification[]
+    submittedMediaSubmissions AquilaMediaSubmission[] @relation("SubmittedMediaSubmissions")
+    reviewedMediaSubmissions  AquilaMediaSubmission[] @relation("ReviewedMediaSubmissions")
+
+    // LACERTA
+    vaultPinHash      String?
+    lacertaMaxStorage Float         @default(104857600)
+    laceraFiles       LaceraFile[]
+    laceraShares      LaceraShare[]
+
+    // FRIENDS STUFF
+    friends          Friend[]        @relation("UserFriends")
+    friendOf         Friend[]        @relation("FriendUsers")
+    sentRequests     FriendRequest[] @relation("SentFriendRequests")
+    receivedRequests FriendRequest[] @relation("ReceivedFriendRequests")
+
+    // MFA Configuration Fields
+    totpSecret      String?
+    totpEnabled     Boolean   @default(false)
+    emailMfaEnabled Boolean   @default(false)
+    backupCodes     String[]  @default([])
+    passkeys        Passkey[]
+
+    // Encryption Keys
+    userPublicKey           String?
+    encryptedUserPrivateKey String?
+    userMlKemPublicKey      String?
+
+    @@index([id])
+    @@index([username])
+    @@index([email])
+}
+
+model Passkey {
+    id         String   @id // The base64url encoded credential ID
+    publicKey  String // The base64url encoded public key
+    counter    Int // Credential counter
+    transports String[] // Transports (usb, nfc, ble, internal, hybrid)
+    name       String? // Nickname/label for the passkey
+    createdAt  DateTime @default(now())
+    userId     String
+    user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+}
+
+model ApiKey {
+    id         String    @id @default(nanoid())
+    createdAt  DateTime  @default(now())
+    updatedAt  DateTime  @updatedAt
+    keyHash    String
+    keyPrefix  String
+    name       String
+    app        String    @default("Polaris")
+    lastUsedAt DateTime?
+    expiresAt  DateTime?
+    userId     String
+    user       User      @relation(fields: [userId], references: [id])
+
+    @@unique([keyPrefix])
+    @@index([userId])
+    @@index([keyPrefix])
+}
+
+enum ConnectionLinkedTo {
+    LYNX
+    AQUILA
+    POLARIS
+}
+
+model Connections {
+    id             String              @id @default(nanoid())
+    username       String
+    connectionId   String?
+    createdAt      DateTime            @default(now())
+    updatedAt      DateTime            @updatedAt
+    provider       ConnectionProvider
+    linkedTo       ConnectionLinkedTo?
+    linkedUsername String?
+    accessToken    String?
+    expiresAt      DateTime?
+    refreshToken   String?
+    user           User                @relation(fields: [username], references: [username])
+    private        Boolean             @default(false)
+    metadata       Json?               @db.Json
+
+    @@unique([username, provider])
+    @@index([username])
+}
+
+enum ConnectionProvider {
+    ANILIST
+    MAL
+    SIMKL
+    DISCORD
+    TRAKT
+    GOOGLE
+    APPLE
+    XIAOMI
+    ICAL_FEED
+}
+
+model UserStats {
+    id        String   @id @default(nanoid())
+    userId    String
+    mediaType String // "anime" | "manga" | "movie" | "tv" | "game" | "book"
+    updatedAt DateTime @updatedAt
+    statsData Json     @db.Json
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([userId, mediaType])
+    @@index([userId])
+}
+
+model Device {
+    id                 String   @id @default(nanoid())
+    userId             String
+    deviceName         String
+    userAgent          String?
+    lastActiveAt       DateTime @default(now())
+    identityKey        String
+    signedPreKey       String
+    encryptedMasterKey String?
+    mlKemIdentityKey   String?
+    user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    preKeys            PreKey[]
+
+    @@index([userId])
+}
+
+model PreKey {
+    id       String @id @default(nanoid())
+    deviceId String
+    key      String
+    device   Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+    @@index([deviceId])
+}
