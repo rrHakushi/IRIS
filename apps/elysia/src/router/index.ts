@@ -1,9 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
+import util from "node:util";
 import { pathToFileURL } from "node:url";
 import { Elysia } from "elysia";
 import { createRateLimiter } from "../plugins/rate-limiter";
 import { c, colorMethod } from "../utils/colors";
+import {
+  requestLogStorage,
+  type RequestLogStore,
+  type RequestLogItem,
+} from "../utils/request-logger";
 import {
   Route,
   type RouteClass,
@@ -149,9 +155,12 @@ export async function createRouterModule(options: RouterOptions = {}) {
 
   const routeFiles = findRouteFiles(modulesDir);
   let loadedCount = 0;
+  const routesByModule = new Map<string, Array<{ method: string; path: string }>>();
 
   for (const filePath of routeFiles) {
     const relativePath = path.relative(modulesDir, filePath);
+    const normalized = relativePath.replace(/\\/g, "/").replace(/^\/+/, "");
+    const moduleName = normalized.split("/")[0] || "core";
     const routePath = parseRoutePath(relativePath);
 
     try {
@@ -258,13 +267,35 @@ export async function createRouterModule(options: RouterOptions = {}) {
             : null;
 
           const boundHandler = async (ctx: Context) => {
-            if (rateLimiter) {
-              const rateLimitError = rateLimiter(ctx);
-              if (rateLimitError) {
-                return rateLimitError;
+            const store: RequestLogStore = { logs: [] };
+            (ctx.request as unknown as { _requestLogs?: RequestLogItem[] })._requestLogs = store.logs;
+
+            ctx.log = Object.assign(
+              (...args: unknown[]) => {
+                store.logs.push({ type: "log", message: util.format(...args) });
+              },
+              {
+                info: (...args: unknown[]) => {
+                  store.logs.push({ type: "info", message: util.format(...args) });
+                },
+                warn: (...args: unknown[]) => {
+                  store.logs.push({ type: "warn", message: util.format(...args) });
+                },
+                error: (...args: unknown[]) => {
+                  store.logs.push({ type: "error", message: util.format(...args) });
+                },
               }
-            }
-            return await handler.call(instance, ctx);
+            );
+
+            return await requestLogStorage.run(store, async () => {
+              if (rateLimiter) {
+                const rateLimitError = rateLimiter(ctx);
+                if (rateLimitError) {
+                  return rateLimitError;
+                }
+              }
+              return await handler.call(instance, ctx);
+            });
           };
 
           const routeTarget = (
@@ -281,11 +312,10 @@ export async function createRouterModule(options: RouterOptions = {}) {
           }
 
           loadedCount++;
-          if (!options.silent) {
-            console.log(
-              `${c.blue(c.bold("[Router]"))} ${c.dim("Route registered:")} ${colorMethod(method)} ${c.cyan(routePath)}`
-            );
+          if (!routesByModule.has(moduleName)) {
+            routesByModule.set(moduleName, []);
           }
+          routesByModule.get(moduleName)!.push({ method, path: routePath });
         }
       }
     } catch (err) {
@@ -294,8 +324,21 @@ export async function createRouterModule(options: RouterOptions = {}) {
   }
 
   if (!options.silent) {
+    for (const [modName, moduleRoutes] of routesByModule) {
+      console.log(
+        `${c.blue(c.bold("[Router]"))} ${c.magenta(c.bold(`[${modName}]`))}`
+      );
+      for (const route of moduleRoutes) {
+        console.log(
+          `${c.blue(c.bold("[Router]"))}   ${colorMethod(route.method)} ${c.cyan(route.path)}`
+        );
+      }
+    }
+
+    const moduleCount = routesByModule.size;
+    const moduleLabel = moduleCount === 1 ? "module" : "modules";
     console.log(
-      `${c.blue(c.bold("[Router]"))} ${c.green("Total routes loaded:")} ${c.bold(loadedCount)}`
+      `${c.blue(c.bold("[Router]"))} ${c.green("Total routes loaded:")} ${c.bold(loadedCount)} ${c.dim(`(${moduleCount} ${moduleLabel})`)}`
     );
   }
 
@@ -304,7 +347,6 @@ export async function createRouterModule(options: RouterOptions = {}) {
 
 export * from "./types";
 export * from "./generator";
-export * from "./routes.generated";
 export {
   createRateLimiter,
   rateLimiter,

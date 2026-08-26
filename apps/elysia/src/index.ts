@@ -1,10 +1,18 @@
 import { Elysia } from "elysia";
 import { websocket } from "elysia/websocket";
-import { bearer } from "@elysiajs/bearer";
 import { prisma } from "@IRIS/database";
-import { cors } from "./plugins";
-import { createRouterModule, routes } from "./router";
+import { cors, session } from "./plugins";
+import { createRouterModule } from "./router";
+import { routes } from "./router/routes.generated";
 import { c, colorMethod, colorStatus, colorDuration } from "./utils/colors";
+import {
+  initConsoleInterceptor,
+  printGroupedRequestLogs,
+  type RequestLogItem,
+} from "./utils/request-logger";
+
+// Intercept console inside request handlers to group logs by request
+initConsoleInterceptor();
 
 const PORT = Number(process.env.ELYSIA_PORT || 4000);
 
@@ -14,15 +22,25 @@ await createRouterModule();
 export { routes };
 export type App = typeof routes;
 
+const loadedPlugins: string[] = [];
+
+function loadPlugin<T>(name: string, plugin: T, description?: string): T {
+  loadedPlugins.push(name);
+  const desc = description ? c.dim(` (${description})`) : "";
+  console.log(`${c.yellow(c.bold("[Plugins]"))} Plugin loaded: ${c.cyan(name.padEnd(10))}${desc}`);
+  return plugin;
+}
+
 // Full server application with database decoration, session derivation, websockets, and request logging
 export const app = new Elysia()
   .decorate("prisma", prisma)
-  .use(websocket())
-  .use(cors())
+  .use(loadPlugin("websocket", websocket(), "realtime websocket transport"))
+  .use(loadPlugin("cors", cors(), "cross-origin resource sharing"))
+  .use(loadPlugin("session", session(), "multi-source session resolver"))
   .request(({ request }) => {
     (request as unknown as { _reqStartTime?: number })._reqStartTime = performance.now();
   })
-  .afterResponse(({ request, set }) => {
+  .afterResponse("global", ({ request, set }) => {
     const startTime = (request as unknown as { _reqStartTime?: number })._reqStartTime;
     const durationMs = startTime ? performance.now() - startTime : 0;
     const url = new URL(request.url);
@@ -35,10 +53,14 @@ export const app = new Elysia()
     const statusColored = colorStatus(status);
     const time = colorDuration(durationMs);
 
-    console.log(`${tag} ${method} ${path} ${arrow} ${statusColored} ${time}`);
+    process.stdout.write(`${tag} ${method} ${path} ${arrow} ${statusColored} ${time}\n`);
+
+    const logs = (request as unknown as { _requestLogs?: RequestLogItem[] })._requestLogs || [];
+    printGroupedRequestLogs(logs);
   })
-  .use(bearer())
   .use(routes);
+
+console.log(`${c.yellow(c.bold("[Plugins]"))} Total plugins loaded: ${c.green(loadedPlugins.length)}`);
 
 if (process.env.NODE_ENV !== "test") {
   app.listen(PORT, () => {

@@ -1,5 +1,7 @@
 import { t, type Context as ElysiaContext, type UnwrapRoute, type InputSchema } from "elysia";
 import type { prisma as PrismaInstance } from "@IRIS/database";
+import type { Session, SessionUser } from "../plugins/session";
+import type { RequestLogger } from "../utils/request-logger";
 
 export interface RateLimitConfig {
   duration?: number;
@@ -43,9 +45,14 @@ export type Context<
    */
   prisma: typeof PrismaInstance;
   /**
-   * Bearer token extracted from the Authorization header (if present)
+   * Extracted session context (NextAuth cookie -> Bearer token -> API key)
+   * Provides helper methods: .getUser(), .status, .hasPermission(), .requireUser()
    */
-  bearer?: string;
+  session: Session;
+  /**
+   * Request-scoped logger that groups output under the current request
+   */
+  log: RequestLogger;
   /**
    * Dynamic path parameters (e.g. /user/:id -> params.id)
    */
