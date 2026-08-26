@@ -3,6 +3,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { Elysia } from "elysia";
 import { createRateLimiter } from "../plugins/rate-limiter";
+import { c, colorMethod } from "../utils/colors";
 import {
   Route,
   type RouteClass,
@@ -90,6 +91,8 @@ function findRouteFiles(dir: string, baseDir: string = dir): string[] {
   return results;
 }
 
+import { generateRoutes } from "./generator";
+
 export interface RouterOptions {
   modulesDir?: string;
   silent?: boolean;
@@ -97,11 +100,45 @@ export interface RouterOptions {
 
 /**
  * Creates an Elysia plugin that loads all module routes using file-based routing.
+ * Automatically generates and keeps Eden Treaty routes manifest in sync.
  */
 export async function createRouterModule(options: RouterOptions = {}) {
   const modulesDir =
     options.modulesDir || path.resolve(import.meta.dirname, "../modules");
   const router = new Elysia({ name: "iris-file-router" });
+
+  // Automatically generate Eden-compatible typed routes manifest
+  try {
+    await generateRoutes({ modulesDir, silent: options.silent });
+  } catch (err) {
+    if (!options.silent) {
+      console.warn("[Router] Route auto-generation warning:", err);
+    }
+  }
+
+  // In development, watch for file changes to automatically regenerate Eden routes
+  if (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "test") {
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    try {
+      const watcher = fs.watch(modulesDir, { recursive: true }, (event, filename) => {
+        if (filename && (filename.endsWith(".ts") || filename.endsWith(".js"))) {
+          if (debounceTimer) clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(async () => {
+            try {
+              await generateRoutes({ modulesDir, silent: true });
+            } catch (err) {
+              console.error("[Router] Auto-generation failed on change:", err);
+            }
+          }, 100);
+        }
+      });
+      if (typeof watcher === "object" && watcher !== null && "unref" in watcher) {
+        (watcher as { unref: () => void }).unref();
+      }
+    } catch {
+      // Ignored if recursive fs.watch is not supported
+    }
+  }
 
   if (!fs.existsSync(modulesDir)) {
     if (!options.silent) {
@@ -246,24 +283,28 @@ export async function createRouterModule(options: RouterOptions = {}) {
           loadedCount++;
           if (!options.silent) {
             console.log(
-              `[Router] Route registered: ${method.padEnd(7)} ${routePath}`
+              `${c.blue(c.bold("[Router]"))} ${c.dim("Route registered:")} ${colorMethod(method)} ${c.cyan(routePath)}`
             );
           }
         }
       }
     } catch (err) {
-      console.error(`[Router] Failed to load route ${relativePath}:`, err);
+      console.error(`${c.red(c.bold("[Router]"))} Failed to load route ${relativePath}:`, err);
     }
   }
 
   if (!options.silent) {
-    console.log(`[Router] Total routes loaded: ${loadedCount}`);
+    console.log(
+      `${c.blue(c.bold("[Router]"))} ${c.green("Total routes loaded:")} ${c.bold(loadedCount)}`
+    );
   }
 
   return router;
 }
 
 export * from "./types";
+export * from "./generator";
+export * from "./routes.generated";
 export {
   createRateLimiter,
   rateLimiter,

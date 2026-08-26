@@ -5,7 +5,6 @@ export default defineRoute({
     // Validates the dynamic route segment /user/:id
     params: t.Object({
       id: t.Number({ minimum: 1 }),
-      username: t.String()
     }),
 
   },
