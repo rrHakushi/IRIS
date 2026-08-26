@@ -253,7 +253,7 @@ async function findUserById(
 
     const user: SessionUser = {
       id: dbUser.id,
-      username: dbUser.username,
+      username: dbUser.username.trim(),
       email: dbUser.email,
       permissions: dbUser.permissions,
     };

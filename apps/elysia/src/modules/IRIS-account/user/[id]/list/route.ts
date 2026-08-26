@@ -7,6 +7,8 @@ export default defineRoute({
       id: t.Number({ minimum: 1 }),
     }),
 
+
+
   },
 
   GET({ params, query, prisma, session }) {

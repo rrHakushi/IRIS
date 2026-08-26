@@ -97,7 +97,10 @@ function findRouteFiles(dir: string, baseDir: string = dir): string[] {
   return results;
 }
 
+import { prisma } from "@IRIS/database";
 import { generateRoutes } from "./generator";
+import { generateInsomniumConfig } from "./insomnium";
+import { ensureDevAccount } from "../utils/dev-account";
 
 export interface RouterOptions {
   modulesDir?: string;
@@ -113,6 +116,23 @@ export async function createRouterModule(options: RouterOptions = {}) {
     options.modulesDir || path.resolve(import.meta.dirname, "../modules");
   const router = new Elysia({ name: "iris-file-router" });
 
+  const isDev = process.env.NODE_ENV === "development";
+
+  // When in development mode, ensure dev account and API key exist
+  let devApiKey: string | undefined;
+  if (isDev) {
+    try {
+      const devAccount = await ensureDevAccount(prisma);
+      if (devAccount) {
+        devApiKey = devAccount.apiKey;
+      }
+    } catch (err) {
+      if (!options.silent) {
+        console.warn("[Dev Account] Warning:", err);
+      }
+    }
+  }
+
   // Automatically generate Eden-compatible typed routes manifest
   try {
     await generateRoutes({ modulesDir, silent: options.silent });
@@ -122,7 +142,18 @@ export async function createRouterModule(options: RouterOptions = {}) {
     }
   }
 
-  // In development, watch for file changes to automatically regenerate Eden routes
+  // When in development mode, generate Insomnium config
+  if (isDev) {
+    try {
+      await generateInsomniumConfig({ modulesDir, devApiKey, silent: options.silent });
+    } catch (err) {
+      if (!options.silent) {
+        console.warn("[Insomnium] Auto-generation warning:", err);
+      }
+    }
+  }
+
+  // In development, watch for file changes to automatically regenerate Eden routes and Insomnium config
   if (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "test") {
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     try {
@@ -132,6 +163,9 @@ export async function createRouterModule(options: RouterOptions = {}) {
           debounceTimer = setTimeout(async () => {
             try {
               await generateRoutes({ modulesDir, silent: true });
+              if (isDev) {
+                await generateInsomniumConfig({ modulesDir, devApiKey, silent: true });
+              }
             } catch (err) {
               console.error("[Router] Auto-generation failed on change:", err);
             }
@@ -347,6 +381,7 @@ export async function createRouterModule(options: RouterOptions = {}) {
 
 export * from "./types";
 export * from "./generator";
+export * from "./insomnium";
 export {
   createRateLimiter,
   rateLimiter,

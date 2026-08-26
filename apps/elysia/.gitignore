@@ -3,3 +3,5 @@ dist
 .turbo
 .env*
 !.env.example
+dev-account.json
+

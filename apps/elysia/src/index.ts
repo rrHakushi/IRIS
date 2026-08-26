@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { Elysia } from "elysia";
 import { websocket } from "elysia/websocket";
 import { prisma } from "@IRIS/database";
@@ -60,6 +62,26 @@ export const app = new Elysia()
   })
   .use(routes);
 
+const isDev = process.env.NODE_ENV === "development"
+
+if (isDev) {
+  const getInsomniumConfig = () => {
+    const configPath = path.resolve(import.meta.dirname, "../insomnium.json");
+    if (fs.existsSync(configPath)) {
+      return new Response(fs.readFileSync(configPath, "utf-8"), {
+        headers: { "content-type": "application/json" },
+      });
+    }
+    return new Response(JSON.stringify({ error: "insomnium.json not generated" }), {
+      status: 404,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  app.get("/insomnium.json", getInsomniumConfig);
+  app.get("/insomnia.json", getInsomniumConfig);
+}
+
 console.log(`${c.yellow(c.bold("[Plugins]"))} Total plugins loaded: ${c.green(loadedPlugins.length)}`);
 
 if (process.env.NODE_ENV !== "test") {
@@ -67,5 +89,10 @@ if (process.env.NODE_ENV !== "test") {
     console.log(
       `${c.magenta(c.bold("[Elysia]"))} ${c.green("server running at")} ${c.cyan(c.underline(`http://localhost:${PORT}`))}`
     );
+    if (isDev) {
+      console.log(
+        `${c.cyan(c.bold("[Insomnium]"))} ${c.dim("Collection URL:")} ${c.cyan(c.underline(`http://localhost:${PORT}/insomnium.json`))}`
+      );
+    }
   });
 }
