@@ -1,6 +1,6 @@
 ---
 name: IRIS-cache
-description: Comprehensive guide for caching in IRIS using @IRIS/cache. Covers Redis connection management with automatic in-memory LRU fallback, strict TypeScript typing (zero any/unknown), cache stampede protection via getOrSet, key namespaces, TTL policies, dynamic NestJS CacheModule integration (forRoot/forRootAsync/@InjectCache()), environment variable configuration, and error handling (MissingEnvError, RedisConnectionError). Use this skill whenever the user mentions @IRIS/cache, Redis caching, in-memory fallback, cache stampede prevention, NestJS cache module in IRIS, or asks how to cache database queries/API responses/computations.
+description: Guide for distributed and in-memory caching in IRIS via @IRIS/cache with Redis and automatic LRU fallback. Use when caching queries, responses, or using getOrSet.
 ---
 
 # @IRIS/cache Guide
@@ -15,7 +15,6 @@ description: Comprehensive guide for caching in IRIS using @IRIS/cache. Covers R
 - **Strictly Typed**: Fully generic APIs with zero `any` or `unknown` types.
 - **Cache Stampede (Thundering Herd) Protection**: Built-in atomic in-flight promise coalescing in `getOrSet()` guarantees expensive query factories run only once during concurrent cache misses.
 - **Namespaces**: Easily create isolated sub-caches using `.withNamespace('users')` without opening additional network connections.
-- **Dual Runtime Support**: Standalone framework-agnostic client (`CacheManager`) + first-class **NestJS 11** dynamic module (`CacheModule`).
 - **Environment Validation**: Validates environment variables and throws `MissingEnvError` when required variables are absent in auto-mode.
 
 ---
@@ -40,107 +39,81 @@ When `autoEnv: true` (default), `@IRIS/cache` reads configuration from `.env`:
 
 ---
 
-## 3. NestJS Integration (`apps/server`)
+## 3. Elysia 2.0 Route Caching (`@IRIS/elysia`)
 
-### Step 1: Register `CacheModule` in `AppModule`
-
-```typescript
-// apps/server/src/app.module.ts
-import { Module } from '@nestjs/common';
-import { CacheModule } from '@IRIS/cache';
-
-@Module({
-  imports: [
-    CacheModule.forRoot({
-      isGlobal: true, // makes CacheService available across all modules
-      defaultTtlSeconds: 300,
-    }),
-  ],
-})
-export class AppModule {}
-```
-
-#### Asynchronous Configuration (e.g. via `ConfigService`):
+In Elysia route handlers, use `CacheManager` to protect expensive database operations from stampedes:
 
 ```typescript
-import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { CacheModule } from '@IRIS/cache';
+import { defineRoute, t } from "@/router";
+import { CacheManager } from "@IRIS/cache";
 
-@Module({
-  imports: [
-    CacheModule.forRootAsync({
-      isGlobal: true,
-      imports: [ConfigModule],
-      useFactory: (config: ConfigService) => ({
-        redis: {
-          url: config.get<string>('REDIS_URL'),
-        },
-        defaultTtlSeconds: 600,
-        fallbackToMemory: true,
-      }),
-      inject: [ConfigService],
-    }),
-  ],
-})
-export class AppModule {}
-```
+const cache = new CacheManager({
+  keyPrefix: "iris:users:",
+  defaultTtlSeconds: 300,
+});
 
----
+export default defineRoute({
+  schema: {
+    params: t.Object({ id: t.Number() }),
+  },
 
-### Step 2: Inject `CacheService` into Controllers & Services
+  async GET({ params, prisma }) {
+    // Stampede-protected cached query
+    const user = await cache.getOrSet(`user:${params.id}`, async () => {
+      return await prisma.user.findUnique({
+        where: { id: String(params.id) },
+      });
+    }, 300);
 
-```typescript
-// apps/server/src/user/user.service.ts
-import { Injectable } from '@nestjs/common';
-import { CacheService } from '@IRIS/cache';
-import { PrismaService } from '@IRIS/database';
+    return { user };
+  },
 
-export interface UserDto {
-  id: string;
-  email: string;
-  name: string;
-}
-
-@Injectable()
-export class UserService {
-  constructor(
-    private readonly cache: CacheService,
-    private readonly prisma: PrismaService,
-  ) {}
-
-  public async getUserById(id: string): Promise<UserDto | null> {
-    // Atomic stampede-protected caching for 10 minutes
-    return this.cache.getOrSet<UserDto | null>(
-      `user:${id}`,
-      async () => {
-        return this.prisma.user.findUnique({ where: { id } });
-      },
-      600,
-    );
-  }
-
-  public async updateUser(id: string, data: Partial<UserDto>): Promise<UserDto> {
-    const updated = await this.prisma.user.update({
-      where: { id },
-      data,
+  async POST({ params, body, prisma }) {
+    const updated = await prisma.user.update({
+      where: { id: String(params.id) },
+      data: body as any,
     });
 
-    // Invalidate or update cache
-    await this.cache.del(`user:${id}`);
-    return updated;
-  }
+    // Invalidate cache
+    await cache.del(`user:${params.id}`);
+
+    return { success: true, user: updated };
+  },
+});
+```
+
+---
+
+## 4. Next.js & Server Actions Usage
+
+```typescript
+import { CacheManager } from "@IRIS/cache";
+import { prisma } from "@IRIS/database";
+
+const statsCache = new CacheManager({
+  keyPrefix: "iris:stats:",
+  defaultTtlSeconds: 60,
+});
+
+export async function getGlobalStats() {
+  return await statsCache.getOrSet("global", async () => {
+    const [userCount, postCount] = await Promise.all([
+      prisma.user.count(),
+      prisma.post.count(),
+    ]);
+    return { userCount, postCount };
+  }, 60);
 }
 ```
 
 ---
 
-## 4. Standalone TypeScript Usage
+## 5. Standalone TypeScript Usage
 
-Use `CacheManager` outside NestJS (e.g., workers, standalone scripts, Next.js API routes):
+Use `CacheManager` for workers, queues, or standalone scripts:
 
 ```typescript
-import { CacheManager } from '@IRIS/cache';
+import { CacheManager } from "@IRIS/cache";
 
 interface SessionData {
   userId: string;
@@ -149,44 +122,44 @@ interface SessionData {
 
 const cache = new CacheManager({
   redis: {
-    host: '127.0.0.1',
+    host: "127.0.0.1",
     port: 6379,
   },
-  keyPrefix: 'iris:session:',
+  keyPrefix: "iris:session:",
   defaultTtlSeconds: 3600,
   fallbackToMemory: true,
 });
 
 // Basic Operations
-await cache.set<SessionData>('token_abc', {
-  userId: 'user_123',
-  roles: ['admin'],
-});
+await cache.set("sess_123", { userId: "u1", roles: ["admin"] }, 3600);
+const session = await cache.get<SessionData>("sess_123");
+await cache.del("sess_123");
 
-const session = await cache.get<SessionData>('token_abc');
-console.log(session?.userId); // "user_123"
+// Cache Stampede Prevention with getOrSet
+const data = await cache.getOrSet(
+  "expensive:computation",
+  async () => {
+    return await computeHeavyReport();
+  },
+  600 // TTL in seconds
+);
 
 // Check Status
 console.log(cache.status); // 'redis' | 'memory' | 'connecting' | 'error'
-console.log(cache.activeStoreName); // 'redis' | 'memory'
-
-// Cleanup
-await cache.close();
 ```
 
 ---
 
-## 5. API Reference
+## 6. Full API Reference (`CacheManager`)
 
 ### `get<T>(key: string): Promise<T | null>`
 Retrieve a typed value from the cache. Returns `null` on cache miss.
 
 ### `set<T>(key: string, value: T, ttlSeconds?: number): Promise<void>`
-Store a typed value with optional TTL (defaults to `defaultTtlSeconds`).
+Store a value with an optional TTL in seconds (overrides default TTL).
 
 ### `getOrSet<T>(key: string, factory: () => Promise<T>, ttlSeconds?: number): Promise<T>`
-Retrieve existing cached value or execute the `factory()` function, store the result, and return it.
-Prevents **Cache Stampede / Thundering Herd** by ensuring concurrent calls for the same missing key share a single execution of `factory()`.
+Retrieve existing key, or execute the async factory function, cache the result, and return it. Includes in-flight coalescing to eliminate cache stampedes.
 
 ### `del(key: string | string[]): Promise<number>`
 Delete one or multiple keys. Returns number of keys removed.
@@ -214,15 +187,11 @@ Gracefully closes connections and clears resources.
 
 ---
 
-## 6. Best Practices
+## 7. Best Practices
 
 1. **Always provide generic types**:
    ```typescript
-   // Recommended
    const user = await cache.get<UserProfile>(`user:${userId}`);
-
-   // Avoid omitting types
-   const user = await cache.get(`user:${userId}`);
    ```
 
 2. **Always prefer `getOrSet` for database queries**:
@@ -230,8 +199,8 @@ Gracefully closes connections and clears resources.
 
 3. **Use Namespaces for sub-domains**:
    ```typescript
-   const authCache = cache.withNamespace('auth');
-   await authCache.set('jwt:xyz', session); // Stores as "iris:auth:jwt:xyz"
+   const authCache = cache.withNamespace("auth");
+   await authCache.set("jwt:xyz", session); // Stores as "iris:auth:jwt:xyz"
    ```
 
 4. **Structured Error Handling**:

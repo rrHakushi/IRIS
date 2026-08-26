@@ -1,11 +1,11 @@
 ---
 name: IRIS-permissions
-description: Comprehensive guide for permission checking and authorization in IRIS using @IRIS/permissions. Covers IRISFlags (ADMINISTRATOR), IRISBitField, direct Prisma Int[] database array integration, strict TypeScript typing (zero any/unknown, null-only semantics), Next.js Server Components authorization (hasPermission), and NestJS endpoint protection (@RequirePermissions(), PermissionsGuard). Use this skill whenever the user mentions @IRIS/permissions, user permissions, ADMINISTRATOR bypass, role-based/permission-based access control (RBAC), PermissionsGuard in NestJS, hasPermission helper, or asks how to verify permissions in IRIS.
+description: Guide for permission checking and RBAC in IRIS via @IRIS/permissions, IRISFlags (ADMINISTRATOR), IRISBitField, Prisma Int[], Next.js, and Elysia session authorization.
 ---
 
 # @IRIS/permissions Guide
 
-`@IRIS/permissions` is the unified permission evaluation and authorization package for the IRIS ecosystem. It combines high-performance `bigint` bitwise logic with direct database storage in PostgreSQL/Prisma as 32-bit integer arrays (`Int[]`), providing fast and type-safe permission checks across Next.js Server Components and NestJS controllers.
+`@IRIS/permissions` is the unified permission evaluation and authorization package for the IRIS ecosystem. It combines high-performance `bigint` bitwise logic with direct database storage in PostgreSQL/Prisma as 32-bit integer arrays (`Int[]`), providing fast and type-safe permission checks across Next.js Server Components and Elysia route handlers.
 
 ---
 
@@ -15,8 +15,7 @@ description: Comprehensive guide for permission checking and authorization in IR
 - **Direct Database Integration**: Reads and writes raw `Int[]` integer arrays directly from the Prisma `User.permissions` field without needing session token re-serialization.
 - **Strictly Typed (Zero `any` / `unknown`)**: All parameters, returns, and generics are explicitly typed.
 - **Null Safety**: API methods accept and return `null` rather than `undefined`.
-- **Framework Agnostic**: Works out of the box in Next.js Server/Client Components, standalone scripts/workers, and NestJS 11 controllers.
-- **NestJS Integration**: Subpath export `@IRIS/permissions/nestjs` providing `@RequirePermissions()` / `@Permissions()` and `PermissionsGuard`.
+- **Framework Agnostic**: Works out of the box in Next.js Server/Client Components, Elysia endpoints, standalone scripts, and workers.
 
 ---
 
@@ -47,16 +46,45 @@ model User {
 
 ---
 
-## 4. Next.js & Server Component Usage
+## 4. Elysia 2.0 Route Authorization (`@IRIS/elysia`)
+
+In Elysia route handlers, permissions are evaluated directly against the request's typed `session`:
+
+```typescript
+import { defineRoute } from "@/router";
+import { IRISFlags } from "@IRIS/permissions";
+
+export default defineRoute({
+  async GET({ session }) {
+    // Check permission (ADMINISTRATOR automatically bypasses all checks)
+    if (!session.hasPermission(IRISFlags.ADMINISTRATOR)) {
+      return new Response(JSON.stringify({ error: "Forbidden: Admin required" }), {
+        status: 403,
+        headers: { "content-type": "application/json" },
+      });
+    }
+
+    return { status: "admin-access-granted" };
+  },
+});
+```
+
+> [!TIP]
+> You can scaffold admin-guarded routes automatically using the CLI:
+> `pnpm route:create "admin/settings" -m IRIS-account --admin`
+
+---
+
+## 5. Next.js & Server Component Usage
 
 ### Using `hasPermission` Helper
 
 The `hasPermission` utility evaluates permission arrays fetched from the database:
 
 ```typescript
-import { hasPermission, IRISFlags } from '@IRIS/permissions';
+import { hasPermission, IRISFlags } from "@IRIS/permissions";
 
-// Example: In a Next.js Server Component or Server Action
+// In a Next.js Server Component or Server Action
 export async function AdminDashboard({ user }: { user: { permissions: number[] } | null }) {
   const isAuthorized = hasPermission(
     user?.permissions ?? null,
@@ -64,57 +92,23 @@ export async function AdminDashboard({ user }: { user: { permissions: number[] }
   );
 
   if (!isAuthorized) {
-    return <div>Access Denied. Administrator permissions required.</div>;
+    return <div>Access Denied: Administrator role required.</div>;
   }
 
-  return <div>Welcome to the Admin Dashboard</div>;
+  return <div>Welcome to Admin Panel</div>;
 }
 ```
 
-#### Checking by String Flag Key or Arrays:
+### Multiple Permissions Evaluation
 
 ```typescript
-// By Flag Key Name
-const isAuthorized = hasPermission(user.permissions, 'ADMINISTRATOR');
+import { hasPermission, IRISFlags } from "@IRIS/permissions";
 
-// By Array of Flags
-const isAuthorized = hasPermission(user.permissions, [IRISFlags.ADMINISTRATOR]);
-```
+// Match ALL flags
+const hasAll = hasPermission(user.permissions, [IRISFlags.ADMINISTRATOR], "all");
 
----
-
-## 5. NestJS Integration (`apps/server`)
-
-### Step 1: Protect Endpoints with `@RequirePermissions()` and `PermissionsGuard`
-
-Import guards and decorators from `@IRIS/permissions/nestjs` (or `apps/server/src/common`):
-
-```typescript
-import { Controller, Get, UseGuards } from '@nestjs/common';
-import { IRISFlags } from '@IRIS/permissions';
-import { RequirePermissions, PermissionsGuard } from '@IRIS/permissions/nestjs';
-
-@Controller('admin')
-@UseGuards(PermissionsGuard)
-export class AdminController {
-  @Get('metrics')
-  @RequirePermissions(IRISFlags.ADMINISTRATOR)
-  public getSystemMetrics() {
-    return { status: 'operational', timestamp: new Date().toISOString() };
-  }
-}
-```
-
-### Multiple Permissions Operator
-
-You can specify `'all'` (default) or `'any'`:
-
-```typescript
-@RequirePermissions([IRISFlags.ADMINISTRATOR], 'any')
-@Get('reports')
-public getReports() {
-  return [];
-}
+// Match ANY flag
+const hasAny = hasPermission(user.permissions, [IRISFlags.ADMINISTRATOR], "any");
 ```
 
 ---
@@ -124,7 +118,7 @@ public getReports() {
 For programmatic permission mutations, checks, and bitwise algebra:
 
 ```typescript
-import { IRISBitField, IRISFlags } from '@IRIS/permissions';
+import { IRISBitField, IRISFlags } from "@IRIS/permissions";
 
 // 1. Instantiate from DB raw array
 const userPerms = IRISBitField.fromRaw(user.permissions);
@@ -149,7 +143,7 @@ const bitmask = userPerms.toBigInt(); // 1n or 0n
 
 ---
 
-## 7. API Reference
+## 7. Full API Reference
 
 ### `hasPermission(permissions: readonly number[] | number[] | null, permission: IRISBitFieldResolvable, checkType?: 'all' | 'any'): boolean`
 Evaluates if a user's permissions array satisfies the required permission check. Returns `false` if `permissions` is `null` or empty.
@@ -169,18 +163,12 @@ Evaluates if a user's permissions array satisfies the required permission check.
 - `static fromBigInt(value: bigint | null): IRISBitField`: Rehydrates from BigInt.
 - `static resolve(resolvable: IRISBitFieldResolvable | null): number[]`: Polymorphic resolver.
 
-### NestJS Exports (`@IRIS/permissions/nestjs`)
-- `@RequirePermissions(flags: IRISBitFieldResolvable | readonly IRISBitFieldResolvable[], operator?: 'all' | 'any')`
-- `@Permissions(...)`: Alias for `@RequirePermissions`.
-- `PermissionsGuard`: Authorization guard implementing `CanActivate`.
-
 ---
 
 ## 8. Best Practices
 
 1. **Always use `null` for unauthenticated states**:
    ```typescript
-   // Recommended
    const isAuth = hasPermission(session?.user?.permissions ?? null, IRISFlags.ADMINISTRATOR);
    ```
 
@@ -192,5 +180,5 @@ Evaluates if a user's permissions array satisfies the required permission check.
    });
    ```
 
-3. **Check permissions at API boundaries**:
-   Use `PermissionsGuard` with `@RequirePermissions(IRISFlags.ADMINISTRATOR)` on all sensitive administrative controllers and endpoints.
+3. **Check permissions at Elysia route boundaries**:
+   Use `session.hasPermission(IRISFlags.ADMINISTRATOR)` at the top of any sensitive route handlers.
