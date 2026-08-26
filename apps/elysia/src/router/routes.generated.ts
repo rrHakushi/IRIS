@@ -24,13 +24,13 @@ export const routes = new Elysia({ name: "iris-routes" })
   }))
   .get(
     "/user/:id/list",
-    ((route_0 as any).GET?.schema ?? (route_0 as any).schemas?.GET ?? (route_0 as any).schema)!,
+    route_0.schema!,
     async (ctx) => {
       const methodItem = (route_0 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_0 as any).rateLimits?.GET ?? (route_0 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_0_GET", rateLimitConfig) : null;
-      return executeWithRequestLogs(ctx, handler, limiter);
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   );
 

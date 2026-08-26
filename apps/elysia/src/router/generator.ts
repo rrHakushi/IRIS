@@ -144,24 +144,29 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
         const elysiaMethod = method === "ALL" ? "all" : method.toLowerCase();
 
         // Check if schema is defined on route or method
-        const hasSchema = Boolean(
-          instance.schema ||
-            instance.schemas ||
-            (typeof instance[method] === "object" &&
-              instance[method] !== null &&
-              "schema" in (instance[method] as object))
-        );
+        let schemaExpr = "";
+        if (
+          typeof instance[method] === "object" &&
+          instance[method] !== null &&
+          "schema" in (instance[method] as object)
+        ) {
+          schemaExpr = `${importName}.${method}.schema`;
+        } else if (instance.schema) {
+          schemaExpr = `${importName}.schema!`;
+        } else if ((instance.schemas as Record<string, unknown>)?.[method]) {
+          schemaExpr = `(${importName}.schemas as any).${method}!`;
+        }
 
-        if (hasSchema) {
+        if (schemaExpr) {
           routeChains.push(`  .${elysiaMethod}(
     "${routePath}",
-    ((${importName} as any).${method}?.schema ?? (${importName} as any).schemas?.${method} ?? (${importName} as any).schema)!,
+    ${schemaExpr},
     async (ctx) => {
       const methodItem = (${importName} as any).${method};
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (${importName} as any).rateLimits?.${method} ?? (${importName} as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("${importName}_${method}", rateLimitConfig) : null;
-      return executeWithRequestLogs(ctx, handler, limiter);
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )`);
         } else {
@@ -172,7 +177,7 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (${importName} as any).rateLimits?.${method} ?? (${importName} as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("${importName}_${method}", rateLimitConfig) : null;
-      return executeWithRequestLogs(ctx, handler, limiter);
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )`);
         }

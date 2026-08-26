@@ -24,6 +24,10 @@ await createRouterModule();
 export { routes };
 export type App = typeof routes;
 
+declare module "elysia" {
+  export const ELYSIA_FORM_DATA: unique symbol;
+}
+
 const loadedPlugins: string[] = [];
 
 function loadPlugin<T>(name: string, plugin: T, description?: string): T {

@@ -1,4 +1,4 @@
-import { defineRoute, t } from "@/router";
+import { defineRoute, t } from "../../../../../router";
 
 export default defineRoute({
   schema: {
@@ -7,8 +7,18 @@ export default defineRoute({
       id: t.Number({ minimum: 1 }),
     }),
 
-
-
+    response: {
+      200: t.Object({
+        userId: t.Number(),
+        limit: t.Number(),
+        page: t.Number(),
+        status: t.String(),
+        authMethod: t.String(),
+        currentUser: t.String(),
+        description: t.String(),
+        timestamp: t.String(),
+      }),
+    },
   },
 
   GET({ params, query, prisma, session }) {
