@@ -102,14 +102,31 @@ import { generateRoutes } from "./generator";
 import { generateInsomniumConfig } from "./insomnium";
 import { ensureDevAccount } from "../utils/dev-account";
 
+/**
+ * Configuration options for the file-based route loader.
+ */
 export interface RouterOptions {
+  /** Directory containing file-based routes (defaults to src/modules). */
   modulesDir?: string;
+  /** Suppress console output when loading routes. */
   silent?: boolean;
 }
 
 /**
  * Creates an Elysia plugin that loads all module routes using file-based routing.
- * Automatically generates and keeps Eden Treaty routes manifest in sync.
+ *
+ * Capabilities:
+ * - Scans `src/modules` recursively for all `route.ts` and `route.js` files
+ * - Parses URL paths supporting route groups `(group)`, params `[id]`, and wildcards `[...slug]`
+ * - Preserves TypeBox request and response schemas for OpenAPI validation
+ * - Mounts route-level or method-level Token Bucket rate limiters
+ * - Integrates request-scoped console grouping (`ctx.log`) via AsyncLocalStorage
+ * - Automatically generates `routes.generated.ts` for Eden Treaty client type safety
+ * - Generates and synchronizes `insomnium.json` for API testing in development mode
+ * - Watches filesystem for route additions/removals with debounced auto-regeneration
+ *
+ * @param options - Router loader options
+ * @returns Configured Elysia router instance with all dynamic routes mounted
  */
 export async function createRouterModule(options: RouterOptions = {}) {
   const modulesDir =

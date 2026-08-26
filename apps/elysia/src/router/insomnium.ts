@@ -16,15 +16,25 @@ const HTTP_METHODS = [
 
 type HttpMethod = (typeof HTTP_METHODS)[number];
 
+/**
+ * Options configuring Insomnium collection generation.
+ */
 export interface InsomniumGeneratorOptions {
+  /** Directory containing file-based routes (defaults to src/modules). */
   modulesDir?: string;
+  /** Output file destination for the Insomnium v4 export JSON. */
   outputFile?: string;
+  /** Developer API key injected into workspace environment variables. */
   devApiKey?: string;
+  /** Suppress console output during generation. */
   silent?: boolean;
 }
 
 /**
  * Converts a relative file path to an Elysia route path.
+ *
+ * @param relativeFilePath - File path relative to modules root
+ * @returns Formatted URL route path string
  */
 function parseRoutePath(relativeFilePath: string): string {
   const normalized = relativeFilePath.replace(/\\/g, "/").replace(/^\/+/, "");
@@ -54,6 +64,9 @@ function parseRoutePath(relativeFilePath: string): string {
 
 /**
  * Recursively scans directory for route files.
+ *
+ * @param dir - Directory path to traverse
+ * @returns List of absolute route file paths
  */
 function findRouteFiles(dir: string): string[] {
   if (!fs.existsSync(dir)) return [];
@@ -76,6 +89,12 @@ function findRouteFiles(dir: string): string[] {
   return results;
 }
 
+/**
+ * Derives a sample JSON payload value from a TypeBox JSON schema definition.
+ *
+ * @param schema - TypeBox schema object
+ * @returns Sample object or primitive value
+ */
 function sampleFromSchema(schema: unknown): unknown {
   if (!schema || typeof schema !== "object") return {};
   const s = schema as Record<string, unknown>;
@@ -96,7 +115,12 @@ function sampleFromSchema(schema: unknown): unknown {
 }
 
 /**
- * Generates an Insomnium / Insomnia v4 compatible collection file from routes.
+ * Generates an Insomnium / Insomnia v4 compatible collection file from all file-based routes.
+ *
+ * Automatically inspects query parameters, path segments, and TypeBox body schemas to
+ * synthesize pre-filled HTTP requests organized into module folders with development API keys.
+ *
+ * @param options - Generation options
  */
 export async function generateInsomniumConfig(
   options: InsomniumGeneratorOptions = {}

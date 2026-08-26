@@ -24,7 +24,8 @@
     "build": "echo \"@IRIS/elysia build completed\"",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "format": "prettier --write \"src/**/*.{ts,js,json}\""
+    "format": "prettier --write \"src/**/*.{ts,js,json}\"",
+    "route:create": "bun run scripts/create-route.ts"
   },
   "dependencies": {
     "@IRIS/cache": "workspace:*",

@@ -4,20 +4,37 @@ import { decode, type JWT } from "next-auth/jwt";
 import { prisma as defaultPrisma } from "@IRIS/database";
 import { IRISBitField, type IRISBitFieldResolvable } from "@IRIS/permissions";
 
+/**
+ * User representation within the active session.
+ */
 export interface SessionUser {
+  /** Unique user identifier (UUID / cuid). */
   id: string;
+  /** Primary username. */
   username: string;
+  /** Primary email address, or null if unlinked. */
   email: string | null;
+  /** Bitfield array representing user permissions. */
   permissions: number[];
 }
 
+/** Authentication status: "authenticated" or "unauthenticated". */
 export type SessionStatus = "authenticated" | "unauthenticated";
+
+/** Authentication mechanism detected for the request. */
 export type AuthMethod = "session" | "token" | "api_key" | "none";
 
+/**
+ * Initialization parameters used to construct a Session instance.
+ */
 export interface SessionInitData {
+  /** Authenticated user profile, or null. */
   user: SessionUser | null;
+  /** Authentication method detected. */
   method: AuthMethod;
+  /** Raw token string if authenticated via bearer/cookie. */
   token?: string | null;
+  /** Database ID of the API key if authenticated via API key. */
   apiKeyId?: string | null;
 }
 
@@ -97,11 +114,21 @@ export class Session {
   }
 }
 
+/**
+ * Standard cookie names used by NextAuth to persist session tokens across HTTP and HTTPS environments.
+ */
 export const NEXTAUTH_SESSION_COOKIE_NAMES = [
   "__Secure-next-auth.session-token",
   "next-auth.session-token",
 ] as const;
 
+/**
+ * Parses raw HTTP `Cookie` header string into a key-value dictionary.
+ * Automatically decodes URI components and ignores malformed segments.
+ *
+ * @param cookieHeader - Raw string from `request.headers.get("cookie")`
+ * @returns Dictionary mapping cookie names to decoded values
+ */
 export function parseCookieHeader(
   cookieHeader: string | null | undefined,
 ): Record<string, string> {

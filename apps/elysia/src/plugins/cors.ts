@@ -1,5 +1,13 @@
 import { Elysia } from "elysia";
 
+/**
+ * Supported pattern types for matching incoming request origins.
+ * - `boolean`: `true` to mirror request Origin (or `*`), `false` to deny.
+ * - `string`: Exact origin string (e.g. `'https://example.com'`) or wildcard `'*'`.
+ * - `RegExp`: Regular expression matched against the origin header.
+ * - `Array<string | RegExp>`: List of allowed origin strings or regex patterns.
+ * - `Function`: Custom callback `(origin, request) => boolean | string` returning allowed origin or boolean.
+ */
 export type CorsOriginMatcher =
   | string
   | RegExp
@@ -7,6 +15,9 @@ export type CorsOriginMatcher =
   | Array<string | RegExp>
   | ((origin: string, request: Request) => boolean | string);
 
+/**
+ * Options configuring cross-origin resource sharing behavior.
+ */
 export interface CorsOptions {
   /**
    * Allowed origin(s).
@@ -69,7 +80,14 @@ const DEFAULT_ALLOWED_HEADERS = [
 ];
 
 /**
- * Resolves the Access-Control-Allow-Origin value based on config and request.
+ * Resolves the Access-Control-Allow-Origin header value according to the configured
+ * matcher and incoming request headers, adhering to the CORS specification for credentialed requests.
+ *
+ * @param matcher - Configured origin matching rule (boolean, string, RegExp, array, or resolver callback)
+ * @param requestOrigin - Origin header value extracted from the incoming request
+ * @param request - Native Web Standard Request object
+ * @param credentials - Whether credentials (cookies/auth) are enabled
+ * @returns The origin string to return in Access-Control-Allow-Origin, or null if disallowed
  */
 function resolveAllowedOrigin(
   matcher: CorsOriginMatcher | undefined,
@@ -132,13 +150,20 @@ function resolveAllowedOrigin(
 /**
  * Elysia CORS plugin supporting credentialed origins, preflight caching, and configurable headers.
  *
+ * @param options - Configuration options for CORS behavior
+ * @returns An Elysia plugin instance that intercepts requests to append CORS headers and handle OPTIONS preflights
+ *
  * @example
  * ```typescript
  * import { Elysia } from "elysia";
  * import { cors } from "./plugins";
  *
  * const app = new Elysia()
- *   .use(cors())
+ *   .use(cors({
+ *     origin: ["https://example.com", "http://localhost:3000"],
+ *     credentials: true,
+ *     maxAge: 86400,
+ *   }))
  *   .get("/health", () => ({ status: "ok" }));
  * ```
  */

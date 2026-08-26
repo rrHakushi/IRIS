@@ -2,22 +2,41 @@ import util from "node:util";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { c } from "./colors";
 
+/**
+ * Individual captured log item with severity level and formatted message.
+ */
 export interface RequestLogItem {
+  /** Log severity type. */
   type: "log" | "info" | "warn" | "error";
+  /** Formatted log message string. */
   message: string;
 }
 
+/**
+ * AsyncLocalStorage storage container for request-scoped logs.
+ */
 export interface RequestLogStore {
+  /** Array of captured log items accumulated during request execution. */
   logs: RequestLogItem[];
 }
 
+/**
+ * Scoped request logger interface attached to route context `ctx.log`.
+ */
 export interface RequestLogger {
+  /** Logs standard message. */
   (...args: unknown[]): void;
+  /** Logs informational message. */
   info(...args: unknown[]): void;
+  /** Logs warning message with highlighted badge. */
   warn(...args: unknown[]): void;
+  /** Logs error message with highlighted badge. */
   error(...args: unknown[]): void;
 }
 
+/**
+ * AsyncLocalStorage instance isolating console log items per concurrent request.
+ */
 export const requestLogStorage = new AsyncLocalStorage<RequestLogStore>();
 
 const originalConsole = {
@@ -61,6 +80,8 @@ export function initConsoleInterceptor(): void {
 
 /**
  * Formats captured request logs as a tree structure branching from the request header.
+ *
+ * @param logs - Array of accumulated RequestLogItem records
  */
 export function printGroupedRequestLogs(logs: RequestLogItem[]): void {
   if (!logs || logs.length === 0) return;
@@ -80,8 +101,14 @@ export function printGroupedRequestLogs(logs: RequestLogItem[]): void {
 }
 
 /**
- * Executes a route handler inside a request log context so any console or ctx.log calls
- * are grouped under the request.
+ * Executes a route handler inside an AsyncLocalStorage context to isolate and group
+ * all console statements and `ctx.log` calls under the request's terminal output.
+ * Also executes route-level or method-level rate limit checks prior to invoking the handler.
+ *
+ * @param ctx - Route execution context
+ * @param handler - Main route handler function
+ * @param rateLimiter - Optional rate limiter middleware function
+ * @returns Result of handler execution or 429 response if rate limited
  */
 export async function executeWithRequestLogs(
   ctx: unknown,

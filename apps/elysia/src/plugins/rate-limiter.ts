@@ -52,15 +52,32 @@ export interface RateLimitConfig {
   [key: string]: unknown;
 }
 
+/**
+ * Internal state record for a single token bucket in memory.
+ */
 export interface TokenBucketRecord {
+  /**
+   * Current number of tokens available in the bucket (can be fractional).
+   */
   tokens: number;
+
+  /**
+   * Epoch millisecond timestamp when the bucket was last refilled.
+   */
   lastRefill: number;
 }
 
+/**
+ * Backward-compatible alias for TokenBucketRecord.
+ */
 export type ClientRecord = TokenBucketRecord;
 
 /**
- * Extracts client IP from standard proxy, CDN, and load balancer headers.
+ * Extracts the real client IP address from incoming request headers,
+ * inspecting Cloudflare, X-Forwarded-For, and X-Real-IP reverse proxy headers.
+ *
+ * @param request - Optional Request instance
+ * @returns Client IP address string (defaults to '127.0.0.1' if absent)
  */
 export function getClientIp(request?: Request): string {
   if (!request?.headers?.get) return "127.0.0.1";
@@ -81,10 +98,14 @@ export function getClientIp(request?: Request): string {
 }
 
 /**
- * Resolves a rate-limit key in strict priority order:
- * 1. User ID (if authenticated)
- * 2. API Key ID or API key hash
- * 3. IP + Device ID / User-Agent fingerprint
+ * Resolves a rate-limit key in strict multi-tier hierarchy:
+ * 1. Authenticated User ID (`usr:<userId>`)
+ * 2. API Key ID or SHA-256 hash (`key:<hash>`)
+ * 3. Client IP + Device ID (`dev:<ip>:<deviceId>`)
+ * 4. Anonymous IP + User-Agent fingerprint (`ip:<ip>:<uaHash>`)
+ *
+ * @param ctx - Request route execution context
+ * @returns Unique string identifying the client quota bucket
  */
 export function resolveRateLimitKey(ctx?: Context): string {
   const request = ctx?.request;
@@ -138,8 +159,18 @@ export function resolveRateLimitKey(ctx?: Context): string {
 /**
  * Creates an in-memory Token Bucket rate limiter function.
  *
- * Smoothly replenishes tokens over time at a constant rate while
- * allowing bursts up to bucket capacity.
+ * Implements smooth token replenishment over time at a constant rate while
+ * allowing bursts up to the bucket's maximum capacity.
+ *
+ * @param config - Rate limiter configuration options (capacity, duration, cost, refillRate)
+ * @returns A limiter middleware function accepting request Context and returning a 429 error payload or null
+ *
+ * @example
+ * ```typescript
+ * const limiter = createRateLimiter({ capacity: 10, duration: 60000 });
+ * const err = limiter(ctx);
+ * if (err) return err;
+ * ```
  */
 export function createRateLimiter(config: RateLimitConfig = {}) {
   const capacity = config.capacity ?? config.max ?? 100;
@@ -230,10 +261,22 @@ export function createRateLimiter(config: RateLimitConfig = {}) {
 /**
  * Elysia rate-limiter plugin for global or scoped rate limiting.
  *
- * Uses Token Bucket algorithm and automatically resolves client keys via:
+ * Uses the Token Bucket algorithm and automatically resolves client identity keys via:
  * 1. User ID (if authenticated)
  * 2. API Key (if provided)
  * 3. IP + Device ID / User-Agent (if anonymous)
+ *
+ * @param options - Rate limiting configuration options
+ * @returns Elysia plugin instance attaching a beforeHandle hook to enforce rate limits
+ *
+ * @example
+ * ```typescript
+ * import { Elysia } from "elysia";
+ * import { rateLimiter } from "./plugins";
+ *
+ * const app = new Elysia()
+ *   .use(rateLimiter({ capacity: 50, duration: 60000 }));
+ * ```
  */
 export function rateLimiter(options: RateLimitConfig = {}) {
   const limiter = createRateLimiter(options);

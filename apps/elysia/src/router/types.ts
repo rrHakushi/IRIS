@@ -8,9 +8,18 @@ import type { prisma as PrismaInstance } from "@IRIS/database";
 import type { Session, SessionUser } from "../plugins/session";
 import type { RequestLogger } from "../utils/request-logger";
 
+/**
+ * Rate limiting configuration applied to a route or HTTP method.
+ */
 export interface RateLimitConfig {
+  /** Time window in milliseconds to refill tokens. */
   duration?: number;
+  /** Maximum token burst allowance. */
   max?: number;
+  /** Maximum burst capacity (alias for max). */
+  capacity?: number;
+  /** Tokens consumed per invocation. */
+  cost?: number;
   [key: string]: unknown;
 }
 
@@ -56,7 +65,7 @@ export interface RouteSchema {
 }
 
 /**
- * Resolves static types from an Elysia/TypeBox schema.
+ * Resolves static path parameter types from a RouteSchema.
  */
 export type SchemaParams<S> = S extends { params: infer P }
   ? P extends AnySchema
@@ -64,12 +73,18 @@ export type SchemaParams<S> = S extends { params: infer P }
     : Record<string, string | undefined>
   : Record<string, string | undefined>;
 
+/**
+ * Resolves static query parameter types from a RouteSchema.
+ */
 export type SchemaQuery<S> = S extends { query: infer Q }
   ? Q extends AnySchema
     ? UnwrapRoute<{ query: Q }>["query"]
     : Record<string, unknown>
   : Record<string, unknown>;
 
+/**
+ * Resolves static body payload types from a RouteSchema.
+ */
 export type SchemaBody<S> = S extends { body: infer B }
   ? B extends AnySchema
     ? UnwrapRoute<{ body: B }>["body"]
@@ -111,12 +126,18 @@ export type Context<
   body: TBody;
 };
 
+/**
+ * Alias for Route context.
+ */
 export type RouteContext<
   TParams extends Record<string, unknown> = Record<string, string | undefined>,
   TQuery extends Record<string, unknown> = Record<string, unknown>,
   TBody = unknown,
 > = Context<TParams, TQuery, TBody>;
 
+/**
+ * General route handler callback.
+ */
 export type RouteHandler<
   TParams extends Record<string, unknown> = Record<string, string | undefined>,
   TQuery extends Record<string, unknown> = Record<string, unknown>,
@@ -137,6 +158,7 @@ export type NoBodyRouteHandler<
  */
 export type NoBodyRouteSchema = Omit<RouteSchema, "body">;
 
+/** Supported HTTP method verbs. */
 export type HttpMethodKey =
   | "GET"
   | "POST"
@@ -147,6 +169,9 @@ export type HttpMethodKey =
   | "HEAD"
   | "ALL";
 
+/**
+ * Configuration object for a specific HTTP method with local schema and rate limit.
+ */
 export interface MethodConfig<
   TParams extends Record<string, unknown> = Record<string, string | undefined>,
   TQuery extends Record<string, unknown> = Record<string, unknown>,
@@ -158,6 +183,9 @@ export interface MethodConfig<
   handler: RouteHandler<TParams, TQuery, TBody>;
 }
 
+/**
+ * Configuration object for HTTP methods without a body (GET, HEAD, OPTIONS).
+ */
 export interface NoBodyMethodConfig<
   TParams extends Record<string, unknown> = Record<string, string | undefined>,
   TQuery extends Record<string, unknown> = Record<string, unknown>,
@@ -168,6 +196,9 @@ export interface NoBodyMethodConfig<
   handler: NoBodyRouteHandler<TParams, TQuery>;
 }
 
+/**
+ * Accepts either a bare handler function or an object specifying local schema, rateLimit, and handler.
+ */
 export type MethodField<
   GlobalSchema extends RouteSchema = RouteSchema,
   LocalMethodSchema extends RouteSchema = GlobalSchema,
@@ -187,6 +218,9 @@ export type MethodField<
       >;
     };
 
+/**
+ * MethodField specialization for bodyless methods (GET, HEAD, OPTIONS).
+ */
 export type NoBodyMethodField<
   GlobalSchema extends RouteSchema = RouteSchema,
   LocalMethodSchema extends NoBodyRouteSchema = GlobalSchema,
@@ -204,6 +238,9 @@ export type NoBodyMethodField<
       >;
     };
 
+/**
+ * Full file-based route definition accepted by `defineRoute()`.
+ */
 export interface RouteDefinition<
   S extends RouteSchema = RouteSchema,
   GetS extends NoBodyRouteSchema = S,
@@ -295,6 +332,9 @@ export abstract class Route {
   [key: string]: unknown;
 }
 
+/**
+ * Constructor interface for class-based routes.
+ */
 export interface RouteClass {
   new(): RouteInstance;
   rateLimit?: RateLimitConfig;
@@ -304,6 +344,9 @@ export interface RouteClass {
   [key: string]: unknown;
 }
 
+/**
+ * Instantiated class route with HTTP method handlers.
+ */
 export interface RouteInstance {
   rateLimit?: RateLimitConfig;
   rateLimits?: Partial<Record<string, RateLimitConfig>>;

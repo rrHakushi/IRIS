@@ -18,6 +18,20 @@ type HttpMethod = (typeof HTTP_METHODS)[number];
 
 /**
  * Converts a relative module file path into an Elysia URL route.
+ *
+ * Rules:
+ * - Omits the root module directory
+ * - Strips route groupings wrapped in parentheses: `(group)/user` -> `/user`
+ * - Transforms dynamic parameters: `[id]` -> `:id`
+ * - Transforms wildcard catch-all segments: `[...slug]` -> `*`
+ *
+ * @param relativeFilePath - File path relative to the modules root directory
+ * @returns Formatted URL route path string starting with a leading slash
+ *
+ * @example
+ * ```typescript
+ * parseRoutePath("IRIS-account/user/[id]/list/route.ts") // returns "/user/:id/list"
+ * ```
  */
 export function parseRoutePath(relativeFilePath: string): string {
   const normalized = relativeFilePath.replace(/\\/g, "/").replace(/^\/+/, "");
@@ -46,7 +60,11 @@ export function parseRoutePath(relativeFilePath: string): string {
 }
 
 /**
- * Recursively scans a directory for route.ts or route.js files.
+ * Recursively scans a filesystem directory for all `route.ts` or `route.js` files.
+ *
+ * @param dir - Starting directory path to traverse
+ * @param baseDir - Base reference directory
+ * @returns Array of absolute file paths matching route files
  */
 export function findRouteFiles(dir: string, baseDir: string = dir): string[] {
   if (!fs.existsSync(dir)) {
@@ -71,9 +89,15 @@ export function findRouteFiles(dir: string, baseDir: string = dir): string[] {
   return results;
 }
 
+/**
+ * Options configuring the Elysia route manifest generator.
+ */
 export interface GeneratorOptions {
+  /** Directory containing file-based routes (defaults to src/modules). */
   modulesDir?: string;
+  /** Output file destination for the generated Elysia app manifest. */
   outputFile?: string;
+  /** Suppress console output when files are generated. */
   silent?: boolean;
 }
 
@@ -81,8 +105,10 @@ export interface GeneratorOptions {
  * Generates a statically typed Elysia route manifest (routes.generated.ts)
  * from all route.ts files in src/modules.
  *
- * This allows Eden Treaty to automatically infer all routes and their
- * request/response types with full TypeScript autocomplete.
+ * Inspects default route exports, preserves TypeBox response schemas without casting to any,
+ * wraps request handlers in logging and rate limiting contexts, and outputs an Elysia router.
+ *
+ * @param options - Generator configuration options
  */
 export async function generateRoutes(options: GeneratorOptions = {}) {
   const rootDir = path.resolve(import.meta.dirname, "..");

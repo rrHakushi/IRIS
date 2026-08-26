@@ -3,7 +3,7 @@ import path from "node:path";
 import { Elysia } from "elysia";
 import { websocket } from "elysia/websocket";
 import { prisma } from "@IRIS/database";
-import { cors, rateLimiter, session } from "./plugins";
+import { cors, cron, rateLimiter, session } from "./plugins";
 import { createRouterModule } from "./router";
 import { routes } from "./router/routes.generated";
 import { c, colorMethod, colorStatus, colorDuration } from "./utils/colors";
@@ -23,6 +23,7 @@ await createRouterModule();
 
 export { routes };
 export type App = typeof routes;
+export * from "./plugins/cron";
 
 declare module "elysia" {
   export const ELYSIA_FORM_DATA: unique symbol;
@@ -37,13 +38,14 @@ function loadPlugin<T>(name: string, plugin: T, description?: string): T {
   return plugin;
 }
 
-// Full server application with database decoration, session derivation, websockets, and request logging
+// Full server application with database decoration, session derivation, websockets, request logging, and task scheduling
 export const app = new Elysia()
   .decorate("prisma", prisma)
   .use(loadPlugin("websocket", websocket(), "realtime websocket transport"))
   .use(loadPlugin("cors", cors(), "cross-origin resource sharing"))
   .use(loadPlugin("session", session(), "multi-source session resolver"))
   .use(loadPlugin("rateLimiter", rateLimiter(), "in-memory ip rate limiting"))
+  .use(loadPlugin("cron", cron(), "in-memory task scheduler"))
   .request(({ request }) => {
     (request as unknown as { _reqStartTime?: number })._reqStartTime = performance.now();
   })

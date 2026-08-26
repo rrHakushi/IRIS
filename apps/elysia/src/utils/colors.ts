@@ -12,6 +12,9 @@ const isColorSupported =
 const format = (open: number, close: number) => (str: unknown) =>
   isColorSupported ? `\x1b[${open}m${str}\x1b[${close}m` : String(str);
 
+/**
+ * ANSI escape code styling helpers for console output.
+ */
 export const c = {
   reset: format(0, 0),
   bold: format(1, 22),
@@ -37,6 +40,12 @@ export const c = {
   bgCyan: format(46, 49),
 };
 
+/**
+ * Returns a colorized, fixed-width ANSI badge for HTTP request methods.
+ *
+ * @param method - HTTP verb (GET, POST, PUT, PATCH, DELETE, etc.)
+ * @returns Colored and padded string representation
+ */
 export function colorMethod(method: string): string {
   const m = method.toUpperCase();
   switch (m) {
@@ -55,6 +64,16 @@ export function colorMethod(method: string): string {
   }
 }
 
+/**
+ * Formats an HTTP status code with contextual color coding:
+ * - 2xx: Green
+ * - 3xx: Cyan
+ * - 4xx: Yellow (Client Error)
+ * - 5xx: Red (Server Error)
+ *
+ * @param status - Numeric or string HTTP status code
+ * @returns Colorized status code string
+ */
 export function colorStatus(status: number | string): string {
   const code = Number(status) || 200;
   if (code >= 500) {
@@ -72,6 +91,15 @@ export function colorStatus(status: number | string): string {
   return c.gray(code);
 }
 
+/**
+ * Colorizes execution duration based on performance thresholds:
+ * - `< 50ms`: Dim gray (fast)
+ * - `50 - 200ms`: Yellow (moderate)
+ * - `> 200ms`: Red (slow)
+ *
+ * @param ms - Duration in milliseconds
+ * @returns Formatted and colorized duration string
+ */
 export function colorDuration(ms: number): string {
   const formatted = ms < 1 ? ms.toFixed(2) : ms.toFixed(1);
   if (ms > 200) {
@@ -82,3 +110,4 @@ export function colorDuration(ms: number): string {
   }
   return c.dim(`(${formatted}ms)`);
 }
+

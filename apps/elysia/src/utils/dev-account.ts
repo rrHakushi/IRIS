@@ -41,13 +41,23 @@ export async function hashPassword(password: string): Promise<string> {
   return `${salt.toString("hex")}:${derivedKey.toString("hex")}`;
 }
 
+/**
+ * Structure of the cached development credentials stored in dev-account.json.
+ */
 export interface DevAccountInfo {
+  /** Database user ID. */
   userId: string;
+  /** Primary username (defaults to "dev"). */
   username: string;
+  /** Developer email address. */
   email: string;
+  /** Plaintext password used for local testing. */
   password?: string;
+  /** Non-expiring API key string. */
   apiKey: string;
+  /** Array of permission bitfield flags. */
   permissions?: number[];
+  /** ISO timestamp when the credentials were saved. */
   createdAt?: string;
 }
 
@@ -55,11 +65,14 @@ export interface DevAccountInfo {
  * Ensures a development user account and infinite-duration API key exist.
  *
  * Behavior:
- * 1. If dev-account.json already exists:
+ * 1. If `dev-account.json` already exists:
  *    Loads and returns credentials directly from disk without querying the database.
- * 2. If dev-account.json does NOT exist:
- *    Queries and creates the dev user and permanent API key in the database,
- *    then writes dev-account.json so future startups skip the DB entirely.
+ * 2. If `dev-account.json` does NOT exist:
+ *    Queries and creates the dev user and permanent API key in PostgreSQL via Prisma,
+ *    then writes `dev-account.json` so future startups skip the database query entirely.
+ *
+ * @param prisma - Prisma database client instance
+ * @returns Development account information, or null if database was unreachable
  */
 export async function ensureDevAccount(
   prisma: typeof PrismaType
