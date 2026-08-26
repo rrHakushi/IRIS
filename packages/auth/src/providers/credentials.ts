@@ -1,8 +1,6 @@
 import CredentialsProvider from "next-auth/providers/credentials";
-import type { IConnection } from "@IRIS/api";
-import * as api from "@IRIS/api";
 import { AuthUser, CredentialsPayload, MfaType } from "../types.js";
-import { getApiConnection } from "../connection.js";
+import { elysia, type ElysiaClient } from "../elysia.js";
 
 /**
  * Normalizes incoming form credentials into a strictly-typed `CredentialsPayload`.
@@ -11,7 +9,7 @@ import { getApiConnection } from "../connection.js";
  * @returns A structured `CredentialsPayload` instance.
  */
 export function parseCredentialsPayload(
-  raw: Record<string, string> | null | undefined,
+  raw: Record<string, string> | null | undefined
 ): CredentialsPayload {
   const data = raw ?? {};
   return {
@@ -28,26 +26,46 @@ export function parseCredentialsPayload(
 }
 
 /**
- * Handles primary username/email and password authentication via `@IRIS/api`.
+ * Handles primary username/email and password authentication via Elysia Eden Treaty.
  *
  * @param identifier - Username or email address.
  * @param password - Plaintext password submitted by the user.
- * @param connection - Optional IConnection instance.
+ * @param client - Optional Eden Treaty client instance (defaults to `elysia`).
  * @returns Authenticated `AuthUser` object, or throws on invalid credentials / MFA required.
  */
 export async function handlePasswordLogin(
   identifier: string,
   password: string,
-  connection: IConnection = getApiConnection(),
+  client: ElysiaClient = elysia
 ): Promise<AuthUser | null> {
   if (!identifier || !password) {
     return null;
   }
-
-  const response = await api.functional.auth.login(connection, {
+  const { data, error } = await client.auth.login.post({
     identifier,
     password,
   });
+
+  if (error || !data) {
+    const errorMsg =
+      typeof error?.value === "object" && error?.value && "message" in error.value
+        ? String((error.value as { message: unknown }).message)
+        : "Invalid username, email, or password.";
+    throw new Error(errorMsg);
+  }
+
+  const response = data as {
+    success: boolean;
+    mfaRequired: boolean;
+    mfaTicket: string | null;
+    allowedMfaTypes: string[] | null;
+    user: {
+      id: string;
+      username: string;
+      email: string;
+      passwordChangedAt: number | null;
+    } | null;
+  };
 
   if (response.mfaRequired) {
     throw new Error(
@@ -55,7 +73,7 @@ export async function handlePasswordLogin(
         error: "MFA_REQUIRED",
         mfaTicket: response.mfaTicket,
         allowedMfaTypes: response.allowedMfaTypes,
-      }),
+      })
     );
   }
 
@@ -72,15 +90,15 @@ export async function handlePasswordLogin(
 }
 
 /**
- * Handles Multi-Factor Authentication (TOTP, Email Code, or WebAuthn Passkey) via `@IRIS/api`.
+ * Handles Multi-Factor Authentication (TOTP, Email Code, or WebAuthn Passkey) via Elysia Eden Treaty.
  *
  * @param payload - The MFA challenge response payload.
- * @param connection - Optional IConnection instance.
+ * @param client - Optional Eden Treaty client instance (defaults to `elysia`).
  * @returns Authenticated `AuthUser` object, or throws on invalid MFA challenge.
  */
 export async function handleMfaVerification(
   payload: CredentialsPayload,
-  connection: IConnection = getApiConnection(),
+  client: ElysiaClient = elysia
 ): Promise<AuthUser | null> {
   if (payload.mfaType === "passkey" && payload.passkeyResponse) {
     const passkeyJson =
@@ -88,13 +106,24 @@ export async function handleMfaVerification(
         ? JSON.parse(payload.passkeyResponse)
         : payload.passkeyResponse;
 
-    const response = await api.functional.auth.passkey.verify_login.verifyLogin(
-      connection,
-      {
-        passkeyResponse: passkeyJson,
-        mfaTicket: payload.mfaTicket ?? undefined,
-      },
-    );
+    const { data, error } = await client.auth.passkey["verify-login"].post({
+      passkeyResponse: passkeyJson,
+      mfaTicket: payload.mfaTicket ?? undefined,
+    });
+
+    if (error || !data) {
+      throw new Error("Passkey verification failed.");
+    }
+
+    const response = data as {
+      success: boolean;
+      user: {
+        id: string;
+        username: string;
+        email: string;
+        passwordChangedAt: number | null;
+      } | null;
+    };
 
     if (response.success && response.user) {
       return {
@@ -110,14 +139,25 @@ export async function handleMfaVerification(
     throw new Error("Missing required MFA verification parameters.");
   }
 
-  const response = await api.functional.account.mfa.verify.verifyMfa(
-    connection,
-    {
-      mfaTicket: payload.mfaTicket,
-      mfaType: payload.mfaType as "totp" | "email" | "backup_code",
-      code: payload.mfaCode,
-    },
-  );
+  const { data, error } = await client.account.mfa.verify.post({
+    mfaTicket: payload.mfaTicket,
+    mfaType: payload.mfaType as "totp" | "email" | "backup_code",
+    code: payload.mfaCode,
+  });
+
+  if (error || !data) {
+    throw new Error("MFA verification failed.");
+  }
+
+  const response = data as {
+    success: boolean;
+    user: {
+      id: string;
+      username: string;
+      email: string;
+      passwordChangedAt: number | null;
+    } | null;
+  };
 
   if (response.success && response.user) {
     return {
@@ -132,15 +172,15 @@ export async function handleMfaVerification(
 }
 
 /**
- * Handles passwordless passkey-only (WebAuthn) authentication via `@IRIS/api`.
+ * Handles passwordless passkey-only (WebAuthn) authentication via Elysia Eden Treaty.
  *
  * @param passkeyResponse - Stringified WebAuthn credential assertion payload.
- * @param connection - Optional IConnection instance.
+ * @param client - Optional Eden Treaty client instance (defaults to `elysia`).
  * @returns Authenticated `AuthUser` object matching the passkey owner.
  */
 export async function handlePasskeyOnlyLogin(
   passkeyResponse: string,
-  connection: IConnection = getApiConnection(),
+  client: ElysiaClient = elysia
 ): Promise<AuthUser | null> {
   if (!passkeyResponse) {
     throw new Error("Invalid passkey response.");
@@ -151,12 +191,23 @@ export async function handlePasskeyOnlyLogin(
       ? JSON.parse(passkeyResponse)
       : passkeyResponse;
 
-  const response = await api.functional.auth.passkey.verify_login.verifyLogin(
-    connection,
-    {
-      passkeyResponse: parsed,
-    },
-  );
+  const { data, error } = await client.auth.passkey["verify-login"].post({
+    passkeyResponse: parsed,
+  });
+
+  if (error || !data) {
+    throw new Error("Passkey login failed.");
+  }
+
+  const response = data as {
+    success: boolean;
+    user: {
+      id: string;
+      username: string;
+      email: string;
+      passwordChangedAt: number | null;
+    } | null;
+  };
 
   if (response.success && response.user) {
     return {
@@ -171,23 +222,39 @@ export async function handlePasskeyOnlyLogin(
 }
 
 /**
- * Handles quick-connect device code or QR-code authentication (Jellyfin/Discord style) via `@IRIS/api`.
+ * Handles quick-connect device code or QR-code authentication (Jellyfin/Discord style) via Elysia Eden Treaty.
  *
  * @param loginCode - Alphanumeric code or session token.
- * @param connection - Optional IConnection instance.
+ * @param client - Optional Eden Treaty client instance (defaults to `elysia`).
  * @returns Authenticated `AuthUser` approved by the secondary device.
  */
 export async function handleLoginCodeVerification(
   loginCode: string,
-  connection: IConnection = getApiConnection(),
+  client: ElysiaClient = elysia
 ): Promise<AuthUser | null> {
   if (!loginCode) {
     throw new Error("Invalid login code.");
   }
 
-  const response = await api.functional.auth.code.status.getStatus(connection, {
-    sessionToken: loginCode,
+  const { data, error } = await client.auth.code.status.get({
+    query: {
+      sessionToken: loginCode,
+    },
   });
+
+  if (error || !data) {
+    throw new Error("Failed to check device login code status.");
+  }
+
+  const response = data as {
+    status: "pending" | "approved" | "expired";
+    user: {
+      id: string;
+      username: string;
+      email: string;
+      passwordChangedAt: number | null;
+    } | null;
+  };
 
   if (response.status === "approved" && response.user) {
     return {
@@ -202,14 +269,12 @@ export async function handleLoginCodeVerification(
 }
 
 /**
- * Creates the NextAuth `CredentialsProvider` configured to handle all IRIS authentication strategies using `@IRIS/api`.
+ * Creates the NextAuth `CredentialsProvider` configured to handle all IRIS authentication strategies using Eden Treaty.
  *
- * @param connection - Optional customized backend API connection.
+ * @param client - Optional customized backend API Eden client (defaults to `elysia`).
  * @returns A NextAuth CredentialsProvider instance.
  */
-export function createCredentialsProvider(connection?: IConnection) {
-  const conn = connection ?? getApiConnection();
-
+export function createCredentialsProvider(client: ElysiaClient = elysia) {
   return CredentialsProvider({
     id: "credentials",
     name: "IRIS Credentials",
@@ -232,7 +297,7 @@ export function createCredentialsProvider(connection?: IConnection) {
         if (!payload.passkeyResponse) {
           throw new Error("Missing passkey assertion response.");
         }
-        return handlePasskeyOnlyLogin(payload.passkeyResponse, conn);
+        return handlePasskeyOnlyLogin(payload.passkeyResponse, client);
       }
 
       // Strategy 2: Quick-Connect Login Code (Jellyfin / QR style)
@@ -240,12 +305,12 @@ export function createCredentialsProvider(connection?: IConnection) {
         if (!payload.loginCode) {
           throw new Error("Missing login code.");
         }
-        return handleLoginCodeVerification(payload.loginCode, conn);
+        return handleLoginCodeVerification(payload.loginCode, client);
       }
 
       // Strategy 3: Multi-Factor Authentication
       if (payload.mfaType !== null || payload.mfaTicket !== null) {
-        return handleMfaVerification(payload, conn);
+        return handleMfaVerification(payload, client);
       }
 
       // Strategy 4: Standard Username / Email + Password Login
@@ -256,7 +321,7 @@ export function createCredentialsProvider(connection?: IConnection) {
         throw new Error("Missing password.");
       }
 
-      return handlePasswordLogin(payload.identifier, payload.password, conn);
+      return handlePasswordLogin(payload.identifier, payload.password, client);
     },
   });
 }

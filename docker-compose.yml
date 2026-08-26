@@ -74,6 +74,27 @@ services:
     ports:
       - "${NEST_PORT:-4000}:4000"
 
+  elysia:
+    container_name: IRIS-elysia
+    build:
+      context: .
+      dockerfile: apps/elysia/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      database:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+      file-storage:
+        condition: service_started
+    networks:
+      IRIS:
+        ipv4_address: 172.28.0.7
+    ports:
+      - "${ELYSIA_PORT:-4000}:4000"
+
   web:
     container_name: IRIS-web
     build:
@@ -83,7 +104,7 @@ services:
     env_file:
       - .env
     depends_on:
-      - server
+      - elysia
     networks:
       IRIS:
         ipv4_address: 172.28.0.6

@@ -13,9 +13,11 @@
     "db:studio": "turbo run db:studio --filter=@IRIS/database",
     "db:generate": "turbo run db:generate --filter=@IRIS/database",
     "db:all": "turbo run db:all --filter=@IRIS/database",
-    "sdk": "dotenvx run -- turbo run sdk --filter=@IRIS/server",
-    "swagger": "dotenvx run -- turbo run swagger --filter=@IRIS/server",
-    "nestia": "dotenvx run -- turbo run nestia --filter=@IRIS/server"
+    "elysia:dev": "dotenvx run -- turbo run dev --filter=@IRIS/elysia",
+    "elysia:build": "turbo run build --filter=@IRIS/elysia",
+    "sdk": "echo \"nestia sdk disabled\"",
+    "swagger": "echo \"nestia swagger disabled\"",
+    "nestia": "echo \"nestia disabled\""
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",
