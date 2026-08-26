@@ -3,7 +3,7 @@ import path from "node:path";
 import { Elysia } from "elysia";
 import { websocket } from "elysia/websocket";
 import { prisma } from "@IRIS/database";
-import { cors, session } from "./plugins";
+import { cors, rateLimiter, session } from "./plugins";
 import { createRouterModule } from "./router";
 import { routes } from "./router/routes.generated";
 import { c, colorMethod, colorStatus, colorDuration } from "./utils/colors";
@@ -39,6 +39,7 @@ export const app = new Elysia()
   .use(loadPlugin("websocket", websocket(), "realtime websocket transport"))
   .use(loadPlugin("cors", cors(), "cross-origin resource sharing"))
   .use(loadPlugin("session", session(), "multi-source session resolver"))
+  .use(loadPlugin("rateLimiter", rateLimiter(), "in-memory ip rate limiting"))
   .request(({ request }) => {
     (request as unknown as { _reqStartTime?: number })._reqStartTime = performance.now();
   })

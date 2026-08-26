@@ -3,7 +3,18 @@
 // Do not edit manually.
 import { Elysia } from "elysia";
 import { executeWithRequestLogs } from "../utils/request-logger";
+import { createRateLimiter } from "../plugins/rate-limiter";
 import route_0 from "../modules/IRIS-account/user/[id]/list/route";
+
+const routeLimiters = new Map<string, ReturnType<typeof createRateLimiter>>();
+function getRouteLimiter(key: string, config: unknown) {
+  let l = routeLimiters.get(key);
+  if (!l) {
+    l = createRateLimiter(config as any);
+    routeLimiters.set(key, l);
+  }
+  return l;
+}
 
 export const routes = new Elysia({ name: "iris-routes" })
   .get("/health", () => ({
@@ -17,7 +28,9 @@ export const routes = new Elysia({ name: "iris-routes" })
     async (ctx) => {
       const methodItem = (route_0 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      return executeWithRequestLogs(ctx, handler);
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_0 as any).rateLimits?.GET ?? (route_0 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_0_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter);
     }
   );
 

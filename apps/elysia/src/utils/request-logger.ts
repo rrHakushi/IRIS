@@ -86,8 +86,16 @@ export function printGroupedRequestLogs(logs: RequestLogItem[]): void {
 export async function executeWithRequestLogs(
   ctx: unknown,
   handler?: (ctx: unknown) => unknown,
+  rateLimiter?: ((ctx: any) => unknown) | null,
 ): Promise<unknown> {
   if (!handler) return undefined;
+
+  if (rateLimiter) {
+    const errorResponse = rateLimiter(ctx);
+    if (errorResponse) {
+      return errorResponse;
+    }
+  }
 
   const req = (ctx as { request?: Request })?.request;
   const store: RequestLogStore = { logs: [] };

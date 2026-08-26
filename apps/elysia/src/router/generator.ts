@@ -159,7 +159,9 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
     async (ctx) => {
       const methodItem = (${importName} as any).${method};
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      return executeWithRequestLogs(ctx, handler);
+      const rateLimitConfig = methodItem?.rateLimit ?? (${importName} as any).rateLimits?.${method} ?? (${importName} as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("${importName}_${method}", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter);
     }
   )`);
         } else {
@@ -168,7 +170,9 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
     async (ctx) => {
       const methodItem = (${importName} as any).${method};
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      return executeWithRequestLogs(ctx, handler);
+      const rateLimitConfig = methodItem?.rateLimit ?? (${importName} as any).rateLimits?.${method} ?? (${importName} as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("${importName}_${method}", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter);
     }
   )`);
         }
@@ -185,7 +189,18 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
 // Do not edit manually.
 import { Elysia } from "elysia";
 import { executeWithRequestLogs } from "../utils/request-logger";
+import { createRateLimiter } from "../plugins/rate-limiter";
 ${imports.join("\n")}
+
+const routeLimiters = new Map<string, ReturnType<typeof createRateLimiter>>();
+function getRouteLimiter(key: string, config: unknown) {
+  let l = routeLimiters.get(key);
+  if (!l) {
+    l = createRateLimiter(config as any);
+    routeLimiters.set(key, l);
+  }
+  return l;
+}
 
 export const routes = new Elysia({ name: "iris-routes" })
   .get("/health", () => ({
