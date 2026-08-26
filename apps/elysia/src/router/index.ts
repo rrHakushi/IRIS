@@ -237,7 +237,7 @@ export async function createRouterModule(options: RouterOptions = {}) {
           if (typeof routeTarget === "function") {
             const hasSchema = Object.keys(methodSchema).length > 0;
             if (hasSchema) {
-              routeTarget.call(router, routePath, boundHandler, methodSchema);
+              routeTarget.call(router, routePath, methodSchema, boundHandler);
             } else {
               routeTarget.call(router, routePath, boundHandler);
             }
