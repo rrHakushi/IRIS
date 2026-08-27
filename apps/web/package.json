@@ -9,16 +9,24 @@
     "start": "dotenvx run -f ../../.env -- next start",
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "i18n:check": "bun scripts/manage-i18n.ts",
+    "i18n:sync": "bun scripts/manage-i18n.ts --sync",
+    "i18n:prune": "bun scripts/manage-i18n.ts --prune"
   },
   "dependencies": {
     "@IRIS/auth": "workspace:*",
+    "@IRIS/database": "workspace:*",
     "@IRIS/elysia": "workspace:*",
+    "@IRIS/permissions": "workspace:*",
+    "@IRIS/shared": "workspace:*",
     "@elysiajs/eden": "^1.4.9",
+    "@simplewebauthn/browser": "^13.1.0",
     "@tabler/icons-react": "^3.46.0",
     "@workspace/ui": "workspace:*",
     "next": "16.3.2",
     "next-auth": "^4.24.15",
+    "next-intl": "^4.13.7",
     "next-themes": "^0.4.6",
     "react": "19.2.8",
     "react-dom": "19.2.8"

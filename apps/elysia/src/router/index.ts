@@ -386,7 +386,11 @@ export async function createRouterModule(options: RouterOptions = {}) {
                   return rateLimitError
                 }
               }
-              return await handler.call(instance, ctx)
+              const res = await handler.call(instance, ctx)
+              if (res instanceof Response) {
+                ctx.set.status = res.status
+              }
+              return res
             })
           }
 

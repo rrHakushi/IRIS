@@ -23,17 +23,41 @@ export default defineRoute({
     },
   },
 
-  async GET({ query, session, prisma, cache }) {
+  async GET({ session, prisma }) {
     if (!session.isAuthenticated) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "content-type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
+        { status: 401, headers: { "content-type": "application/json" } }
+      );
     }
+
+    const user = session.getUser();
+    if (!user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized", message: "User session not found" }),
+        { status: 401, headers: { "content-type": "application/json" } }
+      );
+    }
+
+    const passkeys = await prisma.passkey.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+        createdAt: true,
+        transports: true,
+      },
+    });
 
     return {
       success: true,
-      passkeys: [],
+      passkeys: passkeys.map((pk) => ({
+        id: pk.id,
+        name: pk.name,
+        createdAt: pk.createdAt.toISOString(),
+        transports: pk.transports,
+      })),
     };
   },
 });

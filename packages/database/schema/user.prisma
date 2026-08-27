@@ -1,7 +1,7 @@
 model User {
     id String @id @default(uuid())
 
-    username          String    @unique @db.Char(32)
+    username          String    @unique
     email             String    @unique
     passwordHash      String    @db.Text
     passwordChangedAt DateTime?
@@ -46,7 +46,7 @@ model Passkey {
 model ApiKey {
     id         String    @id @default(uuid())
     hash       String    @db.Text
-    prefix     String    @db.Char(16)
+    prefix     String
     name       String
     lastUsedAt DateTime?
     expiresAt  DateTime?

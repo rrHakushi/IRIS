@@ -24,7 +24,7 @@ import route_16 from "../modules/IRIS-account/auth/quickconnect/status/route";
 import route_17 from "../modules/IRIS-account/auth/register/route";
 import route_18 from "../modules/IRIS-account/auth/totp/setup/route";
 import route_19 from "../modules/IRIS-account/auth/totp/toggle/route";
-import route_20 from "../modules/IRIS-account/user/[id]/list/route";
+import route_20 from "../modules/IRIS-account/users/me/route";
 
 const routeLimiters = new Map<string, ReturnType<typeof createRateLimiter>>();
 function getRouteLimiter(key: string, config: unknown) {
@@ -44,8 +44,8 @@ export const routes = new Elysia({ name: "iris-routes" })
   }))
   .post(
     "/auth/backupcodes/regenerate",
-    route_0.schema!,
-    async (ctx) => {
+    (route_0 as any).schema!,
+    async (ctx: any) => {
       const methodItem = (route_0 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_0 as any).rateLimits?.POST ?? (route_0 as any).rateLimit;
@@ -55,8 +55,8 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/auth/email/send",
-    route_1.schema!,
-    async (ctx) => {
+    (route_1 as any).schema!,
+    async (ctx: any) => {
       const methodItem = (route_1 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_1 as any).rateLimits?.POST ?? (route_1 as any).rateLimit;
@@ -66,8 +66,8 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/auth/email/toggle",
-    route_2.schema!,
-    async (ctx) => {
+    (route_2 as any).schema!,
+    async (ctx: any) => {
       const methodItem = (route_2 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_2 as any).rateLimits?.POST ?? (route_2 as any).rateLimit;
@@ -77,8 +77,8 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/auth/email/verify",
-    route_3.schema!,
-    async (ctx) => {
+    (route_3 as any).schema!,
+    async (ctx: any) => {
       const methodItem = (route_3 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_3 as any).rateLimits?.POST ?? (route_3 as any).rateLimit;
@@ -88,8 +88,8 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/auth/login",
-    route_4.schema!,
-    async (ctx) => {
+    (route_4 as any).schema!,
+    async (ctx: any) => {
       const methodItem = (route_4 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_4 as any).rateLimits?.POST ?? (route_4 as any).rateLimit;
@@ -99,8 +99,8 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .delete(
     "/auth/passkeys/:id",
-    route_5.schema!,
-    async (ctx) => {
+    (route_5 as any).schema!,
+    async (ctx: any) => {
       const methodItem = (route_5 as any).DELETE;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_5 as any).rateLimits?.DELETE ?? (route_5 as any).rateLimit;
@@ -110,8 +110,8 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/auth/passkeys/login",
-    route_6.schema!,
-    async (ctx) => {
+    (route_6 as any).schema!,
+    async (ctx: any) => {
       const methodItem = (route_6 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_6 as any).rateLimits?.POST ?? (route_6 as any).rateLimit;
@@ -121,8 +121,8 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/auth/passkeys/login/verify",
-    route_7.schema!,
-    async (ctx) => {
+    (route_7 as any).schema!,
+    async (ctx: any) => {
       const methodItem = (route_7 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_7 as any).rateLimits?.POST ?? (route_7 as any).rateLimit;
@@ -132,8 +132,8 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/auth/passkeys/register",
-    route_8.schema!,
-    async (ctx) => {
+    (route_8 as any).schema!,
+    async (ctx: any) => {
       const methodItem = (route_8 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_8 as any).rateLimits?.POST ?? (route_8 as any).rateLimit;
@@ -143,8 +143,8 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/auth/passkeys/register/verify",
-    route_9.schema!,
-    async (ctx) => {
+    (route_9 as any).schema!,
+    async (ctx: any) => {
       const methodItem = (route_9 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_9 as any).rateLimits?.POST ?? (route_9 as any).rateLimit;
@@ -154,8 +154,8 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .get(
     "/auth/passkeys",
-    route_10.schema!,
-    async (ctx) => {
+    (route_10 as any).schema!,
+    async (ctx: any) => {
       const methodItem = (route_10 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_10 as any).rateLimits?.GET ?? (route_10 as any).rateLimit;
@@ -165,8 +165,8 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/auth/password/change",
-    route_11.schema!,
-    async (ctx) => {
+    (route_11 as any).schema!,
+    async (ctx: any) => {
       const methodItem = (route_11 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_11 as any).rateLimits?.POST ?? (route_11 as any).rateLimit;
@@ -176,8 +176,8 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/auth/password/forgot",
-    route_12.schema!,
-    async (ctx) => {
+    (route_12 as any).schema!,
+    async (ctx: any) => {
       const methodItem = (route_12 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_12 as any).rateLimits?.POST ?? (route_12 as any).rateLimit;
@@ -187,8 +187,8 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/auth/password/reset",
-    route_13.schema!,
-    async (ctx) => {
+    (route_13 as any).schema!,
+    async (ctx: any) => {
       const methodItem = (route_13 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_13 as any).rateLimits?.POST ?? (route_13 as any).rateLimit;
@@ -198,8 +198,8 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/auth/quickconnect/approve",
-    route_14.schema!,
-    async (ctx) => {
+    (route_14 as any).schema!,
+    async (ctx: any) => {
       const methodItem = (route_14 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_14 as any).rateLimits?.POST ?? (route_14 as any).rateLimit;
@@ -209,8 +209,8 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/auth/quickconnect/generate",
-    route_15.schema!,
-    async (ctx) => {
+    (route_15 as any).schema!,
+    async (ctx: any) => {
       const methodItem = (route_15 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_15 as any).rateLimits?.POST ?? (route_15 as any).rateLimit;
@@ -220,8 +220,8 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .get(
     "/auth/quickconnect/status",
-    route_16.schema!,
-    async (ctx) => {
+    (route_16 as any).schema!,
+    async (ctx: any) => {
       const methodItem = (route_16 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_16 as any).rateLimits?.GET ?? (route_16 as any).rateLimit;
@@ -231,8 +231,8 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/auth/register",
-    route_17.schema!,
-    async (ctx) => {
+    (route_17 as any).schema!,
+    async (ctx: any) => {
       const methodItem = (route_17 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_17 as any).rateLimits?.POST ?? (route_17 as any).rateLimit;
@@ -242,8 +242,8 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/auth/totp/setup",
-    route_18.schema!,
-    async (ctx) => {
+    (route_18 as any).schema!,
+    async (ctx: any) => {
       const methodItem = (route_18 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_18 as any).rateLimits?.POST ?? (route_18 as any).rateLimit;
@@ -253,8 +253,8 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/auth/totp/toggle",
-    route_19.schema!,
-    async (ctx) => {
+    (route_19 as any).schema!,
+    async (ctx: any) => {
       const methodItem = (route_19 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_19 as any).rateLimits?.POST ?? (route_19 as any).rateLimit;
@@ -263,13 +263,24 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/user/:id/list",
-    route_20.schema!,
-    async (ctx) => {
+    "/users/me",
+    (route_20 as any).GET.schema,
+    async (ctx: any) => {
       const methodItem = (route_20 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_20 as any).rateLimits?.GET ?? (route_20 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_20_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .patch(
+    "/users/me",
+    (route_20 as any).PATCH.schema,
+    async (ctx: any) => {
+      const methodItem = (route_20 as any).PATCH;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_20 as any).rateLimits?.PATCH ?? (route_20 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_20_PATCH", rateLimitConfig) : null;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   );

@@ -177,9 +177,9 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
           instance[method] !== null &&
           "schema" in (instance[method] as object)
         ) {
-          schemaExpr = `${importName}.${method}.schema`
+          schemaExpr = `(${importName} as any).${method}.schema`
         } else if (instance.schema) {
-          schemaExpr = `${importName}.schema!`
+          schemaExpr = `(${importName} as any).schema!`
         } else if ((instance.schemas as Record<string, unknown>)?.[method]) {
           schemaExpr = `(${importName}.schemas as any).${method}!`
         }
@@ -188,7 +188,7 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
           routeChains.push(`  .${elysiaMethod}(
     "${routePath}",
     ${schemaExpr},
-    async (ctx) => {
+    async (ctx: any) => {
       const methodItem = (${importName} as any).${method};
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (${importName} as any).rateLimits?.${method} ?? (${importName} as any).rateLimit;
@@ -199,7 +199,7 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
         } else {
           routeChains.push(`  .${elysiaMethod}(
     "${routePath}",
-    async (ctx) => {
+    async (ctx: any) => {
       const methodItem = (${importName} as any).${method};
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (${importName} as any).rateLimits?.${method} ?? (${importName} as any).rateLimit;

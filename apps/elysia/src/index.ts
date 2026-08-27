@@ -54,12 +54,21 @@ export const app = new Elysia()
     ;(request as unknown as { _reqStartTime?: number })._reqStartTime =
       performance.now()
   })
-  .afterResponse("global", ({ request, set }) => {
+  .afterResponse("global", (ctx) => {
+    const { request, set } = ctx
     const startTime = (request as unknown as { _reqStartTime?: number })
       ._reqStartTime
     const durationMs = startTime ? performance.now() - startTime : 0
     const url = new URL(request.url)
-    const status = set.status || 200
+    const resp = (ctx as any).responseValue ?? (ctx as any).response
+    const status =
+      (resp instanceof Response
+        ? resp.status
+        : typeof (resp as any)?.status === "number"
+          ? (resp as any).status
+          : typeof set.status === "number"
+            ? set.status
+            : 200) || 200
 
     const tag = c.magenta(c.bold("[Elysia]"))
     const method = colorMethod(request.method)
