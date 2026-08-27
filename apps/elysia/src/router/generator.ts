@@ -1,7 +1,7 @@
-import fs from "node:fs";
-import path from "node:path";
-import { pathToFileURL } from "node:url";
-import { c } from "../utils/colors";
+import fs from "node:fs"
+import path from "node:path"
+import { pathToFileURL } from "node:url"
+import { c } from "../utils/colors"
 
 const HTTP_METHODS = [
   "GET",
@@ -12,9 +12,9 @@ const HTTP_METHODS = [
   "OPTIONS",
   "HEAD",
   "ALL",
-] as const;
+] as const
 
-type HttpMethod = (typeof HTTP_METHODS)[number];
+type HttpMethod = (typeof HTTP_METHODS)[number]
 
 /**
  * Converts a relative module file path into an Elysia URL route.
@@ -34,29 +34,29 @@ type HttpMethod = (typeof HTTP_METHODS)[number];
  * ```
  */
 export function parseRoutePath(relativeFilePath: string): string {
-  const normalized = relativeFilePath.replace(/\\/g, "/").replace(/^\/+/, "");
-  const parts = normalized.split("/");
+  const normalized = relativeFilePath.replace(/\\/g, "/").replace(/^\/+/, "")
+  const parts = normalized.split("/")
 
-  if (parts.length < 2) return "/";
+  if (parts.length < 2) return "/"
 
-  const segments = parts.slice(1, -1);
-  const routeSegments = segments.filter((seg) => !/^\(.*\)$/.test(seg));
+  const segments = parts.slice(1, -1)
+  const routeSegments = segments.filter((seg) => !/^\(.*\)$/.test(seg))
 
   if (routeSegments.length === 0) {
-    return "/";
+    return "/"
   }
 
   const mapped = routeSegments.map((seg) => {
     if (seg.startsWith("[...") && seg.endsWith("]")) {
-      return "*";
+      return "*"
     }
     if (seg.startsWith("[") && seg.endsWith("]")) {
-      return `:${seg.slice(1, -1)}`;
+      return `:${seg.slice(1, -1)}`
     }
-    return seg;
-  });
+    return seg
+  })
 
-  return "/" + mapped.join("/");
+  return "/" + mapped.join("/")
 }
 
 /**
@@ -68,25 +68,25 @@ export function parseRoutePath(relativeFilePath: string): string {
  */
 export function findRouteFiles(dir: string, baseDir: string = dir): string[] {
   if (!fs.existsSync(dir)) {
-    return [];
+    return []
   }
 
-  const results: string[] = [];
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  const results: string[] = []
+  const entries = fs.readdirSync(dir, { withFileTypes: true })
 
   for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
+    const fullPath = path.join(dir, entry.name)
     if (entry.isDirectory()) {
-      results.push(...findRouteFiles(fullPath, baseDir));
+      results.push(...findRouteFiles(fullPath, baseDir))
     } else if (
       entry.isFile() &&
       (entry.name === "route.ts" || entry.name === "route.js")
     ) {
-      results.push(fullPath);
+      results.push(fullPath)
     }
   }
 
-  return results;
+  return results
 }
 
 /**
@@ -94,11 +94,11 @@ export function findRouteFiles(dir: string, baseDir: string = dir): string[] {
  */
 export interface GeneratorOptions {
   /** Directory containing file-based routes (defaults to src/modules). */
-  modulesDir?: string;
+  modulesDir?: string
   /** Output file destination for the generated Elysia app manifest. */
-  outputFile?: string;
+  outputFile?: string
   /** Suppress console output when files are generated. */
-  silent?: boolean;
+  silent?: boolean
 }
 
 /**
@@ -111,51 +111,52 @@ export interface GeneratorOptions {
  * @param options - Generator configuration options
  */
 export async function generateRoutes(options: GeneratorOptions = {}) {
-  const rootDir = path.resolve(import.meta.dirname, "..");
-  const modulesDir = options.modulesDir || path.resolve(rootDir, "modules");
+  const rootDir = path.resolve(import.meta.dirname, "..")
+  const modulesDir = options.modulesDir || path.resolve(rootDir, "modules")
   const outputFile =
-    options.outputFile || path.resolve(import.meta.dirname, "routes.generated.ts");
+    options.outputFile ||
+    path.resolve(import.meta.dirname, "routes.generated.ts")
 
-  const routeFiles = findRouteFiles(modulesDir);
-  routeFiles.sort();
+  const routeFiles = findRouteFiles(modulesDir)
+  routeFiles.sort()
 
-  const imports: string[] = [];
-  const routeChains: string[] = [];
+  const imports: string[] = []
+  const routeChains: string[] = []
 
-  let routeIndex = 0;
+  let routeIndex = 0
 
   for (const filePath of routeFiles) {
-    const relativeModulePath = path.relative(modulesDir, filePath);
-    const routePath = parseRoutePath(relativeModulePath);
+    const relativeModulePath = path.relative(modulesDir, filePath)
+    const routePath = parseRoutePath(relativeModulePath)
 
     // Compute relative import path from outputFile directory to the route file (without .ts extension)
     let relativeImport = path
       .relative(path.dirname(outputFile), filePath)
-      .replace(/\\/g, "/");
+      .replace(/\\/g, "/")
     if (!relativeImport.startsWith(".")) {
-      relativeImport = "./" + relativeImport;
+      relativeImport = "./" + relativeImport
     }
-    relativeImport = relativeImport.replace(/\.(ts|js)$/, "");
+    relativeImport = relativeImport.replace(/\.(ts|js)$/, "")
 
-    const importName = `route_${routeIndex}`;
-    imports.push(`import ${importName} from "${relativeImport}";`);
+    const importName = `route_${routeIndex}`
+    imports.push(`import ${importName} from "${relativeImport}";`)
 
     try {
-      const fileUrl = pathToFileURL(filePath).href;
-      const mod = await import(fileUrl);
-      const routeExport = mod.default;
+      const fileUrl = pathToFileURL(filePath).href
+      const mod = await import(fileUrl)
+      const routeExport = mod.default
 
-      if (!routeExport) continue;
+      if (!routeExport) continue
 
-      let instance: Record<string, unknown>;
+      let instance: Record<string, unknown>
       if (typeof routeExport === "function") {
         try {
-          instance = new (routeExport as any)();
+          instance = new (routeExport as any)()
         } catch {
-          instance = routeExport as any;
+          instance = routeExport as any
         }
       } else {
-        instance = routeExport as any;
+        instance = routeExport as any
       }
 
       for (const method of HTTP_METHODS) {
@@ -163,24 +164,24 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
           typeof instance[method] === "function" ||
           (typeof instance[method] === "object" &&
             instance[method] !== null &&
-            "handler" in (instance[method] as object));
+            "handler" in (instance[method] as object))
 
-        if (!hasMethod) continue;
+        if (!hasMethod) continue
 
-        const elysiaMethod = method === "ALL" ? "all" : method.toLowerCase();
+        const elysiaMethod = method === "ALL" ? "all" : method.toLowerCase()
 
         // Check if schema is defined on route or method
-        let schemaExpr = "";
+        let schemaExpr = ""
         if (
           typeof instance[method] === "object" &&
           instance[method] !== null &&
           "schema" in (instance[method] as object)
         ) {
-          schemaExpr = `${importName}.${method}.schema`;
+          schemaExpr = `${importName}.${method}.schema`
         } else if (instance.schema) {
-          schemaExpr = `${importName}.schema!`;
+          schemaExpr = `${importName}.schema!`
         } else if ((instance.schemas as Record<string, unknown>)?.[method]) {
-          schemaExpr = `(${importName}.schemas as any).${method}!`;
+          schemaExpr = `(${importName}.schemas as any).${method}!`
         }
 
         if (schemaExpr) {
@@ -194,7 +195,7 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
       const limiter = rateLimitConfig ? getRouteLimiter("${importName}_${method}", rateLimitConfig) : null;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
-  )`);
+  )`)
         } else {
           routeChains.push(`  .${elysiaMethod}(
     "${routePath}",
@@ -205,13 +206,13 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
       const limiter = rateLimitConfig ? getRouteLimiter("${importName}_${method}", rateLimitConfig) : null;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
-  )`);
+  )`)
         }
       }
 
-      routeIndex++;
+      routeIndex++
     } catch (err) {
-      console.warn(`[Eden Generator] Could not inspect ${filePath}:`, err);
+      console.warn(`[Eden Generator] Could not inspect ${filePath}:`, err)
     }
   }
 
@@ -242,21 +243,21 @@ export const routes = new Elysia({ name: "iris-routes" })
 ${routeChains.join("\n")};
 
 export type App = typeof routes;
-`;
+`
 
   if (fs.existsSync(outputFile)) {
-    const current = fs.readFileSync(outputFile, "utf-8");
+    const current = fs.readFileSync(outputFile, "utf-8")
     if (current === fileContent) {
       // Content has not changed: avoid touching file to prevent bun --watch restart loop
-      return;
+      return
     }
   }
 
-  fs.writeFileSync(outputFile, fileContent, "utf-8");
+  fs.writeFileSync(outputFile, fileContent, "utf-8")
 
   if (!options.silent) {
     console.log(
       `${c.cyan(c.bold("[Eden Generator]"))} ${c.green("Generated")} ${c.bold(routeIndex)} ${c.green("routes in:")} ${c.dim(outputFile)}`
-    );
+    )
   }
 }

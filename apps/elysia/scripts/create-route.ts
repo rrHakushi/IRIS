@@ -240,6 +240,7 @@ function generateRouteCode(
     if (isBodyMethod) ctxArgs.push("body");
     ctxArgs.push("session");
     ctxArgs.push("prisma");
+    ctxArgs.push("cache");
 
     let authGuard = "";
     if (options.admin) {

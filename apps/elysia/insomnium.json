@@ -1,14 +1,14 @@
 {
   "_type": "export",
   "__export_format": 4,
-  "__export_date": "2026-08-26T18:36:45.970Z",
+  "__export_date": "2026-08-27T07:13:26.695Z",
   "__export_source": "insomnium.desktop.app:v0.2.3-a",
   "resources": [
     {
       "_id": "wrk_iris_api",
       "parentId": null,
-      "modified": 1787769405970,
-      "created": 1787769405970,
+      "modified": 1787814806694,
+      "created": 1787814806694,
       "name": "IRIS API",
       "description": "Auto-generated Insomnium collection for IRIS Elysia server",
       "scope": "collection",
@@ -17,8 +17,8 @@
     {
       "_id": "env_iris_base",
       "parentId": "wrk_iris_api",
-      "modified": 1787769405970,
-      "created": 1787769405970,
+      "modified": 1787814806694,
+      "created": 1787814806694,
       "name": "Base Environment",
       "data": {
         "base_url": "http://localhost:4000",
@@ -34,14 +34,14 @@
       },
       "color": "#6b46c1",
       "isPrivate": false,
-      "metaSortKey": 1787769405970,
+      "metaSortKey": 1787814806694,
       "_type": "environment"
     },
     {
       "_id": "req_health_check",
       "parentId": "wrk_iris_api",
-      "modified": 1787769405970,
-      "created": 1787769405970,
+      "modified": 1787814806694,
+      "created": 1787814806694,
       "url": "{{ _.base_url }}/health",
       "name": "GET /health",
       "description": "Server health and uptime check",
@@ -50,7 +50,7 @@
       "parameters": [],
       "headers": [],
       "authentication": {},
-      "metaSortKey": 1787769406970,
+      "metaSortKey": 1787814807694,
       "isPrivate": false,
       "settingStoreCookies": true,
       "settingSendCookies": true,
@@ -63,20 +63,849 @@
     {
       "_id": "fld_IRIS_account",
       "parentId": "wrk_iris_api",
-      "modified": 1787769405970,
-      "created": 1787769405970,
+      "modified": 1787814806694,
+      "created": 1787814806694,
       "name": "IRIS-account",
       "description": "Routes for IRIS-account module",
       "environment": {},
       "environmentPropertyOrder": null,
-      "metaSortKey": 1787769406971,
+      "metaSortKey": 1787814807695,
       "_type": "request_group"
+    },
+    {
+      "_id": "req_IRIS-account__auth_backupcodes_regenerate_post",
+      "parentId": "fld_IRIS_account",
+      "modified": 1787814806694,
+      "created": 1787814806694,
+      "url": "{{ _.base_url }}/auth/backupcodes/regenerate",
+      "name": "POST /auth/backupcodes/regenerate",
+      "description": "",
+      "method": "POST",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1787814807696,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_email_send_post",
+      "parentId": "fld_IRIS_account",
+      "modified": 1787814806694,
+      "created": 1787814806694,
+      "url": "{{ _.base_url }}/auth/email/send",
+      "name": "POST /auth/email/send",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"mfaTicket\": \"string\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1787814807697,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_email_toggle_post",
+      "parentId": "fld_IRIS_account",
+      "modified": 1787814806694,
+      "created": 1787814806694,
+      "url": "{{ _.base_url }}/auth/email/toggle",
+      "name": "POST /auth/email/toggle",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"enabled\": true\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1787814807698,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_email_verify_post",
+      "parentId": "fld_IRIS_account",
+      "modified": 1787814806694,
+      "created": 1787814806694,
+      "url": "{{ _.base_url }}/auth/email/verify",
+      "name": "POST /auth/email/verify",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"mfaTicket\": \"string\",\n  \"code\": \"string\",\n  \"mfaType\": {}\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1787814807699,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_login_post",
+      "parentId": "fld_IRIS_account",
+      "modified": 1787814806694,
+      "created": 1787814806694,
+      "url": "{{ _.base_url }}/auth/login",
+      "name": "POST /auth/login",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"identifier\": \"string\",\n  \"password\": \"string\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1787814807700,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_passkeys_login_post",
+      "parentId": "fld_IRIS_account",
+      "modified": 1787814806694,
+      "created": 1787814806694,
+      "url": "{{ _.base_url }}/auth/passkeys/login",
+      "name": "POST /auth/passkeys/login",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"identifier\": \"string\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1787814807701,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_passkeys_login_verify_post",
+      "parentId": "fld_IRIS_account",
+      "modified": 1787814806694,
+      "created": 1787814806694,
+      "url": "{{ _.base_url }}/auth/passkeys/login/verify",
+      "name": "POST /auth/passkeys/login/verify",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"passkeyResponse\": {\n    \"id\": \"string\",\n    \"rawId\": \"string\",\n    \"response\": {},\n    \"type\": \"string\",\n    \"clientExtensionResults\": {}\n  }\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1787814807702,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_passkeys_register_post",
+      "parentId": "fld_IRIS_account",
+      "modified": 1787814806694,
+      "created": 1787814806694,
+      "url": "{{ _.base_url }}/auth/passkeys/register",
+      "name": "POST /auth/passkeys/register",
+      "description": "",
+      "method": "POST",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1787814807703,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_passkeys_register_verify_post",
+      "parentId": "fld_IRIS_account",
+      "modified": 1787814806694,
+      "created": 1787814806694,
+      "url": "{{ _.base_url }}/auth/passkeys/register/verify",
+      "name": "POST /auth/passkeys/register/verify",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"passkeyResponse\": {\n    \"id\": \"string\",\n    \"rawId\": \"string\",\n    \"response\": {},\n    \"type\": \"string\",\n    \"clientExtensionResults\": {}\n  },\n  \"name\": \"string\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1787814807704,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_passkeys_get",
+      "parentId": "fld_IRIS_account",
+      "modified": 1787814806694,
+      "created": 1787814806694,
+      "url": "{{ _.base_url }}/auth/passkeys",
+      "name": "GET /auth/passkeys",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "limit",
+          "value": "20",
+          "disabled": false
+        },
+        {
+          "name": "page",
+          "value": "1",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1787814807705,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_passkeys__id_delete",
+      "parentId": "fld_IRIS_account",
+      "modified": 1787814806694,
+      "created": 1787814806694,
+      "url": "{{ _.base_url }}/auth/passkeys/:id",
+      "name": "DELETE /auth/passkeys/:id",
+      "description": "",
+      "method": "DELETE",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1787814807706,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_password_change_post",
+      "parentId": "fld_IRIS_account",
+      "modified": 1787814806694,
+      "created": 1787814806694,
+      "url": "{{ _.base_url }}/auth/password/change",
+      "name": "POST /auth/password/change",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"currentPassword\": \"string\",\n  \"newPassword\": \"string\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1787814807707,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_password_forgot_post",
+      "parentId": "fld_IRIS_account",
+      "modified": 1787814806694,
+      "created": 1787814806694,
+      "url": "{{ _.base_url }}/auth/password/forgot",
+      "name": "POST /auth/password/forgot",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"string\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1787814807708,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_password_reset_post",
+      "parentId": "fld_IRIS_account",
+      "modified": 1787814806694,
+      "created": 1787814806694,
+      "url": "{{ _.base_url }}/auth/password/reset",
+      "name": "POST /auth/password/reset",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"token\": \"string\",\n  \"newPassword\": \"string\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1787814807709,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_quickconnect_approve_post",
+      "parentId": "fld_IRIS_account",
+      "modified": 1787814806694,
+      "created": 1787814806694,
+      "url": "{{ _.base_url }}/auth/quickconnect/approve",
+      "name": "POST /auth/quickconnect/approve",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"code\": \"string\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1787814807710,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_quickconnect_generate_post",
+      "parentId": "fld_IRIS_account",
+      "modified": 1787814806694,
+      "created": 1787814806694,
+      "url": "{{ _.base_url }}/auth/quickconnect/generate",
+      "name": "POST /auth/quickconnect/generate",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"deviceName\": \"string\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1787814807711,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_quickconnect_status_get",
+      "parentId": "fld_IRIS_account",
+      "modified": 1787814806694,
+      "created": 1787814806694,
+      "url": "{{ _.base_url }}/auth/quickconnect/status",
+      "name": "GET /auth/quickconnect/status",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "sessionToken",
+          "value": "string",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1787814807712,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_register_post",
+      "parentId": "fld_IRIS_account",
+      "modified": 1787814806694,
+      "created": 1787814806694,
+      "url": "{{ _.base_url }}/auth/register",
+      "name": "POST /auth/register",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"string\",\n  \"email\": \"string\",\n  \"password\": \"string\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1787814807713,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_totp_setup_post",
+      "parentId": "fld_IRIS_account",
+      "modified": 1787814806694,
+      "created": 1787814806694,
+      "url": "{{ _.base_url }}/auth/totp/setup",
+      "name": "POST /auth/totp/setup",
+      "description": "",
+      "method": "POST",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1787814807714,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_totp_toggle_post",
+      "parentId": "fld_IRIS_account",
+      "modified": 1787814806694,
+      "created": 1787814806694,
+      "url": "{{ _.base_url }}/auth/totp/toggle",
+      "name": "POST /auth/totp/toggle",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"enabled\": true,\n  \"code\": \"string\",\n  \"password\": \"string\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 1787814807715,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
     },
     {
       "_id": "req_IRIS-account__user__id_list_get",
       "parentId": "fld_IRIS_account",
-      "modified": 1787769405970,
-      "created": 1787769405970,
+      "modified": 1787814806694,
+      "created": 1787814806694,
       "url": "{{ _.base_url }}/user/:id/list",
       "name": "GET /user/:id/list",
       "description": "",
@@ -96,7 +925,7 @@
         }
       ],
       "authentication": {},
-      "metaSortKey": 1787769406972,
+      "metaSortKey": 1787814807716,
       "isPrivate": false,
       "settingStoreCookies": true,
       "settingSendCookies": true,

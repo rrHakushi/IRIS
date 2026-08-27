@@ -1,8 +1,8 @@
-import fs from "node:fs";
-import path from "node:path";
-import { pathToFileURL } from "node:url";
-import { c } from "../utils/colors";
-import { DEV_ACCOUNT_DEFAULTS } from "../utils/dev-account";
+import fs from "node:fs"
+import path from "node:path"
+import { pathToFileURL } from "node:url"
+import { c } from "../utils/colors"
+import { DEV_ACCOUNT_DEFAULTS } from "../utils/dev-account"
 
 const HTTP_METHODS = [
   "GET",
@@ -12,22 +12,22 @@ const HTTP_METHODS = [
   "PATCH",
   "OPTIONS",
   "HEAD",
-] as const;
+] as const
 
-type HttpMethod = (typeof HTTP_METHODS)[number];
+type HttpMethod = (typeof HTTP_METHODS)[number]
 
 /**
  * Options configuring Insomnium collection generation.
  */
 export interface InsomniumGeneratorOptions {
   /** Directory containing file-based routes (defaults to src/modules). */
-  modulesDir?: string;
+  modulesDir?: string
   /** Output file destination for the Insomnium v4 export JSON. */
-  outputFile?: string;
+  outputFile?: string
   /** Developer API key injected into workspace environment variables. */
-  devApiKey?: string;
+  devApiKey?: string
   /** Suppress console output during generation. */
-  silent?: boolean;
+  silent?: boolean
 }
 
 /**
@@ -37,29 +37,29 @@ export interface InsomniumGeneratorOptions {
  * @returns Formatted URL route path string
  */
 function parseRoutePath(relativeFilePath: string): string {
-  const normalized = relativeFilePath.replace(/\\/g, "/").replace(/^\/+/, "");
-  const parts = normalized.split("/");
+  const normalized = relativeFilePath.replace(/\\/g, "/").replace(/^\/+/, "")
+  const parts = normalized.split("/")
 
-  if (parts.length < 2) return "/";
+  if (parts.length < 2) return "/"
 
-  const segments = parts.slice(1, -1);
-  const routeSegments = segments.filter((seg) => !/^\(.*\)$/.test(seg));
+  const segments = parts.slice(1, -1)
+  const routeSegments = segments.filter((seg) => !/^\(.*\)$/.test(seg))
 
   if (routeSegments.length === 0) {
-    return "/";
+    return "/"
   }
 
   const mapped = routeSegments.map((seg) => {
     if (seg.startsWith("[...") && seg.endsWith("]")) {
-      return "*";
+      return "*"
     }
     if (seg.startsWith("[") && seg.endsWith("]")) {
-      return `:${seg.slice(1, -1)}`;
+      return `:${seg.slice(1, -1)}`
     }
-    return seg;
-  });
+    return seg
+  })
 
-  return "/" + mapped.join("/");
+  return "/" + mapped.join("/")
 }
 
 /**
@@ -69,24 +69,24 @@ function parseRoutePath(relativeFilePath: string): string {
  * @returns List of absolute route file paths
  */
 function findRouteFiles(dir: string): string[] {
-  if (!fs.existsSync(dir)) return [];
+  if (!fs.existsSync(dir)) return []
 
-  const results: string[] = [];
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  const results: string[] = []
+  const entries = fs.readdirSync(dir, { withFileTypes: true })
 
   for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
+    const fullPath = path.join(dir, entry.name)
     if (entry.isDirectory()) {
-      results.push(...findRouteFiles(fullPath));
+      results.push(...findRouteFiles(fullPath))
     } else if (
       entry.isFile() &&
       (entry.name === "route.ts" || entry.name === "route.js")
     ) {
-      results.push(fullPath);
+      results.push(fullPath)
     }
   }
 
-  return results;
+  return results
 }
 
 /**
@@ -96,22 +96,24 @@ function findRouteFiles(dir: string): string[] {
  * @returns Sample object or primitive value
  */
 function sampleFromSchema(schema: unknown): unknown {
-  if (!schema || typeof schema !== "object") return {};
-  const s = schema as Record<string, unknown>;
+  if (!schema || typeof schema !== "object") return {}
+  const s = schema as Record<string, unknown>
 
-  if (s.default !== undefined) return s.default;
-  if (s.type === "string") return "string";
-  if (s.type === "number" || s.type === "integer") return 1;
-  if (s.type === "boolean") return true;
-  if (s.type === "array") return [];
+  if (s.default !== undefined) return s.default
+  if (s.type === "string") return "string"
+  if (s.type === "number" || s.type === "integer") return 1
+  if (s.type === "boolean") return true
+  if (s.type === "array") return []
   if (s.type === "object" && s.properties && typeof s.properties === "object") {
-    const obj: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(s.properties as Record<string, unknown>)) {
-      obj[k] = sampleFromSchema(v);
+    const obj: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(
+      s.properties as Record<string, unknown>
+    )) {
+      obj[k] = sampleFromSchema(v)
     }
-    return obj;
+    return obj
   }
-  return {};
+  return {}
 }
 
 /**
@@ -126,19 +128,20 @@ export async function generateInsomniumConfig(
   options: InsomniumGeneratorOptions = {}
 ): Promise<void> {
   const modulesDir =
-    options.modulesDir || path.resolve(import.meta.dirname, "../modules");
+    options.modulesDir || path.resolve(import.meta.dirname, "../modules")
   const outputFile =
-    options.outputFile || path.resolve(import.meta.dirname, "../../insomnium.json");
+    options.outputFile ||
+    path.resolve(import.meta.dirname, "../../insomnium.json")
 
   const baseUrl =
     process.env.NEXT_PUBLIC_API_URL ||
-    `http://localhost:${process.env.ELYSIA_PORT || 4000}`;
+    `http://localhost:${process.env.ELYSIA_PORT || 4000}`
 
-  const routeFiles = findRouteFiles(modulesDir);
-  const now = Date.now();
+  const routeFiles = findRouteFiles(modulesDir)
+  const now = Date.now()
 
-  const workspaceId = "wrk_iris_api";
-  const baseEnvId = "env_iris_base";
+  const workspaceId = "wrk_iris_api"
+  const baseEnvId = "env_iris_base"
 
   const resources: Array<Record<string, unknown>> = [
     {
@@ -170,11 +173,11 @@ export async function generateInsomniumConfig(
       metaSortKey: now,
       _type: "environment",
     },
-  ];
+  ]
 
   // Folder map to track module request groups
-  const folderIds = new Map<string, string>();
-  let sortKeyCounter = now + 1000;
+  const folderIds = new Map<string, string>()
+  let sortKeyCounter = now + 1000
 
   // Add Health Check endpoint
   resources.push({
@@ -199,22 +202,22 @@ export async function generateInsomniumConfig(
     settingRebuildPath: true,
     settingFollowRedirects: "global",
     _type: "request",
-  });
+  })
 
-  let requestCount = 1;
+  let requestCount = 1
 
   for (const filePath of routeFiles) {
-    const relativePath = path.relative(modulesDir, filePath);
-    const normalized = relativePath.replace(/\\/g, "/").replace(/^\/+/, "");
-    const moduleName = normalized.split("/")[0] || "core";
-    const routePath = parseRoutePath(relativePath);
+    const relativePath = path.relative(modulesDir, filePath)
+    const normalized = relativePath.replace(/\\/g, "/").replace(/^\/+/, "")
+    const moduleName = normalized.split("/")[0] || "core"
+    const routePath = parseRoutePath(relativePath)
 
     // Create module folder (request_group) if not yet created
-    let folderId = folderIds.get(moduleName);
+    let folderId = folderIds.get(moduleName)
     if (!folderId) {
-      const sanitizedName = moduleName.replace(/[^a-zA-Z0-9_]/g, "_");
-      folderId = `fld_${sanitizedName}`;
-      folderIds.set(moduleName, folderId);
+      const sanitizedName = moduleName.replace(/[^a-zA-Z0-9_]/g, "_")
+      folderId = `fld_${sanitizedName}`
+      folderIds.set(moduleName, folderId)
 
       resources.push({
         _id: folderId,
@@ -227,45 +230,44 @@ export async function generateInsomniumConfig(
         environmentPropertyOrder: null,
         metaSortKey: sortKeyCounter++,
         _type: "request_group",
-      });
+      })
     }
 
     try {
-      const fileUrl = pathToFileURL(filePath).href;
-      const importedModule = await import(fileUrl);
-      const RouteExport = importedModule.default;
+      const fileUrl = pathToFileURL(filePath).href
+      const importedModule = await import(fileUrl)
+      const RouteExport = importedModule.default
 
-      if (!RouteExport) continue;
+      if (!RouteExport) continue
 
-      let instance: Record<string, unknown>;
+      let instance: Record<string, unknown>
       if (typeof RouteExport === "function") {
         try {
-          instance = new (RouteExport as new () => Record<string, unknown>)();
+          instance = new (RouteExport as new () => Record<string, unknown>)()
         } catch {
-          instance = RouteExport as Record<string, unknown>;
+          instance = RouteExport as Record<string, unknown>
         }
       } else if (typeof RouteExport === "object" && RouteExport !== null) {
-        instance = RouteExport as Record<string, unknown>;
+        instance = RouteExport as Record<string, unknown>
       } else {
-        continue;
+        continue
       }
 
       const globalSchema = (instance.schema ||
         (RouteExport as Record<string, unknown>)?.schema) as
-        | Record<string, unknown>
-        | undefined;
+        Record<string, unknown> | undefined
       const perMethodSchemas = (instance.schemas ||
         (RouteExport as Record<string, unknown>)?.schemas ||
-        {}) as Record<string, Record<string, unknown>>;
+        {}) as Record<string, Record<string, unknown>>
 
       for (const method of HTTP_METHODS) {
-        const methodItem = instance[method];
-        if (!methodItem) continue;
+        const methodItem = instance[method]
+        if (!methodItem) continue
 
         let methodSchema: Record<string, unknown> = {
           ...(globalSchema || {}),
           ...(perMethodSchemas[method] || {}),
-        };
+        }
 
         if (
           typeof methodItem === "object" &&
@@ -275,30 +277,39 @@ export async function generateInsomniumConfig(
           methodSchema = {
             ...methodSchema,
             ...((methodItem as Record<string, unknown>).schema as object),
-          };
+          }
         }
 
         // Generate query parameters
-        const parameters: Array<{ name: string; value: string; disabled?: boolean }> = [];
+        const parameters: Array<{
+          name: string
+          value: string
+          disabled?: boolean
+        }> = []
         if (
           methodSchema.query &&
           typeof methodSchema.query === "object" &&
           "properties" in methodSchema.query
         ) {
-          const queryProps = (methodSchema.query as Record<string, unknown>).properties;
+          const queryProps = (methodSchema.query as Record<string, unknown>)
+            .properties
           if (queryProps && typeof queryProps === "object") {
             for (const [paramName, prop] of Object.entries(queryProps)) {
               parameters.push({
                 name: paramName,
                 value: String(sampleFromSchema(prop) ?? ""),
                 disabled: false,
-              });
+              })
             }
           }
         }
 
         // Generate headers
-        const headers: Array<{ name: string; value: string; disabled?: boolean }> = [
+        const headers: Array<{
+          name: string
+          value: string
+          disabled?: boolean
+        }> = [
           {
             name: "x-api-key",
             value: "{{ _.api_key }}",
@@ -309,32 +320,32 @@ export async function generateInsomniumConfig(
             value: "Bearer {{ _.token }}",
             disabled: true,
           },
-        ];
+        ]
 
         // Generate body
-        let body: Record<string, unknown> = {};
+        let body: Record<string, unknown> = {}
         if (method !== "GET" && method !== "HEAD") {
           headers.unshift({
             name: "Content-Type",
             value: "application/json",
             disabled: false,
-          });
+          })
 
           if (
             methodSchema.body &&
             typeof methodSchema.body === "object" &&
             "properties" in methodSchema.body
           ) {
-            const bodySample = sampleFromSchema(methodSchema.body);
+            const bodySample = sampleFromSchema(methodSchema.body)
             body = {
               mimeType: "application/json",
               text: JSON.stringify(bodySample, null, 2),
-            };
+            }
           }
         }
 
-        const safePathId = routePath.replace(/[^a-zA-Z0-9]/g, "_");
-        const requestId = `req_${moduleName}_${safePathId}_${method.toLowerCase()}`;
+        const safePathId = routePath.replace(/[^a-zA-Z0-9]/g, "_")
+        const requestId = `req_${moduleName}_${safePathId}_${method.toLowerCase()}`
 
         resources.push({
           _id: requestId,
@@ -358,13 +369,13 @@ export async function generateInsomniumConfig(
           settingRebuildPath: true,
           settingFollowRedirects: "global",
           _type: "request",
-        });
+        })
 
-        requestCount++;
+        requestCount++
       }
     } catch (err) {
       if (!options.silent) {
-        console.warn(`[Insomnium] Could not inspect ${filePath}:`, err);
+        console.warn(`[Insomnium] Could not inspect ${filePath}:`, err)
       }
     }
   }
@@ -375,23 +386,23 @@ export async function generateInsomniumConfig(
     __export_date: new Date().toISOString(),
     __export_source: "insomnium.desktop.app:v0.2.3-a",
     resources,
-  };
+  }
 
-  const fileContent = JSON.stringify(exportDocument, null, 2) + "\n";
+  const fileContent = JSON.stringify(exportDocument, null, 2) + "\n"
 
   // Prevent touching the file if unchanged to avoid bun --watch reload loops
   if (fs.existsSync(outputFile)) {
-    const current = fs.readFileSync(outputFile, "utf-8");
+    const current = fs.readFileSync(outputFile, "utf-8")
     if (current === fileContent) {
-      return;
+      return
     }
   }
 
-  fs.writeFileSync(outputFile, fileContent, "utf-8");
+  fs.writeFileSync(outputFile, fileContent, "utf-8")
 
   if (!options.silent) {
     console.log(
       `${c.cyan(c.bold("[Insomnium]"))} ${c.green("Generated")} ${c.bold(requestCount)} ${c.green("endpoints in:")} ${c.dim(outputFile)}`
-    );
+    )
   }
 }

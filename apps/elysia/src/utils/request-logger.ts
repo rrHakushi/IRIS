@@ -1,15 +1,15 @@
-import util from "node:util";
-import { AsyncLocalStorage } from "node:async_hooks";
-import { c } from "./colors";
+import util from "node:util"
+import { AsyncLocalStorage } from "node:async_hooks"
+import { c } from "./colors"
 
 /**
  * Individual captured log item with severity level and formatted message.
  */
 export interface RequestLogItem {
   /** Log severity type. */
-  type: "log" | "info" | "warn" | "error";
+  type: "log" | "info" | "warn" | "error"
   /** Formatted log message string. */
-  message: string;
+  message: string
 }
 
 /**
@@ -17,7 +17,7 @@ export interface RequestLogItem {
  */
 export interface RequestLogStore {
   /** Array of captured log items accumulated during request execution. */
-  logs: RequestLogItem[];
+  logs: RequestLogItem[]
 }
 
 /**
@@ -25,28 +25,28 @@ export interface RequestLogStore {
  */
 export interface RequestLogger {
   /** Logs standard message. */
-  (...args: unknown[]): void;
+  (...args: unknown[]): void
   /** Logs informational message. */
-  info(...args: unknown[]): void;
+  info(...args: unknown[]): void
   /** Logs warning message with highlighted badge. */
-  warn(...args: unknown[]): void;
+  warn(...args: unknown[]): void
   /** Logs error message with highlighted badge. */
-  error(...args: unknown[]): void;
+  error(...args: unknown[]): void
 }
 
 /**
  * AsyncLocalStorage instance isolating console log items per concurrent request.
  */
-export const requestLogStorage = new AsyncLocalStorage<RequestLogStore>();
+export const requestLogStorage = new AsyncLocalStorage<RequestLogStore>()
 
 const originalConsole = {
   log: console.log.bind(console),
   info: console.info.bind(console),
   warn: console.warn.bind(console),
   error: console.error.bind(console),
-};
+}
 
-let isInterceptorActive = false;
+let isInterceptorActive = false
 
 /**
  * Initializes global console interception.
@@ -55,27 +55,27 @@ let isInterceptorActive = false;
  * Outside a request, console behaves completely normally.
  */
 export function initConsoleInterceptor(): void {
-  if (isInterceptorActive) return;
-  isInterceptorActive = true;
+  if (isInterceptorActive) return
+  isInterceptorActive = true
 
   const createIntercept = (type: "log" | "info" | "warn" | "error") => {
     return (...args: unknown[]) => {
-      const store = requestLogStorage.getStore();
+      const store = requestLogStorage.getStore()
       if (store) {
         store.logs.push({
           type,
           message: util.format(...args),
-        });
+        })
       } else {
-        originalConsole[type](...args);
+        originalConsole[type](...args)
       }
-    };
-  };
+    }
+  }
 
-  console.log = createIntercept("log");
-  console.info = createIntercept("info");
-  console.warn = createIntercept("warn");
-  console.error = createIntercept("error");
+  console.log = createIntercept("log")
+  console.info = createIntercept("info")
+  console.warn = createIntercept("warn")
+  console.error = createIntercept("error")
 }
 
 /**
@@ -84,19 +84,19 @@ export function initConsoleInterceptor(): void {
  * @param logs - Array of accumulated RequestLogItem records
  */
 export function printGroupedRequestLogs(logs: RequestLogItem[]): void {
-  if (!logs || logs.length === 0) return;
+  if (!logs || logs.length === 0) return
 
   for (let i = 0; i < logs.length; i++) {
-    const isLast = i === logs.length - 1;
-    const branch = c.gray(isLast ? "  └─ " : "  ├─ ");
-    const item = logs[i];
-    if (!item) continue;
+    const isLast = i === logs.length - 1
+    const branch = c.gray(isLast ? "  └─ " : "  ├─ ")
+    const item = logs[i]
+    if (!item) continue
 
-    let prefix = "";
-    if (item.type === "warn") prefix = c.yellow(c.bold("[WARN] "));
-    if (item.type === "error") prefix = c.red(c.bold("[ERROR] "));
+    let prefix = ""
+    if (item.type === "warn") prefix = c.yellow(c.bold("[WARN] "))
+    if (item.type === "error") prefix = c.red(c.bold("[ERROR] "))
 
-    process.stdout.write(`${branch}${prefix}${item.message}\n`);
+    process.stdout.write(`${branch}${prefix}${item.message}\n`)
   }
 }
 
@@ -113,42 +113,43 @@ export function printGroupedRequestLogs(logs: RequestLogItem[]): void {
 export async function executeWithRequestLogs(
   ctx: unknown,
   handler?: (ctx: unknown) => unknown,
-  rateLimiter?: ((ctx: any) => unknown) | null,
+  rateLimiter?: ((ctx: any) => unknown) | null
 ): Promise<unknown> {
-  if (!handler) return undefined;
+  if (!handler) return undefined
 
   if (rateLimiter) {
-    const errorResponse = rateLimiter(ctx);
+    const errorResponse = rateLimiter(ctx)
     if (errorResponse) {
-      return errorResponse;
+      return errorResponse
     }
   }
 
-  const req = (ctx as { request?: Request })?.request;
-  const store: RequestLogStore = { logs: [] };
+  const req = (ctx as { request?: Request })?.request
+  const store: RequestLogStore = { logs: [] }
 
   if (req) {
-    (req as unknown as { _requestLogs?: RequestLogItem[] })._requestLogs = store.logs;
+    ;(req as unknown as { _requestLogs?: RequestLogItem[] })._requestLogs =
+      store.logs
   }
 
-  (ctx as { log?: RequestLogger }).log = Object.assign(
+  ;(ctx as { log?: RequestLogger }).log = Object.assign(
     (...args: unknown[]) => {
-      store.logs.push({ type: "log", message: util.format(...args) });
+      store.logs.push({ type: "log", message: util.format(...args) })
     },
     {
       info: (...args: unknown[]) => {
-        store.logs.push({ type: "info", message: util.format(...args) });
+        store.logs.push({ type: "info", message: util.format(...args) })
       },
       warn: (...args: unknown[]) => {
-        store.logs.push({ type: "warn", message: util.format(...args) });
+        store.logs.push({ type: "warn", message: util.format(...args) })
       },
       error: (...args: unknown[]) => {
-        store.logs.push({ type: "error", message: util.format(...args) });
+        store.logs.push({ type: "error", message: util.format(...args) })
       },
     }
-  );
+  )
 
   return await requestLogStorage.run(store, async () => {
-    return await handler(ctx);
-  });
+    return await handler(ctx)
+  })
 }

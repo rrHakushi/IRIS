@@ -1,15 +1,15 @@
-import fs from "node:fs";
-import path from "node:path";
-import util from "node:util";
-import { pathToFileURL } from "node:url";
-import { Elysia } from "elysia";
-import { createRateLimiter } from "../plugins/rate-limiter";
-import { c, colorMethod } from "../utils/colors";
+import fs from "node:fs"
+import path from "node:path"
+import util from "node:util"
+import { pathToFileURL } from "node:url"
+import { Elysia } from "elysia"
+import { createRateLimiter } from "../plugins/rate-limiter"
+import { c, colorMethod } from "../utils/colors"
 import {
   requestLogStorage,
   type RequestLogStore,
   type RequestLogItem,
-} from "../utils/request-logger";
+} from "../utils/request-logger"
 import {
   Route,
   type RouteClass,
@@ -18,7 +18,7 @@ import {
   type RouteDefinition,
   type MethodConfig,
   type HttpMethodKey,
-} from "./types";
+} from "./types"
 
 const HTTP_METHODS: readonly HttpMethodKey[] = [
   "GET",
@@ -29,7 +29,7 @@ const HTTP_METHODS: readonly HttpMethodKey[] = [
   "OPTIONS",
   "HEAD",
   "ALL",
-] as const;
+] as const
 
 /**
  * Converts a relative module file path into an Elysia URL route.
@@ -42,33 +42,33 @@ const HTTP_METHODS: readonly HttpMethodKey[] = [
  * - Module root `IRIS-account/route.ts` -> `/`
  */
 export function parseRoutePath(relativeFilePath: string): string {
-  const normalized = relativeFilePath.replace(/\\/g, "/").replace(/^\/+/, "");
-  const parts = normalized.split("/");
+  const normalized = relativeFilePath.replace(/\\/g, "/").replace(/^\/+/, "")
+  const parts = normalized.split("/")
 
   // Need at least module_folder/route.ts
-  if (parts.length < 2) return "/";
+  if (parts.length < 2) return "/"
 
   // First segment is module name (ignored), last segment is file name (ignored)
-  const segments = parts.slice(1, -1);
+  const segments = parts.slice(1, -1)
 
   // Filter out route groups in parentheses like (auth), (admin)
-  const routeSegments = segments.filter((seg) => !/^\(.*\)$/.test(seg));
+  const routeSegments = segments.filter((seg) => !/^\(.*\)$/.test(seg))
 
   if (routeSegments.length === 0) {
-    return "/";
+    return "/"
   }
 
   const mapped = routeSegments.map((seg) => {
     if (seg.startsWith("[...") && seg.endsWith("]")) {
-      return "*";
+      return "*"
     }
     if (seg.startsWith("[") && seg.endsWith("]")) {
-      return `:${seg.slice(1, -1)}`;
+      return `:${seg.slice(1, -1)}`
     }
-    return seg;
-  });
+    return seg
+  })
 
-  return "/" + mapped.join("/");
+  return "/" + mapped.join("/")
 }
 
 /**
@@ -76,40 +76,40 @@ export function parseRoutePath(relativeFilePath: string): string {
  */
 function findRouteFiles(dir: string, baseDir: string = dir): string[] {
   if (!fs.existsSync(dir)) {
-    return [];
+    return []
   }
 
-  const results: string[] = [];
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  const results: string[] = []
+  const entries = fs.readdirSync(dir, { withFileTypes: true })
 
   for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
+    const fullPath = path.join(dir, entry.name)
     if (entry.isDirectory()) {
-      results.push(...findRouteFiles(fullPath, baseDir));
+      results.push(...findRouteFiles(fullPath, baseDir))
     } else if (
       entry.isFile() &&
       (entry.name === "route.ts" || entry.name === "route.js")
     ) {
-      results.push(fullPath);
+      results.push(fullPath)
     }
   }
 
-  return results;
+  return results
 }
 
-import { prisma } from "@IRIS/database";
-import { generateRoutes } from "./generator";
-import { generateInsomniumConfig } from "./insomnium";
-import { ensureDevAccount } from "../utils/dev-account";
+import { prisma } from "@IRIS/database"
+import { generateRoutes } from "./generator"
+import { generateInsomniumConfig } from "./insomnium"
+import { ensureDevAccount } from "../utils/dev-account"
 
 /**
  * Configuration options for the file-based route loader.
  */
 export interface RouterOptions {
   /** Directory containing file-based routes (defaults to src/modules). */
-  modulesDir?: string;
+  modulesDir?: string
   /** Suppress console output when loading routes. */
-  silent?: boolean;
+  silent?: boolean
 }
 
 /**
@@ -130,67 +130,89 @@ export interface RouterOptions {
  */
 export async function createRouterModule(options: RouterOptions = {}) {
   const modulesDir =
-    options.modulesDir || path.resolve(import.meta.dirname, "../modules");
-  const router = new Elysia({ name: "iris-file-router" });
+    options.modulesDir || path.resolve(import.meta.dirname, "../modules")
+  const router = new Elysia({ name: "iris-file-router" })
 
-  const isDev = process.env.NODE_ENV === "development";
+  const isDev = process.env.NODE_ENV === "development"
 
   // When in development mode, ensure dev account and API key exist
-  let devApiKey: string | undefined;
+  let devApiKey: string | undefined
   if (isDev) {
     try {
-      const devAccount = await ensureDevAccount(prisma);
+      const devAccount = await ensureDevAccount(prisma)
       if (devAccount) {
-        devApiKey = devAccount.apiKey;
+        devApiKey = devAccount.apiKey
       }
     } catch (err) {
       if (!options.silent) {
-        console.warn("[Dev Account] Warning:", err);
+        console.warn("[Dev Account] Warning:", err)
       }
     }
   }
 
   // Automatically generate Eden-compatible typed routes manifest
   try {
-    await generateRoutes({ modulesDir, silent: options.silent });
+    await generateRoutes({ modulesDir, silent: options.silent })
   } catch (err) {
     if (!options.silent) {
-      console.warn("[Router] Route auto-generation warning:", err);
+      console.warn("[Router] Route auto-generation warning:", err)
     }
   }
 
   // When in development mode, generate Insomnium config
   if (isDev) {
     try {
-      await generateInsomniumConfig({ modulesDir, devApiKey, silent: options.silent });
+      await generateInsomniumConfig({
+        modulesDir,
+        devApiKey,
+        silent: options.silent,
+      })
     } catch (err) {
       if (!options.silent) {
-        console.warn("[Insomnium] Auto-generation warning:", err);
+        console.warn("[Insomnium] Auto-generation warning:", err)
       }
     }
   }
 
   // In development, watch for file changes to automatically regenerate Eden routes and Insomnium config
-  if (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "test") {
-    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  if (
+    process.env.NODE_ENV !== "production" &&
+    process.env.NODE_ENV !== "test"
+  ) {
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null
     try {
-      const watcher = fs.watch(modulesDir, { recursive: true }, (event, filename) => {
-        if (filename && (filename.endsWith(".ts") || filename.endsWith(".js"))) {
-          if (debounceTimer) clearTimeout(debounceTimer);
-          debounceTimer = setTimeout(async () => {
-            try {
-              await generateRoutes({ modulesDir, silent: true });
-              if (isDev) {
-                await generateInsomniumConfig({ modulesDir, devApiKey, silent: true });
+      const watcher = fs.watch(
+        modulesDir,
+        { recursive: true },
+        (event, filename) => {
+          if (
+            filename &&
+            (filename.endsWith(".ts") || filename.endsWith(".js"))
+          ) {
+            if (debounceTimer) clearTimeout(debounceTimer)
+            debounceTimer = setTimeout(async () => {
+              try {
+                await generateRoutes({ modulesDir, silent: true })
+                if (isDev) {
+                  await generateInsomniumConfig({
+                    modulesDir,
+                    devApiKey,
+                    silent: true,
+                  })
+                }
+              } catch (err) {
+                console.error("[Router] Auto-generation failed on change:", err)
               }
-            } catch (err) {
-              console.error("[Router] Auto-generation failed on change:", err);
-            }
-          }, 100);
+            }, 100)
+          }
         }
-      });
-      if (typeof watcher === "object" && watcher !== null && "unref" in watcher) {
-        (watcher as { unref: () => void }).unref();
+      )
+      if (
+        typeof watcher === "object" &&
+        watcher !== null &&
+        "unref" in watcher
+      ) {
+        ;(watcher as { unref: () => void }).unref()
       }
     } catch {
       // Ignored if recursive fs.watch is not supported
@@ -199,178 +221,200 @@ export async function createRouterModule(options: RouterOptions = {}) {
 
   if (!fs.existsSync(modulesDir)) {
     if (!options.silent) {
-      console.log(`[Router] Modules directory not found: ${modulesDir}`);
+      console.log(`[Router] Modules directory not found: ${modulesDir}`)
     }
-    return router;
+    return router
   }
 
-  const routeFiles = findRouteFiles(modulesDir);
-  let loadedCount = 0;
-  const routesByModule = new Map<string, Array<{ method: string; path: string }>>();
+  const routeFiles = findRouteFiles(modulesDir)
+  let loadedCount = 0
+  const routesByModule = new Map<
+    string,
+    Array<{ method: string; path: string }>
+  >()
 
   for (const filePath of routeFiles) {
-    const relativePath = path.relative(modulesDir, filePath);
-    const normalized = relativePath.replace(/\\/g, "/").replace(/^\/+/, "");
-    const moduleName = normalized.split("/")[0] || "core";
-    const routePath = parseRoutePath(relativePath);
+    const relativePath = path.relative(modulesDir, filePath)
+    const normalized = relativePath.replace(/\\/g, "/").replace(/^\/+/, "")
+    const moduleName = normalized.split("/")[0] || "core"
+    const routePath = parseRoutePath(relativePath)
 
     try {
-      const fileUrl = pathToFileURL(filePath).href;
-      const importedModule = await import(fileUrl);
-      const RouteExport = importedModule.default;
+      const fileUrl = pathToFileURL(filePath).href
+      const importedModule = await import(fileUrl)
+      const RouteExport = importedModule.default
 
       if (!RouteExport) {
         console.warn(
           `[Router] Skipping ${relativePath}: No default export found.`
-        );
-        continue;
+        )
+        continue
       }
 
-      let instance: RouteInstance;
-      let staticClass: RouteClass | null = null;
+      let instance: RouteInstance
+      let staticClass: RouteClass | null = null
 
       if (typeof RouteExport === "function") {
         try {
-          instance = new (RouteExport as RouteClass)();
-          staticClass = RouteExport as RouteClass;
+          instance = new (RouteExport as RouteClass)()
+          staticClass = RouteExport as RouteClass
         } catch {
-          instance = RouteExport as unknown as RouteInstance;
+          instance = RouteExport as unknown as RouteInstance
         }
       } else if (typeof RouteExport === "object" && RouteExport !== null) {
-        instance = RouteExport as RouteInstance;
+        instance = RouteExport as RouteInstance
       } else {
         console.warn(
           `[Router] Skipping ${relativePath}: Default export is not a class or object.`
-        );
-        continue;
+        )
+        continue
       }
 
       const globalRateLimit =
         staticClass?.rateLimit ||
         instance.rateLimit ||
         (RouteExport as RouteDefinition)?.rateLimit ||
-        importedModule.rateLimit;
+        importedModule.rateLimit
 
       const perMethodRateLimits =
         staticClass?.rateLimits ||
         instance.rateLimits ||
         (RouteExport as RouteDefinition)?.rateLimits ||
         importedModule.rateLimits ||
-        {};
+        {}
 
       const globalSchema =
         staticClass?.schema ||
         instance.schema ||
-        (RouteExport as RouteDefinition)?.schema;
+        (RouteExport as RouteDefinition)?.schema
 
       const perMethodSchemas =
         staticClass?.schemas ||
         instance.schemas ||
         (RouteExport as RouteDefinition)?.schemas ||
-        {};
+        {}
 
       for (const method of HTTP_METHODS) {
         const methodItem =
           (staticClass as Record<string, unknown>)?.[method] ??
-          (instance[method] !== (Route.prototype as Record<string, unknown>)[method]
+          (instance[method] !==
+          (Route.prototype as Record<string, unknown>)[method]
             ? instance[method]
-            : undefined);
+            : undefined)
 
-        let handler: ((ctx: Context) => unknown) | null = null;
+        let handler: ((ctx: Context) => unknown) | null = null
         let methodSchema: Record<string, unknown> = {
           ...(globalSchema || {}),
           ...(perMethodSchemas[method as keyof typeof perMethodSchemas] || {}),
-        };
-        let customMethodRateLimit = perMethodRateLimits[method as keyof typeof perMethodRateLimits];
+        }
+        let customMethodRateLimit =
+          perMethodRateLimits[method as keyof typeof perMethodRateLimits]
 
         if (typeof methodItem === "function") {
-          handler = methodItem as (ctx: Context) => unknown;
+          handler = methodItem as (ctx: Context) => unknown
         } else if (
           typeof methodItem === "object" &&
           methodItem !== null &&
           "handler" in methodItem
         ) {
-          handler = (methodItem as MethodConfig).handler;
+          handler = (methodItem as MethodConfig).handler
           if ((methodItem as MethodConfig).schema) {
-            methodSchema = { ...methodSchema, ...(methodItem as MethodConfig).schema };
+            methodSchema = {
+              ...methodSchema,
+              ...(methodItem as MethodConfig).schema,
+            }
           }
           if ((methodItem as MethodConfig).rateLimit) {
-            customMethodRateLimit = (methodItem as MethodConfig).rateLimit;
+            customMethodRateLimit = (methodItem as MethodConfig).rateLimit
           }
         }
 
         if (handler) {
           const elysiaMethod = (
             method === "ALL" ? "all" : method.toLowerCase()
-          ) as keyof Elysia;
+          ) as keyof Elysia
 
           const methodRateLimit =
             customMethodRateLimit ||
             (staticClass as Record<string, unknown>)?.[`${method}_rateLimit`] ||
             (staticClass as Record<string, unknown>)?.[
-            `${method.toLowerCase()}RateLimit`
+              `${method.toLowerCase()}RateLimit`
             ] ||
             (staticClass as Record<string, unknown>)?.[`${method}RateLimit`] ||
-            globalRateLimit;
+            globalRateLimit
 
           const rateLimiter = methodRateLimit
             ? createRateLimiter(methodRateLimit)
-            : null;
+            : null
 
           const boundHandler = async (ctx: Context) => {
-            const store: RequestLogStore = { logs: [] };
-            (ctx.request as unknown as { _requestLogs?: RequestLogItem[] })._requestLogs = store.logs;
+            const store: RequestLogStore = { logs: [] }
+            ;(
+              ctx.request as unknown as { _requestLogs?: RequestLogItem[] }
+            )._requestLogs = store.logs
 
             ctx.log = Object.assign(
               (...args: unknown[]) => {
-                store.logs.push({ type: "log", message: util.format(...args) });
+                store.logs.push({ type: "log", message: util.format(...args) })
               },
               {
                 info: (...args: unknown[]) => {
-                  store.logs.push({ type: "info", message: util.format(...args) });
+                  store.logs.push({
+                    type: "info",
+                    message: util.format(...args),
+                  })
                 },
                 warn: (...args: unknown[]) => {
-                  store.logs.push({ type: "warn", message: util.format(...args) });
+                  store.logs.push({
+                    type: "warn",
+                    message: util.format(...args),
+                  })
                 },
                 error: (...args: unknown[]) => {
-                  store.logs.push({ type: "error", message: util.format(...args) });
+                  store.logs.push({
+                    type: "error",
+                    message: util.format(...args),
+                  })
                 },
               }
-            );
+            )
 
             return await requestLogStorage.run(store, async () => {
               if (rateLimiter) {
-                const rateLimitError = rateLimiter(ctx);
+                const rateLimitError = rateLimiter(ctx)
                 if (rateLimitError) {
-                  return rateLimitError;
+                  return rateLimitError
                 }
               }
-              return await handler.call(instance, ctx);
-            });
-          };
+              return await handler.call(instance, ctx)
+            })
+          }
 
-          const routeTarget = (
-            router as unknown as Record<string, Function>
-          )[elysiaMethod];
+          const routeTarget = (router as unknown as Record<string, Function>)[
+            elysiaMethod
+          ]
 
           if (typeof routeTarget === "function") {
-            const hasSchema = Object.keys(methodSchema).length > 0;
+            const hasSchema = Object.keys(methodSchema).length > 0
             if (hasSchema) {
-              routeTarget.call(router, routePath, methodSchema, boundHandler);
+              routeTarget.call(router, routePath, methodSchema, boundHandler)
             } else {
-              routeTarget.call(router, routePath, boundHandler);
+              routeTarget.call(router, routePath, boundHandler)
             }
           }
 
-          loadedCount++;
+          loadedCount++
           if (!routesByModule.has(moduleName)) {
-            routesByModule.set(moduleName, []);
+            routesByModule.set(moduleName, [])
           }
-          routesByModule.get(moduleName)!.push({ method, path: routePath });
+          routesByModule.get(moduleName)!.push({ method, path: routePath })
         }
       }
     } catch (err) {
-      console.error(`${c.red(c.bold("[Router]"))} Failed to load route ${relativePath}:`, err);
+      console.error(
+        `${c.red(c.bold("[Router]"))} Failed to load route ${relativePath}:`,
+        err
+      )
     }
   }
 
@@ -378,30 +422,30 @@ export async function createRouterModule(options: RouterOptions = {}) {
     for (const [modName, moduleRoutes] of routesByModule) {
       console.log(
         `${c.blue(c.bold("[Router]"))} ${c.magenta(c.bold(`[${modName}]`))}`
-      );
+      )
       for (const route of moduleRoutes) {
         console.log(
           `${c.blue(c.bold("[Router]"))}   ${colorMethod(route.method)} ${c.cyan(route.path)}`
-        );
+        )
       }
     }
 
-    const moduleCount = routesByModule.size;
-    const moduleLabel = moduleCount === 1 ? "module" : "modules";
+    const moduleCount = routesByModule.size
+    const moduleLabel = moduleCount === 1 ? "module" : "modules"
     console.log(
       `${c.blue(c.bold("[Router]"))} ${c.green("Total routes loaded:")} ${c.bold(loadedCount)} ${c.dim(`(${moduleCount} ${moduleLabel})`)}`
-    );
+    )
   }
 
-  return router;
+  return router
 }
 
-export * from "./types";
-export * from "./generator";
-export * from "./insomnium";
+export * from "./types"
+export * from "./generator"
+export * from "./insomnium"
 export {
   createRateLimiter,
   rateLimiter,
   getClientIp,
   type ClientRecord,
-} from "../plugins/rate-limiter";
+} from "../plugins/rate-limiter"

@@ -1,76 +1,12 @@
-import { createHash } from "node:crypto";
-import { Elysia } from "elysia";
-import type { Context } from "../router/types";
+import { createHash } from "node:crypto"
+import { Elysia } from "elysia"
+import type { Context } from "../router/types"
 
-export interface RateLimitConfig {
-  /**
-   * Maximum capacity of the token bucket (maximum burst allowance).
-   * @default 100
-   */
-  capacity?: number;
-
-  /**
-   * Alias for `capacity` for backwards-compatibility.
-   * @default 100
-   */
-  max?: number;
-
-  /**
-   * Time window in milliseconds to completely refill the bucket.
-   * The refill rate defaults to `capacity / (duration / 1000)` tokens per second.
-   * @default 60_000 (1 minute)
-   */
-  duration?: number;
-
-  /**
-   * Direct refill rate in tokens per second.
-   * If specified, overrides the `capacity / (duration / 1000)` calculation.
-   */
-  refillRate?: number;
-
-  /**
-   * Number of tokens consumed per request.
-   * @default 1
-   */
-  cost?: number;
-
-  /**
-   * Custom error message returned when tokens are exhausted.
-   */
-  errorMessage?: string;
-
-  /**
-   * Optional custom key generator to derive a unique rate-limit key.
-   */
-  keyGenerator?: (ctx: Context) => string;
-
-  /**
-   * Optional predicate function to skip rate limiting for specific requests.
-   */
-  skip?: (ctx: Context) => boolean;
-
-  [key: string]: unknown;
-}
-
-/**
- * Internal state record for a single token bucket in memory.
- */
-export interface TokenBucketRecord {
-  /**
-   * Current number of tokens available in the bucket (can be fractional).
-   */
-  tokens: number;
-
-  /**
-   * Epoch millisecond timestamp when the bucket was last refilled.
-   */
-  lastRefill: number;
-}
-
-/**
- * Backward-compatible alias for TokenBucketRecord.
- */
-export type ClientRecord = TokenBucketRecord;
+const DEFAULT_CAPACITY = 100
+const DEFAULT_DURATION = 60_000
+const DEFAULT_COST = 1
+const DEFAULT_IP = "127.0.0.1"
+const CLEANUP_INTERVAL_MS = 60_000
 
 /**
  * Extracts the real client IP address from incoming request headers,
@@ -80,21 +16,21 @@ export type ClientRecord = TokenBucketRecord;
  * @returns Client IP address string (defaults to '127.0.0.1' if absent)
  */
 export function getClientIp(request?: Request): string {
-  if (!request?.headers?.get) return "127.0.0.1";
+  if (!request?.headers?.get) return DEFAULT_IP
 
-  const cfIp = request.headers.get("cf-connecting-ip");
-  if (cfIp) return cfIp.trim();
+  const cfIp = request.headers.get("cf-connecting-ip")
+  if (cfIp) return cfIp.trim()
 
-  const forwardedFor = request.headers.get("x-forwarded-for");
+  const forwardedFor = request.headers.get("x-forwarded-for")
   if (forwardedFor) {
-    const firstIp = forwardedFor.split(",")[0]?.trim();
-    if (firstIp) return firstIp;
+    const firstIp = forwardedFor.split(",")[0]?.trim()
+    if (firstIp) return firstIp
   }
 
-  const realIp = request.headers.get("x-real-ip");
-  if (realIp) return realIp.trim();
+  const realIp = request.headers.get("x-real-ip")
+  if (realIp) return realIp.trim()
 
-  return "127.0.0.1";
+  return DEFAULT_IP
 }
 
 /**
@@ -108,18 +44,18 @@ export function getClientIp(request?: Request): string {
  * @returns Unique string identifying the client quota bucket
  */
 export function resolveRateLimitKey(ctx?: Context): string {
-  const request = ctx?.request;
-  const session = ctx?.session;
+  const request = ctx?.request
+  const session = ctx?.session
 
   // Priority 1: Authenticated User ID
-  const userId = session?.getUser?.()?.id ?? session?.user?.id;
+  const userId = session?.getUser?.()?.id ?? session?.user?.id
   if (userId) {
-    return `usr:${userId}`;
+    return `usr:${userId}`
   }
 
   // Priority 2: API Key (from session or headers)
   if (session?.apiKeyId) {
-    return `key:${session.apiKeyId}`;
+    return `key:${session.apiKeyId}`
   }
 
   if (request?.headers) {
@@ -128,32 +64,35 @@ export function resolveRateLimitKey(ctx?: Context): string {
       request.headers.get("apikey") ||
       (request.headers.get("authorization")?.startsWith("ApiKey ")
         ? request.headers.get("authorization")?.slice(7).trim()
-        : null);
+        : null)
 
     if (rawApiKey) {
-      const hash = createHash("sha256").update(rawApiKey.trim()).digest("hex").slice(0, 16);
-      return `key:${hash}`;
+      const hash = createHash("sha256")
+        .update(rawApiKey.trim())
+        .digest("hex")
+        .slice(0, 16)
+      return `key:${hash}`
     }
   }
 
   // Priority 3: IP + Device ID or User-Agent fingerprint
-  const ip = getClientIp(request);
+  const ip = getClientIp(request)
   const deviceId =
     request?.headers?.get("x-device-id") ||
     request?.headers?.get("device-id") ||
-    request?.headers?.get("x-client-id");
+    request?.headers?.get("x-client-id")
 
   if (deviceId) {
-    return `dev:${ip}:${deviceId.trim()}`;
+    return `dev:${ip}:${deviceId.trim()}`
   }
 
-  const userAgent = request?.headers?.get("user-agent");
+  const userAgent = request?.headers?.get("user-agent")
   if (userAgent) {
-    const uaHash = createHash("md5").update(userAgent).digest("hex").slice(0, 8);
-    return `ip:${ip}:${uaHash}`;
+    const uaHash = createHash("md5").update(userAgent).digest("hex").slice(0, 8)
+    return `ip:${ip}:${uaHash}`
   }
 
-  return `ip:${ip}`;
+  return `ip:${ip}`
 }
 
 /**
@@ -173,79 +112,84 @@ export function resolveRateLimitKey(ctx?: Context): string {
  * ```
  */
 export function createRateLimiter(config: RateLimitConfig = {}) {
-  const capacity = config.capacity ?? config.max ?? 100;
-  const duration = config.duration ?? 60_000;
-  const refillRate = config.refillRate ?? capacity / (duration / 1000);
-  const cost = config.cost ?? 1;
+  const capacity = config.capacity ?? config.max ?? DEFAULT_CAPACITY
+  const duration = config.duration ?? DEFAULT_DURATION
+  const refillRate = config.refillRate ?? capacity / (duration / 1000)
+  const cost = config.cost ?? DEFAULT_COST
 
-  const store = new Map<string, TokenBucketRecord>();
+  const store = new Map<string, TokenBucketRecord>()
 
   // Periodically clean up stale entries (idle for longer than full duration window)
   const timer = setInterval(() => {
-    const now = Date.now();
+    const now = Date.now()
     for (const [key, record] of store.entries()) {
       if (now - record.lastRefill > duration && record.tokens >= capacity) {
-        store.delete(key);
+        store.delete(key)
       }
     }
-  }, 60_000);
+  }, CLEANUP_INTERVAL_MS)
 
   if (typeof timer === "object" && timer !== null && "unref" in timer) {
-    (timer as { unref: () => void }).unref();
+    ;(timer as { unref: () => void }).unref()
   }
 
-  return (ctx: Context): { error: string; message: string; status: number } | null => {
-    const set = ctx?.set;
+  return (
+    ctx: Context
+  ): { error: string; message: string; status: number } | null => {
+    const set = ctx?.set
 
     if (config.skip && config.skip(ctx)) {
-      return null;
+      return null
     }
 
     const key = config.keyGenerator
       ? config.keyGenerator(ctx)
-      : resolveRateLimitKey(ctx);
+      : resolveRateLimitKey(ctx)
 
-    const now = Date.now();
-    let record = store.get(key);
+    const now = Date.now()
+    let record = store.get(key)
 
     if (!record) {
-      record = { tokens: capacity, lastRefill: now };
-      store.set(key, record);
+      record = { tokens: capacity, lastRefill: now }
+      store.set(key, record)
     } else {
       // Smooth token replenishment
-      const elapsedSeconds = (now - record.lastRefill) / 1000;
-      record.tokens = Math.min(capacity, record.tokens + elapsedSeconds * refillRate);
-      record.lastRefill = now;
+      const elapsedSeconds = (now - record.lastRefill) / 1000
+      record.tokens = Math.min(
+        capacity,
+        record.tokens + elapsedSeconds * refillRate
+      )
+      record.lastRefill = now
     }
 
     // Check if sufficient tokens are available
     if (record.tokens >= cost) {
-      record.tokens -= cost;
-      const remaining = Math.floor(record.tokens);
-      const resetSeconds = Math.ceil((capacity - record.tokens) / refillRate);
+      record.tokens -= cost
+      const remaining = Math.floor(record.tokens)
+      const resetSeconds = Math.ceil((capacity - record.tokens) / refillRate)
 
       if (set) {
-        if (!set.headers) set.headers = {};
-        set.headers["ratelimit-limit"] = String(capacity);
-        set.headers["ratelimit-remaining"] = String(remaining);
-        set.headers["ratelimit-reset"] = String(resetSeconds);
+        if (!set.headers) set.headers = {}
+        set.headers["ratelimit-limit"] = String(capacity)
+        set.headers["ratelimit-remaining"] = String(remaining)
+        set.headers["ratelimit-reset"] = String(resetSeconds)
       }
 
-      return null;
+      return null
     }
 
     // Tokens exhausted -> 429 Too Many Requests
-    const deficit = cost - record.tokens;
-    const retryAfter = Math.max(1, Math.ceil(deficit / refillRate));
-    const resetSeconds = Math.ceil((capacity - record.tokens) / refillRate);
+    const deficit = cost - record.tokens
+    const retryAfter = Math.max(1, Math.ceil(deficit / refillRate))
+    const resetSeconds = Math.ceil((capacity - record.tokens) / refillRate)
 
     if (set) {
-      set.status = 429;
-      if (!set.headers) set.headers = {};
-      set.headers["ratelimit-limit"] = String(capacity);
-      set.headers["ratelimit-remaining"] = "0";
-      set.headers["ratelimit-reset"] = String(resetSeconds);
-      set.headers["retry-after"] = String(retryAfter);
+      set.status = 429
+      if (!set.headers) set.headers = {}
+      set.headers["ratelimit-limit"] = String(capacity)
+      set.headers["ratelimit-remaining"] = "0"
+      set.headers["ratelimit-reset"] = String(resetSeconds)
+      set.headers["retry-after"] = String(retryAfter)
     }
 
     return {
@@ -254,8 +198,8 @@ export function createRateLimiter(config: RateLimitConfig = {}) {
         config.errorMessage ??
         `Rate limit exceeded. Try again in ${retryAfter}s.`,
       status: 429,
-    };
-  };
+    }
+  }
 }
 
 /**
@@ -279,13 +223,85 @@ export function createRateLimiter(config: RateLimitConfig = {}) {
  * ```
  */
 export function rateLimiter(options: RateLimitConfig = {}) {
-  const limiter = createRateLimiter(options);
+  const limiter = createRateLimiter(options)
 
-  return new Elysia({ name: "iris-rate-limiter" })
-    .beforeHandle("global", (ctx) => {
-      const errorResponse = limiter(ctx as unknown as Context);
+  return new Elysia({ name: "iris-rate-limiter" }).beforeHandle(
+    "global",
+    (ctx) => {
+      const errorResponse = limiter(ctx as unknown as Context)
       if (errorResponse) {
-        return errorResponse;
+        return errorResponse
       }
-    });
+    }
+  )
 }
+
+export interface RateLimitConfig {
+  /**
+   * Maximum capacity of the token bucket (maximum burst allowance).
+   * @default 100
+   */
+  capacity?: number
+
+  /**
+   * Alias for `capacity` for backwards-compatibility.
+   * @default 100
+   */
+  max?: number
+
+  /**
+   * Time window in milliseconds to completely refill the bucket.
+   * The refill rate defaults to `capacity / (duration / 1000)` tokens per second.
+   * @default 60_000 (1 minute)
+   */
+  duration?: number
+
+  /**
+   * Direct refill rate in tokens per second.
+   * If specified, overrides the `capacity / (duration / 1000)` calculation.
+   */
+  refillRate?: number
+
+  /**
+   * Number of tokens consumed per request.
+   * @default 1
+   */
+  cost?: number
+
+  /**
+   * Custom error message returned when tokens are exhausted.
+   */
+  errorMessage?: string
+
+  /**
+   * Optional custom key generator to derive a unique rate-limit key.
+   */
+  keyGenerator?: (ctx: Context) => string
+
+  /**
+   * Optional predicate function to skip rate limiting for specific requests.
+   */
+  skip?: (ctx: Context) => boolean
+
+  [key: string]: unknown
+}
+
+/**
+ * Internal state record for a single token bucket in memory.
+ */
+export interface TokenBucketRecord {
+  /**
+   * Current number of tokens available in the bucket (can be fractional).
+   */
+  tokens: number
+
+  /**
+   * Epoch millisecond timestamp when the bucket was last refilled.
+   */
+  lastRefill: number
+}
+
+/**
+ * Backward-compatible alias for TokenBucketRecord.
+ */
+export type ClientRecord = TokenBucketRecord

@@ -7,10 +7,10 @@ const isColorSupported =
   (process.platform === "win32" ||
     process.env.TERM !== "dumb" ||
     Boolean(process.env.CI) ||
-    Boolean(process.stdout?.isTTY));
+    Boolean(process.stdout?.isTTY))
 
 const format = (open: number, close: number) => (str: unknown) =>
-  isColorSupported ? `\x1b[${open}m${str}\x1b[${close}m` : String(str);
+  isColorSupported ? `\x1b[${open}m${str}\x1b[${close}m` : String(str)
 
 /**
  * ANSI escape code styling helpers for console output.
@@ -38,7 +38,7 @@ export const c = {
   bgBlue: format(44, 49),
   bgMagenta: format(45, 49),
   bgCyan: format(46, 49),
-};
+}
 
 /**
  * Returns a colorized, fixed-width ANSI badge for HTTP request methods.
@@ -47,20 +47,20 @@ export const c = {
  * @returns Colored and padded string representation
  */
 export function colorMethod(method: string): string {
-  const m = method.toUpperCase();
+  const m = method.toUpperCase()
   switch (m) {
     case "GET":
-      return c.green(c.bold(m.padEnd(7)));
+      return c.green(c.bold(m.padEnd(7)))
     case "POST":
-      return c.yellow(c.bold(m.padEnd(7)));
+      return c.yellow(c.bold(m.padEnd(7)))
     case "PUT":
-      return c.blue(c.bold(m.padEnd(7)));
+      return c.blue(c.bold(m.padEnd(7)))
     case "PATCH":
-      return c.magenta(c.bold(m.padEnd(7)));
+      return c.magenta(c.bold(m.padEnd(7)))
     case "DELETE":
-      return c.red(c.bold(m.padEnd(7)));
+      return c.red(c.bold(m.padEnd(7)))
     default:
-      return c.gray(c.bold(m.padEnd(7)));
+      return c.gray(c.bold(m.padEnd(7)))
   }
 }
 
@@ -75,20 +75,20 @@ export function colorMethod(method: string): string {
  * @returns Colorized status code string
  */
 export function colorStatus(status: number | string): string {
-  const code = Number(status) || 200;
+  const code = Number(status) || 200
   if (code >= 500) {
-    return c.red(c.bold(code));
+    return c.red(c.bold(code))
   }
   if (code >= 400) {
-    return c.yellow(c.bold(code));
+    return c.yellow(c.bold(code))
   }
   if (code >= 300) {
-    return c.cyan(code);
+    return c.cyan(code)
   }
   if (code >= 200) {
-    return c.green(c.bold(code));
+    return c.green(c.bold(code))
   }
-  return c.gray(code);
+  return c.gray(code)
 }
 
 /**
@@ -101,13 +101,12 @@ export function colorStatus(status: number | string): string {
  * @returns Formatted and colorized duration string
  */
 export function colorDuration(ms: number): string {
-  const formatted = ms < 1 ? ms.toFixed(2) : ms.toFixed(1);
+  const formatted = ms < 1 ? ms.toFixed(2) : ms.toFixed(1)
   if (ms > 200) {
-    return c.red(`(${formatted}ms)`);
+    return c.red(`(${formatted}ms)`)
   }
   if (ms > 50) {
-    return c.yellow(`(${formatted}ms)`);
+    return c.yellow(`(${formatted}ms)`)
   }
-  return c.dim(`(${formatted}ms)`);
+  return c.dim(`(${formatted}ms)`)
 }
-

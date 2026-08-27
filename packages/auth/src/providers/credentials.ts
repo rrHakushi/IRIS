@@ -106,9 +106,8 @@ export async function handleMfaVerification(
         ? JSON.parse(payload.passkeyResponse)
         : payload.passkeyResponse;
 
-    const { data, error } = await client.auth.passkey["verify-login"].post({
+    const { data, error } = await client.auth.passkeys.login.verify.post({
       passkeyResponse: passkeyJson,
-      mfaTicket: payload.mfaTicket ?? undefined,
     });
 
     if (error || !data) {
@@ -139,7 +138,7 @@ export async function handleMfaVerification(
     throw new Error("Missing required MFA verification parameters.");
   }
 
-  const { data, error } = await client.account.mfa.verify.post({
+  const { data, error } = await client.auth.email.verify.post({
     mfaTicket: payload.mfaTicket,
     mfaType: payload.mfaType as "totp" | "email" | "backup_code",
     code: payload.mfaCode,
@@ -191,7 +190,7 @@ export async function handlePasskeyOnlyLogin(
       ? JSON.parse(passkeyResponse)
       : passkeyResponse;
 
-  const { data, error } = await client.auth.passkey["verify-login"].post({
+  const { data, error } = await client.auth.passkeys.login.verify.post({
     passkeyResponse: parsed,
   });
 
@@ -236,7 +235,7 @@ export async function handleLoginCodeVerification(
     throw new Error("Invalid login code.");
   }
 
-  const { data, error } = await client.auth.code.status.get({
+  const { data, error } = await client.auth.quickconnect.status.get({
     query: {
       sessionToken: loginCode,
     },

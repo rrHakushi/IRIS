@@ -4,7 +4,27 @@
 import { Elysia } from "elysia";
 import { executeWithRequestLogs } from "../utils/request-logger";
 import { createRateLimiter } from "../plugins/rate-limiter";
-import route_0 from "../modules/IRIS-account/user/[id]/list/route";
+import route_0 from "../modules/IRIS-account/auth/backupcodes/regenerate/route";
+import route_1 from "../modules/IRIS-account/auth/email/send/route";
+import route_2 from "../modules/IRIS-account/auth/email/toggle/route";
+import route_3 from "../modules/IRIS-account/auth/email/verify/route";
+import route_4 from "../modules/IRIS-account/auth/login/route";
+import route_5 from "../modules/IRIS-account/auth/passkeys/[id]/route";
+import route_6 from "../modules/IRIS-account/auth/passkeys/login/route";
+import route_7 from "../modules/IRIS-account/auth/passkeys/login/verify/route";
+import route_8 from "../modules/IRIS-account/auth/passkeys/register/route";
+import route_9 from "../modules/IRIS-account/auth/passkeys/register/verify/route";
+import route_10 from "../modules/IRIS-account/auth/passkeys/route";
+import route_11 from "../modules/IRIS-account/auth/password/change/route";
+import route_12 from "../modules/IRIS-account/auth/password/forgot/route";
+import route_13 from "../modules/IRIS-account/auth/password/reset/route";
+import route_14 from "../modules/IRIS-account/auth/quickconnect/approve/route";
+import route_15 from "../modules/IRIS-account/auth/quickconnect/generate/route";
+import route_16 from "../modules/IRIS-account/auth/quickconnect/status/route";
+import route_17 from "../modules/IRIS-account/auth/register/route";
+import route_18 from "../modules/IRIS-account/auth/totp/setup/route";
+import route_19 from "../modules/IRIS-account/auth/totp/toggle/route";
+import route_20 from "../modules/IRIS-account/user/[id]/list/route";
 
 const routeLimiters = new Map<string, ReturnType<typeof createRateLimiter>>();
 function getRouteLimiter(key: string, config: unknown) {
@@ -22,14 +42,234 @@ export const routes = new Elysia({ name: "iris-routes" })
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
   }))
-  .get(
-    "/user/:id/list",
+  .post(
+    "/auth/backupcodes/regenerate",
     route_0.schema!,
     async (ctx) => {
-      const methodItem = (route_0 as any).GET;
+      const methodItem = (route_0 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_0 as any).rateLimits?.GET ?? (route_0 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_0_GET", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_0 as any).rateLimits?.POST ?? (route_0 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_0_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/auth/email/send",
+    route_1.schema!,
+    async (ctx) => {
+      const methodItem = (route_1 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_1 as any).rateLimits?.POST ?? (route_1 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_1_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/auth/email/toggle",
+    route_2.schema!,
+    async (ctx) => {
+      const methodItem = (route_2 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_2 as any).rateLimits?.POST ?? (route_2 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_2_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/auth/email/verify",
+    route_3.schema!,
+    async (ctx) => {
+      const methodItem = (route_3 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_3 as any).rateLimits?.POST ?? (route_3 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_3_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/auth/login",
+    route_4.schema!,
+    async (ctx) => {
+      const methodItem = (route_4 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_4 as any).rateLimits?.POST ?? (route_4 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_4_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/auth/passkeys/:id",
+    route_5.schema!,
+    async (ctx) => {
+      const methodItem = (route_5 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_5 as any).rateLimits?.DELETE ?? (route_5 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_5_DELETE", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/auth/passkeys/login",
+    route_6.schema!,
+    async (ctx) => {
+      const methodItem = (route_6 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_6 as any).rateLimits?.POST ?? (route_6 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_6_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/auth/passkeys/login/verify",
+    route_7.schema!,
+    async (ctx) => {
+      const methodItem = (route_7 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_7 as any).rateLimits?.POST ?? (route_7 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_7_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/auth/passkeys/register",
+    route_8.schema!,
+    async (ctx) => {
+      const methodItem = (route_8 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_8 as any).rateLimits?.POST ?? (route_8 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_8_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/auth/passkeys/register/verify",
+    route_9.schema!,
+    async (ctx) => {
+      const methodItem = (route_9 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_9 as any).rateLimits?.POST ?? (route_9 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_9_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/auth/passkeys",
+    route_10.schema!,
+    async (ctx) => {
+      const methodItem = (route_10 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_10 as any).rateLimits?.GET ?? (route_10 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_10_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/auth/password/change",
+    route_11.schema!,
+    async (ctx) => {
+      const methodItem = (route_11 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_11 as any).rateLimits?.POST ?? (route_11 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_11_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/auth/password/forgot",
+    route_12.schema!,
+    async (ctx) => {
+      const methodItem = (route_12 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_12 as any).rateLimits?.POST ?? (route_12 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_12_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/auth/password/reset",
+    route_13.schema!,
+    async (ctx) => {
+      const methodItem = (route_13 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_13 as any).rateLimits?.POST ?? (route_13 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_13_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/auth/quickconnect/approve",
+    route_14.schema!,
+    async (ctx) => {
+      const methodItem = (route_14 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_14 as any).rateLimits?.POST ?? (route_14 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_14_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/auth/quickconnect/generate",
+    route_15.schema!,
+    async (ctx) => {
+      const methodItem = (route_15 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_15 as any).rateLimits?.POST ?? (route_15 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_15_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/auth/quickconnect/status",
+    route_16.schema!,
+    async (ctx) => {
+      const methodItem = (route_16 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_16 as any).rateLimits?.GET ?? (route_16 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_16_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/auth/register",
+    route_17.schema!,
+    async (ctx) => {
+      const methodItem = (route_17 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_17 as any).rateLimits?.POST ?? (route_17 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_17_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/auth/totp/setup",
+    route_18.schema!,
+    async (ctx) => {
+      const methodItem = (route_18 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_18 as any).rateLimits?.POST ?? (route_18 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_18_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/auth/totp/toggle",
+    route_19.schema!,
+    async (ctx) => {
+      const methodItem = (route_19 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_19 as any).rateLimits?.POST ?? (route_19 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_19_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:id/list",
+    route_20.schema!,
+    async (ctx) => {
+      const methodItem = (route_20 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_20 as any).rateLimits?.GET ?? (route_20 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_20_GET", rateLimitConfig) : null;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   );
