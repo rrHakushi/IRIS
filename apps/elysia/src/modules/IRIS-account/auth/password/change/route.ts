@@ -6,6 +6,7 @@ import {
   encryptPrivateKey,
   generateUserKeypair,
 } from "../../../../../utils/auth-crypto";
+import { notifyPasswordChanged } from "../../../../../utils/client-info";
 
 export default defineRoute({
   schema: {
@@ -21,7 +22,7 @@ export default defineRoute({
     },
   },
 
-  async POST({ body, session, prisma }) {
+  async POST({ body, session, prisma, request }) {
     if (!session.isAuthenticated) {
       return new Response(
         JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
@@ -104,6 +105,8 @@ export default defineRoute({
         passwordChangedAt: now,
       },
     });
+
+    notifyPasswordChanged(user.id, request);
 
     return {
       success: true,

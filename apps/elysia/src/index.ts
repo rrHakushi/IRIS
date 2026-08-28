@@ -5,6 +5,8 @@ import { websocket } from "elysia/websocket"
 import { prisma } from "@IRIS/database"
 import { cache } from "./utils/cache"
 import { cors, cron, rateLimiter, session } from "./plugins"
+import { resolveSessionFromRequest } from "./plugins/session"
+import { wsHub } from "./services/websocket-hub"
 import { createRouterModule } from "./router"
 import { routes } from "./router/routes.generated"
 import { c, colorMethod, colorStatus, colorDuration } from "./utils/colors"
@@ -70,21 +72,62 @@ export const app = new Elysia()
             ? set.status
             : 200) || 200
 
+    const isWs =
+      url.pathname === "/ws" ||
+      request.headers.get("upgrade")?.toLowerCase() === "websocket"
+
     const tag = c.magenta(c.bold("[Elysia]"))
-    const method = colorMethod(request.method)
+    const method = isWs ? c.yellow(c.bold("WS     ")) : colorMethod(request.method)
     const path = c.cyan(url.pathname)
     const arrow = c.gray("->")
-    const statusColored = colorStatus(status)
-    const time = colorDuration(durationMs)
+    const statusColored = isWs ? c.green("connected") : colorStatus(status)
+    const time = isWs ? "" : ` ${colorDuration(durationMs)}`
 
     process.stdout.write(
-      `${tag} ${method} ${path} ${arrow} ${statusColored} ${time}\n`
+      `${tag} ${method} ${path} ${arrow} ${statusColored}${time}\n`
     )
 
     const logs =
       (request as unknown as { _requestLogs?: RequestLogItem[] })
         ._requestLogs || []
     printGroupedRequestLogs(logs)
+  })
+  .ws("/ws", {
+    async open(ws: any) {
+      const request = ws?.data?.request ?? ws?.raw?.request
+      const sessionUser = ws?.data?.session?.user
+      let userId = sessionUser?.id ?? ws?.data?.query?.userId ?? null
+      if (!userId && request) {
+        try {
+          const url = new URL(request.url)
+          const queryUserId = url.searchParams.get("userId")
+          if (queryUserId) {
+            userId = queryUserId
+          } else {
+            const { sessionData } = await resolveSessionFromRequest(request, prisma)
+            userId = sessionData?.user?.id ?? null
+          }
+        } catch {
+          // ignore
+        }
+      }
+      wsHub.register(ws, userId)
+      console.log(
+        `${c.magenta(c.bold("[WebSocket]"))} ${c.green("Client connected:")} user=${c.cyan(userId ?? "anonymous")}`
+      )
+      if (userId) {
+        wsHub.send(ws, "auth:success", { userId })
+      }
+    },
+    message(ws: any, message) {
+      wsHub.handleMessage(ws, message)
+    },
+    close(ws: any) {
+      console.log(
+        `${c.magenta(c.bold("[WebSocket]"))} ${c.yellow("Client disconnected")}`
+      )
+      wsHub.unregister(ws)
+    },
   })
   .use(routes)
 

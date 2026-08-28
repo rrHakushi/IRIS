@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { defineRoute, t } from "../../../../router";
 import { verifyPassword, signUserJwt } from "../../../../utils/auth-crypto";
+import { notifyUserLogin } from "../../../../utils/client-info";
 
 export default defineRoute({
   schema: {
@@ -35,7 +36,7 @@ export default defineRoute({
     },
   },
 
-  async POST({ body, prisma, cache }) {
+  async POST({ body, prisma, cache, request }) {
     const rawIdentifier = body.identifier.trim();
     const lowerIdentifier = rawIdentifier.toLowerCase();
 
@@ -110,6 +111,9 @@ export default defineRoute({
       ...user,
       username: user.username.trim(),
     });
+
+    // Send login notification asynchronously
+    notifyUserLogin(user.id, request);
 
     return {
       success: true,

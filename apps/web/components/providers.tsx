@@ -7,6 +7,9 @@ import { DirectionProvider } from "@workspace/ui/components/direction";
 import { IrisSidebarProvider } from "@/components/navigation/sidebar-provider";
 import { UserProvider } from "@/context/user-context";
 import { EncryptionProvider } from "@/context/encryption-context";
+import { WebSocketProvider } from "@/context/websocket-context";
+import { NotificationProvider } from "@/context/notification-context";
+import { Toaster } from "@/components/ui/sonner";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -17,13 +20,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
     >
       <UserProvider>
         <EncryptionProvider>
-          <DirectionProvider direction="ltr">
-            <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-              <IrisSidebarProvider>
-                {children}
-              </IrisSidebarProvider>
-            </ThemeProvider>
-          </DirectionProvider>
+          <WebSocketProvider>
+            <NotificationProvider>
+              <DirectionProvider direction="ltr">
+                <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+                  <IrisSidebarProvider>
+                    {children}
+                  </IrisSidebarProvider>
+                  <Toaster closeButton position="top-center" />
+                </ThemeProvider>
+              </DirectionProvider>
+            </NotificationProvider>
+          </WebSocketProvider>
         </EncryptionProvider>
       </UserProvider>
     </SessionProvider>

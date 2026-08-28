@@ -36,6 +36,8 @@ import {
   IrisSettingsModal,
   type IrisSettingsCategory,
 } from "./iris-settings-modal";
+import { formatBadgeNumber } from "@/lib/numbers";
+import { useNotifications } from "@/context/notification-context";
 import { useUser } from "@/context/user-context";
 import { useEncryption } from "@/context/encryption-context";
 import { useLocale } from "next-intl";
@@ -55,14 +57,13 @@ export function IrisUserMenu({
   const { data: session } = useSession();
   const { user } = useUser();
   const { isActive: isEncryptionActive } = useEncryption();
+  const { unreadCount, isModalOpen: notificationsOpen, setIsModalOpen: setNotificationsOpen } = useNotifications();
   const { theme, setTheme } = useTheme();
   const { position } = useIrisSidebar();
   const isRight = position === "right";
-  const [unreadCount, setUnreadCount] = useState(2);
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Modal open states
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [friendsOpen, setFriendsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsDefaultCategory, setSettingsDefaultCategory] =
@@ -153,7 +154,6 @@ export function IrisUserMenu({
             <DropdownMenuItem
               onAction={() => {
                 setMenuOpen(false);
-                setUnreadCount(0);
                 setNotificationsOpen(true);
               }}
             >
@@ -161,7 +161,7 @@ export function IrisUserMenu({
               <span>{t("notifications")}</span>
               {unreadCount > 0 && (
                 <Badge className="ms-auto h-4 px-1 bg-primary text-primary-foreground text-[8px] font-bold rounded-full flex items-center justify-center min-w-4">
-                  {unreadCount}
+                  {formatBadgeNumber(unreadCount, 2)}
                 </Badge>
               )}
             </DropdownMenuItem>

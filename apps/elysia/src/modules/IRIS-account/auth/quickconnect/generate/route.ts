@@ -1,11 +1,13 @@
 import { randomBytes } from "node:crypto";
 import { defineRoute, t } from "../../../../../router";
+import { sendQuickConnectInputNotification } from "../../../../../utils/client-info";
 
 export default defineRoute({
   schema: {
     body: t.Optional(
       t.Object({
         deviceName: t.Optional(t.String({ maxLength: 64 })),
+        userIdentifier: t.Optional(t.String({ minLength: 3, maxLength: 255 })),
       })
     ),
     response: {
@@ -18,7 +20,7 @@ export default defineRoute({
     },
   },
 
-  async POST({ body, cache }) {
+  async POST({ body, cache, prisma, session }) {
     // 1. Generate 8-character human-readable pairing code
     const CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     const bytes = randomBytes(8);
@@ -51,6 +53,28 @@ export default defineRoute({
         300
       ),
     ]);
+
+    // 4. Optionally dispatch an ACTION_INPUT notification to target user session
+    let targetUserId: string | null = null;
+
+    if (body?.userIdentifier) {
+      const lower = body.userIdentifier.trim().toLowerCase();
+      const targetUser = await prisma.user.findFirst({
+        where: {
+          OR: [{ email: lower }, { username: body.userIdentifier.trim() }],
+        },
+        select: { id: true },
+      });
+      if (targetUser) {
+        targetUserId = targetUser.id;
+      }
+    } else if (session?.isAuthenticated) {
+      targetUserId = session.getUser()?.id || session.user?.id || null;
+    }
+
+    if (targetUserId) {
+      await sendQuickConnectInputNotification(targetUserId, code);
+    }
 
     return {
       code,

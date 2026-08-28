@@ -18,6 +18,7 @@ model User {
     backupCodes     String[]  @default([])
     passkeys        Passkey[]
     apiKeys         ApiKey[]
+    notifications   Notification[]
 
     // ENCRYPTION KEYS
     publicKey              String?

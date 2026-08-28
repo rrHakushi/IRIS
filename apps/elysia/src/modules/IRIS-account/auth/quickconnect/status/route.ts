@@ -1,5 +1,6 @@
 import { defineRoute, t } from "../../../../../router";
 import { signUserJwt } from "../../../../../utils/auth-crypto";
+import { notifyUserLogin } from "../../../../../utils/client-info";
 
 export default defineRoute({
   schema: {
@@ -26,7 +27,7 @@ export default defineRoute({
     },
   },
 
-  async GET({ query, prisma, cache }) {
+  async GET({ query, prisma, cache, request }) {
     // 1. Inspect pairing session in cache
     const sessionData = await cache.get<{
       status: "pending" | "approved";
@@ -65,8 +66,24 @@ export default defineRoute({
       };
     }
 
-    // 3. Invalidate session token immediately to prevent reuse
-    await cache.del(`auth:quickconnect:session:${query.sessionToken}`);
+    // 3. Keep approved session record with a 30s TTL so frontend polling + NextAuth signIn can both consume it
+    // Only dispatch the sign-in notification once on the client device request
+    const isFirstTime = !(sessionData as any).notified;
+    if (isFirstTime) {
+      (sessionData as any).notified = true;
+      await cache.set(
+        `auth:quickconnect:session:${query.sessionToken}`,
+        sessionData,
+        30
+      );
+      notifyUserLogin(user.id, request);
+    } else {
+      await cache.set(
+        `auth:quickconnect:session:${query.sessionToken}`,
+        sessionData,
+        30
+      );
+    }
 
     // 4. Issue authenticated session token
     const token = await signUserJwt({

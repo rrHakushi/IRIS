@@ -1,8 +1,13 @@
 import { treaty, type Treaty } from "@elysiajs/eden";
 import type { App } from "@IRIS/elysia";
 
-export const API_URL =
+const rawApiUrl =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
+export const API_URL = rawApiUrl.replace(
+  /\$\{ELYSIA_PORT\}|\$ELYSIA_PORT/g,
+  "4000"
+);
 
 export type ElysiaClient = Treaty.Create<App>;
 

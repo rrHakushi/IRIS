@@ -1,6 +1,7 @@
 import { verifyAuthenticationResponse } from "@simplewebauthn/server";
 import { defineRoute, t } from "../../../../../../router";
 import { signUserJwt } from "../../../../../../utils/auth-crypto";
+import { notifyUserLogin } from "../../../../../../utils/client-info";
 
 export default defineRoute({
   schema: {
@@ -29,7 +30,7 @@ export default defineRoute({
     },
   },
 
-  async POST({ body, prisma, cache }) {
+  async POST({ body, prisma, cache, request }) {
     // 1. Locate passkey and user in database
     const passkey = await prisma.passkey.findUnique({
       where: { id: body.passkeyResponse.id },
@@ -140,6 +141,8 @@ export default defineRoute({
       ...passkey.user,
       username: passkey.user.username.trim(),
     });
+
+    notifyUserLogin(passkey.user.id, request);
 
     return {
       success: true,

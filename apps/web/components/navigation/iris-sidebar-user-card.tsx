@@ -4,6 +4,7 @@ import * as React from "react";
 import { IconSelector } from "@tabler/icons-react";
 import { cn } from "@workspace/ui/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@workspace/ui/components/avatar";
+import { formatBadgeNumber } from "@/lib/numbers";
 
 export interface IrisSidebarUserCardProps
   extends React.HTMLAttributes<HTMLDivElement> {
@@ -78,8 +79,8 @@ export const IrisSidebarUserCard = React.forwardRef<
             </AvatarFallback>
           </Avatar>
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground border border-background">
-              {unreadCount}
+            <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground border border-background">
+              {formatBadgeNumber(unreadCount, 2)}
             </span>
           )}
         </div>

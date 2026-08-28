@@ -6,6 +6,7 @@ import {
   verifyPassword,
   hashPassword,
 } from "../../../../../utils/auth-crypto";
+import { notifyEncryptionPasswordUpdated } from "../../../../../utils/client-info";
 
 export default defineRoute({
   GET: {
@@ -72,7 +73,7 @@ export default defineRoute({
         }),
       },
     },
-    async handler({ body, session, prisma }) {
+    async handler({ body, session, prisma, request }) {
       if (!session.isAuthenticated || !session.user) {
         return new Response(
           JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
@@ -102,9 +103,9 @@ export default defineRoute({
         select: {
           id: true,
           passwordHash: true,
+          encryptionPasswordHash: true,
           publicKey: true,
           encryptedPrivateKey: true,
-          encryptionPasswordHash: true,
         },
       });
 
@@ -115,37 +116,50 @@ export default defineRoute({
         );
       }
 
-      // 1. Verify current password
+      const isNew = !Boolean(user.encryptionPasswordHash);
+
       // If a separate encryption password is set, currentPassword must match encryptionPasswordHash.
-      // Otherwise, it must match the account passwordHash.
+      // Otherwise, currentPassword must match account passwordHash.
       if (user.encryptionPasswordHash) {
-        const isEncryptionPwdValid = await verifyPassword(
+        const isCurrentValid = await verifyPassword(
           body.currentPassword,
           user.encryptionPasswordHash
         );
-        if (!isEncryptionPwdValid) {
+        if (!isCurrentValid) {
           return new Response(
             JSON.stringify({
-              error: "BadRequest",
+              error: "Unauthorized",
               message: "Incorrect current encryption password.",
             }),
-            { status: 400, headers: { "content-type": "application/json" } }
+            { status: 401, headers: { "content-type": "application/json" } }
           );
         }
       } else {
-        const isAccountPwdValid = await verifyPassword(
+        const isCurrentValid = await verifyPassword(
           body.currentPassword,
           user.passwordHash
         );
-        if (!isAccountPwdValid) {
+        if (!isCurrentValid) {
           return new Response(
             JSON.stringify({
-              error: "BadRequest",
-              message: "Incorrect current password.",
+              error: "Unauthorized",
+              message: "Incorrect current account password.",
             }),
-            { status: 400, headers: { "content-type": "application/json" } }
+            { status: 401, headers: { "content-type": "application/json" } }
           );
         }
+      }
+
+      // 1. Envelope re-encryption of post-quantum private key with new encryption password
+      // Decrypt using provided currentPassword (which could be the previous encryption password or account password)
+      if (body.currentPassword === body.newEncryptionPassword) {
+        return new Response(
+          JSON.stringify({
+            error: "BadRequest",
+            message: "New encryption password cannot be identical to current password.",
+          }),
+          { status: 400, headers: { "content-type": "application/json" } }
+        );
       }
 
       let updatedEncryptedPrivateKey: string;
@@ -189,6 +203,8 @@ export default defineRoute({
           encryptionPasswordHash: newEncryptionPasswordHash,
         },
       });
+
+      notifyEncryptionPasswordUpdated(user.id, isNew, request);
 
       return {
         success: true,

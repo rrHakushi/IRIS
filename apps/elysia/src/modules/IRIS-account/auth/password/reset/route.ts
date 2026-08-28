@@ -1,5 +1,6 @@
 import { defineRoute, t } from "../../../../../router";
 import { hashPassword, generateUserKeypair } from "../../../../../utils/auth-crypto";
+import { notifyPasswordChanged } from "../../../../../utils/client-info";
 
 export default defineRoute({
   schema: {
@@ -15,7 +16,7 @@ export default defineRoute({
     },
   },
 
-  async POST({ body, prisma, cache }) {
+  async POST({ body, prisma, cache, request }) {
     // 1. Validate reset token from cache
     const userId = await cache.get<string>(`auth:pwd-reset:${body.token}`);
 
@@ -48,6 +49,8 @@ export default defineRoute({
 
     // 3. Invalidate token immediately
     await cache.del(`auth:pwd-reset:${body.token}`);
+
+    notifyPasswordChanged(userId, request);
 
     return {
       success: true,

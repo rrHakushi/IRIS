@@ -5,6 +5,7 @@ import {
   verifyBackupCode,
   signUserJwt,
 } from "../../../../../utils/auth-crypto";
+import { notifyUserLogin } from "../../../../../utils/client-info";
 
 export default defineRoute({
   schema: {
@@ -33,7 +34,7 @@ export default defineRoute({
     },
   },
 
-  async POST({ body, prisma, cache }) {
+  async POST({ body, prisma, cache, request }) {
     // 1. Resolve MFA session ticket
     const ticketData = await cache.get<{ userId: string }>(
       `auth:mfa-ticket:${body.mfaTicket}`
@@ -140,6 +141,8 @@ export default defineRoute({
       ...user,
       username: user.username.trim(),
     });
+
+    notifyUserLogin(user.id, request);
 
     return {
       success: true,

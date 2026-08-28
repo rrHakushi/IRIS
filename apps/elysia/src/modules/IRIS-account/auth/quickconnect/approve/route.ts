@@ -1,4 +1,5 @@
 import { defineRoute, t } from "../../../../../router";
+import { notifyUserLogin } from "../../../../../utils/client-info";
 
 export default defineRoute({
   schema: {
@@ -13,7 +14,7 @@ export default defineRoute({
     },
   },
 
-  async POST({ body, session, cache }) {
+  async POST({ body, session, cache, request }) {
     if (!session.isAuthenticated) {
       return new Response(
         JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
@@ -40,6 +41,7 @@ export default defineRoute({
     const sessionToken =
       (await cache.get<string>(`auth:quickconnect:code:${formattedCode}`)) ||
       (await cache.get<string>(`auth:quickconnect:code:${raw}`));
+
 
     if (!sessionToken) {
       return new Response(

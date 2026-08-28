@@ -327,13 +327,16 @@ export function LoginForm({ footer }: LoginFormProps) {
   /**
    * Quick-Connect Device Code Generator
    */
-  const handleGenerateQuickConnect = async () => {
+  const handleGenerateQuickConnect = async (customIdentifier?: string) => {
     setView("quickconnect");
     setLoading(true);
     setQuickConnectError(null);
 
     try {
-      const { data, error } = await elysia.auth.quickconnect.generate.post();
+      const targetIdent = (customIdentifier ?? identifier).trim() || undefined;
+      const { data, error } = await (elysia.auth.quickconnect.generate as any).post({
+        userIdentifier: targetIdent,
+      });
       if (error || !data) {
         throw new Error(t("failedGenerateCode"));
       }
@@ -363,7 +366,7 @@ export function LoginForm({ footer }: LoginFormProps) {
           loading={loading}
           onSubmit={handleCredentialsSubmit}
           onPasskeyLogin={handlePasskeyLogin}
-          onGenerateQuickConnect={handleGenerateQuickConnect}
+          onGenerateQuickConnect={() => handleGenerateQuickConnect()}
           footer={footer}
         />
       )}
@@ -373,6 +376,10 @@ export function LoginForm({ footer }: LoginFormProps) {
           code={quickConnectCode}
           loading={loading}
           errorMessage={quickConnectError}
+          initialIdentifier={identifier}
+          onSendNotification={async (targetIdent) => {
+            await handleGenerateQuickConnect(targetIdent);
+          }}
           onBack={() => {
             setView("credentials");
             setQuickConnectSessionToken(null);
