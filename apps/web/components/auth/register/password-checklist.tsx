@@ -12,24 +12,33 @@ export interface PasswordCriteria {
   special: boolean;
 }
 
+export interface PasswordRule {
+  key: keyof PasswordCriteria;
+  label: string;
+}
+
 interface PasswordChecklistProps {
   criteria: PasswordCriteria;
   strengthScore: number;
+  rules?: readonly PasswordRule[];
 }
 
 export function PasswordChecklist({
   criteria,
   strengthScore,
+  rules: customRules,
 }: PasswordChecklistProps) {
   const t = useTranslations("auth.register");
 
-  const rules = [
+  const defaultRules: readonly PasswordRule[] = [
     { key: "length", label: t("passwordMinLen") },
     { key: "maxLength", label: t("passwordMaxLen") },
     { key: "uppercase", label: t("passwordUpper") },
     { key: "number", label: t("passwordNumber") },
     { key: "special", label: t("passwordSpecial") },
-  ] as const;
+  ];
+
+  const rules = customRules || defaultRules;
 
   return (
     <div className="mt-1 flex flex-col gap-2 rounded-lg border border-border bg-muted/30 p-3 text-xs">

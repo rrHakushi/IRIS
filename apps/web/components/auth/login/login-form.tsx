@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { elysia } from "@/lib/elysia";
 import { useAuthIllustration } from "../auth-illustration-context";
+import { useEncryption } from "@/context/encryption-context";
 import { LoginCredentials } from "./login-credentials";
 import { LoginQuickConnect } from "./login-quick-connect";
 import { LoginMfa, type MfaType } from "./login-mfa";
@@ -23,6 +24,7 @@ export function LoginForm({ footer }: LoginFormProps) {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
   const { setIllustration } = useAuthIllustration();
+  const { unlockVault } = useEncryption();
 
   // Form View State
   const [view, setView] = useState<LoginView>("credentials");
@@ -195,6 +197,14 @@ export function LoginForm({ footer }: LoginFormProps) {
 
       if (res?.ok) {
         setIllustration("/images/auth/character/login-success.jpg");
+        // Automatically unlock vault if user uses account password for encryption
+        if (password) {
+          try {
+            await unlockVault(password);
+          } catch {
+            // If a separate encryption password is required, it will fail decryption and stay locked
+          }
+        }
         handleSafeRedirect();
       }
     } catch (err: any) {
@@ -228,6 +238,13 @@ export function LoginForm({ footer }: LoginFormProps) {
       }
 
       if (res?.ok) {
+        if (password) {
+          try {
+            await unlockVault(password);
+          } catch {
+            // Ignored if separate password required
+          }
+        }
         handleSafeRedirect();
       }
     } catch (err: any) {

@@ -1,5 +1,5 @@
 import { defineRoute, t } from "../../../../../router";
-import { hashPassword } from "../../../../../utils/auth-crypto";
+import { hashPassword, generateUserKeypair } from "../../../../../utils/auth-crypto";
 
 export default defineRoute({
   schema: {
@@ -29,14 +29,19 @@ export default defineRoute({
       );
     }
 
-    // 2. Hash new password and record revocation timestamp
+    // 2. Hash new password and generate fresh Post-Quantum keypair
     const newHash = await hashPassword(body.newPassword);
+    const { publicKey, encryptedPrivateKey } = await generateUserKeypair(
+      body.newPassword
+    );
     const now = new Date();
 
     await prisma.user.update({
       where: { id: userId },
       data: {
         passwordHash: newHash,
+        publicKey,
+        encryptedPrivateKey,
         passwordChangedAt: now,
       },
     });

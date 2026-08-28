@@ -20,8 +20,9 @@ model User {
     apiKeys         ApiKey[]
 
     // ENCRYPTION KEYS
-    publicKey           String?
-    encryptedPrivateKey String?
+    publicKey              String?
+    encryptedPrivateKey    String?
+    encryptionPasswordHash String?   @db.Text
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

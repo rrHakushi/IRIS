@@ -162,6 +162,7 @@
         "profile": "プロフィール",
         "info": "情報",
         "security": "セキュリティ",
+        "encryption": "暗号化",
         "apiKeys": "APIキー",
         "connections": "連携アカウント",
         "privacy": "プライバシー",
@@ -190,7 +191,8 @@
       "language": "言語",
       "selectLanguage": "言語を選択",
       "encryption": "暗号化",
-      "locked": "ロック中"
+      "locked": "ロック中",
+      "active": "アクティブ"
     }
   }
 }

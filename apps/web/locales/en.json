@@ -162,6 +162,7 @@
         "profile": "Profile",
         "info": "Info",
         "security": "Security",
+        "encryption": "Encryption",
         "apiKeys": "Api Keys",
         "connections": "Connections",
         "privacy": "Privacy",
@@ -190,7 +191,8 @@
       "language": "Language",
       "selectLanguage": "Select Language",
       "encryption": "Encryption",
-      "locked": "Locked"
+      "locked": "Locked",
+      "active": "Active"
     }
   }
 }

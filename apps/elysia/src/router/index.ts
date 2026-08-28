@@ -133,7 +133,7 @@ export async function createRouterModule(options: RouterOptions = {}) {
     options.modulesDir || path.resolve(import.meta.dirname, "../modules")
   const router = new Elysia({ name: "iris-file-router" })
 
-  const isDev = process.env.NODE_ENV === "development"
+  const isDev = process.env.NODE_ENV !== "production";
 
   // When in development mode, ensure dev account and API key exist
   let devApiKey: string | undefined

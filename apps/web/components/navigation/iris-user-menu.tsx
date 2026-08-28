@@ -24,6 +24,7 @@ import {
   IconCheck,
   IconUsers,
   IconShieldCheck,
+  IconShieldLock,
   IconLogout,
   IconLogin,
 } from "@tabler/icons-react";
@@ -31,9 +32,12 @@ import { useIrisSidebar } from "./sidebar-provider";
 import { IrisSidebarUserCard } from "./iris-sidebar-user-card";
 import { IrisNotificationsModal } from "./iris-notifications-modal";
 import { IrisFriendsModal } from "./iris-friends-modal";
-import { IrisSettingsModal } from "./iris-settings-modal";
-import { IrisEncryptionModal } from "./iris-encryption-modal";
+import {
+  IrisSettingsModal,
+  type IrisSettingsCategory,
+} from "./iris-settings-modal";
 import { useUser } from "@/context/user-context";
+import { useEncryption } from "@/context/encryption-context";
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { locales, localeNames, type Locale } from "@/i18n/routing";
@@ -50,6 +54,7 @@ export function IrisUserMenu({
   const t = useTranslations("navigation.userMenu");
   const { data: session } = useSession();
   const { user } = useUser();
+  const { isActive: isEncryptionActive } = useEncryption();
   const { theme, setTheme } = useTheme();
   const { position } = useIrisSidebar();
   const isRight = position === "right";
@@ -60,7 +65,8 @@ export function IrisUserMenu({
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [friendsOpen, setFriendsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [encryptionOpen, setEncryptionOpen] = useState(false);
+  const [settingsDefaultCategory, setSettingsDefaultCategory] =
+    useState<IrisSettingsCategory>("profile");
 
   const router = useRouter();
   const currentLocale = useLocale() as Locale;
@@ -191,6 +197,7 @@ export function IrisUserMenu({
             <DropdownMenuItem
               onAction={() => {
                 setMenuOpen(false);
+                setSettingsDefaultCategory("profile");
                 setSettingsOpen(true);
                 onOpenSettings?.();
               }}
@@ -258,14 +265,25 @@ export function IrisUserMenu({
             <DropdownMenuItem
               onAction={() => {
                 setMenuOpen(false);
-                setEncryptionOpen(true);
+                setSettingsDefaultCategory("encryption");
+                setSettingsOpen(true);
               }}
             >
-              <IconShieldCheck className="size-4 text-emerald-400" />
+              {isEncryptionActive ? (
+                <IconShieldCheck className="size-4 text-emerald-400" />
+              ) : (
+                <IconShieldLock className="size-4 text-amber-400" />
+              )}
               <span>{t("encryption")}</span>
-              <Badge className="ms-auto h-4 px-1.5 border text-[8px] font-bold rounded-full bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-                {t("locked")}
-              </Badge>
+              {isEncryptionActive ? (
+                <Badge className="ms-auto h-4 px-1.5 border text-[8px] font-bold rounded-full bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                  {t("active")}
+                </Badge>
+              ) : (
+                <Badge className="ms-auto h-4 px-1.5 border text-[8px] font-bold rounded-full bg-amber-500/10 text-amber-400 border-amber-500/20">
+                  {t("locked")}
+                </Badge>
+              )}
             </DropdownMenuItem>
           </DropdownMenuGroup>
 
@@ -309,10 +327,7 @@ export function IrisUserMenu({
       <IrisSettingsModal
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
-      />
-      <IrisEncryptionModal
-        open={encryptionOpen}
-        onOpenChange={setEncryptionOpen}
+        defaultCategory={settingsDefaultCategory}
       />
     </>
   );

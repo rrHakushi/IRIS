@@ -6,6 +6,7 @@ import { ThemeProvider } from "next-themes";
 import { DirectionProvider } from "@workspace/ui/components/direction";
 import { IrisSidebarProvider } from "@/components/navigation/sidebar-provider";
 import { UserProvider } from "@/context/user-context";
+import { EncryptionProvider } from "@/context/encryption-context";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -15,13 +16,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
       refetchWhenOffline={false}
     >
       <UserProvider>
-        <DirectionProvider direction="ltr">
-          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-            <IrisSidebarProvider>
-              {children}
-            </IrisSidebarProvider>
-          </ThemeProvider>
-        </DirectionProvider>
+        <EncryptionProvider>
+          <DirectionProvider direction="ltr">
+            <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+              <IrisSidebarProvider>
+                {children}
+              </IrisSidebarProvider>
+            </ThemeProvider>
+          </DirectionProvider>
+        </EncryptionProvider>
       </UserProvider>
     </SessionProvider>
   );

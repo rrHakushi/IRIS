@@ -8,5 +8,4 @@ export * from "./iris-sidebar-user-card";
 export * from "./iris-notifications-modal";
 export * from "./iris-friends-modal";
 export * from "./iris-settings-modal";
-export * from "./iris-encryption-modal";
 

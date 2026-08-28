@@ -13,6 +13,7 @@ import {
   IconUser,
   IconInfoCircle,
   IconShieldCheck,
+  IconLock,
   IconKey,
   IconLink,
   IconEyeCheck,
@@ -35,6 +36,7 @@ import { cn } from "@workspace/ui/lib/utils";
 import { ProfileSettingsTab } from "./settings-tabs/account/profile-tab";
 import { InfoSettingsTab } from "./settings-tabs/account/info-tab";
 import { SecuritySettingsTab } from "./settings-tabs/account/security-tab";
+import { EncryptionSettingsTab } from "./settings-tabs/account/encryption-tab";
 import { ApiKeysSettingsTab } from "./settings-tabs/account/api-keys-tab";
 import { ConnectionsSettingsTab } from "./settings-tabs/account/connections-tab";
 import { PrivacySettingsTab } from "./settings-tabs/account/privacy-tab";
@@ -60,6 +62,7 @@ export type IrisSettingsCategory =
   | "profile"
   | "info"
   | "security"
+  | "encryption"
   | "apiKeys"
   | "connections"
   | "privacy"
@@ -92,6 +95,8 @@ function renderTabContent(
       return <InfoSettingsTab onOpenChange={onOpenChange} setFooterContent={setFooterContent} />;
     case "security":
       return <SecuritySettingsTab onOpenChange={onOpenChange} setFooterContent={setFooterContent} />;
+    case "encryption":
+      return <EncryptionSettingsTab onOpenChange={onOpenChange} setFooterContent={setFooterContent} />;
     case "apiKeys":
       return <ApiKeysSettingsTab onOpenChange={onOpenChange} setFooterContent={setFooterContent} />;
     case "connections":
@@ -140,6 +145,7 @@ export function IrisSettingsModal({
       { id: "profile", name: t("tabs.profile"), icon: IconUser, group: t("groups.account") },
       { id: "info", name: t("tabs.info"), icon: IconInfoCircle, group: t("groups.account") },
       { id: "security", name: t("tabs.security"), icon: IconShieldCheck, group: t("groups.account") },
+      { id: "encryption", name: t("tabs.encryption"), icon: IconLock, group: t("groups.account") },
       { id: "apiKeys", name: t("tabs.apiKeys"), icon: IconKey, group: t("groups.account") },
       { id: "connections", name: t("tabs.connections"), icon: IconLink, group: t("groups.account") },
       { id: "privacy", name: t("tabs.privacy"), icon: IconEyeCheck, group: t("groups.account") },

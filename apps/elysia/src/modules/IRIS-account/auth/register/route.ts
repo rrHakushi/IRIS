@@ -1,7 +1,7 @@
 import { isReservedKeyword } from "@IRIS/shared";
 import { IRISFlags } from "@IRIS/permissions";
 import { defineRoute, t } from "../../../../router";
-import { hashPassword } from "../../../../utils/auth-crypto";
+import { hashPassword, generateUserKeypair } from "../../../../utils/auth-crypto";
 
 /**
  * In-memory cache tracking whether an administrator account already exists.
@@ -15,6 +15,7 @@ export default defineRoute({
       username: t.String({ minLength: 3, maxLength: 32 }),
       email: t.String({ format: "email" }),
       password: t.String({ minLength: 12, maxLength: 64 }),
+      encryptionPassword: t.Optional(t.String({ minLength: 16, maxLength: 64 })),
     }),
     response: {
       200: t.Object({
@@ -109,13 +110,32 @@ export default defineRoute({
     // 4. Secure password hash via scrypt
     const passwordHash = await hashPassword(body.password);
 
-    // 5. Persist user in database
+    // 5. Generate Post-Quantum (ML-KEM-768) keypair derived from encryption password (or account password)
+    const hasSeparatePassword = Boolean(
+      body.encryptionPassword && body.encryptionPassword.trim().length > 0
+    );
+    const effectiveEncryptionPassword = hasSeparatePassword
+      ? body.encryptionPassword!.trim()
+      : body.password;
+
+    const encryptionPasswordHash = hasSeparatePassword
+      ? await hashPassword(effectiveEncryptionPassword)
+      : null;
+
+    const { publicKey, encryptedPrivateKey } = await generateUserKeypair(
+      effectiveEncryptionPassword
+    );
+
+    // 6. Persist user in database
     const user = await prisma.user.create({
       data: {
         username: sanitizedUsername,
         email: lowerEmail,
         passwordHash,
         permissions,
+        publicKey,
+        encryptedPrivateKey,
+        encryptionPasswordHash,
       },
     });
 

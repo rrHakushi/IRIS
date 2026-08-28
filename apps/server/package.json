@@ -33,6 +33,7 @@
     "@nestjs/common": "^11.2.1",
     "@nestjs/core": "^11.2.1",
     "@nestjs/platform-express": "^11.2.1",
+    "@noble/post-quantum": "^0.7.1",
     "@prisma/adapter-pg": "^7.9.1",
     "@simplewebauthn/server": "^13.3.2",
     "concurrently": "^10.0.5",

@@ -1,5 +1,11 @@
 import { defineRoute, t } from "../../../../../router";
-import { verifyPassword, hashPassword } from "../../../../../utils/auth-crypto";
+import {
+  verifyPassword,
+  hashPassword,
+  decryptPrivateKey,
+  encryptPrivateKey,
+  generateUserKeypair,
+} from "../../../../../utils/auth-crypto";
 
 export default defineRoute({
   schema: {
@@ -58,7 +64,34 @@ export default defineRoute({
       );
     }
 
-    // 2. Hash new password and record passwordChangedAt
+    // 2. Envelope re-encryption of post-quantum private key
+    // Only re-encrypt if the user has NOT set a separate encryption password
+    let updatedEncryptedPrivateKey = user.encryptedPrivateKey;
+    let updatedPublicKey = user.publicKey;
+
+    if (!user.encryptionPasswordHash) {
+      if (user.encryptedPrivateKey) {
+        try {
+          const decryptedSecret = await decryptPrivateKey(
+            user.encryptedPrivateKey,
+            body.currentPassword
+          );
+          updatedEncryptedPrivateKey = await encryptPrivateKey(
+            decryptedSecret,
+            body.newPassword
+          );
+        } catch {
+          // If decryption fails, leave as-is
+        }
+      } else {
+        // Legacy user without encryption keys: generate fresh ML-KEM-768 keypair
+        const keypair = await generateUserKeypair(body.newPassword);
+        updatedPublicKey = keypair.publicKey;
+        updatedEncryptedPrivateKey = keypair.encryptedPrivateKey;
+      }
+    }
+
+    // 3. Hash new password and record passwordChangedAt
     const newHash = await hashPassword(body.newPassword);
     const now = new Date();
 
@@ -66,6 +99,8 @@ export default defineRoute({
       where: { id: user.id },
       data: {
         passwordHash: newHash,
+        publicKey: updatedPublicKey,
+        encryptedPrivateKey: updatedEncryptedPrivateKey,
         passwordChangedAt: now,
       },
     });

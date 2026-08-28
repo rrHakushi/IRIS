@@ -1,11 +1,9 @@
 import fs from "node:fs"
 import path from "node:path"
-import { createHash, randomBytes, scrypt } from "node:crypto"
-import { promisify } from "node:util"
+import { createHash } from "node:crypto"
 import type { prisma as PrismaType } from "@IRIS/database"
 import { c } from "./colors"
-
-const scryptAsync = promisify(scrypt)
+import { hashPassword, generateUserKeypair } from "./auth-crypto"
 
 /**
  * File path where dev credentials are saved and cached.
@@ -32,16 +30,6 @@ export const DEV_ACCOUNT_DEFAULTS = {
 } as const
 
 /**
- * Hashes password using native scrypt with a 32-byte salt,
- * matching IRIS CryptoService standard format: "saltHex:hashHex".
- */
-export async function hashPassword(password: string): Promise<string> {
-  const salt = randomBytes(32)
-  const derivedKey = (await scryptAsync(password, salt, 64)) as Buffer
-  return `${salt.toString("hex")}:${derivedKey.toString("hex")}`
-}
-
-/**
  * Structure of the cached development credentials stored in dev-account.json.
  */
 export interface DevAccountInfo {
@@ -62,14 +50,8 @@ export interface DevAccountInfo {
 }
 
 /**
- * Ensures a development user account and infinite-duration API key exist.
- *
- * Behavior:
- * 1. If `dev-account.json` already exists:
- *    Loads and returns credentials directly from disk without querying the database.
- * 2. If `dev-account.json` does NOT exist:
- *    Queries and creates the dev user and permanent API key in PostgreSQL via Prisma,
- *    then writes `dev-account.json` so future startups skip the database query entirely.
+ * Ensures a development user account and infinite-duration API key exist in the database.
+ * Always verifies that the user record and API key exist in PostgreSQL.
  *
  * @param prisma - Prisma database client instance
  * @returns Development account information, or null if database was unreachable
@@ -77,53 +59,47 @@ export interface DevAccountInfo {
 export async function ensureDevAccount(
   prisma: typeof PrismaType
 ): Promise<DevAccountInfo | null> {
-  // Check if credentials file already exists on disk
-  if (fs.existsSync(DEV_ACCOUNT_FILE)) {
-    try {
-      const content = fs.readFileSync(DEV_ACCOUNT_FILE, "utf-8")
-      const parsed = JSON.parse(content) as DevAccountInfo
-      if (parsed && parsed.apiKey && parsed.username) {
-        console.log(
-          `${c.green(c.bold("[Dev Account]"))} Loaded credentials from ${c.cyan("dev-account.json")} ${c.dim("(no DB query)")}`
-        )
-        return parsed
-      }
-    } catch (err) {
-      console.warn(
-        "[Dev Account] Could not parse existing dev-account.json, re-creating:",
-        err
-      )
-    }
-  }
-
-  // Not found on disk: create/verify in database
   try {
-    const { username, email, password, apiKey, permissions } =
-      DEV_ACCOUNT_DEFAULTS
+    const { username, email, password, apiKey, permissions } = DEV_ACCOUNT_DEFAULTS
 
-    // 1. Find or create dev user
+    // 1. Check if dev user exists in database
     let user = await prisma.user.findUnique({
       where: { username },
     })
 
     if (!user) {
       const passwordHash = await hashPassword(password)
+      const { publicKey, encryptedPrivateKey } = await generateUserKeypair(password)
       user = await prisma.user.create({
         data: {
           username,
           email,
           passwordHash,
           permissions: [...permissions],
+          publicKey,
+          encryptedPrivateKey,
         },
       })
+      console.log(
+        `${c.green(c.bold("[Dev Account]"))} Created new dev user in database: ${c.cyan(username)}`
+      )
     } else {
-      // Ensure user has admin permissions
+      // Ensure existing dev user has admin permissions and encryption keys
       const hasAdmin = user.permissions.includes(1)
-      if (!hasAdmin) {
+      const needsEncryptionKeys = !user.publicKey || !user.encryptedPrivateKey
+
+      if (!hasAdmin || needsEncryptionKeys) {
+        let keysToUpdate: { publicKey?: string; encryptedPrivateKey?: string } = {}
+        if (needsEncryptionKeys) {
+          const { publicKey, encryptedPrivateKey } = await generateUserKeypair(password)
+          keysToUpdate = { publicKey, encryptedPrivateKey }
+        }
+
         user = await prisma.user.update({
           where: { id: user.id },
           data: {
             permissions: Array.from(new Set([...user.permissions, 1])),
+            ...keysToUpdate,
           },
         })
       }
@@ -157,7 +133,7 @@ export async function ensureDevAccount(
       createdAt: new Date().toISOString(),
     }
 
-    // Save to dev-account.json so next startup avoids database queries
+    // 3. Save / update dev-account.json file on disk
     fs.writeFileSync(
       DEV_ACCOUNT_FILE,
       JSON.stringify(creds, null, 2) + "\n",
@@ -165,7 +141,7 @@ export async function ensureDevAccount(
     )
 
     console.log(
-      `${c.green(c.bold("[Dev Account]"))} Created dev account in DB and saved to ${c.cyan("dev-account.json")}`
+      `${c.green(c.bold("[Dev Account]"))} Dev account active (${c.cyan(username)} / ${c.dim(email)})`
     )
 
     return creds

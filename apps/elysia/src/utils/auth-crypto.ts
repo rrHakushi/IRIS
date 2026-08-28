@@ -8,6 +8,7 @@ import {
 } from "node:crypto";
 import { promisify } from "node:util";
 import { encode } from "next-auth/jwt";
+import { ml_kem768 } from "@noble/post-quantum/ml-kem.js";
 
 const scryptAsync = promisify(scrypt);
 
@@ -224,3 +225,81 @@ export async function signUserJwt(user: UserSessionTokenData): Promise<string> {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   });
 }
+
+/**
+ * Encrypts a post-quantum private key using AES-256-GCM with a key derived
+ * from the user's password via scrypt.
+ *
+ * Format: `${saltHex}:${ivHex}:${authTagHex}:${ciphertextHex}`
+ */
+export async function encryptPrivateKey(
+  secretKey: Uint8Array | Buffer,
+  password: string
+): Promise<string> {
+  const salt = randomBytes(16);
+  const key = (await scryptAsync(password, salt, 32)) as Buffer;
+  const iv = randomBytes(12);
+
+  const cipher = createCipheriv("aes-256-gcm", key, iv);
+  const encrypted = Buffer.concat([
+    cipher.update(Buffer.from(secretKey)),
+    cipher.final(),
+  ]);
+  const authTag = cipher.getAuthTag();
+
+  return `${salt.toString("hex")}:${iv.toString("hex")}:${authTag.toString("hex")}:${encrypted.toString("hex")}`;
+}
+
+/**
+ * Decrypts a post-quantum private key previously encrypted with `encryptPrivateKey`.
+ *
+ * @param encryptedPayload - Formatted string `saltHex:ivHex:authTagHex:ciphertextHex`.
+ * @param password - User's encryption or account password.
+ * @returns Decrypted private key as Uint8Array.
+ */
+export async function decryptPrivateKey(
+  encryptedPayload: string,
+  password: string
+): Promise<Uint8Array> {
+  const [saltHex, ivHex, authTagHex, encryptedHex] = encryptedPayload.split(":");
+  if (!saltHex || !ivHex || !authTagHex || !encryptedHex) {
+    throw new Error("Invalid encrypted private key format.");
+  }
+
+  const salt = Buffer.from(saltHex, "hex");
+  const iv = Buffer.from(ivHex, "hex");
+  const authTag = Buffer.from(authTagHex, "hex");
+  const encrypted = Buffer.from(encryptedHex, "hex");
+
+  const key = (await scryptAsync(password, salt, 32)) as Buffer;
+  const decipher = createDecipheriv("aes-256-gcm", key, iv);
+  decipher.setAuthTag(authTag);
+
+  const decrypted = Buffer.concat([
+    decipher.update(encrypted),
+    decipher.final(),
+  ]);
+
+  return new Uint8Array(decrypted);
+}
+
+/**
+ * Generates an ML-KEM-768 (NIST FIPS 203 Post-Quantum) keypair and encrypts
+ * the private key with the user's password using AES-256-GCM.
+ *
+ * @param password - Plaintext password (account password or separate encryption password).
+ * @returns Object containing public key (Base64) and encrypted private key string.
+ */
+export async function generateUserKeypair(
+  password: string
+): Promise<{ publicKey: string; encryptedPrivateKey: string }> {
+  const { publicKey, secretKey } = ml_kem768.keygen();
+  const publicKeyBase64 = Buffer.from(publicKey).toString("base64");
+  const encryptedPrivateKey = await encryptPrivateKey(secretKey, password);
+
+  return {
+    publicKey: publicKeyBase64,
+    encryptedPrivateKey,
+  };
+}
+
