@@ -1,5 +1,8 @@
 {
   "auth": {
+    "languageSelector": {
+      "selectLanguage": "言語を選択"
+    },
     "login": {
       "welcomeBack": "おかえりなさい",
       "loginToIris": "IRISアカウントにログイン",
@@ -36,7 +39,14 @@
       "backupCode": "バックアップコード",
       "invalidCredentials": "ユーザー名、メールアドレス、またはパスワードが無効です。",
       "mfaFailed": "MFA検証に失敗しました。コードを確認して再試行してください。",
-      "orContinueWith": "または他の方法で続ける"
+      "orContinueWith": "または他の方法で続ける",
+      "deviceCodeExpired": "デバイス連携コードの有効期限が切れました。新しいコードを生成してください。",
+      "failedSendEmailOtp": "メール検証コードの送信に失敗しました。",
+      "failedReachMailService": "メールサービスへの接続に失敗しました。",
+      "failedLoadPasskeyOptions": "パスキー認証オプションの読み込みに失敗しました。",
+      "passkeyCancelled": "パスキー認証がキャンセルされました。",
+      "passkeyFailed": "パスキー認証に失敗しました。",
+      "passkeyVerificationCancelled": "パスキー検証がキャンセルされました。"
     },
     "register": {
       "createCredentials": "アカウント作成",
@@ -66,6 +76,121 @@
       "signIn": "サインイン",
       "successRedirect": "登録が完了しました！ログインページへ移動中...",
       "registrationFailed": "登録に失敗しました。もう一度お試しください。"
+    }
+  },
+  "navigation": {
+    "apps": {
+      "irisList": {
+        "name": "IRIS List",
+        "description": "メディアを記録。視聴、読書、リスニングをすべて楽しむ。",
+        "descriptionShort": "メディア管理"
+      }
+    },
+    "listSidebar": {
+      "home": "ホーム",
+      "browse": "ブラウズ",
+      "rankings": "ランキング",
+      "discover": "ディスカバー",
+      "calendar": "カレンダー",
+      "library": "ライブラリ",
+      "myLists": "マイリスト",
+      "animeList": "アニメリスト",
+      "mangaList": "マンガリスト",
+      "movieList": "映画リスト",
+      "tvList": "ドラマ・TVリスト",
+      "gameList": "ゲームリスト",
+      "musicList": "音楽リスト",
+      "bookList": "書籍リスト",
+      "otherLists": "その他リスト"
+    },
+    "appMenu": {
+      "appCenter": "アプリセンター",
+      "reorganizeMenu": "メニューの並べ替え",
+      "applications": "アプリケーション",
+      "cancel": "キャンセル",
+      "done": "完了",
+      "edit": "編集",
+      "bookmarks": "ブックマーク",
+      "addBookmark": "ブックマークを追加",
+      "loginToUseBookmarks": "ブックマークを利用するにはログインしてください",
+      "noSavedBookmarks": "保存されたブックマークはありません",
+      "deleteBookmark": "ブックマークを削除"
+    },
+    "dockSettings": {
+      "title": "ナビゲーションとレイアウトの設定",
+      "description": "サイドバーの配置を設定し、モバイルドックの4つのクイックショートカットをカスタマイズします。",
+      "sidebarOrientation": "サイドバーの向き",
+      "leftDefault": "左（デフォルト）",
+      "rightMirrored": "右（ミラー）",
+      "top": "上",
+      "bottom": "下",
+      "soon": "近日公開",
+      "mobileBottomDock": "モバイルボトムドック（4クイックスロット）",
+      "slotSelected": "スロット {{slot}} 選択中",
+      "clickItemToAssign": "下の項目をクリックしてスロット {{slot}} に割り当てます:",
+      "slotBadge": "スロット {{slot}}",
+      "empty": "空",
+      "cancel": "キャンセル",
+      "saveChanges": "変更を保存"
+    },
+    "dock": {
+      "empty": "空",
+      "clearPosition": "スロット {{pos}} をクリア",
+      "toggleDrawer": "ナビゲーションドロワーの切り替え",
+      "toggleLauncher": "アプリ＆ナビゲーションランチャーの切り替え"
+    },
+    "mobileLauncher": {
+      "title": "ナビゲーションランチャー",
+      "applications": "アプリケーション",
+      "collapse": "折りたたむ",
+      "expand": "展開"
+    },
+    "settings": {
+      "title": "設定",
+      "description": "IRISの設定",
+      "close": "閉じる",
+      "closeSettings": "設定を閉じる",
+      "back": "戻る",
+      "groups": {
+        "account": "アカウント",
+        "customization": "カスタマイズ",
+        "lists": "リスト",
+        "servarr": "Servarr",
+        "email": "メール"
+      },
+      "tabs": {
+        "profile": "プロフィール",
+        "info": "情報",
+        "security": "セキュリティ",
+        "apiKeys": "APIキー",
+        "connections": "連携アカウント",
+        "privacy": "プライバシー",
+        "appearance": "外観",
+        "sidebar": "サイドバー",
+        "dock": "ドック",
+        "import": "インポート",
+        "export": "エクスポート",
+        "sonarr": "Sonarr",
+        "radarr": "Radarr",
+        "readarr": "Readarr",
+        "accounts": "アカウント設定"
+      }
+    },
+    "sidebar": {
+      "collapse": "折りたたむ",
+      "expand": "展開"
+    },
+    "userMenu": {
+      "logIn": "ログイン",
+      "logOut": "ログアウト",
+      "notifications": "通知",
+      "friends": "フレンド",
+      "appearance": "外観",
+      "settings": "設定",
+      "language": "言語",
+      "selectLanguage": "言語を選択",
+      "encryption": "暗号化",
+      "locked": "ロック中"
     }
   }
 }

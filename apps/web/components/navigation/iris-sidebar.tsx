@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { hasPermission } from "@IRIS/permissions";
 import { cn } from "@workspace/ui/lib/utils";
 import {
@@ -25,13 +26,7 @@ import {
 import { Badge } from "@workspace/ui/components/badge";
 import {
   IconChevronDown,
-  IconChevronLeft,
   IconChevronRight,
-  IconLayoutSidebar,
-  IconLayoutSidebarRight,
-  IconSettings,
-  IconSparkles,
-  IconUser,
 } from "@tabler/icons-react";
 import type {
   SidebarConfig,
@@ -39,10 +34,23 @@ import type {
   SidebarItemChild,
   SidebarSection,
 } from "@/types/sidebar-config";
+import { formatBadgeNumber } from "@/lib/numbers";
 import { useIrisSidebar } from "./sidebar-provider";
 import { IrisBottomDock } from "./iris-bottom-dock";
 import { IrisAppMenu } from "./iris-app-menu";
 import { IrisUserMenu } from "./iris-user-menu";
+
+function formatBadge(badge: string | number | undefined): string | null {
+  if (badge === undefined || badge === null || badge === "") return null;
+  if (typeof badge === "number") {
+    return formatBadgeNumber(badge, 2);
+  }
+  const numeric = Number(badge);
+  if (!isNaN(numeric) && String(badge).trim() !== "") {
+    return formatBadgeNumber(numeric, 2);
+  }
+  return String(badge);
+}
 
 export interface IrisSidebarProps
   extends Omit<React.ComponentProps<typeof Sidebar>, "children"> {
@@ -57,11 +65,15 @@ export function IrisSidebar({
   variant = "inset",
   ...props
 }: IrisSidebarProps): React.JSX.Element {
+  const t = useTranslations("navigation.sidebar");
   const { data: session } = useSession();
   const pathname = usePathname() || "/";
-  const { isMobile, setOpenMobile } = useSidebar();
-  const { sidebarConfig, position, setPosition } =
-    useIrisSidebar(initialConfig);
+  const { isMobile, setOpenMobile, state } = useSidebar();
+  const { sidebarConfig, position } = useIrisSidebar(initialConfig);
+  const activeConfig =
+    sidebarConfig && sidebarConfig.length > 0
+      ? sidebarConfig
+      : initialConfig || [];
 
   // Track expanded state of menu items with submenus
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
@@ -74,10 +86,11 @@ export function IrisSidebar({
   const userPermissions = (session?.user as any)?.permissions ?? null;
 
   const resolvedConfig = useMemo(() => {
-    return sidebarConfig
+    return activeConfig
       .filter((section: SidebarSection) => {
-        const secLower = section.section?.toLowerCase().replace(/[^a-z]/g, "");
-        if (secLower === "phone") return false;
+        const secName = section.section?.toLowerCase() || "";
+        // Exclude mobile-only dock sections (starting with #$) from desktop sidebar
+        if (secName.startsWith("#$")) return false;
         if (section.permissions && !hasPermission(userPermissions, section.permissions, "any")) {
           return false;
         }
@@ -102,7 +115,7 @@ export function IrisSidebar({
             return { ...item, children: filteredChildren };
           });
 
-        // Sort positive at top, undefined in middle, negative in footer
+        // Sort positive at top (1, 2, ...), undefined in middle (0), negative in footer (-1, -2, ...)
         const indexed = filteredItems.map((item, idx) => ({ item, idx }));
         indexed.sort((a, b) => {
           const posA = a.item.position !== undefined ? a.item.position : 0;
@@ -133,7 +146,7 @@ export function IrisSidebar({
         className={cn(className)}
         {...props}
       >
-        {/* Header: App Context Switcher & Bookmarks Dropdown */}
+        {/* Header: App Context Switcher */}
         <SidebarHeader className="p-2 border-b border-sidebar-border/60">
           <IrisAppMenu />
         </SidebarHeader>
@@ -171,6 +184,7 @@ export function IrisSidebar({
                         ? openItems[itemKey]
                         : isChildActive;
 
+                    // If item is a custom component, render it directly
                     if (item.component) {
                       return (
                         <SidebarMenuItem key={itemIdx}>
@@ -183,75 +197,96 @@ export function IrisSidebar({
                       <SidebarMenuItem key={itemIdx}>
                         {hasChildren ? (
                           <div className="flex flex-col w-full">
-                            <SidebarMenuButton
-                              isActive={isActive}
-                              tooltip={item.label}
-                              className={cn(
-                                "justify-between",
-                                isActive && "font-semibold"
-                              )}
-                              onPress={() => toggleItem(itemKey)}
-                            >
-                              <span className="flex items-center gap-2.5 min-w-0">
-                                {item.icon}
-                                <span className="truncate">{item.label}</span>
-                              </span>
-                              <span className="flex items-center gap-1.5 ms-auto">
+                            <div className="relative flex items-center w-full">
+                              <SidebarMenuButton
+                                href={item.href}
+                                isActive={isActive}
+                                tooltip={state === "collapsed" ? item.label : undefined}
+                                className={cn(
+                                  "w-full justify-between gap-2 pe-7",
+                                  isActive && "font-semibold"
+                                )}
+                                onClick={!item.href ? () => toggleItem(itemKey) : undefined}
+                              >
+                                <span className="flex items-center gap-2.5 min-w-0 flex-1">
+                                  {item.icon && <span className="shrink-0">{item.icon}</span>}
+                                  <span className="truncate">{item.label}</span>
+                                </span>
                                 {item.badge && (
                                   <Badge
                                     variant="secondary"
-                                    className="text-[10px] h-4 px-1.5"
+                                    className="text-[10px] h-4 px-1.5 shrink-0"
                                   >
-                                    {item.badge}
+                                    {formatBadge(item.badge)}
                                   </Badge>
                                 )}
+                              </SidebarMenuButton>
+
+                              {/* Dedicated Chevron button to expand/collapse */}
+                              <SidebarMenuAction
+                                showOnHover={false}
+                                className="cursor-pointer"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  toggleItem(itemKey);
+                                }}
+                                aria-label={isOpen ? t("collapse") : t("expand")}
+                              >
                                 <IconChevronDown
                                   className={cn(
-                                    "size-3.5 text-muted-foreground transition-transform duration-200",
+                                    "size-3.5 transition-transform duration-200",
                                     isOpen && "rotate-180"
                                   )}
                                 />
-                              </span>
-                            </SidebarMenuButton>
+                              </SidebarMenuAction>
+                            </div>
 
                             {isOpen && (
-                              <SidebarMenuSub className="mt-1">
+                              <SidebarMenuSub className="mt-1 ms-3.5 me-0 ps-2 pe-0 border-s border-sidebar-border/60">
                                 {item.children!.map(
                                   (
                                     child: SidebarItemChild,
                                     childIdx: number
                                   ) => {
                                     const isSubActive = pathname === child.href;
+
+                                    if (child.component) {
+                                      return (
+                                        <SidebarMenuSubItem key={childIdx}>
+                                          {child.component}
+                                        </SidebarMenuSubItem>
+                                      );
+                                    }
+
                                     return (
                                       <SidebarMenuSubItem key={childIdx}>
-                                        {child.component ? (
-                                          child.component
-                                        ) : (
-                                          <SidebarMenuSubButton
-                                            href={child.href || "#"}
-                                            isActive={isSubActive}
-                                            className={cn(
-                                              "justify-between",
-                                              isSubActive &&
-                                                "font-semibold text-primary"
+                                        <SidebarMenuSubButton
+                                          href={child.href || "#"}
+                                          isActive={isSubActive}
+                                          className={cn(
+                                            "w-full justify-between gap-2",
+                                            isSubActive &&
+                                              "font-semibold text-primary"
+                                          )}
+                                        >
+                                          <span className="flex items-center gap-2 min-w-0 flex-1">
+                                            {child.icon && (
+                                              <span className="shrink-0">{child.icon}</span>
                                             )}
-                                          >
-                                            <span className="flex items-center gap-2 min-w-0">
-                                              {child.icon}
-                                              <span className="truncate">
-                                                {child.label}
-                                              </span>
+                                            <span className="truncate">
+                                              {child.label}
                                             </span>
-                                            {child.badge && (
-                                              <Badge
-                                                variant="secondary"
-                                                className="text-[10px] h-4 px-1.5"
-                                              >
-                                                {child.badge}
-                                              </Badge>
-                                            )}
-                                          </SidebarMenuSubButton>
-                                        )}
+                                          </span>
+                                          {child.badge && (
+                                            <Badge
+                                              variant="secondary"
+                                              className="text-[10px] h-4 px-1.5 ml-auto shrink-0"
+                                            >
+                                              {formatBadge(child.badge)}
+                                            </Badge>
+                                          )}
+                                        </SidebarMenuSubButton>
                                       </SidebarMenuSubItem>
                                     );
                                   }
@@ -263,22 +298,23 @@ export function IrisSidebar({
                           <SidebarMenuButton
                             href={item.href || "#"}
                             isActive={isActive}
-                            tooltip={item.label}
+                            tooltip={state === "collapsed" ? item.label : undefined}
                             className={cn(
-                              "justify-between",
-                              isActive && "font-semibold text-primary"
+                              "w-full justify-between gap-2",
+                              isActive && "font-semibold"
                             )}
+                            onClick={item.onClick}
                           >
-                            <span className="flex items-center gap-2.5 min-w-0">
-                              {item.icon}
+                            <span className="flex items-center gap-2.5 min-w-0 flex-1">
+                              {item.icon && <span className="shrink-0">{item.icon}</span>}
                               <span className="truncate">{item.label}</span>
                             </span>
                             {item.badge && (
                               <Badge
                                 variant="secondary"
-                                className="text-[10px] h-4 px-1.5"
+                                className="text-[10px] h-4 px-1.5 ml-auto shrink-0"
                               >
-                                {item.badge}
+                                {formatBadge(item.badge)}
                               </Badge>
                             )}
                           </SidebarMenuButton>
@@ -292,14 +328,14 @@ export function IrisSidebar({
           })}
         </SidebarContent>
 
-        {/* Footer: User profile & Settings launcher */}
+        {/* Footer: Custom widgets (negative position items) & User profile */}
         <SidebarFooter className="p-2 border-t border-sidebar-border/60">
           {resolvedConfig
             .flatMap((s) => s.items)
             .filter((item) => (item.position ?? 0) < 0)
             .map((item, idx) => (
               <div key={idx} className="w-full">
-                {item.component}
+                {item.component ? item.component : null}
               </div>
             ))}
 
@@ -307,14 +343,13 @@ export function IrisSidebar({
         </SidebarFooter>
       </Sidebar>
 
-      {/* Mobile Bottom Dock (rendered only when on mobile viewport) */}
-      {isMobile && (
-        <IrisBottomDock
-          pathname={pathname}
-          navConfig={sidebarConfig}
-          setOpenMobile={setOpenMobile}
-        />
-      )}
+      {/* Mobile Bottom Dock (CSS md:hidden handles desktop vs mobile rendering) */}
+      <IrisBottomDock
+        pathname={pathname}
+        navConfig={activeConfig}
+        setOpenMobile={setOpenMobile}
+        onOpenSettings={onOpenSettings}
+      />
     </>
   );
 }

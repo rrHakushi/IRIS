@@ -1,4 +1,7 @@
 import { defineRoute, t } from "../../../../router";
+import { cache } from "../../../../utils/cache";
+
+const userCache = cache.withNamespace("users:me");
 
 export default defineRoute({
   GET: {
@@ -33,24 +36,47 @@ export default defineRoute({
         );
       }
 
-      const user = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: {
-          id: true,
-          username: true,
-          email: true,
-          customization: true,
-          settings: true,
-          permissions: true,
-          TOTPEnabled: true,
-          emailMfaEnabled: true,
-          publicKey: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      });
+      const userId = session.user.id;
+      const cachedUser = await userCache.getOrSet(
+        `user:${userId}`,
+        async () => {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+              id: true,
+              username: true,
+              email: true,
+              customization: true,
+              settings: true,
+              permissions: true,
+              TOTPEnabled: true,
+              emailMfaEnabled: true,
+              publicKey: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          });
 
-      if (!user) {
+          if (!dbUser) return null;
+
+          return {
+            id: dbUser.id,
+            username: dbUser.username.trim(),
+            email: dbUser.email,
+            customization: dbUser.customization,
+            settings: dbUser.settings,
+            permissions: dbUser.permissions,
+            TOTPEnabled: dbUser.TOTPEnabled,
+            emailMfaEnabled: dbUser.emailMfaEnabled,
+            publicKey: dbUser.publicKey,
+            createdAt: dbUser.createdAt.toISOString(),
+            updatedAt: dbUser.updatedAt.toISOString(),
+          };
+        },
+        300 // 5 minutes TTL
+      );
+
+      if (!cachedUser) {
         return new Response(
           JSON.stringify({ error: "Not Found", message: "User not found" }),
           {
@@ -62,19 +88,7 @@ export default defineRoute({
 
       return {
         success: true,
-        user: {
-          id: user.id,
-          username: user.username.trim(),
-          email: user.email,
-          customization: user.customization,
-          settings: user.settings,
-          permissions: user.permissions,
-          TOTPEnabled: user.TOTPEnabled,
-          emailMfaEnabled: user.emailMfaEnabled,
-          publicKey: user.publicKey,
-          createdAt: user.createdAt.toISOString(),
-          updatedAt: user.updatedAt.toISOString(),
-        },
+        user: cachedUser,
       };
     },
   },
@@ -143,21 +157,26 @@ export default defineRoute({
         },
       });
 
+      const formattedUser = {
+        id: updatedUser.id,
+        username: updatedUser.username.trim(),
+        email: updatedUser.email,
+        customization: updatedUser.customization,
+        settings: updatedUser.settings,
+        permissions: updatedUser.permissions,
+        TOTPEnabled: updatedUser.TOTPEnabled,
+        emailMfaEnabled: updatedUser.emailMfaEnabled,
+        publicKey: updatedUser.publicKey,
+        createdAt: updatedUser.createdAt.toISOString(),
+        updatedAt: updatedUser.updatedAt.toISOString(),
+      };
+
+      // Invalidate and update cache
+      await userCache.set(`user:${session.user.id}`, formattedUser, 300);
+
       return {
         success: true,
-        user: {
-          id: updatedUser.id,
-          username: updatedUser.username.trim(),
-          email: updatedUser.email,
-          customization: updatedUser.customization,
-          settings: updatedUser.settings,
-          permissions: updatedUser.permissions,
-          TOTPEnabled: updatedUser.TOTPEnabled,
-          emailMfaEnabled: updatedUser.emailMfaEnabled,
-          publicKey: updatedUser.publicKey,
-          createdAt: updatedUser.createdAt.toISOString(),
-          updatedAt: updatedUser.updatedAt.toISOString(),
-        },
+        user: formattedUser,
       };
     },
   },

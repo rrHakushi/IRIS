@@ -38,8 +38,8 @@ export const authOptions: NextAuthOptions = {
   },
 
   pages: {
-    signIn: "/auth/login",
-    error: "/auth/login",
+    signIn: "/IRIS-account/auth/login",
+    error: "/IRIS-account/auth/login",
   },
 
   callbacks: {

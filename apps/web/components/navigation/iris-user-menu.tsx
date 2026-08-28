@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useSession, signIn, signOut } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import {
   DropdownMenu,
   DropdownMenuGroup,
@@ -16,9 +17,11 @@ import { Button } from "@workspace/ui/components/button";
 import { Badge } from "@workspace/ui/components/badge";
 import {
   IconBell,
-  IconBookmark,
   IconSettings,
   IconPalette,
+  IconLanguage,
+  IconChevronRight,
+  IconCheck,
   IconUsers,
   IconShieldCheck,
   IconLogout,
@@ -26,155 +29,291 @@ import {
 } from "@tabler/icons-react";
 import { useIrisSidebar } from "./sidebar-provider";
 import { IrisSidebarUserCard } from "./iris-sidebar-user-card";
+import { IrisNotificationsModal } from "./iris-notifications-modal";
+import { IrisFriendsModal } from "./iris-friends-modal";
+import { IrisSettingsModal } from "./iris-settings-modal";
+import { IrisEncryptionModal } from "./iris-encryption-modal";
 import { useUser } from "@/context/user-context";
+import { useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
+import { locales, localeNames, type Locale } from "@/i18n/routing";
 
 export interface IrisUserMenuProps {
   onOpenSettings?: () => void;
+  placement?: any;
 }
 
-export function IrisUserMenu({ onOpenSettings }: IrisUserMenuProps): React.JSX.Element {
+export function IrisUserMenu({
+  onOpenSettings,
+  placement,
+}: IrisUserMenuProps): React.JSX.Element {
+  const t = useTranslations("navigation.userMenu");
   const { data: session } = useSession();
   const { user } = useUser();
   const { theme, setTheme } = useTheme();
   const { position } = useIrisSidebar();
   const isRight = position === "right";
-
   const [unreadCount, setUnreadCount] = useState(2);
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  const displayName = user?.displayName || user?.username || "IRIS Operator";
-  const userEmail = user?.email || "operator@iris.local";
-  const username = user?.username || "operator";
+  // Modal open states
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [friendsOpen, setFriendsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [encryptionOpen, setEncryptionOpen] = useState(false);
 
-  const handleAddBookmark = () => {
-    try {
-      const stored = localStorage.getItem("iris_bookmarks");
-      const current: any[] = stored ? JSON.parse(stored) : [];
-      const newBm = {
-        id: Date.now().toString(),
-        title: document.title || "New Bookmark",
-        href: window.location.pathname,
-      };
-      current.push(newBm);
-      localStorage.setItem("iris_bookmarks", JSON.stringify(current));
-    } catch {
-      // ignore
-    }
+  const router = useRouter();
+  const currentLocale = useLocale() as Locale;
+  const localeMeta = localeNames[currentLocale] ?? localeNames.en;
+
+  const displayName = user?.displayName || user?.username;
+  const userEmail = user?.email;
+  const username = user?.username;
+
+  const defaultPlacement = isRight ? "left bottom" : "right bottom";
+  const resolvedPlacement = placement ?? defaultPlacement;
+
+  const handleSelectLanguage = (nextLocale: Locale) => {
+    if (!nextLocale || nextLocale === currentLocale) return;
+    document.cookie = `NEXT_LOCALE=${nextLocale}; path=/; max-age=31536000; SameSite=Lax`;
+    router.refresh();
   };
 
-  return (
-    <DropdownMenuTrigger>
-      {/* Closed Menu Button Trigger */}
+  if (!session?.user) {
+    return (
       <Button
         variant="ghost"
-        className="h-12 w-full p-0 border-0 bg-transparent hover:bg-transparent focus-visible:ring-0 overflow-hidden cursor-pointer"
+        className="h-10 w-full justify-start gap-2.5 px-3 rounded-2xl group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center cursor-pointer"
+        onClick={() => {
+          setMenuOpen(false);
+          signIn();
+        }}
       >
-        <IrisSidebarUserCard
-          sidebarCardBackgroundUrl={user?.sidebarCardBackgroundUrl}
-          avatarUrl={user?.avatarUrl}
-          displayName={displayName}
-          username={username}
-          email={userEmail}
-          unreadCount={unreadCount}
-          showChevrons
-          className="h-full w-full border-border/40 hover:border-border/80 hover:bg-muted/50 data-[state=open]:bg-muted/80 data-[state=open]:border-border"
-        />
+        <IconLogin className="size-4 shrink-0" />
+        <span className="truncate group-data-[collapsible=icon]:hidden">{t("logIn")}</span>
       </Button>
+    );
+  }
 
-      {/* Opened Dropdown Menu */}
-      <DropdownMenu
-        placement={isRight ? "left bottom" : "right bottom"}
-        offset={6}
-        className="w-(--trigger-width) min-w-60 rounded-2xl p-1.5"
-      >
-        {/* User Card Label Header */}
-        <DropdownMenuLabel className="p-0 font-normal">
-          <Link href="/profile">
-            <IrisSidebarUserCard
-              sidebarCardBackgroundUrl={user?.sidebarCardBackgroundUrl}
-              avatarUrl={user?.avatarUrl}
-              displayName={displayName}
-              username={username}
-              email={userEmail}
-              showEmail
-              showChevrons={false}
-              className="border-border/50 hover:border-border hover:bg-muted/70 mb-1 py-2.5"
-            />
-          </Link>
-        </DropdownMenuLabel>
+  return (
+    <>
+      <DropdownMenuTrigger isOpen={menuOpen} onOpenChange={setMenuOpen}>
+        {/* Closed Menu Button Trigger */}
+        <Button
+          variant="ghost"
+          className="h-12 w-full p-0 border-0 bg-transparent hover:bg-transparent focus-visible:ring-0 overflow-hidden cursor-pointer"
+        >
+          <IrisSidebarUserCard
+            sidebarCardBackgroundUrl={user?.sidebarCardBackgroundUrl}
+            avatarUrl={user?.avatarUrl}
+            displayName={displayName}
+            username={username}
+            email={userEmail}
+            unreadCount={unreadCount}
+            showChevrons
+            className="h-full w-full border-border/40 hover:border-border/80 hover:bg-muted/50 data-[state=open]:bg-muted/80 data-[state=open]:border-border"
+          />
+        </Button>
 
-        <DropdownMenuSeparator />
+        {/* Opened Dropdown Menu */}
+        <DropdownMenu
+          placement={resolvedPlacement}
+          offset={6}
+          className="w-(--trigger-width) min-w-60 rounded-2xl p-1.5"
+        >
+          {/* User Card Label Header */}
+          <DropdownMenuLabel className="p-0 font-normal normal-case tracking-normal">
+            <Link
+              href={`/IRIS-account/users/${username}`}
+              onClick={() => setMenuOpen(false)}
+            >
+              <IrisSidebarUserCard
+                sidebarCardBackgroundUrl={user?.sidebarCardBackgroundUrl}
+                avatarUrl={user?.avatarUrl}
+                displayName={displayName}
+                username={username}
+                email={userEmail}
+                showEmail
+                showChevrons={false}
+                className="border-border/50 hover:border-border hover:bg-muted/70 mb-1 py-2.5"
+              />
+            </Link>
+          </DropdownMenuLabel>
 
-        {/* Action Group 1 */}
-        <DropdownMenuGroup>
-          <DropdownMenuItem onAction={() => setUnreadCount(0)}>
-            <IconBell className="size-4" />
-            <span>Notifications</span>
-            {unreadCount > 0 && (
-              <Badge className="ms-auto h-4 px-1 bg-primary text-primary-foreground text-[8px] font-bold rounded-full flex items-center justify-center min-w-4">
-                {unreadCount}
-              </Badge>
-            )}
-          </DropdownMenuItem>
+          <DropdownMenuSeparator />
 
-          <DropdownMenuItem onAction={handleAddBookmark}>
-            <IconBookmark className="size-4" />
-            <span>Add Bookmark</span>
-          </DropdownMenuItem>
+          {/* Action Group 1 */}
+          <DropdownMenuGroup>
+            <DropdownMenuItem
+              onAction={() => {
+                setMenuOpen(false);
+                setUnreadCount(0);
+                setNotificationsOpen(true);
+              }}
+            >
+              <IconBell className="size-4" />
+              <span>{t("notifications")}</span>
+              {unreadCount > 0 && (
+                <Badge className="ms-auto h-4 px-1 bg-primary text-primary-foreground text-[8px] font-bold rounded-full flex items-center justify-center min-w-4">
+                  {unreadCount}
+                </Badge>
+              )}
+            </DropdownMenuItem>
 
-          <DropdownMenuItem onAction={() => {}}>
-            <IconUsers className="size-4" />
-            <span>Friends</span>
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
+            <DropdownMenuItem
+              onAction={() => {
+                setMenuOpen(false);
+                setFriendsOpen(true);
+              }}
+            >
+              <IconUsers className="size-4" />
+              <span>{t("friends")}</span>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
 
-        <DropdownMenuSeparator />
+          <DropdownMenuSeparator />
 
-        {/* Action Group 2: Utilities & Settings */}
-        <DropdownMenuGroup>
-          <DropdownMenuItem
-            onAction={() => setTheme(theme === "dark" ? "light" : "dark")}
-          >
-            <IconPalette className="size-4" />
-            <span>Appearance</span>
-            <span className="ms-auto text-[10px] text-muted-foreground capitalize">
-              {theme || "dark"}
-            </span>
-          </DropdownMenuItem>
+          {/* Action Group 2: Utilities & Settings */}
+          <DropdownMenuGroup>
+            <DropdownMenuItem
+              onAction={() => {
+                setMenuOpen(false);
+                setTheme(theme === "dark" ? "light" : "dark");
+              }}
+            >
+              <IconPalette className="size-4" />
+              <span>{t("appearance")}</span>
+              <span className="ms-auto text-[10px] text-muted-foreground capitalize">
+                {theme || "dark"}
+              </span>
+            </DropdownMenuItem>
 
-          {onOpenSettings && (
-            <DropdownMenuItem onAction={onOpenSettings}>
+            <DropdownMenuItem
+              onAction={() => {
+                setMenuOpen(false);
+                setSettingsOpen(true);
+                onOpenSettings?.();
+              }}
+            >
               <IconSettings className="size-4" />
-              <span>Navigation Settings</span>
+              <span>{t("settings")}</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuTrigger>
+              <Button
+                variant="ghost"
+                className="flex w-full items-center justify-between gap-2.5 rounded-xl px-2.5 py-1.5 h-auto font-medium text-xs hover:bg-muted/80 focus:bg-muted/80 cursor-pointer border-0 bg-transparent text-inherit"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <IconLanguage className="size-4 shrink-0" />
+                  <span>{t("language")}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground ms-auto shrink-0 font-normal">
+                  <span>{localeMeta.flag}</span>
+                  <span>{localeMeta.nativeName}</span>
+                  <IconChevronRight className="size-3.5 opacity-60" />
+                </div>
+              </Button>
+
+              <DropdownMenu
+                placement={isRight ? "left top" : "right top"}
+                offset={8}
+                className="min-w-44 rounded-2xl p-1.5"
+              >
+                <DropdownMenuLabel className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  {t("selectLanguage")}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  {locales.map((loc) => {
+                    const meta = localeNames[loc];
+                    const isSelected = loc === currentLocale;
+                    return (
+                      <DropdownMenuItem
+                        key={loc}
+                        onAction={() => {
+                          handleSelectLanguage(loc);
+                          setMenuOpen(false);
+                        }}
+                        className="justify-between cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{meta.flag}</span>
+                          <span>{meta.nativeName}</span>
+                        </div>
+                        {isSelected && (
+                          <IconCheck className="size-3.5 text-primary ms-auto" />
+                        )}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuGroup>
+              </DropdownMenu>
+            </DropdownMenuTrigger>
+          </DropdownMenuGroup>
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuGroup>
+            <DropdownMenuItem
+              onAction={() => {
+                setMenuOpen(false);
+                setEncryptionOpen(true);
+              }}
+            >
+              <IconShieldCheck className="size-4 text-emerald-400" />
+              <span>{t("encryption")}</span>
+              <Badge className="ms-auto h-4 px-1.5 border text-[8px] font-bold rounded-full bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                {t("locked")}
+              </Badge>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+
+          <DropdownMenuSeparator />
+
+          {/* Sign In / Sign Out */}
+          {session ? (
+            <DropdownMenuItem
+              variant="destructive"
+              onAction={() => {
+                setMenuOpen(false);
+                signOut({ redirect: false });
+              }}
+            >
+              <IconLogout className="size-4 text-red-400" />
+              <span className="font-bold text-red-400">{t("logOut")}</span>
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem
+              onAction={() => {
+                setMenuOpen(false);
+                signIn();
+              }}
+            >
+              <IconLogin className="size-4 text-primary" />
+              <span className="font-bold text-primary">{t("logIn")}</span>
             </DropdownMenuItem>
           )}
+        </DropdownMenu>
+      </DropdownMenuTrigger>
 
-          <DropdownMenuItem onAction={() => {}}>
-            <IconShieldCheck className="size-4 text-emerald-400" />
-            <span>RBAC Security</span>
-            <Badge className="ms-auto h-4 px-1.5 border text-[8px] font-bold rounded-full bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-              Active
-            </Badge>
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-
-        <DropdownMenuSeparator />
-
-        {/* Sign In / Sign Out */}
-        {session ? (
-          <DropdownMenuItem
-            variant="destructive"
-            onAction={() => signOut({ redirect: false })}
-          >
-            <IconLogout className="size-4 text-red-400" />
-            <span className="font-bold text-red-400">Log Out</span>
-          </DropdownMenuItem>
-        ) : (
-          <DropdownMenuItem onAction={() => signIn()}>
-            <IconLogin className="size-4 text-primary" />
-            <span className="font-bold text-primary">Log In</span>
-          </DropdownMenuItem>
-        )}
-      </DropdownMenu>
-    </DropdownMenuTrigger>
+      {/* Modals triggered from User Menu */}
+      <IrisNotificationsModal
+        open={notificationsOpen}
+        onOpenChange={setNotificationsOpen}
+      />
+      <IrisFriendsModal
+        open={friendsOpen}
+        onOpenChange={setFriendsOpen}
+      />
+      <IrisSettingsModal
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+      />
+      <IrisEncryptionModal
+        open={encryptionOpen}
+        onOpenChange={setEncryptionOpen}
+      />
+    </>
   );
 }

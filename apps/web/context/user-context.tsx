@@ -6,7 +6,6 @@ import React, {
   useEffect,
   useState,
   useCallback,
-  useRef,
 } from "react";
 import { useSession } from "next-auth/react";
 import { elysia } from "@/lib/elysia";
@@ -15,17 +14,18 @@ export interface FullUser {
   id: string;
   username: string;
   email: string;
-  displayName: string;
-  avatarUrl: string | null;
-  sidebarCardBackgroundUrl: string | null;
-  customization?: Record<string, unknown> | null;
-  settings?: Record<string, unknown> | null;
-  permissions: number[];
+  displayName?: string;
+  avatarUrl?: string | null;
+  sidebarCardBackgroundUrl?: string | null;
+  customization?: Record<string, any> | null;
+  settings?: Record<string, any> | null;
+  permissions?: number[];
   TOTPEnabled?: boolean;
   emailMfaEnabled?: boolean;
   publicKey?: string | null;
   createdAt?: string;
   updatedAt?: string;
+  [key: string]: any;
 }
 
 interface UserContextValue {
@@ -47,130 +47,92 @@ const UserContext = createContext<UserContextValue>({
   updateUser: async () => null,
 });
 
+// In-memory cache across route changes
+let cachedUser: FullUser | null = null;
+let inFlightPromise: Promise<FullUser | null> | null = null;
+
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const { data: session, status } = useSession();
-  const [user, setUser] = useState<FullUser | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { status } = useSession();
+  const [user, setUser] = useState<FullUser | null>(cachedUser);
+  const [isLoading, setIsLoading] = useState<boolean>(
+    !cachedUser && status === "authenticated"
+  );
   const [error, setError] = useState<string | null>(null);
-
-  // In-flight request deduplication and user cache tracker
-  const inFlightPromiseRef = useRef<Promise<FullUser | null> | null>(null);
-  const lastFetchedUserIdRef = useRef<string | null>(null);
-
-  const sessionId = (session?.user as Record<string, unknown> | undefined)?.id as
-    | string
-    | undefined;
 
   const fetchUser = useCallback(
     async (force = false): Promise<FullUser | null> => {
-      if (status !== "authenticated" || !sessionId) {
+      if (status !== "authenticated") {
         if (status === "unauthenticated") {
+          cachedUser = null;
           setUser(null);
-          lastFetchedUserIdRef.current = null;
         }
         setIsLoading(false);
         return null;
       }
 
-      // Return immediately if already fetched and not forced
-      if (!force && lastFetchedUserIdRef.current === sessionId && user) {
-        return user;
+      if (!force && cachedUser) {
+        return cachedUser;
       }
 
-      // Deduplicate concurrent requests
-      if (inFlightPromiseRef.current) {
-        return inFlightPromiseRef.current;
+      if (inFlightPromise) {
+        return inFlightPromise;
       }
 
       setIsLoading(true);
       setError(null);
 
-      const promise = (async () => {
+      inFlightPromise = (async () => {
         try {
-          // Use Elysia Eden Treaty client to fetch from /users/me
           const { data, error: apiError } = await (elysia as any).users.me.get({
             fetch: { credentials: "include" },
           });
 
           if (apiError || !data?.user) {
             throw new Error(
-              (apiError as any)?.value?.message || "Failed to fetch user from Elysia"
+              (apiError as any)?.value?.message || "Failed to fetch user"
             );
           }
 
           const userData = data.user;
           const customization =
-            (userData.customization as Record<string, unknown> | null) || {};
+            (userData.customization as Record<string, any>) || {};
 
           const fullUser: FullUser = {
-            id: userData.id,
-            username: userData.username,
-            email: userData.email,
-            displayName:
-              (customization.displayName as string | undefined) ||
-              userData.username,
-            avatarUrl: (customization.avatarUrl as string | undefined) || null,
+            ...userData,
+            displayName: customization.displayName || userData.username,
+            avatarUrl: customization.avatarUrl || null,
             sidebarCardBackgroundUrl:
-              (customization.sidebarCardBackgroundUrl as string | undefined) ||
-              null,
-            customization: userData.customization,
-            settings: userData.settings,
-            permissions: userData.permissions || [],
-            TOTPEnabled: userData.TOTPEnabled,
-            emailMfaEnabled: userData.emailMfaEnabled,
-            publicKey: userData.publicKey,
-            createdAt: userData.createdAt,
-            updatedAt: userData.updatedAt,
+              customization.sidebarCardBackgroundUrl || null,
           };
 
-          lastFetchedUserIdRef.current = sessionId;
+          cachedUser = fullUser;
           setUser(fullUser);
           return fullUser;
         } catch (err: unknown) {
           const msg = err instanceof Error ? err.message : "Error fetching user";
           setError(msg);
-
-          // Graceful fallback to session data
-          if (session?.user) {
-            const sUser = session.user as unknown as Record<string, unknown>;
-            const fallbackUser: FullUser = {
-              id: (sUser.id as string) || "operator",
-              username:
-                (sUser.username as string) || (sUser.name as string) || "operator",
-              email: (sUser.email as string) || "operator@iris.local",
-              displayName:
-                (sUser.displayName as string) ||
-                (sUser.name as string) ||
-                (sUser.username as string) ||
-                "IRIS Operator",
-              avatarUrl: (sUser.avatarUrl as string) || null,
-              sidebarCardBackgroundUrl:
-                (sUser.sidebarCardBackgroundUrl as string) || null,
-              permissions: (sUser.permissions as number[]) || [],
-            };
-            setUser(fallbackUser);
-            return fallbackUser;
-          }
           return null;
         } finally {
           setIsLoading(false);
-          inFlightPromiseRef.current = null;
+          inFlightPromise = null;
         }
       })();
 
-      inFlightPromiseRef.current = promise;
-      return promise;
+      return inFlightPromise;
     },
-    [status, sessionId, user, session?.user]
+    [status]
   );
 
   useEffect(() => {
-    if (status === "authenticated" && sessionId) {
-      if (lastFetchedUserIdRef.current !== sessionId) {
+    if (status === "authenticated") {
+      if (!cachedUser) {
         fetchUser();
       }
+    } else if (status === "unauthenticated") {
+      cachedUser = null;
+      setUser(null);
     }
-  }, [status, sessionId, fetchUser]);
+  }, [status, fetchUser]);
 
   const updateUser = async (data: {
     customization?: Record<string, unknown>;
@@ -191,33 +153,21 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
       const userData = resData.user;
       const customization =
-        (userData.customization as Record<string, unknown> | null) || {};
+        (userData.customization as Record<string, any>) || {};
 
       const updatedFullUser: FullUser = {
-        id: userData.id,
-        username: userData.username,
-        email: userData.email,
-        displayName:
-          (customization.displayName as string | undefined) ||
-          userData.username,
-        avatarUrl: (customization.avatarUrl as string | undefined) || null,
+        ...userData,
+        displayName: customization.displayName || userData.username,
+        avatarUrl: customization.avatarUrl || null,
         sidebarCardBackgroundUrl:
-          (customization.sidebarCardBackgroundUrl as string | undefined) ||
-          null,
-        customization: userData.customization,
-        settings: userData.settings,
-        permissions: userData.permissions || [],
-        TOTPEnabled: userData.TOTPEnabled,
-        emailMfaEnabled: userData.emailMfaEnabled,
-        publicKey: userData.publicKey,
-        createdAt: userData.createdAt,
-        updatedAt: userData.updatedAt,
+          customization.sidebarCardBackgroundUrl || null,
       };
 
+      cachedUser = updatedFullUser;
       setUser(updatedFullUser);
       return updatedFullUser;
     } catch (err: unknown) {
-      console.error("Failed to update user settings:", err);
+      console.error("Failed to update user:", err);
     }
     return null;
   };

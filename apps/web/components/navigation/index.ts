@@ -5,4 +5,8 @@ export * from "./iris-dock-settings-modal";
 export * from "./iris-app-menu";
 export * from "./iris-user-menu";
 export * from "./iris-sidebar-user-card";
-export * from "./default-sidebar-config";
+export * from "./iris-notifications-modal";
+export * from "./iris-friends-modal";
+export * from "./iris-settings-modal";
+export * from "./iris-encryption-modal";
+

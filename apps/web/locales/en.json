@@ -1,5 +1,8 @@
 {
   "auth": {
+    "languageSelector": {
+      "selectLanguage": "Select Language"
+    },
     "login": {
       "welcomeBack": "Welcome back",
       "loginToIris": "Log in to your IRIS account",
@@ -36,7 +39,14 @@
       "backupCode": "Backup Code",
       "invalidCredentials": "Invalid username, email, or password.",
       "mfaFailed": "MFA verification failed. Please check the code and try again.",
-      "orContinueWith": "Or continue with"
+      "orContinueWith": "Or continue with",
+      "deviceCodeExpired": "Device link code expired. Please generate a new code.",
+      "failedSendEmailOtp": "Failed to send email verification code.",
+      "failedReachMailService": "Failed to reach mail service.",
+      "failedLoadPasskeyOptions": "Failed to load passkey authentication options.",
+      "passkeyCancelled": "Passkey authentication was cancelled.",
+      "passkeyFailed": "Passkey authentication failed.",
+      "passkeyVerificationCancelled": "Passkey verification cancelled."
     },
     "register": {
       "createCredentials": "Create Account",
@@ -66,6 +76,121 @@
       "signIn": "Sign In",
       "successRedirect": "Registration successful! Redirecting to login...",
       "registrationFailed": "Registration failed. Please try again."
+    }
+  },
+  "navigation": {
+    "apps": {
+      "irisList": {
+        "name": "IRIS List",
+        "description": "Track your media. Watch, read, listen, and enjoy.",
+        "descriptionShort": "Media tracking."
+      }
+    },
+    "listSidebar": {
+      "home": "Home",
+      "browse": "Browse",
+      "rankings": "Rankings",
+      "discover": "Discover",
+      "calendar": "Calendar",
+      "library": "Library",
+      "myLists": "My Lists",
+      "animeList": "Anime List",
+      "mangaList": "Manga List",
+      "movieList": "Movie List",
+      "tvList": "TV List",
+      "gameList": "Game List",
+      "musicList": "Music List",
+      "bookList": "Book List",
+      "otherLists": "Other Lists"
+    },
+    "appMenu": {
+      "appCenter": "App Center",
+      "reorganizeMenu": "Reorganize Menu",
+      "applications": "Applications",
+      "cancel": "Cancel",
+      "done": "Done",
+      "edit": "Edit",
+      "bookmarks": "Bookmarks",
+      "addBookmark": "Add bookmark",
+      "loginToUseBookmarks": "Log in to use bookmarks",
+      "noSavedBookmarks": "No saved bookmarks",
+      "deleteBookmark": "Delete bookmark"
+    },
+    "dockSettings": {
+      "title": "Navigation & Layout Settings",
+      "description": "Configure sidebar alignment and customize your 4 mobile dock quick shortcuts.",
+      "sidebarOrientation": "Sidebar Orientation",
+      "leftDefault": "Left (Default)",
+      "rightMirrored": "Right (Mirrored)",
+      "top": "Top",
+      "bottom": "Bottom",
+      "soon": "Soon",
+      "mobileBottomDock": "Mobile Bottom Dock (4 Quick Slots)",
+      "slotSelected": "Slot {{slot}} selected",
+      "clickItemToAssign": "Click an item below to assign it to Slot {{slot}}:",
+      "slotBadge": "Slot {{slot}}",
+      "empty": "Empty",
+      "cancel": "Cancel",
+      "saveChanges": "Save Changes"
+    },
+    "dock": {
+      "empty": "Empty",
+      "clearPosition": "Clear position {{pos}}",
+      "toggleDrawer": "Toggle Navigation Drawer",
+      "toggleLauncher": "Toggle App & Navigation Launcher"
+    },
+    "mobileLauncher": {
+      "title": "Navigation Launcher",
+      "applications": "Applications",
+      "collapse": "Collapse",
+      "expand": "Expand"
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "IRIS settings",
+      "close": "Close",
+      "closeSettings": "Close Settings",
+      "back": "Back",
+      "groups": {
+        "account": "Account",
+        "customization": "Customization",
+        "lists": "Lists",
+        "servarr": "Servarr",
+        "email": "Email"
+      },
+      "tabs": {
+        "profile": "Profile",
+        "info": "Info",
+        "security": "Security",
+        "apiKeys": "Api Keys",
+        "connections": "Connections",
+        "privacy": "Privacy",
+        "appearance": "Appearance",
+        "sidebar": "Sidebar",
+        "dock": "Dock",
+        "import": "Import",
+        "export": "Export",
+        "sonarr": "Sonarr",
+        "radarr": "Radarr",
+        "readarr": "Readarr",
+        "accounts": "Accounts"
+      }
+    },
+    "sidebar": {
+      "collapse": "Collapse",
+      "expand": "Expand"
+    },
+    "userMenu": {
+      "logIn": "Log In",
+      "logOut": "Log Out",
+      "notifications": "Notifications",
+      "friends": "Friends",
+      "appearance": "Appearance",
+      "settings": "Settings",
+      "language": "Language",
+      "selectLanguage": "Select Language",
+      "encryption": "Encryption",
+      "locked": "Locked"
     }
   }
 }

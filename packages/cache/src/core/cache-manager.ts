@@ -112,12 +112,12 @@ export class CacheManager extends EventEmitter {
     this.options = resolveCacheOptions(options);
     this.serializer = serializer;
 
-    if (this.options.logger === true) {
+    if (this.options.logger === true || (this.options.logger === undefined && process.env['NODE_ENV'] !== 'production')) {
       this.logger = {
-        debug: (msg, ...args) => console.debug('[IRIS:Cache]', msg, ...args),
-        info: (msg, ...args) => console.info('[IRIS:Cache]', msg, ...args),
-        warn: (msg, ...args) => console.warn('[IRIS:Cache]', msg, ...args),
-        error: (msg, ...args) => console.error('[IRIS:Cache]', msg, ...args),
+        debug: (msg, ...args) => console.log('\x1b[36m[IRIS:Cache]\x1b[0m', msg, ...args),
+        info: (msg, ...args) => console.log('\x1b[32m[IRIS:Cache]\x1b[0m', msg, ...args),
+        warn: (msg, ...args) => console.warn('\x1b[33m[IRIS:Cache]\x1b[0m', msg, ...args),
+        error: (msg, ...args) => console.error('\x1b[31m[IRIS:Cache]\x1b[0m', msg, ...args),
       };
     } else if (this.options.logger) {
       this.logger = this.options.logger;
@@ -133,27 +133,35 @@ export class CacheManager extends EventEmitter {
     this.memoryStore = new MemoryStore(this.options.memory);
 
     // Initialize Redis store
-    this.redisStore = new RedisStore(
-      this.options.redis,
-      {
-        onReady: () => this.handleRedisReady(),
-        onError: (err) => this.handleRedisError(err),
-        onClose: () => this.handleRedisClose(),
-        onReconnect: () => this.handleRedisReconnect(),
-      },
-      this.serializer,
-    );
+    if (this.options.redis?.url || this.options.redis?.host) {
+      this.redisStore = new RedisStore(
+        this.options.redis,
+        {
+          onReady: () => this.handleRedisReady(),
+          onError: (err) => this.handleRedisError(err),
+          onClose: () => this.handleRedisClose(),
+          onReconnect: () => this.handleRedisReconnect(),
+        },
+        this.serializer,
+      );
 
-    // Initial connection attempt
-    this.redisStore.connect().catch((err: Error) => {
-      this.handleRedisError(err);
-    });
+      // Initial connection attempt
+      this.redisStore.connect().catch((err: Error) => {
+        this.handleRedisError(err);
+      });
+    } else {
+      this._status = 'memory';
+      this.logger?.info?.('\x1b[32m[INIT]\x1b[0m Operating on in-memory LRU cache (Redis unconfigured).');
+    }
   }
 
   /**
    * Current operational status of the cache manager ('redis' | 'memory' | 'connecting' | 'error').
    */
   public get status(): CacheStatus {
+    if (this.redisStore && this.redisStore.ready) {
+      return 'redis';
+    }
     return this._status;
   }
 
@@ -189,14 +197,14 @@ export class CacheManager extends EventEmitter {
    * Name of the currently active store ('redis' or 'memory').
    */
   public get activeStoreName(): 'redis' | 'memory' {
-    return this._status === 'redis' ? 'redis' : 'memory';
+    return this.redisStore && this.redisStore.ready ? 'redis' : 'memory';
   }
 
   /**
    * Returns the active store instance based on current connection state.
    */
   private get activeStore(): ICacheStore {
-    if (this._status === 'redis' && this.redisStore && this.redisStore.ready) {
+    if (this.redisStore && this.redisStore.ready) {
       return this.redisStore;
     }
     return this.memoryStore;
@@ -209,7 +217,8 @@ export class CacheManager extends EventEmitter {
     if (this.isClosed) return;
     const previousStatus = this._status;
     this._status = 'redis';
-    this.logger?.info?.('Redis connection established and ready.');
+    const target = this.options.redis.url || `${this.options.redis.host || '127.0.0.1'}:${this.options.redis.port || 6379}`;
+    this.logger?.info?.(`\x1b[32m[CONNECTED]\x1b[0m Redis cache connected and ready (${target})`);
 
     if (previousStatus === 'memory' || previousStatus === 'error') {
       this.emit('reconnect');
@@ -223,7 +232,7 @@ export class CacheManager extends EventEmitter {
   private handleRedisReconnect(): void {
     if (this.isClosed) return;
     this._status = 'connecting';
-    this.logger?.warn?.('Redis reconnecting...');
+    this.logger?.warn?.('\x1b[33m[RECONNECTING]\x1b[0m Redis reconnecting...');
   }
 
   /**
@@ -232,7 +241,6 @@ export class CacheManager extends EventEmitter {
    */
   private handleRedisError(err: Error): void {
     if (this.isClosed) return;
-    this.logger?.warn?.(`Redis encountered error: ${err.message}.`);
     if (this.listenerCount('error') > 0) {
       this.emit('error', err);
     }
@@ -240,11 +248,12 @@ export class CacheManager extends EventEmitter {
     if (this.options.fallbackToMemory) {
       if (this._status !== 'memory') {
         this._status = 'memory';
-        this.logger?.warn?.('Fell back to local in-memory LRU cache.');
+        this.logger?.warn?.(`\x1b[33m[FALLBACK]\x1b[0m Redis unavailable (${err.message}). Switched to local in-memory LRU cache.`);
         this.emit('fallback', err);
       }
     } else {
       this._status = 'error';
+      this.logger?.error?.(`\x1b[31m[ERROR]\x1b[0m Redis connection error:`, err);
     }
   }
 
@@ -255,7 +264,7 @@ export class CacheManager extends EventEmitter {
     if (this.isClosed) return;
     if (this.options.fallbackToMemory && this._status !== 'memory') {
       this._status = 'memory';
-      this.logger?.warn?.('Redis closed. Switched to local in-memory LRU cache.');
+      this.logger?.warn?.('\x1b[33m[FALLBACK]\x1b[0m Redis closed. Switched to local in-memory LRU cache.');
       this.emit('fallback', new CacheError('Redis connection closed'));
     }
   }
@@ -310,7 +319,15 @@ export class CacheManager extends EventEmitter {
    */
   public async get<T = SerializableValue>(key: string): Promise<T | null> {
     const fullKey = this.prefixKey(key);
-    return this.executeWithFallback((store) => store.get<T>(fullKey));
+    const result = await this.executeWithFallback((store) => store.get<T>(fullKey));
+    if (this.logger) {
+      if (result !== null && result !== undefined) {
+        this.logger.debug?.(`\x1b[32m[GET:HIT]\x1b[0m key="${fullKey}" (store=${this.activeStoreName})`);
+      } else {
+        this.logger.debug?.(`\x1b[33m[GET:MISS]\x1b[0m key="${fullKey}" (store=${this.activeStoreName})`);
+      }
+    }
+    return result;
   }
 
   /**
@@ -332,7 +349,10 @@ export class CacheManager extends EventEmitter {
     ttlSeconds: number = this.options.defaultTtlSeconds,
   ): Promise<void> {
     const fullKey = this.prefixKey(key);
-    return this.executeWithFallback((store) => store.set<T>(fullKey, value, ttlSeconds));
+    await this.executeWithFallback((store) => store.set<T>(fullKey, value, ttlSeconds));
+    if (this.logger) {
+      this.logger.debug?.(`\x1b[35m[SET]\x1b[0m key="${fullKey}" ttl=${ttlSeconds}s (store=${this.activeStoreName})`);
+    }
   }
 
   /**
@@ -351,7 +371,12 @@ export class CacheManager extends EventEmitter {
     const keys = Array.isArray(key)
       ? key.map((k) => this.prefixKey(k))
       : this.prefixKey(key);
-    return this.executeWithFallback((store) => store.del(keys));
+    const count = await this.executeWithFallback((store) => store.del(keys));
+    if (this.logger) {
+      const keysStr = Array.isArray(keys) ? keys.join(', ') : keys;
+      this.logger.debug?.(`\x1b[31m[DEL]\x1b[0m key="${keysStr}" deleted=${count} (store=${this.activeStoreName})`);
+    }
+    return count;
   }
 
   /**
@@ -399,6 +424,10 @@ export class CacheManager extends EventEmitter {
     }
 
     const fullKey = this.prefixKey(key);
+    if (this.logger) {
+      this.logger.debug?.(`\x1b[34m[GET_OR_SET:FETCHING]\x1b[0m key="${fullKey}" executing factory query... (store=${this.activeStoreName})`);
+    }
+
     const existingInFlight = this.inFlightPromises.get(fullKey);
     if (existingInFlight) {
       return (await existingInFlight) as T;
@@ -407,7 +436,7 @@ export class CacheManager extends EventEmitter {
     const promise = (async (): Promise<SerializableValue> => {
       try {
         const freshValue = await factory();
-        if (freshValue !== undefined) {
+        if (freshValue !== undefined && freshValue !== null) {
           await this.set<T>(key, freshValue, ttlSeconds);
         }
         return freshValue as SerializableValue;
@@ -480,7 +509,10 @@ export class CacheManager extends EventEmitter {
       : this.options.keyPrefix
         ? `${this.options.keyPrefix}*`
         : '*';
-    return this.executeWithFallback((store) => store.clear(fullPattern));
+    await this.executeWithFallback((store) => store.clear(fullPattern));
+    if (this.logger) {
+      this.logger.debug?.(`\x1b[31m[CLEAR]\x1b[0m pattern="${fullPattern}" (store=${this.activeStoreName})`);
+    }
   }
 
   /**
@@ -501,6 +533,7 @@ export class CacheManager extends EventEmitter {
       {
         ...this.options,
         keyPrefix: combinedPrefix,
+        logger: this.options.logger,
       },
       this.serializer,
       {

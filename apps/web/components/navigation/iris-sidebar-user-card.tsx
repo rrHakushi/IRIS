@@ -39,7 +39,7 @@ export const IrisSidebarUserCard = React.forwardRef<
     },
     ref
   ) => {
-    const nameToShow = displayName || username || "Operator";
+    const nameToShow = displayName || username || "I"
     const initial = nameToShow.charAt(0).toUpperCase();
 
     return (
@@ -47,7 +47,7 @@ export const IrisSidebarUserCard = React.forwardRef<
         ref={ref}
         {...props}
         className={cn(
-          "relative flex items-center gap-3 px-3 py-2 rounded-xl border border-border/50 bg-card/60 backdrop-blur-xl overflow-hidden transition-all duration-300 isolate select-none",
+          "relative flex items-center gap-3 px-3 py-2 rounded-xl border border-border/50 bg-card/60 backdrop-blur-xl overflow-hidden transition-all duration-300 isolate select-none normal-case",
           className
         )}
       >

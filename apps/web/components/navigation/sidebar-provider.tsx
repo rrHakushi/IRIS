@@ -1,13 +1,15 @@
 "use client";
 
-import {
+import React, {
   createContext,
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
+import { SidebarProvider as BaseSidebarProvider } from "@workspace/ui/components/sidebar";
 import type {
   SidebarConfig,
   SidebarItem,
@@ -18,7 +20,7 @@ import type {
 
 const POSITION_STORAGE_KEY = "iris-sidebar-position";
 
-interface SidebarContextType {
+export interface SidebarContextType {
   sidebarConfig: SidebarConfig;
   setSidebarConfig: (
     config: SidebarConfig | ((prev: SidebarConfig) => SidebarConfig)
@@ -71,7 +73,8 @@ export const SidebarNavigationContext = createContext<
   SidebarContextType | undefined
 >(undefined);
 
-export interface IrisSidebarProviderProps {
+export interface IrisSidebarProviderProps
+  extends React.ComponentProps<typeof BaseSidebarProvider> {
   children: ReactNode;
   initialConfig?: SidebarConfig;
   defaultPosition?: SidebarPosition;
@@ -81,6 +84,8 @@ export function IrisSidebarProvider({
   children,
   initialConfig = [],
   defaultPosition = "left",
+  defaultOpen = true,
+  ...sidebarProps
 }: IrisSidebarProviderProps) {
   const [sidebarConfig, setSidebarConfig] =
     useState<SidebarConfig>(initialConfig);
@@ -95,7 +100,7 @@ export function IrisSidebarProvider({
         setPositionState(stored);
       }
     } catch {
-      // ignore storage access errors in restricted envs
+      // ignore storage access errors
     }
   }, []);
 
@@ -111,7 +116,7 @@ export function IrisSidebarProvider({
     }
   }, []);
 
-  // Listen for position changes across tabs / components
+  // Listen for position changes across components
   useEffect(() => {
     const handlePosEvent = (e: Event) => {
       const customEvent = e as CustomEvent<SidebarPosition>;
@@ -311,27 +316,47 @@ export function IrisSidebarProvider({
     []
   );
 
+  const contextValue = useMemo(
+    () => ({
+      sidebarConfig,
+      setSidebarConfig,
+      position,
+      setPosition,
+      getSection,
+      getItem,
+      getChild,
+      insertSection,
+      insertItem,
+      insertChild,
+      removeSection,
+      removeItem,
+      removeChild,
+      updateBadge,
+      updateChildBadge,
+    }),
+    [
+      sidebarConfig,
+      position,
+      setPosition,
+      getSection,
+      getItem,
+      getChild,
+      insertSection,
+      insertItem,
+      insertChild,
+      removeSection,
+      removeItem,
+      removeChild,
+      updateBadge,
+      updateChildBadge,
+    ]
+  );
+
   return (
-    <SidebarNavigationContext.Provider
-      value={{
-        sidebarConfig,
-        setSidebarConfig,
-        position,
-        setPosition,
-        getSection,
-        getItem,
-        getChild,
-        insertSection,
-        insertItem,
-        insertChild,
-        removeSection,
-        removeItem,
-        removeChild,
-        updateBadge,
-        updateChildBadge,
-      }}
-    >
-      {children}
+    <SidebarNavigationContext.Provider value={contextValue}>
+      <BaseSidebarProvider defaultOpen={defaultOpen} {...sidebarProps}>
+        {children}
+      </BaseSidebarProvider>
     </SidebarNavigationContext.Provider>
   );
 }
@@ -343,11 +368,16 @@ export function useIrisSidebar(config?: SidebarConfig) {
     throw new Error("useIrisSidebar must be used within an IrisSidebarProvider");
   }
 
+  const { setSidebarConfig } = context;
+
   useEffect(() => {
     if (config && config.length > 0) {
-      context.setSidebarConfig(config);
+      setSidebarConfig((prev) => {
+        if (prev === config) return prev;
+        return config;
+      });
     }
-  }, [config, context]);
+  }, [config, setSidebarConfig]);
 
   return context;
 }

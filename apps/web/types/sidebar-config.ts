@@ -12,7 +12,7 @@ export type SidebarPosition = "left" | "right" | "top" | "bottom";
 
 export interface SidebarSection {
   /**
-   * Section heading. If starts with "#$phone" or is "phone",
+   * Section heading. If starts with "#$" (e.g. "#$Phone"),
    * it designates items for mobile dock resolution.
    */
   section: string;
@@ -46,7 +46,7 @@ export type SidebarItem = {
   badge?: string | number;
 
   /**
-   * Sort position: positive at top, undefined in middle, negative at footer.
+   * Sort position: positive at top (1, 2, 3...), undefined in middle (0), negative in footer (-1, -2...).
    */
   position?: number;
 
@@ -57,11 +57,10 @@ export type SidebarItem = {
 
   children?: SidebarItemChild[];
   onClick?: () => void;
-} & (
-  | { href: string; preventRedirect?: boolean; component?: never }
-  | { href?: never; preventRedirect?: never; component: ReactNode }
-  | { href?: string; preventRedirect?: boolean; component?: ReactNode }
-);
+  component?: ReactNode;
+  href?: string;
+  preventRedirect?: boolean;
+};
 
 export type SidebarItemChild = {
   label: string;
@@ -77,11 +76,10 @@ export type SidebarItemChild = {
   position?: number;
   permissions?: Permissions;
   onClick?: () => void;
-} & (
-  | { href: string; preventRedirect?: boolean; component?: never }
-  | { href?: never; preventRedirect?: never; component: ReactNode }
-  | { href?: string; preventRedirect?: boolean; component?: ReactNode }
-);
+  component?: ReactNode;
+  href?: string;
+  preventRedirect?: boolean;
+};
 
 export type SidebarConfig = SidebarSection[];
 

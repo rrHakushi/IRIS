@@ -103,7 +103,7 @@ export function LoginForm({ footer }: LoginFormProps) {
             clearInterval(quickConnectPollingRef.current);
             quickConnectPollingRef.current = null;
           }
-          setQuickConnectError("Device link code expired. Please generate a new code.");
+          setQuickConnectError(t("deviceCodeExpired"));
         }
       } catch {
         // Ignore polling glitches
@@ -250,12 +250,12 @@ export function LoginForm({ footer }: LoginFormProps) {
       });
 
       if (error || !data) {
-        setMfaError("Failed to send email verification code.");
+        setMfaError(t("failedSendEmailOtp"));
       } else {
         setEmailCooldown(60);
       }
     } catch {
-      setMfaError("Failed to reach mail service.");
+      setMfaError(t("failedReachMailService"));
     } finally {
       setLoading(false);
     }
@@ -275,7 +275,7 @@ export function LoginForm({ footer }: LoginFormProps) {
       });
 
       if (error || !data) {
-        throw new Error("Failed to load passkey authentication options.");
+        throw new Error("FAILED_LOAD_PASSKEY_OPTIONS");
       }
 
       const assertion = await startAuthentication({
@@ -297,9 +297,11 @@ export function LoginForm({ footer }: LoginFormProps) {
       }
     } catch (err: any) {
       if (err.name === "NotAllowedError" || err.message?.includes("NotAllowedError")) {
-        setCredentialsError("Passkey authentication was cancelled.");
+        setCredentialsError(t("passkeyCancelled"));
+      } else if (err.message === "FAILED_LOAD_PASSKEY_OPTIONS") {
+        setCredentialsError(t("failedLoadPasskeyOptions"));
       } else {
-        setCredentialsError(err.message || "Passkey authentication failed.");
+        setCredentialsError(t("passkeyFailed"));
       }
       setLoading(false);
     }
@@ -397,7 +399,11 @@ export function LoginForm({ footer }: LoginFormProps) {
                 }
               }
             } catch (err: any) {
-              setMfaError(err.message || "Passkey verification cancelled.");
+              if (err.name === "NotAllowedError" || err.message?.includes("NotAllowedError")) {
+                setMfaError(t("passkeyVerificationCancelled"));
+              } else {
+                setMfaError(t("passkeyFailed"));
+              }
               setLoading(false);
             }
           }}

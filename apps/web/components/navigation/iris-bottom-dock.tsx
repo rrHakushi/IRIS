@@ -2,7 +2,11 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { cn } from "@workspace/ui/lib/utils";
+import { Badge } from "@workspace/ui/components/badge";
+import { formatBadgeNumber } from "@/lib/numbers";
 import type {
   SidebarConfig,
   SidebarItem,
@@ -10,19 +14,16 @@ import type {
   DockItemData,
 } from "@/types/sidebar-config";
 import { IconLayoutGrid, IconX } from "@tabler/icons-react";
-import {
-  Popover,
-  PopoverTrigger,
-} from "@workspace/ui/components/popover";
-import { Button } from "@workspace/ui/components/button";
+import { IrisMobileLauncher } from "./iris-mobile-launcher";
 
 export interface IrisBottomDockProps {
   pathname: string;
   navConfig?: SidebarConfig;
   setOpenMobile?: (open: boolean) => void;
+  onOpenSettings?: () => void;
   items?: DockItemData[];
   className?: string;
-  /** Whether the dock is being rendered in preview mode (e.g. inside settings modal) */
+  /** Whether the dock is being rendered in preview mode */
   isPreview?: boolean;
   /** Currently focused position slot (1-4) in preview mode */
   focusedSlot?: string | null;
@@ -42,6 +43,7 @@ export function IrisBottomDock({
   pathname,
   navConfig,
   setOpenMobile,
+  onOpenSettings,
   items: customItems,
   className,
   isPreview = false,
@@ -50,8 +52,11 @@ export function IrisBottomDock({
   onClearSlot,
   findItemByKey,
   tempPositions,
-  emptySlotLabel = "Empty",
+  emptySlotLabel,
 }: IrisBottomDockProps): React.JSX.Element | null {
+  const t = useTranslations("navigation.dock");
+  const [launcherOpen, setLauncherOpen] = useState(false);
+  const resolvedEmptyLabel = emptySlotLabel || t("empty");
   // If custom items are provided, render custom scrolling dock
   if (customItems) {
     return (
@@ -101,7 +106,7 @@ export function IrisBottomDock({
               <>
                 <span className="text-xs font-bold opacity-60">+{pos}</span>
                 <span className="text-[9px] opacity-50 font-medium">
-                  {emptySlotLabel}
+                  {resolvedEmptyLabel}
                 </span>
               </>
             )}
@@ -120,7 +125,7 @@ export function IrisBottomDock({
                   ? "opacity-100 scale-100"
                   : "opacity-0 scale-75 group-hover/slot:opacity-100 group-hover/slot:scale-100"
               )}
-              aria-label={`Clear position ${pos}`}
+              aria-label={t("clearPosition", { pos })}
             >
               <IconX className="size-2.5 stroke-[3]" />
             </button>
@@ -144,7 +149,7 @@ export function IrisBottomDock({
 
         <div
           className="flex items-center justify-center size-10 rounded-full bg-primary text-primary-foreground shadow-xs shrink-0 mx-1"
-          aria-label="Toggle Navigation Drawer"
+          aria-label={t("toggleDrawer")}
         >
           <IconLayoutGrid className="size-5" />
         </div>
@@ -158,20 +163,72 @@ export function IrisBottomDock({
   }
 
   // Standalone Mobile Bottom Dock
-  if (!navConfig) return null;
+  if (!navConfig || navConfig.length === 0) return null;
 
-  const phoneSection = navConfig.find(
-    (s) =>
-      s.section?.toLowerCase().replace(/[^a-z]/g, "") === "phone" ||
-      s.dataKey?.toLowerCase() === "phone"
-  );
-  if (!phoneSection || phoneSection.items.length === 0) return null;
+  // Look for mobile dock section starting with #$ (e.g. #$Phone)
+  const phoneSection = navConfig.find((s) => {
+    const sec = s.section?.toLowerCase() || "";
+    const dk = s.dataKey?.toLowerCase() || "";
+    return (
+      sec.startsWith("#$") ||
+      sec === "phone" ||
+      sec === "#$phone" ||
+      dk.startsWith("#$") ||
+      dk === "phone" ||
+      dk === "mobile-dock"
+    );
+  });
 
-  const items = phoneSection.items;
-  const item1 = items.find((i) => i.position === 1);
-  const item2 = items.find((i) => i.position === 2);
-  const item3 = items.find((i) => i.position === 3);
-  const item4 = items.find((i) => i.position === 4);
+  const rawItems = phoneSection?.items ?? [];
+
+  // Check localStorage for customized dock slots
+  let customMap: Record<string, string | null> | null = null;
+  if (typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem("iris-phone-dock-items-default");
+      if (stored) customMap = JSON.parse(stored);
+    } catch {
+      // ignore
+    }
+  }
+
+  // Lookup helper across all config sections
+  const lookupItem = (key: string | null | undefined): SidebarItem | undefined => {
+    if (!key) return undefined;
+    for (const sec of navConfig) {
+      for (const it of sec.items) {
+        const itemKey = it.href || (it.component ? `label:${it.label}` : undefined);
+        if (itemKey === key) return it;
+        if (it.children) {
+          for (const ch of it.children) {
+            const childKey = ch.href || (ch.component ? `label:${ch.label}` : undefined);
+            if (childKey === key) return ch as SidebarItem;
+          }
+        }
+      }
+    }
+    return undefined;
+  };
+
+  const item1 = customMap?.["1"]
+    ? lookupItem(customMap["1"])
+    : (rawItems.find((i) => i.position === 1) || rawItems[0]);
+
+  const item2 = customMap?.["2"]
+    ? lookupItem(customMap["2"])
+    : (rawItems.find((i) => i.position === 2) || rawItems[1]);
+
+  const item3 = customMap?.["3"]
+    ? lookupItem(customMap["3"])
+    : (rawItems.find((i) => i.position === 3) || rawItems[2]);
+
+  const item4 = customMap?.["4"]
+    ? lookupItem(customMap["4"])
+    : (rawItems.find((i) => i.position === 4) || rawItems[3]);
+
+  if (!item1 && !item2 && !item3 && !item4 && rawItems.length === 0) {
+    return null;
+  }
 
   const checkActive = (item: SidebarItem) => {
     const isChildActive =
@@ -216,23 +273,29 @@ export function IrisBottomDock({
         {mapItem(item2)}
       </div>
 
-      {/* Middle Drawer Switcher Button */}
-      {setOpenMobile && (
-        <button
-          type="button"
-          onClick={() => setOpenMobile(true)}
-          className="flex items-center justify-center size-10 rounded-full bg-primary text-primary-foreground shadow-xs cursor-pointer shrink-0 mx-1 transition-transform active:scale-95 hover:opacity-90"
-          aria-label="Toggle Navigation Drawer"
-        >
-          <IconLayoutGrid className="size-5" />
-        </button>
-      )}
+      {/* Middle Mobile Launcher Button */}
+      <button
+        type="button"
+        onClick={() => setLauncherOpen(true)}
+        className="flex items-center justify-center size-10 rounded-full bg-primary text-primary-foreground shadow-xs cursor-pointer shrink-0 mx-1 transition-transform active:scale-95 hover:opacity-90"
+        aria-label={t("toggleLauncher")}
+      >
+        <IconLayoutGrid className="size-5" />
+      </button>
 
       {/* Right items (3 and 4) */}
       <div className="flex items-center gap-1 flex-1 justify-around min-w-0">
         {mapItem(item3)}
         {mapItem(item4)}
       </div>
+
+      {/* Dedicated Mobile Launcher Bottom Sheet */}
+      <IrisMobileLauncher
+        open={launcherOpen}
+        onOpenChange={setLauncherOpen}
+        navConfig={navConfig}
+        onOpenSettings={onOpenSettings}
+      />
     </div>
   );
 }
@@ -244,48 +307,127 @@ function IrisDockItem({
   item: DockItemData;
   pathname?: string;
 }): React.JSX.Element {
-  const [popoverOpen, setPopoverOpen] = useState(false);
+  const router = useRouter();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLongPressRef = useRef(false);
+  const cleanupContextMenuRef = useRef<(() => void) | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
-  const startPress = useCallback(() => {
+  // Close dropdown when clicking or tapping anywhere outside
+  useEffect(() => {
+    if (!dropdownOpen) return;
+
+    const handleOutside = (e: MouseEvent | TouchEvent | PointerEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handleOutside, { capture: true });
+    document.addEventListener("touchstart", handleOutside, { capture: true });
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handleOutside, { capture: true });
+      document.removeEventListener("touchstart", handleOutside, { capture: true });
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [dropdownOpen]);
+
+  const startPress = (e: React.MouseEvent | React.TouchEvent) => {
+    if ("button" in e && e.button !== 0) return;
     if (!item.children || item.children.length === 0) return;
+
+    if (cleanupContextMenuRef.current) {
+      cleanupContextMenuRef.current();
+    }
+
     isLongPressRef.current = false;
+
+    const blockContextMenu = (ev: Event) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+    };
+    window.addEventListener("contextmenu", blockContextMenu, { capture: true });
+
+    const cleanup = () => {
+      setTimeout(() => {
+        window.removeEventListener("contextmenu", blockContextMenu, {
+          capture: true,
+        });
+      }, 500);
+      window.removeEventListener("mouseup", cleanup);
+      window.removeEventListener("touchend", cleanup);
+      window.removeEventListener("touchcancel", cleanup);
+      cleanupContextMenuRef.current = null;
+    };
+
+    cleanupContextMenuRef.current = cleanup;
+
+    window.addEventListener("mouseup", cleanup);
+    window.addEventListener("touchend", cleanup);
+    window.addEventListener("touchcancel", cleanup);
 
     timerRef.current = setTimeout(() => {
       isLongPressRef.current = true;
-      setPopoverOpen(true);
+      setDropdownOpen(true);
       if (typeof navigator !== "undefined" && navigator.vibrate) {
         try {
-          navigator.vibrate(40);
+          navigator.vibrate(50);
         } catch {
           // ignore
         }
       }
-    }, 300);
-  }, [item.children]);
+    }, 250);
+  };
 
-  const endPress = useCallback(() => {
+  const endPress = (e: React.MouseEvent | React.TouchEvent) => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
-  }, []);
+    if (isLongPressRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      setTimeout(() => {
+        isLongPressRef.current = false;
+      }, 100);
+    }
+  };
+
+  const cancelPress = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    if (cleanupContextMenuRef.current) {
+      cleanupContextMenuRef.current();
+    }
+  };
 
   const handleClick = (e: React.MouseEvent) => {
     if (isLongPressRef.current) {
       e.preventDefault();
       e.stopPropagation();
-      isLongPressRef.current = false;
       return;
     }
     if (item.onClick) {
+      e.preventDefault();
       item.onClick();
+    } else if (item.href) {
+      router.push(item.href);
     }
   };
 
   const buttonClass = cn(
-    "relative flex flex-col items-center justify-center gap-0.5 px-1.5 py-1 rounded-full transition-colors duration-150 w-full min-h-11 cursor-pointer pointer-events-auto",
+    "relative flex flex-col items-center justify-center gap-0.5 px-1.5 py-1 rounded-full transition-colors duration-150 w-full min-h-11 cursor-pointer pointer-events-auto select-none",
     item.isActive
       ? "text-primary font-semibold"
       : "text-muted-foreground hover:text-foreground"
@@ -313,54 +455,108 @@ function IrisDockItem({
     </>
   );
 
-  // If item has sub-items (children), wrap with Popover
+  // If item has sub-items (children), handle both tap navigation and long-press dropdown
   if (item.children && item.children.length > 0) {
     return (
-      <PopoverTrigger>
-        <button
-          type="button"
-          className={buttonClass}
-          onClick={handleClick}
-          onMouseDown={startPress}
-          onTouchStart={startPress}
-          onMouseUp={endPress}
-          onTouchEnd={endPress}
-          onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
-        >
-          {content}
-        </button>
-        <Popover
-          placement="top"
-          className="w-48 p-1 bg-popover/95 backdrop-blur-md border border-border shadow-lg rounded-xl"
-        >
-          <div className="flex flex-col gap-0.5">
-            {item.children.map((child) => {
-              const isChildActive = pathname === child.href;
-              return child.component ? (
-                <div key={child.label}>{child.component}</div>
-              ) : (
-                <Link
-                  key={child.label}
-                  href={child.href || "#"}
-                  className={cn(
-                    "flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150",
-                    isChildActive
-                      ? "bg-primary/10 text-primary font-semibold"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  )}
-                >
-                  {child.icon && (
-                    <span className="[&>svg]:size-4 shrink-0">
-                      {child.icon}
+      <div ref={menuRef} className="relative flex flex-col items-center w-full">
+        {item.href ? (
+          <Link
+            href={item.href}
+            className={buttonClass}
+            style={{ WebkitTouchCallout: "none" }}
+            onClick={handleClick}
+            onMouseDown={startPress}
+            onTouchStart={startPress}
+            onMouseUp={endPress}
+            onTouchEnd={endPress}
+            onMouseLeave={cancelPress}
+            onTouchMove={cancelPress}
+            onTouchCancel={cancelPress}
+            onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
+          >
+            {content}
+          </Link>
+        ) : (
+          <button
+            type="button"
+            className={buttonClass}
+            style={{ WebkitTouchCallout: "none" }}
+            onClick={handleClick}
+            onMouseDown={startPress}
+            onTouchStart={startPress}
+            onMouseUp={endPress}
+            onTouchEnd={endPress}
+            onMouseLeave={cancelPress}
+            onTouchMove={cancelPress}
+            onTouchCancel={cancelPress}
+            onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
+          >
+            {content}
+          </button>
+        )}
+
+        {/* Long-press floating sub-items menu */}
+        {dropdownOpen && (
+          <>
+            <div
+              className="fixed inset-0 z-40 bg-black/20 backdrop-blur-2xs md:hidden"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDropdownOpen(false);
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                setDropdownOpen(false);
+              }}
+            />
+            <div
+              className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-50 min-w-44 max-w-56 p-1.5 bg-card/95 backdrop-blur-2xl border border-border/80 shadow-2xl rounded-2xl animate-in fade-in-0 zoom-in-95 duration-150 select-none flex flex-col gap-0.5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {item.children.map((child) => {
+                const isChildActive = pathname === child.href;
+                return child.component ? (
+                  <div
+                    key={child.label}
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    {child.component}
+                  </div>
+                ) : (
+                  <Link
+                    key={child.label}
+                    href={child.href || "#"}
+                    onClick={() => setDropdownOpen(false)}
+                    className={cn(
+                      "flex items-center justify-between w-full px-3 py-2 rounded-xl text-xs font-medium transition-colors duration-150",
+                      isChildActive
+                        ? "bg-primary/15 text-primary font-semibold"
+                        : "text-foreground/90 hover:text-foreground hover:bg-muted/70 active:bg-muted"
+                    )}
+                  >
+                    <span className="flex items-center gap-2.5 min-w-0 flex-1">
+                      {child.icon && (
+                        <span className="[&>svg]:size-4.5 shrink-0 text-foreground">
+                          {child.icon}
+                        </span>
+                      )}
+                      <span className="truncate text-sm font-medium">{child.label}</span>
                     </span>
-                  )}
-                  <span className="truncate">{child.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </Popover>
-      </PopoverTrigger>
+                    {child.badge && (
+                      <Badge
+                        variant="secondary"
+                        className="text-[10px] h-4 px-1.5 ml-auto shrink-0"
+                      >
+                        {formatBadgeNumber(Number(child.badge) || 0, 2)}
+                      </Badge>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
     );
   }
 

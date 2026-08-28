@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { cn } from "@workspace/ui/lib/utils";
 import {
   Dialog,
@@ -39,6 +40,7 @@ export function IrisDockSettingsModal({
   open,
   onOpenChange,
 }: IrisDockSettingsModalProps): React.JSX.Element {
+  const t = useTranslations("navigation.dockSettings");
   const { sidebarConfig, position, setPosition } = useIrisSidebar();
 
   const [selectedPosition, setSelectedPosition] =
@@ -178,17 +180,15 @@ export function IrisDockSettingsModal({
   return (
     <Dialog isOpen={open} onOpenChange={onOpenChange} className="sm:max-w-xl max-h-[90vh]">
       <DialogHeader>
-        <DialogTitle>Navigation & Layout Settings</DialogTitle>
-        <DialogDescription>
-          Configure sidebar alignment and customize your 4 mobile dock quick shortcuts.
-        </DialogDescription>
+        <DialogTitle>{t("title")}</DialogTitle>
+        <DialogDescription>{t("description")}</DialogDescription>
       </DialogHeader>
 
       <div className="flex-1 min-h-0 overflow-y-auto space-y-6 pe-1">
         {/* Section 1: Sidebar Position Settings */}
         <div className="space-y-3">
           <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Sidebar Orientation
+            {t("sidebarOrientation")}
           </h4>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {/* Left */}
@@ -203,7 +203,7 @@ export function IrisDockSettingsModal({
               )}
             >
               <IconLayoutSidebar className="size-5" />
-              <span>Left (Default)</span>
+              <span>{t("leftDefault")}</span>
             </button>
 
             {/* Right / Mirrored */}
@@ -218,7 +218,7 @@ export function IrisDockSettingsModal({
               )}
             >
               <IconLayoutSidebarRight className="size-5" />
-              <span>Right (Mirrored)</span>
+              <span>{t("rightMirrored")}</span>
             </button>
 
             {/* Top (Architectural placeholder) */}
@@ -229,9 +229,9 @@ export function IrisDockSettingsModal({
             >
               <IconLayoutNavbar className="size-5 text-muted-foreground" />
               <span className="flex items-center gap-1">
-                Top
+                {t("top")}
                 <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5">
-                  Soon
+                  {t("soon")}
                 </Badge>
               </span>
             </button>
@@ -244,9 +244,9 @@ export function IrisDockSettingsModal({
             >
               <IconLayoutBottombar className="size-5 text-muted-foreground" />
               <span className="flex items-center gap-1">
-                Bottom
+                {t("bottom")}
                 <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5">
-                  Soon
+                  {t("soon")}
                 </Badge>
               </span>
             </button>
@@ -258,10 +258,10 @@ export function IrisDockSettingsModal({
           <div className="flex items-center justify-between">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
               <IconDeviceMobile className="size-4 text-primary" />
-              <span>Mobile Bottom Dock (4 Quick Slots)</span>
+              <span>{t("mobileBottomDock")}</span>
             </h4>
             <span className="text-[11px] text-muted-foreground">
-              Slot {focusedSlot || "—"} selected
+              {t("slotSelected", { slot: focusedSlot || "—" })}
             </span>
           </div>
 
@@ -275,14 +275,14 @@ export function IrisDockSettingsModal({
               onFocusSlot={setFocusedSlot}
               onClearSlot={handleClearSlot}
               findItemByKey={findItemByKey}
-              emptySlotLabel="Empty"
+              emptySlotLabel={t("empty")}
             />
           </div>
 
           {/* Shortcut Picker Grid */}
           <div className="space-y-2">
             <span className="text-xs font-medium text-muted-foreground">
-              Click an item below to assign it to Slot {focusedSlot || "1"}:
+              {t("clickItemToAssign", { slot: focusedSlot || "1" })}
             </span>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {availableItems.map((item) => {
@@ -312,7 +312,7 @@ export function IrisDockSettingsModal({
                         variant="secondary"
                         className="text-[10px] h-4 px-1.5 shrink-0 bg-primary text-primary-foreground font-bold"
                       >
-                        Slot {assignedSlot}
+                        {t("slotBadge", { slot: assignedSlot })}
                       </Badge>
                     ) : (
                       <IconPlus className="size-3.5 text-muted-foreground shrink-0 opacity-60" />
@@ -331,11 +331,11 @@ export function IrisDockSettingsModal({
           size="sm"
           onPress={() => onOpenChange(false)}
         >
-          Cancel
+          {t("cancel")}
         </Button>
         <Button size="sm" onPress={handleSave}>
           <IconCheck className="size-4" />
-          Save Changes
+          {t("saveChanges")}
         </Button>
       </DialogFooter>
     </Dialog>

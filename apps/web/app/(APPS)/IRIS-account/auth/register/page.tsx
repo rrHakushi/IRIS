@@ -3,37 +3,35 @@ import { getTranslations } from "next-intl/server";
 import { AuthCard } from "@/components/auth/auth-card";
 import { AuthHeader } from "@/components/auth/auth-header";
 import { AuthFooterLink } from "@/components/auth/auth-footer-link";
-import { LoginForm } from "@/components/auth/login/login-form";
+import { RegisterForm } from "@/components/auth/register/register-form";
 import { LanguageSelector } from "@/components/auth/language-selector";
 import { AuthIllustrationProvider } from "@/components/auth/auth-illustration-context";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("auth.login");
-  return {
-    title: `${t("welcomeBack")} | IRIS`,
-    description: t("loginToIris"),
-  };
-}
+export const metadata: Metadata = {
+  title: "IRIS register",
+  description: "IRIS register page",
+};
 
-export default async function LoginPage() {
-  const t = await getTranslations("auth.login");
+
+export default async function RegisterPage() {
+  const t = await getTranslations("auth.register");
 
   return (
     <main className="flex min-h-svh w-full flex-col items-center justify-center p-4 sm:p-6 md:p-10 lg:p-12">
       <LanguageSelector variant="floating" />
       <div className="w-full max-w-md md:max-w-4xl lg:max-w-5xl">
-        <AuthIllustrationProvider initialSrc="/images/auth/character/login-default.jpg">
-          <AuthCard>
+        <AuthIllustrationProvider initialSrc="/images/auth/character/register-default.jpg">
+          <AuthCard heroImageSrc="/images/auth/character/register-default.jpg">
             <AuthHeader
-              title={t("welcomeBack")}
-              description={t("loginToIris")}
+              title={t("createCredentials")}
+              description={t("createIrisProfile")}
             />
-            <LoginForm
+            <RegisterForm
               footer={
                 <AuthFooterLink
-                  promptText={t("dontHaveAccount")}
-                  linkText={t("signUp")}
-                  href="/auth/register"
+                  promptText={t("registeredProfile")}
+                  linkText={t("signIn")}
+                  href="/IRIS-account/auth/login"
                 />
               }
             />

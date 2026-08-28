@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useTransition } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
   Select,
@@ -20,6 +20,7 @@ interface LanguageSelectorProps {
 }
 
 export function LanguageSelector({ variant = "floating", className }: LanguageSelectorProps) {
+  const t = useTranslations("auth.languageSelector");
   const currentLocale = useLocale() as Locale;
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -45,7 +46,7 @@ export function LanguageSelector({ variant = "floating", className }: LanguageSe
       <Select
         selectedKey={currentLocale}
         onSelectionChange={(key) => handleSelectLocale(key as Locale)}
-        aria-label="Select Language"
+        aria-label={t("selectLanguage")}
         isDisabled={isPending}
         className="w-auto"
       >
