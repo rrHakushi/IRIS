@@ -50,3 +50,4 @@ packages/database/generated-client
 # dev accounts
 dev-account.json
 
+apps/elysia/insomnium.json
