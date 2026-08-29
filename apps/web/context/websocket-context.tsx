@@ -114,17 +114,29 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const connect = useCallback((force = false) => {
     if (typeof window === "undefined") return;
 
-    // Do NOT connect if session does not exist unless forced
-    if (!force && (status !== "authenticated" || !userId)) {
+    // Strict authentication check: NEVER connect if user is not logged in
+    if (status !== "authenticated" || !userId) {
+      if (socketRef.current) {
+        socketRef.current.close();
+        socketRef.current = null;
+      }
+      setIsConnected(false);
+      setAuthenticatedUserId(null);
       return;
     }
 
     if (
+      !force &&
       socketRef.current &&
       (socketRef.current.readyState === WebSocket.OPEN ||
         socketRef.current.readyState === WebSocket.CONNECTING)
     ) {
       return;
+    }
+
+    if (force && socketRef.current) {
+      socketRef.current.close();
+      socketRef.current = null;
     }
 
     try {
@@ -137,6 +149,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         setIsConnected(true);
         isConnectingRef.current = false;
         reconnectAttempts.current = 0;
+        console.log("[WebSocket] Connected to realtime gateway", { url: wsUrl, userId });
 
         // Send auth frame immediately if userId is known
         if (userId) {
@@ -157,6 +170,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
           const data = JSON.parse(event.data);
           if (data.event === "auth:success" && data.data?.userId) {
             setAuthenticatedUserId(data.data.userId);
+            console.log("[WebSocket] Authenticated session:", data.data.userId);
           }
           dispatchMessage(data);
         } catch {
@@ -164,19 +178,22 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         }
       };
 
-      ws.onclose = () => {
+      ws.onclose = (event) => {
         setIsConnected(false);
         isConnectingRef.current = false;
         setAuthenticatedUserId(null);
         if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current);
+        console.log("[WebSocket] Connection closed", { code: event.code, reason: event.reason });
 
-        // Auto-reconnect ONLY if session exists
-        if (status === "authenticated" && userId) {
-          const delay = Math.min(1000 * 2 ** reconnectAttempts.current, 10000);
-          reconnectAttempts.current += 1;
-          if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-          reconnectTimeoutRef.current = setTimeout(() => connect(false), delay);
+        // Do not reconnect if unauthorized (4401) or if session is unauthenticated
+        if (event.code === 4401 || status !== "authenticated" || !userId) {
+          return;
         }
+
+        const delay = Math.min(1000 * 2 ** reconnectAttempts.current, 10000);
+        reconnectAttempts.current += 1;
+        if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = setTimeout(() => connect(false), delay);
       };
 
       ws.onerror = () => {
@@ -263,11 +280,13 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const reconnect = useCallback((force = true) => {
+    if (status !== "authenticated" || !userId) return;
     if (socketRef.current) {
       socketRef.current.close();
+      socketRef.current = null;
     }
     connect(force);
-  }, [connect]);
+  }, [connect, status, userId]);
 
   return (
     <WebSocketContext.Provider

@@ -279,7 +279,7 @@ export function IrisSettingsModal({
         <main className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-background">
           {/* Active Tab Scrollable Content */}
           <div className="flex-1 overflow-y-auto p-6 no-scrollbar">
-            <div className="max-w-3xl">
+            <div className="w-full h-full">
               {renderTabContent(desktopCategory, onOpenChange, setFooterContent)}
             </div>
           </div>

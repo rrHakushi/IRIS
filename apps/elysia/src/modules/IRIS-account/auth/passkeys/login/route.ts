@@ -14,7 +14,7 @@ export default defineRoute({
     response: {
       200: t.Object({
         challenge: t.String(),
-        rpId: t.String(),
+        rpId: t.Optional(t.String()),
         allowCredentials: t.Optional(
           t.Array(
             t.Object({
@@ -24,21 +24,31 @@ export default defineRoute({
             })
           )
         ),
-        timeout: t.Number(),
-        userVerification: t.Union([
-          t.Literal("required"),
-          t.Literal("preferred"),
-          t.Literal("discouraged"),
-        ]),
+        timeout: t.Optional(t.Number()),
+        userVerification: t.Optional(
+          t.Union([
+            t.Literal("required"),
+            t.Literal("preferred"),
+            t.Literal("discouraged"),
+          ])
+        ),
       }),
     },
   },
 
-  async POST({ body, prisma, cache }) {
-    const nextUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+  async POST({ body, prisma, cache, request }) {
+    const originHeader = request?.headers.get("origin") || request?.headers.get("referer");
+    let origin = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+    if (originHeader) {
+      try {
+        const u = new URL(originHeader);
+        origin = `${u.protocol}//${u.host}`;
+      } catch {}
+    }
+
     let rpID = "localhost";
     try {
-      rpID = process.env.RP_ID || new URL(nextUrl).hostname;
+      rpID = process.env.RP_ID || new URL(origin).hostname;
     } catch {
       rpID = "localhost";
     }
@@ -78,10 +88,14 @@ export default defineRoute({
 
     return {
       challenge: options.challenge,
-      rpId: rpID,
-      allowCredentials,
+      rpId: options.rpId ?? rpID,
+      allowCredentials: options.allowCredentials?.map((cred) => ({
+        id: cred.id,
+        type: "public-key" as const,
+        transports: cred.transports,
+      })),
       timeout: options.timeout ?? 60000,
-      userVerification: "preferred" as const,
+      userVerification: options.userVerification,
     };
   },
 });

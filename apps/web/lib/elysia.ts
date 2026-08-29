@@ -11,7 +11,11 @@ export const API_URL = rawApiUrl.replace(
 
 export type ElysiaClient = Treaty.Create<App>;
 
-export const elysia: ElysiaClient = treaty<App>(API_URL);
+export const elysia: ElysiaClient = treaty<App>(API_URL, {
+  fetch: {
+    credentials: "include",
+  },
+});
 
 /**
  * Creates an Eden Treaty client with an optional Authorization header

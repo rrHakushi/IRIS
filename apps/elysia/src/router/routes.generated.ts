@@ -4,33 +4,38 @@
 import { Elysia } from "elysia";
 import { executeWithRequestLogs } from "../utils/request-logger";
 import { createRateLimiter } from "../plugins/rate-limiter";
-import route_0 from "../modules/IRIS-account/auth/backupcodes/regenerate/route";
-import route_1 from "../modules/IRIS-account/auth/email/send/route";
-import route_2 from "../modules/IRIS-account/auth/email/toggle/route";
-import route_3 from "../modules/IRIS-account/auth/email/verify/route";
-import route_4 from "../modules/IRIS-account/auth/login/route";
-import route_5 from "../modules/IRIS-account/auth/passkeys/[id]/route";
-import route_6 from "../modules/IRIS-account/auth/passkeys/login/route";
-import route_7 from "../modules/IRIS-account/auth/passkeys/login/verify/route";
-import route_8 from "../modules/IRIS-account/auth/passkeys/register/route";
-import route_9 from "../modules/IRIS-account/auth/passkeys/register/verify/route";
-import route_10 from "../modules/IRIS-account/auth/passkeys/route";
-import route_11 from "../modules/IRIS-account/auth/password/change/route";
-import route_12 from "../modules/IRIS-account/auth/password/forgot/route";
-import route_13 from "../modules/IRIS-account/auth/password/reset/route";
-import route_14 from "../modules/IRIS-account/auth/quickconnect/approve/route";
-import route_15 from "../modules/IRIS-account/auth/quickconnect/generate/route";
-import route_16 from "../modules/IRIS-account/auth/quickconnect/status/route";
-import route_17 from "../modules/IRIS-account/auth/register/route";
-import route_18 from "../modules/IRIS-account/auth/totp/setup/route";
-import route_19 from "../modules/IRIS-account/auth/totp/toggle/route";
-import route_20 from "../modules/IRIS-account/notifications/[id]/action/route";
-import route_21 from "../modules/IRIS-account/notifications/[id]/read/route";
-import route_22 from "../modules/IRIS-account/notifications/[id]/route";
-import route_23 from "../modules/IRIS-account/notifications/mark-all-read/route";
-import route_24 from "../modules/IRIS-account/notifications/route";
-import route_25 from "../modules/IRIS-account/users/me/encryption/route";
-import route_26 from "../modules/IRIS-account/users/me/route";
+import route_0 from "../modules/IRIS-account/auth/api-keys/[id]/regenerate/route";
+import route_1 from "../modules/IRIS-account/auth/api-keys/[id]/route";
+import route_2 from "../modules/IRIS-account/auth/api-keys/route";
+import route_3 from "../modules/IRIS-account/auth/backupcodes/regenerate/route";
+import route_4 from "../modules/IRIS-account/auth/email/send/route";
+import route_5 from "../modules/IRIS-account/auth/email/toggle/route";
+import route_6 from "../modules/IRIS-account/auth/email/verify/route";
+import route_7 from "../modules/IRIS-account/auth/login/route";
+import route_8 from "../modules/IRIS-account/auth/passkeys/[id]/route";
+import route_9 from "../modules/IRIS-account/auth/passkeys/login/route";
+import route_10 from "../modules/IRIS-account/auth/passkeys/login/verify/route";
+import route_11 from "../modules/IRIS-account/auth/passkeys/register/route";
+import route_12 from "../modules/IRIS-account/auth/passkeys/register/verify/route";
+import route_13 from "../modules/IRIS-account/auth/passkeys/route";
+import route_14 from "../modules/IRIS-account/auth/password/change/route";
+import route_15 from "../modules/IRIS-account/auth/password/forgot/route";
+import route_16 from "../modules/IRIS-account/auth/password/reset/route";
+import route_17 from "../modules/IRIS-account/auth/quickconnect/approve/route";
+import route_18 from "../modules/IRIS-account/auth/quickconnect/generate/route";
+import route_19 from "../modules/IRIS-account/auth/quickconnect/status/route";
+import route_20 from "../modules/IRIS-account/auth/register/route";
+import route_21 from "../modules/IRIS-account/auth/totp/setup/route";
+import route_22 from "../modules/IRIS-account/auth/totp/toggle/route";
+import route_23 from "../modules/IRIS-account/notifications/[id]/action/route";
+import route_24 from "../modules/IRIS-account/notifications/[id]/read/route";
+import route_25 from "../modules/IRIS-account/notifications/[id]/route";
+import route_26 from "../modules/IRIS-account/notifications/mark-all-read/route";
+import route_27 from "../modules/IRIS-account/notifications/route";
+import route_28 from "../modules/IRIS-account/public/[...key]/route";
+import route_29 from "../modules/IRIS-account/users/me/assets/route";
+import route_30 from "../modules/IRIS-account/users/me/encryption/route";
+import route_31 from "../modules/IRIS-account/users/me/route";
 
 const routeLimiters = new Map<string, ReturnType<typeof createRateLimiter>>();
 function getRouteLimiter(key: string, config: unknown) {
@@ -49,8 +54,8 @@ export const routes = new Elysia({ name: "iris-routes" })
     uptime: process.uptime(),
   }))
   .post(
-    "/auth/backupcodes/regenerate",
-    (route_0 as any).schema!,
+    "/auth/api-keys/:id/regenerate",
+    (route_0 as any).POST.schema,
     async (ctx: any) => {
       const methodItem = (route_0 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -59,20 +64,42 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/auth/email/send",
-    (route_1 as any).schema!,
+  .delete(
+    "/auth/api-keys/:id",
+    (route_1 as any).DELETE.schema,
     async (ctx: any) => {
-      const methodItem = (route_1 as any).POST;
+      const methodItem = (route_1 as any).DELETE;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_1 as any).rateLimits?.POST ?? (route_1 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_1_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_1 as any).rateLimits?.DELETE ?? (route_1 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_1_DELETE", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .patch(
+    "/auth/api-keys/:id",
+    (route_1 as any).PATCH.schema,
+    async (ctx: any) => {
+      const methodItem = (route_1 as any).PATCH;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_1 as any).rateLimits?.PATCH ?? (route_1 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_1_PATCH", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/auth/api-keys",
+    (route_2 as any).GET.schema,
+    async (ctx: any) => {
+      const methodItem = (route_2 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_2 as any).rateLimits?.GET ?? (route_2 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_2_GET", rateLimitConfig) : null;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
-    "/auth/email/toggle",
-    (route_2 as any).schema!,
+    "/auth/api-keys",
+    (route_2 as any).POST.schema,
     async (ctx: any) => {
       const methodItem = (route_2 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -82,8 +109,8 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .post(
-    "/auth/email/verify",
-    (route_3 as any).schema!,
+    "/auth/backupcodes/regenerate",
+    route_3.schema,
     async (ctx: any) => {
       const methodItem = (route_3 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -93,8 +120,8 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .post(
-    "/auth/login",
-    (route_4 as any).schema!,
+    "/auth/email/send",
+    route_4.schema,
     async (ctx: any) => {
       const methodItem = (route_4 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -103,20 +130,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .delete(
-    "/auth/passkeys/:id",
-    (route_5 as any).schema!,
+  .post(
+    "/auth/email/toggle",
+    route_5.schema,
     async (ctx: any) => {
-      const methodItem = (route_5 as any).DELETE;
+      const methodItem = (route_5 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_5 as any).rateLimits?.DELETE ?? (route_5 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_5_DELETE", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_5 as any).rateLimits?.POST ?? (route_5 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_5_POST", rateLimitConfig) : null;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
-    "/auth/passkeys/login",
-    (route_6 as any).schema!,
+    "/auth/email/verify",
+    route_6.schema,
     async (ctx: any) => {
       const methodItem = (route_6 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -126,8 +153,8 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .post(
-    "/auth/passkeys/login/verify",
-    (route_7 as any).schema!,
+    "/auth/login",
+    route_7.schema,
     async (ctx: any) => {
       const methodItem = (route_7 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -136,20 +163,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/auth/passkeys/register",
-    (route_8 as any).schema!,
+  .delete(
+    "/auth/passkeys/:id",
+    route_8.schema,
     async (ctx: any) => {
-      const methodItem = (route_8 as any).POST;
+      const methodItem = (route_8 as any).DELETE;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_8 as any).rateLimits?.POST ?? (route_8 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_8_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_8 as any).rateLimits?.DELETE ?? (route_8 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_8_DELETE", rateLimitConfig) : null;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
-    "/auth/passkeys/register/verify",
-    (route_9 as any).schema!,
+    "/auth/passkeys/login",
+    route_9.schema,
     async (ctx: any) => {
       const methodItem = (route_9 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -158,20 +185,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .get(
-    "/auth/passkeys",
-    (route_10 as any).schema!,
+  .post(
+    "/auth/passkeys/login/verify",
+    route_10.schema,
     async (ctx: any) => {
-      const methodItem = (route_10 as any).GET;
+      const methodItem = (route_10 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_10 as any).rateLimits?.GET ?? (route_10 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_10_GET", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_10 as any).rateLimits?.POST ?? (route_10 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_10_POST", rateLimitConfig) : null;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
-    "/auth/password/change",
-    (route_11 as any).schema!,
+    "/auth/passkeys/register",
+    route_11.schema,
     async (ctx: any) => {
       const methodItem = (route_11 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -181,8 +208,8 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .post(
-    "/auth/password/forgot",
-    (route_12 as any).schema!,
+    "/auth/passkeys/register/verify",
+    route_12.schema,
     async (ctx: any) => {
       const methodItem = (route_12 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -191,20 +218,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/auth/password/reset",
-    (route_13 as any).schema!,
+  .get(
+    "/auth/passkeys",
+    route_13.schema,
     async (ctx: any) => {
-      const methodItem = (route_13 as any).POST;
+      const methodItem = (route_13 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_13 as any).rateLimits?.POST ?? (route_13 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_13_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_13 as any).rateLimits?.GET ?? (route_13 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_13_GET", rateLimitConfig) : null;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
-    "/auth/quickconnect/approve",
-    (route_14 as any).schema!,
+    "/auth/password/change",
+    route_14.schema,
     async (ctx: any) => {
       const methodItem = (route_14 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -214,8 +241,8 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .post(
-    "/auth/quickconnect/generate",
-    (route_15 as any).schema!,
+    "/auth/password/forgot",
+    route_15.schema,
     async (ctx: any) => {
       const methodItem = (route_15 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -224,20 +251,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .get(
-    "/auth/quickconnect/status",
-    (route_16 as any).schema!,
+  .post(
+    "/auth/password/reset",
+    route_16.schema,
     async (ctx: any) => {
-      const methodItem = (route_16 as any).GET;
+      const methodItem = (route_16 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_16 as any).rateLimits?.GET ?? (route_16 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_16_GET", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_16 as any).rateLimits?.POST ?? (route_16 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_16_POST", rateLimitConfig) : null;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
-    "/auth/register",
-    (route_17 as any).schema!,
+    "/auth/quickconnect/approve",
+    route_17.schema,
     async (ctx: any) => {
       const methodItem = (route_17 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -247,8 +274,8 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .post(
-    "/auth/totp/setup",
-    (route_18 as any).schema!,
+    "/auth/quickconnect/generate",
+    route_18.schema,
     async (ctx: any) => {
       const methodItem = (route_18 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -257,20 +284,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/auth/totp/toggle",
-    (route_19 as any).schema!,
+  .get(
+    "/auth/quickconnect/status",
+    route_19.schema,
     async (ctx: any) => {
-      const methodItem = (route_19 as any).POST;
+      const methodItem = (route_19 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_19 as any).rateLimits?.POST ?? (route_19 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_19_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_19 as any).rateLimits?.GET ?? (route_19 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_19_GET", rateLimitConfig) : null;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
-    "/notifications/:id/action",
-    (route_20 as any).POST.schema,
+    "/auth/register",
+    route_20.schema,
     async (ctx: any) => {
       const methodItem = (route_20 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -279,41 +306,30 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .patch(
-    "/notifications/:id/read",
-    (route_21 as any).PATCH.schema,
+  .post(
+    "/auth/totp/setup",
+    route_21.schema,
     async (ctx: any) => {
-      const methodItem = (route_21 as any).PATCH;
+      const methodItem = (route_21 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_21 as any).rateLimits?.PATCH ?? (route_21 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_21_PATCH", rateLimitConfig) : null;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .get(
-    "/notifications/:id",
-    (route_22 as any).GET.schema,
-    async (ctx: any) => {
-      const methodItem = (route_22 as any).GET;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_22 as any).rateLimits?.GET ?? (route_22 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_22_GET", rateLimitConfig) : null;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .delete(
-    "/notifications/:id",
-    (route_22 as any).DELETE.schema,
-    async (ctx: any) => {
-      const methodItem = (route_22 as any).DELETE;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_22 as any).rateLimits?.DELETE ?? (route_22 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_22_DELETE", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_21 as any).rateLimits?.POST ?? (route_21 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_21_POST", rateLimitConfig) : null;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
-    "/notifications/mark-all-read",
+    "/auth/totp/toggle",
+    route_22.schema,
+    async (ctx: any) => {
+      const methodItem = (route_22 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_22 as any).rateLimits?.POST ?? (route_22 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_22_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/notifications/:id/action",
     (route_23 as any).POST.schema,
     async (ctx: any) => {
       const methodItem = (route_23 as any).POST;
@@ -323,30 +339,19 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .get(
-    "/notifications",
-    (route_24 as any).GET.schema,
+  .patch(
+    "/notifications/:id/read",
+    (route_24 as any).PATCH.schema,
     async (ctx: any) => {
-      const methodItem = (route_24 as any).GET;
+      const methodItem = (route_24 as any).PATCH;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_24 as any).rateLimits?.GET ?? (route_24 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_24_GET", rateLimitConfig) : null;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .delete(
-    "/notifications",
-    (route_24 as any).DELETE.schema,
-    async (ctx: any) => {
-      const methodItem = (route_24 as any).DELETE;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_24 as any).rateLimits?.DELETE ?? (route_24 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_24_DELETE", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_24 as any).rateLimits?.PATCH ?? (route_24 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_24_PATCH", rateLimitConfig) : null;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
-    "/users/me/encryption",
+    "/notifications/:id",
     (route_25 as any).GET.schema,
     async (ctx: any) => {
       const methodItem = (route_25 as any).GET;
@@ -356,36 +361,123 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
+  .delete(
+    "/notifications/:id",
+    (route_25 as any).DELETE.schema,
+    async (ctx: any) => {
+      const methodItem = (route_25 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_25 as any).rateLimits?.DELETE ?? (route_25 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_25_DELETE", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/notifications/mark-all-read",
+    (route_26 as any).POST.schema,
+    async (ctx: any) => {
+      const methodItem = (route_26 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_26 as any).rateLimits?.POST ?? (route_26 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_26_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/notifications",
+    (route_27 as any).GET.schema,
+    async (ctx: any) => {
+      const methodItem = (route_27 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_27 as any).rateLimits?.GET ?? (route_27 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_27_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/notifications",
+    (route_27 as any).DELETE.schema,
+    async (ctx: any) => {
+      const methodItem = (route_27 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_27 as any).rateLimits?.DELETE ?? (route_27 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_27_DELETE", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/public/*",
+    async (ctx: any) => {
+      const methodItem = (route_28 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_28 as any).rateLimits?.GET ?? (route_28 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_28_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/users/me/assets",
+    (route_29 as any).POST.schema,
+    async (ctx: any) => {
+      const methodItem = (route_29 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_29 as any).rateLimits?.POST ?? (route_29 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_29_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/users/me/assets",
+    (route_29 as any).DELETE.schema,
+    async (ctx: any) => {
+      const methodItem = (route_29 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_29 as any).rateLimits?.DELETE ?? (route_29 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_29_DELETE", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/users/me/encryption",
+    (route_30 as any).GET.schema,
+    async (ctx: any) => {
+      const methodItem = (route_30 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_30 as any).rateLimits?.GET ?? (route_30 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_30_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
   .post(
     "/users/me/encryption",
-    (route_25 as any).POST.schema,
+    (route_30 as any).POST.schema,
     async (ctx: any) => {
-      const methodItem = (route_25 as any).POST;
+      const methodItem = (route_30 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_25 as any).rateLimits?.POST ?? (route_25 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_25_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_30 as any).rateLimits?.POST ?? (route_30 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_30_POST", rateLimitConfig) : null;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
     "/users/me",
-    (route_26 as any).GET.schema,
+    (route_31 as any).GET.schema,
     async (ctx: any) => {
-      const methodItem = (route_26 as any).GET;
+      const methodItem = (route_31 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_26 as any).rateLimits?.GET ?? (route_26 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_26_GET", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_31 as any).rateLimits?.GET ?? (route_31 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_31_GET", rateLimitConfig) : null;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .patch(
     "/users/me",
-    (route_26 as any).PATCH.schema,
+    (route_31 as any).PATCH.schema,
     async (ctx: any) => {
-      const methodItem = (route_26 as any).PATCH;
+      const methodItem = (route_31 as any).PATCH;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_26 as any).rateLimits?.PATCH ?? (route_26 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_26_PATCH", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_31 as any).rateLimits?.PATCH ?? (route_31 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_31_PATCH", rateLimitConfig) : null;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   );

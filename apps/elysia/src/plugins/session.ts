@@ -194,6 +194,22 @@ export function hashApiKey(apiKey: string): string {
   return createHash("sha256").update(apiKey.trim()).digest("hex")
 }
 
+/**
+ * Purges an API key from the in-memory cache by hash, API key ID, or clears entire cache.
+ */
+export function invalidateApiKeyCache(keyHashOrId?: string): void {
+  if (!keyHashOrId) {
+    apiKeyCache.clear()
+    return
+  }
+  apiKeyCache.delete(keyHashOrId)
+  for (const [hash, entry] of apiKeyCache.entries()) {
+    if (entry.value?.id === keyHashOrId) {
+      apiKeyCache.delete(hash)
+    }
+  }
+}
+
 function getCached<T>(
   cache: Map<string, CacheEntry<T>>,
   key: string
@@ -430,10 +446,13 @@ export async function resolveSessionFromRequest(
   // ---------------------------------------------------------
   let rawApiKey: string | null = null
   const xApiKey = request.headers.get("x-api-key")
+  const xApi = request.headers.get("x-api")
   const apiKeyHeader = request.headers.get("apikey")
 
   if (xApiKey && xApiKey.trim().length > 0) {
     rawApiKey = xApiKey.trim()
+  } else if (xApi && xApi.trim().length > 0) {
+    rawApiKey = xApi.trim()
   } else if (apiKeyHeader && apiKeyHeader.trim().length > 0) {
     rawApiKey = apiKeyHeader.trim()
   } else if (authHeader && authHeader.trim().startsWith("ApiKey ")) {

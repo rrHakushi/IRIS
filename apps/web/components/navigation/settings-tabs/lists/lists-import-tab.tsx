@@ -3,9 +3,12 @@
 import React from "react";
 import type { SettingsTabProps } from "../types";
 
-export function ListsImportSettingsTab({
-  onOpenChange,
-  setFooterContent,
-}: SettingsTabProps): React.JSX.Element {
-  return <div className="flex-1 w-full" />;
+export function ListsImportSettingsTab({}: SettingsTabProps): React.JSX.Element {
+  return (
+    <div className="flex-1 w-full space-y-6 pb-6 animate-in fade-in-50 duration-200">
+      <div>
+        <h3 className="text-base font-bold text-foreground">Import Lists</h3>
+      </div>
+    </div>
+  );
 }

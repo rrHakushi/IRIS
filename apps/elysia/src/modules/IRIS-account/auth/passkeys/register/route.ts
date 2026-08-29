@@ -21,13 +21,22 @@ export default defineRoute({
             type: t.Literal("public-key"),
           })
         ),
-        timeout: t.Number(),
-        attestation: t.String(),
+        authenticatorSelection: t.Optional(
+          t.Object({
+            authenticatorAttachment: t.Optional(t.String()),
+            requireResidentKey: t.Optional(t.Boolean()),
+            residentKey: t.Optional(t.String()),
+            userVerification: t.Optional(t.String()),
+          })
+        ),
+        timeout: t.Optional(t.Number()),
+        attestation: t.Optional(t.String()),
+        excludeCredentials: t.Optional(t.Array(t.Any())),
       }),
     },
   },
 
-  async POST({ session, prisma, cache }) {
+  async POST({ session, prisma, cache, request }) {
     if (!session.isAuthenticated) {
       return new Response(
         JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
@@ -55,10 +64,18 @@ export default defineRoute({
       );
     }
 
-    const nextUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+    const originHeader = request?.headers.get("origin") || request?.headers.get("referer");
+    let origin = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+    if (originHeader) {
+      try {
+        const u = new URL(originHeader);
+        origin = `${u.protocol}//${u.host}`;
+      } catch {}
+    }
+
     let rpID = "localhost";
     try {
-      rpID = process.env.RP_ID || new URL(nextUrl).hostname;
+      rpID = process.env.RP_ID || new URL(origin).hostname;
     } catch {
       rpID = "localhost";
     }
@@ -72,11 +89,13 @@ export default defineRoute({
       excludeCredentials: user.passkeys.map((pk) => ({
         id: pk.id,
         type: "public-key" as const,
+        transports: pk.transports as any,
       })),
       authenticatorSelection: {
         residentKey: "preferred",
         userVerification: "preferred",
       },
+      attestationType: "none",
     });
 
     // Cache challenge for 5 minutes
@@ -97,8 +116,17 @@ export default defineRoute({
         alg: p.alg,
         type: "public-key" as const,
       })),
+      authenticatorSelection: options.authenticatorSelection
+        ? {
+            authenticatorAttachment: options.authenticatorSelection.authenticatorAttachment,
+            requireResidentKey: options.authenticatorSelection.requireResidentKey,
+            residentKey: options.authenticatorSelection.residentKey,
+            userVerification: options.authenticatorSelection.userVerification,
+          }
+        : undefined,
       timeout: options.timeout ?? 60000,
       attestation: options.attestation ?? "none",
+      excludeCredentials: options.excludeCredentials,
     };
   },
 });

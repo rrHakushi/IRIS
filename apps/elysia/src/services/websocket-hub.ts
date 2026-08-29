@@ -31,21 +31,30 @@ export class WebSocketHub {
     return WebSocketHub.instance;
   }
 
+  public hasConnection(ws: ElysiaWS<any>): boolean {
+    return this.connectionUsers.has(ws);
+  }
+
+  public getUserId(ws: ElysiaWS<any>): string | undefined {
+    return this.connectionUsers.get(ws);
+  }
+
   /**
    * Registers a newly opened WebSocket connection.
    */
   public register(ws: ElysiaWS<any>, userId?: string | null): void {
-    if (userId) {
-      this.connectionUsers.set(ws, userId);
-      let sockets = this.userConnections.get(userId);
+    if (userId && typeof userId === "string" && userId.trim().length > 0) {
+      const uid = userId.trim();
+      this.connectionUsers.set(ws, uid);
+      let sockets = this.userConnections.get(uid);
       if (!sockets) {
         sockets = new Set();
-        this.userConnections.set(userId, sockets);
+        this.userConnections.set(uid, sockets);
       }
       sockets.add(ws);
 
       // Automatically subscribe the user to their private channel
-      this.subscribe(ws, `user:${userId}`);
+      this.subscribe(ws, `user:${uid}`);
     }
 
     this.connectionChannels.set(ws, new Set());
@@ -180,11 +189,18 @@ export class WebSocketHub {
 
       if (parsed.type === "auth" && typeof parsed.userId === "string" && parsed.userId.trim().length > 0) {
         const uid = parsed.userId.trim();
+        if ((ws as any)._authTimeout) {
+          clearTimeout((ws as any)._authTimeout);
+          delete (ws as any)._authTimeout;
+        }
+        const alreadyRegistered = this.connectionUsers.get(ws) === uid;
         this.register(ws, uid);
         this.send(ws, "auth:success", { userId: uid });
-        console.log(
-          `\x1b[35m\x1b[1m[WebSocket]\x1b[0m \x1b[32mClient authenticated:\x1b[0m user=\x1b[36m${uid}\x1b[0m`
-        );
+        if (!alreadyRegistered) {
+          console.log(
+            `\x1b[35m\x1b[1m[WebSocket]\x1b[0m \x1b[32mClient connected:\x1b[0m user=\x1b[36m${uid}\x1b[0m`
+          );
+        }
         return;
       }
 

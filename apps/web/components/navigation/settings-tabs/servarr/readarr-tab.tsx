@@ -3,9 +3,12 @@
 import React from "react";
 import type { SettingsTabProps } from "../types";
 
-export function ReadarrSettingsTab({
-  onOpenChange,
-  setFooterContent,
-}: SettingsTabProps): React.JSX.Element {
-  return <div className="flex-1 w-full" />;
+export function ReadarrSettingsTab({}: SettingsTabProps): React.JSX.Element {
+  return (
+    <div className="flex-1 w-full space-y-6 pb-6 animate-in fade-in-50 duration-200">
+      <div>
+        <h3 className="text-base font-bold text-foreground">Readarr</h3>
+      </div>
+    </div>
+  );
 }

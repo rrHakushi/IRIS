@@ -2,6 +2,7 @@ import { verify as verifyTotp } from "otplib";
 import { defineRoute, t } from "../../../../../router";
 import {
   encryptSecret,
+  decryptSecret,
   verifyPassword,
   generateBackupCodes,
 } from "../../../../../utils/auth-crypto";
@@ -12,6 +13,7 @@ export default defineRoute({
       enabled: t.Boolean(),
       code: t.Optional(t.String({ minLength: 6, maxLength: 6 })),
       password: t.Optional(t.String({ minLength: 1 })),
+      secret: t.Optional(t.String()),
     }),
     response: {
       200: t.Object({
@@ -62,15 +64,16 @@ export default defineRoute({
         );
       }
 
-      const pendingSecret = await cache.get<string>(
+      const cachedSecret = await cache.get<string>(
         `auth:totp:pending:${user.id}`
       );
+      const secretToVerify = cachedSecret || body.secret;
 
-      if (!pendingSecret) {
+      if (!secretToVerify) {
         return new Response(
           JSON.stringify({
             error: "BadRequest",
-            message: "TOTP setup session expired or was not initiated.",
+            message: "TOTP setup session expired or was not initiated. Please generate a new QR code.",
           }),
           { status: 400, headers: { "content-type": "application/json" } }
         );
@@ -78,20 +81,21 @@ export default defineRoute({
 
       const verifyResult = await verifyTotp({
         token: body.code.trim(),
-        secret: pendingSecret,
+        secret: secretToVerify,
+        epochTolerance: 30,
       });
 
       if (!verifyResult.valid) {
         return new Response(
           JSON.stringify({
             error: "BadRequest",
-            message: "Invalid verification code.",
+            message: "Invalid verification code. Check that the time on your authenticator device is synchronized.",
           }),
           { status: 400, headers: { "content-type": "application/json" } }
         );
       }
 
-      const encryptedSecret = encryptSecret(pendingSecret);
+      const encryptedSecret = encryptSecret(secretToVerify);
 
       // Generate backup codes if user doesn't already have them
       let plainBackupCodes: string[] = [];
@@ -113,7 +117,10 @@ export default defineRoute({
         },
       });
 
+      // Clear pending and cached user record so GET /users/me reflects new state immediately
       await cache.del(`auth:totp:pending:${user.id}`);
+      await cache.del(`users:me:user:${user.id}`);
+      await cache.del(`user:${user.id}`);
 
       return {
         success: true,
@@ -122,25 +129,58 @@ export default defineRoute({
       };
     }
 
-    // --- Case 2: Disabling TOTP ---
-    if (!body.password) {
+    // --- Case 2: Disabling TOTP (Requires TOTP code or Password) ---
+    let isAuthorized = false;
+
+    // Option A: Verify via TOTP code
+    if (body.code && user.TOTPSecret) {
+      const decryptedSecret = decryptSecret(user.TOTPSecret);
+      const verifyResult = await verifyTotp({
+        token: body.code.trim(),
+        secret: decryptedSecret,
+        epochTolerance: 30,
+      });
+
+      if (verifyResult.valid) {
+        isAuthorized = true;
+      } else {
+        return new Response(
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "Invalid authenticator verification code.",
+          }),
+          { status: 401, headers: { "content-type": "application/json" } }
+        );
+      }
+    }
+    // Option B: Verify via Account Password
+    else if (body.password) {
+      if (user.passwordHash) {
+        const isPasswordValid = await verifyPassword(body.password, user.passwordHash);
+        if (isPasswordValid) {
+          isAuthorized = true;
+        } else {
+          return new Response(
+            JSON.stringify({
+              error: "Unauthorized",
+              message: "Incorrect password confirmation.",
+            }),
+            { status: 401, headers: { "content-type": "application/json" } }
+          );
+        }
+      } else {
+        // User has no password (e.g. Passkey/OAuth user)
+        isAuthorized = true;
+      }
+    }
+
+    if (!isAuthorized) {
       return new Response(
         JSON.stringify({
           error: "BadRequest",
-          message: "Current account password is required to disable TOTP.",
+          message: "Please enter a 6-digit authenticator code or your account password to disable TOTP.",
         }),
         { status: 400, headers: { "content-type": "application/json" } }
-      );
-    }
-
-    const isPasswordValid = await verifyPassword(body.password, user.passwordHash);
-    if (!isPasswordValid) {
-      return new Response(
-        JSON.stringify({
-          error: "Unauthorized",
-          message: "Incorrect password confirmation.",
-        }),
-        { status: 401, headers: { "content-type": "application/json" } }
       );
     }
 
@@ -154,6 +194,10 @@ export default defineRoute({
         ...(!remainingMfa ? { backupCodes: [] } : {}),
       },
     });
+
+    // Invalidate cached user record so GET /users/me reflects new state immediately
+    await cache.del(`users:me:user:${user.id}`);
+    await cache.del(`user:${user.id}`);
 
     return {
       success: true,

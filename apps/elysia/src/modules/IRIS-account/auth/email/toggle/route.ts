@@ -14,7 +14,7 @@ export default defineRoute({
     },
   },
 
-  async POST({ body, session, prisma }) {
+  async POST({ body, session, prisma, cache }) {
     if (!session.isAuthenticated) {
       return new Response(
         JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
@@ -59,6 +59,10 @@ export default defineRoute({
         },
       });
 
+      // Invalidate cached user record
+      await cache.del(`users:me:user:${user.id}`);
+      await cache.del(`user:${user.id}`);
+
       return {
         success: true,
         message: "Email MFA has been enabled",
@@ -74,6 +78,10 @@ export default defineRoute({
           ...(!otherMfaActive ? { backupCodes: [] } : {}),
         },
       });
+
+      // Invalidate cached user record
+      await cache.del(`users:me:user:${user.id}`);
+      await cache.del(`user:${user.id}`);
 
       return {
         success: true,

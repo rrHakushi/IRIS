@@ -3,6 +3,21 @@ import { AsyncLocalStorage } from "node:async_hooks"
 import { c } from "./colors"
 
 /**
+ * Formats a Date into a zero-padded timestamp string `[HH:mm:ss]` with dim gray coloring.
+ *
+ * @param date - Optional Date object or timestamp (defaults to new Date())
+ * @returns Formatted and colorized timestamp string e.g. `[10:36:09]`
+ */
+export function formatTimestamp(date: Date | string | number = new Date()): string {
+  const d = date instanceof Date ? date : new Date(date)
+  const pad = (n: number) => n.toString().padStart(2, "0")
+  const h = pad(d.getHours())
+  const m = pad(d.getMinutes())
+  const s = pad(d.getSeconds())
+  return c.gray(`[${h}:${m}:${s}]`)
+}
+
+/**
  * Individual captured log item with severity level and formatted message.
  */
 export interface RequestLogItem {
@@ -10,6 +25,8 @@ export interface RequestLogItem {
   type: "log" | "info" | "warn" | "error"
   /** Formatted log message string. */
   message: string
+  /** Timestamp when log was recorded. */
+  timestamp?: Date
 }
 
 /**
@@ -65,6 +82,7 @@ export function initConsoleInterceptor(): void {
         store.logs.push({
           type,
           message: util.format(...args),
+          timestamp: new Date(),
         })
       } else {
         originalConsole[type](...args)
@@ -92,11 +110,13 @@ export function printGroupedRequestLogs(logs: RequestLogItem[]): void {
     const item = logs[i]
     if (!item) continue
 
+    const time = formatTimestamp(item.timestamp)
+
     let prefix = ""
     if (item.type === "warn") prefix = c.yellow(c.bold("[WARN] "))
     if (item.type === "error") prefix = c.red(c.bold("[ERROR] "))
 
-    process.stdout.write(`${branch}${prefix}${item.message}\n`)
+    process.stdout.write(`${branch}${time} ${prefix}${item.message}\n`)
   }
 }
 
@@ -128,23 +148,39 @@ export async function executeWithRequestLogs(
   const store: RequestLogStore = { logs: [] }
 
   if (req) {
-    ;(req as unknown as { _requestLogs?: RequestLogItem[] })._requestLogs =
+    ; (req as unknown as { _requestLogs?: RequestLogItem[] })._requestLogs =
       store.logs
   }
 
-  ;(ctx as { log?: RequestLogger }).log = Object.assign(
+  ; (ctx as { log?: RequestLogger }).log = Object.assign(
     (...args: unknown[]) => {
-      store.logs.push({ type: "log", message: util.format(...args) })
+      store.logs.push({
+        type: "log",
+        message: util.format(...args),
+        timestamp: new Date(),
+      })
     },
     {
       info: (...args: unknown[]) => {
-        store.logs.push({ type: "info", message: util.format(...args) })
+        store.logs.push({
+          type: "info",
+          message: util.format(...args),
+          timestamp: new Date(),
+        })
       },
       warn: (...args: unknown[]) => {
-        store.logs.push({ type: "warn", message: util.format(...args) })
+        store.logs.push({
+          type: "warn",
+          message: util.format(...args),
+          timestamp: new Date(),
+        })
       },
       error: (...args: unknown[]) => {
-        store.logs.push({ type: "error", message: util.format(...args) })
+        store.logs.push({
+          type: "error",
+          message: util.format(...args),
+          timestamp: new Date(),
+        })
       },
     }
   )
@@ -153,3 +189,4 @@ export async function executeWithRequestLogs(
     return await handler(ctx)
   })
 }
+

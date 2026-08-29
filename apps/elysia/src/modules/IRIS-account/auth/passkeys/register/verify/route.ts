@@ -22,7 +22,7 @@ export default defineRoute({
     },
   },
 
-  async POST({ body, session, prisma, cache }) {
+  async POST({ body, session, prisma, cache, request }) {
     if (!session.isAuthenticated) {
       return new Response(
         JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
@@ -65,10 +65,18 @@ export default defineRoute({
       );
     }
 
-    const nextUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+    const originHeader = request?.headers.get("origin") || request?.headers.get("referer");
+    let expectedOrigin = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+    if (originHeader) {
+      try {
+        const u = new URL(originHeader);
+        expectedOrigin = `${u.protocol}//${u.host}`;
+      } catch {}
+    }
+
     let expectedRPID = "localhost";
     try {
-      expectedRPID = process.env.RP_ID || new URL(nextUrl).hostname;
+      expectedRPID = process.env.RP_ID || new URL(expectedOrigin).hostname;
     } catch {
       expectedRPID = "localhost";
     }
@@ -79,7 +87,7 @@ export default defineRoute({
       verification = await verifyRegistrationResponse({
         response: body.passkeyResponse as any,
         expectedChallenge,
-        expectedOrigin: nextUrl,
+        expectedOrigin,
         expectedRPID,
       });
     } catch (err: unknown) {
@@ -134,8 +142,10 @@ export default defineRoute({
       });
     }
 
-    // Clean up cached challenge
+    // Clean up cached challenge and user cache
     await cache.del(`auth:passkey-reg:${user.id}`);
+    await cache.del(`users:me:user:${user.id}`);
+    await cache.del(`user:${user.id}`);
 
     return {
       success: true,

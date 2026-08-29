@@ -10,13 +10,28 @@ import React, {
 import { useSession } from "next-auth/react";
 import { elysia } from "@/lib/elysia";
 
+import {
+  getProfileCustomization,
+  setProfileCustomization,
+  type UserProfileCustomization,
+  type DisplayNameStyle,
+} from "@IRIS/shared";
+
 export interface FullUser {
   id: string;
   username: string;
   email: string;
   displayName?: string;
+  displayNameStyle?: DisplayNameStyle;
+  pronouns?: string;
+  statusText?: string;
+  bio?: string;
   avatarUrl?: string | null;
+  bannerUrl?: string | null;
+  nameplateUrl?: string | null;
   sidebarCardBackgroundUrl?: string | null;
+  avatarFrame?: string | null;
+  profile?: UserProfileCustomization;
   customization?: Record<string, any> | null;
   settings?: Record<string, any> | null;
   permissions?: number[];
@@ -37,6 +52,7 @@ interface UserContextValue {
     customization?: Record<string, unknown>;
     settings?: Record<string, unknown>;
   }) => Promise<FullUser | null>;
+  updateProfile: (patch: Partial<UserProfileCustomization>) => Promise<FullUser | null>;
 }
 
 const UserContext = createContext<UserContextValue>({
@@ -45,6 +61,7 @@ const UserContext = createContext<UserContextValue>({
   error: null,
   refetchUser: async () => null,
   updateUser: async () => null,
+  updateProfile: async () => null,
 });
 
 // In-memory cache across route changes
@@ -94,15 +111,21 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           }
 
           const userData = data.user;
-          const customization =
-            (userData.customization as Record<string, any>) || {};
+          const profile = getProfileCustomization(userData.customization);
 
           const fullUser: FullUser = {
             ...userData,
-            displayName: customization.displayName || userData.username,
-            avatarUrl: customization.avatarUrl || null,
-            sidebarCardBackgroundUrl:
-              customization.sidebarCardBackgroundUrl || null,
+            displayName: profile.displayName || userData.username,
+            displayNameStyle: profile.displayNameStyle,
+            pronouns: profile.pronouns,
+            statusText: profile.statusText,
+            bio: profile.bio,
+            avatarUrl: profile.avatarUrl,
+            bannerUrl: profile.bannerUrl,
+            nameplateUrl: profile.nameplateUrl,
+            sidebarCardBackgroundUrl: profile.nameplateUrl,
+            avatarFrame: profile.avatarFrame,
+            profile,
           };
 
           cachedUser = fullUser;
@@ -152,15 +175,18 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       }
 
       const userData = resData.user;
-      const customization =
-        (userData.customization as Record<string, any>) || {};
+      const profile = getProfileCustomization(userData.customization);
 
       const updatedFullUser: FullUser = {
         ...userData,
-        displayName: customization.displayName || userData.username,
-        avatarUrl: customization.avatarUrl || null,
-        sidebarCardBackgroundUrl:
-          customization.sidebarCardBackgroundUrl || null,
+        displayName: profile.displayName || userData.username,
+        displayNameStyle: profile.displayNameStyle,
+        bio: profile.bio,
+        avatarUrl: profile.avatarUrl,
+        bannerUrl: profile.bannerUrl,
+        sidebarCardBackgroundUrl: profile.sidebarBannerUrl,
+        avatarFrame: profile.avatarFrame,
+        profile,
       };
 
       cachedUser = updatedFullUser;
@@ -172,6 +198,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return null;
   };
 
+  const updateProfile = async (
+    patch: Partial<UserProfileCustomization>
+  ): Promise<FullUser | null> => {
+    const updatedCustomization = setProfileCustomization(
+      user?.customization,
+      patch
+    );
+    return updateUser({ customization: updatedCustomization });
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -180,6 +216,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         error,
         refetchUser: () => fetchUser(true),
         updateUser,
+        updateProfile,
       }}
     >
       {children}

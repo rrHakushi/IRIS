@@ -322,8 +322,8 @@ export function defineRoute<
   OptionsS,
   HeadS,
   AllS
-> {
-  return definition
+> & { schema: S } {
+  return definition as any
 }
 
 /**

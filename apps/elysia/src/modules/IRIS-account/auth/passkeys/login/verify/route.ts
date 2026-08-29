@@ -86,10 +86,18 @@ export default defineRoute({
       );
     }
 
-    const nextUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+    const originHeader = request?.headers.get("origin") || request?.headers.get("referer");
+    let expectedOrigin = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+    if (originHeader) {
+      try {
+        const u = new URL(originHeader);
+        expectedOrigin = `${u.protocol}//${u.host}`;
+      } catch {}
+    }
+
     let expectedRPID = "localhost";
     try {
-      expectedRPID = process.env.RP_ID || new URL(nextUrl).hostname;
+      expectedRPID = process.env.RP_ID || new URL(expectedOrigin).hostname;
     } catch {
       expectedRPID = "localhost";
     }
@@ -100,7 +108,7 @@ export default defineRoute({
       verification = await verifyAuthenticationResponse({
         response: body.passkeyResponse as any,
         expectedChallenge,
-        expectedOrigin: nextUrl,
+        expectedOrigin,
         expectedRPID,
         credential: {
           id: passkey.id,

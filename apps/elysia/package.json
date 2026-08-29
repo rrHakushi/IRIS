@@ -32,6 +32,7 @@
     "@IRIS/database": "workspace:*",
     "@IRIS/permissions": "workspace:*",
     "@IRIS/shared": "workspace:*",
+    "@aws-sdk/client-s3": "^3.1121.0",
     "@elysiajs/bearer": "^1.4.4",
     "@noble/ciphers": "^2.4.0",
     "@noble/hashes": "^2.4.0",

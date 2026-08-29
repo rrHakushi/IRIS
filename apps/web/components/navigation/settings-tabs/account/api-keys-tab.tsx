@@ -1,11 +1,407 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { Button } from "@workspace/ui/components/button";
+import { Input } from "@workspace/ui/components/input";
+import { Badge } from "@workspace/ui/components/badge";
+import { Spinner } from "@workspace/ui/components/spinner";
+import {
+  IconKey,
+  IconPlus,
+  IconSearch,
+  IconAlertCircle,
+  IconShieldLock,
+  IconRefresh,
+} from "@tabler/icons-react";
+import { elysia } from "@/lib/elysia";
+import { toast } from "sonner";
 import type { SettingsTabProps } from "../types";
+import type { ApiKeyItem } from "./api-keys/types";
+import { ApiKeyItemCard } from "./api-keys/api-key-item-card";
+import { CreateApiKeyDialog } from "./api-keys/create-api-key-dialog";
+import { RevealApiKeyDialog } from "./api-keys/reveal-api-key-dialog";
 
 export function ApiKeysSettingsTab({
-  onOpenChange,
   setFooterContent,
 }: SettingsTabProps): React.JSX.Element {
-  return <div className="flex-1 w-full" />;
+  const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  // Dialog states
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [revealDialogOpen, setRevealDialogOpen] = useState(false);
+  const [revealedRawKey, setRevealedRawKey] = useState<string | null>(null);
+  const [revealedApiKey, setRevealedApiKey] = useState<ApiKeyItem | null>(null);
+  const [isRevealedRegenerated, setIsRevealedRegenerated] = useState(false);
+
+  // Item action loading states
+  const [isCreating, setIsCreating] = useState(false);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const hasFetchedRef = useRef(false);
+
+  // Clear footer content for this tab since actions are modal/dialog based
+  useEffect(() => {
+    setFooterContent?.(null);
+  }, [setFooterContent]);
+
+  // Fetch all API keys for user
+  const fetchApiKeys = useCallback(async (isManualRefresh = false) => {
+    if (isManualRefresh) setIsRefreshing(true);
+    else setIsLoading(true);
+    setError(null);
+
+    try {
+      const res = await (elysia.auth as any)["api-keys"].get({
+        fetch: { credentials: "include" },
+      });
+
+      if (res.error) {
+        const errorData = res.error?.value as { message?: string } | undefined;
+        throw new Error(errorData?.message || "Failed to load API keys.");
+      }
+
+      if (res.data?.apiKeys) {
+        setApiKeys(res.data.apiKeys);
+      }
+    } catch (err: any) {
+      console.error("[ApiKeysTab] Fetch error:", err);
+      const msg = err.message || "Failed to load API keys.";
+      setError(msg);
+      if (isManualRefresh) toast.error(msg);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!hasFetchedRef.current) {
+      hasFetchedRef.current = true;
+      fetchApiKeys();
+    }
+  }, [fetchApiKeys]);
+
+  // Create API Key handler
+  const handleCreateApiKey = async (
+    name: string,
+    expirationDays: number | null
+  ): Promise<boolean> => {
+    setIsCreating(true);
+    setError(null);
+
+    try {
+      const res = await (elysia.auth as any)["api-keys"].post(
+        {
+          name,
+          expirationDays: expirationDays ?? undefined,
+        },
+        {
+          fetch: { credentials: "include" },
+        }
+      );
+
+      if (res.error || !res.data) {
+        const errorData = res.error?.value as { message?: string } | undefined;
+        throw new Error(errorData?.message || "Failed to generate API key.");
+      }
+
+      const { rawKey, apiKey } = res.data;
+
+      // Update state
+      setApiKeys((prev) => [apiKey, ...prev]);
+      setRevealedRawKey(rawKey);
+      setRevealedApiKey(apiKey);
+      setIsRevealedRegenerated(false);
+      setCreateDialogOpen(false);
+      setRevealDialogOpen(true);
+
+      toast.success("API key created successfully!");
+      return true;
+    } catch (err: any) {
+      console.error("[ApiKeysTab] Create error:", err);
+      const msg = err.message || "Failed to create API key.";
+      toast.error(msg);
+      return false;
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  // Rename API Key handler
+  const handleRenameApiKey = async (
+    id: string,
+    newName: string
+  ): Promise<boolean> => {
+    setRenamingId(id);
+
+    try {
+      const res = await (elysia.auth as any)["api-keys"]({ id }).patch(
+        {
+          name: newName,
+        },
+        {
+          fetch: { credentials: "include" },
+        }
+      );
+
+      if (res.error || !res.data) {
+        const errorData = res.error?.value as { message?: string } | undefined;
+        throw new Error(errorData?.message || "Failed to rename API key.");
+      }
+
+      const updatedKey = res.data.apiKey;
+      setApiKeys((prev) =>
+        prev.map((k) => (k.id === id ? { ...k, ...updatedKey } : k))
+      );
+
+      toast.success("API key renamed successfully.");
+      return true;
+    } catch (err: any) {
+      console.error("[ApiKeysTab] Rename error:", err);
+      toast.error(err.message || "Failed to rename API key.");
+      return false;
+    } finally {
+      setRenamingId(null);
+    }
+  };
+
+  // Regenerate API Key handler
+  const handleRegenerateApiKey = async (id: string): Promise<boolean> => {
+    setRegeneratingId(id);
+
+    try {
+      const res = await (elysia.auth as any)["api-keys"]({ id }).regenerate.post(
+        {},
+        {
+          fetch: { credentials: "include" },
+        }
+      );
+
+      if (res.error || !res.data) {
+        const errorData = res.error?.value as { message?: string } | undefined;
+        throw new Error(errorData?.message || "Failed to regenerate API key.");
+      }
+
+      const { rawKey, apiKey } = res.data;
+
+      // Update state
+      setApiKeys((prev) =>
+        prev.map((k) => (k.id === id ? { ...k, ...apiKey } : k))
+      );
+      setRevealedRawKey(rawKey);
+      setRevealedApiKey(apiKey);
+      setIsRevealedRegenerated(true);
+      setRevealDialogOpen(true);
+
+      toast.success("API key regenerated successfully!");
+      return true;
+    } catch (err: any) {
+      console.error("[ApiKeysTab] Regenerate error:", err);
+      toast.error(err.message || "Failed to regenerate API key.");
+      return false;
+    } finally {
+      setRegeneratingId(null);
+    }
+  };
+
+  // Revoke / Delete API Key handler
+  const handleDeleteApiKey = async (id: string): Promise<boolean> => {
+    setDeletingId(id);
+
+    try {
+      const res = await (elysia.auth as any)["api-keys"]({ id }).delete(
+        {},
+        {
+          fetch: { credentials: "include" },
+        }
+      );
+
+      if (res.error) {
+        const errorData = res.error?.value as { message?: string } | undefined;
+        throw new Error(errorData?.message || "Failed to delete API key.");
+      }
+
+      setApiKeys((prev) => prev.filter((k) => k.id !== id));
+      toast.success("API key revoked successfully.");
+      return true;
+    } catch (err: any) {
+      console.error("[ApiKeysTab] Delete error:", err);
+      toast.error(err.message || "Failed to revoke API key.");
+      return false;
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  // Filtered keys
+  const filteredKeys = apiKeys.filter((key) => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      key.name.toLowerCase().includes(q) ||
+      key.prefix.toLowerCase().includes(q)
+    );
+  });
+
+  const activeKeysCount = apiKeys.filter((k) =>
+    k.expiresAt ? new Date(k.expiresAt).getTime() > Date.now() : true
+  ).length;
+
+  return (
+    <div className="flex-1 w-full space-y-6 pb-6 animate-in fade-in-50 duration-200">
+      <div className="flex items-center justify-between gap-3 flex-wrap pr-10 sm:pr-12">
+        <div>
+          <h3 className="text-base font-bold text-foreground">Api Keys</h3>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Search filter if there are multiple keys */}
+          {apiKeys.length > 3 && (
+            <div className="relative w-36 sm:w-48">
+              <IconSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search keys..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-8 text-xs pl-8 rounded-xl bg-background/50"
+              />
+            </div>
+          )}
+
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            onClick={() => fetchApiKeys(true)}
+            disabled={isLoading || isRefreshing}
+            aria-label="Refresh API keys"
+            className="size-8 rounded-xl shrink-0"
+          >
+            <IconRefresh
+              className={`size-3.5 ${isRefreshing ? "animate-spin text-primary" : ""}`}
+            />
+          </Button>
+
+          <Button
+            type="button"
+            variant="default"
+            size="sm"
+            onClick={() => setCreateDialogOpen(true)}
+            className="h-8 text-xs rounded-xl gap-1.5 px-3.5 shrink-0"
+          >
+            <IconPlus className="size-4" />
+            <span>Create API Key</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Keys Section */}
+      <div className="space-y-3.5">
+
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="rounded-2xl border border-border/60 bg-muted/10 p-10 flex flex-col items-center justify-center gap-3">
+            <Spinner className="size-6 text-primary" />
+            <p className="text-xs text-muted-foreground">Loading API keys...</p>
+          </div>
+        ) : error ? (
+          /* Error State */
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-6 flex flex-col items-center justify-center gap-2.5 text-center">
+            <IconAlertCircle className="size-6 text-destructive" />
+            <p className="text-xs text-destructive font-medium">{error}</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => fetchApiKeys()}
+              className="h-7 text-xs rounded-lg mt-1"
+            >
+              Retry
+            </Button>
+          </div>
+        ) : apiKeys.length === 0 ? (
+          /* Empty State */
+          <div className="rounded-2xl border border-dashed border-border/80 bg-muted/10 p-8 sm:p-10 flex flex-col items-center justify-center gap-3 text-center">
+            <div className="size-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+              <IconShieldLock className="size-6" />
+            </div>
+            <div className="space-y-1 max-w-sm">
+              <h4 className="font-semibold text-sm text-foreground">
+                No API Keys Found
+              </h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Generate an API key to authenticate CLI scripts, plugins, and third-party applications with IRIS.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="default"
+              size="sm"
+              onClick={() => setCreateDialogOpen(true)}
+              className="h-8 text-xs rounded-xl gap-1.5 px-4 mt-1"
+            >
+              <IconPlus className="size-3.5" />
+              <span>Create your first API key</span>
+            </Button>
+          </div>
+        ) : filteredKeys.length === 0 ? (
+          /* Search Empty State */
+          <div className="rounded-2xl border border-border/60 bg-muted/10 p-8 text-center space-y-2">
+            <p className="text-xs text-muted-foreground">
+              No API keys matching "{searchQuery}"
+            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setSearchQuery("")}
+              className="h-7 text-xs rounded-lg"
+            >
+              Clear Search
+            </Button>
+          </div>
+        ) : (
+          /* Key List */
+          <div className="space-y-3">
+            {filteredKeys.map((key) => (
+              <ApiKeyItemCard
+                key={key.id}
+                apiKey={key}
+                onRename={handleRenameApiKey}
+                onRegenerate={handleRegenerateApiKey}
+                onDelete={handleDeleteApiKey}
+                isRenaming={renamingId === key.id}
+                isRegenerating={regeneratingId === key.id}
+                isDeleting={deletingId === key.id}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Create Dialog */}
+      <CreateApiKeyDialog
+        isOpen={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onCreate={handleCreateApiKey}
+        isCreating={isCreating}
+      />
+
+      {/* Reveal Dialog (Shown after creation or regeneration) */}
+      <RevealApiKeyDialog
+        isOpen={revealDialogOpen}
+        onOpenChange={setRevealDialogOpen}
+        rawKey={revealedRawKey}
+        apiKey={revealedApiKey}
+        isRegenerated={isRevealedRegenerated}
+      />
+    </div>
+  );
 }

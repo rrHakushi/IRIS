@@ -111,9 +111,12 @@ export function IrisUserMenu({
           className="h-12 w-full p-0 border-0 bg-transparent hover:bg-transparent focus-visible:ring-0 overflow-hidden cursor-pointer"
         >
           <IrisSidebarUserCard
-            sidebarCardBackgroundUrl={user?.sidebarCardBackgroundUrl}
+            nameplateUrl={user?.nameplateUrl || user?.sidebarCardBackgroundUrl}
             avatarUrl={user?.avatarUrl}
+            avatarFrame={user?.avatarFrame}
             displayName={displayName}
+            displayNameStyle={user?.displayNameStyle}
+            statusText={user?.statusText}
             username={username}
             email={userEmail}
             unreadCount={unreadCount}
@@ -135,9 +138,12 @@ export function IrisUserMenu({
               onClick={() => setMenuOpen(false)}
             >
               <IrisSidebarUserCard
-                sidebarCardBackgroundUrl={user?.sidebarCardBackgroundUrl}
+                nameplateUrl={user?.nameplateUrl || user?.sidebarCardBackgroundUrl}
                 avatarUrl={user?.avatarUrl}
+                avatarFrame={user?.avatarFrame}
                 displayName={displayName}
+                displayNameStyle={user?.displayNameStyle}
+                statusText={user?.statusText}
                 username={username}
                 email={userEmail}
                 showEmail
