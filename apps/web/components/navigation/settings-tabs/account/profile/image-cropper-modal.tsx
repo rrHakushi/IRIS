@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Dialog, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog";
 import { Button } from "@workspace/ui/components/button";
 import { Spinner } from "@workspace/ui/components/spinner";
@@ -57,9 +58,11 @@ export function ImageCropperModal({
   onOpenChange,
   imageFile,
   aspectRatio = "square",
-  title = "Crop Image",
+  title,
   onCropComplete,
 }: ImageCropperModalProps): React.JSX.Element {
+  const t = useTranslations("navigation.settings.account.profile");
+  const modalTitle = title ?? t("cropImage");
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [naturalSize, setNaturalSize] = useState<{ width: number; height: number } | null>(null);
   const [cropBoxSize, setCropBoxSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
@@ -148,8 +151,8 @@ export function ImageCropperModal({
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
     setNaturalSize({
-      width: img.naturalWidth || 800,
-      height: img.naturalHeight || 600,
+      width: img.naturalWidth,
+      height: img.naturalHeight,
     });
   };
 
@@ -157,17 +160,20 @@ export function ImageCropperModal({
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsDragging(true);
-    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+    setDragStart({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y,
+    });
   };
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      if (!isDragging) return;
-      const rawX = e.clientX - dragStart.x;
-      const rawY = e.clientY - dragStart.y;
-      setPosition(
-        clampPosition({ x: rawX, y: rawY }, naturalSize, cropBoxSize, minScale, zoom, rotation)
-      );
+      if (!isDragging || !naturalSize) return;
+      const rawPos = {
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y,
+      };
+      setPosition(clampPosition(rawPos, naturalSize, cropBoxSize, minScale, zoom, rotation));
     },
     [isDragging, dragStart, naturalSize, cropBoxSize, minScale, zoom, rotation]
   );
@@ -187,7 +193,7 @@ export function ImageCropperModal({
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
-  // Touch handling with clamping
+  // Touch Support
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 1 && e.touches[0]) {
       setIsDragging(true);
@@ -199,42 +205,52 @@ export function ImageCropperModal({
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || e.touches.length !== 1 || !e.touches[0]) return;
-    const rawX = e.touches[0].clientX - dragStart.x;
-    const rawY = e.touches[0].clientY - dragStart.y;
-    setPosition(
-      clampPosition({ x: rawX, y: rawY }, naturalSize, cropBoxSize, minScale, zoom, rotation)
-    );
+    if (!isDragging || !naturalSize || e.touches.length !== 1 || !e.touches[0]) return;
+    const rawPos = {
+      x: e.touches[0].clientX - dragStart.x,
+      y: e.touches[0].clientY - dragStart.y,
+    };
+    setPosition(clampPosition(rawPos, naturalSize, cropBoxSize, minScale, zoom, rotation));
   };
 
   const handleTouchEnd = () => {
     setIsDragging(false);
   };
 
-  // Wheel zoom
+  // Wheel Zoom
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
-    const delta = e.deltaY * -0.0015;
-    const newZoom = Math.min(Math.max(1, zoom + delta), 3);
-    setZoom(newZoom);
-    setPosition((prev) =>
-      clampPosition(prev, naturalSize, cropBoxSize, minScale, newZoom, rotation)
-    );
+    const delta = e.deltaY > 0 ? -0.08 : 0.08;
+    setZoom((prev) => {
+      const nextZoom = Math.min(Math.max(prev + delta, 1.0), 3.0);
+      if (naturalSize) {
+        setPosition((currentPos) =>
+          clampPosition(currentPos, naturalSize, cropBoxSize, minScale, nextZoom, rotation)
+        );
+      }
+      return nextZoom;
+    });
   };
 
-  const handleZoomChange = (newZoom: number) => {
-    setZoom(newZoom);
-    setPosition((prev) =>
-      clampPosition(prev, naturalSize, cropBoxSize, minScale, newZoom, rotation)
-    );
+  const handleZoomChange = (nextZoom: number) => {
+    setZoom(nextZoom);
+    if (naturalSize) {
+      setPosition((currentPos) =>
+        clampPosition(currentPos, naturalSize, cropBoxSize, minScale, nextZoom, rotation)
+      );
+    }
   };
 
-  const handleRotate = (deltaDeg: number) => {
-    const nextRot = (rotation + deltaDeg + 360) % 360;
-    setRotation(nextRot);
-    setPosition((prev) =>
-      clampPosition(prev, naturalSize, cropBoxSize, minScale, zoom, nextRot)
-    );
+  const handleRotate = (deg: number) => {
+    setRotation((prev) => {
+      const nextRot = (prev + deg + 360) % 360;
+      if (naturalSize) {
+        setPosition((currentPos) =>
+          clampPosition(currentPos, naturalSize, cropBoxSize, minScale, zoom, nextRot)
+        );
+      }
+      return nextRot;
+    });
   };
 
   // Reset transforms
@@ -246,71 +262,86 @@ export function ImageCropperModal({
     setPosition({ x: 0, y: 0 });
   };
 
-  // Export cropped canvas
+  // Perform canvas crop and export cropped File
   const handleSaveCrop = async () => {
-    if (!imageRef.current || !imageFile || !naturalSize || cropBoxSize.width === 0) return;
-
+    if (!imageRef.current || !naturalSize || cropBoxSize.width === 0) return;
     setIsProcessing(true);
-    try {
-      const img = imageRef.current;
 
-      // High-resolution canvas export
-      const exportWidth = targetRatio >= 2 ? 1400 : 800;
-      const exportHeight = Math.round(exportWidth / targetRatio);
+    try {
+      // Output target resolutions
+      let outWidth = 512;
+      let outHeight = 512;
+
+      if (aspectRatio === "banner") {
+        outWidth = 1200;
+        outHeight = 400;
+      } else if (aspectRatio === "sidebar") {
+        outWidth = 800;
+        outHeight = 400;
+      }
 
       const canvas = document.createElement("canvas");
-      canvas.width = exportWidth;
-      canvas.height = exportHeight;
+      canvas.width = outWidth;
+      canvas.height = outHeight;
       const ctx = canvas.getContext("2d");
 
-      if (!ctx) throw new Error("Could not get canvas context");
+      if (!ctx) throw new Error("Could not initialize canvas context.");
 
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
 
-      // Scale between export canvas and on-screen crop box
-      const canvasScale = exportWidth / cropBoxSize.width;
+      // 1. Center canvas for rotation & flipping
+      ctx.translate(outWidth / 2, outHeight / 2);
 
-      // Translate to canvas center
-      ctx.translate(exportWidth / 2, exportHeight / 2);
-
-      // Translate by clamped pan offset
-      ctx.translate(position.x * canvasScale, position.y * canvasScale);
-
-      // Apply rotation and flips
+      // 2. Rotate canvas
       ctx.rotate((rotation * Math.PI) / 180);
+
+      // 3. Flip canvas
       ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
 
-      // Displayed dimensions on canvas
-      const drawWidth = naturalSize.width * minScale * zoom * canvasScale;
-      const drawHeight = naturalSize.height * minScale * zoom * canvasScale;
+      // 4. Calculate scale factor between on-screen crop box and high-res canvas
+      const scaleToCanvas = outWidth / cropBoxSize.width;
+      const scaledDispW = naturalSize.width * minScale * zoom * scaleToCanvas;
+      const scaledDispH = naturalSize.height * minScale * zoom * scaleToCanvas;
 
+      // Un-rotated position mapped to canvas coordinates
+      let drawOffsetX = position.x * scaleToCanvas;
+      let drawOffsetY = position.y * scaleToCanvas;
+
+      if (rotation === 90) {
+        const temp = drawOffsetX;
+        drawOffsetX = drawOffsetY;
+        drawOffsetY = -temp;
+      } else if (rotation === 180) {
+        drawOffsetX = -drawOffsetX;
+        drawOffsetY = -drawOffsetY;
+      } else if (rotation === 270) {
+        const temp = drawOffsetX;
+        drawOffsetX = -drawOffsetY;
+        drawOffsetY = temp;
+      }
+
+      if (flipH) drawOffsetX = -drawOffsetX;
+      if (flipV) drawOffsetY = -drawOffsetY;
+
+      // 5. Draw source image into transformed canvas
       ctx.drawImage(
-        img,
-        -drawWidth / 2,
-        -drawHeight / 2,
-        drawWidth,
-        drawHeight
+        imageRef.current,
+        -scaledDispW / 2 + drawOffsetX,
+        -scaledDispH / 2 + drawOffsetY,
+        scaledDispW,
+        scaledDispH
       );
 
-      // Convert canvas to Blob / File
-      const mimeType =
-        imageFile.type === "image/png" || imageFile.type === "image/svg+xml"
-          ? "image/png"
-          : "image/webp";
-
-      const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob((b) => resolve(b), mimeType, 0.92);
-      });
-
-      if (!blob) throw new Error("Failed to render cropped image blob");
-
-      const extension = mimeType === "image/png" ? "png" : "webp";
-      const croppedFile = new File(
-        [blob],
-        `cropped-${Date.now()}.${extension}`,
-        { type: mimeType }
+      // 6. Convert canvas blob to File
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/webp", 0.92)
       );
+
+      if (!blob) throw new Error("Failed to encode cropped image.");
+
+      const fileName = `${imageFile?.name?.replace(/\.[^/.]+$/, "") || "asset"}-cropped.webp`;
+      const croppedFile = new File([blob], fileName, { type: "image/webp" });
 
       onCropComplete(croppedFile);
       onOpenChange(false);
@@ -332,7 +363,7 @@ export function ImageCropperModal({
     >
       <DialogHeader className="p-5 pb-3">
         <DialogTitle className="text-base font-bold text-foreground">
-          {title}
+          {modalTitle}
         </DialogTitle>
       </DialogHeader>
 
@@ -398,7 +429,7 @@ export function ImageCropperModal({
             className="h-8 text-xs font-medium gap-1.5 rounded-xl cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted"
           >
             <IconRotate data-icon="inline-start" className="size-4" />
-            Rotate L
+            {t("rotateL")}
           </Button>
 
           <Button
@@ -409,7 +440,7 @@ export function ImageCropperModal({
             className="h-8 text-xs font-medium gap-1.5 rounded-xl cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted"
           >
             <IconRotateClockwise data-icon="inline-start" className="size-4" />
-            Rotate R
+            {t("rotateR")}
           </Button>
 
           <Button
@@ -420,7 +451,7 @@ export function ImageCropperModal({
             className="h-8 text-xs font-medium gap-1.5 rounded-xl cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted"
           >
             <IconFlipHorizontal data-icon="inline-start" className="size-4" />
-            Flip H
+            {t("flipH")}
           </Button>
 
           <Button
@@ -431,7 +462,7 @@ export function ImageCropperModal({
             className="h-8 text-xs font-medium gap-1.5 rounded-xl cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted"
           >
             <IconFlipVertical data-icon="inline-start" className="size-4" />
-            Flip V
+            {t("flipV")}
           </Button>
         </div>
 
@@ -452,7 +483,7 @@ export function ImageCropperModal({
           <button
             type="button"
             onClick={handleReset}
-            title="Reset transformations"
+            title={t("resetTransformationsTitle")}
             className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer ml-1"
           >
             <IconRotate2 className="size-4" />
@@ -470,7 +501,7 @@ export function ImageCropperModal({
           onPress={() => onOpenChange(false)}
           className="text-xs h-9 px-4 rounded-xl cursor-pointer"
         >
-          Cancel
+          {t("cancel")}
         </Button>
         <Button
           type="button"
@@ -483,10 +514,10 @@ export function ImageCropperModal({
           {isProcessing ? (
             <>
               <Spinner className="size-3.5" />
-              <span>Saving Crop...</span>
+              <span>{t("savingCrop")}</span>
             </>
           ) : (
-            <span>Save Crop</span>
+            <span>{t("saveCrop")}</span>
           )}
         </Button>
       </div>

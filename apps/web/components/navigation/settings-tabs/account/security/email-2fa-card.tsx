@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslations } from "next-intl";
 import { Switch } from "@workspace/ui/components/switch";
 import { Badge } from "@workspace/ui/components/badge";
 import { IconMail, IconMailCheck } from "@tabler/icons-react";
@@ -20,6 +21,7 @@ export function Email2faCard({
   onChange,
   disabled = false,
 }: Email2faCardProps): React.JSX.Element {
+  const t = useTranslations("navigation.settings.account.security");
   const isDirty = enabled !== originalEnabled;
 
   return (
@@ -32,26 +34,26 @@ export function Email2faCard({
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h4 className="font-semibold text-sm text-foreground">
-                Email Two-Factor Authentication
+                {t("emailTwoFactor")}
               </h4>
               {enabled ? (
                 <Badge
                   variant="outline"
                   className="text-[10px] h-4.5 px-2 border-emerald-500/30 text-emerald-400 bg-emerald-500/10 font-semibold"
                 >
-                  Enabled
+                  {t("enabled")}
                 </Badge>
               ) : (
                 <Badge
                   variant="outline"
                   className="text-[10px] h-4.5 px-2 text-muted-foreground border-border font-medium"
                 >
-                  Disabled
+                  {t("disabled")}
                 </Badge>
               )}
               {isDirty && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 font-medium animate-pulse">
-                  Pending Save
+                  {t("pendingSave")}
                 </span>
               )}
             </div>
@@ -62,17 +64,17 @@ export function Email2faCard({
           isSelected={enabled}
           onChange={onChange}
           isDisabled={disabled}
-          aria-label="Toggle Email Two-Factor Authentication"
+          aria-label={t("toggleEmail2faAria")}
         />
       </div>
 
       <div className="rounded-xl border border-border/50 bg-background/50 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <IconMailCheck className="size-4 text-primary shrink-0" />
-          <span>Codes will be delivered to:</span>
+          <span>{t("codesDeliveredTo")}</span>
         </div>
         <span className="text-xs font-mono font-medium text-foreground bg-muted/60 px-2.5 py-1 rounded-lg border border-border/60 truncate">
-          {email || "No email linked"}
+          {email || t("noEmailLinked")}
         </span>
       </div>
     </div>

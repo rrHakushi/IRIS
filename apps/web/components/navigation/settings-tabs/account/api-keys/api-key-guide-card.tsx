@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@workspace/ui/components/button";
 import { Badge } from "@workspace/ui/components/badge";
 import {
-  IconCode,
   IconCopy,
   IconCheck,
   IconChevronDown,
@@ -19,6 +19,7 @@ import { cn } from "@workspace/ui/lib/utils";
 type SnippetTab = "curl" | "fetch" | "python";
 
 export function ApiKeyGuideCard(): React.JSX.Element {
+  const t = useTranslations("navigation.settings.account.apiKeys");
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<SnippetTab>("curl");
   const [copied, setCopied] = useState(false);
@@ -52,10 +53,10 @@ print(response.json())`,
     try {
       await navigator.clipboard.writeText(snippets[activeTab]);
       setCopied(true);
-      toast.success("Snippet copied to clipboard!");
+      toast.success(t("snippetCopiedSuccess"));
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error("Failed to copy snippet.");
+      toast.error(t("failedCopySnippet"));
     }
   };
 
@@ -74,14 +75,14 @@ print(response.json())`,
           <div>
             <div className="flex items-center gap-2">
               <h4 className="font-semibold text-sm text-foreground">
-                API Authentication Guide
+                {t("guideTitle")}
               </h4>
               <Badge variant="outline" className="text-[10px] h-4.5 px-1.5 text-muted-foreground border-border">
-                Developer
+                {t("developerBadge")}
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Learn how to authenticate requests using the <code className="text-primary font-mono text-[11px]">x-api</code> header.
+              {t("guideDescription", { header: "x-api" })}
             </p>
           </div>
         </div>
@@ -155,12 +156,12 @@ print(response.json())`,
               {copied ? (
                 <>
                   <IconCheck className="size-3.5 text-emerald-400" />
-                  <span>Copied</span>
+                  <span>{t("copied")}</span>
                 </>
               ) : (
                 <>
                   <IconCopy className="size-3.5" />
-                  <span>Copy Snippet</span>
+                  <span>{t("copySnippet")}</span>
                 </>
               )}
             </Button>
@@ -174,7 +175,10 @@ print(response.json())`,
           </div>
 
           <p className="text-[11px] text-muted-foreground">
-            Note: The server also accepts <code className="font-mono text-foreground">x-api-key</code>, <code className="font-mono text-foreground">apikey</code>, or query parameter <code className="font-mono text-foreground">?api_key=...</code>.
+            {t("headerNote", {
+              headers: "x-api-key, apikey",
+              param: "?api_key=...",
+            })}
           </p>
         </div>
       )}

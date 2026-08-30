@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useUser } from "@/context/user-context";
 import { Button } from "@workspace/ui/components/button";
 import { Badge } from "@workspace/ui/components/badge";
@@ -17,6 +18,7 @@ import type { SettingsTabProps } from "../types";
 export function SecuritySettingsTab({
   setFooterContent,
 }: SettingsTabProps): React.JSX.Element {
+  const t = useTranslations("navigation.settings.account.security");
   const { user, refetchUser } = useUser();
 
   // --- Password State ---
@@ -59,11 +61,11 @@ export function SecuritySettingsTab({
     if (!currentPassword || !newPassword) return;
 
     if (newPassword.length < 12 || newPassword.length > 64) {
-      setPasswordError("New password must be between 12 and 64 characters.");
+      setPasswordError(t("passwordMinMaxError"));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordError("Passwords do not match.");
+      setPasswordError(t("passwordsDoNotMatch"));
       return;
     }
 
@@ -86,17 +88,17 @@ export function SecuritySettingsTab({
         const errorData = res.error?.value as { message?: string } | undefined;
         const msg =
           errorData?.message ||
-          "Incorrect current password or invalid request.";
+          t("incorrectCurrentPassword");
         throw new Error(msg);
       }
 
-      setPasswordSuccess("Password updated successfully.");
-      toast.success("Password changed successfully!");
+      setPasswordSuccess(t("passwordUpdated"));
+      toast.success(t("passwordUpdated"));
       handleClearPassword();
     } catch (err: any) {
       console.error("[Security] Password update error:", err);
-      setPasswordError(err.message || "Failed to update password.");
-      toast.error(err.message || "Failed to update password.");
+      setPasswordError(err.message || t("passwordUpdateFailed"));
+      toast.error(err.message || t("passwordUpdateFailed"));
     } finally {
       setIsSavingPassword(false);
     }
@@ -111,20 +113,20 @@ export function SecuritySettingsTab({
       // 1. Process password change if entered
       if (isPasswordDirty) {
         if (!currentPassword) {
-          setPasswordError("Current password is required to change password.");
-          toast.error("Please enter your current password.");
+          setPasswordError(t("currentPasswordRequired"));
+          toast.error(t("enterCurrentPassword"));
           setIsSavingAll(false);
           return;
         }
         if (newPassword.length < 12 || newPassword.length > 64) {
-          setPasswordError("New password must be between 12 and 64 characters.");
-          toast.error("New password must meet length requirements.");
+          setPasswordError(t("passwordMinMaxError"));
+          toast.error(t("passwordMustMeetRequirements"));
           setIsSavingAll(false);
           return;
         }
         if (newPassword !== confirmPassword) {
-          setPasswordError("Passwords do not match.");
-          toast.error("Passwords do not match.");
+          setPasswordError(t("passwordsDoNotMatch"));
+          toast.error(t("passwordsDoNotMatch"));
           setIsSavingAll(false);
           return;
         }
@@ -141,12 +143,12 @@ export function SecuritySettingsTab({
 
         if (passRes.error) {
           const errorData = passRes.error?.value as { message?: string } | undefined;
-          const msg = errorData?.message || "Incorrect current password.";
+          const msg = errorData?.message || t("incorrectCurrentPasswordShort");
           throw new Error(msg);
         }
 
         handleClearPassword();
-        toast.success("Password updated successfully!");
+        toast.success(t("passwordUpdated"));
       }
 
       // 2. Process Email 2FA toggle if modified
@@ -162,21 +164,21 @@ export function SecuritySettingsTab({
 
         if (emailRes.error) {
           const errorData = emailRes.error?.value as { message?: string } | undefined;
-          const msg = errorData?.message || "Failed to update Email 2FA.";
+          const msg = errorData?.message || t("email2faUpdateFailed");
           throw new Error(msg);
         }
 
         toast.success(
           draftEmailMfa
-            ? "Email two-factor authentication enabled."
-            : "Email two-factor authentication disabled."
+            ? t("email2faEnabled")
+            : t("email2faDisabled")
         );
       }
 
       await refetchUser();
     } catch (err: any) {
       console.error("[Security] Save error:", err);
-      toast.error(err.message || "Failed to save security settings.");
+      toast.error(err.message || t("failedSaveSecuritySettings"));
     } finally {
       setIsSavingAll(false);
     }
@@ -186,7 +188,7 @@ export function SecuritySettingsTab({
   const handleDiscard = () => {
     handleClearPassword();
     setDraftEmailMfa(originalEmailMfa);
-    toast.info("Changes discarded.");
+    toast.info(t("changesDiscarded"));
   };
 
   // Push Sticky Actions to Settings Modal Footer
@@ -201,7 +203,7 @@ export function SecuritySettingsTab({
               variant="outline"
               className="text-xs border-amber-500/40 text-amber-400 bg-amber-500/10 animate-pulse"
             >
-              Unsaved changes
+              {t("unsavedChanges")}
             </Badge>
           )}
         </div>
@@ -215,7 +217,7 @@ export function SecuritySettingsTab({
             onClick={handleDiscard}
             className="text-xs h-8 px-3"
           >
-            Discard
+            {t("discard")}
           </Button>
           <Button
             type="button"
@@ -225,19 +227,19 @@ export function SecuritySettingsTab({
             className="text-xs h-8 px-4 font-semibold"
           >
             {isSavingAll ? <Spinner className="size-3.5 mr-1.5" /> : null}
-            Save Changes
+            {t("saveChanges")}
           </Button>
         </div>
       </div>
     );
 
     return () => setFooterContent(null);
-  }, [isDirty, isSavingAll, currentPassword, newPassword, confirmPassword, draftEmailMfa, originalEmailMfa]);
+  }, [isDirty, isSavingAll, currentPassword, newPassword, confirmPassword, draftEmailMfa, originalEmailMfa, t]);
 
   return (
     <div className="flex-1 w-full space-y-6 pb-6 animate-in fade-in-50 duration-200">
       <div>
-        <h3 className="text-base font-bold text-foreground">Security</h3>
+        <h3 className="text-base font-bold text-foreground">{t("title")}</h3>
       </div>
 
       {/* 1. Change Password */}

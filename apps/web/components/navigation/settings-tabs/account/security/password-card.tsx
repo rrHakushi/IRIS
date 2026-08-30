@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Spinner } from "@workspace/ui/components/spinner";
@@ -14,7 +15,6 @@ import {
 import {
   PasswordChecklist,
   type PasswordCriteria,
-  type PasswordRule,
 } from "@/components/auth/register/password-checklist";
 import { cn } from "@workspace/ui/lib/utils";
 
@@ -45,6 +45,7 @@ export function PasswordCard({
   onClear,
   onSubmit,
 }: PasswordCardProps): React.JSX.Element {
+  const t = useTranslations("navigation.settings.account.security");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -64,14 +65,6 @@ export function PasswordCard({
   const isMatch = Boolean(confirmPassword && newPassword === confirmPassword);
   const hasInput = Boolean(currentPassword || newPassword || confirmPassword);
 
-  const passwordRules: readonly PasswordRule[] = [
-    { key: "length", label: "At least 12 characters" },
-    { key: "maxLength", label: "At most 64 characters" },
-    { key: "uppercase", label: "At least 1 uppercase letter" },
-    { key: "number", label: "At least 1 number" },
-    { key: "special", label: "At least 1 special character" },
-  ];
-
   return (
     <form onSubmit={onSubmit} className="rounded-2xl border border-border/60 bg-muted/20 p-4 sm:p-5 space-y-3.5 sm:space-y-4 shadow-2xs">
       <div className="flex items-center justify-between gap-2">
@@ -80,7 +73,7 @@ export function PasswordCard({
             <IconLock className="size-4" />
           </div>
           <div>
-            <h4 className="font-semibold text-sm text-foreground">Change Password</h4>
+            <h4 className="font-semibold text-sm text-foreground">{t("changePassword")}</h4>
           </div>
         </div>
       </div>
@@ -103,14 +96,14 @@ export function PasswordCard({
         {/* Current Password Field */}
         <div className="space-y-1">
           <label className="text-xs font-medium text-foreground/80">
-            Current Password
+            {t("currentPassword")}
           </label>
           <div className="relative">
             <Input
               type={showCurrentPassword ? "text" : "password"}
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="Enter current password"
+              placeholder={t("enterCurrentPasswordPlaceholder")}
               className="h-10 text-xs pe-10 rounded-xl bg-background/70"
             />
             <button
@@ -119,7 +112,7 @@ export function PasswordCard({
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => setShowCurrentPassword((prev) => !prev)}
               className="absolute end-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
-              aria-label={showCurrentPassword ? "Hide password" : "Show password"}
+              aria-label={showCurrentPassword ? t("hidePassword") : t("showPassword")}
             >
               {showCurrentPassword ? (
                 <IconEyeOff className="size-3.5" />
@@ -133,7 +126,7 @@ export function PasswordCard({
         {/* New Password Field */}
         <div className="space-y-1">
           <label className="text-xs font-medium text-foreground/80">
-            New Password
+            {t("newPassword")}
           </label>
           <div className="relative">
             <Input
@@ -142,7 +135,7 @@ export function PasswordCard({
               onFocus={() => setIsNewPasswordFocused(true)}
               onBlur={() => setIsNewPasswordFocused(false)}
               onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Enter new password (min 12 characters)"
+              placeholder={t("enterNewPasswordPlaceholder")}
               className="h-10 text-xs pe-10 rounded-xl bg-background/70"
             />
             <button
@@ -151,7 +144,7 @@ export function PasswordCard({
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => setShowNewPassword((prev) => !prev)}
               className="absolute end-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
-              aria-label={showNewPassword ? "Hide password" : "Show password"}
+              aria-label={showNewPassword ? t("hidePassword") : t("showPassword")}
             >
               {showNewPassword ? (
                 <IconEyeOff className="size-3.5" />
@@ -167,7 +160,6 @@ export function PasswordCard({
               <PasswordChecklist
                 criteria={criteria}
                 strengthScore={strengthScore}
-                rules={passwordRules}
               />
             </div>
           )}
@@ -176,14 +168,14 @@ export function PasswordCard({
         {/* Confirm New Password Field */}
         <div className="space-y-1">
           <label className="text-xs font-medium text-foreground/80">
-            Confirm New Password
+            {t("confirmNewPassword")}
           </label>
           <div className="relative">
             <Input
               type={showConfirmPassword ? "text" : "password"}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Re-enter new password"
+              placeholder={t("reenterNewPasswordPlaceholder")}
               className={cn(
                 "h-10 text-xs pe-10 rounded-xl bg-background/70",
                 confirmPassword && !isMatch && "border-destructive focus-visible:border-destructive"
@@ -195,7 +187,7 @@ export function PasswordCard({
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => setShowConfirmPassword((prev) => !prev)}
               className="absolute end-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
-              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              aria-label={showConfirmPassword ? t("hidePassword") : t("showPassword")}
             >
               {showConfirmPassword ? (
                 <IconEyeOff className="size-3.5" />
@@ -206,13 +198,12 @@ export function PasswordCard({
           </div>
           {confirmPassword && !isMatch && (
             <p className="text-[11px] text-destructive pt-0.5">
-              Passwords do not match.
+              {t("passwordsDoNotMatch")}
             </p>
           )}
         </div>
       </div>
 
-      {/* Action Row */}
       {hasInput && (
         <div className="pt-2 flex items-center justify-end gap-2.5 animate-in fade-in-50">
           <Button
@@ -222,7 +213,7 @@ export function PasswordCard({
             onClick={onClear}
             className="h-8 text-xs font-medium text-muted-foreground hover:text-foreground"
           >
-            Clear
+            {t("clear")}
           </Button>
           <Button
             type="submit"
@@ -236,7 +227,7 @@ export function PasswordCard({
             className="h-8 text-xs font-semibold rounded-xl px-4 gap-1.5"
           >
             {isSaving ? <Spinner className="size-3.5" /> : <IconCheck className="size-3.5" />}
-            <span>Update Password</span>
+            <span>{t("updatePassword")}</span>
           </Button>
         </div>
       )}

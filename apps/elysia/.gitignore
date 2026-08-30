@@ -4,4 +4,4 @@ dist
 .env*
 !.env.example
 dev-account.json
-
+insomnium.json

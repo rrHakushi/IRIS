@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { Avatar, AvatarFallback, AvatarImage } from "@workspace/ui/components/avatar";
 import { Badge } from "@workspace/ui/components/badge";
 import { cn } from "@workspace/ui/lib/utils";
@@ -39,6 +40,7 @@ export function ProfilePreviewCard({
   email,
   className,
 }: ProfilePreviewCardProps): React.JSX.Element {
+  const t = useTranslations("navigation.settings.account.profile");
   const nameToShow = profile.displayName || username || "Display Name";
   const initial = nameToShow.charAt(0).toUpperCase();
 
@@ -55,7 +57,7 @@ export function ProfilePreviewCard({
     >
       {/* Header bar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 bg-muted/20">
-        <span className="text-xs font-bold text-foreground">Preview</span>
+        <span className="text-xs font-bold text-foreground">{t("preview")}</span>
       </div>
 
       {/* Main Preview Container: Displays both Profile Card and Nameplate Preview */}
@@ -112,7 +114,7 @@ export function ProfilePreviewCard({
               </div>
 
               <Badge variant="outline" className="text-[10px] px-2 py-0.5 bg-background/80 backdrop-blur-xs font-mono">
-                MEMBER
+                {t("member")}
               </Badge>
             </div>
 
@@ -151,10 +153,10 @@ export function ProfilePreviewCard({
             {/* Bio Section */}
             <div className="mt-3 pt-3 border-t border-border/40">
               <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                About Me
+                {t("aboutMe")}
               </div>
               <div className="text-xs bg-muted/20 p-2.5 rounded-xl border border-border/30">
-                {renderBioMarkdown(profile.bio || "")}
+                {renderBioMarkdown(profile.bio || "", t("noBio"))}
               </div>
             </div>
           </div>
@@ -163,7 +165,7 @@ export function ProfilePreviewCard({
         {/* 2. Nameplate Preview View */}
         <div className="pt-2 border-t border-border/40 space-y-2">
           <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-0.5">
-            Nameplate Preview
+            {t("nameplatePreview")}
           </div>
           <IrisSidebarUserCard
             nameplateUrl={profile.nameplateUrl || profile.sidebarBannerUrl}

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Badge } from "@workspace/ui/components/badge";
@@ -24,6 +25,7 @@ export interface PasskeyItem {
 }
 
 export function PasskeysCard(): React.JSX.Element {
+  const t = useTranslations("navigation.settings.account.security");
   const [passkeys, setPasskeys] = useState<PasskeyItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -45,11 +47,11 @@ export function PasskeysCard(): React.JSX.Element {
       }
     } catch (err: any) {
       console.error("[Passkeys] Failed to fetch passkeys:", err);
-      setError("Failed to load passkeys.");
+      setError(t("failedLoadPasskeys"));
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!hasFetchedRef.current) {
@@ -73,7 +75,7 @@ export function PasskeysCard(): React.JSX.Element {
       if (optionsRes.error || !optionsRes.data) {
         const errorData = optionsRes.error?.value as { message?: string } | undefined;
         const msg =
-          errorData?.message || "Failed to initiate passkey registration.";
+          errorData?.message || t("failedInitiatePasskey");
         throw new Error(msg);
       }
 
@@ -93,11 +95,11 @@ export function PasskeysCard(): React.JSX.Element {
 
       if (verifyRes.error) {
         const errorData = verifyRes.error?.value as { message?: string } | undefined;
-        const msg = errorData?.message || "Passkey verification failed.";
+        const msg = errorData?.message || t("passkeyVerificationFailed");
         throw new Error(msg);
       }
 
-      toast.success("Passkey registered successfully!");
+      toast.success(t("passkeyRegisteredSuccess"));
       setPasskeyName("");
       setShowAddInput(false);
       await fetchPasskeys();
@@ -107,9 +109,9 @@ export function PasskeysCard(): React.JSX.Element {
         err.name === "NotAllowedError" ||
         err.message?.includes("NotAllowedError")
       ) {
-        toast.info("Passkey registration was cancelled.");
+        toast.info(t("passkeyCancelled"));
       } else {
-        const msg = err.message || "Failed to register passkey.";
+        const msg = err.message || t("failedRegisterPasskey");
         setError(msg);
         toast.error(msg);
       }
@@ -130,15 +132,15 @@ export function PasskeysCard(): React.JSX.Element {
       );
       if (res.error) {
         const errorData = res.error?.value as { message?: string } | undefined;
-        const msg = errorData?.message || "Failed to delete passkey.";
+        const msg = errorData?.message || t("failedDeletePasskey");
         throw new Error(msg);
       }
 
-      toast.success(`Passkey "${name || "Passkey"}" removed.`);
+      toast.success(t("passkeyRemoved", { name: name || t("defaultPasskeyName") }));
       setPasskeys((prev) => prev.filter((p) => p.id !== id));
     } catch (err: any) {
       console.error("[Passkeys] Delete error:", err);
-      toast.error(err.message || "Failed to remove passkey.");
+      toast.error(err.message || t("failedDeletePasskey"));
     } finally {
       setDeletingId(null);
     }
@@ -152,7 +154,7 @@ export function PasskeysCard(): React.JSX.Element {
             <IconFingerprint className="size-4" />
           </div>
           <div className="flex items-center gap-2 min-w-0">
-            <h4 className="font-semibold text-sm text-foreground truncate">Passkeys</h4>
+            <h4 className="font-semibold text-sm text-foreground truncate">{t("passkeys")}</h4>
             {passkeys.length > 0 && (
               <Badge variant="secondary" className="text-[10px] h-4.5 px-1.5 font-semibold shrink-0">
                 {passkeys.length}
@@ -170,7 +172,7 @@ export function PasskeysCard(): React.JSX.Element {
             className="h-8 text-xs font-semibold rounded-xl gap-1.5 shrink-0"
           >
             <IconPlus className="size-3.5" />
-            <span>Add Passkey</span>
+            <span>{t("addPasskey")}</span>
           </Button>
         )}
       </div>
@@ -190,7 +192,7 @@ export function PasskeysCard(): React.JSX.Element {
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-foreground">
-              Register New Passkey
+              {t("registerNewPasskey")}
             </span>
             <button
               type="button"
@@ -200,7 +202,7 @@ export function PasskeysCard(): React.JSX.Element {
               }}
               className="text-[11px] text-muted-foreground hover:text-foreground cursor-pointer"
             >
-              Cancel
+              {t("cancel")}
             </button>
           </div>
 
@@ -209,7 +211,7 @@ export function PasskeysCard(): React.JSX.Element {
               type="text"
               value={passkeyName}
               onChange={(e) => setPasskeyName(e.target.value)}
-              placeholder="Nickname (e.g. Bitwarden, MacBook Touch ID)"
+              placeholder={t("passkeyNicknamePlaceholder")}
               className="h-9 text-xs rounded-xl bg-background flex-1"
               autoFocus
             />
@@ -224,11 +226,11 @@ export function PasskeysCard(): React.JSX.Element {
               ) : (
                 <IconFingerprint className="size-3.5" />
               )}
-              <span>{isRegistering ? "Prompting..." : "Register"}</span>
+              <span>{isRegistering ? t("prompting") : t("register")}</span>
             </Button>
           </div>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
-            When you click Register, your browser or password manager will prompt you to save the passkey.
+            {t("passkeyPromptDesc")}
           </p>
         </form>
       )}
@@ -238,7 +240,7 @@ export function PasskeysCard(): React.JSX.Element {
         {isLoading ? (
           <div className="flex items-center justify-center py-6 gap-2 text-xs text-muted-foreground">
             <Spinner className="size-4" />
-            <span>Loading passkeys...</span>
+            <span>{t("loadingPasskeys")}</span>
           </div>
         ) : passkeys.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-6 text-center rounded-xl border border-dashed border-border/70 bg-background/40 p-4 space-y-2">
@@ -246,9 +248,9 @@ export function PasskeysCard(): React.JSX.Element {
               <IconKey className="size-5" />
             </div>
             <div className="space-y-0.5">
-              <p className="text-xs font-semibold text-foreground">No passkeys registered</p>
+              <p className="text-xs font-semibold text-foreground">{t("noPasskeysRegistered")}</p>
               <p className="text-[11px] text-muted-foreground max-w-xs">
-                Add a passkey to sign in effortlessly without typing your password.
+                {t("noPasskeysDesc")}
               </p>
             </div>
           </div>
@@ -260,6 +262,7 @@ export function PasskeysCard(): React.JSX.Element {
                 { year: "numeric", month: "short", day: "numeric" }
               );
               const isDeleting = deletingId === pk.id;
+              const displayName = pk.name || t("defaultPasskeyName");
 
               return (
                 <div
@@ -272,10 +275,10 @@ export function PasskeysCard(): React.JSX.Element {
                     </div>
                     <div className="min-w-0 space-y-0.5 flex-1">
                       <span className="text-xs font-semibold text-foreground truncate block">
-                        {pk.name || "Passkey"}
+                        {displayName}
                       </span>
                       <p className="text-[11px] text-muted-foreground">
-                        Added on {formattedDate}
+                        {t("addedOn", { date: formattedDate })}
                       </p>
                     </div>
                   </div>
@@ -287,7 +290,7 @@ export function PasskeysCard(): React.JSX.Element {
                     disabled={isDeleting}
                     onClick={() => handleDeletePasskey(pk.id, pk.name)}
                     className="size-7 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer shrink-0 transition-colors"
-                    aria-label={`Delete passkey ${pk.name || "Passkey"}`}
+                    aria-label={t("deletePasskeyAria", { name: displayName })}
                   >
                     {isDeleting ? (
                       <Spinner className="size-3.5" />

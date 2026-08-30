@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogHeader,
@@ -27,19 +28,38 @@ export function CreateApiKeyDialog({
   onCreate,
   isCreating,
 }: CreateApiKeyDialogProps): React.JSX.Element {
+  const t = useTranslations("navigation.settings.account.apiKeys");
   const [name, setName] = useState("");
   const [selectedDays, setSelectedDays] = useState<number | null>(30);
   const [error, setError] = useState<string | null>(null);
+
+  const getDurationLabel = (days: number | null): string => {
+    switch (days) {
+      case 7:
+        return t("durations.7days");
+      case 30:
+        return t("durations.30days");
+      case 60:
+        return t("durations.60days");
+      case 90:
+        return t("durations.90days");
+      case 365:
+        return t("durations.1year");
+      case null:
+      default:
+        return t("durations.never");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanName = name.trim();
     if (!cleanName) {
-      setError("Please provide a name for this API key.");
+      setError(t("nameRequiredError"));
       return;
     }
     if (cleanName.length > 64) {
-      setError("Name cannot exceed 64 characters.");
+      setError(t("nameMaxLengthError"));
       return;
     }
 
@@ -73,7 +93,7 @@ export function CreateApiKeyDialog({
           <div className="size-8 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
             <IconKey className="size-4.5" />
           </div>
-          <DialogTitle>Create New API Key</DialogTitle>
+          <DialogTitle>{t("createTitle")}</DialogTitle>
         </div>
       </DialogHeader>
 
@@ -82,14 +102,14 @@ export function CreateApiKeyDialog({
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-xs">
             <label htmlFor="apiKeyName" className="font-semibold text-foreground">
-              Key Name / Description
+              {t("keyNameLabel")}
             </label>
             <span className="text-muted-foreground">{name.length}/64</span>
           </div>
           <Input
             id="apiKeyName"
             type="text"
-            placeholder="e.g. Home Assistant, Jellyfin Sync, Mobile CLI"
+            placeholder={t("keyNamePlaceholder")}
             value={name}
             onChange={(e) => {
               setName(e.target.value);
@@ -107,14 +127,14 @@ export function CreateApiKeyDialog({
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
             <IconClock className="size-3.5 text-muted-foreground" />
-            <span>Expiration</span>
+            <span>{t("expiration")}</span>
           </div>
           <div className="grid grid-cols-3 gap-2">
             {EXPIRATION_OPTIONS.map((opt: ExpirationOption) => {
               const isSelected = selectedDays === opt.days;
               return (
                 <button
-                  key={opt.label}
+                  key={opt.days ?? "never"}
                   type="button"
                   onClick={() => setSelectedDays(opt.days)}
                   disabled={isCreating}
@@ -125,15 +145,15 @@ export function CreateApiKeyDialog({
                       : "border-border/70 bg-background/50 hover:bg-muted/40 text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  {opt.label}
+                  {getDurationLabel(opt.days)}
                 </button>
               );
             })}
           </div>
           <p className="text-[11px] text-muted-foreground">
             {selectedDays === null
-              ? "This key will never expire unless manually revoked."
-              : `Key will automatically expire in ${selectedDays} days.`}
+              ? t("neverExpireDesc")
+              : t("expireInDaysDesc", { days: selectedDays })}
           </p>
         </div>
 
@@ -145,7 +165,7 @@ export function CreateApiKeyDialog({
             disabled={isCreating}
             className="rounded-xl"
           >
-            Cancel
+            {t("cancel")}
           </Button>
           <Button
             type="submit"
@@ -156,12 +176,12 @@ export function CreateApiKeyDialog({
             {isCreating ? (
               <>
                 <Spinner className="size-3.5" />
-                <span>Creating...</span>
+                <span>{t("creating")}</span>
               </>
             ) : (
               <>
                 <IconPlus className="size-4" />
-                <span>Create Key</span>
+                <span>{t("createKey")}</span>
               </>
             )}
           </Button>

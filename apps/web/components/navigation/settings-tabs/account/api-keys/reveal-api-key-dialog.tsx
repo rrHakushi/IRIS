@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogHeader,
@@ -33,6 +34,7 @@ export function RevealApiKeyDialog({
   apiKey,
   isRegenerated = false,
 }: RevealApiKeyDialogProps): React.JSX.Element {
+  const t = useTranslations("navigation.settings.account.apiKeys");
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -40,10 +42,10 @@ export function RevealApiKeyDialog({
     try {
       await navigator.clipboard.writeText(rawKey);
       setCopied(true);
-      toast.success("API key copied to clipboard!");
+      toast.success(t("copiedSuccess"));
       setTimeout(() => setCopied(false), 2500);
     } catch {
-      toast.error("Failed to copy API key to clipboard.");
+      toast.error(t("failedCopy"));
     }
   };
 
@@ -53,7 +55,7 @@ export function RevealApiKeyDialog({
         month: "short",
         day: "numeric",
       })
-    : "Never";
+    : t("never");
 
   return (
     <Dialog
@@ -67,7 +69,7 @@ export function RevealApiKeyDialog({
             <IconKey className="size-4.5" />
           </div>
           <DialogTitle>
-            {isRegenerated ? "API Key Regenerated" : "API Key Created"}
+            {isRegenerated ? t("regeneratedTitle") : t("createdTitle")}
           </DialogTitle>
         </div>
       </DialogHeader>
@@ -78,11 +80,10 @@ export function RevealApiKeyDialog({
           <IconAlertTriangle className="size-5 shrink-0 mt-0.5 text-amber-400" />
           <div className="text-xs space-y-1">
             <p className="font-semibold text-amber-200">
-              Save this key immediately
+              {t("saveImmediately")}
             </p>
             <p className="text-amber-300/90 leading-relaxed">
-              For security reasons, you will not be able to view this key again.
-              If you lose it, you will need to regenerate or create a new key.
+              {t("saveWarningDesc")}
             </p>
           </div>
         </div>
@@ -90,9 +91,9 @@ export function RevealApiKeyDialog({
         {/* API Key Box */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-xs text-muted-foreground px-0.5">
-            <span className="font-medium">Key: {apiKey?.name}</span>
+            <span className="font-medium">{t("keyLabel", { name: apiKey?.name ?? "" })}</span>
             <Badge variant="outline" className="text-[10px] h-5 px-2">
-              Expires: {formattedExpiration}
+              {t("expiresLabel", { date: formattedExpiration })}
             </Badge>
           </div>
           <div className="relative flex items-center">
@@ -112,12 +113,12 @@ export function RevealApiKeyDialog({
               {copied ? (
                 <>
                   <IconCheck className="size-3.5 text-emerald-400" />
-                  <span>Copied</span>
+                  <span>{t("copied")}</span>
                 </>
               ) : (
                 <>
                   <IconCopy className="size-3.5" />
-                  <span>Copy</span>
+                  <span>{t("copy")}</span>
                 </>
               )}
             </Button>
@@ -131,7 +132,7 @@ export function RevealApiKeyDialog({
           onClick={() => onOpenChange(false)}
           className="w-full sm:w-auto rounded-xl"
         >
-          I Have Saved My Key
+          {t("savedConfirmButton")}
         </Button>
       </DialogFooter>
     </Dialog>

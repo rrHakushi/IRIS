@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Spinner } from "@workspace/ui/components/spinner";
-import { cn } from "@workspace/ui/lib/utils";
 import {
   IconEye,
   IconEyeOff,
@@ -22,6 +22,7 @@ import { useEncryption } from "@/context/encryption-context";
 import type { SettingsTabProps } from "../types";
 
 export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
+  const t = useTranslations("navigation.settings.account.encryption");
   const {
     isActive,
     hasSeparateEncryptionPassword,
@@ -59,11 +60,11 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
   const strengthScore = Object.values(criteria).filter(Boolean).length;
 
   const encryptionRules: readonly PasswordRule[] = [
-    { key: "length", label: "At least 16 characters" },
-    { key: "maxLength", label: "At most 64 characters" },
-    { key: "uppercase", label: "At least 1 uppercase letter" },
-    { key: "number", label: "At least 2 numbers" },
-    { key: "special", label: "At least 2 special characters" },
+    { key: "length", label: t("rules.minLen") },
+    { key: "maxLength", label: t("rules.maxLen") },
+    { key: "uppercase", label: t("rules.upper") },
+    { key: "number", label: t("rules.number") },
+    { key: "special", label: t("rules.special") },
   ];
 
   const handleUnlock = async (e: React.FormEvent) => {
@@ -76,8 +77,8 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
     } else {
       setUnlockError(
         hasSeparateEncryptionPassword
-          ? "Incorrect encryption password. Note: a separate encryption password is set."
-          : "Incorrect password."
+          ? t("incorrectEncryptionPasswordSeparate")
+          : t("incorrectPassword")
       );
     }
   };
@@ -88,29 +89,27 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
     setChangeSuccess(null);
 
     if (!currentPassword) {
-      setChangeError("Current password is required");
+      setChangeError(t("currentPasswordRequired"));
       return;
     }
     if (!isPasswordValid) {
-      setChangeError(
-        "Encryption password must meet all complexity requirements (min 16 chars, 2 numbers, 2 special characters)"
-      );
+      setChangeError(t("complexityRequirements"));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setChangeError("Passwords do not match");
+      setChangeError(t("passwordsDoNotMatch"));
       return;
     }
 
     const res = await changeEncryptionPassword(currentPassword, newPassword);
     if (res.success) {
-      setChangeSuccess("Encryption password updated");
+      setChangeSuccess(t("encryptionPasswordUpdated"));
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
       setIsNewPasswordFocused(false);
     } else {
-      setChangeError(res.error || "Failed to update encryption password");
+      setChangeError(res.error || t("failedUpdateEncryptionPassword"));
     }
   };
 
@@ -128,14 +127,14 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
   return (
     <div className="flex-1 w-full space-y-6 pb-6 animate-in fade-in-50 duration-200">
       <div>
-        <h3 className="text-base font-bold text-foreground">Encryption</h3>
+        <h3 className="text-base font-bold text-foreground">{t("title")}</h3>
       </div>
 
       {/* Section 1: Enter Password to Decrypt */}
       <div className="rounded-2xl border border-border/60 bg-muted/20 p-5 space-y-4">
         <div className="flex items-center justify-between">
           <span className="font-semibold text-sm text-foreground">
-            {isActive ? "Encryption Unlocked" : "Decrypt Data"}
+            {isActive ? t("encryptionUnlocked") : t("decryptData")}
           </span>
           {isActive && (
             <Button
@@ -145,7 +144,7 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
               className="h-8 text-xs rounded-xl gap-1.5 text-destructive hover:bg-destructive/10 border-destructive/30"
             >
               <IconLock className="size-3.5" />
-              <span>Lock</span>
+              <span>{t("lock")}</span>
             </Button>
           )}
         </div>
@@ -167,14 +166,15 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
                   onChange={(e) => setUnlockPassword(e.target.value)}
                   placeholder={
                     hasSeparateEncryptionPassword
-                      ? "Enter encryption password to decrypt"
-                      : "Enter password to decrypt"
+                      ? t("enterEncryptionPasswordPlaceholder")
+                      : t("enterPasswordPlaceholder")
                   }
                   className="h-10 text-xs pe-10 rounded-xl"
                 />
                 <button
                   type="button"
                   tabIndex={-1}
+                  aria-label={showUnlockPassword ? t("hidePassword") : t("showPassword")}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => setShowUnlockPassword((prev) => !prev)}
                   className="absolute end-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
@@ -196,7 +196,7 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
                 ) : (
                   <div className="flex items-center gap-1.5">
                     <IconLockOpen className="size-4" />
-                    <span>Decrypt</span>
+                    <span>{t("decrypt")}</span>
                   </div>
                 )}
               </Button>
@@ -205,7 +205,7 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
         ) : (
           <div className="text-xs text-emerald-400 font-medium flex items-center gap-2">
             <IconCheck className="size-4" />
-            <span>Active for this session</span>
+            <span>{t("activeForSession")}</span>
           </div>
         )}
       </div>
@@ -216,12 +216,12 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
           <div className="flex items-center justify-between gap-2">
             <span className="font-semibold text-sm text-foreground">
               {hasSeparateEncryptionPassword
-                ? "Change Encryption Password"
-                : "Create Separate Encryption Password"}
+                ? t("changeEncryptionPassword")
+                : t("createSeparateEncryptionPassword")}
             </span>
             {hasSeparateEncryptionPassword && (
               <span className="text-[10px] px-2.5 py-0.5 rounded-full font-medium border border-emerald-500/30 text-emerald-400 bg-emerald-500/10 shrink-0">
-                Enabled
+                {t("enabled")}
               </span>
             )}
           </div>
@@ -249,14 +249,15 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder={
                   hasSeparateEncryptionPassword
-                    ? "Current encryption password"
-                    : "Current account password"
+                    ? t("currentEncryptionPasswordPlaceholder")
+                    : t("currentAccountPasswordPlaceholder")
                 }
                 className="h-10 text-xs pe-10 rounded-xl"
               />
               <button
                 type="button"
                 tabIndex={-1}
+                aria-label={showCurrentPassword ? t("hidePassword") : t("showPassword")}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => setShowCurrentPassword((prev) => !prev)}
                 className="absolute end-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
@@ -280,12 +281,13 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
                   onFocus={() => setIsNewPasswordFocused(true)}
                   onBlur={() => setIsNewPasswordFocused(false)}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="New encryption password (min 16 chars)"
+                  placeholder={t("newEncryptionPasswordPlaceholder")}
                   className="h-10 text-xs pe-10 rounded-xl"
                 />
                 <button
                   type="button"
                   tabIndex={-1}
+                  aria-label={showNewPassword ? t("hidePassword") : t("showPassword")}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => setShowNewPassword((prev) => !prev)}
                   className="absolute end-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
@@ -313,7 +315,7 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
               required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm new encryption password"
+              placeholder={t("confirmNewEncryptionPasswordPlaceholder")}
               className="h-10 text-xs rounded-xl"
             />
           </div>
@@ -327,7 +329,7 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
               onClick={handleClearFields}
               className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-2 cursor-pointer"
             >
-              Clear Fields
+              {t("clearFields")}
             </button>
             <Button
               type="submit"
@@ -339,7 +341,7 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
               }
               className="h-10 text-xs font-semibold rounded-xl px-5"
             >
-              {isLoading ? <Spinner className="size-4" /> : "Update Password"}
+              {isLoading ? <Spinner className="size-4" /> : t("updatePassword")}
             </Button>
           </div>
         )}

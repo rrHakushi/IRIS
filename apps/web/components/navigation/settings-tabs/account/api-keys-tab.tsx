@@ -1,12 +1,11 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
-import { Badge } from "@workspace/ui/components/badge";
 import { Spinner } from "@workspace/ui/components/spinner";
 import {
-  IconKey,
   IconPlus,
   IconSearch,
   IconAlertCircle,
@@ -24,6 +23,7 @@ import { RevealApiKeyDialog } from "./api-keys/reveal-api-key-dialog";
 export function ApiKeysSettingsTab({
   setFooterContent,
 }: SettingsTabProps): React.JSX.Element {
+  const t = useTranslations("navigation.settings.account.apiKeys");
   const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -63,7 +63,7 @@ export function ApiKeysSettingsTab({
 
       if (res.error) {
         const errorData = res.error?.value as { message?: string } | undefined;
-        throw new Error(errorData?.message || "Failed to load API keys.");
+        throw new Error(errorData?.message || t("failedLoad"));
       }
 
       if (res.data?.apiKeys) {
@@ -71,14 +71,14 @@ export function ApiKeysSettingsTab({
       }
     } catch (err: any) {
       console.error("[ApiKeysTab] Fetch error:", err);
-      const msg = err.message || "Failed to load API keys.";
+      const msg = err.message || t("failedLoad");
       setError(msg);
       if (isManualRefresh) toast.error(msg);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!hasFetchedRef.current) {
@@ -108,7 +108,7 @@ export function ApiKeysSettingsTab({
 
       if (res.error || !res.data) {
         const errorData = res.error?.value as { message?: string } | undefined;
-        throw new Error(errorData?.message || "Failed to generate API key.");
+        throw new Error(errorData?.message || t("failedGenerate"));
       }
 
       const { rawKey, apiKey } = res.data;
@@ -121,11 +121,11 @@ export function ApiKeysSettingsTab({
       setCreateDialogOpen(false);
       setRevealDialogOpen(true);
 
-      toast.success("API key created successfully!");
+      toast.success(t("createdSuccess"));
       return true;
     } catch (err: any) {
       console.error("[ApiKeysTab] Create error:", err);
-      const msg = err.message || "Failed to create API key.";
+      const msg = err.message || t("failedCreate");
       toast.error(msg);
       return false;
     } finally {
@@ -152,7 +152,7 @@ export function ApiKeysSettingsTab({
 
       if (res.error || !res.data) {
         const errorData = res.error?.value as { message?: string } | undefined;
-        throw new Error(errorData?.message || "Failed to rename API key.");
+        throw new Error(errorData?.message || t("failedRename"));
       }
 
       const updatedKey = res.data.apiKey;
@@ -160,11 +160,11 @@ export function ApiKeysSettingsTab({
         prev.map((k) => (k.id === id ? { ...k, ...updatedKey } : k))
       );
 
-      toast.success("API key renamed successfully.");
+      toast.success(t("renamedSuccess"));
       return true;
     } catch (err: any) {
       console.error("[ApiKeysTab] Rename error:", err);
-      toast.error(err.message || "Failed to rename API key.");
+      toast.error(err.message || t("failedRename"));
       return false;
     } finally {
       setRenamingId(null);
@@ -185,7 +185,7 @@ export function ApiKeysSettingsTab({
 
       if (res.error || !res.data) {
         const errorData = res.error?.value as { message?: string } | undefined;
-        throw new Error(errorData?.message || "Failed to regenerate API key.");
+        throw new Error(errorData?.message || t("failedRegenerate"));
       }
 
       const { rawKey, apiKey } = res.data;
@@ -199,11 +199,11 @@ export function ApiKeysSettingsTab({
       setIsRevealedRegenerated(true);
       setRevealDialogOpen(true);
 
-      toast.success("API key regenerated successfully!");
+      toast.success(t("regeneratedSuccess"));
       return true;
     } catch (err: any) {
       console.error("[ApiKeysTab] Regenerate error:", err);
-      toast.error(err.message || "Failed to regenerate API key.");
+      toast.error(err.message || t("failedRegenerate"));
       return false;
     } finally {
       setRegeneratingId(null);
@@ -224,15 +224,15 @@ export function ApiKeysSettingsTab({
 
       if (res.error) {
         const errorData = res.error?.value as { message?: string } | undefined;
-        throw new Error(errorData?.message || "Failed to delete API key.");
+        throw new Error(errorData?.message || t("failedDelete"));
       }
 
       setApiKeys((prev) => prev.filter((k) => k.id !== id));
-      toast.success("API key revoked successfully.");
+      toast.success(t("revokedSuccess"));
       return true;
     } catch (err: any) {
       console.error("[ApiKeysTab] Delete error:", err);
-      toast.error(err.message || "Failed to revoke API key.");
+      toast.error(err.message || t("failedRevoke"));
       return false;
     } finally {
       setDeletingId(null);
@@ -249,15 +249,11 @@ export function ApiKeysSettingsTab({
     );
   });
 
-  const activeKeysCount = apiKeys.filter((k) =>
-    k.expiresAt ? new Date(k.expiresAt).getTime() > Date.now() : true
-  ).length;
-
   return (
     <div className="flex-1 w-full space-y-6 pb-6 animate-in fade-in-50 duration-200">
       <div className="flex items-center justify-between gap-3 flex-wrap pr-10 sm:pr-12">
         <div>
-          <h3 className="text-base font-bold text-foreground">Api Keys</h3>
+          <h3 className="text-base font-bold text-foreground">{t("title")}</h3>
         </div>
 
         <div className="flex items-center gap-2">
@@ -267,7 +263,7 @@ export function ApiKeysSettingsTab({
               <IconSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search keys..."
+                placeholder={t("searchKeysPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="h-8 text-xs pl-8 rounded-xl bg-background/50"
@@ -281,7 +277,7 @@ export function ApiKeysSettingsTab({
             size="icon-sm"
             onClick={() => fetchApiKeys(true)}
             disabled={isLoading || isRefreshing}
-            aria-label="Refresh API keys"
+            aria-label={t("refreshAria")}
             className="size-8 rounded-xl shrink-0"
           >
             <IconRefresh
@@ -297,19 +293,18 @@ export function ApiKeysSettingsTab({
             className="h-8 text-xs rounded-xl gap-1.5 px-3.5 shrink-0"
           >
             <IconPlus className="size-4" />
-            <span>Create API Key</span>
+            <span>{t("createApiKey")}</span>
           </Button>
         </div>
       </div>
 
       {/* Main Keys Section */}
       <div className="space-y-3.5">
-
         {/* Loading State */}
         {isLoading ? (
           <div className="rounded-2xl border border-border/60 bg-muted/10 p-10 flex flex-col items-center justify-center gap-3">
             <Spinner className="size-6 text-primary" />
-            <p className="text-xs text-muted-foreground">Loading API keys...</p>
+            <p className="text-xs text-muted-foreground">{t("loadingApiKeys")}</p>
           </div>
         ) : error ? (
           /* Error State */
@@ -323,7 +318,7 @@ export function ApiKeysSettingsTab({
               onClick={() => fetchApiKeys()}
               className="h-7 text-xs rounded-lg mt-1"
             >
-              Retry
+              {t("retry")}
             </Button>
           </div>
         ) : apiKeys.length === 0 ? (
@@ -334,10 +329,10 @@ export function ApiKeysSettingsTab({
             </div>
             <div className="space-y-1 max-w-sm">
               <h4 className="font-semibold text-sm text-foreground">
-                No API Keys Found
+                {t("noApiKeysFound")}
               </h4>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Generate an API key to authenticate CLI scripts, plugins, and third-party applications with IRIS.
+                {t("noApiKeysDesc")}
               </p>
             </div>
             <Button
@@ -348,14 +343,14 @@ export function ApiKeysSettingsTab({
               className="h-8 text-xs rounded-xl gap-1.5 px-4 mt-1"
             >
               <IconPlus className="size-3.5" />
-              <span>Create your first API key</span>
+              <span>{t("createFirstKey")}</span>
             </Button>
           </div>
         ) : filteredKeys.length === 0 ? (
           /* Search Empty State */
           <div className="rounded-2xl border border-border/60 bg-muted/10 p-8 text-center space-y-2">
             <p className="text-xs text-muted-foreground">
-              No API keys matching "{searchQuery}"
+              {t("noKeysMatching", { query: searchQuery })}
             </p>
             <Button
               type="button"
@@ -364,7 +359,7 @@ export function ApiKeysSettingsTab({
               onClick={() => setSearchQuery("")}
               className="h-7 text-xs rounded-lg"
             >
-              Clear Search
+              {t("clearSearch")}
             </Button>
           </div>
         ) : (

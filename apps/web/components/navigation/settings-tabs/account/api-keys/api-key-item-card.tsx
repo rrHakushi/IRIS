@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Badge } from "@workspace/ui/components/badge";
@@ -46,6 +47,8 @@ export function ApiKeyItemCard({
   isRegenerating,
   isDeleting,
 }: ApiKeyItemCardProps): React.JSX.Element {
+  const t = useTranslations("navigation.settings.account.apiKeys");
+
   // Modal states
   const [renameOpen, setRenameOpen] = useState(false);
   const [regenerateOpen, setRegenerateOpen] = useState(false);
@@ -83,7 +86,7 @@ export function ApiKeyItemCard({
         hour: "2-digit",
         minute: "2-digit",
       })
-    : "Never used";
+    : t("neverUsed");
 
   const formattedExpires = apiKey.expiresAt
     ? new Date(apiKey.expiresAt).toLocaleDateString(undefined, {
@@ -91,17 +94,17 @@ export function ApiKeyItemCard({
         month: "short",
         day: "numeric",
       })
-    : "Never expires";
+    : t("neverExpires");
 
   // Handle prefix copy
   const handleCopyPrefix = async () => {
     try {
       await navigator.clipboard.writeText(apiKey.prefix);
       setCopiedPrefix(true);
-      toast.success("Key prefix copied to clipboard!");
+      toast.success(t("prefixCopied"));
       setTimeout(() => setCopiedPrefix(false), 2000);
     } catch {
-      toast.error("Failed to copy prefix.");
+      toast.error(t("failedCopyPrefix"));
     }
   };
 
@@ -110,7 +113,7 @@ export function ApiKeyItemCard({
     e.preventDefault();
     const clean = editName.trim();
     if (!clean) {
-      setRenameError("Name cannot be empty.");
+      setRenameError(t("nameEmptyError"));
       return;
     }
     setRenameError(null);
@@ -165,14 +168,14 @@ export function ApiKeyItemCard({
                     variant="outline"
                     className="text-[10px] h-4.5 px-2 border-destructive/30 text-destructive bg-destructive/10 font-semibold"
                   >
-                    Expired
+                    {t("expired")}
                   </Badge>
                 ) : (
                   <Badge
                     variant="outline"
                     className="text-[10px] h-4.5 px-2 border-emerald-500/30 text-emerald-400 bg-emerald-500/10 font-semibold"
                   >
-                    Active
+                    {t("active")}
                   </Badge>
                 )}
 
@@ -184,9 +187,9 @@ export function ApiKeyItemCard({
                   >
                     {daysRemaining !== null
                       ? daysRemaining <= 1
-                        ? "Expires today"
-                        : `Expires in ${daysRemaining}d`
-                      : "Never expires"}
+                        ? t("expiresToday")
+                        : t("expiresInDays", { days: daysRemaining })
+                      : t("neverExpires")}
                   </Badge>
                 )}
               </div>
@@ -196,7 +199,7 @@ export function ApiKeyItemCard({
                 <button
                   type="button"
                   onClick={handleCopyPrefix}
-                  title="Copy key prefix"
+                  title={t("copyPrefixTitle")}
                   className="inline-flex items-center gap-1.5 font-mono text-[11px] bg-background/80 hover:bg-background border border-border/60 rounded-lg px-2 py-0.5 text-muted-foreground hover:text-foreground transition-colors group cursor-pointer"
                 >
                   <span>{apiKey.prefix}••••••••</span>
@@ -216,7 +219,7 @@ export function ApiKeyItemCard({
               type="button"
               variant="ghost"
               size="icon-sm"
-              aria-label="Rename API key"
+              aria-label={t("renameAria")}
               onClick={() => {
                 setEditName(apiKey.name);
                 setRenameError(null);
@@ -231,7 +234,7 @@ export function ApiKeyItemCard({
               type="button"
               variant="ghost"
               size="icon-sm"
-              aria-label="Regenerate / Rotate key"
+              aria-label={t("regenerateAria")}
               onClick={() => setRegenerateOpen(true)}
               className="size-7.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10"
             >
@@ -242,7 +245,7 @@ export function ApiKeyItemCard({
               type="button"
               variant="ghost"
               size="icon-sm"
-              aria-label="Revoke / Delete key"
+              aria-label={t("revokeAria")}
               onClick={() => setDeleteOpen(true)}
               className="size-7.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             >
@@ -255,14 +258,14 @@ export function ApiKeyItemCard({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] text-muted-foreground pt-1 border-t border-border/40">
           <div className="flex items-center gap-1.5">
             <IconClock className="size-3 text-muted-foreground/70 shrink-0" />
-            <span>Created: {formattedCreated}</span>
+            <span>{t("created", { date: formattedCreated })}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <IconActivity className="size-3 text-muted-foreground/70 shrink-0" />
-            <span>Last used: {formattedLastUsed}</span>
+            <span>{t("lastUsed", { date: formattedLastUsed })}</span>
           </div>
           <div className="flex items-center gap-1.5 sm:justify-end">
-            <span>Expires: {formattedExpires}</span>
+            <span>{t("expires", { date: formattedExpires })}</span>
           </div>
         </div>
       </div>
@@ -278,14 +281,14 @@ export function ApiKeyItemCard({
         <DialogHeader>
           <div className="flex items-center gap-2 text-primary">
             <IconPencil className="size-4.5" />
-            <DialogTitle>Rename API Key</DialogTitle>
+            <DialogTitle>{t("renameTitle")}</DialogTitle>
           </div>
         </DialogHeader>
 
         <form onSubmit={handleRenameSubmit} className="space-y-4 py-1">
           <div className="space-y-1.5">
             <label htmlFor={`rename-${apiKey.id}`} className="text-xs font-semibold text-foreground">
-              Key Name
+              {t("keyName")}
             </label>
             <Input
               id={`rename-${apiKey.id}`}
@@ -311,7 +314,7 @@ export function ApiKeyItemCard({
               disabled={isRenaming}
               className="rounded-xl"
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               type="submit"
@@ -322,10 +325,10 @@ export function ApiKeyItemCard({
               {isRenaming ? (
                 <>
                   <Spinner className="size-3.5" />
-                  <span>Saving...</span>
+                  <span>{t("saving")}</span>
                 </>
               ) : (
-                <span>Save</span>
+                <span>{t("save")}</span>
               )}
             </Button>
           </DialogFooter>
@@ -343,17 +346,17 @@ export function ApiKeyItemCard({
         <DialogHeader>
           <div className="flex items-center gap-2 text-amber-400">
             <IconAlertTriangle className="size-5" />
-            <DialogTitle>Regenerate API Key?</DialogTitle>
+            <DialogTitle>{t("regenerateTitle")}</DialogTitle>
           </div>
           <DialogDescription>
-            Are you sure you want to regenerate <span className="font-semibold text-foreground">"{apiKey.name}"</span>?
+            {t("regenerateConfirm", { name: apiKey.name })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300 space-y-1 my-2">
-          <p className="font-semibold text-amber-200">Warning</p>
+          <p className="font-semibold text-amber-200">{t("warning")}</p>
           <p className="text-amber-300/90 leading-relaxed">
-            The current key will immediately stop working. Any applications or scripts using this key must be updated with the newly generated key.
+            {t("regenerateWarningDesc")}
           </p>
         </div>
 
@@ -365,7 +368,7 @@ export function ApiKeyItemCard({
             disabled={isRegenerating}
             className="rounded-xl"
           >
-            Cancel
+            {t("cancel")}
           </Button>
           <Button
             type="button"
@@ -377,12 +380,12 @@ export function ApiKeyItemCard({
             {isRegenerating ? (
               <>
                 <Spinner className="size-3.5" />
-                <span>Regenerating...</span>
+                <span>{t("regenerating")}</span>
               </>
             ) : (
               <>
                 <IconRotate2 className="size-4" />
-                <span>Regenerate Key</span>
+                <span>{t("regenerateKey")}</span>
               </>
             )}
           </Button>
@@ -400,17 +403,17 @@ export function ApiKeyItemCard({
         <DialogHeader>
           <div className="flex items-center gap-2 text-destructive">
             <IconTrash className="size-5" />
-            <DialogTitle>Revoke API Key?</DialogTitle>
+            <DialogTitle>{t("revokeTitle")}</DialogTitle>
           </div>
           <DialogDescription>
-            Are you sure you want to revoke and delete <span className="font-semibold text-foreground">"{apiKey.name}"</span>?
+            {t("revokeConfirm", { name: apiKey.name })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive space-y-1 my-2">
-          <p className="font-semibold">This action is permanent and cannot be undone.</p>
+          <p className="font-semibold">{t("revokePermanentDesc")}</p>
           <p className="text-destructive/90 leading-relaxed">
-            Any integration or client using this API key will immediately be denied access.
+            {t("revokeAccessDesc")}
           </p>
         </div>
 
@@ -422,7 +425,7 @@ export function ApiKeyItemCard({
             disabled={isDeleting}
             className="rounded-xl"
           >
-            Cancel
+            {t("cancel")}
           </Button>
           <Button
             type="button"
@@ -434,10 +437,10 @@ export function ApiKeyItemCard({
             {isDeleting ? (
               <>
                 <Spinner className="size-3.5" />
-                <span>Revoking...</span>
+                <span>{t("revoking")}</span>
               </>
             ) : (
-              <span>Revoke Key</span>
+              <span>{t("revokeKey")}</span>
             )}
           </Button>
         </DialogFooter>

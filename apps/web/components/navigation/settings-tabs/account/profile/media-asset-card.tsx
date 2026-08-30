@@ -2,6 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import {
   Card,
   CardHeader,
@@ -55,6 +56,7 @@ export function MediaAssetCard({
   fallbackInitial = "I",
   disabled = false,
 }: MediaAssetCardProps): React.JSX.Element {
+  const t = useTranslations("navigation.settings.account.profile");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFileForCrop, setSelectedFileForCrop] = useState<File | null>(null);
   const [cropModalOpen, setCropModalOpen] = useState(false);
@@ -70,7 +72,7 @@ export function MediaAssetCard({
 
     // Client-side file size validation (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("File exceeds 10MB limit. Please choose a smaller image.");
+      toast.error(t("fileExceedsLimit"));
       return;
     }
 
@@ -81,7 +83,7 @@ export function MediaAssetCard({
         : ["image/png", "image/jpeg", "image/webp", "image/gif"];
 
     if (!allowed.includes(file.type)) {
-      toast.error(`Invalid format. Allowed: ${allowed.map((f) => f.split("/")[1]?.toUpperCase()).join(", ")}`);
+      toast.error(t("invalidFormat", { formats: allowed.map((f) => f.split("/")[1]?.toUpperCase()).join(", ") }));
       return;
     }
 
@@ -89,7 +91,7 @@ export function MediaAssetCard({
     if (file.type === "image/svg+xml") {
       const previewUrl = URL.createObjectURL(file);
       onPendingFileChange(file, previewUrl);
-      toast.success(`${title} selected (click Save Changes to apply)`);
+      toast.success(t("assetSelected", { title }));
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
@@ -103,7 +105,7 @@ export function MediaAssetCard({
   const handleCropComplete = (croppedFile: File) => {
     const previewUrl = URL.createObjectURL(croppedFile);
     onPendingFileChange(croppedFile, previewUrl);
-    toast.success(`${title} cropped (click Save Changes to apply)`);
+    toast.success(t("assetCropped", { title }));
   };
 
   const handleDownload = () => {
@@ -115,12 +117,12 @@ export function MediaAssetCard({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success("Download started");
+    toast.success(t("downloadStarted"));
   };
 
   const handleRemove = () => {
     onPendingFileChange(null, null);
-    toast.info(`${title} removed (click Save Changes to apply)`);
+    toast.info(t("assetRemoved", { title }));
   };
 
   const isFrameType = assetType === "avatarFrame";
@@ -222,7 +224,7 @@ export function MediaAssetCard({
                 ) : (
                   <div className="size-full flex flex-col items-center justify-center text-muted-foreground/50 text-[10px] gap-1">
                     <IconPhoto className="size-4" />
-                    <span>No banner set</span>
+                    <span>{t("noBannerSet")}</span>
                   </div>
                 )}
               </div>
@@ -242,7 +244,7 @@ export function MediaAssetCard({
                 ) : (
                   <div className="size-full flex flex-col items-center justify-center text-muted-foreground/50 text-[10px] gap-1">
                     <IconPhoto className="size-4" />
-                    <span>Default nameplate style</span>
+                    <span>{t("defaultNameplateStyle")}</span>
                   </div>
                 )}
               </div>
@@ -259,7 +261,7 @@ export function MediaAssetCard({
                 className="gap-1.5 text-xs rounded-xl cursor-pointer"
               >
                 <IconUpload data-icon="inline-start" className="size-3.5" />
-                <span>Choose {isFrameType ? "Frame" : "Image"}</span>
+                <span>{isFrameType ? t("chooseFrame") : t("chooseImage")}</span>
               </Button>
 
               {currentUrl && (
@@ -270,7 +272,7 @@ export function MediaAssetCard({
                     size="icon-sm"
                     disabled={disabled}
                     onPress={handleDownload}
-                    aria-label="Download image"
+                    aria-label={t("downloadImageAria")}
                     className="rounded-xl cursor-pointer text-muted-foreground hover:text-foreground"
                   >
                     <IconDownload className="size-4" />
@@ -282,7 +284,7 @@ export function MediaAssetCard({
                     size="icon-sm"
                     disabled={disabled}
                     onPress={handleRemove}
-                    aria-label="Remove asset"
+                    aria-label={t("removeAssetAria")}
                     className="rounded-xl cursor-pointer text-red-400 hover:text-red-300 hover:bg-red-500/10"
                   >
                     <IconTrash className="size-4" />
@@ -301,7 +303,7 @@ export function MediaAssetCard({
           onOpenChange={setCropModalOpen}
           imageFile={selectedFileForCrop}
           aspectRatio={aspectRatio}
-          title={`Crop ${title}`}
+          title={t("cropTitle", { title })}
           onCropComplete={handleCropComplete}
         />
       )}

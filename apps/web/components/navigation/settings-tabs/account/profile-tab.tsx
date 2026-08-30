@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useUser } from "@/context/user-context";
 import {
   type UserProfileCustomization,
@@ -33,6 +34,7 @@ export interface ProfileTabProps {
 export function ProfileTab({
   setFooterContent,
 }: ProfileTabProps): React.JSX.Element {
+  const t = useTranslations("navigation.settings.account.profile");
   const { user, updateProfile, isLoading } = useUser();
   const initialProfile = user?.profile || DEFAULT_PROFILE_CUSTOMIZATION;
 
@@ -113,7 +115,7 @@ export function ProfileTab({
             const errorMsg =
               (error as any)?.value?.message ||
               (error as any)?.message ||
-              `Failed to upload ${type}`;
+              t("failedUpload", { type });
             throw new Error(errorMsg);
           }
 
@@ -159,13 +161,13 @@ export function ProfileTab({
         setSavedProfile(finalProfile);
         setDraftProfile(finalProfile);
         setPendingFiles({});
-        toast.success("Profile customization saved successfully!");
+        toast.success(t("savedSuccess"));
       } else {
-        toast.error("Failed to save profile customization.");
+        toast.error(t("saveFailed"));
       }
     } catch (err: any) {
       console.error("Save error:", err);
-      toast.error(err.message || "An error occurred while saving.");
+      toast.error(err.message || t("errorSaving"));
     } finally {
       setIsSaving(false);
     }
@@ -175,7 +177,7 @@ export function ProfileTab({
   const handleReset = () => {
     setDraftProfile(savedProfile);
     setPendingFiles({});
-    toast.info("Changes reset.");
+    toast.info(t("changesReset"));
   };
 
   // Push sticky actions into modal footer
@@ -187,7 +189,7 @@ export function ProfileTab({
         <div className="flex items-center gap-2">
           {isDirty && (
             <Badge variant="outline" className="text-xs border-amber-500/40 text-amber-400 bg-amber-500/10 animate-pulse">
-              Unsaved changes
+              {t("unsavedChanges")}
             </Badge>
           )}
         </div>
@@ -202,7 +204,7 @@ export function ProfileTab({
             className="text-xs rounded-xl cursor-pointer"
           >
             <IconRotate2 data-icon="inline-start" className="size-3.5" />
-            Reset
+            {t("reset")}
           </Button>
 
           <Button
@@ -216,12 +218,12 @@ export function ProfileTab({
             {isSaving ? (
               <>
                 <Spinner className="size-3.5" />
-                <span>Saving...</span>
+                <span>{t("saving")}</span>
               </>
             ) : (
               <>
                 <IconCheck data-icon="inline-start" className="size-3.5" />
-                <span>Save Changes</span>
+                <span>{t("saveChanges")}</span>
               </>
             )}
           </Button>
@@ -232,12 +234,12 @@ export function ProfileTab({
     return () => {
       setFooterContent(null);
     };
-  }, [isDirty, isSaving, draftProfile, savedProfile, pendingFiles, setFooterContent]);
+  }, [isDirty, isSaving, draftProfile, savedProfile, pendingFiles, setFooterContent, t]);
 
   return (
     <div className="relative w-full space-y-6 pb-10 animate-in fade-in-50 duration-200">
       <div>
-        <h3 className="text-base font-bold text-foreground">Profile</h3>
+        <h3 className="text-base font-bold text-foreground">{t("title")}</h3>
       </div>
 
       {/* 2-Column Responsive Layout */}
@@ -271,7 +273,7 @@ export function ProfileTab({
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
                 <IconWriting className="size-4 text-primary" />
-                About me
+                {t("aboutMe")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -288,8 +290,8 @@ export function ProfileTab({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
             {/* Card 3: Profile Picture (Avatar) */}
             <MediaAssetCard
-              title="Profile Picture"
-              description="512×512px (PNG, JPG, WebP, GIF)"
+              title={t("profilePicture")}
+              description={t("profilePictureDesc")}
               assetType="avatar"
               currentUrl={draftProfile.avatarUrl}
               onPendingFileChange={(file, previewUrl) =>
@@ -302,8 +304,8 @@ export function ProfileTab({
 
             {/* Card 4: Avatar Frame */}
             <MediaAssetCard
-              title="Avatar Frame"
-              description="512×512px (PNG, WebP, SVG transparent)"
+              title={t("avatarFrame")}
+              description={t("avatarFrameDesc")}
               assetType="avatarFrame"
               currentUrl={draftProfile.avatarFrame}
               avatarUrl={draftProfile.avatarUrl}
@@ -318,8 +320,8 @@ export function ProfileTab({
 
           {/* Card 5: Profile Banner */}
           <MediaAssetCard
-            title="Banner"
-            description="1200×400px (PNG, JPG, WebP, GIF)"
+            title={t("banner")}
+            description={t("bannerDesc")}
             assetType="banner"
             currentUrl={draftProfile.bannerUrl}
             onPendingFileChange={(file, previewUrl) =>
@@ -332,8 +334,8 @@ export function ProfileTab({
 
           {/* Card 6: Nameplate */}
           <MediaAssetCard
-            title="Nameplate"
-            description="800×400px (PNG, JPG, WebP, GIF)"
+            title={t("nameplate")}
+            description={t("nameplateDesc")}
             assetType="nameplate"
             currentUrl={draftProfile.nameplateUrl || draftProfile.sidebarBannerUrl}
             onPendingFileChange={(file, previewUrl) =>
@@ -365,7 +367,7 @@ export function ProfileTab({
           className="gap-2 shadow-xl rounded-full px-4 h-10 font-bold bg-primary text-primary-foreground cursor-pointer"
         >
           <IconEye className="size-4" />
-          <span>Preview</span>
+          <span>{t("preview")}</span>
         </Button>
       </div>
 
@@ -378,7 +380,7 @@ export function ProfileTab({
         <DialogHeader className="pb-2">
           <DialogTitle className="text-sm font-bold flex items-center gap-2">
             <IconEye className="size-4 text-primary" />
-            Preview
+            {t("preview")}
           </DialogTitle>
         </DialogHeader>
         <div className="pt-2">

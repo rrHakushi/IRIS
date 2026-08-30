@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Spinner } from "@workspace/ui/components/spinner";
@@ -14,6 +15,7 @@ import { elysia } from "@/lib/elysia";
 import { toast } from "sonner";
 
 export function QuickConnectCard(): React.JSX.Element {
+  const t = useTranslations("navigation.settings.account.security");
   const [code, setCode] = useState("");
   const [isApproving, setIsApproving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +41,7 @@ export function QuickConnectCard(): React.JSX.Element {
         handleCodeChange(text.trim());
       }
     } catch {
-      toast.error("Failed to read clipboard.");
+      toast.error(t("failedReadClipboard"));
     }
   };
 
@@ -66,16 +68,16 @@ export function QuickConnectCard(): React.JSX.Element {
       if (res.error) {
         const errorData = res.error?.value as { message?: string } | undefined;
         const msg =
-          errorData?.message || "Invalid or expired device link code.";
+          errorData?.message || t("invalidOrExpiredCode");
         throw new Error(msg);
       }
 
-      setSuccess("Device linked successfully! The companion device is now signed in.");
-      toast.success("Device approved successfully!");
+      setSuccess(t("deviceLinkedSuccess"));
+      toast.success(t("deviceApprovedSuccess"));
       setCode("");
     } catch (err: any) {
       console.error("[QuickConnect] Approval error:", err);
-      const msg = err.message || "Failed to approve device code.";
+      const msg = err.message || t("failedApproveCode");
       setError(msg);
       toast.error(msg);
     } finally {
@@ -92,7 +94,7 @@ export function QuickConnectCard(): React.JSX.Element {
           </div>
           <div className="min-w-0">
             <h4 className="font-semibold text-sm text-foreground">
-              Qucik Connect
+              {t("quickConnect")}
             </h4>
           </div>
         </div>
@@ -115,7 +117,7 @@ export function QuickConnectCard(): React.JSX.Element {
       <div className="space-y-3 pt-1">
         <div className="space-y-1">
           <label className="text-xs font-medium text-foreground/80">
-            8-Character Pairing Code
+            {t("pairingCodeLabel")}
           </label>
           <div className="flex gap-2">
             <div className="relative flex-1">
@@ -132,7 +134,7 @@ export function QuickConnectCard(): React.JSX.Element {
                 tabIndex={-1}
                 onClick={handlePaste}
                 className="absolute end-2.5 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
-                title="Paste from clipboard"
+                title={t("pasteClipboardTitle")}
               >
                 <IconClipboard className="size-4" />
               </button>
@@ -149,7 +151,7 @@ export function QuickConnectCard(): React.JSX.Element {
               ) : (
                 <IconCheck className="size-3.5" />
               )}
-              <span>Approve Device</span>
+              <span>{t("approveDevice")}</span>
             </Button>
           </div>
         </div>

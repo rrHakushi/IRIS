@@ -1,16 +1,15 @@
 "use client";
 
 import React from "react";
+import { useTranslations } from "next-intl";
 import {
   Card,
   CardHeader,
   CardTitle,
-  CardDescription,
   CardContent,
 } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
-import { Field, FieldLabel, FieldDescription, FieldGroup } from "@workspace/ui/components/field";
-import { Badge } from "@workspace/ui/components/badge";
+import { Field, FieldLabel, FieldGroup } from "@workspace/ui/components/field";
 import { cn } from "@workspace/ui/lib/utils";
 import {
   FONT_PRESETS,
@@ -53,6 +52,7 @@ export function DisplayNameStyleCard({
   username,
   disabled = false,
 }: DisplayNameStyleCardProps): React.JSX.Element {
+  const t = useTranslations("navigation.settings.account.profile");
   const currentFont = style.font || "default";
   const currentEffect: DisplayNameEffectType =
     (style.effect as DisplayNameEffectType) || "solid";
@@ -80,7 +80,7 @@ export function DisplayNameStyleCard({
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-bold flex items-center gap-2">
           <IconTypography className="size-4 text-primary" />
-          Display Name & Styling
+          {t("displayNameAndStyling")}
         </CardTitle>
       </CardHeader>
 
@@ -92,7 +92,7 @@ export function DisplayNameStyleCard({
             <FieldGroup>
               <Field>
                 <FieldLabel htmlFor="display-name" className="text-xs font-semibold">
-                  Display Name
+                  {t("displayName")}
                 </FieldLabel>
                 <Input
                   id="display-name"
@@ -100,7 +100,7 @@ export function DisplayNameStyleCard({
                   value={displayName}
                   disabled={disabled}
                   onChange={(e) => onDisplayNameChange(e.target.value)}
-                  placeholder={username || "Your custom name"}
+                  placeholder={username || t("yourCustomNamePlaceholder")}
                   maxLength={32}
                   className="rounded-xl text-xs bg-background/50 h-9"
                 />
@@ -113,7 +113,7 @@ export function DisplayNameStyleCard({
             <FieldGroup>
               <Field>
                 <FieldLabel htmlFor="pronouns" className="text-xs font-semibold">
-                  Pronouns
+                  {t("pronouns")}
                 </FieldLabel>
                 <Input
                   id="pronouns"
@@ -121,7 +121,7 @@ export function DisplayNameStyleCard({
                   value={pronouns}
                   disabled={disabled}
                   onChange={(e) => onPronounsChange?.(e.target.value)}
-                  placeholder="Pronouns"
+                  placeholder={t("pronounsPlaceholder")}
                   maxLength={24}
                   className="rounded-xl text-xs bg-background/50 h-9"
                 />
@@ -134,7 +134,7 @@ export function DisplayNameStyleCard({
             <FieldGroup>
               <Field>
                 <FieldLabel htmlFor="status-text" className="text-xs font-semibold">
-                  Status
+                  {t("status")}
                 </FieldLabel>
                 <Input
                   id="status-text"
@@ -142,7 +142,7 @@ export function DisplayNameStyleCard({
                   value={statusText}
                   disabled={disabled}
                   onChange={(e) => onStatusTextChange?.(e.target.value)}
-                  placeholder="What's on your mind?"
+                  placeholder={t("statusPlaceholder")}
                   maxLength={128}
                   className="rounded-xl text-xs bg-background/50 h-9"
                 />
@@ -155,7 +155,7 @@ export function DisplayNameStyleCard({
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
             <IconTypography className="size-3.5 text-primary" />
-            <span>Font</span>
+            <span>{t("font")}</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2">
             {FONT_PRESETS.map((preset) => {
@@ -194,7 +194,7 @@ export function DisplayNameStyleCard({
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
             <IconSparkles className="size-3.5 text-primary" />
-            <span>Effect</span>
+            <span>{t("effect")}</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {TEXT_EFFECT_PRESETS.map((effect) => {
@@ -216,17 +216,17 @@ export function DisplayNameStyleCard({
                   {/* Effect Text Representation */}
                   {effect.id === "solid" && (
                     <span className="text-xs font-bold text-white tracking-wide">
-                      Solid
+                      {t("effects.solid")}
                     </span>
                   )}
                   {effect.id === "gradient" && (
                     <span className="text-xs font-extrabold bg-linear-to-r from-teal-300 via-amber-200 to-rose-300 bg-clip-text text-transparent">
-                      Gradient
+                      {t("effects.gradient")}
                     </span>
                   )}
                   {effect.id === "neon" && (
                     <span className="text-xs font-extrabold text-white drop-shadow-[0_0_8px_#d946ef] drop-shadow-[0_0_18px_#d946ef]">
-                      Neon
+                      {t("effects.neon")}
                     </span>
                   )}
                   {effect.id === "toon" && (
@@ -237,7 +237,7 @@ export function DisplayNameStyleCard({
                           "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 2px 2px 0px #000",
                       }}
                     >
-                      Toon
+                      {t("effects.toon")}
                     </span>
                   )}
                   {effect.id === "pop" && (
@@ -248,7 +248,7 @@ export function DisplayNameStyleCard({
                           "1px 1px 0px #059669, 2px 2px 0px #059669, 3px 3px 0px rgba(0,0,0,0.5)",
                       }}
                     >
-                      Pop
+                      {t("effects.pop")}
                     </span>
                   )}
                   {effect.id === "gummy" && (
@@ -256,17 +256,17 @@ export function DisplayNameStyleCard({
                       className="text-xs font-black bg-linear-to-b from-white via-pink-300 to-pink-500 bg-clip-text text-transparent"
                       style={{ filter: "drop-shadow(0 2px 4px rgba(244,114,182,0.6))" }}
                     >
-                      Gummy
+                      {t("effects.gummy")}
                     </span>
                   )}
                   {effect.id === "prism" && (
                     <span className="text-xs font-black bg-linear-to-r from-purple-400 via-sky-400 via-emerald-400 via-amber-400 to-rose-400 bg-clip-text text-transparent">
-                      Prism
+                      {t("effects.prism")}
                     </span>
                   )}
 
                   {isSelected && (
-                    <div className="absolute top-1.5 right-1.5">
+                    <div className="absolute top-1.5 right-1.5 size-4 rounded-full bg-primary/20 flex items-center justify-center">
                       <IconCheck className="size-3.5 text-primary" />
                     </div>
                   )}
@@ -288,7 +288,7 @@ export function DisplayNameStyleCard({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
                   <IconColorSwatch className="size-3.5 text-primary" />
-                  <span>Choose Color {currentEffect === "pop" ? "(Face)" : ""}</span>
+                  <span>{currentEffect === "pop" ? t("chooseColorFace") : t("chooseColor")}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <input
@@ -297,7 +297,7 @@ export function DisplayNameStyleCard({
                     value={currentColor.startsWith("#") ? currentColor : "#ffffff"}
                     onChange={(e) => onStyleChange({ ...style, color: e.target.value })}
                     className="size-6 rounded-md border border-border cursor-pointer bg-transparent"
-                    title="Custom color"
+                    title={t("customColorTitle")}
                   />
                   <span className="text-[10px] font-mono text-muted-foreground">
                     {currentColor}
@@ -337,7 +337,7 @@ export function DisplayNameStyleCard({
                 <div className="pt-2 border-t border-border/30 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-foreground">
-                      3D Shadow Color
+                      {t("shadow3dColor")}
                     </span>
                     <div className="flex items-center gap-1.5">
                       <input
@@ -348,6 +348,7 @@ export function DisplayNameStyleCard({
                           onStyleChange({ ...style, color2: e.target.value })
                         }
                         className="size-6 rounded-md border border-border cursor-pointer bg-transparent"
+                        title={t("customColorTitle")}
                       />
                       <span className="text-[10px] font-mono text-muted-foreground">
                         {currentColor2}
@@ -359,18 +360,16 @@ export function DisplayNameStyleCard({
             </div>
           )}
 
-          {/* 2. DUAL GRADIENT PICKER (Gradient Effect: 2 Colors) */}
+          {/* 2. GRADIENT CONTROLS (2-Stop Linear Gradient) */}
           {currentEffect === "gradient" && (
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                  <IconColorSwatch className="size-3.5 text-primary" />
-                  <span>Gradient Colors (2-Stop Blend)</span>
-                </div>
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                <IconColorSwatch className="size-3.5 text-primary" />
+                <span>{t("gradientColorsTitle")}</span>
               </div>
 
               {/* Gradient Presets */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {GRADIENT_PRESETS.map((gp) => {
                   const isSelected =
                     currentColor.toLowerCase() === gp.color1.toLowerCase() &&
@@ -414,7 +413,7 @@ export function DisplayNameStyleCard({
               {/* Color 1 & Color 2 Custom Inputs */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <div className="p-3 rounded-xl border border-border/50 bg-background/30 flex items-center justify-between">
-                  <span className="text-xs font-medium">Color 1 (Start)</span>
+                  <span className="text-xs font-medium">{t("color1Start")}</span>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
@@ -432,7 +431,7 @@ export function DisplayNameStyleCard({
                 </div>
 
                 <div className="p-3 rounded-xl border border-border/50 bg-background/30 flex items-center justify-between">
-                  <span className="text-xs font-medium">Color 2 (End)</span>
+                  <span className="text-xs font-medium">{t("color2End")}</span>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
@@ -458,7 +457,7 @@ export function DisplayNameStyleCard({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
                   <IconColorSwatch className="size-3.5 text-primary" />
-                  <span>Prism Spectrum Colors (5 Stops)</span>
+                  <span>{t("prismSpectrumTitle")}</span>
                 </div>
               </div>
 
@@ -510,7 +509,7 @@ export function DisplayNameStyleCard({
                     className="p-2 rounded-xl border border-border/50 bg-background/30 flex flex-col items-center gap-1.5 text-center"
                   >
                     <span className="text-[10px] font-medium text-muted-foreground">
-                      Stop {idx + 1}
+                      {t("stopNumber", { number: idx + 1 })}
                     </span>
                     <input
                       type="color"

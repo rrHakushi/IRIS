@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Switch } from "@workspace/ui/components/switch";
@@ -40,6 +41,8 @@ export function Totp2faCard({
   onRefresh,
   disabled = false,
 }: Totp2faCardProps): React.JSX.Element {
+  const t = useTranslations("navigation.settings.account.security");
+
   // Modal states
   const [setupOpen, setSetupOpen] = useState(false);
   const [disableOpen, setDisableOpen] = useState(false);
@@ -84,7 +87,7 @@ export function Totp2faCard({
       );
       if (res.error || !res.data) {
         const errorData = res.error?.value as { message?: string } | undefined;
-        const msg = errorData?.message || "Failed to initiate TOTP setup.";
+        const msg = errorData?.message || t("failedInitiateSetup");
         throw new Error(msg);
       }
 
@@ -92,7 +95,7 @@ export function Totp2faCard({
       setSecretKey(res.data.secret);
     } catch (err: any) {
       console.error("[TOTP] Setup error:", err);
-      setSetupError(err.message || "Failed to load authenticator setup.");
+      setSetupError(err.message || t("failedLoadSetup"));
     } finally {
       setIsSettingUp(false);
     }
@@ -112,7 +115,7 @@ export function Totp2faCard({
   const handleVerifySetup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!verificationCode.trim() || verificationCode.trim().length !== 6) {
-      setSetupError("Please enter a valid 6-digit verification code.");
+      setSetupError(t("validSixDigitError"));
       return;
     }
 
@@ -135,11 +138,11 @@ export function Totp2faCard({
         const errorData = res.error?.value as { message?: string } | undefined;
         const msg =
           errorData?.message ||
-          "Invalid verification code. Please check your app and try again.";
+          t("invalidVerificationCode");
         throw new Error(msg);
       }
 
-      toast.success("Authenticator app successfully activated!");
+      toast.success(t("authenticatorActivatedSuccess"));
       await onRefresh();
 
       if (res.data?.backupCodes && res.data.backupCodes.length > 0) {
@@ -149,7 +152,7 @@ export function Totp2faCard({
       }
     } catch (err: any) {
       console.error("[TOTP] Verification error:", err);
-      setSetupError(err.message || "Failed to verify code.");
+      setSetupError(err.message || t("failedVerifyCode"));
     } finally {
       setIsVerifying(false);
     }
@@ -161,10 +164,10 @@ export function Totp2faCard({
     try {
       await navigator.clipboard.writeText(secretKey);
       setCopiedSecret(true);
-      toast.success("Secret key copied to clipboard!");
+      toast.success(t("secretCopied"));
       setTimeout(() => setCopiedSecret(false), 2000);
     } catch {
-      toast.error("Failed to copy secret key.");
+      toast.error(t("failedCopySecret"));
     }
   };
 
@@ -174,10 +177,10 @@ export function Totp2faCard({
     try {
       await navigator.clipboard.writeText(backupCodes.join("\n"));
       setCopiedBackupCodes(true);
-      toast.success("Backup recovery codes copied!");
+      toast.success(t("backupCodesCopied"));
       setTimeout(() => setCopiedBackupCodes(false), 2000);
     } catch {
-      toast.error("Failed to copy backup codes.");
+      toast.error(t("failedCopyBackupCodes"));
     }
   };
 
@@ -192,7 +195,7 @@ export function Totp2faCard({
     link.download = `IRIS-backup-codes-${Date.now()}.txt`;
     link.click();
     URL.revokeObjectURL(url);
-    toast.success("Backup codes downloaded.");
+    toast.success(t("backupCodesDownloaded"));
   };
 
   // Disable TOTP Handler
@@ -200,11 +203,11 @@ export function Totp2faCard({
     if (e) e.preventDefault();
 
     if (disableMethod === "code" && (!disableCode.trim() || disableCode.trim().length !== 6)) {
-      setDisableError("Please enter a 6-digit authenticator code.");
+      setDisableError(t("enterSixDigitToDisable"));
       return;
     }
     if (disableMethod === "password" && !disablePassword.trim()) {
-      setDisableError("Please enter your account password.");
+      setDisableError(t("enterPasswordToDisable"));
       return;
     }
 
@@ -225,18 +228,18 @@ export function Totp2faCard({
 
       if (res.error) {
         const errorData = res.error?.value as { message?: string } | undefined;
-        const msg = errorData?.message || "Failed to disable authenticator.";
+        const msg = errorData?.message || t("failedDisableTotp");
         throw new Error(msg);
       }
 
-      toast.success("Authenticator app disabled.");
+      toast.success(t("authenticatorDisabledSuccess"));
       setDisableOpen(false);
       setDisableCode("");
       setDisablePassword("");
       await onRefresh();
     } catch (err: any) {
       console.error("[TOTP] Disable error:", err);
-      setDisableError(err.message || "Failed to disable authenticator.");
+      setDisableError(err.message || t("failedDisableTotp"));
     } finally {
       setIsDisabling(false);
     }
@@ -253,21 +256,21 @@ export function Totp2faCard({
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h4 className="font-semibold text-sm text-foreground">
-                  Authentificator
+                  {t("authenticator")}
                 </h4>
                 {enabled ? (
                   <Badge
                     variant="outline"
                     className="text-[10px] h-4.5 px-2 border-emerald-500/30 text-emerald-400 bg-emerald-500/10 font-semibold"
                   >
-                    Active
+                    {t("active")}
                   </Badge>
                 ) : (
                   <Badge
                     variant="outline"
                     className="text-[10px] h-4.5 px-2 text-muted-foreground border-border font-medium"
                   >
-                    Inactive
+                    {t("inactive")}
                   </Badge>
                 )}
               </div>
@@ -284,15 +287,15 @@ export function Totp2faCard({
               }
             }}
             isDisabled={disabled}
-            aria-label="Toggle Authenticator App TOTP"
+            aria-label={t("toggleTotpAria")}
           />
         </div>
 
         <div className="rounded-xl border border-border/50 bg-background/50 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <span className="text-xs text-muted-foreground">
             {enabled
-              ? "Your account is protected with time-based one-time passwords."
-              : "Generate secure time-based passcodes on your mobile device."}
+              ? t("totpActiveDesc")
+              : t("totpInactiveDesc")}
           </span>
           <Button
             type="button"
@@ -301,7 +304,7 @@ export function Totp2faCard({
             onClick={() => (enabled ? handleOpenDisable() : handleStartSetup())}
             className="h-7 text-xs rounded-lg px-3 self-start sm:self-auto shrink-0"
           >
-            {enabled ? "Manage / Disable" : "Configure App"}
+            {enabled ? t("manageDisable") : t("configureApp")}
           </Button>
         </div>
       </div>
@@ -312,12 +315,12 @@ export function Totp2faCard({
           <div className="flex items-center gap-2 text-primary">
             <IconQrcode className="size-5" />
             <DialogTitle>
-              {backupCodes ? "Emergency Recovery Codes" : "Set Up Authenticator App"}
+              {backupCodes ? t("emergencyRecoveryCodes") : t("setUpAuthenticatorApp")}
             </DialogTitle>
           </div>
           {backupCodes && (
             <DialogDescription>
-              Save these emergency recovery backup codes in a safe place. If you lose access to your authenticator, you can use these single-use codes to log in.
+              {t("emergencyRecoveryDesc")}
             </DialogDescription>
           )}
         </DialogHeader>
@@ -328,7 +331,7 @@ export function Totp2faCard({
             <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 flex items-start gap-2.5 text-xs text-amber-300">
               <IconAlertTriangle className="size-4 shrink-0 mt-0.5" />
               <span>
-                These codes are only shown once. Copy or download them immediately.
+                {t("codesShownOnceWarning")}
               </span>
             </div>
 
@@ -360,7 +363,7 @@ export function Totp2faCard({
                   ) : (
                     <IconCopy className="size-3.5" />
                   )}
-                  <span>{copiedBackupCodes ? "Copied" : "Copy All"}</span>
+                  <span>{copiedBackupCodes ? t("copied") : t("copyAll")}</span>
                 </Button>
                 <Button
                   type="button"
@@ -370,7 +373,7 @@ export function Totp2faCard({
                   className="h-8 text-xs rounded-xl gap-1.5"
                 >
                   <IconDownload className="size-3.5" />
-                  <span>Download .txt</span>
+                  <span>{t("downloadTxt")}</span>
                 </Button>
               </div>
 
@@ -380,7 +383,7 @@ export function Totp2faCard({
                 onClick={() => setSetupOpen(false)}
                 className="h-8 text-xs font-semibold rounded-xl px-4"
               >
-                Done
+                {t("done")}
               </Button>
             </div>
           </div>
@@ -398,7 +401,7 @@ export function Totp2faCard({
               <div className="flex flex-col items-center justify-center py-10 gap-3">
                 <Spinner className="size-6" />
                 <span className="text-xs text-muted-foreground">
-                  Generating authenticator key...
+                  {t("generatingKey")}
                 </span>
               </div>
             ) : (
@@ -428,7 +431,7 @@ export function Totp2faCard({
                           size="icon-sm"
                           onClick={() => setShowSecret((prev) => !prev)}
                           className="size-8 rounded-xl shrink-0"
-                          aria-label={showSecret ? "Hide secret key" : "Show secret key"}
+                          aria-label={showSecret ? t("hideSecretAria") : t("showSecretAria")}
                         >
                           {showSecret ? (
                             <IconEyeOff className="size-3.5" />
@@ -443,7 +446,7 @@ export function Totp2faCard({
                             size="icon-sm"
                             onClick={handleCopySecret}
                             className="size-8 rounded-xl shrink-0 animate-in fade-in-50"
-                            aria-label="Copy secret key"
+                            aria-label={t("copySecretAria")}
                           >
                             {copiedSecret ? (
                               <IconCheck className="size-3.5 text-primary" />
@@ -459,7 +462,7 @@ export function Totp2faCard({
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-foreground">
-                    Enter 6-Digit Code from App
+                    {t("enter6DigitCode")}
                   </label>
                   <Input
                     type="text"
@@ -484,7 +487,7 @@ export function Totp2faCard({
                     onClick={() => setSetupOpen(false)}
                     className="h-8 text-xs"
                   >
-                    Cancel
+                    {t("cancel")}
                   </Button>
                   <Button
                     type="submit"
@@ -497,7 +500,7 @@ export function Totp2faCard({
                     ) : (
                       <IconCheck className="size-3.5" />
                     )}
-                    <span>Verify & Activate</span>
+                    <span>{t("verifyAndActivate")}</span>
                   </Button>
                 </DialogFooter>
               </>
@@ -511,10 +514,10 @@ export function Totp2faCard({
         <DialogHeader>
           <div className="flex items-center gap-2 text-destructive">
             <IconAlertTriangle className="size-5" />
-            <DialogTitle>Disable Authenticator App</DialogTitle>
+            <DialogTitle>{t("disableAuthenticatorTitle")}</DialogTitle>
           </div>
           <DialogDescription>
-            Enter a 6-digit code from your authenticator app or your account password to confirm.
+            {t("disableAuthenticatorDesc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -541,7 +544,7 @@ export function Totp2faCard({
               }`}
             >
               <IconDeviceMobile className="size-3.5" />
-              <span>Authenticator Code</span>
+              <span>{t("authenticatorCode")}</span>
             </button>
             <button
               type="button"
@@ -556,14 +559,14 @@ export function Totp2faCard({
               }`}
             >
               <IconLock className="size-3.5" />
-              <span>Password</span>
+              <span>{t("password")}</span>
             </button>
           </div>
 
           {disableMethod === "code" ? (
             <div className="space-y-1.5 animate-in fade-in-50 duration-150">
               <label className="text-xs font-medium text-foreground">
-                6-Digit Authenticator Code
+                {t("sixDigitCode")}
               </label>
               <Input
                 type="text"
@@ -583,7 +586,7 @@ export function Totp2faCard({
           ) : (
             <div className="space-y-1.5 animate-in fade-in-50 duration-150">
               <label className="text-xs font-medium text-foreground">
-                Account Password
+                {t("accountPassword")}
               </label>
               <div className="relative">
                 <Input
@@ -593,7 +596,7 @@ export function Totp2faCard({
                     setDisableError(null);
                     setDisablePassword(e.target.value);
                   }}
-                  placeholder="Enter your account password"
+                  placeholder={t("enterAccountPasswordPlaceholder")}
                   className="h-10 text-xs pe-10 rounded-xl bg-background"
                   autoFocus
                 />
@@ -603,7 +606,7 @@ export function Totp2faCard({
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => setShowDisablePassword((prev) => !prev)}
                   className="absolute end-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground cursor-pointer"
-                  aria-label={showDisablePassword ? "Hide password" : "Show password"}
+                  aria-label={showDisablePassword ? t("hidePassword") : t("showPassword")}
                 >
                   {showDisablePassword ? (
                     <IconEyeOff className="size-3.5" />
@@ -623,7 +626,7 @@ export function Totp2faCard({
               onClick={() => setDisableOpen(false)}
               className="h-8 text-xs"
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               type="submit"
@@ -637,7 +640,7 @@ export function Totp2faCard({
               className="h-8 text-xs font-semibold rounded-xl px-4 gap-1.5 cursor-pointer"
             >
               {isDisabling ? <Spinner className="size-3.5" /> : null}
-              <span>Confirm & Disable</span>
+              <span>{t("confirmAndDisable")}</span>
             </Button>
           </DialogFooter>
         </form>

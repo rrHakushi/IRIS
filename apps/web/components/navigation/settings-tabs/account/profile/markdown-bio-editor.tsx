@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { cn } from "@workspace/ui/lib/utils";
@@ -27,11 +28,11 @@ export interface MarkdownBioEditorProps {
 /**
  * Lightweight and safe client-side markdown formatter for user bios.
  */
-export function renderBioMarkdown(markdown: string): React.ReactNode {
+export function renderBioMarkdown(markdown: string, emptyText?: React.ReactNode): React.ReactNode {
   if (!markdown || !markdown.trim()) {
     return (
       <span className="text-xs italic text-muted-foreground/60">
-        No bio provided yet. Tell others about yourself!
+        {emptyText ?? "No bio provided yet. Tell others about yourself!"}
       </span>
     );
   }
@@ -207,6 +208,7 @@ export function MarkdownBioEditor({
   maxLength = 500,
   disabled = false,
 }: MarkdownBioEditorProps): React.JSX.Element {
+  const t = useTranslations("navigation.settings.account.profile");
   const [tab, setTab] = useState<"write" | "preview">("write");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -252,7 +254,7 @@ export function MarkdownBioEditor({
             className="h-7 px-2.5 text-xs font-medium gap-1 rounded-lg"
           >
             <IconEdit data-icon="inline-start" className="size-3.5" />
-            Write
+            {t("write")}
           </Button>
           <Button
             type="button"
@@ -262,7 +264,7 @@ export function MarkdownBioEditor({
             className="h-7 px-2.5 text-xs font-medium gap-1 rounded-lg"
           >
             <IconEye data-icon="inline-start" className="size-3.5" />
-            Preview
+            {t("preview")}
           </Button>
         </div>
 
@@ -271,36 +273,36 @@ export function MarkdownBioEditor({
             <button
               type="button"
               disabled={disabled}
-              onClick={() => insertFormatting("**", "**", "bold")}
+              onClick={() => insertFormatting("**", "**", "bold text")}
               className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40 cursor-pointer"
-              title="Bold (**text**)"
+              title={t("boldTitle")}
             >
               <IconBold className="size-4" />
             </button>
             <button
               type="button"
               disabled={disabled}
-              onClick={() => insertFormatting("*", "*", "italic")}
+              onClick={() => insertFormatting("*", "*", "italic text")}
               className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40 cursor-pointer"
-              title="Italic (*text*)"
+              title={t("italicTitle")}
             >
               <IconItalic className="size-4" />
             </button>
             <button
               type="button"
               disabled={disabled}
-              onClick={() => insertFormatting("~~", "~~", "strike")}
+              onClick={() => insertFormatting("~~", "~~", "strikethrough text")}
               className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40 cursor-pointer"
-              title="Strikethrough (~~text~~)"
+              title={t("strikeTitle")}
             >
               <IconStrikethrough className="size-4" />
             </button>
             <button
               type="button"
               disabled={disabled}
-              onClick={() => insertFormatting("### ", "", "Heading")}
+              onClick={() => insertFormatting("### ", "", "heading")}
               className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40 cursor-pointer"
-              title="Heading (### text)"
+              title={t("headingTitle")}
             >
               <IconHeading className="size-4" />
             </button>
@@ -309,7 +311,7 @@ export function MarkdownBioEditor({
               disabled={disabled}
               onClick={() => insertFormatting("> ", "", "quote")}
               className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40 cursor-pointer"
-              title="Quote (> quote)"
+              title={t("quoteTitle")}
             >
               <IconQuote className="size-4" />
             </button>
@@ -318,7 +320,7 @@ export function MarkdownBioEditor({
               disabled={disabled}
               onClick={() => insertFormatting("`", "`", "code")}
               className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40 cursor-pointer"
-              title="Code (`code`)"
+              title={t("codeTitle")}
             >
               <IconCode className="size-4" />
             </button>
@@ -327,7 +329,7 @@ export function MarkdownBioEditor({
               disabled={disabled}
               onClick={() => insertFormatting("- ", "", "item")}
               className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40 cursor-pointer"
-              title="Bullet list (- item)"
+              title={t("listTitle")}
             >
               <IconList className="size-4" />
             </button>
@@ -336,7 +338,7 @@ export function MarkdownBioEditor({
               disabled={disabled}
               onClick={() => insertFormatting("[", "](https://example.com)", "link text")}
               className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40 cursor-pointer"
-              title="Link ([text](url))"
+              title={t("linkTitle")}
             >
               <IconLink className="size-4" />
             </button>
@@ -353,20 +355,20 @@ export function MarkdownBioEditor({
             disabled={disabled}
             maxLength={maxLength}
             onChange={(e) => onChange(e.target.value)}
-            placeholder="Tell us about yourself..."
+            placeholder={t("bioPlaceholder")}
             rows={5}
             className="w-full resize-y min-h-[130px] text-xs bg-background/50 border-border/50 focus-visible:ring-primary/40 rounded-xl leading-relaxed p-3"
           />
         </div>
       ) : (
         <div className="min-h-[130px] p-3.5 rounded-xl bg-muted/20 border border-border/40 overflow-y-auto max-h-60">
-          {renderBioMarkdown(value)}
+          {renderBioMarkdown(value, t("noBio"))}
         </div>
       )}
 
       {/* Footer info: Character Count */}
       <div className="flex items-center justify-between text-[10px] text-muted-foreground px-1">
-        <span>Supports bold, italic, code, quotes, and links</span>
+        <span>{t("formattingSupport")}</span>
         <span
           className={cn(
             "font-mono font-medium",
