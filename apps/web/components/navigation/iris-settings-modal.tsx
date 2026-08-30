@@ -58,6 +58,8 @@ import { ReadarrSettingsTab } from "./settings-tabs/servarr/readarr-tab";
 // Email Tabs
 import { EmailAccountsSettingsTab } from "./settings-tabs/email/email-accounts-tab";
 
+import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
+
 export type IrisSettingsCategory =
   | "profile"
   | "info"
@@ -138,6 +140,7 @@ export function IrisSettingsModal({
   defaultCategory = "profile",
 }: IrisSettingsModalProps): React.JSX.Element {
   const t = useTranslations("navigation.settings");
+  const isMobile = useIsMobile();
 
   const navItems: SettingItemMeta[] = useMemo(
     () => [
@@ -248,7 +251,6 @@ export function IrisSettingsModal({
                         type="button"
                         onClick={() => {
                           setDesktopCategory(item.id);
-                          setMobileCategory(item.id);
                         }}
                         className={cn(
                           "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium cursor-pointer transition-all border group text-start",
@@ -280,7 +282,7 @@ export function IrisSettingsModal({
           {/* Active Tab Scrollable Content */}
           <div className="flex-1 overflow-y-auto p-6 no-scrollbar">
             <div className="w-full h-full">
-              {renderTabContent(desktopCategory, onOpenChange, setFooterContent)}
+              {!isMobile && renderTabContent(desktopCategory, onOpenChange, setFooterContent)}
             </div>
           </div>
 
@@ -348,7 +350,7 @@ export function IrisSettingsModal({
 
         {/* Mobile Content Area */}
         <main className="flex-1 min-h-0 overflow-y-auto w-full overscroll-contain no-scrollbar">
-          {mobileCategory ? (
+          {isMobile && mobileCategory ? (
             /* Sub-View: Active Tab Content */
             <div className="p-4 animate-in fade-in slide-in-from-right-4 duration-200">
               {renderTabContent(mobileCategory, onOpenChange, setFooterContent)}
@@ -370,7 +372,6 @@ export function IrisSettingsModal({
                           type="button"
                           onClick={() => {
                             setMobileCategory(item.id);
-                            setDesktopCategory(item.id);
                           }}
                           className="w-full flex items-center justify-between px-4 py-3 text-xs font-medium text-foreground hover:bg-primary/10 hover:text-primary active:bg-primary/15 transition-all text-start group cursor-pointer"
                         >
@@ -390,11 +391,11 @@ export function IrisSettingsModal({
         </main>
 
         {/* Mobile Pinned Footer */}
-        {mobileCategory && footerContent ? (
+        {isMobile && mobileCategory && footerContent ? (
           <footer className="border-t border-border px-4 py-3 bg-card shrink-0 flex items-center justify-between gap-3 w-full">
             {footerContent}
           </footer>
-        ) : (
+        ) : isMobile ? (
           <footer className="border-t border-border/60 px-4 py-3 bg-card/40 shrink-0 flex items-center justify-between gap-3 w-full">
             <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
               IRIS
@@ -407,7 +408,7 @@ export function IrisSettingsModal({
               {mobileCategory ? t("back") : t("close")}
             </Button>
           </footer>
-        )}
+        ) : null}
       </div>
     </Dialog>
   );
