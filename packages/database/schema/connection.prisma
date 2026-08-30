@@ -1,0 +1,67 @@
+enum ConnectionProvider {
+    ANILIST
+    MAL
+    SIMKL
+    BANGUMI
+    STEAM
+    RIOT_GAMES
+    RADARR
+    SONARR
+    READARR
+    LIDARR
+    JELLYFIN
+    PLEX
+    CUSTOM
+}
+
+enum ConnectionAuthType {
+    OAUTH2
+    API_KEY
+    CREDENTIALS
+    OPENID
+}
+
+enum ConnectionStatus {
+    CONNECTED
+    EXPIRED
+    REVOKED
+    ERROR
+    DISCONNECTED
+}
+
+model Connection {
+    id             String             @id @default(uuid())
+    userId         String
+    user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+    provider       ConnectionProvider
+    authType       ConnectionAuthType @default(OAUTH2)
+    
+    // External account identifiers
+    externalId     String?            // e.g. steamId, provider user id, or username
+    displayName    String?            // External profile/account display name
+    avatarUrl      String?            // External avatar URL
+    profileUrl     String?            // External profile page URL
+    
+    // Secure token and credential storage
+    // Format: AES-256-GCM encrypted JSON payload containing tokens, API keys, or credentials
+    encryptedData  String             @db.Text
+    
+    // Connection state
+    status         ConnectionStatus   @default(CONNECTED)
+    errorMessage   String?            @db.Text
+    
+    // Configurable settings per connection
+    // e.g. { autoSync: true, scrobbleEnabled: true, searchQuotaShare: true, isPrivate: false, hostUrl: "http://..." }
+    settings       Json?              @db.Json
+    
+    // Timestamps
+    lastSyncedAt   DateTime?
+    expiresAt      DateTime?          // OAuth token expiration timestamp if applicable
+    createdAt      DateTime           @default(now())
+    updatedAt      DateTime           @updatedAt
+
+    @@unique([userId, provider, externalId])
+    @@index([userId])
+    @@index([provider])
+    @@index([status])
+}

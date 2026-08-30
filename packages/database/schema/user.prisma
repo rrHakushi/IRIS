@@ -19,6 +19,7 @@ model User {
     passkeys        Passkey[]
     apiKeys         ApiKey[]
     notifications   Notification[]
+    connections     Connection[]
 
     // ENCRYPTION KEYS
     publicKey              String?

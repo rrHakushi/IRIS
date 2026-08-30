@@ -6,7 +6,9 @@
     "moduleResolution": "Bundler",
     "types": ["bun", "node"],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@IRIS/connections": ["../../packages/connections/src/index.ts"],
+      "@IRIS/connections/*": ["../../packages/connections/src/*"]
     },
     "declaration": false,
     "declarationMap": false,

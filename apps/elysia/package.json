@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@IRIS/cache": "workspace:*",
+    "@IRIS/connections": "workspace:*",
     "@IRIS/database": "workspace:*",
     "@IRIS/permissions": "workspace:*",
     "@IRIS/shared": "workspace:*",

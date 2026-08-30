@@ -43,6 +43,7 @@ import { useEncryption } from "@/context/encryption-context";
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { locales, localeNames, type Locale } from "@/i18n/routing";
+import { toast } from "sonner";
 
 export interface IrisUserMenuProps {
   onOpenSettings?: () => void;
@@ -68,6 +69,39 @@ export function IrisUserMenu({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsDefaultCategory, setSettingsDefaultCategory] =
     useState<IrisSettingsCategory>("profile");
+
+  // Automatically open settings on connections tab and alert on OAuth return
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("status");
+    const provider = params.get("provider");
+    const tab = params.get("tab") || params.get("openSettings");
+
+    if (status || tab === "connections" || provider) {
+      if (status === "connected" && provider) {
+        toast.success(`Successfully connected to ${provider}!`);
+      } else if (status === "error") {
+        const msg = params.get("message");
+        toast.error(msg ? decodeURIComponent(msg) : "Connection failed");
+      }
+
+      setSettingsDefaultCategory("connections");
+      setSettingsOpen(true);
+
+      const cleanUrl = new URL(window.location.href);
+      cleanUrl.searchParams.delete("status");
+      cleanUrl.searchParams.delete("provider");
+      cleanUrl.searchParams.delete("message");
+      cleanUrl.searchParams.delete("tab");
+      cleanUrl.searchParams.delete("openSettings");
+      window.history.replaceState(
+        {},
+        document.title,
+        cleanUrl.pathname + (cleanUrl.search ? cleanUrl.search : "")
+      );
+    }
+  }, []);
 
   const router = useRouter();
   const currentLocale = useLocale() as Locale;

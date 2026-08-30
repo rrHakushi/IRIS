@@ -3,6 +3,8 @@
   "compilerOptions": {
     "paths": {
       "@/*": ["./*"],
+      "@IRIS/connections": ["../../packages/connections/src/index.ts"],
+      "@IRIS/connections/*": ["../../packages/connections/src/*"],
       "@workspace/ui/postcss.config": ["../../packages/ui/postcss.config.mjs"],
       "@workspace/ui/globals.css": ["../../packages/ui/src/styles/globals.css"],
       "@workspace/ui/*": ["../../packages/ui/src/*"]

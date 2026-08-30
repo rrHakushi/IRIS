@@ -36,6 +36,14 @@ import route_28 from "../modules/IRIS-account/public/[...key]/route";
 import route_29 from "../modules/IRIS-account/users/me/assets/route";
 import route_30 from "../modules/IRIS-account/users/me/encryption/route";
 import route_31 from "../modules/IRIS-account/users/me/route";
+import route_32 from "../modules/IRIS-connections/connections/[id]/route";
+import route_33 from "../modules/IRIS-connections/connections/[id]/sync/route";
+import route_34 from "../modules/IRIS-connections/connections/[id]/test/route";
+import route_35 from "../modules/IRIS-connections/connections/[provider]/auth/route";
+import route_36 from "../modules/IRIS-connections/connections/[provider]/callback/route";
+import route_37 from "../modules/IRIS-connections/connections/providers/route";
+import route_38 from "../modules/IRIS-connections/connections/route";
+import route_39 from "../modules/IRIS-connections/connections/search/route";
 
 const routeLimiters = new Map<string, ReturnType<typeof createRateLimiter>>();
 function getRouteLimiter(key: string, config: unknown) {
@@ -478,6 +486,116 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_31 as any).rateLimits?.PATCH ?? (route_31 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_31_PATCH", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/connections/:id",
+    (route_32 as any).DELETE.schema,
+    async (ctx: any) => {
+      const methodItem = (route_32 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_32 as any).rateLimits?.DELETE ?? (route_32 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_32_DELETE", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .patch(
+    "/connections/:id",
+    (route_32 as any).PATCH.schema,
+    async (ctx: any) => {
+      const methodItem = (route_32 as any).PATCH;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_32 as any).rateLimits?.PATCH ?? (route_32 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_32_PATCH", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/connections/:id/sync",
+    (route_33 as any).POST.schema,
+    async (ctx: any) => {
+      const methodItem = (route_33 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_33 as any).rateLimits?.POST ?? (route_33 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_33_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/connections/:id/test",
+    (route_34 as any).POST.schema,
+    async (ctx: any) => {
+      const methodItem = (route_34 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_34 as any).rateLimits?.POST ?? (route_34 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_34_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/connections/:provider/auth",
+    (route_35 as any).GET.schema,
+    async (ctx: any) => {
+      const methodItem = (route_35 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_35 as any).rateLimits?.GET ?? (route_35 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_35_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/connections/:provider/callback",
+    (route_36 as any).GET.schema,
+    async (ctx: any) => {
+      const methodItem = (route_36 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_36 as any).rateLimits?.GET ?? (route_36 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_36_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/connections/providers",
+    (route_37 as any).GET.schema,
+    async (ctx: any) => {
+      const methodItem = (route_37 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_37 as any).rateLimits?.GET ?? (route_37 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_37_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/connections",
+    (route_38 as any).GET.schema,
+    async (ctx: any) => {
+      const methodItem = (route_38 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_38 as any).rateLimits?.GET ?? (route_38 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_38_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/connections",
+    (route_38 as any).POST.schema,
+    async (ctx: any) => {
+      const methodItem = (route_38 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_38 as any).rateLimits?.POST ?? (route_38 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_38_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/connections/search",
+    (route_39 as any).GET.schema,
+    async (ctx: any) => {
+      const methodItem = (route_39 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_39 as any).rateLimits?.GET ?? (route_39 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_39_GET", rateLimitConfig) : null;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   );

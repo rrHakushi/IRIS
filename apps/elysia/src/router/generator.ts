@@ -138,15 +138,15 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
     }
     relativeImport = relativeImport.replace(/\.(ts|js)$/, "")
 
-    const importName = `route_${routeIndex}`
-    imports.push(`import ${importName} from "${relativeImport}";`)
-
     try {
       const fileUrl = pathToFileURL(filePath).href
       const mod = await import(fileUrl)
       const routeExport = mod.default
 
       if (!routeExport) continue
+
+      const importName = `route_${routeIndex}`
+      imports.push(`import ${importName} from "${relativeImport}";`)
 
       let instance: Record<string, unknown>
       if (typeof routeExport === "function") {
