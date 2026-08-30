@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Blank",
-    description: "Blank",
+    title: "IRIS List | Discover",
+    description: "IRIS List Discover",
 };
 
 export default function Page() {

@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Blank",
-    description: "Blank",
+    title: "IRIS Account | Users",
+    description: "IRIS Account Users",
 };
 
 export default function Page() {

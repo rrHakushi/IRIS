@@ -222,7 +222,7 @@ export async function signUserJwt(user: UserSessionTokenData): Promise<string> {
       error: null,
     },
     secret,
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 365 * 24 * 60 * 60, // 1 year (365 days)
   });
 }
 

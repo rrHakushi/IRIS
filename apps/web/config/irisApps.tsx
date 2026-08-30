@@ -23,7 +23,7 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
     {
       id: "iris-list",
       name: t("irisList.name"),
-      href: "/list",
+      href: "/IRIS-list",
       color: "#6366f1",
       description: t("irisList.description"),
       descriptionShort: t("irisList.descriptionShort"),

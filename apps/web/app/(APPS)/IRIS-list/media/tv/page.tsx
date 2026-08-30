@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Blank",
-    description: "Blank",
+    title: "IRIS List | Media > TV",
+    description: "TV media on IRIS List",
 };
 
 export default function Page() {

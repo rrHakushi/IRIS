@@ -10,6 +10,7 @@ import { EncryptionProvider } from "@/context/encryption-context";
 import { WebSocketProvider } from "@/context/websocket-context";
 import { NotificationProvider } from "@/context/notification-context";
 import { Toaster } from "@/components/ui/sonner";
+import { LastAppTracker } from "@/components/navigation/last-app-tracker";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -18,6 +19,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       refetchInterval={0}
       refetchWhenOffline={false}
     >
+      <LastAppTracker />
       <UserProvider>
         <EncryptionProvider>
           <WebSocketProvider>
