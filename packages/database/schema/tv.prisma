@@ -1,0 +1,170 @@
+enum TvStatus {
+    RETURNING_SERIES
+    ENDED
+    CANCELED
+    IN_PRODUCTION
+    UPCOMING
+    UNKNOWN
+}
+
+model Tv {
+    id       Int     @id @default(autoincrement())
+    tmdbId   Int?    @unique
+    imdbId   String? @unique
+    tvDBId   Int?    @unique
+    simklId  Int?    @unique
+    tvmazeId Int?    @unique
+
+    titlePrimary   String  @db.Text
+    titleSecondary String? @db.Text
+    titleNative    String? @db.Text
+
+    coverImage  String? @db.Text
+    bannerImage String? @db.Text
+    images      Json?   @db.JsonB
+
+    description      String? @db.Text
+    originalLanguage String?
+    countryOfOrigin  String?
+    episodeCount     Int?
+    seasonCount      Int?
+    averageRuntime   Int?
+    showType         String?
+
+    broadcastTime String?
+    broadcastDays String[] @db.Text
+
+    firstAiredYear  Int?
+    firstAiredMonth Int?
+    firstAiredDay   Int?
+
+    lastAiredYear  Int?
+    lastAiredMonth Int?
+    lastAiredDay   Int?
+
+    genres   Genre[]
+    tags     Tag[]
+    networks String[] @db.Text
+
+    status   TvStatus @default(UNKNOWN)
+    isAdult  Boolean  @default(false)
+    synonyms String[] @db.Text
+    trailers Json?    @db.JsonB
+    locked   Boolean  @default(false)
+
+    averageScore        Float?
+    imdbRating          Float?
+    imdbVotes           Int?
+    tvmazeRating        Float?
+    rottenTomatoesScore Float?
+    awards              String? @db.Text
+
+    favorites          Int  @default(0)
+    popularity         Int  @default(0)
+    totalScoreSum      Int? @db.Integer
+    scoredCount        Int? @db.Integer
+    statusDistribution Json @default("{}") @db.JsonB
+    scoreDistribution  Json @default("{}") @db.JsonB
+
+    sources Json? @db.JsonB
+
+    ageRating      String?
+    ageRatingGuide String?
+    contentRatings Json?   @db.JsonB
+
+    imdbUpdatedAt   Int?
+    tvdbUpdatedAt   Int?
+    tvmazeUpdatedAt Int?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    seasons          TvSeason[]
+    episodes         TvEpisode[]
+    characters       MediaCharacter[]
+    studios          MediaStudio[]
+    staff            MediaStaff[]
+    userLists        TvList[]
+    reviews          TvReview[]
+    watchlistEntries WatchlistEntry[]
+
+    @@index([titlePrimary])
+    @@index([status])
+    @@index([popularity(sort: Desc)])
+    @@index([averageScore(sort: Desc)])
+}
+
+model TvSeason {
+    id           Int        @id @default(autoincrement())
+    tvId         Int
+    seasonNumber Int
+    tvdbSeasonId Int?
+    tmdbSeasonId Int?
+    tv           Tv         @relation(fields: [tvId], references: [id], onDelete: Cascade)
+
+    titlePrimary   String? @db.Text
+    titleSecondary String? @db.Text
+    description    String? @db.Text
+    posterImage    String? @db.Text
+
+    airDateYear  Int?
+    airDateMonth Int?
+    airDateDay   Int?
+    episodeCount Int?
+
+    trailers Json? @db.JsonB
+    sources  Json? @db.JsonB
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    episodes       TvEpisode[]
+    seasonProgress TvSeasonProgress[]
+    reviews        TvReview[]
+
+    @@unique([tvId, seasonNumber])
+    @@index([tvId])
+}
+
+model TvEpisode {
+    id            Int       @id @default(autoincrement())
+    tvId          Int
+    seasonId      Int?
+    seasonNumber  Int
+    episodeNumber Int
+    tv            Tv        @relation(fields: [tvId], references: [id], onDelete: Cascade)
+    season        TvSeason? @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+    titlePrimary   String  @db.Text
+    titleSecondary String? @db.Text
+    titleNative    String? @db.Text
+
+    description    String?   @db.Text
+    duration       Int?
+    airDate        DateTime?
+    rating         Float?
+    episodeType    String?
+    thumbnail      String?   @db.Text
+    isFiller       Boolean   @default(false)
+    isRecap        Boolean   @default(false)
+    streamingLinks Json?     @db.JsonB
+
+    opStart    Int?
+    opEnd      Int?
+    edStart    Int?
+    edEnd      Int?
+    recapStart Int?
+    recapEnd   Int?
+
+    skipTimestamps Json? @db.JsonB
+    sources        Json? @db.JsonB
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    watchedEpisodes TvWatchedEpisode[]
+
+    @@unique([tvId, seasonNumber, episodeNumber])
+    @@index([tvId])
+    @@index([seasonId])
+}

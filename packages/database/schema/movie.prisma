@@ -1,0 +1,77 @@
+enum MovieStatus {
+    RELEASED
+    IN_PRODUCTION
+    POST_PRODUCTION
+    RUMORED
+    CANCELLED
+    UNKNOWN
+}
+
+model Movie {
+    id      Int     @id @default(autoincrement())
+    tmdbId  Int?    @unique
+    imdbId  String? @unique
+    tvDBId  Int?    @unique
+    simklId Int?    @unique
+
+    titlePrimary   String  @db.Text
+    titleSecondary String? @db.Text
+    titleNative    String? @db.Text
+
+    coverImage  String? @db.Text
+    bannerImage String? @db.Text
+    images      Json?   @db.JsonB
+
+    description      String? @db.Text
+    originalLanguage String?
+    countryOfOrigin  String?
+    runtime          Int?
+    budget           BigInt?
+    revenue          BigInt?
+
+    releaseDateYear  Int?
+    releaseDateMonth Int?
+    releaseDateDay   Int?
+
+    genres   Genre[]
+    tags     Tag[]
+    status   MovieStatus @default(RELEASED)
+    isAdult  Boolean     @default(false)
+    synonyms String[]    @db.Text
+    trailers Json?       @db.JsonB
+    locked   Boolean     @default(false)
+
+    averageScore       Float?
+    favorites          Int    @default(0)
+    popularity         Int    @default(0)
+    totalScoreSum      Int?   @db.Integer
+    scoredCount        Int?   @db.Integer
+    statusDistribution Json   @default("{}") @db.JsonB
+    scoreDistribution  Json   @default("{}") @db.JsonB
+
+    imdbRating Float?
+    imdbVotes  Int?
+
+    sources Json? @db.JsonB
+
+    ageRating      String?
+    ageRatingGuide String?
+
+    imdbUpdatedAt Int?
+    tvdbUpdatedAt Int?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    characters       MediaCharacter[]
+    studios          MediaStudio[]
+    staff            MediaStaff[]
+    userLists        MovieList[]
+    reviews          MovieReview[]
+    watchlistEntries WatchlistEntry[]
+
+    @@index([titlePrimary])
+    @@index([status])
+    @@index([popularity(sort: Desc)])
+    @@index([averageScore(sort: Desc)])
+}

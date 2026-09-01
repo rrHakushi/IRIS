@@ -7,6 +7,7 @@ import { createRateLimiter } from "../plugins/rate-limiter"
 import { c, colorMethod } from "../utils/colors"
 import {
   requestLogStorage,
+  createRequestLogger,
   type RequestLogStore,
   type RequestLogItem,
 } from "../utils/request-logger"
@@ -353,31 +354,9 @@ export async function createRouterModule(options: RouterOptions = {}) {
               ctx.request as unknown as { _requestLogs?: RequestLogItem[] }
             )._requestLogs = store.logs
 
-            ctx.log = Object.assign(
-              (...args: unknown[]) => {
-                store.logs.push({ type: "log", message: util.format(...args) })
-              },
-              {
-                info: (...args: unknown[]) => {
-                  store.logs.push({
-                    type: "info",
-                    message: util.format(...args),
-                  })
-                },
-                warn: (...args: unknown[]) => {
-                  store.logs.push({
-                    type: "warn",
-                    message: util.format(...args),
-                  })
-                },
-                error: (...args: unknown[]) => {
-                  store.logs.push({
-                    type: "error",
-                    message: util.format(...args),
-                  })
-                },
-              }
-            )
+            const requestLogger = createRequestLogger(store)
+            ctx.log = requestLogger
+            ctx.logger = requestLogger
 
             return await requestLogStorage.run(store, async () => {
               if (rateLimiter) {

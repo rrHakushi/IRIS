@@ -1,0 +1,98 @@
+enum GameStatus {
+    RELEASED
+    EARLY_ACCESS
+    ANNOUNCED
+    IN_DEVELOPMENT
+    DELAYED
+    CANCELLED
+    UNKNOWN
+}
+
+model Game {
+    id          Int     @id @default(autoincrement())
+    rawgId      Int?    @unique
+    igdbId      Int?    @unique
+    steamAppId  Int?    @unique
+    giantbombId String? @unique
+    vndbId      String? @unique
+
+    titlePrimary   String  @db.Text
+    titleSecondary String? @db.Text
+    titleNative    String? @db.Text
+    slug           String?
+    tagline        String? @db.Text
+
+    coverImage      String? @db.Text
+    bannerImage     String? @db.Text
+    backgroundImage String? @db.Text
+    images          Json?   @db.JsonB
+
+    description String? @db.Text
+
+    releaseDateYear  Int?
+    releaseDateMonth Int?
+    releaseDateDay   Int?
+    releaseDate      DateTime?
+
+    genres             Genre[]
+    tags               Tag[]
+    platforms          String[]   @db.Text
+    developers         String[]   @db.Text
+    publishers         String[]   @db.Text
+    franchise          String?    @db.Text
+    gameModes          String[]   @db.Text
+    playerPerspectives String[]   @db.Text
+    status             GameStatus @default(UNKNOWN)
+    isAdult            Boolean    @default(false)
+    synonyms           String[]   @db.Text
+    trailers           Json?      @db.JsonB
+    locked             Boolean    @default(false)
+
+    averageScore    Float?
+    igdbRating      Float?
+    igdbRatingCount Int?
+
+    requirements      Json?    @db.JsonB
+    languages         String[] @db.Text
+    controllerSupport String?
+    achievements      Json?    @db.JsonB
+
+    linuxSupport    Boolean?
+    steamDeckStatus String?
+    steamDeck       Json?    @db.JsonB
+
+    favorites          Int  @default(0)
+    popularity         Int  @default(0)
+    totalScoreSum      Int? @db.Integer
+    scoredCount        Int? @db.Integer
+    statusDistribution Json @default("{}") @db.JsonB
+    scoreDistribution  Json @default("{}") @db.JsonB
+
+    averagePlaytime  Float?
+    totalPlaytimeSum Float? @default(0)
+    playtimeCount    Int?   @default(0)
+
+    sources Json? @db.JsonB
+
+    esrbRating     String?
+    pegiRating     String?
+    ageRating      String?
+    ageRatingGuide String?
+    contentRatings Json?   @db.JsonB
+
+    igdbUpdatedAt  Int?
+    steamUpdatedAt Int?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    studios          MediaStudio[]
+    userLists        GameList[]
+    reviews          GameReview[]
+    watchlistEntries WatchlistEntry[]
+
+    @@index([titlePrimary])
+    @@index([status])
+    @@index([popularity(sort: Desc)])
+    @@index([averageScore(sort: Desc)])
+}

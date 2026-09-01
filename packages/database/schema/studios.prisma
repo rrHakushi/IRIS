@@ -1,0 +1,49 @@
+model Studio {
+    id        Int  @id @default(autoincrement())
+    anilistId Int? @unique
+    malId     Int? @unique
+    aniDBId   Int? @unique
+    tvDBId    Int? @unique
+    bangumiId Int? @unique
+
+    name              String  @db.Text
+    isAnimationStudio Boolean @default(false)
+    siteUrl           String? @db.Text
+
+    favorites   Int? @default(0)
+    alFavorites Int?
+
+    sources Json? @db.JsonB
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    mediaStudios MediaStudio[]
+
+    @@index([name])
+}
+
+model MediaStudio {
+    id        Int       @id @default(autoincrement())
+    mediaType MediaType @default(ANIME)
+    mediaId   Int
+    studioId  Int
+    isMain    Boolean   @default(false)
+
+    animeId Int?
+    movieId Int?
+    tvId    Int?
+    gameId  Int?
+    bookId  Int?
+
+    studio Studio @relation(fields: [studioId], references: [id], onDelete: Cascade)
+    anime  Anime? @relation(fields: [animeId], references: [id], onDelete: Cascade)
+    movie  Movie? @relation(fields: [movieId], references: [id], onDelete: Cascade)
+    tv     Tv?    @relation(fields: [tvId], references: [id], onDelete: Cascade)
+    game   Game?  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    book   Book?  @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+    @@unique([mediaType, mediaId, studioId])
+    @@index([mediaType, mediaId])
+    @@index([studioId])
+}

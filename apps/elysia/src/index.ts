@@ -6,10 +6,11 @@ import { prisma } from "@IRIS/database"
 import { cache } from "./utils/cache"
 import { cors, cron, rateLimiter, session } from "./plugins"
 import { resolveSessionFromRequest } from "./plugins/session"
-import { wsHub } from "./services/websocket-hub"
+import { wsHub, initServices } from "./services"
 import { createRouterModule } from "./router"
 import { routes } from "./router/routes.generated"
 import { c, colorMethod, colorStatus, colorDuration } from "./utils/colors"
+import { logger } from "./utils/logger"
 import {
   initConsoleInterceptor,
   printGroupedRequestLogs,
@@ -17,7 +18,13 @@ import {
 } from "./utils/request-logger"
 
 // Intercept console inside request handlers to group logs by request
-initConsoleInterceptor()
+initConsoleInterceptor();
+
+// Enable native JSON serialization for BigInt values returned by database queries
+;(BigInt.prototype as any).toJSON = function () {
+  const intVal = Number(this)
+  return Number.isSafeInteger(intVal) ? intVal : this.toString()
+}
 
 const PORT = Number(process.env.ELYSIA_PORT || 4000)
 
@@ -36,10 +43,7 @@ const loadedPlugins: string[] = []
 
 function loadPlugin<T>(name: string, plugin: T, description?: string): T {
   loadedPlugins.push(name)
-  const desc = description ? c.dim(` (${description})`) : ""
-  console.log(
-    `${c.yellow(c.bold("[Plugins]"))} Plugin loaded: ${c.cyan(name.padEnd(10))}${desc}`
-  )
+  logger.plugin.loaded(name, description)
   return plugin
 }
 
@@ -140,9 +144,7 @@ export const app = new Elysia()
 
       if (userId) {
         wsHub.register(ws, userId)
-        console.log(
-          `${c.magenta(c.bold("[WebSocket]"))} ${c.green("Client connected:")} user=${c.cyan(userId)}`
-        )
+        logger.ws.connected(userId)
         wsHub.send(ws, "auth:success", { userId })
       } else {
         // Allow a 5-second grace period for client to authenticate via auth frame
@@ -168,9 +170,7 @@ export const app = new Elysia()
       const hadUser = wsHub.hasConnection(ws)
       wsHub.unregister(ws)
       if (hadUser) {
-        console.log(
-          `${c.magenta(c.bold("[WebSocket]"))} ${c.yellow("Client disconnected")}`
-        )
+        logger.ws.disconnected()
       }
     },
   })
@@ -199,9 +199,9 @@ if (isDev) {
   app.get("/insomnia.json", getInsomniumConfig)
 }
 
-console.log(
-  `${c.yellow(c.bold("[Plugins]"))} Total plugins loaded: ${c.green(loadedPlugins.length)}`
-)
+logger.plugin.total(loadedPlugins.length)
+
+initServices()
 
 if (process.env.NODE_ENV !== "test") {
   app.listen(PORT, () => {

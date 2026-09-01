@@ -1,0 +1,125 @@
+{
+  "first-release-date": "2000-03-08",
+  "id": "81be9d8b-888f-4af2-9eb4-415f5090855c",
+  "artist-credit": [
+    {
+      "name": "Rick Astley",
+      "artist": {
+        "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df",
+        "sort-name": "Astley, Rick",
+        "country": "GB",
+        "id": "db92a151-1ac2-438b-bc43-b82e149ddd50",
+        "name": "Rick Astley",
+        "tags": [
+          {
+            "count": 1,
+            "name": "adult contemporary"
+          },
+          {
+            "name": "blue-eyed soul",
+            "count": 4
+          },
+          {
+            "count": 4,
+            "name": "dance-pop"
+          },
+          {
+            "count": 4,
+            "name": "pop"
+          },
+          {
+            "name": "synthpop",
+            "count": 1
+          }
+        ],
+        "type": "Person",
+        "disambiguation": "English singer, songwriter and radio personality"
+      },
+      "joinphrase": ""
+    }
+  ],
+  "rating": {
+    "votes-count": 0,
+    "value": null
+  },
+  "length": 174000,
+  "relations": [],
+  "title": "Never Gonna Give You Up",
+  "disambiguation": "part of “Dancemania Super Classics 3” DJ-mix",
+  "video": false,
+  "tags": [],
+  "releases": [
+    {
+      "title": "Dancemania Super Classics 3",
+      "country": "JP",
+      "release-events": [
+        {
+          "date": "2000-03-08",
+          "area": {
+            "disambiguation": "",
+            "type": null,
+            "name": "Japan",
+            "id": "2db42837-c832-3c27-b4a3-08198f75693c",
+            "iso-3166-1-codes": [
+              "JP"
+            ],
+            "sort-name": "Japan",
+            "type-id": null
+          }
+        }
+      ],
+      "artist-credit": [
+        {
+          "artist": {
+            "type-id": "ac897045-5043-3294-969b-187360e45d86",
+            "sort-name": "Various Artists",
+            "country": null,
+            "id": "89ad4ac3-39f7-470e-963a-56509c546377",
+            "name": "Various Artists",
+            "type": "Other",
+            "tags": [
+              {
+                "name": "9818784",
+                "count": 1
+              },
+              {
+                "name": "compilation",
+                "count": 7
+              },
+              {
+                "name": "soundtrack",
+                "count": 1
+              },
+              {
+                "count": 10,
+                "name": "special purpose"
+              },
+              {
+                "name": "special purpose artist",
+                "count": 68
+              }
+            ],
+            "disambiguation": "add compilations to this artist"
+          },
+          "joinphrase": "",
+          "name": "Various Artists"
+        }
+      ],
+      "tags": [],
+      "disambiguation": "",
+      "packaging-id": null,
+      "barcode": "4988006779549",
+      "packaging": null,
+      "id": "6e354098-4ffa-468a-ab77-978ac15c2c84",
+      "status-id": "4e304316-386d-3409-af2e-78857eec5cfe",
+      "status": "Official",
+      "date": "2000-03-08",
+      "text-representation": {
+        "script": "Latn",
+        "language": "eng"
+      },
+      "quality": "normal"
+    }
+  ],
+  "coverImageUrl": "https://coverartarchive.org/release/6e354098-4ffa-468a-ab77-978ac15c2c84/41642747751.jpg"
+}

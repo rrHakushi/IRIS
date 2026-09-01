@@ -1,0 +1,51 @@
+enum RecommendationVoteType {
+    UPVOTE
+    DOWNVOTE
+}
+
+model MediaRecommendation {
+    id         Int      @id @default(autoincrement())
+    userId     String
+    user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    sourceType MediaType
+    sourceId   Int
+
+    targetType MediaType
+    targetId   Int
+
+    body       String?  @db.Text
+
+    upvotes    Int      @default(0)
+    downvotes  Int      @default(0)
+    score      Int      @default(0)
+
+    votes      MediaRecommendationVote[]
+
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+
+    @@unique([userId, sourceType, sourceId, targetType, targetId])
+    @@index([sourceType, sourceId])
+    @@index([targetType, targetId])
+    @@index([userId])
+    @@index([score(sort: Desc)])
+}
+
+model MediaRecommendationVote {
+    id               Int                 @id @default(autoincrement())
+    recommendationId Int
+    recommendation   MediaRecommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+
+    userId           String
+    user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    voteType         RecommendationVoteType
+
+    createdAt        DateTime            @default(now())
+    updatedAt        DateTime            @updatedAt
+
+    @@unique([recommendationId, userId])
+    @@index([recommendationId])
+    @@index([userId])
+}

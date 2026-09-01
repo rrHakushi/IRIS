@@ -38,17 +38,84 @@ export interface RequestLogStore {
 }
 
 /**
- * Scoped request logger interface attached to route context `ctx.log`.
+ * Scoped request logger interface attached to route context `ctx.log` and `ctx.logger`.
  */
 export interface RequestLogger {
   /** Logs standard message. */
   (...args: unknown[]): void
+  /** Logs standard message (alias). */
+  log(...args: unknown[]): void
   /** Logs informational message. */
   info(...args: unknown[]): void
   /** Logs warning message with highlighted badge. */
   warn(...args: unknown[]): void
   /** Logs error message with highlighted badge. */
   error(...args: unknown[]): void
+  /** Logs debug message. */
+  debug(...args: unknown[]): void
+  /** Logs success message with green checkmark. */
+  success(...args: unknown[]): void
+}
+
+/**
+ * Creates a scoped RequestLogger bound to a RequestLogStore.
+ *
+ * @param store - Target request log store
+ * @returns Callable RequestLogger instance
+ */
+export function createRequestLogger(store: RequestLogStore): RequestLogger {
+  const logFn = (...args: unknown[]) => {
+    store.logs.push({
+      type: "log",
+      message: util.format(...args),
+      timestamp: new Date(),
+    })
+  }
+
+  return Object.assign(logFn, {
+    log: (...args: unknown[]) => {
+      store.logs.push({
+        type: "log",
+        message: util.format(...args),
+        timestamp: new Date(),
+      })
+    },
+    info: (...args: unknown[]) => {
+      store.logs.push({
+        type: "info",
+        message: util.format(...args),
+        timestamp: new Date(),
+      })
+    },
+    warn: (...args: unknown[]) => {
+      store.logs.push({
+        type: "warn",
+        message: util.format(...args),
+        timestamp: new Date(),
+      })
+    },
+    error: (...args: unknown[]) => {
+      store.logs.push({
+        type: "error",
+        message: util.format(...args),
+        timestamp: new Date(),
+      })
+    },
+    debug: (...args: unknown[]) => {
+      store.logs.push({
+        type: "info",
+        message: `${c.gray("[DEBUG]")} ${util.format(...args)}`,
+        timestamp: new Date(),
+      })
+    },
+    success: (...args: unknown[]) => {
+      store.logs.push({
+        type: "info",
+        message: `${c.green("✓")} ${util.format(...args)}`,
+        timestamp: new Date(),
+      })
+    },
+  })
 }
 
 /**
@@ -152,38 +219,9 @@ export async function executeWithRequestLogs(
       store.logs
   }
 
-  ; (ctx as { log?: RequestLogger }).log = Object.assign(
-    (...args: unknown[]) => {
-      store.logs.push({
-        type: "log",
-        message: util.format(...args),
-        timestamp: new Date(),
-      })
-    },
-    {
-      info: (...args: unknown[]) => {
-        store.logs.push({
-          type: "info",
-          message: util.format(...args),
-          timestamp: new Date(),
-        })
-      },
-      warn: (...args: unknown[]) => {
-        store.logs.push({
-          type: "warn",
-          message: util.format(...args),
-          timestamp: new Date(),
-        })
-      },
-      error: (...args: unknown[]) => {
-        store.logs.push({
-          type: "error",
-          message: util.format(...args),
-          timestamp: new Date(),
-        })
-      },
-    }
-  )
+  const requestLogger = createRequestLogger(store)
+  ; (ctx as { log?: RequestLogger; logger?: RequestLogger }).log = requestLogger
+  ; (ctx as { log?: RequestLogger; logger?: RequestLogger }).logger = requestLogger
 
   return await requestLogStorage.run(store, async () => {
     return await handler(ctx)

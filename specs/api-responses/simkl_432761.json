@@ -1,0 +1,200 @@
+{
+  "title": "Pyramid Game",
+  "year": 2024,
+  "type": "show",
+  "ids": {
+    "simkl": 2125431,
+    "slug": "pyramid-game",
+    "tvdb": "432761",
+    "imdb": "tt29311421",
+    "mdlslug": "749923-pyramid-game",
+    "tmdb": "227192",
+    "tvdbslug": "432761-series",
+    "traktslug": "pyramid-game"
+  },
+  "year_start_end": "2024 - 2024",
+  "rank": 5344,
+  "droprate": "4%",
+  "poster": "19/1906278188627d1159",
+  "fanart": "15/15382059666c9cbe52",
+  "first_aired": "2024-02-29T04:00:00Z",
+  "last_aired": "2024-03-21T03:00:00Z",
+  "airs": {
+    "day": "Wednesday",
+    "time": "11:00 PM",
+    "timezone": "America/New_York"
+  },
+  "runtime": 59,
+  "certification": "TV-MA",
+  "overview": "Every month, a vote determines the attackers, victims, and bystanders in a classroom. Students at the top of the pyramid try to defend power, while those at the bottom dream of overthrow. Who will emerge victorious in this brutal pyramid game?",
+  "genres": [
+    "Action",
+    "Drama",
+    "Thriller"
+  ],
+  "country": "KR",
+  "total_episodes": 10,
+  "status": "ended",
+  "network": "TVING",
+  "ratings": {
+    "simkl": {
+      "rating": 7.9,
+      "votes": 149
+    },
+    "imdb": {
+      "rating": 7.4,
+      "votes": 3432
+    }
+  },
+  "trailers": [
+    {
+      "name": "Trailer",
+      "youtube": "BcYin0vw1yc",
+      "size": 1080
+    },
+    {
+      "name": "Trailer",
+      "youtube": "2VxvTIJM0qo",
+      "size": null
+    },
+    {
+      "name": "Trailer",
+      "youtube": "QFUoLfQVmQs",
+      "size": null
+    }
+  ],
+  "users_recommendations": [
+    {
+      "title": "Night Has Come",
+      "year": 2023,
+      "poster": "14/14871021ddf4090cd2",
+      "type": "tv",
+      "users_percent": null,
+      "users_count": 0,
+      "ids": {
+        "simkl": 2235039,
+        "slug": "night-has-come"
+      }
+    },
+    {
+      "title": "Class of Lies",
+      "year": 2019,
+      "poster": "84/842223648de885709",
+      "type": "tv",
+      "users_percent": null,
+      "users_count": 0,
+      "ids": {
+        "simkl": 1083100,
+        "slug": "class-of-lies"
+      }
+    },
+    {
+      "title": "Revenge of Others",
+      "year": 2022,
+      "poster": "19/19797463ebe3d772f2",
+      "type": "tv",
+      "users_percent": null,
+      "users_count": 0,
+      "ids": {
+        "simkl": 1987677,
+        "slug": "revenge-of-others"
+      }
+    },
+    {
+      "title": "Duty After School",
+      "year": 2023,
+      "poster": "13/1380495552bdcf15fc",
+      "type": "tv",
+      "users_percent": null,
+      "users_count": 0,
+      "ids": {
+        "simkl": 2072051,
+        "slug": "duty-after-school"
+      }
+    },
+    {
+      "title": "High School Return Of A Gangster",
+      "year": 2024,
+      "poster": "16/16783081d42bc14b19",
+      "type": "tv",
+      "users_percent": null,
+      "users_count": 0,
+      "ids": {
+        "simkl": 2125433,
+        "slug": "high-school-return-of-a-gangster"
+      }
+    },
+    {
+      "title": "Study Group",
+      "year": 2025,
+      "poster": "17/171852513af4f8b686",
+      "type": "tv",
+      "users_percent": null,
+      "users_count": 0,
+      "ids": {
+        "simkl": 2170475,
+        "slug": "study-group"
+      }
+    },
+    {
+      "title": "Extracurricular",
+      "year": 2020,
+      "poster": "98/9858242325a610a5e",
+      "type": "tv",
+      "users_percent": null,
+      "users_count": 0,
+      "ids": {
+        "simkl": 1080516,
+        "slug": "extracurricular"
+      }
+    },
+    {
+      "title": "Weak Hero",
+      "year": 2022,
+      "poster": "17/1753097170dcaebaca",
+      "type": "tv",
+      "users_percent": null,
+      "users_count": 0,
+      "ids": {
+        "simkl": 1973535,
+        "slug": "weak-hero"
+      }
+    },
+    {
+      "title": "All of Us Are Dead",
+      "year": 2022,
+      "poster": "12/121758735572ac424f",
+      "type": "tv",
+      "users_percent": null,
+      "users_count": 0,
+      "ids": {
+        "simkl": 1343616,
+        "slug": "all-of-us-are-dead"
+      }
+    },
+    {
+      "title": "My Name",
+      "year": 2021,
+      "poster": "13/13772463fa32c8beb5",
+      "type": "tv",
+      "users_percent": null,
+      "users_count": 0,
+      "ids": {
+        "simkl": 1553940,
+        "slug": "my-name"
+      }
+    },
+    {
+      "title": "Happiness",
+      "year": 2021,
+      "poster": "11/11871994d6edff5497",
+      "type": "tv",
+      "users_percent": null,
+      "users_count": 0,
+      "ids": {
+        "simkl": 1658260,
+        "slug": "happiness"
+      }
+    }
+  ]
+}

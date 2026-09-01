@@ -118,6 +118,10 @@ export type Context<
    */
   log: RequestLogger
   /**
+   * Request-scoped logger that groups output under the current request (alias for log)
+   */
+  logger: RequestLogger
+  /**
    * Dynamic path parameters (e.g. /user/:id -> params.id)
    */
   params: TParams

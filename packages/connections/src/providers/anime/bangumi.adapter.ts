@@ -24,6 +24,8 @@ export class BangumiAdapter extends BaseConnectionAdapter {
   readonly iconUrl = "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/svg/bangumi.svg";
   readonly requiredEnvVars = ["BANGUMI_CLIENT_ID", "BANGUMI_CLIENT_SECRET"] as const;
 
+  private static readonly USER_AGENT = "IRIS/1.0 (https://github.com/rrHakushi/IRIS)";
+
   readonly capabilities: ProviderCapability = {
     authType: "OAUTH2",
     category: "TRACKING",
@@ -150,6 +152,7 @@ export class BangumiAdapter extends BaseConnectionAdapter {
     }>("https://api.bgm.tv/v0/me", {
       headers: {
         Authorization: `Bearer ${token}`,
+        "User-Agent": BangumiAdapter.USER_AGENT,
       },
     });
 
@@ -182,7 +185,9 @@ export class BangumiAdapter extends BaseConnectionAdapter {
     options?: SearchOptions
   ): Promise<MediaSearchResult[]> {
     const token = credentials?.accessToken || credentials?.apiKey;
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = {
+      "User-Agent": BangumiAdapter.USER_AGENT,
+    };
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
@@ -280,6 +285,7 @@ export class BangumiAdapter extends BaseConnectionAdapter {
     }>(`https://api.bgm.tv/v0/users/${profile.username}/collections?limit=100`, {
       headers: {
         Authorization: `Bearer ${token}`,
+        "User-Agent": BangumiAdapter.USER_AGENT,
       },
     });
 

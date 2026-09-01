@@ -1,0 +1,19 @@
+model Genre {
+    id        Int      @id @default(autoincrement())
+    name      String   @unique @db.Text
+    slug      String   @unique @db.Text
+
+    anime     Anime[]
+    manga     Manga[]
+    movies    Movie[]
+    tv        Tv[]
+    games     Game[]
+    books     Book[]
+    music     Music[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([slug])
+    @@index([name])
+}

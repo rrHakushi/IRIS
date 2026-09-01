@@ -1,0 +1,357 @@
+enum MediaType {
+    ANIME
+    MANGA
+    MOVIE
+    TV
+    GAME
+    BOOK
+    MUSIC
+    OTHER
+    UNKNOWN
+}
+
+enum AnimeListStatus {
+    PLANNING
+    WATCHING
+    COMPLETED
+    ON_HOLD
+    DROPPED
+}
+
+enum MangaListStatus {
+    PLANNING
+    READING
+    COMPLETED
+    ON_HOLD
+    DROPPED
+}
+
+enum MovieListStatus {
+    PLANNING
+    COMPLETED
+    DROPPED
+}
+
+enum TvListStatus {
+    WATCHING
+    PLANNING
+    COMPLETED
+    ON_HOLD
+    DROPPED
+}
+
+enum GameListStatus {
+    PLANNING
+    PLAYING
+    COMPLETED
+    ON_HOLD
+    DROPPED
+}
+
+enum BookListStatus {
+    PLANNING
+    READING
+    COMPLETED
+    ON_HOLD
+    DROPPED
+}
+
+enum MusicListStatus {
+    PLANNING
+    LISTENING
+    COMPLETED
+    ON_HOLD
+    DROPPED
+}
+
+model Watchlist {
+    id          String   @id @default(uuid())
+    userId      String
+    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    name        String
+    description String?  @db.Text
+    isDefault   Boolean  @default(false)
+    isPrivate   Boolean  @default(false)
+    coverImage  String?  @db.Text
+    order       Int      @default(0)
+
+    entries WatchlistEntry[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId])
+    @@index([userId, isDefault])
+}
+
+model WatchlistEntry {
+    id          String    @id @default(uuid())
+    watchlistId String
+    watchlist   Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+
+    mediaType   MediaType
+    mediaId     Int
+    order       Int       @default(0)
+    customNotes String?   @db.Text
+    addedAt     DateTime  @default(now())
+
+    animeId Int?
+    mangaId Int?
+    movieId Int?
+    tvId    Int?
+    gameId  Int?
+    bookId  Int?
+    musicId Int?
+
+    anime Anime? @relation(fields: [animeId], references: [id], onDelete: Cascade)
+    manga Manga? @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+    movie Movie? @relation(fields: [movieId], references: [id], onDelete: Cascade)
+    tv    Tv?    @relation(fields: [tvId], references: [id], onDelete: Cascade)
+    game  Game?  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    book  Book?  @relation(fields: [bookId], references: [id], onDelete: Cascade)
+    music Music? @relation(fields: [musicId], references: [id], onDelete: Cascade)
+
+    @@unique([watchlistId, mediaType, mediaId])
+    @@index([watchlistId])
+    @@index([mediaType, mediaId])
+}
+
+model AnimeList {
+    id          Int             @id @default(autoincrement())
+    userId      String
+    user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    animeId     Int
+    anime       Anime           @relation(fields: [animeId], references: [id], onDelete: Cascade)
+    status      AnimeListStatus @default(PLANNING)
+    progress    Int             @default(0)
+    score       Float?
+    notes       String?         @db.Text
+    rewatched   Int             @default(0)
+    private     Boolean         @default(false)
+
+    startedAt      DateTime?
+    completedAt    DateTime?
+    rewatchHistory Json?     @db.JsonB
+    connections    Json?     @db.JsonB
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, animeId])
+    @@index([userId])
+    @@index([animeId])
+    @@index([status])
+    @@index([userId, status])
+    @@index([userId, score(sort: Desc)])
+}
+
+model MangaList {
+    id               Int             @id @default(autoincrement())
+    userId           String
+    user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    mangaId          Int
+    manga            Manga           @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+    status           MangaListStatus @default(PLANNING)
+    chaptersProgress Int             @default(0)
+    volumesProgress  Int             @default(0)
+    score            Float?
+    notes            String?         @db.Text
+    reread           Int             @default(0)
+    private          Boolean         @default(false)
+
+    startedAt     DateTime?
+    completedAt   DateTime?
+    rereadHistory Json?     @db.JsonB
+    connections   Json?     @db.JsonB
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, mangaId])
+    @@index([userId])
+    @@index([mangaId])
+    @@index([status])
+    @@index([userId, status])
+    @@index([userId, score(sort: Desc)])
+}
+
+model MovieList {
+    id          Int             @id @default(autoincrement())
+    userId      String
+    user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    movieId     Int
+    movie       Movie           @relation(fields: [movieId], references: [id], onDelete: Cascade)
+    status      MovieListStatus @default(PLANNING)
+    score       Float?
+    notes       String?         @db.Text
+    rewatched   Int             @default(0)
+    private     Boolean         @default(false)
+
+    startedAt      DateTime?
+    completedAt    DateTime?
+    rewatchHistory Json?     @db.JsonB
+    connections    Json?     @db.JsonB
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, movieId])
+    @@index([userId])
+    @@index([movieId])
+    @@index([status])
+    @@index([userId, status])
+    @@index([userId, score(sort: Desc)])
+}
+
+model TvList {
+    id          Int          @id @default(autoincrement())
+    userId      String
+    user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    tvId        Int
+    tv          Tv           @relation(fields: [tvId], references: [id], onDelete: Cascade)
+    status      TvListStatus @default(PLANNING)
+    progress    Int          @default(0)
+    score       Float?
+    notes       String?      @db.Text
+    rewatched   Int          @default(0)
+    private     Boolean      @default(false)
+
+    startedAt      DateTime?
+    completedAt    DateTime?
+    rewatchHistory Json?     @db.JsonB
+    connections    Json?     @db.JsonB
+
+    seasons         TvSeasonProgress[]
+    watchedEpisodes TvWatchedEpisode[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, tvId])
+    @@index([userId])
+    @@index([tvId])
+    @@index([status])
+    @@index([userId, status])
+    @@index([userId, score(sort: Desc)])
+}
+
+model TvSeasonProgress {
+    id           Int          @id @default(autoincrement())
+    tvListId     Int
+    tvList       TvList       @relation(fields: [tvListId], references: [id], onDelete: Cascade)
+    seasonId     Int
+    season       TvSeason     @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+    seasonNumber Int
+    status       TvListStatus @default(PLANNING)
+    progress     Int          @default(0)
+    score        Float?
+    notes        String?      @db.Text
+    rewatched    Int          @default(0)
+
+    startedAt      DateTime?
+    completedAt    DateTime?
+    rewatchHistory Json?     @db.JsonB
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([tvListId, seasonNumber])
+    @@index([tvListId])
+    @@index([seasonId])
+}
+
+model TvWatchedEpisode {
+    id            Int        @id @default(autoincrement())
+    tvListId      Int
+    tvList        TvList     @relation(fields: [tvListId], references: [id], onDelete: Cascade)
+    episodeId     Int?
+    episode       TvEpisode? @relation(fields: [episodeId], references: [id], onDelete: SetNull)
+    seasonNumber  Int
+    episodeNumber Int
+    watchedAt     DateTime   @default(now())
+
+    @@unique([tvListId, seasonNumber, episodeNumber])
+    @@index([tvListId])
+    @@index([episodeId])
+}
+
+model GameList {
+    id          Int            @id @default(autoincrement())
+    userId      String
+    user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+    gameId      Int
+    game        Game           @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    status      GameListStatus @default(PLANNING)
+    progress    Int            @default(0)
+    score       Float?
+    notes       String?        @db.Text
+    replayed    Int            @default(0)
+    private     Boolean        @default(false)
+
+    startedAt     DateTime?
+    completedAt   DateTime?
+    replayHistory Json?     @db.JsonB
+    connections   Json?     @db.JsonB
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, gameId])
+    @@index([userId])
+    @@index([gameId])
+    @@index([status])
+    @@index([userId, status])
+    @@index([userId, score(sort: Desc)])
+}
+
+model BookList {
+    id               Int            @id @default(autoincrement())
+    userId           String
+    user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+    bookId           Int
+    book             Book           @relation(fields: [bookId], references: [id], onDelete: Cascade)
+    status           BookListStatus @default(PLANNING)
+    progressPages    Int            @default(0)
+    progressChapters Int            @default(0)
+    progressVolumes  Int            @default(0)
+    score            Float?
+    notes            String?        @db.Text
+    reread           Int            @default(0)
+    private          Boolean        @default(false)
+
+    startedAt     DateTime?
+    completedAt   DateTime?
+    rereadHistory Json?     @db.JsonB
+    connections   Json?     @db.JsonB
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, bookId])
+    @@index([userId])
+    @@index([bookId])
+    @@index([status])
+    @@index([userId, status])
+    @@index([userId, score(sort: Desc)])
+}
+
+model MusicList {
+    id        Int             @id @default(autoincrement())
+    userId    String
+    user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    musicId   Int
+    music     Music           @relation(fields: [musicId], references: [id], onDelete: Cascade)
+    status    MusicListStatus @default(PLANNING)
+    score     Float?
+    playCount Int             @default(0)
+    notes     String?         @db.Text
+    private   Boolean         @default(false)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, musicId])
+    @@index([userId])
+    @@index([musicId])
+    @@index([status])
+}

@@ -1,0 +1,42 @@
+model UserStats {
+    id        String    @id @default(uuid())
+    userId    String
+    user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    mediaType MediaType // ANIME, MANGA, MOVIE, TV, GAME, BOOK, MUSIC, OTHER
+
+    // Counts by Status
+    totalCount     Int @default(0)
+    completedCount Int @default(0)
+    currentCount   Int @default(0) // Watching / Reading / Playing / Listening
+    planningCount  Int @default(0)
+    onHoldCount    Int @default(0)
+    droppedCount   Int @default(0)
+
+    // Consumed Units & Duration
+    totalUnits       Int    @default(0) // Total episodes, chapters, pages, tracks
+    totalTimeMinutes BigInt @default(0) // Total minutes spent consuming
+    totalRewatches   Int    @default(0) // Rewatches / rereads / replays count
+
+    // Scoring Metrics
+    meanScore         Float @default(0)
+    standardDeviation Float @default(0)
+
+    // Distributions (JSON)
+    scoreDistribution       Json? @db.Json // { "10": 2, "20": 0, "80": 15, "100": 8 }
+    genreDistribution       Json? @db.Json // { "Action": { "count": 10, "meanScore": 85, "timeMinutes": 450 } }
+    tagDistribution         Json? @db.Json // { "Cyberpunk": { "count": 4, "meanScore": 90 } }
+    formatDistribution      Json? @db.Json // { "TV": 20, "MOVIE": 5, "OVA": 3 }
+    countryDistribution     Json? @db.Json // { "JP": 35, "KR": 5, "US": 10 }
+    releaseYearDistribution Json? @db.Json // { "2023": 8, "2024": 12 }
+    studioDistribution      Json? @db.Json // { "Kyoto Animation": { "count": 6, "meanScore": 92 } }
+    staffDistribution       Json? @db.Json // { "Hayao Miyazaki": { "count": 5, "meanScore": 95 } }
+    voiceActorDistribution  Json? @db.Json // { "Mamoru Miyano": { "count": 7, "meanScore": 88 } }
+    customStats             Json? @db.Json // Catch-all for extra computed stats
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, mediaType])
+    @@index([userId])
+    @@index([mediaType])
+}

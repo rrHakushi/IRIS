@@ -44,6 +44,52 @@ import route_36 from "../modules/IRIS-connections/connections/[provider]/callbac
 import route_37 from "../modules/IRIS-connections/connections/providers/route";
 import route_38 from "../modules/IRIS-connections/connections/route";
 import route_39 from "../modules/IRIS-connections/connections/search/route";
+import route_40 from "../modules/IRIS-list/user/[username]/favorites/[id]/route";
+import route_41 from "../modules/IRIS-list/user/[username]/favorites/route";
+import route_42 from "../modules/IRIS-list/user/[username]/lists/anime/[id]/route";
+import route_43 from "../modules/IRIS-list/user/[username]/lists/anime/route";
+import route_44 from "../modules/IRIS-list/user/[username]/lists/books/[id]/route";
+import route_45 from "../modules/IRIS-list/user/[username]/lists/books/route";
+import route_46 from "../modules/IRIS-list/user/[username]/lists/games/[id]/route";
+import route_47 from "../modules/IRIS-list/user/[username]/lists/games/route";
+import route_48 from "../modules/IRIS-list/user/[username]/lists/manga/[id]/route";
+import route_49 from "../modules/IRIS-list/user/[username]/lists/manga/route";
+import route_50 from "../modules/IRIS-list/user/[username]/lists/movies/[id]/route";
+import route_51 from "../modules/IRIS-list/user/[username]/lists/movies/route";
+import route_52 from "../modules/IRIS-list/user/[username]/lists/music/[id]/route";
+import route_53 from "../modules/IRIS-list/user/[username]/lists/music/route";
+import route_54 from "../modules/IRIS-list/user/[username]/lists/tv/[id]/route";
+import route_55 from "../modules/IRIS-list/user/[username]/lists/tv/route";
+import route_56 from "../modules/IRIS-list/user/[username]/watchlists/[id]/entries/route";
+import route_57 from "../modules/IRIS-list/user/[username]/watchlists/[id]/route";
+import route_58 from "../modules/IRIS-list/user/[username]/watchlists/route";
+import route_59 from "../modules/IRIS-media/media/anime/[id]/route";
+import route_60 from "../modules/IRIS-media/media/books/[id]/route";
+import route_61 from "../modules/IRIS-media/media/characters/[id]/route";
+import route_62 from "../modules/IRIS-media/media/games/[id]/route";
+import route_63 from "../modules/IRIS-media/media/manga/[id]/route";
+import route_64 from "../modules/IRIS-media/media/movies/[id]/route";
+import route_65 from "../modules/IRIS-media/media/music/[id]/route";
+import route_66 from "../modules/IRIS-media/media/people/[id]/route";
+import route_67 from "../modules/IRIS-media/media/studios/[id]/route";
+import route_68 from "../modules/IRIS-media/media/tv/[id]/route";
+import route_69 from "../modules/IRIS-media/search/anime/route";
+import route_70 from "../modules/IRIS-media/search/books/route";
+import route_71 from "../modules/IRIS-media/search/characters/route";
+import route_72 from "../modules/IRIS-media/search/games/route";
+import route_73 from "../modules/IRIS-media/search/manga/route";
+import route_74 from "../modules/IRIS-media/search/movies/route";
+import route_75 from "../modules/IRIS-media/search/music/route";
+import route_76 from "../modules/IRIS-media/search/people/route";
+import route_77 from "../modules/IRIS-media/search/studios/route";
+import route_78 from "../modules/IRIS-media/search/tv/route";
+import route_79 from "../modules/IRIS-social/recommendations/[id]/route";
+import route_80 from "../modules/IRIS-social/recommendations/[id]/vote/route";
+import route_81 from "../modules/IRIS-social/recommendations/[type]/[id]/route";
+import route_82 from "../modules/IRIS-social/recommendations/route";
+import route_83 from "../modules/IRIS-social/reviews/[type]/[id]/route";
+import route_84 from "../modules/IRIS-social/reviews/[type]/[id]/vote/route";
+import route_85 from "../modules/IRIS-social/user/[username]/reviews/route";
 
 const routeLimiters = new Map<string, ReturnType<typeof createRateLimiter>>();
 function getRouteLimiter(key: string, config: unknown) {
@@ -596,6 +642,765 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_39 as any).rateLimits?.GET ?? (route_39 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_39_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/favorites/:id",
+    route_40.schema,
+    async (ctx: any) => {
+      const methodItem = (route_40 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_40 as any).rateLimits?.GET ?? (route_40 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_40_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/user/:username/favorites/:id",
+    route_40.schema,
+    async (ctx: any) => {
+      const methodItem = (route_40 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_40 as any).rateLimits?.POST ?? (route_40 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_40_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/user/:username/favorites/:id",
+    route_40.schema,
+    async (ctx: any) => {
+      const methodItem = (route_40 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_40 as any).rateLimits?.DELETE ?? (route_40 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_40_DELETE", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/favorites",
+    route_41.schema,
+    async (ctx: any) => {
+      const methodItem = (route_41 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_41 as any).rateLimits?.GET ?? (route_41 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_41_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/lists/anime/:id",
+    route_42.schema,
+    async (ctx: any) => {
+      const methodItem = (route_42 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_42 as any).rateLimits?.GET ?? (route_42 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_42_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/user/:username/lists/anime/:id",
+    route_42.schema,
+    async (ctx: any) => {
+      const methodItem = (route_42 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_42 as any).rateLimits?.POST ?? (route_42 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_42_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/user/:username/lists/anime/:id",
+    route_42.schema,
+    async (ctx: any) => {
+      const methodItem = (route_42 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_42 as any).rateLimits?.DELETE ?? (route_42 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_42_DELETE", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/lists/anime",
+    route_43.schema,
+    async (ctx: any) => {
+      const methodItem = (route_43 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_43 as any).rateLimits?.GET ?? (route_43 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_43_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/lists/books/:id",
+    route_44.schema,
+    async (ctx: any) => {
+      const methodItem = (route_44 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_44 as any).rateLimits?.GET ?? (route_44 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_44_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/user/:username/lists/books/:id",
+    route_44.schema,
+    async (ctx: any) => {
+      const methodItem = (route_44 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_44 as any).rateLimits?.POST ?? (route_44 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_44_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/user/:username/lists/books/:id",
+    route_44.schema,
+    async (ctx: any) => {
+      const methodItem = (route_44 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_44 as any).rateLimits?.DELETE ?? (route_44 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_44_DELETE", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/lists/books",
+    route_45.schema,
+    async (ctx: any) => {
+      const methodItem = (route_45 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_45 as any).rateLimits?.GET ?? (route_45 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_45_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/lists/games/:id",
+    route_46.schema,
+    async (ctx: any) => {
+      const methodItem = (route_46 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_46 as any).rateLimits?.GET ?? (route_46 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_46_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/user/:username/lists/games/:id",
+    route_46.schema,
+    async (ctx: any) => {
+      const methodItem = (route_46 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_46 as any).rateLimits?.POST ?? (route_46 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_46_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/user/:username/lists/games/:id",
+    route_46.schema,
+    async (ctx: any) => {
+      const methodItem = (route_46 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_46 as any).rateLimits?.DELETE ?? (route_46 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_46_DELETE", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/lists/games",
+    route_47.schema,
+    async (ctx: any) => {
+      const methodItem = (route_47 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_47 as any).rateLimits?.GET ?? (route_47 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_47_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/lists/manga/:id",
+    route_48.schema,
+    async (ctx: any) => {
+      const methodItem = (route_48 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_48 as any).rateLimits?.GET ?? (route_48 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_48_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/user/:username/lists/manga/:id",
+    route_48.schema,
+    async (ctx: any) => {
+      const methodItem = (route_48 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_48 as any).rateLimits?.POST ?? (route_48 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_48_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/user/:username/lists/manga/:id",
+    route_48.schema,
+    async (ctx: any) => {
+      const methodItem = (route_48 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_48 as any).rateLimits?.DELETE ?? (route_48 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_48_DELETE", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/lists/manga",
+    route_49.schema,
+    async (ctx: any) => {
+      const methodItem = (route_49 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_49 as any).rateLimits?.GET ?? (route_49 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_49_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/lists/movies/:id",
+    route_50.schema,
+    async (ctx: any) => {
+      const methodItem = (route_50 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_50 as any).rateLimits?.GET ?? (route_50 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_50_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/user/:username/lists/movies/:id",
+    route_50.schema,
+    async (ctx: any) => {
+      const methodItem = (route_50 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_50 as any).rateLimits?.POST ?? (route_50 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_50_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/user/:username/lists/movies/:id",
+    route_50.schema,
+    async (ctx: any) => {
+      const methodItem = (route_50 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_50 as any).rateLimits?.DELETE ?? (route_50 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_50_DELETE", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/lists/movies",
+    route_51.schema,
+    async (ctx: any) => {
+      const methodItem = (route_51 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_51 as any).rateLimits?.GET ?? (route_51 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_51_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/lists/music/:id",
+    route_52.schema,
+    async (ctx: any) => {
+      const methodItem = (route_52 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_52 as any).rateLimits?.GET ?? (route_52 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_52_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/user/:username/lists/music/:id",
+    route_52.schema,
+    async (ctx: any) => {
+      const methodItem = (route_52 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_52 as any).rateLimits?.POST ?? (route_52 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_52_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/user/:username/lists/music/:id",
+    route_52.schema,
+    async (ctx: any) => {
+      const methodItem = (route_52 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_52 as any).rateLimits?.DELETE ?? (route_52 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_52_DELETE", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/lists/music",
+    route_53.schema,
+    async (ctx: any) => {
+      const methodItem = (route_53 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_53 as any).rateLimits?.GET ?? (route_53 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_53_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/lists/tv/:id",
+    route_54.schema,
+    async (ctx: any) => {
+      const methodItem = (route_54 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_54 as any).rateLimits?.GET ?? (route_54 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_54_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/user/:username/lists/tv/:id",
+    route_54.schema,
+    async (ctx: any) => {
+      const methodItem = (route_54 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_54 as any).rateLimits?.POST ?? (route_54 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_54_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/user/:username/lists/tv/:id",
+    route_54.schema,
+    async (ctx: any) => {
+      const methodItem = (route_54 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_54 as any).rateLimits?.DELETE ?? (route_54 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_54_DELETE", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/lists/tv",
+    route_55.schema,
+    async (ctx: any) => {
+      const methodItem = (route_55 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_55 as any).rateLimits?.GET ?? (route_55 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_55_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/user/:username/watchlists/:id/entries",
+    route_56.schema,
+    async (ctx: any) => {
+      const methodItem = (route_56 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_56 as any).rateLimits?.POST ?? (route_56 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_56_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/user/:username/watchlists/:id/entries",
+    route_56.schema,
+    async (ctx: any) => {
+      const methodItem = (route_56 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_56 as any).rateLimits?.DELETE ?? (route_56 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_56_DELETE", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/watchlists/:id",
+    route_57.schema,
+    async (ctx: any) => {
+      const methodItem = (route_57 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_57 as any).rateLimits?.GET ?? (route_57 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_57_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/user/:username/watchlists/:id",
+    route_57.schema,
+    async (ctx: any) => {
+      const methodItem = (route_57 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_57 as any).rateLimits?.DELETE ?? (route_57 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_57_DELETE", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .patch(
+    "/user/:username/watchlists/:id",
+    route_57.schema,
+    async (ctx: any) => {
+      const methodItem = (route_57 as any).PATCH;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_57 as any).rateLimits?.PATCH ?? (route_57 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_57_PATCH", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/watchlists",
+    route_58.schema,
+    async (ctx: any) => {
+      const methodItem = (route_58 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_58 as any).rateLimits?.GET ?? (route_58 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_58_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/user/:username/watchlists",
+    route_58.schema,
+    async (ctx: any) => {
+      const methodItem = (route_58 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_58 as any).rateLimits?.POST ?? (route_58 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_58_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/media/anime/:id",
+    route_59.schema,
+    async (ctx: any) => {
+      const methodItem = (route_59 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_59 as any).rateLimits?.GET ?? (route_59 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_59_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/media/books/:id",
+    route_60.schema,
+    async (ctx: any) => {
+      const methodItem = (route_60 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_60 as any).rateLimits?.GET ?? (route_60 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_60_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/media/characters/:id",
+    route_61.schema,
+    async (ctx: any) => {
+      const methodItem = (route_61 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_61 as any).rateLimits?.GET ?? (route_61 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_61_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/media/games/:id",
+    route_62.schema,
+    async (ctx: any) => {
+      const methodItem = (route_62 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_62 as any).rateLimits?.GET ?? (route_62 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_62_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/media/manga/:id",
+    route_63.schema,
+    async (ctx: any) => {
+      const methodItem = (route_63 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_63 as any).rateLimits?.GET ?? (route_63 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_63_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/media/movies/:id",
+    route_64.schema,
+    async (ctx: any) => {
+      const methodItem = (route_64 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_64 as any).rateLimits?.GET ?? (route_64 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_64_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/media/music/:id",
+    route_65.schema,
+    async (ctx: any) => {
+      const methodItem = (route_65 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_65 as any).rateLimits?.GET ?? (route_65 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_65_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/media/people/:id",
+    route_66.schema,
+    async (ctx: any) => {
+      const methodItem = (route_66 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_66 as any).rateLimits?.GET ?? (route_66 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_66_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/media/studios/:id",
+    route_67.schema,
+    async (ctx: any) => {
+      const methodItem = (route_67 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_67 as any).rateLimits?.GET ?? (route_67 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_67_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/media/tv/:id",
+    route_68.schema,
+    async (ctx: any) => {
+      const methodItem = (route_68 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_68 as any).rateLimits?.GET ?? (route_68 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_68_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/search/anime",
+    route_69.schema,
+    async (ctx: any) => {
+      const methodItem = (route_69 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_69 as any).rateLimits?.GET ?? (route_69 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_69_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/search/books",
+    route_70.schema,
+    async (ctx: any) => {
+      const methodItem = (route_70 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_70 as any).rateLimits?.GET ?? (route_70 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_70_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/search/characters",
+    route_71.schema,
+    async (ctx: any) => {
+      const methodItem = (route_71 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_71 as any).rateLimits?.GET ?? (route_71 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_71_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/search/games",
+    route_72.schema,
+    async (ctx: any) => {
+      const methodItem = (route_72 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_72 as any).rateLimits?.GET ?? (route_72 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_72_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/search/manga",
+    route_73.schema,
+    async (ctx: any) => {
+      const methodItem = (route_73 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_73 as any).rateLimits?.GET ?? (route_73 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_73_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/search/movies",
+    route_74.schema,
+    async (ctx: any) => {
+      const methodItem = (route_74 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_74 as any).rateLimits?.GET ?? (route_74 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_74_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/search/music",
+    route_75.schema,
+    async (ctx: any) => {
+      const methodItem = (route_75 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_75 as any).rateLimits?.GET ?? (route_75 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_75_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/search/people",
+    route_76.schema,
+    async (ctx: any) => {
+      const methodItem = (route_76 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_76 as any).rateLimits?.GET ?? (route_76 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_76_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/search/studios",
+    route_77.schema,
+    async (ctx: any) => {
+      const methodItem = (route_77 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_77 as any).rateLimits?.GET ?? (route_77 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_77_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/search/tv",
+    route_78.schema,
+    async (ctx: any) => {
+      const methodItem = (route_78 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_78 as any).rateLimits?.GET ?? (route_78 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_78_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/recommendations/:id",
+    route_79.schema,
+    async (ctx: any) => {
+      const methodItem = (route_79 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_79 as any).rateLimits?.DELETE ?? (route_79 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_79_DELETE", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/recommendations/:id/vote",
+    route_80.schema,
+    async (ctx: any) => {
+      const methodItem = (route_80 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_80 as any).rateLimits?.POST ?? (route_80 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_80_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/recommendations/:type/:id",
+    route_81.schema,
+    async (ctx: any) => {
+      const methodItem = (route_81 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_81 as any).rateLimits?.GET ?? (route_81 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_81_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/recommendations",
+    route_82.schema,
+    async (ctx: any) => {
+      const methodItem = (route_82 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_82 as any).rateLimits?.POST ?? (route_82 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_82_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/reviews/:type/:id",
+    route_83.schema,
+    async (ctx: any) => {
+      const methodItem = (route_83 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_83 as any).rateLimits?.GET ?? (route_83 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_83_GET", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/reviews/:type/:id",
+    route_83.schema,
+    async (ctx: any) => {
+      const methodItem = (route_83 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_83 as any).rateLimits?.POST ?? (route_83 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_83_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/reviews/:type/:id",
+    route_83.schema,
+    async (ctx: any) => {
+      const methodItem = (route_83 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_83 as any).rateLimits?.DELETE ?? (route_83 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_83_DELETE", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .patch(
+    "/reviews/:type/:id",
+    route_83.schema,
+    async (ctx: any) => {
+      const methodItem = (route_83 as any).PATCH;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_83 as any).rateLimits?.PATCH ?? (route_83 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_83_PATCH", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/reviews/:type/:id/vote",
+    route_84.schema,
+    async (ctx: any) => {
+      const methodItem = (route_84 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_84 as any).rateLimits?.POST ?? (route_84 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_84_POST", rateLimitConfig) : null;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/reviews",
+    route_85.schema,
+    async (ctx: any) => {
+      const methodItem = (route_85 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_85 as any).rateLimits?.GET ?? (route_85 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_85_GET", rateLimitConfig) : null;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   );

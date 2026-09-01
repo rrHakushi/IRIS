@@ -1,0 +1,92 @@
+enum BookStatus {
+    PUBLISHED
+    RELEASING
+    CANCELLED
+    ON_HIATUS
+    UNKNOWN
+}
+
+model Book {
+    id             Int     @id @default(autoincrement())
+    googleBookId   String? @unique
+    isbn10         String? @unique
+    isbn13         String? @unique
+    openLibraryId  String? @unique
+
+    titlePrimary   String  @db.Text
+    titleSecondary String? @db.Text
+    subtitle       String? @db.Text
+    slug           String?
+    tagline        String? @db.Text
+
+    coverImage  String? @db.Text
+    bannerImage String? @db.Text
+    images      Json?   @db.JsonB
+
+    description      String? @db.Text
+    originalLanguage String?
+    countryOfOrigin  String?
+    series           String? @db.Text
+    seriesPosition   Float?
+    format           String?
+    website          String? @db.Text
+    siteUrl          String? @db.Text
+    previewLink      String? @db.Text
+    infoLink         String? @db.Text
+    buyLink          String? @db.Text
+
+    releaseDateYear  Int?
+    releaseDateMonth Int?
+    releaseDateDay   Int?
+    releaseDate      DateTime?
+
+    pageCount    Int?
+    chapterCount Int?
+    volumeCount  Int?
+
+    genres     Genre[]
+    subjects   String[]   @db.Text
+    tags       Tag[]
+    publishers String[]   @db.Text
+    authors    String[]   @db.Text
+    status     BookStatus @default(UNKNOWN)
+    isAdult    Boolean    @default(false)
+    synonyms   String[]   @db.Text
+    locked     Boolean    @default(false)
+
+    averageScore            Float?
+    googleBooksRating       Float?
+    googleBooksRatingsCount Int?
+
+    favorites          Int  @default(0)
+    popularity         Int  @default(0)
+    totalScoreSum      Int? @db.Integer
+    scoredCount        Int? @db.Integer
+    statusDistribution Json @default("{}") @db.JsonB
+    scoreDistribution  Json @default("{}") @db.JsonB
+
+    sources Json? @db.JsonB
+
+    retailPrice         Float?
+    retailPriceCurrency String?
+    ageRating           String?
+    ageRatingGuide      String?
+    contentRatings      Json?   @db.JsonB
+
+    googleBooksUpdatedAt Int?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    characters       MediaCharacter[]
+    studios          MediaStudio[]
+    staff            MediaStaff[]
+    userLists        BookList[]
+    reviews          BookReview[]
+    watchlistEntries WatchlistEntry[]
+
+    @@index([titlePrimary])
+    @@index([status])
+    @@index([popularity(sort: Desc)])
+    @@index([averageScore(sort: Desc)])
+}

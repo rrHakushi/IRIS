@@ -1,0 +1,183 @@
+enum ReviewVoteType {
+    UPVOTE
+    DOWNVOTE
+}
+
+model AnimeReview {
+    id        Int     @id @default(autoincrement())
+    userId    String
+    user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    animeId   Int
+    anime     Anime   @relation(fields: [animeId], references: [id], onDelete: Cascade)
+    summary   String  @db.Text
+    body      String  @db.Text
+    score     Float
+    upvotes   Int     @default(0)
+    downvotes Int     @default(0)
+    isSpoiler Boolean @default(false)
+    ratings   Json?   @db.JsonB
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, animeId])
+    @@index([animeId])
+    @@index([userId])
+    @@index([score(sort: Desc)])
+}
+
+model MangaReview {
+    id        Int     @id @default(autoincrement())
+    userId    String
+    user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    mangaId   Int
+    manga     Manga   @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+    summary   String  @db.Text
+    body      String  @db.Text
+    score     Float
+    upvotes   Int     @default(0)
+    downvotes Int     @default(0)
+    isSpoiler Boolean @default(false)
+    ratings   Json?   @db.JsonB
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, mangaId])
+    @@index([mangaId])
+    @@index([userId])
+    @@index([score(sort: Desc)])
+}
+
+model MovieReview {
+    id        Int     @id @default(autoincrement())
+    userId    String
+    user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    movieId   Int
+    movie     Movie   @relation(fields: [movieId], references: [id], onDelete: Cascade)
+    summary   String  @db.Text
+    body      String  @db.Text
+    score     Float
+    upvotes   Int     @default(0)
+    downvotes Int     @default(0)
+    isSpoiler Boolean @default(false)
+    ratings   Json?   @db.JsonB
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, movieId])
+    @@index([movieId])
+    @@index([userId])
+    @@index([score(sort: Desc)])
+}
+
+model TvReview {
+    id        Int       @id @default(autoincrement())
+    userId    String
+    user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    tvId      Int
+    tv        Tv        @relation(fields: [tvId], references: [id], onDelete: Cascade)
+    seasonId  Int?
+    season    TvSeason? @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+    summary   String    @db.Text
+    body      String    @db.Text
+    score     Float
+    upvotes   Int       @default(0)
+    downvotes Int       @default(0)
+    isSpoiler Boolean   @default(false)
+    ratings   Json?     @db.JsonB
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([tvId])
+    @@index([seasonId])
+    @@index([userId])
+    @@index([score(sort: Desc)])
+}
+
+model GameReview {
+    id        Int     @id @default(autoincrement())
+    userId    String
+    user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    gameId    Int
+    game      Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    summary   String  @db.Text
+    body      String  @db.Text
+    score     Float
+    upvotes   Int     @default(0)
+    downvotes Int     @default(0)
+    isSpoiler Boolean @default(false)
+    ratings   Json?   @db.JsonB
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, gameId])
+    @@index([gameId])
+    @@index([userId])
+    @@index([score(sort: Desc)])
+}
+
+model BookReview {
+    id        Int     @id @default(autoincrement())
+    userId    String
+    user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    bookId    Int
+    book      Book    @relation(fields: [bookId], references: [id], onDelete: Cascade)
+    summary   String  @db.Text
+    body      String  @db.Text
+    score     Float
+    upvotes   Int     @default(0)
+    downvotes Int     @default(0)
+    isSpoiler Boolean @default(false)
+    ratings   Json?   @db.JsonB
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, bookId])
+    @@index([bookId])
+    @@index([userId])
+    @@index([score(sort: Desc)])
+}
+
+model MusicReview {
+    id        Int     @id @default(autoincrement())
+    userId    String
+    user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    musicId   Int
+    music     Music   @relation(fields: [musicId], references: [id], onDelete: Cascade)
+    summary   String  @db.Text
+    body      String  @db.Text
+    score     Float
+    upvotes   Int     @default(0)
+    downvotes Int     @default(0)
+    isSpoiler Boolean @default(false)
+    ratings   Json?   @db.JsonB
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, musicId])
+    @@index([musicId])
+    @@index([userId])
+    @@index([score(sort: Desc)])
+}
+
+model ReviewVote {
+    id         Int            @id @default(autoincrement())
+    userId     String
+    user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+    reviewType MediaType
+    reviewId   Int
+    voteType   ReviewVoteType
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, reviewType, reviewId])
+    @@index([reviewType, reviewId])
+    @@index([userId])
+}

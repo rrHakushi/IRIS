@@ -2,12 +2,41 @@ import { ml_kem768 } from "@noble/post-quantum/ml-kem.js";
 import { gcm } from "@noble/ciphers/aes.js";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
 import { prisma } from "@IRIS/database";
-import { wsHub } from "./websocket-hub";
+import { wsHub } from "./websocket-hub.js";
+import { logger } from "../utils/logger.js";
 import type {
   NotificationType,
   NotificationPriority,
   NotificationActionStatus,
 } from "@IRIS/database";
+
+let pqeServiceLogged = false;
+
+export function logPqeServiceStatus(): void {
+  if (pqeServiceLogged) return;
+  pqeServiceLogged = true;
+
+  logger.service("pqe-notification", "post-quantum encrypted notifications");
+
+  const missingRequired: string[] = [];
+  if (!process.env.DATABASE_URL) {
+    missingRequired.push("DATABASE_URL");
+  }
+
+  if (missingRequired.length > 0) {
+    for (const v of missingRequired) {
+      logger.service.missingEnv(
+        v,
+        "required for recipient key resolution & database persistence"
+      );
+    }
+  } else {
+    logger.service.verified("Environment verified (DATABASE_URL configured)");
+  }
+}
+
+// Auto-log on module initialization
+logPqeServiceStatus();
 
 export interface ActionInputDefinition {
   id: string;

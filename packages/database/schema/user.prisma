@@ -21,6 +21,35 @@ model User {
     notifications   Notification[]
     connections     Connection[]
 
+    // MEDIA LISTS & PLAYLISTS
+    watchlists      Watchlist[]
+    animeList       AnimeList[]
+    mangaList       MangaList[]
+    movieList       MovieList[]
+    tvList          TvList[]
+    gameList        GameList[]
+    bookList        BookList[]
+    musicList       MusicList[]
+
+    // REVIEWS & SOCIAL
+    animeReviews        AnimeReview[]
+    mangaReviews        MangaReview[]
+    movieReviews        MovieReview[]
+    tvReviews           TvReview[]
+    gameReviews         GameReview[]
+    bookReviews         BookReview[]
+    musicReviews        MusicReview[]
+    reviewVotes         ReviewVote[]
+    recommendations     MediaRecommendation[]
+    recommendationVotes MediaRecommendationVote[]
+    favorites           Favorite[]
+
+    // STATS & ACTIVITY
+    userStats       UserStats[]
+    activityLogs    ActivityLog[]
+    activityLikes   ActivityLike[]
+    activityReplies ActivityReply[]
+
     // ENCRYPTION KEYS
     publicKey              String?
     encryptedPrivateKey    String?

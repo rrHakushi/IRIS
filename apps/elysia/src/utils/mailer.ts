@@ -2,6 +2,7 @@ import React from "react";
 import nodemailer from "nodemailer";
 import { render } from "@react-email/render";
 import { c } from "./colors.js";
+import { logger } from "./logger.js";
 import {
   MfaVerificationEmail,
   PasswordResetEmail,
@@ -33,8 +34,8 @@ function getTransporter(): nodemailer.Transporter | null {
       secure: port === "465",
       auth: user && pass ? { user, pass } : undefined,
     });
-    console.log(
-      `${c.green(c.bold("[Mailer]"))} SMTP client configured for ${c.cyan(`${host}:${port}`)}`
+    logger.mailer.info(
+      `SMTP client configured for ${c.cyan(`${host}:${port}`)}`
     );
   }
 
@@ -71,13 +72,13 @@ export async function sendEmail({
         html,
         text,
       });
-      console.log(
-        `${c.green(c.bold("[Mailer]"))} Email sent successfully to ${c.cyan(to)} (${subject})`
+      logger.mailer.info(
+        `Email sent successfully to ${c.cyan(to)} (${subject})`
       );
       return true;
     } catch (error) {
-      console.error(
-        `${c.red(c.bold("[Mailer]"))} Failed to send email to ${to}:`,
+      logger.mailer.error(
+        `Failed to send email to ${to}:`,
         error
       );
       return false;

@@ -1,0 +1,26 @@
+enum FavoriteType {
+    ANIME
+    MANGA
+    MOVIE
+    TV
+    GAME
+    BOOK
+    MUSIC
+    CHARACTER
+    PERSON
+    STUDIO
+    USER
+}
+
+model Favorite {
+    id        String       @id @default(uuid())
+    userId    String
+    user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    type      FavoriteType
+    targetId  Int
+    createdAt DateTime     @default(now())
+
+    @@unique([userId, type, targetId])
+    @@index([userId])
+    @@index([type, targetId])
+}

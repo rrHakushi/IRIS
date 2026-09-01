@@ -1,0 +1,95 @@
+enum ActivityType {
+    // Media List Tracking Events
+    LIST_ITEM_ADDED
+    LIST_STATUS_UPDATED
+    LIST_PROGRESS_UPDATED
+    LIST_SCORE_UPDATED
+    LIST_COMPLETED
+    LIST_REWATCH_STARTED
+    LIST_ITEM_REMOVED
+
+    // Social Events
+    REVIEW_POSTED
+    REVIEW_VOTED
+    RECOMMENDATION_POSTED
+    WATCHLIST_CREATED
+    FAVORITE_ADDED
+    FAVORITE_REMOVED
+
+    // User Text Post / Status
+    STATUS_POST
+    USER_MILESTONE
+}
+
+model ActivityLog {
+    id     String @id @default(uuid())
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    type ActivityType
+
+    // Target Media (if applicable)
+    mediaType MediaType?
+    mediaId   Int?
+
+    // Action Details
+    status          String? // e.g. "COMPLETED", "WATCHING", "READING"
+    progress        Int? // e.g. Episode 12, Chapter 45
+    progressVolumes Int? // e.g. Volume 3
+    score           Int? // Score 1-100
+
+    // Content for reviews, status posts, or notes
+    title   String?
+    content String? @db.Text
+
+    // Extra dynamic metadata (old status, old progress, reviewId, watchlistId, etc.)
+    metadata Json? @db.Json
+
+    // Visibility & Flags
+    isPrivate Boolean @default(false)
+    isSpoiler Boolean @default(false)
+
+    // Social metrics
+    likeCount  Int @default(0)
+    replyCount Int @default(0)
+
+    // Reactions / Replies
+    likes   ActivityLike[]
+    replies ActivityReply[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId, createdAt])
+    @@index([type])
+    @@index([mediaType, mediaId])
+    @@index([createdAt])
+}
+
+model ActivityLike {
+    id         String      @id @default(uuid())
+    activityId String
+    activity   ActivityLog @relation(fields: [activityId], references: [id], onDelete: Cascade)
+    userId     String
+    user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+    createdAt  DateTime    @default(now())
+
+    @@unique([activityId, userId])
+    @@index([userId])
+    @@index([activityId])
+}
+
+model ActivityReply {
+    id         String      @id @default(uuid())
+    activityId String
+    activity   ActivityLog @relation(fields: [activityId], references: [id], onDelete: Cascade)
+    userId     String
+    user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+    content    String      @db.Text
+    likeCount  Int         @default(0)
+    createdAt  DateTime    @default(now())
+    updatedAt  DateTime    @updatedAt
+
+    @@index([activityId, createdAt])
+    @@index([userId])
+}

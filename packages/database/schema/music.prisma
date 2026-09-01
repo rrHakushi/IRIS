@@ -1,0 +1,55 @@
+enum MusicStatus {
+    RELEASED
+    UPCOMING
+    CANCELLED
+    UNKNOWN
+}
+
+model Music {
+    id             Int     @id @default(autoincrement())
+    spotifyId      String? @unique
+    appleMusicId   String? @unique
+    youtubeMusicId String? @unique
+    musicBrainzId  String? @unique
+    isrc           String? @unique
+
+    titlePrimary   String  @db.Text
+    titleSecondary String? @db.Text
+    artist         String? @db.Text
+    artists        String[] @db.Text
+    album          String? @db.Text
+
+    coverImage  String? @db.Text
+    bannerImage String? @db.Text
+    images      Json?   @db.JsonB
+
+    description      String?   @db.Text
+    duration         Int? // Duration in seconds
+    releaseDateYear  Int?
+    releaseDateMonth Int?
+    releaseDateDay   Int?
+    releaseDate      DateTime?
+
+    genres          Genre[]
+    tags            Tag[]
+    audioPreviewUrl String?   @db.Text
+    lyrics          String?   @db.Text
+    syncedLyrics    String?   @db.Text
+    sources         Json?     @db.JsonB
+
+    status     MusicStatus @default(RELEASED)
+    favorites  Int         @default(0)
+    popularity Int         @default(0)
+
+    musicBrainzUpdatedAt Int?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    userLists        MusicList[]
+    reviews          MusicReview[]
+    watchlistEntries WatchlistEntry[]
+
+    @@index([titlePrimary])
+    @@index([artist])
+}

@@ -1,0 +1,68 @@
+enum CharacterRole {
+    MAIN
+    SUPPORTING
+    BACKGROUND
+}
+
+model Character {
+    id        Int  @id @default(autoincrement())
+    anilistId Int? @unique
+    malId     Int? @unique
+    aniDBId   Int? @unique
+    tvDBId    Int? @unique
+    bangumiId Int? @unique
+
+    namePrimary            String   @db.Text
+    nameNative             String?  @db.Text
+    nameAlternative        String[] @db.Text
+    nameAlternativeSpoiler String[] @db.Text
+
+    image       String? @db.Text
+    images      Json?   @db.JsonB
+    description String? @db.Text
+    gender      String?
+    age         String?
+
+    dateOfBirthYear  Int?
+    dateOfBirthMonth Int?
+    dateOfBirthDay   Int?
+
+    favorites   Int? @default(0)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    mediaCharacters MediaCharacter[]
+
+    @@index([namePrimary])
+}
+
+model MediaCharacter {
+    id          Int           @id @default(autoincrement())
+    mediaType   MediaType
+    mediaId     Int
+    characterId Int
+    actorId     Int?
+
+    role  CharacterRole @default(MAIN)
+    order Int?
+
+    animeId Int?
+    mangaId Int?
+    movieId Int?
+    tvId    Int?
+    bookId  Int?
+
+    character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+    actor     Person?   @relation(fields: [actorId], references: [id], onDelete: SetNull)
+    anime     Anime?    @relation(fields: [animeId], references: [id], onDelete: Cascade)
+    manga     Manga?    @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+    movie     Movie?    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+    tv        Tv?       @relation(fields: [tvId], references: [id], onDelete: Cascade)
+    book      Book?     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+    @@unique([mediaType, mediaId, characterId, actorId])
+    @@index([mediaType, mediaId])
+    @@index([characterId])
+    @@index([actorId])
+}

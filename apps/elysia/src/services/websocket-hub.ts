@@ -1,4 +1,5 @@
 import type { ElysiaWS } from "elysia/ws";
+import { logger } from "../utils/logger.js";
 
 export interface WsMessagePayload<T = unknown> {
   event: string;
@@ -9,6 +10,7 @@ export interface WsMessagePayload<T = unknown> {
 
 export class WebSocketHub {
   private static instance: WebSocketHub;
+  private static logged = false;
 
   // Mapping from userId -> Set of active WebSocket connections
   private userConnections = new Map<string, Set<ElysiaWS<any>>>();
@@ -22,7 +24,15 @@ export class WebSocketHub {
   // Mapping from connection -> Set of channels it subscribed to
   private connectionChannels = new Map<ElysiaWS<any>, Set<string>>();
 
-  private constructor() {}
+  private constructor() {
+    WebSocketHub.logStatus();
+  }
+
+  public static logStatus(): void {
+    if (WebSocketHub.logged) return;
+    WebSocketHub.logged = true;
+    logger.service("websocket-hub", "realtime websocket hub & pub/sub manager");
+  }
 
   public static getInstance(): WebSocketHub {
     if (!WebSocketHub.instance) {
@@ -176,6 +186,16 @@ export class WebSocketHub {
   }
 
   /**
+   * Broadcasts an event to all active WebSocket connections across all channels.
+   */
+  public broadcast(event: string, data: unknown): void {
+    for (const ws of this.connectionUsers.keys()) {
+      this.send(ws, event, data);
+    }
+    this.broadcastChannel("media", event, data);
+  }
+
+  /**
    * Handles incoming message frames from clients.
    */
   public handleMessage(ws: ElysiaWS<any>, rawMessage: unknown): void {
@@ -197,9 +217,7 @@ export class WebSocketHub {
         this.register(ws, uid);
         this.send(ws, "auth:success", { userId: uid });
         if (!alreadyRegistered) {
-          console.log(
-            `\x1b[35m\x1b[1m[WebSocket]\x1b[0m \x1b[32mClient connected:\x1b[0m user=\x1b[36m${uid}\x1b[0m`
-          );
+          logger.ws.connected(uid);
         }
         return;
       }

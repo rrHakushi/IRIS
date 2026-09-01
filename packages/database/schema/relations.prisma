@@ -1,0 +1,25 @@
+enum RelationType {
+    PREQUEL
+    SEQUEL
+    ADAPTATION
+    SIDE_STORY
+    SPIN_OFF
+    SUMMARY
+    ALTERNATIVE
+    CHARACTER
+    OTHER
+    UNKNOWN
+}
+
+model MediaRelation {
+    id         Int          @id @default(autoincrement())
+    sourceType MediaType
+    sourceId   Int
+    targetType MediaType
+    targetId   Int
+    type       RelationType
+
+    @@unique([sourceType, sourceId, targetType, targetId, type])
+    @@index([sourceType, sourceId])
+    @@index([targetType, targetId])
+}

@@ -1,0 +1,100 @@
+enum MangaFormat {
+    MANGA
+    NOVEL
+    LIGHT_NOVEL
+    ONE_SHOT
+    MANHWA
+    MANHUA
+    UNKNOWN
+}
+
+enum MangaStatus {
+    FINISHED
+    RELEASING
+    NOT_YET_RELEASED
+    CANCELLED
+    HIATUS
+    UNKNOWN
+}
+
+model Manga {
+    id             Int     @id @default(autoincrement())
+    anilistId      Int?    @unique
+    malId          Int?    @unique
+    mangaUpdatesId String? @unique
+    kitsuId        Int?    @unique
+    bangumiId      Int?    @unique
+
+    titlePrimary   String  @db.Text
+    titleSecondary String? @db.Text
+    titleNative    String? @db.Text
+
+    coverImage  String? @db.Text
+    bannerImage String? @db.Text
+    images      Json?   @db.JsonB
+
+    description     String? @db.Text
+    countryOfOrigin String?
+
+    volumeCount  Int?
+    chapterCount Int?
+
+    startDateYear  Int?
+    startDateMonth Int?
+    startDateDay   Int?
+
+    endDateYear  Int?
+    endDateMonth Int?
+    endDateDay   Int?
+
+    genres Genre[]
+    tags   Tag[]
+    source AnimeSource @default(UNKNOWN)
+    format MangaFormat @default(UNKNOWN)
+    status MangaStatus @default(UNKNOWN)
+
+    averageScore       Float?
+    favorites          Int    @default(0)
+    popularity         Int    @default(0)
+    totalScoreSum      Int?   @db.Integer
+    scoredCount        Int?   @db.Integer
+    statusDistribution Json   @default("{}") @db.JsonB
+    scoreDistribution  Json   @default("{}") @db.JsonB
+
+    alAverageScore Int?
+    alFavorites    Int?
+    alPopularity   Int?
+
+    malAverageScore Int?
+    malFavorites    Int?
+    malPopularity   Int?
+
+    isAdult  Boolean  @default(false)
+    synonyms String[] @db.Text
+    locked   Boolean  @default(false)
+
+    siteUrl       String? @db.Text
+    externalLinks Json?   @db.JsonB
+    sources       Json?   @db.JsonB
+
+    ageRating      String?
+    ageRatingGuide String?
+
+    alUpdatedAt  Int?
+    malUpdatedAt Int?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    characters       MediaCharacter[]
+    staff            MediaStaff[]
+    userLists        MangaList[]
+    reviews          MangaReview[]
+    watchlistEntries WatchlistEntry[]
+
+    @@index([titlePrimary])
+    @@index([status])
+    @@index([format])
+    @@index([popularity(sort: Desc)])
+    @@index([averageScore(sort: Desc)])
+}

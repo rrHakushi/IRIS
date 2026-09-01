@@ -3,6 +3,7 @@ import path from "node:path"
 import { createHash } from "node:crypto"
 import type { prisma as PrismaType } from "@IRIS/database"
 import { c } from "./colors"
+import { logger } from "./logger"
 import { hashPassword, generateUserKeypair } from "./auth-crypto"
 
 /**
@@ -80,8 +81,8 @@ export async function ensureDevAccount(
           encryptedPrivateKey,
         },
       })
-      console.log(
-        `${c.green(c.bold("[Dev Account]"))} Created new dev user in database: ${c.cyan(username)}`
+      logger.devAccount.info(
+        `Created new dev user in database: ${c.cyan(username)}`
       )
     } else {
       // Ensure existing dev user has admin permissions and encryption keys
@@ -140,13 +141,13 @@ export async function ensureDevAccount(
       "utf-8"
     )
 
-    console.log(
-      `${c.green(c.bold("[Dev Account]"))} Dev account active (${c.cyan(username)} / ${c.dim(email)})`
+    logger.devAccount.info(
+      `Dev account active (${c.cyan(username)} / ${c.dim(email)})`
     )
 
     return creds
   } catch (err) {
-    console.warn("[Dev Account] Could not initialize dev account in DB:", err)
+    logger.devAccount.warn("Could not initialize dev account in DB:", err)
     return null
   }
 }

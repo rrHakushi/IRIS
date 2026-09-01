@@ -110,6 +110,15 @@ describe("@IRIS/connections - Provider Registry", () => {
 });
 
 describe("@IRIS/connections - Search Proxy", () => {
+  it("should ensure ANILIST, MAL, SIMKL, and BANGUMI have search capability enabled", () => {
+    const searchProviders = ["ANILIST", "MAL", "SIMKL", "BANGUMI"] as const;
+    for (const prov of searchProviders) {
+      const adapter = getConnectionAdapter(prov);
+      assert.ok(adapter.capabilities.supportsSearch, `${prov} must have supportsSearch enabled`);
+      assert.equal(typeof adapter.searchMedia, "function", `${prov} must implement searchMedia`);
+    }
+  });
+
   it("should throw error when searching on provider without search capability", async () => {
     await assert.rejects(
       async () => {

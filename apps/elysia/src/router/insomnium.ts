@@ -138,7 +138,6 @@ export async function generateInsomniumConfig(
     `http://localhost:${process.env.ELYSIA_PORT || 4000}`
 
   const routeFiles = findRouteFiles(modulesDir)
-  const now = Date.now()
 
   const workspaceId = "wrk_iris_api"
   const baseEnvId = "env_iris_base"
@@ -147,8 +146,6 @@ export async function generateInsomniumConfig(
     {
       _id: workspaceId,
       parentId: null,
-      modified: now,
-      created: now,
       name: "IRIS API",
       description: "Auto-generated Insomnium collection for IRIS Elysia server",
       scope: "collection",
@@ -157,8 +154,6 @@ export async function generateInsomniumConfig(
     {
       _id: baseEnvId,
       parentId: workspaceId,
-      modified: now,
-      created: now,
       name: "Base Environment",
       data: {
         base_url: baseUrl,
@@ -170,21 +165,17 @@ export async function generateInsomniumConfig(
       },
       color: "#6b46c1",
       isPrivate: false,
-      metaSortKey: now,
       _type: "environment",
     },
   ]
 
   // Folder map to track module request groups
   const folderIds = new Map<string, string>()
-  let sortKeyCounter = now + 1000
 
   // Add Health Check endpoint
   resources.push({
     _id: "req_health_check",
     parentId: workspaceId,
-    modified: now,
-    created: now,
     url: "{{ _.base_url }}/health",
     name: "GET /health",
     description: "Server health and uptime check",
@@ -193,7 +184,6 @@ export async function generateInsomniumConfig(
     parameters: [],
     headers: [],
     authentication: {},
-    metaSortKey: sortKeyCounter++,
     isPrivate: false,
     settingStoreCookies: true,
     settingSendCookies: true,
@@ -222,13 +212,10 @@ export async function generateInsomniumConfig(
       resources.push({
         _id: folderId,
         parentId: workspaceId,
-        modified: now,
-        created: now,
         name: moduleName,
         description: `Routes for ${moduleName} module`,
         environment: {},
         environmentPropertyOrder: null,
-        metaSortKey: sortKeyCounter++,
         _type: "request_group",
       })
     }
@@ -310,17 +297,17 @@ export async function generateInsomniumConfig(
           value: string
           disabled?: boolean
         }> = [
-          {
-            name: "x-api-key",
-            value: "{{ _.api_key }}",
-            disabled: false,
-          },
-          {
-            name: "Authorization",
-            value: "Bearer {{ _.token }}",
-            disabled: true,
-          },
-        ]
+            {
+              name: "x-api-key",
+              value: "{{ _.api_key }}",
+              disabled: false,
+            },
+            {
+              name: "Authorization",
+              value: "Bearer {{ _.token }}",
+              disabled: true,
+            },
+          ]
 
         // Generate body
         let body: Record<string, unknown> = {}
@@ -350,8 +337,6 @@ export async function generateInsomniumConfig(
         resources.push({
           _id: requestId,
           parentId: folderId,
-          modified: now,
-          created: now,
           url: `{{ _.base_url }}${routePath}`,
           name: `${method} ${routePath}`,
           description: "",
@@ -360,7 +345,6 @@ export async function generateInsomniumConfig(
           parameters,
           headers,
           authentication: {},
-          metaSortKey: sortKeyCounter++,
           isPrivate: false,
           settingStoreCookies: true,
           settingSendCookies: true,
@@ -383,14 +367,13 @@ export async function generateInsomniumConfig(
   const exportDocument = {
     _type: "export",
     __export_format: 4,
-    __export_date: new Date().toISOString(),
     __export_source: "insomnium.desktop.app:v0.2.3-a",
     resources,
   }
 
   const fileContent = JSON.stringify(exportDocument, null, 2) + "\n"
 
-  // Prevent touching the file if unchanged to avoid bun --watch reload loops
+  // Prevent touching the file if unchanged to avoid bun --watch reload loops and preserve disk lifetime
   if (fs.existsSync(outputFile)) {
     const current = fs.readFileSync(outputFile, "utf-8")
     if (current === fileContent) {

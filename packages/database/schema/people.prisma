@@ -1,0 +1,75 @@
+enum StaffRole {
+    DIRECTOR
+    EPISODE_DIRECTOR
+    CHIEF_ANIMATION_DIRECTOR
+    CHARACTER_DESIGN
+    ART_DIRECTOR
+    COMPOSER
+    SOUND_DIRECTOR
+    ORIGINAL_CREATOR
+    SCRIPT
+    KEY_ANIMATION
+    COLOR_DESIGN
+    PRODUCER
+    EXECUTIVE_PRODUCER
+    AUTHOR
+    ILLUSTRATOR
+    CAST
+    OTHER
+}
+
+model Person {
+    id        Int  @id @default(autoincrement())
+    anilistId Int? @unique
+    malId     Int? @unique
+    aniDBId   Int? @unique
+    tvDBId    Int? @unique
+    bangumiId Int? @unique
+    imdbId    String? @unique
+    tmdbId    Int?    @unique
+
+    namePrimary     String   @db.Text
+    nameNative      String?  @db.Text
+    nameAlternative String[] @db.Text
+
+    image       String? @db.Text
+    images      Json?   @db.JsonB
+    description String? @db.Text
+    language    String?
+
+    favorites   Int? @default(0)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    mediaStaff       MediaStaff[]
+    voicedCharacters MediaCharacter[]
+
+    @@index([namePrimary])
+}
+
+model MediaStaff {
+    id         Int       @id @default(autoincrement())
+    mediaType  MediaType @default(ANIME)
+    mediaId    Int
+    personId   Int
+    role       StaffRole @default(OTHER)
+    customRole String?
+
+    animeId Int?
+    mangaId Int?
+    movieId Int?
+    tvId    Int?
+    bookId  Int?
+
+    person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+    anime  Anime? @relation(fields: [animeId], references: [id], onDelete: Cascade)
+    manga  Manga? @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+    movie  Movie? @relation(fields: [movieId], references: [id], onDelete: Cascade)
+    tv     Tv?    @relation(fields: [tvId], references: [id], onDelete: Cascade)
+    book   Book?  @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+    @@unique([mediaType, mediaId, personId, role])
+    @@index([mediaType, mediaId])
+    @@index([personId])
+}

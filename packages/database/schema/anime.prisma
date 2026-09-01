@@ -1,0 +1,206 @@
+enum AnimeStatus {
+    FINISHED
+    RELEASING
+    NOT_YET_RELEASED
+    CANCELLED
+    HIATUS
+    UNKNOWN
+}
+
+enum AnimeSeason {
+    WINTER
+    SPRING
+    SUMMER
+    FALL
+    UNKNOWN
+}
+
+enum AnimeSource {
+    ORIGINAL
+    MANGA
+    LIGHT_NOVEL
+    VISUAL_NOVEL
+    VIDEO_GAME
+    OTHER
+    NOVEL
+    DOUJINSHI
+    ANIME
+    WEB_NOVEL
+    LIVE_ACTION
+    GAME
+    COMIC
+    MULTIMEDIA_PROJECT
+    PICTURE_BOOK
+    UNKNOWN
+}
+
+enum AnimeFormat {
+    TV
+    TV_SHORT
+    MOVIE
+    SPECIAL
+    OVA
+    ONA
+    MUSIC
+    UNKNOWN
+}
+
+enum EpisodeType {
+    REGULAR
+    SPECIAL
+    OVA
+    ONA
+    MOVIE
+    OTHER
+}
+
+model Anime {
+    id        Int  @id @default(autoincrement())
+    anilistId Int? @unique
+    malId     Int? @unique
+    aniDBId   Int? @unique
+    tvDBId    Int?
+    bangumiId Int? @unique
+    kitsuId   Int? @unique
+
+    titlePrimary   String  @db.Text
+    titleSecondary String? @db.Text
+    titleNative    String? @db.Text
+
+    coverImage  String? @db.Text
+    bannerImage String? @db.Text
+    images      Json?   @db.JsonB
+
+    description     String? @db.Text
+    hashtag         String?
+    countryOfOrigin String?
+
+    episodeCount    Int?
+    episodeDuration Int?
+    episodes        AnimeEpisode[]
+    airingSchedule  AnimeAiringSchedule[]
+
+    startDateYear  Int?
+    startDateMonth Int?
+    startDateDay   Int?
+
+    endDateYear  Int?
+    endDateMonth Int?
+    endDateDay   Int?
+
+    genres       Genre[]
+    tags         Tag[]
+    source       AnimeSource @default(UNKNOWN)
+    format       AnimeFormat @default(UNKNOWN)
+    status       AnimeStatus @default(UNKNOWN)
+    seasonSeason AnimeSeason @default(UNKNOWN)
+    seasonYear   Int?
+
+    averageScore       Float?
+    favorites          Int    @default(0)
+    popularity         Int    @default(0)
+    totalScoreSum      Int?   @db.Integer
+    scoredCount        Int?   @db.Integer
+    statusDistribution Json   @default("{}") @db.JsonB
+    scoreDistribution  Json   @default("{}") @db.JsonB
+
+    alAverageScore Int?
+    alFavorites    Int?
+    alPopularity   Int?
+
+    malAverageScore Int?
+    malFavorites    Int?
+    malPopularity   Int?
+
+    isAdult  Boolean  @default(false)
+    synonyms String[] @db.Text
+    trailers Json?    @db.JsonB
+    locked   Boolean  @default(false)
+
+    siteUrl       String? @db.Text
+    externalLinks Json?   @db.JsonB
+    sources       Json?   @db.JsonB
+
+    themeSongs Json? @db.JsonB
+
+    ageRating      String?
+    ageRatingGuide String?
+
+    nextAiringEpisodeNumber Int?
+    nextAiringAt            DateTime?
+
+    alUpdatedAt    Int?
+    malUpdatedAt   Int?
+    anidbUpdatedAt Int?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    characters       MediaCharacter[]
+    studios          MediaStudio[]
+    staff            MediaStaff[]
+    userLists        AnimeList[]
+    reviews          AnimeReview[]
+    watchlistEntries WatchlistEntry[]
+
+    @@index([titlePrimary])
+    @@index([status])
+    @@index([format])
+    @@index([seasonYear, seasonSeason])
+    @@index([popularity(sort: Desc)])
+    @@index([averageScore(sort: Desc)])
+    @@index([nextAiringAt])
+    @@index([tvDBId])
+}
+
+model AnimeEpisode {
+    id      Int         @id @default(autoincrement())
+    animeId Int
+    anime   Anime       @relation(fields: [animeId], references: [id], onDelete: Cascade)
+    number  Int
+    type    EpisodeType @default(REGULAR)
+
+    titlePrimary   String  @db.Text
+    titleSecondary String? @db.Text
+    titleNative    String? @db.Text
+
+    description    String?   @db.Text
+    duration       Int?
+    airDate        DateTime?
+    thumbnail      String?   @db.Text
+    isFiller       Boolean   @default(false)
+    isRecap        Boolean   @default(false)
+    streamingLinks Json?     @db.JsonB
+
+    opStart    Int?
+    opEnd      Int?
+    edStart    Int?
+    edEnd      Int?
+    recapStart Int?
+    recapEnd   Int?
+
+    skipTimestamps Json? @db.JsonB
+
+    anidbEpisodeId Int?
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt
+
+    @@unique([animeId, number, type])
+    @@index([animeId])
+    @@index([airDate])
+}
+
+model AnimeAiringSchedule {
+    id              Int      @id @default(autoincrement())
+    animeId         Int
+    anime           Anime    @relation(fields: [animeId], references: [id], onDelete: Cascade)
+    episodeNumber   Int
+    airingAt        DateTime
+    anilistAiringId Int?     @unique
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+
+    @@unique([animeId, episodeNumber])
+    @@index([animeId])
+    @@index([airingAt])
+}
