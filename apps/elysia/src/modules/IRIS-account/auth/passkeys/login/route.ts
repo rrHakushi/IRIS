@@ -38,12 +38,12 @@ export default defineRoute({
 
   async POST({ body, prisma, cache, request }) {
     const originHeader = request?.headers.get("origin") || request?.headers.get("referer");
-    let origin = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+    let origin = process.env.NEXTAUTH_URL!
     if (originHeader) {
       try {
         const u = new URL(originHeader);
         origin = `${u.protocol}//${u.host}`;
-      } catch {}
+      } catch { }
     }
 
     let rpID = "localhost";

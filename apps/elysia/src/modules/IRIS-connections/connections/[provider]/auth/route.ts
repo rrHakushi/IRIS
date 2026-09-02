@@ -58,10 +58,8 @@ export default defineRoute({
         );
       }
 
-      const apiUrl =
-        process.env.API_URL ||
-        process.env.NEXT_PUBLIC_API_URL ||
-        `http://localhost:${process.env.ELYSIA_PORT || 4000}`;
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL
+
       const defaultCallback = `${apiUrl}/connections/${provider.toLowerCase()}/callback`;
       const redirectUri = query?.redirectUri || defaultCallback;
 

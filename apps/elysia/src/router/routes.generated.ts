@@ -101,6 +101,41 @@ function getRouteLimiter(key: string, config: unknown) {
   return l;
 }
 
+export const globalCacheKeyStorage: Record<string, Record<string, any>> = {};
+function deepMergeCacheKeys(target: Record<string, any>, source: Record<string, any>) {
+  for (const [key, val] of Object.entries(source)) {
+    if (typeof val === "function") {
+      target[key] = val;
+    } else if (val && typeof val === "object") {
+      if (!target[key] || typeof target[key] !== "object") {
+        target[key] = {};
+      }
+      deepMergeCacheKeys(target[key], val);
+    }
+  }
+}
+if ((route_59 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_59 as any).cacheKeys);
+}
+if ((route_60 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_60 as any).cacheKeys);
+}
+if ((route_62 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_62 as any).cacheKeys);
+}
+if ((route_63 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_63 as any).cacheKeys);
+}
+if ((route_64 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_64 as any).cacheKeys);
+}
+if ((route_65 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_65 as any).cacheKeys);
+}
+if ((route_68 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_68 as any).cacheKeys);
+}
+
 export const routes = new Elysia({ name: "iris-routes" })
   .get("/health", () => ({
     status: "ok",
@@ -115,6 +150,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_0 as any).rateLimits?.POST ?? (route_0 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_0_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -126,6 +162,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_1 as any).rateLimits?.DELETE ?? (route_1 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_1_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -137,6 +174,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_1 as any).rateLimits?.PATCH ?? (route_1 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_1_PATCH", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -148,6 +186,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_2 as any).rateLimits?.GET ?? (route_2 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_2_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -159,6 +198,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_2 as any).rateLimits?.POST ?? (route_2 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_2_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -170,6 +210,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_3 as any).rateLimits?.POST ?? (route_3 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_3_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -181,6 +222,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_4 as any).rateLimits?.POST ?? (route_4 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_4_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -192,6 +234,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_5 as any).rateLimits?.POST ?? (route_5 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_5_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -203,6 +246,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_6 as any).rateLimits?.POST ?? (route_6 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_6_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -214,6 +258,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_7 as any).rateLimits?.POST ?? (route_7 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_7_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -225,6 +270,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_8 as any).rateLimits?.DELETE ?? (route_8 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_8_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -236,6 +282,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_9 as any).rateLimits?.POST ?? (route_9 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_9_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -247,6 +294,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_10 as any).rateLimits?.POST ?? (route_10 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_10_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -258,6 +306,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_11 as any).rateLimits?.POST ?? (route_11 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_11_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -269,6 +318,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_12 as any).rateLimits?.POST ?? (route_12 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_12_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -280,6 +330,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_13 as any).rateLimits?.GET ?? (route_13 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_13_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -291,6 +342,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_14 as any).rateLimits?.POST ?? (route_14 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_14_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -302,6 +354,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_15 as any).rateLimits?.POST ?? (route_15 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_15_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -313,6 +366,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_16 as any).rateLimits?.POST ?? (route_16 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_16_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -324,6 +378,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_17 as any).rateLimits?.POST ?? (route_17 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_17_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -335,6 +390,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_18 as any).rateLimits?.POST ?? (route_18 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_18_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -346,6 +402,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_19 as any).rateLimits?.GET ?? (route_19 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_19_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -357,6 +414,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_20 as any).rateLimits?.POST ?? (route_20 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_20_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -368,6 +426,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_21 as any).rateLimits?.POST ?? (route_21 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_21_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -379,6 +438,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_22 as any).rateLimits?.POST ?? (route_22 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_22_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -390,6 +450,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_23 as any).rateLimits?.POST ?? (route_23 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_23_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -401,6 +462,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_24 as any).rateLimits?.PATCH ?? (route_24 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_24_PATCH", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -412,6 +474,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_25 as any).rateLimits?.GET ?? (route_25 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_25_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -423,6 +486,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_25 as any).rateLimits?.DELETE ?? (route_25 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_25_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -434,6 +498,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_26 as any).rateLimits?.POST ?? (route_26 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_26_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -445,6 +510,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_27 as any).rateLimits?.GET ?? (route_27 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_27_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -456,6 +522,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_27 as any).rateLimits?.DELETE ?? (route_27 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_27_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -466,6 +533,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_28 as any).rateLimits?.GET ?? (route_28 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_28_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -477,6 +545,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_29 as any).rateLimits?.POST ?? (route_29 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_29_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -488,6 +557,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_29 as any).rateLimits?.DELETE ?? (route_29 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_29_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -499,6 +569,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_30 as any).rateLimits?.GET ?? (route_30 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_30_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -510,6 +581,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_30 as any).rateLimits?.POST ?? (route_30 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_30_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -521,6 +593,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_31 as any).rateLimits?.GET ?? (route_31 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_31_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -532,6 +605,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_31 as any).rateLimits?.PATCH ?? (route_31 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_31_PATCH", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -543,6 +617,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_32 as any).rateLimits?.DELETE ?? (route_32 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_32_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -554,6 +629,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_32 as any).rateLimits?.PATCH ?? (route_32 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_32_PATCH", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -565,6 +641,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_33 as any).rateLimits?.POST ?? (route_33 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_33_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -576,6 +653,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_34 as any).rateLimits?.POST ?? (route_34 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_34_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -587,6 +665,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_35 as any).rateLimits?.GET ?? (route_35 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_35_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -598,6 +677,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_36 as any).rateLimits?.GET ?? (route_36 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_36_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -609,6 +689,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_37 as any).rateLimits?.GET ?? (route_37 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_37_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -620,6 +701,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_38 as any).rateLimits?.GET ?? (route_38 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_38_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -631,6 +713,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_38 as any).rateLimits?.POST ?? (route_38 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_38_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -642,6 +725,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_39 as any).rateLimits?.GET ?? (route_39 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_39_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -653,6 +737,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_40 as any).rateLimits?.GET ?? (route_40 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_40_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -664,6 +749,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_40 as any).rateLimits?.POST ?? (route_40 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_40_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -675,6 +761,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_40 as any).rateLimits?.DELETE ?? (route_40 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_40_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -686,6 +773,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_41 as any).rateLimits?.GET ?? (route_41 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_41_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -697,6 +785,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_42 as any).rateLimits?.GET ?? (route_42 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_42_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -708,6 +797,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_42 as any).rateLimits?.POST ?? (route_42 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_42_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -719,6 +809,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_42 as any).rateLimits?.DELETE ?? (route_42 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_42_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -730,6 +821,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_43 as any).rateLimits?.GET ?? (route_43 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_43_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -741,6 +833,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_44 as any).rateLimits?.GET ?? (route_44 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_44_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -752,6 +845,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_44 as any).rateLimits?.POST ?? (route_44 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_44_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -763,6 +857,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_44 as any).rateLimits?.DELETE ?? (route_44 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_44_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -774,6 +869,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_45 as any).rateLimits?.GET ?? (route_45 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_45_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -785,6 +881,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_46 as any).rateLimits?.GET ?? (route_46 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_46_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -796,6 +893,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_46 as any).rateLimits?.POST ?? (route_46 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_46_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -807,6 +905,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_46 as any).rateLimits?.DELETE ?? (route_46 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_46_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -818,6 +917,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_47 as any).rateLimits?.GET ?? (route_47 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_47_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -829,6 +929,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_48 as any).rateLimits?.GET ?? (route_48 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_48_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -840,6 +941,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_48 as any).rateLimits?.POST ?? (route_48 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_48_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -851,6 +953,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_48 as any).rateLimits?.DELETE ?? (route_48 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_48_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -862,6 +965,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_49 as any).rateLimits?.GET ?? (route_49 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_49_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -873,6 +977,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_50 as any).rateLimits?.GET ?? (route_50 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_50_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -884,6 +989,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_50 as any).rateLimits?.POST ?? (route_50 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_50_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -895,6 +1001,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_50 as any).rateLimits?.DELETE ?? (route_50 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_50_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -906,6 +1013,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_51 as any).rateLimits?.GET ?? (route_51 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_51_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -917,6 +1025,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_52 as any).rateLimits?.GET ?? (route_52 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_52_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -928,6 +1037,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_52 as any).rateLimits?.POST ?? (route_52 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_52_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -939,6 +1049,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_52 as any).rateLimits?.DELETE ?? (route_52 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_52_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -950,6 +1061,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_53 as any).rateLimits?.GET ?? (route_53 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_53_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -961,6 +1073,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_54 as any).rateLimits?.GET ?? (route_54 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_54_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -972,6 +1085,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_54 as any).rateLimits?.POST ?? (route_54 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_54_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -983,6 +1097,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_54 as any).rateLimits?.DELETE ?? (route_54 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_54_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -994,6 +1109,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_55 as any).rateLimits?.GET ?? (route_55 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_55_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1005,6 +1121,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_56 as any).rateLimits?.POST ?? (route_56 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_56_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1016,6 +1133,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_56 as any).rateLimits?.DELETE ?? (route_56 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_56_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1027,6 +1145,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_57 as any).rateLimits?.GET ?? (route_57 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_57_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1038,6 +1157,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_57 as any).rateLimits?.DELETE ?? (route_57 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_57_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1049,6 +1169,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_57 as any).rateLimits?.PATCH ?? (route_57 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_57_PATCH", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1060,6 +1181,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_58 as any).rateLimits?.GET ?? (route_58 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_58_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1071,6 +1193,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_58 as any).rateLimits?.POST ?? (route_58 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_58_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1082,6 +1205,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_59 as any).rateLimits?.GET ?? (route_59 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_59_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1093,6 +1217,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_60 as any).rateLimits?.GET ?? (route_60 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_60_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1104,6 +1229,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_61 as any).rateLimits?.GET ?? (route_61 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_61_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1115,6 +1241,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_62 as any).rateLimits?.GET ?? (route_62 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_62_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1126,6 +1253,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_63 as any).rateLimits?.GET ?? (route_63 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_63_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1137,6 +1265,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_64 as any).rateLimits?.GET ?? (route_64 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_64_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1148,6 +1277,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_65 as any).rateLimits?.GET ?? (route_65 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_65_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1159,6 +1289,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_66 as any).rateLimits?.GET ?? (route_66 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_66_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1170,6 +1301,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_67 as any).rateLimits?.GET ?? (route_67 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_67_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1181,6 +1313,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_68 as any).rateLimits?.GET ?? (route_68 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_68_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1192,6 +1325,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_69 as any).rateLimits?.GET ?? (route_69 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_69_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1203,6 +1337,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_70 as any).rateLimits?.GET ?? (route_70 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_70_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1214,6 +1349,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_71 as any).rateLimits?.GET ?? (route_71 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_71_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1225,6 +1361,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_72 as any).rateLimits?.GET ?? (route_72 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_72_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1236,6 +1373,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_73 as any).rateLimits?.GET ?? (route_73 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_73_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1247,6 +1385,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_74 as any).rateLimits?.GET ?? (route_74 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_74_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1258,6 +1397,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_75 as any).rateLimits?.GET ?? (route_75 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_75_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1269,6 +1409,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_76 as any).rateLimits?.GET ?? (route_76 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_76_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1280,6 +1421,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_77 as any).rateLimits?.GET ?? (route_77 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_77_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1291,6 +1433,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_78 as any).rateLimits?.GET ?? (route_78 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_78_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1302,6 +1445,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_79 as any).rateLimits?.DELETE ?? (route_79 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_79_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1313,6 +1457,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_80 as any).rateLimits?.POST ?? (route_80 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_80_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1324,6 +1469,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_81 as any).rateLimits?.GET ?? (route_81 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_81_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1335,6 +1481,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_82 as any).rateLimits?.POST ?? (route_82 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_82_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1346,6 +1493,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_83 as any).rateLimits?.GET ?? (route_83 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_83_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1357,6 +1505,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_83 as any).rateLimits?.POST ?? (route_83 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_83_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1368,6 +1517,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_83 as any).rateLimits?.DELETE ?? (route_83 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_83_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1379,6 +1529,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_83 as any).rateLimits?.PATCH ?? (route_83 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_83_PATCH", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1390,6 +1541,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_84 as any).rateLimits?.POST ?? (route_84 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_84_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
@@ -1401,6 +1553,7 @@ export const routes = new Elysia({ name: "iris-routes" })
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_85 as any).rateLimits?.GET ?? (route_85 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_85_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   );

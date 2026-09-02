@@ -97,16 +97,19 @@ export interface GeneratorOptions {
   modulesDir?: string
   /** Output file destination for the generated Elysia app manifest. */
   outputFile?: string
+  /** Output file destination for the generated cache key types. */
+  cacheKeysOutputFile?: string
   /** Suppress console output when files are generated. */
   silent?: boolean
 }
 
 /**
  * Generates a statically typed Elysia route manifest (routes.generated.ts)
- * from all route.ts files in src/modules.
+ * and cache keys type definition (cache-keys.generated.ts) from all route.ts files in src/modules.
  *
- * Inspects default route exports, preserves TypeBox response schemas without casting to any,
- * wraps request handlers in logging and rate limiting contexts, and outputs an Elysia router.
+ * Inspects default route exports, aggregates all cacheKeys with duplicate detection,
+ * preserves TypeBox response schemas without casting to any, wraps request handlers
+ * in logging and rate limiting contexts, and outputs an Elysia router.
  *
  * @param options - Generator configuration options
  */
@@ -116,12 +119,90 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
   const outputFile =
     options.outputFile ||
     path.resolve(import.meta.dirname, "routes.generated.ts")
+  const cacheKeysOutputFile =
+    options.cacheKeysOutputFile ||
+    path.resolve(import.meta.dirname, "cache-keys.generated.ts")
+
+type NestedTypeMap = { [key: string]: string | NestedTypeMap }
+
+function collectCacheKeysRecursively(
+  obj: Record<string, any>,
+  prefix: string,
+  relativePath: string,
+  targetTypeMap: NestedTypeMap,
+  cacheKeyRegistry: Map<string, string>,
+  sourceCode: string
+) {
+  for (const [key, val] of Object.entries(obj)) {
+    const fullPath = prefix ? `${prefix}.${key}` : key
+    if (typeof val === "function") {
+      const existing = cacheKeyRegistry.get(fullPath)
+      if (existing) {
+        throw new Error(
+          `[Eden Generator] Duplicate cache key "${fullPath}" found in "${relativePath}". It was already defined in "${existing}". Cache keys must be unique across all routes.`
+        )
+      }
+      cacheKeyRegistry.set(fullPath, relativePath)
+
+      // Extract function parameter signature from source code if available
+      let paramSig = "...args: any[]"
+      if (sourceCode) {
+        const keyRegex = new RegExp(
+          `(?:['"]?${key}['"]?\\s*:\\s*(?:async\\s*)?\\(([^)]*)\\)|(?:async\\s*)?${key}\\s*\\(([^)]*)\\))`,
+          "m"
+        )
+        const m = sourceCode.match(keyRegex)
+        if (m) {
+          const rawParams = (m[1] || m[2] || "").trim()
+          paramSig = rawParams ? rawParams : ""
+        }
+      }
+      targetTypeMap[key] = `(${paramSig}) => string`
+    } else if (val && typeof val === "object") {
+      if (!targetTypeMap[key] || typeof targetTypeMap[key] !== "object") {
+        targetTypeMap[key] = {}
+      }
+      collectCacheKeysRecursively(
+        val,
+        fullPath,
+        relativePath,
+        targetTypeMap[key] as NestedTypeMap,
+        cacheKeyRegistry,
+        sourceCode
+      )
+    }
+  }
+}
+
+function renderTypeMap(map: NestedTypeMap, indentLevel = 1): string {
+  const indent = "  ".repeat(indentLevel)
+  let out = ""
+  const keys = Object.keys(map).sort()
+  for (const k of keys) {
+    const val = map[k]
+    if (typeof val === "string") {
+      out += `${indent}${k}: ${val};\n`
+    } else if (val && typeof val === "object") {
+      out += `${indent}${k}: {\n`
+      out += renderTypeMap(val, indentLevel + 1)
+      out += `${indent}};\n`
+    }
+  }
+  return out
+}
 
   const routeFiles = findRouteFiles(modulesDir)
   routeFiles.sort()
 
   const imports: string[] = []
   const routeChains: string[] = []
+  const routesWithCacheKeys: Array<{
+    importName: string
+    relativeImport: string
+    filePath: string
+  }> = []
+  const cacheKeyRegistry = new Map<string, string>()
+  const globalTypeSignatures: NestedTypeMap = {}
 
   let routeIndex = 0
 
@@ -159,6 +240,40 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
         instance = routeExport as any
       }
 
+      // Check and aggregate cacheKeys with duplicate collision validation
+      const routeCacheKeys =
+        (instance as any)?.cacheKeys ||
+        (routeExport as any)?.cacheKeys ||
+        mod.cacheKeys
+
+      if (
+        routeCacheKeys &&
+        typeof routeCacheKeys === "object" &&
+        Object.keys(routeCacheKeys).length > 0
+      ) {
+        let sourceCode = ""
+        try {
+          sourceCode = fs.readFileSync(filePath, "utf-8")
+        } catch {
+          // ignore
+        }
+
+        collectCacheKeysRecursively(
+          routeCacheKeys,
+          "",
+          relativeModulePath,
+          globalTypeSignatures,
+          cacheKeyRegistry,
+          sourceCode
+        )
+
+        routesWithCacheKeys.push({
+          importName,
+          relativeImport,
+          filePath: relativeModulePath,
+        })
+      }
+
       for (const method of HTTP_METHODS) {
         const hasMethod =
           typeof instance[method] === "function" ||
@@ -193,6 +308,7 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (${importName} as any).rateLimits?.${method} ?? (${importName} as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("${importName}_${method}", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )`)
@@ -204,6 +320,7 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (${importName} as any).rateLimits?.${method} ?? (${importName} as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("${importName}_${method}", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )`)
@@ -215,6 +332,50 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
       console.warn(`[Eden Generator] Could not inspect ${filePath}:`, err)
     }
   }
+
+  // Generate cache-keys.generated.ts
+  let cacheKeysContent = `/* eslint-disable */
+// Automatically generated by the IRIS file router for cache key type safety.
+// Do not edit manually.
+
+export interface GlobalCacheKeys {
+${renderTypeMap(globalTypeSignatures, 1)}}
+
+export type GlobalCacheKeyStorage = GlobalCacheKeys;
+`
+
+  if (fs.existsSync(cacheKeysOutputFile)) {
+    const currentKeys = fs.readFileSync(cacheKeysOutputFile, "utf-8")
+    if (currentKeys !== cacheKeysContent) {
+      fs.writeFileSync(cacheKeysOutputFile, cacheKeysContent, "utf-8")
+    }
+  } else {
+    fs.writeFileSync(cacheKeysOutputFile, cacheKeysContent, "utf-8")
+  }
+
+  const globalKeysInit =
+    routesWithCacheKeys.length > 0
+      ? `function deepMergeCacheKeys(target: Record<string, any>, source: Record<string, any>) {
+  for (const [key, val] of Object.entries(source)) {
+    if (typeof val === "function") {
+      target[key] = val;
+    } else if (val && typeof val === "object") {
+      if (!target[key] || typeof target[key] !== "object") {
+        target[key] = {};
+      }
+      deepMergeCacheKeys(target[key], val);
+    }
+  }
+}
+` +
+        routesWithCacheKeys
+          .map(
+            (r) => `if ((${r.importName} as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (${r.importName} as any).cacheKeys);
+}`
+          )
+          .join("\n")
+      : ""
 
   const fileContent = `/* eslint-disable */
 // Automatically generated by the IRIS file router for Eden Treaty.
@@ -233,6 +394,9 @@ function getRouteLimiter(key: string, config: unknown) {
   }
   return l;
 }
+
+export const globalCacheKeyStorage: Record<string, Record<string, any>> = {};
+${globalKeysInit}
 
 export const routes = new Elysia({ name: "iris-routes" })
   .get("/health", () => ({

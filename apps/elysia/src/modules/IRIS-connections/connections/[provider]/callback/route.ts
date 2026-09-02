@@ -28,10 +28,8 @@ export default defineRoute({
     },
     async handler({ params, query, request, prisma }) {
       const provider = params.provider.toUpperCase() as ConnectionProvider;
-      const frontendBase =
-        process.env.NEXT_PUBLIC_APP_URL ||
-        process.env.NEXTAUTH_URL ||
-        "http://localhost:3000";
+      const frontendBase = process.env.NEXTAUTH_URL
+
 
       const defaultErrorRedirect = (msg: string) =>
         Response.redirect(
@@ -44,7 +42,7 @@ export default defineRoute({
         if (request?.url) {
           rawUrlParams = new URL(request.url).searchParams;
         }
-      } catch {}
+      } catch { }
 
       if (query?.error) {
         const msg = query.error_description || query.error || "Authorization declined";

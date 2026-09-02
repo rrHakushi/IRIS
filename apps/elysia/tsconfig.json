@@ -4,11 +4,20 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "types": ["bun", "node"],
+    "types": [
+      "bun",
+      "node"
+    ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@IRIS/connections": ["../../packages/connections/src/index.ts"],
-      "@IRIS/connections/*": ["../../packages/connections/src/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@IRIS/connections": [
+        "../../packages/connections/src/index.ts"
+      ],
+      "@IRIS/connections/*": [
+        "../../packages/connections/src/*"
+      ]
     },
     "declaration": false,
     "declarationMap": false,
@@ -18,6 +27,12 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*",
+    "types.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

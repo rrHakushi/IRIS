@@ -10,11 +10,11 @@ export const cache = new CacheManager({
   redis: process.env.REDIS_URL
     ? { url: process.env.REDIS_URL }
     : {
-        host: process.env.REDIS_HOST || "127.0.0.1",
-        port: Number(process.env.REDIS_PORT) || 6379,
-        password: process.env.REDIS_PASSWORD || undefined,
-        db: process.env.REDIS_DB ? Number(process.env.REDIS_DB) : undefined,
-      },
+      host: process.env.REDIS_HOST,
+      port: Number(process.env.REDIS_PORT),
+      password: process.env.REDIS_PASSWORD,
+      db: Number(process.env.REDIS_DB),
+    },
   defaultTtlSeconds: process.env.CACHE_DEFAULT_TTL
     ? Number(process.env.CACHE_DEFAULT_TTL)
     : 300,

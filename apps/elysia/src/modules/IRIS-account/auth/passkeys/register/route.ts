@@ -65,12 +65,12 @@ export default defineRoute({
     }
 
     const originHeader = request?.headers.get("origin") || request?.headers.get("referer");
-    let origin = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+    let origin = process.env.NEXTAUTH_URL!
     if (originHeader) {
       try {
         const u = new URL(originHeader);
         origin = `${u.protocol}//${u.host}`;
-      } catch {}
+      } catch { }
     }
 
     let rpID = "localhost";
@@ -118,11 +118,11 @@ export default defineRoute({
       })),
       authenticatorSelection: options.authenticatorSelection
         ? {
-            authenticatorAttachment: options.authenticatorSelection.authenticatorAttachment,
-            requireResidentKey: options.authenticatorSelection.requireResidentKey,
-            residentKey: options.authenticatorSelection.residentKey,
-            userVerification: options.authenticatorSelection.userVerification,
-          }
+          authenticatorAttachment: options.authenticatorSelection.authenticatorAttachment,
+          requireResidentKey: options.authenticatorSelection.requireResidentKey,
+          residentKey: options.authenticatorSelection.residentKey,
+          userVerification: options.authenticatorSelection.userVerification,
+        }
         : undefined,
       timeout: options.timeout ?? 60000,
       attestation: options.attestation ?? "none",

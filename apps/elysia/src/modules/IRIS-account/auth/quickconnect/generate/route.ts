@@ -33,10 +33,7 @@ export default defineRoute({
     // 2. Generate private 256-bit unguessable polling session token
     const sessionToken = randomBytes(32).toString("hex");
 
-    const baseUrl =
-      process.env.NEXTAUTH_URL ||
-      process.env.NEXT_PUBLIC_URL ||
-      "http://localhost:3000";
+    const baseUrl = process.env.NEXTAUTH_URL!
     const qrPayload = `${baseUrl.replace(/\/$/, "")}/auth-test?code=${code}`;
 
     // 3. Store pairing records in cache (300 seconds TTL)

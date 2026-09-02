@@ -10,13 +10,13 @@ import type {
   NotificationActionStatus,
 } from "@IRIS/database";
 
-let pqeServiceLogged = false;
+let notificationServiceLogged = false;
 
-export function logPqeServiceStatus(): void {
-  if (pqeServiceLogged) return;
-  pqeServiceLogged = true;
+export function logNotificationServiceStatus(): void {
+  if (notificationServiceLogged) return;
+  notificationServiceLogged = true;
 
-  logger.service("pqe-notification", "post-quantum encrypted notifications");
+  logger.service("notification", "notifications service");
 
   const missingRequired: string[] = [];
   if (!process.env.DATABASE_URL) {
@@ -36,7 +36,7 @@ export function logPqeServiceStatus(): void {
 }
 
 // Auto-log on module initialization
-logPqeServiceStatus();
+logNotificationServiceStatus();
 
 export interface ActionInputDefinition {
   id: string;
@@ -70,7 +70,7 @@ export interface ActionConfirmDefinition {
   rejectVariant?: "default" | "destructive" | "outline" | "secondary";
 }
 
-export interface PqeNotificationContent {
+export interface NotificationContent {
   title: string;
   body: string;
   icon?: string;
@@ -81,13 +81,13 @@ export interface PqeNotificationContent {
   metadata?: Record<string, unknown>;
 }
 
-export interface SendPqeNotificationParams {
+export interface SendNotificationParams {
   userId: string;
   app: string;
   category: string;
   type?: NotificationType;
   priority?: NotificationPriority;
-  content: PqeNotificationContent;
+  content: NotificationContent;
   actionHandler?: string;
   expiresAt?: Date | null;
 }
@@ -95,12 +95,12 @@ export interface SendPqeNotificationParams {
 /**
  * Encrypts a notification content object for a recipient using their ML-KEM-768 public key and AES-256-GCM.
  */
-export function encryptPqeContent(
-  content: PqeNotificationContent,
+export function encryptNotificationContent(
+  content: NotificationContent,
   publicKeyBase64: string
 ): { kemCiphertext: string; encryptedData: string } {
   const recipientPublicKey = new Uint8Array(Buffer.from(publicKeyBase64, "base64"));
-  
+
   // 1. Post-Quantum KEM Encapsulation
   const { cipherText, sharedSecret } = ml_kem768.encapsulate(recipientPublicKey);
 
@@ -126,11 +126,11 @@ export function encryptPqeContent(
 /**
  * Decrypts a notification encrypted payload using the user's ML-KEM-768 secret key.
  */
-export function decryptPqeContent(
+export function decryptNotificationContent(
   kemCiphertextBase64: string,
   encryptedData: string,
   secretKey: Uint8Array
-): PqeNotificationContent {
+): NotificationContent {
   const parts = encryptedData.split(":");
   if (parts.length !== 3) {
     throw new Error("Invalid encrypted notification payload format (expected iv:authTag:cipher)");
@@ -142,7 +142,7 @@ export function decryptPqeContent(
   const cipher = hexToBytes(cipherHex!);
 
   const cipherText = new Uint8Array(Buffer.from(kemCiphertextBase64, "base64"));
-  
+
   // 1. Post-Quantum KEM Decapsulation
   const sharedSecret = ml_kem768.decapsulate(cipherText, secretKey);
 
@@ -155,23 +155,23 @@ export function decryptPqeContent(
   const decryptedBytes = aes.decrypt(ciphertextWithTag);
 
   const jsonString = new TextDecoder().decode(decryptedBytes);
-  return JSON.parse(jsonString) as PqeNotificationContent;
+  return JSON.parse(jsonString) as NotificationContent;
 }
 
 /**
- * Creates, post-quantum encrypts, saves, and broadcasts a notification to a recipient.
+ * Creates, encrypts, saves, and broadcasts a notification to a recipient.
  */
-export async function sendPqeNotification(params: SendPqeNotificationParams) {
+export async function sendNotification(params: SendNotificationParams) {
   const user = await prisma.user.findUnique({
     where: { id: params.userId },
     select: { id: true, publicKey: true },
   });
 
   if (!user || !user.publicKey) {
-    throw new Error(`Recipient user ${params.userId} has no Post-Quantum public key.`);
+    throw new Error(`Recipient user ${params.userId} has no public key.`);
   }
 
-  const { kemCiphertext, encryptedData } = encryptPqeContent(params.content, user.publicKey);
+  const { kemCiphertext, encryptedData } = encryptNotificationContent(params.content, user.publicKey);
 
   const notification = await prisma.notification.create({
     data: {

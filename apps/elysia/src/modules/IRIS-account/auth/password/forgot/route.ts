@@ -31,10 +31,7 @@ export default defineRoute({
       // Cache token for 15 minutes (900 seconds)
       await cache.set(`auth:pwd-reset:${resetToken}`, user.id, 900);
 
-      const baseUrl =
-        process.env.NEXTAUTH_URL ||
-        process.env.NEXT_PUBLIC_URL ||
-        "http://localhost:3000";
+      const baseUrl = process.env.NEXTAUTH_URL!
       const resetUrl = `${baseUrl.replace(/\/$/, "")}/auth-test?resetToken=${resetToken}`;
 
       // 3. Dispatch reset link using React Email template

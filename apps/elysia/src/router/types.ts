@@ -8,6 +8,9 @@ import type { prisma as PrismaInstance } from "@IRIS/database"
 import type { CacheManager } from "@IRIS/cache"
 import type { Session, SessionUser } from "../plugins/session"
 import type { RequestLogger } from "../utils/request-logger"
+import type { GlobalCacheKeyStorage } from "./cache-keys.generated"
+
+export type { GlobalCacheKeyStorage }
 
 /**
  * Rate limiting configuration applied to a route or HTTP method.
@@ -93,13 +96,26 @@ export type SchemaBody<S> = S extends { body: infer B }
   : unknown
 
 /**
- * Strongly-typed Elysia route context including Prisma client and Bearer token.
+ * A cache key generator function.
+ */
+export type RouteCacheKeyGenerator = (...args: any[]) => string
+
+/**
+ * Nested map of cache key generator functions organized by namespace.
+ * Supports arbitrary levels of nesting.
+ * E.g. { anime: { id: (id: number) => `anime:${id}` }, manga: { recents: { id: (id: number) => `manga:recents:${id}` } } }
+ */
+export type RouteCacheKeyStorage = Record<string, any>
+
+/**
+ * Strongly-typed Elysia route context including Prisma client, cache, session, cacheKeys, and logger.
  */
 export type Context<
   TParams extends Record<string, unknown> = Record<string, string | undefined>,
   TQuery extends Record<string, unknown> = Record<string, unknown>,
   TBody = unknown,
-> = ElysiaContext & {
+  TCacheKeys extends RouteCacheKeyStorage = {},
+> = {
   /**
    * Database client connected via @IRIS/database
    */
@@ -109,16 +125,16 @@ export type Context<
    */
   cache: CacheManager
   /**
+   * Injected cache key generator functions defined across all route definitions.
+   */
+  cacheKeys: TCacheKeys & GlobalCacheKeyStorage
+  /**
    * Extracted session context (NextAuth cookie -> Bearer token -> API key)
    * Provides helper methods: .getUser(), .status, .hasPermission(), .requireUser()
    */
   session: Session
   /**
    * Request-scoped logger that groups output under the current request
-   */
-  log: RequestLogger
-  /**
-   * Request-scoped logger that groups output under the current request (alias for log)
    */
   logger: RequestLogger
   /**
@@ -133,6 +149,38 @@ export type Context<
    * Parsed request body payload
    */
   body: TBody
+  /**
+   * HTTP response mutator
+   */
+  set: ElysiaContext["set"]
+  /**
+   * Web standard Request object
+   */
+  request: ElysiaContext["request"]
+  /**
+   * Global state store
+   */
+  store: ElysiaContext["store"]
+  /**
+   * Request headers map
+   */
+  headers: Record<string, string | undefined>
+  /**
+   * Request cookies
+   */
+  cookie: ElysiaContext["cookie"]
+  /**
+   * HTTP redirect helper
+   */
+  redirect: ElysiaContext["redirect"]
+  /**
+   * Elysia error helper
+   */
+  error: (code: number | string, response?: unknown) => unknown
+  /**
+   * Current request path
+   */
+  path: string
 }
 
 /**
@@ -142,7 +190,8 @@ export type RouteContext<
   TParams extends Record<string, unknown> = Record<string, string | undefined>,
   TQuery extends Record<string, unknown> = Record<string, unknown>,
   TBody = unknown,
-> = Context<TParams, TQuery, TBody>
+  TCacheKeys extends RouteCacheKeyStorage = {},
+> = Context<TParams, TQuery, TBody, TCacheKeys>
 
 /**
  * General route handler callback.
@@ -151,7 +200,10 @@ export type RouteHandler<
   TParams extends Record<string, unknown> = Record<string, string | undefined>,
   TQuery extends Record<string, unknown> = Record<string, unknown>,
   TBody = unknown,
-> = (ctx: Context<TParams, TQuery, TBody>) => unknown | Promise<unknown>
+  TCacheKeys extends RouteCacheKeyStorage = {},
+> = (
+  ctx: Context<TParams, TQuery, TBody, TCacheKeys>
+) => unknown | Promise<unknown>
 
 /**
  * Route handler for HTTP methods that do not support a request body (GET, HEAD, OPTIONS).
@@ -160,8 +212,9 @@ export type RouteHandler<
 export type NoBodyRouteHandler<
   TParams extends Record<string, unknown> = Record<string, string | undefined>,
   TQuery extends Record<string, unknown> = Record<string, unknown>,
+  TCacheKeys extends RouteCacheKeyStorage = {},
 > = (
-  ctx: Omit<Context<TParams, TQuery, never>, "body">
+  ctx: Omit<Context<TParams, TQuery, never, TCacheKeys>, "body">
 ) => unknown | Promise<unknown>
 
 /**
@@ -181,10 +234,11 @@ export interface MethodConfig<
   TQuery extends Record<string, unknown> = Record<string, unknown>,
   TBody = unknown,
   S extends RouteSchema = RouteSchema,
+  TCacheKeys extends RouteCacheKeyStorage = {},
 > {
   schema?: S
   rateLimit?: RateLimitConfig
-  handler: RouteHandler<TParams, TQuery, TBody>
+  handler: RouteHandler<TParams, TQuery, TBody, TCacheKeys>
 }
 
 /**
@@ -194,10 +248,11 @@ export interface NoBodyMethodConfig<
   TParams extends Record<string, unknown> = Record<string, string | undefined>,
   TQuery extends Record<string, unknown> = Record<string, unknown>,
   S extends NoBodyRouteSchema = NoBodyRouteSchema,
+  TCacheKeys extends RouteCacheKeyStorage = {},
 > {
   schema?: S
   rateLimit?: RateLimitConfig
-  handler: NoBodyRouteHandler<TParams, TQuery>
+  handler: NoBodyRouteHandler<TParams, TQuery, TCacheKeys>
 }
 
 /**
@@ -205,21 +260,18 @@ export interface NoBodyMethodConfig<
  */
 export type MethodField<
   GlobalSchema extends RouteSchema = RouteSchema,
-  LocalMethodSchema extends RouteSchema = GlobalSchema,
+  TCacheKeys extends RouteCacheKeyStorage = {},
 > =
   | RouteHandler<
-      SchemaParams<LocalMethodSchema>,
-      SchemaQuery<LocalMethodSchema>,
-      SchemaBody<LocalMethodSchema>
+      SchemaParams<GlobalSchema>,
+      SchemaQuery<GlobalSchema>,
+      SchemaBody<GlobalSchema>,
+      TCacheKeys
     >
   | {
-      schema?: LocalMethodSchema
+      schema?: RouteSchema
       rateLimit?: RateLimitConfig
-      handler: RouteHandler<
-        SchemaParams<LocalMethodSchema>,
-        SchemaQuery<LocalMethodSchema>,
-        SchemaBody<LocalMethodSchema>
-      >
+      handler: RouteHandler<any, any, any, TCacheKeys>
     }
 
 /**
@@ -227,19 +279,17 @@ export type MethodField<
  */
 export type NoBodyMethodField<
   GlobalSchema extends RouteSchema = RouteSchema,
-  LocalMethodSchema extends NoBodyRouteSchema = GlobalSchema,
+  TCacheKeys extends RouteCacheKeyStorage = {},
 > =
   | NoBodyRouteHandler<
-      SchemaParams<LocalMethodSchema>,
-      SchemaQuery<LocalMethodSchema>
+      SchemaParams<GlobalSchema>,
+      SchemaQuery<GlobalSchema>,
+      TCacheKeys
     >
   | {
-      schema?: LocalMethodSchema
+      schema?: NoBodyRouteSchema
       rateLimit?: RateLimitConfig
-      handler: NoBodyRouteHandler<
-        SchemaParams<LocalMethodSchema>,
-        SchemaQuery<LocalMethodSchema>
-      >
+      handler: NoBodyRouteHandler<any, any, TCacheKeys>
     }
 
 /**
@@ -247,86 +297,84 @@ export type NoBodyMethodField<
  */
 export interface RouteDefinition<
   S extends RouteSchema = RouteSchema,
-  GetS extends NoBodyRouteSchema = S,
-  PostS extends RouteSchema = S,
-  PutS extends RouteSchema = S,
-  DeleteS extends RouteSchema = S,
-  PatchS extends RouteSchema = S,
-  OptionsS extends NoBodyRouteSchema = S,
-  HeadS extends NoBodyRouteSchema = S,
-  AllS extends RouteSchema = S,
+  K extends RouteCacheKeyStorage = {},
 > {
+  cacheKeys?: K
   rateLimit?: RateLimitConfig
   rateLimits?: Partial<Record<HttpMethodKey, RateLimitConfig>>
   schema?: S
   schemas?: Partial<Record<HttpMethodKey, RouteSchema>>
 
-  GET?: NoBodyMethodField<S, GetS>
-  HEAD?: NoBodyMethodField<S, HeadS>
-  OPTIONS?: NoBodyMethodField<S, OptionsS>
+  GET?: NoBodyMethodField<S, K>
+  HEAD?: NoBodyMethodField<S, K>
+  OPTIONS?: NoBodyMethodField<S, K>
 
-  POST?: MethodField<S, PostS>
-  PUT?: MethodField<S, PutS>
-  DELETE?: MethodField<S, DeleteS>
-  PATCH?: MethodField<S, PatchS>
-  ALL?: MethodField<S, AllS>
+  POST?: MethodField<S, K>
+  PUT?: MethodField<S, K>
+  DELETE?: MethodField<S, K>
+  PATCH?: MethodField<S, K>
+  ALL?: MethodField<S, K>
+}
+
+/**
+ * Defined route object returned by `defineRoute()`.
+ * Carries extracted cache keys and schemas while decoupling internal Context types
+ * to ensure zero circular type dependencies across modules.
+ */
+export interface DefinedRoute<
+  S extends RouteSchema = RouteSchema,
+  K extends RouteCacheKeyStorage = RouteCacheKeyStorage,
+> {
+  cacheKeys?: K
+  schema: S
+  schemas?: Partial<Record<HttpMethodKey, RouteSchema>>
+  rateLimit?: RateLimitConfig
+  rateLimits?: Partial<Record<HttpMethodKey, RateLimitConfig>>
+  GET?: unknown
+  HEAD?: unknown
+  OPTIONS?: unknown
+  POST?: unknown
+  PUT?: unknown
+  DELETE?: unknown
+  PATCH?: unknown
+  ALL?: unknown
+  [key: string]: unknown
 }
 
 /**
  * Defines a type-safe file-based route with instant parameter IntelliSense.
  * Automatically infers params, query, and body types from TypeBox schemas.
  * Methods that do not support a request body (GET, HEAD, OPTIONS) do not expose `body`.
+ * Injects `cacheKeys` and `logger` into the handler context matching `cacheKeys`.
  *
  * @example
  * ```typescript
  * import { defineRoute, t } from "@/router";
  *
  * export default defineRoute({
+ *   cacheKeys: {
+ *     anime: {
+ *       id: (id: number) => `anime:${id}`,
+ *     },
+ *   },
  *   schema: {
  *     params: t.Object({ id: t.Number() }),
  *     query: t.Object({ page: t.Optional(t.Number()) }),
  *   },
- *   GET({ params, query }) {
+ *   GET({ params, query, cacheKeys, logger }) {
+ *     const key = cacheKeys.anime.id(params.id)
  *     params.id // typed as number!
  *     query.page // typed as number | undefined!
- *     // body is not accessible on GET!
  *   },
  * });
  * ```
  */
 export function defineRoute<
   S extends RouteSchema = RouteSchema,
-  GetS extends NoBodyRouteSchema = S,
-  PostS extends RouteSchema = S,
-  PutS extends RouteSchema = S,
-  DeleteS extends RouteSchema = S,
-  PatchS extends RouteSchema = S,
-  OptionsS extends NoBodyRouteSchema = S,
-  HeadS extends NoBodyRouteSchema = S,
-  AllS extends RouteSchema = S,
+  K extends RouteCacheKeyStorage = {},
 >(
-  definition: RouteDefinition<
-    S,
-    GetS,
-    PostS,
-    PutS,
-    DeleteS,
-    PatchS,
-    OptionsS,
-    HeadS,
-    AllS
-  >
-): RouteDefinition<
-  S,
-  GetS,
-  PostS,
-  PutS,
-  DeleteS,
-  PatchS,
-  OptionsS,
-  HeadS,
-  AllS
-> & { schema: S } {
+  definition: RouteDefinition<S, K>
+): DefinedRoute<S, K> {
   return definition as any
 }
 

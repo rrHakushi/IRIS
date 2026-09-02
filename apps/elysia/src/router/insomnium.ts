@@ -133,9 +133,7 @@ export async function generateInsomniumConfig(
     options.outputFile ||
     path.resolve(import.meta.dirname, "../../insomnium.json")
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_API_URL ||
-    `http://localhost:${process.env.ELYSIA_PORT || 4000}`
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL
 
   const routeFiles = findRouteFiles(modulesDir)
 

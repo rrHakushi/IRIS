@@ -1,4 +1,4 @@
-import { sendPqeNotification } from "../services/pqe-notification.service";
+import { sendNotification } from "../services/notification.service";
 
 export interface ClientDeviceInfo {
   ip: string;
@@ -23,7 +23,7 @@ export function extractClientInfo(request: Request): ClientDeviceInfo {
     headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     headers.get("x-client-ip") ||
     "127.0.0.1";
-  
+
   const ip = rawIp.replace(/^::ffff:/, "");
 
   // 2. Parse User-Agent
@@ -77,12 +77,12 @@ export function extractClientInfo(request: Request): ClientDeviceInfo {
 }
 
 /**
- * Sends a Post-Quantum Encrypted security notification when a user logs in.
+ * Sends a security notification when a user logs in.
  */
 export async function notifyUserLogin(userId: string, request: Request) {
   try {
     const client = extractClientInfo(request);
-    await sendPqeNotification({
+    await sendNotification({
       userId,
       app: "IRIS Account",
       category: "Security",
@@ -101,20 +101,20 @@ export async function notifyUserLogin(userId: string, request: Request) {
       },
     });
   } catch (err) {
-    // Non-blocking for login if user has no PQE keys initialized yet
+    // Non-blocking for login if user has no keys initialized yet
     console.warn(`[notifyUserLogin] Failed to send login notification to ${userId}:`, err);
   }
 }
 
 /**
- * Sends a Post-Quantum Encrypted security notification when account password changes.
+ * Sends a security notification when account password changes.
  */
 export async function notifyPasswordChanged(userId: string, request?: Request) {
   try {
     const client = request ? extractClientInfo(request) : null;
     const fromPart = client ? ` from ${client.summary}` : "";
 
-    await sendPqeNotification({
+    await sendNotification({
       userId,
       app: "IRIS Account",
       category: "Security",
@@ -132,7 +132,7 @@ export async function notifyPasswordChanged(userId: string, request?: Request) {
 }
 
 /**
- * Sends a Post-Quantum Encrypted security notification when encryption password is added or changed.
+ * Sends a security notification when encryption password is added or changed.
  */
 export async function notifyEncryptionPasswordUpdated(
   userId: string,
@@ -143,7 +143,7 @@ export async function notifyEncryptionPasswordUpdated(
     const client = request ? extractClientInfo(request) : null;
     const fromPart = client ? ` from ${client.summary}` : "";
 
-    await sendPqeNotification({
+    await sendNotification({
       userId,
       app: "IRIS Account",
       category: "Security",
@@ -152,8 +152,8 @@ export async function notifyEncryptionPasswordUpdated(
       content: {
         title: "Encryption Key Vault Updated",
         body: isNew
-          ? `A dedicated post-quantum encryption password was added to your account${fromPart}.`
-          : `Your post-quantum encryption vault password was successfully updated${fromPart}.`,
+          ? `A dedicated encryption password was added to your account${fromPart}.`
+          : `Your encryption vault password was successfully updated${fromPart}.`,
         metadata: client ? { ip: client.ip, device: client.device, timestamp: new Date().toISOString() } : undefined,
       },
     });
@@ -170,7 +170,7 @@ export async function sendQuickConnectInputNotification(
   suggestedCode?: string
 ) {
   try {
-    await sendPqeNotification({
+    await sendNotification({
       userId,
       app: "IRIS Account",
       category: "Quick Connect",

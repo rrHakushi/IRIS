@@ -180,6 +180,28 @@ export class MediaQueueService {
   }
 
   /**
+   * Checks if an error is non-retryable (e.g. 404 Not Found from AniList, MAL, TVDB, etc.).
+   */
+  private isNonRetryableError(error: unknown): boolean {
+    if (!error) return false;
+    const msg = (error as Error)?.message || String(error);
+    const status = (error as any)?.status || (error as any)?.statusCode;
+    if (status === 404) return true;
+    if (
+      msg.includes("HTTP 404") ||
+      msg.includes("status\":404") ||
+      msg.includes("status: 404") ||
+      msg.includes("404") ||
+      msg.includes("Not Found") ||
+      msg.includes("not found") ||
+      msg.includes("Record not found")
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * Sets up the RxJS processing stream with concurrency control, retry backoff, and error handling.
    */
   private setupPipeline(): void {
@@ -190,6 +212,9 @@ export class MediaQueueService {
             retry({
               count: job.maxRetries ?? 3,
               delay: (error, retryCount) => {
+                if (this.isNonRetryableError(error)) {
+                  throw error;
+                }
                 const backoffMs = Math.min(30000, Math.pow(2, retryCount) * 1000);
                 logQueue(
                   `${c.magenta(c.bold("[MediaQueue]"))} ${c.yellow(`⚠️ Retry #${retryCount} for ${job.id}`)} in ${backoffMs}ms: ${(error as Error)?.message || error}`
@@ -255,7 +280,7 @@ export class MediaQueueService {
         current.push(value);
         await cache.set(key, current, 86400 * 7); // 7 days retention
       }
-    } catch {}
+    } catch { }
   }
 
   private async removeFromRedisSet(key: string, value: string): Promise<void> {
@@ -263,7 +288,7 @@ export class MediaQueueService {
       const current = await this.getRedisSet(key);
       const filtered = current.filter((item) => item !== value);
       await cache.set(key, filtered, 86400 * 7);
-    } catch {}
+    } catch { }
   }
 
   private getJobId(type: MediaJobType, externalId: string | number): string {
@@ -457,7 +482,7 @@ export class MediaQueueService {
                 `${c.magenta(c.bold("[MediaQueue]"))} 📺 [2/3] MAL received ${malEpisodes.length} named episodes with air dates.`
               );
             }
-          } catch {}
+          } catch { }
         }
 
         // Cross-site ID mapping (AniDB, TheTVDB, Bangumi, Kitsu, IMDb, TMDB)
@@ -502,7 +527,7 @@ export class MediaQueueService {
                   `${c.magenta(c.bold("[MediaQueue]"))} ⏭️ [2/3] AniSkip received skip timestamps for ${skipMap.size} episodes.`
                 );
               }
-            } catch {}
+            } catch { }
           }
         }
 
@@ -598,7 +623,7 @@ export class MediaQueueService {
               `${c.magenta(c.bold("[MediaQueue]"))} 🖼️ TheTVDB received ${tvdbImages.length} images/artworks for Series #${tvdbId}.`
             );
           }
-        } catch {}
+        } catch { }
 
         // Simkl Enrichment (Ratings, IMDb votes, certifications)
         let imdbId: string | undefined;
@@ -623,7 +648,7 @@ export class MediaQueueService {
             if (simklData.certification) parts.push(`Rated=${simklData.certification}`);
             logQueue(`${c.magenta(c.bold("[MediaQueue]"))} 📺 Simkl enriched: ${parts.join(", ")}`);
           }
-        } catch {}
+        } catch { }
 
         // Fetch English translation if available (English is always primary)
         let engTranslation: { name?: string; overview?: string } | null = null;
@@ -634,7 +659,7 @@ export class MediaQueueService {
               `${c.magenta(c.bold("[MediaQueue]"))} 🌐 English translation found: "${c.bold(engTranslation.name)}"`
             );
           }
-        } catch {}
+        } catch { }
 
         logQueue(`${c.magenta(c.bold("[MediaQueue]"))} 💾 Upserting TV Show, Seasons, Episodes, and Cast to database...`);
         const result = await mediaDbSyncer.upsertTv(series, episodes, characters, tvdbImages, simklData, engTranslation);
@@ -659,7 +684,7 @@ export class MediaQueueService {
               `${c.magenta(c.bold("[MediaQueue]"))} 🖼️ TheTVDB received ${tvdbImages.length} images/artworks for Movie #${tvdbId}.`
             );
           }
-        } catch {}
+        } catch { }
 
         // Simkl Enrichment (Ratings, IMDb votes, certifications)
         let imdbId: string | undefined;
@@ -684,7 +709,7 @@ export class MediaQueueService {
             if (simklData.certification) parts.push(`Rated=${simklData.certification}`);
             logQueue(`${c.magenta(c.bold("[MediaQueue]"))} 🎬 Simkl enriched: ${parts.join(", ")}`);
           }
-        } catch {}
+        } catch { }
 
         // Fetch English translation if available (English is always primary)
         let engTranslation: { name?: string; overview?: string } | null = null;
@@ -695,7 +720,7 @@ export class MediaQueueService {
               `${c.magenta(c.bold("[MediaQueue]"))} 🌐 English translation found: "${c.bold(engTranslation.name)}"`
             );
           }
-        } catch {}
+        } catch { }
 
         logQueue(`${c.magenta(c.bold("[MediaQueue]"))} 💾 Upserting Movie to database...`);
         const result = await mediaDbSyncer.upsertMovie(movie, tvdbImages, simklData, engTranslation);
@@ -769,7 +794,7 @@ export class MediaQueueService {
               const catStr = catNames[deckData.resolved_category] || "Unknown";
               logQueue(`${c.magenta(c.bold("[MediaQueue]"))} 🕹️ Steam Deck Compatibility: ${catStr}`);
             }
-          } catch {}
+          } catch { }
         }
 
         logQueue(`${c.magenta(c.bold("[MediaQueue]"))} 💾 Upserting Game to database...`);
@@ -829,7 +854,7 @@ export class MediaQueueService {
         localId,
         completedAt: job.completedAt,
       });
-    } catch {}
+    } catch { }
 
     // Infinite-depth relation crawling: recursively enqueue discovered relations with deduplication
     const currentDepth = job.depth || 0;
@@ -860,7 +885,7 @@ export class MediaQueueService {
   private async resolveCharacterDescriptionLinks(characterIds: number[]): Promise<void> {
     if (!characterIds || characterIds.length === 0) return;
 
-    const baseUrl = (process.env.NEXT_PUBLIC_URL || "http://localhost:3000").replace(/\/+$/, "");
+    const baseUrl = process.env.NEXTAUTH_URL!.replace(/\/+$/, "");
     const ANILIST_CHAR_URL_REGEX = /https?:\/\/(?:www\.)?anilist\.co\/character\/(\d+)(?:\/[^\s\)\"\]\.]*)?/gi;
 
     for (const charId of characterIds) {
@@ -905,7 +930,7 @@ export class MediaQueueService {
             data: { description: updatedDesc },
           });
         }
-      } catch {}
+      } catch { }
     }
   }
 
@@ -935,7 +960,7 @@ export class MediaQueueService {
         externalId: job.externalId,
         error: errorMsg,
       });
-    } catch {}
+    } catch { }
   }
 }
 

@@ -98,6 +98,42 @@ function findRouteFiles(dir: string, baseDir: string = dir): string[] {
   return results
 }
 
+/**
+ * Deeply merges and validates cache keys across routes, throwing on duplicate collisions.
+ */
+function deepMergeAndValidateCacheKeys(
+  target: Record<string, any>,
+  source: Record<string, any>,
+  prefix: string,
+  relativePath: string,
+  cacheKeyRegistry: Map<string, string>
+) {
+  for (const [key, val] of Object.entries(source)) {
+    const fullPath = prefix ? `${prefix}.${key}` : key
+    if (typeof val === "function") {
+      const existing = cacheKeyRegistry.get(fullPath)
+      if (existing) {
+        throw new Error(
+          `[Router] Duplicate cache key "${fullPath}" found in "${relativePath}". It was already defined in "${existing}". Cache keys must be unique across all routes.`
+        )
+      }
+      cacheKeyRegistry.set(fullPath, relativePath)
+      target[key] = val
+    } else if (val && typeof val === "object") {
+      if (!target[key] || typeof target[key] !== "object") {
+        target[key] = {}
+      }
+      deepMergeAndValidateCacheKeys(
+        target[key],
+        val,
+        fullPath,
+        relativePath,
+        cacheKeyRegistry
+      )
+    }
+  }
+}
+
 import { prisma } from "@IRIS/database"
 import { generateRoutes } from "./generator"
 import { generateInsomniumConfig } from "./insomnium"
@@ -233,6 +269,8 @@ export async function createRouterModule(options: RouterOptions = {}) {
     string,
     Array<{ method: string; path: string }>
   >()
+  const globalCacheKeyStorage: Record<string, Record<string, any>> = {}
+  const cacheKeyRegistry = new Map<string, string>()
 
   for (const filePath of routeFiles) {
     const relativePath = path.relative(modulesDir, filePath)
@@ -269,6 +307,27 @@ export async function createRouterModule(options: RouterOptions = {}) {
           `[Router] Skipping ${relativePath}: Default export is not a class or object.`
         )
         continue
+      }
+
+      const routeCacheKeys =
+        staticClass?.cacheKeys ||
+        instance.cacheKeys ||
+        (RouteExport as RouteDefinition)?.cacheKeys ||
+        importedModule.cacheKeys ||
+        {}
+
+      if (
+        routeCacheKeys &&
+        typeof routeCacheKeys === "object" &&
+        Object.keys(routeCacheKeys).length > 0
+      ) {
+        deepMergeAndValidateCacheKeys(
+          globalCacheKeyStorage,
+          routeCacheKeys,
+          "",
+          relativePath,
+          cacheKeyRegistry
+        )
       }
 
       const globalRateLimit =
@@ -318,7 +377,9 @@ export async function createRouterModule(options: RouterOptions = {}) {
           methodItem !== null &&
           "handler" in methodItem
         ) {
-          handler = (methodItem as MethodConfig).handler
+          handler = (methodItem as MethodConfig).handler as (
+            ctx: Context
+          ) => unknown
           if ((methodItem as MethodConfig).schema) {
             methodSchema = {
               ...methodSchema,
@@ -355,8 +416,8 @@ export async function createRouterModule(options: RouterOptions = {}) {
             )._requestLogs = store.logs
 
             const requestLogger = createRequestLogger(store)
-            ctx.log = requestLogger
             ctx.logger = requestLogger
+            ctx.cacheKeys = globalCacheKeyStorage as any
 
             return await requestLogStorage.run(store, async () => {
               if (rateLimiter) {

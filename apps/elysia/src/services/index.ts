@@ -1,11 +1,11 @@
 import { logger } from "../utils/logger.js";
 import { wsHub, WebSocketHub } from "./websocket-hub.js";
 import {
-  sendPqeNotification,
-  encryptPqeContent,
-  decryptPqeContent,
-  logPqeServiceStatus,
-} from "./pqe-notification.service.js";
+  sendNotification,
+  encryptNotificationContent,
+  decryptNotificationContent,
+  logNotificationServiceStatus,
+} from "./notification.service.js";
 import {
   mediaQueueService,
   MediaQueueService,
@@ -20,14 +20,14 @@ import {
   queueMusicFetch,
 } from "./media-queue/index.js";
 
-const loadedServices: string[] = ["websocket-hub", "pqe-notification", "media-queue"];
+const loadedServices: string[] = ["websocket-hub", "notification", "media-queue"];
 
 /**
  * Initializes and logs status for all core Elysia backend services.
  */
 export function initServices(): void {
   WebSocketHub.logStatus();
-  logPqeServiceStatus();
+  logNotificationServiceStatus();
   MediaQueueService.logStatus();
 
   logger.service.total(loadedServices.length);
@@ -36,9 +36,9 @@ export function initServices(): void {
 export {
   wsHub,
   WebSocketHub,
-  sendPqeNotification,
-  encryptPqeContent,
-  decryptPqeContent,
+  sendNotification,
+  encryptNotificationContent,
+  decryptNotificationContent,
   mediaQueueService,
   MediaQueueService,
   mediaDbSyncer,

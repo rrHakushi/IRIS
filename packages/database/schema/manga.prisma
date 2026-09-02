@@ -21,7 +21,7 @@ model Manga {
     id             Int     @id @default(autoincrement())
     anilistId      Int?    @unique
     malId          Int?    @unique
-    mangaUpdatesId String? @unique
+    mangaUpdatesId String?
     kitsuId        Int?    @unique
     bangumiId      Int?    @unique
 

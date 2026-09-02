@@ -1,53 +1,98 @@
 import { defineRoute, t } from "@/router";
-import { queueBookFetch } from "@/services/media-queue";
+import { mediaDbSyncer, queueBookFetch } from "@/services/media-queue";
+import type { Prisma } from "@IRIS/database";
+import { NotFound } from "elysia";
+import { BookResponseSchema } from "./types";
+import { NotFoundResponseSchema } from "../../../../../../types";
+import { fetchMediaRelations, type MediaRelationItem } from "@/modules/IRIS-media/helpers/media-relations";
+
+const BOOK_CACHE_TTL = 60 * 60 * 12; // 12 hours
+
+export const bookInclude = {
+  characters: {
+    include: {
+      character: true,
+      actor: true,
+    },
+  },
+  genres: true,
+  tags: true,
+  staff: {
+    include: {
+      person: true,
+    },
+  },
+  studios: {
+    include: {
+      studio: true,
+    },
+  },
+} as const satisfies Prisma.BookInclude;
+
+export type BookDetails = NonNullable<
+  Prisma.BookGetPayload<{
+    include: typeof bookInclude;
+  }>
+> & {
+  relations: MediaRelationItem[];
+};
 
 export default defineRoute({
-  schema: {
-    params: t.Object({
-      id: t.String(),
-    }),
-    response: {
-      200: t.Any(),
+  cacheKeys: {
+    book: {
+      id: (id: number) => `book:${id}`,
     },
   },
 
-  async GET({ params, prisma }) {
-    // await queueBookFetch(params.id, { forceRefresh: true });
+  schema: {
+    params: t.Object({
+      id: t.Number({ minimum: 1 }),
+    }),
+    response: {
+      200: BookResponseSchema,
+      404: NotFoundResponseSchema,
+    },
+    detail: {
+      summary: "Get book by ID",
+      description: "Fetches book details with characters, staff, studios, tags, genres, and media relations.",
+      tags: ["Media - Book"],
+    },
+  },
 
-    const isNumeric = /^\d+$/.test(params.id);
-    const numId = isNumeric ? parseInt(params.id, 10) : null;
+  async GET({ params, prisma, cache, cacheKeys, logger }) {
+    const id = params.id;
+    const cacheKey = cacheKeys.book.id(id);
 
-    const data = await prisma.book.findFirst({
+    const cached = await cache.get<BookDetails>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const data = await prisma.book.findUnique({
       where: {
-        OR: [
-          ...(numId ? [{ id: numId }] : []),
-          { googleBookId: params.id },
-          { isbn13: params.id },
-          { isbn10: params.id },
-        ],
+        id: id,
       },
-      include: {
-        genres: true,
-        tags: true,
-        studios: {
-          include: {
-            studio: true,
-          },
-        },
-        staff: {
-          include: {
-            person: true,
-          },
-        },
-        characters: {
-          include: {
-            character: true,
-            actor: true,
-          },
-        },
-      },
+      include: bookInclude,
     });
 
-    return data;
+    if (!data) {
+      return new NotFound(`Book not found with ID ${id}`);
+    }
+
+    const relations = await fetchMediaRelations(prisma, "BOOK", data.id);
+    const result: BookDetails = {
+      ...data,
+      relations,
+    };
+
+    await cache.set(cacheKey, result, BOOK_CACHE_TTL);
+
+    if (data.googleBookId && mediaDbSyncer.isRecordStale(data, "BOOK")) {
+      void queueBookFetch(data.googleBookId).catch((err) => {
+        logger.error(`[BookRoute] Failed to queue background fetch for id ${id} (googleBook id ${data.googleBookId}):`, err);
+      });
+    }
+
+    return result;
   },
 });

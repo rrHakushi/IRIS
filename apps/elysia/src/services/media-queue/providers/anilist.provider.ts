@@ -318,12 +318,19 @@ export class AniListProvider {
 
     if (!res.ok) {
       const errText = await res.text().catch(() => "");
-      throw new Error(`[AniListProvider] GraphQL HTTP ${res.status}: ${errText}`);
+      const error: any = new Error(`[AniListProvider] GraphQL HTTP ${res.status}: ${errText}`);
+      error.status = res.status;
+      throw error;
     }
 
-    const json = (await res.json()) as { data?: T; errors?: Array<{ message: string }> };
+    const json = (await res.json()) as { data?: T; errors?: Array<{ message: string; status?: number }> };
     if (json.errors && json.errors.length > 0) {
-      throw new Error(`[AniListProvider] GraphQL error: ${json.errors[0]?.message}`);
+      const firstError = json.errors[0];
+      const error: any = new Error(`[AniListProvider] GraphQL error: ${firstError?.message}`);
+      if (firstError?.status) {
+        error.status = firstError.status;
+      }
+      throw error;
     }
 
     if (!json.data) {
