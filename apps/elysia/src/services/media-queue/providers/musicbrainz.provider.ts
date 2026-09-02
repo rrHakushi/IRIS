@@ -1,3 +1,6 @@
+import { logQueue } from "../logger.js";
+import { c } from "../../../utils/colors.js";
+
 export interface MusicBrainzRecordingPayload {
   id: string;
   title: string;
@@ -52,6 +55,9 @@ export class MusicBrainzProvider {
 
     if (res.status === 429 || res.status === 503) {
       const retryAfter = Number(res.headers.get("Retry-After")) || 3;
+      logQueue(
+        `${c.magenta(c.bold("[MediaQueue]"))} ${c.red(c.bold("⚠️ [RATE LIMIT 429/503]"))} ${c.red(`MusicBrainz HTTP ${res.status}. Backing off for ${retryAfter}s...`)}`
+      );
       await new Promise((r) => setTimeout(r, retryAfter * 1000));
       return this.fetchRecording(mbid);
     }
@@ -88,20 +94,46 @@ export class MusicBrainzProvider {
   /**
    * Searches recordings by track title and artist name.
    */
-  async searchRecording(query: string): Promise<MusicBrainzRecordingPayload[]> {
+  async searchRecording(query: string, limit: number = 10): Promise<MusicBrainzRecordingPayload[]> {
+    const clean = query.trim();
+    if (!clean) return [];
+
     await this.waitForRateLimit();
 
-    const url = `${this.baseUrl}/recording?query=${encodeURIComponent(query)}&limit=5&fmt=json`;
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": "IRIS-Platform/1.0 (https://iris.app; contact@iris.app)",
-        Accept: "application/json",
-      },
-    });
+    const maxLimit = Math.min(Math.max(limit, 1), 25);
+    const url = `${this.baseUrl}/recording?query=${encodeURIComponent(clean)}&limit=${maxLimit}&fmt=json`;
+    try {
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent": "IRIS-Platform/1.0 (https://iris.app; contact@iris.app)",
+          Accept: "application/json",
+        },
+      });
 
-    if (!res.ok) return [];
+      if (res.status === 429 || res.status === 503) {
+        const retryAfter = Number(res.headers.get("Retry-After")) || 3;
+        logQueue(
+          `${c.magenta(c.bold("[MediaQueue]"))} ${c.red(c.bold("⚠️ [RATE LIMIT 429/503]"))} ${c.red(`MusicBrainz HTTP ${res.status} during search. Backing off for ${retryAfter}s...`)}`
+        );
+        await new Promise((r) => setTimeout(r, retryAfter * 1000));
+        return this.searchRecording(clean, limit);
+      }
 
-    const json = (await res.json()) as { recordings?: MusicBrainzRecordingPayload[] };
-    return json.recordings || [];
+      if (!res.ok) return [];
+
+      const json = (await res.json()) as { recordings?: MusicBrainzRecordingPayload[] };
+      return json.recordings || [];
+    } catch (err: any) {
+      console.error(`[MusicBrainzProvider] searchRecording failed: ${err.message}`);
+      return [];
+    }
+  }
+
+  /**
+   * Searches MusicBrainz for music recordings by query and returns recording MBIDs.
+   */
+  async searchMusic(query: string, limit: number = 10): Promise<string[]> {
+    const recordings = await this.searchRecording(query, limit);
+    return recordings.map((r) => r.id).filter(Boolean);
   }
 }

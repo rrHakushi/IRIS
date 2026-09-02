@@ -72,15 +72,35 @@ export function findRouteFiles(dir: string, baseDir: string = dir): string[] {
   }
 
   const results: string[] = []
-  const entries = fs.readdirSync(dir, { withFileTypes: true })
+  let entries: fs.Dirent[] = []
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true })
+  } catch {
+    return []
+  }
 
   for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name)
+    const name = entry.name
+
+    // Ignore hidden files and directories
+    if (name.startsWith(".")) continue
+
+    // Ignore temporary, backup, or editor duplicate copies (e.g. 'refresh copy', 'folder (1)', '*.bak')
+    if (
+      /\s+copy(\s+\d+)?$/i.test(name) ||
+      /\s*\(\d+\)$/.test(name) ||
+      /\s*\(copy\)/i.test(name)
+    ) {
+      continue
+    }
+    if (/\.bak$|\.tmp$|\.old$|~$/i.test(name)) continue
+
+    const fullPath = path.join(dir, name)
     if (entry.isDirectory()) {
       results.push(...findRouteFiles(fullPath, baseDir))
     } else if (
       entry.isFile() &&
-      (entry.name === "route.ts" || entry.name === "route.js")
+      (name === "route.ts" || name === "route.js")
     ) {
       results.push(fullPath)
     }
@@ -424,4 +444,8 @@ export type App = typeof routes;
       `${c.cyan(c.bold("[Eden Generator]"))} ${c.green("Generated")} ${c.bold(routeIndex)} ${c.green("routes in:")} ${c.dim(outputFile)}`
     )
   }
+}
+
+if (import.meta.main) {
+  generateRoutes()
 }

@@ -30,24 +30,23 @@ import type {
   MediaJob,
   MediaJobType,
   QueueJobOptions,
+  QueueSearchOptions,
   DiscoveredRelation,
 } from "./types.js";
 
+import { logQueue } from "./logger.js";
+
 const REDIS_KEY_PREFIX = "media-queue";
 const MAX_CONCURRENCY = 4;
-
-function logQueue(msg: string): void {
-  const d = new Date();
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  const time = c.gray(`[${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}]`);
-  process.stdout.write(`${time} ${msg}\n`);
-}
 
 export class MediaQueueService {
   private static logged = false;
   private queueSubject$ = new Subject<MediaJob>();
   private inFlightJobs = new Map<string, MediaJob>();
   private isInitialized = false;
+  private idleCheckTimeout: NodeJS.Timeout | null = null;
+  private sessionStartTime = 0;
+  private sessionProcessedCount = 0;
 
   // Provider instances
   public readonly anilist = new AniListProvider();
@@ -363,6 +362,15 @@ export class MediaQueueService {
 
     const jobId = this.getJobId(type, externalId);
 
+    if (this.sessionStartTime === 0) {
+      this.sessionStartTime = performance.now();
+      this.sessionProcessedCount = 0;
+    }
+    if (this.idleCheckTimeout) {
+      clearTimeout(this.idleCheckTimeout);
+      this.idleCheckTimeout = null;
+    }
+
     // 1. In-flight deduplication
     const inFlight = this.inFlightJobs.get(jobId);
     if (inFlight && (inFlight.status === "PENDING" || inFlight.status === "PROCESSING")) {
@@ -426,6 +434,163 @@ export class MediaQueueService {
     this.queueSubject$.next(job);
 
     return job;
+  }
+
+  /**
+   * Searches external provider APIs by title/query, extracts discovered IDs,
+   * and enqueues fetch/sync jobs for each item.
+   *
+   * Providers used:
+   * - ANIME: AniList GraphQL searchAnime
+   * - MANGA: AniList GraphQL searchManga
+   * - TV: TheTVDB searchTvSeries
+   * - MOVIE: TheTVDB searchMovies
+   * - BOOK: Google Books searchBooks
+   * - GAME: IGDB searchGames
+   * - MUSIC: MusicBrainz searchMusic
+   *
+   * @param type - Target MediaJobType
+   * @param query - Search query / title string
+   * @param options - Optional QueueSearchOptions (limit, priority, forceRefresh, etc.)
+   * @returns Array of queued MediaJob instances
+   */
+  /**
+   * Searches external provider APIs by title/query, creates/retrieves initial search preview stubs
+   * in the database, enqueues full background fetch jobs, and returns search result records immediately.
+   *
+   * @param type - Target MediaJobType
+   * @param query - Search query / title string
+   * @param options - Optional QueueSearchOptions (limit, priority, forceRefresh, etc.)
+   * @returns Array of search result items
+   */
+  async enqueueSearchFetch(
+    type: MediaJobType,
+    query: string,
+    options?: QueueSearchOptions
+  ): Promise<any[]> {
+    const cleanQuery = query?.trim();
+    if (!cleanQuery) return [];
+
+    const limit = options?.limit ?? 10;
+    const results: any[] = [];
+
+    logQueue(
+      `${c.magenta(c.bold("[MediaQueue]"))} 🔍 ${c.cyan("Search & Enqueue Fetch")} for ${c.bold(type)}: "${c.yellow(cleanQuery)}" (limit=${limit})...`
+    );
+
+    switch (type) {
+      case "ANIME": {
+        const previews = await this.anilist.searchAnime(cleanQuery, limit);
+        for (const item of previews) {
+          try {
+            const previewResult = await this.syncer.upsertAnimeSearchPreview(item);
+            results.push(previewResult);
+            await this.enqueueJob("ANIME", item.id, { ...options, priority: options?.priority ?? 2 });
+          } catch (err: any) {
+            logQueue(`${c.magenta(c.bold("[MediaQueue]"))} ⚠️ Search stub error for ANIME:${item.id}: ${err.message}`);
+          }
+        }
+        break;
+      }
+      case "MANGA": {
+        const previews = await this.anilist.searchManga(cleanQuery, limit);
+        for (const item of previews) {
+          try {
+            const previewResult = await this.syncer.upsertMangaSearchPreview(item);
+            results.push(previewResult);
+            await this.enqueueJob("MANGA", item.id, { ...options, priority: options?.priority ?? 2 });
+          } catch (err: any) {
+            logQueue(`${c.magenta(c.bold("[MediaQueue]"))} ⚠️ Search stub error for MANGA:${item.id}: ${err.message}`);
+          }
+        }
+        break;
+      }
+      case "TV": {
+        const items = await this.tvdb.searchTvSeries(cleanQuery, limit);
+        for (const item of items) {
+          try {
+            const previewResult = await this.syncer.upsertTvSearchPreview(item);
+            results.push(previewResult);
+            const rawId = item.tvdb_id || item.id || item.objectID;
+            const extId = typeof rawId === "number" ? rawId : parseInt(String(rawId).replace(/\D/g, ""), 10);
+            if (extId) {
+              await this.enqueueJob("TV", extId, { ...options, priority: options?.priority ?? 2 });
+            }
+          } catch (err: any) {
+            logQueue(`${c.magenta(c.bold("[MediaQueue]"))} ⚠️ Search stub error for TV: ${err.message}`);
+          }
+        }
+        break;
+      }
+      case "MOVIE": {
+        const items = await this.tvdb.searchMovies(cleanQuery, limit);
+        for (const item of items) {
+          try {
+            const previewResult = await this.syncer.upsertMovieSearchPreview(item);
+            results.push(previewResult);
+            const rawId = item.tvdb_id || item.id || item.objectID;
+            const extId = typeof rawId === "number" ? rawId : parseInt(String(rawId).replace(/\D/g, ""), 10);
+            if (extId) {
+              await this.enqueueJob("MOVIE", extId, { ...options, priority: options?.priority ?? 2 });
+            }
+          } catch (err: any) {
+            logQueue(`${c.magenta(c.bold("[MediaQueue]"))} ⚠️ Search stub error for MOVIE: ${err.message}`);
+          }
+        }
+        break;
+      }
+      case "BOOK": {
+        const items = await this.googleBooks.searchBooks(cleanQuery, limit);
+        for (const item of items) {
+          try {
+            const previewResult = await this.syncer.upsertBookSearchPreview(item);
+            results.push(previewResult);
+            if (item.id) {
+              await this.enqueueJob("BOOK", item.id, { ...options, priority: options?.priority ?? 2 });
+            }
+          } catch (err: any) {
+            logQueue(`${c.magenta(c.bold("[MediaQueue]"))} ⚠️ Search stub error for BOOK: ${err.message}`);
+          }
+        }
+        break;
+      }
+      case "GAME": {
+        const items = await this.igdb.searchGames(cleanQuery, limit);
+        for (const item of items) {
+          try {
+            const previewResult = await this.syncer.upsertGameSearchPreview(item);
+            results.push(previewResult);
+            if (item.id) {
+              await this.enqueueJob("GAME", item.id, { ...options, priority: options?.priority ?? 2 });
+            }
+          } catch (err: any) {
+            logQueue(`${c.magenta(c.bold("[MediaQueue]"))} ⚠️ Search stub error for GAME:${item.id}: ${err.message}`);
+          }
+        }
+        break;
+      }
+      case "MUSIC": {
+        const items = await this.musicbrainz.searchRecording(cleanQuery, limit);
+        for (const item of items) {
+          try {
+            const previewResult = await this.syncer.upsertMusicSearchPreview(item);
+            results.push(previewResult);
+            if (item.id) {
+              await this.enqueueJob("MUSIC", item.id, { ...options, priority: options?.priority ?? 2 });
+            }
+          } catch (err: any) {
+            logQueue(`${c.magenta(c.bold("[MediaQueue]"))} ⚠️ Search stub error for MUSIC:${item.id}: ${err.message}`);
+          }
+        }
+        break;
+      }
+    }
+
+    logQueue(
+      `${c.magenta(c.bold("[MediaQueue]"))} ✨ Created/found ${c.bold(results.length)} search preview stubs for ${type}. Background fetch jobs queued.`
+    );
+
+    return results;
   }
 
   /**
@@ -840,6 +1005,8 @@ export class MediaQueueService {
     await cache.set(`${REDIS_KEY_PREFIX}:job:${job.id}`, job, 86400 * 7);
     await this.removeFromRedisSet(`${REDIS_KEY_PREFIX}:processing`, job.id);
     this.inFlightJobs.delete(job.id);
+    this.sessionProcessedCount++;
+    this.checkQueueCompletion();
 
     logQueue(
       `${c.magenta(c.bold("[MediaQueue]"))} ${c.green(c.bold("✨ [SUCCESS] Finished:"))} ${c.cyan(job.id)} ${c.bold(summaryText ? `("${summaryText}")` : "")} -> Local ID: ${c.bold(localId ?? "N/A")} ${colorDuration(durationMs)}`
@@ -856,21 +1023,34 @@ export class MediaQueueService {
       });
     } catch { }
 
-    // Infinite-depth relation crawling: recursively enqueue discovered relations with deduplication
+    // Recursive relation crawling with deduplication and cycle prevention
     const currentDepth = job.depth || 0;
     const maxDepth = job.maxDepth ?? Infinity;
+    const lineage: string[] = (job.metadata?.lineage as string[]) || [job.id];
 
     if (relationsToCrawl.length > 0 && currentDepth < maxDepth) {
       logQueue(
         `${c.magenta(c.bold("[MediaQueue]"))} ${c.yellow(`⚡ Discovered ${relationsToCrawl.length} relations for ${job.id}:`)} queueing connected nodes (depth=${currentDepth + 1})...`
       );
       for (const rel of relationsToCrawl) {
+        const targetJobId = this.getJobId(rel.targetType, rel.targetExternalId);
+        if (lineage.includes(targetJobId)) {
+          logQueue(
+            `  ↳ ${c.cyan(`[${rel.type}]`)} ${c.yellow(`${rel.targetType}:${rel.targetExternalId}`)} ${c.dim("⏩ Skipped (Cycle detected in lineage)")}`
+          );
+          continue;
+        }
+
         logQueue(
           `  ↳ ${c.cyan(`[${rel.type}]`)} ${c.yellow(`${rel.targetType}:${rel.targetExternalId}`)} ${c.dim(`(depth=${currentDepth + 1})`)}`
         );
         this.enqueueJob(rel.targetType, rel.targetExternalId, {
           maxDepth,
-          metadata: { depth: currentDepth + 1, parentJobId: job.id },
+          metadata: {
+            depth: currentDepth + 1,
+            parentJobId: job.id,
+            lineage: [...lineage, targetJobId],
+          },
         }).catch((err) => {
           logQueue(`${c.magenta(c.bold("[MediaQueue]"))} ⚠️ Failed to enqueue relation ${rel.targetType}:${rel.targetExternalId}: ${err.message}`);
         });
@@ -952,6 +1132,8 @@ export class MediaQueueService {
     await this.removeFromRedisSet(`${REDIS_KEY_PREFIX}:processing`, job.id);
     await this.addToRedisSet(`${REDIS_KEY_PREFIX}:failed`, job.id);
     this.inFlightJobs.delete(job.id);
+    this.sessionProcessedCount++;
+    this.checkQueueCompletion();
 
     try {
       wsHub.broadcast("media:failed", {
@@ -961,6 +1143,29 @@ export class MediaQueueService {
         error: errorMsg,
       });
     } catch { }
+  }
+
+  /**
+   * Checks if all in-flight jobs have completed and logs queue completion status.
+   */
+  private checkQueueCompletion(): void {
+    if (this.idleCheckTimeout) {
+      clearTimeout(this.idleCheckTimeout);
+      this.idleCheckTimeout = null;
+    }
+
+    if (this.inFlightJobs.size === 0 && this.sessionProcessedCount > 0) {
+      this.idleCheckTimeout = setTimeout(() => {
+        if (this.inFlightJobs.size === 0 && this.sessionProcessedCount > 0) {
+          const elapsed = performance.now() - this.sessionStartTime;
+          logQueue(
+            `${c.magenta(c.bold("[MediaQueue]"))} ${c.green(c.bold("🏁 [QUEUE FINISHED]"))} ${c.bold("All queued media fetch jobs have completed!")} ${c.dim(`(Processed: ${this.sessionProcessedCount} items, Total elapsed: ${colorDuration(elapsed)})`)}`
+          );
+          this.sessionProcessedCount = 0;
+          this.sessionStartTime = 0;
+        }
+      }, 500);
+    }
   }
 }
 

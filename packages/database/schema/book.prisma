@@ -7,11 +7,11 @@ enum BookStatus {
 }
 
 model Book {
-    id             Int     @id @default(autoincrement())
-    googleBookId   String? @unique
-    isbn10         String? @unique
-    isbn13         String? @unique
-    openLibraryId  String? @unique
+    id            Int     @id @default(autoincrement())
+    googleBookId  String? @unique
+    isbn10        String?
+    isbn13        String?
+    openLibraryId String?
 
     titlePrimary   String  @db.Text
     titleSecondary String? @db.Text

@@ -58,10 +58,10 @@ model Anime {
     id        Int  @id @default(autoincrement())
     anilistId Int? @unique
     malId     Int? @unique
-    aniDBId   Int? @unique
+    aniDBId   Int?
     tvDBId    Int?
-    bangumiId Int? @unique
-    kitsuId   Int? @unique
+    bangumiId Int?
+    kitsuId   Int?
 
     titlePrimary   String  @db.Text
     titleSecondary String? @db.Text

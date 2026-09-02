@@ -1,3 +1,6 @@
+import { logQueue } from "../logger.js";
+import { c } from "../../../utils/colors.js";
+
 export interface SteamAppDetailsPayload {
   name?: string;
   steam_appid?: number;
@@ -60,6 +63,15 @@ export class SteamProvider {
       },
     });
 
+    if (res.status === 429) {
+      const retryAfter = Number(res.headers.get("Retry-After")) || 5;
+      logQueue(
+        `${c.magenta(c.bold("[MediaQueue]"))} ${c.red(c.bold("⚠️ [RATE LIMIT 429]"))} ${c.red(`Steam Store HTTP 429 Too Many Requests. Backing off for ${retryAfter}s...`)}`
+      );
+      await new Promise((r) => setTimeout(r, retryAfter * 1000));
+      return this.fetchAppDetails(appId);
+    }
+
     if (!res.ok) {
       return null;
     }
@@ -86,6 +98,15 @@ export class SteamProvider {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) IRIS/1.0",
       },
     });
+
+    if (res.status === 429) {
+      const retryAfter = Number(res.headers.get("Retry-After")) || 5;
+      logQueue(
+        `${c.magenta(c.bold("[MediaQueue]"))} ${c.red(c.bold("⚠️ [RATE LIMIT 429]"))} ${c.red(`Steam Deck HTTP 429 Too Many Requests. Backing off for ${retryAfter}s...`)}`
+      );
+      await new Promise((r) => setTimeout(r, retryAfter * 1000));
+      return this.fetchDeckCompatibility(appId);
+    }
 
     if (!res.ok) {
       return null;

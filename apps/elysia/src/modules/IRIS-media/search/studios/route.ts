@@ -1,28 +1,66 @@
 import { defineRoute, t } from "@/router";
+import { NotFound } from "elysia";
+
+import { StudioSearchResponseSchema, type StudioSearchResponse } from "./types";
+import { NotFoundResponseSchema } from "../../../../../types";
+
+const SEARCH_STUDIOS_TTL = 60 * 60; // 1 hour
 
 export default defineRoute({
   schema: {
-    query: t.Optional(
-      t.Object({
-        q: t.Optional(t.String()),
-        page: t.Optional(t.Number({ default: 1 })),
-        limit: t.Optional(t.Number({ default: 20 })),
-      })
-    ),
-    response: {
-      200: t.Object({
-        success: t.Boolean(),
-        message: t.String(),
-        timestamp: t.String(),
+    query: t.Object({
+      q: t.String({
+        description: "Search query string (minimum 3 characters)",
+        minLength: 3,
       }),
+    }),
+    response: {
+      200: StudioSearchResponseSchema,
+      404: NotFoundResponseSchema,
+    },
+    detail: {
+      summary: "Search studios",
+      description: "Searches production and animation studios by name and returns matching studio preview records.",
+      tags: ["Media - Studio"],
     },
   },
 
-  async GET({ query, prisma, cache }) {
-    return {
-      success: true,
-      message: `GET /search/studios handled successfully`,
-      timestamp: new Date().toISOString(),
-    };
+  cacheKeys: {
+    search: {
+      studios: (q: string) => `search:studios:${q}`,
+    },
+  },
+
+  async GET({ query, prisma, cache, cacheKeys }) {
+    const { q } = query;
+    const cleanQuery = decodeURIComponent(q).replace(/\+/g, " ").trim();
+    const cacheKey = cacheKeys.search.studios(cleanQuery);
+
+    if (!cleanQuery || cleanQuery.length < 3) {
+      return new NotFound("Query must be at least 3 characters long");
+    }
+
+    const cached = await cache.get<StudioSearchResponse>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const data = await prisma.studio.findMany({
+      where: {
+        name: { contains: cleanQuery, mode: "insensitive" },
+      },
+      select: {
+        id: true,
+        name: true,
+        isAnimationStudio: true,
+
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+
+    await cache.set(cacheKey, data, SEARCH_STUDIOS_TTL);
+    return data;
   },
 });

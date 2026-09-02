@@ -1,3 +1,6 @@
+import { logQueue } from "../logger.js";
+import { c } from "../../../utils/colors.js";
+
 export interface MalAnimePayload {
   id: number;
   title: string;
@@ -91,6 +94,9 @@ export class MyAnimeListProvider {
 
     if (res.status === 429) {
       const retryAfter = Number(res.headers.get("Retry-After")) || 10;
+      logQueue(
+        `${c.magenta(c.bold("[MediaQueue]"))} ${c.red(c.bold("⚠️ [RATE LIMIT 429]"))} ${c.red(`MyAnimeList HTTP 429 Too Many Requests. Backing off for ${retryAfter}s...`)}`
+      );
       await new Promise((r) => setTimeout(r, retryAfter * 1000));
       return this.fetchJson<T>(url);
     }

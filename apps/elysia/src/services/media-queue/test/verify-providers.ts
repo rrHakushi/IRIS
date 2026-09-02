@@ -33,6 +33,12 @@ async function runVerification() {
 
     const manga = await anilist.fetchManga(30013); // One Piece
     console.log(`  ✓ AniList Manga: "${manga.title.userPreferred || manga.title.romaji}" (ID: ${manga.id})`);
+
+    const animeSearchResults = await anilist.searchAnime("Attack on Titan", 3);
+    console.log(`  ✓ AniList Anime Search results: ${animeSearchResults.length} items`);
+
+    const mangaSearchResults = await anilist.searchManga("One Piece", 3);
+    console.log(`  ✓ AniList Manga Search results: ${mangaSearchResults.length} items`);
   } catch (err: any) {
     console.error("  ✕ AniList Provider error:", err.message);
   }
@@ -63,6 +69,12 @@ async function runVerification() {
 
     const movie = await tvdb.fetchMovie(12);
     console.log(`  ✓ TVDB Movie: "${movie.name}" (Runtime: ${movie.runtime}m)`);
+
+    const tvSearchResults = await tvdb.searchTvSeries("Breaking Bad", 3);
+    console.log(`  ✓ TVDB TV Search results: ${tvSearchResults.length} items`);
+
+    const movieSearchResults = await tvdb.searchMovies("Inception", 3);
+    console.log(`  ✓ TVDB Movie Search results: ${movieSearchResults.length} items`);
   } catch (err: any) {
     console.error("  ✕ TheTVDB Provider error:", err.message);
   }
@@ -74,6 +86,9 @@ async function runVerification() {
     const book = await googleBooks.fetchBook("zyTCAlFPjgYC"); // The Hobbit
     console.log(`  ✓ Google Book: "${book.volumeInfo.title}" by ${book.volumeInfo.authors?.join(", ")}`);
     console.log(`    - Page count: ${book.volumeInfo.pageCount}, Published: ${book.volumeInfo.publishedDate}`);
+
+    const bookSearchResults = await googleBooks.searchBooks("The Hobbit", 3);
+    console.log(`  ✓ Google Books Search results: ${bookSearchResults.length} items`);
   } catch (err: any) {
     console.error("  ✕ Google Books Provider error:", err.message);
   }
@@ -85,6 +100,9 @@ async function runVerification() {
     const game = await igdb.fetchGame(1942); // The Witcher 3
     console.log(`  ✓ IGDB Game: "${game.name}" (Rating: ${game.rating?.toFixed(1)})`);
     console.log(`    - Genres: ${game.genres?.map((g) => g.name).join(", ")}`);
+
+    const gameSearchResults = await igdb.searchGames("The Witcher 3", 3);
+    console.log(`  ✓ IGDB Games Search results: ${gameSearchResults.length} items`);
   } catch (err: any) {
     console.error("  ✕ IGDB Provider error:", err.message);
   }
@@ -98,6 +116,9 @@ async function runVerification() {
     const mbid = searchResults[0]?.id || "b1e26560-60e5-4236-bbdb-9aa5a8d5ee19";
     const recording = await mb.fetchRecording(mbid);
     console.log(`  ✓ MusicBrainz: "${recording.title}" (MBID: ${recording.id}) by ${recording["artist-credit"]?.[0]?.name}`);
+
+    const musicSearchIds = await mb.searchMusic("Bohemian Rhapsody", 3);
+    console.log(`  ✓ MusicBrainz Search results: [${musicSearchIds.join(", ")}]`);
 
     const lyrics = await lrclib.fetchLyrics("Bohemian Rhapsody", "Queen");
     console.log(`  ✓ LRCLIB: Lyrics found (${lyrics?.plainLyrics ? `${lyrics.plainLyrics.length} chars` : "none"})`);
@@ -121,7 +142,7 @@ async function runVerification() {
   const isReleasingStale = mediaDbSyncer.isRecordStale(testReleasingRecord, "ANIME");
   console.log(`  - Releasing anime updated 8 days ago is stale? ${isReleasingStale} (Expected: true)`);
 
-  // Verify the 7 functions can be invoked
+  // Verify the fetch & search functions can be invoked
   const job1 = await queueAnimeFetch(16498, { priority: 1 });
   console.log(`  ✓ queueAnimeFetch created job: ${job1.id} (Status: ${job1.status})`);
 

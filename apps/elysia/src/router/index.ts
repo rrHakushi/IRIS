@@ -81,15 +81,35 @@ function findRouteFiles(dir: string, baseDir: string = dir): string[] {
   }
 
   const results: string[] = []
-  const entries = fs.readdirSync(dir, { withFileTypes: true })
+  let entries: fs.Dirent[] = []
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true })
+  } catch {
+    return []
+  }
 
   for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name)
+    const name = entry.name
+
+    // Ignore hidden files and directories
+    if (name.startsWith(".")) continue
+
+    // Ignore temporary, backup, or editor duplicate copies
+    if (
+      /\s+copy(\s+\d+)?$/i.test(name) ||
+      /\s*\(\d+\)$/.test(name) ||
+      /\s*\(copy\)/i.test(name)
+    ) {
+      continue
+    }
+    if (/\.bak$|\.tmp$|\.old$|~$/i.test(name)) continue
+
+    const fullPath = path.join(dir, name)
     if (entry.isDirectory()) {
       results.push(...findRouteFiles(fullPath, baseDir))
     } else if (
       entry.isFile() &&
-      (entry.name === "route.ts" || entry.name === "route.js")
+      (name === "route.ts" || name === "route.js")
     ) {
       results.push(fullPath)
     }
@@ -222,26 +242,31 @@ export async function createRouterModule(options: RouterOptions = {}) {
         modulesDir,
         { recursive: true },
         (event, filename) => {
+          // Ignore hidden files, git, or system files
           if (
             filename &&
-            (filename.endsWith(".ts") || filename.endsWith(".js"))
+            (filename.startsWith(".") ||
+              filename.includes(".git") ||
+              filename.includes("node_modules"))
           ) {
-            if (debounceTimer) clearTimeout(debounceTimer)
-            debounceTimer = setTimeout(async () => {
-              try {
-                await generateRoutes({ modulesDir, silent: true })
-                if (isDev) {
-                  await generateInsomniumConfig({
-                    modulesDir,
-                    devApiKey,
-                    silent: true,
-                  })
-                }
-              } catch (err) {
-                console.error("[Router] Auto-generation failed on change:", err)
-              }
-            }, 100)
+            return
           }
+
+          if (debounceTimer) clearTimeout(debounceTimer)
+          debounceTimer = setTimeout(async () => {
+            try {
+              await generateRoutes({ modulesDir, silent: true })
+              if (isDev) {
+                await generateInsomniumConfig({
+                  modulesDir,
+                  devApiKey,
+                  silent: true,
+                })
+              }
+            } catch (err) {
+              console.error("[Router] Auto-generation failed on change:", err)
+            }
+          }, 150)
         }
       )
       if (

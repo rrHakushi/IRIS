@@ -63,33 +63,47 @@ import route_55 from "../modules/IRIS-list/user/[username]/lists/tv/route";
 import route_56 from "../modules/IRIS-list/user/[username]/watchlists/[id]/entries/route";
 import route_57 from "../modules/IRIS-list/user/[username]/watchlists/[id]/route";
 import route_58 from "../modules/IRIS-list/user/[username]/watchlists/route";
-import route_59 from "../modules/IRIS-media/media/anime/[id]/route";
-import route_60 from "../modules/IRIS-media/media/books/[id]/route";
-import route_61 from "../modules/IRIS-media/media/characters/[id]/route";
-import route_62 from "../modules/IRIS-media/media/games/[id]/route";
-import route_63 from "../modules/IRIS-media/media/manga/[id]/route";
-import route_64 from "../modules/IRIS-media/media/movies/[id]/route";
-import route_65 from "../modules/IRIS-media/media/music/[id]/route";
-import route_66 from "../modules/IRIS-media/media/people/[id]/route";
-import route_67 from "../modules/IRIS-media/media/studios/[id]/route";
-import route_68 from "../modules/IRIS-media/media/tv/[id]/route";
-import route_69 from "../modules/IRIS-media/search/anime/route";
-import route_70 from "../modules/IRIS-media/search/books/route";
-import route_71 from "../modules/IRIS-media/search/characters/route";
-import route_72 from "../modules/IRIS-media/search/games/route";
-import route_73 from "../modules/IRIS-media/search/manga/route";
-import route_74 from "../modules/IRIS-media/search/movies/route";
-import route_75 from "../modules/IRIS-media/search/music/route";
-import route_76 from "../modules/IRIS-media/search/people/route";
-import route_77 from "../modules/IRIS-media/search/studios/route";
-import route_78 from "../modules/IRIS-media/search/tv/route";
-import route_79 from "../modules/IRIS-social/recommendations/[id]/route";
-import route_80 from "../modules/IRIS-social/recommendations/[id]/vote/route";
-import route_81 from "../modules/IRIS-social/recommendations/[type]/[id]/route";
-import route_82 from "../modules/IRIS-social/recommendations/route";
-import route_83 from "../modules/IRIS-social/reviews/[type]/[id]/route";
-import route_84 from "../modules/IRIS-social/reviews/[type]/[id]/vote/route";
-import route_85 from "../modules/IRIS-social/user/[username]/reviews/route";
+import route_59 from "../modules/IRIS-media/media/anime/[id]/refresh/route";
+import route_60 from "../modules/IRIS-media/media/anime/[id]/route";
+import route_61 from "../modules/IRIS-media/media/anime/[id]/similar/route";
+import route_62 from "../modules/IRIS-media/media/books/[id]/refresh/route";
+import route_63 from "../modules/IRIS-media/media/books/[id]/route";
+import route_64 from "../modules/IRIS-media/media/books/[id]/similar/route";
+import route_65 from "../modules/IRIS-media/media/characters/[id]/route";
+import route_66 from "../modules/IRIS-media/media/games/[id]/refresh/route";
+import route_67 from "../modules/IRIS-media/media/games/[id]/route";
+import route_68 from "../modules/IRIS-media/media/games/[id]/similar/route";
+import route_69 from "../modules/IRIS-media/media/manga/[id]/refresh/route";
+import route_70 from "../modules/IRIS-media/media/manga/[id]/route";
+import route_71 from "../modules/IRIS-media/media/manga/[id]/similar/route";
+import route_72 from "../modules/IRIS-media/media/movies/[id]/refresh/route";
+import route_73 from "../modules/IRIS-media/media/movies/[id]/route";
+import route_74 from "../modules/IRIS-media/media/movies/[id]/similar/route";
+import route_75 from "../modules/IRIS-media/media/music/[id]/refresh/route";
+import route_76 from "../modules/IRIS-media/media/music/[id]/route";
+import route_77 from "../modules/IRIS-media/media/music/[id]/similar/route";
+import route_78 from "../modules/IRIS-media/media/people/[id]/route";
+import route_79 from "../modules/IRIS-media/media/studios/[id]/route";
+import route_80 from "../modules/IRIS-media/media/tv/[id]/refresh/route";
+import route_81 from "../modules/IRIS-media/media/tv/[id]/route";
+import route_82 from "../modules/IRIS-media/media/tv/[id]/similar/route";
+import route_83 from "../modules/IRIS-media/search/anime/route";
+import route_84 from "../modules/IRIS-media/search/books/route";
+import route_85 from "../modules/IRIS-media/search/characters/route";
+import route_86 from "../modules/IRIS-media/search/games/route";
+import route_87 from "../modules/IRIS-media/search/manga/route";
+import route_88 from "../modules/IRIS-media/search/movies/route";
+import route_89 from "../modules/IRIS-media/search/music/route";
+import route_90 from "../modules/IRIS-media/search/people/route";
+import route_91 from "../modules/IRIS-media/search/studios/route";
+import route_92 from "../modules/IRIS-media/search/tv/route";
+import route_93 from "../modules/IRIS-social/recommendations/[id]/route";
+import route_94 from "../modules/IRIS-social/recommendations/[id]/vote/route";
+import route_95 from "../modules/IRIS-social/recommendations/[type]/[id]/route";
+import route_96 from "../modules/IRIS-social/recommendations/route";
+import route_97 from "../modules/IRIS-social/reviews/[type]/[id]/route";
+import route_98 from "../modules/IRIS-social/reviews/[type]/[id]/vote/route";
+import route_99 from "../modules/IRIS-social/user/[username]/reviews/route";
 
 const routeLimiters = new Map<string, ReturnType<typeof createRateLimiter>>();
 function getRouteLimiter(key: string, config: unknown) {
@@ -114,26 +128,56 @@ function deepMergeCacheKeys(target: Record<string, any>, source: Record<string, 
     }
   }
 }
-if ((route_59 as any)?.cacheKeys) {
-  deepMergeCacheKeys(globalCacheKeyStorage, (route_59 as any).cacheKeys);
-}
 if ((route_60 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_60 as any).cacheKeys);
-}
-if ((route_62 as any)?.cacheKeys) {
-  deepMergeCacheKeys(globalCacheKeyStorage, (route_62 as any).cacheKeys);
 }
 if ((route_63 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_63 as any).cacheKeys);
 }
-if ((route_64 as any)?.cacheKeys) {
-  deepMergeCacheKeys(globalCacheKeyStorage, (route_64 as any).cacheKeys);
+if ((route_67 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_67 as any).cacheKeys);
 }
-if ((route_65 as any)?.cacheKeys) {
-  deepMergeCacheKeys(globalCacheKeyStorage, (route_65 as any).cacheKeys);
+if ((route_70 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_70 as any).cacheKeys);
 }
-if ((route_68 as any)?.cacheKeys) {
-  deepMergeCacheKeys(globalCacheKeyStorage, (route_68 as any).cacheKeys);
+if ((route_73 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_73 as any).cacheKeys);
+}
+if ((route_76 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_76 as any).cacheKeys);
+}
+if ((route_81 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_81 as any).cacheKeys);
+}
+if ((route_83 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_83 as any).cacheKeys);
+}
+if ((route_84 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_84 as any).cacheKeys);
+}
+if ((route_85 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_85 as any).cacheKeys);
+}
+if ((route_86 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_86 as any).cacheKeys);
+}
+if ((route_87 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_87 as any).cacheKeys);
+}
+if ((route_88 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_88 as any).cacheKeys);
+}
+if ((route_89 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_89 as any).cacheKeys);
+}
+if ((route_90 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_90 as any).cacheKeys);
+}
+if ((route_91 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_91 as any).cacheKeys);
+}
+if ((route_92 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_92 as any).cacheKeys);
 }
 
 export const routes = new Elysia({ name: "iris-routes" })
@@ -1197,20 +1241,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .get(
-    "/media/anime/:id",
+  .post(
+    "/media/anime/:id/refresh",
     route_59.schema,
     async (ctx: any) => {
-      const methodItem = (route_59 as any).GET;
+      const methodItem = (route_59 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_59 as any).rateLimits?.GET ?? (route_59 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_59_GET", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_59 as any).rateLimits?.POST ?? (route_59 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_59_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
-    "/media/books/:id",
+    "/media/anime/:id",
     route_60.schema,
     async (ctx: any) => {
       const methodItem = (route_60 as any).GET;
@@ -1222,7 +1266,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/media/characters/:id",
+    "/media/anime/:id/similar",
     route_61.schema,
     async (ctx: any) => {
       const methodItem = (route_61 as any).GET;
@@ -1233,20 +1277,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .get(
-    "/media/games/:id",
+  .post(
+    "/media/books/:id/refresh",
     route_62.schema,
     async (ctx: any) => {
-      const methodItem = (route_62 as any).GET;
+      const methodItem = (route_62 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_62 as any).rateLimits?.GET ?? (route_62 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_62_GET", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_62 as any).rateLimits?.POST ?? (route_62 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_62_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
-    "/media/manga/:id",
+    "/media/books/:id",
     route_63.schema,
     async (ctx: any) => {
       const methodItem = (route_63 as any).GET;
@@ -1258,7 +1302,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/media/movies/:id",
+    "/media/books/:id/similar",
     route_64.schema,
     async (ctx: any) => {
       const methodItem = (route_64 as any).GET;
@@ -1270,7 +1314,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/media/music/:id",
+    "/media/characters/:id",
     route_65.schema,
     async (ctx: any) => {
       const methodItem = (route_65 as any).GET;
@@ -1281,20 +1325,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .get(
-    "/media/people/:id",
+  .post(
+    "/media/games/:id/refresh",
     route_66.schema,
     async (ctx: any) => {
-      const methodItem = (route_66 as any).GET;
+      const methodItem = (route_66 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_66 as any).rateLimits?.GET ?? (route_66 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_66_GET", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_66 as any).rateLimits?.POST ?? (route_66 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_66_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
-    "/media/studios/:id",
+    "/media/games/:id",
     route_67.schema,
     async (ctx: any) => {
       const methodItem = (route_67 as any).GET;
@@ -1306,7 +1350,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/media/tv/:id",
+    "/media/games/:id/similar",
     route_68.schema,
     async (ctx: any) => {
       const methodItem = (route_68 as any).GET;
@@ -1317,20 +1361,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .get(
-    "/search/anime",
+  .post(
+    "/media/manga/:id/refresh",
     route_69.schema,
     async (ctx: any) => {
-      const methodItem = (route_69 as any).GET;
+      const methodItem = (route_69 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_69 as any).rateLimits?.GET ?? (route_69 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_69_GET", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_69 as any).rateLimits?.POST ?? (route_69 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_69_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
-    "/search/books",
+    "/media/manga/:id",
     route_70.schema,
     async (ctx: any) => {
       const methodItem = (route_70 as any).GET;
@@ -1342,7 +1386,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/characters",
+    "/media/manga/:id/similar",
     route_71.schema,
     async (ctx: any) => {
       const methodItem = (route_71 as any).GET;
@@ -1353,20 +1397,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .get(
-    "/search/games",
+  .post(
+    "/media/movies/:id/refresh",
     route_72.schema,
     async (ctx: any) => {
-      const methodItem = (route_72 as any).GET;
+      const methodItem = (route_72 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_72 as any).rateLimits?.GET ?? (route_72 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_72_GET", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_72 as any).rateLimits?.POST ?? (route_72 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_72_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
-    "/search/manga",
+    "/media/movies/:id",
     route_73.schema,
     async (ctx: any) => {
       const methodItem = (route_73 as any).GET;
@@ -1378,7 +1422,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/movies",
+    "/media/movies/:id/similar",
     route_74.schema,
     async (ctx: any) => {
       const methodItem = (route_74 as any).GET;
@@ -1389,20 +1433,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .get(
-    "/search/music",
+  .post(
+    "/media/music/:id/refresh",
     route_75.schema,
     async (ctx: any) => {
-      const methodItem = (route_75 as any).GET;
+      const methodItem = (route_75 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_75 as any).rateLimits?.GET ?? (route_75 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_75_GET", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_75 as any).rateLimits?.POST ?? (route_75 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_75_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
-    "/search/people",
+    "/media/music/:id",
     route_76.schema,
     async (ctx: any) => {
       const methodItem = (route_76 as any).GET;
@@ -1414,7 +1458,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/studios",
+    "/media/music/:id/similar",
     route_77.schema,
     async (ctx: any) => {
       const methodItem = (route_77 as any).GET;
@@ -1426,7 +1470,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/tv",
+    "/media/people/:id",
     route_78.schema,
     async (ctx: any) => {
       const methodItem = (route_78 as any).GET;
@@ -1437,20 +1481,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .delete(
-    "/recommendations/:id",
+  .get(
+    "/media/studios/:id",
     route_79.schema,
     async (ctx: any) => {
-      const methodItem = (route_79 as any).DELETE;
+      const methodItem = (route_79 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_79 as any).rateLimits?.DELETE ?? (route_79 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_79_DELETE", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_79 as any).rateLimits?.GET ?? (route_79 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_79_GET", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
-    "/recommendations/:id/vote",
+    "/media/tv/:id/refresh",
     route_80.schema,
     async (ctx: any) => {
       const methodItem = (route_80 as any).POST;
@@ -1462,7 +1506,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/recommendations/:type/:id",
+    "/media/tv/:id",
     route_81.schema,
     async (ctx: any) => {
       const methodItem = (route_81 as any).GET;
@@ -1473,20 +1517,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/recommendations",
+  .get(
+    "/media/tv/:id/similar",
     route_82.schema,
     async (ctx: any) => {
-      const methodItem = (route_82 as any).POST;
+      const methodItem = (route_82 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_82 as any).rateLimits?.POST ?? (route_82 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_82_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_82 as any).rateLimits?.GET ?? (route_82 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_82_GET", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
-    "/reviews/:type/:id",
+    "/search/anime",
     route_83.schema,
     async (ctx: any) => {
       const methodItem = (route_83 as any).GET;
@@ -1497,62 +1541,230 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/reviews/:type/:id",
-    route_83.schema,
-    async (ctx: any) => {
-      const methodItem = (route_83 as any).POST;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_83 as any).rateLimits?.POST ?? (route_83 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_83_POST", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .delete(
-    "/reviews/:type/:id",
-    route_83.schema,
-    async (ctx: any) => {
-      const methodItem = (route_83 as any).DELETE;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_83 as any).rateLimits?.DELETE ?? (route_83 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_83_DELETE", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .patch(
-    "/reviews/:type/:id",
-    route_83.schema,
-    async (ctx: any) => {
-      const methodItem = (route_83 as any).PATCH;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_83 as any).rateLimits?.PATCH ?? (route_83 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_83_PATCH", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .post(
-    "/reviews/:type/:id/vote",
+  .get(
+    "/search/books",
     route_84.schema,
     async (ctx: any) => {
-      const methodItem = (route_84 as any).POST;
+      const methodItem = (route_84 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_84 as any).rateLimits?.POST ?? (route_84 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_84_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_84 as any).rateLimits?.GET ?? (route_84 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_84_GET", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
-    "/user/:username/reviews",
+    "/search/characters",
     route_85.schema,
     async (ctx: any) => {
       const methodItem = (route_85 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
       const rateLimitConfig = methodItem?.rateLimit ?? (route_85 as any).rateLimits?.GET ?? (route_85 as any).rateLimit;
       const limiter = rateLimitConfig ? getRouteLimiter("route_85_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/search/games",
+    route_86.schema,
+    async (ctx: any) => {
+      const methodItem = (route_86 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_86 as any).rateLimits?.GET ?? (route_86 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_86_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/search/manga",
+    route_87.schema,
+    async (ctx: any) => {
+      const methodItem = (route_87 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_87 as any).rateLimits?.GET ?? (route_87 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_87_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/search/movies",
+    route_88.schema,
+    async (ctx: any) => {
+      const methodItem = (route_88 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_88 as any).rateLimits?.GET ?? (route_88 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_88_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/search/music",
+    route_89.schema,
+    async (ctx: any) => {
+      const methodItem = (route_89 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_89 as any).rateLimits?.GET ?? (route_89 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_89_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/search/people",
+    route_90.schema,
+    async (ctx: any) => {
+      const methodItem = (route_90 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_90 as any).rateLimits?.GET ?? (route_90 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_90_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/search/studios",
+    route_91.schema,
+    async (ctx: any) => {
+      const methodItem = (route_91 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_91 as any).rateLimits?.GET ?? (route_91 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_91_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/search/tv",
+    route_92.schema,
+    async (ctx: any) => {
+      const methodItem = (route_92 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_92 as any).rateLimits?.GET ?? (route_92 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_92_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/recommendations/:id",
+    route_93.schema,
+    async (ctx: any) => {
+      const methodItem = (route_93 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_93 as any).rateLimits?.DELETE ?? (route_93 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_93_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/recommendations/:id/vote",
+    route_94.schema,
+    async (ctx: any) => {
+      const methodItem = (route_94 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_94 as any).rateLimits?.POST ?? (route_94 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_94_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/recommendations/:type/:id",
+    route_95.schema,
+    async (ctx: any) => {
+      const methodItem = (route_95 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_95 as any).rateLimits?.GET ?? (route_95 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_95_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/recommendations",
+    route_96.schema,
+    async (ctx: any) => {
+      const methodItem = (route_96 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_96 as any).rateLimits?.POST ?? (route_96 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_96_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/reviews/:type/:id",
+    route_97.schema,
+    async (ctx: any) => {
+      const methodItem = (route_97 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_97 as any).rateLimits?.GET ?? (route_97 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_97_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/reviews/:type/:id",
+    route_97.schema,
+    async (ctx: any) => {
+      const methodItem = (route_97 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_97 as any).rateLimits?.POST ?? (route_97 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_97_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/reviews/:type/:id",
+    route_97.schema,
+    async (ctx: any) => {
+      const methodItem = (route_97 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_97 as any).rateLimits?.DELETE ?? (route_97 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_97_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .patch(
+    "/reviews/:type/:id",
+    route_97.schema,
+    async (ctx: any) => {
+      const methodItem = (route_97 as any).PATCH;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_97 as any).rateLimits?.PATCH ?? (route_97 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_97_PATCH", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/reviews/:type/:id/vote",
+    route_98.schema,
+    async (ctx: any) => {
+      const methodItem = (route_98 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_98 as any).rateLimits?.POST ?? (route_98 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_98_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/reviews",
+    route_99.schema,
+    async (ctx: any) => {
+      const methodItem = (route_99 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_99 as any).rateLimits?.GET ?? (route_99 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_99_GET", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }

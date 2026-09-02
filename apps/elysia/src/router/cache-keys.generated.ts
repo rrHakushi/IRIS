@@ -21,6 +21,18 @@ export interface GlobalCacheKeys {
   music: {
     id: (id: number) => string;
   };
+  search: {
+    anime: (q: string) => string;
+    books: (q: string) => string;
+    characters: (q: string) => string;
+    games: (q: string) => string;
+    manga: (q: string) => string;
+    movies: (q: string) => string;
+    music: (q: string) => string;
+    people: (q: string) => string;
+    studios: (q: string) => string;
+    tv: (q: string) => string;
+  };
   tv: {
     id: (id: number) => string;
   };

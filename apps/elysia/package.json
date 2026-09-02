@@ -19,13 +19,16 @@
     }
   },
   "scripts": {
-    "dev": "dotenvx run -f ../../.env -- bun --no-warnings --watch src/index.ts",
-    "start": "dotenvx run -f ../../.env -- bun --no-warnings run src/index.ts",
-    "build": "echo \"@IRIS/elysia build completed\"",
+    "dev": "bun run scripts/generate-manifests.ts && dotenvx run -f ../../.env -- bun --no-warnings --watch src/index.ts",
+    "start": "bun run scripts/generate-manifests.ts && dotenvx run -f ../../.env -- bun --no-warnings run src/index.ts",
+    "build": "bun run scripts/generate-manifests.ts && echo \"@IRIS/elysia build completed\"",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.{ts,js,json}\"",
-    "route:create": "bun run scripts/create-route.ts"
+    "route:create": "bun run scripts/create-route.ts",
+    "route:delete": "bun run scripts/delete-route.ts",
+    "route:sync": "bun run scripts/generate-manifests.ts",
+    "generate": "bun run scripts/generate-manifests.ts"
   },
   "dependencies": {
     "@IRIS/cache": "workspace:*",

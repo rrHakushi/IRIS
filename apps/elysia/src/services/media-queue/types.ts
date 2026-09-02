@@ -40,6 +40,81 @@ export interface QueueJobOptions {
   metadata?: Record<string, unknown>;
 }
 
+export interface QueueSearchOptions extends QueueJobOptions {
+  limit?: number;
+}
+
+export interface AnimeSearchResult {
+  id: number;
+  titlePrimary: string;
+  titleSecondary?: string | null;
+  titleNative?: string | null;
+  coverImage?: string | null;
+  isAdult?: boolean;
+  format?: string;
+  seasonYear?: number | null;
+  seasonSeason?: string;
+}
+
+export interface MangaSearchResult {
+  id: number;
+  titlePrimary: string;
+  titleSecondary?: string | null;
+  titleNative?: string | null;
+  coverImage?: string | null;
+  isAdult?: boolean;
+  format?: string;
+  startDateYear?: number | null;
+}
+
+export interface TvSearchResult {
+  id: number;
+  titlePrimary: string;
+  titleSecondary?: string | null;
+  titleNative?: string | null;
+  coverImage?: string | null;
+  bannerImage?: string | null;
+  firstAiredYear?: number | null;
+  status?: string;
+}
+
+export interface MovieSearchResult {
+  id: number;
+  titlePrimary: string;
+  titleSecondary?: string | null;
+  titleNative?: string | null;
+  coverImage?: string | null;
+  bannerImage?: string | null;
+  releaseDateYear?: number | null;
+  status?: string;
+}
+
+export interface BookSearchResult {
+  id: number;
+  titlePrimary: string;
+  titleSecondary?: string | null;
+  coverImage?: string | null;
+  authors?: string[];
+  releaseDateYear?: number | null;
+}
+
+export interface GameSearchResult {
+  id: number;
+  titlePrimary: string;
+  titleSecondary?: string | null;
+  coverImage?: string | null;
+  releaseDateYear?: number | null;
+}
+
+export interface MusicSearchResult {
+  id: number;
+  titlePrimary: string;
+  titleSecondary?: string | null;
+  artist?: string | null;
+  coverImage?: string | null;
+  duration?: number | null;
+}
+
 // Relation model
 export type RelationKind =
   | "ADAPTATION"

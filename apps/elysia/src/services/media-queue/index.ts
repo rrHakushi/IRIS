@@ -1,5 +1,17 @@
 import { mediaQueueService } from "./media-queue.service.js";
-import type { MediaJob, QueueJobOptions } from "./types.js";
+import type {
+  MediaJob,
+  MediaJobType,
+  QueueJobOptions,
+  QueueSearchOptions,
+  AnimeSearchResult,
+  MangaSearchResult,
+  TvSearchResult,
+  MovieSearchResult,
+  BookSearchResult,
+  GameSearchResult,
+  MusicSearchResult,
+} from "./types.js";
 
 /**
  * 1. Queues an anime fetch/update job using AniList as primary and MyAnimeList as secondary.
@@ -97,6 +109,119 @@ export async function queueMusicFetch(
   options?: QueueJobOptions
 ): Promise<MediaJob> {
   return await mediaQueueService.enqueueJob("MUSIC", id, options);
+}
+
+/**
+ * Searches AniList by title/query, creates/retrieves minimal search stub records in the database,
+ * queues background fetch jobs, and returns search result records immediately.
+ *
+ * @param query - Anime title to search for
+ * @param options - Optional search & queue configuration (limit, priority, forceRefresh, maxRetries)
+ */
+export async function queueAnimeSearchFetch(
+  query: string,
+  options?: QueueSearchOptions
+): Promise<AnimeSearchResult[]> {
+  return await mediaQueueService.enqueueSearchFetch("ANIME", query, options);
+}
+
+/**
+ * Searches AniList by title/query, creates/retrieves minimal search stub records in the database,
+ * queues background fetch jobs, and returns search result records immediately.
+ *
+ * @param query - Manga title to search for
+ * @param options - Optional search & queue configuration
+ */
+export async function queueMangaSearchFetch(
+  query: string,
+  options?: QueueSearchOptions
+): Promise<MangaSearchResult[]> {
+  return await mediaQueueService.enqueueSearchFetch("MANGA", query, options);
+}
+
+/**
+ * Searches TheTVDB specifically for TV series by title/query, creates/retrieves minimal search stub records in the database,
+ * queues background fetch jobs, and returns search result records immediately.
+ *
+ * @param query - TV show title to search for
+ * @param options - Optional search & queue configuration
+ */
+export async function queueTvSearchFetch(
+  query: string,
+  options?: QueueSearchOptions
+): Promise<TvSearchResult[]> {
+  return await mediaQueueService.enqueueSearchFetch("TV", query, options);
+}
+
+/**
+ * Searches TheTVDB specifically for movies by title/query, creates/retrieves minimal search stub records in the database,
+ * queues background fetch jobs, and returns search result records immediately.
+ *
+ * @param query - Movie title to search for
+ * @param options - Optional search & queue configuration
+ */
+export async function queueMovieSearchFetch(
+  query: string,
+  options?: QueueSearchOptions
+): Promise<MovieSearchResult[]> {
+  return await mediaQueueService.enqueueSearchFetch("MOVIE", query, options);
+}
+
+/**
+ * Searches Google Books by title/query, creates/retrieves minimal search stub records in the database,
+ * queues background fetch jobs, and returns search result records immediately.
+ *
+ * @param query - Book title or query string
+ * @param options - Optional search & queue configuration
+ */
+export async function queueBookSearchFetch(
+  query: string,
+  options?: QueueSearchOptions
+): Promise<BookSearchResult[]> {
+  return await mediaQueueService.enqueueSearchFetch("BOOK", query, options);
+}
+
+/**
+ * Searches IGDB by title/query, creates/retrieves minimal search stub records in the database,
+ * queues background fetch jobs, and returns search result records immediately.
+ *
+ * @param query - Video game title to search for
+ * @param options - Optional search & queue configuration
+ */
+export async function queueGameSearchFetch(
+  query: string,
+  options?: QueueSearchOptions
+): Promise<GameSearchResult[]> {
+  return await mediaQueueService.enqueueSearchFetch("GAME", query, options);
+}
+
+/**
+ * Searches MusicBrainz by title/query, creates/retrieves minimal search stub records in the database,
+ * queues background fetch jobs, and returns search result records immediately.
+ *
+ * @param query - Track/song title or query to search for
+ * @param options - Optional search & queue configuration
+ */
+export async function queueMusicSearchFetch(
+  query: string,
+  options?: QueueSearchOptions
+): Promise<MusicSearchResult[]> {
+  return await mediaQueueService.enqueueSearchFetch("MUSIC", query, options);
+}
+
+/**
+ * Generic search & fetch queue dispatcher across any supported media type.
+ *
+ * @param type - Target MediaJobType ("ANIME" | "MANGA" | "TV" | "MOVIE" | "BOOK" | "GAME" | "MUSIC")
+ * @param query - Search query / title string
+ * @param options - Optional search & queue configuration
+ */
+export async function queueMediaSearchFetch(
+  type: MediaJobType,
+  query: string,
+  options?: QueueSearchOptions
+): Promise<any[]> {
+  return await mediaQueueService.enqueueSearchFetch(type, query, options);
 }
 
 export { mediaQueueService, MediaQueueService } from "./media-queue.service.js";

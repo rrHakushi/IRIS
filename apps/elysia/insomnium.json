@@ -16,7 +16,6 @@
       "parentId": "wrk_iris_api",
       "name": "Base Environment",
       "data": {
-        "base_url": "http://localhost:4000",
         "token": "",
         "api_key": "iris_dev_key_0192837465abcdef01928374"
       },
@@ -3515,6 +3514,45 @@
       "_type": "request_group"
     },
     {
+      "_id": "req_IRIS-media__media_anime__id_refresh_post",
+      "parentId": "fld_IRIS_media",
+      "url": "{{ _.base_url }}/media/anime/:id/refresh",
+      "name": "POST /media/anime/:id/refresh",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"string\",\n  \"enabled\": true\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
       "_id": "req_IRIS-media__media_anime__id_get",
       "parentId": "fld_IRIS_media",
       "url": "{{ _.base_url }}/media/anime/:id",
@@ -3546,6 +3584,87 @@
       "_type": "request"
     },
     {
+      "_id": "req_IRIS-media__media_anime__id_similar_get",
+      "parentId": "fld_IRIS_media",
+      "url": "{{ _.base_url }}/media/anime/:id/similar",
+      "name": "GET /media/anime/:id/similar",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "limit",
+          "value": "20",
+          "disabled": false
+        },
+        {
+          "name": "page",
+          "value": "1",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-media__media_books__id_refresh_post",
+      "parentId": "fld_IRIS_media",
+      "url": "{{ _.base_url }}/media/books/:id/refresh",
+      "name": "POST /media/books/:id/refresh",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"string\",\n  \"enabled\": true\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
       "_id": "req_IRIS-media__media_books__id_get",
       "parentId": "fld_IRIS_media",
       "url": "{{ _.base_url }}/media/books/:id",
@@ -3554,6 +3673,48 @@
       "method": "GET",
       "body": {},
       "parameters": [],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-media__media_books__id_similar_get",
+      "parentId": "fld_IRIS_media",
+      "url": "{{ _.base_url }}/media/books/:id/similar",
+      "name": "GET /media/books/:id/similar",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "limit",
+          "value": "20",
+          "disabled": false
+        },
+        {
+          "name": "page",
+          "value": "1",
+          "disabled": false
+        }
+      ],
       "headers": [
         {
           "name": "x-api-key",
@@ -3608,6 +3769,45 @@
       "_type": "request"
     },
     {
+      "_id": "req_IRIS-media__media_games__id_refresh_post",
+      "parentId": "fld_IRIS_media",
+      "url": "{{ _.base_url }}/media/games/:id/refresh",
+      "name": "POST /media/games/:id/refresh",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"string\",\n  \"enabled\": true\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
       "_id": "req_IRIS-media__media_games__id_get",
       "parentId": "fld_IRIS_media",
       "url": "{{ _.base_url }}/media/games/:id",
@@ -3617,6 +3817,87 @@
       "body": {},
       "parameters": [],
       "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-media__media_games__id_similar_get",
+      "parentId": "fld_IRIS_media",
+      "url": "{{ _.base_url }}/media/games/:id/similar",
+      "name": "GET /media/games/:id/similar",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "limit",
+          "value": "20",
+          "disabled": false
+        },
+        {
+          "name": "page",
+          "value": "1",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-media__media_manga__id_refresh_post",
+      "parentId": "fld_IRIS_media",
+      "url": "{{ _.base_url }}/media/manga/:id/refresh",
+      "name": "POST /media/manga/:id/refresh",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"string\",\n  \"enabled\": true\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
         {
           "name": "x-api-key",
           "value": "{{ _.api_key }}",
@@ -3670,6 +3951,87 @@
       "_type": "request"
     },
     {
+      "_id": "req_IRIS-media__media_manga__id_similar_get",
+      "parentId": "fld_IRIS_media",
+      "url": "{{ _.base_url }}/media/manga/:id/similar",
+      "name": "GET /media/manga/:id/similar",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "limit",
+          "value": "20",
+          "disabled": false
+        },
+        {
+          "name": "page",
+          "value": "1",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-media__media_movies__id_refresh_post",
+      "parentId": "fld_IRIS_media",
+      "url": "{{ _.base_url }}/media/movies/:id/refresh",
+      "name": "POST /media/movies/:id/refresh",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"string\",\n  \"enabled\": true\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
       "_id": "req_IRIS-media__media_movies__id_get",
       "parentId": "fld_IRIS_media",
       "url": "{{ _.base_url }}/media/movies/:id",
@@ -3701,6 +4063,87 @@
       "_type": "request"
     },
     {
+      "_id": "req_IRIS-media__media_movies__id_similar_get",
+      "parentId": "fld_IRIS_media",
+      "url": "{{ _.base_url }}/media/movies/:id/similar",
+      "name": "GET /media/movies/:id/similar",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "limit",
+          "value": "20",
+          "disabled": false
+        },
+        {
+          "name": "page",
+          "value": "1",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-media__media_music__id_refresh_post",
+      "parentId": "fld_IRIS_media",
+      "url": "{{ _.base_url }}/media/music/:id/refresh",
+      "name": "POST /media/music/:id/refresh",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"string\",\n  \"enabled\": true\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
       "_id": "req_IRIS-media__media_music__id_get",
       "parentId": "fld_IRIS_media",
       "url": "{{ _.base_url }}/media/music/:id",
@@ -3709,6 +4152,48 @@
       "method": "GET",
       "body": {},
       "parameters": [],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-media__media_music__id_similar_get",
+      "parentId": "fld_IRIS_media",
+      "url": "{{ _.base_url }}/media/music/:id/similar",
+      "name": "GET /media/music/:id/similar",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "limit",
+          "value": "20",
+          "disabled": false
+        },
+        {
+          "name": "page",
+          "value": "1",
+          "disabled": false
+        }
+      ],
       "headers": [
         {
           "name": "x-api-key",
@@ -3794,6 +4279,45 @@
       "_type": "request"
     },
     {
+      "_id": "req_IRIS-media__media_tv__id_refresh_post",
+      "parentId": "fld_IRIS_media",
+      "url": "{{ _.base_url }}/media/tv/:id/refresh",
+      "name": "POST /media/tv/:id/refresh",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"string\",\n  \"enabled\": true\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
       "_id": "req_IRIS-media__media_tv__id_get",
       "parentId": "fld_IRIS_media",
       "url": "{{ _.base_url }}/media/tv/:id",
@@ -3802,6 +4326,48 @@
       "method": "GET",
       "body": {},
       "parameters": [],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-media__media_tv__id_similar_get",
+      "parentId": "fld_IRIS_media",
+      "url": "{{ _.base_url }}/media/tv/:id/similar",
+      "name": "GET /media/tv/:id/similar",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "limit",
+          "value": "20",
+          "disabled": false
+        },
+        {
+          "name": "page",
+          "value": "1",
+          "disabled": false
+        }
+      ],
       "headers": [
         {
           "name": "x-api-key",
@@ -3836,16 +4402,6 @@
         {
           "name": "q",
           "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "page",
-          "value": "1",
-          "disabled": false
-        },
-        {
-          "name": "limit",
-          "value": "20",
           "disabled": false
         }
       ],
@@ -3884,16 +4440,6 @@
           "name": "q",
           "value": "string",
           "disabled": false
-        },
-        {
-          "name": "page",
-          "value": "1",
-          "disabled": false
-        },
-        {
-          "name": "limit",
-          "value": "20",
-          "disabled": false
         }
       ],
       "headers": [
@@ -3930,16 +4476,6 @@
         {
           "name": "q",
           "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "page",
-          "value": "1",
-          "disabled": false
-        },
-        {
-          "name": "limit",
-          "value": "20",
           "disabled": false
         }
       ],
@@ -3978,16 +4514,6 @@
           "name": "q",
           "value": "string",
           "disabled": false
-        },
-        {
-          "name": "page",
-          "value": "1",
-          "disabled": false
-        },
-        {
-          "name": "limit",
-          "value": "20",
-          "disabled": false
         }
       ],
       "headers": [
@@ -4024,16 +4550,6 @@
         {
           "name": "q",
           "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "page",
-          "value": "1",
-          "disabled": false
-        },
-        {
-          "name": "limit",
-          "value": "20",
           "disabled": false
         }
       ],
@@ -4072,16 +4588,6 @@
           "name": "q",
           "value": "string",
           "disabled": false
-        },
-        {
-          "name": "page",
-          "value": "1",
-          "disabled": false
-        },
-        {
-          "name": "limit",
-          "value": "20",
-          "disabled": false
         }
       ],
       "headers": [
@@ -4118,16 +4624,6 @@
         {
           "name": "q",
           "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "page",
-          "value": "1",
-          "disabled": false
-        },
-        {
-          "name": "limit",
-          "value": "20",
           "disabled": false
         }
       ],
@@ -4166,16 +4662,6 @@
           "name": "q",
           "value": "string",
           "disabled": false
-        },
-        {
-          "name": "page",
-          "value": "1",
-          "disabled": false
-        },
-        {
-          "name": "limit",
-          "value": "20",
-          "disabled": false
         }
       ],
       "headers": [
@@ -4213,16 +4699,6 @@
           "name": "q",
           "value": "string",
           "disabled": false
-        },
-        {
-          "name": "page",
-          "value": "1",
-          "disabled": false
-        },
-        {
-          "name": "limit",
-          "value": "20",
-          "disabled": false
         }
       ],
       "headers": [
@@ -4259,16 +4735,6 @@
         {
           "name": "q",
           "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "page",
-          "value": "1",
-          "disabled": false
-        },
-        {
-          "name": "limit",
-          "value": "20",
           "disabled": false
         }
       ],

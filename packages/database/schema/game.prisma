@@ -10,11 +10,11 @@ enum GameStatus {
 
 model Game {
     id          Int     @id @default(autoincrement())
-    rawgId      Int?    @unique
+    rawgId      Int?
     igdbId      Int?    @unique
-    steamAppId  Int?    @unique
-    giantbombId String? @unique
-    vndbId      String? @unique
+    steamAppId  Int?
+    giantbombId String?
+    vndbId      String?
 
     titlePrimary   String  @db.Text
     titleSecondary String? @db.Text

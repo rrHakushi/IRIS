@@ -9,11 +9,11 @@ enum TvStatus {
 
 model Tv {
     id       Int     @id @default(autoincrement())
-    tmdbId   Int?    @unique
-    imdbId   String? @unique
+    tmdbId   Int?
+    imdbId   String?
     tvDBId   Int?    @unique
-    simklId  Int?    @unique
-    tvmazeId Int?    @unique
+    simklId  Int?
+    tvmazeId Int?
 
     titlePrimary   String  @db.Text
     titleSecondary String? @db.Text
@@ -95,12 +95,12 @@ model Tv {
 }
 
 model TvSeason {
-    id           Int        @id @default(autoincrement())
+    id           Int  @id @default(autoincrement())
     tvId         Int
     seasonNumber Int
     tvdbSeasonId Int?
     tmdbSeasonId Int?
-    tv           Tv         @relation(fields: [tvId], references: [id], onDelete: Cascade)
+    tv           Tv   @relation(fields: [tvId], references: [id], onDelete: Cascade)
 
     titlePrimary   String? @db.Text
     titleSecondary String? @db.Text

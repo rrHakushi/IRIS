@@ -2,6 +2,8 @@ import { prisma } from "@IRIS/database";
 import type {
   AniListAnimePayload,
   AniListMangaPayload,
+  AniListAnimeSearchPreview,
+  AniListMangaSearchPreview,
 } from "./providers/anilist.provider.js";
 import type { MalAnimePayload, MalMangaPayload } from "./providers/mal.provider.js";
 import {
@@ -16,8 +18,19 @@ import type { IgdbGamePayload } from "./providers/igdb.provider.js";
 import type { SteamAppDetailsPayload, SteamDeckCompatibilityReport } from "./providers/steam.provider.js";
 import type { MusicBrainzRecordingPayload } from "./providers/musicbrainz.provider.js";
 import type { LrcLibLyricsPayload } from "./providers/lrclib.provider.js";
-import type { DiscoveredRelation, MediaJobType } from "./types.js";
+import type {
+  DiscoveredRelation,
+  MediaJobType,
+  AnimeSearchResult,
+  MangaSearchResult,
+  TvSearchResult,
+  MovieSearchResult,
+  BookSearchResult,
+  GameSearchResult,
+  MusicSearchResult,
+} from "./types.js";
 
+const ONE_HOUR_MS = 60 * 60 * 1000;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const ONE_WEEK_MS = 7 * ONE_DAY_MS;
 const ONE_YEAR_MS = 365 * ONE_DAY_MS;
@@ -56,24 +69,29 @@ export class MediaDbSyncer {
   ): boolean {
     if (!record) return true;
 
-    // If provider updated timestamp is missing or 0, it's an unhydrated stub -> STALE (must fetch!)
-    if (mediaType === "ANIME" && !record.alUpdatedAt) return true;
-    if (mediaType === "MANGA" && !record.alUpdatedAt) return true;
-    if (mediaType === "TV" && !record.tvdbUpdatedAt) return true;
-    if (mediaType === "MOVIE" && !record.tvdbUpdatedAt) return true;
-    if (mediaType === "BOOK" && !record.googleBooksUpdatedAt) return true;
-    if (mediaType === "GAME" && !record.igdbUpdatedAt) return true;
+    // If provider updated timestamp is explicitly null or 0, it's an unhydrated stub -> STALE (must fetch!)
+    if (mediaType === "ANIME" && (record.alUpdatedAt === null || record.alUpdatedAt === 0)) return true;
+    if (mediaType === "MANGA" && (record.alUpdatedAt === null || record.alUpdatedAt === 0)) return true;
+    if (mediaType === "TV" && (record.tvdbUpdatedAt === null || record.tvdbUpdatedAt === 0)) return true;
+    if (mediaType === "MOVIE" && (record.tvdbUpdatedAt === null || record.tvdbUpdatedAt === 0)) return true;
+    if (mediaType === "BOOK" && (record.googleBooksUpdatedAt === null || record.googleBooksUpdatedAt === 0)) return true;
+    if (mediaType === "GAME" && (record.igdbUpdatedAt === null || record.igdbUpdatedAt === 0)) return true;
 
     if (!record.updatedAt) return true;
 
     const now = Date.now();
     const updatedAge = now - new Date(record.updatedAt).getTime();
 
-    // Check airing schedule timestamp
+    // Freshness cooldown: if updated less than 1 hour ago, it is always fresh (prevents tight loops)
+    if (updatedAge < ONE_HOUR_MS) {
+      return false;
+    }
+
+    // Check airing schedule timestamp (+ 1 day after airing to allow external data to update)
     if (record.nextAiringAt) {
       const nextAir = new Date(record.nextAiringAt).getTime();
-      // If next airing time has passed, or airs within the next 24 hours, consider stale
-      if (now >= nextAir - ONE_DAY_MS) {
+      // If 1 day has passed since scheduled airing time and record hasn't been refreshed in 6 hours:
+      if (now >= nextAir + ONE_DAY_MS && updatedAge > 6 * ONE_HOUR_MS) {
         return true;
       }
     }
@@ -85,10 +103,11 @@ export class MediaDbSyncer {
       statusUpper === "IN_PRODUCTION" ||
       statusUpper === "AIRING" ||
       statusUpper === "UPCOMING" ||
-      statusUpper === "EARLY_ACCESS";
+      statusUpper === "EARLY_ACCESS" ||
+      statusUpper === "NOT_YET_RELEASED";
 
     if (isActive) {
-      // Releasing media: stale if older than 1 week (7 days)
+      // Releasing / active media: stale if older than 1 week (7 days)
       return updatedAge > ONE_WEEK_MS;
     }
 
@@ -99,7 +118,7 @@ export class MediaDbSyncer {
   /**
    * Helper to parse enum AnimeFormat.
    */
-  private mapAnimeFormat(fmt?: string): any {
+  public mapAnimeFormat(fmt?: string): any {
     const map: Record<string, string> = {
       TV: "TV",
       TV_SHORT: "TV_SHORT",
@@ -115,7 +134,7 @@ export class MediaDbSyncer {
   /**
    * Helper to parse enum AnimeStatus.
    */
-  private mapAnimeStatus(st?: string): any {
+  public mapAnimeStatus(st?: string): any {
     const map: Record<string, string> = {
       FINISHED: "FINISHED",
       RELEASING: "RELEASING",
@@ -129,7 +148,7 @@ export class MediaDbSyncer {
   /**
    * Helper to parse enum AnimeSource.
    */
-  private mapAnimeSource(alSource?: string, malSource?: string): any {
+  public mapAnimeSource(alSource?: string, malSource?: string): any {
     const raw = (alSource || malSource || "").toUpperCase().replace(/[\s-]+/g, "_");
     const map: Record<string, string> = {
       ORIGINAL: "ORIGINAL",
@@ -158,7 +177,7 @@ export class MediaDbSyncer {
   /**
    * Helper to parse enum MangaFormat.
    */
-  private mapMangaFormat(fmt?: string): any {
+  public mapMangaFormat(fmt?: string): any {
     const map: Record<string, string> = {
       MANGA: "MANGA",
       NOVEL: "NOVEL",
@@ -173,7 +192,7 @@ export class MediaDbSyncer {
   /**
    * Helper to parse enum MangaStatus.
    */
-  private mapMangaStatus(st?: string): any {
+  public mapMangaStatus(st?: string): any {
     const map: Record<string, string> = {
       FINISHED: "FINISHED",
       RELEASING: "RELEASING",
@@ -187,7 +206,7 @@ export class MediaDbSyncer {
   /**
    * Helper to parse enum TvStatus.
    */
-  private mapTvStatus(st?: string): any {
+  public mapTvStatus(st?: string): any {
     const map: Record<string, string> = {
       "RETURNING SERIES": "RETURNING_SERIES",
       RETURNING_SERIES: "RETURNING_SERIES",
@@ -205,7 +224,7 @@ export class MediaDbSyncer {
   /**
    * Helper to parse enum MovieStatus.
    */
-  private mapMovieStatus(st?: string): any {
+  public mapMovieStatus(st?: string): any {
     const map: Record<string, string> = {
       RELEASED: "RELEASED",
       "IN PRODUCTION": "IN_PRODUCTION",
@@ -217,6 +236,389 @@ export class MediaDbSyncer {
       CANCELED: "CANCELLED",
     };
     return (st && map[st.toUpperCase()]) || "RELEASED";
+  }
+
+  /**
+   * Upserts a lightweight search preview stub for Anime and returns the search result record.
+   */
+  async upsertAnimeSearchPreview(item: AniListAnimeSearchPreview): Promise<AnimeSearchResult> {
+    const titlePrimary = item.title.english || item.title.userPreferred || item.title.romaji || "Unknown Anime";
+    const titleSecondary = item.title.romaji || item.title.english || null;
+    const titleNative = item.title.native || null;
+    const coverImage = item.coverImage?.large || null;
+    const format = this.mapAnimeFormat(item.format);
+    const seasonSeason = (item.season && ["WINTER", "SPRING", "SUMMER", "FALL"].includes(item.season) ? item.season : "UNKNOWN") as any;
+
+    const existing = await prisma.anime.findUnique({
+      where: { anilistId: item.id },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        titleNative: true,
+        coverImage: true,
+        isAdult: true,
+        format: true,
+        seasonYear: true,
+        seasonSeason: true,
+      },
+    });
+
+    if (existing) {
+      return {
+        id: existing.id,
+        titlePrimary: existing.titlePrimary,
+        titleSecondary: existing.titleSecondary,
+        titleNative: existing.titleNative,
+        coverImage: existing.coverImage,
+        isAdult: existing.isAdult,
+        format: existing.format,
+        seasonYear: existing.seasonYear,
+        seasonSeason: existing.seasonSeason,
+      };
+    }
+
+    const created = await prisma.anime.create({
+      data: {
+        anilistId: item.id,
+        titlePrimary,
+        titleSecondary,
+        titleNative,
+        coverImage,
+        isAdult: item.isAdult ?? false,
+        format,
+        seasonSeason,
+        seasonYear: item.seasonYear,
+        alUpdatedAt: null, // Marks as unhydrated stub -> full background fetch will proceed
+      },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        titleNative: true,
+        coverImage: true,
+        isAdult: true,
+        format: true,
+        seasonYear: true,
+        seasonSeason: true,
+      },
+    });
+
+    return {
+      id: created.id,
+      titlePrimary: created.titlePrimary,
+      titleSecondary: created.titleSecondary,
+      titleNative: created.titleNative,
+      coverImage: created.coverImage,
+      isAdult: created.isAdult,
+      format: created.format,
+      seasonYear: created.seasonYear,
+      seasonSeason: created.seasonSeason,
+    };
+  }
+
+  /**
+   * Upserts a lightweight search preview stub for Manga and returns the search result record.
+   */
+  async upsertMangaSearchPreview(item: AniListMangaSearchPreview): Promise<MangaSearchResult> {
+    const titlePrimary = item.title.english || item.title.userPreferred || item.title.romaji || "Unknown Manga";
+    const titleSecondary = item.title.romaji || item.title.english || null;
+    const titleNative = item.title.native || null;
+    const coverImage = item.coverImage?.large || null;
+    const format = this.mapMangaFormat(item.format);
+
+    const existing = await prisma.manga.findUnique({
+      where: { anilistId: item.id },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        titleNative: true,
+        coverImage: true,
+        isAdult: true,
+        format: true,
+        startDateYear: true,
+      },
+    });
+
+    if (existing) {
+      return existing;
+    }
+
+    const created = await prisma.manga.create({
+      data: {
+        anilistId: item.id,
+        titlePrimary,
+        titleSecondary,
+        titleNative,
+        coverImage,
+        isAdult: item.isAdult ?? false,
+        format,
+        startDateYear: item.startDate?.year,
+        alUpdatedAt: null,
+      },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        titleNative: true,
+        coverImage: true,
+        isAdult: true,
+        format: true,
+        startDateYear: true,
+      },
+    });
+
+    return created;
+  }
+
+  /**
+   * Upserts a lightweight search preview stub for TV and returns the search result record.
+   */
+  async upsertTvSearchPreview(item: any): Promise<TvSearchResult> {
+    const rawId = item.tvdb_id || item.id || item.objectID;
+    const tvdbId = typeof rawId === "number" ? rawId : parseInt(String(rawId).replace(/\D/g, ""), 10);
+    const titlePrimary = item.name || "Unknown TV Series";
+    const coverImage = normalizeTvdbImageUrl(item.image_url);
+    const firstAiredYear = item.year ? parseInt(String(item.year).slice(0, 4), 10) : undefined;
+    const status = this.mapTvStatus(item.status);
+
+    if (tvdbId) {
+      const existing = await prisma.tv.findUnique({
+        where: { tvDBId: tvdbId },
+        select: {
+          id: true,
+          titlePrimary: true,
+          titleSecondary: true,
+          titleNative: true,
+          coverImage: true,
+          bannerImage: true,
+          firstAiredYear: true,
+          status: true,
+        },
+      });
+      if (existing) return existing;
+    }
+
+    const created = await prisma.tv.create({
+      data: {
+        tvDBId: tvdbId || undefined,
+        titlePrimary,
+        coverImage,
+        firstAiredYear: isNaN(firstAiredYear as number) ? undefined : firstAiredYear,
+        status,
+        description: item.overview,
+        tvdbUpdatedAt: null,
+      },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        titleNative: true,
+        coverImage: true,
+        bannerImage: true,
+        firstAiredYear: true,
+        status: true,
+      },
+    });
+
+    return created;
+  }
+
+  /**
+   * Upserts a lightweight search preview stub for Movie and returns the search result record.
+   */
+  async upsertMovieSearchPreview(item: any): Promise<MovieSearchResult> {
+    const rawId = item.tvdb_id || item.id || item.objectID;
+    const tvdbId = typeof rawId === "number" ? rawId : parseInt(String(rawId).replace(/\D/g, ""), 10);
+    const titlePrimary = item.name || "Unknown Movie";
+    const coverImage = normalizeTvdbImageUrl(item.image_url);
+    const releaseDateYear = item.year ? parseInt(String(item.year).slice(0, 4), 10) : undefined;
+    const status = this.mapMovieStatus(item.status);
+
+    if (tvdbId) {
+      const existing = await prisma.movie.findUnique({
+        where: { tvDBId: tvdbId },
+        select: {
+          id: true,
+          titlePrimary: true,
+          titleSecondary: true,
+          titleNative: true,
+          coverImage: true,
+          bannerImage: true,
+          releaseDateYear: true,
+          status: true,
+        },
+      });
+      if (existing) return existing;
+    }
+
+    const created = await prisma.movie.create({
+      data: {
+        tvDBId: tvdbId || undefined,
+        titlePrimary,
+        coverImage,
+        releaseDateYear: isNaN(releaseDateYear as number) ? undefined : releaseDateYear,
+        status,
+        description: item.overview,
+        tvdbUpdatedAt: null,
+      },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        titleNative: true,
+        coverImage: true,
+        bannerImage: true,
+        releaseDateYear: true,
+        status: true,
+      },
+    });
+
+    return created;
+  }
+
+  /**
+   * Upserts a lightweight search preview stub for Book and returns the search result record.
+   */
+  async upsertBookSearchPreview(item: GoogleBookPayload): Promise<BookSearchResult> {
+    const info = item.volumeInfo || {};
+    const titlePrimary = info.title || "Unknown Book";
+    const titleSecondary = info.subtitle || null;
+    const coverImage = info.imageLinks?.extraLarge || info.imageLinks?.large || info.imageLinks?.medium || info.imageLinks?.thumbnail || null;
+    const authors = info.authors || [];
+    let releaseDateYear: number | undefined;
+    if (info.publishedDate) {
+      const yr = parseInt(info.publishedDate.slice(0, 4), 10);
+      if (!isNaN(yr)) releaseDateYear = yr;
+    }
+
+    const existing = await prisma.book.findUnique({
+      where: { googleBookId: item.id },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        authors: true,
+        releaseDateYear: true,
+      },
+    });
+    if (existing) return existing;
+
+    const created = await prisma.book.create({
+      data: {
+        googleBookId: item.id,
+        titlePrimary,
+        titleSecondary,
+        subtitle: info.subtitle,
+        coverImage,
+        authors,
+        publishers: info.publisher ? [info.publisher] : [],
+        description: info.description,
+        releaseDateYear,
+        pageCount: info.pageCount,
+        googleBooksUpdatedAt: null,
+      },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        authors: true,
+        releaseDateYear: true,
+      },
+    });
+
+    return created;
+  }
+
+  /**
+   * Upserts a lightweight search preview stub for Game and returns the search result record.
+   */
+  async upsertGameSearchPreview(item: any): Promise<GameSearchResult> {
+    const titlePrimary = item.name || "Unknown Game";
+    const coverImage = item.cover?.image_id
+      ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${item.cover.image_id}.jpg`
+      : null;
+    let releaseDateYear: number | undefined;
+    if (item.first_release_date) {
+      releaseDateYear = new Date(item.first_release_date * 1000).getUTCFullYear();
+    }
+
+    const existing = await prisma.game.findUnique({
+      where: { igdbId: item.id },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        releaseDateYear: true,
+      },
+    });
+    if (existing) return existing;
+
+    const created = await prisma.game.create({
+      data: {
+        igdbId: item.id,
+        titlePrimary,
+        coverImage,
+        releaseDateYear,
+        description: item.summary,
+        igdbUpdatedAt: null,
+      },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        releaseDateYear: true,
+      },
+    });
+
+    return created;
+  }
+
+  /**
+   * Upserts a lightweight search preview stub for Music and returns the search result record.
+   */
+  async upsertMusicSearchPreview(item: MusicBrainzRecordingPayload): Promise<MusicSearchResult> {
+    const titlePrimary = item.title || "Unknown Track";
+    const artist = item["artist-credit"]?.map((a) => a.name).join(", ") || null;
+    const duration = item.length ? Math.round(item.length / 1000) : null;
+
+    const existing = await prisma.music.findUnique({
+      where: { musicBrainzId: item.id },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        artist: true,
+        coverImage: true,
+        duration: true,
+      },
+    });
+    if (existing) return existing;
+
+    const created = await prisma.music.create({
+      data: {
+        musicBrainzId: item.id,
+        titlePrimary,
+        artist,
+        duration,
+        musicBrainzUpdatedAt: null,
+      },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        artist: true,
+        coverImage: true,
+        duration: true,
+      },
+    });
+
+    return created;
   }
 
   /**
@@ -2169,8 +2571,8 @@ export class MediaDbSyncer {
 
     const existing =
       (await prisma.book.findUnique({ where: { googleBookId: book.id } })) ||
-      (isbn13 ? await prisma.book.findUnique({ where: { isbn13 } }) : null) ||
-      (isbn10 ? await prisma.book.findUnique({ where: { isbn10 } }) : null);
+      (isbn13 ? await prisma.book.findFirst({ where: { isbn13 } }) : null) ||
+      (isbn10 ? await prisma.book.findFirst({ where: { isbn10 } }) : null);
 
     const normalizeGoogleBooksUrl = (url?: string) => {
       if (!url) return undefined;

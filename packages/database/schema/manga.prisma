@@ -22,8 +22,8 @@ model Manga {
     anilistId      Int?    @unique
     malId          Int?    @unique
     mangaUpdatesId String?
-    kitsuId        Int?    @unique
-    bangumiId      Int?    @unique
+    kitsuId        Int?
+    bangumiId      Int?
 
     titlePrimary   String  @db.Text
     titleSecondary String? @db.Text

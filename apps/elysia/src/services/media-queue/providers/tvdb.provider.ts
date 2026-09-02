@@ -1,3 +1,17 @@
+import { logQueue } from "../logger.js";
+import { c } from "../../../utils/colors.js";
+
+export interface TvdbSearchItem {
+  objectID?: string;
+  id?: string | number;
+  tvdb_id?: string | number;
+  name?: string;
+  image_url?: string;
+  year?: string;
+  status?: string;
+  overview?: string;
+}
+
 export interface TvdbCharacter {
   id: number;
   name?: string;
@@ -192,6 +206,9 @@ export class TheTVDBProvider {
 
     if (res.status === 429) {
       const retryAfter = Number(res.headers.get("Retry-After")) || 5;
+      logQueue(
+        `${c.magenta(c.bold("[MediaQueue]"))} ${c.red(c.bold("⚠️ [RATE LIMIT 429]"))} ${c.red(`TheTVDB HTTP 429 Too Many Requests. Backing off for ${retryAfter}s...`)}`
+      );
       await new Promise((r) => setTimeout(r, retryAfter * 1000));
       return this.fetchJson<T>(endpoint);
     }
@@ -375,5 +392,45 @@ export class TheTVDBProvider {
     } catch {}
 
     return Array.from(urls);
+  }
+
+  /**
+   * Searches TVDB specifically for TV Series and returns search preview items.
+   */
+  async searchTvSeries(query: string, limit: number = 10): Promise<TvdbSearchItem[]> {
+    const clean = query.trim();
+    if (!clean) return [];
+
+    try {
+      const maxLimit = Math.min(Math.max(limit, 1), 50);
+      const url = `/search?query=${encodeURIComponent(clean)}&type=series&limit=${maxLimit}`;
+      const results = await this.fetchJson<TvdbSearchItem[]>(url);
+
+      if (!Array.isArray(results)) return [];
+      return results;
+    } catch (err: any) {
+      console.error(`[TheTVDBProvider] searchTvSeries failed: ${err.message}`);
+      return [];
+    }
+  }
+
+  /**
+   * Searches TVDB specifically for Movies and returns search preview items.
+   */
+  async searchMovies(query: string, limit: number = 10): Promise<TvdbSearchItem[]> {
+    const clean = query.trim();
+    if (!clean) return [];
+
+    try {
+      const maxLimit = Math.min(Math.max(limit, 1), 50);
+      const url = `/search?query=${encodeURIComponent(clean)}&type=movie&limit=${maxLimit}`;
+      const results = await this.fetchJson<TvdbSearchItem[]>(url);
+
+      if (!Array.isArray(results)) return [];
+      return results;
+    } catch (err: any) {
+      console.error(`[TheTVDBProvider] searchMovies failed: ${err.message}`);
+      return [];
+    }
   }
 }

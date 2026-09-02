@@ -72,15 +72,35 @@ function findRouteFiles(dir: string): string[] {
   if (!fs.existsSync(dir)) return []
 
   const results: string[] = []
-  const entries = fs.readdirSync(dir, { withFileTypes: true })
+  let entries: fs.Dirent[] = []
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true })
+  } catch {
+    return []
+  }
 
   for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name)
+    const name = entry.name
+
+    // Ignore hidden files and directories
+    if (name.startsWith(".")) continue
+
+    // Ignore temporary, backup, or editor duplicate copies
+    if (
+      /\s+copy(\s+\d+)?$/i.test(name) ||
+      /\s*\(\d+\)$/.test(name) ||
+      /\s*\(copy\)/i.test(name)
+    ) {
+      continue
+    }
+    if (/\.bak$|\.tmp$|\.old$|~$/i.test(name)) continue
+
+    const fullPath = path.join(dir, name)
     if (entry.isDirectory()) {
       results.push(...findRouteFiles(fullPath))
     } else if (
       entry.isFile() &&
-      (entry.name === "route.ts" || entry.name === "route.js")
+      (name === "route.ts" || name === "route.js")
     ) {
       results.push(fullPath)
     }
@@ -386,4 +406,8 @@ export async function generateInsomniumConfig(
       `${c.cyan(c.bold("[Insomnium]"))} ${c.green("Generated")} ${c.bold(requestCount)} ${c.green("endpoints in:")} ${c.dim(outputFile)}`
     )
   }
+}
+
+if (import.meta.main) {
+  generateInsomniumConfig()
 }

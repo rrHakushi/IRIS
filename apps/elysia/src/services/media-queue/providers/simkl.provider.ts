@@ -1,4 +1,6 @@
 import { cache } from "../../../utils/cache.js";
+import { logQueue } from "../logger.js";
+import { c } from "../../../utils/colors.js";
 
 export interface SimklMoviePayload {
   simklId: number;
@@ -92,6 +94,12 @@ export class SimklProvider {
         headers: { "Content-Type": "application/json" },
       });
 
+      if (res.status === 429) {
+        logQueue(
+          `${c.magenta(c.bold("[MediaQueue]"))} ${c.red(c.bold("⚠️ [RATE LIMIT 429]"))} ${c.red("Simkl HTTP 429 Too Many Requests.")}`
+        );
+      }
+
       if (res.ok) {
         const list = (await res.json()) as any[];
         if (Array.isArray(list) && list.length > 0 && list[0]?.ids?.simkl) {
@@ -179,6 +187,12 @@ export class SimklProvider {
       const res = await fetch(searchUrl, {
         headers: { "Content-Type": "application/json" },
       });
+
+      if (res.status === 429) {
+        logQueue(
+          `${c.magenta(c.bold("[MediaQueue]"))} ${c.red(c.bold("⚠️ [RATE LIMIT 429]"))} ${c.red("Simkl HTTP 429 Too Many Requests.")}`
+        );
+      }
 
       if (res.ok) {
         const list = (await res.json()) as any[];

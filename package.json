@@ -16,6 +16,8 @@
     "elysia:dev": "dotenvx run -- turbo run dev --filter=@IRIS/elysia",
     "elysia:build": "turbo run build --filter=@IRIS/elysia",
     "route:create": "bun run --cwd apps/elysia scripts/create-route.ts",
+    "route:delete": "bun run --cwd apps/elysia scripts/delete-route.ts",
+    "route:sync": "bun run --cwd apps/elysia scripts/generate-manifests.ts",
     "sdk": "echo \"nestia sdk disabled\"",
     "swagger": "echo \"nestia swagger disabled\"",
     "nestia": "echo \"nestia disabled\""

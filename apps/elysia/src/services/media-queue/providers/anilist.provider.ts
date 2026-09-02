@@ -1,3 +1,6 @@
+import { logQueue } from "../logger.js";
+import { c } from "../../../utils/colors.js";
+
 export interface AniListMediaRelationNode {
   id: number;
   type: "ANIME" | "MANGA";
@@ -202,12 +205,50 @@ export interface AniListMangaPayload {
   };
 }
 
+export interface AniListAnimeSearchPreview {
+  id: number;
+  title: {
+    userPreferred?: string;
+    romaji?: string;
+    english?: string;
+    native?: string;
+  };
+  coverImage?: {
+    large?: string;
+  };
+  isAdult?: boolean;
+  format?: string;
+  seasonYear?: number;
+  season?: string;
+}
+
+export interface AniListMangaSearchPreview {
+  id: number;
+  title: {
+    userPreferred?: string;
+    romaji?: string;
+    english?: string;
+    native?: string;
+  };
+  coverImage?: {
+    large?: string;
+  };
+  isAdult?: boolean;
+  format?: string;
+  startDate?: { year?: number };
+}
+
 export class AniListProvider {
   private readonly endpoint = "https://graphql.anilist.co";
   private appToken: string | null = null;
   private tokenExpiresAt = 0;
   private rateLimitRemaining = 90;
   private rateLimitResetTimestamp = 0;
+  private pauseUntil = 0;
+  private lastRequestTime = 0;
+  private last429LogTime = 0;
+  private requestQueue: Promise<unknown> = Promise.resolve();
+  private readonly minDelayMs = 700; // ~85 req/min (safely within AniList 90 req/min limit)
 
   private getClientId(): string {
     return process.env.ANILIST_CLIENT_ID || "";
@@ -263,19 +304,52 @@ export class AniListProvider {
 
   private async waitForRateLimit(): Promise<void> {
     const now = Date.now();
-    // Only sleep if AniList header indicates we're exhausted
-    if (this.rateLimitRemaining <= 2 && this.rateLimitResetTimestamp > 0) {
-      const waitMs = Math.max(0, this.rateLimitResetTimestamp * 1000 - now + 500);
-      if (waitMs > 0 && waitMs < 120000) {
-        console.log(
-          `[AniListProvider] ⏳ Rate limit threshold reached (remaining: ${this.rateLimitRemaining}). Waiting ${(waitMs / 1000).toFixed(1)}s until reset...`
-        );
+
+    // 1. If a global 429 pause is active, wait until it clears
+    if (this.pauseUntil > now) {
+      const waitMs = this.pauseUntil - now;
+      if (waitMs > 0) {
         await new Promise((r) => setTimeout(r, waitMs));
       }
+    }
+
+    // 2. Proactive rate limit reset pause if remaining header is exhausted
+    const currentNow = Date.now();
+    if (this.rateLimitRemaining <= 2 && this.rateLimitResetTimestamp > 0) {
+      const waitMs = Math.max(0, this.rateLimitResetTimestamp * 1000 - currentNow + 1000);
+      if (waitMs > 0 && waitMs < 120000) {
+        const sec = (waitMs / 1000).toFixed(1);
+        const now2 = Date.now();
+        if (now2 - this.last429LogTime > 4000) {
+          this.last429LogTime = now2;
+          logQueue(
+            `${c.magenta(c.bold("[MediaQueue]"))} ${c.yellow(c.bold("⏳ [RATE LIMIT]"))} ${c.yellow(`AniList threshold reached (remaining: ${this.rateLimitRemaining}). Pausing for ${sec}s until reset...`)}`
+          );
+        }
+        await new Promise((r) => setTimeout(r, waitMs));
+      }
+    }
+
+    // 3. Minimum interval pacing between consecutive requests (700ms)
+    const elapsed = Date.now() - this.lastRequestTime;
+    if (elapsed < this.minDelayMs) {
+      await new Promise((r) => setTimeout(r, this.minDelayMs - elapsed));
     }
   }
 
   private async executeGraphQL<T>(query: string, variables: Record<string, unknown>): Promise<T> {
+    // Chain onto serialized queue to ensure strict minimum delay and prevent thundering herd
+    const queuePromise = this.requestQueue.then(async () => {
+      return await this.performGraphQLRequest<T>(query, variables);
+    });
+
+    // Catch errors on the chain so subsequent requests don't fail immediately
+    this.requestQueue = queuePromise.catch(() => {});
+
+    return queuePromise;
+  }
+
+  private async performGraphQLRequest<T>(query: string, variables: Record<string, unknown>): Promise<T> {
     await this.waitForRateLimit();
 
     const headers: Record<string, string> = {
@@ -295,6 +369,8 @@ export class AniListProvider {
       body: JSON.stringify({ query, variables }),
     });
 
+    this.lastRequestTime = Date.now();
+
     // Inspect dynamic rate-limit headers
     const limitHeader = res.headers.get("X-RateLimit-Limit");
     const remainingHeader = res.headers.get("X-RateLimit-Remaining");
@@ -309,11 +385,18 @@ export class AniListProvider {
 
     if (res.status === 429) {
       const retryAfter = Number(res.headers.get("Retry-After")) || 60;
-      console.log(
-        `[AniListProvider] ⚠️ HTTP 429 Too Many Requests from AniList. Waiting ${retryAfter}s before retrying...`
-      );
-      await new Promise((r) => setTimeout(r, retryAfter * 1000));
-      return this.executeGraphQL<T>(query, variables);
+      this.pauseUntil = Math.max(this.pauseUntil, Date.now() + retryAfter * 1000 + 1000);
+
+      const now = Date.now();
+      if (now - this.last429LogTime > 4000) {
+        this.last429LogTime = now;
+        logQueue(
+          `${c.magenta(c.bold("[MediaQueue]"))} ${c.red(c.bold("⚠️ [RATE LIMIT 429]"))} ${c.red(`AniList HTTP 429 Too Many Requests. Pausing AniList queue for ${retryAfter}s...`)}`
+        );
+      }
+
+      await new Promise((r) => setTimeout(r, retryAfter * 1000 + 1000));
+      return this.performGraphQLRequest<T>(query, variables);
     }
 
     if (!res.ok) {
@@ -787,33 +870,25 @@ export class AniListProvider {
     `;
 
     while (keepGoing && page <= 25) {
-      const pageBatch = [page, page + 1, page + 2, page + 3, page + 4];
       try {
-        const batchResults = await Promise.all(
-          pageBatch.map((p) =>
-            this.executeGraphQL<{
-              Media: {
-                characters: {
-                  pageInfo: { hasNextPage: boolean };
-                  edges: any[];
-                };
-              };
-            }>(query, { id: mediaId, type: mediaType, page: p }).catch(() => null)
-          )
-        );
+        const res = await this.executeGraphQL<{
+          Media: {
+            characters: {
+              pageInfo: { hasNextPage: boolean };
+              edges: any[];
+            };
+          };
+        }>(query, { id: mediaId, type: mediaType, page });
 
-        for (const res of batchResults) {
-          if (!res) continue;
-          const chars = res.Media?.characters;
-          if (chars?.edges && chars.edges.length > 0) {
-            allEdges.push(...chars.edges);
-          }
-          if (!chars?.pageInfo?.hasNextPage || !chars?.edges || chars.edges.length === 0) {
-            keepGoing = false;
-            break;
-          }
+        const chars = res.Media?.characters;
+        if (chars?.edges && chars.edges.length > 0) {
+          allEdges.push(...chars.edges);
         }
-        page += pageBatch.length;
+        if (!chars?.pageInfo?.hasNextPage || !chars?.edges || chars.edges.length === 0) {
+          keepGoing = false;
+          break;
+        }
+        page++;
       } catch {
         break;
       }
@@ -865,38 +940,115 @@ export class AniListProvider {
     `;
 
     while (keepGoing && page <= 25) {
-      const pageBatch = [page, page + 1, page + 2, page + 3, page + 4];
       try {
-        const batchResults = await Promise.all(
-          pageBatch.map((p) =>
-            this.executeGraphQL<{
-              Media: {
-                staff: {
-                  pageInfo: { hasNextPage: boolean };
-                  edges: any[];
-                };
-              };
-            }>(query, { id: mediaId, type: mediaType, page: p }).catch(() => null)
-          )
-        );
+        const res = await this.executeGraphQL<{
+          Media: {
+            staff: {
+              pageInfo: { hasNextPage: boolean };
+              edges: any[];
+            };
+          };
+        }>(query, { id: mediaId, type: mediaType, page });
 
-        for (const res of batchResults) {
-          if (!res) continue;
-          const staff = res.Media?.staff;
-          if (staff?.edges && staff.edges.length > 0) {
-            allEdges.push(...staff.edges);
-          }
-          if (!staff?.pageInfo?.hasNextPage || !staff?.edges || staff.edges.length === 0) {
-            keepGoing = false;
-            break;
-          }
+        const staff = res.Media?.staff;
+        if (staff?.edges && staff.edges.length > 0) {
+          allEdges.push(...staff.edges);
         }
-        page += pageBatch.length;
+        if (!staff?.pageInfo?.hasNextPage || !staff?.edges || staff.edges.length === 0) {
+          keepGoing = false;
+          break;
+        }
+        page++;
       } catch {
         break;
       }
     }
 
     return allEdges;
+  }
+
+  /**
+   * Searches AniList for anime by title/query and returns minimal search preview items.
+   */
+  async searchAnime(query: string, limit: number = 10): Promise<AniListAnimeSearchPreview[]> {
+    const clean = query.trim();
+    if (!clean) return [];
+
+    const gqlQuery = `
+      query SearchAnime($search: String, $perPage: Int) {
+        Page(page: 1, perPage: $perPage) {
+          media(search: $search, type: ANIME, sort: SEARCH_MATCH) {
+            id
+            title {
+              userPreferred
+              romaji
+              english
+              native
+            }
+            coverImage {
+              large
+            }
+            isAdult
+            format
+            seasonYear
+            season
+          }
+        }
+      }
+    `;
+
+    try {
+      const data = await this.executeGraphQL<{
+        Page?: { media?: AniListAnimeSearchPreview[] };
+      }>(gqlQuery, { search: clean, perPage: Math.min(Math.max(limit, 1), 50) });
+
+      return data.Page?.media || [];
+    } catch (err: any) {
+      console.error(`[AniListProvider] searchAnime failed: ${err.message}`);
+      return [];
+    }
+  }
+
+  /**
+   * Searches AniList for manga by title/query and returns minimal search preview items.
+   */
+  async searchManga(query: string, limit: number = 10): Promise<AniListMangaSearchPreview[]> {
+    const clean = query.trim();
+    if (!clean) return [];
+
+    const gqlQuery = `
+      query SearchManga($search: String, $perPage: Int) {
+        Page(page: 1, perPage: $perPage) {
+          media(search: $search, type: MANGA, sort: SEARCH_MATCH) {
+            id
+            title {
+              userPreferred
+              romaji
+              english
+              native
+            }
+            coverImage {
+              large
+            }
+            isAdult
+            format
+            startDate {
+              year
+            }
+          }
+        }
+      }
+    `;
+
+    try {
+      const data = await this.executeGraphQL<{
+        Page?: { media?: AniListMangaSearchPreview[] };
+      }>(gqlQuery, { search: clean, perPage: Math.min(Math.max(limit, 1), 50) });
+
+      return data.Page?.media || [];
+    } catch (err: any) {
+      console.error(`[AniListProvider] searchManga failed: ${err.message}`);
+      return [];
+    }
   }
 }

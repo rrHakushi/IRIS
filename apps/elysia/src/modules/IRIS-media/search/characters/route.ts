@@ -1,28 +1,71 @@
 import { defineRoute, t } from "@/router";
+import { NotFound } from "elysia";
+
+import { CharacterSearchResponseSchema, type CharacterSearchResponse } from "./types";
+import { NotFoundResponseSchema } from "../../../../../types";
+
+const SEARCH_CHARACTERS_TTL = 60 * 60; // 1 hour
 
 export default defineRoute({
   schema: {
-    query: t.Optional(
-      t.Object({
-        q: t.Optional(t.String()),
-        page: t.Optional(t.Number({ default: 1 })),
-        limit: t.Optional(t.Number({ default: 20 })),
-      })
-    ),
-    response: {
-      200: t.Object({
-        success: t.Boolean(),
-        message: t.String(),
-        timestamp: t.String(),
+    query: t.Object({
+      q: t.String({
+        description: "Search query string (minimum 3 characters)",
+        minLength: 3,
       }),
+    }),
+    response: {
+      200: CharacterSearchResponseSchema,
+      404: NotFoundResponseSchema,
+    },
+    detail: {
+      summary: "Search characters",
+      description: "Searches characters by name or aliases and returns matching character preview records.",
+      tags: ["Media - Character"],
     },
   },
 
-  async GET({ query, prisma, cache }) {
-    return {
-      success: true,
-      message: `GET /search/characters handled successfully`,
-      timestamp: new Date().toISOString(),
-    };
+  cacheKeys: {
+    search: {
+      characters: (q: string) => `search:characters:${q}`,
+    },
+  },
+
+  async GET({ query, prisma, cache, cacheKeys }) {
+    const { q } = query;
+    const cleanQuery = decodeURIComponent(q).replace(/\+/g, " ").trim();
+    const cacheKey = cacheKeys.search.characters(cleanQuery);
+
+    if (!cleanQuery || cleanQuery.length < 3) {
+      return new NotFound("Query must be at least 3 characters long");
+    }
+
+    const cached = await cache.get<CharacterSearchResponse>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const data = await prisma.character.findMany({
+      where: {
+        OR: [
+          { namePrimary: { contains: cleanQuery, mode: "insensitive" } },
+          { nameNative: { contains: cleanQuery, mode: "insensitive" } },
+          { nameAlternative: { has: cleanQuery } },
+        ],
+      },
+      select: {
+        id: true,
+        namePrimary: true,
+        nameNative: true,
+        image: true,
+        gender: true,
+      },
+      orderBy: {
+        namePrimary: "asc",
+      },
+    });
+
+    await cache.set(cacheKey, data, SEARCH_CHARACTERS_TTL);
+    return data;
   },
 });

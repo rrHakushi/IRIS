@@ -1,3 +1,13 @@
+import { logQueue } from "../logger.js";
+import { c } from "../../../utils/colors.js";
+
+export interface IgdbSearchPreview {
+  id: number;
+  name: string;
+  cover?: { id: number; image_id: string };
+  first_release_date?: number;
+}
+
 export interface IgdbGamePayload {
   id: number;
   name: string;
@@ -171,6 +181,9 @@ export class IGDBProvider {
 
     if (res.status === 429) {
       const retryAfter = Number(res.headers.get("Retry-After")) || 5;
+      logQueue(
+        `${c.magenta(c.bold("[MediaQueue]"))} ${c.red(c.bold("⚠️ [RATE LIMIT 429]"))} ${c.red(`IGDB HTTP 429 Too Many Requests. Backing off for ${retryAfter}s...`)}`
+      );
       await new Promise((r) => setTimeout(r, retryAfter * 1000));
       return this.fetchGame(igdbId);
     }
@@ -237,5 +250,59 @@ export class IGDBProvider {
 
     if (!res.ok) return [];
     return (await res.json()) as any[];
+  }
+
+  /**
+   * Searches IGDB for games by title/query and returns matching search preview items.
+   */
+  async searchGames(query: string, limit: number = 10): Promise<IgdbSearchPreview[]> {
+    const clean = query.trim();
+    if (!clean) return [];
+
+    try {
+      await this.waitForRateLimit();
+      const token = await this.getValidToken();
+      const clientId = this.getClientId();
+
+      const maxResults = Math.min(Math.max(limit, 1), 50);
+      const sanitized = clean.replace(/"/g, '\\"');
+      const igdbQuery = `
+        search "${sanitized}";
+        fields id, name, cover.image_id, first_release_date;
+        limit ${maxResults};
+      `;
+
+      const res = await fetch(`${this.baseUrl}/games`, {
+        method: "POST",
+        headers: {
+          "Client-ID": clientId,
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "text/plain",
+          Accept: "application/json",
+        },
+        body: igdbQuery,
+      });
+
+      if (res.status === 429) {
+        const retryAfter = Number(res.headers.get("Retry-After")) || 5;
+        logQueue(
+          `${c.magenta(c.bold("[MediaQueue]"))} ${c.red(c.bold("⚠️ [RATE LIMIT 429]"))} ${c.red(`IGDB HTTP 429 during search. Backing off for ${retryAfter}s...`)}`
+        );
+        await new Promise((r) => setTimeout(r, retryAfter * 1000));
+        return this.searchGames(query, limit);
+      }
+
+      if (!res.ok) {
+        return [];
+      }
+
+      const items = (await res.json()) as IgdbSearchPreview[];
+      if (!Array.isArray(items)) return [];
+
+      return items.filter((g) => Boolean(g && typeof g.id === "number"));
+    } catch (err: any) {
+      console.error(`[IGDBProvider] searchGames failed: ${err.message}`);
+      return [];
+    }
   }
 }
