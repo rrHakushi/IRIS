@@ -20,6 +20,7 @@ import { ConnectionCard } from "./connections/connection-card"
 import { ConnectDialog } from "./connections/connect-dialog"
 import { ConnectionSettingsDialog } from "./connections/connection-settings-dialog"
 import { toast } from "sonner"
+import { elysia } from "@/lib/elysia"
 
 type CategoryFilter = "ALL" | "TRACKING" | "GAMING" | "SERVARR"
 
@@ -42,8 +43,6 @@ export function ConnectionsSettingsTab({}: SettingsTabProps): React.JSX.Element 
     useState<ProviderMetadata | null>(null)
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false)
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
-
   const inFlightRef = React.useRef(false)
 
   const fetchData = useCallback(
@@ -56,22 +55,16 @@ export function ConnectionsSettingsTab({}: SettingsTabProps): React.JSX.Element 
 
       try {
         const [provRes, connRes] = await Promise.all([
-          fetch(`${apiUrl}/connections/providers`),
-          fetch(`${apiUrl}/connections`, { credentials: "include" }),
+          elysia.connections.providers.get(),
+          elysia.connections.get({ fetch: { credentials: "include" } }),
         ])
 
-        if (provRes.ok) {
-          const provData = await provRes.json()
-          if (provData.success) {
-            setProviders(provData.providers)
-          }
+        if (!provRes.error && provRes.data?.success) {
+          setProviders(provRes.data.providers as unknown as ProviderMetadata[])
         }
 
-        if (connRes.ok) {
-          const connData = await connRes.json()
-          if (connData.success) {
-            setConnections(connData.connections)
-          }
+        if (!connRes.error && connRes.data?.success) {
+          setConnections(connRes.data.connections as unknown as UserConnectionItem[])
         }
       } catch (err) {
         console.error("Failed to load connections:", err)
@@ -81,7 +74,7 @@ export function ConnectionsSettingsTab({}: SettingsTabProps): React.JSX.Element 
         inFlightRef.current = false
       }
     },
-    [apiUrl]
+    []
   )
 
   useEffect(() => {

@@ -22,6 +22,7 @@ import {
 } from "@tabler/icons-react"
 import type { ProviderMetadata } from "./types"
 import { toast } from "sonner"
+import { elysia } from "@/lib/elysia"
 
 interface ConnectDialogProps {
   provider: ProviderMetadata | null
@@ -71,23 +72,23 @@ export function ConnectDialog({
     setError(null)
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
-      const res = await fetch(`${apiUrl}/connections`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          provider: provider.provider,
+      const { error: submitErr } = await elysia.connections.post(
+        {
+          provider: provider.provider as any,
           apiKey: apiKey.trim() || undefined,
           hostUrl: hostUrl.trim() || undefined,
           username: username.trim() || undefined,
           password: password || undefined,
-        }),
-      })
+        },
+        {
+          fetch: { credentials: "include" },
+        }
+      )
 
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to establish connection")
+      if (submitErr) {
+        throw new Error(
+          (submitErr as any)?.value?.message || "Failed to establish connection"
+        )
       }
 
       toast.success(`Successfully connected to ${provider.name}!`)

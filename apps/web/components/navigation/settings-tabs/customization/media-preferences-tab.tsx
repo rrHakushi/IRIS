@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { useUser } from "@/context/user-context"
+import { elysia } from "@/lib/elysia"
 import type { SettingsTabProps } from "../types"
 import { type MediaTitleLanguage, getMediaPreferences } from "@IRIS/shared"
 import {
@@ -22,7 +23,7 @@ export function MediaPreferencesSettingsTab({
   setFooterContent,
 }: SettingsTabProps): React.JSX.Element {
   const t = useTranslations("navigation.settings.customization.media")
-  const { user, updateUser } = useUser()
+  const { user, refetchUser } = useUser()
 
   const currentPref =
     getMediaPreferences(user?.customization).title || "primary"
@@ -67,20 +68,22 @@ export function MediaPreferencesSettingsTab({
         },
       }
 
-      const res = await fetch("/api/users/me", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const { data, error } = await elysia.users.me.patch(
+        {
           customization: updatedCustomization,
-        }),
-      })
+        },
+        {
+          fetch: { credentials: "include" },
+        }
+      )
 
-      if (!res.ok) {
-        throw new Error("Failed to update media preferences")
+      if (error || !data?.user) {
+        throw new Error(
+          (error as any)?.value?.message || "Failed to update media preferences"
+        )
       }
 
-      const updatedUserData = await res.json()
-      updateUser(updatedUserData)
+      await refetchUser()
       setSavedTitle(selectedTitle)
       toast.success(t("updateSuccess"))
     } catch (error) {

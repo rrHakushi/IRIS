@@ -199,7 +199,7 @@ export function RegisterForm({ footer }: RegisterFormProps) {
         payload.encryptionPassword = encryptionPassword.trim()
       }
 
-      const { data, error } = await (elysia as any).auth.register.post(payload)
+      const { data, error } = await elysia.auth.register.post(payload)
 
       if (error || !data) {
         const message =

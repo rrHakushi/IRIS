@@ -58,7 +58,7 @@ export function ApiKeysSettingsTab({
       setError(null)
 
       try {
-        const res = await (elysia.auth as any)["api-keys"].get({
+        const res = await elysia.auth["api-keys"].get({
           fetch: { credentials: "include" },
         })
 
@@ -99,7 +99,7 @@ export function ApiKeysSettingsTab({
     setError(null)
 
     try {
-      const res = await (elysia.auth as any)["api-keys"].post(
+      const res = await elysia.auth["api-keys"].post(
         {
           name,
           expirationDays: expirationDays ?? undefined,
@@ -144,7 +144,7 @@ export function ApiKeysSettingsTab({
     setRenamingId(id)
 
     try {
-      const res = await (elysia.auth as any)["api-keys"]({ id }).patch(
+      const res = await elysia.auth["api-keys"]({ id }).patch(
         {
           name: newName,
         },
@@ -179,7 +179,7 @@ export function ApiKeysSettingsTab({
     setRegeneratingId(id)
 
     try {
-      const res = await (elysia.auth as any)
+      const res = await elysia.auth
         ["api-keys"]({ id })
         .regenerate.post(
           {},
@@ -220,7 +220,7 @@ export function ApiKeysSettingsTab({
     setDeletingId(id)
 
     try {
-      const res = await (elysia.auth as any)["api-keys"]({ id }).delete(
+      const res = await elysia.auth["api-keys"]({ id }).delete(
         {},
         {
           fetch: { credentials: "include" },

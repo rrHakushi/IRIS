@@ -129,11 +129,10 @@ export function EncryptionProvider({
         }
 
         // 3. Fetch latest from server
-        const { data, error: apiError } = await (
-          elysia as any
-        ).users.me.encryption.get({
-          fetch: { credentials: "include" },
-        })
+        const { data, error: apiError } =
+          await elysia.users.me.encryption.get({
+            fetch: { credentials: "include" },
+          })
 
         if (!apiError && data?.success && data.publicKey) {
           const resolvedUserId = data.userId || userId || null
@@ -298,17 +297,16 @@ export function EncryptionProvider({
     setError(null)
 
     try {
-      const { data, error: apiError } = await (
-        elysia as any
-      ).users.me.encryption.post(
-        {
-          currentPassword,
-          newEncryptionPassword: newPassword,
-        },
-        {
-          fetch: { credentials: "include" },
-        }
-      )
+      const { data, error: apiError } =
+        await elysia.users.me.encryption.post(
+          {
+            currentPassword,
+            newEncryptionPassword: newPassword,
+          },
+          {
+            fetch: { credentials: "include" },
+          }
+        )
 
       if (apiError || !data?.success) {
         const msg =

@@ -14,6 +14,7 @@ import {
 } from "@tabler/icons-react"
 import type { ProviderMetadata, UserConnectionItem } from "./types"
 import { toast } from "sonner"
+import { elysia } from "@/lib/elysia"
 
 interface ConnectionCardProps {
   provider: ProviderMetadata
@@ -39,8 +40,6 @@ export function ConnectionCard({
   const isError = connection && connection.status === "ERROR"
   const isExpired = connection && connection.status === "EXPIRED"
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
-
   React.useEffect(() => {
     if (testCooldown <= 0) return
     const timer = setInterval(() => {
@@ -55,23 +54,21 @@ export function ConnectionCard({
         typeof window !== "undefined"
           ? window.location.href
           : "/settings?tab=connections"
-      const authEndpoint = new URL(
-        `${apiUrl}/connections/${provider.provider.toLowerCase()}/auth`
-      )
-      authEndpoint.searchParams.set("returnTo", returnTo)
 
-      const res = await fetch(authEndpoint.toString(), {
-        credentials: "include",
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to initiate authorization")
+      const { data, error } = await elysia
+        .connections({ id: provider.provider.toLowerCase() })
+        .auth.get({
+          query: { returnTo },
+          fetch: { credentials: "include" },
+        })
+
+      if (error || !data?.url) {
+        throw new Error(
+          (error as any)?.value?.message || "Failed to initiate authorization"
+        )
       }
 
-      if (data.url) {
-        // Redirect in the same window
-        window.location.href = data.url
-      }
+      window.location.href = data.url
     } catch (err: unknown) {
       toast.error((err as Error).message || "Authorization failed")
     }
@@ -93,13 +90,18 @@ export function ConnectionCard({
     if (!connection || isTesting || testCooldown > 0) return
     setIsTesting(true)
     try {
-      const res = await fetch(`${apiUrl}/connections/${connection.id}/test`, {
-        method: "POST",
-        credentials: "include",
-      })
-      const data = await res.json()
-      if (!res.ok || data.status === "ERROR") {
-        throw new Error(data.message || "Connection health test failed")
+      const { data, error } = await elysia
+        .connections({ id: connection.id })
+        .test.post(undefined, {
+          fetch: { credentials: "include" },
+        })
+
+      if (error || data?.status === "ERROR") {
+        throw new Error(
+          (error as any)?.value?.message ||
+            (data as any)?.message ||
+            "Connection health test failed"
+        )
       }
       toast.success(`${provider.name} is active and healthy!`)
       setTestCooldown(10)

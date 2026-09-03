@@ -15,6 +15,7 @@ import { Spinner } from "@workspace/ui/components/spinner"
 import { IconTrash, IconCheck } from "@tabler/icons-react"
 import type { ProviderMetadata, UserConnectionItem } from "./types"
 import { toast } from "sonner"
+import { elysia } from "@/lib/elysia"
 
 interface ConnectionSettingsDialogProps {
   connection: UserConnectionItem | null
@@ -33,12 +34,8 @@ export function ConnectionSettingsDialog({
   onUpdated,
   onDisconnected,
 }: ConnectionSettingsDialogProps): React.JSX.Element | null {
-  const [librarySync, setLibrarySync] = useState<boolean>(
-    Boolean(connection?.settings?.librarySync ?? true)
-  )
-  const [isPrivate, setIsPrivate] = useState<boolean>(
-    Boolean(connection?.settings?.isPrivate ?? false)
-  )
+  const [librarySync, setLibrarySync] = useState(false)
+  const [isPrivate, setIsPrivate] = useState(false)
 
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -53,16 +50,11 @@ export function ConnectionSettingsDialog({
 
   if (!connection || !provider) return null
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
-
   const handleSaveSettings = async () => {
     setIsSaving(true)
     try {
-      const res = await fetch(`${apiUrl}/connections/${connection.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
+      const { error } = await elysia.connections({ id: connection.id }).patch(
+        {
           settings: {
             ...(connection.settings?.hostUrl
               ? { hostUrl: connection.settings.hostUrl }
@@ -70,10 +62,17 @@ export function ConnectionSettingsDialog({
             librarySync,
             isPrivate,
           },
-        }),
-      })
+        },
+        {
+          fetch: { credentials: "include" },
+        }
+      )
 
-      if (!res.ok) throw new Error("Failed to save settings")
+      if (error) {
+        throw new Error(
+          (error as any)?.value?.message || "Failed to save settings"
+        )
+      }
 
       toast.success("Connection settings updated!")
       onOpenChange(false)
@@ -91,12 +90,18 @@ export function ConnectionSettingsDialog({
 
     setIsDeleting(true)
     try {
-      const res = await fetch(`${apiUrl}/connections/${connection.id}`, {
-        method: "DELETE",
-        credentials: "include",
-      })
+      const { error } = await elysia.connections({ id: connection.id }).delete(
+        undefined,
+        {
+          fetch: { credentials: "include" },
+        }
+      )
 
-      if (!res.ok) throw new Error("Failed to disconnect")
+      if (error) {
+        throw new Error(
+          (error as any)?.value?.message || "Failed to disconnect"
+        )
+      }
 
       toast.success(`Disconnected ${provider.name}`)
       onOpenChange(false)

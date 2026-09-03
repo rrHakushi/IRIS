@@ -347,17 +347,15 @@ export function LoginForm({ footer }: LoginFormProps) {
 
     try {
       const targetIdent = (customIdentifier ?? identifier).trim() || undefined
-      const { data, error } = await (
-        elysia.auth.quickconnect.generate as any
-      ).post({
+      const { data, error } = await elysia.auth.quickconnect.generate.post({
         userIdentifier: targetIdent,
       })
       if (error || !data) {
         throw new Error(t("failedGenerateCode"))
       }
 
-      const sessionToken = (data as any).sessionToken
-      setQuickConnectCode((data as any).code || sessionToken)
+      const sessionToken = data.sessionToken
+      setQuickConnectCode(data.code || sessionToken)
       setQuickConnectSessionToken(sessionToken)
       setLoading(false)
     } catch (err: any) {

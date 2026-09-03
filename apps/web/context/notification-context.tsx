@@ -199,11 +199,9 @@ export function NotificationProvider({
     setError(null)
 
     try {
-      const { data, error: apiError } = await (elysia as any).notifications.get(
-        {
-          fetch: { credentials: "include" },
-        }
-      )
+      const { data, error: apiError } = await elysia.notifications.get({
+        fetch: { credentials: "include" },
+      })
 
       if (!apiError && data?.success) {
         const secretKey = loadSessionSecretKey(userId)
@@ -268,7 +266,7 @@ export function NotificationProvider({
       payload?: Record<string, unknown>
     ): Promise<boolean> => {
       try {
-        const { data, error: apiError } = await (elysia as any)
+        const { data, error: apiError } = await elysia
           .notifications({ id })
           .action.post(
             { action, payload },
@@ -456,7 +454,7 @@ export function NotificationProvider({
       )
       setUnreadCount((prev) => Math.max(0, prev - 1))
 
-      const { data, error: apiError } = await (elysia as any)
+      const { data, error: apiError } = await elysia
         .notifications({ id })
         .read.patch({ isRead: true }, { fetch: { credentials: "include" } })
 
@@ -477,7 +475,7 @@ export function NotificationProvider({
       )
       setUnreadCount(0)
 
-      const { data, error: apiError } = await (elysia as any).notifications[
+      const { data, error: apiError } = await elysia.notifications[
         "mark-all-read"
       ].post({}, { fetch: { credentials: "include" } })
 
@@ -495,7 +493,7 @@ export function NotificationProvider({
         setUnreadCount((prev) => Math.max(0, prev - 1))
       }
 
-      const { data, error: apiError } = await (elysia as any)
+      const { data, error: apiError } = await elysia
         .notifications({ id })
         .delete({}, { fetch: { credentials: "include" } })
 
@@ -514,9 +512,7 @@ export function NotificationProvider({
         setUnreadCount(0)
       }
 
-      const { data, error: apiError } = await (
-        elysia as any
-      ).notifications.delete(
+      const { data, error: apiError } = await elysia.notifications.delete(
         { query: { onlyRead: onlyRead ? "true" : undefined } },
         { fetch: { credentials: "include" } }
       )

@@ -1,4 +1,4 @@
-import { elysia, API_URL } from "@/lib/elysia"
+import { elysia } from "@/lib/elysia"
 import type { BrowseCategory } from "@/lib/browse-history"
 import type { SearchResultItem } from "@/components/browse/browse-search-results"
 import type { MediaTitleLanguage } from "@IRIS/shared"
@@ -19,48 +19,22 @@ export async function searchCategoryMedia(
   }
 
   try {
-    // Attempt via Eden Treaty client first
-    const client = elysia as any
-    if (client.search && client.search[category]) {
-      const { data, error } = await client.search[category].get({
-        query: { q: cleanQuery },
-        fetch: {
-          signal,
-          credentials: "include",
-        },
-      })
-
-      if (!error && Array.isArray(data)) {
-        return normalizeSearchResults(data, category, titlePreference)
-      }
-    }
-
-    // Direct fetch fallback
-    const res = await fetch(
-      `${API_URL}/search/${category}?q=${encodeURIComponent(cleanQuery)}`,
-      {
+    const searchClient = elysia.search[category]
+    const { data, error } = await searchClient.get({
+      query: { q: cleanQuery },
+      fetch: {
         signal,
         credentials: "include",
-        headers: {
-          Accept: "application/json",
-        },
-      }
-    )
+      },
+    })
 
-    if (!res.ok) {
-      return []
+    if (!error && Array.isArray(data)) {
+      return normalizeSearchResults(data, category, titlePreference)
     }
 
-    const json = await res.json()
-    const items = Array.isArray(json)
-      ? json
-      : Array.isArray(json?.data)
-        ? json.data
-        : []
-
-    return normalizeSearchResults(items, category, titlePreference)
-  } catch (err: any) {
-    if (err.name === "AbortError") {
+    return []
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === "AbortError") {
       return []
     }
     console.error(`[BrowseSearch] Error searching category ${category}:`, err)
