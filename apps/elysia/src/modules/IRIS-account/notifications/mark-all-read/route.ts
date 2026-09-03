@@ -1,5 +1,5 @@
-import { defineRoute, t } from "../../../../router";
-import { wsHub } from "../../../../services/websocket-hub";
+import { defineRoute, t } from "../../../../router"
+import { wsHub } from "../../../../services/websocket-hub"
 
 export default defineRoute({
   POST: {
@@ -15,12 +15,15 @@ export default defineRoute({
     async handler({ session, prisma }) {
       if (!session.isAuthenticated || !session.user) {
         return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "Authentication required",
+          }),
           { status: 401, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
-      const userId = session.user.id;
+      const userId = session.user.id
 
       const result = await prisma.notification.updateMany({
         where: {
@@ -31,18 +34,18 @@ export default defineRoute({
           isRead: true,
           readAt: new Date(),
         },
-      });
+      })
 
       wsHub.sendToUser(userId, "notification:mark-all-read", {
         markedCount: result.count,
         unreadCount: 0,
-      });
+      })
 
       return {
         success: true,
         markedCount: result.count,
         unreadCount: 0,
-      };
+      }
     },
   },
-});
+})

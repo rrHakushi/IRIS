@@ -1,5 +1,5 @@
-import { defineRoute, t } from "../../../router";
-import { wsHub } from "../../../services/websocket-hub";
+import { defineRoute, t } from "../../../router"
+import { wsHub } from "../../../services/websocket-hub"
 
 export default defineRoute({
   GET: {
@@ -44,31 +44,34 @@ export default defineRoute({
     async handler({ session, query, prisma }) {
       if (!session.isAuthenticated || !session.user) {
         return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "Authentication required",
+          }),
           { status: 401, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
-      const userId = session.user.id;
-      const limit = query.limit ?? 50;
-      const offset = query.offset ?? 0;
+      const userId = session.user.id
+      const limit = query.limit ?? 50
+      const offset = query.offset ?? 0
 
-      const where: any = { userId };
+      const where: any = { userId }
 
       if (query.app) {
-        where.app = query.app;
+        where.app = query.app
       }
       if (query.category) {
-        where.category = query.category;
+        where.category = query.category
       }
       if (query.type) {
-        where.type = query.type as any;
+        where.type = query.type as any
       }
       if (query.priority) {
-        where.priority = query.priority as any;
+        where.priority = query.priority as any
       }
       if (query.isRead !== undefined) {
-        where.isRead = Boolean(query.isRead);
+        where.isRead = Boolean(query.isRead)
       }
 
       const [total, unreadCount, notifications] = await Promise.all([
@@ -80,14 +83,14 @@ export default defineRoute({
           take: limit,
           skip: offset,
         }),
-      ]);
+      ])
 
       return {
         success: true,
         total,
         unreadCount,
         notifications,
-      };
+      }
     },
   },
 
@@ -107,32 +110,35 @@ export default defineRoute({
     async handler({ session, query, prisma }) {
       if (!session.isAuthenticated || !session.user) {
         return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "Authentication required",
+          }),
           { status: 401, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
-      const userId = session.user.id;
-      const where: any = { userId };
+      const userId = session.user.id
+      const where: any = { userId }
       if (query.onlyRead) {
-        where.isRead = true;
+        where.isRead = true
       }
 
-      const result = await prisma.notification.deleteMany({ where });
+      const result = await prisma.notification.deleteMany({ where })
       const unreadCount = await prisma.notification.count({
         where: { userId, isRead: false },
-      });
+      })
 
       wsHub.sendToUser(userId, "notification:bulk-delete", {
         deletedCount: result.count,
         unreadCount,
-      });
+      })
 
       return {
         success: true,
         deletedCount: result.count,
         unreadCount,
-      };
+      }
     },
   },
-});
+})

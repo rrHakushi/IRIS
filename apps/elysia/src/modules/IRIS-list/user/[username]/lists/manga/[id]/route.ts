@@ -1,4 +1,4 @@
-import { defineRoute, t } from "@/router";
+import { defineRoute, t } from "@/router"
 
 export default defineRoute({
   schema: {
@@ -31,7 +31,7 @@ export default defineRoute({
       success: true,
       message: `GET /user/${params.username}/lists/manga/${params.id} handled successfully`,
       timestamp: new Date().toISOString(),
-    };
+    }
   },
 
   async POST({ params, body, session, prisma }) {
@@ -39,14 +39,14 @@ export default defineRoute({
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "content-type": "application/json" },
-      });
+      })
     }
 
     return {
       success: true,
       message: `POST /user/${params.username}/lists/manga/${params.id} handled successfully`,
       timestamp: new Date().toISOString(),
-    };
+    }
   },
 
   async DELETE({ params, session, prisma }) {
@@ -54,13 +54,13 @@ export default defineRoute({
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "content-type": "application/json" },
-      });
+      })
     }
 
     return {
       success: true,
       message: `DELETE /user/${params.username}/lists/manga/${params.id} handled successfully`,
       timestamp: new Date().toISOString(),
-    };
+    }
   },
-});
+})

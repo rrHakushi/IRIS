@@ -1,31 +1,28 @@
-import React from "react";
-import nodemailer from "nodemailer";
-import { render } from "@react-email/render";
-import { c } from "./colors.js";
-import { logger } from "./logger.js";
-import {
-  MfaVerificationEmail,
-  PasswordResetEmail,
-} from "../emails/index.js";
+import React from "react"
+import nodemailer from "nodemailer"
+import { render } from "@react-email/render"
+import { c } from "./colors.js"
+import { logger } from "./logger.js"
+import { MfaVerificationEmail, PasswordResetEmail } from "../emails/index.js"
 
 interface SendMailParams {
-  to: string;
-  subject: string;
-  html: string;
-  text: string;
+  to: string
+  subject: string
+  html: string
+  text: string
 }
 
-let transporter: nodemailer.Transporter | null = null;
+let transporter: nodemailer.Transporter | null = null
 
 function getTransporter(): nodemailer.Transporter | null {
   if (transporter) {
-    return transporter;
+    return transporter
   }
 
-  const host = process.env.SMTP_HOST;
-  const port = process.env.SMTP_PORT;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const host = process.env.SMTP_HOST
+  const port = process.env.SMTP_PORT
+  const user = process.env.SMTP_USER
+  const pass = process.env.SMTP_PASS
 
   if (host && port) {
     transporter = nodemailer.createTransport({
@@ -33,13 +30,13 @@ function getTransporter(): nodemailer.Transporter | null {
       port: parseInt(port, 10),
       secure: port === "465",
       auth: user && pass ? { user, pass } : undefined,
-    });
+    })
     logger.mailer.info(
       `SMTP client configured for ${c.cyan(`${host}:${port}`)}`
-    );
+    )
   }
 
-  return transporter;
+  return transporter
 }
 
 /**
@@ -56,12 +53,12 @@ export async function sendEmail({
   html,
   text,
 }: SendMailParams): Promise<boolean> {
-  const isDev = process.env.NODE_ENV === "development" || !process.env.NODE_ENV;
-  const useMailInDev = process.env.USE_MAIL_IN_DEV === "true";
-  const shouldSendRealMail = !isDev || useMailInDev;
+  const isDev = process.env.NODE_ENV === "development" || !process.env.NODE_ENV
+  const useMailInDev = process.env.USE_MAIL_IN_DEV === "true"
+  const shouldSendRealMail = !isDev || useMailInDev
 
-  const from = process.env.SMTP_FROM || "noreply@iris.local";
-  const activeTransporter = getTransporter();
+  const from = process.env.SMTP_FROM || "noreply@iris.local"
+  const activeTransporter = getTransporter()
 
   if (shouldSendRealMail && activeTransporter) {
     try {
@@ -71,17 +68,14 @@ export async function sendEmail({
         subject,
         html,
         text,
-      });
+      })
       logger.mailer.info(
         `Email sent successfully to ${c.cyan(to)} (${subject})`
-      );
-      return true;
+      )
+      return true
     } catch (error) {
-      logger.mailer.error(
-        `Failed to send email to ${to}:`,
-        error
-      );
-      return false;
+      logger.mailer.error(`Failed to send email to ${to}:`, error)
+      return false
     }
   }
 
@@ -95,9 +89,9 @@ ${c.bold("Subject:")} ${c.green(subject)}
 -----------------------------------------
 ${text.trim()}
 ${c.yellow(c.bold("========================================="))}
-`);
+`)
 
-  return true;
+  return true
 }
 
 /**
@@ -116,19 +110,19 @@ export async function sendMfaVerificationEmail(
     code,
     validityMinutes,
     appName: "IRIS",
-  });
+  })
 
   const [html, text] = await Promise.all([
     render(emailElement),
     render(emailElement, { plainText: true }),
-  ]);
+  ])
 
   return sendEmail({
     to,
     subject: `IRIS - Login Verification Code (${code})`,
     html,
     text,
-  });
+  })
 }
 
 /**
@@ -147,17 +141,17 @@ export async function sendPasswordResetEmail(
     resetUrl,
     validityMinutes,
     appName: "IRIS",
-  });
+  })
 
   const [html, text] = await Promise.all([
     render(emailElement),
     render(emailElement, { plainText: true }),
-  ]);
+  ])
 
   return sendEmail({
     to,
     subject: "IRIS - Password Reset Request",
     html,
     text,
-  });
+  })
 }

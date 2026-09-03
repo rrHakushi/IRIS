@@ -1,4 +1,4 @@
-import { defineRoute, t } from "@/router";
+import { defineRoute, t } from "@/router"
 
 export default defineRoute({
   schema: {
@@ -24,13 +24,13 @@ export default defineRoute({
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "content-type": "application/json" },
-      });
+      })
     }
 
     return {
       success: true,
       message: `POST /recommendations/${params.id}/vote handled successfully`,
       timestamp: new Date().toISOString(),
-    };
+    }
   },
-});
+})

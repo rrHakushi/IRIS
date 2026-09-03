@@ -61,7 +61,8 @@ export async function ensureDevAccount(
   prisma: typeof PrismaType
 ): Promise<DevAccountInfo | null> {
   try {
-    const { username, email, password, apiKey, permissions } = DEV_ACCOUNT_DEFAULTS
+    const { username, email, password, apiKey, permissions } =
+      DEV_ACCOUNT_DEFAULTS
 
     // 1. Check if dev user exists in database
     let user = await prisma.user.findUnique({
@@ -70,7 +71,8 @@ export async function ensureDevAccount(
 
     if (!user) {
       const passwordHash = await hashPassword(password)
-      const { publicKey, encryptedPrivateKey } = await generateUserKeypair(password)
+      const { publicKey, encryptedPrivateKey } =
+        await generateUserKeypair(password)
       user = await prisma.user.create({
         data: {
           username,
@@ -90,9 +92,11 @@ export async function ensureDevAccount(
       const needsEncryptionKeys = !user.publicKey || !user.encryptedPrivateKey
 
       if (!hasAdmin || needsEncryptionKeys) {
-        let keysToUpdate: { publicKey?: string; encryptedPrivateKey?: string } = {}
+        let keysToUpdate: { publicKey?: string; encryptedPrivateKey?: string } =
+          {}
         if (needsEncryptionKeys) {
-          const { publicKey, encryptedPrivateKey } = await generateUserKeypair(password)
+          const { publicKey, encryptedPrivateKey } =
+            await generateUserKeypair(password)
           keysToUpdate = { publicKey, encryptedPrivateKey }
         }
 

@@ -1,29 +1,29 @@
-import type { PrismaClient } from "@IRIS/database";
+import type { PrismaClient } from "@IRIS/database"
 
 export interface MediaRelationItem {
-  id: number;
-  sourceType: string;
-  sourceId: number;
-  targetType: string;
-  targetId: number;
-  type: string;
-  target: any | null;
+  id: number
+  sourceType: string
+  sourceId: number
+  targetType: string
+  targetId: number
+  type: string
+  target: any | null
 }
 
 function invertRelationType(type: string): string {
   switch (type) {
     case "PREQUEL":
-      return "SEQUEL";
+      return "SEQUEL"
     case "SEQUEL":
-      return "PREQUEL";
+      return "PREQUEL"
     case "PARENT":
-      return "SIDE_STORY";
+      return "SIDE_STORY"
     case "SIDE_STORY":
-      return "PARENT";
+      return "PARENT"
     case "SUMMARY":
-      return "PARENT";
+      return "PARENT"
     default:
-      return type;
+      return type
   }
 }
 
@@ -34,25 +34,26 @@ export async function fetchMediaRelations(
 ): Promise<MediaRelationItem[]> {
   const rawRelations = await prisma.mediaRelation.findMany({
     where: {
-      sourceType, sourceId
+      sourceType,
+      sourceId,
     },
-  });
+  })
 
   const relationMap = new Map<
     string,
     {
-      id: number;
-      sourceType: string;
-      sourceId: number;
-      targetType: string;
-      targetId: number;
-      type: string;
+      id: number
+      sourceType: string
+      sourceId: number
+      targetType: string
+      targetId: number
+      type: string
     }
-  >();
+  >()
 
   for (const rel of rawRelations) {
     if (rel.sourceType === sourceType && rel.sourceId === sourceId) {
-      const key = `${rel.targetType}:${rel.targetId}`;
+      const key = `${rel.targetType}:${rel.targetId}`
       relationMap.set(key, {
         id: rel.id,
         sourceType: rel.sourceType,
@@ -60,9 +61,9 @@ export async function fetchMediaRelations(
         targetType: rel.targetType,
         targetId: rel.targetId,
         type: rel.type,
-      });
+      })
     } else if (rel.targetType === sourceType && rel.targetId === sourceId) {
-      const key = `${rel.sourceType}:${rel.sourceId}`;
+      const key = `${rel.sourceType}:${rel.sourceId}`
       if (!relationMap.has(key)) {
         relationMap.set(key, {
           id: rel.id,
@@ -71,48 +72,48 @@ export async function fetchMediaRelations(
           targetType: rel.sourceType,
           targetId: rel.sourceId,
           type: invertRelationType(rel.type),
-        });
+        })
       }
     }
   }
 
-  const relations = Array.from(relationMap.values());
+  const relations = Array.from(relationMap.values())
   if (relations.length === 0) {
-    return [];
+    return []
   }
 
-  const animeIds: number[] = [];
-  const mangaIds: number[] = [];
-  const movieIds: number[] = [];
-  const tvIds: number[] = [];
-  const gameIds: number[] = [];
-  const bookIds: number[] = [];
+  const animeIds: number[] = []
+  const mangaIds: number[] = []
+  const movieIds: number[] = []
+  const tvIds: number[] = []
+  const gameIds: number[] = []
+  const bookIds: number[] = []
 
   for (const r of relations) {
     switch (r.targetType) {
       case "ANIME":
-        animeIds.push(r.targetId);
-        break;
+        animeIds.push(r.targetId)
+        break
       case "MANGA":
-        mangaIds.push(r.targetId);
-        break;
+        mangaIds.push(r.targetId)
+        break
       case "MOVIE":
-        movieIds.push(r.targetId);
-        break;
+        movieIds.push(r.targetId)
+        break
       case "TV":
-        tvIds.push(r.targetId);
-        break;
+        tvIds.push(r.targetId)
+        break
       case "GAME":
-        gameIds.push(r.targetId);
-        break;
+        gameIds.push(r.targetId)
+        break
       case "BOOK":
-        bookIds.push(r.targetId);
-        break;
+        bookIds.push(r.targetId)
+        break
     }
   }
 
-  const targetMap = new Map<string, any>();
-  const queries: Promise<void>[] = [];
+  const targetMap = new Map<string, any>()
+  const queries: Promise<void>[] = []
 
   if (animeIds.length > 0) {
     queries.push(
@@ -130,10 +131,10 @@ export async function fetchMediaRelations(
         })
         .then((items) => {
           for (const item of items) {
-            targetMap.set(`ANIME:${item.id}`, item);
+            targetMap.set(`ANIME:${item.id}`, item)
           }
         })
-    );
+    )
   }
 
   if (mangaIds.length > 0) {
@@ -152,10 +153,10 @@ export async function fetchMediaRelations(
         })
         .then((items) => {
           for (const item of items) {
-            targetMap.set(`MANGA:${item.id}`, item);
+            targetMap.set(`MANGA:${item.id}`, item)
           }
         })
-    );
+    )
   }
 
   if (movieIds.length > 0) {
@@ -169,15 +170,14 @@ export async function fetchMediaRelations(
             titleSecondary: true,
             titleNative: true,
             coverImage: true,
-
           },
         })
         .then((items) => {
           for (const item of items) {
-            targetMap.set(`MOVIE:${item.id}`, item);
+            targetMap.set(`MOVIE:${item.id}`, item)
           }
         })
-    );
+    )
   }
 
   if (tvIds.length > 0) {
@@ -195,10 +195,10 @@ export async function fetchMediaRelations(
         })
         .then((items) => {
           for (const item of items) {
-            targetMap.set(`TV:${item.id}`, item);
+            targetMap.set(`TV:${item.id}`, item)
           }
         })
-    );
+    )
   }
 
   if (gameIds.length > 0) {
@@ -216,10 +216,10 @@ export async function fetchMediaRelations(
         })
         .then((items) => {
           for (const item of items) {
-            targetMap.set(`GAME:${item.id}`, item);
+            targetMap.set(`GAME:${item.id}`, item)
           }
         })
-    );
+    )
   }
 
   if (bookIds.length > 0) {
@@ -236,16 +236,16 @@ export async function fetchMediaRelations(
         })
         .then((items) => {
           for (const item of items) {
-            targetMap.set(`BOOK:${item.id}`, item);
+            targetMap.set(`BOOK:${item.id}`, item)
           }
         })
-    );
+    )
   }
 
-  await Promise.all(queries);
+  await Promise.all(queries)
 
   return relations.map((r) => ({
     ...r,
     target: targetMap.get(`${r.targetType}:${r.targetId}`) ?? null,
-  }));
+  }))
 }

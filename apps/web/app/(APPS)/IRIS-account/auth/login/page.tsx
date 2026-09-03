@@ -1,20 +1,19 @@
-import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
-import { AuthCard } from "@/components/auth/auth-card";
-import { AuthHeader } from "@/components/auth/auth-header";
-import { AuthFooterLink } from "@/components/auth/auth-footer-link";
-import { LoginForm } from "@/components/auth/login/login-form";
-import { LanguageSelector } from "@/components/auth/language-selector";
-import { AuthIllustrationProvider } from "@/components/auth/auth-illustration-context";
+import type { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
+import { AuthCard } from "@/components/auth/auth-card"
+import { AuthHeader } from "@/components/auth/auth-header"
+import { AuthFooterLink } from "@/components/auth/auth-footer-link"
+import { LoginForm } from "@/components/auth/login/login-form"
+import { LanguageSelector } from "@/components/auth/language-selector"
+import { AuthIllustrationProvider } from "@/components/auth/auth-illustration-context"
 
 export const metadata: Metadata = {
   title: "IRIS Account | Login",
   description: "IRIS Account Login",
-};
-
+}
 
 export default async function LoginPage() {
-  const t = await getTranslations("auth.login");
+  const t = await getTranslations("auth.login")
 
   return (
     <main className="flex min-h-svh w-full flex-col items-center justify-center p-4 sm:p-6 md:p-10 lg:p-12">
@@ -39,5 +38,5 @@ export default async function LoginPage() {
         </AuthIllustrationProvider>
       </div>
     </main>
-  );
+  )
 }

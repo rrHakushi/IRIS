@@ -1,39 +1,39 @@
-"use client";
+"use client"
 
-import React from "react";
-import { useTranslations } from "next-intl";
+import React from "react"
+import { useTranslations } from "next-intl"
 import {
   IconEye,
   IconEyeOff,
   IconFingerprint,
   IconDeviceMobile,
-} from "@tabler/icons-react";
-import { Button } from "@workspace/ui/components/button";
+} from "@tabler/icons-react"
+import { Button } from "@workspace/ui/components/button"
 import {
   Field,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
-} from "@workspace/ui/components/field";
-import { Input } from "@workspace/ui/components/input";
-import { Spinner } from "@workspace/ui/components/spinner";
-import { cn } from "@workspace/ui/lib/utils";
-import { useAuthIllustration } from "../auth-illustration-context";
+} from "@workspace/ui/components/field"
+import { Input } from "@workspace/ui/components/input"
+import { Spinner } from "@workspace/ui/components/spinner"
+import { cn } from "@workspace/ui/lib/utils"
+import { useAuthIllustration } from "../auth-illustration-context"
 
 interface LoginCredentialsProps {
-  identifier: string;
-  setIdentifier: (val: string) => void;
-  password: string;
-  setPassword: (val: string) => void;
-  showPassword: boolean;
-  setShowPassword: React.Dispatch<React.SetStateAction<boolean>>;
-  credentialsError: string | null;
-  setCredentialsError: (val: string | null) => void;
-  loading: boolean;
-  onSubmit: (e: React.FormEvent) => void;
-  onPasskeyLogin: () => void;
-  onGenerateQuickConnect: () => void;
-  footer?: React.ReactNode;
+  identifier: string
+  setIdentifier: (val: string) => void
+  password: string
+  setPassword: (val: string) => void
+  showPassword: boolean
+  setShowPassword: React.Dispatch<React.SetStateAction<boolean>>
+  credentialsError: string | null
+  setCredentialsError: (val: string | null) => void
+  loading: boolean
+  onSubmit: (e: React.FormEvent) => void
+  onPasskeyLogin: () => void
+  onGenerateQuickConnect: () => void
+  footer?: React.ReactNode
 }
 
 export function LoginCredentials({
@@ -51,8 +51,8 @@ export function LoginCredentials({
   onGenerateQuickConnect,
   footer,
 }: LoginCredentialsProps) {
-  const t = useTranslations("auth.login");
-  const { setIllustration } = useAuthIllustration();
+  const t = useTranslations("auth.login")
+  const { setIllustration } = useAuthIllustration()
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col justify-center">
@@ -64,7 +64,7 @@ export function LoginCredentials({
               {t("emailOrUsername")}
             </FieldLabel>
             {credentialsError && (
-              <span className="text-xs text-destructive font-medium">
+              <span className="text-xs font-medium text-destructive">
                 {credentialsError}
               </span>
             )}
@@ -78,16 +78,17 @@ export function LoginCredentials({
             aria-invalid={Boolean(credentialsError)}
             value={identifier}
             onChange={(e) => {
-              setIdentifier(e.target.value);
+              setIdentifier(e.target.value)
               if (credentialsError) {
-                setCredentialsError(null);
-                setIllustration("/images/auth/character/login-default.jpg");
+                setCredentialsError(null)
+                setIllustration("/images/auth/character/login-default.jpg")
               }
             }}
             autoComplete="username"
             className={cn(
-              "h-10 sm:h-11 md:h-12 text-sm",
-              credentialsError && "border-destructive focus-visible:ring-destructive/30"
+              "h-10 text-sm sm:h-11 md:h-12",
+              credentialsError &&
+                "border-destructive focus-visible:ring-destructive/30"
             )}
           />
         </Field>
@@ -109,16 +110,17 @@ export function LoginCredentials({
               aria-invalid={Boolean(credentialsError)}
               value={password}
               onChange={(e) => {
-                setPassword(e.target.value);
+                setPassword(e.target.value)
                 if (credentialsError) {
-                  setCredentialsError(null);
-                  setIllustration("/images/auth/character/login-default.jpg");
+                  setCredentialsError(null)
+                  setIllustration("/images/auth/character/login-default.jpg")
                 }
               }}
               autoComplete="current-password"
               className={cn(
-                "h-10 sm:h-11 md:h-12 text-sm pe-10",
-                credentialsError && "border-destructive focus-visible:ring-destructive/30"
+                "h-10 pe-10 text-sm sm:h-11 md:h-12",
+                credentialsError &&
+                  "border-destructive focus-visible:ring-destructive/30"
               )}
             />
             <button
@@ -143,14 +145,14 @@ export function LoginCredentials({
           <Button
             type="submit"
             disabled={loading}
-            className="w-full h-10 sm:h-11 md:h-12 text-sm sm:text-base font-semibold"
+            className="h-10 w-full text-sm font-semibold sm:h-11 sm:text-base md:h-12"
           >
-            {loading ? <Spinner className="size-4 mr-2" /> : null}
+            {loading ? <Spinner className="mr-2 size-4" /> : null}
             {loading ? t("loggingIn") : t("login")}
           </Button>
         </Field>
 
-        <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card my-0.5 sm:my-1">
+        <FieldSeparator className="my-0.5 *:data-[slot=field-separator-content]:bg-card sm:my-1">
           {t("orContinueWith")}
         </FieldSeparator>
 
@@ -161,7 +163,7 @@ export function LoginCredentials({
             type="button"
             disabled={loading}
             onClick={onPasskeyLogin}
-            className="w-full h-10 sm:h-11 px-2.5 sm:px-4 gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium"
+            className="h-10 w-full gap-1.5 px-2.5 text-xs font-medium sm:h-11 sm:gap-2 sm:px-4 sm:text-sm"
           >
             <IconFingerprint className="size-4 shrink-0" />
             <span className="truncate">{t("passkey")}</span>
@@ -171,7 +173,7 @@ export function LoginCredentials({
             type="button"
             disabled={loading}
             onClick={onGenerateQuickConnect}
-            className="w-full h-10 sm:h-11 px-2.5 sm:px-4 gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium"
+            className="h-10 w-full gap-1.5 px-2.5 text-xs font-medium sm:h-11 sm:gap-2 sm:px-4 sm:text-sm"
           >
             <IconDeviceMobile className="size-4 shrink-0" />
             <span className="truncate">{t("loginWithCode")}</span>
@@ -181,5 +183,5 @@ export function LoginCredentials({
         {footer}
       </FieldGroup>
     </form>
-  );
+  )
 }

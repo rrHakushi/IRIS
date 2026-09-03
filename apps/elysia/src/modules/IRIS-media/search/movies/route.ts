@@ -1,11 +1,11 @@
-import { defineRoute, t } from "@/router";
-import { queueMovieSearchFetch } from "@/services/media-queue";
-import { NotFound } from "elysia";
+import { defineRoute, t } from "@/router"
+import { queueMovieSearchFetch } from "@/services/media-queue"
+import { NotFound } from "elysia"
 
-import { MovieSearchResponseSchema, type MovieSearchResponse } from "./types";
-import { NotFoundResponseSchema } from "../../../../../types";
+import { MovieSearchResponseSchema, type MovieSearchResponse } from "./types"
+import { NotFoundResponseSchema } from "../../../../../types"
 
-const SEARCH_MOVIES_TTL = 60 * 60; // 1 hour
+const SEARCH_MOVIES_TTL = 60 * 60 // 1 hour
 
 export default defineRoute({
   schema: {
@@ -21,7 +21,8 @@ export default defineRoute({
     },
     detail: {
       summary: "Search movies",
-      description: "Searches movies by title or synonyms and returns matching movie preview records.",
+      description:
+        "Searches movies by title or synonyms and returns matching movie preview records.",
       tags: ["Media - Movie"],
     },
   },
@@ -33,17 +34,17 @@ export default defineRoute({
   },
 
   async GET({ query, prisma, cache, cacheKeys, logger }) {
-    const { q } = query;
-    const cleanQuery = decodeURIComponent(q).replace(/\+/g, " ").trim();
-    const cacheKey = cacheKeys.search.movies(cleanQuery);
+    const { q } = query
+    const cleanQuery = decodeURIComponent(q).replace(/\+/g, " ").trim()
+    const cacheKey = cacheKeys.search.movies(cleanQuery)
 
     if (!cleanQuery || cleanQuery.length < 3) {
-      return new NotFound("Query must be at least 3 characters long");
+      return new NotFound("Query must be at least 3 characters long")
     }
 
-    const cached = await cache.get<MovieSearchResponse>(cacheKey);
+    const cached = await cache.get<MovieSearchResponse>(cacheKey)
     if (cached) {
-      return cached;
+      return cached
     }
 
     const data = await prisma.movie.findMany({
@@ -67,20 +68,23 @@ export default defineRoute({
       orderBy: {
         titlePrimary: "asc",
       },
-    });
+    })
 
     if (data.length === 0) {
-      logger.warn(`No data found for query: ${cleanQuery}, triggering refresh`);
-      const results = await queueMovieSearchFetch(cleanQuery);
-      await cache.set(cacheKey, results, SEARCH_MOVIES_TTL);
-      return results;
+      logger.warn(`No data found for query: ${cleanQuery}, triggering refresh`)
+      const results = await queueMovieSearchFetch(cleanQuery)
+      await cache.set(cacheKey, results, SEARCH_MOVIES_TTL)
+      return results
     }
 
-    await cache.set(cacheKey, data, SEARCH_MOVIES_TTL);
+    await cache.set(cacheKey, data, SEARCH_MOVIES_TTL)
     void queueMovieSearchFetch(cleanQuery).catch((err) => {
-      logger.error(`[SearchMoviesRoute] Failed to queue background search for "${cleanQuery}":`, err);
-    });
+      logger.error(
+        `[SearchMoviesRoute] Failed to queue background search for "${cleanQuery}":`,
+        err
+      )
+    })
 
-    return data;
+    return data
   },
-});
+})

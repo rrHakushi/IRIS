@@ -1,12 +1,15 @@
-import { defineRoute, t } from "@/router";
-import { mediaDbSyncer, queueTvFetch } from "@/services/media-queue";
-import type { Prisma } from "@IRIS/database";
-import { NotFound } from "elysia";
-import { TvResponseSchema } from "./types";
-import { NotFoundResponseSchema } from "../../../../../../types";
-import { fetchMediaRelations, type MediaRelationItem } from "@/modules/IRIS-media/helpers/media-relations";
+import { defineRoute, t } from "@/router"
+import { mediaDbSyncer, queueTvFetch } from "@/services/media-queue"
+import type { Prisma } from "@IRIS/database"
+import { NotFound } from "elysia"
+import { TvResponseSchema } from "./types"
+import { NotFoundResponseSchema } from "../../../../../../types"
+import {
+  fetchMediaRelations,
+  type MediaRelationItem,
+} from "@/modules/IRIS-media/helpers/media-relations"
 
-const TV_CACHE_TTL = 60 * 60 * 12; // 12 hours
+const TV_CACHE_TTL = 60 * 60 * 12 // 12 hours
 
 export const tvInclude = {
   characters: {
@@ -33,20 +36,17 @@ export const tvInclude = {
     },
   },
   episodes: {
-    orderBy: [
-      { seasonNumber: "asc" },
-      { episodeNumber: "asc" },
-    ],
+    orderBy: [{ seasonNumber: "asc" }, { episodeNumber: "asc" }],
   },
-} as const satisfies Prisma.TvInclude;
+} as const satisfies Prisma.TvInclude
 
 export type TvDetails = NonNullable<
   Prisma.TvGetPayload<{
-    include: typeof tvInclude;
+    include: typeof tvInclude
   }>
 > & {
-  relations: MediaRelationItem[];
-};
+  relations: MediaRelationItem[]
+}
 
 export default defineRoute({
   cacheKeys: {
@@ -65,18 +65,19 @@ export default defineRoute({
     },
     detail: {
       summary: "Get TV series by ID",
-      description: "Fetches TV series details with seasons, episodes, characters, staff, studios, tags, genres, and media relations.",
+      description:
+        "Fetches TV series details with seasons, episodes, characters, staff, studios, tags, genres, and media relations.",
       tags: ["Media - TV"],
     },
   },
 
   async GET({ params, prisma, cache, cacheKeys, logger }) {
-    const id = params.id;
-    const cacheKey = cacheKeys.tv.id(id);
+    const id = params.id
+    const cacheKey = cacheKeys.tv.id(id)
 
-    const cached = await cache.get<TvDetails>(cacheKey);
+    const cached = await cache.get<TvDetails>(cacheKey)
     if (cached) {
-      return cached;
+      return cached
     }
 
     const data = await prisma.tv.findUnique({
@@ -84,26 +85,29 @@ export default defineRoute({
         id: id,
       },
       include: tvInclude,
-    });
+    })
 
     if (!data) {
-      return new NotFound(`TV series not found with ID ${id}`);
+      return new NotFound(`TV series not found with ID ${id}`)
     }
 
-    const relations = await fetchMediaRelations(prisma, "TV", data.id);
+    const relations = await fetchMediaRelations(prisma, "TV", data.id)
     const result: TvDetails = {
       ...data,
       relations,
-    };
+    }
 
-    await cache.set(cacheKey, result, TV_CACHE_TTL);
+    await cache.set(cacheKey, result, TV_CACHE_TTL)
 
     if (data.tvDBId && mediaDbSyncer.isRecordStale(data, "TV")) {
       void queueTvFetch(data.tvDBId).catch((err) => {
-        logger.error(`[TvRoute] Failed to queue background fetch for id ${id} (tvDB id ${data.tvDBId}):`, err);
-      });
+        logger.error(
+          `[TvRoute] Failed to queue background fetch for id ${id} (tvDB id ${data.tvDBId}):`,
+          err
+        )
+      })
     }
 
-    return result;
+    return result
   },
-});
+})

@@ -1,14 +1,14 @@
-import { defineRoute, t } from "../../../../../router";
+import { defineRoute, t } from "../../../../../router"
 import {
   getConnectionAdapter,
   encryptConnectionData,
   verifyOAuthStateToken,
   type ConnectionProvider,
   type OAuthStatePayload,
-} from "@IRIS/connections";
-import { cache } from "../../../../../utils/cache";
+} from "@IRIS/connections"
+import { cache } from "../../../../../utils/cache"
 
-const oauthCache = cache.withNamespace("oauth:state");
+const oauthCache = cache.withNamespace("oauth:state")
 
 export default defineRoute({
   GET: {
@@ -27,50 +27,50 @@ export default defineRoute({
       ),
     },
     async handler({ params, query, request, prisma }) {
-      const provider = params.provider.toUpperCase() as ConnectionProvider;
+      const provider = params.provider.toUpperCase() as ConnectionProvider
       const frontendBase = process.env.NEXTAUTH_URL
-
 
       const defaultErrorRedirect = (msg: string) =>
         Response.redirect(
           `${frontendBase}/settings?tab=connections&status=error&provider=${provider}&message=${encodeURIComponent(msg)}`,
           302
-        );
+        )
 
-      let rawUrlParams: URLSearchParams | null = null;
+      let rawUrlParams: URLSearchParams | null = null
       try {
         if (request?.url) {
-          rawUrlParams = new URL(request.url).searchParams;
+          rawUrlParams = new URL(request.url).searchParams
         }
-      } catch { }
+      } catch {}
 
       if (query?.error) {
-        const msg = query.error_description || query.error || "Authorization declined";
-        return defaultErrorRedirect(msg);
+        const msg =
+          query.error_description || query.error || "Authorization declined"
+        return defaultErrorRedirect(msg)
       }
 
-      const state = query?.state || rawUrlParams?.get("state");
+      const state = query?.state || rawUrlParams?.get("state")
       if (!state) {
-        return defaultErrorRedirect("Missing OAuth state parameter");
+        return defaultErrorRedirect("Missing OAuth state parameter")
       }
 
       // 1. First try verifying HMAC-signed stateless token
-      let stateData: OAuthStatePayload | null = verifyOAuthStateToken(state);
+      let stateData: OAuthStatePayload | null = verifyOAuthStateToken(state)
 
       // 2. Fall back to cache store if signed token verification wasn't matching
       if (!stateData) {
-        const cached = await oauthCache.get<OAuthStatePayload>(state);
+        const cached = await oauthCache.get<OAuthStatePayload>(state)
         if (cached) {
-          stateData = cached;
+          stateData = cached
         }
       }
 
       if (!stateData) {
-        return defaultErrorRedirect("OAuth session expired or invalid");
+        return defaultErrorRedirect("OAuth session expired or invalid")
       }
 
       // Cleanup cache if it was stored
-      await oauthCache.del(state);
+      await oauthCache.del(state)
 
       // Support standard OAuth2 code and Steam OpenID claimed_id
       const claimedId =
@@ -79,17 +79,19 @@ export default defineRoute({
         rawUrlParams?.get("openid.identity") ||
         query?.openid_claimed_id ||
         (query as any)?.["openid.claimed_id"] ||
-        "";
-      const code = query?.code || claimedId;
+        ""
+      const code = query?.code || claimedId
       if (!code) {
-        return defaultErrorRedirect("Missing authorization code or OpenID identity from provider");
+        return defaultErrorRedirect(
+          "Missing authorization code or OpenID identity from provider"
+        )
       }
 
-      let adapter;
+      let adapter
       try {
-        adapter = getConnectionAdapter(provider);
+        adapter = getConnectionAdapter(provider)
       } catch {
-        return defaultErrorRedirect(`Unsupported provider: ${provider}`);
+        return defaultErrorRedirect(`Unsupported provider: ${provider}`)
       }
 
       try {
@@ -97,12 +99,14 @@ export default defineRoute({
           code,
           stateData.redirectUri,
           stateData.codeVerifier
-        );
+        )
 
-        const profile = await adapter.getProfile(tokens);
-        const encryptedData = encryptConnectionData(tokens, stateData.userId);
+        const profile = await adapter.getProfile(tokens)
+        const encryptedData = encryptConnectionData(tokens, stateData.userId)
 
-        const expiresAtDate = tokens.expiresAt ? new Date(tokens.expiresAt) : null;
+        const expiresAtDate = tokens.expiresAt
+          ? new Date(tokens.expiresAt)
+          : null
 
         await prisma.connection.upsert({
           where: {
@@ -140,37 +144,46 @@ export default defineRoute({
             expiresAt: expiresAtDate,
             lastSyncedAt: new Date(),
           },
-        });
+        })
 
         // Determine destination redirect from returnTo
-        let destinationUrl: URL;
+        let destinationUrl: URL
         try {
-          destinationUrl = new URL(stateData.returnTo || `${frontendBase}/settings?tab=connections`, frontendBase);
+          destinationUrl = new URL(
+            stateData.returnTo || `${frontendBase}/settings?tab=connections`,
+            frontendBase
+          )
         } catch {
-          destinationUrl = new URL(`${frontendBase}/settings?tab=connections`);
+          destinationUrl = new URL(`${frontendBase}/settings?tab=connections`)
         }
 
-        destinationUrl.searchParams.set("status", "connected");
-        destinationUrl.searchParams.set("provider", provider);
+        destinationUrl.searchParams.set("status", "connected")
+        destinationUrl.searchParams.set("provider", provider)
 
-        return Response.redirect(destinationUrl.toString(), 302);
+        return Response.redirect(destinationUrl.toString(), 302)
       } catch (err: unknown) {
-        console.error(`[Connections] OAuth callback failed for ${provider}:`, err);
-        const errorMsg = (err as Error).message || "Token exchange failed";
+        console.error(
+          `[Connections] OAuth callback failed for ${provider}:`,
+          err
+        )
+        const errorMsg = (err as Error).message || "Token exchange failed"
 
-        let errorDestUrl: URL;
+        let errorDestUrl: URL
         try {
-          errorDestUrl = new URL(stateData.returnTo || `${frontendBase}/settings?tab=connections`, frontendBase);
+          errorDestUrl = new URL(
+            stateData.returnTo || `${frontendBase}/settings?tab=connections`,
+            frontendBase
+          )
         } catch {
-          errorDestUrl = new URL(`${frontendBase}/settings?tab=connections`);
+          errorDestUrl = new URL(`${frontendBase}/settings?tab=connections`)
         }
 
-        errorDestUrl.searchParams.set("status", "error");
-        errorDestUrl.searchParams.set("provider", provider);
-        errorDestUrl.searchParams.set("message", errorMsg);
+        errorDestUrl.searchParams.set("status", "error")
+        errorDestUrl.searchParams.set("provider", provider)
+        errorDestUrl.searchParams.set("message", errorMsg)
 
-        return Response.redirect(errorDestUrl.toString(), 302);
+        return Response.redirect(errorDestUrl.toString(), 302)
       }
     },
   },
-});
+})

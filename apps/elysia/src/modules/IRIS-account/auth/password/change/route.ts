@@ -1,12 +1,12 @@
-import { defineRoute, t } from "../../../../../router";
+import { defineRoute, t } from "../../../../../router"
 import {
   verifyPassword,
   hashPassword,
   decryptPrivateKey,
   encryptPrivateKey,
   generateUserKeypair,
-} from "../../../../../utils/auth-crypto";
-import { notifyPasswordChanged } from "../../../../../utils/client-info";
+} from "../../../../../utils/auth-crypto"
+import { notifyPasswordChanged } from "../../../../../utils/client-info"
 
 export default defineRoute({
   schema: {
@@ -25,35 +25,41 @@ export default defineRoute({
   async POST({ body, session, prisma, request }) {
     if (!session.isAuthenticated) {
       return new Response(
-        JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
+        JSON.stringify({
+          error: "Unauthorized",
+          message: "Authentication required",
+        }),
         { status: 401, headers: { "content-type": "application/json" } }
-      );
+      )
     }
 
-    const sessionUser = session.getUser();
+    const sessionUser = session.getUser()
     if (!sessionUser) {
       return new Response(
-        JSON.stringify({ error: "Unauthorized", message: "User session not found" }),
+        JSON.stringify({
+          error: "Unauthorized",
+          message: "User session not found",
+        }),
         { status: 401, headers: { "content-type": "application/json" } }
-      );
+      )
     }
 
     const user = await prisma.user.findUnique({
       where: { id: sessionUser.id },
-    });
+    })
 
     if (!user) {
       return new Response(
         JSON.stringify({ error: "NotFound", message: "User not found" }),
         { status: 404, headers: { "content-type": "application/json" } }
-      );
+      )
     }
 
     // 1. Verify existing password
     const isCurrentValid = await verifyPassword(
       body.currentPassword,
       user.passwordHash
-    );
+    )
 
     if (!isCurrentValid) {
       return new Response(
@@ -62,13 +68,13 @@ export default defineRoute({
           message: "Incorrect current password.",
         }),
         { status: 401, headers: { "content-type": "application/json" } }
-      );
+      )
     }
 
     // 2. Envelope re-encryption of post-quantum private key
     // Only re-encrypt if the user has NOT set a separate encryption password
-    let updatedEncryptedPrivateKey = user.encryptedPrivateKey;
-    let updatedPublicKey = user.publicKey;
+    let updatedEncryptedPrivateKey = user.encryptedPrivateKey
+    let updatedPublicKey = user.publicKey
 
     if (!user.encryptionPasswordHash) {
       if (user.encryptedPrivateKey) {
@@ -76,25 +82,25 @@ export default defineRoute({
           const decryptedSecret = await decryptPrivateKey(
             user.encryptedPrivateKey,
             body.currentPassword
-          );
+          )
           updatedEncryptedPrivateKey = await encryptPrivateKey(
             decryptedSecret,
             body.newPassword
-          );
+          )
         } catch {
           // If decryption fails, leave as-is
         }
       } else {
         // Legacy user without encryption keys: generate fresh ML-KEM-768 keypair
-        const keypair = await generateUserKeypair(body.newPassword);
-        updatedPublicKey = keypair.publicKey;
-        updatedEncryptedPrivateKey = keypair.encryptedPrivateKey;
+        const keypair = await generateUserKeypair(body.newPassword)
+        updatedPublicKey = keypair.publicKey
+        updatedEncryptedPrivateKey = keypair.encryptedPrivateKey
       }
     }
 
     // 3. Hash new password and record passwordChangedAt
-    const newHash = await hashPassword(body.newPassword);
-    const now = new Date();
+    const newHash = await hashPassword(body.newPassword)
+    const now = new Date()
 
     await prisma.user.update({
       where: { id: user.id },
@@ -104,13 +110,13 @@ export default defineRoute({
         encryptedPrivateKey: updatedEncryptedPrivateKey,
         passwordChangedAt: now,
       },
-    });
+    })
 
-    notifyPasswordChanged(user.id, request);
+    notifyPasswordChanged(user.id, request)
 
     return {
       success: true,
       message: "Password changed successfully",
-    };
+    }
   },
-});
+})

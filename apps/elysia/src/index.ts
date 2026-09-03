@@ -18,7 +18,7 @@ import {
 } from "./utils/request-logger"
 
 // Intercept console inside request handlers to group logs by request
-initConsoleInterceptor();
+initConsoleInterceptor()
 
 // Enable native JSON serialization for BigInt values returned by database queries
 ;(BigInt.prototype as any).toJSON = function () {

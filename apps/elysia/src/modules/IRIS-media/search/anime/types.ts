@@ -1,4 +1,4 @@
-import { t } from "elysia";
+import { t } from "elysia"
 
 export const AnimeSearchResultSchema = t.Object({
   id: t.Number(),
@@ -10,20 +10,20 @@ export const AnimeSearchResultSchema = t.Object({
   format: t.String(),
   seasonYear: t.Nullable(t.Number()),
   seasonSeason: t.String(),
-});
+})
 
-export const AnimeSearchResponseSchema = t.Array(AnimeSearchResultSchema);
+export const AnimeSearchResponseSchema = t.Array(AnimeSearchResultSchema)
 
 export interface AnimeSearchResultItem {
-  id: number;
-  titlePrimary: string;
-  titleSecondary: string | null;
-  titleNative: string | null;
-  coverImage: string | null;
-  isAdult: boolean;
-  format: string;
-  seasonYear: number | null;
-  seasonSeason: string;
+  id: number
+  titlePrimary: string
+  titleSecondary: string | null
+  titleNative: string | null
+  coverImage: string | null
+  isAdult: boolean
+  format: string
+  seasonYear: number | null
+  seasonSeason: string
 }
 
-export type AnimeSearchResponse = AnimeSearchResultItem[];
+export type AnimeSearchResponse = AnimeSearchResultItem[]

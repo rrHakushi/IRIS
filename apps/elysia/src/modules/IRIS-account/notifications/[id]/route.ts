@@ -1,5 +1,5 @@
-import { defineRoute, t } from "../../../../router";
-import { wsHub } from "../../../../services/websocket-hub";
+import { defineRoute, t } from "../../../../router"
+import { wsHub } from "../../../../services/websocket-hub"
 
 export default defineRoute({
   GET: {
@@ -34,26 +34,32 @@ export default defineRoute({
     async handler({ session, params, prisma }) {
       if (!session.isAuthenticated || !session.user) {
         return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "Authentication required",
+          }),
           { status: 401, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
       const notification = await prisma.notification.findUnique({
         where: { id: params.id },
-      });
+      })
 
       if (!notification || notification.userId !== session.user.id) {
         return new Response(
-          JSON.stringify({ error: "NotFound", message: "Notification not found" }),
+          JSON.stringify({
+            error: "NotFound",
+            message: "Notification not found",
+          }),
           { status: 404, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
       return {
         success: true,
         notification,
-      };
+      }
     },
   },
 
@@ -73,41 +79,47 @@ export default defineRoute({
     async handler({ session, params, prisma }) {
       if (!session.isAuthenticated || !session.user) {
         return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "Authentication required",
+          }),
           { status: 401, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
       const notification = await prisma.notification.findUnique({
         where: { id: params.id },
         select: { id: true, userId: true },
-      });
+      })
 
       if (!notification || notification.userId !== session.user.id) {
         return new Response(
-          JSON.stringify({ error: "NotFound", message: "Notification not found" }),
+          JSON.stringify({
+            error: "NotFound",
+            message: "Notification not found",
+          }),
           { status: 404, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
       await prisma.notification.delete({
         where: { id: params.id },
-      });
+      })
 
       const unreadCount = await prisma.notification.count({
         where: { userId: session.user.id, isRead: false },
-      });
+      })
 
       wsHub.sendToUser(session.user.id, "notification:delete", {
         id: params.id,
         unreadCount,
-      });
+      })
 
       return {
         success: true,
         id: params.id,
         unreadCount,
-      };
+      }
     },
   },
-});
+})

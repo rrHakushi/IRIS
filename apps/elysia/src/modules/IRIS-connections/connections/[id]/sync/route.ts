@@ -1,10 +1,10 @@
-import { defineRoute, t } from "../../../../../router";
+import { defineRoute, t } from "../../../../../router"
 import {
   getConnectionAdapter,
   decryptConnectionData,
   type ConnectionProvider,
   type ConnectionCredentials,
-} from "@IRIS/connections";
+} from "@IRIS/connections"
 
 export default defineRoute({
   POST: {
@@ -23,9 +23,12 @@ export default defineRoute({
     async handler({ params, session, prisma }) {
       if (!session.isAuthenticated || !session.user) {
         return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "Authentication required",
+          }),
           { status: 401, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
       const connection = await prisma.connection.findFirst({
@@ -33,50 +36,58 @@ export default defineRoute({
           id: params.id,
           userId: session.user.id,
         },
-      });
+      })
 
       if (!connection) {
         return new Response(
-          JSON.stringify({ error: "Not Found", message: "Connection not found" }),
+          JSON.stringify({
+            error: "Not Found",
+            message: "Connection not found",
+          }),
           { status: 404, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
-      const adapter = getConnectionAdapter(connection.provider as ConnectionProvider);
-      let credentials: ConnectionCredentials;
+      const adapter = getConnectionAdapter(
+        connection.provider as ConnectionProvider
+      )
+      let credentials: ConnectionCredentials
 
       try {
         credentials = decryptConnectionData<ConnectionCredentials>(
           connection.encryptedData,
           session.user.id
-        );
+        )
       } catch (err) {
         return new Response(
-          JSON.stringify({ error: "Decryption Failed", message: "Failed to decrypt credentials" }),
+          JSON.stringify({
+            error: "Decryption Failed",
+            message: "Failed to decrypt credentials",
+          }),
           { status: 400, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
-      let itemCount = 0;
+      let itemCount = 0
 
       if (adapter.getLibrary) {
-        const library = await adapter.getLibrary(credentials);
-        itemCount = library.length;
+        const library = await adapter.getLibrary(credentials)
+        itemCount = library.length
       } else if (adapter.getGames) {
-        const games = await adapter.getGames(credentials);
-        itemCount = games.length;
+        const games = await adapter.getGames(credentials)
+        itemCount = games.length
       }
 
       await prisma.connection.update({
         where: { id: connection.id },
         data: { lastSyncedAt: new Date() },
-      });
+      })
 
       return {
         success: true,
         message: `Synced ${itemCount} items from ${connection.provider}`,
         itemCount,
-      };
+      }
     },
   },
-});
+})

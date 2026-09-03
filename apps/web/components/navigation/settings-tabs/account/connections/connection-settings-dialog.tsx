@@ -1,31 +1,28 @@
-"use client";
+"use client"
 
-import React, { useState } from "react";
+import React, { useState } from "react"
 import {
   Dialog,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@workspace/ui/components/dialog";
-import { Button } from "@workspace/ui/components/button";
-import { Switch } from "@workspace/ui/components/switch";
-import { Label } from "@workspace/ui/components/label";
-import { Spinner } from "@workspace/ui/components/spinner";
-import {
-  IconTrash,
-  IconCheck,
-} from "@tabler/icons-react";
-import type { ProviderMetadata, UserConnectionItem } from "./types";
-import { toast } from "sonner";
+} from "@workspace/ui/components/dialog"
+import { Button } from "@workspace/ui/components/button"
+import { Switch } from "@workspace/ui/components/switch"
+import { Label } from "@workspace/ui/components/label"
+import { Spinner } from "@workspace/ui/components/spinner"
+import { IconTrash, IconCheck } from "@tabler/icons-react"
+import type { ProviderMetadata, UserConnectionItem } from "./types"
+import { toast } from "sonner"
 
 interface ConnectionSettingsDialogProps {
-  connection: UserConnectionItem | null;
-  provider: ProviderMetadata | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onUpdated: () => void;
-  onDisconnected: () => void;
+  connection: UserConnectionItem | null
+  provider: ProviderMetadata | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onUpdated: () => void
+  onDisconnected: () => void
 }
 
 export function ConnectionSettingsDialog({
@@ -38,28 +35,28 @@ export function ConnectionSettingsDialog({
 }: ConnectionSettingsDialogProps): React.JSX.Element | null {
   const [librarySync, setLibrarySync] = useState<boolean>(
     Boolean(connection?.settings?.librarySync ?? true)
-  );
+  )
   const [isPrivate, setIsPrivate] = useState<boolean>(
     Boolean(connection?.settings?.isPrivate ?? false)
-  );
+  )
 
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Sync state when connection changes
   React.useEffect(() => {
     if (connection) {
-      setLibrarySync(Boolean(connection.settings?.librarySync ?? true));
-      setIsPrivate(Boolean(connection.settings?.isPrivate ?? false));
+      setLibrarySync(Boolean(connection.settings?.librarySync ?? true))
+      setIsPrivate(Boolean(connection.settings?.isPrivate ?? false))
     }
-  }, [connection]);
+  }, [connection])
 
-  if (!connection || !provider) return null;
+  if (!connection || !provider) return null
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
 
   const handleSaveSettings = async () => {
-    setIsSaving(true);
+    setIsSaving(true)
     try {
       const res = await fetch(`${apiUrl}/connections/${connection.id}`, {
         method: "PATCH",
@@ -67,64 +64,70 @@ export function ConnectionSettingsDialog({
         credentials: "include",
         body: JSON.stringify({
           settings: {
-            ...(connection.settings?.hostUrl ? { hostUrl: connection.settings.hostUrl } : {}),
+            ...(connection.settings?.hostUrl
+              ? { hostUrl: connection.settings.hostUrl }
+              : {}),
             librarySync,
             isPrivate,
           },
         }),
-      });
+      })
 
-      if (!res.ok) throw new Error("Failed to save settings");
+      if (!res.ok) throw new Error("Failed to save settings")
 
-      toast.success("Connection settings updated!");
-      onOpenChange(false);
-      onUpdated();
+      toast.success("Connection settings updated!")
+      onOpenChange(false)
+      onUpdated()
     } catch (err: unknown) {
-      toast.error((err as Error).message || "Failed to update settings");
+      toast.error((err as Error).message || "Failed to update settings")
     } finally {
-      setIsSaving(false);
+      setIsSaving(false)
     }
-  };
+  }
 
   const handleDisconnect = async () => {
-    if (!confirm(`Are you sure you want to disconnect ${provider.name}?`)) return;
+    if (!confirm(`Are you sure you want to disconnect ${provider.name}?`))
+      return
 
-    setIsDeleting(true);
+    setIsDeleting(true)
     try {
       const res = await fetch(`${apiUrl}/connections/${connection.id}`, {
         method: "DELETE",
         credentials: "include",
-      });
+      })
 
-      if (!res.ok) throw new Error("Failed to disconnect");
+      if (!res.ok) throw new Error("Failed to disconnect")
 
-      toast.success(`Disconnected ${provider.name}`);
-      onOpenChange(false);
-      onDisconnected();
+      toast.success(`Disconnected ${provider.name}`)
+      onOpenChange(false)
+      onDisconnected()
     } catch (err: unknown) {
-      toast.error((err as Error).message || "Failed to disconnect");
+      toast.error((err as Error).message || "Failed to disconnect")
     } finally {
-      setIsDeleting(false);
+      setIsDeleting(false)
     }
-  };
+  }
 
   return (
     <Dialog isOpen={open} onOpenChange={onOpenChange}>
       <div className="w-full">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-muted/40 flex items-center justify-center p-2 border border-border/40">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-border/40 bg-muted/40 p-2">
               <img
                 src={provider.iconUrl}
                 alt={provider.name}
-                className="w-6 h-6 object-contain"
+                className="h-6 w-6 object-contain"
                 loading="lazy"
               />
             </div>
             <div>
               <DialogTitle>{provider.name} Settings</DialogTitle>
-              <DialogDescription className="text-xs mt-0.5">
-                Connected as <span className="font-semibold text-foreground">{connection.displayName || connection.externalId}</span>
+              <DialogDescription className="mt-0.5 text-xs">
+                Connected as{" "}
+                <span className="font-semibold text-foreground">
+                  {connection.displayName || connection.externalId}
+                </span>
               </DialogDescription>
             </div>
           </div>
@@ -145,7 +148,9 @@ export function ConnectionSettingsDialog({
 
             <div className="flex items-center justify-between border-t border-border/40 pt-3">
               <div className="space-y-0.5 pr-4">
-                <Label className="text-xs font-medium">Private Connection</Label>
+                <Label className="text-xs font-medium">
+                  Private Connection
+                </Label>
                 <p className="text-[11px] text-muted-foreground">
                   Hide this linked account badge from your public profile.
                 </p>
@@ -155,16 +160,20 @@ export function ConnectionSettingsDialog({
           </div>
         </div>
 
-        <DialogFooter className="flex flex-row items-center justify-between sm:justify-between w-full">
+        <DialogFooter className="flex w-full flex-row items-center justify-between sm:justify-between">
           <Button
             type="button"
             variant="destructive"
             size="sm"
             onClick={handleDisconnect}
             disabled={isDeleting}
-            className="gap-1.5 h-8 text-xs"
+            className="h-8 gap-1.5 text-xs"
           >
-            {isDeleting ? <Spinner className="w-3.5 h-3.5" /> : <IconTrash className="w-3.5 h-3.5" />}
+            {isDeleting ? (
+              <Spinner className="h-3.5 w-3.5" />
+            ) : (
+              <IconTrash className="h-3.5 w-3.5" />
+            )}
             Disconnect
           </Button>
 
@@ -183,15 +192,18 @@ export function ConnectionSettingsDialog({
               size="sm"
               onClick={handleSaveSettings}
               disabled={isSaving}
-              className="gap-1.5 h-8 text-xs"
+              className="h-8 gap-1.5 text-xs"
             >
-              {isSaving ? <Spinner className="w-3.5 h-3.5" /> : <IconCheck className="w-3.5 h-3.5" />}
+              {isSaving ? (
+                <Spinner className="h-3.5 w-3.5" />
+              ) : (
+                <IconCheck className="h-3.5 w-3.5" />
+              )}
               Save Changes
             </Button>
           </div>
         </DialogFooter>
       </div>
     </Dialog>
-  );
+  )
 }
-

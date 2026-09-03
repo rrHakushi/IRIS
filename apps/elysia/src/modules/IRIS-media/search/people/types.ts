@@ -1,4 +1,4 @@
-import { t } from "elysia";
+import { t } from "elysia"
 
 export const PeopleSearchResultSchema = t.Object({
   id: t.Number(),
@@ -6,16 +6,16 @@ export const PeopleSearchResultSchema = t.Object({
   nameNative: t.Nullable(t.String()),
   image: t.Nullable(t.String()),
   language: t.Nullable(t.String()),
-});
+})
 
-export const PeopleSearchResponseSchema = t.Array(PeopleSearchResultSchema);
+export const PeopleSearchResponseSchema = t.Array(PeopleSearchResultSchema)
 
 export interface PeopleSearchResultItem {
-  id: number;
-  namePrimary: string;
-  nameNative: string | null;
-  image: string | null;
-  language: string | null;
+  id: number
+  namePrimary: string
+  nameNative: string | null
+  image: string | null
+  language: string | null
 }
 
-export type PeopleSearchResponse = PeopleSearchResultItem[];
+export type PeopleSearchResponse = PeopleSearchResultItem[]

@@ -1,13 +1,15 @@
-import { defineRoute, t } from "@/router";
-import { mediaDbSyncer, queueAnimeFetch } from "@/services/media-queue";
-import type { Prisma } from "@IRIS/database";
-import { NotFound } from "elysia";
-import { AnimeResponseSchema } from "./types";
-import { NotFoundResponseSchema } from "../../../../../../types";
-import { fetchMediaRelations, type MediaRelationItem } from "@/modules/IRIS-media/helpers/media-relations";
+import { defineRoute, t } from "@/router"
+import { mediaDbSyncer, queueAnimeFetch } from "@/services/media-queue"
+import type { Prisma } from "@IRIS/database"
+import { NotFound } from "elysia"
+import { AnimeResponseSchema } from "./types"
+import { NotFoundResponseSchema } from "../../../../../../types"
+import {
+  fetchMediaRelations,
+  type MediaRelationItem,
+} from "@/modules/IRIS-media/helpers/media-relations"
 
-const ANIME_CACHE_TTL = 60 * 60 * 12; // 12 hours
-
+const ANIME_CACHE_TTL = 60 * 60 * 12 // 12 hours
 
 export const animeInclude = {
   characters: {
@@ -30,15 +32,15 @@ export const animeInclude = {
       studio: true,
     },
   },
-} as const satisfies Prisma.AnimeInclude;
+} as const satisfies Prisma.AnimeInclude
 
 export type AnimeDetails = NonNullable<
   Prisma.AnimeGetPayload<{
-    include: typeof animeInclude;
+    include: typeof animeInclude
   }>
 > & {
-  relations: MediaRelationItem[];
-};
+  relations: MediaRelationItem[]
+}
 
 export default defineRoute({
   cacheKeys: {
@@ -57,18 +59,19 @@ export default defineRoute({
     },
     detail: {
       summary: "Get anime by ID",
-      description: "Fetches anime details with characters, staff, studios, episodes, tags, airing schedules, and media relations.",
+      description:
+        "Fetches anime details with characters, staff, studios, episodes, tags, airing schedules, and media relations.",
       tags: ["Media - Anime"],
     },
   },
 
   async GET({ params, prisma, cache, cacheKeys, logger }) {
-    const id = params.id;
-    const cacheKey = cacheKeys.anime.id(id);
+    const id = params.id
+    const cacheKey = cacheKeys.anime.id(id)
 
-    const cached = await cache.get<AnimeDetails>(cacheKey);
+    const cached = await cache.get<AnimeDetails>(cacheKey)
     if (cached) {
-      return cached;
+      return cached
     }
 
     const data = await prisma.anime.findUnique({
@@ -76,27 +79,29 @@ export default defineRoute({
         id: id,
       },
       include: animeInclude,
-    });
+    })
 
     if (!data) {
-      return new NotFound(`Anime not found with ID ${id}`);
+      return new NotFound(`Anime not found with ID ${id}`)
     }
 
-    const relations = await fetchMediaRelations(prisma, "ANIME", data.id);
+    const relations = await fetchMediaRelations(prisma, "ANIME", data.id)
     const result: AnimeDetails = {
       ...data,
       relations,
-    };
-
-    await cache.set(cacheKey, result, ANIME_CACHE_TTL);
-
-    if (data.anilistId && mediaDbSyncer.isRecordStale(data, 'ANIME')) {
-      void queueAnimeFetch(data.anilistId).catch((err) => {
-        logger.error(`[AnimeRoute] Failed to queue background fetch for id ${id} (anilist id ${data.anilistId}):`, err);
-      });
     }
 
-    return result;
-  },
-});
+    await cache.set(cacheKey, result, ANIME_CACHE_TTL)
 
+    if (data.anilistId && mediaDbSyncer.isRecordStale(data, "ANIME")) {
+      void queueAnimeFetch(data.anilistId).catch((err) => {
+        logger.error(
+          `[AnimeRoute] Failed to queue background fetch for id ${id} (anilist id ${data.anilistId}):`,
+          err
+        )
+      })
+    }
+
+    return result
+  },
+})

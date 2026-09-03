@@ -1,10 +1,10 @@
-import { defineRoute, t } from "@/router";
-import { NotFound } from "elysia";
+import { defineRoute, t } from "@/router"
+import { NotFound } from "elysia"
 
-import { PeopleSearchResponseSchema, type PeopleSearchResponse } from "./types";
-import { NotFoundResponseSchema } from "../../../../../types";
+import { PeopleSearchResponseSchema, type PeopleSearchResponse } from "./types"
+import { NotFoundResponseSchema } from "../../../../../types"
 
-const SEARCH_PEOPLE_TTL = 60 * 60; // 1 hour
+const SEARCH_PEOPLE_TTL = 60 * 60 // 1 hour
 
 export default defineRoute({
   schema: {
@@ -20,7 +20,8 @@ export default defineRoute({
     },
     detail: {
       summary: "Search people",
-      description: "Searches people and staff by name or aliases and returns matching person preview records.",
+      description:
+        "Searches people and staff by name or aliases and returns matching person preview records.",
       tags: ["Media - Person"],
     },
   },
@@ -32,17 +33,17 @@ export default defineRoute({
   },
 
   async GET({ query, prisma, cache, cacheKeys }) {
-    const { q } = query;
-    const cleanQuery = decodeURIComponent(q).replace(/\+/g, " ").trim();
-    const cacheKey = cacheKeys.search.people(cleanQuery);
+    const { q } = query
+    const cleanQuery = decodeURIComponent(q).replace(/\+/g, " ").trim()
+    const cacheKey = cacheKeys.search.people(cleanQuery)
 
     if (!cleanQuery || cleanQuery.length < 3) {
-      return new NotFound("Query must be at least 3 characters long");
+      return new NotFound("Query must be at least 3 characters long")
     }
 
-    const cached = await cache.get<PeopleSearchResponse>(cacheKey);
+    const cached = await cache.get<PeopleSearchResponse>(cacheKey)
     if (cached) {
-      return cached;
+      return cached
     }
 
     const data = await prisma.person.findMany({
@@ -63,9 +64,9 @@ export default defineRoute({
       orderBy: {
         namePrimary: "asc",
       },
-    });
+    })
 
-    await cache.set(cacheKey, data, SEARCH_PEOPLE_TTL);
-    return data;
+    await cache.set(cacheKey, data, SEARCH_PEOPLE_TTL)
+    return data
   },
-});
+})

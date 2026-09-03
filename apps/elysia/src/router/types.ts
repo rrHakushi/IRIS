@@ -372,9 +372,7 @@ export interface DefinedRoute<
 export function defineRoute<
   S extends RouteSchema = RouteSchema,
   K extends RouteCacheKeyStorage = {},
->(
-  definition: RouteDefinition<S, K>
-): DefinedRoute<S, K> {
+>(definition: RouteDefinition<S, K>): DefinedRoute<S, K> {
   return definition as any
 }
 

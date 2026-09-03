@@ -1,11 +1,11 @@
-import { defineRoute, t } from "@/router";
-import { queueMangaSearchFetch } from "@/services/media-queue";
-import { NotFound } from "elysia";
+import { defineRoute, t } from "@/router"
+import { queueMangaSearchFetch } from "@/services/media-queue"
+import { NotFound } from "elysia"
 
-import { MangaSearchResponseSchema, type MangaSearchResponse } from "./types";
-import { NotFoundResponseSchema } from "../../../../../types";
+import { MangaSearchResponseSchema, type MangaSearchResponse } from "./types"
+import { NotFoundResponseSchema } from "../../../../../types"
 
-const SEARCH_MANGA_TTL = 60 * 60; // 1 hour
+const SEARCH_MANGA_TTL = 60 * 60 // 1 hour
 
 export default defineRoute({
   schema: {
@@ -21,7 +21,8 @@ export default defineRoute({
     },
     detail: {
       summary: "Search manga",
-      description: "Searches manga by title or synonyms and returns matching manga preview records.",
+      description:
+        "Searches manga by title or synonyms and returns matching manga preview records.",
       tags: ["Media - Manga"],
     },
   },
@@ -33,17 +34,17 @@ export default defineRoute({
   },
 
   async GET({ query, prisma, cache, cacheKeys, logger }) {
-    const { q } = query;
-    const cleanQuery = decodeURIComponent(q).replace(/\+/g, " ").trim();
-    const cacheKey = cacheKeys.search.manga(cleanQuery);
+    const { q } = query
+    const cleanQuery = decodeURIComponent(q).replace(/\+/g, " ").trim()
+    const cacheKey = cacheKeys.search.manga(cleanQuery)
 
     if (!cleanQuery || cleanQuery.length < 3) {
-      return new NotFound("Query must be at least 3 characters long");
+      return new NotFound("Query must be at least 3 characters long")
     }
 
-    const cached = await cache.get<MangaSearchResponse>(cacheKey);
+    const cached = await cache.get<MangaSearchResponse>(cacheKey)
     if (cached) {
-      return cached;
+      return cached
     }
 
     const data = await prisma.manga.findMany({
@@ -68,20 +69,23 @@ export default defineRoute({
       orderBy: {
         titlePrimary: "asc",
       },
-    });
+    })
 
     if (data.length === 0) {
-      logger.warn(`No data found for query: ${cleanQuery}, triggering refresh`);
-      const results = await queueMangaSearchFetch(cleanQuery);
-      await cache.set(cacheKey, results, SEARCH_MANGA_TTL);
-      return results;
+      logger.warn(`No data found for query: ${cleanQuery}, triggering refresh`)
+      const results = await queueMangaSearchFetch(cleanQuery)
+      await cache.set(cacheKey, results, SEARCH_MANGA_TTL)
+      return results
     }
 
-    await cache.set(cacheKey, data, SEARCH_MANGA_TTL);
+    await cache.set(cacheKey, data, SEARCH_MANGA_TTL)
     void queueMangaSearchFetch(cleanQuery).catch((err) => {
-      logger.error(`[SearchMangaRoute] Failed to queue background search for "${cleanQuery}":`, err);
-    });
+      logger.error(
+        `[SearchMangaRoute] Failed to queue background search for "${cleanQuery}":`,
+        err
+      )
+    })
 
-    return data;
+    return data
   },
-});
+})

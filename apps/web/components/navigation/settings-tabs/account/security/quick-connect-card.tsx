@@ -1,59 +1,59 @@
-"use client";
+"use client"
 
-import React, { useState } from "react";
-import { useTranslations } from "next-intl";
-import { Button } from "@workspace/ui/components/button";
-import { Input } from "@workspace/ui/components/input";
-import { Spinner } from "@workspace/ui/components/spinner";
+import React, { useState } from "react"
+import { useTranslations } from "next-intl"
+import { Button } from "@workspace/ui/components/button"
+import { Input } from "@workspace/ui/components/input"
+import { Spinner } from "@workspace/ui/components/spinner"
 import {
   IconDeviceTv,
   IconCheck,
   IconAlertTriangle,
   IconClipboard,
-} from "@tabler/icons-react";
-import { elysia } from "@/lib/elysia";
-import { toast } from "sonner";
+} from "@tabler/icons-react"
+import { elysia } from "@/lib/elysia"
+import { toast } from "sonner"
 
 export function QuickConnectCard(): React.JSX.Element {
-  const t = useTranslations("navigation.settings.account.security");
-  const [code, setCode] = useState("");
-  const [isApproving, setIsApproving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const t = useTranslations("navigation.settings.account.security")
+  const [code, setCode] = useState("")
+  const [isApproving, setIsApproving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
   // Format code as XXXX-XXXX or uppercase alphanumeric
   const handleCodeChange = (raw: string) => {
-    setError(null);
-    setSuccess(null);
-    const clean = raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    setError(null)
+    setSuccess(null)
+    const clean = raw.toUpperCase().replace(/[^A-Z0-9]/g, "")
     if (clean.length <= 4) {
-      setCode(clean);
+      setCode(clean)
     } else {
-      setCode(`${clean.slice(0, 4)}-${clean.slice(4, 8)}`);
+      setCode(`${clean.slice(0, 4)}-${clean.slice(4, 8)}`)
     }
-  };
+  }
 
   // Paste from clipboard
   const handlePaste = async () => {
     try {
-      const text = await navigator.clipboard.readText();
+      const text = await navigator.clipboard.readText()
       if (text) {
-        handleCodeChange(text.trim());
+        handleCodeChange(text.trim())
       }
     } catch {
-      toast.error(t("failedReadClipboard"));
+      toast.error(t("failedReadClipboard"))
     }
-  };
+  }
 
   // Submit Quick Connect Code approval
   const handleApprove = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanCode = code.trim();
-    if (!cleanCode) return;
+    e.preventDefault()
+    const cleanCode = code.trim()
+    if (!cleanCode) return
 
-    setIsApproving(true);
-    setError(null);
-    setSuccess(null);
+    setIsApproving(true)
+    setError(null)
+    setSuccess(null)
 
     try {
       const res = await elysia.auth.quickconnect.approve.post(
@@ -63,37 +63,39 @@ export function QuickConnectCard(): React.JSX.Element {
         {
           fetch: { credentials: "include" },
         }
-      );
+      )
 
       if (res.error) {
-        const errorData = res.error?.value as { message?: string } | undefined;
-        const msg =
-          errorData?.message || t("invalidOrExpiredCode");
-        throw new Error(msg);
+        const errorData = res.error?.value as { message?: string } | undefined
+        const msg = errorData?.message || t("invalidOrExpiredCode")
+        throw new Error(msg)
       }
 
-      setSuccess(t("deviceLinkedSuccess"));
-      toast.success(t("deviceApprovedSuccess"));
-      setCode("");
+      setSuccess(t("deviceLinkedSuccess"))
+      toast.success(t("deviceApprovedSuccess"))
+      setCode("")
     } catch (err: any) {
-      console.error("[QuickConnect] Approval error:", err);
-      const msg = err.message || t("failedApproveCode");
-      setError(msg);
-      toast.error(msg);
+      console.error("[QuickConnect] Approval error:", err)
+      const msg = err.message || t("failedApproveCode")
+      setError(msg)
+      toast.error(msg)
     } finally {
-      setIsApproving(false);
+      setIsApproving(false)
     }
-  };
+  }
 
   return (
-    <form onSubmit={handleApprove} className="rounded-2xl border border-border/60 bg-muted/20 p-4 sm:p-5 space-y-3.5 sm:space-y-4 shadow-2xs">
+    <form
+      onSubmit={handleApprove}
+      className="space-y-3.5 rounded-2xl border border-border/60 bg-muted/20 p-4 shadow-2xs sm:space-y-4 sm:p-5"
+    >
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="size-8 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
             <IconDeviceTv className="size-4" />
           </div>
           <div className="min-w-0">
-            <h4 className="font-semibold text-sm text-foreground">
+            <h4 className="text-sm font-semibold text-foreground">
               {t("quickConnect")}
             </h4>
           </div>
@@ -101,14 +103,14 @@ export function QuickConnectCard(): React.JSX.Element {
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive animate-in fade-in-50">
+        <div className="flex animate-in items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive fade-in-50">
           <IconAlertTriangle className="size-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {success && (
-        <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-400 animate-in fade-in-50">
+        <div className="flex animate-in items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-400 fade-in-50">
           <IconCheck className="size-4 shrink-0" />
           <span>{success}</span>
         </div>
@@ -127,13 +129,13 @@ export function QuickConnectCard(): React.JSX.Element {
                 onChange={(e) => handleCodeChange(e.target.value)}
                 placeholder="XXXX-XXXX"
                 maxLength={9}
-                className="h-10 text-xs font-mono tracking-widest uppercase rounded-xl bg-background/70 pe-10"
+                className="h-10 rounded-xl bg-background/70 pe-10 font-mono text-xs tracking-widest uppercase"
               />
               <button
                 type="button"
                 tabIndex={-1}
                 onClick={handlePaste}
-                className="absolute end-2.5 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                className="absolute end-2.5 top-1/2 -translate-y-1/2 cursor-pointer p-1 text-muted-foreground transition-colors hover:text-foreground"
                 title={t("pasteClipboardTitle")}
               >
                 <IconClipboard className="size-4" />
@@ -143,8 +145,10 @@ export function QuickConnectCard(): React.JSX.Element {
             <Button
               type="submit"
               size="sm"
-              disabled={isApproving || code.replace(/[^A-Z0-9]/g, "").length < 6}
-              className="h-10 text-xs font-semibold rounded-xl px-4 gap-1.5 shrink-0"
+              disabled={
+                isApproving || code.replace(/[^A-Z0-9]/g, "").length < 6
+              }
+              className="h-10 shrink-0 gap-1.5 rounded-xl px-4 text-xs font-semibold"
             >
               {isApproving ? (
                 <Spinner className="size-3.5" />
@@ -157,5 +161,5 @@ export function QuickConnectCard(): React.JSX.Element {
         </div>
       </div>
     </form>
-  );
+  )
 }

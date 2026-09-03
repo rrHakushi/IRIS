@@ -98,10 +98,7 @@ function findRouteFiles(dir: string): string[] {
     const fullPath = path.join(dir, name)
     if (entry.isDirectory()) {
       results.push(...findRouteFiles(fullPath))
-    } else if (
-      entry.isFile() &&
-      (name === "route.ts" || name === "route.js")
-    ) {
+    } else if (entry.isFile() && (name === "route.ts" || name === "route.js")) {
       results.push(fullPath)
     }
   }
@@ -315,17 +312,17 @@ export async function generateInsomniumConfig(
           value: string
           disabled?: boolean
         }> = [
-            {
-              name: "x-api-key",
-              value: "{{ _.api_key }}",
-              disabled: false,
-            },
-            {
-              name: "Authorization",
-              value: "Bearer {{ _.token }}",
-              disabled: true,
-            },
-          ]
+          {
+            name: "x-api-key",
+            value: "{{ _.api_key }}",
+            disabled: false,
+          },
+          {
+            name: "Authorization",
+            value: "Bearer {{ _.token }}",
+            disabled: true,
+          },
+        ]
 
         // Generate body
         let body: Record<string, unknown> = {}

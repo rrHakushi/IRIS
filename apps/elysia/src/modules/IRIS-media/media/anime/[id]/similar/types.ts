@@ -5,4 +5,4 @@ export {
   type SimilarMediaTitles as SimilarAnimeTitles,
   type SimilarMediaItem as SimilarAnimeItem,
   type SimilarMediaResponse as SimilarAnimeResponse,
-} from "@/modules/IRIS-media/helpers/media-similarity";
+} from "@/modules/IRIS-media/helpers/media-similarity"

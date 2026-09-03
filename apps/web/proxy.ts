@@ -1,2 +1,1 @@
-
-export default function proxy() { }
+export default function proxy() {}

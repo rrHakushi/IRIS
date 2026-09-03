@@ -1,12 +1,15 @@
-import { defineRoute, t } from "@/router";
-import { mediaDbSyncer, queueBookFetch } from "@/services/media-queue";
-import type { Prisma } from "@IRIS/database";
-import { NotFound } from "elysia";
-import { BookResponseSchema } from "./types";
-import { NotFoundResponseSchema } from "../../../../../../types";
-import { fetchMediaRelations, type MediaRelationItem } from "@/modules/IRIS-media/helpers/media-relations";
+import { defineRoute, t } from "@/router"
+import { mediaDbSyncer, queueBookFetch } from "@/services/media-queue"
+import type { Prisma } from "@IRIS/database"
+import { NotFound } from "elysia"
+import { BookResponseSchema } from "./types"
+import { NotFoundResponseSchema } from "../../../../../../types"
+import {
+  fetchMediaRelations,
+  type MediaRelationItem,
+} from "@/modules/IRIS-media/helpers/media-relations"
 
-const BOOK_CACHE_TTL = 60 * 60 * 12; // 12 hours
+const BOOK_CACHE_TTL = 60 * 60 * 12 // 12 hours
 
 export const bookInclude = {
   characters: {
@@ -27,15 +30,15 @@ export const bookInclude = {
       studio: true,
     },
   },
-} as const satisfies Prisma.BookInclude;
+} as const satisfies Prisma.BookInclude
 
 export type BookDetails = NonNullable<
   Prisma.BookGetPayload<{
-    include: typeof bookInclude;
+    include: typeof bookInclude
   }>
 > & {
-  relations: MediaRelationItem[];
-};
+  relations: MediaRelationItem[]
+}
 
 export default defineRoute({
   cacheKeys: {
@@ -54,18 +57,19 @@ export default defineRoute({
     },
     detail: {
       summary: "Get book by ID",
-      description: "Fetches book details with characters, staff, studios, tags, genres, and media relations.",
+      description:
+        "Fetches book details with characters, staff, studios, tags, genres, and media relations.",
       tags: ["Media - Book"],
     },
   },
 
   async GET({ params, prisma, cache, cacheKeys, logger }) {
-    const id = params.id;
-    const cacheKey = cacheKeys.book.id(id);
+    const id = params.id
+    const cacheKey = cacheKeys.book.id(id)
 
-    const cached = await cache.get<BookDetails>(cacheKey);
+    const cached = await cache.get<BookDetails>(cacheKey)
     if (cached) {
-      return cached;
+      return cached
     }
 
     const data = await prisma.book.findUnique({
@@ -73,26 +77,29 @@ export default defineRoute({
         id: id,
       },
       include: bookInclude,
-    });
+    })
 
     if (!data) {
-      return new NotFound(`Book not found with ID ${id}`);
+      return new NotFound(`Book not found with ID ${id}`)
     }
 
-    const relations = await fetchMediaRelations(prisma, "BOOK", data.id);
+    const relations = await fetchMediaRelations(prisma, "BOOK", data.id)
     const result: BookDetails = {
       ...data,
       relations,
-    };
+    }
 
-    await cache.set(cacheKey, result, BOOK_CACHE_TTL);
+    await cache.set(cacheKey, result, BOOK_CACHE_TTL)
 
     if (data.googleBookId && mediaDbSyncer.isRecordStale(data, "BOOK")) {
       void queueBookFetch(data.googleBookId).catch((err) => {
-        logger.error(`[BookRoute] Failed to queue background fetch for id ${id} (googleBook id ${data.googleBookId}):`, err);
-      });
+        logger.error(
+          `[BookRoute] Failed to queue background fetch for id ${id} (googleBook id ${data.googleBookId}):`,
+          err
+        )
+      })
     }
 
-    return result;
+    return result
   },
-});
+})

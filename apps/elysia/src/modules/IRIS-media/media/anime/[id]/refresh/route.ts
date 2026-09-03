@@ -4,10 +4,10 @@ import {
   Forbidden,
   NotFound,
   ErrorResponseSchema,
-} from "@/utils/errors";
-import { defineRoute, t } from "@/router";
-import { IRISFlags } from "@IRIS/permissions";
-import { queueAnimeFetch } from "@/services";
+} from "@/utils/errors"
+import { defineRoute, t } from "@/router"
+import { IRISFlags } from "@IRIS/permissions"
+import { queueAnimeFetch } from "@/services"
 
 export default defineRoute({
   schema: {
@@ -19,7 +19,9 @@ export default defineRoute({
         force: t.Optional(t.Boolean({ default: false })),
         maxDepth: t.Optional(t.Number({ minimum: 0, maximum: 99, default: 0 })),
         priority: t.Optional(t.Number({ minimum: 0, maximum: 10, default: 1 })),
-        maxRetries: t.Optional(t.Number({ minimum: 0, maximum: 99, default: 3 })),
+        maxRetries: t.Optional(
+          t.Number({ minimum: 0, maximum: 99, default: 3 })
+        ),
       })
     ),
     response: {
@@ -43,16 +45,16 @@ export default defineRoute({
 
   async POST({ params, body, session, prisma }) {
     if (!session.hasPermission(IRISFlags.ADMINISTRATOR)) {
-      return new Forbidden("Forbidden: Admin required");
+      return new Forbidden("Forbidden: Admin required")
     }
 
-    const anime = await prisma.anime.findUnique({ where: { id: params.id } });
+    const anime = await prisma.anime.findUnique({ where: { id: params.id } })
     if (!anime) {
-      return new NotFound("Anime not found");
+      return new NotFound("Anime not found")
     }
 
     if (!anime.anilistId) {
-      return new BadRequest("Anime is missing anilistId");
+      return new BadRequest("Anime is missing anilistId")
     }
 
     const queued = await queueAnimeFetch(anime.anilistId, {
@@ -60,30 +62,24 @@ export default defineRoute({
       maxDepth: body?.maxDepth,
       priority: body?.priority,
       maxRetries: body?.maxRetries,
-    });
+    })
 
     if (queued?.metadata?.skipped) {
-      return new Conflict(
-        `${queued.metadata.reason}`
-      );
+      return new Conflict(`${queued.metadata.reason}`)
     }
 
-    if (
-      queued.status === "PROCESSING" ||
-      queued.status === "PENDING"
-    ) {
+    if (queued.status === "PROCESSING" || queued.status === "PENDING") {
       return {
         success: true,
         message: "Anime queued for refresh",
         timestamp: new Date().toISOString(),
-      };
+      }
     }
 
     return {
       success: false,
       message: "Failed to queue anime for refresh",
       timestamp: new Date().toISOString(),
-    };
+    }
   },
-});
-
+})

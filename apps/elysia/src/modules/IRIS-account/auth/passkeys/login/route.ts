@@ -1,8 +1,8 @@
 import {
   generateAuthenticationOptions,
   type AuthenticatorTransportFuture,
-} from "@simplewebauthn/server";
-import { defineRoute, t } from "../../../../../router";
+} from "@simplewebauthn/server"
+import { defineRoute, t } from "../../../../../router"
 
 export default defineRoute({
   schema: {
@@ -37,43 +37,48 @@ export default defineRoute({
   },
 
   async POST({ body, prisma, cache, request }) {
-    const originHeader = request?.headers.get("origin") || request?.headers.get("referer");
+    const originHeader =
+      request?.headers.get("origin") || request?.headers.get("referer")
     let origin = process.env.NEXTAUTH_URL!
     if (originHeader) {
       try {
-        const u = new URL(originHeader);
-        origin = `${u.protocol}//${u.host}`;
-      } catch { }
+        const u = new URL(originHeader)
+        origin = `${u.protocol}//${u.host}`
+      } catch {}
     }
 
-    let rpID = "localhost";
+    let rpID = "localhost"
     try {
-      rpID = process.env.RP_ID || new URL(origin).hostname;
+      rpID = process.env.RP_ID || new URL(origin).hostname
     } catch {
-      rpID = "localhost";
+      rpID = "localhost"
     }
 
     let allowCredentials:
-      | { id: string; type: "public-key"; transports?: AuthenticatorTransportFuture[] }[]
-      | undefined = undefined;
+      | {
+          id: string
+          type: "public-key"
+          transports?: AuthenticatorTransportFuture[]
+        }[]
+      | undefined = undefined
 
     if (body?.identifier) {
-      const rawIdentifier = body.identifier.trim();
-      const lowerIdentifier = rawIdentifier.toLowerCase();
+      const rawIdentifier = body.identifier.trim()
+      const lowerIdentifier = rawIdentifier.toLowerCase()
 
       const user = await prisma.user.findFirst({
         where: {
           OR: [{ email: lowerIdentifier }, { username: rawIdentifier }],
         },
         include: { passkeys: true },
-      });
+      })
 
       if (user && user.passkeys.length > 0) {
         allowCredentials = user.passkeys.map((pk) => ({
           id: pk.id,
           type: "public-key" as const,
           transports: pk.transports as AuthenticatorTransportFuture[],
-        }));
+        }))
       }
     }
 
@@ -81,10 +86,14 @@ export default defineRoute({
       rpID,
       allowCredentials,
       userVerification: "preferred",
-    });
+    })
 
     // Cache challenge for 5 minutes
-    await cache.set(`auth:passkey-auth:${options.challenge}`, options.challenge, 300);
+    await cache.set(
+      `auth:passkey-auth:${options.challenge}`,
+      options.challenge,
+      300
+    )
 
     return {
       challenge: options.challenge,
@@ -96,6 +105,6 @@ export default defineRoute({
       })),
       timeout: options.timeout ?? 60000,
       userVerification: options.userVerification,
-    };
+    }
   },
-});
+})

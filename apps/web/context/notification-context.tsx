@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import React, {
   createContext,
@@ -8,94 +8,96 @@ import React, {
   useCallback,
   useRef,
   useMemo,
-} from "react";
-import { useSession } from "next-auth/react";
-import { toast } from "sonner";
-import { elysia } from "@/lib/elysia";
-import { useWebSocket } from "./websocket-context";
-import { useEncryption } from "./encryption-context";
-import { loadSessionSecretKey } from "@/lib/encryption-vault";
+} from "react"
+import { useSession } from "next-auth/react"
+import { toast } from "sonner"
+import { elysia } from "@/lib/elysia"
+import { useWebSocket } from "./websocket-context"
+import { useEncryption } from "./encryption-context"
+import { loadSessionSecretKey } from "@/lib/encryption-vault"
 import {
   decryptPqeNotification,
   type PqeNotificationContent,
-} from "@/lib/encryption-pqe";
-import { IrisNotificationToast } from "@/components/navigation/iris-notification-toast";
+} from "@/lib/encryption-pqe"
+import { IrisNotificationToast } from "@/components/navigation/iris-notification-toast"
 
-export type NotificationType = "INFO" | "ACTION_CONFIRM" | "ACTION_INPUT" | "ACTION_SELECT";
-export type NotificationPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
-export type NotificationActionStatus = "PENDING" | "CONFIRMED" | "REJECTED" | "SUBMITTED" | "EXPIRED";
+export type NotificationType =
+  "INFO" | "ACTION_CONFIRM" | "ACTION_INPUT" | "ACTION_SELECT"
+export type NotificationPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT"
+export type NotificationActionStatus =
+  "PENDING" | "CONFIRMED" | "REJECTED" | "SUBMITTED" | "EXPIRED"
 
 export interface NotificationItem {
-  id: string;
-  userId: string;
-  app: string;
-  category: string;
-  type: NotificationType;
-  priority: NotificationPriority;
-  isRead: boolean;
-  readAt: string | null;
-  actionStatus: NotificationActionStatus | null;
-  actionPayload: any;
-  actionHandler: string | null;
-  kemCiphertext: string;
-  encryptedData: string;
-  expiresAt: string | null;
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  userId: string
+  app: string
+  category: string
+  type: NotificationType
+  priority: NotificationPriority
+  isRead: boolean
+  readAt: string | null
+  actionStatus: NotificationActionStatus | null
+  actionPayload: any
+  actionHandler: string | null
+  kemCiphertext: string
+  encryptedData: string
+  expiresAt: string | null
+  createdAt: string
+  updatedAt: string
 
   // Decrypted client state
-  isDecrypted: boolean;
-  content: PqeNotificationContent | null;
-  decryptionError?: string | null;
+  isDecrypted: boolean
+  content: PqeNotificationContent | null
+  decryptionError?: string | null
 }
 
 export interface NotificationFilterState {
-  apps: string[];
-  categories: string[];
-  types: NotificationType[];
-  priorities: NotificationPriority[];
-  actionStatus: string;
-  dateRange: "all" | "today" | "week";
-  isRead: "all" | "unread" | "read";
-  search: string;
+  apps: string[]
+  categories: string[]
+  types: NotificationType[]
+  priorities: NotificationPriority[]
+  actionStatus: string
+  dateRange: "all" | "today" | "week"
+  isRead: "all" | "unread" | "read"
+  search: string
 }
 
 export interface NotificationContextValue {
-  notifications: NotificationItem[];
-  filteredNotifications: NotificationItem[];
-  unreadCount: number;
-  isLoading: boolean;
-  error: string | null;
+  notifications: NotificationItem[]
+  filteredNotifications: NotificationItem[]
+  unreadCount: number
+  isLoading: boolean
+  error: string | null
 
   // Modal open state
-  isModalOpen: boolean;
-  setIsModalOpen: (open: boolean) => void;
+  isModalOpen: boolean
+  setIsModalOpen: (open: boolean) => void
 
   // Filters
-  filters: NotificationFilterState;
-  setFilters: React.Dispatch<React.SetStateAction<NotificationFilterState>>;
+  filters: NotificationFilterState
+  setFilters: React.Dispatch<React.SetStateAction<NotificationFilterState>>
   updateFilter: <K extends keyof NotificationFilterState>(
     key: K,
     value: NotificationFilterState[K]
-  ) => void;
+  ) => void
   toggleFilterItem: <K extends "apps" | "categories" | "types" | "priorities">(
     key: K,
     item: NotificationFilterState[K][number]
-  ) => void;
-  resetFilters: () => void;
+  ) => void
+  resetFilters: () => void
 
   // Actions
-  markAsRead: (id: string) => Promise<boolean>;
-  markAllAsRead: () => Promise<boolean>;
-  deleteNotification: (id: string) => Promise<boolean>;
-  deleteAllNotifications: (onlyRead?: boolean) => Promise<boolean>;
+  markAsRead: (id: string) => Promise<boolean>
+  markAllAsRead: () => Promise<boolean>
+  deleteNotification: (id: string) => Promise<boolean>
+  deleteAllNotifications: (onlyRead?: boolean) => Promise<boolean>
   submitAction: (
     id: string,
     action: string,
     payload?: Record<string, unknown>
-  ) => Promise<boolean>;
-  refresh: () => Promise<void>;
-  decryptAllPending: () => void;
+  ) => Promise<boolean>
+  refresh: () => Promise<void>
+  decryptAllPending: () => void
 }
 
 const defaultFilters: NotificationFilterState = {
@@ -107,37 +109,47 @@ const defaultFilters: NotificationFilterState = {
   dateRange: "all",
   isRead: "all",
   search: "",
-};
+}
 
-const NotificationContext = createContext<NotificationContextValue | null>(null);
+const NotificationContext = createContext<NotificationContextValue | null>(null)
 
-export function NotificationProvider({ children }: { children: React.ReactNode }) {
-  const { data: session, status } = useSession();
-  const userId = session?.user?.id;
-  const { subscribe, isConnected } = useWebSocket();
-  const { isActive } = useEncryption();
+export function NotificationProvider({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const { data: session, status } = useSession()
+  const userId = session?.user?.id
+  const { subscribe, isConnected } = useWebSocket()
+  const { isActive } = useEncryption()
 
-  const [rawNotifications, setRawNotifications] = useState<NotificationItem[]>([]);
-  const [unreadCount, setUnreadCount] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [filters, setFilters] = useState<NotificationFilterState>(defaultFilters);
+  const [rawNotifications, setRawNotifications] = useState<NotificationItem[]>(
+    []
+  )
+  const [unreadCount, setUnreadCount] = useState<number>(0)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
+  const [filters, setFilters] =
+    useState<NotificationFilterState>(defaultFilters)
 
-  const notificationsRef = useRef<NotificationItem[]>([]);
-  notificationsRef.current = rawNotifications;
+  const notificationsRef = useRef<NotificationItem[]>([])
+  notificationsRef.current = rawNotifications
 
   // Helper to attempt decrypting a single notification item
   const tryDecryptNotification = useCallback(
-    (item: NotificationItem, secretKey: Uint8Array | null): NotificationItem => {
-      if (item.isDecrypted && item.content) return item;
+    (
+      item: NotificationItem,
+      secretKey: Uint8Array | null
+    ): NotificationItem => {
+      if (item.isDecrypted && item.content) return item
       if (!secretKey) {
         return {
           ...item,
           isDecrypted: false,
           content: null,
           decryptionError: null,
-        };
+        }
       }
 
       try {
@@ -145,54 +157,56 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           item.kemCiphertext,
           item.encryptedData,
           secretKey
-        );
+        )
         return {
           ...item,
           isDecrypted: true,
           content,
           decryptionError: null,
-        };
+        }
       } catch (err: any) {
         return {
           ...item,
           isDecrypted: false,
           content: null,
           decryptionError: err?.message || "Decryption failed",
-        };
+        }
       }
     },
     []
-  );
+  )
 
   // Decrypt all notifications currently held in state
   const decryptAllWithKey = useCallback(
     (secretKey: Uint8Array | null) => {
       setRawNotifications((prev) =>
         prev.map((item) => tryDecryptNotification(item, secretKey))
-      );
+      )
     },
     [tryDecryptNotification]
-  );
+  )
 
   const decryptAllPending = useCallback(() => {
-    const secretKey = loadSessionSecretKey(userId);
-    decryptAllWithKey(secretKey);
-  }, [userId, decryptAllWithKey]);
+    const secretKey = loadSessionSecretKey(userId)
+    decryptAllWithKey(secretKey)
+  }, [userId, decryptAllWithKey])
 
   // Fetch notifications from server
   const fetchNotifications = useCallback(async () => {
-    if (status !== "authenticated" || !userId) return;
+    if (status !== "authenticated" || !userId) return
 
-    setIsLoading(true);
-    setError(null);
+    setIsLoading(true)
+    setError(null)
 
     try {
-      const { data, error: apiError } = await (elysia as any).notifications.get({
-        fetch: { credentials: "include" },
-      });
+      const { data, error: apiError } = await (elysia as any).notifications.get(
+        {
+          fetch: { credentials: "include" },
+        }
+      )
 
       if (!apiError && data?.success) {
-        const secretKey = loadSessionSecretKey(userId);
+        const secretKey = loadSessionSecretKey(userId)
         const mapped: NotificationItem[] = (data.notifications || []).map(
           (n: any) => {
             const baseItem: NotificationItem = {
@@ -214,37 +228,37 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
               updatedAt: String(n.updatedAt),
               isDecrypted: false,
               content: null,
-            };
-            return tryDecryptNotification(baseItem, secretKey);
+            }
+            return tryDecryptNotification(baseItem, secretKey)
           }
-        );
+        )
 
-        setRawNotifications(mapped);
-        setUnreadCount(data.unreadCount ?? 0);
+        setRawNotifications(mapped)
+        setUnreadCount(data.unreadCount ?? 0)
       }
     } catch (err: any) {
-      console.warn("[NotificationContext] Failed to load notifications:", err);
-      setError(err?.message || "Failed to load notifications");
+      console.warn("[NotificationContext] Failed to load notifications:", err)
+      setError(err?.message || "Failed to load notifications")
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, [status, userId, tryDecryptNotification]);
+  }, [status, userId, tryDecryptNotification])
 
   // Initial fetch on login
   useEffect(() => {
     if (status === "authenticated" && userId) {
-      fetchNotifications();
+      fetchNotifications()
     } else if (status === "unauthenticated") {
-      setRawNotifications([]);
-      setUnreadCount(0);
+      setRawNotifications([])
+      setUnreadCount(0)
     }
-  }, [status, userId, fetchNotifications]);
+  }, [status, userId, fetchNotifications])
 
   // When encryption vault becomes active (or locked), re-attempt decryption
   useEffect(() => {
-    const secretKey = isActive ? loadSessionSecretKey(userId) : null;
-    decryptAllWithKey(secretKey);
-  }, [isActive, userId, decryptAllWithKey]);
+    const secretKey = isActive ? loadSessionSecretKey(userId) : null
+    decryptAllWithKey(secretKey)
+  }, [isActive, userId, decryptAllWithKey])
 
   // Submit interactive notification action
   const submitAction = useCallback(
@@ -259,7 +273,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           .action.post(
             { action, payload },
             { fetch: { credentials: "include" } }
-          );
+          )
 
         if (!apiError && data?.success) {
           setRawNotifications((prev) =>
@@ -273,28 +287,28 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                   }
                 : n
             )
-          );
-          setUnreadCount((prev) => Math.max(0, prev - 1));
-          return true;
+          )
+          setUnreadCount((prev) => Math.max(0, prev - 1))
+          return true
         }
-        return false;
+        return false
       } catch {
-        return false;
+        return false
       }
     },
     []
-  );
+  )
 
   // Real-time WebSocket event listeners
   useEffect(() => {
-    if (status !== "authenticated") return;
+    if (status !== "authenticated") return
 
     // 1. New incoming notification
     const unsubNew = subscribe("notification:new", (msg) => {
-      const raw = msg.data?.notification;
-      if (!raw) return;
+      const raw = msg.data?.notification
+      if (!raw) return
 
-      const secretKey = loadSessionSecretKey(userId);
+      const secretKey = loadSessionSecretKey(userId)
       const baseItem: NotificationItem = {
         id: raw.id,
         userId: raw.userId,
@@ -314,15 +328,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         updatedAt: raw.updatedAt,
         isDecrypted: false,
         content: null,
-      };
+      }
 
-      const decrypted = tryDecryptNotification(baseItem, secretKey);
+      const decrypted = tryDecryptNotification(baseItem, secretKey)
 
       setRawNotifications((prev) => {
-        if (prev.some((n) => n.id === decrypted.id)) return prev;
-        return [decrypted, ...prev];
-      });
-      setUnreadCount((prev) => prev + 1);
+        if (prev.some((n) => n.id === decrypted.id)) return prev
+        return [decrypted, ...prev]
+      })
+      setUnreadCount((prev) => prev + 1)
 
       // Trigger custom interactive popup
       toast.custom(
@@ -338,13 +352,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         {
           duration: decrypted.priority === "URGENT" ? 15000 : 8000,
         }
-      );
-    });
+      )
+    })
 
     // 2. Notification update (e.g. read status)
     const unsubUpdate = subscribe("notification:update", (msg) => {
-      const data = msg.data;
-      if (!data?.id) return;
+      const data = msg.data
+      if (!data?.id) return
 
       setRawNotifications((prev) =>
         prev.map((item) =>
@@ -356,16 +370,16 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
               }
             : item
         )
-      );
+      )
       if (typeof data.unreadCount === "number") {
-        setUnreadCount(data.unreadCount);
+        setUnreadCount(data.unreadCount)
       }
-    });
+    })
 
     // 3. Action resolved
     const unsubAction = subscribe("notification:action-resolved", (msg) => {
-      const data = msg.data;
-      if (!data?.id) return;
+      const data = msg.data
+      if (!data?.id) return
 
       setRawNotifications((prev) =>
         prev.map((item) =>
@@ -378,142 +392,150 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
               }
             : item
         )
-      );
+      )
       if (typeof data.unreadCount === "number") {
-        setUnreadCount(data.unreadCount);
+        setUnreadCount(data.unreadCount)
       }
-    });
+    })
 
     // 4. Single delete
     const unsubDelete = subscribe("notification:delete", (msg) => {
-      const data = msg.data;
-      if (!data?.id) return;
+      const data = msg.data
+      if (!data?.id) return
 
-      setRawNotifications((prev) => prev.filter((item) => item.id !== data.id));
+      setRawNotifications((prev) => prev.filter((item) => item.id !== data.id))
       if (typeof data.unreadCount === "number") {
-        setUnreadCount(data.unreadCount);
+        setUnreadCount(data.unreadCount)
       }
-    });
+    })
 
     // 5. Bulk delete
     const unsubBulkDelete = subscribe("notification:bulk-delete", (msg) => {
-      const data = msg.data;
+      const data = msg.data
       if (typeof data?.unreadCount === "number") {
-        setUnreadCount(data.unreadCount);
+        setUnreadCount(data.unreadCount)
       }
-      fetchNotifications();
-    });
+      fetchNotifications()
+    })
 
     // 6. Mark all read
     const unsubMarkAll = subscribe("notification:mark-all-read", () => {
       setRawNotifications((prev) =>
-        prev.map((item) => ({ ...item, isRead: true, readAt: new Date().toISOString() }))
-      );
-      setUnreadCount(0);
-    });
+        prev.map((item) => ({
+          ...item,
+          isRead: true,
+          readAt: new Date().toISOString(),
+        }))
+      )
+      setUnreadCount(0)
+    })
 
     return () => {
-      unsubNew();
-      unsubUpdate();
-      unsubAction();
-      unsubDelete();
-      unsubBulkDelete();
-      unsubMarkAll();
-    };
-  }, [status, userId, subscribe, tryDecryptNotification, fetchNotifications]);
+      unsubNew()
+      unsubUpdate()
+      unsubAction()
+      unsubDelete()
+      unsubBulkDelete()
+      unsubMarkAll()
+    }
+  }, [status, userId, subscribe, tryDecryptNotification, fetchNotifications])
 
   // Actions
   const markAsRead = async (id: string): Promise<boolean> => {
     try {
-      const target = rawNotifications.find((n) => n.id === id);
-      if (target?.isRead) return true;
+      const target = rawNotifications.find((n) => n.id === id)
+      if (target?.isRead) return true
 
       // Optimistic update
       setRawNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, isRead: true, readAt: new Date().toISOString() } : n))
-      );
-      setUnreadCount((prev) => Math.max(0, prev - 1));
+        prev.map((n) =>
+          n.id === id
+            ? { ...n, isRead: true, readAt: new Date().toISOString() }
+            : n
+        )
+      )
+      setUnreadCount((prev) => Math.max(0, prev - 1))
 
       const { data, error: apiError } = await (elysia as any)
         .notifications({ id })
-        .read.patch(
-          { isRead: true },
-          { fetch: { credentials: "include" } }
-        );
+        .read.patch({ isRead: true }, { fetch: { credentials: "include" } })
 
-      return !apiError && Boolean(data?.success);
+      return !apiError && Boolean(data?.success)
     } catch {
-      return false;
+      return false
     }
-  };
+  }
 
   const markAllAsRead = async (): Promise<boolean> => {
     try {
       setRawNotifications((prev) =>
-        prev.map((n) => ({ ...n, isRead: true, readAt: new Date().toISOString() }))
-      );
-      setUnreadCount(0);
+        prev.map((n) => ({
+          ...n,
+          isRead: true,
+          readAt: new Date().toISOString(),
+        }))
+      )
+      setUnreadCount(0)
 
-      const { data, error: apiError } = await (elysia as any)
-        .notifications["mark-all-read"].post({}, { fetch: { credentials: "include" } });
+      const { data, error: apiError } = await (elysia as any).notifications[
+        "mark-all-read"
+      ].post({}, { fetch: { credentials: "include" } })
 
-      return !apiError && Boolean(data?.success);
+      return !apiError && Boolean(data?.success)
     } catch {
-      return false;
+      return false
     }
-  };
+  }
 
   const deleteNotification = async (id: string): Promise<boolean> => {
     try {
-      const target = rawNotifications.find((n) => n.id === id);
-      setRawNotifications((prev) => prev.filter((n) => n.id !== id));
+      const target = rawNotifications.find((n) => n.id === id)
+      setRawNotifications((prev) => prev.filter((n) => n.id !== id))
       if (target && !target.isRead) {
-        setUnreadCount((prev) => Math.max(0, prev - 1));
+        setUnreadCount((prev) => Math.max(0, prev - 1))
       }
 
       const { data, error: apiError } = await (elysia as any)
         .notifications({ id })
-        .delete({}, { fetch: { credentials: "include" } });
+        .delete({}, { fetch: { credentials: "include" } })
 
-      return !apiError && Boolean(data?.success);
+      return !apiError && Boolean(data?.success)
     } catch {
-      return false;
+      return false
     }
-  };
+  }
 
   const deleteAllNotifications = async (onlyRead = false): Promise<boolean> => {
     try {
       if (onlyRead) {
-        setRawNotifications((prev) => prev.filter((n) => !n.isRead));
+        setRawNotifications((prev) => prev.filter((n) => !n.isRead))
       } else {
-        setRawNotifications([]);
-        setUnreadCount(0);
+        setRawNotifications([])
+        setUnreadCount(0)
       }
 
-      const { data, error: apiError } = await (elysia as any).notifications.delete(
+      const { data, error: apiError } = await (
+        elysia as any
+      ).notifications.delete(
         { query: { onlyRead: onlyRead ? "true" : undefined } },
         { fetch: { credentials: "include" } }
-      );
+      )
 
-      return !apiError && Boolean(data?.success);
+      return !apiError && Boolean(data?.success)
     } catch {
-      return false;
+      return false
     }
-  };
-
-
-
-
+  }
 
   const updateFilter = useCallback(
     <K extends keyof NotificationFilterState>(
       key: K,
       value: NotificationFilterState[K]
     ) => {
-      setFilters((prev) => ({ ...prev, [key]: value }));
+      setFilters((prev) => ({ ...prev, [key]: value }))
     },
     []
-  );
+  )
 
   const toggleFilterItem = useCallback(
     <K extends "apps" | "categories" | "types" | "priorities">(
@@ -521,18 +543,18 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       item: NotificationFilterState[K][number]
     ) => {
       setFilters((prev) => {
-        const list = prev[key] as any[];
-        const exists = list.includes(item);
-        const next = exists ? list.filter((x) => x !== item) : [...list, item];
-        return { ...prev, [key]: next };
-      });
+        const list = prev[key] as any[]
+        const exists = list.includes(item)
+        const next = exists ? list.filter((x) => x !== item) : [...list, item]
+        return { ...prev, [key]: next }
+      })
     },
     []
-  );
+  )
 
   const resetFilters = useCallback(() => {
-    setFilters(defaultFilters);
-  }, []);
+    setFilters(defaultFilters)
+  }, [])
 
   // Filtered notifications list
   const filteredNotifications = useMemo(() => {
@@ -542,7 +564,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         filters.apps.length > 0 &&
         !filters.apps.some((a) => a.toLowerCase() === item.app.toLowerCase())
       ) {
-        return false;
+        return false
       }
 
       // 2. Category multi-filter
@@ -552,12 +574,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           (c) => c.toLowerCase() === item.category.toLowerCase()
         )
       ) {
-        return false;
+        return false
       }
 
       // 3. Type multi-filter
       if (filters.types.length > 0 && !filters.types.includes(item.type)) {
-        return false;
+        return false
       }
 
       // 4. Priority multi-filter
@@ -565,55 +587,58 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         filters.priorities.length > 0 &&
         !filters.priorities.includes(item.priority)
       ) {
-        return false;
+        return false
       }
 
       // 5. Action Status filter
       if (filters.actionStatus !== "all") {
-        if (filters.actionStatus === "pending" && item.actionStatus !== "PENDING") {
-          return false;
+        if (
+          filters.actionStatus === "pending" &&
+          item.actionStatus !== "PENDING"
+        ) {
+          return false
         }
         if (
           filters.actionStatus === "resolved" &&
           (!item.actionStatus || item.actionStatus === "PENDING")
         ) {
-          return false;
+          return false
         }
       }
 
       // 6. Read filter
-      if (filters.isRead === "unread" && item.isRead) return false;
-      if (filters.isRead === "read" && !item.isRead) return false;
+      if (filters.isRead === "unread" && item.isRead) return false
+      if (filters.isRead === "read" && !item.isRead) return false
 
       // 7. Date Range filter
       if (filters.dateRange !== "all") {
-        const itemDate = new Date(item.createdAt).getTime();
-        const now = Date.now();
+        const itemDate = new Date(item.createdAt).getTime()
+        const now = Date.now()
         if (filters.dateRange === "today") {
-          const oneDay = 24 * 60 * 60 * 1000;
-          if (now - itemDate > oneDay) return false;
+          const oneDay = 24 * 60 * 60 * 1000
+          if (now - itemDate > oneDay) return false
         } else if (filters.dateRange === "week") {
-          const sevenDays = 7 * 24 * 60 * 60 * 1000;
-          if (now - itemDate > sevenDays) return false;
+          const sevenDays = 7 * 24 * 60 * 60 * 1000
+          if (now - itemDate > sevenDays) return false
         }
       }
 
       // 8. Search query (matches decrypted title/body, app name, category)
       if (filters.search.trim()) {
-        const q = filters.search.toLowerCase().trim();
-        const appMatch = item.app.toLowerCase().includes(q);
-        const catMatch = item.category.toLowerCase().includes(q);
-        const titleMatch = item.content?.title.toLowerCase().includes(q);
-        const bodyMatch = item.content?.body.toLowerCase().includes(q);
+        const q = filters.search.toLowerCase().trim()
+        const appMatch = item.app.toLowerCase().includes(q)
+        const catMatch = item.category.toLowerCase().includes(q)
+        const titleMatch = item.content?.title.toLowerCase().includes(q)
+        const bodyMatch = item.content?.body.toLowerCase().includes(q)
 
         if (!appMatch && !catMatch && !titleMatch && !bodyMatch) {
-          return false;
+          return false
         }
       }
 
-      return true;
-    });
-  }, [rawNotifications, filters]);
+      return true
+    })
+  }, [rawNotifications, filters])
 
   return (
     <NotificationContext.Provider
@@ -641,13 +666,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     >
       {children}
     </NotificationContext.Provider>
-  );
+  )
 }
 
 export function useNotifications() {
-  const context = useContext(NotificationContext);
+  const context = useContext(NotificationContext)
   if (!context) {
-    throw new Error("useNotifications must be used within a NotificationProvider");
+    throw new Error(
+      "useNotifications must be used within a NotificationProvider"
+    )
   }
-  return context;
+  return context
 }

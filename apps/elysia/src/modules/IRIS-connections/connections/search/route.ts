@@ -1,9 +1,9 @@
-import { defineRoute, t } from "../../../../router";
+import { defineRoute, t } from "../../../../router"
 import {
   SearchProxyManager,
   type ConnectionProvider,
   type MediaType,
-} from "@IRIS/connections";
+} from "@IRIS/connections"
 
 export default defineRoute({
   GET: {
@@ -58,8 +58,8 @@ export default defineRoute({
       },
     },
     async handler({ query, session, prisma }) {
-      const provider = query.provider.toUpperCase() as ConnectionProvider;
-      let userConnection: any = null;
+      const provider = query.provider.toUpperCase() as ConnectionProvider
+      let userConnection: any = null
 
       if (session.isAuthenticated && session.user) {
         userConnection = await prisma.connection.findFirst({
@@ -68,7 +68,7 @@ export default defineRoute({
             provider: provider as any,
             status: "CONNECTED",
           },
-        });
+        })
       }
 
       const results = await SearchProxyManager.search(
@@ -87,15 +87,15 @@ export default defineRoute({
               encryptedData: updatedEncrypted,
               expiresAt,
             },
-          });
+          })
         }
-      );
+      )
 
       return {
         success: true,
         provider,
         results,
-      };
+      }
     },
   },
-});
+})

@@ -107,10 +107,7 @@ function findRouteFiles(dir: string, baseDir: string = dir): string[] {
     const fullPath = path.join(dir, name)
     if (entry.isDirectory()) {
       results.push(...findRouteFiles(fullPath, baseDir))
-    } else if (
-      entry.isFile() &&
-      (name === "route.ts" || name === "route.js")
-    ) {
+    } else if (entry.isFile() && (name === "route.ts" || name === "route.js")) {
       results.push(fullPath)
     }
   }
@@ -190,7 +187,7 @@ export async function createRouterModule(options: RouterOptions = {}) {
     options.modulesDir || path.resolve(import.meta.dirname, "../modules")
   const router = new Elysia({ name: "iris-file-router" })
 
-  const isDev = process.env.NODE_ENV !== "production";
+  const isDev = process.env.NODE_ENV !== "production"
 
   // When in development mode, ensure dev account and API key exist
   let devApiKey: string | undefined

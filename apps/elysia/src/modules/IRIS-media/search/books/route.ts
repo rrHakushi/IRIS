@@ -1,11 +1,11 @@
-import { defineRoute, t } from "@/router";
-import { queueBookSearchFetch } from "@/services/media-queue";
-import { NotFound } from "elysia";
+import { defineRoute, t } from "@/router"
+import { queueBookSearchFetch } from "@/services/media-queue"
+import { NotFound } from "elysia"
 
-import { BookSearchResponseSchema, type BookSearchResponse } from "./types";
-import { NotFoundResponseSchema } from "../../../../../types";
+import { BookSearchResponseSchema, type BookSearchResponse } from "./types"
+import { NotFoundResponseSchema } from "../../../../../types"
 
-const SEARCH_BOOKS_TTL = 60 * 60; // 1 hour
+const SEARCH_BOOKS_TTL = 60 * 60 // 1 hour
 
 export default defineRoute({
   schema: {
@@ -21,7 +21,8 @@ export default defineRoute({
     },
     detail: {
       summary: "Search books",
-      description: "Searches books by title, authors, or synonyms and returns matching book preview records.",
+      description:
+        "Searches books by title, authors, or synonyms and returns matching book preview records.",
       tags: ["Media - Book"],
     },
   },
@@ -33,17 +34,17 @@ export default defineRoute({
   },
 
   async GET({ query, prisma, cache, cacheKeys, logger }) {
-    const { q } = query;
-    const cleanQuery = decodeURIComponent(q).replace(/\+/g, " ").trim();
-    const cacheKey = cacheKeys.search.books(cleanQuery);
+    const { q } = query
+    const cleanQuery = decodeURIComponent(q).replace(/\+/g, " ").trim()
+    const cacheKey = cacheKeys.search.books(cleanQuery)
 
     if (!cleanQuery || cleanQuery.length < 3) {
-      return new NotFound("Query must be at least 3 characters long");
+      return new NotFound("Query must be at least 3 characters long")
     }
 
-    const cached = await cache.get<BookSearchResponse>(cacheKey);
+    const cached = await cache.get<BookSearchResponse>(cacheKey)
     if (cached) {
-      return cached;
+      return cached
     }
 
     const data = await prisma.book.findMany({
@@ -66,20 +67,23 @@ export default defineRoute({
       orderBy: {
         titlePrimary: "asc",
       },
-    });
+    })
 
     if (data.length === 0) {
-      logger.warn(`No data found for query: ${cleanQuery}, triggering refresh`);
-      const results = await queueBookSearchFetch(cleanQuery);
-      await cache.set(cacheKey, results, SEARCH_BOOKS_TTL);
-      return results;
+      logger.warn(`No data found for query: ${cleanQuery}, triggering refresh`)
+      const results = await queueBookSearchFetch(cleanQuery)
+      await cache.set(cacheKey, results, SEARCH_BOOKS_TTL)
+      return results
     }
 
-    await cache.set(cacheKey, data, SEARCH_BOOKS_TTL);
+    await cache.set(cacheKey, data, SEARCH_BOOKS_TTL)
     void queueBookSearchFetch(cleanQuery).catch((err) => {
-      logger.error(`[SearchBooksRoute] Failed to queue background search for "${cleanQuery}":`, err);
-    });
+      logger.error(
+        `[SearchBooksRoute] Failed to queue background search for "${cleanQuery}":`,
+        err
+      )
+    })
 
-    return data;
+    return data
   },
-});
+})

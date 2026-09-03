@@ -1,4 +1,4 @@
-import { defineRoute, t } from "../../../../router";
+import { defineRoute, t } from "../../../../router"
 
 export default defineRoute({
   schema: {
@@ -26,17 +26,23 @@ export default defineRoute({
   async GET({ session, prisma }) {
     if (!session.isAuthenticated) {
       return new Response(
-        JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
+        JSON.stringify({
+          error: "Unauthorized",
+          message: "Authentication required",
+        }),
         { status: 401, headers: { "content-type": "application/json" } }
-      );
+      )
     }
 
-    const user = session.getUser();
+    const user = session.getUser()
     if (!user) {
       return new Response(
-        JSON.stringify({ error: "Unauthorized", message: "User session not found" }),
+        JSON.stringify({
+          error: "Unauthorized",
+          message: "User session not found",
+        }),
         { status: 401, headers: { "content-type": "application/json" } }
-      );
+      )
     }
 
     const passkeys = await prisma.passkey.findMany({
@@ -48,7 +54,7 @@ export default defineRoute({
         createdAt: true,
         transports: true,
       },
-    });
+    })
 
     return {
       success: true,
@@ -58,6 +64,6 @@ export default defineRoute({
         createdAt: pk.createdAt.toISOString(),
         transports: pk.transports,
       })),
-    };
+    }
   },
-});
+})

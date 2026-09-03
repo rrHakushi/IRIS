@@ -1,29 +1,33 @@
-"use client";
+"use client"
 
-import React from "react";
-import Image from "next/image";
-import { useTranslations } from "next-intl";
-import { Avatar, AvatarFallback, AvatarImage } from "@workspace/ui/components/avatar";
-import { Badge } from "@workspace/ui/components/badge";
-import { cn } from "@workspace/ui/lib/utils";
+import React from "react"
+import Image from "next/image"
+import { useTranslations } from "next-intl"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@workspace/ui/components/avatar"
+import { Badge } from "@workspace/ui/components/badge"
+import { cn } from "@workspace/ui/lib/utils"
 import {
   getDisplayNameStyleCss,
   getDisplayNameEffectClasses,
   type UserProfileCustomization,
-} from "@IRIS/shared";
-import { renderBioMarkdown } from "./markdown-bio-editor";
-import { IrisSidebarUserCard } from "../../../iris-sidebar-user-card";
+} from "@IRIS/shared"
+import { renderBioMarkdown } from "./markdown-bio-editor"
+import { IrisSidebarUserCard } from "../../../iris-sidebar-user-card"
 
 export interface ProfilePreviewCardProps {
-  profile: UserProfileCustomization;
-  username: string;
-  email?: string;
-  className?: string;
+  profile: UserProfileCustomization
+  username: string
+  email?: string
+  className?: string
 }
 
 function isValidFrameUrl(url?: string | null): url is string {
-  if (!url || typeof url !== "string") return false;
-  const trimmed = url.trim();
+  if (!url || typeof url !== "string") return false
+  const trimmed = url.trim()
   return (
     trimmed !== "" &&
     trimmed !== "none" &&
@@ -31,7 +35,7 @@ function isValidFrameUrl(url?: string | null): url is string {
       trimmed.startsWith("http") ||
       trimmed.startsWith("data:") ||
       trimmed.startsWith("blob:"))
-  );
+  )
 }
 
 export function ProfilePreviewCard({
@@ -40,32 +44,36 @@ export function ProfilePreviewCard({
   email,
   className,
 }: ProfilePreviewCardProps): React.JSX.Element {
-  const t = useTranslations("navigation.settings.account.profile");
-  const nameToShow = profile.displayName || username || "Display Name";
-  const initial = nameToShow.charAt(0).toUpperCase();
+  const t = useTranslations("navigation.settings.account.profile")
+  const nameToShow = profile.displayName || username || "Display Name"
+  const initial = nameToShow.charAt(0).toUpperCase()
 
-  const nameStyle = getDisplayNameStyleCss(profile.displayNameStyle);
-  const nameEffect = getDisplayNameEffectClasses(profile.displayNameStyle?.effect);
-  const hasValidFrame = isValidFrameUrl(profile.avatarFrame);
+  const nameStyle = getDisplayNameStyleCss(profile.displayNameStyle)
+  const nameEffect = getDisplayNameEffectClasses(
+    profile.displayNameStyle?.effect
+  )
+  const hasValidFrame = isValidFrameUrl(profile.avatarFrame)
 
   return (
     <div
       className={cn(
-        "rounded-2xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-md overflow-hidden flex flex-col transition-all duration-300 isolate",
+        "isolate flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/80 shadow-md backdrop-blur-xl transition-all duration-300",
         className
       )}
     >
       {/* Header bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 bg-muted/20">
-        <span className="text-xs font-bold text-foreground">{t("preview")}</span>
+      <div className="flex items-center justify-between border-b border-border/50 bg-muted/20 px-4 py-3">
+        <span className="text-xs font-bold text-foreground">
+          {t("preview")}
+        </span>
       </div>
 
       {/* Main Preview Container: Displays both Profile Card and Nameplate Preview */}
-      <div className="p-4 space-y-4">
+      <div className="space-y-4 p-4">
         {/* 1. Full Profile Card View */}
-        <div className="relative rounded-2xl border border-border/60 bg-card overflow-hidden shadow-sm">
+        <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
           {/* Banner Header */}
-          <div className="relative h-28 w-full bg-linear-to-r from-primary/30 via-primary/10 to-muted/50 overflow-hidden">
+          <div className="relative h-28 w-full overflow-hidden bg-linear-to-r from-primary/30 via-primary/10 to-muted/50">
             {profile.bannerUrl ? (
               <Image
                 src={profile.bannerUrl}
@@ -76,8 +84,10 @@ export function ProfilePreviewCard({
                 className="object-cover"
               />
             ) : (
-              <div className="size-full bg-linear-to-br from-primary/20 via-background to-primary/5 flex items-center justify-end pr-4 text-primary/10 select-none">
-                <span className="font-black text-6xl tracking-tighter opacity-20">IRIS</span>
+              <div className="flex size-full items-center justify-end bg-linear-to-br from-primary/20 via-background to-primary/5 pr-4 text-primary/10 select-none">
+                <span className="text-6xl font-black tracking-tighter opacity-20">
+                  IRIS
+                </span>
               </div>
             )}
             {/* Dark subtle gradient overlay */}
@@ -85,20 +95,20 @@ export function ProfilePreviewCard({
           </div>
 
           {/* Profile Avatar & Info section */}
-          <div className="px-4 pb-4 pt-0 relative">
+          <div className="relative px-4 pt-0 pb-4">
             {/* Floating Avatar with Frame */}
-            <div className="flex justify-between items-end -mt-10 mb-3">
+            <div className="-mt-10 mb-3 flex items-end justify-between">
               <div className="relative flex items-center justify-center">
                 <Avatar className="size-20 border-2 border-card bg-background shadow-md">
                   {profile.avatarUrl ? (
                     <AvatarImage src={profile.avatarUrl} alt={nameToShow} />
                   ) : null}
-                  <AvatarFallback className="bg-primary/15 text-primary text-xl font-black uppercase">
+                  <AvatarFallback className="bg-primary/15 text-xl font-black text-primary uppercase">
                     {initial}
                   </AvatarFallback>
                 </Avatar>
                 {hasValidFrame && (
-                  <div className="absolute -inset-3 size-26 max-w-none pointer-events-none z-10 select-none">
+                  <div className="pointer-events-none absolute -inset-3 z-10 size-26 max-w-none select-none">
                     <Image
                       src={profile.avatarFrame!}
                       alt="Avatar Frame"
@@ -113,7 +123,10 @@ export function ProfilePreviewCard({
                 )}
               </div>
 
-              <Badge variant="outline" className="text-[10px] px-2 py-0.5 bg-background/80 backdrop-blur-xs font-mono">
+              <Badge
+                variant="outline"
+                className="bg-background/80 px-2 py-0.5 font-mono text-[10px] backdrop-blur-xs"
+              >
                 {t("member")}
               </Badge>
             </div>
@@ -123,7 +136,7 @@ export function ProfilePreviewCard({
               <div className="flex items-center gap-2">
                 <span
                   className={cn(
-                    "text-base font-bold tracking-tight truncate transition-all duration-200",
+                    "truncate text-base font-bold tracking-tight transition-all duration-200",
                     nameEffect
                   )}
                   style={nameStyle}
@@ -131,7 +144,7 @@ export function ProfilePreviewCard({
                   {nameToShow}
                 </span>
                 {profile.pronouns && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-muted/40 text-muted-foreground font-medium shrink-0">
+                  <span className="shrink-0 rounded-md bg-muted/40 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                     {profile.pronouns}
                   </span>
                 )}
@@ -143,7 +156,7 @@ export function ProfilePreviewCard({
 
               {/* Status Message */}
               {profile.statusText && (
-                <div className="text-xs text-foreground/90 italic flex items-center gap-1.5 pt-0.5">
+                <div className="flex items-center gap-1.5 pt-0.5 text-xs text-foreground/90 italic">
                   <span className="text-[10px]">💬</span>
                   <span className="truncate">{profile.statusText}</span>
                 </div>
@@ -151,11 +164,11 @@ export function ProfilePreviewCard({
             </div>
 
             {/* Bio Section */}
-            <div className="mt-3 pt-3 border-t border-border/40">
-              <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
+            <div className="mt-3 border-t border-border/40 pt-3">
+              <div className="mb-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                 {t("aboutMe")}
               </div>
-              <div className="text-xs bg-muted/20 p-2.5 rounded-xl border border-border/30">
+              <div className="rounded-xl border border-border/30 bg-muted/20 p-2.5 text-xs">
                 {renderBioMarkdown(profile.bio || "", t("noBio"))}
               </div>
             </div>
@@ -163,8 +176,8 @@ export function ProfilePreviewCard({
         </div>
 
         {/* 2. Nameplate Preview View */}
-        <div className="pt-2 border-t border-border/40 space-y-2">
-          <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-0.5">
+        <div className="space-y-2 border-t border-border/40 pt-2">
+          <div className="px-0.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
             {t("nameplatePreview")}
           </div>
           <IrisSidebarUserCard
@@ -183,5 +196,5 @@ export function ProfilePreviewCard({
         </div>
       </div>
     </div>
-  );
+  )
 }

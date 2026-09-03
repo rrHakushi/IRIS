@@ -1,10 +1,10 @@
-import { defineRoute, t } from "../../../../../router";
+import { defineRoute, t } from "../../../../../router"
 import {
   uploadPublicAsset,
   deletePublicAsset,
   extractS3Key,
-} from "../../../../../utils/s3";
-import { getProfileCustomization } from "@IRIS/shared";
+} from "../../../../../utils/s3"
+import { getProfileCustomization } from "@IRIS/shared"
 
 export default defineRoute({
   POST: {
@@ -36,10 +36,10 @@ export default defineRoute({
             status: 401,
             headers: { "content-type": "application/json" },
           }
-        );
+        )
       }
 
-      const { file, assetType } = body;
+      const { file, assetType } = body
 
       const allowedTypes = [
         "image/jpeg",
@@ -47,23 +47,24 @@ export default defineRoute({
         "image/webp",
         "image/gif",
         "image/svg+xml",
-      ];
+      ]
 
       if (!allowedTypes.includes(file.type)) {
         return new Response(
           JSON.stringify({
             error: "Bad Request",
-            message: "Unsupported file format. Please upload JPEG, PNG, WebP, GIF, or SVG.",
+            message:
+              "Unsupported file format. Please upload JPEG, PNG, WebP, GIF, or SVG.",
           }),
           {
             status: 400,
             headers: { "content-type": "application/json" },
           }
-        );
+        )
       }
 
       // Max size: 10MB
-      const maxSizeBytes = 10 * 1024 * 1024;
+      const maxSizeBytes = 10 * 1024 * 1024
       if (file.size > maxSizeBytes) {
         return new Response(
           JSON.stringify({
@@ -74,7 +75,7 @@ export default defineRoute({
             status: 400,
             headers: { "content-type": "application/json" },
           }
-        );
+        )
       }
 
       // Automatically clean up previously stored asset of this type from RustFS
@@ -84,57 +85,60 @@ export default defineRoute({
           select: {
             customization: true,
           },
-        });
+        })
 
         if (user) {
-          const profile = getProfileCustomization(user.customization);
-          let oldUrl: string | null | undefined = null;
+          const profile = getProfileCustomization(user.customization)
+          let oldUrl: string | null | undefined = null
 
           if (assetType === "avatar") {
-            oldUrl = profile.avatarUrl;
+            oldUrl = profile.avatarUrl
           } else if (assetType === "banner") {
-            oldUrl = profile.bannerUrl;
-          } else if (assetType === "nameplate" || assetType === "sidebarBanner") {
-            oldUrl = profile.nameplateUrl || profile.sidebarBannerUrl;
+            oldUrl = profile.bannerUrl
+          } else if (
+            assetType === "nameplate" ||
+            assetType === "sidebarBanner"
+          ) {
+            oldUrl = profile.nameplateUrl || profile.sidebarBannerUrl
           } else if (assetType === "avatarFrame") {
-            oldUrl = profile.avatarFrame;
+            oldUrl = profile.avatarFrame
           }
 
           if (oldUrl) {
-            const oldKey = extractS3Key(oldUrl);
+            const oldKey = extractS3Key(oldUrl)
             if (oldKey && oldKey.startsWith(`users/${session.user.id}/`)) {
-              await deletePublicAsset(oldKey);
+              await deletePublicAsset(oldKey)
             }
           }
         }
       } catch (cleanupErr) {
-        console.warn("[Assets] Warning during old asset cleanup:", cleanupErr);
+        console.warn("[Assets] Warning during old asset cleanup:", cleanupErr)
       }
 
-      let ext = "png";
-      if (file.type === "image/jpeg") ext = "jpg";
-      else if (file.type === "image/webp") ext = "webp";
-      else if (file.type === "image/gif") ext = "gif";
-      else if (file.type === "image/svg+xml") ext = "svg";
+      let ext = "png"
+      if (file.type === "image/jpeg") ext = "jpg"
+      else if (file.type === "image/webp") ext = "webp"
+      else if (file.type === "image/gif") ext = "gif"
+      else if (file.type === "image/svg+xml") ext = "svg"
 
-      const key = `users/${session.user.id}/${assetType}-${Date.now()}.${ext}`;
-      const buffer = Buffer.from(await file.arrayBuffer());
+      const key = `users/${session.user.id}/${assetType}-${Date.now()}.${ext}`
+      const buffer = Buffer.from(await file.arrayBuffer())
 
       try {
         const { publicUrl } = await uploadPublicAsset({
           key,
           body: buffer,
           contentType: file.type,
-        });
+        })
 
         return {
           success: true,
           url: publicUrl,
           key,
           assetType,
-        };
+        }
       } catch (err: any) {
-        console.error("[Assets] Upload failed:", err);
+        console.error("[Assets] Upload failed:", err)
         return new Response(
           JSON.stringify({
             error: "Internal Server Error",
@@ -144,7 +148,7 @@ export default defineRoute({
             status: 500,
             headers: { "content-type": "application/json" },
           }
-        );
+        )
       }
     },
   },
@@ -168,24 +172,27 @@ export default defineRoute({
             status: 401,
             headers: { "content-type": "application/json" },
           }
-        );
+        )
       }
 
-      const targetKey = extractS3Key(body.key) || body.key;
+      const targetKey = extractS3Key(body.key) || body.key
 
       // Ensure key belongs to current user
       if (!targetKey.startsWith(`users/${session.user.id}/`)) {
         return new Response(
-          JSON.stringify({ error: "Forbidden", message: "Cannot delete another user's asset" }),
+          JSON.stringify({
+            error: "Forbidden",
+            message: "Cannot delete another user's asset",
+          }),
           {
             status: 403,
             headers: { "content-type": "application/json" },
           }
-        );
+        )
       }
 
-      const success = await deletePublicAsset(targetKey);
-      return { success };
+      const success = await deletePublicAsset(targetKey)
+      return { success }
     },
   },
-});
+})

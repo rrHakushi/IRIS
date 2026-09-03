@@ -4,10 +4,10 @@ import {
   Forbidden,
   NotFound,
   ErrorResponseSchema,
-} from "@/utils/errors";
-import { defineRoute, t } from "@/router";
-import { IRISFlags } from "@IRIS/permissions";
-import { queueMusicFetch } from "@/services";
+} from "@/utils/errors"
+import { defineRoute, t } from "@/router"
+import { IRISFlags } from "@IRIS/permissions"
+import { queueMusicFetch } from "@/services"
 
 export default defineRoute({
   schema: {
@@ -19,7 +19,9 @@ export default defineRoute({
         force: t.Optional(t.Boolean({ default: false })),
         maxDepth: t.Optional(t.Number({ minimum: 0, maximum: 99, default: 0 })),
         priority: t.Optional(t.Number({ minimum: 0, maximum: 10, default: 1 })),
-        maxRetries: t.Optional(t.Number({ minimum: 0, maximum: 99, default: 3 })),
+        maxRetries: t.Optional(
+          t.Number({ minimum: 0, maximum: 99, default: 3 })
+        ),
       })
     ),
     response: {
@@ -43,16 +45,16 @@ export default defineRoute({
 
   async POST({ params, body, session, prisma }) {
     if (!session.hasPermission(IRISFlags.ADMINISTRATOR)) {
-      return new Forbidden("Forbidden: Admin required");
+      return new Forbidden("Forbidden: Admin required")
     }
 
-    const music = await prisma.music.findUnique({ where: { id: params.id } });
+    const music = await prisma.music.findUnique({ where: { id: params.id } })
     if (!music) {
-      return new NotFound("Music track not found");
+      return new NotFound("Music track not found")
     }
 
     if (!music.musicBrainzId) {
-      return new BadRequest("Music track is missing musicBrainzId");
+      return new BadRequest("Music track is missing musicBrainzId")
     }
 
     const queued = await queueMusicFetch(music.musicBrainzId, {
@@ -60,29 +62,26 @@ export default defineRoute({
       maxDepth: body?.maxDepth,
       priority: body?.priority,
       maxRetries: body?.maxRetries,
-    });
+    })
 
     if (queued?.metadata?.skipped) {
       return new Conflict(
         `${queued.metadata.reason || "Music track is already fresh in database"}`
-      );
+      )
     }
 
-    if (
-      queued.status === "PROCESSING" ||
-      queued.status === "PENDING"
-    ) {
+    if (queued.status === "PROCESSING" || queued.status === "PENDING") {
       return {
         success: true,
         message: "Music track queued for refresh",
         timestamp: new Date().toISOString(),
-      };
+      }
     }
 
     return {
       success: false,
       message: "Failed to queue music track for refresh",
       timestamp: new Date().toISOString(),
-    };
+    }
   },
-});
+})

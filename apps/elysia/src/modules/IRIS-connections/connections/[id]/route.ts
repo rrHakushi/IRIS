@@ -1,4 +1,4 @@
-import { defineRoute, t } from "../../../../router";
+import { defineRoute, t } from "../../../../router"
 
 export default defineRoute({
   DELETE: {
@@ -16,9 +16,12 @@ export default defineRoute({
     async handler({ params, session, prisma }) {
       if (!session.isAuthenticated || !session.user) {
         return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "Authentication required",
+          }),
           { status: 401, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
       const connection = await prisma.connection.findFirst({
@@ -26,23 +29,26 @@ export default defineRoute({
           id: params.id,
           userId: session.user.id,
         },
-      });
+      })
 
       if (!connection) {
         return new Response(
-          JSON.stringify({ error: "Not Found", message: "Connection not found" }),
+          JSON.stringify({
+            error: "Not Found",
+            message: "Connection not found",
+          }),
           { status: 404, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
       await prisma.connection.delete({
         where: { id: params.id },
-      });
+      })
 
       return {
         success: true,
         message: `Connection for ${connection.provider} removed successfully`,
-      };
+      }
     },
   },
 
@@ -69,9 +75,12 @@ export default defineRoute({
     async handler({ params, body, session, prisma }) {
       if (!session.isAuthenticated || !session.user) {
         return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "Authentication required",
+          }),
           { status: 401, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
       const connection = await prisma.connection.findFirst({
@@ -79,22 +88,29 @@ export default defineRoute({
           id: params.id,
           userId: session.user.id,
         },
-      });
+      })
 
       if (!connection) {
         return new Response(
-          JSON.stringify({ error: "Not Found", message: "Connection not found" }),
+          JSON.stringify({
+            error: "Not Found",
+            message: "Connection not found",
+          }),
           { status: 404, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
       const updated = await prisma.connection.update({
         where: { id: params.id },
         data: {
-          settings: body.settings !== undefined ? body.settings : connection.settings,
-          displayName: body.displayName !== undefined ? body.displayName : connection.displayName,
+          settings:
+            body.settings !== undefined ? body.settings : connection.settings,
+          displayName:
+            body.displayName !== undefined
+              ? body.displayName
+              : connection.displayName,
         },
-      });
+      })
 
       return {
         success: true,
@@ -103,7 +119,7 @@ export default defineRoute({
           displayName: updated.displayName,
           settings: updated.settings,
         },
-      };
+      }
     },
   },
-});
+})

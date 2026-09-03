@@ -1,6 +1,9 @@
-import { defineRoute, t } from "../../../../../router";
-import { hashPassword, generateUserKeypair } from "../../../../../utils/auth-crypto";
-import { notifyPasswordChanged } from "../../../../../utils/client-info";
+import { defineRoute, t } from "../../../../../router"
+import {
+  hashPassword,
+  generateUserKeypair,
+} from "../../../../../utils/auth-crypto"
+import { notifyPasswordChanged } from "../../../../../utils/client-info"
 
 export default defineRoute({
   schema: {
@@ -18,7 +21,7 @@ export default defineRoute({
 
   async POST({ body, prisma, cache, request }) {
     // 1. Validate reset token from cache
-    const userId = await cache.get<string>(`auth:pwd-reset:${body.token}`);
+    const userId = await cache.get<string>(`auth:pwd-reset:${body.token}`)
 
     if (!userId) {
       return new Response(
@@ -27,15 +30,15 @@ export default defineRoute({
           message: "Invalid or expired password reset token.",
         }),
         { status: 400, headers: { "content-type": "application/json" } }
-      );
+      )
     }
 
     // 2. Hash new password and generate fresh Post-Quantum keypair
-    const newHash = await hashPassword(body.newPassword);
+    const newHash = await hashPassword(body.newPassword)
     const { publicKey, encryptedPrivateKey } = await generateUserKeypair(
       body.newPassword
-    );
-    const now = new Date();
+    )
+    const now = new Date()
 
     await prisma.user.update({
       where: { id: userId },
@@ -45,16 +48,16 @@ export default defineRoute({
         encryptedPrivateKey,
         passwordChangedAt: now,
       },
-    });
+    })
 
     // 3. Invalidate token immediately
-    await cache.del(`auth:pwd-reset:${body.token}`);
+    await cache.del(`auth:pwd-reset:${body.token}`)
 
-    notifyPasswordChanged(userId, request);
+    notifyPasswordChanged(userId, request)
 
     return {
       success: true,
       message: "Password reset successfully",
-    };
+    }
   },
-});
+})

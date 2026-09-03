@@ -1,20 +1,20 @@
-import { sendNotification } from "../services/notification.service";
+import { sendNotification } from "../services/notification.service"
 
 export interface ClientDeviceInfo {
-  ip: string;
-  userAgent: string;
-  browser: string;
-  os: string;
-  device: string;
-  location: string | null;
-  summary: string;
+  ip: string
+  userAgent: string
+  browser: string
+  os: string
+  device: string
+  location: string | null
+  summary: string
 }
 
 /**
  * Extracts and parses client network, device, and location metadata from HTTP request headers.
  */
 export function extractClientInfo(request: Request): ClientDeviceInfo {
-  const headers = request.headers;
+  const headers = request.headers
 
   // 1. Resolve client IP
   const rawIp =
@@ -22,48 +22,54 @@ export function extractClientInfo(request: Request): ClientDeviceInfo {
     headers.get("x-real-ip") ||
     headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     headers.get("x-client-ip") ||
-    "127.0.0.1";
+    "127.0.0.1"
 
-  const ip = rawIp.replace(/^::ffff:/, "");
+  const ip = rawIp.replace(/^::ffff:/, "")
 
   // 2. Parse User-Agent
-  const ua = headers.get("user-agent") || "Unknown Device";
+  const ua = headers.get("user-agent") || "Unknown Device"
 
-  let browser = "Web Browser";
-  if (ua.includes("Firefox/")) browser = "Firefox";
-  else if (ua.includes("Edg/")) browser = "Microsoft Edge";
-  else if (ua.includes("Chrome/") && !ua.includes("Edg/")) browser = "Google Chrome";
-  else if (ua.includes("Safari/") && !ua.includes("Chrome/")) browser = "Safari";
-  else if (ua.includes("Opera") || ua.includes("OPR/")) browser = "Opera";
+  let browser = "Web Browser"
+  if (ua.includes("Firefox/")) browser = "Firefox"
+  else if (ua.includes("Edg/")) browser = "Microsoft Edge"
+  else if (ua.includes("Chrome/") && !ua.includes("Edg/"))
+    browser = "Google Chrome"
+  else if (ua.includes("Safari/") && !ua.includes("Chrome/")) browser = "Safari"
+  else if (ua.includes("Opera") || ua.includes("OPR/")) browser = "Opera"
 
-  let os = "Unknown OS";
-  if (ua.includes("Windows NT 10.0") || ua.includes("Windows 11") || ua.includes("Windows NT 11.0")) os = "Windows";
-  else if (ua.includes("Windows NT")) os = "Windows";
-  else if (ua.includes("Macintosh") || ua.includes("Mac OS X")) os = "macOS";
-  else if (ua.includes("iPhone")) os = "iOS";
-  else if (ua.includes("iPad")) os = "iPadOS";
-  else if (ua.includes("Android")) os = "Android";
-  else if (ua.includes("Linux")) os = "Linux";
+  let os = "Unknown OS"
+  if (
+    ua.includes("Windows NT 10.0") ||
+    ua.includes("Windows 11") ||
+    ua.includes("Windows NT 11.0")
+  )
+    os = "Windows"
+  else if (ua.includes("Windows NT")) os = "Windows"
+  else if (ua.includes("Macintosh") || ua.includes("Mac OS X")) os = "macOS"
+  else if (ua.includes("iPhone")) os = "iOS"
+  else if (ua.includes("iPad")) os = "iPadOS"
+  else if (ua.includes("Android")) os = "Android"
+  else if (ua.includes("Linux")) os = "Linux"
 
-  const device = `${browser} on ${os}`;
+  const device = `${browser} on ${os}`
 
   // 3. Resolve location from cloud / proxy headers
-  const city = headers.get("cf-ipcity") || headers.get("x-vercel-ip-city");
+  const city = headers.get("cf-ipcity") || headers.get("x-vercel-ip-city")
   const country =
     headers.get("cf-ipcountry") ||
     headers.get("x-vercel-ip-country") ||
-    headers.get("x-geo-country");
+    headers.get("x-geo-country")
 
-  let location: string | null = null;
+  let location: string | null = null
   if (city && country) {
-    location = `${city}, ${country}`;
+    location = `${city}, ${country}`
   } else if (country) {
-    location = country;
+    location = country
   }
 
   // 4. Formatted summary string
-  const locPart = location ? `, ${location}` : "";
-  const summary = `${device} (IP: ${ip}${locPart})`;
+  const locPart = location ? `, ${location}` : ""
+  const summary = `${device} (IP: ${ip}${locPart})`
 
   return {
     ip,
@@ -73,7 +79,7 @@ export function extractClientInfo(request: Request): ClientDeviceInfo {
     device,
     location,
     summary,
-  };
+  }
 }
 
 /**
@@ -81,7 +87,7 @@ export function extractClientInfo(request: Request): ClientDeviceInfo {
  */
 export async function notifyUserLogin(userId: string, request: Request) {
   try {
-    const client = extractClientInfo(request);
+    const client = extractClientInfo(request)
     await sendNotification({
       userId,
       app: "IRIS Account",
@@ -99,10 +105,13 @@ export async function notifyUserLogin(userId: string, request: Request) {
           timestamp: new Date().toISOString(),
         },
       },
-    });
+    })
   } catch (err) {
     // Non-blocking for login if user has no keys initialized yet
-    console.warn(`[notifyUserLogin] Failed to send login notification to ${userId}:`, err);
+    console.warn(
+      `[notifyUserLogin] Failed to send login notification to ${userId}:`,
+      err
+    )
   }
 }
 
@@ -111,8 +120,8 @@ export async function notifyUserLogin(userId: string, request: Request) {
  */
 export async function notifyPasswordChanged(userId: string, request?: Request) {
   try {
-    const client = request ? extractClientInfo(request) : null;
-    const fromPart = client ? ` from ${client.summary}` : "";
+    const client = request ? extractClientInfo(request) : null
+    const fromPart = client ? ` from ${client.summary}` : ""
 
     await sendNotification({
       userId,
@@ -123,11 +132,20 @@ export async function notifyPasswordChanged(userId: string, request?: Request) {
       content: {
         title: "Account Password Changed",
         body: `Your account password was successfully updated${fromPart}. If you did not make this change, secure your account immediately.`,
-        metadata: client ? { ip: client.ip, device: client.device, timestamp: new Date().toISOString() } : undefined,
+        metadata: client
+          ? {
+              ip: client.ip,
+              device: client.device,
+              timestamp: new Date().toISOString(),
+            }
+          : undefined,
       },
-    });
+    })
   } catch (err) {
-    console.warn(`[notifyPasswordChanged] Failed to send notification to ${userId}:`, err);
+    console.warn(
+      `[notifyPasswordChanged] Failed to send notification to ${userId}:`,
+      err
+    )
   }
 }
 
@@ -140,8 +158,8 @@ export async function notifyEncryptionPasswordUpdated(
   request?: Request
 ) {
   try {
-    const client = request ? extractClientInfo(request) : null;
-    const fromPart = client ? ` from ${client.summary}` : "";
+    const client = request ? extractClientInfo(request) : null
+    const fromPart = client ? ` from ${client.summary}` : ""
 
     await sendNotification({
       userId,
@@ -154,11 +172,20 @@ export async function notifyEncryptionPasswordUpdated(
         body: isNew
           ? `A dedicated encryption password was added to your account${fromPart}.`
           : `Your encryption vault password was successfully updated${fromPart}.`,
-        metadata: client ? { ip: client.ip, device: client.device, timestamp: new Date().toISOString() } : undefined,
+        metadata: client
+          ? {
+              ip: client.ip,
+              device: client.device,
+              timestamp: new Date().toISOString(),
+            }
+          : undefined,
       },
-    });
+    })
   } catch (err) {
-    console.warn(`[notifyEncryptionPasswordUpdated] Failed to send notification to ${userId}:`, err);
+    console.warn(
+      `[notifyEncryptionPasswordUpdated] Failed to send notification to ${userId}:`,
+      err
+    )
   }
 }
 
@@ -191,8 +218,11 @@ export async function sendQuickConnectInputNotification(
           },
         ],
       },
-    });
+    })
   } catch (err) {
-    console.warn(`[sendQuickConnectInputNotification] Failed to send to ${userId}:`, err);
+    console.warn(
+      `[sendQuickConnectInputNotification] Failed to send to ${userId}:`,
+      err
+    )
   }
 }

@@ -8,7 +8,9 @@ import { c } from "./colors"
  * @param date - Optional Date object or timestamp (defaults to new Date())
  * @returns Formatted and colorized timestamp string e.g. `[10:36:09]`
  */
-export function formatTimestamp(date: Date | string | number = new Date()): string {
+export function formatTimestamp(
+  date: Date | string | number = new Date()
+): string {
   const d = date instanceof Date ? date : new Date(date)
   const pad = (n: number) => n.toString().padStart(2, "0")
   const h = pad(d.getHours())
@@ -215,16 +217,16 @@ export async function executeWithRequestLogs(
   const store: RequestLogStore = { logs: [] }
 
   if (req) {
-    ; (req as unknown as { _requestLogs?: RequestLogItem[] })._requestLogs =
+    ;(req as unknown as { _requestLogs?: RequestLogItem[] })._requestLogs =
       store.logs
   }
 
   const requestLogger = createRequestLogger(store)
-  ; (ctx as { log?: RequestLogger; logger?: RequestLogger }).log = requestLogger
-  ; (ctx as { log?: RequestLogger; logger?: RequestLogger }).logger = requestLogger
+  ;(ctx as { log?: RequestLogger; logger?: RequestLogger }).log = requestLogger
+  ;(ctx as { log?: RequestLogger; logger?: RequestLogger }).logger =
+    requestLogger
 
   return await requestLogStorage.run(store, async () => {
     return await handler(ctx)
   })
 }
-

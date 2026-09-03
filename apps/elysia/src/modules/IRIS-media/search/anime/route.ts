@@ -1,11 +1,11 @@
-import { defineRoute, t } from "@/router";
-import { queueAnimeSearchFetch } from "@/services/media-queue";
-import { NotFound } from "elysia";
+import { defineRoute, t } from "@/router"
+import { queueAnimeSearchFetch } from "@/services/media-queue"
+import { NotFound } from "elysia"
 
-import { AnimeSearchResponseSchema, type AnimeSearchResponse } from "./types";
-import { NotFoundResponseSchema } from "../../../../../types";
+import { AnimeSearchResponseSchema, type AnimeSearchResponse } from "./types"
+import { NotFoundResponseSchema } from "../../../../../types"
 
-const SEARCH_ANIME_TTL = 60 * 60; // 1 hour
+const SEARCH_ANIME_TTL = 60 * 60 // 1 hour
 
 export default defineRoute({
   schema: {
@@ -21,7 +21,8 @@ export default defineRoute({
     },
     detail: {
       summary: "Search anime",
-      description: "Searches anime by title or synonyms and returns matching anime preview records.",
+      description:
+        "Searches anime by title or synonyms and returns matching anime preview records.",
       tags: ["Media - Anime"],
     },
   },
@@ -30,29 +31,28 @@ export default defineRoute({
     search: {
       anime: (q: string) => `search:anime:${q}`,
     },
-
   },
 
   async GET({ query, prisma, cache, cacheKeys, logger }) {
-    const { q } = query;
-    const cleanQuery = decodeURIComponent(q).replace(/\+/g, ' ').trim();
+    const { q } = query
+    const cleanQuery = decodeURIComponent(q).replace(/\+/g, " ").trim()
     const cacheKey = cacheKeys.search.anime(cleanQuery)
 
     if (!cleanQuery || cleanQuery.length < 3) {
-      return new NotFound("Query must be at least 3 characters long");
+      return new NotFound("Query must be at least 3 characters long")
     }
 
-    const cached = await cache.get<AnimeSearchResponse>(cacheKey);
+    const cached = await cache.get<AnimeSearchResponse>(cacheKey)
     if (cached) {
-      return cached;
+      return cached
     }
 
     const data = await prisma.anime.findMany({
       where: {
         OR: [
-          { titlePrimary: { contains: cleanQuery, mode: 'insensitive' } },
-          { titleSecondary: { contains: cleanQuery, mode: 'insensitive' } },
-          { titleNative: { contains: cleanQuery, mode: 'insensitive' } },
+          { titlePrimary: { contains: cleanQuery, mode: "insensitive" } },
+          { titleSecondary: { contains: cleanQuery, mode: "insensitive" } },
+          { titleNative: { contains: cleanQuery, mode: "insensitive" } },
           { synonyms: { has: cleanQuery } },
         ],
       },
@@ -65,26 +65,28 @@ export default defineRoute({
         isAdult: true,
         format: true,
         seasonYear: true,
-        seasonSeason: true
+        seasonSeason: true,
       },
       orderBy: {
-        titlePrimary: 'asc',
+        titlePrimary: "asc",
       },
-    });
+    })
 
     if (data.length === 0) {
-      logger.warn(`No data found for query: ${cleanQuery}, triggering refresh`);
-      const results = await queueAnimeSearchFetch(cleanQuery);
-      await cache.set(cacheKey, results, SEARCH_ANIME_TTL);
-      return results;
+      logger.warn(`No data found for query: ${cleanQuery}, triggering refresh`)
+      const results = await queueAnimeSearchFetch(cleanQuery)
+      await cache.set(cacheKey, results, SEARCH_ANIME_TTL)
+      return results
     }
 
-    await cache.set(cacheKey, data, SEARCH_ANIME_TTL);
+    await cache.set(cacheKey, data, SEARCH_ANIME_TTL)
     void queueAnimeSearchFetch(cleanQuery).catch((err) => {
-      logger.error(`[SearchAnimeRoute] Failed to queue background search for "${cleanQuery}":`, err);
-    });
+      logger.error(
+        `[SearchAnimeRoute] Failed to queue background search for "${cleanQuery}":`,
+        err
+      )
+    })
 
-    return data;
+    return data
   },
-});
-
+})

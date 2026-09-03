@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import React, { useState } from "react";
-import { useTranslations } from "next-intl";
-import { Button } from "@workspace/ui/components/button";
-import { Badge } from "@workspace/ui/components/badge";
+import React, { useState } from "react"
+import { useTranslations } from "next-intl"
+import { Button } from "@workspace/ui/components/button"
+import { Badge } from "@workspace/ui/components/badge"
 import {
   IconCopy,
   IconCheck,
@@ -12,17 +12,17 @@ import {
   IconTerminal2,
   IconBrandJavascript,
   IconBrandPython,
-} from "@tabler/icons-react";
-import { toast } from "sonner";
-import { cn } from "@workspace/ui/lib/utils";
+} from "@tabler/icons-react"
+import { toast } from "sonner"
+import { cn } from "@workspace/ui/lib/utils"
 
-type SnippetTab = "curl" | "fetch" | "python";
+type SnippetTab = "curl" | "fetch" | "python"
 
 export function ApiKeyGuideCard(): React.JSX.Element {
-  const t = useTranslations("navigation.settings.account.apiKeys");
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [activeTab, setActiveTab] = useState<SnippetTab>("curl");
-  const [copied, setCopied] = useState(false);
+  const t = useTranslations("navigation.settings.account.apiKeys")
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [activeTab, setActiveTab] = useState<SnippetTab>("curl")
+  const [copied, setCopied] = useState(false)
 
   const snippets: Record<SnippetTab, string> = {
     curl: `curl -X GET "http://localhost:4000/users/me" \\
@@ -47,47 +47,50 @@ headers = {
 
 response = requests.get(url, headers=headers)
 print(response.json())`,
-  };
+  }
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(snippets[activeTab]);
-      setCopied(true);
-      toast.success(t("snippetCopiedSuccess"));
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(snippets[activeTab])
+      setCopied(true)
+      toast.success(t("snippetCopiedSuccess"))
+      setTimeout(() => setCopied(false), 2000)
     } catch {
-      toast.error(t("failedCopySnippet"));
+      toast.error(t("failedCopySnippet"))
     }
-  };
+  }
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-muted/15 overflow-hidden transition-all shadow-2xs">
+    <div className="overflow-hidden rounded-2xl border border-border/60 bg-muted/15 shadow-2xs transition-all">
       {/* Accordion Header */}
       <button
         type="button"
         onClick={() => setIsExpanded((prev) => !prev)}
-        className="w-full flex items-center justify-between p-4 sm:p-4.5 hover:bg-muted/25 transition-colors cursor-pointer text-start"
+        className="flex w-full cursor-pointer items-center justify-between p-4 text-start transition-colors hover:bg-muted/25 sm:p-4.5"
       >
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="size-8 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
             <IconTerminal2 className="size-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h4 className="font-semibold text-sm text-foreground">
+              <h4 className="text-sm font-semibold text-foreground">
                 {t("guideTitle")}
               </h4>
-              <Badge variant="outline" className="text-[10px] h-4.5 px-1.5 text-muted-foreground border-border">
+              <Badge
+                variant="outline"
+                className="h-4.5 border-border px-1.5 text-[10px] text-muted-foreground"
+              >
                 {t("developerBadge")}
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               {t("guideDescription", { header: "x-api" })}
             </p>
           </div>
         </div>
 
-        <div className="text-muted-foreground pl-2">
+        <div className="pl-2 text-muted-foreground">
           {isExpanded ? (
             <IconChevronUp className="size-4.5" />
           ) : (
@@ -98,17 +101,17 @@ print(response.json())`,
 
       {/* Accordion Body */}
       {isExpanded && (
-        <div className="p-4 pt-1 sm:p-5 sm:pt-1 space-y-3.5 border-t border-border/40 animate-in fade-in-50 duration-150">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="animate-in space-y-3.5 border-t border-border/40 p-4 pt-1 duration-150 fade-in-50 sm:p-5 sm:pt-1">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             {/* Language Selector */}
-            <div className="flex items-center gap-1 bg-background/60 p-1 rounded-xl border border-border/50">
+            <div className="flex items-center gap-1 rounded-xl border border-border/50 bg-background/60 p-1">
               <button
                 type="button"
                 onClick={() => setActiveTab("curl")}
                 className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer",
+                  "flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors",
                   activeTab === "curl"
-                    ? "bg-muted text-foreground shadow-2xs font-semibold"
+                    ? "bg-muted font-semibold text-foreground shadow-2xs"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -120,9 +123,9 @@ print(response.json())`,
                 type="button"
                 onClick={() => setActiveTab("fetch")}
                 className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer",
+                  "flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors",
                   activeTab === "fetch"
-                    ? "bg-muted text-foreground shadow-2xs font-semibold"
+                    ? "bg-muted font-semibold text-foreground shadow-2xs"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -134,9 +137,9 @@ print(response.json())`,
                 type="button"
                 onClick={() => setActiveTab("python")}
                 className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer",
+                  "flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors",
                   activeTab === "python"
-                    ? "bg-muted text-foreground shadow-2xs font-semibold"
+                    ? "bg-muted font-semibold text-foreground shadow-2xs"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -151,7 +154,7 @@ print(response.json())`,
               variant="outline"
               size="sm"
               onClick={handleCopy}
-              className="h-7 text-xs rounded-lg px-2.5 gap-1.5"
+              className="h-7 gap-1.5 rounded-lg px-2.5 text-xs"
             >
               {copied ? (
                 <>
@@ -168,7 +171,7 @@ print(response.json())`,
           </div>
 
           {/* Code display block */}
-          <div className="relative rounded-xl border border-border/70 bg-background/90 p-3.5 font-mono text-xs text-foreground overflow-x-auto">
+          <div className="relative overflow-x-auto rounded-xl border border-border/70 bg-background/90 p-3.5 font-mono text-xs text-foreground">
             <pre className="leading-relaxed whitespace-pre-wrap select-all">
               {snippets[activeTab]}
             </pre>
@@ -183,5 +186,5 @@ print(response.json())`,
         </div>
       )}
     </div>
-  );
+  )
 }

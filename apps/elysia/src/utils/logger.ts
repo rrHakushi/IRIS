@@ -5,14 +5,7 @@ import { requestLogStorage } from "./request-logger.js"
 export type LogLevel = "debug" | "info" | "warn" | "error" | "silent"
 
 export type TagColor =
-  | "blue"
-  | "yellow"
-  | "magenta"
-  | "green"
-  | "cyan"
-  | "red"
-  | "white"
-  | "gray"
+  "blue" | "yellow" | "magenta" | "green" | "cyan" | "red" | "white" | "gray"
 
 const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
   debug: 0,
@@ -45,8 +38,12 @@ function resolveTagColor(tag: string, overrideColor?: TagColor): TagColor {
 }
 
 function colorizeTag(tag: string, color: TagColor): string {
-  const colorFn = (c as Record<string, ((v: unknown) => string) | undefined>)[color]
-  const renderedColor = colorFn ? colorFn(c.bold(`[${tag}]`)) : c.bold(`[${tag}]`)
+  const colorFn = (c as Record<string, ((v: unknown) => string) | undefined>)[
+    color
+  ]
+  const renderedColor = colorFn
+    ? colorFn(c.bold(`[${tag}]`))
+    : c.bold(`[${tag}]`)
   return renderedColor
 }
 
@@ -71,14 +68,16 @@ function emitLog(
 
   const store = requestLogStorage.getStore()
   if (store) {
-    const formatted = rawArgs.length > 0 ? util.format(message, ...rawArgs) : message
+    const formatted =
+      rawArgs.length > 0 ? util.format(message, ...rawArgs) : message
     store.logs.push({
       type: level === "debug" ? "info" : level,
       message: formatted,
       timestamp: new Date(),
     })
   } else {
-    const formatted = rawArgs.length > 0 ? util.format(message, ...rawArgs) : message
+    const formatted =
+      rawArgs.length > 0 ? util.format(message, ...rawArgs) : message
     if (level === "error") {
       console.error(formatted)
     } else if (level === "warn") {
@@ -120,7 +119,10 @@ export interface ScopedLogger {
  * @param options - Optional color or configuration options
  * @returns Strongly-typed callable logger instance
  */
-export function createLogger(tag: string, options?: ScopedLoggerOptions): ScopedLogger {
+export function createLogger(
+  tag: string,
+  options?: ScopedLoggerOptions
+): ScopedLogger {
   const color = resolveTagColor(tag, options?.color)
   const fullTag = options?.parentTag ? `${options.parentTag}][${tag}` : tag
   const tagPrefix = colorizeTag(fullTag, color)
@@ -138,13 +140,22 @@ export function createLogger(tag: string, options?: ScopedLoggerOptions): Scoped
       emitLog("info", formatMessage(args))
     },
     warn: (...args: unknown[]) => {
-      emitLog("warn", `${tagPrefix} ${c.yellow(c.bold("[WARN]"))} ${util.format(...args)}`)
+      emitLog(
+        "warn",
+        `${tagPrefix} ${c.yellow(c.bold("[WARN]"))} ${util.format(...args)}`
+      )
     },
     error: (...args: unknown[]) => {
-      emitLog("error", `${tagPrefix} ${c.red(c.bold("[ERROR]"))} ${util.format(...args)}`)
+      emitLog(
+        "error",
+        `${tagPrefix} ${c.red(c.bold("[ERROR]"))} ${util.format(...args)}`
+      )
     },
     debug: (...args: unknown[]) => {
-      emitLog("debug", `${tagPrefix} ${c.gray("[DEBUG]")} ${util.format(...args)}`)
+      emitLog(
+        "debug",
+        `${tagPrefix} ${c.gray("[DEBUG]")} ${util.format(...args)}`
+      )
     },
     success: (...args: unknown[]) => {
       emitLog("info", `${tagPrefix} ${c.green("✓")} ${util.format(...args)}`)
@@ -212,14 +223,22 @@ function createServiceLogger(): ServiceLogger {
           `${c.blue(c.bold("[Services]"))}   ${c.yellow("⚠️ Missing required env:")} ${c.red(envVar)}${desc}`
         )
       },
-      providerMissingEnv: (provider: string, envVar: string, reason?: string) => {
+      providerMissingEnv: (
+        provider: string,
+        envVar: string,
+        reason?: string
+      ) => {
         const desc = reason ? ` ${c.dim(`(${reason})`)}` : ""
         emitLog(
           "warn",
           `${c.blue(c.bold("[Services]"))}   ${c.yellow(`⚠️ [${provider}] Missing required env:`)} ${c.red(envVar)}${desc}`
         )
       },
-      providerOptionalEnv: (provider: string, envVar: string, fallback?: string) => {
+      providerOptionalEnv: (
+        provider: string,
+        envVar: string,
+        fallback?: string
+      ) => {
         const desc = fallback ? ` ${c.dim(`(${fallback})`)}` : ""
         emitLog(
           "info",

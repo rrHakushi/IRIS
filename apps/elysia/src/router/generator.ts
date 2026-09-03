@@ -98,10 +98,7 @@ export function findRouteFiles(dir: string, baseDir: string = dir): string[] {
     const fullPath = path.join(dir, name)
     if (entry.isDirectory()) {
       results.push(...findRouteFiles(fullPath, baseDir))
-    } else if (
-      entry.isFile() &&
-      (name === "route.ts" || name === "route.js")
-    ) {
+    } else if (entry.isFile() && (name === "route.ts" || name === "route.js")) {
       results.push(fullPath)
     }
   }
@@ -143,73 +140,73 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
     options.cacheKeysOutputFile ||
     path.resolve(import.meta.dirname, "cache-keys.generated.ts")
 
-type NestedTypeMap = { [key: string]: string | NestedTypeMap }
+  type NestedTypeMap = { [key: string]: string | NestedTypeMap }
 
-function collectCacheKeysRecursively(
-  obj: Record<string, any>,
-  prefix: string,
-  relativePath: string,
-  targetTypeMap: NestedTypeMap,
-  cacheKeyRegistry: Map<string, string>,
-  sourceCode: string
-) {
-  for (const [key, val] of Object.entries(obj)) {
-    const fullPath = prefix ? `${prefix}.${key}` : key
-    if (typeof val === "function") {
-      const existing = cacheKeyRegistry.get(fullPath)
-      if (existing) {
-        throw new Error(
-          `[Eden Generator] Duplicate cache key "${fullPath}" found in "${relativePath}". It was already defined in "${existing}". Cache keys must be unique across all routes.`
-        )
-      }
-      cacheKeyRegistry.set(fullPath, relativePath)
-
-      // Extract function parameter signature from source code if available
-      let paramSig = "...args: any[]"
-      if (sourceCode) {
-        const keyRegex = new RegExp(
-          `(?:['"]?${key}['"]?\\s*:\\s*(?:async\\s*)?\\(([^)]*)\\)|(?:async\\s*)?${key}\\s*\\(([^)]*)\\))`,
-          "m"
-        )
-        const m = sourceCode.match(keyRegex)
-        if (m) {
-          const rawParams = (m[1] || m[2] || "").trim()
-          paramSig = rawParams ? rawParams : ""
+  function collectCacheKeysRecursively(
+    obj: Record<string, any>,
+    prefix: string,
+    relativePath: string,
+    targetTypeMap: NestedTypeMap,
+    cacheKeyRegistry: Map<string, string>,
+    sourceCode: string
+  ) {
+    for (const [key, val] of Object.entries(obj)) {
+      const fullPath = prefix ? `${prefix}.${key}` : key
+      if (typeof val === "function") {
+        const existing = cacheKeyRegistry.get(fullPath)
+        if (existing) {
+          throw new Error(
+            `[Eden Generator] Duplicate cache key "${fullPath}" found in "${relativePath}". It was already defined in "${existing}". Cache keys must be unique across all routes.`
+          )
         }
-      }
-      targetTypeMap[key] = `(${paramSig}) => string`
-    } else if (val && typeof val === "object") {
-      if (!targetTypeMap[key] || typeof targetTypeMap[key] !== "object") {
-        targetTypeMap[key] = {}
-      }
-      collectCacheKeysRecursively(
-        val,
-        fullPath,
-        relativePath,
-        targetTypeMap[key] as NestedTypeMap,
-        cacheKeyRegistry,
-        sourceCode
-      )
-    }
-  }
-}
+        cacheKeyRegistry.set(fullPath, relativePath)
 
-function renderTypeMap(map: NestedTypeMap, indentLevel = 1): string {
-  const indent = "  ".repeat(indentLevel)
-  let out = ""
-  const keys = Object.keys(map).sort()
-  for (const k of keys) {
-    const val = map[k]
-    if (typeof val === "string") {
-      out += `${indent}${k}: ${val};\n`
-    } else if (val && typeof val === "object") {
-      out += `${indent}${k}: {\n`
-      out += renderTypeMap(val, indentLevel + 1)
-      out += `${indent}};\n`
+        // Extract function parameter signature from source code if available
+        let paramSig = "...args: any[]"
+        if (sourceCode) {
+          const keyRegex = new RegExp(
+            `(?:['"]?${key}['"]?\\s*:\\s*(?:async\\s*)?\\(([^)]*)\\)|(?:async\\s*)?${key}\\s*\\(([^)]*)\\))`,
+            "m"
+          )
+          const m = sourceCode.match(keyRegex)
+          if (m) {
+            const rawParams = (m[1] || m[2] || "").trim()
+            paramSig = rawParams ? rawParams : ""
+          }
+        }
+        targetTypeMap[key] = `(${paramSig}) => string`
+      } else if (val && typeof val === "object") {
+        if (!targetTypeMap[key] || typeof targetTypeMap[key] !== "object") {
+          targetTypeMap[key] = {}
+        }
+        collectCacheKeysRecursively(
+          val,
+          fullPath,
+          relativePath,
+          targetTypeMap[key] as NestedTypeMap,
+          cacheKeyRegistry,
+          sourceCode
+        )
+      }
     }
   }
-  return out
-}
+
+  function renderTypeMap(map: NestedTypeMap, indentLevel = 1): string {
+    const indent = "  ".repeat(indentLevel)
+    let out = ""
+    const keys = Object.keys(map).sort()
+    for (const k of keys) {
+      const val = map[k]
+      if (typeof val === "string") {
+        out += `${indent}${k}: ${val};\n`
+      } else if (val && typeof val === "object") {
+        out += `${indent}${k}: {\n`
+        out += renderTypeMap(val, indentLevel + 1)
+        out += `${indent}};\n`
+      }
+    }
+    return out
+  }
 
   const routeFiles = findRouteFiles(modulesDir)
   routeFiles.sort()

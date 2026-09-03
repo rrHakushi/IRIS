@@ -1,17 +1,17 @@
-"use client";
+"use client"
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react"
 import {
   Dialog,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@workspace/ui/components/dialog";
-import { Button } from "@workspace/ui/components/button";
-import { Input } from "@workspace/ui/components/input";
-import { Label } from "@workspace/ui/components/label";
-import { Spinner } from "@workspace/ui/components/spinner";
+} from "@workspace/ui/components/dialog"
+import { Button } from "@workspace/ui/components/button"
+import { Input } from "@workspace/ui/components/input"
+import { Label } from "@workspace/ui/components/label"
+import { Spinner } from "@workspace/ui/components/spinner"
 import {
   IconCheck,
   IconAlertCircle,
@@ -19,15 +19,15 @@ import {
   IconKey,
   IconServer,
   IconUser,
-} from "@tabler/icons-react";
-import type { ProviderMetadata } from "./types";
-import { toast } from "sonner";
+} from "@tabler/icons-react"
+import type { ProviderMetadata } from "./types"
+import { toast } from "sonner"
 
 interface ConnectDialogProps {
-  provider: ProviderMetadata | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConnected: () => void;
+  provider: ProviderMetadata | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onConnected: () => void
 }
 
 export function ConnectDialog({
@@ -36,42 +36,42 @@ export function ConnectDialog({
   onOpenChange,
   onConnected,
 }: ConnectDialogProps): React.JSX.Element | null {
-  const [apiKey, setApiKey] = useState("");
-  const [hostUrl, setHostUrl] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [apiKey, setApiKey] = useState("")
+  const [hostUrl, setHostUrl] = useState("")
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const resetForm = useCallback(() => {
-    setApiKey("");
-    setHostUrl(provider?.defaultHostUrl || "");
-    setUsername("");
-    setPassword("");
-    setError(null);
-  }, [provider]);
+    setApiKey("")
+    setHostUrl(provider?.defaultHostUrl || "")
+    setUsername("")
+    setPassword("")
+    setError(null)
+  }, [provider])
 
   // Reset fields whenever dialog opens or provider changes
   useEffect(() => {
     if (open) {
-      resetForm();
+      resetForm()
     }
-  }, [open, resetForm]);
+  }, [open, resetForm])
 
-  if (!provider) return null;
+  if (!provider) return null
 
-  const isServarr = provider.category === "SERVARR";
-  const isBangumi = provider.provider === "BANGUMI";
-  const isSteam = provider.provider === "STEAM";
-  const isRiot = provider.provider === "RIOT_GAMES";
+  const isServarr = provider.category === "SERVARR"
+  const isBangumi = provider.provider === "BANGUMI"
+  const isSteam = provider.provider === "STEAM"
+  const isRiot = provider.provider === "RIOT_GAMES"
 
   const handleManualConnect = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
+    e.preventDefault()
+    setIsSubmitting(true)
+    setError(null)
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
       const res = await fetch(`${apiUrl}/connections`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -83,40 +83,42 @@ export function ConnectDialog({
           username: username.trim() || undefined,
           password: password || undefined,
         }),
-      });
+      })
 
-      const data = await res.json();
+      const data = await res.json()
       if (!res.ok) {
-        throw new Error(data.message || "Failed to establish connection");
+        throw new Error(data.message || "Failed to establish connection")
       }
 
-      toast.success(`Successfully connected to ${provider.name}!`);
-      resetForm();
-      onOpenChange(false);
-      onConnected();
+      toast.success(`Successfully connected to ${provider.name}!`)
+      resetForm()
+      onOpenChange(false)
+      onConnected()
     } catch (err: unknown) {
-      setError((err as Error).message || "Connection failed. Please check credentials.");
+      setError(
+        (err as Error).message || "Connection failed. Please check credentials."
+      )
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   return (
     <Dialog isOpen={open} onOpenChange={onOpenChange}>
       <form onSubmit={handleManualConnect} className="w-full">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-muted/40 flex items-center justify-center p-2 border border-border/40">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-border/40 bg-muted/40 p-2">
               <img
                 src={provider.iconUrl}
                 alt={provider.name}
-                className="w-6 h-6 object-contain"
+                className="h-6 w-6 object-contain"
                 loading="lazy"
               />
             </div>
             <div>
               <DialogTitle>Connect {provider.name}</DialogTitle>
-              <DialogDescription className="text-xs mt-0.5">
+              <DialogDescription className="mt-0.5 text-xs">
                 {isServarr
                   ? "Enter your server host URL and API key to connect."
                   : isBangumi
@@ -133,16 +135,19 @@ export function ConnectDialog({
 
         <div className="space-y-4 py-4">
           {error && (
-            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center gap-2 animate-in fade-in-50">
-              <IconAlertCircle className="w-4 h-4 shrink-0" />
+            <div className="flex animate-in items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive fade-in-50">
+              <IconAlertCircle className="h-4 w-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           {isServarr && (
             <div className="space-y-1.5">
-              <Label htmlFor="hostUrl" className="text-xs flex items-center gap-1.5 font-medium">
-                <IconServer className="w-3.5 h-3.5 text-muted-foreground" />
+              <Label
+                htmlFor="hostUrl"
+                className="flex items-center gap-1.5 text-xs font-medium"
+              >
+                <IconServer className="h-3.5 w-3.5 text-muted-foreground" />
                 Server Host URL
               </Label>
               <Input
@@ -150,7 +155,7 @@ export function ConnectDialog({
                 placeholder="http://localhost:7878"
                 value={hostUrl}
                 onChange={(e) => setHostUrl(e.target.value)}
-                className="text-xs font-mono"
+                className="font-mono text-xs"
                 required
               />
               <p className="text-[11px] text-muted-foreground">
@@ -161,8 +166,11 @@ export function ConnectDialog({
 
           {isRiot && (
             <div className="space-y-1.5">
-              <Label htmlFor="riotUsername" className="text-xs flex items-center gap-1.5 font-medium">
-                <IconUser className="w-3.5 h-3.5 text-muted-foreground" />
+              <Label
+                htmlFor="riotUsername"
+                className="flex items-center gap-1.5 text-xs font-medium"
+              >
+                <IconUser className="h-3.5 w-3.5 text-muted-foreground" />
                 Riot ID (GameName#TagLine)
               </Label>
               <Input
@@ -170,7 +178,7 @@ export function ConnectDialog({
                 placeholder="Faker#KR1"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="text-xs font-mono"
+                className="font-mono text-xs"
                 required
                 autoFocus
               />
@@ -182,8 +190,11 @@ export function ConnectDialog({
 
           {(isServarr || isBangumi || isSteam || isRiot) && (
             <div className="space-y-1.5">
-              <Label htmlFor="apiKey" className="text-xs flex items-center gap-1.5 font-medium">
-                <IconKey className="w-3.5 h-3.5 text-muted-foreground" />
+              <Label
+                htmlFor="apiKey"
+                className="flex items-center gap-1.5 text-xs font-medium"
+              >
+                <IconKey className="h-3.5 w-3.5 text-muted-foreground" />
                 {isBangumi
                   ? "Personal Access Token"
                   : isSteam
@@ -206,20 +217,20 @@ export function ConnectDialog({
                 }
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                className="text-xs font-mono"
+                className="font-mono text-xs"
                 required={!isRiot}
               />
             </div>
           )}
 
-          <div className="pt-2 text-[11px] text-muted-foreground flex items-center justify-end">
+          <div className="flex items-center justify-end pt-2 text-[11px] text-muted-foreground">
             <a
               href={provider.websiteUrl}
               target="_blank"
               rel="noreferrer"
-              className="hover:text-primary transition-colors flex items-center gap-1"
+              className="flex items-center gap-1 transition-colors hover:text-primary"
             >
-              Website <IconExternalLink className="w-3 h-3" />
+              Website <IconExternalLink className="h-3 w-3" />
             </a>
           </div>
         </div>
@@ -234,15 +245,20 @@ export function ConnectDialog({
           >
             Cancel
           </Button>
-          <Button type="submit" size="sm" disabled={isSubmitting} className="gap-2">
+          <Button
+            type="submit"
+            size="sm"
+            disabled={isSubmitting}
+            className="gap-2"
+          >
             {isSubmitting ? (
               <>
-                <Spinner className="w-3.5 h-3.5" />
+                <Spinner className="h-3.5 w-3.5" />
                 Testing & Saving...
               </>
             ) : (
               <>
-                <IconCheck className="w-4 h-4" />
+                <IconCheck className="h-4 w-4" />
                 Connect
               </>
             )}
@@ -250,6 +266,5 @@ export function ConnectDialog({
         </DialogFooter>
       </form>
     </Dialog>
-  );
+  )
 }
-

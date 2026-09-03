@@ -1,10 +1,10 @@
-"use client";
+"use client"
 
-import React, { useState } from "react";
-import { useTranslations } from "next-intl";
-import { Button } from "@workspace/ui/components/button";
-import { Input } from "@workspace/ui/components/input";
-import { Spinner } from "@workspace/ui/components/spinner";
+import React, { useState } from "react"
+import { useTranslations } from "next-intl"
+import { Button } from "@workspace/ui/components/button"
+import { Input } from "@workspace/ui/components/input"
+import { Spinner } from "@workspace/ui/components/spinner"
 import {
   IconEye,
   IconEyeOff,
@@ -12,17 +12,17 @@ import {
   IconLockOpen,
   IconAlertTriangle,
   IconCheck,
-} from "@tabler/icons-react";
+} from "@tabler/icons-react"
 import {
   PasswordChecklist,
   type PasswordCriteria,
   type PasswordRule,
-} from "@/components/auth/register/password-checklist";
-import { useEncryption } from "@/context/encryption-context";
-import type { SettingsTabProps } from "../types";
+} from "@/components/auth/register/password-checklist"
+import { useEncryption } from "@/context/encryption-context"
+import type { SettingsTabProps } from "../types"
 
 export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
-  const t = useTranslations("navigation.settings.account.encryption");
+  const t = useTranslations("navigation.settings.account.encryption")
   const {
     isActive,
     hasSeparateEncryptionPassword,
@@ -30,22 +30,22 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
     unlockVault,
     lockVault,
     changeEncryptionPassword,
-  } = useEncryption();
+  } = useEncryption()
 
   // Unlock state
-  const [unlockPassword, setUnlockPassword] = useState("");
-  const [showUnlockPassword, setShowUnlockPassword] = useState(false);
-  const [unlockError, setUnlockError] = useState<string | null>(null);
+  const [unlockPassword, setUnlockPassword] = useState("")
+  const [showUnlockPassword, setShowUnlockPassword] = useState(false)
+  const [unlockError, setUnlockError] = useState<string | null>(null)
 
   // Change password state
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [isNewPasswordFocused, setIsNewPasswordFocused] = useState(false);
-  const [changeError, setChangeError] = useState<string | null>(null);
-  const [changeSuccess, setChangeSuccess] = useState<string | null>(null);
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [isNewPasswordFocused, setIsNewPasswordFocused] = useState(false)
+  const [changeError, setChangeError] = useState<string | null>(null)
+  const [changeSuccess, setChangeSuccess] = useState<string | null>(null)
 
   // Encryption password criteria: min 16 chars, max 64, 1 uppercase, 2 numbers, 2 special chars
   const criteria: PasswordCriteria = {
@@ -53,11 +53,13 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
     maxLength: newPassword.length > 0 && newPassword.length <= 64,
     uppercase: /[A-Z]/.test(newPassword),
     number: /(?:.*[0-9]){2}/.test(newPassword),
-    special: /(?:.*[!@#$%^&*(),.?":{}|<>~'_\-+=/\\\[\]\x60]){2}/.test(newPassword),
-  };
+    special: /(?:.*[!@#$%^&*(),.?":{}|<>~'_\-+=/\\\[\]\x60]){2}/.test(
+      newPassword
+    ),
+  }
 
-  const isPasswordValid = Object.values(criteria).every(Boolean);
-  const strengthScore = Object.values(criteria).filter(Boolean).length;
+  const isPasswordValid = Object.values(criteria).every(Boolean)
+  const strengthScore = Object.values(criteria).filter(Boolean).length
 
   const encryptionRules: readonly PasswordRule[] = [
     { key: "length", label: t("rules.minLen") },
@@ -65,75 +67,75 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
     { key: "uppercase", label: t("rules.upper") },
     { key: "number", label: t("rules.number") },
     { key: "special", label: t("rules.special") },
-  ];
+  ]
 
   const handleUnlock = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!unlockPassword) return;
-    setUnlockError(null);
-    const res = await unlockVault(unlockPassword);
+    e.preventDefault()
+    if (!unlockPassword) return
+    setUnlockError(null)
+    const res = await unlockVault(unlockPassword)
     if (res.success) {
-      setUnlockPassword("");
+      setUnlockPassword("")
     } else {
       setUnlockError(
         hasSeparateEncryptionPassword
           ? t("incorrectEncryptionPasswordSeparate")
           : t("incorrectPassword")
-      );
+      )
     }
-  };
+  }
 
   const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setChangeError(null);
-    setChangeSuccess(null);
+    e.preventDefault()
+    setChangeError(null)
+    setChangeSuccess(null)
 
     if (!currentPassword) {
-      setChangeError(t("currentPasswordRequired"));
-      return;
+      setChangeError(t("currentPasswordRequired"))
+      return
     }
     if (!isPasswordValid) {
-      setChangeError(t("complexityRequirements"));
-      return;
+      setChangeError(t("complexityRequirements"))
+      return
     }
     if (newPassword !== confirmPassword) {
-      setChangeError(t("passwordsDoNotMatch"));
-      return;
+      setChangeError(t("passwordsDoNotMatch"))
+      return
     }
 
-    const res = await changeEncryptionPassword(currentPassword, newPassword);
+    const res = await changeEncryptionPassword(currentPassword, newPassword)
     if (res.success) {
-      setChangeSuccess(t("encryptionPasswordUpdated"));
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setIsNewPasswordFocused(false);
+      setChangeSuccess(t("encryptionPasswordUpdated"))
+      setCurrentPassword("")
+      setNewPassword("")
+      setConfirmPassword("")
+      setIsNewPasswordFocused(false)
     } else {
-      setChangeError(res.error || t("failedUpdateEncryptionPassword"));
+      setChangeError(res.error || t("failedUpdateEncryptionPassword"))
     }
-  };
+  }
 
   const handleClearFields = () => {
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setChangeError(null);
-    setChangeSuccess(null);
-    setIsNewPasswordFocused(false);
-  };
+    setCurrentPassword("")
+    setNewPassword("")
+    setConfirmPassword("")
+    setChangeError(null)
+    setChangeSuccess(null)
+    setIsNewPasswordFocused(false)
+  }
 
-  const hasInput = Boolean(currentPassword || newPassword || confirmPassword);
+  const hasInput = Boolean(currentPassword || newPassword || confirmPassword)
 
   return (
-    <div className="flex-1 w-full space-y-6 pb-6 animate-in fade-in-50 duration-200">
+    <div className="w-full flex-1 animate-in space-y-6 pb-6 duration-200 fade-in-50">
       <div>
         <h3 className="text-base font-bold text-foreground">{t("title")}</h3>
       </div>
 
       {/* Section 1: Enter Password to Decrypt */}
-      <div className="rounded-2xl border border-border/60 bg-muted/20 p-5 space-y-4">
+      <div className="space-y-4 rounded-2xl border border-border/60 bg-muted/20 p-5">
         <div className="flex items-center justify-between">
-          <span className="font-semibold text-sm text-foreground">
+          <span className="text-sm font-semibold text-foreground">
             {isActive ? t("encryptionUnlocked") : t("decryptData")}
           </span>
           {isActive && (
@@ -141,7 +143,7 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
               variant="outline"
               size="sm"
               onPress={lockVault}
-              className="h-8 text-xs rounded-xl gap-1.5 text-destructive hover:bg-destructive/10 border-destructive/30"
+              className="h-8 gap-1.5 rounded-xl border-destructive/30 text-xs text-destructive hover:bg-destructive/10"
             >
               <IconLock className="size-3.5" />
               <span>{t("lock")}</span>
@@ -157,7 +159,7 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
                 <span>{unlockError}</span>
               </div>
             )}
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <div className="relative flex-1">
                 <Input
                   type={showUnlockPassword ? "text" : "password"}
@@ -169,12 +171,14 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
                       ? t("enterEncryptionPasswordPlaceholder")
                       : t("enterPasswordPlaceholder")
                   }
-                  className="h-10 text-xs pe-10 rounded-xl"
+                  className="h-10 rounded-xl pe-10 text-xs"
                 />
                 <button
                   type="button"
                   tabIndex={-1}
-                  aria-label={showUnlockPassword ? t("hidePassword") : t("showPassword")}
+                  aria-label={
+                    showUnlockPassword ? t("hidePassword") : t("showPassword")
+                  }
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => setShowUnlockPassword((prev) => !prev)}
                   className="absolute end-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
@@ -189,7 +193,7 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
               <Button
                 type="submit"
                 disabled={isLoading || !unlockPassword}
-                className="h-10 text-xs font-semibold rounded-xl px-5 shrink-0"
+                className="h-10 shrink-0 rounded-xl px-5 text-xs font-semibold"
               >
                 {isLoading ? (
                   <Spinner className="size-4" />
@@ -203,7 +207,7 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
             </div>
           </form>
         ) : (
-          <div className="text-xs text-emerald-400 font-medium flex items-center gap-2">
+          <div className="flex items-center gap-2 text-xs font-medium text-emerald-400">
             <IconCheck className="size-4" />
             <span>{t("activeForSession")}</span>
           </div>
@@ -212,15 +216,15 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
 
       {/* Section 2: Create / Change Encryption Password */}
       <form onSubmit={handleChangePassword} className="space-y-4">
-        <div className="rounded-2xl border border-border/60 bg-muted/20 p-5 space-y-4">
+        <div className="space-y-4 rounded-2xl border border-border/60 bg-muted/20 p-5">
           <div className="flex items-center justify-between gap-2">
-            <span className="font-semibold text-sm text-foreground">
+            <span className="text-sm font-semibold text-foreground">
               {hasSeparateEncryptionPassword
                 ? t("changeEncryptionPassword")
                 : t("createSeparateEncryptionPassword")}
             </span>
             {hasSeparateEncryptionPassword && (
-              <span className="text-[10px] px-2.5 py-0.5 rounded-full font-medium border border-emerald-500/30 text-emerald-400 bg-emerald-500/10 shrink-0">
+              <span className="shrink-0 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-medium text-emerald-400">
                 {t("enabled")}
               </span>
             )}
@@ -252,12 +256,14 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
                     ? t("currentEncryptionPasswordPlaceholder")
                     : t("currentAccountPasswordPlaceholder")
                 }
-                className="h-10 text-xs pe-10 rounded-xl"
+                className="h-10 rounded-xl pe-10 text-xs"
               />
               <button
                 type="button"
                 tabIndex={-1}
-                aria-label={showCurrentPassword ? t("hidePassword") : t("showPassword")}
+                aria-label={
+                  showCurrentPassword ? t("hidePassword") : t("showPassword")
+                }
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => setShowCurrentPassword((prev) => !prev)}
                 className="absolute end-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
@@ -282,12 +288,14 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
                   onBlur={() => setIsNewPasswordFocused(false)}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder={t("newEncryptionPasswordPlaceholder")}
-                  className="h-10 text-xs pe-10 rounded-xl"
+                  className="h-10 rounded-xl pe-10 text-xs"
                 />
                 <button
                   type="button"
                   tabIndex={-1}
-                  aria-label={showNewPassword ? t("hidePassword") : t("showPassword")}
+                  aria-label={
+                    showNewPassword ? t("hidePassword") : t("showPassword")
+                  }
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => setShowNewPassword((prev) => !prev)}
                   className="absolute end-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
@@ -316,18 +324,18 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder={t("confirmNewEncryptionPasswordPlaceholder")}
-              className="h-10 text-xs rounded-xl"
+              className="h-10 rounded-xl text-xs"
             />
           </div>
         </div>
 
         {/* Action bar - only shown when fields have input */}
         {hasInput && (
-          <div className="rounded-2xl border border-border/60 bg-muted/20 px-5 py-3.5 flex items-center justify-end gap-3 animate-in fade-in-50 duration-200">
+          <div className="flex animate-in items-center justify-end gap-3 rounded-2xl border border-border/60 bg-muted/20 px-5 py-3.5 duration-200 fade-in-50">
             <button
               type="button"
               onClick={handleClearFields}
-              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-2 cursor-pointer"
+              className="cursor-pointer px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               {t("clearFields")}
             </button>
@@ -339,7 +347,7 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
                 !currentPassword ||
                 newPassword !== confirmPassword
               }
-              className="h-10 text-xs font-semibold rounded-xl px-5"
+              className="h-10 rounded-xl px-5 text-xs font-semibold"
             >
               {isLoading ? <Spinner className="size-4" /> : t("updatePassword")}
             </Button>
@@ -347,5 +355,5 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
         )}
       </form>
     </div>
-  );
+  )
 }

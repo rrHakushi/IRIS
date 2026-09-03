@@ -1,7 +1,7 @@
-import { verifyAuthenticationResponse } from "@simplewebauthn/server";
-import { defineRoute, t } from "../../../../../../router";
-import { signUserJwt } from "../../../../../../utils/auth-crypto";
-import { notifyUserLogin } from "../../../../../../utils/client-info";
+import { verifyAuthenticationResponse } from "@simplewebauthn/server"
+import { defineRoute, t } from "../../../../../../router"
+import { signUserJwt } from "../../../../../../utils/auth-crypto"
+import { notifyUserLogin } from "../../../../../../utils/client-info"
 
 export default defineRoute({
   schema: {
@@ -35,7 +35,7 @@ export default defineRoute({
     const passkey = await prisma.passkey.findUnique({
       where: { id: body.passkeyResponse.id },
       include: { user: true },
-    });
+    })
 
     if (!passkey || !passkey.user) {
       return new Response(
@@ -44,21 +44,21 @@ export default defineRoute({
           message: "Passkey credential not recognized.",
         }),
         { status: 401, headers: { "content-type": "application/json" } }
-      );
+      )
     }
 
     // 2. Extract challenge from clientDataJSON
-    let challenge: string | null = null;
+    let challenge: string | null = null
     try {
-      const clientDataJSON = body.passkeyResponse.response?.clientDataJSON;
+      const clientDataJSON = body.passkeyResponse.response?.clientDataJSON
       if (clientDataJSON) {
         const clientData = JSON.parse(
           Buffer.from(clientDataJSON, "base64url").toString("utf8")
-        );
-        challenge = clientData.challenge;
+        )
+        challenge = clientData.challenge
       }
     } catch {
-      challenge = null;
+      challenge = null
     }
 
     if (!challenge) {
@@ -68,13 +68,13 @@ export default defineRoute({
           message: "Invalid client assertion payload.",
         }),
         { status: 400, headers: { "content-type": "application/json" } }
-      );
+      )
     }
 
     // 3. Verify challenge in cache
     const expectedChallenge = await cache.get<string>(
       `auth:passkey-auth:${challenge}`
-    );
+    )
 
     if (!expectedChallenge) {
       return new Response(
@@ -83,27 +83,28 @@ export default defineRoute({
           message: "Passkey authentication challenge expired or invalid.",
         }),
         { status: 400, headers: { "content-type": "application/json" } }
-      );
+      )
     }
 
-    const originHeader = request?.headers.get("origin") || request?.headers.get("referer");
+    const originHeader =
+      request?.headers.get("origin") || request?.headers.get("referer")
     let expectedOrigin = process.env.NEXTAUTH_URL!
     if (originHeader) {
       try {
-        const u = new URL(originHeader);
-        expectedOrigin = `${u.protocol}//${u.host}`;
-      } catch { }
+        const u = new URL(originHeader)
+        expectedOrigin = `${u.protocol}//${u.host}`
+      } catch {}
     }
 
-    let expectedRPID = "localhost";
+    let expectedRPID = "localhost"
     try {
-      expectedRPID = process.env.RP_ID || new URL(expectedOrigin).hostname;
+      expectedRPID = process.env.RP_ID || new URL(expectedOrigin).hostname
     } catch {
-      expectedRPID = "localhost";
+      expectedRPID = "localhost"
     }
 
     // 4. Verify signature & counter
-    let verification;
+    let verification
     try {
       verification = await verifyAuthenticationResponse({
         response: body.passkeyResponse as any,
@@ -116,13 +117,14 @@ export default defineRoute({
           counter: passkey.counter,
           transports: passkey.transports as any,
         },
-      });
+      })
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Passkey verification failed";
+      const msg =
+        err instanceof Error ? err.message : "Passkey verification failed"
       return new Response(
         JSON.stringify({ error: "Unauthorized", message: msg }),
         { status: 401, headers: { "content-type": "application/json" } }
-      );
+      )
     }
 
     if (!verification.verified || !verification.authenticationInfo) {
@@ -132,25 +134,25 @@ export default defineRoute({
           message: "Passkey authentication verification failed.",
         }),
         { status: 401, headers: { "content-type": "application/json" } }
-      );
+      )
     }
 
     // 5. Update authenticator counter to prevent replay
     await prisma.passkey.update({
       where: { id: passkey.id },
       data: { counter: verification.authenticationInfo.newCounter },
-    });
+    })
 
     // Invalidate cached challenge
-    await cache.del(`auth:passkey-auth:${challenge}`);
+    await cache.del(`auth:passkey-auth:${challenge}`)
 
     // 6. Sign session token
     const token = await signUserJwt({
       ...passkey.user,
       username: passkey.user.username.trim(),
-    });
+    })
 
-    notifyUserLogin(passkey.user.id, request);
+    notifyUserLogin(passkey.user.id, request)
 
     return {
       success: true,
@@ -163,6 +165,6 @@ export default defineRoute({
           : null,
       },
       token,
-    };
+    }
   },
-});
+})

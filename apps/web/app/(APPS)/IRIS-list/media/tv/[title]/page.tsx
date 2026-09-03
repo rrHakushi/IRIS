@@ -1,18 +1,18 @@
-import type { Metadata } from "next";
+import type { Metadata } from "next"
 
 type Props = {
-  params: Promise<{ title: string }>;
-};
+  params: Promise<{ title: string }>
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { title } = await params;
-  const decodedTitle = decodeURIComponent(title);
+  const { title } = await params
+  const decodedTitle = decodeURIComponent(title)
   return {
     title: `IRIS List | Media > TV > ${decodedTitle}`,
     description: `${decodedTitle} details on IRIS List`,
-  };
+  }
 }
 
 export default function Page() {
-  return <>page</>;
+  return <>page</>
 }

@@ -1,7 +1,7 @@
-import { defineRoute, t } from "../../../../router";
-import { cache } from "../../../../utils/cache";
+import { defineRoute, t } from "../../../../router"
+import { cache } from "../../../../utils/cache"
 
-const userCache = cache.withNamespace("users:me");
+const userCache = cache.withNamespace("users:me")
 
 export default defineRoute({
   GET: {
@@ -33,10 +33,10 @@ export default defineRoute({
             status: 401,
             headers: { "content-type": "application/json" },
           }
-        );
+        )
       }
 
-      const userId = session.user.id;
+      const userId = session.user.id
       const cachedUser = await userCache.getOrSet(
         `user:${userId}`,
         async () => {
@@ -55,9 +55,9 @@ export default defineRoute({
               createdAt: true,
               updatedAt: true,
             },
-          });
+          })
 
-          if (!dbUser) return null;
+          if (!dbUser) return null
 
           return {
             id: dbUser.id,
@@ -71,10 +71,10 @@ export default defineRoute({
             publicKey: dbUser.publicKey,
             createdAt: dbUser.createdAt.toISOString(),
             updatedAt: dbUser.updatedAt.toISOString(),
-          };
+          }
         },
         300 // 5 minutes TTL
-      );
+      )
 
       if (!cachedUser) {
         return new Response(
@@ -83,13 +83,13 @@ export default defineRoute({
             status: 404,
             headers: { "content-type": "application/json" },
           }
-        );
+        )
       }
 
       return {
         success: true,
         user: cachedUser,
-      };
+      }
     },
   },
 
@@ -128,15 +128,15 @@ export default defineRoute({
             status: 401,
             headers: { "content-type": "application/json" },
           }
-        );
+        )
       }
 
-      const updateData: Record<string, unknown> = {};
+      const updateData: Record<string, unknown> = {}
       if (body?.customization !== undefined) {
-        updateData.customization = body.customization;
+        updateData.customization = body.customization
       }
       if (body?.settings !== undefined) {
-        updateData.settings = body.settings;
+        updateData.settings = body.settings
       }
 
       const updatedUser = await prisma.user.update({
@@ -155,7 +155,7 @@ export default defineRoute({
           createdAt: true,
           updatedAt: true,
         },
-      });
+      })
 
       const formattedUser = {
         id: updatedUser.id,
@@ -169,15 +169,15 @@ export default defineRoute({
         publicKey: updatedUser.publicKey,
         createdAt: updatedUser.createdAt.toISOString(),
         updatedAt: updatedUser.updatedAt.toISOString(),
-      };
+      }
 
       // Invalidate and update cache
-      await userCache.set(`user:${session.user.id}`, formattedUser, 300);
+      await userCache.set(`user:${session.user.id}`, formattedUser, 300)
 
       return {
         success: true,
         user: formattedUser,
-      };
+      }
     },
   },
-});
+})

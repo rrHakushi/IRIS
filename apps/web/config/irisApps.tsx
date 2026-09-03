@@ -1,21 +1,21 @@
-import React, { useMemo } from "react";
-import { useTranslations } from "next-intl";
-import { type IRISBitFieldResolvable } from "@IRIS/permissions";
-import { IconApps } from "@tabler/icons-react";
+import React, { useMemo } from "react"
+import { useTranslations } from "next-intl"
+import { type IRISBitFieldResolvable } from "@IRIS/permissions"
+import { IconApps } from "@tabler/icons-react"
 
 export interface IrisApp {
-  id?: string;
-  name: string;
-  href: string;
-  color: string;
-  icon?: React.ReactNode;
-  iconLeftRing?: string;
-  iconLeftNoRing?: string;
-  iconRightRing?: string;
-  iconRightNoRing?: string;
-  description: string;
-  descriptionShort: string;
-  permissions?: IRISBitFieldResolvable;
+  id?: string
+  name: string
+  href: string
+  color: string
+  icon?: React.ReactNode
+  iconLeftRing?: string
+  iconLeftNoRing?: string
+  iconRightRing?: string
+  iconRightNoRing?: string
+  description: string
+  descriptionShort: string
+  permissions?: IRISBitFieldResolvable
 }
 
 export function getIrisApps(t: (key: string) => string): IrisApp[] {
@@ -61,12 +61,12 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
     //   descriptionShort: "Docs",
     //   icon: <IconPuzzle className="size-4 text-purple-500" />,
     // },
-  ];
+  ]
 }
 
 export function useIrisApps(): IrisApp[] {
-  const t = useTranslations("navigation.apps");
-  return useMemo(() => getIrisApps(t), [t]);
+  const t = useTranslations("navigation.apps")
+  return useMemo(() => getIrisApps(t), [t])
 }
 
 // export const irisApps: IrisApp[] = [

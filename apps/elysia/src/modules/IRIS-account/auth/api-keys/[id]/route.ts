@@ -1,5 +1,5 @@
-import { defineRoute, t } from "../../../../../router";
-import { invalidateApiKeyCache } from "../../../../../plugins/session";
+import { defineRoute, t } from "../../../../../router"
+import { invalidateApiKeyCache } from "../../../../../plugins/session"
 
 export default defineRoute({
   PATCH: {
@@ -28,36 +28,45 @@ export default defineRoute({
     async handler({ params, body, session, prisma }) {
       if (!session.isAuthenticated) {
         return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "Authentication required",
+          }),
           { status: 401, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
-      const user = session.getUser();
+      const user = session.getUser()
       if (!user) {
         return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "User session not found" }),
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "User session not found",
+          }),
           { status: 401, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
-      const rawName = (body.name || "").trim();
+      const rawName = (body.name || "").trim()
       if (!rawName) {
         return new Response(
-          JSON.stringify({ error: "BadRequest", message: "API key name cannot be empty" }),
+          JSON.stringify({
+            error: "BadRequest",
+            message: "API key name cannot be empty",
+          }),
           { status: 400, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
       const existing = await prisma.apiKey.findFirst({
         where: { id: params.id, userId: user.id },
-      });
+      })
 
       if (!existing) {
         return new Response(
           JSON.stringify({ error: "NotFound", message: "API key not found" }),
           { status: 404, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
       const updated = await prisma.apiKey.update({
@@ -72,7 +81,7 @@ export default defineRoute({
           lastUsedAt: true,
           expiresAt: true,
         },
-      });
+      })
 
       return {
         success: true,
@@ -82,10 +91,12 @@ export default defineRoute({
           prefix: updated.prefix,
           createdAt: updated.createdAt.toISOString(),
           updatedAt: updated.updatedAt.toISOString(),
-          lastUsedAt: updated.lastUsedAt ? updated.lastUsedAt.toISOString() : null,
+          lastUsedAt: updated.lastUsedAt
+            ? updated.lastUsedAt.toISOString()
+            : null,
           expiresAt: updated.expiresAt ? updated.expiresAt.toISOString() : null,
         },
-      };
+      }
     },
   },
 
@@ -104,44 +115,50 @@ export default defineRoute({
     async handler({ params, session, prisma }) {
       if (!session.isAuthenticated) {
         return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "Authentication required",
+          }),
           { status: 401, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
-      const user = session.getUser();
+      const user = session.getUser()
       if (!user) {
         return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "User session not found" }),
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "User session not found",
+          }),
           { status: 401, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
       const existing = await prisma.apiKey.findFirst({
         where: { id: params.id, userId: user.id },
-      });
+      })
 
       if (!existing) {
         return new Response(
           JSON.stringify({ error: "NotFound", message: "API key not found" }),
           { status: 404, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
       // Purge key from in-memory cache immediately
       if (existing.hash) {
-        invalidateApiKeyCache(existing.hash);
+        invalidateApiKeyCache(existing.hash)
       }
-      invalidateApiKeyCache(existing.id);
+      invalidateApiKeyCache(existing.id)
 
       await prisma.apiKey.delete({
         where: { id: existing.id },
-      });
+      })
 
       return {
         success: true,
         message: `API key ${params.id} deleted successfully`,
-      };
+      }
     },
   },
-});
+})

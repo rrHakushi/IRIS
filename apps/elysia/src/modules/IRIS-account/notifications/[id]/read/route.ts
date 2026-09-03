@@ -1,5 +1,5 @@
-import { defineRoute, t } from "../../../../../router";
-import { wsHub } from "../../../../../services/websocket-hub";
+import { defineRoute, t } from "../../../../../router"
+import { wsHub } from "../../../../../services/websocket-hub"
 
 export default defineRoute({
   PATCH: {
@@ -25,21 +25,27 @@ export default defineRoute({
     async handler({ session, params, prisma }) {
       if (!session.isAuthenticated || !session.user) {
         return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "Authentication required",
+          }),
           { status: 401, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
       const notification = await prisma.notification.findUnique({
         where: { id: params.id },
         select: { id: true, userId: true, isRead: true, readAt: true },
-      });
+      })
 
       if (!notification || notification.userId !== session.user.id) {
         return new Response(
-          JSON.stringify({ error: "NotFound", message: "Notification not found" }),
+          JSON.stringify({
+            error: "NotFound",
+            message: "Notification not found",
+          }),
           { status: 404, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
       // Marking as read is permanent and one-way
@@ -50,18 +56,18 @@ export default defineRoute({
             isRead: true,
             readAt: new Date(),
           },
-        });
+        })
 
         const unreadCount = await prisma.notification.count({
           where: { userId: session.user.id, isRead: false },
-        });
+        })
 
         wsHub.sendToUser(session.user.id, "notification:update", {
           id: updated.id,
           isRead: true,
           readAt: updated.readAt,
           unreadCount,
-        });
+        })
 
         return {
           success: true,
@@ -69,12 +75,12 @@ export default defineRoute({
           isRead: true,
           readAt: updated.readAt,
           unreadCount,
-        };
+        }
       }
 
       const unreadCount = await prisma.notification.count({
         where: { userId: session.user.id, isRead: false },
-      });
+      })
 
       return {
         success: true,
@@ -82,7 +88,7 @@ export default defineRoute({
         isRead: true,
         readAt: notification.readAt || new Date(),
         unreadCount,
-      };
+      }
     },
   },
-});
+})

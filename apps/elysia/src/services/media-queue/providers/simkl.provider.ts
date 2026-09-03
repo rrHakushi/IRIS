@@ -1,49 +1,49 @@
-import { cache } from "../../../utils/cache.js";
-import { logQueue } from "../logger.js";
-import { c } from "../../../utils/colors.js";
+import { cache } from "../../../utils/cache.js"
+import { logQueue } from "../logger.js"
+import { c } from "../../../utils/colors.js"
 
 export interface SimklMoviePayload {
-  simklId: number;
-  slug?: string;
-  imdbId?: string;
-  tmdbId?: number;
-  tvdbId?: number;
-  title?: string;
-  year?: number;
-  runtime?: number;
-  country?: string;
-  certification?: string;
-  releaseDate?: string;
-  imdbRating?: number;
-  imdbVotes?: number;
-  simklRating?: number;
-  simklVotes?: number;
-  poster?: string;
-  overview?: string;
-  genres?: string[];
+  simklId: number
+  slug?: string
+  imdbId?: string
+  tmdbId?: number
+  tvdbId?: number
+  title?: string
+  year?: number
+  runtime?: number
+  country?: string
+  certification?: string
+  releaseDate?: string
+  imdbRating?: number
+  imdbVotes?: number
+  simklRating?: number
+  simklVotes?: number
+  poster?: string
+  overview?: string
+  genres?: string[]
 }
 
 export interface SimklTvPayload {
-  simklId: number;
-  slug?: string;
-  imdbId?: string;
-  tmdbId?: number;
-  tvdbId?: number;
-  title?: string;
-  overview?: string;
-  year?: number;
-  runtime?: number;
-  country?: string;
-  certification?: string;
-  firstAired?: string;
-  network?: string;
-  imdbRating?: number;
-  imdbVotes?: number;
-  simklRating?: number;
-  simklVotes?: number;
-  poster?: string;
-  genres?: string[];
-  totalEpisodes?: number;
+  simklId: number
+  slug?: string
+  imdbId?: string
+  tmdbId?: number
+  tvdbId?: number
+  title?: string
+  overview?: string
+  year?: number
+  runtime?: number
+  country?: string
+  certification?: string
+  firstAired?: string
+  network?: string
+  imdbRating?: number
+  imdbVotes?: number
+  simklRating?: number
+  simklVotes?: number
+  poster?: string
+  genres?: string[]
+  totalEpisodes?: number
 }
 
 export class SimklProvider {
@@ -52,73 +52,73 @@ export class SimklProvider {
       process.env.SIMKL_CLIENT_ID ||
       process.env.SIMKL_KEY ||
       process.env.SIMKL_API_KEY
-    );
+    )
   }
 
   /**
    * Looks up a Movie on Simkl via IMDb ID, TMDb ID, TVDB ID, or title search.
    */
   async lookupMovie(identifiers: {
-    imdbId?: string;
-    tmdbId?: number;
-    tvdbId?: number;
-    title?: string;
-    year?: number;
+    imdbId?: string
+    tmdbId?: number
+    tvdbId?: number
+    title?: string
+    year?: number
   }): Promise<SimklMoviePayload | null> {
-    const clientId = this.getClientId();
-    if (!clientId) return null;
+    const clientId = this.getClientId()
+    if (!clientId) return null
 
-    const cacheKey = `media-simkl:movie:${identifiers.imdbId || identifiers.tmdbId || identifiers.tvdbId || identifiers.title}`;
-    const cached = await cache.get<SimklMoviePayload>(cacheKey);
-    if (cached) return cached;
+    const cacheKey = `media-simkl:movie:${identifiers.imdbId || identifiers.tmdbId || identifiers.tvdbId || identifiers.title}`
+    const cached = await cache.get<SimklMoviePayload>(cacheKey)
+    if (cached) return cached
 
     try {
-      let simklId: number | undefined;
+      let simklId: number | undefined
 
       // 1. Search by ID
-      let searchUrl = "";
+      let searchUrl = ""
       if (identifiers.imdbId) {
-        searchUrl = `https://api.simkl.com/search/id?imdb=${identifiers.imdbId}&client_id=${clientId}`;
+        searchUrl = `https://api.simkl.com/search/id?imdb=${identifiers.imdbId}&client_id=${clientId}`
       } else if (identifiers.tmdbId) {
-        searchUrl = `https://api.simkl.com/search/id?tmdb=${identifiers.tmdbId}&client_id=${clientId}`;
+        searchUrl = `https://api.simkl.com/search/id?tmdb=${identifiers.tmdbId}&client_id=${clientId}`
       } else if (identifiers.tvdbId) {
-        searchUrl = `https://api.simkl.com/search/id?tvdb=${identifiers.tvdbId}&client_id=${clientId}`;
+        searchUrl = `https://api.simkl.com/search/id?tvdb=${identifiers.tvdbId}&client_id=${clientId}`
       } else if (identifiers.title) {
-        const q = encodeURIComponent(identifiers.title);
-        searchUrl = `https://api.simkl.com/search/movie?q=${q}${identifiers.year ? `&year=${identifiers.year}` : ""}&client_id=${clientId}`;
+        const q = encodeURIComponent(identifiers.title)
+        searchUrl = `https://api.simkl.com/search/movie?q=${q}${identifiers.year ? `&year=${identifiers.year}` : ""}&client_id=${clientId}`
       }
 
-      if (!searchUrl) return null;
+      if (!searchUrl) return null
 
       const res = await fetch(searchUrl, {
         headers: { "Content-Type": "application/json" },
-      });
+      })
 
       if (res.status === 429) {
         logQueue(
           `${c.magenta(c.bold("[MediaQueue]"))} ${c.red(c.bold("⚠️ [RATE LIMIT 429]"))} ${c.red("Simkl HTTP 429 Too Many Requests.")}`
-        );
+        )
       }
 
       if (res.ok) {
-        const list = (await res.json()) as any[];
+        const list = (await res.json()) as any[]
         if (Array.isArray(list) && list.length > 0 && list[0]?.ids?.simkl) {
-          simklId = list[0].ids.simkl;
+          simklId = list[0].ids.simkl
         }
       }
 
-      if (!simklId) return null;
+      if (!simklId) return null
 
       // 2. Fetch full extended metadata
       const extRes = await fetch(
         `https://api.simkl.com/movies/${simklId}?extended=full&client_id=${clientId}`,
         { headers: { "Content-Type": "application/json" } }
-      );
+      )
 
-      if (!extRes.ok) return null;
+      if (!extRes.ok) return null
 
-      const ext = (await extRes.json()) as any;
-      if (!ext) return null;
+      const ext = (await extRes.json()) as any
+      if (!ext) return null
 
       const payload: SimklMoviePayload = {
         simklId: ext.ids?.simkl || simklId,
@@ -136,16 +136,18 @@ export class SimklProvider {
         imdbVotes: ext.ratings?.imdb?.votes,
         simklRating: ext.ratings?.simkl?.rating,
         simklVotes: ext.ratings?.simkl?.votes,
-        poster: ext.poster ? `https://simkl.in/posters/${ext.poster}_m.webp` : undefined,
+        poster: ext.poster
+          ? `https://simkl.in/posters/${ext.poster}_m.webp`
+          : undefined,
         overview: ext.overview,
         genres: ext.genres,
-      };
+      }
 
       // Cache for 7 days
-      await cache.set(cacheKey, payload, 86400 * 7);
-      return payload;
+      await cache.set(cacheKey, payload, 86400 * 7)
+      return payload
     } catch {
-      return null;
+      return null
     }
   }
 
@@ -153,66 +155,66 @@ export class SimklProvider {
    * Looks up a TV Show on Simkl via IMDb ID, TMDb ID, TVDB ID, or title search.
    */
   async lookupTv(identifiers: {
-    imdbId?: string;
-    tmdbId?: number;
-    tvdbId?: number;
-    title?: string;
-    year?: number;
+    imdbId?: string
+    tmdbId?: number
+    tvdbId?: number
+    title?: string
+    year?: number
   }): Promise<SimklTvPayload | null> {
-    const clientId = this.getClientId();
-    if (!clientId) return null;
+    const clientId = this.getClientId()
+    if (!clientId) return null
 
-    const cacheKey = `media-simkl:tv:${identifiers.tvdbId || identifiers.imdbId || identifiers.tmdbId || identifiers.title}`;
-    const cached = await cache.get<SimklTvPayload>(cacheKey);
-    if (cached) return cached;
+    const cacheKey = `media-simkl:tv:${identifiers.tvdbId || identifiers.imdbId || identifiers.tmdbId || identifiers.title}`
+    const cached = await cache.get<SimklTvPayload>(cacheKey)
+    if (cached) return cached
 
     try {
-      let simklId: number | undefined;
+      let simklId: number | undefined
 
       // 1. Search by ID
-      let searchUrl = "";
+      let searchUrl = ""
       if (identifiers.tvdbId) {
-        searchUrl = `https://api.simkl.com/search/id?tvdb=${identifiers.tvdbId}&client_id=${clientId}`;
+        searchUrl = `https://api.simkl.com/search/id?tvdb=${identifiers.tvdbId}&client_id=${clientId}`
       } else if (identifiers.imdbId) {
-        searchUrl = `https://api.simkl.com/search/id?imdb=${identifiers.imdbId}&client_id=${clientId}`;
+        searchUrl = `https://api.simkl.com/search/id?imdb=${identifiers.imdbId}&client_id=${clientId}`
       } else if (identifiers.tmdbId) {
-        searchUrl = `https://api.simkl.com/search/id?tmdb=${identifiers.tmdbId}&client_id=${clientId}`;
+        searchUrl = `https://api.simkl.com/search/id?tmdb=${identifiers.tmdbId}&client_id=${clientId}`
       } else if (identifiers.title) {
-        const q = encodeURIComponent(identifiers.title);
-        searchUrl = `https://api.simkl.com/search/tv?q=${q}${identifiers.year ? `&year=${identifiers.year}` : ""}&client_id=${clientId}`;
+        const q = encodeURIComponent(identifiers.title)
+        searchUrl = `https://api.simkl.com/search/tv?q=${q}${identifiers.year ? `&year=${identifiers.year}` : ""}&client_id=${clientId}`
       }
 
-      if (!searchUrl) return null;
+      if (!searchUrl) return null
 
       const res = await fetch(searchUrl, {
         headers: { "Content-Type": "application/json" },
-      });
+      })
 
       if (res.status === 429) {
         logQueue(
           `${c.magenta(c.bold("[MediaQueue]"))} ${c.red(c.bold("⚠️ [RATE LIMIT 429]"))} ${c.red("Simkl HTTP 429 Too Many Requests.")}`
-        );
+        )
       }
 
       if (res.ok) {
-        const list = (await res.json()) as any[];
+        const list = (await res.json()) as any[]
         if (Array.isArray(list) && list.length > 0 && list[0]?.ids?.simkl) {
-          simklId = list[0].ids.simkl;
+          simklId = list[0].ids.simkl
         }
       }
 
-      if (!simklId) return null;
+      if (!simklId) return null
 
       // 2. Fetch full extended TV metadata
       const extRes = await fetch(
         `https://api.simkl.com/tv/${simklId}?extended=full&client_id=${clientId}`,
         { headers: { "Content-Type": "application/json" } }
-      );
+      )
 
-      if (!extRes.ok) return null;
+      if (!extRes.ok) return null
 
-      const ext = (await extRes.json()) as any;
-      if (!ext) return null;
+      const ext = (await extRes.json()) as any
+      if (!ext) return null
 
       const payload: SimklTvPayload = {
         simklId: ext.ids?.simkl || simklId,
@@ -231,17 +233,19 @@ export class SimklProvider {
         imdbVotes: ext.ratings?.imdb?.votes,
         simklRating: ext.ratings?.simkl?.rating,
         simklVotes: ext.ratings?.simkl?.votes,
-        poster: ext.poster ? `https://simkl.in/posters/${ext.poster}_m.webp` : undefined,
+        poster: ext.poster
+          ? `https://simkl.in/posters/${ext.poster}_m.webp`
+          : undefined,
         overview: ext.overview,
         genres: ext.genres,
         totalEpisodes: ext.total_episodes,
-      };
+      }
 
       // Cache for 7 days
-      await cache.set(cacheKey, payload, 86400 * 7);
-      return payload;
+      await cache.set(cacheKey, payload, 86400 * 7)
+      return payload
     } catch {
-      return null;
+      return null
     }
   }
 }

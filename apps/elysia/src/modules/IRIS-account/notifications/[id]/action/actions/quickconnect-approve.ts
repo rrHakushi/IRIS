@@ -1,4 +1,4 @@
-import type { NotificationActionHandler } from "./types";
+import type { NotificationActionHandler } from "./types"
 
 /**
  * Action Handler: "auth.quickconnect.approve"
@@ -11,57 +11,57 @@ export const quickConnectApproveAction: NotificationActionHandler = async ({
   cache,
 }) => {
   if (resolvedStatus === "REJECTED") {
-    return { success: true, message: "Pairing request rejected." };
+    return { success: true, message: "Pairing request rejected." }
   }
 
   const payloadObj =
     typeof payload === "object" && payload !== null
       ? (payload as Record<string, unknown>)
-      : {};
+      : {}
   const codeValue =
     payloadObj.code ||
     payloadObj.selection ||
-    (typeof payload === "string" ? payload : "");
+    (typeof payload === "string" ? payload : "")
 
   if (!codeValue) {
     return {
       success: false,
       error: "Missing Quick Connect pairing code in action payload.",
-    };
+    }
   }
 
-  const raw = String(codeValue).trim().toUpperCase();
-  const cleanNoDash = raw.replaceAll("-", "");
+  const raw = String(codeValue).trim().toUpperCase()
+  const cleanNoDash = raw.replaceAll("-", "")
   const formattedCode =
     cleanNoDash.length === 8
       ? `${cleanNoDash.slice(0, 4)}-${cleanNoDash.slice(4, 8)}`
-      : raw;
+      : raw
 
   // 1. Resolve sessionToken from code
   const sessionToken =
     (await cache.get<string>(`auth:quickconnect:code:${formattedCode}`)) ||
-    (await cache.get<string>(`auth:quickconnect:code:${raw}`));
+    (await cache.get<string>(`auth:quickconnect:code:${raw}`))
 
   if (!sessionToken) {
     return {
       success: false,
       error: "Invalid or expired Quick Connect pairing code.",
-    };
+    }
   }
 
   // 2. Fetch session data
   const sessionData = await cache.get<{
-    status: string;
-    code: string;
-    deviceName: string;
-    userId: string | null;
-  }>(`auth:quickconnect:session:${sessionToken}`);
+    status: string
+    code: string
+    deviceName: string
+    userId: string | null
+  }>(`auth:quickconnect:session:${sessionToken}`)
 
   if (!sessionData) {
     return {
       success: false,
       error: "Quick Connect pairing session has expired.",
-    };
+    }
   }
 
   // 3. Mark session as approved with the current user's ID
@@ -73,13 +73,13 @@ export const quickConnectApproveAction: NotificationActionHandler = async ({
       userId: sessionUser.id,
     },
     300
-  );
+  )
 
   // 4. Invalidate lookup code so it cannot be claimed twice
   await Promise.all([
     cache.del(`auth:quickconnect:code:${formattedCode}`),
     cache.del(`auth:quickconnect:code:${raw}`),
-  ]);
+  ])
 
   return {
     success: true,
@@ -89,5 +89,5 @@ export const quickConnectApproveAction: NotificationActionHandler = async ({
       deviceName: sessionData.deviceName,
       approvedAt: new Date().toISOString(),
     },
-  };
-};
+  }
+}

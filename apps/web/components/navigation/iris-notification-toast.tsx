@@ -1,10 +1,10 @@
-"use client";
+"use client"
 
-import React, { useState } from "react";
-import { useTranslations } from "next-intl";
-import { Badge } from "@workspace/ui/components/badge";
-import { Button } from "@workspace/ui/components/button";
-import { Input } from "@workspace/ui/components/input";
+import React, { useState } from "react"
+import { useTranslations } from "next-intl"
+import { Badge } from "@workspace/ui/components/badge"
+import { Button } from "@workspace/ui/components/button"
+import { Input } from "@workspace/ui/components/input"
 import {
   IconCheck,
   IconX,
@@ -13,20 +13,23 @@ import {
   IconArrowRight,
   IconSquare,
   IconSquareCheck,
-} from "@tabler/icons-react";
-import { cn } from "@workspace/ui/lib/utils";
-import type { NotificationItem, NotificationPriority } from "@/context/notification-context";
+} from "@tabler/icons-react"
+import { cn } from "@workspace/ui/lib/utils"
+import type {
+  NotificationItem,
+  NotificationPriority,
+} from "@/context/notification-context"
 
 export interface IrisNotificationToastProps {
-  toastId: string | number;
-  item: NotificationItem;
+  toastId: string | number
+  item: NotificationItem
   onSubmitAction: (
     id: string,
     action: string,
     payload?: Record<string, unknown>
-  ) => Promise<boolean>;
-  onOpenModal: () => void;
-  onDismiss: () => void;
+  ) => Promise<boolean>
+  onOpenModal: () => void
+  onDismiss: () => void
 }
 
 export function IrisNotificationToast({
@@ -36,114 +39,127 @@ export function IrisNotificationToast({
   onOpenModal,
   onDismiss,
 }: IrisNotificationToastProps): React.JSX.Element {
-  const t = useTranslations("navigation.notifications");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [resolvedStatus, setResolvedStatus] = useState<string | null>(null);
+  const t = useTranslations("navigation.notifications")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [resolvedStatus, setResolvedStatus] = useState<string | null>(null)
 
   // Form states for inputs/selects in toast
-  const [selectedSingle, setSelectedSingle] = useState<string>("");
-  const [selectedMulti, setSelectedMulti] = useState<string[]>([]);
-  const [inputValues, setInputValues] = useState<Record<string, string>>({});
+  const [selectedSingle, setSelectedSingle] = useState<string>("")
+  const [selectedMulti, setSelectedMulti] = useState<string[]>([])
+  const [inputValues, setInputValues] = useState<Record<string, string>>({})
 
-  const isMulti = Boolean(item.content?.actionSelect?.isMultiSelect);
+  const isMulti = Boolean(item.content?.actionSelect?.isMultiSelect)
 
   const getAppLabel = (appVal: string) => {
-    if (appVal.toLowerCase() === "system") return t("appSystem");
-    return appVal;
-  };
+    if (appVal.toLowerCase() === "system") return t("appSystem")
+    return appVal
+  }
 
   const getPriorityBadge = (priority: NotificationPriority) => {
     switch (priority) {
       case "URGENT":
         return (
-          <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4 font-bold">
+          <Badge
+            variant="destructive"
+            className="h-4 px-1.5 py-0 text-[10px] font-bold"
+          >
             {t("urgent")}
           </Badge>
-        );
+        )
       case "HIGH":
         return (
           <Badge
             variant="outline"
-            className="text-[10px] px-1.5 py-0 h-4 font-semibold border-primary/50 text-primary bg-primary/10"
+            className="h-4 border-primary/50 bg-primary/10 px-1.5 py-0 text-[10px] font-semibold text-primary"
           >
             {t("high")}
           </Badge>
-        );
+        )
       case "NORMAL":
         return (
           <Badge
             variant="secondary"
-            className="text-[10px] px-1.5 py-0 h-4 font-medium text-secondary-foreground bg-secondary/80 border border-border/40"
+            className="h-4 border border-border/40 bg-secondary/80 px-1.5 py-0 text-[10px] font-medium text-secondary-foreground"
           >
             {t("normal")}
           </Badge>
-        );
+        )
       case "LOW":
       default:
         return (
           <Badge
             variant="outline"
-            className="text-[10px] px-1.5 py-0 h-4 font-normal text-muted-foreground border-border/50 bg-muted/30"
+            className="h-4 border-border/50 bg-muted/30 px-1.5 py-0 text-[10px] font-normal text-muted-foreground"
           >
             {t("low")}
           </Badge>
-        );
+        )
     }
-  };
+  }
 
   const handleConfirmAction = async (action: "CONFIRM" | "REJECT") => {
-    setIsSubmitting(true);
-    const success = await onSubmitAction(item.id, action);
-    setIsSubmitting(false);
+    setIsSubmitting(true)
+    const success = await onSubmitAction(item.id, action)
+    setIsSubmitting(false)
     if (success) {
-      setResolvedStatus(action === "CONFIRM" ? t("approved") : t("denied"));
-      setTimeout(onDismiss, 1200);
+      setResolvedStatus(action === "CONFIRM" ? t("approved") : t("denied"))
+      setTimeout(onDismiss, 1200)
     }
-  };
+  }
 
   const handleSingleSelect = async (value: string) => {
-    setSelectedSingle(value);
-    setIsSubmitting(true);
-    const success = await onSubmitAction(item.id, "SUBMIT", { selection: value });
-    setIsSubmitting(false);
+    setSelectedSingle(value)
+    setIsSubmitting(true)
+    const success = await onSubmitAction(item.id, "SUBMIT", {
+      selection: value,
+    })
+    setIsSubmitting(false)
     if (success) {
-      setResolvedStatus(t("submitted"));
-      setTimeout(onDismiss, 1200);
+      setResolvedStatus(t("submitted"))
+      setTimeout(onDismiss, 1200)
     }
-  };
+  }
 
   const handleMultiSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (selectedMulti.length === 0) return;
-    setIsSubmitting(true);
-    const success = await onSubmitAction(item.id, "SUBMIT", { selection: selectedMulti });
-    setIsSubmitting(false);
+    e.preventDefault()
+    if (selectedMulti.length === 0) return
+    setIsSubmitting(true)
+    const success = await onSubmitAction(item.id, "SUBMIT", {
+      selection: selectedMulti,
+    })
+    setIsSubmitting(false)
     if (success) {
-      setResolvedStatus(t("submitted"));
-      setTimeout(onDismiss, 1200);
+      setResolvedStatus(t("submitted"))
+      setTimeout(onDismiss, 1200)
     }
-  };
+  }
 
   const handleInputSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    const success = await onSubmitAction(item.id, "SUBMIT", inputValues);
-    setIsSubmitting(false);
+    e.preventDefault()
+    setIsSubmitting(true)
+    const success = await onSubmitAction(item.id, "SUBMIT", inputValues)
+    setIsSubmitting(false)
     if (success) {
-      setResolvedStatus(t("submitted"));
-      setTimeout(onDismiss, 1200);
+      setResolvedStatus(t("submitted"))
+      setTimeout(onDismiss, 1200)
     }
-  };
+  }
 
   return (
-    <div className="w-[360px] sm:w-[400px] rounded-2xl bg-card border border-border text-card-foreground p-3.5 shadow-2xl backdrop-blur-xl flex flex-col gap-2.5 transition-all duration-150 relative isolate">
+    <div className="relative isolate flex w-[360px] flex-col gap-2.5 rounded-2xl border border-border bg-card p-3.5 text-card-foreground shadow-2xl backdrop-blur-xl transition-all duration-150 sm:w-[400px]">
       {/* 1. Header: Meta Badges + Close Button */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0.5 rounded-lg bg-background/80">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge
+            variant="outline"
+            className="rounded-lg bg-background/80 px-2 py-0.5 text-[10px] font-semibold"
+          >
             {getAppLabel(item.app)}
           </Badge>
-          <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 rounded-lg text-muted-foreground">
+          <Badge
+            variant="secondary"
+            className="rounded-lg px-1.5 py-0.5 text-[10px] text-muted-foreground"
+          >
             {item.category}
           </Badge>
           {getPriorityBadge(item.priority)}
@@ -152,7 +168,7 @@ export function IrisNotificationToast({
         <button
           type="button"
           onClick={onDismiss}
-          className="size-6 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 flex items-center justify-center cursor-pointer transition-colors shrink-0"
+          className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
           aria-label={t("close")}
         >
           <IconX className="size-3.5" />
@@ -162,10 +178,10 @@ export function IrisNotificationToast({
       {/* 2. Decrypted Content or Locked Banner */}
       {item.isDecrypted && item.content ? (
         <div className="space-y-1">
-          <h4 className="text-xs font-bold text-foreground leading-snug">
+          <h4 className="text-xs leading-snug font-bold text-foreground">
             {item.content.title}
           </h4>
-          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
+          <p className="line-clamp-3 text-xs leading-relaxed text-muted-foreground">
             {item.content.body}
           </p>
         </div>
@@ -183,8 +199,11 @@ export function IrisNotificationToast({
 
       {/* 3. Action Area */}
       {resolvedStatus ? (
-        <div className="pt-1 flex items-center gap-1.5">
-          <Badge variant="default" className="text-xs px-2.5 py-1 rounded-xl font-semibold gap-1">
+        <div className="flex items-center gap-1.5 pt-1">
+          <Badge
+            variant="default"
+            className="gap-1 rounded-xl px-2.5 py-1 text-xs font-semibold"
+          >
             <IconCheck className="size-3.5" />
             {resolvedStatus}
           </Badge>
@@ -196,12 +215,14 @@ export function IrisNotificationToast({
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
-                variant={item.content.actionConfirm?.confirmVariant || "default"}
+                variant={
+                  item.content.actionConfirm?.confirmVariant || "default"
+                }
                 disabled={isSubmitting}
                 onPress={() => handleConfirmAction("CONFIRM")}
-                className="text-xs h-7.5 rounded-xl px-3 cursor-pointer"
+                className="h-7.5 cursor-pointer rounded-xl px-3 text-xs"
               >
-                <IconCheck className="size-3.5 mr-1" />
+                <IconCheck className="mr-1 size-3.5" />
                 {item.content.actionConfirm?.confirmLabel || t("confirm")}
               </Button>
               <Button
@@ -209,19 +230,19 @@ export function IrisNotificationToast({
                 variant={item.content.actionConfirm?.rejectVariant || "outline"}
                 disabled={isSubmitting}
                 onPress={() => handleConfirmAction("REJECT")}
-                className="text-xs h-7.5 rounded-xl px-3 cursor-pointer"
+                className="h-7.5 cursor-pointer rounded-xl px-3 text-xs"
               >
-                <IconX className="size-3.5 mr-1" />
+                <IconX className="mr-1 size-3.5" />
                 {item.content.actionConfirm?.rejectLabel || t("reject")}
               </Button>
               <Button
                 size="sm"
                 variant="ghost"
                 onPress={() => {
-                  onDismiss();
-                  onOpenModal();
+                  onDismiss()
+                  onOpenModal()
                 }}
-                className="text-xs h-7.5 rounded-xl px-2 text-muted-foreground hover:text-foreground cursor-pointer ml-auto"
+                className="ml-auto h-7.5 cursor-pointer rounded-xl px-2 text-xs text-muted-foreground hover:text-foreground"
               >
                 {t("details")}
               </Button>
@@ -233,9 +254,9 @@ export function IrisNotificationToast({
             <div className="space-y-2">
               {isMulti ? (
                 <form onSubmit={handleMultiSubmit} className="space-y-2">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-36 overflow-y-auto no-scrollbar">
+                  <div className="no-scrollbar grid max-h-36 grid-cols-1 gap-1.5 overflow-y-auto sm:grid-cols-2">
                     {item.content.actionSelect.options.map((opt) => {
-                      const isChecked = selectedMulti.includes(opt.value);
+                      const isChecked = selectedMulti.includes(opt.value)
                       return (
                         <button
                           key={opt.value}
@@ -245,23 +266,23 @@ export function IrisNotificationToast({
                               prev.includes(opt.value)
                                 ? prev.filter((v) => v !== opt.value)
                                 : [...prev, opt.value]
-                            );
+                            )
                           }}
                           className={cn(
-                            "flex items-center gap-1.5 text-left p-1.5 rounded-lg border text-xs cursor-pointer transition-colors",
+                            "flex cursor-pointer items-center gap-1.5 rounded-lg border p-1.5 text-left text-xs transition-colors",
                             isChecked
-                              ? "bg-primary/15 border-primary/40 text-primary font-semibold"
-                              : "bg-background/70 border-border/70 text-foreground hover:border-border"
+                              ? "border-primary/40 bg-primary/15 font-semibold text-primary"
+                              : "border-border/70 bg-background/70 text-foreground hover:border-border"
                           )}
                         >
                           {isChecked ? (
-                            <IconSquareCheck className="size-3.5 text-primary shrink-0" />
+                            <IconSquareCheck className="size-3.5 shrink-0 text-primary" />
                           ) : (
-                            <IconSquare className="size-3.5 text-muted-foreground/40 shrink-0" />
+                            <IconSquare className="size-3.5 shrink-0 text-muted-foreground/40" />
                           )}
                           <span className="truncate">{opt.label}</span>
                         </button>
-                      );
+                      )
                     })}
                   </div>
                   <div className="flex items-center gap-2">
@@ -269,9 +290,9 @@ export function IrisNotificationToast({
                       type="submit"
                       size="sm"
                       disabled={isSubmitting || selectedMulti.length === 0}
-                      className="text-xs h-7.5 rounded-xl px-3 cursor-pointer"
+                      className="h-7.5 cursor-pointer rounded-xl px-3 text-xs"
                     >
-                      <IconCheck className="size-3.5 mr-1" />
+                      <IconCheck className="mr-1 size-3.5" />
                       {t("submitSelected", { count: selectedMulti.length })}
                     </Button>
                     <Button
@@ -279,10 +300,10 @@ export function IrisNotificationToast({
                       variant="ghost"
                       size="sm"
                       onPress={() => {
-                        onDismiss();
-                        onOpenModal();
+                        onDismiss()
+                        onOpenModal()
                       }}
-                      className="text-xs h-7.5 rounded-xl px-2 text-muted-foreground hover:text-foreground cursor-pointer ml-auto"
+                      className="ml-auto h-7.5 cursor-pointer rounded-xl px-2 text-xs text-muted-foreground hover:text-foreground"
                     >
                       {t("details")}
                     </Button>
@@ -290,15 +311,17 @@ export function IrisNotificationToast({
                 </form>
               ) : (
                 <div className="space-y-1.5">
-                  <div className="flex items-center gap-1.5 flex-wrap">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     {item.content.actionSelect.options.map((opt) => (
                       <Button
                         key={opt.value}
                         size="sm"
-                        variant={selectedSingle === opt.value ? "default" : "outline"}
+                        variant={
+                          selectedSingle === opt.value ? "default" : "outline"
+                        }
                         disabled={isSubmitting}
                         onPress={() => handleSingleSelect(opt.value)}
-                        className="text-xs h-7 rounded-xl px-2.5 cursor-pointer"
+                        className="h-7 cursor-pointer rounded-xl px-2.5 text-xs"
                       >
                         {opt.label}
                       </Button>
@@ -321,9 +344,12 @@ export function IrisNotificationToast({
                     required={inp.required}
                     value={inputValues[inp.id] || ""}
                     onChange={(e) =>
-                      setInputValues((prev) => ({ ...prev, [inp.id]: e.target.value }))
+                      setInputValues((prev) => ({
+                        ...prev,
+                        [inp.id]: e.target.value,
+                      }))
                     }
-                    className="h-7 text-xs rounded-xl bg-background/80"
+                    className="h-7 rounded-xl bg-background/80 text-xs"
                   />
                 ))}
               </div>
@@ -332,9 +358,9 @@ export function IrisNotificationToast({
                   type="submit"
                   size="sm"
                   disabled={isSubmitting}
-                  className="text-xs h-7.5 rounded-xl px-3 cursor-pointer"
+                  className="h-7.5 cursor-pointer rounded-xl px-3 text-xs"
                 >
-                  <IconSend className="size-3.5 mr-1" />
+                  <IconSend className="mr-1 size-3.5" />
                   {t("submit")}
                 </Button>
                 <Button
@@ -342,10 +368,10 @@ export function IrisNotificationToast({
                   variant="ghost"
                   size="sm"
                   onPress={() => {
-                    onDismiss();
-                    onOpenModal();
+                    onDismiss()
+                    onOpenModal()
                   }}
-                  className="text-xs h-7.5 rounded-xl px-2 text-muted-foreground hover:text-foreground cursor-pointer ml-auto"
+                  className="ml-auto h-7.5 cursor-pointer rounded-xl px-2 text-xs text-muted-foreground hover:text-foreground"
                 >
                   {t("details")}
                 </Button>
@@ -370,10 +396,10 @@ export function IrisNotificationToast({
                 variant="outline"
                 size="sm"
                 onPress={() => {
-                  onDismiss();
-                  onOpenModal();
+                  onDismiss()
+                  onOpenModal()
                 }}
-                className="text-xs h-7 rounded-xl px-2.5 cursor-pointer ml-auto"
+                className="ml-auto h-7 cursor-pointer rounded-xl px-2.5 text-xs"
               >
                 {t("view")}
               </Button>
@@ -382,19 +408,19 @@ export function IrisNotificationToast({
         </div>
       ) : (
         /* Encrypted state action button */
-        <div className="pt-1 flex items-center justify-end">
+        <div className="flex items-center justify-end pt-1">
           <Button
             size="sm"
             onPress={() => {
-              onDismiss();
-              onOpenModal();
+              onDismiss()
+              onOpenModal()
             }}
-            className="text-xs h-7.5 rounded-xl px-3 cursor-pointer"
+            className="h-7.5 cursor-pointer rounded-xl px-3 text-xs"
           >
             {t("unlockAndView")}
           </Button>
         </div>
       )}
     </div>
-  );
+  )
 }

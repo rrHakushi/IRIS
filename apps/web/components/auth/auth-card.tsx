@@ -1,12 +1,12 @@
-import React from "react";
-import { Card, CardContent } from "@workspace/ui/components/card";
-import { cn } from "@workspace/ui/lib/utils";
-import { AuthHeroImage } from "./auth-hero-image";
+import React from "react"
+import { Card, CardContent } from "@workspace/ui/components/card"
+import { cn } from "@workspace/ui/lib/utils"
+import { AuthHeroImage } from "./auth-hero-image"
 
 interface AuthCardProps extends React.ComponentProps<"div"> {
-  children: React.ReactNode;
-  heroImageSrc?: string;
-  heroImageAlt?: string;
+  children: React.ReactNode
+  heroImageSrc?: string
+  heroImageAlt?: string
 }
 
 /**
@@ -20,11 +20,11 @@ export function AuthCard({
   ...props
 }: AuthCardProps) {
   return (
-    <div className={cn("flex flex-col gap-6 w-full", className)} {...props}>
-      <Card className="overflow-hidden p-0 shadow-lg md:min-h-[580px] flex flex-col justify-center">
-        <CardContent className="grid p-0 md:grid-cols-2 md:min-h-[580px]">
+    <div className={cn("flex w-full flex-col gap-6", className)} {...props}>
+      <Card className="flex flex-col justify-center overflow-hidden p-0 shadow-lg md:min-h-[580px]">
+        <CardContent className="grid p-0 md:min-h-[580px] md:grid-cols-2">
           {/* Left Column: Form & Content */}
-          <div className="p-6 sm:p-8 md:p-10 lg:p-12 flex flex-col justify-center">
+          <div className="flex flex-col justify-center p-6 sm:p-8 md:p-10 lg:p-12">
             {children}
           </div>
 
@@ -33,5 +33,5 @@ export function AuthCard({
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

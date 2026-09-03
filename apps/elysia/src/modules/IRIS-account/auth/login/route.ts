@@ -1,7 +1,7 @@
-import { randomBytes } from "node:crypto";
-import { defineRoute, t } from "../../../../router";
-import { verifyPassword, signUserJwt } from "../../../../utils/auth-crypto";
-import { notifyUserLogin } from "../../../../utils/client-info";
+import { randomBytes } from "node:crypto"
+import { defineRoute, t } from "../../../../router"
+import { verifyPassword, signUserJwt } from "../../../../utils/auth-crypto"
+import { notifyUserLogin } from "../../../../utils/client-info"
 
 export default defineRoute({
   schema: {
@@ -37,21 +37,18 @@ export default defineRoute({
   },
 
   async POST({ body, prisma, cache, request }) {
-    const rawIdentifier = body.identifier.trim();
-    const lowerIdentifier = rawIdentifier.toLowerCase();
+    const rawIdentifier = body.identifier.trim()
+    const lowerIdentifier = rawIdentifier.toLowerCase()
 
     // 1. Locate user by username or email
     const user = await prisma.user.findFirst({
       where: {
-        OR: [
-          { email: lowerIdentifier },
-          { username: rawIdentifier },
-        ],
+        OR: [{ email: lowerIdentifier }, { username: rawIdentifier }],
       },
       include: {
         passkeys: true,
       },
-    });
+    })
 
     if (!user) {
       return new Response(
@@ -60,11 +57,14 @@ export default defineRoute({
           message: "Invalid username, email, or password.",
         }),
         { status: 401, headers: { "content-type": "application/json" } }
-      );
+      )
     }
 
     // 2. Verify password
-    const isPasswordValid = await verifyPassword(body.password, user.passwordHash);
+    const isPasswordValid = await verifyPassword(
+      body.password,
+      user.passwordHash
+    )
     if (!isPasswordValid) {
       return new Response(
         JSON.stringify({
@@ -72,29 +72,25 @@ export default defineRoute({
           message: "Invalid username, email, or password.",
         }),
         { status: 401, headers: { "content-type": "application/json" } }
-      );
+      )
     }
 
     // 3. Inspect MFA requirements
-    const hasTotp = user.TOTPEnabled && Boolean(user.TOTPSecret);
-    const hasEmail = user.emailMfaEnabled;
-    const hasPasskeys = user.passkeys.length > 0;
-    const isMfaActive = hasTotp || hasEmail || hasPasskeys;
+    const hasTotp = user.TOTPEnabled && Boolean(user.TOTPSecret)
+    const hasEmail = user.emailMfaEnabled
+    const hasPasskeys = user.passkeys.length > 0
+    const isMfaActive = hasTotp || hasEmail || hasPasskeys
 
     if (isMfaActive) {
-      const mfaTicket = `mfa_${randomBytes(24).toString("hex")}`;
+      const mfaTicket = `mfa_${randomBytes(24).toString("hex")}`
 
       // Cache ticket for 5 minutes (300 seconds)
-      await cache.set(
-        `auth:mfa-ticket:${mfaTicket}`,
-        { userId: user.id },
-        300
-      );
+      await cache.set(`auth:mfa-ticket:${mfaTicket}`, { userId: user.id }, 300)
 
-      const allowedMfaTypes: ("totp" | "email" | "passkey")[] = [];
-      if (hasTotp) allowedMfaTypes.push("totp");
-      if (hasEmail) allowedMfaTypes.push("email");
-      if (hasPasskeys) allowedMfaTypes.push("passkey");
+      const allowedMfaTypes: ("totp" | "email" | "passkey")[] = []
+      if (hasTotp) allowedMfaTypes.push("totp")
+      if (hasEmail) allowedMfaTypes.push("email")
+      if (hasPasskeys) allowedMfaTypes.push("passkey")
 
       return {
         success: true,
@@ -103,17 +99,17 @@ export default defineRoute({
         allowedMfaTypes,
         user: null,
         token: null,
-      };
+      }
     }
 
     // 4. Issue authenticated session token
     const token = await signUserJwt({
       ...user,
       username: user.username.trim(),
-    });
+    })
 
     // Send login notification asynchronously
-    notifyUserLogin(user.id, request);
+    notifyUserLogin(user.id, request)
 
     return {
       success: true,
@@ -129,6 +125,6 @@ export default defineRoute({
           : null,
       },
       token,
-    };
+    }
   },
-});
+})

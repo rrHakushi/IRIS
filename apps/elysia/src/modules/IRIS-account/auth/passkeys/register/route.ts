@@ -1,5 +1,5 @@
-import { generateRegistrationOptions } from "@simplewebauthn/server";
-import { defineRoute, t } from "../../../../../router";
+import { generateRegistrationOptions } from "@simplewebauthn/server"
+import { defineRoute, t } from "../../../../../router"
 
 export default defineRoute({
   schema: {
@@ -39,45 +39,52 @@ export default defineRoute({
   async POST({ session, prisma, cache, request }) {
     if (!session.isAuthenticated) {
       return new Response(
-        JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
+        JSON.stringify({
+          error: "Unauthorized",
+          message: "Authentication required",
+        }),
         { status: 401, headers: { "content-type": "application/json" } }
-      );
+      )
     }
 
-    const sessionUser = session.getUser();
+    const sessionUser = session.getUser()
     if (!sessionUser) {
       return new Response(
-        JSON.stringify({ error: "Unauthorized", message: "User session not found" }),
+        JSON.stringify({
+          error: "Unauthorized",
+          message: "User session not found",
+        }),
         { status: 401, headers: { "content-type": "application/json" } }
-      );
+      )
     }
 
     const user = await prisma.user.findUnique({
       where: { id: sessionUser.id },
       include: { passkeys: true },
-    });
+    })
 
     if (!user) {
       return new Response(
         JSON.stringify({ error: "NotFound", message: "User not found" }),
         { status: 404, headers: { "content-type": "application/json" } }
-      );
+      )
     }
 
-    const originHeader = request?.headers.get("origin") || request?.headers.get("referer");
+    const originHeader =
+      request?.headers.get("origin") || request?.headers.get("referer")
     let origin = process.env.NEXTAUTH_URL!
     if (originHeader) {
       try {
-        const u = new URL(originHeader);
-        origin = `${u.protocol}//${u.host}`;
-      } catch { }
+        const u = new URL(originHeader)
+        origin = `${u.protocol}//${u.host}`
+      } catch {}
     }
 
-    let rpID = "localhost";
+    let rpID = "localhost"
     try {
-      rpID = process.env.RP_ID || new URL(origin).hostname;
+      rpID = process.env.RP_ID || new URL(origin).hostname
     } catch {
-      rpID = "localhost";
+      rpID = "localhost"
     }
 
     const options = await generateRegistrationOptions({
@@ -96,10 +103,10 @@ export default defineRoute({
         userVerification: "preferred",
       },
       attestationType: "none",
-    });
+    })
 
     // Cache challenge for 5 minutes
-    await cache.set(`auth:passkey-reg:${user.id}`, options.challenge, 300);
+    await cache.set(`auth:passkey-reg:${user.id}`, options.challenge, 300)
 
     return {
       challenge: options.challenge,
@@ -118,15 +125,17 @@ export default defineRoute({
       })),
       authenticatorSelection: options.authenticatorSelection
         ? {
-          authenticatorAttachment: options.authenticatorSelection.authenticatorAttachment,
-          requireResidentKey: options.authenticatorSelection.requireResidentKey,
-          residentKey: options.authenticatorSelection.residentKey,
-          userVerification: options.authenticatorSelection.userVerification,
-        }
+            authenticatorAttachment:
+              options.authenticatorSelection.authenticatorAttachment,
+            requireResidentKey:
+              options.authenticatorSelection.requireResidentKey,
+            residentKey: options.authenticatorSelection.residentKey,
+            userVerification: options.authenticatorSelection.userVerification,
+          }
         : undefined,
       timeout: options.timeout ?? 60000,
       attestation: options.attestation ?? "none",
       excludeCredentials: options.excludeCredentials,
-    };
+    }
   },
-});
+})

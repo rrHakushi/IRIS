@@ -1,10 +1,10 @@
-import { defineRoute, t } from "@/router";
-import { NotFound } from "elysia";
+import { defineRoute, t } from "@/router"
+import { NotFound } from "elysia"
 
-import { StudioSearchResponseSchema, type StudioSearchResponse } from "./types";
-import { NotFoundResponseSchema } from "../../../../../types";
+import { StudioSearchResponseSchema, type StudioSearchResponse } from "./types"
+import { NotFoundResponseSchema } from "../../../../../types"
 
-const SEARCH_STUDIOS_TTL = 60 * 60; // 1 hour
+const SEARCH_STUDIOS_TTL = 60 * 60 // 1 hour
 
 export default defineRoute({
   schema: {
@@ -20,7 +20,8 @@ export default defineRoute({
     },
     detail: {
       summary: "Search studios",
-      description: "Searches production and animation studios by name and returns matching studio preview records.",
+      description:
+        "Searches production and animation studios by name and returns matching studio preview records.",
       tags: ["Media - Studio"],
     },
   },
@@ -32,17 +33,17 @@ export default defineRoute({
   },
 
   async GET({ query, prisma, cache, cacheKeys }) {
-    const { q } = query;
-    const cleanQuery = decodeURIComponent(q).replace(/\+/g, " ").trim();
-    const cacheKey = cacheKeys.search.studios(cleanQuery);
+    const { q } = query
+    const cleanQuery = decodeURIComponent(q).replace(/\+/g, " ").trim()
+    const cacheKey = cacheKeys.search.studios(cleanQuery)
 
     if (!cleanQuery || cleanQuery.length < 3) {
-      return new NotFound("Query must be at least 3 characters long");
+      return new NotFound("Query must be at least 3 characters long")
     }
 
-    const cached = await cache.get<StudioSearchResponse>(cacheKey);
+    const cached = await cache.get<StudioSearchResponse>(cacheKey)
     if (cached) {
-      return cached;
+      return cached
     }
 
     const data = await prisma.studio.findMany({
@@ -53,14 +54,13 @@ export default defineRoute({
         id: true,
         name: true,
         isAnimationStudio: true,
-
       },
       orderBy: {
         name: "asc",
       },
-    });
+    })
 
-    await cache.set(cacheKey, data, SEARCH_STUDIOS_TTL);
-    return data;
+    await cache.set(cacheKey, data, SEARCH_STUDIOS_TTL)
+    return data
   },
-});
+})

@@ -1,11 +1,11 @@
-import { defineRoute, t } from "@/router";
-import { queueTvSearchFetch } from "@/services/media-queue";
-import { NotFound } from "elysia";
+import { defineRoute, t } from "@/router"
+import { queueTvSearchFetch } from "@/services/media-queue"
+import { NotFound } from "elysia"
 
-import { TvSearchResponseSchema, type TvSearchResponse } from "./types";
-import { NotFoundResponseSchema } from "../../../../../types";
+import { TvSearchResponseSchema, type TvSearchResponse } from "./types"
+import { NotFoundResponseSchema } from "../../../../../types"
 
-const SEARCH_TV_TTL = 60 * 60; // 1 hour
+const SEARCH_TV_TTL = 60 * 60 // 1 hour
 
 export default defineRoute({
   schema: {
@@ -21,7 +21,8 @@ export default defineRoute({
     },
     detail: {
       summary: "Search TV shows",
-      description: "Searches TV shows by title or synonyms and returns matching TV show preview records.",
+      description:
+        "Searches TV shows by title or synonyms and returns matching TV show preview records.",
       tags: ["Media - TV"],
     },
   },
@@ -33,17 +34,17 @@ export default defineRoute({
   },
 
   async GET({ query, prisma, cache, cacheKeys, logger }) {
-    const { q } = query;
-    const cleanQuery = decodeURIComponent(q).replace(/\+/g, " ").trim();
-    const cacheKey = cacheKeys.search.tv(cleanQuery);
+    const { q } = query
+    const cleanQuery = decodeURIComponent(q).replace(/\+/g, " ").trim()
+    const cacheKey = cacheKeys.search.tv(cleanQuery)
 
     if (!cleanQuery || cleanQuery.length < 3) {
-      return new NotFound("Query must be at least 3 characters long");
+      return new NotFound("Query must be at least 3 characters long")
     }
 
-    const cached = await cache.get<TvSearchResponse>(cacheKey);
+    const cached = await cache.get<TvSearchResponse>(cacheKey)
     if (cached) {
-      return cached;
+      return cached
     }
 
     const data = await prisma.tv.findMany({
@@ -66,20 +67,23 @@ export default defineRoute({
       orderBy: {
         titlePrimary: "asc",
       },
-    });
+    })
 
     if (data.length === 0) {
-      logger.warn(`No data found for query: ${cleanQuery}, triggering refresh`);
-      const results = await queueTvSearchFetch(cleanQuery);
-      await cache.set(cacheKey, results, SEARCH_TV_TTL);
-      return results;
+      logger.warn(`No data found for query: ${cleanQuery}, triggering refresh`)
+      const results = await queueTvSearchFetch(cleanQuery)
+      await cache.set(cacheKey, results, SEARCH_TV_TTL)
+      return results
     }
 
-    await cache.set(cacheKey, data, SEARCH_TV_TTL);
+    await cache.set(cacheKey, data, SEARCH_TV_TTL)
     void queueTvSearchFetch(cleanQuery).catch((err) => {
-      logger.error(`[SearchTvRoute] Failed to queue background search for "${cleanQuery}":`, err);
-    });
+      logger.error(
+        `[SearchTvRoute] Failed to queue background search for "${cleanQuery}":`,
+        err
+      )
+    })
 
-    return data;
+    return data
   },
-});
+})

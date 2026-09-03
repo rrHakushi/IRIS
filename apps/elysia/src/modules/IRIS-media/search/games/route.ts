@@ -1,11 +1,11 @@
-import { defineRoute, t } from "@/router";
-import { queueGameSearchFetch } from "@/services/media-queue";
-import { NotFound } from "elysia";
+import { defineRoute, t } from "@/router"
+import { queueGameSearchFetch } from "@/services/media-queue"
+import { NotFound } from "elysia"
 
-import { GameSearchResponseSchema, type GameSearchResponse } from "./types";
-import { NotFoundResponseSchema } from "../../../../../types";
+import { GameSearchResponseSchema, type GameSearchResponse } from "./types"
+import { NotFoundResponseSchema } from "../../../../../types"
 
-const SEARCH_GAMES_TTL = 60 * 60; // 1 hour
+const SEARCH_GAMES_TTL = 60 * 60 // 1 hour
 
 export default defineRoute({
   schema: {
@@ -21,7 +21,8 @@ export default defineRoute({
     },
     detail: {
       summary: "Search games",
-      description: "Searches video games by title or synonyms and returns matching game preview records.",
+      description:
+        "Searches video games by title or synonyms and returns matching game preview records.",
       tags: ["Media - Game"],
     },
   },
@@ -33,17 +34,17 @@ export default defineRoute({
   },
 
   async GET({ query, prisma, cache, cacheKeys, logger }) {
-    const { q } = query;
-    const cleanQuery = decodeURIComponent(q).replace(/\+/g, " ").trim();
-    const cacheKey = cacheKeys.search.games(cleanQuery);
+    const { q } = query
+    const cleanQuery = decodeURIComponent(q).replace(/\+/g, " ").trim()
+    const cacheKey = cacheKeys.search.games(cleanQuery)
 
     if (!cleanQuery || cleanQuery.length < 3) {
-      return new NotFound("Query must be at least 3 characters long");
+      return new NotFound("Query must be at least 3 characters long")
     }
 
-    const cached = await cache.get<GameSearchResponse>(cacheKey);
+    const cached = await cache.get<GameSearchResponse>(cacheKey)
     if (cached) {
-      return cached;
+      return cached
     }
 
     const data = await prisma.game.findMany({
@@ -65,20 +66,23 @@ export default defineRoute({
       orderBy: {
         titlePrimary: "asc",
       },
-    });
+    })
 
     if (data.length === 0) {
-      logger.warn(`No data found for query: ${cleanQuery}, triggering refresh`);
-      const results = await queueGameSearchFetch(cleanQuery);
-      await cache.set(cacheKey, results, SEARCH_GAMES_TTL);
-      return results;
+      logger.warn(`No data found for query: ${cleanQuery}, triggering refresh`)
+      const results = await queueGameSearchFetch(cleanQuery)
+      await cache.set(cacheKey, results, SEARCH_GAMES_TTL)
+      return results
     }
 
-    await cache.set(cacheKey, data, SEARCH_GAMES_TTL);
+    await cache.set(cacheKey, data, SEARCH_GAMES_TTL)
     void queueGameSearchFetch(cleanQuery).catch((err) => {
-      logger.error(`[SearchGamesRoute] Failed to queue background search for "${cleanQuery}":`, err);
-    });
+      logger.error(
+        `[SearchGamesRoute] Failed to queue background search for "${cleanQuery}":`,
+        err
+      )
+    })
 
-    return data;
+    return data
   },
-});
+})

@@ -1,25 +1,25 @@
-"use client";
+"use client"
 
-import React, { useState } from "react";
-import { useTranslations } from "next-intl";
+import React, { useState } from "react"
+import { useTranslations } from "next-intl"
 import {
   Dialog,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@workspace/ui/components/dialog";
-import { Button } from "@workspace/ui/components/button";
-import { Input } from "@workspace/ui/components/input";
-import { Spinner } from "@workspace/ui/components/spinner";
-import { IconKey, IconPlus, IconClock } from "@tabler/icons-react";
-import { cn } from "@workspace/ui/lib/utils";
-import { EXPIRATION_OPTIONS, type ExpirationOption } from "./types";
+} from "@workspace/ui/components/dialog"
+import { Button } from "@workspace/ui/components/button"
+import { Input } from "@workspace/ui/components/input"
+import { Spinner } from "@workspace/ui/components/spinner"
+import { IconKey, IconPlus, IconClock } from "@tabler/icons-react"
+import { cn } from "@workspace/ui/lib/utils"
+import { EXPIRATION_OPTIONS, type ExpirationOption } from "./types"
 
 export interface CreateApiKeyDialogProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCreate: (name: string, expirationDays: number | null) => Promise<boolean>;
-  isCreating: boolean;
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
+  onCreate: (name: string, expirationDays: number | null) => Promise<boolean>
+  isCreating: boolean
 }
 
 export function CreateApiKeyDialog({
@@ -28,69 +28,69 @@ export function CreateApiKeyDialog({
   onCreate,
   isCreating,
 }: CreateApiKeyDialogProps): React.JSX.Element {
-  const t = useTranslations("navigation.settings.account.apiKeys");
-  const [name, setName] = useState("");
-  const [selectedDays, setSelectedDays] = useState<number | null>(30);
-  const [error, setError] = useState<string | null>(null);
+  const t = useTranslations("navigation.settings.account.apiKeys")
+  const [name, setName] = useState("")
+  const [selectedDays, setSelectedDays] = useState<number | null>(30)
+  const [error, setError] = useState<string | null>(null)
 
   const getDurationLabel = (days: number | null): string => {
     switch (days) {
       case 7:
-        return t("durations.7days");
+        return t("durations.7days")
       case 30:
-        return t("durations.30days");
+        return t("durations.30days")
       case 60:
-        return t("durations.60days");
+        return t("durations.60days")
       case 90:
-        return t("durations.90days");
+        return t("durations.90days")
       case 365:
-        return t("durations.1year");
+        return t("durations.1year")
       case null:
       default:
-        return t("durations.never");
+        return t("durations.never")
     }
-  };
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanName = name.trim();
+    e.preventDefault()
+    const cleanName = name.trim()
     if (!cleanName) {
-      setError(t("nameRequiredError"));
-      return;
+      setError(t("nameRequiredError"))
+      return
     }
     if (cleanName.length > 64) {
-      setError(t("nameMaxLengthError"));
-      return;
+      setError(t("nameMaxLengthError"))
+      return
     }
 
-    setError(null);
-    const success = await onCreate(cleanName, selectedDays);
+    setError(null)
+    const success = await onCreate(cleanName, selectedDays)
     if (success) {
-      setName("");
-      setSelectedDays(30);
+      setName("")
+      setSelectedDays(30)
     }
-  };
+  }
 
   const handleClose = () => {
-    if (isCreating) return;
-    setError(null);
-    setName("");
-    setSelectedDays(30);
-    onOpenChange(false);
-  };
+    if (isCreating) return
+    setError(null)
+    setName("")
+    setSelectedDays(30)
+    onOpenChange(false)
+  }
 
   return (
     <Dialog
       isOpen={isOpen}
       onOpenChange={(open) => {
-        if (!open) handleClose();
-        else onOpenChange(true);
+        if (!open) handleClose()
+        else onOpenChange(true)
       }}
       className="sm:max-w-md"
     >
       <DialogHeader>
         <div className="flex items-center gap-2.5 text-primary">
-          <div className="size-8 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
             <IconKey className="size-4.5" />
           </div>
           <DialogTitle>{t("createTitle")}</DialogTitle>
@@ -101,7 +101,10 @@ export function CreateApiKeyDialog({
         {/* Name Input */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-xs">
-            <label htmlFor="apiKeyName" className="font-semibold text-foreground">
+            <label
+              htmlFor="apiKeyName"
+              className="font-semibold text-foreground"
+            >
               {t("keyNameLabel")}
             </label>
             <span className="text-muted-foreground">{name.length}/64</span>
@@ -112,15 +115,15 @@ export function CreateApiKeyDialog({
             placeholder={t("keyNamePlaceholder")}
             value={name}
             onChange={(e) => {
-              setName(e.target.value);
-              if (error) setError(null);
+              setName(e.target.value)
+              if (error) setError(null)
             }}
             maxLength={64}
             disabled={isCreating}
-            className="w-full text-xs rounded-xl"
+            className="w-full rounded-xl text-xs"
             autoFocus
           />
-          {error && <p className="text-xs text-destructive mt-1">{error}</p>}
+          {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
         </div>
 
         {/* Expiration Presets */}
@@ -131,7 +134,7 @@ export function CreateApiKeyDialog({
           </div>
           <div className="grid grid-cols-3 gap-2">
             {EXPIRATION_OPTIONS.map((opt: ExpirationOption) => {
-              const isSelected = selectedDays === opt.days;
+              const isSelected = selectedDays === opt.days
               return (
                 <button
                   key={opt.days ?? "never"}
@@ -139,15 +142,15 @@ export function CreateApiKeyDialog({
                   onClick={() => setSelectedDays(opt.days)}
                   disabled={isCreating}
                   className={cn(
-                    "text-xs py-2 px-3 rounded-xl border font-medium transition-all text-center",
+                    "rounded-xl border px-3 py-2 text-center text-xs font-medium transition-all",
                     isSelected
-                      ? "border-primary bg-primary/15 text-primary ring-1 ring-primary/40 font-semibold shadow-xs"
-                      : "border-border/70 bg-background/50 hover:bg-muted/40 text-muted-foreground hover:text-foreground"
+                      ? "border-primary bg-primary/15 font-semibold text-primary shadow-xs ring-1 ring-primary/40"
+                      : "border-border/70 bg-background/50 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
                   )}
                 >
                   {getDurationLabel(opt.days)}
                 </button>
-              );
+              )
             })}
           </div>
           <p className="text-[11px] text-muted-foreground">
@@ -171,7 +174,7 @@ export function CreateApiKeyDialog({
             type="submit"
             variant="default"
             disabled={isCreating || !name.trim()}
-            className="rounded-xl gap-1.5 min-w-[120px]"
+            className="min-w-[120px] gap-1.5 rounded-xl"
           >
             {isCreating ? (
               <>
@@ -188,5 +191,5 @@ export function CreateApiKeyDialog({
         </DialogFooter>
       </form>
     </Dialog>
-  );
+  )
 }

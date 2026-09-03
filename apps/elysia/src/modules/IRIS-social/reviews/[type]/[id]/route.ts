@@ -1,4 +1,4 @@
-import { defineRoute, t } from "@/router";
+import { defineRoute, t } from "@/router"
 
 export default defineRoute({
   schema: {
@@ -36,7 +36,7 @@ export default defineRoute({
       success: true,
       message: `GET /reviews/${params.type}/${params.id} handled successfully`,
       timestamp: new Date().toISOString(),
-    };
+    }
   },
 
   async POST({ params, body, session, prisma }) {
@@ -44,14 +44,14 @@ export default defineRoute({
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "content-type": "application/json" },
-      });
+      })
     }
 
     return {
       success: true,
       message: `POST /reviews/${params.type}/${params.id} handled successfully`,
       timestamp: new Date().toISOString(),
-    };
+    }
   },
 
   async PATCH({ params, body, session, prisma }) {
@@ -59,14 +59,14 @@ export default defineRoute({
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "content-type": "application/json" },
-      });
+      })
     }
 
     return {
       success: true,
       message: `PATCH /reviews/${params.type}/${params.id} handled successfully`,
       timestamp: new Date().toISOString(),
-    };
+    }
   },
 
   async DELETE({ params, session, prisma }) {
@@ -74,13 +74,13 @@ export default defineRoute({
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "content-type": "application/json" },
-      });
+      })
     }
 
     return {
       success: true,
       message: `DELETE /reviews/${params.type}/${params.id} handled successfully`,
       timestamp: new Date().toISOString(),
-    };
+    }
   },
-});
+})

@@ -1,25 +1,25 @@
-"use client";
+"use client"
 
-import React, { useState } from "react";
-import { useTranslations } from "next-intl";
+import React, { useState } from "react"
+import { useTranslations } from "next-intl"
 import {
   IconAlertCircle,
   IconArrowLeft,
   IconSend,
   IconCheck,
-} from "@tabler/icons-react";
-import { Button } from "@workspace/ui/components/button";
-import { Input } from "@workspace/ui/components/input";
-import { FieldGroup } from "@workspace/ui/components/field";
-import { Spinner } from "@workspace/ui/components/spinner";
+} from "@tabler/icons-react"
+import { Button } from "@workspace/ui/components/button"
+import { Input } from "@workspace/ui/components/input"
+import { FieldGroup } from "@workspace/ui/components/field"
+import { Spinner } from "@workspace/ui/components/spinner"
 
 interface LoginQuickConnectProps {
-  code: string | null;
-  loading: boolean;
-  errorMessage: string | null;
-  initialIdentifier?: string;
-  onSendNotification?: (userIdentifier: string) => Promise<void>;
-  onBack: () => void;
+  code: string | null
+  loading: boolean
+  errorMessage: string | null
+  initialIdentifier?: string
+  onSendNotification?: (userIdentifier: string) => Promise<void>
+  onBack: () => void
 }
 
 export function LoginQuickConnect({
@@ -30,33 +30,33 @@ export function LoginQuickConnect({
   onSendNotification,
   onBack,
 }: LoginQuickConnectProps) {
-  const t = useTranslations("auth.login");
-  const [userIdentifier, setUserIdentifier] = useState(initialIdentifier);
-  const [isSendingPrompt, setIsSendingPrompt] = useState(false);
-  const [promptSuccess, setPromptSuccess] = useState(false);
+  const t = useTranslations("auth.login")
+  const [userIdentifier, setUserIdentifier] = useState(initialIdentifier)
+  const [isSendingPrompt, setIsSendingPrompt] = useState(false)
+  const [promptSuccess, setPromptSuccess] = useState(false)
 
   const handleSendPrompt = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userIdentifier.trim() || !onSendNotification) return;
+    e.preventDefault()
+    if (!userIdentifier.trim() || !onSendNotification) return
 
-    setIsSendingPrompt(true);
-    setPromptSuccess(false);
+    setIsSendingPrompt(true)
+    setPromptSuccess(false)
     try {
-      await onSendNotification(userIdentifier.trim());
-      setPromptSuccess(true);
+      await onSendNotification(userIdentifier.trim())
+      setPromptSuccess(true)
     } finally {
-      setIsSendingPrompt(false);
+      setIsSendingPrompt(false)
     }
-  };
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center text-center gap-4 sm:gap-6">
-      <FieldGroup className="items-center text-center gap-3 sm:gap-4 w-full">
+    <div className="flex flex-col items-center justify-center gap-4 text-center sm:gap-6">
+      <FieldGroup className="w-full items-center gap-3 text-center sm:gap-4">
         <div className="flex flex-col items-center gap-1.5 sm:gap-2">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
             {t("loginWithCode")}
           </h1>
-          <p className="text-balance text-muted-foreground text-xs sm:text-sm max-w-xs">
+          <p className="max-w-xs text-xs text-balance text-muted-foreground sm:text-sm">
             {t("toLogInOpenSettings")}
           </p>
         </div>
@@ -71,19 +71,19 @@ export function LoginQuickConnect({
         {loading ? (
           <div className="flex flex-col items-center gap-3 py-6 sm:py-8">
             <Spinner className="size-8" />
-            <span className="text-xs sm:text-sm text-muted-foreground">
+            <span className="text-xs text-muted-foreground sm:text-sm">
               {t("generatingCode")}
             </span>
           </div>
         ) : (
-          <div className="flex items-center justify-center rounded-xl border border-border bg-muted/40 px-4 py-3 sm:px-6 sm:py-4 my-1 sm:my-2 w-full max-w-[280px] sm:max-w-xs">
-            <span className="font-mono text-2xl sm:text-3xl font-bold tracking-widest text-foreground whitespace-nowrap select-all">
+          <div className="my-1 flex w-full max-w-[280px] items-center justify-center rounded-xl border border-border bg-muted/40 px-4 py-3 sm:my-2 sm:max-w-xs sm:px-6 sm:py-4">
+            <span className="font-mono text-2xl font-bold tracking-widest whitespace-nowrap text-foreground select-all sm:text-3xl">
               {code}
             </span>
           </div>
         )}
 
-        <span className="text-xs sm:text-sm text-muted-foreground">
+        <span className="text-xs text-muted-foreground sm:text-sm">
           {t("waitingForAuth")}
         </span>
 
@@ -91,9 +91,9 @@ export function LoginQuickConnect({
         {onSendNotification && (
           <form
             onSubmit={handleSendPrompt}
-            className="w-full max-w-xs space-y-2 pt-2 border-t border-border/50"
+            className="w-full max-w-xs space-y-2 border-t border-border/50 pt-2"
           >
-            <span className="text-[11px] font-semibold text-muted-foreground block text-left">
+            <span className="block text-left text-[11px] font-semibold text-muted-foreground">
               {t("sendPromptToDevice")}
             </span>
             <div className="flex items-center gap-1.5">
@@ -102,16 +102,16 @@ export function LoginQuickConnect({
                 placeholder={t("sendPromptPlaceholder")}
                 value={userIdentifier}
                 onChange={(e) => {
-                  setUserIdentifier(e.target.value);
-                  setPromptSuccess(false);
+                  setUserIdentifier(e.target.value)
+                  setPromptSuccess(false)
                 }}
-                className="h-8 text-xs rounded-xl bg-background flex-1"
+                className="h-8 flex-1 rounded-xl bg-background text-xs"
               />
               <Button
                 type="submit"
                 size="sm"
                 disabled={isSendingPrompt || !userIdentifier.trim()}
-                className="h-8 text-xs rounded-xl px-2.5 gap-1 shrink-0"
+                className="h-8 shrink-0 gap-1 rounded-xl px-2.5 text-xs"
               >
                 {isSendingPrompt ? (
                   <Spinner className="size-3.5" />
@@ -124,7 +124,7 @@ export function LoginQuickConnect({
               </Button>
             </div>
             {promptSuccess && (
-              <span className="text-[11px] text-primary font-medium block text-left">
+              <span className="block text-left text-[11px] font-medium text-primary">
                 {t("promptSent")}
               </span>
             )}
@@ -136,12 +136,12 @@ export function LoginQuickConnect({
           variant="outline"
           size="sm"
           onClick={onBack}
-          className="mt-2 sm:mt-4 h-9 sm:h-10 px-3 sm:px-4 text-xs sm:text-sm"
+          className="mt-2 h-9 px-3 text-xs sm:mt-4 sm:h-10 sm:px-4 sm:text-sm"
         >
-          <IconArrowLeft className="size-3.5 sm:size-4 mr-1.5" />
+          <IconArrowLeft className="mr-1.5 size-3.5 sm:size-4" />
           {t("backToCredentials")}
         </Button>
       </FieldGroup>
     </div>
-  );
+  )
 }

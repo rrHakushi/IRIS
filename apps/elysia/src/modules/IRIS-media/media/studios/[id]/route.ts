@@ -1,4 +1,4 @@
-import { defineRoute, t } from "@/router";
+import { defineRoute, t } from "@/router"
 
 export default defineRoute({
   schema: {
@@ -19,6 +19,6 @@ export default defineRoute({
       success: true,
       message: `GET /media/studios/${params.id} handled successfully`,
       timestamp: new Date().toISOString(),
-    };
+    }
   },
-});
+})

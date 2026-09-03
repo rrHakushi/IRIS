@@ -1,13 +1,15 @@
-import { defineRoute, t } from "@/router";
-import { mediaDbSyncer, queueMangaFetch } from "@/services/media-queue";
-import type { Prisma } from "@IRIS/database";
-import { NotFound } from "elysia";
-import { MangaResponseSchema } from "./types";
-import { NotFoundResponseSchema } from "../../../../../../types";
-import { fetchMediaRelations, type MediaRelationItem } from "@/modules/IRIS-media/helpers/media-relations";
+import { defineRoute, t } from "@/router"
+import { mediaDbSyncer, queueMangaFetch } from "@/services/media-queue"
+import type { Prisma } from "@IRIS/database"
+import { NotFound } from "elysia"
+import { MangaResponseSchema } from "./types"
+import { NotFoundResponseSchema } from "../../../../../../types"
+import {
+  fetchMediaRelations,
+  type MediaRelationItem,
+} from "@/modules/IRIS-media/helpers/media-relations"
 
-const MANGA_CACHE_TTL = 60 * 60 * 12; // 12 hours
-
+const MANGA_CACHE_TTL = 60 * 60 * 12 // 12 hours
 
 export const mangaInclude = {
   characters: {
@@ -23,15 +25,15 @@ export const mangaInclude = {
       person: true,
     },
   },
-} as const satisfies Prisma.MangaInclude;
+} as const satisfies Prisma.MangaInclude
 
 export type MangaDetails = NonNullable<
   Prisma.MangaGetPayload<{
-    include: typeof mangaInclude;
+    include: typeof mangaInclude
   }>
 > & {
-  relations: MediaRelationItem[];
-};
+  relations: MediaRelationItem[]
+}
 
 export default defineRoute({
   cacheKeys: {
@@ -50,18 +52,19 @@ export default defineRoute({
     },
     detail: {
       summary: "Get manga by ID",
-      description: "Fetches manga details with characters, staff, tags, genres, and media relations.",
+      description:
+        "Fetches manga details with characters, staff, tags, genres, and media relations.",
       tags: ["Media - Manga"],
     },
   },
 
   async GET({ params, prisma, cache, cacheKeys, logger }) {
-    const id = params.id;
-    const cacheKey = cacheKeys.manga.id(id);
+    const id = params.id
+    const cacheKey = cacheKeys.manga.id(id)
 
-    const cached = await cache.get<MangaDetails>(cacheKey);
+    const cached = await cache.get<MangaDetails>(cacheKey)
     if (cached) {
-      return cached;
+      return cached
     }
 
     const data = await prisma.manga.findUnique({
@@ -69,26 +72,29 @@ export default defineRoute({
         id: id,
       },
       include: mangaInclude,
-    });
+    })
 
     if (!data) {
-      return new NotFound(`Manga not found with ID ${id}`);
+      return new NotFound(`Manga not found with ID ${id}`)
     }
 
-    const relations = await fetchMediaRelations(prisma, "MANGA", data.id);
+    const relations = await fetchMediaRelations(prisma, "MANGA", data.id)
     const result: MangaDetails = {
       ...data,
       relations,
-    };
-
-    await cache.set(cacheKey, result, MANGA_CACHE_TTL);
-
-    if (data.anilistId && mediaDbSyncer.isRecordStale(data, 'MANGA')) {
-      void queueMangaFetch(data.anilistId).catch((err) => {
-        logger.error(`[MangaRoute] Failed to queue background fetch for id ${id} (anilist id ${data.anilistId}):`, err);
-      });
     }
 
-    return result;
+    await cache.set(cacheKey, result, MANGA_CACHE_TTL)
+
+    if (data.anilistId && mediaDbSyncer.isRecordStale(data, "MANGA")) {
+      void queueMangaFetch(data.anilistId).catch((err) => {
+        logger.error(
+          `[MangaRoute] Failed to queue background fetch for id ${id} (anilist id ${data.anilistId}):`,
+          err
+        )
+      })
+    }
+
+    return result
   },
-});
+})

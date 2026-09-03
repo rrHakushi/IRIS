@@ -1,12 +1,15 @@
-import { defineRoute, t } from "@/router";
-import { mediaDbSyncer, queueGameFetch } from "@/services/media-queue";
-import type { Prisma } from "@IRIS/database";
-import { NotFound } from "elysia";
-import { GameResponseSchema } from "./types";
-import { NotFoundResponseSchema } from "../../../../../../types";
-import { fetchMediaRelations, type MediaRelationItem } from "@/modules/IRIS-media/helpers/media-relations";
+import { defineRoute, t } from "@/router"
+import { mediaDbSyncer, queueGameFetch } from "@/services/media-queue"
+import type { Prisma } from "@IRIS/database"
+import { NotFound } from "elysia"
+import { GameResponseSchema } from "./types"
+import { NotFoundResponseSchema } from "../../../../../../types"
+import {
+  fetchMediaRelations,
+  type MediaRelationItem,
+} from "@/modules/IRIS-media/helpers/media-relations"
 
-const GAME_CACHE_TTL = 60 * 60 * 12; // 12 hours
+const GAME_CACHE_TTL = 60 * 60 * 12 // 12 hours
 
 export const gameInclude = {
   genres: true,
@@ -16,15 +19,15 @@ export const gameInclude = {
       studio: true,
     },
   },
-} as const satisfies Prisma.GameInclude;
+} as const satisfies Prisma.GameInclude
 
 export type GameDetails = NonNullable<
   Prisma.GameGetPayload<{
-    include: typeof gameInclude;
+    include: typeof gameInclude
   }>
 > & {
-  relations: MediaRelationItem[];
-};
+  relations: MediaRelationItem[]
+}
 
 export default defineRoute({
   cacheKeys: {
@@ -43,18 +46,19 @@ export default defineRoute({
     },
     detail: {
       summary: "Get game by ID",
-      description: "Fetches game details with studios, tags, genres, and media relations.",
+      description:
+        "Fetches game details with studios, tags, genres, and media relations.",
       tags: ["Media - Game"],
     },
   },
 
   async GET({ params, prisma, cache, cacheKeys, logger }) {
-    const id = params.id;
-    const cacheKey = cacheKeys.game.id(id);
+    const id = params.id
+    const cacheKey = cacheKeys.game.id(id)
 
-    const cached = await cache.get<GameDetails>(cacheKey);
+    const cached = await cache.get<GameDetails>(cacheKey)
     if (cached) {
-      return cached;
+      return cached
     }
 
     const data = await prisma.game.findUnique({
@@ -62,26 +66,29 @@ export default defineRoute({
         id: id,
       },
       include: gameInclude,
-    });
+    })
 
     if (!data) {
-      return new NotFound(`Game not found with ID ${id}`);
+      return new NotFound(`Game not found with ID ${id}`)
     }
 
-    const relations = await fetchMediaRelations(prisma, "GAME", data.id);
+    const relations = await fetchMediaRelations(prisma, "GAME", data.id)
     const result: GameDetails = {
       ...data,
       relations,
-    };
+    }
 
-    await cache.set(cacheKey, result, GAME_CACHE_TTL);
+    await cache.set(cacheKey, result, GAME_CACHE_TTL)
 
     if (data.igdbId && mediaDbSyncer.isRecordStale(data, "GAME")) {
       void queueGameFetch(data.igdbId).catch((err) => {
-        logger.error(`[GameRoute] Failed to queue background fetch for id ${id} (igdb id ${data.igdbId}):`, err);
-      });
+        logger.error(
+          `[GameRoute] Failed to queue background fetch for id ${id} (igdb id ${data.igdbId}):`,
+          err
+        )
+      })
     }
 
-    return result;
+    return result
   },
-});
+})

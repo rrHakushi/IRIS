@@ -1,14 +1,10 @@
-import { Metadata } from "next";
+import { Metadata } from "next"
 
 export const metadata: Metadata = {
-    title: "IRIS List | Browse",
-    description: "IRIS List Browse",
-};
+  title: "IRIS List | Browse",
+  description: "IRIS List Browse",
+}
 
 export default function Page() {
-    return (
-        <>
-            page
-        </>
-    )
+  return <>page</>
 }

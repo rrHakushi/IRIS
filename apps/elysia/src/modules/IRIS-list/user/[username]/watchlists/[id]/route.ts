@@ -1,4 +1,4 @@
-import { defineRoute, t } from "@/router";
+import { defineRoute, t } from "@/router"
 
 export default defineRoute({
   schema: {
@@ -28,7 +28,7 @@ export default defineRoute({
       success: true,
       message: `GET /user/${params.username}/watchlists/${params.id} handled successfully`,
       timestamp: new Date().toISOString(),
-    };
+    }
   },
 
   async PATCH({ params, body, session, prisma }) {
@@ -36,14 +36,14 @@ export default defineRoute({
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "content-type": "application/json" },
-      });
+      })
     }
 
     return {
       success: true,
       message: `PATCH /user/${params.username}/watchlists/${params.id} handled successfully`,
       timestamp: new Date().toISOString(),
-    };
+    }
   },
 
   async DELETE({ params, session, prisma }) {
@@ -51,13 +51,13 @@ export default defineRoute({
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "content-type": "application/json" },
-      });
+      })
     }
 
     return {
       success: true,
       message: `DELETE /user/${params.username}/watchlists/${params.id} handled successfully`,
       timestamp: new Date().toISOString(),
-    };
+    }
   },
-});
+})

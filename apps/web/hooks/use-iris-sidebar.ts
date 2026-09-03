@@ -1,1 +1,1 @@
-export { useIrisSidebar } from "@/components/navigation/sidebar-provider";
+export { useIrisSidebar } from "@/components/navigation/sidebar-provider"

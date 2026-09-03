@@ -1,16 +1,16 @@
 export interface ApiKeyItem {
-  id: string;
-  name: string;
-  prefix: string;
-  createdAt: string;
-  updatedAt: string;
-  lastUsedAt: string | null;
-  expiresAt: string | null;
+  id: string
+  name: string
+  prefix: string
+  createdAt: string
+  updatedAt: string
+  lastUsedAt: string | null
+  expiresAt: string | null
 }
 
 export interface ExpirationOption {
-  label: string;
-  days: number | null;
+  label: string
+  days: number | null
 }
 
 export const EXPIRATION_OPTIONS: readonly ExpirationOption[] = [
@@ -20,4 +20,4 @@ export const EXPIRATION_OPTIONS: readonly ExpirationOption[] = [
   { label: "90 days", days: 90 },
   { label: "1 year", days: 365 },
   { label: "Never", days: null },
-] as const;
+] as const

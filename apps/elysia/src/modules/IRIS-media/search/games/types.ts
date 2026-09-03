@@ -1,4 +1,4 @@
-import { t } from "elysia";
+import { t } from "elysia"
 
 export const GameSearchResultSchema = t.Object({
   id: t.Number(),
@@ -6,16 +6,16 @@ export const GameSearchResultSchema = t.Object({
   titleSecondary: t.Nullable(t.String()),
   coverImage: t.Nullable(t.String()),
   releaseDateYear: t.Nullable(t.Number()),
-});
+})
 
-export const GameSearchResponseSchema = t.Array(GameSearchResultSchema);
+export const GameSearchResponseSchema = t.Array(GameSearchResultSchema)
 
 export interface GameSearchResultItem {
-  id: number;
-  titlePrimary: string;
-  titleSecondary: string | null;
-  coverImage: string | null;
-  releaseDateYear: number | null;
+  id: number
+  titlePrimary: string
+  titleSecondary: string | null
+  coverImage: string | null
+  releaseDateYear: number | null
 }
 
-export type GameSearchResponse = GameSearchResultItem[];
+export type GameSearchResponse = GameSearchResultItem[]

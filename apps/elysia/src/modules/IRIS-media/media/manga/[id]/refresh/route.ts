@@ -4,10 +4,10 @@ import {
   Forbidden,
   NotFound,
   ErrorResponseSchema,
-} from "@/utils/errors";
-import { defineRoute, t } from "@/router";
-import { IRISFlags } from "@IRIS/permissions";
-import { queueMangaFetch } from "@/services";
+} from "@/utils/errors"
+import { defineRoute, t } from "@/router"
+import { IRISFlags } from "@IRIS/permissions"
+import { queueMangaFetch } from "@/services"
 
 export default defineRoute({
   schema: {
@@ -19,7 +19,9 @@ export default defineRoute({
         force: t.Optional(t.Boolean({ default: false })),
         maxDepth: t.Optional(t.Number({ minimum: 0, maximum: 99, default: 0 })),
         priority: t.Optional(t.Number({ minimum: 0, maximum: 10, default: 1 })),
-        maxRetries: t.Optional(t.Number({ minimum: 0, maximum: 99, default: 3 })),
+        maxRetries: t.Optional(
+          t.Number({ minimum: 0, maximum: 99, default: 3 })
+        ),
       })
     ),
     response: {
@@ -43,16 +45,16 @@ export default defineRoute({
 
   async POST({ params, body, session, prisma }) {
     if (!session.hasPermission(IRISFlags.ADMINISTRATOR)) {
-      return new Forbidden("Forbidden: Admin required");
+      return new Forbidden("Forbidden: Admin required")
     }
 
-    const manga = await prisma.manga.findUnique({ where: { id: params.id } });
+    const manga = await prisma.manga.findUnique({ where: { id: params.id } })
     if (!manga) {
-      return new NotFound("Manga not found");
+      return new NotFound("Manga not found")
     }
 
     if (!manga.anilistId) {
-      return new BadRequest("Manga is missing anilistId");
+      return new BadRequest("Manga is missing anilistId")
     }
 
     const queued = await queueMangaFetch(manga.anilistId, {
@@ -60,29 +62,26 @@ export default defineRoute({
       maxDepth: body?.maxDepth,
       priority: body?.priority,
       maxRetries: body?.maxRetries,
-    });
+    })
 
     if (queued?.metadata?.skipped) {
       return new Conflict(
         `${queued.metadata.reason || "Manga is already fresh in database"}`
-      );
+      )
     }
 
-    if (
-      queued.status === "PROCESSING" ||
-      queued.status === "PENDING"
-    ) {
+    if (queued.status === "PROCESSING" || queued.status === "PENDING") {
       return {
         success: true,
         message: "Manga queued for refresh",
         timestamp: new Date().toISOString(),
-      };
+      }
     }
 
     return {
       success: false,
       message: "Failed to queue manga for refresh",
       timestamp: new Date().toISOString(),
-    };
+    }
   },
-});
+})

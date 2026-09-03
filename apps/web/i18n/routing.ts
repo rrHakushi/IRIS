@@ -1,8 +1,11 @@
-export const locales = ["en", "ja"] as const;
-export type Locale = (typeof locales)[number];
-export const defaultLocale: Locale = "en";
+export const locales = ["en", "ja"] as const
+export type Locale = (typeof locales)[number]
+export const defaultLocale: Locale = "en"
 
-export const localeNames: Record<Locale, { name: string; nativeName: string; flag: string }> = {
+export const localeNames: Record<
+  Locale,
+  { name: string; nativeName: string; flag: string }
+> = {
   en: {
     name: "English",
     nativeName: "English",
@@ -13,4 +16,4 @@ export const localeNames: Record<Locale, { name: string; nativeName: string; fla
     nativeName: "日本語",
     flag: "🇯🇵",
   },
-};
+}

@@ -1,6 +1,6 @@
-import { randomBytes } from "node:crypto";
-import { defineRoute, t } from "../../../../router";
-import { hashApiKey } from "../../../../plugins/session";
+import { randomBytes } from "node:crypto"
+import { defineRoute, t } from "../../../../router"
+import { hashApiKey } from "../../../../plugins/session"
 
 export default defineRoute({
   GET: {
@@ -31,17 +31,23 @@ export default defineRoute({
     async handler({ session, prisma }) {
       if (!session.isAuthenticated) {
         return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "Authentication required",
+          }),
           { status: 401, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
-      const user = session.getUser();
+      const user = session.getUser()
       if (!user) {
         return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "User session not found" }),
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "User session not found",
+          }),
           { status: 401, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
       const keys = await prisma.apiKey.findMany({
@@ -56,7 +62,7 @@ export default defineRoute({
           lastUsedAt: true,
           expiresAt: true,
         },
-      });
+      })
 
       return {
         success: true,
@@ -69,7 +75,7 @@ export default defineRoute({
           lastUsedAt: k.lastUsedAt ? k.lastUsedAt.toISOString() : null,
           expiresAt: k.expiresAt ? k.expiresAt.toISOString() : null,
         })),
-      };
+      }
     },
   },
 
@@ -98,38 +104,46 @@ export default defineRoute({
     async handler({ body, session, prisma }) {
       if (!session.isAuthenticated) {
         return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "Authentication required",
+          }),
           { status: 401, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
-      const user = session.getUser();
+      const user = session.getUser()
       if (!user) {
         return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "User session not found" }),
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "User session not found",
+          }),
           { status: 401, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
-      const rawName = (body.name || "").trim();
+      const rawName = (body.name || "").trim()
       if (!rawName) {
         return new Response(
-          JSON.stringify({ error: "BadRequest", message: "API key name is required" }),
+          JSON.stringify({
+            error: "BadRequest",
+            message: "API key name is required",
+          }),
           { status: 400, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
-      const entropy = randomBytes(24).toString("hex");
-      const rawKey = `iris-key-${entropy}`;
-      const keyHash = hashApiKey(rawKey);
-      const prefix = rawKey.slice(0, 17); // e.g. "iris-key-12345678"
+      const entropy = randomBytes(24).toString("hex")
+      const rawKey = `iris-key-${entropy}`
+      const keyHash = hashApiKey(rawKey)
+      const prefix = rawKey.slice(0, 17) // e.g. "iris-key-12345678"
 
-      let expiresAt: Date | null = null;
-      if (
-        typeof body.expirationDays === "number" &&
-        body.expirationDays > 0
-      ) {
-        expiresAt = new Date(Date.now() + body.expirationDays * 24 * 60 * 60 * 1000);
+      let expiresAt: Date | null = null
+      if (typeof body.expirationDays === "number" && body.expirationDays > 0) {
+        expiresAt = new Date(
+          Date.now() + body.expirationDays * 24 * 60 * 60 * 1000
+        )
       }
 
       const created = await prisma.apiKey.create({
@@ -149,7 +163,7 @@ export default defineRoute({
           lastUsedAt: true,
           expiresAt: true,
         },
-      });
+      })
 
       return {
         success: true,
@@ -160,10 +174,12 @@ export default defineRoute({
           prefix: created.prefix,
           createdAt: created.createdAt.toISOString(),
           updatedAt: created.updatedAt.toISOString(),
-          lastUsedAt: created.lastUsedAt ? created.lastUsedAt.toISOString() : null,
+          lastUsedAt: created.lastUsedAt
+            ? created.lastUsedAt.toISOString()
+            : null,
           expiresAt: created.expiresAt ? created.expiresAt.toISOString() : null,
         },
-      };
+      }
     },
   },
-});
+})

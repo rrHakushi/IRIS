@@ -1,12 +1,15 @@
-import { defineRoute, t } from "@/router";
-import { mediaDbSyncer, queueMovieFetch } from "@/services/media-queue";
-import type { Prisma } from "@IRIS/database";
-import { NotFound } from "elysia";
-import { MovieResponseSchema } from "./types";
-import { NotFoundResponseSchema } from "../../../../../../types";
-import { fetchMediaRelations, type MediaRelationItem } from "@/modules/IRIS-media/helpers/media-relations";
+import { defineRoute, t } from "@/router"
+import { mediaDbSyncer, queueMovieFetch } from "@/services/media-queue"
+import type { Prisma } from "@IRIS/database"
+import { NotFound } from "elysia"
+import { MovieResponseSchema } from "./types"
+import { NotFoundResponseSchema } from "../../../../../../types"
+import {
+  fetchMediaRelations,
+  type MediaRelationItem,
+} from "@/modules/IRIS-media/helpers/media-relations"
 
-const MOVIE_CACHE_TTL = 60 * 60 * 12; // 12 hours
+const MOVIE_CACHE_TTL = 60 * 60 * 12 // 12 hours
 
 export const movieInclude = {
   characters: {
@@ -27,15 +30,15 @@ export const movieInclude = {
       studio: true,
     },
   },
-} as const satisfies Prisma.MovieInclude;
+} as const satisfies Prisma.MovieInclude
 
 export type MovieDetails = NonNullable<
   Prisma.MovieGetPayload<{
-    include: typeof movieInclude;
+    include: typeof movieInclude
   }>
 > & {
-  relations: MediaRelationItem[];
-};
+  relations: MediaRelationItem[]
+}
 
 export default defineRoute({
   cacheKeys: {
@@ -54,18 +57,19 @@ export default defineRoute({
     },
     detail: {
       summary: "Get movie by ID",
-      description: "Fetches movie details with characters, staff, studios, tags, genres, and media relations.",
+      description:
+        "Fetches movie details with characters, staff, studios, tags, genres, and media relations.",
       tags: ["Media - Movie"],
     },
   },
 
   async GET({ params, prisma, cache, cacheKeys, logger }) {
-    const id = params.id;
-    const cacheKey = cacheKeys.movie.id(id);
+    const id = params.id
+    const cacheKey = cacheKeys.movie.id(id)
 
-    const cached = await cache.get<MovieDetails>(cacheKey);
+    const cached = await cache.get<MovieDetails>(cacheKey)
     if (cached) {
-      return cached;
+      return cached
     }
 
     const data = await prisma.movie.findUnique({
@@ -73,26 +77,29 @@ export default defineRoute({
         id: id,
       },
       include: movieInclude,
-    });
+    })
 
     if (!data) {
-      return new NotFound(`Movie not found with ID ${id}`);
+      return new NotFound(`Movie not found with ID ${id}`)
     }
 
-    const relations = await fetchMediaRelations(prisma, "MOVIE", data.id);
+    const relations = await fetchMediaRelations(prisma, "MOVIE", data.id)
     const result: MovieDetails = {
       ...data,
       relations,
-    };
+    }
 
-    await cache.set(cacheKey, result, MOVIE_CACHE_TTL);
+    await cache.set(cacheKey, result, MOVIE_CACHE_TTL)
 
     if (data.tvDBId && mediaDbSyncer.isRecordStale(data, "MOVIE")) {
       void queueMovieFetch(data.tvDBId).catch((err) => {
-        logger.error(`[MovieRoute] Failed to queue background fetch for id ${id} (tvDB id ${data.tvDBId}):`, err);
-      });
+        logger.error(
+          `[MovieRoute] Failed to queue background fetch for id ${id} (tvDB id ${data.tvDBId}):`,
+          err
+        )
+      })
     }
 
-    return result;
+    return result
   },
-});
+})

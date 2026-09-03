@@ -1,5 +1,5 @@
-import { defineRoute, t } from "../../../../router";
-import { getSupportedProviders } from "@IRIS/connections";
+import { defineRoute, t } from "../../../../router"
+import { getSupportedProviders } from "@IRIS/connections"
 
 export default defineRoute({
   GET: {
@@ -36,11 +36,11 @@ export default defineRoute({
     },
     async handler() {
       // Returns active supported connection providers list
-      const providers = getSupportedProviders();
+      const providers = getSupportedProviders()
       return {
         success: true,
         providers,
-      };
+      }
     },
   },
-});
+})

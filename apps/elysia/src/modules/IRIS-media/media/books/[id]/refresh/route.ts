@@ -4,10 +4,10 @@ import {
   Forbidden,
   NotFound,
   ErrorResponseSchema,
-} from "@/utils/errors";
-import { defineRoute, t } from "@/router";
-import { IRISFlags } from "@IRIS/permissions";
-import { queueBookFetch } from "@/services";
+} from "@/utils/errors"
+import { defineRoute, t } from "@/router"
+import { IRISFlags } from "@IRIS/permissions"
+import { queueBookFetch } from "@/services"
 
 export default defineRoute({
   schema: {
@@ -19,7 +19,9 @@ export default defineRoute({
         force: t.Optional(t.Boolean({ default: false })),
         maxDepth: t.Optional(t.Number({ minimum: 0, maximum: 99, default: 0 })),
         priority: t.Optional(t.Number({ minimum: 0, maximum: 10, default: 1 })),
-        maxRetries: t.Optional(t.Number({ minimum: 0, maximum: 99, default: 3 })),
+        maxRetries: t.Optional(
+          t.Number({ minimum: 0, maximum: 99, default: 3 })
+        ),
       })
     ),
     response: {
@@ -43,16 +45,16 @@ export default defineRoute({
 
   async POST({ params, body, session, prisma }) {
     if (!session.hasPermission(IRISFlags.ADMINISTRATOR)) {
-      return new Forbidden("Forbidden: Admin required");
+      return new Forbidden("Forbidden: Admin required")
     }
 
-    const book = await prisma.book.findUnique({ where: { id: params.id } });
+    const book = await prisma.book.findUnique({ where: { id: params.id } })
     if (!book) {
-      return new NotFound("Book not found");
+      return new NotFound("Book not found")
     }
 
     if (!book.googleBookId) {
-      return new BadRequest("Book is missing googleBookId");
+      return new BadRequest("Book is missing googleBookId")
     }
 
     const queued = await queueBookFetch(book.googleBookId, {
@@ -60,29 +62,26 @@ export default defineRoute({
       maxDepth: body?.maxDepth,
       priority: body?.priority,
       maxRetries: body?.maxRetries,
-    });
+    })
 
     if (queued?.metadata?.skipped) {
       return new Conflict(
         `${queued.metadata.reason || "Book is already fresh in database"}`
-      );
+      )
     }
 
-    if (
-      queued.status === "PROCESSING" ||
-      queued.status === "PENDING"
-    ) {
+    if (queued.status === "PROCESSING" || queued.status === "PENDING") {
       return {
         success: true,
         message: "Book queued for refresh",
         timestamp: new Date().toISOString(),
-      };
+      }
     }
 
     return {
       success: false,
       message: "Failed to queue book for refresh",
       timestamp: new Date().toISOString(),
-    };
+    }
   },
-});
+})

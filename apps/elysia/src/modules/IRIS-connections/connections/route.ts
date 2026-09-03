@@ -1,10 +1,10 @@
-import { defineRoute, t } from "../../../router";
+import { defineRoute, t } from "../../../router"
 import {
   getConnectionAdapter,
   encryptConnectionData,
   type ConnectionProvider,
   type ConnectionCredentials,
-} from "@IRIS/connections";
+} from "@IRIS/connections"
 
 export default defineRoute({
   GET: {
@@ -36,15 +36,18 @@ export default defineRoute({
     async handler({ session, prisma }) {
       if (!session.isAuthenticated || !session.user) {
         return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "Authentication required",
+          }),
           { status: 401, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
       const connections = await prisma.connection.findMany({
         where: { userId: session.user.id },
         orderBy: { createdAt: "desc" },
-      });
+      })
 
       return {
         success: true,
@@ -64,7 +67,7 @@ export default defineRoute({
           createdAt: conn.createdAt.toISOString(),
           updatedAt: conn.updatedAt.toISOString(),
         })),
-      };
+      }
     },
   },
 
@@ -94,20 +97,26 @@ export default defineRoute({
     async handler({ body, session, prisma }) {
       if (!session.isAuthenticated || !session.user) {
         return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "Authentication required" }),
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "Authentication required",
+          }),
           { status: 401, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
-      const provider = body.provider.toUpperCase() as ConnectionProvider;
-      let adapter;
+      const provider = body.provider.toUpperCase() as ConnectionProvider
+      let adapter
       try {
-        adapter = getConnectionAdapter(provider);
+        adapter = getConnectionAdapter(provider)
       } catch {
         return new Response(
-          JSON.stringify({ error: "Bad Request", message: `Unsupported provider: ${body.provider}` }),
+          JSON.stringify({
+            error: "Bad Request",
+            message: `Unsupported provider: ${body.provider}`,
+          }),
           { status: 400, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
       const credentials: ConnectionCredentials = {
@@ -115,23 +124,27 @@ export default defineRoute({
         hostUrl: body.hostUrl,
         username: body.username,
         password: body.password,
-      };
+      }
 
       // Test connection with provider
-      const testResult = await adapter.testConnection(credentials);
+      const testResult = await adapter.testConnection(credentials)
       if (!testResult.ok) {
         return new Response(
           JSON.stringify({
             error: "Connection Failed",
-            message: testResult.message || "Failed to authenticate with provider",
+            message:
+              testResult.message || "Failed to authenticate with provider",
           }),
           { status: 400, headers: { "content-type": "application/json" } }
-        );
+        )
       }
 
-      const finalCredentials = testResult.credentials || credentials;
-      const encryptedData = encryptConnectionData(finalCredentials, session.user.id);
-      const profile = testResult.profile;
+      const finalCredentials = testResult.credentials || credentials
+      const encryptedData = encryptConnectionData(
+        finalCredentials,
+        session.user.id
+      )
+      const profile = testResult.profile
 
       const connection = await prisma.connection.upsert({
         where: {
@@ -144,9 +157,14 @@ export default defineRoute({
         create: {
           userId: session.user.id,
           provider: provider as any,
-          authType: (body.authType?.toUpperCase() as any) || (adapter.authType as any),
+          authType:
+            (body.authType?.toUpperCase() as any) || (adapter.authType as any),
           externalId: profile?.id || body.username || "default",
-          displayName: profile?.displayName || profile?.username || body.username || provider,
+          displayName:
+            profile?.displayName ||
+            profile?.username ||
+            body.username ||
+            provider,
           avatarUrl: profile?.avatarUrl,
           profileUrl: profile?.profileUrl || body.hostUrl,
           encryptedData,
@@ -160,7 +178,11 @@ export default defineRoute({
           lastSyncedAt: new Date(),
         },
         update: {
-          displayName: profile?.displayName || profile?.username || body.username || provider,
+          displayName:
+            profile?.displayName ||
+            profile?.username ||
+            body.username ||
+            provider,
           avatarUrl: profile?.avatarUrl,
           profileUrl: profile?.profileUrl || body.hostUrl,
           encryptedData,
@@ -174,7 +196,7 @@ export default defineRoute({
           },
           lastSyncedAt: new Date(),
         },
-      });
+      })
 
       return {
         success: true,
@@ -184,7 +206,7 @@ export default defineRoute({
           displayName: connection.displayName,
           status: connection.status,
         },
-      };
+      }
     },
   },
-});
+})

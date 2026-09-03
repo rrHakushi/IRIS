@@ -1,4 +1,4 @@
-import { mediaQueueService } from "./media-queue.service.js";
+import { mediaQueueService } from "./media-queue.service.js"
 import type {
   MediaJob,
   MediaJobType,
@@ -11,7 +11,7 @@ import type {
   BookSearchResult,
   GameSearchResult,
   MusicSearchResult,
-} from "./types.js";
+} from "./types.js"
 
 /**
  * 1. Queues an anime fetch/update job using AniList as primary and MyAnimeList as secondary.
@@ -24,7 +24,7 @@ export async function queueAnimeFetch(
   id: number | string,
   options?: QueueJobOptions
 ): Promise<MediaJob> {
-  return await mediaQueueService.enqueueJob("ANIME", id, options);
+  return await mediaQueueService.enqueueJob("ANIME", id, options)
 }
 
 /**
@@ -38,7 +38,7 @@ export async function queueMangaFetch(
   id: number | string,
   options?: QueueJobOptions
 ): Promise<MediaJob> {
-  return await mediaQueueService.enqueueJob("MANGA", id, options);
+  return await mediaQueueService.enqueueJob("MANGA", id, options)
 }
 
 /**
@@ -53,7 +53,7 @@ export async function queueTvFetch(
   id: number | string,
   options?: QueueJobOptions
 ): Promise<MediaJob> {
-  return await mediaQueueService.enqueueJob("TV", id, options);
+  return await mediaQueueService.enqueueJob("TV", id, options)
 }
 
 /**
@@ -67,7 +67,7 @@ export async function queueMovieFetch(
   id: number | string,
   options?: QueueJobOptions
 ): Promise<MediaJob> {
-  return await mediaQueueService.enqueueJob("MOVIE", id, options);
+  return await mediaQueueService.enqueueJob("MOVIE", id, options)
 }
 
 /**
@@ -81,7 +81,7 @@ export async function queueBookFetch(
   id: string | number,
   options?: QueueJobOptions
 ): Promise<MediaJob> {
-  return await mediaQueueService.enqueueJob("BOOK", id, options);
+  return await mediaQueueService.enqueueJob("BOOK", id, options)
 }
 
 /**
@@ -95,7 +95,7 @@ export async function queueGameFetch(
   id: number | string,
   options?: QueueJobOptions
 ): Promise<MediaJob> {
-  return await mediaQueueService.enqueueJob("GAME", id, options);
+  return await mediaQueueService.enqueueJob("GAME", id, options)
 }
 
 /**
@@ -108,7 +108,7 @@ export async function queueMusicFetch(
   id: string | number,
   options?: QueueJobOptions
 ): Promise<MediaJob> {
-  return await mediaQueueService.enqueueJob("MUSIC", id, options);
+  return await mediaQueueService.enqueueJob("MUSIC", id, options)
 }
 
 /**
@@ -122,7 +122,7 @@ export async function queueAnimeSearchFetch(
   query: string,
   options?: QueueSearchOptions
 ): Promise<AnimeSearchResult[]> {
-  return await mediaQueueService.enqueueSearchFetch("ANIME", query, options);
+  return await mediaQueueService.enqueueSearchFetch("ANIME", query, options)
 }
 
 /**
@@ -136,7 +136,7 @@ export async function queueMangaSearchFetch(
   query: string,
   options?: QueueSearchOptions
 ): Promise<MangaSearchResult[]> {
-  return await mediaQueueService.enqueueSearchFetch("MANGA", query, options);
+  return await mediaQueueService.enqueueSearchFetch("MANGA", query, options)
 }
 
 /**
@@ -150,7 +150,7 @@ export async function queueTvSearchFetch(
   query: string,
   options?: QueueSearchOptions
 ): Promise<TvSearchResult[]> {
-  return await mediaQueueService.enqueueSearchFetch("TV", query, options);
+  return await mediaQueueService.enqueueSearchFetch("TV", query, options)
 }
 
 /**
@@ -164,7 +164,7 @@ export async function queueMovieSearchFetch(
   query: string,
   options?: QueueSearchOptions
 ): Promise<MovieSearchResult[]> {
-  return await mediaQueueService.enqueueSearchFetch("MOVIE", query, options);
+  return await mediaQueueService.enqueueSearchFetch("MOVIE", query, options)
 }
 
 /**
@@ -178,7 +178,7 @@ export async function queueBookSearchFetch(
   query: string,
   options?: QueueSearchOptions
 ): Promise<BookSearchResult[]> {
-  return await mediaQueueService.enqueueSearchFetch("BOOK", query, options);
+  return await mediaQueueService.enqueueSearchFetch("BOOK", query, options)
 }
 
 /**
@@ -192,7 +192,7 @@ export async function queueGameSearchFetch(
   query: string,
   options?: QueueSearchOptions
 ): Promise<GameSearchResult[]> {
-  return await mediaQueueService.enqueueSearchFetch("GAME", query, options);
+  return await mediaQueueService.enqueueSearchFetch("GAME", query, options)
 }
 
 /**
@@ -206,7 +206,7 @@ export async function queueMusicSearchFetch(
   query: string,
   options?: QueueSearchOptions
 ): Promise<MusicSearchResult[]> {
-  return await mediaQueueService.enqueueSearchFetch("MUSIC", query, options);
+  return await mediaQueueService.enqueueSearchFetch("MUSIC", query, options)
 }
 
 /**
@@ -221,10 +221,10 @@ export async function queueMediaSearchFetch(
   query: string,
   options?: QueueSearchOptions
 ): Promise<any[]> {
-  return await mediaQueueService.enqueueSearchFetch(type, query, options);
+  return await mediaQueueService.enqueueSearchFetch(type, query, options)
 }
 
-export { mediaQueueService, MediaQueueService } from "./media-queue.service.js";
-export { mediaDbSyncer, MediaDbSyncer } from "./media-db.syncer.js";
-export * from "./providers/index.js";
-export * from "./types.js";
+export { mediaQueueService, MediaQueueService } from "./media-queue.service.js"
+export { mediaDbSyncer, MediaDbSyncer } from "./media-db.syncer.js"
+export * from "./providers/index.js"
+export * from "./types.js"

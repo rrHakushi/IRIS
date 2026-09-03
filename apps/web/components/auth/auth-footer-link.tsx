@@ -1,13 +1,13 @@
-import React from "react";
-import Link from "next/link";
-import { FieldDescription } from "@workspace/ui/components/field";
-import { cn } from "@workspace/ui/lib/utils";
+import React from "react"
+import Link from "next/link"
+import { FieldDescription } from "@workspace/ui/components/field"
+import { cn } from "@workspace/ui/lib/utils"
 
 interface AuthFooterLinkProps {
-  promptText: string;
-  linkText: string;
-  href: string;
-  className?: string;
+  promptText: string
+  linkText: string
+  href: string
+  className?: string
 }
 
 /**
@@ -20,14 +20,16 @@ export function AuthFooterLink({
   className,
 }: AuthFooterLinkProps) {
   return (
-    <FieldDescription className={cn("text-center text-xs sm:text-sm pt-1", className)}>
+    <FieldDescription
+      className={cn("pt-1 text-center text-xs sm:text-sm", className)}
+    >
       <span className="inline-block">{promptText}</span>{" "}
       <Link
         href={href}
-        className="font-semibold underline underline-offset-2 hover:underline whitespace-nowrap"
+        className="font-semibold whitespace-nowrap underline underline-offset-2 hover:underline"
       >
         {linkText}
       </Link>
     </FieldDescription>
-  );
+  )
 }
