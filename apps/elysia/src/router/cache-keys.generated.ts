@@ -33,6 +33,15 @@ export interface GlobalCacheKeys {
     studios: (q: string) => string;
     tv: (q: string) => string;
   };
+  similar: {
+    anime: (id: number) => string;
+    books: (id: number) => string;
+    games: (id: number) => string;
+    manga: (id: number) => string;
+    movies: (id: number) => string;
+    music: (id: number) => string;
+    tv: (id: number) => string;
+  };
   tv: {
     id: (id: number) => string;
   };

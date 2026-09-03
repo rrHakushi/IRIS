@@ -3595,12 +3595,7 @@
       "parameters": [
         {
           "name": "limit",
-          "value": "20",
-          "disabled": false
-        },
-        {
-          "name": "page",
-          "value": "1",
+          "value": "10",
           "disabled": false
         }
       ],
@@ -3707,12 +3702,7 @@
       "parameters": [
         {
           "name": "limit",
-          "value": "20",
-          "disabled": false
-        },
-        {
-          "name": "page",
-          "value": "1",
+          "value": "10",
           "disabled": false
         }
       ],
@@ -3850,12 +3840,7 @@
       "parameters": [
         {
           "name": "limit",
-          "value": "20",
-          "disabled": false
-        },
-        {
-          "name": "page",
-          "value": "1",
+          "value": "10",
           "disabled": false
         }
       ],
@@ -3962,12 +3947,7 @@
       "parameters": [
         {
           "name": "limit",
-          "value": "20",
-          "disabled": false
-        },
-        {
-          "name": "page",
-          "value": "1",
+          "value": "10",
           "disabled": false
         }
       ],
@@ -4074,12 +4054,7 @@
       "parameters": [
         {
           "name": "limit",
-          "value": "20",
-          "disabled": false
-        },
-        {
-          "name": "page",
-          "value": "1",
+          "value": "10",
           "disabled": false
         }
       ],
@@ -4186,12 +4161,7 @@
       "parameters": [
         {
           "name": "limit",
-          "value": "20",
-          "disabled": false
-        },
-        {
-          "name": "page",
-          "value": "1",
+          "value": "10",
           "disabled": false
         }
       ],
@@ -4360,12 +4330,7 @@
       "parameters": [
         {
           "name": "limit",
-          "value": "20",
-          "disabled": false
-        },
-        {
-          "name": "page",
-          "value": "1",
+          "value": "10",
           "disabled": false
         }
       ],

@@ -131,23 +131,44 @@ function deepMergeCacheKeys(target: Record<string, any>, source: Record<string, 
 if ((route_60 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_60 as any).cacheKeys);
 }
+if ((route_61 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_61 as any).cacheKeys);
+}
 if ((route_63 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_63 as any).cacheKeys);
+}
+if ((route_64 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_64 as any).cacheKeys);
 }
 if ((route_67 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_67 as any).cacheKeys);
 }
+if ((route_68 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_68 as any).cacheKeys);
+}
 if ((route_70 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_70 as any).cacheKeys);
+}
+if ((route_71 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_71 as any).cacheKeys);
 }
 if ((route_73 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_73 as any).cacheKeys);
 }
+if ((route_74 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_74 as any).cacheKeys);
+}
 if ((route_76 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_76 as any).cacheKeys);
 }
+if ((route_77 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_77 as any).cacheKeys);
+}
 if ((route_81 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_81 as any).cacheKeys);
+}
+if ((route_82 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_82 as any).cacheKeys);
 }
 if ((route_83 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_83 as any).cacheKeys);
