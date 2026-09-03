@@ -4,7 +4,7 @@ import { NotFound } from "elysia"
 import { StudioSearchResponseSchema, type StudioSearchResponse } from "./types"
 import { NotFoundResponseSchema } from "../../../../../types"
 
-const SEARCH_STUDIOS_TTL = 60 * 60 // 1 hour
+const SEARCH_STUDIOS_TTL = 5 * 60 // 5 minutes
 
 export default defineRoute({
   schema: {

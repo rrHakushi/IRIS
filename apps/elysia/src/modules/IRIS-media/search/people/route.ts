@@ -5,7 +5,7 @@ import { PeopleSearchResponseSchema, type PeopleSearchResponse } from "./types"
 import { NotFoundResponseSchema } from "../../../../../types"
 import { findMatchingAlternativeNameIds } from "../../helpers/search-synonyms"
 
-const SEARCH_PEOPLE_TTL = 60 * 60 // 1 hour
+const SEARCH_PEOPLE_TTL = 5 * 60 // 5 minutes
 
 export default defineRoute({
   schema: {

@@ -1,6 +1,6 @@
 import { t } from "elysia"
 
-export const SIMILAR_MEDIA_TTL = 60 * 60 // 1 hour
+export const SIMILAR_MEDIA_TTL = 5 * 60 // 5 minutes
 export const MIN_SIMILARITY_SCORE = 17 // Minimum score threshold
 export const TITLE_MATCH_THRESHOLD = 0.6 // 60% match required
 export const TITLE_MATCH_POINTS = 20

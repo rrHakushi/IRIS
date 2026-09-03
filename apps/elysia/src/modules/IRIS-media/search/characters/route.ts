@@ -8,7 +8,7 @@ import {
 import { NotFoundResponseSchema } from "../../../../../types"
 import { findMatchingAlternativeNameIds } from "../../helpers/search-synonyms"
 
-const SEARCH_CHARACTERS_TTL = 60 * 60 // 1 hour
+const SEARCH_CHARACTERS_TTL = 5 * 60 // 5 minutes
 
 export default defineRoute({
   schema: {

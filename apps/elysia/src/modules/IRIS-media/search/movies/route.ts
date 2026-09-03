@@ -6,7 +6,7 @@ import { MovieSearchResponseSchema, type MovieSearchResponse } from "./types"
 import { NotFoundResponseSchema } from "../../../../../types"
 import { findMatchingSynonymIds } from "../../helpers/search-synonyms"
 
-const SEARCH_MOVIES_TTL = 60 * 60 // 1 hour
+const SEARCH_MOVIES_TTL = 5 * 60 // 5 minutes
 
 export default defineRoute({
   schema: {
@@ -75,7 +75,11 @@ export default defineRoute({
 
     if (data.length === 0) {
       logger.warn(`No data found for query: ${cleanQuery}, triggering refresh`)
-      const results = await queueMovieSearchFetch(cleanQuery)
+      const rawResults = await queueMovieSearchFetch(cleanQuery)
+      const results = rawResults.map((item: any) => ({
+        ...item,
+        queuedForFetch: true,
+      }))
       await cache.set(cacheKey, results, SEARCH_MOVIES_TTL)
       return results
     }

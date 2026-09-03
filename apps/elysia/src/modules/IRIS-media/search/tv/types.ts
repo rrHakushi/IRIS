@@ -7,6 +7,7 @@ export const TvSearchResultSchema = t.Object({
   titleNative: t.Nullable(t.String()),
   coverImage: t.Nullable(t.String()),
   firstAiredYear: t.Nullable(t.Number()),
+  queuedForFetch: t.Optional(t.Boolean()),
 })
 
 export const TvSearchResponseSchema = t.Array(TvSearchResultSchema)
@@ -18,6 +19,7 @@ export interface TvSearchResultItem {
   titleNative: string | null
   coverImage: string | null
   firstAiredYear: number | null
+  queuedForFetch?: boolean
 }
 
 export type TvSearchResponse = TvSearchResultItem[]

@@ -1,12 +1,7 @@
 import { Prisma, type PrismaClient } from "@IRIS/database"
 
 export type MediaSearchTable =
-  | "Anime"
-  | "Manga"
-  | "Movie"
-  | "Tv"
-  | "Game"
-  | "Book"
+  "Anime" | "Manga" | "Movie" | "Tv" | "Game" | "Book"
 
 export type EntitySearchTable = MediaSearchTable | "Character" | "Person"
 

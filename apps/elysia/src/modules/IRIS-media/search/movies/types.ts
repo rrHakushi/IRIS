@@ -8,6 +8,7 @@ export const MovieSearchResultSchema = t.Object({
   coverImage: t.Nullable(t.String()),
   bannerImage: t.Nullable(t.String()),
   releaseDateYear: t.Nullable(t.Number()),
+  queuedForFetch: t.Optional(t.Boolean()),
 })
 
 export const MovieSearchResponseSchema = t.Array(MovieSearchResultSchema)
@@ -20,6 +21,7 @@ export interface MovieSearchResultItem {
   coverImage: string | null
   bannerImage: string | null
   releaseDateYear: number | null
+  queuedForFetch?: boolean
 }
 
 export type MovieSearchResponse = MovieSearchResultItem[]

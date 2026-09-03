@@ -7,6 +7,7 @@ export const MusicSearchResultSchema = t.Object({
   artist: t.Nullable(t.String()),
   coverImage: t.Nullable(t.String()),
   duration: t.Nullable(t.Number()),
+  queuedForFetch: t.Optional(t.Boolean()),
 })
 
 export const MusicSearchResponseSchema = t.Array(MusicSearchResultSchema)
@@ -18,6 +19,7 @@ export interface MusicSearchResultItem {
   artist: string | null
   coverImage: string | null
   duration: number | null
+  queuedForFetch?: boolean
 }
 
 export type MusicSearchResponse = MusicSearchResultItem[]

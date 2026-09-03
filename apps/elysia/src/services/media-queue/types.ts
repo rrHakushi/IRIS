@@ -44,6 +44,7 @@ export interface AnimeSearchResult {
   format?: string
   seasonYear?: number | null
   seasonSeason?: string
+  queuedForFetch?: boolean
 }
 
 export interface MangaSearchResult {
@@ -55,6 +56,7 @@ export interface MangaSearchResult {
   isAdult?: boolean
   format?: string
   startDateYear?: number | null
+  queuedForFetch?: boolean
 }
 
 export interface TvSearchResult {
@@ -66,6 +68,7 @@ export interface TvSearchResult {
   bannerImage?: string | null
   firstAiredYear?: number | null
   status?: string
+  queuedForFetch?: boolean
 }
 
 export interface MovieSearchResult {
@@ -77,6 +80,7 @@ export interface MovieSearchResult {
   bannerImage?: string | null
   releaseDateYear?: number | null
   status?: string
+  queuedForFetch?: boolean
 }
 
 export interface BookSearchResult {
@@ -86,6 +90,7 @@ export interface BookSearchResult {
   coverImage?: string | null
   authors?: string[]
   releaseDateYear?: number | null
+  queuedForFetch?: boolean
 }
 
 export interface GameSearchResult {
@@ -94,6 +99,7 @@ export interface GameSearchResult {
   titleSecondary?: string | null
   coverImage?: string | null
   releaseDateYear?: number | null
+  queuedForFetch?: boolean
 }
 
 export interface MusicSearchResult {
@@ -103,6 +109,7 @@ export interface MusicSearchResult {
   artist?: string | null
   coverImage?: string | null
   duration?: number | null
+  queuedForFetch?: boolean
 }
 
 // Relation model

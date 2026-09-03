@@ -6,6 +6,7 @@ export const GameSearchResultSchema = t.Object({
   titleSecondary: t.Nullable(t.String()),
   coverImage: t.Nullable(t.String()),
   releaseDateYear: t.Nullable(t.Number()),
+  queuedForFetch: t.Optional(t.Boolean()),
 })
 
 export const GameSearchResponseSchema = t.Array(GameSearchResultSchema)
@@ -16,6 +17,7 @@ export interface GameSearchResultItem {
   titleSecondary: string | null
   coverImage: string | null
   releaseDateYear: number | null
+  queuedForFetch?: boolean
 }
 
 export type GameSearchResponse = GameSearchResultItem[]

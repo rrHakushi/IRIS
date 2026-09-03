@@ -9,7 +9,7 @@ import {
   type MediaRelationItem,
 } from "@/modules/IRIS-media/helpers/media-relations"
 
-const BOOK_CACHE_TTL = 60 * 60 * 12 // 12 hours
+const BOOK_CACHE_TTL = 5 * 60 // 5 minutes
 
 export const bookInclude = {
   characters: {

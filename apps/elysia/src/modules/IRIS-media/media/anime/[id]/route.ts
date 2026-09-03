@@ -9,7 +9,7 @@ import {
   type MediaRelationItem,
 } from "@/modules/IRIS-media/helpers/media-relations"
 
-const ANIME_CACHE_TTL = 60 * 60 * 12 // 12 hours
+const ANIME_CACHE_TTL = 5 * 60 // 5 minutes
 
 export const animeInclude = {
   characters: {

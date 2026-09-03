@@ -9,6 +9,7 @@ export const MangaSearchResultSchema = t.Object({
   isAdult: t.Boolean(),
   format: t.String(),
   startDateYear: t.Nullable(t.Number()),
+  queuedForFetch: t.Optional(t.Boolean()),
 })
 
 export const MangaSearchResponseSchema = t.Array(MangaSearchResultSchema)
@@ -22,6 +23,7 @@ export interface MangaSearchResultItem {
   isAdult: boolean
   format: string
   startDateYear: number | null
+  queuedForFetch?: boolean
 }
 
 export type MangaSearchResponse = MangaSearchResultItem[]

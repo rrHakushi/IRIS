@@ -5,7 +5,7 @@ import { NotFound } from "elysia"
 import { MusicSearchResponseSchema, type MusicSearchResponse } from "./types"
 import { NotFoundResponseSchema } from "../../../../../types"
 
-const SEARCH_MUSIC_TTL = 60 * 60 // 1 hour
+const SEARCH_MUSIC_TTL = 5 * 60 // 5 minutes
 
 export default defineRoute({
   schema: {
@@ -71,7 +71,11 @@ export default defineRoute({
 
     if (data.length === 0) {
       logger.warn(`No data found for query: ${cleanQuery}, triggering refresh`)
-      const results = await queueMusicSearchFetch(cleanQuery)
+      const rawResults = await queueMusicSearchFetch(cleanQuery)
+      const results = rawResults.map((item: any) => ({
+        ...item,
+        queuedForFetch: true,
+      }))
       await cache.set(cacheKey, results, SEARCH_MUSIC_TTL)
       return results
     }

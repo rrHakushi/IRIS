@@ -6,7 +6,7 @@ import { BookSearchResponseSchema, type BookSearchResponse } from "./types"
 import { NotFoundResponseSchema } from "../../../../../types"
 import { findMatchingSynonymIds } from "../../helpers/search-synonyms"
 
-const SEARCH_BOOKS_TTL = 60 * 60 // 1 hour
+const SEARCH_BOOKS_TTL = 5 * 60 // 5 minutes
 
 export default defineRoute({
   schema: {
@@ -74,7 +74,11 @@ export default defineRoute({
 
     if (data.length === 0) {
       logger.warn(`No data found for query: ${cleanQuery}, triggering refresh`)
-      const results = await queueBookSearchFetch(cleanQuery)
+      const rawResults = await queueBookSearchFetch(cleanQuery)
+      const results = rawResults.map((item: any) => ({
+        ...item,
+        queuedForFetch: true,
+      }))
       await cache.set(cacheKey, results, SEARCH_BOOKS_TTL)
       return results
     }

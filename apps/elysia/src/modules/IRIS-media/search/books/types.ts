@@ -7,6 +7,7 @@ export const BookSearchResultSchema = t.Object({
   coverImage: t.Nullable(t.String()),
   authors: t.Array(t.String()),
   releaseDateYear: t.Nullable(t.Number()),
+  queuedForFetch: t.Optional(t.Boolean()),
 })
 
 export const BookSearchResponseSchema = t.Array(BookSearchResultSchema)
@@ -18,6 +19,7 @@ export interface BookSearchResultItem {
   coverImage: string | null
   authors: string[]
   releaseDateYear: number | null
+  queuedForFetch?: boolean
 }
 
 export type BookSearchResponse = BookSearchResultItem[]

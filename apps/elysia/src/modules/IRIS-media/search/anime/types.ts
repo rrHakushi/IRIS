@@ -10,6 +10,7 @@ export const AnimeSearchResultSchema = t.Object({
   format: t.String(),
   seasonYear: t.Nullable(t.Number()),
   seasonSeason: t.String(),
+  queuedForFetch: t.Optional(t.Boolean()),
 })
 
 export const AnimeSearchResponseSchema = t.Array(AnimeSearchResultSchema)
@@ -24,6 +25,7 @@ export interface AnimeSearchResultItem {
   format: string
   seasonYear: number | null
   seasonSeason: string
+  queuedForFetch?: boolean
 }
 
 export type AnimeSearchResponse = AnimeSearchResultItem[]
