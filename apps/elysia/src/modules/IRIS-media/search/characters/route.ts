@@ -6,6 +6,7 @@ import {
   type CharacterSearchResponse,
 } from "./types"
 import { NotFoundResponseSchema } from "../../../../../types"
+import { findMatchingAlternativeNameIds } from "../../helpers/search-synonyms"
 
 const SEARCH_CHARACTERS_TTL = 60 * 60 // 1 hour
 
@@ -49,12 +50,20 @@ export default defineRoute({
       return cached
     }
 
+    const alternativeNameIds = await findMatchingAlternativeNameIds(
+      prisma,
+      "Character",
+      cleanQuery
+    )
+
     const data = await prisma.character.findMany({
       where: {
         OR: [
           { namePrimary: { contains: cleanQuery, mode: "insensitive" } },
           { nameNative: { contains: cleanQuery, mode: "insensitive" } },
-          { nameAlternative: { has: cleanQuery } },
+          ...(alternativeNameIds.length > 0
+            ? [{ id: { in: alternativeNameIds } }]
+            : []),
         ],
       },
       select: {

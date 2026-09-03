@@ -4,6 +4,7 @@ import { NotFound } from "elysia"
 
 import { MangaSearchResponseSchema, type MangaSearchResponse } from "./types"
 import { NotFoundResponseSchema } from "../../../../../types"
+import { findMatchingSynonymIds } from "../../helpers/search-synonyms"
 
 const SEARCH_MANGA_TTL = 60 * 60 // 1 hour
 
@@ -47,13 +48,15 @@ export default defineRoute({
       return cached
     }
 
+    const synonymIds = await findMatchingSynonymIds(prisma, "Manga", cleanQuery)
+
     const data = await prisma.manga.findMany({
       where: {
         OR: [
           { titlePrimary: { contains: cleanQuery, mode: "insensitive" } },
           { titleSecondary: { contains: cleanQuery, mode: "insensitive" } },
           { titleNative: { contains: cleanQuery, mode: "insensitive" } },
-          { synonyms: { has: cleanQuery } },
+          ...(synonymIds.length > 0 ? [{ id: { in: synonymIds } }] : []),
         ],
       },
       select: {

@@ -3,6 +3,7 @@ import { NotFound } from "elysia"
 
 import { PeopleSearchResponseSchema, type PeopleSearchResponse } from "./types"
 import { NotFoundResponseSchema } from "../../../../../types"
+import { findMatchingAlternativeNameIds } from "../../helpers/search-synonyms"
 
 const SEARCH_PEOPLE_TTL = 60 * 60 // 1 hour
 
@@ -46,12 +47,20 @@ export default defineRoute({
       return cached
     }
 
+    const alternativeNameIds = await findMatchingAlternativeNameIds(
+      prisma,
+      "Person",
+      cleanQuery
+    )
+
     const data = await prisma.person.findMany({
       where: {
         OR: [
           { namePrimary: { contains: cleanQuery, mode: "insensitive" } },
           { nameNative: { contains: cleanQuery, mode: "insensitive" } },
-          { nameAlternative: { has: cleanQuery } },
+          ...(alternativeNameIds.length > 0
+            ? [{ id: { in: alternativeNameIds } }]
+            : []),
         ],
       },
       select: {
