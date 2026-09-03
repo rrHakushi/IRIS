@@ -13,7 +13,7 @@ export default defineRoute({
   GET: {
     schema: {
       params: t.Object({
-        provider: t.String(),
+        id: t.String(),
       }),
       query: t.Optional(
         t.Object({
@@ -40,7 +40,7 @@ export default defineRoute({
         )
       }
 
-      const provider = params.provider.toUpperCase() as ConnectionProvider
+      const provider = params.id.toUpperCase() as ConnectionProvider
       let adapter
       try {
         adapter = getConnectionAdapter(provider)
@@ -48,7 +48,7 @@ export default defineRoute({
         return new Response(
           JSON.stringify({
             error: "Bad Request",
-            message: `Unsupported provider: ${params.provider}`,
+            message: `Unsupported provider: ${params.id}`,
           }),
           { status: 400, headers: { "content-type": "application/json" } }
         )

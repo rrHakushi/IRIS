@@ -324,20 +324,23 @@ export interface RouteDefinition<
 export interface DefinedRoute<
   S extends RouteSchema = RouteSchema,
   K extends RouteCacheKeyStorage = RouteCacheKeyStorage,
+  M = unknown,
 > {
   cacheKeys?: K
-  schema: S
-  schemas?: Partial<Record<HttpMethodKey, RouteSchema>>
+  schema: M extends { schema: infer Sc } ? Sc : S
+  schemas?: M extends { schemas: infer Scs }
+    ? Scs
+    : Partial<Record<HttpMethodKey, RouteSchema>>
   rateLimit?: RateLimitConfig
   rateLimits?: Partial<Record<HttpMethodKey, RateLimitConfig>>
-  GET?: unknown
-  HEAD?: unknown
-  OPTIONS?: unknown
-  POST?: unknown
-  PUT?: unknown
-  DELETE?: unknown
-  PATCH?: unknown
-  ALL?: unknown
+  GET?: M extends { GET: infer G } ? G : unknown
+  HEAD?: M extends { HEAD: infer H } ? H : unknown
+  OPTIONS?: M extends { OPTIONS: infer O } ? O : unknown
+  POST?: M extends { POST: infer P } ? P : unknown
+  PUT?: M extends { PUT: infer U } ? U : unknown
+  DELETE?: M extends { DELETE: infer D } ? D : unknown
+  PATCH?: M extends { PATCH: infer PA } ? PA : unknown
+  ALL?: M extends { ALL: infer A } ? A : unknown
   [key: string]: unknown
 }
 
@@ -372,7 +375,8 @@ export interface DefinedRoute<
 export function defineRoute<
   S extends RouteSchema = RouteSchema,
   K extends RouteCacheKeyStorage = {},
->(definition: RouteDefinition<S, K>): DefinedRoute<S, K> {
+  D extends RouteDefinition<S, K> = RouteDefinition<S, K>,
+>(definition: D): DefinedRoute<S, K, D> {
   return definition as any
 }
 

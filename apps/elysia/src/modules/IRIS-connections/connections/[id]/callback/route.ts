@@ -14,7 +14,7 @@ export default defineRoute({
   GET: {
     schema: {
       params: t.Object({
-        provider: t.String(),
+        id: t.String(),
       }),
       query: t.Optional(
         t.Object({
@@ -27,7 +27,7 @@ export default defineRoute({
       ),
     },
     async handler({ params, query, request, prisma }) {
-      const provider = params.provider.toUpperCase() as ConnectionProvider
+      const provider = params.id.toUpperCase() as ConnectionProvider
       const frontendBase = process.env.NEXTAUTH_URL
 
       const defaultErrorRedirect = (msg: string) =>

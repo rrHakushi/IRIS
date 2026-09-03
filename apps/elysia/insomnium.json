@@ -16,7 +16,6 @@
       "parentId": "wrk_iris_api",
       "name": "Base Environment",
       "data": {
-        "base_url": "http://localhost:4000",
         "token": "",
         "api_key": "iris_dev_key_0192837465abcdef01928374"
       },
@@ -1728,6 +1727,105 @@
       "_type": "request"
     },
     {
+      "_id": "req_IRIS-connections__connections__id_auth_get",
+      "parentId": "fld_IRIS_connections",
+      "url": "{{ _.base_url }}/connections/:id/auth",
+      "name": "GET /connections/:id/auth",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "redirectUri",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "returnTo",
+          "value": "string",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-connections__connections__id_callback_get",
+      "parentId": "fld_IRIS_connections",
+      "url": "{{ _.base_url }}/connections/:id/callback",
+      "name": "GET /connections/:id/callback",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "code",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "state",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "error",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "error_description",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "openid_claimed_id",
+          "value": "string",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
       "_id": "req_IRIS-connections__connections__id_delete",
       "parentId": "fld_IRIS_connections",
       "url": "{{ _.base_url }}/connections/:id",
@@ -1853,105 +1951,6 @@
           "value": "application/json",
           "disabled": false
         },
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_IRIS-connections__connections__provider_auth_get",
-      "parentId": "fld_IRIS_connections",
-      "url": "{{ _.base_url }}/connections/:provider/auth",
-      "name": "GET /connections/:provider/auth",
-      "description": "",
-      "method": "GET",
-      "body": {},
-      "parameters": [
-        {
-          "name": "redirectUri",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "returnTo",
-          "value": "string",
-          "disabled": false
-        }
-      ],
-      "headers": [
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_IRIS-connections__connections__provider_callback_get",
-      "parentId": "fld_IRIS_connections",
-      "url": "{{ _.base_url }}/connections/:provider/callback",
-      "name": "GET /connections/:provider/callback",
-      "description": "",
-      "method": "GET",
-      "body": {},
-      "parameters": [
-        {
-          "name": "code",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "state",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "error",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "error_description",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "openid_claimed_id",
-          "value": "string",
-          "disabled": false
-        }
-      ],
-      "headers": [
         {
           "name": "x-api-key",
           "value": "{{ _.api_key }}",

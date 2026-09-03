@@ -313,7 +313,7 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
           instance[method] !== null &&
           "schema" in (instance[method] as object)
         ) {
-          schemaExpr = `(${importName} as any).${method}.schema`
+          schemaExpr = `${importName}.${method}!.schema`
         }
 
         if (schemaExpr) {

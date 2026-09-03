@@ -36,11 +36,11 @@ import route_28 from "../modules/IRIS-account/public/[...key]/route";
 import route_29 from "../modules/IRIS-account/users/me/assets/route";
 import route_30 from "../modules/IRIS-account/users/me/encryption/route";
 import route_31 from "../modules/IRIS-account/users/me/route";
-import route_32 from "../modules/IRIS-connections/connections/[id]/route";
-import route_33 from "../modules/IRIS-connections/connections/[id]/sync/route";
-import route_34 from "../modules/IRIS-connections/connections/[id]/test/route";
-import route_35 from "../modules/IRIS-connections/connections/[provider]/auth/route";
-import route_36 from "../modules/IRIS-connections/connections/[provider]/callback/route";
+import route_32 from "../modules/IRIS-connections/connections/[id]/auth/route";
+import route_33 from "../modules/IRIS-connections/connections/[id]/callback/route";
+import route_34 from "../modules/IRIS-connections/connections/[id]/route";
+import route_35 from "../modules/IRIS-connections/connections/[id]/sync/route";
+import route_36 from "../modules/IRIS-connections/connections/[id]/test/route";
 import route_37 from "../modules/IRIS-connections/connections/providers/route";
 import route_38 from "../modules/IRIS-connections/connections/route";
 import route_39 from "../modules/IRIS-connections/connections/search/route";
@@ -209,7 +209,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   }))
   .post(
     "/auth/api-keys/:id/regenerate",
-    (route_0 as any).POST.schema,
+    route_0.POST!.schema,
     async (ctx: any) => {
       const methodItem = (route_0 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -221,7 +221,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .delete(
     "/auth/api-keys/:id",
-    (route_1 as any).DELETE.schema,
+    route_1.DELETE!.schema,
     async (ctx: any) => {
       const methodItem = (route_1 as any).DELETE;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -233,7 +233,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .patch(
     "/auth/api-keys/:id",
-    (route_1 as any).PATCH.schema,
+    route_1.PATCH!.schema,
     async (ctx: any) => {
       const methodItem = (route_1 as any).PATCH;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -245,7 +245,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .get(
     "/auth/api-keys",
-    (route_2 as any).GET.schema,
+    route_2.GET!.schema,
     async (ctx: any) => {
       const methodItem = (route_2 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -257,7 +257,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/auth/api-keys",
-    (route_2 as any).POST.schema,
+    route_2.POST!.schema,
     async (ctx: any) => {
       const methodItem = (route_2 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -509,7 +509,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/notifications/:id/action",
-    (route_23 as any).POST.schema,
+    route_23.POST!.schema,
     async (ctx: any) => {
       const methodItem = (route_23 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -521,7 +521,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .patch(
     "/notifications/:id/read",
-    (route_24 as any).PATCH.schema,
+    route_24.PATCH!.schema,
     async (ctx: any) => {
       const methodItem = (route_24 as any).PATCH;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -533,7 +533,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .get(
     "/notifications/:id",
-    (route_25 as any).GET.schema,
+    route_25.GET!.schema,
     async (ctx: any) => {
       const methodItem = (route_25 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -545,7 +545,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .delete(
     "/notifications/:id",
-    (route_25 as any).DELETE.schema,
+    route_25.DELETE!.schema,
     async (ctx: any) => {
       const methodItem = (route_25 as any).DELETE;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -557,7 +557,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/notifications/mark-all-read",
-    (route_26 as any).POST.schema,
+    route_26.POST!.schema,
     async (ctx: any) => {
       const methodItem = (route_26 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -569,7 +569,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .get(
     "/notifications",
-    (route_27 as any).GET.schema,
+    route_27.GET!.schema,
     async (ctx: any) => {
       const methodItem = (route_27 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -581,7 +581,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .delete(
     "/notifications",
-    (route_27 as any).DELETE.schema,
+    route_27.DELETE!.schema,
     async (ctx: any) => {
       const methodItem = (route_27 as any).DELETE;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -604,7 +604,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/users/me/assets",
-    (route_29 as any).POST.schema,
+    route_29.POST!.schema,
     async (ctx: any) => {
       const methodItem = (route_29 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -616,7 +616,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .delete(
     "/users/me/assets",
-    (route_29 as any).DELETE.schema,
+    route_29.DELETE!.schema,
     async (ctx: any) => {
       const methodItem = (route_29 as any).DELETE;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -628,7 +628,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .get(
     "/users/me/encryption",
-    (route_30 as any).GET.schema,
+    route_30.GET!.schema,
     async (ctx: any) => {
       const methodItem = (route_30 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -640,7 +640,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/users/me/encryption",
-    (route_30 as any).POST.schema,
+    route_30.POST!.schema,
     async (ctx: any) => {
       const methodItem = (route_30 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -652,7 +652,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .get(
     "/users/me",
-    (route_31 as any).GET.schema,
+    route_31.GET!.schema,
     async (ctx: any) => {
       const methodItem = (route_31 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -664,7 +664,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .patch(
     "/users/me",
-    (route_31 as any).PATCH.schema,
+    route_31.PATCH!.schema,
     async (ctx: any) => {
       const methodItem = (route_31 as any).PATCH;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -674,81 +674,81 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
+  .get(
+    "/connections/:id/auth",
+    route_32.GET!.schema,
+    async (ctx: any) => {
+      const methodItem = (route_32 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_32 as any).rateLimits?.GET ?? (route_32 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_32_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/connections/:id/callback",
+    route_33.GET!.schema,
+    async (ctx: any) => {
+      const methodItem = (route_33 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_33 as any).rateLimits?.GET ?? (route_33 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_33_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
   .delete(
     "/connections/:id",
-    (route_32 as any).DELETE.schema,
+    route_34.DELETE!.schema,
     async (ctx: any) => {
-      const methodItem = (route_32 as any).DELETE;
+      const methodItem = (route_34 as any).DELETE;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_32 as any).rateLimits?.DELETE ?? (route_32 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_32_DELETE", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_34 as any).rateLimits?.DELETE ?? (route_34 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_34_DELETE", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .patch(
     "/connections/:id",
-    (route_32 as any).PATCH.schema,
+    route_34.PATCH!.schema,
     async (ctx: any) => {
-      const methodItem = (route_32 as any).PATCH;
+      const methodItem = (route_34 as any).PATCH;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_32 as any).rateLimits?.PATCH ?? (route_32 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_32_PATCH", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_34 as any).rateLimits?.PATCH ?? (route_34 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_34_PATCH", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
     "/connections/:id/sync",
-    (route_33 as any).POST.schema,
+    route_35.POST!.schema,
     async (ctx: any) => {
-      const methodItem = (route_33 as any).POST;
+      const methodItem = (route_35 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_33 as any).rateLimits?.POST ?? (route_33 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_33_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_35 as any).rateLimits?.POST ?? (route_35 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_35_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
     "/connections/:id/test",
-    (route_34 as any).POST.schema,
+    route_36.POST!.schema,
     async (ctx: any) => {
-      const methodItem = (route_34 as any).POST;
+      const methodItem = (route_36 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_34 as any).rateLimits?.POST ?? (route_34 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_34_POST", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .get(
-    "/connections/:provider/auth",
-    (route_35 as any).GET.schema,
-    async (ctx: any) => {
-      const methodItem = (route_35 as any).GET;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_35 as any).rateLimits?.GET ?? (route_35 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_35_GET", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .get(
-    "/connections/:provider/callback",
-    (route_36 as any).GET.schema,
-    async (ctx: any) => {
-      const methodItem = (route_36 as any).GET;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_36 as any).rateLimits?.GET ?? (route_36 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_36_GET", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_36 as any).rateLimits?.POST ?? (route_36 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_36_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
     "/connections/providers",
-    (route_37 as any).GET.schema,
+    route_37.GET!.schema,
     async (ctx: any) => {
       const methodItem = (route_37 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -760,7 +760,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .get(
     "/connections",
-    (route_38 as any).GET.schema,
+    route_38.GET!.schema,
     async (ctx: any) => {
       const methodItem = (route_38 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -772,7 +772,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/connections",
-    (route_38 as any).POST.schema,
+    route_38.POST!.schema,
     async (ctx: any) => {
       const methodItem = (route_38 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -784,7 +784,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .get(
     "/connections/search",
-    (route_39 as any).GET.schema,
+    route_39.GET!.schema,
     async (ctx: any) => {
       const methodItem = (route_39 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
