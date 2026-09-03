@@ -45,6 +45,7 @@ import { PrivacySettingsTab } from "./settings-tabs/account/privacy-tab"
 import { AppearanceSettingsTab } from "./settings-tabs/customization/appearance-tab"
 import { SidebarSettingsTab } from "./settings-tabs/customization/sidebar-tab"
 import { DockSettingsTab } from "./settings-tabs/customization/dock-tab"
+import { MediaPreferencesSettingsTab } from "./settings-tabs/customization/media-preferences-tab"
 
 // Lists Tabs
 import { ListsImportSettingsTab } from "./settings-tabs/lists/lists-import-tab"
@@ -71,6 +72,7 @@ export type IrisSettingsCategory =
   | "appearance"
   | "sidebar"
   | "dock"
+  | "mediaPreferences"
   | "import"
   | "export"
   | "sonarr"
@@ -157,6 +159,13 @@ function renderTabContent(
     case "dock":
       return (
         <DockSettingsTab
+          onOpenChange={onOpenChange}
+          setFooterContent={setFooterContent}
+        />
+      )
+    case "mediaPreferences":
+      return (
+        <MediaPreferencesSettingsTab
           onOpenChange={onOpenChange}
           setFooterContent={setFooterContent}
         />
@@ -285,6 +294,12 @@ export function IrisSettingsModal({
         id: "dock",
         name: t("tabs.dock"),
         icon: IconDeviceMobile,
+        group: t("groups.customization"),
+      },
+      {
+        id: "mediaPreferences",
+        name: t("tabs.media"),
+        icon: IconMovie,
         group: t("groups.customization"),
       },
 

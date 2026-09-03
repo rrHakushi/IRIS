@@ -173,6 +173,7 @@
         "appearance": "Appearance",
         "sidebar": "Sidebar",
         "dock": "Dock",
+        "media": "Media Preferences",
         "import": "Import",
         "export": "Export",
         "sonarr": "Sonarr",
@@ -518,6 +519,22 @@
           "failedCopySnippet": "Failed to copy snippet.",
           "headerNote": "Note: The server also accepts {headers}, or query parameter {param}."
         }
+      },
+      "customization": {
+        "media": {
+          "title": "Media Preferences",
+          "titleDisplayLanguage": "Title Display Language",
+          "primaryTitle": "Primary Title",
+          "secondaryTitle": "Secondary / Romaji",
+          "nativeTitle": "Native Title",
+          "preview": "Preview",
+          "unsavedChanges": "Unsaved changes",
+          "reset": "Reset",
+          "saveChanges": "Save Changes",
+          "saving": "Saving...",
+          "updateSuccess": "Media preferences updated successfully!",
+          "updateFailed": "Failed to update media preferences."
+        }
       }
     },
     "sidebar": {
@@ -594,6 +611,40 @@
       "denied": "Denied",
       "submitted": "Submitted",
       "submit": "Submit Response"
+    }
+  },
+  "browse": {
+    "title": "Browse",
+    "searchPlaceholderPhone": "Search titles...",
+    "searchPlaceholderDesktop": "Search titles... (try @anime, @movie to switch category)",
+    "searchTitles": "Search titles",
+    "clearSearch": "Clear search input",
+    "switchCategory": "Switch Category",
+    "recent": "Recent",
+    "recentSearches": "Recent Searches",
+    "clearCategory": "Clear {category}",
+    "clearCategoryTitle": "Clear {category} search history and visited media",
+    "clearCategoryHistory": "Clear {category} History",
+    "clearAllCategories": "Clear All Categories",
+    "moreClearOptions": "More clear options",
+    "recentlyVisited": "Recently Visited {category}",
+    "noResultsTitle": "No {category} found for \"{query}\"",
+    "noResultsDesc": "Check for typos or try searching with alternate spelling or a broader term.",
+    "removeRecentQuery": "Remove recent search query: {query}",
+    "searchFor": "Search for {query}",
+    "removeFromVisited": "Remove {title} from recently visited",
+    "noImage": "No image available",
+    "categories": {
+      "anime": "Anime",
+      "manga": "Manga",
+      "movies": "Movies",
+      "tv": "TV Shows",
+      "games": "Games",
+      "books": "Books",
+      "music": "Music",
+      "characters": "Characters",
+      "people": "Staff",
+      "studios": "Studios"
     }
   }
 }

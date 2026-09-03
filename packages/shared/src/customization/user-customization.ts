@@ -28,12 +28,35 @@ export interface UserProfileCustomization {
   avatarFrame?: string | null; // URL of uploaded PNG/SVG transparent frame overlay
 }
 
+export type MediaTitleLanguage = "primary" | "secondary" | "native";
+
+export interface UserMediaPreferences {
+  title?: MediaTitleLanguage;
+}
+
+export interface UserPreferencesCustomization {
+  media?: UserMediaPreferences;
+}
+
 export interface UserCustomization {
   profile?: UserProfileCustomization;
   appearance?: Record<string, unknown>;
   sidebar?: Record<string, unknown>;
   dock?: Record<string, unknown>;
+  preferences?: UserPreferencesCustomization;
   [key: string]: unknown;
+}
+
+export function getMediaPreferences(customization?: unknown): UserMediaPreferences {
+  if (!customization || typeof customization !== "object") {
+    return { title: "primary" };
+  }
+  const media = (customization as any)?.preferences?.media;
+  const title = media?.title;
+  if (title === "secondary" || title === "native" || title === "primary") {
+    return { title };
+  }
+  return { title: "primary" };
 }
 
 export interface FontPreset {

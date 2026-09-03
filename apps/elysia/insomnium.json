@@ -1530,7 +1530,7 @@
       "method": "PATCH",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"customization\": {},\n  \"settings\": {}\n}"
+        "text": "{\n  \"customization\": {\n    \"profile\": {},\n    \"appearance\": {},\n    \"sidebar\": {},\n    \"dock\": {},\n    \"preferences\": {\n      \"media\": {\n        \"title\": {}\n      }\n    }\n  },\n  \"settings\": {}\n}"
       },
       "parameters": [],
       "headers": [

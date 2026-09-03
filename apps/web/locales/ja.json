@@ -173,6 +173,7 @@
         "appearance": "外観",
         "sidebar": "サイドバー",
         "dock": "ドック",
+        "media": "メディア設定",
         "import": "インポート",
         "export": "エクスポート",
         "sonarr": "Sonarr",
@@ -518,6 +519,22 @@
           "failedCopySnippet": "スニペットのコピーに失敗しました。",
           "headerNote": "※ サーバーは {headers}、またはクエリパラメータ {param} も受け付けます。"
         }
+      },
+      "customization": {
+        "media": {
+          "title": "メディア設定",
+          "titleDisplayLanguage": "タイトルの表示言語",
+          "primaryTitle": "プライマリタイトル",
+          "secondaryTitle": "セカンダリ / ローマ字",
+          "nativeTitle": "原語タイトル",
+          "preview": "プレビュー",
+          "unsavedChanges": "未保存の変更",
+          "reset": "リセット",
+          "saveChanges": "変更を保存",
+          "saving": "保存中...",
+          "updateSuccess": "メディア設定を更新しました！",
+          "updateFailed": "メディア設定の更新に失敗しました。"
+        }
       }
     },
     "sidebar": {
@@ -594,6 +611,40 @@
       "denied": "拒否済み",
       "submitted": "送信済み",
       "submit": "回答を送信"
+    }
+  },
+  "browse": {
+    "title": "ブラウズ",
+    "searchPlaceholderPhone": "作品を検索...",
+    "searchPlaceholderDesktop": "作品を検索... (@anime, @movie でカテゴリ切り替え)",
+    "searchTitles": "作品を検索",
+    "clearSearch": "検索内容を消去",
+    "switchCategory": "カテゴリを切り替え",
+    "recent": "最近",
+    "recentSearches": "最近の検索",
+    "clearCategory": "{category}を消去",
+    "clearCategoryTitle": "{category}の検索履歴と閲覧履歴を消去",
+    "clearCategoryHistory": "{category}の履歴を消去",
+    "clearAllCategories": "すべてのカテゴリを消去",
+    "moreClearOptions": "その他の消去オプション",
+    "recentlyVisited": "最近閲覧した{category}",
+    "noResultsTitle": "「{query}」に一致する{category}は見つかりませんでした",
+    "noResultsDesc": "誤字がないか確認するか、別のキーワードや一般的な言葉で検索してください。",
+    "removeRecentQuery": "最近の検索クエリ「{query}」を削除",
+    "searchFor": "「{query}」を検索",
+    "removeFromVisited": "「{title}」を最近の閲覧履歴から削除",
+    "noImage": "画像がありません",
+    "categories": {
+      "anime": "アニメ",
+      "manga": "マンガ",
+      "movies": "映画",
+      "tv": "テレビ番組",
+      "games": "ゲーム",
+      "books": "書籍",
+      "music": "音楽",
+      "characters": "キャラクター",
+      "people": "スタッフ",
+      "studios": "スタジオ"
     }
   }
 }

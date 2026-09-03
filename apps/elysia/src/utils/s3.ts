@@ -74,9 +74,7 @@ export async function uploadPublicAsset(params: {
   }
 }
 
-export async function getPublicAsset(
-  key: string
-): Promise<{
+export async function getPublicAsset(key: string): Promise<{
   body: ReadableStream | any
   contentType?: string
   contentLength?: number

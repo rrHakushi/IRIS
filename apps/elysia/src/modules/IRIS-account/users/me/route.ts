@@ -3,6 +3,27 @@ import { cache } from "../../../../utils/cache"
 
 const userCache = cache.withNamespace("users:me")
 
+export const MediaPreferencesSchema = t.Object({
+  title: t.Optional(
+    t.Union([t.Literal("primary"), t.Literal("secondary"), t.Literal("native")])
+  ),
+})
+
+export const PreferencesCustomizationSchema = t.Object({
+  media: t.Optional(MediaPreferencesSchema),
+})
+
+export const UserCustomizationSchema = t.Partial(
+  t.Object({
+    profile: t.Optional(t.Any()),
+    appearance: t.Optional(t.Any()),
+    sidebar: t.Optional(t.Any()),
+    dock: t.Optional(t.Any()),
+    preferences: t.Optional(PreferencesCustomizationSchema),
+  }),
+  { additionalProperties: true }
+)
+
 export default defineRoute({
   GET: {
     schema: {
@@ -13,7 +34,7 @@ export default defineRoute({
             id: t.String(),
             username: t.String(),
             email: t.String(),
-            customization: t.Nullable(t.Any()),
+            customization: t.Nullable(UserCustomizationSchema),
             settings: t.Nullable(t.Any()),
             permissions: t.Array(t.Number()),
             TOTPEnabled: t.Boolean(),
@@ -97,7 +118,7 @@ export default defineRoute({
     schema: {
       body: t.Optional(
         t.Object({
-          customization: t.Optional(t.Any()),
+          customization: t.Optional(UserCustomizationSchema),
           settings: t.Optional(t.Any()),
         })
       ),
@@ -108,7 +129,7 @@ export default defineRoute({
             id: t.String(),
             username: t.String(),
             email: t.String(),
-            customization: t.Nullable(t.Any()),
+            customization: t.Nullable(UserCustomizationSchema),
             settings: t.Nullable(t.Any()),
             permissions: t.Array(t.Number()),
             TOTPEnabled: t.Boolean(),
