@@ -16,6 +16,7 @@
       "parentId": "wrk_iris_api",
       "name": "Base Environment",
       "data": {
+        "base_url": "http://localhost:4000",
         "token": "",
         "api_key": "iris_dev_key_0192837465abcdef01928374"
       },
@@ -3522,7 +3523,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"name\": \"string\",\n  \"enabled\": true\n}"
+        "text": "{\n  \"force\": false,\n  \"maxDepth\": 0,\n  \"priority\": 1,\n  \"maxRetries\": 3\n}"
       },
       "parameters": [],
       "headers": [
@@ -3634,7 +3635,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"name\": \"string\",\n  \"enabled\": true\n}"
+        "text": "{\n  \"force\": false,\n  \"maxDepth\": 0,\n  \"priority\": 1,\n  \"maxRetries\": 3\n}"
       },
       "parameters": [],
       "headers": [
@@ -3777,7 +3778,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"name\": \"string\",\n  \"enabled\": true\n}"
+        "text": "{\n  \"force\": false,\n  \"maxDepth\": 0,\n  \"priority\": 1,\n  \"maxRetries\": 3\n}"
       },
       "parameters": [],
       "headers": [
@@ -3889,7 +3890,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"name\": \"string\",\n  \"enabled\": true\n}"
+        "text": "{\n  \"force\": false,\n  \"maxDepth\": 0,\n  \"priority\": 1,\n  \"maxRetries\": 3\n}"
       },
       "parameters": [],
       "headers": [
@@ -4001,7 +4002,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"name\": \"string\",\n  \"enabled\": true\n}"
+        "text": "{\n  \"force\": false,\n  \"maxDepth\": 0,\n  \"priority\": 1,\n  \"maxRetries\": 3\n}"
       },
       "parameters": [],
       "headers": [
@@ -4113,7 +4114,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"name\": \"string\",\n  \"enabled\": true\n}"
+        "text": "{\n  \"force\": false,\n  \"maxDepth\": 0,\n  \"priority\": 1,\n  \"maxRetries\": 3\n}"
       },
       "parameters": [],
       "headers": [
@@ -4287,7 +4288,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"name\": \"string\",\n  \"enabled\": true\n}"
+        "text": "{\n  \"force\": false,\n  \"maxDepth\": 0,\n  \"priority\": 1,\n  \"maxRetries\": 3\n}"
       },
       "parameters": [],
       "headers": [
