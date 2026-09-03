@@ -16,6 +16,7 @@ interface BrowseMediaCardProps {
     coverImage?: string | null
     format?: string | null
     year?: number | string | null
+    queuedForFetch?: boolean
   }
   category: BrowseCategory
   onVisit?: (item: VisitedMediaItem) => void
@@ -34,7 +35,9 @@ export function BrowseMediaCard({
 }: BrowseMediaCardProps) {
   const t = useTranslations("browse")
   const [imageError, setImageError] = useState(false)
-  const href = `/IRIS-list/media/${category}/${item.id}`
+  const href = item.queuedForFetch
+    ? `/IRIS-list/media/${category}/${item.id}?queuedFetch=true`
+    : `/IRIS-list/media/${category}/${item.id}`
 
   const handleClick = () => {
     onVisit?.({
@@ -43,6 +46,7 @@ export function BrowseMediaCard({
       coverImage: item.coverImage,
       format: item.format,
       year: item.year,
+      queuedForFetch: item.queuedForFetch,
       visitedAt: Date.now(),
     })
   }
@@ -97,6 +101,21 @@ export function BrowseMediaCard({
               </Badge>
             )}
           </div>
+
+          {/* Queued For Fetch Badge */}
+          {item.queuedForFetch && (
+            <div
+              className="absolute inset-x-1.5 bottom-1.5 z-10 flex"
+              title={t("fetchingFullDataTooltip")}
+            >
+              <Badge
+                variant="outline"
+                className="w-full justify-center border-amber-500/40 bg-amber-500/90 px-1.5 py-0.5 text-[9px] font-medium text-amber-950 shadow-xs backdrop-blur-md dark:border-amber-400/30 dark:bg-amber-500/25 dark:text-amber-200"
+              >
+                <span className="truncate">{t("fetchingFullData")}</span>
+              </Badge>
+            </div>
+          )}
         </div>
 
         {/* Card Metadata */}

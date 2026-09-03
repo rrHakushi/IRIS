@@ -138,6 +138,7 @@ function normalizeSearchResults(
       coverImage,
       format,
       year,
+      queuedForFetch: Boolean(item.queuedForFetch),
     }
   })
 }

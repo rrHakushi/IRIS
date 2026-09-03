@@ -105,6 +105,7 @@ export interface VisitedMediaItem {
   coverImage?: string | null
   format?: string | null
   year?: number | string | null
+  queuedForFetch?: boolean
   visitedAt: number
 }
 

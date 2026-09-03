@@ -634,6 +634,8 @@
     "searchFor": "Search for {query}",
     "removeFromVisited": "Remove {title} from recently visited",
     "noImage": "No image available",
+    "fetchingFullData": "Fetching full data...",
+    "fetchingFullDataTooltip": "Fetching full data in the background. This may take a while depending on how much data and relations are being imported.",
     "categories": {
       "anime": "Anime",
       "manga": "Manga",

@@ -13,6 +13,7 @@ export interface SearchResultItem {
   coverImage?: string | null
   format?: string | null
   year?: number | string | null
+  queuedForFetch?: boolean
 }
 
 interface BrowseSearchResultsProps {

@@ -634,6 +634,8 @@
     "searchFor": "「{query}」を検索",
     "removeFromVisited": "「{title}」を最近の閲覧履歴から削除",
     "noImage": "画像がありません",
+    "fetchingFullData": "詳細データを取得中...",
+    "fetchingFullDataTooltip": "バックグラウンドで詳細データを取得中です。関連データや関係性の量によって時間がかかる場合があります。",
     "categories": {
       "anime": "アニメ",
       "manga": "マンガ",
