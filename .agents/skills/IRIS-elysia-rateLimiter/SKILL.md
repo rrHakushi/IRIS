@@ -1,5 +1,5 @@
 ---
-name: IRIS-Elysia/rateLimiter
+name: IRIS-elysia/rateLimiter
 description: Guide for Token Bucket rate limiting in IRIS (@IRIS/elysia) with multi-tier identity resolution (user, API key, device ID, IP) and HTTP 429 headers. Use when configuring rate limits, quotas, or 429 errors.
 ---
 
@@ -226,3 +226,12 @@ When tokens are exhausted, the rate limiter immediately aborts the request with:
     "retryAfter": 5
   }
   ```
+
+---
+
+## 7. Related Backend Skills
+
+- [IRIS-elysia](file:///c:/Users/yki/Documents/GitHub/IRIS/.agents/skills/IRIS-elysia/SKILL.md): Master backend architecture guide covering modules, services, utils, plugins, router, and Elysia 2.0 beta.
+- [IRIS-elysia/createRoute](file:///c:/Users/yki/Documents/GitHub/IRIS/.agents/skills/IRIS-elysia-createRoute/SKILL.md): Scaffolding file-based routes via CLI (`pnpm route:create`).
+- [IRIS-elysia/cron](file:///c:/Users/yki/Documents/GitHub/IRIS/.agents/skills/IRIS-elysia-cron/SKILL.md): Background job scheduling.
+- [IRIS-elysia/session](file:///c:/Users/yki/Documents/GitHub/IRIS/.agents/skills/IRIS-elysia-session/SKILL.md): Authentication and session resolution.

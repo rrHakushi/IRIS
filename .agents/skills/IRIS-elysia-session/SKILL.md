@@ -1,5 +1,5 @@
 ---
-name: IRIS-Elysia/session
+name: IRIS-elysia/session
 description: Guide for authentication and session resolution in IRIS (@IRIS/elysia) across Bearer tokens, NextAuth cookies, and API keys. Use when working with Elysia session, currentUser, API keys, dev account, or endpoint security.
 ---
 
@@ -140,3 +140,14 @@ if (!session.hasPermission(IRISFlags.MANAGE_USERS)) {
 
 > [!NOTE]
 > If the user has `IRISFlags.ADMINISTRATOR`, `session.hasPermission()` will always return `true` regardless of which flag is requested.
+
+---
+
+## 7. Related Backend Skills
+
+- [IRIS-elysia](file:///c:/Users/yki/Documents/GitHub/IRIS/.agents/skills/IRIS-elysia/SKILL.md): Master backend architecture guide covering modules, services, utils, plugins, router, and Elysia 2.0 beta.
+- [IRIS-elysia/createRoute](file:///c:/Users/yki/Documents/GitHub/IRIS/.agents/skills/IRIS-elysia-createRoute/SKILL.md): Scaffolding file-based routes via CLI (`pnpm route:create`).
+- [IRIS-elysia/cron](file:///c:/Users/yki/Documents/GitHub/IRIS/.agents/skills/IRIS-elysia-cron/SKILL.md): Background job scheduling.
+- [IRIS-elysia/rateLimiter](file:///c:/Users/yki/Documents/GitHub/IRIS/.agents/skills/IRIS-elysia-rateLimiter/SKILL.md): Token Bucket rate limiting.
+- [IRIS-permissions](file:///c:/Users/yki/Documents/GitHub/IRIS/.agents/skills/IRIS-permissions/SKILL.md): Guide for permission checking and RBAC in IRIS via @IRIS/permissions.
+

@@ -1,5 +1,5 @@
 ---
-name: IRIS-Elysia/cron
+name: IRIS-elysia/cron
 description: Guide for task scheduling and cron jobs in Elysia 2.0 (@IRIS/elysia) using zero-dependency timers, predefined Patterns, store.cron, and schedule() APIs. Use when creating or managing scheduled background jobs.
 ---
 
@@ -225,3 +225,13 @@ Each job instance exposes:
 | `job.previousRun()` | `Date \| null` | Returns the previous execution Date |
 | `job.running` | `boolean` | Current running state |
 | `job.runCount` | `number` | Total number of executions completed |
+
+---
+
+## 7. Related Backend Skills
+
+- [IRIS-elysia](file:///c:/Users/yki/Documents/GitHub/IRIS/.agents/skills/IRIS-elysia/SKILL.md): Master backend architecture guide covering modules, services, utils, plugins, router, and Elysia 2.0 beta.
+- [IRIS-elysia/createRoute](file:///c:/Users/yki/Documents/GitHub/IRIS/.agents/skills/IRIS-elysia-createRoute/SKILL.md): Scaffolding file-based routes via CLI (`pnpm route:create`).
+- [IRIS-elysia/rateLimiter](file:///c:/Users/yki/Documents/GitHub/IRIS/.agents/skills/IRIS-elysia-rateLimiter/SKILL.md): Token Bucket rate limiting.
+- [IRIS-elysia/session](file:///c:/Users/yki/Documents/GitHub/IRIS/.agents/skills/IRIS-elysia-session/SKILL.md): Authentication and session resolution.
+
