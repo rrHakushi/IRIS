@@ -135,3 +135,50 @@ export const MediaRelationSchema = t.Object({
   type: t.String(),
   target: t.Nullable(t.Any()),
 })
+
+export const MediaTrailerItemSchema = t.Object(
+  {
+    id: t.Optional(t.Nullable(t.Union([t.String(), t.Number()]))),
+    site: t.Optional(t.Nullable(t.String())),
+    url: t.Optional(t.Nullable(t.String())),
+    name: t.Optional(t.Nullable(t.String())),
+    runtime: t.Optional(t.Nullable(t.Number())),
+    language: t.Optional(t.Nullable(t.String())),
+    thumbnail: t.Optional(t.Nullable(t.String())),
+  },
+  { additionalProperties: true }
+)
+
+export const MediaImagesSchema = t.Record(t.String(), t.Array(t.String()))
+
+export const MediaExternalLinkSchema = t.Object({
+  id: t.Optional(t.Nullable(t.Union([t.String(), t.Number()]))),
+  url: t.String(),
+  site: t.Optional(t.Nullable(t.String())),
+  type: t.Optional(t.Nullable(t.String())),
+  icon: t.Optional(t.Nullable(t.String())),
+})
+
+export const MediaSourceItemSchema = t.Object({
+  id: t.Optional(t.Nullable(t.Union([t.String(), t.Number()]))),
+  url: t.Optional(t.Nullable(t.String())),
+  updatedAt: t.Optional(t.Nullable(t.Union([t.Number(), t.String()]))),
+})
+
+export const MediaSourcesSchema = t.Record(t.String(), MediaSourceItemSchema)
+
+export const MediaThemeSongItemSchema = t.Union([
+  t.String(),
+  t.Object({
+    id: t.Optional(t.Nullable(t.Number())),
+    text: t.String(),
+  }),
+])
+
+export const MediaThemeSongsSchema = t.Object({
+  op: t.Optional(t.Nullable(t.Array(MediaThemeSongItemSchema))),
+  ed: t.Optional(t.Nullable(t.Array(MediaThemeSongItemSchema))),
+})
+
+export const MediaStatusDistributionSchema = t.Record(t.String(), t.Number())
+export const MediaScoreDistributionSchema = t.Record(t.String(), t.Number())

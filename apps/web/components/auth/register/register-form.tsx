@@ -190,13 +190,13 @@ export function RegisterForm({ footer }: RegisterFormProps) {
     setLoading(true)
 
     try {
-      const payload: Record<string, string> = {
+      const payload = {
         username: cleanUsername,
         email: email.trim().toLowerCase(),
         password,
-      }
-      if (useSeparateEncryptionPassword && encryptionPassword.trim()) {
-        payload.encryptionPassword = encryptionPassword.trim()
+        ...(useSeparateEncryptionPassword && encryptionPassword.trim()
+          ? { encryptionPassword: encryptionPassword.trim() }
+          : {}),
       }
 
       const { data, error } = await elysia.auth.register.post(payload)

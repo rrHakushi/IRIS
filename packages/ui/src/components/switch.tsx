@@ -31,7 +31,7 @@ function Switch({
           <span
             data-slot="switch-thumb"
             data-selected={isSelected || undefined}
-            className="pointer-events-none block rounded-2xl bg-background shadow-sm ring-0 transition-transform not-dark:bg-clip-padding not-data-selected:translate-x-0 rtl:not-data-selected:-translate-x-0 group-data-[size=default]/switch:size-4 group-data-[size=sm]/switch:size-3 dark:not-data-selected:bg-foreground data-checked:translate-x-[calc(100%-4px)] rtl:data-checked:-translate-x-[calc(100%-4px)] dark:data-checked:bg-primary-foreground data-unchecked:translate-x-0 rtl:data-unchecked:-translate-x-0 dark:data-unchecked:bg-foreground data-selected:translate-x-[calc(100%-4px)] rtl:data-selected:-translate-x-[calc(100%-4px)] dark:data-selected:bg-primary-foreground"
+            className="pointer-events-none block rounded-2xl bg-background shadow-sm ring-0 transition-transform not-dark:bg-clip-padding not-data-selected:translate-x-0 group-data-[size=default]/switch:size-4 group-data-[size=sm]/switch:size-3 rtl:not-data-selected:-translate-x-0 dark:not-data-selected:bg-foreground data-checked:translate-x-[calc(100%-4px)] rtl:data-checked:-translate-x-[calc(100%-4px)] dark:data-checked:bg-primary-foreground data-unchecked:translate-x-0 rtl:data-unchecked:-translate-x-0 dark:data-unchecked:bg-foreground data-selected:translate-x-[calc(100%-4px)] rtl:data-selected:-translate-x-[calc(100%-4px)] dark:data-selected:bg-primary-foreground"
           />
           {children}
         </>

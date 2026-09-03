@@ -16,6 +16,7 @@
       "parentId": "wrk_iris_api",
       "name": "Base Environment",
       "data": {
+        "base_url": "http://localhost:4000",
         "token": "",
         "api_key": "iris_dev_key_0192837465abcdef01928374"
       },

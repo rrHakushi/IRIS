@@ -26,7 +26,11 @@ function Avatar({
 
 type ImageState = "loading" | "loaded" | "error"
 
-function AvatarImage({ className, src, ...props }: React.ComponentProps<"img">) {
+function AvatarImage({
+  className,
+  src,
+  ...props
+}: React.ComponentProps<"img">) {
   const [state, setState] = React.useState<ImageState>(
     src ? "loading" : "error"
   )

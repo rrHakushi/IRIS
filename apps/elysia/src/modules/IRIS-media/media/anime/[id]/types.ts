@@ -5,6 +5,13 @@ import {
   MediaStaffSchema,
   MediaStudioSchema,
   MediaRelationSchema,
+  MediaTrailerItemSchema,
+  MediaImagesSchema,
+  MediaExternalLinkSchema,
+  MediaSourcesSchema,
+  MediaThemeSongsSchema,
+  MediaStatusDistributionSchema,
+  MediaScoreDistributionSchema,
 } from "@/modules/IRIS-media/types"
 import { t } from "elysia"
 
@@ -60,7 +67,7 @@ export const AnimeResponseSchema = t.Object({
 
   coverImage: t.Nullable(t.String()),
   bannerImage: t.Nullable(t.String()),
-  images: t.Nullable(t.Any()),
+  images: t.Nullable(MediaImagesSchema),
 
   description: t.Nullable(t.String()),
   hashtag: t.Nullable(t.String()),
@@ -88,8 +95,8 @@ export const AnimeResponseSchema = t.Object({
   popularity: t.Number(),
   totalScoreSum: t.Nullable(t.Number()),
   scoredCount: t.Nullable(t.Number()),
-  statusDistribution: t.Any(),
-  scoreDistribution: t.Any(),
+  statusDistribution: t.Nullable(MediaStatusDistributionSchema),
+  scoreDistribution: t.Nullable(MediaScoreDistributionSchema),
 
   alAverageScore: t.Nullable(t.Number()),
   alFavorites: t.Nullable(t.Number()),
@@ -101,14 +108,14 @@ export const AnimeResponseSchema = t.Object({
 
   isAdult: t.Boolean(),
   synonyms: t.Array(t.String()),
-  trailers: t.Nullable(t.Any()),
+  trailers: t.Nullable(t.Array(MediaTrailerItemSchema)),
   locked: t.Boolean(),
 
   siteUrl: t.Nullable(t.String()),
-  externalLinks: t.Nullable(t.Any()),
-  sources: t.Nullable(t.Any()),
+  externalLinks: t.Nullable(t.Array(MediaExternalLinkSchema)),
+  sources: t.Nullable(MediaSourcesSchema),
 
-  themeSongs: t.Nullable(t.Any()),
+  themeSongs: t.Nullable(MediaThemeSongsSchema),
 
   ageRating: t.Nullable(t.String()),
   ageRatingGuide: t.Nullable(t.String()),

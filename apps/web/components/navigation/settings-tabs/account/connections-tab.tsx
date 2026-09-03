@@ -45,37 +45,36 @@ export function ConnectionsSettingsTab({}: SettingsTabProps): React.JSX.Element 
 
   const inFlightRef = React.useRef(false)
 
-  const fetchData = useCallback(
-    async (manual = false) => {
-      if (inFlightRef.current && !manual) return
-      inFlightRef.current = true
+  const fetchData = useCallback(async (manual = false) => {
+    if (inFlightRef.current && !manual) return
+    inFlightRef.current = true
 
-      if (manual) setIsRefreshing(true)
-      else setIsLoading(true)
+    if (manual) setIsRefreshing(true)
+    else setIsLoading(true)
 
-      try {
-        const [provRes, connRes] = await Promise.all([
-          elysia.connections.providers.get(),
-          elysia.connections.get({ fetch: { credentials: "include" } }),
-        ])
+    try {
+      const [provRes, connRes] = await Promise.all([
+        elysia.connections.providers.get(),
+        elysia.connections.get({ fetch: { credentials: "include" } }),
+      ])
 
-        if (!provRes.error && provRes.data?.success) {
-          setProviders(provRes.data.providers as unknown as ProviderMetadata[])
-        }
-
-        if (!connRes.error && connRes.data?.success) {
-          setConnections(connRes.data.connections as unknown as UserConnectionItem[])
-        }
-      } catch (err) {
-        console.error("Failed to load connections:", err)
-      } finally {
-        setIsLoading(false)
-        setIsRefreshing(false)
-        inFlightRef.current = false
+      if (!provRes.error && provRes.data?.success) {
+        setProviders(provRes.data.providers as unknown as ProviderMetadata[])
       }
-    },
-    []
-  )
+
+      if (!connRes.error && connRes.data?.success) {
+        setConnections(
+          connRes.data.connections as unknown as UserConnectionItem[]
+        )
+      }
+    } catch (err) {
+      console.error("Failed to load connections:", err)
+    } finally {
+      setIsLoading(false)
+      setIsRefreshing(false)
+      inFlightRef.current = false
+    }
+  }, [])
 
   useEffect(() => {
     // Process any OAuth callback redirect query params

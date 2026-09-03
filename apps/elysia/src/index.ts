@@ -34,6 +34,15 @@ await createRouterModule()
 export { routes }
 export type App = typeof routes
 export * from "./plugins/cron"
+export type { AnimeDetails } from "./modules/IRIS-media/media/anime/[id]/route"
+export type { MovieDetails } from "./modules/IRIS-media/media/movies/[id]/route"
+export type { TvDetails } from "./modules/IRIS-media/media/tv/[id]/route"
+export type { MangaDetails } from "./modules/IRIS-media/media/manga/[id]/route"
+export type { GameDetails } from "./modules/IRIS-media/media/games/[id]/route"
+export type { BookDetails } from "./modules/IRIS-media/media/books/[id]/route"
+export type { CharacterDetails } from "./modules/IRIS-media/media/characters/[id]/route"
+export type { PersonDetails } from "./modules/IRIS-media/media/people/[id]/route"
+export type { SimilarMediaItem } from "./modules/IRIS-media/helpers/media-similarity"
 
 declare module "elysia" {
   export const ELYSIA_FORM_DATA: unique symbol

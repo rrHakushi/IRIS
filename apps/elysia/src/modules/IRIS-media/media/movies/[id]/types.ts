@@ -5,6 +5,11 @@ import {
   MediaStaffSchema,
   MediaStudioSchema,
   MediaRelationSchema,
+  MediaTrailerItemSchema,
+  MediaImagesSchema,
+  MediaSourcesSchema,
+  MediaStatusDistributionSchema,
+  MediaScoreDistributionSchema,
 } from "@/modules/IRIS-media/types"
 import { t } from "elysia"
 
@@ -21,7 +26,7 @@ export const MovieResponseSchema = t.Object({
 
   coverImage: t.Nullable(t.String()),
   bannerImage: t.Nullable(t.String()),
-  images: t.Nullable(t.Any()),
+  images: t.Nullable(MediaImagesSchema),
 
   description: t.Nullable(t.String()),
   originalLanguage: t.Nullable(t.String()),
@@ -37,7 +42,7 @@ export const MovieResponseSchema = t.Object({
   status: t.String(),
   isAdult: t.Boolean(),
   synonyms: t.Array(t.String()),
-  trailers: t.Nullable(t.Any()),
+  trailers: t.Nullable(t.Array(MediaTrailerItemSchema)),
   locked: t.Boolean(),
 
   averageScore: t.Nullable(t.Number()),
@@ -45,13 +50,13 @@ export const MovieResponseSchema = t.Object({
   popularity: t.Number(),
   totalScoreSum: t.Nullable(t.Number()),
   scoredCount: t.Nullable(t.Number()),
-  statusDistribution: t.Any(),
-  scoreDistribution: t.Any(),
+  statusDistribution: t.Nullable(MediaStatusDistributionSchema),
+  scoreDistribution: t.Nullable(MediaScoreDistributionSchema),
 
   imdbRating: t.Nullable(t.Number()),
   imdbVotes: t.Nullable(t.Number()),
 
-  sources: t.Nullable(t.Any()),
+  sources: t.Nullable(MediaSourcesSchema),
 
   ageRating: t.Nullable(t.String()),
   ageRatingGuide: t.Nullable(t.String()),

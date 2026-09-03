@@ -9,6 +9,9 @@ export interface GlobalCacheKeys {
   book: {
     id: (id: number) => string;
   };
+  character: {
+    id: (id: number) => string;
+  };
   game: {
     id: (id: number) => string;
   };
@@ -19,6 +22,9 @@ export interface GlobalCacheKeys {
     id: (id: number) => string;
   };
   music: {
+    id: (id: number) => string;
+  };
+  person: {
     id: (id: number) => string;
   };
   search: {

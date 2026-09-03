@@ -59,7 +59,7 @@ function Tooltip({
     >
       {children}
       <OverlayArrow
-        className="z-50 size-2.5 translate-y-[calc(-50%-2px)] rotate-45 rounded-[2px] bg-foreground fill-foreground data-[side=left]:translate-x-[-1.5px] rtl:data-[side=left]:-translate-x-[-1.5px] data-[side=right]:translate-x-[1.5px] rtl:data-[side=right]:-translate-x-[1.5px]"
+        className="z-50 size-2.5 translate-y-[calc(-50%-2px)] rotate-45 rounded-[2px] bg-foreground fill-foreground data-[side=left]:translate-x-[-1.5px] data-[side=right]:translate-x-[1.5px] rtl:data-[side=left]:-translate-x-[-1.5px] rtl:data-[side=right]:-translate-x-[1.5px]"
         style={({ placement, defaultStyle }) => ({
           ...defaultStyle,
           rotate: "0deg",

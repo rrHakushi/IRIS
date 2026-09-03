@@ -90,12 +90,11 @@ export function ConnectionSettingsDialog({
 
     setIsDeleting(true)
     try {
-      const { error } = await elysia.connections({ id: connection.id }).delete(
-        undefined,
-        {
+      const { error } = await elysia
+        .connections({ id: connection.id })
+        .delete(undefined, {
           fetch: { credentials: "include" },
-        }
-      )
+        })
 
       if (error) {
         throw new Error(

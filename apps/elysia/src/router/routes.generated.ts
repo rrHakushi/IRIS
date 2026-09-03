@@ -140,6 +140,9 @@ if ((route_63 as any)?.cacheKeys) {
 if ((route_64 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_64 as any).cacheKeys);
 }
+if ((route_65 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_65 as any).cacheKeys);
+}
 if ((route_67 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_67 as any).cacheKeys);
 }
@@ -163,6 +166,9 @@ if ((route_76 as any)?.cacheKeys) {
 }
 if ((route_77 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_77 as any).cacheKeys);
+}
+if ((route_78 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_78 as any).cacheKeys);
 }
 if ((route_81 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_81 as any).cacheKeys);

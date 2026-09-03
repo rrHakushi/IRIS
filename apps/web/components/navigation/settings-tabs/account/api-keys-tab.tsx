@@ -179,14 +179,12 @@ export function ApiKeysSettingsTab({
     setRegeneratingId(id)
 
     try {
-      const res = await elysia.auth
-        ["api-keys"]({ id })
-        .regenerate.post(
-          {},
-          {
-            fetch: { credentials: "include" },
-          }
-        )
+      const res = await elysia.auth["api-keys"]({ id }).regenerate.post(
+        {},
+        {
+          fetch: { credentials: "include" },
+        }
+      )
 
       if (res.error || !res.data) {
         const errorData = res.error?.value as { message?: string } | undefined
