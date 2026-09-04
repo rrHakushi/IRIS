@@ -11,7 +11,7 @@ import {
   IconLink,
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
-import { Skeleton } from "@workspace/ui/components/skeleton"
+import { Button } from "@workspace/ui/components/button"
 import { Spinner } from "@workspace/ui/components/spinner"
 import { MediaListModal } from "@/components/media/list/media-list-modal"
 import type { NormalizedMediaData } from "@/components/media/media-types"
@@ -346,32 +346,35 @@ function MediaListCard({
       onTouchCancel={handleTouchMove}
       className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card"
     >
-      {/* Cover Image */}
-      <Link
-        href={mediaHref}
-        onClick={(e) => {
-          if (isLongPressRef.current) {
-            e.preventDefault()
-            e.stopPropagation()
-            isLongPressRef.current = false
-          }
-        }}
-        className="relative aspect-2/3 w-full overflow-hidden bg-muted select-none"
-      >
-        {cover ? (
-          <Image
-            src={cover}
-            alt={title}
-            fill
-            sizes="(max-width: 640px) 33vw, (max-width: 1024px) 20vw, 12.5vw"
-            unoptimized
-            className="object-cover"
-          />
-        ) : (
-          <div className="flex size-full items-center justify-center text-muted-foreground/50">
-            <IconPhotoOff className="size-6" />
-          </div>
-        )}
+      {/* Cover Image & Overlays Container */}
+      <div className="relative aspect-2/3 w-full overflow-hidden bg-muted select-none">
+        {/* Cover Image Link */}
+        <Link
+          href={mediaHref}
+          onClick={(e) => {
+            if (isLongPressRef.current) {
+              e.preventDefault()
+              e.stopPropagation()
+              isLongPressRef.current = false
+            }
+          }}
+          className="absolute inset-0 size-full block"
+        >
+          {cover ? (
+            <Image
+              src={cover}
+              alt={title}
+              fill
+              sizes="(max-width: 640px) 33vw, (max-width: 1024px) 20vw, 12.5vw"
+              unoptimized
+              className="object-cover"
+            />
+          ) : (
+            <div className="flex size-full items-center justify-center text-muted-foreground/50">
+              <IconPhotoOff className="size-6" />
+            </div>
+          )}
+        </Link>
 
         {/* Connection Count Badge (Top-Left, visible only on hover) */}
         {connectedCount > 0 && (
@@ -385,21 +388,22 @@ function MediaListCard({
         )}
 
         {/* Hamburger Icon Overlay (Top-Right, visible only on hover) */}
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          onPress={() => onOpenEditModal(item)}
           onClick={(e) => {
             e.preventDefault()
             e.stopPropagation()
-            onOpenEditModal(item)
           }}
-          title="Edit list entry"
-          className="absolute top-1.5 end-1.5 z-10 flex size-6 items-center justify-center rounded-md bg-black/70 text-white/90 backdrop-blur-md opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto transition-opacity duration-150 hover:bg-black/90 hover:text-white cursor-pointer select-none"
+          aria-label="Edit list entry"
+          className="absolute top-1.5 end-1.5 z-20 size-6 rounded-md bg-black/70 text-white/90 backdrop-blur-md opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto transition-opacity duration-150 hover:bg-black/90 hover:text-white"
         >
           <IconMenu2 className="size-3.5" />
-        </button>
+        </Button>
 
         {/* Bottom Badges Overlay: Score, Progress */}
-        <div className="absolute bottom-1.5 start-1.5 end-1.5 flex items-center gap-1 flex-wrap pointer-events-none select-none">
+        <div className="absolute bottom-1.5 start-1.5 end-1.5 z-10 flex items-center gap-1 flex-wrap pointer-events-none select-none">
           {/* Score Badge */}
           {typeof entry.score === "number" && entry.score > 0 && (
             <div className="flex items-center gap-0.5 rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-bold text-amber-400 backdrop-blur-md shadow-xs">
@@ -455,7 +459,7 @@ function MediaListCard({
             </div>
           )}
         </div>
-      </Link>
+      </div>
 
       {/* Card Meta */}
       <div className="flex flex-1 flex-col p-2">
@@ -594,25 +598,11 @@ export function MediaListGrid({
     }
   }, [hasMore, isLoading, isLoadingMore, onLoadMore])
 
-  // Initial Loading Skeletons
+  // Initial Loading
   if (isLoading) {
     return (
-      <div
-        className={cn(
-          "grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2.5 md:grid-cols-5 md:gap-3 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-8",
-          className
-        )}
-      >
-        {Array.from({ length: 24 }).map((_, i) => (
-          <div
-            key={i}
-            className="flex flex-col gap-1.5 rounded-xl border border-border/40 bg-card p-1.5"
-          >
-            <Skeleton className="aspect-2/3 w-full rounded-lg" />
-            <Skeleton className="h-3 w-4/5 rounded-md" />
-            <Skeleton className="h-2.5 w-1/2 rounded-md" />
-          </div>
-        ))}
+      <div className={cn("flex min-h-[360px] w-full items-center justify-center py-20", className)}>
+        <Spinner className="size-8 text-primary" />
       </div>
     )
   }

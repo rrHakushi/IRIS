@@ -93,6 +93,7 @@ export interface StatusOption {
 
 export type SortByOption = "updatedAt" | "score" | "title" | "progress" | "addedAt"
 export type SortOrderOption = "asc" | "desc"
+export type ListViewTab = "list" | "comments" | "stats"
 
 export interface ListFilterFacets {
   statuses: Array<{ value: string; count: number }>

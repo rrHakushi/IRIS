@@ -145,9 +145,11 @@ export function UserListBanner({
               </div>
 
               {profile?.statusText && (
-                <p className="text-xs text-muted-foreground sm:text-sm">
-                  {profile.statusText}
-                </p>
+                <div className="inline-flex w-fit max-w-xl items-center rounded-2xl border border-border/60 bg-muted/40 px-3.5 py-1 text-xs text-foreground/90 shadow-xs backdrop-blur-xs transition-colors hover:border-border/80 hover:bg-muted/60 sm:text-sm">
+                  <span className="leading-snug break-words font-medium">
+                    {profile.statusText}
+                  </span>
+                </div>
               )}
             </div>
           </div>

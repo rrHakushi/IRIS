@@ -14,6 +14,7 @@ import {
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { Button } from "@workspace/ui/components/button"
+import { Input } from "@workspace/ui/components/input"
 
 export interface MultiSelectOption {
   value: string
@@ -110,22 +111,24 @@ export function MultiSelectFilterPopover({
           {/* Search bar inside popover */}
           {searchable && options.length > 7 && (
             <div className="relative border-b border-border/40 p-2">
-              <IconSearch className="pointer-events-none absolute start-4 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-              <input
+              <IconSearch className="pointer-events-none absolute start-4 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground z-10" />
+              <Input
                 type="text"
                 placeholder={`Filter ${label.toLowerCase()}...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-7 w-full rounded-xl bg-muted/40 ps-7 pe-6 text-xs text-foreground placeholder:text-muted-foreground outline-hidden focus:bg-muted/70"
+                className="h-7 w-full rounded-xl border-none bg-muted/40 ps-7 pe-6 text-xs text-foreground placeholder:text-muted-foreground focus-visible:bg-muted/70 focus-visible:ring-1 focus-visible:ring-ring/30"
               />
               {searchTerm && (
-                <button
-                  type="button"
-                  onClick={() => setSearchTerm("")}
-                  className="absolute end-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onPress={clearAll}
+                  aria-label="Clear filter search"
+                  className="absolute end-3.5 top-1/2 -translate-y-1/2 size-5 rounded-full text-muted-foreground hover:text-foreground z-10"
                 >
                   <IconX className="size-3" />
-                </button>
+                </Button>
               )}
             </div>
           )}

@@ -19,6 +19,7 @@ import type {
   SortOrderOption,
   ListFilterFacets,
   ListEntryData,
+  ListViewTab,
 } from "./types"
 
 export interface UserListViewProps {
@@ -138,7 +139,7 @@ export function UserListView({
 
   const isOwner = Boolean(
     session?.user?.username &&
-      session.user.username.toLowerCase() === username.toLowerCase()
+    session.user.username.toLowerCase() === username.toLowerCase()
   )
 
   // Use current user's profile if owner for reactive live updates, else SSR profile
@@ -160,6 +161,7 @@ export function UserListView({
   const [selectedYears, setSelectedYears] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<SortByOption>("updatedAt")
   const [sortOrder, setSortOrder] = useState<SortOrderOption>("desc")
+  const [activeTab, setActiveTab] = useState<ListViewTab>("list")
 
   // Debounce search input
   useEffect(() => {
@@ -511,6 +513,8 @@ export function UserListView({
           mediaType={mediaType}
           activeStatus={activeStatus}
           onStatusChange={setActiveStatus}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           facets={facets}
@@ -529,19 +533,39 @@ export function UserListView({
           totalCount={totalCount}
         />
 
-        {/* Media Grid with Infinite Scroll */}
-        <MediaListGrid
-          mediaType={mediaType}
-          activeStatus={activeStatus}
-          items={filteredItems}
-          isLoading={isLoading}
-          isLoadingMore={isLoadingMore}
-          hasMore={hasMore}
-          onLoadMore={handleLoadMore}
-          isOwner={isOwner}
-          onItemUpdated={handleItemUpdated}
-          mediaTitlePreference={mediaTitlePreference}
-        />
+        {/* Media Grid when List is selected */}
+        {activeTab === "list" && (
+          <MediaListGrid
+            mediaType={mediaType}
+            activeStatus={activeStatus}
+            items={filteredItems}
+            isLoading={isLoading}
+            isLoadingMore={isLoadingMore}
+            hasMore={hasMore}
+            onLoadMore={handleLoadMore}
+            isOwner={isOwner}
+            onItemUpdated={handleItemUpdated}
+            mediaTitlePreference={mediaTitlePreference}
+          />
+        )}
+
+        {/* Empty State for Comments */}
+        {activeTab === "comments" && (
+          <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/60 p-8 text-center backdrop-blur-md shadow-xs">
+            <p className="text-sm font-medium text-muted-foreground">
+              Comments will appear here.
+            </p>
+          </div>
+        )}
+
+        {/* Empty State for Stats */}
+        {activeTab === "stats" && (
+          <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/60 p-8 text-center backdrop-blur-md shadow-xs">
+            <p className="text-sm font-medium text-muted-foreground">
+              Statistics will appear here.
+            </p>
+          </div>
+        )}
       </main>
     </div>
   )
