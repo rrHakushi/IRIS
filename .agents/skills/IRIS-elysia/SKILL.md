@@ -251,6 +251,15 @@ if (hasConflict) {
 }
 ```
 
+> [!CAUTION]
+> ### Critical Rule: NEVER Add Fallbacks — Let It Fail
+> **NEVER add fallbacks to anything in Elysia routes or services. Let it fail!**
+> - **No mock/default fallback objects**: If an entity, user, list, or record is missing, do NOT construct synthetic objects, fake IDs, or placeholder values. Throw `NotFound` immediately.
+> - **No silent error suppression**: Never wrap database queries or business operations in silent `try { ... } catch { /* ignore */ }` blocks that swallow errors and return partial or fake data.
+> - **No artificial data substitutes**: Never fall back to querying different models, generating default IDs, or guessing missing parameters. If required data is missing from the request or the database, fail fast with standard RFC 9457 errors (`BadRequest`, `NotFound`, `Unauthorized`, `Forbidden`).
+> - Errors must bubble up cleanly to Elysia so the client receives the accurate HTTP status code and Problem Details payload.
+
+
 ### 2. Distributed & In-Memory Cache (`src/utils/cache.ts`)
 
 Shared `CacheManager` from `@IRIS/cache`:
@@ -329,6 +338,10 @@ Generates two critical files:
 ### API Client Synchronization (`src/router/insomnium.ts`)
 
 Generates `insomnium.json` containing pre-configured request collections, complete with sample JSON bodies and development API keys for instant API testing.
+
+> [!NOTE]
+> **Automatic Route Generation & Manifest Syncing**:
+> In development mode (`pnpm run dev`), route generation, Eden Treaty typing (`routes.generated.ts`), cache key extraction (`cache-keys.generated.ts`), and Insomnium manifest synchronization are **completely automatic** via the filesystem watcher. Developers and agents do not need to manually trigger `bun run scripts/generate-manifests.ts` or `pnpm route:sync` during active dev sessions.
 
 ---
 
@@ -415,6 +428,11 @@ We are running `elysia@2.0.0-beta.6`. Be mindful of these breaking changes and a
   pnpm route:create "items/[id]" -m core -X GET,PUT --auth
   ```
 
+### 6. Zero Fallbacks Policy (Let It Fail)
+- **NEVER add fallbacks to anything**: Whether resolving users, parameters, entities, titles, or relations, do NOT implement fallback queries, fake values, or catch-all default objects.
+- If data is invalid or missing, **let it fail immediately** by throwing an RFC 9457 `HttpError` (`NotFound`, `BadRequest`, `Unauthorized`, `Forbidden`).
+- Silent masking hides real bugs and corrupts frontend state assumptions.
+
 ---
 
 ## 9. Companion Backend Skills Directory
@@ -430,3 +448,5 @@ For detailed implementations of specific sub-systems, refer to these dedicated c
 | **`IRIS-cache`** | [SKILL.md](file:///c:/Users/yki/Documents/GitHub/IRIS/.agents/skills/IRIS-cache/SKILL.md) | Distributed Redis caching with in-memory LRU fallback |
 | **`IRIS-permissions`** | [SKILL.md](file:///c:/Users/yki/Documents/GitHub/IRIS/.agents/skills/IRIS-permissions/SKILL.md) | Bitfield RBAC permission flags and validation |
 | **`IRIS-connections`** | [SKILL.md](file:///c:/Users/yki/Documents/GitHub/IRIS/.agents/skills/IRIS-connections/SKILL.md) | Third-party integrations, OAuth, and credential encryption |
+| **`IRIS-web`** | [SKILL.md](file:///c:/Users/yki/Documents/GitHub/IRIS/.agents/skills/IRIS-web/SKILL.md) | Frontend architecture, Eden Treaty data fetching, and shadcn UI guidelines |
+
