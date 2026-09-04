@@ -247,8 +247,8 @@ export function RegisterForm({ footer }: RegisterFormProps) {
       setPassword("")
 
       setTimeout(() => {
-        router.push("/auth/login")
-      }, 1600)
+        router.push("/IRIS-account/auth/login")
+      }, 1500)
     } catch (err: any) {
       setFieldErrors({ username: err.message || t("registrationFailed") })
       setLoading(false)
