@@ -38,11 +38,13 @@ export class SimklAdapter extends BaseConnectionAdapter {
   };
 
   private getClientId(): string {
-    return process.env.SIMKL_CLIENT_ID || "";
+    const raw = process.env.SIMKL_CLIENT_ID || "";
+    return raw.trim().replace(/^["']|["']$/g, "").trim();
   }
 
   private getClientSecret(): string {
-    return process.env.SIMKL_CLIENT_SECRET || "";
+    const raw = process.env.SIMKL_CLIENT_SECRET || "";
+    return raw.trim().replace(/^["']|["']$/g, "").trim();
   }
 
   async getAuthUrl(options: AuthUrlOptions): Promise<AuthUrlResult> {
@@ -149,55 +151,174 @@ export class SimklAdapter extends BaseConnectionAdapter {
     options?: SearchOptions
   ): Promise<MediaSearchResult[]> {
     const clientId = this.getClientId();
-    const type = options?.type === "MOVIE" ? "movies" : options?.type === "TV" ? "tv" : "anime";
+    const searchCategory = options?.type === "MOVIE" ? "movie" : options?.type === "TV" ? "tv" : "anime";
+    const pathType = options?.type === "MOVIE" ? "movies" : options?.type === "TV" ? "tv" : "anime";
+    const mediaType = options?.type === "MOVIE" ? "MOVIE" : options?.type === "TV" ? "TV" : "ANIME";
 
-    const url = new URL(`https://api.simkl.com/search/${type}`);
-    url.searchParams.set("q", query);
-    url.searchParams.set("limit", String(options?.perPage || 20));
-    url.searchParams.set("extended", "full");
+    const fetchCategory = async (type: string) => {
+      const url = new URL(`https://api.simkl.com/search/${type}`);
+      url.searchParams.set("q", query);
+      url.searchParams.set("limit", String(options?.perPage || 20));
+      url.searchParams.set("extended", "full");
+      if (clientId) {
+        url.searchParams.set("client_id", clientId);
+      }
 
-    const headers: Record<string, string> = {
-      "simkl-api-key": clientId,
+      const headers: Record<string, string> = {};
+      if (clientId) {
+        headers["simkl-api-key"] = clientId;
+      }
+
+      if (credentials?.accessToken) {
+        headers["Authorization"] = `Bearer ${credentials.accessToken}`;
+      }
+
+      const items = await this.fetchJson<any[]>(url.toString(), { headers });
+      return Array.isArray(items) ? items : [];
     };
 
+    let items = await fetchCategory(searchCategory);
+
+    // Fallback: If searching "anime" yields no results, also check "tv" in case the entry is under TV
+    if (items.length === 0 && searchCategory === "anime") {
+      try {
+        const tvItems = await fetchCategory("tv");
+        if (tvItems.length > 0) {
+          items = tvItems;
+        }
+      } catch {
+        // Ignore fallback errors
+      }
+    }
+
+    return items.map((item: any) => {
+      const simklId =
+        item.ids?.simkl_id ??
+        item.ids?.simkl ??
+        item.ids?.id ??
+        item.simkl_id ??
+        item.simkl ??
+        item.id;
+
+      let validId =
+        simklId != null &&
+        String(simklId) !== "undefined" &&
+        String(simklId) !== "null"
+          ? String(simklId)
+          : "";
+
+      if (!validId && item.ids?.slug) {
+        const slugMatch = String(item.ids.slug).match(/-(\d+)$/);
+        if (slugMatch && slugMatch[1]) {
+          validId = slugMatch[1];
+        } else {
+          validId = String(item.ids.slug);
+        }
+      }
+
+      if (!validId && item.url) {
+        const urlMatch = String(item.url).match(/\/(\d+)(?:\/|$)/);
+        if (urlMatch && urlMatch[1]) {
+          validId = urlMatch[1];
+        }
+      }
+
+      const primaryTitle =
+        item.title_en ||
+        item.title ||
+        item.title_romaji ||
+        "Untitled";
+
+      return {
+        id: validId || undefined,
+        externalId: validId,
+        provider: "SIMKL",
+        mediaType,
+        title: {
+          userPreferred: primaryTitle,
+          english: item.title_en,
+          romaji: item.title_romaji || item.title,
+        },
+        description: item.overview,
+        coverImage: {
+          large: item.poster ? `https://simkl.in/posters/${item.poster}_m.jpg` : undefined,
+        },
+        bannerImage: item.fanart ? `https://simkl.in/fanart/${item.fanart}_medium.jpg` : undefined,
+        releaseYear: item.year,
+        format: item.type ? String(item.type).toUpperCase() : undefined,
+        episodes: item.ep_count ?? undefined,
+        url: validId
+          ? `https://simkl.com/${pathType}/${validId}`
+          : item.url
+            ? `https://simkl.com${item.url}`
+            : undefined,
+      };
+    });
+  }
+
+  async getMediaById(
+    externalId: string,
+    credentials?: ConnectionCredentials,
+    options?: SearchOptions
+  ): Promise<MediaSearchResult | null> {
+    const clientId = this.getClientId();
+    const primaryType = options?.type === "MOVIE" ? "movies" : options?.type === "TV" ? "tv" : "anime";
+    const url = new URL(`https://api.simkl.com/${primaryType}/${externalId}`);
+    url.searchParams.set("extended", "full");
+    if (clientId) {
+      url.searchParams.set("client_id", clientId);
+    }
+
+    const headers: Record<string, string> = {};
+    if (clientId) {
+      headers["simkl-api-key"] = clientId;
+    }
     if (credentials?.accessToken) {
       headers["Authorization"] = `Bearer ${credentials.accessToken}`;
     }
 
-    const items = await this.fetchJson<
-      Array<{
-        title: string;
-        year?: number;
-        poster?: string;
-        fanart?: string;
-        overview?: string;
-        ids: {
-          simkl: number;
-          slug?: string;
-          mal?: string;
-          anilist?: string;
-          imdb?: string;
-          tmdb?: string;
-        };
-      }>
-    >(url.toString(), { headers });
+    try {
+      const item = await this.fetchJson<any>(url.toString(), { headers });
+      if (!item || item.error) return null;
 
-    return (items || []).map((item) => ({
-      id: String(item.ids.simkl),
-      externalId: String(item.ids.simkl),
-      provider: "SIMKL",
-      mediaType: type === "movies" ? "MOVIE" : type === "tv" ? "TV" : "ANIME",
-      title: {
-        userPreferred: item.title,
-      },
-      description: item.overview,
-      coverImage: {
-        large: item.poster ? `https://simkl.in/posters/${item.poster}_m.jpg` : undefined,
-      },
-      bannerImage: item.fanart ? `https://simkl.in/fanart/${item.fanart}_medium.jpg` : undefined,
-      releaseYear: item.year,
-      url: `https://simkl.com/${type}/${item.ids.simkl}`,
-    }));
+      const simklId =
+        item.ids?.simkl_id ??
+        item.ids?.simkl ??
+        item.ids?.id ??
+        item.simkl_id ??
+        item.simkl ??
+        item.id ??
+        externalId;
+
+      const primaryTitle =
+        item.title_en ||
+        item.title ||
+        item.title_romaji ||
+        "Untitled";
+
+      return {
+        id: String(simklId),
+        externalId: String(simklId),
+        provider: "SIMKL",
+        mediaType: primaryType === "movies" ? "MOVIE" : primaryType === "tv" ? "TV" : "ANIME",
+        title: {
+          userPreferred: primaryTitle,
+          english: item.title_en,
+          romaji: item.title_romaji || item.title,
+        },
+        description: item.overview,
+        coverImage: {
+          large: item.poster ? `https://simkl.in/posters/${item.poster}_m.jpg` : undefined,
+        },
+        bannerImage: item.fanart ? `https://simkl.in/fanart/${item.fanart}_medium.jpg` : undefined,
+        releaseYear: item.year,
+        format: item.type ? String(item.type).toUpperCase() : undefined,
+        episodes: item.ep_count ?? undefined,
+        url: `https://simkl.com/${primaryType}/${simklId}`,
+      };
+    } catch {
+      return null;
+    }
   }
 
   async scrobble(

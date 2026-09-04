@@ -96,4 +96,33 @@ export class SearchProxyManager {
 
     return await adapter.searchMedia(query, credentials, options);
   }
+
+  /**
+   * Fetches media details by external ID directly from provider adapter if supported.
+   */
+  static async getById(
+    provider: ConnectionProvider,
+    externalId: string,
+    userConnection?: UserConnectionRecord | null,
+    options?: SearchOptions
+  ): Promise<MediaSearchResult | null> {
+    const adapter = getConnectionAdapter(provider) as any;
+    if (!adapter.getMediaById) {
+      return null;
+    }
+
+    let credentials: ConnectionCredentials | undefined = undefined;
+    if (userConnection && userConnection.encryptedData) {
+      try {
+        credentials = decryptConnectionData<ConnectionCredentials>(
+          userConnection.encryptedData,
+          userConnection.userId
+        );
+      } catch {
+        credentials = undefined;
+      }
+    }
+
+    return await adapter.getMediaById(externalId, credentials, options);
+  }
 }

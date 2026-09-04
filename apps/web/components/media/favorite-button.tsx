@@ -8,6 +8,7 @@ import { Tooltip, TooltipTrigger } from "@workspace/ui/components/tooltip"
 import { cn } from "@workspace/ui/lib/utils"
 import { toast } from "sonner"
 import { elysia } from "@/lib/elysia"
+import { useUser } from "@/context/user-context"
 
 export type FavoriteType =
   | "ANIME"
@@ -32,6 +33,61 @@ export interface FavoriteButtonProps {
   className?: string
 }
 
+// Module-level deduplication cache and in-flight request tracker
+const favoriteStatusCache = new Map<string, { isFavorited: boolean; timestamp: number }>()
+const favoriteInFlight = new Map<string, Promise<boolean>>()
+const CACHE_TTL_MS = 60_000
+
+export async function fetchFavoriteStatusDeduplicated(
+  username: string,
+  type: string,
+  targetId: number
+): Promise<boolean> {
+  const fetchKey = `${username}:${type}:${targetId}`
+
+  const cached = favoriteStatusCache.get(fetchKey)
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.isFavorited
+  }
+
+  const inFlight = favoriteInFlight.get(fetchKey)
+  if (inFlight) {
+    return inFlight
+  }
+
+  const promise = (async () => {
+    try {
+      const { data, error } = await elysia
+        .user({ username })
+        .favorites({ targetId })
+        .get({
+          query: { type: type as any },
+        })
+
+      const isFav = !error && Boolean(data?.isFavorited)
+      favoriteStatusCache.set(fetchKey, { isFavorited: isFav, timestamp: Date.now() })
+      return isFav
+    } catch {
+      return false
+    } finally {
+      favoriteInFlight.delete(fetchKey)
+    }
+  })()
+
+  favoriteInFlight.set(fetchKey, promise)
+  return promise
+}
+
+export function updateFavoriteCache(
+  username: string,
+  type: string,
+  targetId: number,
+  isFavorited: boolean
+) {
+  const fetchKey = `${username}:${type}:${targetId}`
+  favoriteStatusCache.set(fetchKey, { isFavorited, timestamp: Date.now() })
+}
+
 export function FavoriteButton({
   targetId,
   type,
@@ -41,56 +97,67 @@ export function FavoriteButton({
   showLabel = false,
   className,
 }: FavoriteButtonProps) {
-  const { data: session, status } = useSession()
+  const { data: session } = useSession()
+  const { user } = useUser()
+  const username = user?.username || (session?.user as { username?: string })?.username
+  const isAuthenticated = Boolean(username)
+
+  const numericTargetId = Number(targetId)
+
   const [isFavorited, setIsFavorited] = useState(false)
   const [isPending, setIsPending] = useState(false)
 
-  const username = session?.user?.username
-  const isAuthenticated = status === "authenticated" && Boolean(username)
-
-  const lastFetchedKeyRef = React.useRef<string | null>(null)
-  const isFetchingRef = React.useRef(false)
-
-  // Fetch favorite status only when authenticated and deduplicate across StrictMode / re-renders
+  // Fetch favorite status whenever target entity or authentication changes (deduplicated)
   useEffect(() => {
-    if (!isAuthenticated || !username || !targetId) {
+    if (!isAuthenticated || !username || !numericTargetId) {
+      setIsFavorited(false)
       return
     }
 
-    const fetchKey = `${username}:${type}:${targetId}`
-    if (lastFetchedKeyRef.current === fetchKey || isFetchingRef.current) {
+    const fetchKey = `${username}:${type}:${numericTargetId}`
+    const cached = favoriteStatusCache.get(fetchKey)
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      setIsFavorited(cached.isFavorited)
       return
     }
 
-    lastFetchedKeyRef.current = fetchKey
-    isFetchingRef.current = true
     let isMounted = true
-
-    async function fetchFavoriteStatus() {
-      try {
-        const { data, error } = await elysia
-          .user({ username: username! })
-          .favorites({ targetId })
-          .get({
-            query: { type: type as any },
-          })
-
-        if (isMounted && !error && data) {
-          setIsFavorited(Boolean(data.isFavorited))
-        }
-      } catch {
-        // Silently fail if unavailable
-      } finally {
-        isFetchingRef.current = false
+    fetchFavoriteStatusDeduplicated(username, type, numericTargetId).then((status) => {
+      if (isMounted) {
+        setIsFavorited(status)
       }
-    }
-
-    fetchFavoriteStatus()
+    })
 
     return () => {
       isMounted = false
     }
-  }, [isAuthenticated, username, targetId, type])
+  }, [isAuthenticated, username, numericTargetId, type])
+
+  // Listen for favorite updates dispatched elsewhere (e.g. modal)
+  useEffect(() => {
+    const handleFavoriteUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        targetId: number
+        type: string
+        isFavorited: boolean
+      }>
+      if (
+        customEvent.detail &&
+        customEvent.detail.targetId === numericTargetId &&
+        customEvent.detail.type === type
+      ) {
+        setIsFavorited(customEvent.detail.isFavorited)
+        if (username) {
+          updateFavoriteCache(username, type, numericTargetId, customEvent.detail.isFavorited)
+        }
+      }
+    }
+
+    window.addEventListener("iris:favorite-updated", handleFavoriteUpdate)
+    return () => {
+      window.removeEventListener("iris:favorite-updated", handleFavoriteUpdate)
+    }
+  }, [username, numericTargetId, type])
 
   const handleToggleFavorite = useCallback(async () => {
     if (!isAuthenticated || !username) {
@@ -110,7 +177,7 @@ export function FavoriteButton({
     try {
       const { data, error } = await elysia
         .user({ username })
-        .favorites({ targetId })
+        .favorites({ targetId: numericTargetId })
         .post({
           type: type as any,
           title: title || undefined,
@@ -123,10 +190,21 @@ export function FavoriteButton({
         return
       }
 
-      setIsFavorited(Boolean(data.isFavorited))
+      const newStatus = Boolean(data.isFavorited)
+      setIsFavorited(newStatus)
+      updateFavoriteCache(username, type, numericTargetId, newStatus)
+      window.dispatchEvent(
+        new CustomEvent("iris:favorite-updated", {
+          detail: {
+            targetId: numericTargetId,
+            type,
+            isFavorited: newStatus,
+          },
+        })
+      )
       const fallbackMsg = nextState
-        ? `Added ${title || `${type} #${targetId}`} to favorites`
-        : `Removed ${title || `${type} #${targetId}`} from favorites`
+        ? `Added ${title || `${type} #${numericTargetId}`} to favorites`
+        : `Removed ${title || `${type} #${numericTargetId}`} from favorites`
       toast.success(data.message || fallbackMsg)
     } catch {
       setIsFavorited(previousState)
@@ -134,7 +212,7 @@ export function FavoriteButton({
     } finally {
       setIsPending(false)
     }
-  }, [isAuthenticated, username, isPending, isFavorited, targetId, type, title])
+  }, [isAuthenticated, username, isPending, isFavorited, numericTargetId, type, title])
 
   const tooltipText = isFavorited
     ? "Remove from favorites"

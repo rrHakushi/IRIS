@@ -18,6 +18,7 @@ import type {
 } from "./media-types"
 import { MediaTabNav } from "./media-tab-nav"
 import { FavoriteButton, type FavoriteType } from "./favorite-button"
+import { ListActionButtons } from "./list/list-action-buttons"
 
 const categoryToFavoriteType: Record<string, FavoriteType> = {
   anime: "ANIME",
@@ -165,22 +166,7 @@ export function MediaHero({
 
                 {/* Add to List, Quick Add, & Favorite Buttons */}
                 <div className="flex shrink-0 items-center gap-2 self-start sm:self-center">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="h-8 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs"
-                  >
-                    <IconBookmark className="size-3.5" aria-hidden="true" />
-                    <span>Add to List</span>
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="h-8 gap-1.5 rounded-xl px-3 text-xs font-medium"
-                  >
-                    <IconPlus className="size-3.5" aria-hidden="true" />
-                    <span>Quick Add</span>
-                  </Button>
+                  <ListActionButtons media={media} />
                   <FavoriteButton
                     targetId={media.id}
                     type={categoryToFavoriteType[media.category] || "ANIME"}

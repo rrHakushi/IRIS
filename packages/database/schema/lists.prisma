@@ -345,7 +345,9 @@ model MusicList {
     score     Float?
     playCount Int             @default(0)
     notes     String?         @db.Text
-    private   Boolean         @default(false)
+    private     Boolean         @default(false)
+    startedAt   DateTime?
+    connections Json?     @db.JsonB
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

@@ -10,7 +10,8 @@ export default defineRoute({
     schema: {
       query: t.Object({
         provider: t.String(),
-        q: t.String(),
+        q: t.Optional(t.String()),
+        id: t.Optional(t.String()),
         type: t.Optional(t.String()),
         page: t.Optional(t.Number()),
         perPage: t.Optional(t.Number()),
@@ -71,9 +72,64 @@ export default defineRoute({
         })
       }
 
+      if (query.id) {
+        try {
+          const direct = await SearchProxyManager.getById(
+            provider,
+            query.id,
+            userConnection,
+            {
+              type: query.type?.toUpperCase() as MediaType,
+            }
+          )
+          if (direct) {
+            const hasValidExt =
+              Boolean(direct.externalId) &&
+              direct.externalId !== "undefined" &&
+              direct.externalId !== "null"
+            const hasValidId =
+              Boolean(direct.id) &&
+              direct.id !== "undefined" &&
+              direct.id !== "null"
+            const finalId = hasValidExt
+              ? direct.externalId
+              : hasValidId
+                ? direct.id
+                : query.id
+
+            return {
+              success: true,
+              provider,
+              results: [
+                {
+                  ...direct,
+                  id: hasValidId ? direct.id : finalId,
+                  externalId: finalId,
+                  url:
+                    direct.url && !direct.url.endsWith("/undefined")
+                      ? direct.url
+                      : `https://simkl.com/anime/${finalId}`,
+                },
+              ],
+            }
+          }
+        } catch {
+          // Fall back to search
+        }
+      }
+
+      const searchQuery = query.q || query.id || ""
+      if (!searchQuery.trim()) {
+        return {
+          success: true,
+          provider,
+          results: [],
+        }
+      }
+
       const results = await SearchProxyManager.search(
         provider,
-        query.q,
+        searchQuery,
         userConnection,
         {
           type: query.type?.toUpperCase() as MediaType,
@@ -91,10 +147,36 @@ export default defineRoute({
         }
       )
 
+      const cleanedResults = (results || []).map((r: any, idx: number) => {
+        const hasValidExt =
+          Boolean(r.externalId) &&
+          r.externalId !== "undefined" &&
+          r.externalId !== "null"
+        const hasValidId =
+          Boolean(r.id) &&
+          r.id !== "undefined" &&
+          r.id !== "null"
+        const finalId = hasValidExt
+          ? r.externalId
+          : hasValidId
+            ? r.id
+            : String(idx)
+
+        return {
+          ...r,
+          id: hasValidId ? r.id : finalId,
+          externalId: finalId,
+          url:
+            r.url && !r.url.endsWith("/undefined")
+              ? r.url
+              : `https://simkl.com/anime/${finalId}`,
+        }
+      })
+
       return {
         success: true,
         provider,
-        results,
+        results: cleanedResults,
       }
     },
   },

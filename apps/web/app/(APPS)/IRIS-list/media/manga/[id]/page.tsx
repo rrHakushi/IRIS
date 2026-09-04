@@ -88,6 +88,8 @@ export default async function MangaDetailPage({ params, searchParams }: Props) {
     countryOfOrigin: manga.countryOfOrigin,
     isAdult: manga.isAdult,
     episodeCount: manga.chapterCount,
+    chapterCount: manga.chapterCount,
+    volumeCount: manga.volumeCount,
     averageScore: manga.averageScore,
     favorites: manga.favorites,
     popularity: manga.popularity,
