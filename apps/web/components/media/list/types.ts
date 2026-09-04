@@ -193,6 +193,7 @@ export interface MediaListEntryData {
     completedAt?: string | Date | null
     notes?: string | null
   }> | null
+  updatedAt?: string | Date | null
 }
 
 export function formatDateToYmd(val: unknown): string {

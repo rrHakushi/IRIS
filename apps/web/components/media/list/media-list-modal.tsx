@@ -133,22 +133,117 @@ export function MediaListModal({
       : null
   const repeatLabel = useMemo(() => getRepeatLabel(category), [category])
 
+  const [fetchedTvSeasons, setFetchedTvSeasons] = useState<TvSeasonItem[] | null>(null)
+  const [fetchedTvEpisodes, setFetchedTvEpisodes] = useState<any[] | null>(null)
+  const [fetchedAnimeEpisodes, setFetchedAnimeEpisodes] = useState<any[] | null>(null)
+
+  useEffect(() => {
+    if (isOpen && category === "tv" && media.id) {
+      if (media.seasons && media.seasons.length > 1) {
+        setFetchedTvSeasons(null)
+        setFetchedTvEpisodes(null)
+        return
+      }
+      elysia.media
+        .tv({ id: Number(media.id) })
+        .get()
+        .then((res: any) => {
+          const data = res?.data
+          if (data && data.seasons && data.seasons.length > 0) {
+            setFetchedTvSeasons(
+              data.seasons.map((s: any) => ({
+                id: s.id,
+                seasonNumber: s.seasonNumber,
+                title: s.titlePrimary || s.title || null,
+                titlePrimary: s.titlePrimary || null,
+                episodeCount: s.episodeCount,
+              }))
+            )
+            if (data.episodes && data.episodes.length > 0) {
+              setFetchedTvEpisodes(data.episodes)
+            }
+          }
+        })
+        .catch((err: unknown) => {
+          console.error("Failed to fetch tv seasons for modal:", err)
+        })
+    } else if (!isOpen) {
+      setFetchedTvSeasons(null)
+      setFetchedTvEpisodes(null)
+    }
+  }, [isOpen, category, media.id, media.seasons])
+
+  useEffect(() => {
+    if (isOpen && category === "anime" && media.id) {
+      if (media.episodes && media.episodes.length > 0) {
+        setFetchedAnimeEpisodes(null)
+        return
+      }
+      elysia.media
+        .anime({ id: Number(media.id) })
+        .get()
+        .then((res: any) => {
+          const data = res?.data
+          if (data && data.episodes && data.episodes.length > 0) {
+            setFetchedAnimeEpisodes(data.episodes)
+          }
+        })
+        .catch((err: unknown) => {
+          console.error("Failed to fetch anime episodes for modal:", err)
+        })
+    } else if (!isOpen) {
+      setFetchedAnimeEpisodes(null)
+    }
+  }, [isOpen, category, media.id, media.episodes])
+
   const effectiveTvSeasons: TvSeasonItem[] = useMemo(() => {
     if (category !== "tv") return []
-    if (media.seasons && media.seasons.length > 0) {
-      return media.seasons as unknown as TvSeasonItem[]
+    const source =
+      media.seasons && media.seasons.length > 1
+        ? media.seasons
+        : fetchedTvSeasons && fetchedTvSeasons.length > 0
+          ? fetchedTvSeasons
+          : media.seasons && media.seasons.length > 0
+            ? media.seasons
+            : []
+
+    if (source.length > 0) {
+      const allTvEpisodes =
+        (media.episodes && media.episodes.length > 0
+          ? media.episodes
+          : fetchedTvEpisodes) || []
+      return source.map((s: any) => ({
+        id: s.id,
+        seasonNumber: s.seasonNumber,
+        title: s.title || s.titlePrimary || null,
+        name: s.name || null,
+        episodeCount: s.episodeCount,
+        episodes:
+          s.episodes && s.episodes.length > 0
+            ? s.episodes
+            : allTvEpisodes.filter((ep: any) => ep.seasonNumber === s.seasonNumber),
+      }))
     }
     if (media.episodeCount && media.episodeCount > 0) {
       return [
         {
           seasonNumber: 1,
-          title: "Season 1",
+          title: null,
           episodeCount: media.episodeCount,
         },
       ]
     }
     return []
-  }, [category, media.seasons, media.episodeCount])
+  }, [category, media.seasons, fetchedTvSeasons, fetchedTvEpisodes, media.episodes, media.episodeCount])
+
+  const effectiveAnimeEpisodes = useMemo(() => {
+    if (category !== "anime") return []
+    return (
+      (media.episodes && media.episodes.length > 0
+        ? media.episodes
+        : fetchedAnimeEpisodes) || []
+    )
+  }, [category, media.episodes, fetchedAnimeEpisodes])
 
   // Tab State
   const [activeTab, setActiveTab] = useState<TabType>("general")
@@ -192,6 +287,36 @@ export function MediaListModal({
   const [connections, setConnections] = useState<Record<string, ConnectionItem>>(
     (initialEntry?.connections as Record<string, ConnectionItem>) || {}
   )
+
+  // Total and watched episode counts for the Episodes tab header
+  const totalEpisodesCount = useMemo(() => {
+    if (category === "tv") {
+      const tvTotal = effectiveTvSeasons.reduce(
+        (sum, s) => sum + (s.episodes?.length || s.episodeCount || 0),
+        0
+      )
+      if (tvTotal > 0) return tvTotal
+      if (typeof media.episodeCount === "number" && media.episodeCount > 0) return media.episodeCount
+      return null
+    }
+    if (category === "anime") {
+      if (effectiveAnimeEpisodes.length > 0) return effectiveAnimeEpisodes.length
+      if (typeof media.episodeCount === "number" && media.episodeCount > 0) return media.episodeCount
+      return null
+    }
+    return maxUnits
+  }, [category, effectiveTvSeasons, effectiveAnimeEpisodes.length, media.episodeCount, maxUnits])
+
+  const currentWatchedEpisodesCount = useMemo(() => {
+    if (status === "COMPLETED" && totalEpisodesCount && totalEpisodesCount > 0) {
+      return totalEpisodesCount
+    }
+    if (category === "tv") {
+      if (watchedEpisodes && watchedEpisodes.length > 0) return watchedEpisodes.length
+      return progress || 0
+    }
+    return progress || 0
+  }, [status, totalEpisodesCount, category, watchedEpisodes, progress])
 
   // Rewatch carousel state (1 at once)
   const [activeRewatchIdx, setActiveRewatchIdx] = useState(0)
@@ -280,7 +405,27 @@ export function MediaListModal({
             (initialEntry.rewatchHistory as RewatchHistoryItem[]) ||
             []
         )
-        setWatchedEpisodes(initialEntry.watchedEpisodes || [])
+        let initialWatched: WatchedEpisodeItem[] = initialEntry.watchedEpisodes || []
+        if (category === "tv" && initialWatched.length === 0) {
+          const sProg = (initialEntry as any).seasons as
+            | Array<{ seasonNumber: number; progress?: number }>
+            | undefined
+          if (Array.isArray(sProg) && sProg.length > 0) {
+            const list: WatchedEpisodeItem[] = []
+            for (const sp of sProg) {
+              const p = sp.progress || 0
+              for (let i = 1; i <= p; i++) {
+                list.push({
+                  seasonNumber: sp.seasonNumber,
+                  episodeNumber: i,
+                  watchedAt: "",
+                })
+              }
+            }
+            initialWatched = list
+          }
+        }
+        setWatchedEpisodes(initialWatched)
         setConnections(
           (initialEntry.connections as Record<string, ConnectionItem>) || {}
         )
@@ -301,6 +446,71 @@ export function MediaListModal({
       }
     }
   }, [isOpen, initialEntry, media, maxChapters, maxVolumes])
+
+  // Sync watchedEpisodes for TV when effectiveTvSeasons is available and watchedEpisodes is empty
+  useEffect(() => {
+    if (
+      isOpen &&
+      category === "tv" &&
+      effectiveTvSeasons.length > 0 &&
+      watchedEpisodes.length === 0 &&
+      initialEntry
+    ) {
+      const sProg = (initialEntry as any).seasons as
+        | Array<{ seasonNumber: number; progress?: number }>
+        | undefined
+      if (Array.isArray(sProg) && sProg.length > 0) {
+        const list: WatchedEpisodeItem[] = []
+        for (const sp of sProg) {
+          const p = sp.progress || 0
+          for (let i = 1; i <= p; i++) {
+            list.push({
+              seasonNumber: sp.seasonNumber,
+              episodeNumber: i,
+              watchedAt: "",
+            })
+          }
+        }
+        if (list.length > 0) {
+          setWatchedEpisodes(list)
+          return
+        }
+      }
+
+      if (
+        initialEntry.status === "COMPLETED" ||
+        (initialEntry.progress || 0) > 0
+      ) {
+        const list: WatchedEpisodeItem[] = []
+        let remaining =
+          initialEntry.status === "COMPLETED"
+            ? 999999
+            : initialEntry.progress || 0
+        for (const s of effectiveTvSeasons) {
+          const count = s.episodeCount || s.episodes?.length || 0
+          const take = Math.min(remaining, count)
+          for (let i = 1; i <= take; i++) {
+            list.push({
+              seasonNumber: s.seasonNumber,
+              episodeNumber: i,
+              watchedAt: "",
+            })
+          }
+          remaining -= take
+          if (remaining <= 0) break
+        }
+        if (list.length > 0) {
+          setWatchedEpisodes(list)
+        }
+      }
+    }
+  }, [
+    isOpen,
+    category,
+    effectiveTvSeasons,
+    initialEntry,
+    watchedEpisodes.length,
+  ])
 
   // Fetch favorite status when modal opens (deduplicated)
   useEffect(() => {
@@ -612,6 +822,7 @@ export function MediaListModal({
         replayHistory: rewatchHistory,
         connections,
         watchedEpisodes,
+        updatedAt: res.data?.entry?.updatedAt || new Date().toISOString(),
       }
 
       onEntryUpdated?.(updatedEntry)
@@ -826,7 +1037,7 @@ export function MediaListModal({
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Episodes ({progress}/{maxUnits || "?"})
+              Episodes ({currentWatchedEpisodesCount}/{totalEpisodesCount ?? "?"})
             </button>
           )}
           <button
@@ -1384,7 +1595,7 @@ export function MediaListModal({
             mediaId={media.id}
             category={category}
             seasons={effectiveTvSeasons}
-            episodes={media.episodes as any}
+            episodes={effectiveAnimeEpisodes as any}
             episodeCount={media.episodeCount}
             progress={progress}
             onProgressChange={(newProgress) => {

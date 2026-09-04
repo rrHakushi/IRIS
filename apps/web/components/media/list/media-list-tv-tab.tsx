@@ -53,6 +53,37 @@ export interface MediaListTvTabProps {
   onWatchedEpisodesChange?: (newWatched: WatchedEpisodeItem[]) => void
 }
 
+function formatEpisodeTitle(
+  title: string | null | undefined,
+  epNum: number
+): string | null {
+  if (!title) return null
+  const trimmed = title.trim()
+  if (!trimmed) return null
+
+  // Strip prefix like "Episode 1 - ", "Episode 1: ", "Episode 1. ", "Episode 01 - ", "Ep. 1 - ", "Ep 1: ", "#1 - ", etc.
+  const prefixRegex = new RegExp(
+    `^(?:Episode|Ep\\.?|#)\\s*0*${epNum}\\s*[:\\-–—.]\\s*`,
+    "i"
+  )
+  let cleaned = trimmed.replace(prefixRegex, "").trim()
+
+  // Also handle "1 - ", "01 - ", "1: "
+  const numPrefixRegex = new RegExp(`^0*${epNum}\\s*[:\\-–—.]\\s*`)
+  cleaned = cleaned.replace(numPrefixRegex, "").trim()
+
+  // If the title is literally just "Episode 1", "Episode 01", "Ep 1", "Ep. 1", "#1", or the episode number itself
+  const exactRegex = new RegExp(
+    `^(?:(?:Episode|Ep\\.?|#)\\s*)?0*${epNum}$`,
+    "i"
+  )
+  if (exactRegex.test(cleaned) || exactRegex.test(trimmed)) {
+    return null
+  }
+
+  return cleaned || null
+}
+
 export function MediaListTvTab({
   category = "tv",
   seasons = [],
@@ -211,7 +242,8 @@ export function MediaListTvTab({
             const epNum = idx + 1
             const isWatched = epNum <= progress
             const epItem = episodes.find((e) => e.number === epNum)
-            const title = epItem?.titlePrimary || epItem?.titleSecondary || null
+            const rawTitle = epItem?.titlePrimary || epItem?.titleSecondary || null
+            const displayTitle = formatEpisodeTitle(rawTitle, epNum)
 
             return (
               <button
@@ -228,9 +260,17 @@ export function MediaListTvTab({
                   <span className="shrink-0 font-mono text-xs font-bold text-muted-foreground w-12">
                     Ep {epNum}
                   </span>
-                  <span className={`truncate text-xs font-medium ${isWatched ? "text-foreground font-semibold" : "text-foreground"}`}>
-                    {title || `Episode ${epNum}`}
-                  </span>
+                  {displayTitle ? (
+                    <span
+                      className={`truncate text-xs font-medium ${
+                        isWatched
+                          ? "text-foreground font-semibold"
+                          : "text-foreground"
+                      }`}
+                    >
+                      {displayTitle}
+                    </span>
+                  ) : null}
                 </div>
                 <span
                   className={`flex size-4.5 shrink-0 items-center justify-center rounded-md border transition-colors ${
@@ -259,7 +299,7 @@ export function MediaListTvTab({
         ? [
             {
               seasonNumber: 1,
-              title: "Season 1",
+              title: null,
               episodeCount: episodeCount,
             },
           ]
@@ -319,7 +359,10 @@ export function MediaListTvTab({
                   </button>
                   <span className="truncate text-xs font-semibold text-foreground">
                     Season {seasonNum}
-                    {season.title ? ` • ${season.title}` : ""}
+                    {season.title &&
+                    season.title.trim().toLowerCase() !== `season ${seasonNum}`.toLowerCase()
+                      ? ` • ${season.title}`
+                      : ""}
                   </span>
                   <Badge
                     variant={isFullyWatched ? "default" : "secondary"}
@@ -351,7 +394,8 @@ export function MediaListTvTab({
                     const epNum = idx + 1
                     const isWatched = isEpisodeWatched(seasonNum, epNum)
                     const epItem = season.episodes?.find((e) => e.episodeNumber === epNum)
-                    const title = epItem?.title || epItem?.name || null
+                    const rawTitle = epItem?.title || epItem?.name || null
+                    const displayTitle = formatEpisodeTitle(rawTitle, epNum)
 
                     return (
                       <button
@@ -368,9 +412,17 @@ export function MediaListTvTab({
                           <span className="shrink-0 font-mono text-xs font-bold text-muted-foreground w-12">
                             Ep {epNum}
                           </span>
-                          <span className={`truncate text-xs font-medium ${isWatched ? "text-foreground font-semibold" : "text-foreground"}`}>
-                            {title || `Episode ${epNum}`}
-                          </span>
+                          {displayTitle ? (
+                            <span
+                              className={`truncate text-xs font-medium ${
+                                isWatched
+                                  ? "text-foreground font-semibold"
+                                  : "text-foreground"
+                              }`}
+                            >
+                              {displayTitle}
+                            </span>
+                          ) : null}
                         </div>
                         <span
                           className={`flex size-4.5 shrink-0 items-center justify-center rounded-md border transition-colors ${
