@@ -32,6 +32,7 @@ export default defineRoute({
               rewatchHistory: t.Optional(t.Any()),
               connections: t.Optional(t.Any()),
               seasons: t.Optional(t.Array(t.Any())),
+              watchedEpisodes: t.Optional(t.Array(t.Any())),
               watchedEpisodesCount: t.Optional(t.Number()),
               createdAt: t.String(),
               updatedAt: t.String(),
@@ -110,6 +111,13 @@ export default defineRoute({
         include: {
           tv: { select: tvSelect },
           seasons: true,
+          watchedEpisodes: {
+            select: {
+              seasonNumber: true,
+              episodeNumber: true,
+              watchedAt: true,
+            },
+          },
           _count: {
             select: { watchedEpisodes: true },
           },
@@ -138,6 +146,13 @@ export default defineRoute({
           rewatchHistory: item.rewatchHistory,
           connections: item.connections,
           seasons: item.seasons,
+          watchedEpisodes: item.watchedEpisodes
+            ? item.watchedEpisodes.map((we: any) => ({
+                seasonNumber: we.seasonNumber,
+                episodeNumber: we.episodeNumber,
+                watchedAt: we.watchedAt ? we.watchedAt.toISOString() : new Date().toISOString(),
+              }))
+            : [],
           watchedEpisodesCount: item._count?.watchedEpisodes ?? 0,
           createdAt: item.createdAt.toISOString(),
           updatedAt: item.updatedAt.toISOString(),

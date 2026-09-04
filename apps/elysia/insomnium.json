@@ -1561,6 +1561,37 @@
       "_type": "request"
     },
     {
+      "_id": "req_IRIS-account__users__username_get",
+      "parentId": "fld_IRIS_account",
+      "url": "{{ _.base_url }}/users/:username",
+      "name": "GET /users/:username",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
       "_id": "fld_IRIS_connections",
       "parentId": "wrk_iris_api",
       "name": "IRIS-connections",

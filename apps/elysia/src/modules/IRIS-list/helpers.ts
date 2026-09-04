@@ -103,6 +103,9 @@ export const FilterFacetsResponseSchema = t.Object({
   formats: t.Array(t.Object({ value: t.String(), count: t.Number() })),
   genres: t.Array(t.Object({ value: t.String(), count: t.Number() })),
   years: t.Array(t.Object({ value: t.Number(), count: t.Number() })),
+  mediaStatuses: t.Optional(
+    t.Array(t.Object({ value: t.String(), count: t.Number() }))
+  ),
 })
 
 export const QuickAddResponseSchema = t.Object({
@@ -196,6 +199,16 @@ export const animeSelect = {
   averageScore: true,
   startDateYear: true,
   genres: { select: { id: true, name: true } },
+  episodes: {
+    where: { type: "REGULAR" as const },
+    orderBy: { number: "asc" as const },
+    select: {
+      id: true,
+      number: true,
+      titlePrimary: true,
+      titleSecondary: true,
+    },
+  },
 }
 
 export const mangaSelect = {
@@ -241,6 +254,16 @@ export const tvSelect = {
   averageScore: true,
   firstAiredYear: true,
   genres: { select: { id: true, name: true } },
+  seasons: {
+    orderBy: { seasonNumber: "asc" as const },
+    select: {
+      id: true,
+      seasonNumber: true,
+      titlePrimary: true,
+      titleSecondary: true,
+      episodeCount: true,
+    },
+  },
 }
 
 export const gameSelect = {
@@ -290,15 +313,18 @@ export function aggregateFacetsFromItems(
     status?: string | null
     media?: {
       format?: string | null
+      showType?: string | null
       status?: string | null
       genres?: Array<{ name: string }> | null
       startDateYear?: number | null
       releaseDateYear?: number | null
       firstAiredYear?: number | null
     } | null
+    [key: string]: any
   }>
 ) {
   const statusCounts = new Map<string, number>()
+  const mediaStatusCounts = new Map<string, number>()
   const formatCounts = new Map<string, number>()
   const genreCounts = new Map<string, number>()
   const yearCounts = new Map<number, number>()
@@ -307,11 +333,30 @@ export function aggregateFacetsFromItems(
     if (item.status) {
       statusCounts.set(item.status, (statusCounts.get(item.status) || 0) + 1)
     }
-    const media = item.media
+
+    const media =
+      (item as any).media ??
+      (item as any).anime ??
+      (item as any).manga ??
+      (item as any).movie ??
+      (item as any).tv ??
+      (item as any).game ??
+      (item as any).book ??
+      (item as any).music
+
     if (media) {
-      if (media.format) {
-        formatCounts.set(media.format, (formatCounts.get(media.format) || 0) + 1)
+      const format = media.format || media.showType
+      if (format) {
+        formatCounts.set(format, (formatCounts.get(format) || 0) + 1)
       }
+
+      if (media.status) {
+        mediaStatusCounts.set(
+          media.status,
+          (mediaStatusCounts.get(media.status) || 0) + 1
+        )
+      }
+
       if (media.genres && Array.isArray(media.genres)) {
         for (const g of media.genres) {
           if (g.name) {
@@ -319,10 +364,12 @@ export function aggregateFacetsFromItems(
           }
         }
       }
+
       const yr =
         media.startDateYear ??
         media.releaseDateYear ??
         media.firstAiredYear
+
       if (typeof yr === "number" && yr > 0) {
         yearCounts.set(yr, (yearCounts.get(yr) || 0) + 1)
       }
@@ -330,6 +377,10 @@ export function aggregateFacetsFromItems(
   }
 
   const statuses = Array.from(statusCounts.entries())
+    .map(([value, count]) => ({ value, count }))
+    .sort((a, b) => b.count - a.count)
+
+  const mediaStatuses = Array.from(mediaStatusCounts.entries())
     .map(([value, count]) => ({ value, count }))
     .sort((a, b) => b.count - a.count)
 
@@ -345,5 +396,5 @@ export function aggregateFacetsFromItems(
     .map(([value, count]) => ({ value, count }))
     .sort((a, b) => b.value - a.value)
 
-  return { statuses, formats, genres, years }
+  return { statuses, formats, genres, years, mediaStatuses }
 }

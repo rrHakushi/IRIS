@@ -35,6 +35,7 @@ export default defineRoute({
         status: true,
         tv: {
           select: {
+            showType: true,
             status: true,
             firstAiredYear: true,
             genres: { select: { name: true } },

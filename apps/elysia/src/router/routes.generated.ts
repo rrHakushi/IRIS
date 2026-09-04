@@ -33,103 +33,104 @@ import route_25 from "../modules/IRIS-account/notifications/[id]/route";
 import route_26 from "../modules/IRIS-account/notifications/mark-all-read/route";
 import route_27 from "../modules/IRIS-account/notifications/route";
 import route_28 from "../modules/IRIS-account/public/[...key]/route";
-import route_29 from "../modules/IRIS-account/users/me/assets/route";
-import route_30 from "../modules/IRIS-account/users/me/encryption/route";
-import route_31 from "../modules/IRIS-account/users/me/route";
-import route_32 from "../modules/IRIS-connections/connections/[id]/auth/route";
-import route_33 from "../modules/IRIS-connections/connections/[id]/callback/route";
-import route_34 from "../modules/IRIS-connections/connections/[id]/route";
-import route_35 from "../modules/IRIS-connections/connections/[id]/sync/route";
-import route_36 from "../modules/IRIS-connections/connections/[id]/test/route";
-import route_37 from "../modules/IRIS-connections/connections/providers/route";
-import route_38 from "../modules/IRIS-connections/connections/route";
-import route_39 from "../modules/IRIS-connections/connections/search/route";
-import route_40 from "../modules/IRIS-list/user/[username]/favorites/[targetId]/route";
-import route_41 from "../modules/IRIS-list/user/[username]/favorites/route";
-import route_42 from "../modules/IRIS-list/user/[username]/lists/anime/[id]/increment/route";
-import route_43 from "../modules/IRIS-list/user/[username]/lists/anime/[id]/quick-add/route";
-import route_44 from "../modules/IRIS-list/user/[username]/lists/anime/[id]/route";
-import route_45 from "../modules/IRIS-list/user/[username]/lists/anime/filters/route";
-import route_46 from "../modules/IRIS-list/user/[username]/lists/anime/route";
-import route_47 from "../modules/IRIS-list/user/[username]/lists/book/[id]/increment/route";
-import route_48 from "../modules/IRIS-list/user/[username]/lists/book/[id]/quick-add/route";
-import route_49 from "../modules/IRIS-list/user/[username]/lists/book/[id]/route";
-import route_50 from "../modules/IRIS-list/user/[username]/lists/book/filters/route";
-import route_51 from "../modules/IRIS-list/user/[username]/lists/book/route";
-import route_52 from "../modules/IRIS-list/user/[username]/lists/custom/[watchlistId]/[id]/quick-add/route";
-import route_53 from "../modules/IRIS-list/user/[username]/lists/custom/[watchlistId]/[id]/route";
-import route_54 from "../modules/IRIS-list/user/[username]/lists/custom/[watchlistId]/filters/route";
-import route_55 from "../modules/IRIS-list/user/[username]/lists/custom/[watchlistId]/route";
-import route_56 from "../modules/IRIS-list/user/[username]/lists/game/[id]/increment/route";
-import route_57 from "../modules/IRIS-list/user/[username]/lists/game/[id]/quick-add/route";
-import route_58 from "../modules/IRIS-list/user/[username]/lists/game/[id]/route";
-import route_59 from "../modules/IRIS-list/user/[username]/lists/game/filters/route";
-import route_60 from "../modules/IRIS-list/user/[username]/lists/game/route";
-import route_61 from "../modules/IRIS-list/user/[username]/lists/manga/[id]/increment/route";
-import route_62 from "../modules/IRIS-list/user/[username]/lists/manga/[id]/quick-add/route";
-import route_63 from "../modules/IRIS-list/user/[username]/lists/manga/[id]/route";
-import route_64 from "../modules/IRIS-list/user/[username]/lists/manga/filters/route";
-import route_65 from "../modules/IRIS-list/user/[username]/lists/manga/route";
-import route_66 from "../modules/IRIS-list/user/[username]/lists/movie/[id]/increment/route";
-import route_67 from "../modules/IRIS-list/user/[username]/lists/movie/[id]/quick-add/route";
-import route_68 from "../modules/IRIS-list/user/[username]/lists/movie/[id]/route";
-import route_69 from "../modules/IRIS-list/user/[username]/lists/movie/filters/route";
-import route_70 from "../modules/IRIS-list/user/[username]/lists/movie/route";
-import route_71 from "../modules/IRIS-list/user/[username]/lists/music/[id]/increment/route";
-import route_72 from "../modules/IRIS-list/user/[username]/lists/music/[id]/quick-add/route";
-import route_73 from "../modules/IRIS-list/user/[username]/lists/music/[id]/route";
-import route_74 from "../modules/IRIS-list/user/[username]/lists/music/filters/route";
-import route_75 from "../modules/IRIS-list/user/[username]/lists/music/route";
-import route_76 from "../modules/IRIS-list/user/[username]/lists/tv/[id]/episodes/route";
-import route_77 from "../modules/IRIS-list/user/[username]/lists/tv/[id]/increment/route";
-import route_78 from "../modules/IRIS-list/user/[username]/lists/tv/[id]/quick-add/route";
-import route_79 from "../modules/IRIS-list/user/[username]/lists/tv/[id]/route";
-import route_80 from "../modules/IRIS-list/user/[username]/lists/tv/filters/route";
-import route_81 from "../modules/IRIS-list/user/[username]/lists/tv/route";
-import route_82 from "../modules/IRIS-list/user/[username]/watchlists/[id]/entries/route";
-import route_83 from "../modules/IRIS-list/user/[username]/watchlists/[id]/route";
-import route_84 from "../modules/IRIS-list/user/[username]/watchlists/route";
-import route_85 from "../modules/IRIS-media/media/anime/[id]/refresh/route";
-import route_86 from "../modules/IRIS-media/media/anime/[id]/route";
-import route_87 from "../modules/IRIS-media/media/anime/[id]/similar/route";
-import route_88 from "../modules/IRIS-media/media/books/[id]/refresh/route";
-import route_89 from "../modules/IRIS-media/media/books/[id]/route";
-import route_90 from "../modules/IRIS-media/media/books/[id]/similar/route";
-import route_91 from "../modules/IRIS-media/media/characters/[id]/route";
-import route_92 from "../modules/IRIS-media/media/games/[id]/refresh/route";
-import route_93 from "../modules/IRIS-media/media/games/[id]/route";
-import route_94 from "../modules/IRIS-media/media/games/[id]/similar/route";
-import route_95 from "../modules/IRIS-media/media/manga/[id]/refresh/route";
-import route_96 from "../modules/IRIS-media/media/manga/[id]/route";
-import route_97 from "../modules/IRIS-media/media/manga/[id]/similar/route";
-import route_98 from "../modules/IRIS-media/media/movies/[id]/refresh/route";
-import route_99 from "../modules/IRIS-media/media/movies/[id]/route";
-import route_100 from "../modules/IRIS-media/media/movies/[id]/similar/route";
-import route_101 from "../modules/IRIS-media/media/music/[id]/refresh/route";
-import route_102 from "../modules/IRIS-media/media/music/[id]/route";
-import route_103 from "../modules/IRIS-media/media/music/[id]/similar/route";
-import route_104 from "../modules/IRIS-media/media/people/[id]/route";
-import route_105 from "../modules/IRIS-media/media/studios/[id]/route";
-import route_106 from "../modules/IRIS-media/media/tv/[id]/refresh/route";
-import route_107 from "../modules/IRIS-media/media/tv/[id]/route";
-import route_108 from "../modules/IRIS-media/media/tv/[id]/similar/route";
-import route_109 from "../modules/IRIS-media/search/anime/route";
-import route_110 from "../modules/IRIS-media/search/books/route";
-import route_111 from "../modules/IRIS-media/search/characters/route";
-import route_112 from "../modules/IRIS-media/search/games/route";
-import route_113 from "../modules/IRIS-media/search/manga/route";
-import route_114 from "../modules/IRIS-media/search/movies/route";
-import route_115 from "../modules/IRIS-media/search/music/route";
-import route_116 from "../modules/IRIS-media/search/people/route";
-import route_117 from "../modules/IRIS-media/search/studios/route";
-import route_118 from "../modules/IRIS-media/search/tv/route";
-import route_119 from "../modules/IRIS-social/recommendations/[id]/route";
-import route_120 from "../modules/IRIS-social/recommendations/[id]/vote/route";
-import route_121 from "../modules/IRIS-social/recommendations/[type]/[id]/route";
-import route_122 from "../modules/IRIS-social/recommendations/route";
-import route_123 from "../modules/IRIS-social/reviews/[type]/[id]/route";
-import route_124 from "../modules/IRIS-social/reviews/[type]/[id]/vote/route";
-import route_125 from "../modules/IRIS-social/user/[username]/reviews/route";
+import route_29 from "../modules/IRIS-account/users/[username]/route";
+import route_30 from "../modules/IRIS-account/users/me/assets/route";
+import route_31 from "../modules/IRIS-account/users/me/encryption/route";
+import route_32 from "../modules/IRIS-account/users/me/route";
+import route_33 from "../modules/IRIS-connections/connections/[id]/auth/route";
+import route_34 from "../modules/IRIS-connections/connections/[id]/callback/route";
+import route_35 from "../modules/IRIS-connections/connections/[id]/route";
+import route_36 from "../modules/IRIS-connections/connections/[id]/sync/route";
+import route_37 from "../modules/IRIS-connections/connections/[id]/test/route";
+import route_38 from "../modules/IRIS-connections/connections/providers/route";
+import route_39 from "../modules/IRIS-connections/connections/route";
+import route_40 from "../modules/IRIS-connections/connections/search/route";
+import route_41 from "../modules/IRIS-list/user/[username]/favorites/[targetId]/route";
+import route_42 from "../modules/IRIS-list/user/[username]/favorites/route";
+import route_43 from "../modules/IRIS-list/user/[username]/lists/anime/[id]/increment/route";
+import route_44 from "../modules/IRIS-list/user/[username]/lists/anime/[id]/quick-add/route";
+import route_45 from "../modules/IRIS-list/user/[username]/lists/anime/[id]/route";
+import route_46 from "../modules/IRIS-list/user/[username]/lists/anime/filters/route";
+import route_47 from "../modules/IRIS-list/user/[username]/lists/anime/route";
+import route_48 from "../modules/IRIS-list/user/[username]/lists/book/[id]/increment/route";
+import route_49 from "../modules/IRIS-list/user/[username]/lists/book/[id]/quick-add/route";
+import route_50 from "../modules/IRIS-list/user/[username]/lists/book/[id]/route";
+import route_51 from "../modules/IRIS-list/user/[username]/lists/book/filters/route";
+import route_52 from "../modules/IRIS-list/user/[username]/lists/book/route";
+import route_53 from "../modules/IRIS-list/user/[username]/lists/custom/[watchlistId]/[id]/quick-add/route";
+import route_54 from "../modules/IRIS-list/user/[username]/lists/custom/[watchlistId]/[id]/route";
+import route_55 from "../modules/IRIS-list/user/[username]/lists/custom/[watchlistId]/filters/route";
+import route_56 from "../modules/IRIS-list/user/[username]/lists/custom/[watchlistId]/route";
+import route_57 from "../modules/IRIS-list/user/[username]/lists/game/[id]/increment/route";
+import route_58 from "../modules/IRIS-list/user/[username]/lists/game/[id]/quick-add/route";
+import route_59 from "../modules/IRIS-list/user/[username]/lists/game/[id]/route";
+import route_60 from "../modules/IRIS-list/user/[username]/lists/game/filters/route";
+import route_61 from "../modules/IRIS-list/user/[username]/lists/game/route";
+import route_62 from "../modules/IRIS-list/user/[username]/lists/manga/[id]/increment/route";
+import route_63 from "../modules/IRIS-list/user/[username]/lists/manga/[id]/quick-add/route";
+import route_64 from "../modules/IRIS-list/user/[username]/lists/manga/[id]/route";
+import route_65 from "../modules/IRIS-list/user/[username]/lists/manga/filters/route";
+import route_66 from "../modules/IRIS-list/user/[username]/lists/manga/route";
+import route_67 from "../modules/IRIS-list/user/[username]/lists/movie/[id]/increment/route";
+import route_68 from "../modules/IRIS-list/user/[username]/lists/movie/[id]/quick-add/route";
+import route_69 from "../modules/IRIS-list/user/[username]/lists/movie/[id]/route";
+import route_70 from "../modules/IRIS-list/user/[username]/lists/movie/filters/route";
+import route_71 from "../modules/IRIS-list/user/[username]/lists/movie/route";
+import route_72 from "../modules/IRIS-list/user/[username]/lists/music/[id]/increment/route";
+import route_73 from "../modules/IRIS-list/user/[username]/lists/music/[id]/quick-add/route";
+import route_74 from "../modules/IRIS-list/user/[username]/lists/music/[id]/route";
+import route_75 from "../modules/IRIS-list/user/[username]/lists/music/filters/route";
+import route_76 from "../modules/IRIS-list/user/[username]/lists/music/route";
+import route_77 from "../modules/IRIS-list/user/[username]/lists/tv/[id]/episodes/route";
+import route_78 from "../modules/IRIS-list/user/[username]/lists/tv/[id]/increment/route";
+import route_79 from "../modules/IRIS-list/user/[username]/lists/tv/[id]/quick-add/route";
+import route_80 from "../modules/IRIS-list/user/[username]/lists/tv/[id]/route";
+import route_81 from "../modules/IRIS-list/user/[username]/lists/tv/filters/route";
+import route_82 from "../modules/IRIS-list/user/[username]/lists/tv/route";
+import route_83 from "../modules/IRIS-list/user/[username]/watchlists/[id]/entries/route";
+import route_84 from "../modules/IRIS-list/user/[username]/watchlists/[id]/route";
+import route_85 from "../modules/IRIS-list/user/[username]/watchlists/route";
+import route_86 from "../modules/IRIS-media/media/anime/[id]/refresh/route";
+import route_87 from "../modules/IRIS-media/media/anime/[id]/route";
+import route_88 from "../modules/IRIS-media/media/anime/[id]/similar/route";
+import route_89 from "../modules/IRIS-media/media/books/[id]/refresh/route";
+import route_90 from "../modules/IRIS-media/media/books/[id]/route";
+import route_91 from "../modules/IRIS-media/media/books/[id]/similar/route";
+import route_92 from "../modules/IRIS-media/media/characters/[id]/route";
+import route_93 from "../modules/IRIS-media/media/games/[id]/refresh/route";
+import route_94 from "../modules/IRIS-media/media/games/[id]/route";
+import route_95 from "../modules/IRIS-media/media/games/[id]/similar/route";
+import route_96 from "../modules/IRIS-media/media/manga/[id]/refresh/route";
+import route_97 from "../modules/IRIS-media/media/manga/[id]/route";
+import route_98 from "../modules/IRIS-media/media/manga/[id]/similar/route";
+import route_99 from "../modules/IRIS-media/media/movies/[id]/refresh/route";
+import route_100 from "../modules/IRIS-media/media/movies/[id]/route";
+import route_101 from "../modules/IRIS-media/media/movies/[id]/similar/route";
+import route_102 from "../modules/IRIS-media/media/music/[id]/refresh/route";
+import route_103 from "../modules/IRIS-media/media/music/[id]/route";
+import route_104 from "../modules/IRIS-media/media/music/[id]/similar/route";
+import route_105 from "../modules/IRIS-media/media/people/[id]/route";
+import route_106 from "../modules/IRIS-media/media/studios/[id]/route";
+import route_107 from "../modules/IRIS-media/media/tv/[id]/refresh/route";
+import route_108 from "../modules/IRIS-media/media/tv/[id]/route";
+import route_109 from "../modules/IRIS-media/media/tv/[id]/similar/route";
+import route_110 from "../modules/IRIS-media/search/anime/route";
+import route_111 from "../modules/IRIS-media/search/books/route";
+import route_112 from "../modules/IRIS-media/search/characters/route";
+import route_113 from "../modules/IRIS-media/search/games/route";
+import route_114 from "../modules/IRIS-media/search/manga/route";
+import route_115 from "../modules/IRIS-media/search/movies/route";
+import route_116 from "../modules/IRIS-media/search/music/route";
+import route_117 from "../modules/IRIS-media/search/people/route";
+import route_118 from "../modules/IRIS-media/search/studios/route";
+import route_119 from "../modules/IRIS-media/search/tv/route";
+import route_120 from "../modules/IRIS-social/recommendations/[id]/route";
+import route_121 from "../modules/IRIS-social/recommendations/[id]/vote/route";
+import route_122 from "../modules/IRIS-social/recommendations/[type]/[id]/route";
+import route_123 from "../modules/IRIS-social/recommendations/route";
+import route_124 from "../modules/IRIS-social/reviews/[type]/[id]/route";
+import route_125 from "../modules/IRIS-social/reviews/[type]/[id]/vote/route";
+import route_126 from "../modules/IRIS-social/user/[username]/reviews/route";
 
 const routeLimiters = new Map<string, ReturnType<typeof createRateLimiter>>();
 function getRouteLimiter(key: string, config: unknown) {
@@ -154,14 +155,11 @@ function deepMergeCacheKeys(target: Record<string, any>, source: Record<string, 
     }
   }
 }
-if ((route_86 as any)?.cacheKeys) {
-  deepMergeCacheKeys(globalCacheKeyStorage, (route_86 as any).cacheKeys);
-}
 if ((route_87 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_87 as any).cacheKeys);
 }
-if ((route_89 as any)?.cacheKeys) {
-  deepMergeCacheKeys(globalCacheKeyStorage, (route_89 as any).cacheKeys);
+if ((route_88 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_88 as any).cacheKeys);
 }
 if ((route_90 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_90 as any).cacheKeys);
@@ -169,26 +167,26 @@ if ((route_90 as any)?.cacheKeys) {
 if ((route_91 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_91 as any).cacheKeys);
 }
-if ((route_93 as any)?.cacheKeys) {
-  deepMergeCacheKeys(globalCacheKeyStorage, (route_93 as any).cacheKeys);
+if ((route_92 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_92 as any).cacheKeys);
 }
 if ((route_94 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_94 as any).cacheKeys);
 }
-if ((route_96 as any)?.cacheKeys) {
-  deepMergeCacheKeys(globalCacheKeyStorage, (route_96 as any).cacheKeys);
+if ((route_95 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_95 as any).cacheKeys);
 }
 if ((route_97 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_97 as any).cacheKeys);
 }
-if ((route_99 as any)?.cacheKeys) {
-  deepMergeCacheKeys(globalCacheKeyStorage, (route_99 as any).cacheKeys);
+if ((route_98 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_98 as any).cacheKeys);
 }
 if ((route_100 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_100 as any).cacheKeys);
 }
-if ((route_102 as any)?.cacheKeys) {
-  deepMergeCacheKeys(globalCacheKeyStorage, (route_102 as any).cacheKeys);
+if ((route_101 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_101 as any).cacheKeys);
 }
 if ((route_103 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_103 as any).cacheKeys);
@@ -196,8 +194,8 @@ if ((route_103 as any)?.cacheKeys) {
 if ((route_104 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_104 as any).cacheKeys);
 }
-if ((route_107 as any)?.cacheKeys) {
-  deepMergeCacheKeys(globalCacheKeyStorage, (route_107 as any).cacheKeys);
+if ((route_105 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_105 as any).cacheKeys);
 }
 if ((route_108 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_108 as any).cacheKeys);
@@ -231,6 +229,9 @@ if ((route_117 as any)?.cacheKeys) {
 }
 if ((route_118 as any)?.cacheKeys) {
   deepMergeCacheKeys(globalCacheKeyStorage, (route_118 as any).cacheKeys);
+}
+if ((route_119 as any)?.cacheKeys) {
+  deepMergeCacheKeys(globalCacheKeyStorage, (route_119 as any).cacheKeys);
 }
 
 export const routes = new Elysia({ name: "iris-routes" })
@@ -634,44 +635,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/users/me/assets",
-    route_29.POST!.schema,
-    async (ctx: any) => {
-      const methodItem = (route_29 as any).POST;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_29 as any).rateLimits?.POST ?? (route_29 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_29_POST", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .delete(
-    "/users/me/assets",
-    route_29.DELETE!.schema,
-    async (ctx: any) => {
-      const methodItem = (route_29 as any).DELETE;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_29 as any).rateLimits?.DELETE ?? (route_29 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_29_DELETE", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
   .get(
-    "/users/me/encryption",
-    route_30.GET!.schema,
+    "/users/:username",
+    route_29.GET!.schema,
     async (ctx: any) => {
-      const methodItem = (route_30 as any).GET;
+      const methodItem = (route_29 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_30 as any).rateLimits?.GET ?? (route_30 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_30_GET", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_29 as any).rateLimits?.GET ?? (route_29 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_29_GET", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
-    "/users/me/encryption",
+    "/users/me/assets",
     route_30.POST!.schema,
     async (ctx: any) => {
       const methodItem = (route_30 as any).POST;
@@ -682,8 +659,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
+  .delete(
+    "/users/me/assets",
+    route_30.DELETE!.schema,
+    async (ctx: any) => {
+      const methodItem = (route_30 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_30 as any).rateLimits?.DELETE ?? (route_30 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_30_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
   .get(
-    "/users/me",
+    "/users/me/encryption",
     route_31.GET!.schema,
     async (ctx: any) => {
       const methodItem = (route_31 as any).GET;
@@ -694,20 +683,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .patch(
-    "/users/me",
-    route_31.PATCH!.schema,
+  .post(
+    "/users/me/encryption",
+    route_31.POST!.schema,
     async (ctx: any) => {
-      const methodItem = (route_31 as any).PATCH;
+      const methodItem = (route_31 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_31 as any).rateLimits?.PATCH ?? (route_31 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_31_PATCH", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_31 as any).rateLimits?.POST ?? (route_31 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_31_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
-    "/connections/:id/auth",
+    "/users/me",
     route_32.GET!.schema,
     async (ctx: any) => {
       const methodItem = (route_32 as any).GET;
@@ -718,8 +707,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
+  .patch(
+    "/users/me",
+    route_32.PATCH!.schema,
+    async (ctx: any) => {
+      const methodItem = (route_32 as any).PATCH;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_32 as any).rateLimits?.PATCH ?? (route_32 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_32_PATCH", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
   .get(
-    "/connections/:id/callback",
+    "/connections/:id/auth",
     route_33.GET!.schema,
     async (ctx: any) => {
       const methodItem = (route_33 as any).GET;
@@ -730,44 +731,44 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
+  .get(
+    "/connections/:id/callback",
+    route_34.GET!.schema,
+    async (ctx: any) => {
+      const methodItem = (route_34 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_34 as any).rateLimits?.GET ?? (route_34 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_34_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
   .delete(
     "/connections/:id",
-    route_34.DELETE!.schema,
+    route_35.DELETE!.schema,
     async (ctx: any) => {
-      const methodItem = (route_34 as any).DELETE;
+      const methodItem = (route_35 as any).DELETE;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_34 as any).rateLimits?.DELETE ?? (route_34 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_34_DELETE", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_35 as any).rateLimits?.DELETE ?? (route_35 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_35_DELETE", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .patch(
     "/connections/:id",
-    route_34.PATCH!.schema,
+    route_35.PATCH!.schema,
     async (ctx: any) => {
-      const methodItem = (route_34 as any).PATCH;
+      const methodItem = (route_35 as any).PATCH;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_34 as any).rateLimits?.PATCH ?? (route_34 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_34_PATCH", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_35 as any).rateLimits?.PATCH ?? (route_35 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_35_PATCH", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
     "/connections/:id/sync",
-    route_35.POST!.schema,
-    async (ctx: any) => {
-      const methodItem = (route_35 as any).POST;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_35 as any).rateLimits?.POST ?? (route_35 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_35_POST", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .post(
-    "/connections/:id/test",
     route_36.POST!.schema,
     async (ctx: any) => {
       const methodItem = (route_36 as any).POST;
@@ -778,20 +779,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .get(
-    "/connections/providers",
-    route_37.GET!.schema,
+  .post(
+    "/connections/:id/test",
+    route_37.POST!.schema,
     async (ctx: any) => {
-      const methodItem = (route_37 as any).GET;
+      const methodItem = (route_37 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_37 as any).rateLimits?.GET ?? (route_37 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_37_GET", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_37 as any).rateLimits?.POST ?? (route_37 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_37_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
-    "/connections",
+    "/connections/providers",
     route_38.GET!.schema,
     async (ctx: any) => {
       const methodItem = (route_38 as any).GET;
@@ -802,20 +803,8 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/connections",
-    route_38.POST!.schema,
-    async (ctx: any) => {
-      const methodItem = (route_38 as any).POST;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_38 as any).rateLimits?.POST ?? (route_38 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_38_POST", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
   .get(
-    "/connections/search",
+    "/connections",
     route_39.GET!.schema,
     async (ctx: any) => {
       const methodItem = (route_39 as any).GET;
@@ -826,9 +815,21 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
+  .post(
+    "/connections",
+    route_39.POST!.schema,
+    async (ctx: any) => {
+      const methodItem = (route_39 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_39 as any).rateLimits?.POST ?? (route_39 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_39_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
   .get(
-    "/user/:username/favorites/:targetId",
-    route_40.schemas!.GET,
+    "/connections/search",
+    route_40.GET!.schema,
     async (ctx: any) => {
       const methodItem = (route_40 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -838,33 +839,9 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/user/:username/favorites/:targetId",
-    route_40.schemas!.POST,
-    async (ctx: any) => {
-      const methodItem = (route_40 as any).POST;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_40 as any).rateLimits?.POST ?? (route_40 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_40_POST", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .delete(
-    "/user/:username/favorites/:targetId",
-    route_40.schemas!.DELETE,
-    async (ctx: any) => {
-      const methodItem = (route_40 as any).DELETE;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_40 as any).rateLimits?.DELETE ?? (route_40 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_40_DELETE", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
   .get(
-    "/user/:username/favorites",
-    route_41.schema,
+    "/user/:username/favorites/:targetId",
+    route_41.schemas!.GET,
     async (ctx: any) => {
       const methodItem = (route_41 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -875,19 +852,43 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .post(
-    "/user/:username/lists/anime/:id/increment",
+    "/user/:username/favorites/:targetId",
+    route_41.schemas!.POST,
+    async (ctx: any) => {
+      const methodItem = (route_41 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_41 as any).rateLimits?.POST ?? (route_41 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_41_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/user/:username/favorites/:targetId",
+    route_41.schemas!.DELETE,
+    async (ctx: any) => {
+      const methodItem = (route_41 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_41 as any).rateLimits?.DELETE ?? (route_41 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_41_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/favorites",
     route_42.schema,
     async (ctx: any) => {
-      const methodItem = (route_42 as any).POST;
+      const methodItem = (route_42 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_42 as any).rateLimits?.POST ?? (route_42 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_42_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_42 as any).rateLimits?.GET ?? (route_42 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_42_GET", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
-    "/user/:username/lists/anime/:id/quick-add",
+    "/user/:username/lists/anime/:id/increment",
     route_43.schema,
     async (ctx: any) => {
       const methodItem = (route_43 as any).POST;
@@ -898,57 +899,21 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .get(
-    "/user/:username/lists/anime/:id",
-    route_44.schemas!.GET,
+  .post(
+    "/user/:username/lists/anime/:id/quick-add",
+    route_44.schema,
     async (ctx: any) => {
-      const methodItem = (route_44 as any).GET;
+      const methodItem = (route_44 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_44 as any).rateLimits?.GET ?? (route_44 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_44_GET", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .put(
-    "/user/:username/lists/anime/:id",
-    route_44.schemas!.PUT,
-    async (ctx: any) => {
-      const methodItem = (route_44 as any).PUT;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_44 as any).rateLimits?.PUT ?? (route_44 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_44_PUT", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .delete(
-    "/user/:username/lists/anime/:id",
-    route_44.schemas!.DELETE,
-    async (ctx: any) => {
-      const methodItem = (route_44 as any).DELETE;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_44 as any).rateLimits?.DELETE ?? (route_44 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_44_DELETE", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .patch(
-    "/user/:username/lists/anime/:id",
-    route_44.schemas!.PATCH,
-    async (ctx: any) => {
-      const methodItem = (route_44 as any).PATCH;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_44 as any).rateLimits?.PATCH ?? (route_44 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_44_PATCH", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_44 as any).rateLimits?.POST ?? (route_44 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_44_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
-    "/user/:username/lists/anime/filters",
-    route_45.schema,
+    "/user/:username/lists/anime/:id",
+    route_45.schemas!.GET,
     async (ctx: any) => {
       const methodItem = (route_45 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -958,8 +923,44 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
+  .put(
+    "/user/:username/lists/anime/:id",
+    route_45.schemas!.PUT,
+    async (ctx: any) => {
+      const methodItem = (route_45 as any).PUT;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_45 as any).rateLimits?.PUT ?? (route_45 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_45_PUT", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/user/:username/lists/anime/:id",
+    route_45.schemas!.DELETE,
+    async (ctx: any) => {
+      const methodItem = (route_45 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_45 as any).rateLimits?.DELETE ?? (route_45 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_45_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .patch(
+    "/user/:username/lists/anime/:id",
+    route_45.schemas!.PATCH,
+    async (ctx: any) => {
+      const methodItem = (route_45 as any).PATCH;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_45 as any).rateLimits?.PATCH ?? (route_45 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_45_PATCH", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
   .get(
-    "/user/:username/lists/anime",
+    "/user/:username/lists/anime/filters",
     route_46.schema,
     async (ctx: any) => {
       const methodItem = (route_46 as any).GET;
@@ -970,20 +971,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/user/:username/lists/book/:id/increment",
+  .get(
+    "/user/:username/lists/anime",
     route_47.schema,
     async (ctx: any) => {
-      const methodItem = (route_47 as any).POST;
+      const methodItem = (route_47 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_47 as any).rateLimits?.POST ?? (route_47 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_47_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_47 as any).rateLimits?.GET ?? (route_47 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_47_GET", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
-    "/user/:username/lists/book/:id/quick-add",
+    "/user/:username/lists/book/:id/increment",
     route_48.schema,
     async (ctx: any) => {
       const methodItem = (route_48 as any).POST;
@@ -994,57 +995,21 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .get(
-    "/user/:username/lists/book/:id",
-    route_49.schemas!.GET,
+  .post(
+    "/user/:username/lists/book/:id/quick-add",
+    route_49.schema,
     async (ctx: any) => {
-      const methodItem = (route_49 as any).GET;
+      const methodItem = (route_49 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_49 as any).rateLimits?.GET ?? (route_49 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_49_GET", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .put(
-    "/user/:username/lists/book/:id",
-    route_49.schemas!.PUT,
-    async (ctx: any) => {
-      const methodItem = (route_49 as any).PUT;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_49 as any).rateLimits?.PUT ?? (route_49 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_49_PUT", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .delete(
-    "/user/:username/lists/book/:id",
-    route_49.schemas!.DELETE,
-    async (ctx: any) => {
-      const methodItem = (route_49 as any).DELETE;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_49 as any).rateLimits?.DELETE ?? (route_49 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_49_DELETE", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .patch(
-    "/user/:username/lists/book/:id",
-    route_49.schemas!.PATCH,
-    async (ctx: any) => {
-      const methodItem = (route_49 as any).PATCH;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_49 as any).rateLimits?.PATCH ?? (route_49 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_49_PATCH", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_49 as any).rateLimits?.POST ?? (route_49 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_49_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
-    "/user/:username/lists/book/filters",
-    route_50.schema,
+    "/user/:username/lists/book/:id",
+    route_50.schemas!.GET,
     async (ctx: any) => {
       const methodItem = (route_50 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -1054,8 +1019,44 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
+  .put(
+    "/user/:username/lists/book/:id",
+    route_50.schemas!.PUT,
+    async (ctx: any) => {
+      const methodItem = (route_50 as any).PUT;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_50 as any).rateLimits?.PUT ?? (route_50 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_50_PUT", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/user/:username/lists/book/:id",
+    route_50.schemas!.DELETE,
+    async (ctx: any) => {
+      const methodItem = (route_50 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_50 as any).rateLimits?.DELETE ?? (route_50 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_50_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .patch(
+    "/user/:username/lists/book/:id",
+    route_50.schemas!.PATCH,
+    async (ctx: any) => {
+      const methodItem = (route_50 as any).PATCH;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_50 as any).rateLimits?.PATCH ?? (route_50 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_50_PATCH", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
   .get(
-    "/user/:username/lists/book",
+    "/user/:username/lists/book/filters",
     route_51.schema,
     async (ctx: any) => {
       const methodItem = (route_51 as any).GET;
@@ -1066,69 +1067,33 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/user/:username/lists/custom/:watchlistId/:id/quick-add",
+  .get(
+    "/user/:username/lists/book",
     route_52.schema,
     async (ctx: any) => {
-      const methodItem = (route_52 as any).POST;
+      const methodItem = (route_52 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_52 as any).rateLimits?.POST ?? (route_52 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_52_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_52 as any).rateLimits?.GET ?? (route_52 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_52_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/user/:username/lists/custom/:watchlistId/:id/quick-add",
+    route_53.schema,
+    async (ctx: any) => {
+      const methodItem = (route_53 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_53 as any).rateLimits?.POST ?? (route_53 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_53_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
     "/user/:username/lists/custom/:watchlistId/:id",
-    route_53.schemas!.GET,
-    async (ctx: any) => {
-      const methodItem = (route_53 as any).GET;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_53 as any).rateLimits?.GET ?? (route_53 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_53_GET", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .put(
-    "/user/:username/lists/custom/:watchlistId/:id",
-    route_53.schemas!.PUT,
-    async (ctx: any) => {
-      const methodItem = (route_53 as any).PUT;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_53 as any).rateLimits?.PUT ?? (route_53 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_53_PUT", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .delete(
-    "/user/:username/lists/custom/:watchlistId/:id",
-    route_53.schemas!.DELETE,
-    async (ctx: any) => {
-      const methodItem = (route_53 as any).DELETE;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_53 as any).rateLimits?.DELETE ?? (route_53 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_53_DELETE", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .patch(
-    "/user/:username/lists/custom/:watchlistId/:id",
-    route_53.schemas!.PATCH,
-    async (ctx: any) => {
-      const methodItem = (route_53 as any).PATCH;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_53 as any).rateLimits?.PATCH ?? (route_53 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_53_PATCH", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .get(
-    "/user/:username/lists/custom/:watchlistId/filters",
-    route_54.schema,
+    route_54.schemas!.GET,
     async (ctx: any) => {
       const methodItem = (route_54 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -1138,8 +1103,44 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
+  .put(
+    "/user/:username/lists/custom/:watchlistId/:id",
+    route_54.schemas!.PUT,
+    async (ctx: any) => {
+      const methodItem = (route_54 as any).PUT;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_54 as any).rateLimits?.PUT ?? (route_54 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_54_PUT", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/user/:username/lists/custom/:watchlistId/:id",
+    route_54.schemas!.DELETE,
+    async (ctx: any) => {
+      const methodItem = (route_54 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_54 as any).rateLimits?.DELETE ?? (route_54 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_54_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .patch(
+    "/user/:username/lists/custom/:watchlistId/:id",
+    route_54.schemas!.PATCH,
+    async (ctx: any) => {
+      const methodItem = (route_54 as any).PATCH;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_54 as any).rateLimits?.PATCH ?? (route_54 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_54_PATCH", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
   .get(
-    "/user/:username/lists/custom/:watchlistId",
+    "/user/:username/lists/custom/:watchlistId/filters",
     route_55.schema,
     async (ctx: any) => {
       const methodItem = (route_55 as any).GET;
@@ -1150,20 +1151,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/user/:username/lists/game/:id/increment",
+  .get(
+    "/user/:username/lists/custom/:watchlistId",
     route_56.schema,
     async (ctx: any) => {
-      const methodItem = (route_56 as any).POST;
+      const methodItem = (route_56 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_56 as any).rateLimits?.POST ?? (route_56 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_56_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_56 as any).rateLimits?.GET ?? (route_56 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_56_GET", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
-    "/user/:username/lists/game/:id/quick-add",
+    "/user/:username/lists/game/:id/increment",
     route_57.schema,
     async (ctx: any) => {
       const methodItem = (route_57 as any).POST;
@@ -1174,57 +1175,21 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .get(
-    "/user/:username/lists/game/:id",
-    route_58.schemas!.GET,
+  .post(
+    "/user/:username/lists/game/:id/quick-add",
+    route_58.schema,
     async (ctx: any) => {
-      const methodItem = (route_58 as any).GET;
+      const methodItem = (route_58 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_58 as any).rateLimits?.GET ?? (route_58 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_58_GET", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .put(
-    "/user/:username/lists/game/:id",
-    route_58.schemas!.PUT,
-    async (ctx: any) => {
-      const methodItem = (route_58 as any).PUT;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_58 as any).rateLimits?.PUT ?? (route_58 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_58_PUT", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .delete(
-    "/user/:username/lists/game/:id",
-    route_58.schemas!.DELETE,
-    async (ctx: any) => {
-      const methodItem = (route_58 as any).DELETE;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_58 as any).rateLimits?.DELETE ?? (route_58 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_58_DELETE", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .patch(
-    "/user/:username/lists/game/:id",
-    route_58.schemas!.PATCH,
-    async (ctx: any) => {
-      const methodItem = (route_58 as any).PATCH;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_58 as any).rateLimits?.PATCH ?? (route_58 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_58_PATCH", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_58 as any).rateLimits?.POST ?? (route_58 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_58_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
-    "/user/:username/lists/game/filters",
-    route_59.schema,
+    "/user/:username/lists/game/:id",
+    route_59.schemas!.GET,
     async (ctx: any) => {
       const methodItem = (route_59 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -1234,8 +1199,44 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
+  .put(
+    "/user/:username/lists/game/:id",
+    route_59.schemas!.PUT,
+    async (ctx: any) => {
+      const methodItem = (route_59 as any).PUT;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_59 as any).rateLimits?.PUT ?? (route_59 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_59_PUT", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/user/:username/lists/game/:id",
+    route_59.schemas!.DELETE,
+    async (ctx: any) => {
+      const methodItem = (route_59 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_59 as any).rateLimits?.DELETE ?? (route_59 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_59_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .patch(
+    "/user/:username/lists/game/:id",
+    route_59.schemas!.PATCH,
+    async (ctx: any) => {
+      const methodItem = (route_59 as any).PATCH;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_59 as any).rateLimits?.PATCH ?? (route_59 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_59_PATCH", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
   .get(
-    "/user/:username/lists/game",
+    "/user/:username/lists/game/filters",
     route_60.schema,
     async (ctx: any) => {
       const methodItem = (route_60 as any).GET;
@@ -1246,20 +1247,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/user/:username/lists/manga/:id/increment",
+  .get(
+    "/user/:username/lists/game",
     route_61.schema,
     async (ctx: any) => {
-      const methodItem = (route_61 as any).POST;
+      const methodItem = (route_61 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_61 as any).rateLimits?.POST ?? (route_61 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_61_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_61 as any).rateLimits?.GET ?? (route_61 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_61_GET", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
-    "/user/:username/lists/manga/:id/quick-add",
+    "/user/:username/lists/manga/:id/increment",
     route_62.schema,
     async (ctx: any) => {
       const methodItem = (route_62 as any).POST;
@@ -1270,57 +1271,21 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .get(
-    "/user/:username/lists/manga/:id",
-    route_63.schemas!.GET,
+  .post(
+    "/user/:username/lists/manga/:id/quick-add",
+    route_63.schema,
     async (ctx: any) => {
-      const methodItem = (route_63 as any).GET;
+      const methodItem = (route_63 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_63 as any).rateLimits?.GET ?? (route_63 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_63_GET", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .put(
-    "/user/:username/lists/manga/:id",
-    route_63.schemas!.PUT,
-    async (ctx: any) => {
-      const methodItem = (route_63 as any).PUT;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_63 as any).rateLimits?.PUT ?? (route_63 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_63_PUT", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .delete(
-    "/user/:username/lists/manga/:id",
-    route_63.schemas!.DELETE,
-    async (ctx: any) => {
-      const methodItem = (route_63 as any).DELETE;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_63 as any).rateLimits?.DELETE ?? (route_63 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_63_DELETE", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .patch(
-    "/user/:username/lists/manga/:id",
-    route_63.schemas!.PATCH,
-    async (ctx: any) => {
-      const methodItem = (route_63 as any).PATCH;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_63 as any).rateLimits?.PATCH ?? (route_63 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_63_PATCH", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_63 as any).rateLimits?.POST ?? (route_63 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_63_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
-    "/user/:username/lists/manga/filters",
-    route_64.schema,
+    "/user/:username/lists/manga/:id",
+    route_64.schemas!.GET,
     async (ctx: any) => {
       const methodItem = (route_64 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -1330,8 +1295,44 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
+  .put(
+    "/user/:username/lists/manga/:id",
+    route_64.schemas!.PUT,
+    async (ctx: any) => {
+      const methodItem = (route_64 as any).PUT;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_64 as any).rateLimits?.PUT ?? (route_64 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_64_PUT", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/user/:username/lists/manga/:id",
+    route_64.schemas!.DELETE,
+    async (ctx: any) => {
+      const methodItem = (route_64 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_64 as any).rateLimits?.DELETE ?? (route_64 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_64_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .patch(
+    "/user/:username/lists/manga/:id",
+    route_64.schemas!.PATCH,
+    async (ctx: any) => {
+      const methodItem = (route_64 as any).PATCH;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_64 as any).rateLimits?.PATCH ?? (route_64 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_64_PATCH", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
   .get(
-    "/user/:username/lists/manga",
+    "/user/:username/lists/manga/filters",
     route_65.schema,
     async (ctx: any) => {
       const methodItem = (route_65 as any).GET;
@@ -1342,20 +1343,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/user/:username/lists/movie/:id/increment",
+  .get(
+    "/user/:username/lists/manga",
     route_66.schema,
     async (ctx: any) => {
-      const methodItem = (route_66 as any).POST;
+      const methodItem = (route_66 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_66 as any).rateLimits?.POST ?? (route_66 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_66_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_66 as any).rateLimits?.GET ?? (route_66 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_66_GET", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
-    "/user/:username/lists/movie/:id/quick-add",
+    "/user/:username/lists/movie/:id/increment",
     route_67.schema,
     async (ctx: any) => {
       const methodItem = (route_67 as any).POST;
@@ -1366,57 +1367,21 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .get(
-    "/user/:username/lists/movie/:id",
-    route_68.schemas!.GET,
+  .post(
+    "/user/:username/lists/movie/:id/quick-add",
+    route_68.schema,
     async (ctx: any) => {
-      const methodItem = (route_68 as any).GET;
+      const methodItem = (route_68 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_68 as any).rateLimits?.GET ?? (route_68 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_68_GET", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .put(
-    "/user/:username/lists/movie/:id",
-    route_68.schemas!.PUT,
-    async (ctx: any) => {
-      const methodItem = (route_68 as any).PUT;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_68 as any).rateLimits?.PUT ?? (route_68 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_68_PUT", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .delete(
-    "/user/:username/lists/movie/:id",
-    route_68.schemas!.DELETE,
-    async (ctx: any) => {
-      const methodItem = (route_68 as any).DELETE;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_68 as any).rateLimits?.DELETE ?? (route_68 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_68_DELETE", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .patch(
-    "/user/:username/lists/movie/:id",
-    route_68.schemas!.PATCH,
-    async (ctx: any) => {
-      const methodItem = (route_68 as any).PATCH;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_68 as any).rateLimits?.PATCH ?? (route_68 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_68_PATCH", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_68 as any).rateLimits?.POST ?? (route_68 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_68_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
-    "/user/:username/lists/movie/filters",
-    route_69.schema,
+    "/user/:username/lists/movie/:id",
+    route_69.schemas!.GET,
     async (ctx: any) => {
       const methodItem = (route_69 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -1426,8 +1391,44 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
+  .put(
+    "/user/:username/lists/movie/:id",
+    route_69.schemas!.PUT,
+    async (ctx: any) => {
+      const methodItem = (route_69 as any).PUT;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_69 as any).rateLimits?.PUT ?? (route_69 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_69_PUT", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/user/:username/lists/movie/:id",
+    route_69.schemas!.DELETE,
+    async (ctx: any) => {
+      const methodItem = (route_69 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_69 as any).rateLimits?.DELETE ?? (route_69 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_69_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .patch(
+    "/user/:username/lists/movie/:id",
+    route_69.schemas!.PATCH,
+    async (ctx: any) => {
+      const methodItem = (route_69 as any).PATCH;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_69 as any).rateLimits?.PATCH ?? (route_69 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_69_PATCH", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
   .get(
-    "/user/:username/lists/movie",
+    "/user/:username/lists/movie/filters",
     route_70.schema,
     async (ctx: any) => {
       const methodItem = (route_70 as any).GET;
@@ -1438,20 +1439,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/user/:username/lists/music/:id/increment",
+  .get(
+    "/user/:username/lists/movie",
     route_71.schema,
     async (ctx: any) => {
-      const methodItem = (route_71 as any).POST;
+      const methodItem = (route_71 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_71 as any).rateLimits?.POST ?? (route_71 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_71_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_71 as any).rateLimits?.GET ?? (route_71 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_71_GET", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
-    "/user/:username/lists/music/:id/quick-add",
+    "/user/:username/lists/music/:id/increment",
     route_72.schema,
     async (ctx: any) => {
       const methodItem = (route_72 as any).POST;
@@ -1462,57 +1463,21 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .get(
-    "/user/:username/lists/music/:id",
-    route_73.schemas!.GET,
+  .post(
+    "/user/:username/lists/music/:id/quick-add",
+    route_73.schema,
     async (ctx: any) => {
-      const methodItem = (route_73 as any).GET;
+      const methodItem = (route_73 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_73 as any).rateLimits?.GET ?? (route_73 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_73_GET", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .put(
-    "/user/:username/lists/music/:id",
-    route_73.schemas!.PUT,
-    async (ctx: any) => {
-      const methodItem = (route_73 as any).PUT;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_73 as any).rateLimits?.PUT ?? (route_73 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_73_PUT", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .delete(
-    "/user/:username/lists/music/:id",
-    route_73.schemas!.DELETE,
-    async (ctx: any) => {
-      const methodItem = (route_73 as any).DELETE;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_73 as any).rateLimits?.DELETE ?? (route_73 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_73_DELETE", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .patch(
-    "/user/:username/lists/music/:id",
-    route_73.schemas!.PATCH,
-    async (ctx: any) => {
-      const methodItem = (route_73 as any).PATCH;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_73 as any).rateLimits?.PATCH ?? (route_73 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_73_PATCH", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_73 as any).rateLimits?.POST ?? (route_73 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_73_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
-    "/user/:username/lists/music/filters",
-    route_74.schema,
+    "/user/:username/lists/music/:id",
+    route_74.schemas!.GET,
     async (ctx: any) => {
       const methodItem = (route_74 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -1522,8 +1487,44 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
+  .put(
+    "/user/:username/lists/music/:id",
+    route_74.schemas!.PUT,
+    async (ctx: any) => {
+      const methodItem = (route_74 as any).PUT;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_74 as any).rateLimits?.PUT ?? (route_74 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_74_PUT", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/user/:username/lists/music/:id",
+    route_74.schemas!.DELETE,
+    async (ctx: any) => {
+      const methodItem = (route_74 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_74 as any).rateLimits?.DELETE ?? (route_74 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_74_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .patch(
+    "/user/:username/lists/music/:id",
+    route_74.schemas!.PATCH,
+    async (ctx: any) => {
+      const methodItem = (route_74 as any).PATCH;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_74 as any).rateLimits?.PATCH ?? (route_74 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_74_PATCH", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
   .get(
-    "/user/:username/lists/music",
+    "/user/:username/lists/music/filters",
     route_75.schema,
     async (ctx: any) => {
       const methodItem = (route_75 as any).GET;
@@ -1534,20 +1535,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/user/:username/lists/tv/:id/episodes",
+  .get(
+    "/user/:username/lists/music",
     route_76.schema,
     async (ctx: any) => {
-      const methodItem = (route_76 as any).POST;
+      const methodItem = (route_76 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_76 as any).rateLimits?.POST ?? (route_76 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_76_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_76 as any).rateLimits?.GET ?? (route_76 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_76_GET", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
-    "/user/:username/lists/tv/:id/increment",
+    "/user/:username/lists/tv/:id/episodes",
     route_77.schema,
     async (ctx: any) => {
       const methodItem = (route_77 as any).POST;
@@ -1559,7 +1560,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .post(
-    "/user/:username/lists/tv/:id/quick-add",
+    "/user/:username/lists/tv/:id/increment",
     route_78.schema,
     async (ctx: any) => {
       const methodItem = (route_78 as any).POST;
@@ -1570,57 +1571,21 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .get(
-    "/user/:username/lists/tv/:id",
-    route_79.schemas!.GET,
+  .post(
+    "/user/:username/lists/tv/:id/quick-add",
+    route_79.schema,
     async (ctx: any) => {
-      const methodItem = (route_79 as any).GET;
+      const methodItem = (route_79 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_79 as any).rateLimits?.GET ?? (route_79 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_79_GET", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .put(
-    "/user/:username/lists/tv/:id",
-    route_79.schemas!.PUT,
-    async (ctx: any) => {
-      const methodItem = (route_79 as any).PUT;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_79 as any).rateLimits?.PUT ?? (route_79 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_79_PUT", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .delete(
-    "/user/:username/lists/tv/:id",
-    route_79.schemas!.DELETE,
-    async (ctx: any) => {
-      const methodItem = (route_79 as any).DELETE;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_79 as any).rateLimits?.DELETE ?? (route_79 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_79_DELETE", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .patch(
-    "/user/:username/lists/tv/:id",
-    route_79.schemas!.PATCH,
-    async (ctx: any) => {
-      const methodItem = (route_79 as any).PATCH;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_79 as any).rateLimits?.PATCH ?? (route_79 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_79_PATCH", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_79 as any).rateLimits?.POST ?? (route_79 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_79_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
-    "/user/:username/lists/tv/filters",
-    route_80.schema,
+    "/user/:username/lists/tv/:id",
+    route_80.schemas!.GET,
     async (ctx: any) => {
       const methodItem = (route_80 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -1630,8 +1595,44 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
+  .put(
+    "/user/:username/lists/tv/:id",
+    route_80.schemas!.PUT,
+    async (ctx: any) => {
+      const methodItem = (route_80 as any).PUT;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_80 as any).rateLimits?.PUT ?? (route_80 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_80_PUT", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/user/:username/lists/tv/:id",
+    route_80.schemas!.DELETE,
+    async (ctx: any) => {
+      const methodItem = (route_80 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_80 as any).rateLimits?.DELETE ?? (route_80 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_80_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .patch(
+    "/user/:username/lists/tv/:id",
+    route_80.schemas!.PATCH,
+    async (ctx: any) => {
+      const methodItem = (route_80 as any).PATCH;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_80 as any).rateLimits?.PATCH ?? (route_80 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_80_PATCH", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
   .get(
-    "/user/:username/lists/tv",
+    "/user/:username/lists/tv/filters",
     route_81.schema,
     async (ctx: any) => {
       const methodItem = (route_81 as any).GET;
@@ -1642,44 +1643,32 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
+  .get(
+    "/user/:username/lists/tv",
+    route_82.schema,
+    async (ctx: any) => {
+      const methodItem = (route_82 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_82 as any).rateLimits?.GET ?? (route_82 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_82_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
   .post(
     "/user/:username/watchlists/:id/entries",
-    route_82.schema,
+    route_83.schema,
     async (ctx: any) => {
-      const methodItem = (route_82 as any).POST;
+      const methodItem = (route_83 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_82 as any).rateLimits?.POST ?? (route_82 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_82_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_83 as any).rateLimits?.POST ?? (route_83 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_83_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .delete(
     "/user/:username/watchlists/:id/entries",
-    route_82.schema,
-    async (ctx: any) => {
-      const methodItem = (route_82 as any).DELETE;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_82 as any).rateLimits?.DELETE ?? (route_82 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_82_DELETE", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .get(
-    "/user/:username/watchlists/:id",
-    route_83.schema,
-    async (ctx: any) => {
-      const methodItem = (route_83 as any).GET;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_83 as any).rateLimits?.GET ?? (route_83 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_83_GET", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .delete(
-    "/user/:username/watchlists/:id",
     route_83.schema,
     async (ctx: any) => {
       const methodItem = (route_83 as any).DELETE;
@@ -1690,21 +1679,9 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .patch(
-    "/user/:username/watchlists/:id",
-    route_83.schema,
-    async (ctx: any) => {
-      const methodItem = (route_83 as any).PATCH;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_83 as any).rateLimits?.PATCH ?? (route_83 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_83_PATCH", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
   .get(
-    "/user/:username/watchlists",
-    route_84.schemas!.GET,
+    "/user/:username/watchlists/:id",
+    route_84.schema,
     async (ctx: any) => {
       const methodItem = (route_84 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -1714,21 +1691,45 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/user/:username/watchlists",
-    route_84.schemas!.POST,
+  .delete(
+    "/user/:username/watchlists/:id",
+    route_84.schema,
     async (ctx: any) => {
-      const methodItem = (route_84 as any).POST;
+      const methodItem = (route_84 as any).DELETE;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_84 as any).rateLimits?.POST ?? (route_84 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_84_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_84 as any).rateLimits?.DELETE ?? (route_84 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_84_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .patch(
+    "/user/:username/watchlists/:id",
+    route_84.schema,
+    async (ctx: any) => {
+      const methodItem = (route_84 as any).PATCH;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_84 as any).rateLimits?.PATCH ?? (route_84 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_84_PATCH", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/watchlists",
+    route_85.schemas!.GET,
+    async (ctx: any) => {
+      const methodItem = (route_85 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_85 as any).rateLimits?.GET ?? (route_85 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_85_GET", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
-    "/media/anime/:id/refresh",
-    route_85.schema,
+    "/user/:username/watchlists",
+    route_85.schemas!.POST,
     async (ctx: any) => {
       const methodItem = (route_85 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -1738,20 +1739,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .get(
-    "/media/anime/:id",
+  .post(
+    "/media/anime/:id/refresh",
     route_86.schema,
     async (ctx: any) => {
-      const methodItem = (route_86 as any).GET;
+      const methodItem = (route_86 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_86 as any).rateLimits?.GET ?? (route_86 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_86_GET", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_86 as any).rateLimits?.POST ?? (route_86 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_86_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
-    "/media/anime/:id/similar",
+    "/media/anime/:id",
     route_87.schema,
     async (ctx: any) => {
       const methodItem = (route_87 as any).GET;
@@ -1762,32 +1763,32 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/media/books/:id/refresh",
+  .get(
+    "/media/anime/:id/similar",
     route_88.schema,
     async (ctx: any) => {
-      const methodItem = (route_88 as any).POST;
+      const methodItem = (route_88 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_88 as any).rateLimits?.POST ?? (route_88 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_88_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_88 as any).rateLimits?.GET ?? (route_88 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_88_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/media/books/:id/refresh",
+    route_89.schema,
+    async (ctx: any) => {
+      const methodItem = (route_89 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_89 as any).rateLimits?.POST ?? (route_89 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_89_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
     "/media/books/:id",
-    route_89.schema,
-    async (ctx: any) => {
-      const methodItem = (route_89 as any).GET;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_89 as any).rateLimits?.GET ?? (route_89 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_89_GET", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .get(
-    "/media/books/:id/similar",
     route_90.schema,
     async (ctx: any) => {
       const methodItem = (route_90 as any).GET;
@@ -1799,7 +1800,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/media/characters/:id",
+    "/media/books/:id/similar",
     route_91.schema,
     async (ctx: any) => {
       const methodItem = (route_91 as any).GET;
@@ -1810,32 +1811,32 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/media/games/:id/refresh",
+  .get(
+    "/media/characters/:id",
     route_92.schema,
     async (ctx: any) => {
-      const methodItem = (route_92 as any).POST;
+      const methodItem = (route_92 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_92 as any).rateLimits?.POST ?? (route_92 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_92_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_92 as any).rateLimits?.GET ?? (route_92 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_92_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/media/games/:id/refresh",
+    route_93.schema,
+    async (ctx: any) => {
+      const methodItem = (route_93 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_93 as any).rateLimits?.POST ?? (route_93 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_93_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
     "/media/games/:id",
-    route_93.schema,
-    async (ctx: any) => {
-      const methodItem = (route_93 as any).GET;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_93 as any).rateLimits?.GET ?? (route_93 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_93_GET", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .get(
-    "/media/games/:id/similar",
     route_94.schema,
     async (ctx: any) => {
       const methodItem = (route_94 as any).GET;
@@ -1846,32 +1847,32 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/media/manga/:id/refresh",
+  .get(
+    "/media/games/:id/similar",
     route_95.schema,
     async (ctx: any) => {
-      const methodItem = (route_95 as any).POST;
+      const methodItem = (route_95 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_95 as any).rateLimits?.POST ?? (route_95 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_95_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_95 as any).rateLimits?.GET ?? (route_95 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_95_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/media/manga/:id/refresh",
+    route_96.schema,
+    async (ctx: any) => {
+      const methodItem = (route_96 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_96 as any).rateLimits?.POST ?? (route_96 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_96_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
     "/media/manga/:id",
-    route_96.schema,
-    async (ctx: any) => {
-      const methodItem = (route_96 as any).GET;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_96 as any).rateLimits?.GET ?? (route_96 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_96_GET", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .get(
-    "/media/manga/:id/similar",
     route_97.schema,
     async (ctx: any) => {
       const methodItem = (route_97 as any).GET;
@@ -1882,32 +1883,32 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/media/movies/:id/refresh",
+  .get(
+    "/media/manga/:id/similar",
     route_98.schema,
     async (ctx: any) => {
-      const methodItem = (route_98 as any).POST;
+      const methodItem = (route_98 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_98 as any).rateLimits?.POST ?? (route_98 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_98_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_98 as any).rateLimits?.GET ?? (route_98 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_98_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/media/movies/:id/refresh",
+    route_99.schema,
+    async (ctx: any) => {
+      const methodItem = (route_99 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_99 as any).rateLimits?.POST ?? (route_99 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_99_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
     "/media/movies/:id",
-    route_99.schema,
-    async (ctx: any) => {
-      const methodItem = (route_99 as any).GET;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_99 as any).rateLimits?.GET ?? (route_99 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_99_GET", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .get(
-    "/media/movies/:id/similar",
     route_100.schema,
     async (ctx: any) => {
       const methodItem = (route_100 as any).GET;
@@ -1918,32 +1919,32 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/media/music/:id/refresh",
+  .get(
+    "/media/movies/:id/similar",
     route_101.schema,
     async (ctx: any) => {
-      const methodItem = (route_101 as any).POST;
+      const methodItem = (route_101 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_101 as any).rateLimits?.POST ?? (route_101 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_101_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_101 as any).rateLimits?.GET ?? (route_101 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_101_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/media/music/:id/refresh",
+    route_102.schema,
+    async (ctx: any) => {
+      const methodItem = (route_102 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_102 as any).rateLimits?.POST ?? (route_102 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_102_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
     "/media/music/:id",
-    route_102.schema,
-    async (ctx: any) => {
-      const methodItem = (route_102 as any).GET;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_102 as any).rateLimits?.GET ?? (route_102 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_102_GET", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .get(
-    "/media/music/:id/similar",
     route_103.schema,
     async (ctx: any) => {
       const methodItem = (route_103 as any).GET;
@@ -1955,7 +1956,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/media/people/:id",
+    "/media/music/:id/similar",
     route_104.schema,
     async (ctx: any) => {
       const methodItem = (route_104 as any).GET;
@@ -1967,7 +1968,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/media/studios/:id",
+    "/media/people/:id",
     route_105.schema,
     async (ctx: any) => {
       const methodItem = (route_105 as any).GET;
@@ -1978,32 +1979,32 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .post(
-    "/media/tv/:id/refresh",
+  .get(
+    "/media/studios/:id",
     route_106.schema,
     async (ctx: any) => {
-      const methodItem = (route_106 as any).POST;
+      const methodItem = (route_106 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_106 as any).rateLimits?.POST ?? (route_106 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_106_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_106 as any).rateLimits?.GET ?? (route_106 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_106_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/media/tv/:id/refresh",
+    route_107.schema,
+    async (ctx: any) => {
+      const methodItem = (route_107 as any).POST;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_107 as any).rateLimits?.POST ?? (route_107 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_107_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
     "/media/tv/:id",
-    route_107.schema,
-    async (ctx: any) => {
-      const methodItem = (route_107 as any).GET;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_107 as any).rateLimits?.GET ?? (route_107 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_107_GET", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .get(
-    "/media/tv/:id/similar",
     route_108.schema,
     async (ctx: any) => {
       const methodItem = (route_108 as any).GET;
@@ -2015,7 +2016,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/anime",
+    "/media/tv/:id/similar",
     route_109.schema,
     async (ctx: any) => {
       const methodItem = (route_109 as any).GET;
@@ -2027,7 +2028,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/books",
+    "/search/anime",
     route_110.schema,
     async (ctx: any) => {
       const methodItem = (route_110 as any).GET;
@@ -2039,7 +2040,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/characters",
+    "/search/books",
     route_111.schema,
     async (ctx: any) => {
       const methodItem = (route_111 as any).GET;
@@ -2051,7 +2052,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/games",
+    "/search/characters",
     route_112.schema,
     async (ctx: any) => {
       const methodItem = (route_112 as any).GET;
@@ -2063,7 +2064,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/manga",
+    "/search/games",
     route_113.schema,
     async (ctx: any) => {
       const methodItem = (route_113 as any).GET;
@@ -2075,7 +2076,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/movies",
+    "/search/manga",
     route_114.schema,
     async (ctx: any) => {
       const methodItem = (route_114 as any).GET;
@@ -2087,7 +2088,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/music",
+    "/search/movies",
     route_115.schema,
     async (ctx: any) => {
       const methodItem = (route_115 as any).GET;
@@ -2099,7 +2100,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/people",
+    "/search/music",
     route_116.schema,
     async (ctx: any) => {
       const methodItem = (route_116 as any).GET;
@@ -2111,7 +2112,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/studios",
+    "/search/people",
     route_117.schema,
     async (ctx: any) => {
       const methodItem = (route_117 as any).GET;
@@ -2123,7 +2124,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/tv",
+    "/search/studios",
     route_118.schema,
     async (ctx: any) => {
       const methodItem = (route_118 as any).GET;
@@ -2134,68 +2135,56 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .delete(
-    "/recommendations/:id",
+  .get(
+    "/search/tv",
     route_119.schema,
     async (ctx: any) => {
-      const methodItem = (route_119 as any).DELETE;
+      const methodItem = (route_119 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_119 as any).rateLimits?.DELETE ?? (route_119 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_119_DELETE", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_119 as any).rateLimits?.GET ?? (route_119 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_119_GET", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .delete(
+    "/recommendations/:id",
+    route_120.schema,
+    async (ctx: any) => {
+      const methodItem = (route_120 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_120 as any).rateLimits?.DELETE ?? (route_120 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_120_DELETE", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
     "/recommendations/:id/vote",
-    route_120.schema,
+    route_121.schema,
     async (ctx: any) => {
-      const methodItem = (route_120 as any).POST;
+      const methodItem = (route_121 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_120 as any).rateLimits?.POST ?? (route_120 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_120_POST", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_121 as any).rateLimits?.POST ?? (route_121 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_121_POST", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .get(
     "/recommendations/:type/:id",
-    route_121.schema,
+    route_122.schema,
     async (ctx: any) => {
-      const methodItem = (route_121 as any).GET;
+      const methodItem = (route_122 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_121 as any).rateLimits?.GET ?? (route_121 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_121_GET", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_122 as any).rateLimits?.GET ?? (route_122 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_122_GET", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
     "/recommendations",
-    route_122.schema,
-    async (ctx: any) => {
-      const methodItem = (route_122 as any).POST;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_122 as any).rateLimits?.POST ?? (route_122 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_122_POST", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .get(
-    "/reviews/:type/:id",
-    route_123.schema,
-    async (ctx: any) => {
-      const methodItem = (route_123 as any).GET;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_123 as any).rateLimits?.GET ?? (route_123 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_123_GET", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .post(
-    "/reviews/:type/:id",
     route_123.schema,
     async (ctx: any) => {
       const methodItem = (route_123 as any).POST;
@@ -2206,32 +2195,20 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .delete(
+  .get(
     "/reviews/:type/:id",
-    route_123.schema,
+    route_124.schema,
     async (ctx: any) => {
-      const methodItem = (route_123 as any).DELETE;
+      const methodItem = (route_124 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_123 as any).rateLimits?.DELETE ?? (route_123 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_123_DELETE", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
-  )
-  .patch(
-    "/reviews/:type/:id",
-    route_123.schema,
-    async (ctx: any) => {
-      const methodItem = (route_123 as any).PATCH;
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_123 as any).rateLimits?.PATCH ?? (route_123 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_123_PATCH", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_124 as any).rateLimits?.GET ?? (route_124 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_124_GET", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
   .post(
-    "/reviews/:type/:id/vote",
+    "/reviews/:type/:id",
     route_124.schema,
     async (ctx: any) => {
       const methodItem = (route_124 as any).POST;
@@ -2242,14 +2219,50 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }
   )
-  .get(
-    "/user/:username/reviews",
+  .delete(
+    "/reviews/:type/:id",
+    route_124.schema,
+    async (ctx: any) => {
+      const methodItem = (route_124 as any).DELETE;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_124 as any).rateLimits?.DELETE ?? (route_124 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_124_DELETE", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .patch(
+    "/reviews/:type/:id",
+    route_124.schema,
+    async (ctx: any) => {
+      const methodItem = (route_124 as any).PATCH;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_124 as any).rateLimits?.PATCH ?? (route_124 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_124_PATCH", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .post(
+    "/reviews/:type/:id/vote",
     route_125.schema,
     async (ctx: any) => {
-      const methodItem = (route_125 as any).GET;
+      const methodItem = (route_125 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (route_125 as any).rateLimits?.GET ?? (route_125 as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("route_125_GET", rateLimitConfig) : null;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_125 as any).rateLimits?.POST ?? (route_125 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_125_POST", rateLimitConfig) : null;
+      ctx.cacheKeys = globalCacheKeyStorage;
+      return executeWithRequestLogs(ctx, handler, limiter) as any;
+    }
+  )
+  .get(
+    "/user/:username/reviews",
+    route_126.schema,
+    async (ctx: any) => {
+      const methodItem = (route_126 as any).GET;
+      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
+      const rateLimitConfig = methodItem?.rateLimit ?? (route_126 as any).rateLimits?.GET ?? (route_126 as any).rateLimit;
+      const limiter = rateLimitConfig ? getRouteLimiter("route_126_GET", rateLimitConfig) : null;
       ctx.cacheKeys = globalCacheKeyStorage;
       return executeWithRequestLogs(ctx, handler, limiter) as any;
     }

@@ -35,8 +35,9 @@ export default defineRoute({
         status: true,
         book: {
           select: {
+            format: true,
             status: true,
-            publicationYear: true,
+            releaseDateYear: true,
             genres: { select: { name: true } },
           },
         },
