@@ -12,6 +12,7 @@ import {
 import { UserListBanner } from "./user-list-banner"
 import { ListStatusCard } from "./list-status-card"
 import { MediaListGrid } from "./media-list-grid"
+import { ListCommentsTab } from "./list-comments-tab"
 import type {
   MediaListType,
   StatusKey,
@@ -162,6 +163,45 @@ export function UserListView({
   const [sortBy, setSortBy] = useState<SortByOption>("updatedAt")
   const [sortOrder, setSortOrder] = useState<SortOrderOption>("desc")
   const [activeTab, setActiveTab] = useState<ListViewTab>("list")
+
+  // Sync initial tab from URL search parameters (?tab=list | comments | stats)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search)
+      const tabParam = params.get("tab")
+      if (tabParam === "list" || tabParam === "comments" || tabParam === "stats") {
+        setActiveTab(tabParam)
+      }
+    }
+  }, [])
+
+  // Listen to browser popstate (back/forward) navigation
+  useEffect(() => {
+    const onPopState = () => {
+      const params = new URLSearchParams(window.location.search)
+      const tabParam = params.get("tab")
+      if (tabParam === "list" || tabParam === "comments" || tabParam === "stats") {
+        setActiveTab(tabParam)
+      } else {
+        setActiveTab("list")
+      }
+    }
+    window.addEventListener("popstate", onPopState)
+    return () => window.removeEventListener("popstate", onPopState)
+  }, [])
+
+  // Update activeTab and sync to URL search params (?tab=list | comments | stats)
+  const handleTabChange = useCallback((newTab: ListViewTab) => {
+    setActiveTab(newTab)
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href)
+      url.searchParams.set("tab", newTab)
+      if (newTab !== "comments") {
+        url.searchParams.delete("page")
+      }
+      window.history.replaceState({}, "", url.toString())
+    }
+  }, [])
 
   // Debounce search input
   useEffect(() => {
@@ -539,7 +579,7 @@ export function UserListView({
           activeStatus={activeStatus}
           onStatusChange={setActiveStatus}
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           facets={facets}
@@ -575,13 +615,13 @@ export function UserListView({
           />
         )}
 
-        {/* Empty State for Comments */}
+        {/* Comments Tab */}
         {activeTab === "comments" && (
-          <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/60 p-8 text-center backdrop-blur-md shadow-xs">
-            <p className="text-sm font-medium text-muted-foreground">
-              Comments will appear here.
-            </p>
-          </div>
+          <ListCommentsTab
+            username={username}
+            mediaType={mediaType}
+            isOwner={isOwner}
+          />
         )}
 
         {/* Empty State for Stats */}
