@@ -17,6 +17,17 @@ import type {
   NormalizedMediaData,
 } from "./media-types"
 import { MediaTabNav } from "./media-tab-nav"
+import { FavoriteButton, type FavoriteType } from "./favorite-button"
+
+const categoryToFavoriteType: Record<string, FavoriteType> = {
+  anime: "ANIME",
+  manga: "MANGA",
+  movies: "MOVIE",
+  tv: "TV",
+  games: "GAME",
+  books: "BOOK",
+  music: "MUSIC",
+}
 
 interface MediaHeroProps {
   media: NormalizedMediaData
@@ -152,7 +163,7 @@ export function MediaHero({
                   )}
                 </div>
 
-                {/* Add to List & Quick Add Buttons */}
+                {/* Add to List, Quick Add, & Favorite Buttons */}
                 <div className="flex shrink-0 items-center gap-2 self-start sm:self-center">
                   <Button
                     variant="default"
@@ -170,6 +181,15 @@ export function MediaHero({
                     <IconPlus className="size-3.5" aria-hidden="true" />
                     <span>Quick Add</span>
                   </Button>
+                  <FavoriteButton
+                    targetId={media.id}
+                    type={categoryToFavoriteType[media.category] || "ANIME"}
+                    title={mainTitle}
+                    size="sm"
+                    variant="secondary"
+                    className="h-8 gap-1.5 rounded-xl px-3"
+                    showLabel
+                  />
                 </div>
               </div>
 

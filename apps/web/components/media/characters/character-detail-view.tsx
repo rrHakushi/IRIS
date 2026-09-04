@@ -19,6 +19,7 @@ import { Button } from "@workspace/ui/components/button"
 import { cn } from "@workspace/ui/lib/utils"
 import type { CharacterDetails } from "@IRIS/elysia"
 import { FormattedDescription } from "@/components/media/formatted-description"
+import { FavoriteButton } from "../favorite-button"
 
 interface CharacterDetailViewProps {
   character: CharacterDetails
@@ -331,11 +332,11 @@ export function CharacterDetailView({ character }: CharacterDetailViewProps) {
             )}
           </div>
 
-          {/* Names and Badges */}
+          {/* Names, Badges, and Actions */}
           <div className="flex min-w-0 flex-1 flex-col gap-2">
-            {typeof character.favorites === "number" &&
-              character.favorites > 0 && (
-                <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              {typeof character.favorites === "number" &&
+                character.favorites > 0 && (
                   <Badge
                     variant="secondary"
                     className="gap-1 text-[11px] font-semibold text-rose-500"
@@ -346,8 +347,16 @@ export function CharacterDetailView({ character }: CharacterDetailViewProps) {
                     />
                     <span>{character.favorites.toLocaleString()}</span>
                   </Badge>
-                </div>
-              )}
+                )}
+              <FavoriteButton
+                targetId={character.id}
+                type="CHARACTER"
+                title={character.namePrimary}
+                size="sm"
+                variant="secondary"
+                showLabel
+              />
+            </div>
 
             {/* Primary Name */}
             <h1 className="text-2xl font-bold tracking-tight text-balance text-foreground sm:text-3xl lg:text-4xl">
