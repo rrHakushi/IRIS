@@ -39,6 +39,108 @@ export interface IrisBottomDockProps {
   emptySlotLabel?: string
 }
 
+/**
+ * Hook to hide the bottom dock when the page is scrolled past the top ~10%,
+ * and restore visibility when back near the top of the page.
+ */
+function useDockScrollVisibility(
+  pathname?: string,
+  isPreview = false
+): boolean {
+  const [isVisible, setIsVisible] = useState(true)
+  const isVisibleRef = useRef(true)
+
+  useEffect(() => {
+    if (isPreview) return
+
+    // Immediately restore visibility on route changes
+    setIsVisible(true)
+    isVisibleRef.current = true
+
+    let rafId: number | null = null
+
+    const checkScroll = (e?: Event) => {
+      let scrollTop = 0
+      let maxScroll = 0
+
+      const target = e?.target
+
+      if (
+        target instanceof HTMLElement &&
+        target !== document.documentElement &&
+        target !== document.body
+      ) {
+        const isMain =
+          target.tagName === "MAIN" ||
+          target.getAttribute("data-slot") === "sidebar-inset"
+        if (isMain || target.scrollHeight > window.innerHeight) {
+          scrollTop = target.scrollTop
+          maxScroll = target.scrollHeight - target.clientHeight
+        } else {
+          return
+        }
+      } else {
+        const mainEl =
+          (document.querySelector(
+            'main[data-slot="sidebar-inset"]'
+          ) as HTMLElement | null) ||
+          (document.querySelector("main") as HTMLElement | null)
+
+        if (mainEl && mainEl.scrollHeight > mainEl.clientHeight + 5) {
+          scrollTop = mainEl.scrollTop
+          maxScroll = mainEl.scrollHeight - mainEl.clientHeight
+        } else {
+          const doc = document.documentElement
+          scrollTop =
+            window.scrollY || doc.scrollTop || document.body.scrollTop || 0
+          maxScroll =
+            Math.max(doc.scrollHeight, document.body.scrollHeight) -
+            (window.innerHeight || doc.clientHeight)
+        }
+      }
+
+      // Show when at top ~10% of page or within initial 60px buffer
+      let nextVisible = true
+      if (maxScroll > 0) {
+        const scrollPercentage = (scrollTop / maxScroll) * 100
+        nextVisible = scrollPercentage <= 10 || scrollTop <= 60
+      }
+
+      if (isVisibleRef.current !== nextVisible) {
+        isVisibleRef.current = nextVisible
+        setIsVisible(nextVisible)
+      }
+    }
+
+    const handleScroll = (e?: Event) => {
+      if (rafId !== null) return
+      rafId = requestAnimationFrame(() => {
+        rafId = null
+        checkScroll(e)
+      })
+    }
+
+    const initTimer = setTimeout(() => {
+      checkScroll()
+    }, 50)
+
+    window.addEventListener("scroll", handleScroll, {
+      capture: true,
+      passive: true,
+    })
+
+    return () => {
+      clearTimeout(initTimer)
+      window.removeEventListener("scroll", handleScroll, { capture: true })
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId)
+      }
+    }
+  }, [pathname, isPreview])
+
+  return isVisible
+}
+
 export function IrisBottomDock({
   pathname,
   navConfig,
@@ -56,6 +158,7 @@ export function IrisBottomDock({
 }: IrisBottomDockProps): React.JSX.Element | null {
   const t = useTranslations("navigation.dock")
   const [launcherOpen, setLauncherOpen] = useState(false)
+  const isScrollVisible = useDockScrollVisibility(pathname, isPreview)
   const resolvedEmptyLabel = emptySlotLabel || t("empty")
   // If custom items are provided, render custom scrolling dock
   if (customItems) {
@@ -261,11 +364,16 @@ export function IrisBottomDock({
     )
   }
 
+  const shouldShow = isPreview || launcherOpen || isScrollVisible
+
   return (
     <div
       onContextMenu={(e) => e.preventDefault()}
       className={cn(
-        "fixed bottom-4 left-1/2 z-50 flex w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 items-center justify-between gap-1 rounded-full border border-border bg-background/90 px-3 py-1.5 shadow-xl backdrop-blur-md select-none sm:gap-2 md:hidden",
+        "fixed bottom-4 left-1/2 z-50 flex w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 items-center justify-between gap-1 rounded-full border border-border bg-background/90 px-3 py-1.5 shadow-xl backdrop-blur-md transition-all duration-300 ease-in-out select-none sm:gap-2 md:hidden",
+        shouldShow
+          ? "pointer-events-auto translate-y-0 opacity-100"
+          : "pointer-events-none translate-y-28 opacity-0",
         className
       )}
     >
@@ -593,6 +701,7 @@ function IrisCustomBottomDock({
   pathname: string
   className?: string
 }): React.JSX.Element {
+  const isScrollVisible = useDockScrollVisibility(pathname)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
@@ -607,7 +716,10 @@ function IrisCustomBottomDock({
     <div
       onContextMenu={(e) => e.preventDefault()}
       className={cn(
-        "pointer-events-auto fixed bottom-4 left-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 overflow-hidden rounded-full border border-border bg-background/90 shadow-xl backdrop-blur-md select-none",
+        "fixed bottom-4 left-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 overflow-hidden rounded-full border border-border bg-background/90 shadow-xl backdrop-blur-md transition-all duration-300 ease-in-out select-none md:hidden",
+        isScrollVisible
+          ? "pointer-events-auto translate-y-0 opacity-100"
+          : "pointer-events-none translate-y-28 opacity-0",
         className
       )}
     >
