@@ -4,7 +4,7 @@ import type { NotificationActionHandler } from "./types"
  * Action Handler: "auth.quickconnect.approve"
  * Approves a Quick Connect device pairing session via short pairing code.
  */
-export const quickConnectApproveAction: NotificationActionHandler = async ({
+const quickConnectApproveAction: NotificationActionHandler = async ({
   payload,
   resolvedStatus,
   sessionUser,
@@ -91,3 +91,5 @@ export const quickConnectApproveAction: NotificationActionHandler = async ({
     },
   }
 }
+
+export default quickConnectApproveAction

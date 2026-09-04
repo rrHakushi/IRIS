@@ -89,6 +89,7 @@ export interface SendNotificationParams {
   priority?: NotificationPriority
   content: NotificationContent
   actionHandler?: string
+  actionPayload?: Record<string, unknown> | null
   expiresAt?: Date | null
 }
 
@@ -188,6 +189,7 @@ export async function sendNotification(params: SendNotificationParams) {
       type: params.type || "INFO",
       priority: params.priority || "NORMAL",
       actionStatus: params.type && params.type !== "INFO" ? "PENDING" : null,
+      actionPayload: (params.actionPayload as any) ?? null,
       actionHandler: params.actionHandler ?? null,
       kemCiphertext,
       encryptedData,

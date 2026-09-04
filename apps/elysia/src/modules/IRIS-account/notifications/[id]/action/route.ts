@@ -1,6 +1,64 @@
+import fs from "node:fs"
+import path from "node:path"
+import { pathToFileURL } from "node:url"
 import { defineRoute, t } from "../../../../../router"
 import { wsHub } from "../../../../../services/websocket-hub"
-import { executeNotificationAction } from "./actions"
+import type {
+  NotificationActionContext,
+  NotificationActionResult,
+  NotificationActionHandler,
+} from "./actions/types"
+
+/**
+ * Dynamically resolves and executes an action handler by mapping handler name dots to hyphens:
+ * e.g. "lists.comment.reply" -> "./actions/lists-comment-reply.ts"
+ * e.g. "auth.quickconnect.approve" -> "./actions/auth-quickconnect-approve.ts"
+ */
+async function executeNotificationAction(
+  handlerName: string,
+  ctx: NotificationActionContext
+): Promise<NotificationActionResult> {
+  const baseName = handlerName.replace(/\./g, "-")
+  const actionDir = path.join(__dirname, "actions")
+  const candidates = [
+    path.join(actionDir, `${baseName}.ts`),
+    path.join(actionDir, `${baseName}.js`),
+  ]
+
+  let handler: NotificationActionHandler | null = null
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      try {
+        const mod = await import(pathToFileURL(candidate).href)
+        handler = mod.default || null
+        if (handler) break
+      } catch (importErr) {
+        console.error(
+          `[NotificationAction] Failed to import action handler at '${candidate}':`,
+          importErr
+        )
+      }
+    }
+  }
+
+  if (!handler) {
+    console.warn(
+      `[NotificationAction] No handler file found for action '${handlerName}' (checked: ${candidates.join(", ")})`
+    )
+    return { success: true }
+  }
+
+  try {
+    const result = await handler(ctx)
+    return result || { success: true }
+  } catch (err) {
+    const errorMsg =
+      err instanceof Error ? err.message : "Notification action execution failed"
+    console.error(`[NotificationAction] Error executing '${handlerName}':`, err)
+    return { success: false, error: errorMsg }
+  }
+}
 
 export default defineRoute({
   POST: {

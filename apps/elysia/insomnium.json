@@ -6298,6 +6298,248 @@
       "_type": "request_group"
     },
     {
+      "_id": "req_IRIS-social__lists__username__mediaType_comments_get",
+      "parentId": "fld_IRIS_social",
+      "url": "{{ _.base_url }}/lists/:username/:mediaType/comments",
+      "name": "GET /lists/:username/:mediaType/comments",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "page",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "limit",
+          "value": "6",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-social__lists__username__mediaType_comments_post",
+      "parentId": "fld_IRIS_social",
+      "url": "{{ _.base_url }}/lists/:username/:mediaType/comments",
+      "name": "POST /lists/:username/:mediaType/comments",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"content\": \"string\",\n  \"isSpoiler\": false\n}"
+      },
+      "parameters": [
+        {
+          "name": "page",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "limit",
+          "value": "6",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-social__lists__username__mediaType_comments__id_reply_post",
+      "parentId": "fld_IRIS_social",
+      "url": "{{ _.base_url }}/lists/:username/:mediaType/comments/:id/reply",
+      "name": "POST /lists/:username/:mediaType/comments/:id/reply",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"content\": \"string\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-social__lists__username__mediaType_comments__id_reply_put",
+      "parentId": "fld_IRIS_social",
+      "url": "{{ _.base_url }}/lists/:username/:mediaType/comments/:id/reply",
+      "name": "PUT /lists/:username/:mediaType/comments/:id/reply",
+      "description": "",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"content\": \"string\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-social__lists__username__mediaType_comments__id_reply_delete",
+      "parentId": "fld_IRIS_social",
+      "url": "{{ _.base_url }}/lists/:username/:mediaType/comments/:id/reply",
+      "name": "DELETE /lists/:username/:mediaType/comments/:id/reply",
+      "description": "",
+      "method": "DELETE",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-social__lists__username__mediaType_comments__id_delete",
+      "parentId": "fld_IRIS_social",
+      "url": "{{ _.base_url }}/lists/:username/:mediaType/comments/:id",
+      "name": "DELETE /lists/:username/:mediaType/comments/:id",
+      "description": "",
+      "method": "DELETE",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
       "_id": "req_IRIS-social__recommendations_post",
       "parentId": "fld_IRIS_social",
       "url": "{{ _.base_url }}/recommendations",
