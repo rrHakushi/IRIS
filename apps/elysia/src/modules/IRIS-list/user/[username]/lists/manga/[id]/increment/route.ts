@@ -65,7 +65,7 @@ export default defineRoute({
     })
 
     const currentProgress = existing ? existing.chaptersProgress : 0
-    const newProgress = currentProgress + count
+    let newProgress = currentProgress + count
     let newStatus: MangaListStatus = (existing?.status as MangaListStatus) ?? "READING"
     let completedAt = existing?.completedAt ?? null
 
@@ -74,14 +74,20 @@ export default defineRoute({
       newStatus = "READING"
     }
 
-    // Completion guard: only mark COMPLETED if chapterCount exists and is known
-    if (
-      manga.chapterCount &&
-      manga.chapterCount > 0 &&
-      newProgress >= manga.chapterCount
-    ) {
-      newStatus = "COMPLETED"
-      completedAt = new Date()
+    const hasScore =
+      existing?.score !== null &&
+      existing?.score !== undefined &&
+      existing?.score > 0
+
+    // Completion guard: if chapterCount is known, cap at max and require score for COMPLETED
+    if (manga.chapterCount && manga.chapterCount > 0) {
+      if (newProgress >= manga.chapterCount) {
+        newProgress = manga.chapterCount
+        if (hasScore) {
+          newStatus = "COMPLETED"
+          completedAt = new Date()
+        }
+      }
     }
 
     const result = await prisma.mangaList.upsert({

@@ -65,7 +65,7 @@ export default defineRoute({
     })
 
     const currentProgress = existing ? existing.progress : 0
-    const newProgress = currentProgress + count
+    let newProgress = currentProgress + count
     let newStatus: AnimeListStatus = (existing?.status as AnimeListStatus) ?? "WATCHING"
     let completedAt = existing?.completedAt ?? null
 
@@ -74,14 +74,20 @@ export default defineRoute({
       newStatus = "WATCHING"
     }
 
-    // Completion guard: only mark COMPLETED if episodeCount exists and is known
-    if (
-      anime.episodeCount &&
-      anime.episodeCount > 0 &&
-      newProgress >= anime.episodeCount
-    ) {
-      newStatus = "COMPLETED"
-      completedAt = new Date()
+    const hasScore =
+      existing?.score !== null &&
+      existing?.score !== undefined &&
+      existing?.score > 0
+
+    // Completion guard: if episodeCount is known, cap at max and require score for COMPLETED
+    if (anime.episodeCount && anime.episodeCount > 0) {
+      if (newProgress >= anime.episodeCount) {
+        newProgress = anime.episodeCount
+        if (hasScore) {
+          newStatus = "COMPLETED"
+          completedAt = new Date()
+        }
+      }
     }
 
     const result = await prisma.animeList.upsert({

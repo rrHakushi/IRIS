@@ -47,7 +47,7 @@ export default defineRoute({
 
     const book = await prisma.book.findUnique({
       where: { id },
-      select: { id: true, pageCount: true },
+      select: { id: true, pageCount: true, chapterCount: true },
     })
     if (!book) {
       throw new NotFound(`Book with ID ${id} does not exist`)
@@ -65,12 +65,27 @@ export default defineRoute({
     })
 
     const currentProgress = existing ? existing.progressChapters : 0
-    const newProgress = currentProgress + count
+    let newProgress = currentProgress + count
     let newStatus: BookListStatus = (existing?.status as BookListStatus) ?? "READING"
     let completedAt = existing?.completedAt ?? null
 
     if (newStatus === "PLANNING") {
       newStatus = "READING"
+    }
+
+    const hasScore =
+      existing?.score !== null &&
+      existing?.score !== undefined &&
+      existing?.score > 0
+
+    if (book.chapterCount && book.chapterCount > 0) {
+      if (newProgress >= book.chapterCount) {
+        newProgress = book.chapterCount
+        if (hasScore) {
+          newStatus = "COMPLETED"
+          completedAt = new Date()
+        }
+      }
     }
 
     const result = await prisma.bookList.upsert({

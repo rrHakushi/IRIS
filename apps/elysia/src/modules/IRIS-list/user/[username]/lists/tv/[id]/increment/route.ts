@@ -106,14 +106,37 @@ export default defineRoute({
     )
 
     if (!nextEpisode) {
+      let currentStatus: TvListStatus = tvList.status
+      let isCompleted = currentStatus === "COMPLETED"
+      const hasScore =
+        tvList.score !== null && tvList.score !== undefined && tvList.score > 0
+      const maxProg =
+        tv.episodeCount && tv.episodeCount > 0
+          ? Math.min(tvList.progress, tv.episodeCount)
+          : tvList.progress
+
+      if (!isCompleted && hasScore) {
+        currentStatus = "COMPLETED"
+        isCompleted = true
+        await prisma.tvList.update({
+          where: { id: tvList.id },
+          data: { status: "COMPLETED", progress: maxProg, completedAt: new Date() },
+        })
+      } else if (maxProg !== tvList.progress) {
+        await prisma.tvList.update({
+          where: { id: tvList.id },
+          data: { progress: maxProg },
+        })
+      }
+
       return {
         success: true,
         message: "All available episodes have already been watched",
         episode: null,
         seasonCompleted: false,
-        showCompleted: tvList.status === "COMPLETED",
-        progress: tvList.progress,
-        status: tvList.status,
+        showCompleted: isCompleted,
+        progress: maxProg,
+        status: currentStatus,
       }
     }
 
@@ -173,21 +196,41 @@ export default defineRoute({
     }
 
     // Check show completion (guarded against missing episodeCount)
-    let showCompleted = false
-    if (
-      tv.episodeCount &&
-      tv.episodeCount > 0 &&
-      newProgress >= tv.episodeCount
-    ) {
-      showCompleted = true
+    let finalProgress = newProgress
+    let isAllEpisodesWatched = false
+    if (tv.episodeCount && tv.episodeCount > 0) {
+      if (finalProgress >= tv.episodeCount) {
+        finalProgress = tv.episodeCount
+        isAllEpisodesWatched = true
+      }
+    } else {
+      const remainingUnwatched = eligibleEpisodes.filter(
+        (e) =>
+          !watchedSet.has(`${e.seasonNumber}:${e.episodeNumber}`) &&
+          !(
+            e.seasonNumber === nextEpisode.seasonNumber &&
+            e.episodeNumber === nextEpisode.episodeNumber
+          )
+      )
+      if (remainingUnwatched.length === 0) {
+        isAllEpisodesWatched = true
+      }
     }
 
+    const hasScore =
+      tvList.score !== null && tvList.score !== undefined && tvList.score > 0
+    let showCompleted = false
     let newStatus: TvListStatus = tvList.status
     let completedAt = tvList.completedAt
 
-    if (showCompleted) {
-      newStatus = "COMPLETED"
-      completedAt = new Date()
+    if (isAllEpisodesWatched) {
+      if (hasScore) {
+        showCompleted = true
+        newStatus = "COMPLETED"
+        completedAt = new Date()
+      } else {
+        newStatus = "WATCHING"
+      }
     } else if (tvList.status === "PLANNING") {
       newStatus = "WATCHING"
     }
@@ -196,7 +239,7 @@ export default defineRoute({
       where: { id: tvList.id },
       data: {
         status: newStatus,
-        progress: newProgress,
+        progress: finalProgress,
         completedAt,
         ...(tvList.status === "PLANNING" ? { startedAt: new Date() } : {}),
       },

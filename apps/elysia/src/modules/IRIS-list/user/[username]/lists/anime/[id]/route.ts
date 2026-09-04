@@ -188,7 +188,7 @@ export default defineRoute({
 
     const animeExists = await prisma.anime.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, episodeCount: true },
     })
     if (!animeExists) {
       throw new NotFound(`Anime with ID ${id} does not exist`)
@@ -208,9 +208,29 @@ export default defineRoute({
           : null
         : undefined
 
+    const existing = await prisma.animeList.findUnique({
+      where: {
+        userId_animeId: {
+          userId: dbUser.id,
+          animeId: id,
+        },
+      },
+      select: { id: true, progress: true, score: true, status: true },
+    })
+
+    let targetProgress = payload.progress !== undefined ? payload.progress : existing?.progress
+    if (
+      animeExists.episodeCount &&
+      animeExists.episodeCount > 0 &&
+      targetProgress !== undefined &&
+      targetProgress > animeExists.episodeCount
+    ) {
+      targetProgress = animeExists.episodeCount
+    }
+
     const upsertData: any = {
       ...(payload.status ? { status: payload.status as AnimeListStatus } : {}),
-      ...(payload.progress !== undefined ? { progress: payload.progress } : {}),
+      ...(targetProgress !== undefined ? { progress: targetProgress } : {}),
       ...(payload.score !== undefined ? { score: payload.score } : {}),
       ...(payload.notes !== undefined ? { notes: payload.notes } : {}),
       ...(payload.rewatched !== undefined ? { rewatched: payload.rewatched } : {}),
@@ -225,6 +245,13 @@ export default defineRoute({
         : {}),
     }
 
+    const createProgress =
+      payload.progress !== undefined
+        ? animeExists.episodeCount && animeExists.episodeCount > 0
+          ? Math.min(payload.progress, animeExists.episodeCount)
+          : payload.progress
+        : 0
+
     const result = await prisma.animeList.upsert({
       where: {
         userId_animeId: {
@@ -236,7 +263,7 @@ export default defineRoute({
         userId: dbUser.id,
         animeId: id,
         status: payload.status ?? "PLANNING",
-        progress: payload.progress ?? 0,
+        progress: createProgress,
         score: payload.score ?? null,
         notes: payload.notes ?? null,
         rewatched: payload.rewatched ?? 0,
@@ -284,7 +311,7 @@ export default defineRoute({
 
     const animeExists = await prisma.anime.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, episodeCount: true },
     })
     if (!animeExists) {
       throw new NotFound(`Anime with ID ${id} does not exist`)
@@ -304,9 +331,29 @@ export default defineRoute({
           : null
         : undefined
 
+    const existing = await prisma.animeList.findUnique({
+      where: {
+        userId_animeId: {
+          userId: dbUser.id,
+          animeId: id,
+        },
+      },
+      select: { id: true, progress: true, score: true, status: true },
+    })
+
+    let targetProgress = payload.progress !== undefined ? payload.progress : existing?.progress
+    if (
+      animeExists.episodeCount &&
+      animeExists.episodeCount > 0 &&
+      targetProgress !== undefined &&
+      targetProgress > animeExists.episodeCount
+    ) {
+      targetProgress = animeExists.episodeCount
+    }
+
     const upsertData: any = {
       ...(payload.status ? { status: payload.status as AnimeListStatus } : {}),
-      ...(payload.progress !== undefined ? { progress: payload.progress } : {}),
+      ...(targetProgress !== undefined ? { progress: targetProgress } : {}),
       ...(payload.score !== undefined ? { score: payload.score } : {}),
       ...(payload.notes !== undefined ? { notes: payload.notes } : {}),
       ...(payload.rewatched !== undefined ? { rewatched: payload.rewatched } : {}),
@@ -321,6 +368,13 @@ export default defineRoute({
         : {}),
     }
 
+    const createProgress =
+      payload.progress !== undefined
+        ? animeExists.episodeCount && animeExists.episodeCount > 0
+          ? Math.min(payload.progress, animeExists.episodeCount)
+          : payload.progress
+        : 0
+
     const result = await prisma.animeList.upsert({
       where: {
         userId_animeId: {
@@ -332,7 +386,7 @@ export default defineRoute({
         userId: dbUser.id,
         animeId: id,
         status: payload.status ?? "PLANNING",
-        progress: payload.progress ?? 0,
+        progress: createProgress,
         score: payload.score ?? null,
         notes: payload.notes ?? null,
         rewatched: payload.rewatched ?? 0,

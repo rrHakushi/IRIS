@@ -191,7 +191,7 @@ export default defineRoute({
 
     const mangaExists = await prisma.manga.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, chapterCount: true },
     })
     if (!mangaExists) {
       throw new NotFound(`Manga with ID ${id} does not exist`)
@@ -211,10 +211,31 @@ export default defineRoute({
           : null
         : undefined
 
+    const existing = await prisma.mangaList.findUnique({
+      where: {
+        userId_mangaId: {
+          userId: dbUser.id,
+          mangaId: id,
+        },
+      },
+      select: { id: true, chaptersProgress: true, score: true, status: true },
+    })
+
+    let targetChaptersProgress =
+      payload.chaptersProgress !== undefined ? payload.chaptersProgress : existing?.chaptersProgress
+    if (
+      mangaExists.chapterCount &&
+      mangaExists.chapterCount > 0 &&
+      targetChaptersProgress !== undefined &&
+      targetChaptersProgress > mangaExists.chapterCount
+    ) {
+      targetChaptersProgress = mangaExists.chapterCount
+    }
+
     const upsertData: any = {
       ...(payload.status ? { status: payload.status as MangaListStatus } : {}),
-      ...(payload.chaptersProgress !== undefined
-        ? { chaptersProgress: payload.chaptersProgress }
+      ...(targetChaptersProgress !== undefined
+        ? { chaptersProgress: targetChaptersProgress }
         : {}),
       ...(payload.volumesProgress !== undefined
         ? { volumesProgress: payload.volumesProgress }
@@ -233,6 +254,13 @@ export default defineRoute({
         : {}),
     }
 
+    const createChaptersProgress =
+      payload.chaptersProgress !== undefined
+        ? mangaExists.chapterCount && mangaExists.chapterCount > 0
+          ? Math.min(payload.chaptersProgress, mangaExists.chapterCount)
+          : payload.chaptersProgress
+        : 0
+
     const result = await prisma.mangaList.upsert({
       where: {
         userId_mangaId: {
@@ -244,7 +272,7 @@ export default defineRoute({
         userId: dbUser.id,
         mangaId: id,
         status: payload.status ?? "PLANNING",
-        chaptersProgress: payload.chaptersProgress ?? 0,
+        chaptersProgress: createChaptersProgress,
         volumesProgress: payload.volumesProgress ?? 0,
         score: payload.score ?? null,
         notes: payload.notes ?? null,
@@ -294,7 +322,7 @@ export default defineRoute({
 
     const mangaExists = await prisma.manga.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, chapterCount: true },
     })
     if (!mangaExists) {
       throw new NotFound(`Manga with ID ${id} does not exist`)
@@ -314,10 +342,31 @@ export default defineRoute({
           : null
         : undefined
 
+    const existing = await prisma.mangaList.findUnique({
+      where: {
+        userId_mangaId: {
+          userId: dbUser.id,
+          mangaId: id,
+        },
+      },
+      select: { id: true, chaptersProgress: true, score: true, status: true },
+    })
+
+    let targetChaptersProgress =
+      payload.chaptersProgress !== undefined ? payload.chaptersProgress : existing?.chaptersProgress
+    if (
+      mangaExists.chapterCount &&
+      mangaExists.chapterCount > 0 &&
+      targetChaptersProgress !== undefined &&
+      targetChaptersProgress > mangaExists.chapterCount
+    ) {
+      targetChaptersProgress = mangaExists.chapterCount
+    }
+
     const upsertData: any = {
       ...(payload.status ? { status: payload.status as MangaListStatus } : {}),
-      ...(payload.chaptersProgress !== undefined
-        ? { chaptersProgress: payload.chaptersProgress }
+      ...(targetChaptersProgress !== undefined
+        ? { chaptersProgress: targetChaptersProgress }
         : {}),
       ...(payload.volumesProgress !== undefined
         ? { volumesProgress: payload.volumesProgress }
@@ -336,6 +385,13 @@ export default defineRoute({
         : {}),
     }
 
+    const createChaptersProgress =
+      payload.chaptersProgress !== undefined
+        ? mangaExists.chapterCount && mangaExists.chapterCount > 0
+          ? Math.min(payload.chaptersProgress, mangaExists.chapterCount)
+          : payload.chaptersProgress
+        : 0
+
     const result = await prisma.mangaList.upsert({
       where: {
         userId_mangaId: {
@@ -347,7 +403,7 @@ export default defineRoute({
         userId: dbUser.id,
         mangaId: id,
         status: payload.status ?? "PLANNING",
-        chaptersProgress: payload.chaptersProgress ?? 0,
+        chaptersProgress: createChaptersProgress,
         volumesProgress: payload.volumesProgress ?? 0,
         score: payload.score ?? null,
         notes: payload.notes ?? null,

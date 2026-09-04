@@ -31,6 +31,7 @@ const MovieMutationBodySchema = t.Object({
   status: t.Optional(
     t.Union([
       t.Literal("PLANNING"),
+      t.Literal("WATCHING"),
       t.Literal("COMPLETED"),
       t.Literal("DROPPED"),
     ])
