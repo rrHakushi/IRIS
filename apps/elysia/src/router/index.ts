@@ -389,6 +389,11 @@ export async function createRouterModule(options: RouterOptions = {}) {
           ...(globalSchema || {}),
           ...(perMethodSchemas[method as keyof typeof perMethodSchemas] || {}),
         }
+
+        // Bodyless HTTP methods must never have body schema attached
+        if (["GET", "HEAD", "OPTIONS"].includes(method) && methodSchema.body) {
+          delete methodSchema.body
+        }
         let customMethodRateLimit =
           perMethodRateLimits[method as keyof typeof perMethodRateLimits]
 

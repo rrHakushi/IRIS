@@ -44,7 +44,7 @@ import route_36 from "../modules/IRIS-connections/connections/[id]/test/route";
 import route_37 from "../modules/IRIS-connections/connections/providers/route";
 import route_38 from "../modules/IRIS-connections/connections/route";
 import route_39 from "../modules/IRIS-connections/connections/search/route";
-import route_40 from "../modules/IRIS-list/user/[username]/favorites/[id]/route";
+import route_40 from "../modules/IRIS-list/user/[username]/favorites/[targetId]/route";
 import route_41 from "../modules/IRIS-list/user/[username]/favorites/route";
 import route_42 from "../modules/IRIS-list/user/[username]/lists/anime/[id]/route";
 import route_43 from "../modules/IRIS-list/user/[username]/lists/anime/route";
@@ -801,8 +801,8 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/user/:username/favorites/:id",
-    route_40.schema,
+    "/user/:username/favorites/:targetId",
+    route_40.schemas!.GET,
     async (ctx: any) => {
       const methodItem = (route_40 as any).GET;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -813,8 +813,8 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .post(
-    "/user/:username/favorites/:id",
-    route_40.schema,
+    "/user/:username/favorites/:targetId",
+    route_40.schemas!.POST,
     async (ctx: any) => {
       const methodItem = (route_40 as any).POST;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
@@ -825,8 +825,8 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .delete(
-    "/user/:username/favorites/:id",
-    route_40.schema,
+    "/user/:username/favorites/:targetId",
+    route_40.schemas!.DELETE,
     async (ctx: any) => {
       const methodItem = (route_40 as any).DELETE;
       const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;

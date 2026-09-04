@@ -1993,17 +1993,7 @@
       "parameters": [
         {
           "name": "type",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "page",
-          "value": "1",
-          "disabled": false
-        },
-        {
-          "name": "limit",
-          "value": "50",
+          "value": "[object Object]",
           "disabled": false
         }
       ],
@@ -2030,17 +2020,17 @@
       "_type": "request"
     },
     {
-      "_id": "req_IRIS-list__user__username_favorites__id_get",
+      "_id": "req_IRIS-list__user__username_favorites__targetId_get",
       "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/favorites/:id",
-      "name": "GET /user/:username/favorites/:id",
+      "url": "{{ _.base_url }}/user/:username/favorites/:targetId",
+      "name": "GET /user/:username/favorites/:targetId",
       "description": "",
       "method": "GET",
       "body": {},
       "parameters": [
         {
           "name": "type",
-          "value": "string",
+          "value": "[object Object]",
           "disabled": false
         }
       ],
@@ -2067,23 +2057,17 @@
       "_type": "request"
     },
     {
-      "_id": "req_IRIS-list__user__username_favorites__id_post",
+      "_id": "req_IRIS-list__user__username_favorites__targetId_post",
       "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/favorites/:id",
-      "name": "POST /user/:username/favorites/:id",
+      "url": "{{ _.base_url }}/user/:username/favorites/:targetId",
+      "name": "POST /user/:username/favorites/:targetId",
       "description": "",
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"type\": \"string\"\n}"
+        "text": "{\n  \"type\": {},\n  \"title\": \"string\"\n}"
       },
-      "parameters": [
-        {
-          "name": "type",
-          "value": "string",
-          "disabled": false
-        }
-      ],
+      "parameters": [],
       "headers": [
         {
           "name": "Content-Type",
@@ -2112,20 +2096,17 @@
       "_type": "request"
     },
     {
-      "_id": "req_IRIS-list__user__username_favorites__id_delete",
+      "_id": "req_IRIS-list__user__username_favorites__targetId_delete",
       "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/favorites/:id",
-      "name": "DELETE /user/:username/favorites/:id",
+      "url": "{{ _.base_url }}/user/:username/favorites/:targetId",
+      "name": "DELETE /user/:username/favorites/:targetId",
       "description": "",
       "method": "DELETE",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"type\": \"string\"\n}"
-      },
+      "body": {},
       "parameters": [
         {
           "name": "type",
-          "value": "string",
+          "value": "[object Object]",
           "disabled": false
         }
       ],
