@@ -28,6 +28,7 @@ enum MangaListStatus {
 
 enum MovieListStatus {
     PLANNING
+    WATCHING
     COMPLETED
     DROPPED
 }
