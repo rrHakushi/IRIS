@@ -135,6 +135,7 @@ export function NotificationProvider({
 
   const notificationsRef = useRef<NotificationItem[]>([])
   notificationsRef.current = rawNotifications
+  const processedNotificationIdsRef = useRef<Set<string>>(new Set())
 
   // Helper to attempt decrypting a single notification item
   const tryDecryptNotification = useCallback(
@@ -304,7 +305,13 @@ export function NotificationProvider({
     // 1. New incoming notification
     const unsubNew = subscribe("notification:new", (msg) => {
       const raw = msg.data?.notification
-      if (!raw) return
+      if (!raw?.id) return
+
+      // Deduplicate: ignore if this notification ID was already received in this session
+      if (processedNotificationIdsRef.current.has(raw.id)) {
+        return
+      }
+      processedNotificationIdsRef.current.add(raw.id)
 
       const secretKey = loadSessionSecretKey(userId)
       const baseItem: NotificationItem = {
@@ -332,11 +339,11 @@ export function NotificationProvider({
 
       setRawNotifications((prev) => {
         if (prev.some((n) => n.id === decrypted.id)) return prev
+        setUnreadCount((c) => c + 1)
         return [decrypted, ...prev]
       })
-      setUnreadCount((prev) => prev + 1)
 
-      // Trigger custom interactive popup
+      // Trigger custom interactive popup with unique ID so Sonner never duplicates it
       toast.custom(
         (t) => (
           <IrisNotificationToast
@@ -348,6 +355,7 @@ export function NotificationProvider({
           />
         ),
         {
+          id: `iris-notification-${decrypted.id}`,
           duration: decrypted.priority === "URGENT" ? 15000 : 8000,
         }
       )
