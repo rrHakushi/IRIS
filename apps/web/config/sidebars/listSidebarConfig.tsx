@@ -14,6 +14,7 @@ import {
   IconDeviceGamepad,
   IconDeviceTv,
   IconBook2,
+  IconListDetails,
 } from "@tabler/icons-react"
 import { Session } from "next-auth"
 
@@ -70,47 +71,60 @@ export function getListSidebarConfig(
         },
         ...(username
           ? [
-              {
-                label: t("myLists"),
-                dataKey: "phone-my-lists",
-                icon: <IconList className="size-5" />,
-                position: 4,
-                children: [
-                  {
-                    label: t("animeList"),
-                    href: `/IRIS-list/lists/${username}/anime`,
-                  },
-                  {
-                    label: t("mangaList"),
-                    href: `/IRIS-list/lists/${username}/manga`,
-                  },
-                  {
-                    label: t("movieList"),
-                    href: `/IRIS-list/lists/${username}/movie`,
-                  },
-                  {
-                    label: t("tvList"),
-                    href: `/IRIS-list/lists/${username}/tv`,
-                  },
-                  {
-                    label: t("gameList"),
-                    href: `/IRIS-list/lists/${username}/game`,
-                  },
-                  {
-                    label: t("musicList"),
-                    href: `/IRIS-list/lists/${username}/music`,
-                  },
-                  {
-                    label: t("bookList"),
-                    href: `/IRIS-list/lists/${username}/book`,
-                  },
-                  {
-                    label: t("otherLists"),
-                    href: `/IRIS-list/lists/${username}/other`,
-                  },
-                ],
-              },
-            ]
+            {
+              label: t("myLists"),
+              dataKey: "phone-my-lists",
+              icon: <IconList className="size-5" />,
+              position: 4,
+              children: [
+                {
+                  label: t("anime"),
+                  href: `/IRIS-list/lists/${username}/anime`,
+                  icon: <IconTheater className="size-4" />,
+                },
+                {
+                  label: t("manga"),
+                  href: `/IRIS-list/lists/${username}/manga`,
+                  icon: <IconBook className="size-4" />,
+                },
+                {
+                  label: t("movie"),
+                  href: `/IRIS-list/lists/${username}/movie`,
+                  icon: <IconMovie className="size-4" />,
+                },
+                {
+                  label: t("tv"),
+                  href: `/IRIS-list/lists/${username}/tv`,
+                  icon: <IconDeviceTv className="size-4" />,
+                },
+                {
+                  label: t("game"),
+                  href: `/IRIS-list/lists/${username}/game`,
+                  icon: <IconDeviceGamepad className="size-4" />,
+                },
+                {
+                  label: t("music"),
+                  href: `/IRIS-list/lists/${username}/music`,
+                  icon: <IconMusic className="size-4" />,
+                },
+                {
+                  label: t("book"),
+                  href: `/IRIS-list/lists/${username}/book`,
+                  icon: <IconBook2 className="size-4" />,
+                },
+                {
+                  label: t("other"),
+                  href: `/IRIS-list/lists/${username}/other`,
+                  icon: <IconList className="size-4" />,
+                },
+                {
+                  label: t("watchlists"),
+                  href: `/IRIS-list/lists/${username}/watchlists`,
+                  icon: <IconListDetails className="size-4" />,
+                },
+              ],
+            },
+          ]
           : []),
       ],
     },
@@ -156,61 +170,67 @@ export function getListSidebarConfig(
 
     ...(username
       ? [
-          {
-            section: t("library"),
-            dataKey: "library",
-            items: [
-              {
-                label: t("animeList"),
-                dataKey: "anime-list",
-                href: `/IRIS-list/lists/${username}/anime`,
-                icon: <IconTheater className="size-4" />,
-              },
-              {
-                label: t("mangaList"),
-                dataKey: "manga-list",
-                href: `/IRIS-list/lists/${username}/manga`,
-                icon: <IconBook className="size-4" />,
-              },
-              {
-                label: t("movieList"),
-                dataKey: "movie-list",
-                href: `/IRIS-list/lists/${username}/movie`,
-                icon: <IconMovie className="size-4" />,
-              },
-              {
-                label: t("tvList"),
-                dataKey: "tv-list",
-                href: `/IRIS-list/lists/${username}/tv`,
-                icon: <IconDeviceTv className="size-4" />,
-              },
-              {
-                label: t("gameList"),
-                dataKey: "game-list",
-                href: `/IRIS-list/lists/${username}/game`,
-                icon: <IconDeviceGamepad className="size-4" />,
-              },
-              {
-                label: t("musicList"),
-                dataKey: "music-list",
-                href: `/IRIS-list/lists/${username}/music`,
-                icon: <IconMusic className="size-4" />,
-              },
-              {
-                label: t("bookList"),
-                dataKey: "book-list",
-                href: `/IRIS-list/lists/${username}/book`,
-                icon: <IconBook2 className="size-4" />,
-              },
-              {
-                label: t("otherLists"),
-                dataKey: "other-lists",
-                href: `/IRIS-list/lists/${username}/other`,
-                icon: <IconList className="size-4" />,
-              },
-            ],
-          },
-        ]
+        {
+          section: t("library"),
+          dataKey: "library",
+          items: [
+            {
+              label: t("anime"),
+              dataKey: "anime",
+              href: `/IRIS-list/lists/${username}/anime`,
+              icon: <IconTheater className="size-4" />,
+            },
+            {
+              label: t("manga"),
+              dataKey: "manga",
+              href: `/IRIS-list/lists/${username}/manga`,
+              icon: <IconBook className="size-4" />,
+            },
+            {
+              label: t("movie"),
+              dataKey: "movie",
+              href: `/IRIS-list/lists/${username}/movie`,
+              icon: <IconMovie className="size-4" />,
+            },
+            {
+              label: t("tv"),
+              dataKey: "tv",
+              href: `/IRIS-list/lists/${username}/tv`,
+              icon: <IconDeviceTv className="size-4" />,
+            },
+            {
+              label: t("game"),
+              dataKey: "game",
+              href: `/IRIS-list/lists/${username}/game`,
+              icon: <IconDeviceGamepad className="size-4" />,
+            },
+            {
+              label: t("music"),
+              dataKey: "music",
+              href: `/IRIS-list/lists/${username}/music`,
+              icon: <IconMusic className="size-4" />,
+            },
+            {
+              label: t("book"),
+              dataKey: "book",
+              href: `/IRIS-list/lists/${username}/book`,
+              icon: <IconBook2 className="size-4" />,
+            },
+            {
+              label: t("other"),
+              dataKey: "other",
+              href: `/IRIS-list/lists/${username}/other`,
+              icon: <IconList className="size-4" />,
+            },
+            {
+              label: t("watchlists"),
+              dataKey: "watchlists",
+              href: `/IRIS-list/lists/${username}/watchlists`,
+              icon: <IconListDetails className="size-4" />,
+            },
+          ],
+        },
+      ]
       : []),
   ]
 }
