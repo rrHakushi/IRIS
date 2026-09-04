@@ -30,6 +30,9 @@ model User {
     gameList        GameList[]
     bookList        BookList[]
     musicList       MusicList[]
+    listOwnerComments          ListComment[]      @relation("ListOwnerComments")
+    authoredListComments       ListComment[]      @relation("AuthorListComments")
+    authoredListCommentReplies ListCommentReply[] @relation("AuthorListCommentReplies")
 
     // REVIEWS & SOCIAL
     animeReviews        AnimeReview[]

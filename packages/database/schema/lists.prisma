@@ -358,3 +358,33 @@ model MusicList {
     @@index([musicId])
     @@index([status])
 }
+
+model ListComment {
+    id          String             @id @default(uuid())
+    listOwnerId String
+    listOwner   User               @relation("ListOwnerComments", fields: [listOwnerId], references: [id], onDelete: Cascade)
+    mediaType   String             // "anime" | "manga" | "movie" | "tv" | "game" | "book" | "music"
+    authorId    String
+    author      User               @relation("AuthorListComments", fields: [authorId], references: [id], onDelete: Cascade)
+    content     String             @db.Text
+    isSpoiler   Boolean            @default(false)
+    reply       ListCommentReply?
+    createdAt   DateTime           @default(now())
+    updatedAt   DateTime           @updatedAt
+
+    @@index([listOwnerId, mediaType, createdAt(sort: Desc)])
+    @@index([authorId])
+}
+
+model ListCommentReply {
+    id        String      @id @default(uuid())
+    commentId String      @unique
+    comment   ListComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+    authorId  String
+    author    User        @relation("AuthorListCommentReplies", fields: [authorId], references: [id], onDelete: Cascade)
+    content   String      @db.Text
+    createdAt DateTime    @default(now())
+    updatedAt DateTime    @updatedAt
+
+    @@index([authorId])
+}
