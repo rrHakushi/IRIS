@@ -1,15 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import {
-  IconStar,
-  IconPhotoOff,
-  IconInbox,
-  IconMenu2,
-  IconLink,
-} from "@tabler/icons-react"
+import { IconInbox } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { Button } from "@workspace/ui/components/button"
 import { Spinner } from "@workspace/ui/components/spinner"
@@ -25,6 +17,7 @@ import {
   type StatusKey,
   MEDIA_CATEGORIES,
 } from "./types"
+import { MediaListCard } from "./media-list-card"
 
 export interface MediaListGridProps {
   mediaType: MediaListType
@@ -39,54 +32,12 @@ export interface MediaListGridProps {
     entryId: number,
     updatedEntry: MediaListEntryData | null
   ) => void
+  onIncrementProgress?: (item: ListEntryData, count: number) => Promise<void>
   mediaTitlePreference?: "primary" | "secondary" | "native"
   className?: string
 }
 
-function resolveMediaTitle(
-  media: ListEntryData["media"],
-  pref: "primary" | "secondary" | "native" = "primary"
-): string {
-  if (pref === "secondary" && (media.titleEnglish || media.titleRomaji)) {
-    return media.titleEnglish || media.titleRomaji || ""
-  }
-  if (pref === "native" && media.titleNative) {
-    return media.titleNative
-  }
-  return (
-    media.titlePrimary ||
-    media.titleEnglish ||
-    media.titleRomaji ||
-    media.titleNative ||
-    media.title ||
-    media.name ||
-    "Untitled"
-  )
-}
-
-function resolveCoverImage(media: ListEntryData["media"]): string | null {
-  return media.coverImage || media.posterImage || media.bannerImage || null
-}
-
-function getConnectedCount(connections: unknown): number {
-  if (!connections) return 0
-  if (Array.isArray(connections)) {
-    return connections.filter(Boolean).length
-  }
-  if (typeof connections === "object") {
-    return Object.keys(connections as Record<string, unknown>).filter((key) => {
-      const val = (connections as Record<string, unknown>)[key]
-      if (!val) return false
-      if (typeof val === "object") {
-        return Object.keys(val).length > 0
-      }
-      return true
-    }).length
-  }
-  return 0
-}
-
-function toNormalizedMedia(
+export function toNormalizedMedia(
   media: ListEntryData["media"],
   category: MediaListType
 ): NormalizedMediaData {
@@ -171,7 +122,7 @@ function toNormalizedMedia(
   }
 }
 
-function toMediaListEntry(entry: ListEntryData["entry"]): MediaListEntryData {
+export function toMediaListEntry(entry: ListEntryData["entry"]): MediaListEntryData {
   const e = entry as any
   return {
     id: entry.id,
@@ -192,296 +143,6 @@ function toMediaListEntry(entry: ListEntryData["entry"]): MediaListEntryData {
   } as MediaListEntryData
 }
 
-interface MediaListCardProps {
-  item: ListEntryData
-  mediaType: MediaListType
-  mediaTitlePreference: "primary" | "secondary" | "native"
-  progressUnit: string
-  onOpenEditModal: (item: ListEntryData) => void
-}
-
-function computeTvProgress(item: ListEntryData): {
-  seasonNumber: number
-  episodeNumber: number
-  seasonEpisodeCount?: number
-} {
-  const { entry, media } = item
-  const seasons: any[] = Array.isArray(media.seasons) ? media.seasons : []
-  const entrySeasons: any[] = Array.isArray((entry as any).seasons)
-    ? (entry as any).seasons
-    : []
-  const watchedEpisodes: any[] = Array.isArray((entry as any).watchedEpisodes)
-    ? (entry as any).watchedEpisodes
-    : []
-
-  // 1. From watchedEpisodes: find the highest season and episode watched
-  if (watchedEpisodes.length > 0) {
-    const sorted = [...watchedEpisodes].sort((a, b) => {
-      if (b.seasonNumber !== a.seasonNumber) return b.seasonNumber - a.seasonNumber
-      return b.episodeNumber - a.episodeNumber
-    })
-    const latest = sorted[0]
-    const sObj = seasons.find((s) => s.seasonNumber === latest.seasonNumber)
-    return {
-      seasonNumber: latest.seasonNumber,
-      episodeNumber: latest.episodeNumber,
-      seasonEpisodeCount: sObj?.episodeCount ?? undefined,
-    }
-  }
-
-  // 2. From entrySeasons: find latest season with progress > 0
-  if (entrySeasons.length > 0) {
-    const sorted = [...entrySeasons].sort((a, b) => b.seasonNumber - a.seasonNumber)
-    const inProgressSeason = sorted.find((s) => (s.progress ?? 0) > 0) || sorted[0]
-    if (inProgressSeason) {
-      const sObj = seasons.find((s) => s.seasonNumber === inProgressSeason.seasonNumber)
-      return {
-        seasonNumber: inProgressSeason.seasonNumber,
-        episodeNumber: inProgressSeason.progress ?? 0,
-        seasonEpisodeCount: sObj?.episodeCount ?? undefined,
-      }
-    }
-  }
-
-  // 3. From overall progress & media.seasons
-  const overallProg = entry.progress ?? 0
-  if (seasons.length > 0) {
-    let remaining = overallProg
-    const sortedSeasons = [...seasons].sort((a, b) => a.seasonNumber - b.seasonNumber)
-    for (let i = 0; i < sortedSeasons.length; i++) {
-      const s = sortedSeasons[i]
-      const count = s.episodeCount || 0
-      if (i === sortedSeasons.length - 1 || remaining <= count) {
-        return {
-          seasonNumber: s.seasonNumber,
-          episodeNumber: remaining,
-          seasonEpisodeCount: count > 0 ? count : undefined,
-        }
-      }
-      remaining -= count
-    }
-  }
-
-  // 4. Default fallback
-  return {
-    seasonNumber: 1,
-    episodeNumber: overallProg,
-    seasonEpisodeCount: media.episodes ?? undefined,
-  }
-}
-
-function MediaListCard({
-  item,
-  mediaType,
-  mediaTitlePreference,
-  progressUnit,
-  onOpenEditModal,
-}: MediaListCardProps): React.JSX.Element {
-  const { entry, media } = item
-  const title = resolveMediaTitle(media, mediaTitlePreference)
-  const cover = resolveCoverImage(media)
-  const mediaHref = `/IRIS-list/media/${mediaType}/${media.id}`
-
-  const maxProgress =
-    mediaType === "manga"
-      ? media.chapters
-      : mediaType === "anime" || mediaType === "tv"
-        ? media.episodes
-        : undefined
-
-  const maxVolumes = mediaType === "manga" ? media.volumes : undefined
-
-  const currentProgress =
-    mediaType === "manga"
-      ? entry.chaptersProgress ?? entry.progress ?? 0
-      : entry.progress ?? 0
-
-  const volumesProgress = entry.volumesProgress ?? 0
-
-  const tvProg = useMemo(
-    () => (mediaType === "tv" ? computeTvProgress(item) : null),
-    [item, mediaType]
-  )
-
-  const connectedCount = getConnectedCount(entry.connections)
-
-  const touchTimerRef = useRef<NodeJS.Timeout | null>(null)
-  const isLongPressRef = useRef<boolean>(false)
-
-  const handleTouchStart = () => {
-    isLongPressRef.current = false
-    touchTimerRef.current = setTimeout(() => {
-      isLongPressRef.current = true
-      onOpenEditModal(item)
-      if (typeof navigator !== "undefined" && navigator.vibrate) {
-        try {
-          navigator.vibrate(40)
-        } catch {}
-      }
-    }, 300)
-  }
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchTimerRef.current) {
-      clearTimeout(touchTimerRef.current)
-      touchTimerRef.current = null
-    }
-    if (isLongPressRef.current) {
-      e.preventDefault()
-    }
-  }
-
-  const handleTouchMove = () => {
-    if (touchTimerRef.current) {
-      clearTimeout(touchTimerRef.current)
-      touchTimerRef.current = null
-    }
-  }
-
-  return (
-    <div
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchMove={handleTouchMove}
-      onTouchCancel={handleTouchMove}
-      className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card"
-    >
-      {/* Cover Image & Overlays Container */}
-      <div className="relative aspect-2/3 w-full overflow-hidden bg-muted select-none">
-        {/* Cover Image Link */}
-        <Link
-          href={mediaHref}
-          onClick={(e) => {
-            if (isLongPressRef.current) {
-              e.preventDefault()
-              e.stopPropagation()
-              isLongPressRef.current = false
-            }
-          }}
-          className="absolute inset-0 size-full block"
-        >
-          {cover ? (
-            <Image
-              src={cover}
-              alt={title}
-              fill
-              sizes="(max-width: 640px) 33vw, (max-width: 1024px) 20vw, 12.5vw"
-              unoptimized
-              className="object-cover"
-            />
-          ) : (
-            <div className="flex size-full items-center justify-center text-muted-foreground/50">
-              <IconPhotoOff className="size-6" />
-            </div>
-          )}
-        </Link>
-
-        {/* Connection Count Badge (Top-Left, visible only on hover) */}
-        {connectedCount > 0 && (
-          <div
-            className="absolute top-1.5 start-1.5 z-10 flex items-center gap-0.5 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-md opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 select-none shadow-xs"
-            title={`${connectedCount} connected service${connectedCount === 1 ? "" : "s"}`}
-          >
-            <IconLink className="size-2.5 text-primary" />
-            <span>{connectedCount}</span>
-          </div>
-        )}
-
-        {/* Hamburger Icon Overlay (Top-Right, visible only on hover) */}
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          onPress={() => onOpenEditModal(item)}
-          onClick={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-          }}
-          aria-label="Edit list entry"
-          className="absolute top-1.5 end-1.5 z-20 size-6 rounded-md bg-black/70 text-white/90 backdrop-blur-md opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto transition-opacity duration-150 hover:bg-black/90 hover:text-white"
-        >
-          <IconMenu2 className="size-3.5" />
-        </Button>
-
-        {/* Bottom Badges Overlay: Score, Progress */}
-        <div className="absolute bottom-1.5 start-1.5 end-1.5 z-10 flex items-center gap-1 flex-wrap pointer-events-none select-none">
-          {/* Score Badge */}
-          {typeof entry.score === "number" && entry.score > 0 && (
-            <div className="flex items-center gap-0.5 rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-bold text-amber-400 backdrop-blur-md shadow-xs">
-              <IconStar className="size-2.5 fill-amber-400" />
-              <span>{entry.score}</span>
-            </div>
-          )}
-
-          {/* Progress Badges: Type-specific */}
-          {mediaType === "movie" ? null : mediaType === "tv" && tvProg ? (
-            <>
-              <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-bold text-white/90 backdrop-blur-md shadow-xs">
-                <span>S{tvProg.seasonNumber}</span>
-              </div>
-              <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-md shadow-xs">
-                <span>
-                  Ep {tvProg.episodeNumber}
-                  {tvProg.seasonEpisodeCount ? `/${tvProg.seasonEpisodeCount}` : ""}
-                </span>
-              </div>
-            </>
-          ) : mediaType === "manga" ? (
-            <>
-              <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-md shadow-xs">
-                <span>
-                  Ch {currentProgress}
-                  {typeof maxProgress === "number" && maxProgress > 0
-                    ? `/${maxProgress}`
-                    : ""}
-                </span>
-              </div>
-              <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-md shadow-xs">
-                <span>
-                  Vol {volumesProgress}
-                  {typeof maxVolumes === "number" && maxVolumes > 0
-                    ? `/${maxVolumes}`
-                    : ""}
-                </span>
-              </div>
-            </>
-          ) : mediaType === "game" ? (
-            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-md shadow-xs">
-              <span>{currentProgress} Hrs</span>
-            </div>
-          ) : (
-            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-md shadow-xs">
-              <span>
-                {progressUnit} {currentProgress}
-                {typeof maxProgress === "number" && maxProgress > 0
-                  ? `/${maxProgress}`
-                  : ""}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Card Meta */}
-      <div className="flex flex-1 flex-col p-2">
-        <Link
-          href={mediaHref}
-          title={title}
-          onClick={(e) => {
-            if (isLongPressRef.current) {
-              e.preventDefault()
-              e.stopPropagation()
-              isLongPressRef.current = false
-            }
-          }}
-          className="line-clamp-2 text-[11px] sm:text-xs font-semibold text-foreground transition-colors hover:text-primary leading-tight"
-        >
-          {title}
-        </Link>
-      </div>
-    </div>
-  )
-}
-
 export function MediaListGrid({
   mediaType,
   activeStatus,
@@ -490,7 +151,9 @@ export function MediaListGrid({
   isLoadingMore = false,
   hasMore = false,
   onLoadMore,
+  isOwner = false,
   onItemUpdated,
+  onIncrementProgress,
   mediaTitlePreference = "primary",
   className,
 }: MediaListGridProps): React.JSX.Element {
@@ -650,7 +313,8 @@ export function MediaListGrid({
                     mediaType={mediaType}
                     mediaTitlePreference={mediaTitlePreference}
                     progressUnit={progressUnit}
-                    onOpenEditModal={(target) => setEditingItem(target)}
+                    onOpenEditModal={(target: ListEntryData) => setEditingItem(target)}
+                    onIncrementProgress={isOwner ? onIncrementProgress : undefined}
                   />
                 ))}
               </div>
@@ -666,7 +330,8 @@ export function MediaListGrid({
               mediaType={mediaType}
               mediaTitlePreference={mediaTitlePreference}
               progressUnit={progressUnit}
-              onOpenEditModal={(target) => setEditingItem(target)}
+              onOpenEditModal={(target: ListEntryData) => setEditingItem(target)}
+              onIncrementProgress={isOwner ? onIncrementProgress : undefined}
             />
           ))}
         </div>

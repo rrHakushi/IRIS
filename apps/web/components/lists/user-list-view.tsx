@@ -354,49 +354,74 @@ export function UserListView({
   // 4. Quick Increment (+1) Handler for Owner
   // ---------------------------------------------------------------------------
   const handleIncrementProgress = useCallback(
-    async (entryId: number, mediaId: number) => {
+    async (item: ListEntryData, count: number) => {
+      const entryId = item.entry.id
+      const mediaId = item.media.id
+      const maxCount =
+        mediaType === "manga"
+          ? (item.media.chapters ?? (item.media as any).chapterCount ?? null)
+          : mediaType === "anime"
+            ? (item.media.episodes ?? (item.media as any).episodeCount ?? null)
+            : mediaType === "tv"
+              ? (item.media.episodes ?? (item.media as any).episodeCount ?? null)
+              : mediaType === "book"
+                ? ((item.media as any).chapterCount ?? (item.media as any).pageCount ?? null)
+                : null
+
       const nowIso = new Date().toISOString()
+
       // Optimistic update
       setItems((prev) => {
-        const next = prev.map((item) => {
-          if (item.entry.id === entryId) {
+        const next = prev.map((it) => {
+          if (it.entry.id === entryId) {
             if (mediaType === "manga") {
+              const rawNext = (it.entry.chaptersProgress ?? 0) + count
+              const nextProg =
+                maxCount && maxCount > 0 ? Math.min(rawNext, maxCount) : rawNext
               return {
-                ...item,
+                ...it,
                 entry: {
-                  ...item.entry,
-                  chaptersProgress: (item.entry.chaptersProgress ?? 0) + 1,
+                  ...it.entry,
+                  chaptersProgress: nextProg,
                   updatedAt: nowIso,
                 },
               }
             }
+            const rawNext = (it.entry.progress ?? 0) + count
+            const nextProg =
+              maxCount && maxCount > 0 ? Math.min(rawNext, maxCount) : rawNext
             return {
-              ...item,
+              ...it,
               entry: {
-                ...item.entry,
-                progress: (item.entry.progress ?? 0) + 1,
+                ...it.entry,
+                progress: nextProg,
                 updatedAt: nowIso,
               },
             }
           }
-          return item
+          return it
         })
         return sortListItems(next, sortBy, sortOrder)
       })
 
       try {
-        const resource = getListResource(username, mediaType)
-        const { error } = await (resource as any)({ id: entryId }).increment.post({
-          count: 1,
-        })
-
-        if (error) {
-          toast.error("Failed to update progress")
-          // Re-fetch to synchronize state
-          fetchItems()
+        if (mediaType === "tv") {
+          for (let i = 0; i < count; i++) {
+            const { error } = await elysia
+              .user({ username })
+              .lists.tv({ id: mediaId })
+              .increment.post()
+            if (error) throw new Error("Failed to update TV progress")
+          }
         } else {
-          toast.success("Progress updated (+1)")
+          const resource = getListResource(username, mediaType)
+          const { error } = await (resource as any)({ id: mediaId }).increment.post({
+            count,
+          })
+          if (error) throw new Error("Failed to update progress")
         }
+
+        toast.success(`Progress updated (+${count})`)
       } catch {
         toast.error("Failed to update progress")
         fetchItems()
@@ -545,6 +570,7 @@ export function UserListView({
             onLoadMore={handleLoadMore}
             isOwner={isOwner}
             onItemUpdated={handleItemUpdated}
+            onIncrementProgress={isOwner ? handleIncrementProgress : undefined}
             mediaTitlePreference={mediaTitlePreference}
           />
         )}
