@@ -8,15 +8,22 @@ import {
   IconMusic,
 } from "@tabler/icons-react"
 
-export type MediaListType = "anime" | "manga" | "movie" | "tv" | "game" | "book"
+export type MediaListType =
+  | "anime"
+  | "manga"
+  | "movie"
+  | "tv"
+  | "game"
+  | "book"
+  | "music"
 
 export interface MediaCategoryConfig {
   key: MediaListType
   label: string
   href: (username: string) => string
   icon: React.ComponentType<{ className?: string }>
-  activeVerb: string // e.g. "Watching", "Reading", "Playing"
-  progressLabel: string // e.g. "Ep", "Ch", "Vol", "Hrs"
+  activeVerb: string // e.g. "Watching", "Reading", "Playing", "Listening"
+  progressLabel: string // e.g. "Ep", "Ch", "Vol", "Hrs", "Plays"
   maxUnitLabel?: string
 }
 
@@ -69,10 +76,25 @@ export const MEDIA_CATEGORIES: MediaCategoryConfig[] = [
     activeVerb: "Reading",
     progressLabel: "Pages",
   },
+  {
+    key: "music",
+    label: "Music",
+    href: (u) => `/IRIS-list/lists/${u}/music`,
+    icon: IconMusic,
+    activeVerb: "Listening",
+    progressLabel: "Plays",
+  },
 ]
 
 export type StatusKey =
-  "ALL" | "WATCHING" | "ON_HOLD" | "COMPLETED" | "DROPPED" | "PLANNING"
+  | "ALL"
+  | "WATCHING"
+  | "ON_HOLD"
+  | "COMPLETED"
+  | "DROPPED"
+  | "PLANNING"
+  | "ALBUMS"
+  | "TRACKS"
 
 export interface StatusOption {
   key: StatusKey
@@ -98,6 +120,7 @@ export interface ListEntryData {
     id: number
     status: string
     progress?: number
+    playCount?: number
     chaptersProgress?: number
     volumesProgress?: number
     score: number | null
@@ -107,6 +130,9 @@ export interface ListEntryData {
     private: boolean
     startedAt?: string | null
     completedAt?: string | null
+    albumId?: number | null
+    trackId?: number | null
+    itemType?: string
     connections?: Record<string, any> | null
     createdAt: string
     updatedAt: string
@@ -119,6 +145,8 @@ export interface ListEntryData {
     titleNative?: string
     title?: string
     name?: string
+    artist?: string | null
+    artistName?: string | null
     coverImage?: string | null
     posterImage?: string | null
     bannerImage?: string | null

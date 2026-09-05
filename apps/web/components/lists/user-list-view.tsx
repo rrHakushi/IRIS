@@ -56,6 +56,8 @@ function getListResource(username: string, mediaType: MediaListType) {
       return client.game
     case "book":
       return client.book
+    case "music":
+      return client.music
   }
 }
 
@@ -282,9 +284,21 @@ export function UserListView({
       const resource = getListResource(username, mediaType)
 
       // Format query parameters
-      const statusParam = activeStatus === "ALL" ? undefined : activeStatus
-      const formatsParam =
+      const isMusic = mediaType === "music"
+      let statusParam: string | undefined = undefined
+      let formatsParam: string | undefined =
         selectedFormats.length > 0 ? selectedFormats.join(",") : undefined
+
+      if (isMusic) {
+        if (activeStatus === "ALBUMS") {
+          formatsParam = "ALBUM"
+        } else if (activeStatus === "TRACKS") {
+          formatsParam = "TRACK"
+        }
+      } else {
+        statusParam = activeStatus === "ALL" ? undefined : activeStatus
+      }
+
       const mediaStatusParam =
         selectedMediaStatuses.length > 0
           ? selectedMediaStatuses.join(",")
@@ -352,9 +366,21 @@ export function UserListView({
     try {
       const resource = getListResource(username, mediaType)
 
-      const statusParam = activeStatus === "ALL" ? undefined : activeStatus
-      const formatsParam =
+      const isMusic = mediaType === "music"
+      let statusParam: string | undefined = undefined
+      let formatsParam: string | undefined =
         selectedFormats.length > 0 ? selectedFormats.join(",") : undefined
+
+      if (isMusic) {
+        if (activeStatus === "ALBUMS") {
+          formatsParam = "ALBUM"
+        } else if (activeStatus === "TRACKS") {
+          formatsParam = "TRACK"
+        }
+      } else {
+        statusParam = activeStatus === "ALL" ? undefined : activeStatus
+      }
+
       const mediaStatusParam =
         selectedMediaStatuses.length > 0
           ? selectedMediaStatuses.join(",")
@@ -474,6 +500,18 @@ export function UserListView({
               .increment.post()
             if (error) throw new Error("Failed to update TV progress")
           }
+        } else if (mediaType === "music") {
+          const isTrack =
+            item.entry.itemType === "TRACK" ||
+            Boolean(item.entry.trackId && !item.entry.albumId)
+          const { error } = await elysia
+            .user({ username })
+            .lists.music({ id: mediaId })
+            .increment.post(
+              { count },
+              { query: { type: isTrack ? "TRACK" : "ALBUM" } }
+            )
+          if (error) throw new Error("Failed to update music progress")
         } else {
           const resource = getListResource(username, mediaType)
           const { error } = await (resource as any)({
@@ -537,20 +575,34 @@ export function UserListView({
             return i
           })
 
-          // If a specific status tab is active, remove item if its status no longer matches
+          // If a specific status tab is active, remove item if its status/format no longer matches
           if (activeStatus !== "ALL") {
-            const upperStatus = (updatedEntry.status || "").toUpperCase()
-            const upperActive = activeStatus.toUpperCase()
-            const isMatch =
-              upperStatus === upperActive ||
-              ((upperActive === "WATCHING" ||
-                upperActive === "READING" ||
-                upperActive === "PLAYING") &&
-                (upperStatus === "WATCHING" ||
-                  upperStatus === "READING" ||
-                  upperStatus === "PLAYING"))
-            if (!isMatch) {
-              next = next.filter((i) => i.entry.id !== entryId)
+            if (mediaType === "music") {
+              const itemType = (
+                updatedEntry.itemType ||
+                (updatedEntry.albumId ? "ALBUM" : "TRACK")
+              ).toUpperCase()
+              if (activeStatus === "ALBUMS" && itemType !== "ALBUM") {
+                next = next.filter((i) => i.entry.id !== entryId)
+              } else if (activeStatus === "TRACKS" && itemType !== "TRACK") {
+                next = next.filter((i) => i.entry.id !== entryId)
+              }
+            } else {
+              const upperStatus = (updatedEntry.status || "").toUpperCase()
+              const upperActive = activeStatus.toUpperCase()
+              const isMatch =
+                upperStatus === upperActive ||
+                ((upperActive === "WATCHING" ||
+                  upperActive === "READING" ||
+                  upperActive === "PLAYING" ||
+                  upperActive === "LISTENING") &&
+                  (upperStatus === "WATCHING" ||
+                    upperStatus === "READING" ||
+                    upperStatus === "PLAYING" ||
+                    upperStatus === "LISTENING"))
+              if (!isMatch) {
+                next = next.filter((i) => i.entry.id !== entryId)
+              }
             }
           }
 

@@ -10,6 +10,7 @@ import {
   IconLink,
   IconPlus,
 } from "@tabler/icons-react"
+import { cn } from "@workspace/ui/lib/utils"
 import { Button } from "@workspace/ui/components/button"
 import type { ListEntryData, MediaListType } from "./types"
 
@@ -99,24 +100,21 @@ export function computeTvProgress(item: ListEntryData): {
 
   // 2. From entrySeasons: find latest season with progress > 0
   if (entrySeasons.length > 0) {
-    const sorted = [...entrySeasons].sort(
-      (a, b) => b.seasonNumber - a.seasonNumber
-    )
-    const inProgressSeason =
-      sorted.find((s) => (s.progress ?? 0) > 0) || sorted[0]
-    if (inProgressSeason) {
-      const sObj = seasons.find(
-        (s) => s.seasonNumber === inProgressSeason.seasonNumber
-      )
+    const activeSeasons = entrySeasons
+      .filter((es: any) => es.progress > 0)
+      .sort((a: any, b: any) => b.seasonNumber - a.seasonNumber)
+    if (activeSeasons.length > 0) {
+      const latest = activeSeasons[0]
+      const sObj = seasons.find((s) => s.seasonNumber === latest.seasonNumber)
       return {
-        seasonNumber: inProgressSeason.seasonNumber,
-        episodeNumber: inProgressSeason.progress ?? 0,
+        seasonNumber: latest.seasonNumber,
+        episodeNumber: latest.progress,
         seasonEpisodeCount: sObj?.episodeCount ?? undefined,
       }
     }
   }
 
-  // 3. From overall progress & media.seasons
+  // 3. Fallback: cumulative episodes calculated across seasons
   const overallProg = entry.progress ?? 0
   if (seasons.length > 0) {
     let remaining = overallProg
@@ -156,7 +154,16 @@ export function MediaListCard({
   const { entry, media } = item
   const title = resolveMediaTitle(media, mediaTitlePreference)
   const cover = resolveCoverImage(media)
-  const mediaHref = `/IRIS-list/media/${mediaType}/${media.id}`
+
+  const isMusic = mediaType === "music"
+  const isTrack =
+    isMusic &&
+    (media.format === "TRACK" ||
+      entry.itemType === "TRACK" ||
+      Boolean(entry.trackId && !entry.albumId))
+  const mediaHref = isMusic
+    ? `/IRIS-list/media/music/${isTrack ? "tracks" : "albums"}/${media.id}`
+    : `/IRIS-list/media/${mediaType}/${media.id}`
 
   const maxProgress =
     mediaType === "manga"
@@ -233,7 +240,8 @@ export function MediaListCard({
   const isWatchingOrActive =
     upperStatus === "WATCHING" ||
     upperStatus === "READING" ||
-    upperStatus === "PLAYING"
+    upperStatus === "PLAYING" ||
+    upperStatus === "LISTENING"
 
   const handleIncrementClick = () => {
     if (!onIncrementProgress) return
@@ -306,8 +314,13 @@ export function MediaListCard({
       onTouchCancel={handleTouchMove}
       className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card hover:border-primary/40"
     >
-      {/* Cover Image & Overlays Container */}
-      <div className="relative aspect-2/3 w-full overflow-hidden bg-muted select-none">
+      {/* Cover Image & Overlays Container - 1:1 square for music, 2:3 for posters */}
+      <div
+        className={cn(
+          "relative w-full overflow-hidden bg-muted select-none",
+          isMusic ? "aspect-square" : "aspect-2/3"
+        )}
+      >
         {/* Cover Image Link */}
         <Link
           href={mediaHref}
@@ -347,7 +360,7 @@ export function MediaListCard({
           <IconMenu2 className="size-3.5" />
         </Button>
 
-        {/* Bottom-Right: Quick Increment (+) Button (Visible on hover, only when WATCHING/reading/playing) */}
+        {/* Bottom-Right: Quick Increment (+) Button (Visible on hover, only when active) */}
         {isWatchingOrActive && onIncrementProgress && (
           <Button
             variant="ghost"
@@ -374,7 +387,7 @@ export function MediaListCard({
             </div>
           )}
 
-          {/* 2. Progress Badge: Season/Episode, Volume/Chapter, Ep, Hrs, or Pages */}
+          {/* 2. Progress Badge: Season/Episode, Volume/Chapter, Ep, Hrs, Pages, or Plays */}
           {mediaType === "movie" ? (
             entry.rewatched && entry.rewatched > 0 ? (
               <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
@@ -419,6 +432,10 @@ export function MediaListCard({
             <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
               <span>P {displayedProgress}</span>
             </div>
+          ) : mediaType === "music" ? (
+            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
+              <span>{displayedProgress} Plays</span>
+            </div>
           ) : (
             <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
               <span>
@@ -456,6 +473,11 @@ export function MediaListCard({
         >
           {title}
         </Link>
+        {isMusic && (media.artistName || (media as any).artist) && (
+          <p className="mt-0.5 line-clamp-1 text-[10px] text-muted-foreground">
+            {media.artistName || (media as any).artist}
+          </p>
+        )}
       </div>
     </div>
   )

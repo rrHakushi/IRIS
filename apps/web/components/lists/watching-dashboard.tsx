@@ -30,8 +30,10 @@ import {
 import type { MediaListType, ListEntryData } from "@/components/lists/types"
 import { MEDIA_CATEGORIES } from "@/components/lists/types"
 
+type WatchingMediaListType = Exclude<MediaListType, "music">
+
 interface ActiveCategorySection {
-  type: MediaListType
+  type: WatchingMediaListType
   label: string
   activeVerb: string
   progressUnit: string
@@ -40,7 +42,7 @@ interface ActiveCategorySection {
 }
 
 const CATEGORY_META: Record<
-  MediaListType,
+  WatchingMediaListType,
   {
     statusParam: string
     label: string
@@ -111,7 +113,7 @@ export function WatchingDashboard(): React.JSX.Element {
   // Edit Modal State
   const [editingItem, setEditingItem] = useState<{
     item: ListEntryData
-    mediaType: MediaListType
+    mediaType: WatchingMediaListType
   } | null>(null)
 
   // ---------------------------------------------------------------------------
@@ -191,7 +193,7 @@ export function WatchingDashboard(): React.JSX.Element {
       const activeSections: ActiveCategorySection[] = []
 
       // In-order list of categories
-      const categoryOrder: MediaListType[] = [
+      const categoryOrder: WatchingMediaListType[] = [
         "anime",
         "tv",
         "movie",
@@ -200,7 +202,7 @@ export function WatchingDashboard(): React.JSX.Element {
         "book",
       ]
 
-      const resultsMap: Record<MediaListType, ListEntryData[]> = {
+      const resultsMap: Record<WatchingMediaListType, ListEntryData[]> = {
         anime: extractItems(animeRes),
         tv: extractItems(tvRes),
         movie: extractItems(movieRes),

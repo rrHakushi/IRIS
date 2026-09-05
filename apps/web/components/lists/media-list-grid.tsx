@@ -48,7 +48,9 @@ export function toNormalizedMedia(
         ? ("games" as const)
         : category === "book"
           ? ("books" as const)
-          : (category as "anime" | "manga" | "tv")
+          : category === "music"
+            ? ("music" as const)
+            : (category as "anime" | "manga" | "tv")
 
   return {
     id: media.id,
@@ -130,16 +132,16 @@ export function toMediaListEntry(
   return {
     id: entry.id,
     status: (entry.status?.toUpperCase() || "PLANNING") as MediaListStatus,
-    progress: entry.progress ?? entry.chaptersProgress ?? 0,
+    progress: entry.progress ?? entry.playCount ?? entry.chaptersProgress ?? 0,
     chaptersProgress: entry.chaptersProgress,
     volumesProgress: entry.volumesProgress,
     score: entry.score ?? null,
     notes: entry.notes || "",
-    rewatched: entry.rewatched ?? entry.reread ?? 0,
+    rewatched: entry.rewatched ?? entry.reread ?? (entry as any).relistens ?? 0,
     private: Boolean(entry.private),
     startedAt: entry.startedAt || null,
     completedAt: entry.completedAt || null,
-    rewatchHistory: e.rewatchHistory || null,
+    rewatchHistory: e.rewatchHistory || e.listenHistory || null,
     connections: e.connections || null,
     watchedEpisodes: Array.isArray(e.watchedEpisodes) ? e.watchedEpisodes : [],
     seasons: Array.isArray(e.seasons) ? e.seasons : [],

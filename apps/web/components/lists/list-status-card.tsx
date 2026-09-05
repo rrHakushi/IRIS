@@ -113,7 +113,12 @@ export function ListStatusCard({
 
     facets.statuses.forEach((item) => {
       const upper = item.value.toUpperCase()
-      if (upper === "WATCHING" || upper === "READING" || upper === "PLAYING") {
+      if (
+        upper === "WATCHING" ||
+        upper === "READING" ||
+        upper === "PLAYING" ||
+        upper === "LISTENING"
+      ) {
         map.WATCHING = (map.WATCHING || 0) + item.count
       } else if (upper === "ON_HOLD") {
         map.ON_HOLD = item.count
@@ -133,22 +138,38 @@ export function ListStatusCard({
     key: StatusKey
     label: string
     count: number
-  }> = [
-    { key: "ALL", label: "ALL", count: statusCounts.ALL ?? 0 },
-    {
-      key: "WATCHING",
-      label: activeVerb.toUpperCase(),
-      count: statusCounts.WATCHING ?? 0,
-    },
-    { key: "ON_HOLD", label: "ON HOLD", count: statusCounts.ON_HOLD ?? 0 },
-    {
-      key: "COMPLETED",
-      label: "COMPLETED",
-      count: statusCounts.COMPLETED ?? 0,
-    },
-    { key: "DROPPED", label: "DROPPED", count: statusCounts.DROPPED ?? 0 },
-    { key: "PLANNING", label: "PLANNING", count: statusCounts.PLANNING ?? 0 },
-  ]
+  }> = React.useMemo(() => {
+    if (mediaType === "music") {
+      const albumCount =
+        facets.formats.find((f) => f.value.toUpperCase() === "ALBUM")?.count ??
+        0
+      const trackCount =
+        facets.formats.find((f) => f.value.toUpperCase() === "TRACK")?.count ??
+        0
+      return [
+        { key: "ALL", label: "ALL", count: statusCounts.ALL ?? 0 },
+        { key: "ALBUMS", label: "ALBUMS", count: albumCount },
+        { key: "TRACKS", label: "TRACKS", count: trackCount },
+      ]
+    }
+
+    return [
+      { key: "ALL", label: "ALL", count: statusCounts.ALL ?? 0 },
+      {
+        key: "WATCHING",
+        label: activeVerb.toUpperCase(),
+        count: statusCounts.WATCHING ?? 0,
+      },
+      { key: "ON_HOLD", label: "ON HOLD", count: statusCounts.ON_HOLD ?? 0 },
+      {
+        key: "COMPLETED",
+        label: "COMPLETED",
+        count: statusCounts.COMPLETED ?? 0,
+      },
+      { key: "DROPPED", label: "DROPPED", count: statusCounts.DROPPED ?? 0 },
+      { key: "PLANNING", label: "PLANNING", count: statusCounts.PLANNING ?? 0 },
+    ]
+  }, [mediaType, statusCounts, facets.formats, activeVerb])
 
   const formatOptions = React.useMemo(() => {
     if (facets.formats && facets.formats.length > 0) {
@@ -165,6 +186,7 @@ export function ListStatusCard({
       tv: ["SERIES", "MINISERIES", "SPECIAL"],
       game: ["GAME", "DLC", "REMAKE", "REMASTER"],
       book: ["BOOK", "HARDCOVER", "PAPERBACK", "EBOOK", "AUDIOBOOK"],
+      music: ["ALBUM", "TRACK"],
     }
     return (fallbackMap[mediaType] || []).map((fmt) => ({
       value: fmt,
@@ -358,23 +380,27 @@ export function ListStatusCard({
 
             {/* Right: Multi-select dropdowns & Sort controls */}
             <div className="no-scrollbar flex flex-wrap items-center gap-2 overflow-x-auto pt-1 lg:pt-0">
-              {/* Formats Dropdown */}
-              <MultiSelectFilterPopover
-                label="Formats"
-                allLabel="All Formats"
-                options={formatOptions}
-                selected={selectedFormats}
-                onChange={onFormatsChange}
-              />
+              {/* Formats Dropdown (hidden for music because top tabs handle All / Albums / Tracks) */}
+              {mediaType !== "music" && (
+                <MultiSelectFilterPopover
+                  label="Formats"
+                  allLabel="All Formats"
+                  options={formatOptions}
+                  selected={selectedFormats}
+                  onChange={onFormatsChange}
+                />
+              )}
 
-              {/* Statuses Dropdown */}
-              <MultiSelectFilterPopover
-                label="Statuses"
-                allLabel="All Statuses"
-                options={mediaStatusOptions}
-                selected={selectedMediaStatuses}
-                onChange={onMediaStatusesChange}
-              />
+              {/* Statuses Dropdown (hidden for music) */}
+              {mediaType !== "music" && (
+                <MultiSelectFilterPopover
+                  label="Statuses"
+                  allLabel="All Statuses"
+                  options={mediaStatusOptions}
+                  selected={selectedMediaStatuses}
+                  onChange={onMediaStatusesChange}
+                />
+              )}
 
               {/* Genres Dropdown */}
               <MultiSelectFilterPopover
