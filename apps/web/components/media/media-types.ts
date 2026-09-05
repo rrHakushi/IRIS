@@ -3,11 +3,24 @@ export type MediaTabKey =
   | "characters"
   | "staff"
   | "episodes"
+  | "tracks"
+  | "lyrics"
   | "images"
   | "trailers"
   | "stats"
   | "reviews"
   | "recommendations"
+
+export interface MusicTrackItem {
+  id: number
+  trackNumber: number | null
+  discNumber: number | null
+  titlePrimary: string
+  duration: number | null
+  artistName: string | null
+  artistPersonId?: number | null
+  audioPreviewUrl: string | null
+}
 
 export interface MediaTabItem {
   key: MediaTabKey
@@ -279,5 +292,32 @@ export interface NormalizedMediaData {
   previewLink?: string | null
   infoLink?: string | null
   buyLink?: string | null
+
+  // Music specific fields
+  artist?: string | null
+  artists?: string[] | null
+  artistPersonId?: number | null
+  album?: string | null
+  albumId?: number | null
+  albumType?: string | null
+  totalTracks?: number | null
+  trackNumber?: number | null
+  discNumber?: number | null
+  duration?: number | null
+  audioPreviewUrl?: string | null
+  lyrics?: string | null
+  syncedLyrics?: string | null
+  tracks?: MusicTrackItem[] | null
+  spotifyId?: string | null
+  appleMusicId?: string | null
+  youtubeMusicId?: string | null
+  musicBrainzId?: string | null
+  isrc?: string | null
+  listeners?: number | null
+  playCount?: number | null
+  lastFmListeners?: number | null
+  lastFmPlayCount?: number | null
+  lastFmUrl?: string | null
+
   updatedAt: string | Date
 }

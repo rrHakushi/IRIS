@@ -85,15 +85,21 @@ function normalizeSearchResults(
     const coverImage = item.coverImage || item.image || item.bannerImage || null
 
     let format: string | null = item.format || null
-    if (!format) {
+    let type: "TRACK" | "ALBUM" | undefined = undefined
+
+    if (category === "music") {
+      const rawType = String(item.type || item.itemType || "").toUpperCase()
+      type = rawType === "ALBUM" ? "ALBUM" : "TRACK"
+      if (!format) {
+        format = type === "ALBUM" ? "Album" : "Track"
+      }
+    } else if (!format) {
       if (category === "studios") {
         format = item.isAnimationStudio ? "Anime Studio" : "Studio"
       } else if (category === "characters") {
         format = item.gender || "Character"
       } else if (category === "people") {
         format = item.language || "Person"
-      } else if (category === "music") {
-        format = item.artist || "Track"
       } else if (category === "books" && item.authors?.length) {
         format = item.authors[0]
       }
@@ -113,6 +119,10 @@ function normalizeSearchResults(
       format,
       year,
       queuedForFetch: Boolean(item.queuedForFetch),
+      type,
+      artist: item.artist || item.artistName || null,
+      album: item.album || item.albumTitle || null,
+      duration: item.duration ?? null,
     }
   })
 }

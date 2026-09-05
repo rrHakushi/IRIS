@@ -17,10 +17,12 @@ interface BrowseMediaCardProps {
     format?: string | null
     year?: number | string | null
     queuedForFetch?: boolean
+    type?: "TRACK" | "ALBUM"
+    artist?: string | null
   }
   category: BrowseCategory
   onVisit?: (item: VisitedMediaItem) => void
-  onRemove?: (id: number | string) => void
+  onRemove?: (id: number | string, type?: "TRACK" | "ALBUM") => void
   showRemoveButton?: boolean
   className?: string
 }
@@ -35,9 +37,18 @@ export function BrowseMediaCard({
 }: BrowseMediaCardProps) {
   const t = useTranslations("browse")
   const [imageError, setImageError] = useState(false)
-  const href = item.queuedForFetch
-    ? `/IRIS-list/media/${category}/${item.id}?queuedFetch=true`
-    : `/IRIS-list/media/${category}/${item.id}`
+  const isSquare =
+    category === "music" || item.type === "TRACK" || item.type === "ALBUM"
+
+  const isAlbum = item.type?.toUpperCase() === "ALBUM"
+  const musicSubpath = isAlbum ? "albums" : "tracks"
+  const queuedParam = item.queuedForFetch ? "?queuedFetch=true" : ""
+  const href =
+    category === "music"
+      ? `/IRIS-list/media/music/${musicSubpath}/${item.id}${queuedParam}`
+      : item.queuedForFetch
+        ? `/IRIS-list/media/${category}/${item.id}?queuedFetch=true`
+        : `/IRIS-list/media/${category}/${item.id}`
 
   const handleClick = () => {
     onVisit?.({
@@ -47,6 +58,8 @@ export function BrowseMediaCard({
       format: item.format,
       year: item.year,
       queuedForFetch: item.queuedForFetch,
+      type: item.type,
+      artist: item.artist,
       visitedAt: Date.now(),
     })
   }
@@ -64,7 +77,12 @@ export function BrowseMediaCard({
         className="flex flex-1 flex-col rounded-2xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
         {/* Cover Image Container */}
-        <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted">
+        <div
+          className={cn(
+            "relative w-full overflow-hidden bg-muted",
+            isSquare ? "aspect-square" : "aspect-[2/3]"
+          )}
+        >
           {item.coverImage && !imageError ? (
             <img
               src={item.coverImage}
@@ -126,6 +144,14 @@ export function BrowseMediaCard({
           >
             {item.title}
           </h3>
+          {item.artist && (
+            <p
+              title={item.artist}
+              className="mt-1 line-clamp-1 text-[11px] text-muted-foreground"
+            >
+              {item.artist}
+            </p>
+          )}
         </div>
       </Link>
 
@@ -136,7 +162,7 @@ export function BrowseMediaCard({
           variant="ghost"
           size="icon-xs"
           onPress={() => {
-            onRemove(item.id)
+            onRemove(item.id, item.type)
           }}
           aria-label={t("removeFromVisited", { title: item.title })}
           className="hover:text-destructive-foreground absolute end-1.5 top-1.5 z-10 size-6 rounded-full bg-background/80 text-muted-foreground opacity-0 backdrop-blur-xs transition-opacity duration-150 group-hover:opacity-100 hover:bg-destructive focus-visible:opacity-100"

@@ -155,9 +155,10 @@ export function ListActionButtons({
     if (isQuickAdding) return
     setIsQuickAdding(true)
 
-    // Optimistically update entry to PLANNING
+    // Optimistically update entry (LISTENING for music, PLANNING for other media)
+    const initialStatus = category === "music" ? "LISTENING" : "PLANNING"
     const optimisticEntry: MediaListEntryData = {
-      status: "PLANNING",
+      status: initialStatus,
       progress: 0,
       score: null,
       notes: null,
@@ -209,10 +210,16 @@ export function ListActionButtons({
             ["quick-add"].post()
           break
         case "music":
-          res = await elysia
-            .user({ username })
-            .lists.music({ id: media.id })
-            ["quick-add"].post()
+          res = await (
+            elysia
+              .user({ username })
+              .lists.music({ id: media.id })
+              ["quick-add"] as any
+          ).post(undefined, {
+            query: {
+              type: media.format === "TRACK" ? "TRACK" : "ALBUM",
+            },
+          })
           break
       }
 
@@ -221,7 +228,8 @@ export function ListActionButtons({
       }
 
       toast.success(
-        res.data?.message || `Added ${media.titlePrimary} to Planning`
+        res.data?.message ||
+          `Added ${media.titlePrimary} to ${category === "music" ? "Listening" : "Planning"}`
       )
     } catch (err: any) {
       // Revert optimistic state

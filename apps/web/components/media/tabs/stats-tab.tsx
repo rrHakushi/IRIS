@@ -4,7 +4,11 @@ import React, { useMemo } from "react"
 import {
   IconChartBar,
   IconClock,
+  IconExternalLink,
+  IconHeadphones,
   IconHeart,
+  IconPlayerPlay,
+  IconRepeat,
   IconStarFilled,
   IconTrendingUp,
   IconUsers,
@@ -266,6 +270,48 @@ export function StatsTab({ media }: StatsTabProps) {
             </div>
           )}
 
+        {/* Local Listeners (Music) */}
+        {media.category === "music" && (
+          <div className="flex flex-col gap-1 rounded-2xl border border-border/40 bg-card p-4">
+            <span className="text-xs text-muted-foreground">Local Listeners</span>
+            <div className="flex items-center gap-1.5 text-xl font-bold text-foreground">
+              <IconHeadphones
+                className="size-5 text-primary"
+                aria-hidden="true"
+              />
+              <span>
+                {typeof media.listeners === "number"
+                  ? media.listeners.toLocaleString()
+                  : "0"}
+              </span>
+            </div>
+            <span className="text-[11px] text-muted-foreground">
+              Unique IRIS users
+            </span>
+          </div>
+        )}
+
+        {/* Local Scrobbles (Music) */}
+        {media.category === "music" && (
+          <div className="flex flex-col gap-1 rounded-2xl border border-border/40 bg-card p-4">
+            <span className="text-xs text-muted-foreground">Local Scrobbles</span>
+            <div className="flex items-center gap-1.5 text-xl font-bold text-foreground">
+              <IconPlayerPlay
+                className="size-5 text-primary"
+                aria-hidden="true"
+              />
+              <span>
+                {typeof media.playCount === "number"
+                  ? media.playCount.toLocaleString()
+                  : "0"}
+              </span>
+            </div>
+            <span className="text-[11px] text-muted-foreground">
+              Total plays tracked
+            </span>
+          </div>
+        )}
+
         {/* Community Engagement */}
         <div className="flex flex-col gap-1 rounded-2xl border border-border/40 bg-card p-4">
           <span className="text-xs text-muted-foreground">Favorites</span>
@@ -285,6 +331,114 @@ export function StatsTab({ media }: StatsTabProps) {
           )}
         </div>
       </div>
+
+      {/* Dedicated Last.fm Engagement Section for Music */}
+      {Boolean(media.lastFmListeners || media.lastFmPlayCount || media.lastFmUrl) && (
+        <section
+          aria-labelledby="lastfm-heading"
+          className="rounded-2xl border border-border/40 bg-card p-5"
+        >
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="flex size-7 items-center justify-center rounded-lg bg-[#D51007]/10 text-[#D51007]">
+                <IconHeadphones className="size-4" aria-hidden="true" />
+              </div>
+              <div className="flex flex-col">
+                <h3
+                  id="lastfm-heading"
+                  className="text-sm font-semibold text-foreground"
+                >
+                  Last.fm Statistics
+                </h3>
+                <span className="text-[11px] text-muted-foreground">
+                  Global streaming metrics and scrobble data
+                </span>
+              </div>
+            </div>
+
+            {media.lastFmUrl && (
+              <a
+                href={media.lastFmUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border/40 bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+              >
+                <span>View on Last.fm</span>
+                <IconExternalLink
+                  className="size-3.5 text-muted-foreground"
+                  aria-hidden="true"
+                />
+              </a>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="flex flex-col gap-1 rounded-xl border border-border/20 bg-muted/20 p-3.5">
+              <span className="text-[11px] font-medium text-muted-foreground">
+                Listeners
+              </span>
+              <span className="text-lg font-bold text-foreground tabular-nums">
+                {media.lastFmListeners ? media.lastFmListeners.toLocaleString() : "0"}
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                Total unique listeners
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-1 rounded-xl border border-border/20 bg-muted/20 p-3.5">
+              <span className="text-[11px] font-medium text-muted-foreground">
+                Scrobbles
+              </span>
+              <span className="text-lg font-bold text-foreground tabular-nums">
+                {media.lastFmPlayCount ? media.lastFmPlayCount.toLocaleString() : "0"}
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                Total scrobbles
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-1 rounded-xl border border-border/20 bg-muted/20 p-3.5">
+              <span className="text-[11px] font-medium text-muted-foreground">
+                Plays per Listener
+              </span>
+              <span className="text-lg font-bold text-foreground tabular-nums">
+                {(() => {
+                  const l = media.lastFmListeners ?? 0
+                  const p = media.lastFmPlayCount ?? 0
+                  if (l > 0 && p > 0) {
+                    return (p / l).toFixed(1)
+                  }
+                  return "—"
+                })()}
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                Average replay rate
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-1 rounded-xl border border-border/20 bg-muted/20 p-3.5">
+              <span className="text-[11px] font-medium text-muted-foreground">
+                Replay Engagement
+              </span>
+              <span className="text-lg font-bold text-foreground tabular-nums">
+                {(() => {
+                  const l = media.lastFmListeners ?? 0
+                  const p = media.lastFmPlayCount ?? 0
+                  const ratio = l > 0 ? p / l : 0
+                  if (ratio >= 20) return "Very High"
+                  if (ratio >= 10) return "High"
+                  if (ratio >= 4) return "Moderate"
+                  if (ratio > 0) return "Normal"
+                  return "—"
+                })()}
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                Listener retention
+              </span>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 2. Status Distribution */}
       {statusData.length > 0 && (

@@ -16,6 +16,7 @@ import {
   IconSparkles,
   IconTrophy,
   IconWorld,
+  IconMicrophone,
 } from "@tabler/icons-react"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
@@ -28,17 +29,24 @@ import type {
   RelationItem,
   SimilarMediaCardItem,
 } from "../media-types"
+import { MusicTracklist } from "../music/music-tracklist"
+import { MusicPlayerPreview } from "../music/music-player-preview"
+import { MusicLyrics } from "../music/music-lyrics"
 
 interface OverviewTabProps {
   media: NormalizedMediaData
   similarList: SimilarMediaCardItem[]
   onViewAllCharacters?: () => void
+  onViewAllTracks?: () => void
+  onViewAllLyrics?: () => void
 }
 
 export function OverviewTab({
   media,
   similarList,
   onViewAllCharacters,
+  onViewAllTracks,
+  onViewAllLyrics,
 }: OverviewTabProps) {
   const { user } = useUser()
   const titlePref = getMediaPreferences(user?.customization).title || "primary"
@@ -591,6 +599,122 @@ export function OverviewTab({
                 </div>
               </section>
             )}
+
+          {/* Music: Audio Preview Player for Tracks */}
+          {media.category === "music" && media.audioPreviewUrl && (
+            <section aria-labelledby="preview-heading" className="flex flex-col gap-2">
+              <MusicPlayerPreview
+                audioUrl={media.audioPreviewUrl}
+                title={media.titlePrimary}
+                artist={media.artist}
+              />
+            </section>
+          )}
+
+          {/* Music: From the Album Card for Tracks */}
+          {media.category === "music" && media.album && media.albumId && (
+            <section aria-labelledby="parent-album-heading" className="flex flex-col gap-2.5">
+              <div className="flex items-center gap-2">
+                <IconDisc className="size-4 text-primary" aria-hidden="true" />
+                <h2
+                  id="parent-album-heading"
+                  className="text-base font-semibold text-foreground"
+                >
+                  From the Album
+                </h2>
+              </div>
+
+              <Link
+                href={`/IRIS-list/media/music/albums/${media.albumId}`}
+                className="group flex items-center justify-between gap-4 rounded-2xl border border-border/40 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:bg-accent/30"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="relative aspect-square size-14 shrink-0 overflow-hidden rounded-xl bg-muted shadow-2xs">
+                    {media.coverImage ? (
+                      <img
+                        src={media.coverImage}
+                        alt={media.album}
+                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-muted-foreground/50">
+                        <IconPhotoOff className="size-5" aria-hidden="true" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex min-w-0 flex-col gap-0.5">
+                    <span className="truncate text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                      {media.album}
+                    </span>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      {media.artist && <span>{media.artist}</span>}
+                      {typeof media.trackNumber === "number" && (
+                        <>
+                          <span>•</span>
+                          <span>Track #{media.trackNumber}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary">
+                  <span className="hidden sm:inline">View Album</span>
+                  <IconArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                </div>
+              </Link>
+            </section>
+          )}
+
+          {/* Music: Album Tracklist Preview for Albums */}
+          {media.category === "music" && media.tracks && media.tracks.length > 0 && (
+            <section aria-labelledby="tracklist-heading" className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <IconDisc className="size-4 text-primary" aria-hidden="true" />
+                  <h2
+                    id="tracklist-heading"
+                    className="text-base font-semibold text-foreground"
+                  >
+                    Tracklist
+                  </h2>
+                  <span className="text-xs text-muted-foreground">
+                    ({media.tracks.length} tracks)
+                  </span>
+                </div>
+                {media.tracks.length > 8 && onViewAllTracks && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onViewAllTracks}
+                    className="h-7 gap-1 text-xs text-primary hover:text-primary/80"
+                  >
+                    <span>View all</span>
+                    <IconArrowRight className="size-3" aria-hidden="true" />
+                  </Button>
+                )}
+              </div>
+
+              <MusicTracklist
+                tracks={media.tracks}
+                albumTitle={media.titlePrimary}
+                albumArtistPersonId={media.artistPersonId}
+                limit={8}
+                onViewAll={onViewAllTracks}
+              />
+            </section>
+          )}
+
+          {/* Music: Lyrics for Tracks */}
+          {media.category === "music" && (media.lyrics || media.syncedLyrics) && (
+            <MusicLyrics
+              lyrics={media.lyrics}
+              syncedLyrics={media.syncedLyrics}
+              title={media.titlePrimary}
+              artist={media.artist}
+            />
+          )}
 
           {/* 2. Featured Characters (MAX 2 next to each other) */}
           {featuredCharacters.length > 0 && (
@@ -1290,6 +1414,103 @@ export function OverviewTab({
                 </div>
               )}
 
+              {/* Music: Artist */}
+              {media.artist && (
+                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                  <span className="shrink-0 text-muted-foreground">Artist</span>
+                  {media.artistPersonId ? (
+                    <Link
+                      href={`/IRIS-list/media/people/${media.artistPersonId}`}
+                      className="text-end font-medium text-primary hover:underline transition-colors"
+                    >
+                      {media.artist}
+                    </Link>
+                  ) : (
+                    <span className="text-end font-medium text-foreground">
+                      {media.artist}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Music: Album (for Tracks) */}
+              {media.album && media.albumId && media.format === "TRACK" && (
+                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                  <span className="shrink-0 text-muted-foreground">Album</span>
+                  <Link
+                    href={`/IRIS-list/media/music/albums/${media.albumId}`}
+                    className="text-end font-medium text-primary hover:underline"
+                  >
+                    {media.album}
+                  </Link>
+                </div>
+              )}
+
+              {/* Music: Track & Disc Number (for Tracks) */}
+              {typeof media.trackNumber === "number" && (
+                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                  <span className="shrink-0 text-muted-foreground">Track</span>
+                  <span className="text-end font-medium text-foreground tabular-nums">
+                    #{media.trackNumber}
+                    {typeof media.discNumber === "number" && media.discNumber > 1
+                      ? ` (Disc ${media.discNumber})`
+                      : ""}
+                  </span>
+                </div>
+              )}
+
+              {/* Music: Total Tracks (for Albums) */}
+              {typeof media.totalTracks === "number" && media.totalTracks > 0 && (
+                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                  <span className="shrink-0 text-muted-foreground">Tracks</span>
+                  <span className="text-end font-medium text-foreground tabular-nums">
+                    {media.totalTracks}
+                  </span>
+                </div>
+              )}
+
+              {/* Music: Duration */}
+              {typeof media.duration === "number" && media.duration > 0 && (
+                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                  <span className="shrink-0 text-muted-foreground">Duration</span>
+                  <span className="text-end font-medium text-foreground tabular-nums font-mono">
+                    {media.duration >= 3600
+                      ? `${Math.floor(media.duration / 3600)}h ${Math.floor((media.duration % 3600) / 60)}m`
+                      : `${Math.floor(media.duration / 60)}m ${media.duration % 60}s`}
+                  </span>
+                </div>
+              )}
+
+              {/* Music: ISRC (for Tracks) */}
+              {media.isrc && (
+                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                  <span className="shrink-0 text-muted-foreground">ISRC</span>
+                  <span className="text-end font-mono text-[11px] text-foreground">
+                    {media.isrc}
+                  </span>
+                </div>
+              )}
+
+              {/* Music: Local Listeners */}
+              {typeof media.listeners === "number" && media.category === "music" && (
+                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                  <span className="shrink-0 text-muted-foreground">Listeners</span>
+                  <span className="text-end font-medium text-foreground tabular-nums">
+                    {media.listeners.toLocaleString()}
+                  </span>
+                </div>
+              )}
+
+              {/* Music: Local Scrobbles */}
+              {typeof media.playCount === "number" && media.category === "music" && (
+                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                  <span className="shrink-0 text-muted-foreground">Scrobbles</span>
+                  <span className="text-end font-medium text-foreground tabular-nums">
+                    {media.playCount.toLocaleString()}
+                  </span>
+                </div>
+              )}
+
               {/* Status */}
               {media.status && (
                 <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
@@ -1637,6 +1858,62 @@ export function OverviewTab({
                 <IconWorld className="size-3.5" aria-hidden="true" />
               </div>
               <div className="flex flex-wrap justify-end gap-1.5 pt-1">
+                {/* Music streaming links */}
+                {media.lastFmUrl && (
+                  <a
+                    href={media.lastFmUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded-lg bg-[#D51007]/10 px-2 py-1 text-[11px] font-medium text-[#D51007] hover:bg-[#D51007]/20"
+                  >
+                    <span>Last.fm</span>
+                    <IconExternalLink className="size-3 opacity-60" aria-hidden="true" />
+                  </a>
+                )}
+                {media.spotifyId && (
+                  <a
+                    href={`https://open.spotify.com/${media.format === "TRACK" ? "track" : "album"}/${media.spotifyId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded-lg bg-[#1DB954]/10 px-2 py-1 text-[11px] font-medium text-[#1DB954] hover:bg-[#1DB954]/20"
+                  >
+                    <span>Spotify</span>
+                    <IconExternalLink className="size-3 opacity-60" aria-hidden="true" />
+                  </a>
+                )}
+                {media.appleMusicId && (
+                  <a
+                    href={`https://music.apple.com/song/${media.appleMusicId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded-lg bg-[#FA243C]/10 px-2 py-1 text-[11px] font-medium text-[#FA243C] hover:bg-[#FA243C]/20"
+                  >
+                    <span>Apple Music</span>
+                    <IconExternalLink className="size-3 opacity-60" aria-hidden="true" />
+                  </a>
+                )}
+                {media.youtubeMusicId && (
+                  <a
+                    href={`https://music.youtube.com/watch?v=${media.youtubeMusicId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded-lg bg-[#FF0000]/10 px-2 py-1 text-[11px] font-medium text-[#FF0000] hover:bg-[#FF0000]/20"
+                  >
+                    <span>YouTube Music</span>
+                    <IconExternalLink className="size-3 opacity-60" aria-hidden="true" />
+                  </a>
+                )}
+                {media.musicBrainzId && (
+                  <a
+                    href={`https://musicbrainz.org/${media.format === "TRACK" ? "recording" : "release-group"}/${media.musicBrainzId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded-lg bg-[#BA478F]/10 px-2 py-1 text-[11px] font-medium text-[#BA478F] hover:bg-[#BA478F]/20"
+                  >
+                    <span>MusicBrainz</span>
+                    <IconExternalLink className="size-3 opacity-60" aria-hidden="true" />
+                  </a>
+                )}
                 {media.siteUrl && (
                   <a
                     href={media.siteUrl}

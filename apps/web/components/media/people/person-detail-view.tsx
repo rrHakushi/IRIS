@@ -5,11 +5,15 @@ import Link from "next/link"
 import {
   IconBriefcase,
   IconClock,
+  IconDisc,
   IconExternalLink,
+  IconHeadphones,
   IconHeart,
   IconMicrophone,
   IconMovie,
+  IconMusic,
   IconPhotoOff,
+  IconPlayerPlay,
   IconUser,
   IconWorld,
 } from "@tabler/icons-react"
@@ -25,6 +29,36 @@ interface PersonDetailViewProps {
 }
 
 type MediaFilterKey = "ALL" | "ANIME" | "MANGA" | "MOVIE" | "TV" | "BOOK"
+type MusicFilterKey = "ALL" | "ALBUMS" | "TRACKS"
+type PersonTab = "DISCOGRAPHY" | "VOICED" | "STAFF"
+
+interface MusicAlbumItem {
+  id: number
+  titlePrimary: string
+  titleSecondary?: string | null
+  titleNative?: string | null
+  coverImage?: string | null
+  albumType?: string | null
+  releaseDateYear?: number | null
+  listeners?: number | null
+  playCount?: number | null
+  role: string
+}
+
+interface MusicTrackItem {
+  id: number
+  titlePrimary: string
+  titleSecondary?: string | null
+  titleNative?: string | null
+  coverImage?: string | null
+  albumId?: number | null
+  albumTitle?: string | null
+  trackNumber?: number | null
+  duration?: number | null
+  listeners?: number | null
+  playCount?: number | null
+  role: string
+}
 
 function formatMediaFormat(format?: string | null, mediaType?: string): string {
   if (!format) {
@@ -64,9 +98,7 @@ function formatMediaFormat(format?: string | null, mediaType?: string): string {
         .replace(/\b\w/g, (c) => c.toUpperCase())
   }
 }
-
 export function PersonDetailView({ person }: PersonDetailViewProps) {
-  const [activeTab, setActiveTab] = useState<"VOICED" | "STAFF">("VOICED")
   const [selectedVoicedMediaType, setSelectedVoicedMediaType] =
     useState<MediaFilterKey>("ALL")
   const [selectedStaffMediaType, setSelectedStaffMediaType] =
@@ -214,6 +246,9 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
     >()
 
     person.mediaStaff.forEach((ms) => {
+      if (ms.mediaType === "MUSIC_ALBUM" || ms.mediaType === "MUSIC_TRACK") {
+        return
+      }
       const type = ms.mediaType.toUpperCase() as
         "ANIME" | "MANGA" | "MOVIE" | "TV" | "BOOK"
       const key = `${type}-${ms.mediaId}-${ms.role}`
@@ -256,6 +291,107 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
 
     return Array.from(map.values())
   }, [person.mediaStaff])
+
+  // Deduplicate and process music releases (Albums & Tracks)
+  const { musicAlbums, musicTracks } = useMemo(() => {
+    const albumMap = new Map<number, MusicAlbumItem>()
+    const trackMap = new Map<number, MusicTrackItem>()
+
+    person.mediaStaff.forEach((ms) => {
+      if (ms.mediaType === "MUSIC_ALBUM" && (ms.album || ms.albumId)) {
+        const id = ms.album?.id || ms.albumId || ms.mediaId
+        if (!albumMap.has(id)) {
+          albumMap.set(id, {
+            id,
+            titlePrimary:
+              ms.album?.titlePrimary || ms.customRole || `Album #${id}`,
+            titleSecondary: ms.album?.titleSecondary,
+            titleNative: ms.album?.titleNative,
+            coverImage: ms.album?.coverImage,
+            albumType: ms.album?.albumType,
+            releaseDateYear: ms.album?.releaseDateYear,
+            listeners: ms.album?.lastFmListenersStat ?? ms.album?.listeners,
+            playCount: ms.album?.lastFmPlayCountStat ?? ms.album?.playCount,
+            role: ms.customRole || ms.role,
+          })
+        }
+      } else if (ms.mediaType === "MUSIC_TRACK" && (ms.track || ms.trackId)) {
+        const id = ms.track?.id || ms.trackId || ms.mediaId
+        if (!trackMap.has(id)) {
+          trackMap.set(id, {
+            id,
+            titlePrimary:
+              ms.track?.titlePrimary || ms.customRole || `Track #${id}`,
+            titleSecondary: ms.track?.titleSecondary,
+            titleNative: ms.track?.titleNative,
+            coverImage: ms.track?.coverImage || ms.track?.album?.coverImage,
+            albumId: ms.track?.albumId,
+            albumTitle: ms.track?.album?.titlePrimary,
+            trackNumber: ms.track?.trackNumber,
+            duration: ms.track?.duration,
+            listeners: ms.track?.lastFmListenersStat ?? ms.track?.listeners,
+            playCount: ms.track?.lastFmPlayCountStat ?? ms.track?.playCount,
+            role: ms.customRole || ms.role,
+          })
+        }
+      }
+    })
+
+    const albums = Array.from(albumMap.values()).sort((a, b) => {
+      if (
+        b.releaseDateYear &&
+        a.releaseDateYear &&
+        b.releaseDateYear !== a.releaseDateYear
+      ) {
+        return b.releaseDateYear - a.releaseDateYear
+      }
+      return a.titlePrimary.localeCompare(b.titlePrimary)
+    })
+
+    const tracks = Array.from(trackMap.values()).sort((a, b) => {
+      const bPlays = b.playCount || b.listeners || 0
+      const aPlays = a.playCount || a.listeners || 0
+      if (bPlays !== aPlays) return bPlays - aPlays
+      return a.titlePrimary.localeCompare(b.titlePrimary)
+    })
+
+    return { musicAlbums: albums, musicTracks: tracks }
+  }, [person.mediaStaff])
+
+  const totalMusicReleases = musicAlbums.length + musicTracks.length
+
+  const defaultTab = useMemo<PersonTab>(() => {
+    if (totalMusicReleases > 0 && deduplicatedVoicedRoles.length === 0) {
+      return "DISCOGRAPHY"
+    }
+    if (deduplicatedVoicedRoles.length > 0) {
+      return "VOICED"
+    }
+    if (totalMusicReleases > 0) {
+      return "DISCOGRAPHY"
+    }
+    return "STAFF"
+  }, [totalMusicReleases, deduplicatedVoicedRoles.length])
+
+  const [activeTab, setActiveTab] = useState<PersonTab>(defaultTab)
+  const [selectedMusicFilter, setSelectedMusicFilter] =
+    useState<MusicFilterKey>("ALL")
+
+  const currentTab = useMemo<PersonTab>(() => {
+    if (activeTab === "DISCOGRAPHY" && totalMusicReleases > 0)
+      return "DISCOGRAPHY"
+    if (activeTab === "VOICED" && deduplicatedVoicedRoles.length > 0)
+      return "VOICED"
+    if (activeTab === "STAFF" && deduplicatedStaffRoles.length > 0)
+      return "STAFF"
+    return defaultTab
+  }, [
+    activeTab,
+    totalMusicReleases,
+    deduplicatedVoicedRoles.length,
+    deduplicatedStaffRoles.length,
+    defaultTab,
+  ])
 
   // Group staff credits by media type
   const staffByType = useMemo(() => {
@@ -351,6 +487,36 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                   <span>{person.favorites.toLocaleString()}</span>
                 </Badge>
               )}
+              {typeof person.lastFmListenersStat === "number" &&
+                person.lastFmListenersStat > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="gap-1 text-[11px] font-semibold text-foreground/80"
+                  >
+                    <IconHeadphones
+                      className="size-3 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                    <span>
+                      {person.lastFmListenersStat.toLocaleString()} Listeners
+                    </span>
+                  </Badge>
+                )}
+              {typeof person.lastFmPlayCountStat === "number" &&
+                person.lastFmPlayCountStat > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="gap-1 text-[11px] font-semibold text-foreground/80"
+                  >
+                    <IconPlayerPlay
+                      className="size-3 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                    <span>
+                      {person.lastFmPlayCountStat.toLocaleString()} Scrobbles
+                    </span>
+                  </Badge>
+                )}
               <FavoriteButton
                 targetId={person.id}
                 type="PERSON"
@@ -382,6 +548,30 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                     aria-hidden="true"
                   />
                   <span>{person.language}</span>
+                </span>
+              )}
+              {musicAlbums.length > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-lg bg-muted px-2 py-0.5 font-medium text-foreground">
+                  <IconDisc
+                    className="size-3 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <span>
+                    {musicAlbums.length}{" "}
+                    {musicAlbums.length === 1 ? "Album" : "Albums"}
+                  </span>
+                </span>
+              )}
+              {musicTracks.length > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-lg bg-muted px-2 py-0.5 font-medium text-foreground">
+                  <IconMusic
+                    className="size-3 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <span>
+                    {musicTracks.length}{" "}
+                    {musicTracks.length === 1 ? "Track" : "Tracks"}
+                  </span>
                 </span>
               )}
               {deduplicatedVoicedRoles.length > 0 && (
@@ -469,6 +659,30 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                 </div>
               )}
 
+              {typeof person.lastFmListenersStat === "number" &&
+                person.lastFmListenersStat > 0 && (
+                  <div className="flex items-start justify-between gap-3 py-1.5 text-xs">
+                    <span className="shrink-0 text-muted-foreground">
+                      Listeners
+                    </span>
+                    <span className="text-end font-medium text-foreground tabular-nums">
+                      {person.lastFmListenersStat.toLocaleString()}
+                    </span>
+                  </div>
+                )}
+
+              {typeof person.lastFmPlayCountStat === "number" &&
+                person.lastFmPlayCountStat > 0 && (
+                  <div className="flex items-start justify-between gap-3 py-1.5 text-xs">
+                    <span className="shrink-0 text-muted-foreground">
+                      Scrobbles
+                    </span>
+                    <span className="text-end font-medium text-foreground tabular-nums">
+                      {person.lastFmPlayCountStat.toLocaleString()}
+                    </span>
+                  </div>
+                )}
+
               {person.nameAlternative && person.nameAlternative.length > 0 && (
                 <div className="flex flex-col gap-1 py-1.5 text-xs">
                   <span className="text-muted-foreground">
@@ -497,12 +711,68 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
             person.tvDBId ||
             person.bangumiId ||
             person.imdbId ||
-            person.tmdbId) && (
+            person.tmdbId ||
+            person.lastFmUrl ||
+            person.spotifyId ||
+            person.musicBrainzId) && (
             <div className="flex flex-col gap-2.5 rounded-2xl border border-border/40 bg-card/60 p-4 text-xs shadow-xs">
               <h3 className="text-[11px] font-semibold tracking-wider text-foreground text-muted-foreground uppercase">
                 External IDs
               </h3>
               <div className="flex flex-col divide-y divide-border/20">
+                {person.lastFmUrl && (
+                  <div className="flex items-center justify-between py-1.5">
+                    <span className="text-muted-foreground">Last.fm</span>
+                    <a
+                      href={person.lastFmUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                    >
+                      <span>Profile</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  </div>
+                )}
+                {person.spotifyId && (
+                  <div className="flex items-center justify-between py-1.5">
+                    <span className="text-muted-foreground">Spotify</span>
+                    <a
+                      href={`https://open.spotify.com/artist/${person.spotifyId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                    >
+                      <span>Artist</span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  </div>
+                )}
+                {person.musicBrainzId && (
+                  <div className="flex items-center justify-between py-1.5">
+                    <span className="text-muted-foreground">MusicBrainz</span>
+                    <a
+                      href={`https://musicbrainz.org/artist/${person.musicBrainzId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                    >
+                      <span className="max-w-[120px] truncate">
+                        {person.musicBrainzId.slice(0, 8)}...
+                      </span>
+                      <IconExternalLink
+                        className="size-3 opacity-60"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  </div>
+                )}
                 {person.anilistId && (
                   <div className="flex items-center justify-between py-1.5">
                     <span className="text-muted-foreground">AniList</span>
@@ -647,16 +917,44 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
             />
           </section>
 
-          {/* Role Mode Toggle (Voiced Roles vs Staff Credits) */}
-          {deduplicatedStaffRoles.length > 0 &&
-            deduplicatedVoicedRoles.length > 0 && (
-              <div className="flex items-center gap-2 border-b border-border/40 pb-2">
+          {/* Tab Switcher (Discography, Voiced Roles, Staff Credits) */}
+          {((totalMusicReleases > 0 ? 1 : 0) +
+            (deduplicatedVoicedRoles.length > 0 ? 1 : 0) +
+            (deduplicatedStaffRoles.length > 0 ? 1 : 0)) > 1 && (
+            <div className="flex items-center gap-2 border-b border-border/40 pb-2">
+              {totalMusicReleases > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("DISCOGRAPHY")}
+                  className={cn(
+                    "inline-flex cursor-pointer items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    currentTab === "DISCOGRAPHY"
+                      ? "bg-primary text-primary-foreground shadow-xs"
+                      : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <IconDisc className="size-3.5" aria-hidden="true" />
+                  <span>Discography</span>
+                  <span
+                    className={cn(
+                      "py-0.2 rounded-full px-1.5 text-[10px] font-bold",
+                      currentTab === "DISCOGRAPHY"
+                        ? "bg-primary-foreground/20 text-primary-foreground"
+                        : "bg-background/80 text-muted-foreground"
+                    )}
+                  >
+                    {totalMusicReleases}
+                  </span>
+                </button>
+              )}
+
+              {deduplicatedVoicedRoles.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setActiveTab("VOICED")}
                   className={cn(
                     "inline-flex cursor-pointer items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    activeTab === "VOICED"
+                    currentTab === "VOICED"
                       ? "bg-primary text-primary-foreground shadow-xs"
                       : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
@@ -666,7 +964,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                   <span
                     className={cn(
                       "py-0.2 rounded-full px-1.5 text-[10px] font-bold",
-                      activeTab === "VOICED"
+                      currentTab === "VOICED"
                         ? "bg-primary-foreground/20 text-primary-foreground"
                         : "bg-background/80 text-muted-foreground"
                     )}
@@ -674,13 +972,15 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                     {deduplicatedVoicedRoles.length}
                   </span>
                 </button>
+              )}
 
+              {deduplicatedStaffRoles.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setActiveTab("STAFF")}
                   className={cn(
                     "inline-flex cursor-pointer items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    activeTab === "STAFF"
+                    currentTab === "STAFF"
                       ? "bg-primary text-primary-foreground shadow-xs"
                       : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
@@ -690,7 +990,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                   <span
                     className={cn(
                       "py-0.2 rounded-full px-1.5 text-[10px] font-bold",
-                      activeTab === "STAFF"
+                      currentTab === "STAFF"
                         ? "bg-primary-foreground/20 text-primary-foreground"
                         : "bg-background/80 text-muted-foreground"
                     )}
@@ -698,11 +998,285 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                     {deduplicatedStaffRoles.length}
                   </span>
                 </button>
-              </div>
-            )}
+              )}
+            </div>
+          )}
 
-          {/* 1. Voiced Roles Section */}
-          {(activeTab === "VOICED" || deduplicatedStaffRoles.length === 0) && (
+          {/* 1. Discography Section */}
+          {currentTab === "DISCOGRAPHY" && totalMusicReleases > 0 && (
+            <section
+              aria-labelledby="discography-heading"
+              className="flex flex-col gap-5"
+            >
+              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2">
+                  <IconDisc
+                    className="size-4 text-primary"
+                    aria-hidden="true"
+                  />
+                  <h2
+                    id="discography-heading"
+                    className="text-base font-semibold text-foreground"
+                  >
+                    Discography ({totalMusicReleases})
+                  </h2>
+                </div>
+
+                {/* Music Filter Pills (All / Albums / Tracks) */}
+                {musicAlbums.length > 0 && musicTracks.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1">
+                    {(
+                      [
+                        { key: "ALL", label: "All", count: totalMusicReleases },
+                        {
+                          key: "ALBUMS",
+                          label: "Albums",
+                          count: musicAlbums.length,
+                        },
+                        {
+                          key: "TRACKS",
+                          label: "Tracks",
+                          count: musicTracks.length,
+                        },
+                      ] as const
+                    ).map((filter) => {
+                      const isSelected = selectedMusicFilter === filter.key
+                      return (
+                        <button
+                          key={filter.key}
+                          type="button"
+                          onClick={() => setSelectedMusicFilter(filter.key)}
+                          className={cn(
+                            "inline-flex cursor-pointer items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            isSelected
+                              ? "bg-primary text-primary-foreground shadow-xs"
+                              : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+                          )}
+                        >
+                          <span>{filter.label}</span>
+                          <span
+                            className={cn(
+                              "py-0.2 rounded-full px-1.5 text-[9px] font-bold",
+                              isSelected
+                                ? "bg-primary-foreground/20 text-primary-foreground"
+                                : "bg-background/80 text-muted-foreground"
+                            )}
+                          >
+                            {filter.count}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Albums Sub-section */}
+              {(selectedMusicFilter === "ALL" ||
+                selectedMusicFilter === "ALBUMS") &&
+                musicAlbums.length > 0 && (
+                  <div className="flex flex-col gap-3">
+                    {selectedMusicFilter === "ALL" &&
+                      musicTracks.length > 0 && (
+                        <div className="flex items-center gap-2 border-b border-border/20 pb-1.5">
+                          <h3 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                            Albums & Releases
+                          </h3>
+                          <span className="py-0.2 rounded-full bg-muted px-2 text-[10px] font-semibold text-muted-foreground tabular-nums">
+                            {musicAlbums.length}
+                          </span>
+                        </div>
+                      )}
+
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4">
+                      {musicAlbums.map((album) => {
+                        const albumHref = `/IRIS-list/media/music/albums/${album.id}`
+                        return (
+                          <Link
+                            key={`album-${album.id}`}
+                            href={albumHref}
+                            className="group flex flex-col overflow-hidden rounded-2xl border border-border/40 bg-card/60 p-2.5 transition-all hover:border-border/80 hover:bg-card hover:shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          >
+                            <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-muted">
+                              {album.coverImage ? (
+                                <img
+                                  src={album.coverImage}
+                                  alt={album.titlePrimary}
+                                  loading="lazy"
+                                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                />
+                              ) : (
+                                <div className="flex h-full w-full items-center justify-center text-muted-foreground/40">
+                                  <IconDisc
+                                    className="size-8"
+                                    aria-hidden="true"
+                                  />
+                                </div>
+                              )}
+                              {album.albumType && (
+                                <div className="absolute top-2 start-2">
+                                  <Badge
+                                    variant="secondary"
+                                    className="bg-background/85 backdrop-blur-xs text-[9px] font-semibold uppercase px-1.5 py-0 shadow-xs"
+                                  >
+                                    {album.albumType}
+                                  </Badge>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex flex-1 flex-col justify-between pt-2.5">
+                              <div>
+                                <h4 className="line-clamp-1 text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
+                                  {album.titlePrimary}
+                                </h4>
+                                {album.titleNative &&
+                                  album.titleNative !== album.titlePrimary && (
+                                    <p className="line-clamp-1 font-japanese text-[10px] text-muted-foreground opacity-80">
+                                      {album.titleNative}
+                                    </p>
+                                  )}
+                              </div>
+
+                              <div className="flex items-center justify-between pt-1 text-[10px] text-muted-foreground">
+                                {album.releaseDateYear ? (
+                                  <span>{album.releaseDateYear}</span>
+                                ) : (
+                                  <span />
+                                )}
+                                {typeof album.listeners === "number" &&
+                                  album.listeners > 0 && (
+                                    <span className="inline-flex items-center gap-1 font-medium tabular-nums">
+                                      <IconHeadphones
+                                        className="size-3 opacity-60"
+                                        aria-hidden="true"
+                                      />
+                                      <span>
+                                        {album.listeners.toLocaleString()}
+                                      </span>
+                                    </span>
+                                  )}
+                              </div>
+                            </div>
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+              {/* Tracks Sub-section */}
+              {(selectedMusicFilter === "ALL" ||
+                selectedMusicFilter === "TRACKS") &&
+                musicTracks.length > 0 && (
+                  <div className="flex flex-col gap-3">
+                    {selectedMusicFilter === "ALL" &&
+                      musicAlbums.length > 0 && (
+                        <div className="flex items-center gap-2 border-b border-border/20 pb-1.5 pt-2">
+                          <h3 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                            Popular Tracks
+                          </h3>
+                          <span className="py-0.2 rounded-full bg-muted px-2 text-[10px] font-semibold text-muted-foreground tabular-nums">
+                            {musicTracks.length}
+                          </span>
+                        </div>
+                      )}
+
+                    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                      {musicTracks.map((track) => {
+                        const trackHref = `/IRIS-list/media/music/tracks/${track.id}`
+                        return (
+                          <div
+                            key={`track-${track.id}`}
+                            className="group flex items-center justify-between gap-3 rounded-2xl border border-border/40 bg-card/60 p-2.5 transition-colors hover:border-border/60 hover:bg-card"
+                          >
+                            <Link
+                              href={trackHref}
+                              className="flex min-w-0 flex-1 items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl"
+                            >
+                              <div className="relative aspect-square w-12 shrink-0 overflow-hidden rounded-xl bg-muted">
+                                {track.coverImage ? (
+                                  <img
+                                    src={track.coverImage}
+                                    alt={track.titlePrimary}
+                                    loading="lazy"
+                                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                                  />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center text-muted-foreground/40">
+                                    <IconMusic
+                                      className="size-5"
+                                      aria-hidden="true"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex min-w-0 flex-1 flex-col">
+                                <span className="truncate text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
+                                  {track.titlePrimary}
+                                </span>
+                                {track.albumTitle && (
+                                  <span className="truncate text-[10px] text-muted-foreground">
+                                    {track.albumTitle}
+                                  </span>
+                                )}
+                                {track.titleNative &&
+                                  track.titleNative !== track.titlePrimary &&
+                                  !track.albumTitle && (
+                                    <span className="truncate font-japanese text-[10px] text-muted-foreground opacity-80">
+                                      {track.titleNative}
+                                    </span>
+                                  )}
+                              </div>
+                            </Link>
+
+                            <div className="flex shrink-0 items-center gap-2.5 text-end text-[11px] text-muted-foreground">
+                              {typeof track.duration === "number" &&
+                                track.duration > 0 && (
+                                  <span className="tabular-nums">
+                                    {Math.floor(track.duration / 60)}:
+                                    {String(track.duration % 60).padStart(
+                                      2,
+                                      "0"
+                                    )}
+                                  </span>
+                                )}
+                              {typeof track.playCount === "number" &&
+                              track.playCount > 0 ? (
+                                <span className="inline-flex items-center gap-0.5 font-medium tabular-nums text-foreground/80">
+                                  <IconPlayerPlay
+                                    className="size-3 opacity-60"
+                                    aria-hidden="true"
+                                  />
+                                  <span>
+                                    {track.playCount.toLocaleString()}
+                                  </span>
+                                </span>
+                              ) : typeof track.listeners === "number" &&
+                                track.listeners > 0 ? (
+                                <span className="inline-flex items-center gap-0.5 font-medium tabular-nums text-foreground/80">
+                                  <IconHeadphones
+                                    className="size-3 opacity-60"
+                                    aria-hidden="true"
+                                  />
+                                  <span>
+                                    {track.listeners.toLocaleString()}
+                                  </span>
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+            </section>
+          )}
+
+          {/* 2. Voiced Roles Section */}
+          {currentTab === "VOICED" && deduplicatedVoicedRoles.length > 0 && (
             <section
               aria-labelledby="voiced-heading"
               className="flex flex-col gap-4"
@@ -896,9 +1470,8 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
             </section>
           )}
 
-          {/* 2. Staff Credits Section */}
-          {(activeTab === "STAFF" || deduplicatedVoicedRoles.length === 0) &&
-            deduplicatedStaffRoles.length > 0 && (
+          {/* 3. Staff Credits Section */}
+          {currentTab === "STAFF" && deduplicatedStaffRoles.length > 0 && (
               <section
                 aria-labelledby="staff-heading"
                 className="flex flex-col gap-4"
@@ -1066,6 +1639,14 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                   </div>
                 )}
               </section>
+            )}
+
+          {totalMusicReleases === 0 &&
+            deduplicatedVoicedRoles.length === 0 &&
+            deduplicatedStaffRoles.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-border/60 p-8 text-center text-sm text-muted-foreground">
+                No roles, credits, or discography found for this person.
+              </div>
             )}
         </div>
       </div>

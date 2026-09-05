@@ -93,8 +93,12 @@ export function useBrowseHistory() {
   }, [])
 
   const removeVisit = useCallback(
-    (category: BrowseCategory, id: number | string) => {
-      removeBrowseVisitFromStore(category, id)
+    (
+      category: BrowseCategory,
+      id: number | string,
+      type?: "TRACK" | "ALBUM"
+    ) => {
+      removeBrowseVisitFromStore(category, id, type)
     },
     []
   )

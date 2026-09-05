@@ -201,6 +201,53 @@ async function fetchRemoteMediaDetails(
     return null
   }
 
+  // 1b. Last.fm: Query via server proxy
+  if (providerKey === "lastfm") {
+    try {
+      const res = await (elysia.connections.search as any).get({
+        query: {
+          provider: "LASTFM",
+          id: strId,
+          type: category === "music" ? "TRACK" : undefined,
+        },
+      })
+
+      if (
+        res.data?.success &&
+        Array.isArray(res.data?.results) &&
+        res.data.results.length > 0
+      ) {
+        const item = res.data.results[0]
+        const coverUrl =
+          item.coverImage?.large ||
+          item.coverImage?.medium ||
+          (typeof item.coverImage === "string" ? item.coverImage : null)
+        const primaryTitle =
+          item.title?.userPreferred ||
+          item.title?.english ||
+          item.title?.romaji ||
+          item.title ||
+          null
+
+        return {
+          title: primaryTitle,
+          cover: coverUrl,
+          coverImage: coverUrl,
+          year: item.releaseYear ?? null,
+          format: item.format ?? null,
+          externalUrl:
+            item.url ||
+            (strId.startsWith("http")
+              ? strId
+              : `https://www.last.fm/music/${strId}`),
+        }
+      }
+    } catch {
+      return null
+    }
+    return null
+  }
+
   const numId = Number(externalId)
   if (!numId || isNaN(numId)) return null
 
@@ -374,13 +421,15 @@ export function MediaListConnectionsTab({
     } else if (category === "game") {
       // External providers disabled for games
     } else if (category === "music") {
+      const lastFmUrl = (media as any).lastFmUrl ?? null
+      const lastFmSlug = lastFmUrl
+        ? lastFmUrl.replace(/^https?:\/\/(www\.)?last\.fm\/music\//i, "")
+        : null
       list.push({
-        key: "spotify",
-        name: "Spotify",
-        detectedId: (media as any).spotifyId ?? null,
-        externalUrl: (media as any).spotifyId
-          ? `https://open.spotify.com/album/${(media as any).spotifyId}`
-          : null,
+        key: "lastfm",
+        name: "Last.fm",
+        detectedId: lastFmSlug || ((media as any).musicBrainzId ?? null),
+        externalUrl: lastFmUrl,
       })
     }
 
@@ -633,7 +682,11 @@ export function MediaListConnectionsTab({
               ? "TV"
               : category === "movie"
                 ? "MOVIE"
-                : "ANIME"
+                : category === "music"
+                  ? media.format === "TRACK"
+                    ? "TRACK"
+                    : "ALBUM"
+                  : "ANIME"
 
         try {
           const res = await (elysia.connections.search as any).get({

@@ -8,6 +8,8 @@ import { OverviewTab } from "./tabs/overview-tab"
 import { CharactersTab } from "./tabs/characters-tab"
 import { StaffTab } from "./tabs/staff-tab"
 import { EpisodesTab } from "./tabs/episodes-tab"
+import { TracksTab } from "./tabs/tracks-tab"
+import { LyricsTab } from "./tabs/lyrics-tab"
 import { ImagesTab } from "./tabs/images-tab"
 import { TrailersTab } from "./tabs/trailers-tab"
 import { StatsTab } from "./tabs/stats-tab"
@@ -48,11 +50,42 @@ export function MediaDetailView({
     const uniqueCharCount = new Set(media.characters.map((c) => c.characterId))
       .size
 
-    const tabs: MediaTabItem[] = [
-      { key: "overview", label: "Overview" },
-      { key: "characters", label: "Characters", count: uniqueCharCount },
-      { key: "staff", label: "Staff", count: media.staff.length },
-    ]
+    const tabs: MediaTabItem[] = [{ key: "overview", label: "Overview" }]
+
+    // Music: Tracks tab for albums
+    if (media.category === "music" && media.tracks && media.tracks.length > 0) {
+      tabs.push({
+        key: "tracks",
+        label: "Tracks",
+        count: media.tracks.length,
+      })
+    }
+
+    // Music: Lyrics tab for tracks
+    if (media.category === "music" && (media.lyrics || media.syncedLyrics)) {
+      tabs.push({
+        key: "lyrics",
+        label: "Lyrics",
+      })
+    }
+
+    // Characters tab (only if characters exist or not music)
+    if (media.category !== "music" || uniqueCharCount > 0) {
+      tabs.push({
+        key: "characters",
+        label: "Characters",
+        count: uniqueCharCount > 0 ? uniqueCharCount : undefined,
+      })
+    }
+
+    // Staff tab
+    if (media.staff.length > 0 || media.category !== "music") {
+      tabs.push({
+        key: "staff",
+        label: media.category === "music" ? "Credits" : "Staff",
+        count: media.staff.length > 0 ? media.staff.length : undefined,
+      })
+    }
 
     // Episodes tab for Anime and TV
     if (media.category === "anime" || media.category === "tv") {
@@ -76,13 +109,17 @@ export function MediaDetailView({
       count: imageCount > 0 ? imageCount : undefined,
     })
 
-    // Trailers tab
-    const trailerCount = media.trailers?.length ?? 0
-    tabs.push({
-      key: "trailers",
-      label: "Trailers",
-      count: trailerCount > 0 ? trailerCount : undefined,
-    })
+    // Trailers tab (only for non-music media with trailers)
+    if (media.category !== "music") {
+      const trailerCount = media.trailers?.length ?? 0
+      if (trailerCount > 0) {
+        tabs.push({
+          key: "trailers",
+          label: "Trailers",
+          count: trailerCount,
+        })
+      }
+    }
 
     // Stats, Reviews, Recommendations
     tabs.push(
@@ -118,6 +155,25 @@ export function MediaDetailView({
             media={media}
             similarList={similarList}
             onViewAllCharacters={() => setActiveTab("characters")}
+            onViewAllTracks={() => setActiveTab("tracks")}
+            onViewAllLyrics={() => setActiveTab("lyrics")}
+          />
+        )}
+
+        {validActiveTab === "tracks" && (
+          <TracksTab
+            tracks={media.tracks ?? []}
+            albumTitle={media.titlePrimary}
+            albumArtistPersonId={media.artistPersonId}
+          />
+        )}
+
+        {validActiveTab === "lyrics" && (
+          <LyricsTab
+            lyrics={media.lyrics}
+            syncedLyrics={media.syncedLyrics}
+            title={media.titlePrimary}
+            artist={media.artist}
           />
         )}
 

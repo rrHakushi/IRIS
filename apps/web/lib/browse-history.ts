@@ -107,6 +107,8 @@ export interface VisitedMediaItem {
   year?: number | string | null
   queuedForFetch?: boolean
   visitedAt: number
+  type?: "TRACK" | "ALBUM"
+  artist?: string | null
 }
 
 export interface CategoryBrowseHistory {
@@ -255,10 +257,16 @@ export function addBrowseVisitToStore(
     format: item.format ?? null,
     year: item.year ?? null,
     visitedAt: item.visitedAt ?? Date.now(),
+    type: item.type,
+    artist: item.artist ?? null,
   }
 
   const existing = catHistory.recentBrowseVisits.filter(
-    (v) => String(v.id) !== String(visitedItem.id)
+    (v) =>
+      !(
+        String(v.id) === String(visitedItem.id) &&
+        (category !== "music" || v.type === visitedItem.type)
+      )
   )
 
   const updatedVisits = [visitedItem, ...existing].slice(0, MAX_RECENT_VISITS)
@@ -305,12 +313,13 @@ export function removeBrowseQueryFromStore(
  */
 export function removeBrowseVisitFromStore(
   category: BrowseCategory,
-  id: number | string
+  id: number | string,
+  type?: "TRACK" | "ALBUM"
 ): BrowseHistoryStore {
   const store = getStoredBrowseHistory()
   const catHistory = store[category] || createEmptyCategoryHistory()
   const updatedVisits = catHistory.recentBrowseVisits.filter(
-    (v) => String(v.id) !== String(id)
+    (v) => !(String(v.id) === String(id) && (!type || v.type === type))
   )
 
   const newStore: BrowseHistoryStore = {

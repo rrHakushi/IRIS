@@ -271,7 +271,7 @@ export function MediaListModal({
 
   // Form State
   const [status, setStatus] = useState<MediaListStatus>(
-    initialEntry?.status || "PLANNING"
+    category === "music" ? "LISTENING" : initialEntry?.status || "PLANNING"
   )
   const [progress, setProgress] = useState<number>(initialEntry?.progress ?? 0)
   const [chaptersProgress, setChaptersProgress] = useState<number>(() => {
@@ -295,7 +295,8 @@ export function MediaListModal({
     formatDateToYmd(initialEntry?.completedAt)
   )
   const [rewatched, setRewatched] = useState<number>(
-    (initialEntry as any)?.reread ??
+    (initialEntry as any)?.playCount ??
+      (initialEntry as any)?.reread ??
       (initialEntry as any)?.replayed ??
       initialEntry?.rewatched ??
       0
@@ -376,17 +377,22 @@ export function MediaListModal({
   const handleRewatchedChange = (newVal: number) => {
     const clamped = Math.max(0, newVal)
     setRewatched(clamped)
+    if (category === "music") {
+      setRewatchHistory([])
+      return
+    }
     if (activeRewatchIdx >= clamped && clamped > 0) {
       setActiveRewatchIdx(clamped - 1)
     }
     setRewatchHistory((prev) => {
       if (clamped === prev.length) return prev
       if (clamped > prev.length) {
+        const today = new Date().toISOString().slice(0, 10)
         const additions: RewatchHistoryItem[] = Array.from(
           { length: clamped - prev.length },
           () => ({
-            startedAt: null,
-            completedAt: null,
+            startedAt: today,
+            completedAt: today,
           })
         )
         return [...prev, ...additions]
@@ -413,7 +419,7 @@ export function MediaListModal({
       setStatusDropdownOpen(false)
       setActiveRewatchIdx(0)
       if (initialEntry) {
-        setStatus(initialEntry.status)
+        setStatus(category === "music" ? "LISTENING" : initialEntry.status)
         const rawChapters =
           initialEntry.chaptersProgress ?? initialEntry.progress ?? 0
         setChaptersProgress(
@@ -433,16 +439,19 @@ export function MediaListModal({
         setStartedAt(formatDateToYmd(initialEntry.startedAt))
         setCompletedAt(formatDateToYmd(initialEntry.completedAt))
         setRewatched(
-          initialEntry.reread ??
+          (initialEntry as any)?.playCount ??
+            initialEntry.reread ??
             initialEntry.replayed ??
             initialEntry.rewatched ??
             0
         )
         setRewatchHistory(
-          (initialEntry.rereadHistory as RewatchHistoryItem[]) ||
-            (initialEntry.replayHistory as RewatchHistoryItem[]) ||
-            (initialEntry.rewatchHistory as RewatchHistoryItem[]) ||
-            []
+          category === "music"
+            ? []
+            : (initialEntry.rereadHistory as RewatchHistoryItem[]) ||
+                (initialEntry.replayHistory as RewatchHistoryItem[]) ||
+                (initialEntry.rewatchHistory as RewatchHistoryItem[]) ||
+                []
         )
         let initialWatched: WatchedEpisodeItem[] =
           initialEntry.watchedEpisodes || []
@@ -839,7 +848,8 @@ export function MediaListModal({
             .lists.music({ id: media.id })
             .put({
               ...commonPayload,
-              progress,
+              status: "LISTENING",
+              playCount: rewatched,
               rewatched,
             } as any)
           break
@@ -1509,8 +1519,8 @@ export function MediaListModal({
               </div>
             </div>
 
-            {/* Card: REPEAT DATES (scrollable, only show 1 at once) */}
-            {rewatched > 0 && (
+            {/* Card: REPEAT DATES (scrollable, only show 1 at once; omitted for music) */}
+            {rewatched > 0 && category !== "music" && (
               <div className="space-y-3 rounded-2xl border border-border bg-card p-4 shadow-xs">
                 <div className="flex items-center justify-between">
                   <label className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">

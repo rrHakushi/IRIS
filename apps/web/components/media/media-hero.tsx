@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
+import Link from "next/link"
 import {
   IconAlertTriangle,
   IconBookmark,
@@ -8,6 +9,7 @@ import {
   IconPlus,
 } from "@tabler/icons-react"
 import { Button } from "@workspace/ui/components/button"
+import { cn } from "@workspace/ui/lib/utils"
 import { useUser } from "@/context/user-context"
 import { getMediaPreferences } from "@IRIS/shared"
 import { formatMediaTitle } from "@/lib/browse-search"
@@ -101,7 +103,14 @@ export function MediaHero({
         <div className="relative -mt-16 pb-2 sm:-mt-20">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
             {/* Poster Image */}
-            <div className="relative aspect-[2/3] w-24 shrink-0 overflow-hidden rounded-xl border-2 border-background/80 bg-muted shadow-md sm:w-32 md:w-36">
+            <div
+              className={cn(
+                "relative shrink-0 overflow-hidden rounded-xl border-2 border-background/80 bg-muted shadow-md",
+                media.category === "music"
+                  ? "aspect-square w-28 sm:w-36 md:w-40"
+                  : "aspect-[2/3] w-24 sm:w-32 md:w-36"
+              )}
+            >
               {media.coverImage && !posterError ? (
                 <img
                   src={media.coverImage}
@@ -129,17 +138,68 @@ export function MediaHero({
                     {mainTitle}
                   </h1>
 
-                  {/* Secondary & Native Titles */}
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                    {subTitle && subTitle !== mainTitle && (
-                      <span>{subTitle}</span>
-                    )}
-                    {nativeTitle && (
-                      <span className="font-japanese opacity-80">
-                        {nativeTitle}
-                      </span>
-                    )}
-                  </div>
+                  {/* Music: Artist and Album info */}
+                  {media.category === "music" ? (
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground pt-0.5">
+                      {media.artist && (
+                        <span className="font-semibold text-foreground/90">
+                          by{" "}
+                          {media.artistPersonId ? (
+                            <Link
+                              href={`/IRIS-list/media/people/${media.artistPersonId}`}
+                              className="text-foreground/90 hover:text-primary hover:underline transition-colors"
+                            >
+                              {media.artist}
+                            </Link>
+                          ) : (
+                            media.artist
+                          )}
+                        </span>
+                      )}
+                      {media.album && media.albumId && media.format === "TRACK" && (
+                        <>
+                          <span>•</span>
+                          <span>
+                            From album{" "}
+                            <Link
+                              href={`/IRIS-list/media/music/albums/${media.albumId}`}
+                              className="font-medium text-primary hover:underline"
+                            >
+                              {media.album}
+                            </Link>
+                          </span>
+                        </>
+                      )}
+                      {media.format && (
+                        <>
+                          <span>•</span>
+                          <span className="capitalize text-muted-foreground">
+                            {media.format.toLowerCase().replace(/_/g, " ")}
+                          </span>
+                        </>
+                      )}
+                      {nativeTitle && (
+                        <>
+                          <span>•</span>
+                          <span className="font-japanese opacity-80">
+                            {nativeTitle}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    /* Secondary & Native Titles */
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                      {subTitle && subTitle !== mainTitle && (
+                        <span>{subTitle}</span>
+                      )}
+                      {nativeTitle && (
+                        <span className="font-japanese opacity-80">
+                          {nativeTitle}
+                        </span>
+                      )}
+                    </div>
+                  )}
 
                   {/* Tagline */}
                   {media.tagline && (

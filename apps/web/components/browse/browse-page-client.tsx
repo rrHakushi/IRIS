@@ -9,6 +9,9 @@ import React, {
 } from "react"
 import { useTranslations } from "next-intl"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
+import { IconMusic, IconDisc } from "@tabler/icons-react"
+import { Button } from "@workspace/ui/components/button"
+import { cn } from "@workspace/ui/lib/utils"
 import {
   type BrowseCategory,
   type VisitedMediaItem,
@@ -27,6 +30,8 @@ import {
 import { useUser } from "@/context/user-context"
 import { getMediaPreferences } from "@IRIS/shared"
 
+type MusicBrowseType = "all" | "tracks" | "albums"
+
 export function BrowsePageClient() {
   const router = useRouter()
   const pathname = usePathname()
@@ -39,8 +44,13 @@ export function BrowsePageClient() {
   const initialCategory = isValidCategory ? urlCategory : "anime"
   const initialQuery = searchParams.get("q") || ""
 
+  const urlType = searchParams.get("type") as MusicBrowseType | null
+  const initialMusicType: MusicBrowseType =
+    urlType === "tracks" || urlType === "albums" ? urlType : "all"
+
   const [activeCategory, setActiveCategory] =
     useState<BrowseCategory>(initialCategory)
+  const [musicType, setMusicType] = useState<MusicBrowseType>(initialMusicType)
 
   const { user } = useUser()
   const mediaTitlePreference =
@@ -78,14 +88,30 @@ export function BrowsePageClient() {
       setSearchQuery("")
       setDebouncedQuery("")
       setSearchResults([])
+      setMusicType("all")
 
-      // Update URL without full reload (clear q when switching category)
+      // Update URL without full reload (clear q, clear type when switching category)
       const params = new URLSearchParams(searchParams.toString())
       params.set("category", category)
       params.delete("q")
+      params.delete("type")
       router.replace(`${pathname}?${params.toString()}`, { scroll: false })
     },
     [activeCategory, pathname, router, searchParams]
+  )
+
+  const handleSelectMusicType = useCallback(
+    (type: MusicBrowseType) => {
+      setMusicType(type)
+      const params = new URLSearchParams(searchParams.toString())
+      if (type === "all") {
+        params.delete("type")
+      } else {
+        params.set("type", type)
+      }
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+    },
+    [pathname, router, searchParams]
   )
 
   // Debounce search query changes (500ms)
@@ -114,9 +140,16 @@ export function BrowsePageClient() {
   useEffect(() => {
     const catParam = searchParams.get("category") as BrowseCategory
     const qParam = searchParams.get("q") || ""
+    const typeParam = searchParams.get("type") as MusicBrowseType | null
 
     if (catParam && BROWSE_CATEGORIES.some((c) => c.key === catParam)) {
       setActiveCategory((prev) => (prev !== catParam ? catParam : prev))
+    }
+
+    if (typeParam === "tracks" || typeParam === "albums") {
+      setMusicType(typeParam)
+    } else if (!typeParam) {
+      setMusicType("all")
     }
 
     if (qParam !== debouncedQuery) {
@@ -221,6 +254,59 @@ export function BrowsePageClient() {
             isLoading={isSearching}
           />
 
+          {/* Music-specific sub-type selector: All, Tracks, Albums */}
+          {activeCategory === "music" && (
+            <div className="flex items-center gap-1.5 pt-0.5">
+              <div
+                role="radiogroup"
+                aria-label={t("filterByType")}
+                className="inline-flex items-center gap-1 rounded-2xl bg-muted/60 p-1 text-xs font-medium text-muted-foreground backdrop-blur-xs"
+              >
+                <Button
+                  variant={musicType === "all" ? "default" : "ghost"}
+                  size="xs"
+                  onPress={() => handleSelectMusicType("all")}
+                  className={cn(
+                    "rounded-xl px-3 py-1 text-xs font-medium transition-all select-none",
+                    musicType === "all"
+                      ? "bg-primary text-primary-foreground shadow-xs shadow-primary/20"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <span>{t("all")}</span>
+                </Button>
+                <Button
+                  variant={musicType === "tracks" ? "default" : "ghost"}
+                  size="xs"
+                  onPress={() => handleSelectMusicType("tracks")}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-xl px-3 py-1 text-xs font-medium transition-all select-none",
+                    musicType === "tracks"
+                      ? "bg-primary text-primary-foreground shadow-xs shadow-primary/20"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <IconMusic className="size-3.5" aria-hidden="true" />
+                  <span>{t("tracks")}</span>
+                </Button>
+                <Button
+                  variant={musicType === "albums" ? "default" : "ghost"}
+                  size="xs"
+                  onPress={() => handleSelectMusicType("albums")}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-xl px-3 py-1 text-xs font-medium transition-all select-none",
+                    musicType === "albums"
+                      ? "bg-primary text-primary-foreground shadow-xs shadow-primary/20"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <IconDisc className="size-3.5" aria-hidden="true" />
+                  <span>{t("albums")}</span>
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* 5 Recent Search Queries & Clear Actions */}
           <BrowseRecentQueries
             queries={isLoaded ? currentCategoryHistory.recentBrowseQueries : []}
@@ -244,6 +330,7 @@ export function BrowsePageClient() {
             categoryLabel={categoryLabel}
             isLoading={isSearching}
             onVisit={handleVisit}
+            musicType={musicType}
           />
         ) : (
           <BrowseVisitedGrid
@@ -251,7 +338,8 @@ export function BrowsePageClient() {
             category={activeCategory}
             categoryLabel={categoryLabel}
             onVisit={handleVisit}
-            onRemove={(id) => removeVisit(activeCategory, id)}
+            onRemove={(id, type) => removeVisit(activeCategory, id, type)}
+            musicType={musicType}
           />
         )}
       </main>

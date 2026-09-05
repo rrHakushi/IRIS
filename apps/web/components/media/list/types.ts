@@ -26,13 +26,21 @@ export function toCanonicalCategory(
   if (normalized === "games") return "game"
   if (normalized === "books") return "book"
   if (
+    normalized === "music_album" ||
+    normalized === "music_track" ||
+    normalized === "album" ||
+    normalized === "track" ||
+    normalized.startsWith("music")
+  ) {
+    return "music"
+  }
+  if (
     normalized === "anime" ||
     normalized === "manga" ||
     normalized === "movie" ||
     normalized === "tv" ||
     normalized === "game" ||
-    normalized === "book" ||
-    normalized === "music"
+    normalized === "book"
   ) {
     return normalized
   }
@@ -79,6 +87,17 @@ export function getInProgressStatus(
 export function getAvailableStatuses(
   category: CanonicalMediaCategory
 ): StatusConfig[] {
+  if (category === "music") {
+    return [
+      {
+        value: "LISTENING",
+        label: "Listening",
+        color: "primary",
+        badgeClass: "border-primary/40 bg-primary/10 text-primary",
+      },
+    ]
+  }
+
   const inProgress = getInProgressStatus(category)
 
   const inProgressLabels: Record<MediaListStatus, string> = {
