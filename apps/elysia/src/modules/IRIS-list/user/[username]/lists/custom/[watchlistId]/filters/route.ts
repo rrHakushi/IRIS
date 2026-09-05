@@ -89,10 +89,20 @@ export default defineRoute({
             genres: { select: { name: true } },
           },
         },
-        music: {
+        album: {
           select: {
+            status: true,
             releaseDateYear: true,
             genres: { select: { name: true } },
+          },
+        },
+        track: {
+          select: {
+            status: true,
+            genres: { select: { name: true } },
+            album: {
+              select: { releaseDateYear: true },
+            },
           },
         },
       },
@@ -100,7 +110,14 @@ export default defineRoute({
 
     const items = entries.map((e) => {
       const media =
-        e.anime || e.manga || e.movie || e.tv || e.game || e.book || e.music
+        e.anime ||
+        e.manga ||
+        e.movie ||
+        e.tv ||
+        e.game ||
+        e.book ||
+        e.album ||
+        e.track
       return {
         status: e.mediaType,
         media,

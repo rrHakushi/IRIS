@@ -99,9 +99,9 @@ export async function queueGameFetch(
 }
 
 /**
- * 7. Queues a music fetch/update job using MusicBrainz (for metadata) and LRCLIB (for lyrics).
+ * 7. Queues a music fetch/update job using Last.fm and LRCLIB.
  *
- * @param id - MusicBrainz Recording MBID
+ * @param id - MusicBrainz Recording MBID, local ID, or "artist:::track"
  * @param options - Optional queueing configuration
  */
 export async function queueMusicFetch(
@@ -109,6 +109,26 @@ export async function queueMusicFetch(
   options?: QueueJobOptions
 ): Promise<MediaJob> {
   return await mediaQueueService.enqueueJob("MUSIC", id, options)
+}
+
+/**
+ * Queues a music album fetch/update job using Last.fm and MusicBrainz.
+ */
+export async function queueMusicAlbumFetch(
+  idOrKey: string | number,
+  options?: QueueJobOptions
+): Promise<MediaJob> {
+  return await mediaQueueService.enqueueJob("MUSIC_ALBUM", idOrKey, options)
+}
+
+/**
+ * Queues a music track fetch/update job using Last.fm and LRCLIB.
+ */
+export async function queueMusicTrackFetch(
+  idOrKey: string | number,
+  options?: QueueJobOptions
+): Promise<MediaJob> {
+  return await mediaQueueService.enqueueJob("MUSIC_TRACK", idOrKey, options)
 }
 
 /**

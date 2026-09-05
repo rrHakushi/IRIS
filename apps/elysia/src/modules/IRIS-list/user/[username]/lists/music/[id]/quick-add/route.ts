@@ -13,16 +13,21 @@ export default defineRoute({
       username: t.String(),
       id: t.Number({ minimum: 1, description: "Music ID" }),
     }),
+    query: t.Optional(
+      t.Object({
+        type: t.Optional(t.Union([t.Literal("TRACK"), t.Literal("ALBUM")])),
+      })
+    ),
     response: {
       200: QuickAddResponseSchema,
     },
     detail: {
-      summary: "Quick add music to list with status PLANNING",
+      summary: "Quick add music to list with status LISTENING",
       tags: ["Lists - Music"],
     },
   },
 
-  async POST({ params, prisma, session }) {
+  async POST({ params, query, prisma, session }) {
     requireAuth(session)
     const { dbUser, isOwner } = await resolveTargetUserAndAccess(
       prisma,
@@ -32,21 +37,31 @@ export default defineRoute({
     assertIsOwner(isOwner, params.username)
 
     const id = Number(params.id)
+    const targetType = (query as any)?.type as "TRACK" | "ALBUM" | undefined
 
-    const music = await prisma.music.findUnique({
-      where: { id },
-      select: { id: true },
-    })
-    if (!music) {
+    let track: { id: number } | null = null
+    let album: { id: number } | null = null
+
+    if (targetType === "ALBUM") {
+      album = await prisma.musicAlbum.findUnique({ where: { id }, select: { id: true } })
+    } else if (targetType === "TRACK") {
+      track = await prisma.musicTrack.findUnique({ where: { id }, select: { id: true } })
+    } else {
+      ;[track, album] = await Promise.all([
+        prisma.musicTrack.findUnique({ where: { id }, select: { id: true } }),
+        prisma.musicAlbum.findUnique({ where: { id }, select: { id: true } }),
+      ])
+    }
+
+    if (!track && !album) {
       throw new NotFound(`Music with ID ${id} does not exist`)
     }
 
-    const existing = await prisma.musicList.findUnique({
+    const isAlbum = targetType ? targetType === "ALBUM" : album && !track ? true : false
+    const existing = await prisma.musicList.findFirst({
       where: {
-        userId_musicId: {
-          userId: dbUser.id,
-          musicId: id,
-        },
+        userId: dbUser.id,
+        ...(isAlbum ? { albumId: (album || { id }).id } : { trackId: (track || { id }).id }),
       },
     })
 
@@ -61,8 +76,9 @@ export default defineRoute({
     const created = await prisma.musicList.create({
       data: {
         userId: dbUser.id,
-        musicId: id,
-        status: "PLANNING",
+        itemType: isAlbum ? "ALBUM" : "TRACK",
+        ...(isAlbum ? { albumId: (album || { id }).id } : { trackId: (track || { id }).id }),
+        status: "LISTENING",
         playCount: 0,
       },
     })
@@ -70,10 +86,11 @@ export default defineRoute({
     return {
       success: true,
       alreadyExists: false,
-      message: "Added music to list with status PLANNING",
+      message: "Added music to list with status LISTENING",
       entry: {
         id: created.id,
-        musicId: created.musicId,
+        musicId: id,
+        itemType: created.itemType,
         status: created.status,
         playCount: created.playCount,
         createdAt: created.createdAt.toISOString(),

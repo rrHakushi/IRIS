@@ -36,6 +36,8 @@ export default defineRoute({
             t.Literal("GAME"),
             t.Literal("BOOK"),
             t.Literal("MUSIC"),
+            t.Literal("MUSIC_ALBUM"),
+            t.Literal("MUSIC_TRACK"),
           ])
         ),
         mediaId: t.Optional(t.Number({ minimum: 1 })),
@@ -96,7 +98,10 @@ export default defineRoute({
           ? {
               entries: {
                 where: {
-                  mediaType: query.mediaType as MediaType,
+                  mediaType:
+                    query.mediaType === "MUSIC"
+                      ? { in: ["MUSIC_ALBUM", "MUSIC_TRACK"] }
+                      : (query.mediaType as MediaType),
                   mediaId: Number(query.mediaId),
                 },
                 select: { id: true },

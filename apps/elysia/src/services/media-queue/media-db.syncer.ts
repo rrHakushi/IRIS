@@ -25,6 +25,11 @@ import type {
 import type { MusicBrainzRecordingPayload } from "./providers/musicbrainz.provider.js"
 import type { LrcLibLyricsPayload } from "./providers/lrclib.provider.js"
 import type {
+  LastFmAlbumInfo,
+  LastFmTrackInfo,
+  LastFmArtistInfo,
+} from "./providers/lastfm.provider.js"
+import type {
   DiscoveredRelation,
   MediaJobType,
   AnimeSearchResult,
@@ -107,6 +112,27 @@ export class MediaDbSyncer {
       (record.igdbUpdatedAt === null || record.igdbUpdatedAt === 0)
     )
       return true
+    if (
+      (mediaType === "MUSIC" ||
+        mediaType === "MUSIC_ALBUM" ||
+        mediaType === "MUSIC_TRACK") &&
+      ((record as any).lastFmUpdatedAt === null ||
+        (record as any).lastFmUpdatedAt === 0) &&
+      ((record as any).musicBrainzUpdatedAt === null ||
+        (record as any).musicBrainzUpdatedAt === 0)
+    )
+      return true
+
+    // If a music track has neither description nor lyrics nor lastfm listeners stat, it is an unhydrated stub
+    if (
+      (mediaType === "MUSIC" || mediaType === "MUSIC_TRACK") &&
+      !(record as any).description &&
+      !(record as any).lyrics &&
+      (!(record as any).lastFmListenersStat ||
+        (record as any).lastFmListenersStat === 0)
+    ) {
+      return true
+    }
 
     if (!record.updatedAt) return true
 
@@ -653,7 +679,244 @@ export class MediaDbSyncer {
   }
 
   /**
-   * Upserts a lightweight search preview stub for Music and returns the search result record.
+   * Upserts a lightweight search preview stub for Music Album and returns the search result record.
+   */
+  async upsertMusicAlbumSearchPreview(item: {
+    titlePrimary: string
+    artistName?: string | null
+    coverImage?: string | null
+    lastFmUrl?: string | null
+    musicBrainzId?: string | null
+  }): Promise<MusicSearchResult> {
+    const titlePrimary = item.titlePrimary.trim() || "Unknown Album"
+    const artist = item.artistName?.trim() || null
+
+    let existing: any = null
+    if (item.musicBrainzId) {
+      existing = await prisma.musicAlbum.findUnique({
+        where: { musicBrainzId: item.musicBrainzId },
+        select: {
+          id: true,
+          titlePrimary: true,
+          titleSecondary: true,
+          artistName: true,
+          coverImage: true,
+          duration: true,
+          totalTracks: true,
+        },
+      })
+    }
+    if (!existing && artist) {
+      existing = await prisma.musicAlbum.findFirst({
+        where: {
+          titlePrimary: { equals: titlePrimary, mode: "insensitive" },
+          artistName: { equals: artist, mode: "insensitive" },
+        },
+        select: {
+          id: true,
+          titlePrimary: true,
+          titleSecondary: true,
+          artistName: true,
+          coverImage: true,
+          duration: true,
+          totalTracks: true,
+        },
+      })
+    }
+    if (existing) {
+      return {
+        id: existing.id,
+        itemType: "ALBUM",
+        titlePrimary: existing.titlePrimary,
+        titleSecondary: existing.titleSecondary,
+        artist: existing.artistName,
+        artistName: existing.artistName,
+        coverImage: existing.coverImage,
+        duration: existing.duration,
+        totalTracks: existing.totalTracks,
+      }
+    }
+
+    const created = await prisma.musicAlbum.create({
+      data: {
+        musicBrainzId: item.musicBrainzId,
+        lastFmUrl: item.lastFmUrl,
+        titlePrimary,
+        artistName: artist,
+        coverImage: item.coverImage,
+        lastFmUpdatedAt: null,
+        musicBrainzUpdatedAt: null,
+      },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        artistName: true,
+        coverImage: true,
+        duration: true,
+        totalTracks: true,
+      },
+    })
+
+    if (artist) {
+      const person = await this.upsertArtist({ namePrimary: artist })
+      await prisma.mediaStaff.upsert({
+        where: {
+          mediaType_mediaId_personId_role: {
+            mediaType: "MUSIC_ALBUM",
+            mediaId: created.id,
+            personId: person.id,
+            role: "ARTIST",
+          },
+        },
+        update: { albumId: created.id },
+        create: {
+          mediaType: "MUSIC_ALBUM",
+          mediaId: created.id,
+          albumId: created.id,
+          personId: person.id,
+          role: "ARTIST",
+        },
+      }).catch(() => {})
+    }
+
+    return {
+      id: created.id,
+      itemType: "ALBUM",
+      titlePrimary: created.titlePrimary,
+      titleSecondary: created.titleSecondary,
+      artist: created.artistName,
+      artistName: created.artistName,
+      coverImage: created.coverImage,
+      duration: created.duration,
+      totalTracks: created.totalTracks,
+    }
+  }
+
+  /**
+   * Upserts a lightweight search preview stub for Music Track and returns the search result record.
+   */
+  async upsertMusicTrackSearchPreview(item: {
+    titlePrimary: string
+    artistName?: string | null
+    albumTitle?: string | null
+    coverImage?: string | null
+    lastFmUrl?: string | null
+    musicBrainzId?: string | null
+    duration?: number | null
+  }): Promise<MusicSearchResult> {
+    const titlePrimary = item.titlePrimary.trim() || "Unknown Track"
+    const artist = item.artistName?.trim() || null
+
+    let existing: any = null
+    if (item.musicBrainzId) {
+      existing = await prisma.musicTrack.findUnique({
+        where: { musicBrainzId: item.musicBrainzId },
+        select: {
+          id: true,
+          titlePrimary: true,
+          titleSecondary: true,
+          artistName: true,
+          coverImage: true,
+          duration: true,
+          albumId: true,
+          album: { select: { id: true, titlePrimary: true } },
+        },
+      })
+    }
+    if (!existing && artist) {
+      existing = await prisma.musicTrack.findFirst({
+        where: {
+          titlePrimary: { equals: titlePrimary, mode: "insensitive" },
+          artistName: { equals: artist, mode: "insensitive" },
+        },
+        select: {
+          id: true,
+          titlePrimary: true,
+          titleSecondary: true,
+          artistName: true,
+          coverImage: true,
+          duration: true,
+          albumId: true,
+          album: { select: { id: true, titlePrimary: true } },
+        },
+      })
+    }
+    if (existing) {
+      return {
+        id: existing.id,
+        itemType: "TRACK",
+        titlePrimary: existing.titlePrimary,
+        titleSecondary: existing.titleSecondary,
+        artist: existing.artistName,
+        artistName: existing.artistName,
+        coverImage: existing.coverImage,
+        duration: existing.duration,
+        albumId: existing.albumId,
+        albumTitle: existing.album?.titlePrimary || null,
+      }
+    }
+
+    const created = await prisma.musicTrack.create({
+      data: {
+        musicBrainzId: item.musicBrainzId,
+        lastFmUrl: item.lastFmUrl,
+        titlePrimary,
+        artistName: artist,
+        coverImage: item.coverImage,
+        duration: item.duration,
+        lastFmUpdatedAt: null,
+        musicBrainzUpdatedAt: null,
+      },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        artistName: true,
+        coverImage: true,
+        duration: true,
+        albumId: true,
+      },
+    })
+
+    if (artist) {
+      const person = await this.upsertArtist({ namePrimary: artist })
+      await prisma.mediaStaff.upsert({
+        where: {
+          mediaType_mediaId_personId_role: {
+            mediaType: "MUSIC_TRACK",
+            mediaId: created.id,
+            personId: person.id,
+            role: "ARTIST",
+          },
+        },
+        update: { trackId: created.id },
+        create: {
+          mediaType: "MUSIC_TRACK",
+          mediaId: created.id,
+          trackId: created.id,
+          personId: person.id,
+          role: "ARTIST",
+        },
+      }).catch(() => {})
+    }
+
+    return {
+      id: created.id,
+      itemType: "TRACK",
+      titlePrimary: created.titlePrimary,
+      titleSecondary: created.titleSecondary,
+      artist: created.artistName,
+      artistName: created.artistName,
+      coverImage: created.coverImage,
+      duration: created.duration,
+      albumId: created.albumId,
+      albumTitle: item.albumTitle || null,
+    }
+  }
+
+  /**
+   * Legacy wrapper: upserts a lightweight search preview stub from MusicBrainz recording.
    */
   async upsertMusicSearchPreview(
     item: MusicBrainzRecordingPayload
@@ -662,38 +925,14 @@ export class MediaDbSyncer {
     const artist = item["artist-credit"]?.map((a) => a.name).join(", ") || null
     const duration = item.length ? Math.round(item.length / 1000) : null
 
-    const existing = await prisma.music.findUnique({
-      where: { musicBrainzId: item.id },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        artist: true,
-        coverImage: true,
-        duration: true,
-      },
+    return await this.upsertMusicTrackSearchPreview({
+      titlePrimary,
+      artistName: artist,
+      albumTitle: item.releases?.[0]?.title,
+      coverImage: item.coverImageUrl,
+      musicBrainzId: item.id,
+      duration,
     })
-    if (existing) return existing
-
-    const created = await prisma.music.create({
-      data: {
-        musicBrainzId: item.id,
-        titlePrimary,
-        artist,
-        duration,
-        musicBrainzUpdatedAt: null,
-      },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        artist: true,
-        coverImage: true,
-        duration: true,
-      },
-    })
-
-    return created
   }
 
   /**
@@ -873,6 +1112,103 @@ export class MediaDbSyncer {
         language: data.language,
       },
     })
+  }
+
+  /**
+   * Upserts or finds a Person record for a musical Artist.
+   */
+  public async upsertArtist(data: {
+    namePrimary: string
+    musicBrainzId?: string
+    lastFmUrl?: string
+    spotifyId?: string
+    image?: string
+    images?: any
+    description?: string
+    lastFmListenersStat?: number
+    lastFmPlayCountStat?: number
+  }): Promise<{ id: number; namePrimary: string }> {
+    const name = data.namePrimary?.trim() || "Unknown Artist"
+
+    // 1. Try finding by musicBrainzId
+    if (data.musicBrainzId) {
+      const existing = await prisma.person.findUnique({
+        where: { musicBrainzId: data.musicBrainzId },
+      })
+      if (existing) {
+        const updated = await prisma.person.update({
+          where: { id: existing.id },
+          data: {
+            lastFmUrl: existing.lastFmUrl || data.lastFmUrl,
+            spotifyId: existing.spotifyId || data.spotifyId,
+            image: existing.image || data.image,
+            description: existing.description || data.description,
+            lastFmListenersStat: data.lastFmListenersStat ?? existing.lastFmListenersStat,
+            lastFmPlayCountStat: data.lastFmPlayCountStat ?? existing.lastFmPlayCountStat,
+          },
+        })
+        return { id: updated.id, namePrimary: updated.namePrimary }
+      }
+    }
+
+    // 2. Try finding by lastFmUrl
+    if (data.lastFmUrl) {
+      const existing = await prisma.person.findUnique({
+        where: { lastFmUrl: data.lastFmUrl },
+      })
+      if (existing) {
+        const updated = await prisma.person.update({
+          where: { id: existing.id },
+          data: {
+            musicBrainzId: existing.musicBrainzId || data.musicBrainzId,
+            spotifyId: existing.spotifyId || data.spotifyId,
+            image: existing.image || data.image,
+            description: existing.description || data.description,
+            lastFmListenersStat: data.lastFmListenersStat ?? existing.lastFmListenersStat,
+            lastFmPlayCountStat: data.lastFmPlayCountStat ?? existing.lastFmPlayCountStat,
+          },
+        })
+        return { id: updated.id, namePrimary: updated.namePrimary }
+      }
+    }
+
+    // 3. Match by namePrimary case-insensitively
+    const existingByName = await prisma.person.findFirst({
+      where: {
+        namePrimary: { equals: name, mode: "insensitive" },
+      },
+    })
+    if (existingByName) {
+      const updated = await prisma.person.update({
+        where: { id: existingByName.id },
+        data: {
+          musicBrainzId: existingByName.musicBrainzId || data.musicBrainzId,
+          lastFmUrl: existingByName.lastFmUrl || data.lastFmUrl,
+          spotifyId: existingByName.spotifyId || data.spotifyId,
+          image: existingByName.image || data.image,
+          description: existingByName.description || data.description,
+          lastFmListenersStat: data.lastFmListenersStat ?? existingByName.lastFmListenersStat,
+          lastFmPlayCountStat: data.lastFmPlayCountStat ?? existingByName.lastFmPlayCountStat,
+        },
+      })
+      return { id: updated.id, namePrimary: updated.namePrimary }
+    }
+
+    // 4. Create new Person
+    const created = await prisma.person.create({
+      data: {
+        namePrimary: name,
+        musicBrainzId: data.musicBrainzId,
+        lastFmUrl: data.lastFmUrl,
+        spotifyId: data.spotifyId,
+        image: data.image,
+        images: data.images,
+        description: data.description,
+        lastFmListenersStat: data.lastFmListenersStat || 0,
+        lastFmPlayCountStat: data.lastFmPlayCountStat || 0,
+      },
+    })
+    return { id: created.id, namePrimary: created.namePrimary }
   }
 
   /**
@@ -3543,56 +3879,492 @@ export class MediaDbSyncer {
   }
 
   /**
-   * Upserts Music record with lyrics, tags, genres, and metadata using LOCAL IDs.
+   * Upserts a MusicAlbum record along with its tracks, artist credits via MediaStaff, tags, and genres.
+   */
+  async upsertMusicAlbum(albumData: {
+    titlePrimary: string
+    titleSecondary?: string | null
+    titleNative?: string | null
+    artistName?: string | null
+    musicBrainzId?: string | null
+    lastFmUrl?: string | null
+    spotifyId?: string | null
+    appleMusicId?: string | null
+    barcode?: string | null
+    coverImage?: string | null
+    bannerImage?: string | null
+    images?: any
+    description?: string | null
+    albumType?: any
+    releaseDate?: Date | null
+    releaseDateYear?: number | null
+    releaseDateMonth?: number | null
+    releaseDateDay?: number | null
+    totalTracks?: number | null
+    duration?: number | null
+    status?: any
+    lastFmListenersStat?: number | null
+    lastFmPlayCountStat?: number | null
+    sources?: Record<string, unknown>
+    tags?: Array<string | { name: string; category?: string }>
+    genres?: string[]
+    tracks?: Array<{
+      titlePrimary: string
+      titleSecondary?: string | null
+      titleNative?: string | null
+      trackNumber?: number | null
+      discNumber?: number | null
+      duration?: number | null
+      artistName?: string | null
+      lastFmUrl?: string | null
+      musicBrainzId?: string | null
+      spotifyId?: string | null
+      audioPreviewUrl?: string | null
+      lyrics?: string | null
+      syncedLyrics?: string | null
+    }>
+    artists?: Array<{
+      namePrimary: string
+      musicBrainzId?: string | null
+      lastFmUrl?: string | null
+      spotifyId?: string | null
+      image?: string | null
+      description?: string | null
+      lastFmListenersStat?: number | null
+      lastFmPlayCountStat?: number | null
+      role?: any
+    }>
+  }): Promise<{ id: number; trackIds: number[] }> {
+    let existing: any = null
+    if (albumData.musicBrainzId) {
+      existing = await prisma.musicAlbum.findUnique({
+        where: { musicBrainzId: albumData.musicBrainzId },
+      })
+    }
+    if (!existing && albumData.titlePrimary && albumData.artistName) {
+      existing = await prisma.musicAlbum.findFirst({
+        where: {
+          titlePrimary: { equals: albumData.titlePrimary, mode: "insensitive" },
+          artistName: { equals: albumData.artistName, mode: "insensitive" },
+        },
+      })
+    }
+
+    const genreRecords = await this.upsertGenres(albumData.genres)
+    const tagRecords = await this.upsertTags(albumData.tags)
+
+    const data: any = {
+      titlePrimary: albumData.titlePrimary.trim() || "Unknown Album",
+      titleSecondary: albumData.titleSecondary,
+      titleNative: albumData.titleNative,
+      artistName: albumData.artistName,
+      musicBrainzId: albumData.musicBrainzId,
+      lastFmUrl: albumData.lastFmUrl,
+      spotifyId: albumData.spotifyId,
+      appleMusicId: albumData.appleMusicId,
+      barcode: albumData.barcode,
+      coverImage: albumData.coverImage,
+      bannerImage: albumData.bannerImage || albumData.coverImage,
+      images: albumData.images,
+      description: albumData.description,
+      albumType: albumData.albumType || "ALBUM",
+      releaseDate: albumData.releaseDate,
+      releaseDateYear: albumData.releaseDateYear,
+      releaseDateMonth: albumData.releaseDateMonth,
+      releaseDateDay: albumData.releaseDateDay,
+      totalTracks: albumData.totalTracks || albumData.tracks?.length,
+      duration: albumData.duration,
+      status: albumData.status || "RELEASED",
+      lastFmListenersStat: albumData.lastFmListenersStat ?? 0,
+      lastFmPlayCountStat: albumData.lastFmPlayCountStat ?? 0,
+      sources: albumData.sources || {},
+      lastFmUpdatedAt: Math.floor(Date.now() / 1000),
+      genres: existing ? { set: genreRecords } : { connect: genreRecords },
+      tags: existing ? { set: tagRecords } : { connect: tagRecords },
+    }
+
+    let album: { id: number }
+    if (existing) {
+      album = await prisma.musicAlbum.update({
+        where: { id: existing.id },
+        data,
+      })
+    } else {
+      album = await prisma.musicAlbum.create({
+        data,
+      })
+    }
+
+    // Artist credits & MediaStaff
+    const artistList = albumData.artists?.length
+      ? albumData.artists
+      : albumData.artistName
+        ? [{ namePrimary: albumData.artistName, role: "ARTIST" as const }]
+        : []
+
+    for (const art of artistList) {
+      if (!art.namePrimary?.trim()) continue
+      const person = await this.upsertArtist({
+        namePrimary: art.namePrimary.trim(),
+        musicBrainzId: art.musicBrainzId || undefined,
+        lastFmUrl: art.lastFmUrl || undefined,
+        spotifyId: art.spotifyId || undefined,
+        image: art.image || undefined,
+        description: art.description || undefined,
+      })
+
+      const role = art.role || "ARTIST"
+      await prisma.mediaStaff
+        .upsert({
+          where: {
+            mediaType_mediaId_personId_role: {
+              mediaType: "MUSIC_ALBUM",
+              mediaId: album.id,
+              personId: person.id,
+              role,
+            },
+          },
+          update: {
+            albumId: album.id,
+          },
+          create: {
+            mediaType: "MUSIC_ALBUM",
+            mediaId: album.id,
+            albumId: album.id,
+            personId: person.id,
+            role,
+          },
+        })
+        .catch(() => {})
+    }
+
+    // Tracks
+    const trackIds: number[] = []
+    if (albumData.tracks && albumData.tracks.length > 0) {
+      for (const t of albumData.tracks) {
+        if (!t.titlePrimary?.trim()) continue
+        let trackExisting: any = null
+        if (t.musicBrainzId) {
+          trackExisting = await prisma.musicTrack.findUnique({
+            where: { musicBrainzId: t.musicBrainzId },
+          })
+        }
+        if (!trackExisting && t.trackNumber != null) {
+          trackExisting = await prisma.musicTrack.findFirst({
+            where: {
+              albumId: album.id,
+              trackNumber: t.trackNumber,
+            },
+          })
+        }
+        if (!trackExisting) {
+          trackExisting = await prisma.musicTrack.findFirst({
+            where: {
+              albumId: album.id,
+              titlePrimary: { equals: t.titlePrimary.trim(), mode: "insensitive" },
+            },
+          })
+        }
+
+        const trackArtist = t.artistName || albumData.artistName
+        const trackData: any = {
+          albumId: album.id,
+          trackNumber: t.trackNumber,
+          discNumber: t.discNumber || 1,
+          duration: t.duration,
+          titlePrimary: t.titlePrimary.trim(),
+          titleSecondary: t.titleSecondary,
+          titleNative: t.titleNative,
+          artistName: trackArtist,
+          coverImage: albumData.coverImage,
+          musicBrainzId: t.musicBrainzId,
+          lastFmUrl: t.lastFmUrl,
+          spotifyId: t.spotifyId,
+          audioPreviewUrl: t.audioPreviewUrl,
+          lyrics: t.lyrics,
+          syncedLyrics: t.syncedLyrics,
+          lastFmUpdatedAt: trackExisting?.lastFmUpdatedAt ?? null,
+          status: "RELEASED",
+        }
+
+        let savedTrack: { id: number }
+        if (trackExisting) {
+          savedTrack = await prisma.musicTrack.update({
+            where: { id: trackExisting.id },
+            data: trackData,
+          })
+        } else {
+          savedTrack = await prisma.musicTrack.create({
+            data: trackData,
+          })
+        }
+        trackIds.push(savedTrack.id)
+
+        if (trackArtist) {
+          const matchingArtist = albumData.artists?.find(
+            (a) => a.namePrimary.toLowerCase() === trackArtist.toLowerCase()
+          )
+          const person = await this.upsertArtist(
+            matchingArtist
+              ? {
+                  namePrimary: matchingArtist.namePrimary.trim(),
+                  musicBrainzId: matchingArtist.musicBrainzId || undefined,
+                  lastFmUrl: matchingArtist.lastFmUrl || undefined,
+                  spotifyId: matchingArtist.spotifyId || undefined,
+                  image: matchingArtist.image || undefined,
+                  description: matchingArtist.description || undefined,
+                  lastFmListenersStat: matchingArtist.lastFmListenersStat || undefined,
+                  lastFmPlayCountStat: matchingArtist.lastFmPlayCountStat || undefined,
+                }
+              : { namePrimary: trackArtist.trim() }
+          )
+          await prisma.mediaStaff
+            .upsert({
+              where: {
+                mediaType_mediaId_personId_role: {
+                  mediaType: "MUSIC_TRACK",
+                  mediaId: savedTrack.id,
+                  personId: person.id,
+                  role: "ARTIST",
+                },
+              },
+              update: {
+                trackId: savedTrack.id,
+              },
+              create: {
+                mediaType: "MUSIC_TRACK",
+                mediaId: savedTrack.id,
+                trackId: savedTrack.id,
+                personId: person.id,
+                role: "ARTIST",
+              },
+            })
+            .catch(() => {})
+        }
+      }
+    }
+
+    return { id: album.id, trackIds }
+  }
+
+  /**
+   * Upserts a standalone MusicTrack record with lyrics, artist credits, tags, and genres.
+   */
+  async upsertMusicTrack(
+    trackData: {
+      id?: number
+      titlePrimary: string
+      titleSecondary?: string | null
+      titleNative?: string | null
+      artistName?: string | null
+      albumTitle?: string | null
+      albumId?: number | null
+      trackNumber?: number | null
+      discNumber?: number | null
+      duration?: number | null
+      musicBrainzId?: string | null
+      isrc?: string | null
+      lastFmUrl?: string | null
+      spotifyId?: string | null
+      appleMusicId?: string | null
+      youtubeMusicId?: string | null
+      coverImage?: string | null
+      audioPreviewUrl?: string | null
+      description?: string | null
+      lyrics?: string | null
+      syncedLyrics?: string | null
+      lastFmListenersStat?: number | null
+      lastFmPlayCountStat?: number | null
+      tags?: Array<string | { name: string; category?: string }>
+      genres?: string[]
+      sources?: Record<string, unknown>
+      artist?: {
+        namePrimary: string
+        musicBrainzId?: string | null
+        lastFmUrl?: string | null
+        spotifyId?: string | null
+        image?: string | null
+        description?: string | null
+        lastFmListenersStat?: number | null
+        lastFmPlayCountStat?: number | null
+      }
+    },
+    lyrics?: LrcLibLyricsPayload | null
+  ): Promise<{ id: number }> {
+    let existing: any = null
+    if (trackData.id) {
+      existing = await prisma.musicTrack.findUnique({
+        where: { id: trackData.id },
+      })
+    }
+    if (trackData.musicBrainzId) {
+      const mbExisting = await prisma.musicTrack.findUnique({
+        where: { musicBrainzId: trackData.musicBrainzId },
+      })
+      if (mbExisting) {
+        if (!existing) {
+          existing = mbExisting
+        } else if (existing.id !== mbExisting.id) {
+          await prisma.musicTrack.delete({ where: { id: mbExisting.id } }).catch(() => {})
+        }
+      }
+    }
+    if (!existing && trackData.albumId && trackData.trackNumber) {
+      existing = await prisma.musicTrack.findFirst({
+        where: {
+          albumId: trackData.albumId,
+          trackNumber: trackData.trackNumber,
+        },
+      })
+    }
+    if (!existing && trackData.titlePrimary && trackData.artistName) {
+      existing = await prisma.musicTrack.findFirst({
+        where: {
+          titlePrimary: { equals: trackData.titlePrimary, mode: "insensitive" },
+          artistName: { equals: trackData.artistName, mode: "insensitive" },
+        },
+      })
+    }
+
+    let resolvedAlbumId = trackData.albumId || null
+    if (!resolvedAlbumId && trackData.albumTitle && trackData.artistName) {
+      const foundAlbum = await prisma.musicAlbum.findFirst({
+        where: {
+          titlePrimary: { equals: trackData.albumTitle, mode: "insensitive" },
+          artistName: { equals: trackData.artistName, mode: "insensitive" },
+        },
+        select: { id: true },
+      })
+      if (foundAlbum) {
+        resolvedAlbumId = foundAlbum.id
+      }
+    }
+
+    const genreRecords = await this.upsertGenres(trackData.genres)
+    const tagRecords = await this.upsertTags(trackData.tags)
+
+    const fullPlainLyrics =
+      trackData.lyrics ||
+      lyrics?.plainLyrics ||
+      (lyrics?.syncedLyrics
+        ? lyrics.syncedLyrics.replace(/\[\d+:\d+\.\d+\]/g, "").trim()
+        : undefined)
+    const syncedLyrics = trackData.syncedLyrics || lyrics?.syncedLyrics || undefined
+
+    const sources: Record<string, unknown> = {
+      ...(trackData.sources || {}),
+    }
+    if (lyrics?.id) {
+      sources.lrclib = {
+        id: lyrics.id,
+        trackName: lyrics.trackName,
+        artistName: lyrics.artistName,
+      }
+    }
+
+    const data: any = {
+      albumId: resolvedAlbumId,
+      trackNumber: trackData.trackNumber,
+      discNumber: trackData.discNumber || 1,
+      duration: trackData.duration,
+      titlePrimary: trackData.titlePrimary.trim() || "Unknown Track",
+      titleSecondary: trackData.titleSecondary,
+      titleNative: trackData.titleNative,
+      artistName: trackData.artistName,
+      coverImage: trackData.coverImage,
+      musicBrainzId: trackData.musicBrainzId,
+      isrc: trackData.isrc,
+      lastFmUrl: trackData.lastFmUrl,
+      spotifyId: trackData.spotifyId,
+      appleMusicId: trackData.appleMusicId,
+      youtubeMusicId: trackData.youtubeMusicId,
+      audioPreviewUrl: trackData.audioPreviewUrl,
+      description: trackData.description,
+      lyrics: fullPlainLyrics,
+      syncedLyrics,
+      sources,
+      lastFmListenersStat: trackData.lastFmListenersStat ?? 0,
+      lastFmPlayCountStat: trackData.lastFmPlayCountStat ?? 0,
+      lastFmUpdatedAt: Math.floor(Date.now() / 1000),
+      status: "RELEASED",
+      genres: existing ? { set: genreRecords } : { connect: genreRecords },
+      tags: existing ? { set: tagRecords } : { connect: tagRecords },
+    }
+
+    let track: { id: number }
+    if (existing) {
+      track = await prisma.musicTrack.update({
+        where: { id: existing.id },
+        data,
+      })
+    } else {
+      track = await prisma.musicTrack.create({
+        data,
+      })
+    }
+
+    if (trackData.artist || trackData.artistName) {
+      const person = await this.upsertArtist(
+        trackData.artist
+          ? {
+              namePrimary: trackData.artist.namePrimary.trim(),
+              musicBrainzId: trackData.artist.musicBrainzId || undefined,
+              lastFmUrl: trackData.artist.lastFmUrl || undefined,
+              spotifyId: trackData.artist.spotifyId || undefined,
+              image: trackData.artist.image || undefined,
+              description: trackData.artist.description || undefined,
+              lastFmListenersStat: trackData.artist.lastFmListenersStat || undefined,
+              lastFmPlayCountStat: trackData.artist.lastFmPlayCountStat || undefined,
+            }
+          : { namePrimary: trackData.artistName!.trim() }
+      )
+      await prisma.mediaStaff
+        .upsert({
+          where: {
+            mediaType_mediaId_personId_role: {
+              mediaType: "MUSIC_TRACK",
+              mediaId: track.id,
+              personId: person.id,
+              role: "ARTIST",
+            },
+          },
+          update: {
+            trackId: track.id,
+          },
+          create: {
+            mediaType: "MUSIC_TRACK",
+            mediaId: track.id,
+            trackId: track.id,
+            personId: person.id,
+            role: "ARTIST",
+          },
+        })
+        .catch(() => {})
+    }
+
+    return { id: track.id }
+  }
+
+  /**
+   * Backwards-compatible upsertMusic: wraps upsertMusicTrack for MusicBrainz recordings.
    */
   async upsertMusic(
     mb: MusicBrainzRecordingPayload,
     lyrics?: LrcLibLyricsPayload | null
   ): Promise<{ id: number }> {
-    const existing = await prisma.music.findUnique({
-      where: { musicBrainzId: mb.id },
-    })
-
     const artists = mb["artist-credit"]?.map((a) => a.name) || []
     const artistName = artists.join(", ") || "Unknown Artist"
     const release = mb.releases?.[0]
     const albumName = release?.title
     const durationSeconds = mb.length ? Math.round(mb.length / 1000) : undefined
 
-    // Date parts
-    let releaseDateYear: number | undefined
-    let releaseDateMonth: number | undefined
-    let releaseDateDay: number | undefined
-    let releaseDate: Date | undefined
-
-    if (release?.date) {
-      const parts = release.date.split("-").map(Number)
-      if (parts[0] && !isNaN(parts[0])) releaseDateYear = parts[0]
-      if (parts[1] && !isNaN(parts[1])) releaseDateMonth = parts[1]
-      if (parts[2] && !isNaN(parts[2])) releaseDateDay = parts[2]
-      const parsedD = new Date(release.date)
-      if (!isNaN(parsedD.getTime())) releaseDate = parsedD
-    }
-
-    // Genres & Tags
     const rawGenres = mb.genres?.map((g) => g.name) || []
-    const genreRecords = await this.upsertGenres(rawGenres)
-
     const rawTags: Array<{ name: string; category?: string }> = []
     if (mb.tags) {
       for (const t of mb.tags) {
         if (t.name) rawTags.push({ name: t.name, category: "Music Tag" })
       }
     }
-    const tagRecords = await this.upsertTags(rawTags)
-
-    const fullPlainLyrics =
-      lyrics?.plainLyrics ||
-      (lyrics?.syncedLyrics
-        ? lyrics.syncedLyrics.replace(/\[\d+:\d+\.\d+\]/g, "").trim()
-        : undefined)
-
-    const isrc = mb.isrcs?.[0]
 
     const sources: Record<string, unknown> = {
       musicBrainz: {
@@ -3606,49 +4378,22 @@ export class MediaDbSyncer {
         url: `https://coverartarchive.org/release/${release.id}`,
       }
     }
-    if (lyrics?.id) {
-      sources.lrclib = {
-        id: lyrics.id,
-        trackName: lyrics.trackName,
-        artistName: lyrics.artistName,
-      }
-    }
 
-    const images = {
-      musicBrainz: [mb.coverImageUrl].filter(Boolean) as string[],
-    }
-
-    const data: any = {
-      musicBrainzId: mb.id,
-      isrc,
-      titlePrimary: mb.title || "Unknown Track",
-      artist: artistName,
-      artists,
-      album: albumName,
-      duration: durationSeconds,
-      releaseDate,
-      releaseDateYear,
-      releaseDateMonth,
-      releaseDateDay,
-      genres: existing ? { set: genreRecords } : { connect: genreRecords },
-      tags: existing ? { set: tagRecords } : { connect: tagRecords },
-      coverImage: mb.coverImageUrl,
-      bannerImage: mb.coverImageUrl,
-      images,
-      sources,
-      lyrics: fullPlainLyrics,
-      syncedLyrics: lyrics?.syncedLyrics,
-      musicBrainzUpdatedAt: Math.floor(Date.now() / 1000),
-    }
-
-    let music: { id: number }
-    if (existing) {
-      music = await prisma.music.update({ where: { id: existing.id }, data })
-    } else {
-      music = await prisma.music.create({ data })
-    }
-
-    return { id: music.id }
+    return await this.upsertMusicTrack(
+      {
+        titlePrimary: mb.title || "Unknown Track",
+        artistName,
+        albumTitle: albumName,
+        duration: durationSeconds,
+        musicBrainzId: mb.id,
+        isrc: mb.isrcs?.[0],
+        coverImage: mb.coverImageUrl,
+        genres: rawGenres,
+        tags: rawTags,
+        sources,
+      },
+      lyrics
+    )
   }
 }
 

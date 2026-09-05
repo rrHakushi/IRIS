@@ -29,12 +29,21 @@ function invertRelationType(type: string): string {
 
 export async function fetchMediaRelations(
   prisma: PrismaClient,
-  sourceType: "ANIME" | "MANGA" | "MOVIE" | "TV" | "GAME" | "BOOK" | "MUSIC",
+  sourceType:
+    | "ANIME"
+    | "MANGA"
+    | "MOVIE"
+    | "TV"
+    | "GAME"
+    | "BOOK"
+    | "MUSIC"
+    | "MUSIC_ALBUM"
+    | "MUSIC_TRACK",
   sourceId: number
 ): Promise<MediaRelationItem[]> {
   const rawRelations = await prisma.mediaRelation.findMany({
     where: {
-      sourceType,
+      sourceType: sourceType as any,
       sourceId,
     },
   })
@@ -88,6 +97,8 @@ export async function fetchMediaRelations(
   const tvIds: number[] = []
   const gameIds: number[] = []
   const bookIds: number[] = []
+  const musicTrackIds: number[] = []
+  const musicAlbumIds: number[] = []
 
   for (const r of relations) {
     switch (r.targetType) {
@@ -108,6 +119,13 @@ export async function fetchMediaRelations(
         break
       case "BOOK":
         bookIds.push(r.targetId)
+        break
+      case "MUSIC":
+      case "MUSIC_TRACK":
+        musicTrackIds.push(r.targetId)
+        break
+      case "MUSIC_ALBUM":
+        musicAlbumIds.push(r.targetId)
         break
     }
   }
@@ -237,6 +255,51 @@ export async function fetchMediaRelations(
         .then((items) => {
           for (const item of items) {
             targetMap.set(`BOOK:${item.id}`, item)
+          }
+        })
+    )
+  }
+
+  if (musicTrackIds.length > 0) {
+    queries.push(
+      prisma.musicTrack
+        .findMany({
+          where: { id: { in: musicTrackIds } },
+          select: {
+            id: true,
+            titlePrimary: true,
+            titleSecondary: true,
+            titleNative: true,
+            coverImage: true,
+            artistName: true,
+          },
+        })
+        .then((items) => {
+          for (const item of items) {
+            targetMap.set(`MUSIC:${item.id}`, item)
+            targetMap.set(`MUSIC_TRACK:${item.id}`, item)
+          }
+        })
+    )
+  }
+
+  if (musicAlbumIds.length > 0) {
+    queries.push(
+      prisma.musicAlbum
+        .findMany({
+          where: { id: { in: musicAlbumIds } },
+          select: {
+            id: true,
+            titlePrimary: true,
+            titleSecondary: true,
+            titleNative: true,
+            coverImage: true,
+            artistName: true,
+          },
+        })
+        .then((items) => {
+          for (const item of items) {
+            targetMap.set(`MUSIC_ALBUM:${item.id}`, item)
           }
         })
     )

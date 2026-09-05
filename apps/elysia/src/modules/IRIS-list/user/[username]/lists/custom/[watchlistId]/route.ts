@@ -10,7 +10,8 @@ import {
   tvSelect,
   gameSelect,
   bookSelect,
-  musicSelect,
+  musicAlbumSelect,
+  musicTrackSelect,
 } from "@/modules/IRIS-list/helpers"
 import { NotFound } from "@/utils/errors"
 import type { MediaType } from "@IRIS/database"
@@ -118,7 +119,8 @@ export default defineRoute({
           tv: { select: tvSelect },
           game: { select: gameSelect },
           book: { select: bookSelect },
-          music: { select: musicSelect },
+          album: { select: musicAlbumSelect },
+          track: { select: musicTrackSelect },
         },
       }),
     ])
@@ -145,7 +147,8 @@ export default defineRoute({
           entry.tv ||
           entry.game ||
           entry.book ||
-          entry.music ||
+          entry.album ||
+          entry.track ||
           null
 
         return {

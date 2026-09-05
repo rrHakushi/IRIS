@@ -322,15 +322,36 @@ export const bookSelect = {
   genres: { select: { id: true, name: true } },
 }
 
-export const musicSelect = {
+export const musicAlbumSelect = {
   id: true,
   titlePrimary: true,
   titleSecondary: true,
+  artistName: true,
   coverImage: true,
   bannerImage: true,
   releaseDateYear: true,
   genres: { select: { id: true, name: true } },
 }
+
+export const musicTrackSelect = {
+  id: true,
+  titlePrimary: true,
+  titleSecondary: true,
+  artistName: true,
+  coverImage: true,
+  duration: true,
+  genres: { select: { id: true, name: true } },
+  album: {
+    select: {
+      id: true,
+      titlePrimary: true,
+      coverImage: true,
+      releaseDateYear: true,
+    },
+  },
+}
+
+export const musicSelect = musicAlbumSelect
 
 // ============================================================================
 // Filter Aggregation Helper
@@ -370,10 +391,13 @@ export function aggregateFacetsFromItems(
       (item as any).tv ??
       (item as any).game ??
       (item as any).book ??
+      (item as any).album ??
+      (item as any).track ??
       (item as any).music
 
     if (media) {
-      const format = media.format || media.showType
+      const format =
+        media.format || media.showType || (item as any).itemType
       if (format) {
         formatCounts.set(format, (formatCounts.get(format) || 0) + 1)
       }
@@ -394,7 +418,10 @@ export function aggregateFacetsFromItems(
       }
 
       const yr =
-        media.startDateYear ?? media.releaseDateYear ?? media.firstAiredYear
+        media.startDateYear ??
+        media.releaseDateYear ??
+        media.firstAiredYear ??
+        media.album?.releaseDateYear
 
       if (typeof yr === "number" && yr > 0) {
         yearCounts.set(yr, (yearCounts.get(yr) || 0) + 1)

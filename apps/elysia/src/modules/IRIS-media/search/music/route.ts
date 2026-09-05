@@ -35,7 +35,7 @@ export default defineRoute({
 
   async GET({ query, prisma, cache, cacheKeys, logger }) {
     const { q } = query
-    const cleanQuery = decodeURIComponent(q).replace(/\+/g, " ").trim()
+    const cleanQuery = decodeURIComponent(String(q || "")).replace(/\+/g, " ").trim()
     const cacheKey = cacheKeys.search.music(cleanQuery)
 
     if (!cleanQuery || cleanQuery.length < 3) {
@@ -47,33 +47,92 @@ export default defineRoute({
       return cached
     }
 
-    const data = await prisma.music.findMany({
-      where: {
-        OR: [
-          { titlePrimary: { contains: cleanQuery, mode: "insensitive" } },
-          { titleSecondary: { contains: cleanQuery, mode: "insensitive" } },
-          { artist: { contains: cleanQuery, mode: "insensitive" } },
-          { album: { contains: cleanQuery, mode: "insensitive" } },
-        ],
-      },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        artist: true,
-        coverImage: true,
-        duration: true,
-      },
-      orderBy: {
-        titlePrimary: "asc",
-      },
-    })
+    const [tracks, albums] = await Promise.all([
+      prisma.musicTrack.findMany({
+        where: {
+          OR: [
+            { titlePrimary: { contains: cleanQuery, mode: "insensitive" } },
+            { titleSecondary: { contains: cleanQuery, mode: "insensitive" } },
+            { artistName: { contains: cleanQuery, mode: "insensitive" } },
+          ],
+        },
+        select: {
+          id: true,
+          titlePrimary: true,
+          titleSecondary: true,
+          artistName: true,
+          coverImage: true,
+          duration: true,
+          albumId: true,
+          album: { select: { id: true, titlePrimary: true } },
+        },
+        take: 20,
+        orderBy: {
+          titlePrimary: "asc",
+        },
+      }),
+      prisma.musicAlbum.findMany({
+        where: {
+          OR: [
+            { titlePrimary: { contains: cleanQuery, mode: "insensitive" } },
+            { titleSecondary: { contains: cleanQuery, mode: "insensitive" } },
+            { artistName: { contains: cleanQuery, mode: "insensitive" } },
+          ],
+        },
+        select: {
+          id: true,
+          titlePrimary: true,
+          titleSecondary: true,
+          artistName: true,
+          coverImage: true,
+          duration: true,
+        },
+        take: 10,
+        orderBy: {
+          titlePrimary: "asc",
+        },
+      }),
+    ])
+
+    const data: MusicSearchResponse = [
+      ...albums.map((a) => ({
+        id: a.id,
+        titlePrimary: a.titlePrimary,
+        titleSecondary: a.titleSecondary,
+        artist: a.artistName,
+        artistName: a.artistName,
+        coverImage: a.coverImage,
+        duration: a.duration,
+        type: "ALBUM" as const,
+      })),
+      ...tracks.map((t) => ({
+        id: t.id,
+        titlePrimary: t.titlePrimary,
+        titleSecondary: t.titleSecondary,
+        artist: t.artistName,
+        artistName: t.artistName,
+        coverImage: t.coverImage,
+        duration: t.duration,
+        album: t.album?.titlePrimary || null,
+        albumId: t.albumId,
+        type: "TRACK" as const,
+      })),
+    ]
 
     if (data.length === 0) {
       logger.warn(`No data found for query: ${cleanQuery}, triggering refresh`)
       const rawResults = await queueMusicSearchFetch(cleanQuery)
-      const results = rawResults.map((item: any) => ({
-        ...item,
+      const results: MusicSearchResponse = rawResults.map((item: any) => ({
+        id: item.id,
+        titlePrimary: item.titlePrimary,
+        titleSecondary: item.titleSecondary ?? null,
+        artist: item.artistName || item.artist || null,
+        artistName: item.artistName || item.artist || null,
+        coverImage: item.coverImage ?? null,
+        duration: item.duration ?? null,
+        album: item.album || item.albumTitle || null,
+        albumId: item.albumId,
+        type: item.type || item.itemType,
         queuedForFetch: true,
       }))
       await cache.set(cacheKey, results, SEARCH_MUSIC_TTL)

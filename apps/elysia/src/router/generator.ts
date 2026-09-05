@@ -150,7 +150,7 @@ export async function generateRoutes(
           schemaExpr = `${importName}.schema`
         }
 
-        const handlerCall = `async (ctx: unknown) => {
+        const handlerCall = `async (ctx: any): Promise<any> => {
       const route = ${importName} as Record<string, unknown>;
       const methodItem = route.${method} as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);

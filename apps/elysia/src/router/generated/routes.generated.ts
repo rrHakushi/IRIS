@@ -275,7 +275,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/auth/api-keys/:id/regenerate",
     Route_0.POST!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_0 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -296,7 +296,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/auth/api-keys/:id",
     Route_1.DELETE!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_1 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -317,7 +317,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .patch(
     "/auth/api-keys/:id",
     Route_1.PATCH!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_1 as Record<string, unknown>;
       const methodItem = route.PATCH as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -338,7 +338,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/auth/api-keys",
     Route_2.GET!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_2 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -359,7 +359,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/auth/api-keys",
     Route_2.POST!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_2 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -380,7 +380,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/auth/backupcodes/regenerate",
     Route_3.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_3 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -401,7 +401,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/auth/email/send",
     Route_4.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_4 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -422,7 +422,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/auth/email/toggle",
     Route_5.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_5 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -443,7 +443,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/auth/email/verify",
     Route_6.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_6 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -464,7 +464,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/auth/login",
     Route_7.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_7 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -485,7 +485,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/auth/passkeys/:id",
     Route_8.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_8 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -506,7 +506,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/auth/passkeys/login",
     Route_9.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_9 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -527,7 +527,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/auth/passkeys/login/verify",
     Route_10.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_10 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -548,7 +548,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/auth/passkeys/register",
     Route_11.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_11 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -569,7 +569,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/auth/passkeys/register/verify",
     Route_12.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_12 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -590,7 +590,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/auth/passkeys",
     Route_13.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_13 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -611,7 +611,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/auth/password/change",
     Route_14.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_14 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -632,7 +632,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/auth/password/forgot",
     Route_15.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_15 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -653,7 +653,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/auth/password/reset",
     Route_16.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_16 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -674,7 +674,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/auth/quickconnect/approve",
     Route_17.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_17 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -695,7 +695,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/auth/quickconnect/generate",
     Route_18.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_18 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -716,7 +716,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/auth/quickconnect/status",
     Route_19.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_19 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -737,7 +737,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/auth/register",
     Route_20.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_20 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -758,7 +758,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/auth/totp/setup",
     Route_21.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_21 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -779,7 +779,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/auth/totp/toggle",
     Route_22.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_22 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -800,7 +800,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/notifications/:id/action",
     Route_23.POST!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_23 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -821,7 +821,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .patch(
     "/notifications/:id/read",
     Route_24.PATCH!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_24 as Record<string, unknown>;
       const methodItem = route.PATCH as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -842,7 +842,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/notifications/:id",
     Route_25.GET!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_25 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -863,7 +863,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/notifications/:id",
     Route_25.DELETE!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_25 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -884,7 +884,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/notifications/mark-all-read",
     Route_26.POST!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_26 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -905,7 +905,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/notifications",
     Route_27.GET!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_27 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -926,7 +926,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/notifications",
     Route_27.DELETE!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_27 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -946,7 +946,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .get(
     "/public/*",
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_28 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -967,7 +967,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/users/:username",
     Route_29.GET!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_29 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -988,7 +988,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/users/me/assets",
     Route_30.POST!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_30 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1009,7 +1009,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/users/me/assets",
     Route_30.DELETE!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_30 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1030,7 +1030,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/users/me/encryption",
     Route_31.GET!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_31 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1051,7 +1051,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/users/me/encryption",
     Route_31.POST!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_31 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1072,7 +1072,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/users/me",
     Route_32.GET!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_32 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1093,7 +1093,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .patch(
     "/users/me",
     Route_32.PATCH!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_32 as Record<string, unknown>;
       const methodItem = route.PATCH as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1114,7 +1114,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/connections/:id/auth",
     Route_33.GET!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_33 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1135,7 +1135,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/connections/:id/callback",
     Route_34.GET!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_34 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1156,7 +1156,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/connections/:id",
     Route_35.DELETE!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_35 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1177,7 +1177,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .patch(
     "/connections/:id",
     Route_35.PATCH!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_35 as Record<string, unknown>;
       const methodItem = route.PATCH as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1198,7 +1198,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/connections/:id/sync",
     Route_36.POST!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_36 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1219,7 +1219,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/connections/:id/test",
     Route_37.POST!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_37 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1240,7 +1240,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/connections/providers",
     Route_38.GET!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_38 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1261,7 +1261,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/connections",
     Route_39.GET!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_39 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1282,7 +1282,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/connections",
     Route_39.POST!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_39 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1303,7 +1303,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/connections/search",
     Route_40.GET!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_40 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1324,7 +1324,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/favorites/:targetId",
     Route_41.schemas!.GET,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_41 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1345,7 +1345,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/user/:username/favorites/:targetId",
     Route_41.schemas!.POST,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_41 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1366,7 +1366,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/user/:username/favorites/:targetId",
     Route_41.schemas!.DELETE,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_41 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1387,7 +1387,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/favorites",
     Route_42.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_42 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1408,7 +1408,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/user/:username/lists/anime/:id/increment",
     Route_43.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_43 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1429,7 +1429,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/user/:username/lists/anime/:id/quick-add",
     Route_44.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_44 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1450,7 +1450,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/anime/:id",
     Route_45.schemas!.GET,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_45 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1471,7 +1471,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .put(
     "/user/:username/lists/anime/:id",
     Route_45.schemas!.PUT,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_45 as Record<string, unknown>;
       const methodItem = route.PUT as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1492,7 +1492,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/user/:username/lists/anime/:id",
     Route_45.schemas!.DELETE,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_45 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1513,7 +1513,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .patch(
     "/user/:username/lists/anime/:id",
     Route_45.schemas!.PATCH,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_45 as Record<string, unknown>;
       const methodItem = route.PATCH as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1534,7 +1534,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/anime/filters",
     Route_46.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_46 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1555,7 +1555,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/anime",
     Route_47.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_47 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1576,7 +1576,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/user/:username/lists/book/:id/increment",
     Route_48.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_48 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1597,7 +1597,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/user/:username/lists/book/:id/quick-add",
     Route_49.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_49 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1618,7 +1618,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/book/:id",
     Route_50.schemas!.GET,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_50 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1639,7 +1639,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .put(
     "/user/:username/lists/book/:id",
     Route_50.schemas!.PUT,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_50 as Record<string, unknown>;
       const methodItem = route.PUT as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1660,7 +1660,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/user/:username/lists/book/:id",
     Route_50.schemas!.DELETE,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_50 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1681,7 +1681,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .patch(
     "/user/:username/lists/book/:id",
     Route_50.schemas!.PATCH,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_50 as Record<string, unknown>;
       const methodItem = route.PATCH as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1702,7 +1702,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/book/filters",
     Route_51.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_51 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1723,7 +1723,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/book",
     Route_52.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_52 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1744,7 +1744,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/user/:username/lists/custom/:watchlistId/:id/quick-add",
     Route_53.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_53 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1765,7 +1765,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/custom/:watchlistId/:id",
     Route_54.schemas!.GET,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_54 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1786,7 +1786,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .put(
     "/user/:username/lists/custom/:watchlistId/:id",
     Route_54.schemas!.PUT,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_54 as Record<string, unknown>;
       const methodItem = route.PUT as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1807,7 +1807,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/user/:username/lists/custom/:watchlistId/:id",
     Route_54.schemas!.DELETE,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_54 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1828,7 +1828,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .patch(
     "/user/:username/lists/custom/:watchlistId/:id",
     Route_54.schemas!.PATCH,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_54 as Record<string, unknown>;
       const methodItem = route.PATCH as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1849,7 +1849,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/custom/:watchlistId/filters",
     Route_55.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_55 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1870,7 +1870,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/custom/:watchlistId",
     Route_56.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_56 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1891,7 +1891,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/user/:username/lists/game/:id/increment",
     Route_57.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_57 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1912,7 +1912,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/user/:username/lists/game/:id/quick-add",
     Route_58.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_58 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1933,7 +1933,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/game/:id",
     Route_59.schemas!.GET,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_59 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1954,7 +1954,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .put(
     "/user/:username/lists/game/:id",
     Route_59.schemas!.PUT,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_59 as Record<string, unknown>;
       const methodItem = route.PUT as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1975,7 +1975,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/user/:username/lists/game/:id",
     Route_59.schemas!.DELETE,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_59 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -1996,7 +1996,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .patch(
     "/user/:username/lists/game/:id",
     Route_59.schemas!.PATCH,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_59 as Record<string, unknown>;
       const methodItem = route.PATCH as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2017,7 +2017,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/game/filters",
     Route_60.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_60 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2038,7 +2038,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/game",
     Route_61.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_61 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2059,7 +2059,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/user/:username/lists/manga/:id/increment",
     Route_62.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_62 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2080,7 +2080,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/user/:username/lists/manga/:id/quick-add",
     Route_63.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_63 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2101,7 +2101,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/manga/:id",
     Route_64.schemas!.GET,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_64 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2122,7 +2122,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .put(
     "/user/:username/lists/manga/:id",
     Route_64.schemas!.PUT,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_64 as Record<string, unknown>;
       const methodItem = route.PUT as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2143,7 +2143,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/user/:username/lists/manga/:id",
     Route_64.schemas!.DELETE,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_64 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2164,7 +2164,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .patch(
     "/user/:username/lists/manga/:id",
     Route_64.schemas!.PATCH,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_64 as Record<string, unknown>;
       const methodItem = route.PATCH as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2185,7 +2185,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/manga/filters",
     Route_65.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_65 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2206,7 +2206,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/manga",
     Route_66.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_66 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2227,7 +2227,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/user/:username/lists/movie/:id/increment",
     Route_67.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_67 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2248,7 +2248,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/user/:username/lists/movie/:id/quick-add",
     Route_68.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_68 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2269,7 +2269,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/movie/:id",
     Route_69.schemas!.GET,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_69 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2290,7 +2290,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .put(
     "/user/:username/lists/movie/:id",
     Route_69.schemas!.PUT,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_69 as Record<string, unknown>;
       const methodItem = route.PUT as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2311,7 +2311,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/user/:username/lists/movie/:id",
     Route_69.schemas!.DELETE,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_69 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2332,7 +2332,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .patch(
     "/user/:username/lists/movie/:id",
     Route_69.schemas!.PATCH,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_69 as Record<string, unknown>;
       const methodItem = route.PATCH as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2353,7 +2353,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/movie/filters",
     Route_70.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_70 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2374,7 +2374,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/movie",
     Route_71.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_71 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2395,7 +2395,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/user/:username/lists/music/:id/increment",
     Route_72.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_72 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2416,7 +2416,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/user/:username/lists/music/:id/quick-add",
     Route_73.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_73 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2437,7 +2437,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/music/:id",
     Route_74.schemas!.GET,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_74 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2458,7 +2458,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .put(
     "/user/:username/lists/music/:id",
     Route_74.schemas!.PUT,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_74 as Record<string, unknown>;
       const methodItem = route.PUT as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2479,7 +2479,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/user/:username/lists/music/:id",
     Route_74.schemas!.DELETE,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_74 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2500,7 +2500,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .patch(
     "/user/:username/lists/music/:id",
     Route_74.schemas!.PATCH,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_74 as Record<string, unknown>;
       const methodItem = route.PATCH as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2521,7 +2521,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/music/filters",
     Route_75.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_75 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2542,7 +2542,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/music",
     Route_76.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_76 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2563,7 +2563,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/user/:username/lists/tv/:id/episodes",
     Route_77.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_77 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2584,7 +2584,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/user/:username/lists/tv/:id/increment",
     Route_78.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_78 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2605,7 +2605,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/user/:username/lists/tv/:id/quick-add",
     Route_79.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_79 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2626,7 +2626,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/tv/:id",
     Route_80.schemas!.GET,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_80 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2647,7 +2647,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .put(
     "/user/:username/lists/tv/:id",
     Route_80.schemas!.PUT,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_80 as Record<string, unknown>;
       const methodItem = route.PUT as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2668,7 +2668,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/user/:username/lists/tv/:id",
     Route_80.schemas!.DELETE,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_80 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2689,7 +2689,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .patch(
     "/user/:username/lists/tv/:id",
     Route_80.schemas!.PATCH,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_80 as Record<string, unknown>;
       const methodItem = route.PATCH as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2710,7 +2710,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/tv/filters",
     Route_81.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_81 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2731,7 +2731,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/lists/tv",
     Route_82.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_82 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2752,7 +2752,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/user/:username/watchlists/:id/entries",
     Route_83.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_83 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2773,7 +2773,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/user/:username/watchlists/:id/entries",
     Route_83.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_83 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2794,7 +2794,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/watchlists/:id",
     Route_84.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_84 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2815,7 +2815,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/user/:username/watchlists/:id",
     Route_84.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_84 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2836,7 +2836,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .patch(
     "/user/:username/watchlists/:id",
     Route_84.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_84 as Record<string, unknown>;
       const methodItem = route.PATCH as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2857,7 +2857,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/watchlists",
     Route_85.schemas!.GET,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_85 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2878,7 +2878,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/user/:username/watchlists",
     Route_85.schemas!.POST,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_85 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2899,7 +2899,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/media/anime/:id/refresh",
     Route_86.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_86 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2920,7 +2920,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/media/anime/:id",
     Route_87.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_87 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2941,7 +2941,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/media/anime/:id/similar",
     Route_88.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_88 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2962,7 +2962,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/media/books/:id/refresh",
     Route_89.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_89 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -2983,7 +2983,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/media/books/:id",
     Route_90.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_90 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3004,7 +3004,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/media/books/:id/similar",
     Route_91.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_91 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3025,7 +3025,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/media/characters/:id",
     Route_92.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_92 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3046,7 +3046,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/media/games/:id/refresh",
     Route_93.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_93 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3067,7 +3067,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/media/games/:id",
     Route_94.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_94 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3088,7 +3088,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/media/games/:id/similar",
     Route_95.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_95 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3109,7 +3109,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/media/manga/:id/refresh",
     Route_96.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_96 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3130,7 +3130,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/media/manga/:id",
     Route_97.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_97 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3151,7 +3151,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/media/manga/:id/similar",
     Route_98.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_98 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3172,7 +3172,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/media/movies/:id/refresh",
     Route_99.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_99 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3193,7 +3193,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/media/movies/:id",
     Route_100.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_100 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3214,7 +3214,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/media/movies/:id/similar",
     Route_101.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_101 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3235,7 +3235,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/media/music/:id/refresh",
     Route_102.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_102 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3256,7 +3256,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/media/music/:id",
     Route_103.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_103 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3277,7 +3277,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/media/music/:id/similar",
     Route_104.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_104 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3298,7 +3298,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/media/people/:id",
     Route_105.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_105 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3319,7 +3319,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/media/studios/:id",
     Route_106.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_106 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3340,7 +3340,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/media/tv/:id/refresh",
     Route_107.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_107 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3361,7 +3361,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/media/tv/:id",
     Route_108.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_108 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3382,7 +3382,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/media/tv/:id/similar",
     Route_109.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_109 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3403,7 +3403,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/search/anime",
     Route_110.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_110 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3424,7 +3424,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/search/books",
     Route_111.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_111 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3445,7 +3445,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/search/characters",
     Route_112.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_112 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3466,7 +3466,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/search/games",
     Route_113.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_113 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3487,7 +3487,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/search/manga",
     Route_114.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_114 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3508,7 +3508,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/search/movies",
     Route_115.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_115 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3529,7 +3529,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/search/music",
     Route_116.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_116 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3550,7 +3550,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/search/people",
     Route_117.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_117 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3571,7 +3571,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/search/studios",
     Route_118.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_118 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3592,7 +3592,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/search/tv",
     Route_119.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_119 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3613,7 +3613,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/lists/:username/:mediaType/comments/:id/reply",
     Route_120.POST!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_120 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3634,7 +3634,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .put(
     "/lists/:username/:mediaType/comments/:id/reply",
     Route_120.PUT!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_120 as Record<string, unknown>;
       const methodItem = route.PUT as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3655,7 +3655,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/lists/:username/:mediaType/comments/:id/reply",
     Route_120.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_120 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3676,7 +3676,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/lists/:username/:mediaType/comments/:id",
     Route_121.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_121 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3697,7 +3697,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/lists/:username/:mediaType/comments",
     Route_122.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_122 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3718,7 +3718,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/lists/:username/:mediaType/comments",
     Route_122.POST!.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_122 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3739,7 +3739,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/recommendations/:id",
     Route_123.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_123 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3760,7 +3760,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/recommendations/:id/vote",
     Route_124.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_124 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3781,7 +3781,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/recommendations/:type/:id",
     Route_125.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_125 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3802,7 +3802,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/recommendations",
     Route_126.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_126 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3823,7 +3823,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/reviews/:type/:id",
     Route_127.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_127 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3844,7 +3844,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/reviews/:type/:id",
     Route_127.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_127 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3865,7 +3865,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .delete(
     "/reviews/:type/:id",
     Route_127.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_127 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3886,7 +3886,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .patch(
     "/reviews/:type/:id",
     Route_127.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_127 as Record<string, unknown>;
       const methodItem = route.PATCH as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3907,7 +3907,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .post(
     "/reviews/:type/:id/vote",
     Route_128.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_128 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
@@ -3928,7 +3928,7 @@ export const routes = new Elysia({ name: "iris-routes" })
   .get(
     "/user/:username/reviews",
     Route_129.schema,
-    async (ctx: unknown) => {
+    async (ctx: any): Promise<any> => {
       const route = Route_129 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);

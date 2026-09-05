@@ -31,7 +31,7 @@ export interface GlobalCacheKeys {
     id: (id: any) => string;
   };
   music: {
-    id: (id: any) => string;
+    id: (id: any, type: any) => string;
   };
   person: {
     id: (id: any) => string;

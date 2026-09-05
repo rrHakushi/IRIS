@@ -4098,7 +4098,13 @@
         "mimeType": "application/json",
         "text": "{\n  \"count\": 1\n}"
       },
-      "parameters": [],
+      "parameters": [
+        {
+          "name": "type",
+          "value": "",
+          "disabled": false
+        }
+      ],
       "headers": [
         {
           "name": "Content-Type",
@@ -4134,7 +4140,13 @@
       "description": "",
       "method": "POST",
       "body": {},
-      "parameters": [],
+      "parameters": [
+        {
+          "name": "type",
+          "value": "",
+          "disabled": false
+        }
+      ],
       "headers": [
         {
           "name": "Content-Type",
@@ -4170,7 +4182,13 @@
       "description": "",
       "method": "GET",
       "body": {},
-      "parameters": [],
+      "parameters": [
+        {
+          "name": "type",
+          "value": "",
+          "disabled": false
+        }
+      ],
       "headers": [
         {
           "name": "x-api-key",
@@ -4204,7 +4222,13 @@
         "mimeType": "application/json",
         "text": "{\n  \"status\": null,\n  \"score\": null,\n  \"playCount\": 0,\n  \"notes\": null,\n  \"private\": true,\n  \"startedAt\": null,\n  \"connections\": null\n}"
       },
-      "parameters": [],
+      "parameters": [
+        {
+          "name": "type",
+          "value": "",
+          "disabled": false
+        }
+      ],
       "headers": [
         {
           "name": "Content-Type",
@@ -4240,7 +4264,13 @@
       "description": "",
       "method": "DELETE",
       "body": {},
-      "parameters": [],
+      "parameters": [
+        {
+          "name": "type",
+          "value": "",
+          "disabled": false
+        }
+      ],
       "headers": [
         {
           "name": "Content-Type",
@@ -4279,7 +4309,13 @@
         "mimeType": "application/json",
         "text": "{\n  \"status\": null,\n  \"score\": null,\n  \"playCount\": 0,\n  \"notes\": null,\n  \"private\": true,\n  \"startedAt\": null,\n  \"connections\": null\n}"
       },
-      "parameters": [],
+      "parameters": [
+        {
+          "name": "type",
+          "value": "",
+          "disabled": false
+        }
+      ],
       "headers": [
         {
           "name": "Content-Type",
@@ -5669,7 +5705,13 @@
       "description": "",
       "method": "GET",
       "body": {},
-      "parameters": [],
+      "parameters": [
+        {
+          "name": "type",
+          "value": "",
+          "disabled": false
+        }
+      ],
       "headers": [
         {
           "name": "x-api-key",

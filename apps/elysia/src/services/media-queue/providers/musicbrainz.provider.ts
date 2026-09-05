@@ -19,8 +19,46 @@ export interface MusicBrainzRecordingPayload {
     "release-group"?: { id: string; "primary-type"?: string }
   }>
   tags?: Array<{ name: string; count?: number }>
-  genres?: Array<{ id: string; name: string }>
+  genres?: Array<{ id?: string; name: string }>
   rating?: { value?: number; "votes-count"?: number }
+  coverImageUrl?: string
+}
+
+export interface MusicBrainzReleasePayload {
+  id: string
+  title: string
+  status?: string
+  date?: string // "YYYY-MM-DD" or "YYYY"
+  country?: string
+  barcode?: string
+  "release-group"?: {
+    id: string
+    "primary-type"?: string
+    "secondary-types"?: string[]
+  }
+  "artist-credit"?: Array<{
+    name: string
+    artist: { id: string; name: string; "sort-name"?: string }
+  }>
+  media?: Array<{
+    position: number
+    format?: string
+    "track-count": number
+    tracks?: Array<{
+      id: string
+      position: number
+      number: string
+      title: string
+      length?: number // in ms
+      recording?: {
+        id: string
+        title: string
+        length?: number
+      }
+    }>
+  }>
+  tags?: Array<{ name: string; count?: number }>
+  genres?: Array<{ id: string; name: string }>
   coverImageUrl?: string
 }
 
@@ -150,5 +188,106 @@ export class MusicBrainzProvider {
   async searchMusic(query: string, limit: number = 10): Promise<string[]> {
     const recordings = await this.searchRecording(query, limit)
     return recordings.map((r) => r.id).filter(Boolean)
+  }
+
+  /**
+   * Fetches release metadata by MusicBrainz release MBID.
+   */
+  async fetchRelease(mbid: string): Promise<MusicBrainzReleasePayload | null> {
+    await this.waitForRateLimit()
+
+    const cleanMbid = encodeURIComponent(mbid.trim())
+    const url = `${this.baseUrl}/release/${cleanMbid}?inc=artists+recordings+release-groups+tags+genres&fmt=json`
+    try {
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent": "IRIS-Platform/1.0 (https://iris.app; contact@iris.app)",
+          Accept: "application/json",
+        },
+      })
+
+      if (res.status === 429 || res.status === 503) {
+        const retryAfter = Number(res.headers.get("Retry-After")) || 3
+        logQueue(
+          `${c.magenta(c.bold("[MediaQueue]"))} ${c.red(c.bold("⚠️ [RATE LIMIT 429/503]"))} ${c.red(`MusicBrainz HTTP ${res.status}. Backing off for ${retryAfter}s...`)}`
+        )
+        await new Promise((r) => setTimeout(r, retryAfter * 1000))
+        return this.fetchRelease(mbid)
+      }
+
+      if (!res.ok) return null
+
+      const payload = (await res.json()) as MusicBrainzReleasePayload
+
+      // Attempt to fetch cover art from Cover Art Archive if release exists
+      try {
+        const caaRes = await fetch(
+          `https://coverartarchive.org/release/${cleanMbid}`,
+          {
+            headers: { Accept: "application/json" },
+          }
+        )
+        if (caaRes.ok) {
+          const caaJson = (await caaRes.json()) as {
+            images?: Array<{ image: string; front: boolean }>
+          }
+          const frontImg =
+            caaJson.images?.find((img) => img.front)?.image ||
+            caaJson.images?.[0]?.image
+          if (frontImg) {
+            payload.coverImageUrl = frontImg
+          }
+        }
+      } catch {}
+
+      return payload
+    } catch (err: any) {
+      console.error(`[MusicBrainzProvider] fetchRelease failed: ${err.message}`)
+      return null
+    }
+  }
+
+  /**
+   * Searches releases by query (e.g. album title and artist).
+   */
+  async searchRelease(
+    query: string,
+    limit: number = 5
+  ): Promise<MusicBrainzReleasePayload[]> {
+    const clean = query.trim()
+    if (!clean) return []
+
+    await this.waitForRateLimit()
+
+    const maxLimit = Math.min(Math.max(limit, 1), 10)
+    const url = `${this.baseUrl}/release?query=${encodeURIComponent(clean)}&limit=${maxLimit}&fmt=json`
+    try {
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent":
+            "IRIS-Platform/1.0 (https://iris.app; contact@iris.app)",
+          Accept: "application/json",
+        },
+      })
+
+      if (res.status === 429 || res.status === 503) {
+        const retryAfter = Number(res.headers.get("Retry-After")) || 3
+        logQueue(
+          `${c.magenta(c.bold("[MediaQueue]"))} ${c.red(c.bold("⚠️ [RATE LIMIT 429/503]"))} ${c.red(`MusicBrainz HTTP ${res.status} during search. Backing off for ${retryAfter}s...`)}`
+        )
+        await new Promise((r) => setTimeout(r, retryAfter * 1000))
+        return this.searchRelease(clean, limit)
+      }
+
+      if (!res.ok) return []
+
+      const json = (await res.json()) as {
+        releases?: MusicBrainzReleasePayload[]
+      }
+      return json.releases || []
+    } catch (err: any) {
+      console.error(`[MusicBrainzProvider] searchRelease failed: ${err.message}`)
+      return []
+    }
   }
 }

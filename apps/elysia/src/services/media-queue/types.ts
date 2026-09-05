@@ -1,8 +1,20 @@
 export type MediaJobType =
-  "ANIME" | "MANGA" | "TV" | "MOVIE" | "BOOK" | "GAME" | "MUSIC"
+  | "ANIME"
+  | "MANGA"
+  | "TV"
+  | "MOVIE"
+  | "BOOK"
+  | "GAME"
+  | "MUSIC"
+  | "MUSIC_ALBUM"
+  | "MUSIC_TRACK"
 
 export type MediaJobStatus =
-  "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | "CANCELLED"
+  | "PENDING"
+  | "PROCESSING"
+  | "COMPLETED"
+  | "FAILED"
+  | "CANCELLED"
 
 export interface MediaJob {
   id: string // Unique job ID (e.g. "ANIME:16498")
@@ -104,11 +116,16 @@ export interface GameSearchResult {
 
 export interface MusicSearchResult {
   id: number
+  itemType: "ALBUM" | "TRACK"
   titlePrimary: string
   titleSecondary?: string | null
   artist?: string | null
+  artistName?: string | null
   coverImage?: string | null
   duration?: number | null
+  albumTitle?: string | null
+  albumId?: number | null
+  totalTracks?: number | null
   queuedForFetch?: boolean
 }
 

@@ -9,7 +9,8 @@ import {
   tvSelect,
   gameSelect,
   bookSelect,
-  musicSelect,
+  musicAlbumSelect,
+  musicTrackSelect,
 } from "@/modules/IRIS-list/helpers"
 import { NotFound, BadRequest } from "@/utils/errors"
 import type { MediaType } from "@IRIS/database"
@@ -126,6 +127,8 @@ export default defineRoute({
             t.Literal("GAME"),
             t.Literal("BOOK"),
             t.Literal("MUSIC"),
+            t.Literal("MUSIC_ALBUM"),
+            t.Literal("MUSIC_TRACK"),
           ])
         ),
       }),
@@ -175,7 +178,8 @@ export default defineRoute({
         tv: { select: tvSelect },
         game: { select: gameSelect },
         book: { select: bookSelect },
-        music: { select: musicSelect },
+        album: { select: musicAlbumSelect },
+        track: { select: musicTrackSelect },
       },
     })
 
@@ -190,7 +194,8 @@ export default defineRoute({
       entry.tv ||
       entry.game ||
       entry.book ||
-      entry.music ||
+      entry.album ||
+      entry.track ||
       null
 
     return {
@@ -232,27 +237,39 @@ export default defineRoute({
     const order = b.order ?? 0
     const customNotes = b.customNotes ?? null
 
+    let resolvedMediaType = mediaType
+    if ((mediaType as string) === "MUSIC") {
+      const isAlbum = await prisma.musicAlbum.findUnique({
+        where: { id: mediaId },
+        select: { id: true },
+      })
+      resolvedMediaType = isAlbum
+        ? ("MUSIC_ALBUM" as MediaType)
+        : ("MUSIC_TRACK" as MediaType)
+    }
+
     const foreignKeyField: any = {
-      animeId: mediaType === "ANIME" ? mediaId : null,
-      mangaId: mediaType === "MANGA" ? mediaId : null,
-      movieId: mediaType === "MOVIE" ? mediaId : null,
-      tvId: mediaType === "TV" ? mediaId : null,
-      gameId: mediaType === "GAME" ? mediaId : null,
-      bookId: mediaType === "BOOK" ? mediaId : null,
-      musicId: mediaType === "MUSIC" ? mediaId : null,
+      animeId: resolvedMediaType === "ANIME" ? mediaId : null,
+      mangaId: resolvedMediaType === "MANGA" ? mediaId : null,
+      movieId: resolvedMediaType === "MOVIE" ? mediaId : null,
+      tvId: resolvedMediaType === "TV" ? mediaId : null,
+      gameId: resolvedMediaType === "GAME" ? mediaId : null,
+      bookId: resolvedMediaType === "BOOK" ? mediaId : null,
+      albumId: resolvedMediaType === "MUSIC_ALBUM" ? mediaId : null,
+      trackId: resolvedMediaType === "MUSIC_TRACK" ? mediaId : null,
     }
 
     const result = await prisma.watchlistEntry.upsert({
       where: {
         watchlistId_mediaType_mediaId: {
           watchlistId: watchlist.id,
-          mediaType,
+          mediaType: resolvedMediaType,
           mediaId,
         },
       },
       create: {
         watchlistId: watchlist.id,
-        mediaType,
+        mediaType: resolvedMediaType,
         mediaId,
         order,
         customNotes,
@@ -303,27 +320,39 @@ export default defineRoute({
     const order = b.order ?? 0
     const customNotes = b.customNotes ?? null
 
+    let resolvedMediaType = mediaType
+    if ((mediaType as string) === "MUSIC") {
+      const isAlbum = await prisma.musicAlbum.findUnique({
+        where: { id: mediaId },
+        select: { id: true },
+      })
+      resolvedMediaType = isAlbum
+        ? ("MUSIC_ALBUM" as MediaType)
+        : ("MUSIC_TRACK" as MediaType)
+    }
+
     const foreignKeyField: any = {
-      animeId: mediaType === "ANIME" ? mediaId : null,
-      mangaId: mediaType === "MANGA" ? mediaId : null,
-      movieId: mediaType === "MOVIE" ? mediaId : null,
-      tvId: mediaType === "TV" ? mediaId : null,
-      gameId: mediaType === "GAME" ? mediaId : null,
-      bookId: mediaType === "BOOK" ? mediaId : null,
-      musicId: mediaType === "MUSIC" ? mediaId : null,
+      animeId: resolvedMediaType === "ANIME" ? mediaId : null,
+      mangaId: resolvedMediaType === "MANGA" ? mediaId : null,
+      movieId: resolvedMediaType === "MOVIE" ? mediaId : null,
+      tvId: resolvedMediaType === "TV" ? mediaId : null,
+      gameId: resolvedMediaType === "GAME" ? mediaId : null,
+      bookId: resolvedMediaType === "BOOK" ? mediaId : null,
+      albumId: resolvedMediaType === "MUSIC_ALBUM" ? mediaId : null,
+      trackId: resolvedMediaType === "MUSIC_TRACK" ? mediaId : null,
     }
 
     const result = await prisma.watchlistEntry.upsert({
       where: {
         watchlistId_mediaType_mediaId: {
           watchlistId: watchlist.id,
-          mediaType,
+          mediaType: resolvedMediaType,
           mediaId,
         },
       },
       create: {
         watchlistId: watchlist.id,
-        mediaType,
+        mediaType: resolvedMediaType,
         mediaId,
         order,
         customNotes,
@@ -371,7 +400,11 @@ export default defineRoute({
     const whereClause: any = {
       watchlistId: watchlist.id,
       mediaId: Number(params.id),
-      ...(query?.mediaType ? { mediaType: query.mediaType as MediaType } : {}),
+      ...(query?.mediaType
+        ? query.mediaType === "MUSIC"
+          ? { mediaType: { in: ["MUSIC_ALBUM", "MUSIC_TRACK"] } }
+          : { mediaType: query.mediaType as MediaType }
+        : {}),
     }
 
     const existing = await prisma.watchlistEntry.findFirst({

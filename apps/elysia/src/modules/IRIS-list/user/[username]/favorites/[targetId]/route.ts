@@ -11,6 +11,8 @@ export const FavoriteTypeSchema = t.Union([
   t.Literal("GAME"),
   t.Literal("BOOK"),
   t.Literal("MUSIC"),
+  t.Literal("MUSIC_ALBUM"),
+  t.Literal("MUSIC_TRACK"),
   t.Literal("CHARACTER"),
   t.Literal("PERSON"),
   t.Literal("STUDIO"),
@@ -77,11 +79,30 @@ async function updateEntityFavoritesCounter(
           data: { favorites: { increment: delta } },
         })
         break
-      case "MUSIC":
-        await prisma.music.update({
+      case "MUSIC_ALBUM":
+        await prisma.musicAlbum.update({
           where: { id: targetId },
           data: { favorites: { increment: delta } },
         })
+        break
+      case "MUSIC_TRACK":
+        await prisma.musicTrack.update({
+          where: { id: targetId },
+          data: { favorites: { increment: delta } },
+        })
+        break
+      case "MUSIC":
+        try {
+          await prisma.musicTrack.update({
+            where: { id: targetId },
+            data: { favorites: { increment: delta } },
+          })
+        } catch {
+          await prisma.musicAlbum.update({
+            where: { id: targetId },
+            data: { favorites: { increment: delta } },
+          })
+        }
         break
       case "CHARACTER":
         await prisma.character.update({
@@ -190,8 +211,18 @@ export default defineRoute({
 
     const typeFilter = query?.type as FavoriteType | undefined
 
-    const favorite = typeFilter
-      ? await prisma.favorite.findUnique({
+    let favorite: any = null
+    if (typeFilter) {
+      if ((typeFilter as string) === "MUSIC") {
+        favorite = await prisma.favorite.findFirst({
+          where: {
+            userId: dbUser.id,
+            targetId,
+            type: { in: ["MUSIC_ALBUM", "MUSIC_TRACK"] },
+          },
+        })
+      } else {
+        favorite = await prisma.favorite.findUnique({
           where: {
             userId_type_targetId: {
               userId: dbUser.id,
@@ -200,12 +231,15 @@ export default defineRoute({
             },
           },
         })
-      : await prisma.favorite.findFirst({
-          where: {
-            userId: dbUser.id,
-            targetId,
-          },
-        })
+      }
+    } else {
+      favorite = await prisma.favorite.findFirst({
+        where: {
+          userId: dbUser.id,
+          targetId,
+        },
+      })
+    }
 
     return {
       success: true,
@@ -259,7 +293,14 @@ export default defineRoute({
       throw new NotFound(`User "${username}" not found`)
     }
 
-    const targetType = payload.type
+    let targetType: FavoriteType = payload.type
+    if ((payload.type as string) === "MUSIC") {
+      const isAlbum = await prisma.musicAlbum.findUnique({
+        where: { id: targetId },
+        select: { id: true },
+      })
+      targetType = isAlbum ? "MUSIC_ALBUM" : "MUSIC_TRACK"
+    }
     const displayTitle = payload.title?.trim() || `${targetType} #${targetId}`
 
     const existing = await prisma.favorite.findUnique({

@@ -129,6 +129,53 @@ export const PersonMediaStaffItemSchema = t.Object({
       averageScore: t.Nullable(t.Number()),
     })
   ),
+  album: t.Optional(
+    t.Nullable(
+      t.Object({
+        id: t.Number(),
+        titlePrimary: t.String(),
+        titleSecondary: t.Nullable(t.String()),
+        titleNative: t.Nullable(t.String()),
+        coverImage: t.Nullable(t.String()),
+        bannerImage: t.Nullable(t.String()),
+        albumType: t.Nullable(t.String()),
+        releaseDateYear: t.Nullable(t.Number()),
+        popularity: t.Nullable(t.Number()),
+        listeners: t.Nullable(t.Number()),
+        playCount: t.Nullable(t.Number()),
+        lastFmListenersStat: t.Nullable(t.Number()),
+        lastFmPlayCountStat: t.Nullable(t.Number()),
+      })
+    )
+  ),
+  track: t.Optional(
+    t.Nullable(
+      t.Object({
+        id: t.Number(),
+        titlePrimary: t.String(),
+        titleSecondary: t.Nullable(t.String()),
+        titleNative: t.Nullable(t.String()),
+        coverImage: t.Nullable(t.String()),
+        albumId: t.Nullable(t.Number()),
+        trackNumber: t.Nullable(t.Number()),
+        duration: t.Nullable(t.Number()),
+        popularity: t.Nullable(t.Number()),
+        listeners: t.Nullable(t.Number()),
+        playCount: t.Nullable(t.Number()),
+        lastFmListenersStat: t.Nullable(t.Number()),
+        lastFmPlayCountStat: t.Nullable(t.Number()),
+        album: t.Optional(
+          t.Nullable(
+            t.Object({
+              id: t.Number(),
+              titlePrimary: t.String(),
+              coverImage: t.Nullable(t.String()),
+            })
+          )
+        ),
+      })
+    )
+  ),
 })
 
 export const PersonResponseSchema = t.Object({
@@ -140,6 +187,12 @@ export const PersonResponseSchema = t.Object({
   bangumiId: t.Nullable(t.Number()),
   imdbId: t.Nullable(t.String()),
   tmdbId: t.Nullable(t.Number()),
+
+  musicBrainzId: t.Optional(t.Nullable(t.String())),
+  lastFmUrl: t.Optional(t.Nullable(t.String())),
+  spotifyId: t.Optional(t.Nullable(t.String())),
+  lastFmListenersStat: t.Optional(t.Nullable(t.Number())),
+  lastFmPlayCountStat: t.Optional(t.Nullable(t.Number())),
 
   namePrimary: t.String(),
   nameNative: t.Nullable(t.String()),

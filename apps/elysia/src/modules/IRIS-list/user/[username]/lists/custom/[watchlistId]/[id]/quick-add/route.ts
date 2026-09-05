@@ -24,6 +24,8 @@ export default defineRoute({
         t.Literal("GAME"),
         t.Literal("BOOK"),
         t.Literal("MUSIC"),
+        t.Literal("MUSIC_ALBUM"),
+        t.Literal("MUSIC_TRACK"),
       ]),
     }),
     response: {
@@ -52,14 +54,25 @@ export default defineRoute({
       throw new NotFound(`Watchlist "${params.watchlistId}" not found`)
     }
 
-    const mediaType = (body as any).mediaType as MediaType
+    const rawMediaType = (body as any).mediaType
     const mediaId = Number(params.id)
+    let resolvedMediaType = rawMediaType as MediaType
+
+    if (rawMediaType === "MUSIC") {
+      const isAlbum = await prisma.musicAlbum.findUnique({
+        where: { id: mediaId },
+        select: { id: true },
+      })
+      resolvedMediaType = isAlbum
+        ? ("MUSIC_ALBUM" as MediaType)
+        : ("MUSIC_TRACK" as MediaType)
+    }
 
     const existing = await prisma.watchlistEntry.findUnique({
       where: {
         watchlistId_mediaType_mediaId: {
           watchlistId: watchlist.id,
-          mediaType,
+          mediaType: resolvedMediaType,
           mediaId,
         },
       },
@@ -74,19 +87,20 @@ export default defineRoute({
     }
 
     const foreignKeyField: any = {
-      animeId: mediaType === "ANIME" ? mediaId : null,
-      mangaId: mediaType === "MANGA" ? mediaId : null,
-      movieId: mediaType === "MOVIE" ? mediaId : null,
-      tvId: mediaType === "TV" ? mediaId : null,
-      gameId: mediaType === "GAME" ? mediaId : null,
-      bookId: mediaType === "BOOK" ? mediaId : null,
-      musicId: mediaType === "MUSIC" ? mediaId : null,
+      animeId: resolvedMediaType === "ANIME" ? mediaId : null,
+      mangaId: resolvedMediaType === "MANGA" ? mediaId : null,
+      movieId: resolvedMediaType === "MOVIE" ? mediaId : null,
+      tvId: resolvedMediaType === "TV" ? mediaId : null,
+      gameId: resolvedMediaType === "GAME" ? mediaId : null,
+      bookId: resolvedMediaType === "BOOK" ? mediaId : null,
+      albumId: resolvedMediaType === "MUSIC_ALBUM" ? mediaId : null,
+      trackId: resolvedMediaType === "MUSIC_TRACK" ? mediaId : null,
     }
 
     const created = await prisma.watchlistEntry.create({
       data: {
         watchlistId: watchlist.id,
-        mediaType,
+        mediaType: resolvedMediaType,
         mediaId,
         ...foreignKeyField,
       },

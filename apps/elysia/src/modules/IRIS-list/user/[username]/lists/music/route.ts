@@ -4,7 +4,8 @@ import {
   resolveTargetUserAndAccess,
   parseCommaSeparated,
   parseYears,
-  musicSelect,
+  musicAlbumSelect,
+  musicTrackSelect,
 } from "@/modules/IRIS-list/helpers"
 
 export default defineRoute({
@@ -21,12 +22,17 @@ export default defineRoute({
             entry: t.Object({
               id: t.Number(),
               musicId: t.Number(),
+              albumId: t.Optional(t.Nullable(t.Number())),
+              trackId: t.Optional(t.Nullable(t.Number())),
+              itemType: t.String(),
               status: t.String(),
               score: t.Nullable(t.Number()),
+              progress: t.Number(),
               playCount: t.Number(),
               notes: t.Nullable(t.String()),
               private: t.Boolean(),
               startedAt: t.Nullable(t.String()),
+              completedAt: t.Optional(t.Nullable(t.String())),
               connections: t.Optional(t.Any()),
               createdAt: t.String(),
               updatedAt: t.String(),
@@ -56,7 +62,16 @@ export default defineRoute({
 
     const limit = Number(query?.limit ?? 50)
     const cursor = query?.cursor ? Number(query.cursor) : undefined
-    const statuses = parseCommaSeparated(query?.status)
+    const statuses = parseCommaSeparated(query?.status).map((s) => {
+      const upper = s.toUpperCase()
+      if (upper === "WATCHING" || upper === "READING" || upper === "PLAYING") {
+        return "LISTENING"
+      }
+      return upper
+    })
+    const formats = parseCommaSeparated(query?.mediaFormat).map((f) =>
+      f.toUpperCase()
+    )
     const genres = parseCommaSeparated(query?.genres)
     const years = parseYears(query?.year)
     const sortBy = (query?.sortBy ?? "updatedAt") as string
@@ -66,27 +81,50 @@ export default defineRoute({
       userId: dbUser.id,
       ...(!isOwner ? { private: false } : {}),
       ...(statuses.length > 0 ? { status: { in: statuses } } : {}),
+      ...(formats.length > 0 ? { itemType: { in: formats } } : {}),
       ...(genres.length > 0 || years.length > 0
         ? {
-            music: {
-              ...(years.length > 0 ? { releaseDateYear: { in: years } } : {}),
-              ...(genres.length > 0
-                ? {
-                    genres: {
-                      some: {
-                        name: { in: genres, mode: "insensitive" },
-                      },
-                    },
-                  }
-                : {}),
-            },
+            OR: [
+              {
+                album: {
+                  ...(years.length > 0
+                    ? { releaseDateYear: { in: years } }
+                    : {}),
+                  ...(genres.length > 0
+                    ? {
+                        genres: {
+                          some: {
+                            name: { in: genres, mode: "insensitive" },
+                          },
+                        },
+                      }
+                    : {}),
+                },
+              },
+              {
+                track: {
+                  ...(years.length > 0
+                    ? { album: { releaseDateYear: { in: years } } }
+                    : {}),
+                  ...(genres.length > 0
+                    ? {
+                        genres: {
+                          some: {
+                            name: { in: genres, mode: "insensitive" },
+                          },
+                        },
+                      }
+                    : {}),
+                },
+              },
+            ],
           }
         : {}),
     }
 
     let orderByClause: any = { [sortBy]: order }
     if (sortBy === "title") {
-      orderByClause = { music: { titlePrimary: order } }
+      orderByClause = { id: order }
     } else if (sortBy === "progress") {
       orderByClause = { playCount: order }
     } else if (sortBy === "addedAt") {
@@ -101,7 +139,8 @@ export default defineRoute({
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
         orderBy: [orderByClause, { id: "desc" }],
         include: {
-          music: { select: musicSelect },
+          album: { select: musicAlbumSelect },
+          track: { select: musicTrackSelect },
         },
       }),
     ])
@@ -113,22 +152,58 @@ export default defineRoute({
 
     return {
       success: true,
-      items: paged.map((item: any) => ({
-        entry: {
-          id: item.id,
-          musicId: item.musicId,
-          status: item.status,
-          score: item.score,
-          playCount: item.playCount,
-          notes: item.notes,
-          private: item.private,
-          startedAt: item.startedAt ? item.startedAt.toISOString() : null,
-          connections: item.connections,
-          createdAt: item.createdAt.toISOString(),
-          updatedAt: item.updatedAt.toISOString(),
-        },
-        media: item.music,
-      })),
+      items: paged.map((item: any) => {
+        const isAlbum =
+          item.itemType === "ALBUM" || Boolean(item.albumId && !item.trackId)
+        const rawMedia = isAlbum ? item.album : (item.track ?? item.album)
+        const format = isAlbum ? "ALBUM" : "TRACK"
+        const year =
+          item.album?.releaseDateYear ??
+          item.track?.album?.releaseDateYear ??
+          null
+        const coverImage =
+          rawMedia?.coverImage || item.track?.album?.coverImage || null
+        const artist =
+          rawMedia?.artistName ||
+          item.album?.artistName ||
+          item.track?.artistName ||
+          null
+
+        return {
+          entry: {
+            id: item.id,
+            musicId: item.albumId ?? item.trackId ?? 0,
+            albumId: item.albumId ?? null,
+            trackId: item.trackId ?? null,
+            itemType: item.itemType || format,
+            status: item.status,
+            score: item.score,
+            progress: item.playCount ?? 0,
+            playCount: item.playCount ?? 0,
+            notes: item.notes,
+            private: item.private,
+            startedAt: item.startedAt ? item.startedAt.toISOString() : null,
+            completedAt: item.completedAt
+              ? item.completedAt.toISOString()
+              : null,
+            connections: item.connections,
+            createdAt: item.createdAt.toISOString(),
+            updatedAt: item.updatedAt.toISOString(),
+          },
+          media: rawMedia
+            ? {
+                ...rawMedia,
+                coverImage,
+                format,
+                year,
+                startDateYear: year,
+                releaseDateYear: year,
+                artist,
+                artistName: artist,
+              }
+            : null,
+        }
+      }),
       pagination: {
         nextCursor,
         hasMore,
