@@ -8,11 +8,7 @@ import {
   IconSortDescending,
   IconChevronDown,
 } from "@tabler/icons-react"
-import {
-  DialogTrigger,
-  Popover,
-  Dialog,
-} from "react-aria-components"
+import { DialogTrigger, Popover, Dialog } from "react-aria-components"
 import { cn } from "@workspace/ui/lib/utils"
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
@@ -145,7 +141,11 @@ export function ListStatusCard({
       count: statusCounts.WATCHING ?? 0,
     },
     { key: "ON_HOLD", label: "ON HOLD", count: statusCounts.ON_HOLD ?? 0 },
-    { key: "COMPLETED", label: "COMPLETED", count: statusCounts.COMPLETED ?? 0 },
+    {
+      key: "COMPLETED",
+      label: "COMPLETED",
+      count: statusCounts.COMPLETED ?? 0,
+    },
     { key: "DROPPED", label: "DROPPED", count: statusCounts.DROPPED ?? 0 },
     { key: "PLANNING", label: "PLANNING", count: statusCounts.PLANNING ?? 0 },
   ]
@@ -245,7 +245,7 @@ export function ListStatusCard({
       {/* ================================================================== */}
       <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto p-2 sm:gap-2 sm:p-2.5">
         {/* Status Option Pills */}
-        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
           {statusOptions.map((st) => {
             const isActive = activeStatus === st.key
 
@@ -270,7 +270,7 @@ export function ListStatusCard({
                 <span>{st.label}</span>
                 <span
                   className={cn(
-                    "rounded-full px-1.5 py-0.5 font-mono text-[11px] font-medium leading-none transition-colors",
+                    "rounded-full px-1.5 py-0.5 font-mono text-[11px] leading-none font-medium transition-colors",
                     isActive
                       ? "bg-black/20 text-primary-foreground dark:bg-black/30"
                       : "bg-muted text-muted-foreground group-hover:bg-muted/90 group-hover:text-foreground"
@@ -286,34 +286,36 @@ export function ListStatusCard({
         {/* Vertical Divider (Orange line in reference) */}
         <Separator
           orientation="vertical"
-          className="h-5 shrink-0 bg-border/60 mx-1 self-center"
+          className="mx-1 h-5 shrink-0 self-center bg-border/60"
         />
 
         {/* Tab Switcher: List | Comments | Stats (Green circle in reference) */}
         <Tabs
           selectedKey={currentTab}
-          onSelectionChange={(key) => handleTabChange(String(key) as ListViewTab)}
-          className="gap-0 shrink-0"
+          onSelectionChange={(key) =>
+            handleTabChange(String(key) as ListViewTab)
+          }
+          className="shrink-0 gap-0"
         >
           <TabList
             aria-label="View Switcher"
-            className="h-7 gap-0.5 rounded-full bg-muted/40 p-0.5 border border-border/40"
+            className="h-7 gap-0.5 rounded-full border border-border/40 bg-muted/40 p-0.5"
           >
             <Tab
               id="list"
-              className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs hover:text-foreground"
+              className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
             >
               List
             </Tab>
             <Tab
               id="comments"
-              className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs hover:text-foreground"
+              className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
             >
               Comments
             </Tab>
             <Tab
               id="stats"
-              className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs hover:text-foreground"
+              className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
             >
               Stats
             </Tab>
@@ -332,14 +334,14 @@ export function ListStatusCard({
           {/* ================================================================== */}
           <div className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center lg:justify-between">
             {/* Left: Search input */}
-            <div className="relative flex-1 max-w-md">
-              <IconSearch className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground z-10" />
+            <div className="relative max-w-md flex-1">
+              <IconSearch className="pointer-events-none absolute start-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder={`Search ${mediaType}...`}
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="h-9 w-full rounded-2xl border border-border/50 bg-background/50 ps-9 pe-8 text-xs text-foreground placeholder:text-muted-foreground transition-all focus-visible:border-ring focus-visible:bg-background focus-visible:ring-3 focus-visible:ring-ring/20"
+                className="h-9 w-full rounded-2xl border border-border/50 bg-background/50 ps-9 pe-8 text-xs text-foreground transition-all placeholder:text-muted-foreground focus-visible:border-ring focus-visible:bg-background focus-visible:ring-3 focus-visible:ring-ring/20"
               />
               {searchQuery && (
                 <Button
@@ -347,7 +349,7 @@ export function ListStatusCard({
                   size="icon-xs"
                   onPress={() => onSearchChange("")}
                   aria-label="Clear search"
-                  className="absolute end-2 top-1/2 -translate-y-1/2 size-6 rounded-full text-muted-foreground hover:text-foreground z-10"
+                  className="absolute end-2 top-1/2 z-10 size-6 -translate-y-1/2 rounded-full text-muted-foreground hover:text-foreground"
                 >
                   <IconX className="size-3.5" />
                 </Button>
@@ -393,7 +395,7 @@ export function ListStatusCard({
               />
 
               {/* SORT Divider & Label */}
-              <div className="hidden sm:flex items-center gap-1.5 ps-1">
+              <div className="hidden items-center gap-1.5 ps-1 sm:flex">
                 <span className="text-[11px] font-bold tracking-wider text-muted-foreground/80 uppercase">
                   SORT
                 </span>
@@ -404,16 +406,16 @@ export function ListStatusCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 gap-1.5 rounded-2xl border border-border/60 bg-card/60 px-3 text-xs font-medium text-foreground hover:bg-muted hover:text-foreground select-none"
+                  className="h-8 gap-1.5 rounded-2xl border border-border/60 bg-card/60 px-3 text-xs font-medium text-foreground select-none hover:bg-muted hover:text-foreground"
                 >
                   <span>{currentSortLabel}</span>
-                  <IconChevronDown className="size-3.5 opacity-60 shrink-0" />
+                  <IconChevronDown className="size-3.5 shrink-0 opacity-60" />
                 </Button>
 
                 <Popover
                   placement="bottom end"
                   offset={6}
-                  className="z-50 w-48 overflow-hidden rounded-2xl border border-border/70 bg-popover/95 p-1 text-popover-foreground shadow-2xl backdrop-blur-2xl outline-hidden duration-100 data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:fade-out-0 data-exiting:zoom-out-95"
+                  className="z-50 w-48 overflow-hidden rounded-2xl border border-border/70 bg-popover/95 p-1 text-popover-foreground shadow-2xl outline-hidden backdrop-blur-2xl duration-100 data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:fade-out-0 data-exiting:zoom-out-95"
                 >
                   <Dialog className="flex flex-col gap-0.5 outline-hidden">
                     {SORT_OPTIONS.map((opt) => {
@@ -425,9 +427,9 @@ export function ListStatusCard({
                           size="sm"
                           onPress={() => onSortByChange(opt.value)}
                           className={cn(
-                            "flex h-auto w-full items-center justify-between rounded-xl px-2.5 py-1.5 text-xs text-start select-none",
+                            "flex h-auto w-full items-center justify-between rounded-xl px-2.5 py-1.5 text-start text-xs select-none",
                             isSelected
-                              ? "bg-primary/10 text-primary font-semibold hover:bg-primary/15"
+                              ? "bg-primary/10 font-semibold text-primary hover:bg-primary/15"
                               : "text-foreground hover:bg-muted/60"
                           )}
                         >
@@ -449,7 +451,9 @@ export function ListStatusCard({
                 onPress={() =>
                   onSortOrderChange(sortOrder === "asc" ? "desc" : "asc")
                 }
-                aria-label={sortOrder === "asc" ? "Sort Ascending" : "Sort Descending"}
+                aria-label={
+                  sortOrder === "asc" ? "Sort Ascending" : "Sort Descending"
+                }
                 className="size-8 rounded-2xl border border-border/60 bg-card/60 text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 {sortOrder === "asc" ? (

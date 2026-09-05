@@ -3,24 +3,14 @@ import path from "node:path"
 import { pathToFileURL } from "node:url"
 import { c } from "../utils/colors"
 import { DEV_ACCOUNT_DEFAULTS } from "../utils/dev-account"
-
-const HTTP_METHODS = [
-  "GET",
-  "POST",
-  "PUT",
-  "DELETE",
-  "PATCH",
-  "OPTIONS",
-  "HEAD",
-] as const
-
-type HttpMethod = (typeof HTTP_METHODS)[number]
+import { parseRoutePath, HTTP_METHODS } from "./helpers/path"
+import { findRouteFiles } from "./helpers/scanner"
 
 /**
- * Options configuring Insomnium collection generation.
+ * Configuration options for Insomnium workspace collection generation.
  */
-export interface InsomniumGeneratorOptions {
-  /** Directory containing file-based routes (defaults to src/modules). */
+export interface InsomniumOptions {
+  /** Directory containing file-based routes (defaults to `src/modules`). */
   modulesDir?: string
   /** Output file destination for the Insomnium v4 export JSON. */
   outputFile?: string
@@ -31,185 +21,71 @@ export interface InsomniumGeneratorOptions {
 }
 
 /**
- * Converts a relative file path to an Elysia route path.
+ * Generates an Insomnium v4 export JSON configuration from all routes.
  *
- * @param relativeFilePath - File path relative to modules root
- * @returns Formatted URL route path string
- */
-function parseRoutePath(relativeFilePath: string): string {
-  const normalized = relativeFilePath.replace(/\\/g, "/").replace(/^\/+/, "")
-  const parts = normalized.split("/")
-
-  if (parts.length < 2) return "/"
-
-  const segments = parts.slice(1, -1)
-  const routeSegments = segments.filter((seg) => !/^\(.*\)$/.test(seg))
-
-  if (routeSegments.length === 0) {
-    return "/"
-  }
-
-  const mapped = routeSegments.map((seg) => {
-    if (seg.startsWith("[...") && seg.endsWith("]")) {
-      return "*"
-    }
-    if (seg.startsWith("[") && seg.endsWith("]")) {
-      return `:${seg.slice(1, -1)}`
-    }
-    return seg
-  })
-
-  return "/" + mapped.join("/")
-}
-
-/**
- * Recursively scans directory for route files.
+ * This function:
+ * 1. Scans `src/modules/` recursively using the shared scanner helper.
+ * 2. Parses URL parameters and schemas using the shared path helper.
+ * 3. Builds a pre-configured Insomnium workspace with base URL and development API keys.
+ * 4. Organizes endpoints into folders grouped by domain module.
+ * 5. Synthesizes sample request bodies and query parameters matching TypeBox schemas.
+ * 6. Idempotently writes to `insomnium.json`.
  *
- * @param dir - Directory path to traverse
- * @returns List of absolute route file paths
- */
-function findRouteFiles(dir: string): string[] {
-  if (!fs.existsSync(dir)) return []
-
-  const results: string[] = []
-  let entries: fs.Dirent[] = []
-  try {
-    entries = fs.readdirSync(dir, { withFileTypes: true })
-  } catch {
-    return []
-  }
-
-  for (const entry of entries) {
-    const name = entry.name
-
-    // Ignore hidden files and directories
-    if (name.startsWith(".")) continue
-
-    // Ignore temporary, backup, or editor duplicate copies
-    if (
-      /\s+copy(\s+\d+)?$/i.test(name) ||
-      /\s*\(\d+\)$/.test(name) ||
-      /\s*\(copy\)/i.test(name)
-    ) {
-      continue
-    }
-    if (/\.bak$|\.tmp$|\.old$|~$/i.test(name)) continue
-
-    const fullPath = path.join(dir, name)
-    if (entry.isDirectory()) {
-      results.push(...findRouteFiles(fullPath))
-    } else if (entry.isFile() && (name === "route.ts" || name === "route.js")) {
-      results.push(fullPath)
-    }
-  }
-
-  return results
-}
-
-/**
- * Derives a sample JSON payload value from a TypeBox JSON schema definition.
+ * @param options - Insomnium generator options
  *
- * @param schema - TypeBox schema object
- * @returns Sample object or primitive value
- */
-function sampleFromSchema(schema: unknown): unknown {
-  if (!schema || typeof schema !== "object") return {}
-  const s = schema as Record<string, unknown>
-
-  if (s.default !== undefined) return s.default
-  if (s.type === "string") return "string"
-  if (s.type === "number" || s.type === "integer") return 1
-  if (s.type === "boolean") return true
-  if (s.type === "array") return []
-  if (s.type === "object" && s.properties && typeof s.properties === "object") {
-    const obj: Record<string, unknown> = {}
-    for (const [k, v] of Object.entries(
-      s.properties as Record<string, unknown>
-    )) {
-      obj[k] = sampleFromSchema(v)
-    }
-    return obj
-  }
-  return {}
-}
-
-/**
- * Generates an Insomnium / Insomnia v4 compatible collection file from all file-based routes.
- *
- * Automatically inspects query parameters, path segments, and TypeBox body schemas to
- * synthesize pre-filled HTTP requests organized into module folders with development API keys.
- *
- * @param options - Generation options
+ * @example
+ * ```typescript
+ * await generateInsomniumConfig({ silent: true })
+ * ```
  */
 export async function generateInsomniumConfig(
-  options: InsomniumGeneratorOptions = {}
+  options: InsomniumOptions = {}
 ): Promise<void> {
-  const modulesDir =
-    options.modulesDir || path.resolve(import.meta.dirname, "../modules")
+  const routerDir = import.meta.dirname
+  const modulesDir = options.modulesDir || path.resolve(routerDir, "../modules")
   const outputFile =
-    options.outputFile ||
-    path.resolve(import.meta.dirname, "../../insomnium.json")
+    options.outputFile || path.resolve(routerDir, "../../insomnium.json")
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL
+  const devApiKey = options.devApiKey || DEV_ACCOUNT_DEFAULTS.apiKey
 
-  const routeFiles = findRouteFiles(modulesDir)
-
-  const workspaceId = "wrk_iris_api"
-  const baseEnvId = "env_iris_base"
+  const workspaceId = "wrk_iris_elysia_api"
+  const envId = "env_iris_elysia_local"
 
   const resources: Array<Record<string, unknown>> = [
     {
       _id: workspaceId,
       parentId: null,
-      name: "IRIS API",
-      description: "Auto-generated Insomnium collection for IRIS Elysia server",
+      name: "IRIS Elysia API",
+      description:
+        "Auto-generated collection for IRIS Elysia file-based routes",
       scope: "collection",
       _type: "workspace",
     },
     {
-      _id: baseEnvId,
+      _id: envId,
       parentId: workspaceId,
-      name: "Base Environment",
+      name: "Local Development",
       data: {
-        base_url: baseUrl,
+        base_url: "http://localhost:4000",
+        api_key: devApiKey,
         token: "",
-        api_key: options.devApiKey || DEV_ACCOUNT_DEFAULTS.apiKey,
       },
       dataPropertyOrder: {
-        "&": ["base_url", "token", "api_key"],
+        "&": ["base_url", "api_key", "token"],
       },
-      color: "#6b46c1",
+      color: "#8b5cf6",
       isPrivate: false,
       _type: "environment",
     },
   ]
 
-  // Folder map to track module request groups
   const folderIds = new Map<string, string>()
+  const routeFiles = findRouteFiles(modulesDir)
 
-  // Add Health Check endpoint
-  resources.push({
-    _id: "req_health_check",
-    parentId: workspaceId,
-    url: "{{ _.base_url }}/health",
-    name: "GET /health",
-    description: "Server health and uptime check",
-    method: "GET",
-    body: {},
-    parameters: [],
-    headers: [],
-    authentication: {},
-    isPrivate: false,
-    settingStoreCookies: true,
-    settingSendCookies: true,
-    settingDisableRenderRequestBody: false,
-    settingEncodeUrl: true,
-    settingRebuildPath: true,
-    settingFollowRedirects: "global",
-    _type: "request",
-  })
+  // Sort files for deterministic generation
+  routeFiles.sort()
 
-  let requestCount = 1
+  let requestCount = 0
 
   for (const filePath of routeFiles) {
     const relativePath = path.relative(modulesDir, filePath)
@@ -402,6 +278,48 @@ export async function generateInsomniumConfig(
     console.log(
       `${c.cyan(c.bold("[Insomnium]"))} ${c.green("Generated")} ${c.bold(requestCount)} ${c.green("endpoints in:")} ${c.dim(outputFile)}`
     )
+  }
+}
+
+/**
+ * Generates sample data from a JSON Schema / TypeBox definition.
+ */
+function sampleFromSchema(schema: unknown): unknown {
+  if (!schema || typeof schema !== "object") return ""
+
+  const s = schema as Record<string, unknown>
+
+  if (s.default !== undefined) return s.default
+  if (Array.isArray(s.examples) && s.examples.length > 0) return s.examples[0]
+  if (Array.isArray(s.enum) && s.enum.length > 0) return s.enum[0]
+
+  switch (s.type) {
+    case "string":
+      if (s.format === "date-time") return new Date().toISOString()
+      if (s.format === "email") return "user@example.com"
+      if (s.format === "uuid") return "00000000-0000-0000-0000-000000000000"
+      return "string"
+    case "number":
+    case "integer":
+      return s.minimum ?? 1
+    case "boolean":
+      return true
+    case "array":
+      if (s.items) {
+        return [sampleFromSchema(s.items)]
+      }
+      return []
+    case "object":
+      if (s.properties && typeof s.properties === "object") {
+        const result: Record<string, unknown> = {}
+        for (const [k, v] of Object.entries(s.properties)) {
+          result[k] = sampleFromSchema(v)
+        }
+        return result
+      }
+      return {}
+    default:
+      return null
   }
 }
 

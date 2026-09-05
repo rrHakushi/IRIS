@@ -12,11 +12,35 @@
       "@/*": [
         "./src/*"
       ],
+      "@IRIS/cache": [
+        "../../packages/cache/src/index.ts"
+      ],
+      "@IRIS/cache/*": [
+        "../../packages/cache/src/*"
+      ],
       "@IRIS/connections": [
         "../../packages/connections/src/index.ts"
       ],
       "@IRIS/connections/*": [
         "../../packages/connections/src/*"
+      ],
+      "@IRIS/database": [
+        "../../packages/database/src/index.ts"
+      ],
+      "@IRIS/database/*": [
+        "../../packages/database/src/*"
+      ],
+      "@IRIS/permissions": [
+        "../../packages/permissions/src/index.ts"
+      ],
+      "@IRIS/permissions/*": [
+        "../../packages/permissions/src/*"
+      ],
+      "@IRIS/shared": [
+        "../../packages/shared/src/index.ts"
+      ],
+      "@IRIS/shared/*": [
+        "../../packages/shared/src/*"
       ]
     },
     "declaration": false,

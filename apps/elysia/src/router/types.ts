@@ -5,10 +5,12 @@ import {
   type AnySchema,
 } from "elysia"
 import type { prisma as PrismaInstance } from "@IRIS/database"
-import type { CacheManager } from "@IRIS/cache"
+import type { CacheInstance } from "../utils/cache"
+import type { IRISBitFieldResolvable } from "@IRIS/permissions"
 import type { Session, SessionUser } from "../plugins/session"
 import type { RequestLogger } from "../utils/request-logger"
-import type { GlobalCacheKeyStorage } from "./cache-keys.generated"
+import type { NotificationService } from "../plugins/notification"
+import type { GlobalCacheKeyStorage } from "./generated/cache-keys.generated"
 
 export type { GlobalCacheKeyStorage }
 
@@ -108,6 +110,13 @@ export type RouteCacheKeyGenerator = (...args: any[]) => string
 export type RouteCacheKeyStorage = Record<string, any>
 
 /**
+ * Session interface for routes guaranteed to have an authenticated user.
+ */
+export interface AuthenticatedSession extends Omit<Session, "user"> {
+  user: SessionUser
+}
+
+/**
  * Strongly-typed Elysia route context including Prisma client, cache, session, cacheKeys, and logger.
  */
 export type Context<
@@ -115,6 +124,7 @@ export type Context<
   TQuery extends Record<string, unknown> = Record<string, unknown>,
   TBody = unknown,
   TCacheKeys extends RouteCacheKeyStorage = {},
+  TSession extends Session = Session,
 > = {
   /**
    * Database client connected via @IRIS/database
@@ -123,7 +133,7 @@ export type Context<
   /**
    * Cache manager instance connected via @IRIS/cache
    */
-  cache: CacheManager
+  cache: CacheInstance
   /**
    * Injected cache key generator functions defined across all route definitions.
    */
@@ -132,11 +142,15 @@ export type Context<
    * Extracted session context (NextAuth cookie -> Bearer token -> API key)
    * Provides helper methods: .getUser(), .status, .hasPermission(), .requireUser()
    */
-  session: Session
+  session: TSession
   /**
    * Request-scoped logger that groups output under the current request
    */
   logger: RequestLogger
+  /**
+   * Post-quantum encrypted notification dispatcher service
+   */
+  notifications: NotificationService
   /**
    * Dynamic path parameters (e.g. /user/:id -> params.id)
    */
@@ -201,8 +215,9 @@ export type RouteHandler<
   TQuery extends Record<string, unknown> = Record<string, unknown>,
   TBody = unknown,
   TCacheKeys extends RouteCacheKeyStorage = {},
+  TSession extends Session = Session,
 > = (
-  ctx: Context<TParams, TQuery, TBody, TCacheKeys>
+  ctx: Context<TParams, TQuery, TBody, TCacheKeys, TSession>
 ) => unknown | Promise<unknown>
 
 /**
@@ -213,9 +228,20 @@ export type NoBodyRouteHandler<
   TParams extends Record<string, unknown> = Record<string, string | undefined>,
   TQuery extends Record<string, unknown> = Record<string, unknown>,
   TCacheKeys extends RouteCacheKeyStorage = {},
+  TSession extends Session = Session,
 > = (
-  ctx: Omit<Context<TParams, TQuery, never, TCacheKeys>, "body">
+  ctx: Omit<Context<TParams, TQuery, never, TCacheKeys, TSession>, "body">
 ) => unknown | Promise<unknown>
+
+/**
+ * Infers the session type based on requireAuth and requirePermissions flags.
+ */
+export type InferSession<TAuth, TPerms> = TAuth extends
+  true | { message?: string }
+  ? AuthenticatedSession
+  : TPerms extends readonly [any, ...any[]] | any[]
+    ? AuthenticatedSession
+    : Session
 
 /**
  * Route schema for HTTP methods that do not accept a request body.
@@ -235,10 +261,34 @@ export interface MethodConfig<
   TBody = unknown,
   S extends RouteSchema = RouteSchema,
   TCacheKeys extends RouteCacheKeyStorage = {},
+  TAuth extends boolean | { message?: string } | undefined =
+    boolean | { message?: string } | undefined,
+  TPerms extends IRISBitFieldResolvable[] | undefined =
+    IRISBitFieldResolvable[] | undefined,
 > {
   schema?: S
   rateLimit?: RateLimitConfig
-  handler: RouteHandler<TParams, TQuery, TBody, TCacheKeys>
+  /**
+   * Whether authentication is required to access this method.
+   * Can be a boolean or an object specifying a custom error message.
+   * Method-level configuration has priority over route-level.
+   *
+   * @default false
+   */
+  requireAuth?: TAuth
+  /**
+   * Array of permissions required to invoke this method.
+   * Automatically enforces authentication.
+   * Method-level configuration has priority over route-level.
+   */
+  requirePermissions?: TPerms
+  handler: RouteHandler<
+    TParams,
+    TQuery,
+    TBody,
+    TCacheKeys,
+    InferSession<TAuth, TPerms>
+  >
 }
 
 /**
@@ -249,10 +299,33 @@ export interface NoBodyMethodConfig<
   TQuery extends Record<string, unknown> = Record<string, unknown>,
   S extends NoBodyRouteSchema = NoBodyRouteSchema,
   TCacheKeys extends RouteCacheKeyStorage = {},
+  TAuth extends boolean | { message?: string } | undefined =
+    boolean | { message?: string } | undefined,
+  TPerms extends IRISBitFieldResolvable[] | undefined =
+    IRISBitFieldResolvable[] | undefined,
 > {
   schema?: S
   rateLimit?: RateLimitConfig
-  handler: NoBodyRouteHandler<TParams, TQuery, TCacheKeys>
+  /**
+   * Whether authentication is required to access this method.
+   * Can be a boolean or an object specifying a custom error message.
+   * Method-level configuration has priority over route-level.
+   *
+   * @default false
+   */
+  requireAuth?: TAuth
+  /**
+   * Array of permissions required to invoke this method.
+   * Automatically enforces authentication.
+   * Method-level configuration has priority over route-level.
+   */
+  requirePermissions?: TPerms
+  handler: NoBodyRouteHandler<
+    TParams,
+    TQuery,
+    TCacheKeys,
+    InferSession<TAuth, TPerms>
+  >
 }
 
 /**
@@ -271,7 +344,41 @@ export type MethodField<
   | {
       schema?: RouteSchema
       rateLimit?: RateLimitConfig
-      handler: RouteHandler<any, any, any, TCacheKeys>
+      requireAuth: true | { message?: string }
+      requirePermissions?: IRISBitFieldResolvable[]
+      handler: RouteHandler<
+        SchemaParams<GlobalSchema>,
+        SchemaQuery<GlobalSchema>,
+        any,
+        TCacheKeys,
+        AuthenticatedSession
+      >
+    }
+  | {
+      schema?: RouteSchema
+      rateLimit?: RateLimitConfig
+      requireAuth?: boolean | { message?: string }
+      requirePermissions: [IRISBitFieldResolvable, ...IRISBitFieldResolvable[]]
+      handler: RouteHandler<
+        SchemaParams<GlobalSchema>,
+        SchemaQuery<GlobalSchema>,
+        any,
+        TCacheKeys,
+        AuthenticatedSession
+      >
+    }
+  | {
+      schema?: RouteSchema
+      rateLimit?: RateLimitConfig
+      requireAuth?: boolean | { message?: string }
+      requirePermissions?: IRISBitFieldResolvable[]
+      handler: RouteHandler<
+        SchemaParams<GlobalSchema>,
+        SchemaQuery<GlobalSchema>,
+        any,
+        TCacheKeys,
+        Session
+      >
     }
 
 /**
@@ -289,7 +396,38 @@ export type NoBodyMethodField<
   | {
       schema?: NoBodyRouteSchema
       rateLimit?: RateLimitConfig
-      handler: NoBodyRouteHandler<any, any, TCacheKeys>
+      requireAuth: true | { message?: string }
+      requirePermissions?: IRISBitFieldResolvable[]
+      handler: NoBodyRouteHandler<
+        SchemaParams<GlobalSchema>,
+        SchemaQuery<GlobalSchema>,
+        TCacheKeys,
+        AuthenticatedSession
+      >
+    }
+  | {
+      schema?: NoBodyRouteSchema
+      rateLimit?: RateLimitConfig
+      requireAuth?: boolean | { message?: string }
+      requirePermissions: [IRISBitFieldResolvable, ...IRISBitFieldResolvable[]]
+      handler: NoBodyRouteHandler<
+        SchemaParams<GlobalSchema>,
+        SchemaQuery<GlobalSchema>,
+        TCacheKeys,
+        AuthenticatedSession
+      >
+    }
+  | {
+      schema?: NoBodyRouteSchema
+      rateLimit?: RateLimitConfig
+      requireAuth?: boolean | { message?: string }
+      requirePermissions?: IRISBitFieldResolvable[]
+      handler: NoBodyRouteHandler<
+        SchemaParams<GlobalSchema>,
+        SchemaQuery<GlobalSchema>,
+        TCacheKeys,
+        Session
+      >
     }
 
 /**
@@ -302,6 +440,8 @@ export interface RouteDefinition<
   cacheKeys?: K
   rateLimit?: RateLimitConfig
   rateLimits?: Partial<Record<HttpMethodKey, RateLimitConfig>>
+  requireAuth?: boolean | { message?: string }
+  requirePermissions?: IRISBitFieldResolvable[]
   schema?: S
   schemas?: Partial<Record<HttpMethodKey, RouteSchema>>
 
@@ -377,7 +517,7 @@ export function defineRoute<
   K extends RouteCacheKeyStorage = {},
   D extends RouteDefinition<S, K> = RouteDefinition<S, K>,
 >(definition: D): DefinedRoute<S, K, D> {
-  return definition as any
+  return definition as unknown as DefinedRoute<S, K, D>
 }
 
 /**
@@ -386,11 +526,15 @@ export function defineRoute<
 export abstract class Route {
   static rateLimit?: RateLimitConfig
   static rateLimits?: Partial<Record<HttpMethodKey, RateLimitConfig>>
+  static requireAuth?: boolean | { message?: string }
+  static requirePermissions?: IRISBitFieldResolvable[]
   static schema?: RouteSchema
   static schemas?: Partial<Record<HttpMethodKey, RouteSchema>>
 
   rateLimit?: RateLimitConfig
   rateLimits?: Partial<Record<HttpMethodKey, RateLimitConfig>>
+  requireAuth?: boolean | { message?: string }
+  requirePermissions?: IRISBitFieldResolvable[]
   schema?: RouteSchema
   schemas?: Partial<Record<HttpMethodKey, RouteSchema>>
 
@@ -413,6 +557,8 @@ export interface RouteClass {
   new (): RouteInstance
   rateLimit?: RateLimitConfig
   rateLimits?: Partial<Record<string, RateLimitConfig>>
+  requireAuth?: boolean | { message?: string }
+  requirePermissions?: IRISBitFieldResolvable[]
   schema?: RouteSchema
   schemas?: Partial<Record<string, RouteSchema>>
   [key: string]: unknown
@@ -424,6 +570,8 @@ export interface RouteClass {
 export interface RouteInstance {
   rateLimit?: RateLimitConfig
   rateLimits?: Partial<Record<string, RateLimitConfig>>
+  requireAuth?: boolean | { message?: string }
+  requirePermissions?: IRISBitFieldResolvable[]
   schema?: RouteSchema
   schemas?: Partial<Record<string, RouteSchema>>
   GET?: RouteHandler | MethodConfig

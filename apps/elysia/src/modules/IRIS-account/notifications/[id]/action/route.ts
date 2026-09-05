@@ -54,7 +54,9 @@ async function executeNotificationAction(
     return result || { success: true }
   } catch (err) {
     const errorMsg =
-      err instanceof Error ? err.message : "Notification action execution failed"
+      err instanceof Error
+        ? err.message
+        : "Notification action execution failed"
     console.error(`[NotificationAction] Error executing '${handlerName}':`, err)
     return { success: false, error: errorMsg }
   }

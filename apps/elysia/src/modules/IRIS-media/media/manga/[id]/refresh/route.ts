@@ -1,7 +1,6 @@
 import {
   BadRequest,
   Conflict,
-  Forbidden,
   NotFound,
   ErrorResponseSchema,
 } from "@/utils/errors"
@@ -43,45 +42,44 @@ export default defineRoute({
     },
   },
 
-  async POST({ params, body, session, prisma }) {
-    if (!session.hasPermission(IRISFlags.ADMINISTRATOR)) {
-      return new Forbidden("Forbidden: Admin required")
-    }
+  POST: {
+    requirePermissions: [IRISFlags.ADMINISTRATOR],
+    async handler({ params, body, prisma }) {
+      const manga = await prisma.manga.findUnique({ where: { id: params.id } })
+      if (!manga) {
+        throw new NotFound("Manga not found")
+      }
 
-    const manga = await prisma.manga.findUnique({ where: { id: params.id } })
-    if (!manga) {
-      return new NotFound("Manga not found")
-    }
+      if (!manga.anilistId) {
+        throw new BadRequest("Manga is missing anilistId")
+      }
 
-    if (!manga.anilistId) {
-      return new BadRequest("Manga is missing anilistId")
-    }
+      const queued = await queueMangaFetch(manga.anilistId, {
+        forceRefresh: body?.force,
+        maxDepth: body?.maxDepth,
+        priority: body?.priority,
+        maxRetries: body?.maxRetries,
+      })
 
-    const queued = await queueMangaFetch(manga.anilistId, {
-      forceRefresh: body?.force,
-      maxDepth: body?.maxDepth,
-      priority: body?.priority,
-      maxRetries: body?.maxRetries,
-    })
+      if (queued?.metadata?.skipped) {
+        throw new Conflict(
+          `${queued.metadata.reason || "Manga is already fresh in database"}`
+        )
+      }
 
-    if (queued?.metadata?.skipped) {
-      return new Conflict(
-        `${queued.metadata.reason || "Manga is already fresh in database"}`
-      )
-    }
+      if (queued.status === "PROCESSING" || queued.status === "PENDING") {
+        return {
+          success: true,
+          message: "Manga queued for refresh",
+          timestamp: new Date().toISOString(),
+        }
+      }
 
-    if (queued.status === "PROCESSING" || queued.status === "PENDING") {
       return {
-        success: true,
-        message: "Manga queued for refresh",
+        success: false,
+        message: "Failed to queue manga for refresh",
         timestamp: new Date().toISOString(),
       }
-    }
-
-    return {
-      success: false,
-      message: "Failed to queue manga for refresh",
-      timestamp: new Date().toISOString(),
-    }
+    },
   },
 })

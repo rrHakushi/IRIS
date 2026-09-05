@@ -1,7 +1,7 @@
 import { ml_kem768 } from "@noble/post-quantum/ml-kem.js"
 import { gcm } from "@noble/ciphers/aes.js"
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js"
-import { prisma } from "@IRIS/database"
+import { prisma, Prisma } from "@IRIS/database"
 import { wsHub } from "./websocket-hub.js"
 import { logger } from "../utils/logger.js"
 import type {
@@ -89,7 +89,7 @@ export interface SendNotificationParams {
   priority?: NotificationPriority
   content: NotificationContent
   actionHandler?: string
-  actionPayload?: Record<string, unknown> | null
+  actionPayload?: Prisma.InputJsonValue | null
   expiresAt?: Date | null
 }
 
@@ -189,7 +189,7 @@ export async function sendNotification(params: SendNotificationParams) {
       type: params.type || "INFO",
       priority: params.priority || "NORMAL",
       actionStatus: params.type && params.type !== "INFO" ? "PENDING" : null,
-      actionPayload: (params.actionPayload as any) ?? null,
+      actionPayload: params.actionPayload ?? Prisma.JsonNull,
       actionHandler: params.actionHandler ?? null,
       kemCiphertext,
       encryptedData,

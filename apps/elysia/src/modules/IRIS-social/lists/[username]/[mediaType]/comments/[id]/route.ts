@@ -1,6 +1,5 @@
 import { defineRoute, t } from "@/router"
-import { NotFound, Unauthorized, Forbidden } from "@/utils/errors"
-import { sendNotification } from "@/services/notification.service"
+import { NotFound, Forbidden } from "@/utils/errors"
 import { getProfileCustomization } from "@IRIS/shared"
 
 export default defineRoute({
@@ -13,14 +12,9 @@ export default defineRoute({
   },
 
   DELETE: {
-    async handler({ params, session, prisma }) {
-      if (!session.isAuthenticated || !session.user) {
-        throw new Unauthorized("Authentication required to delete comments.")
-      }
-
-      const commentDelegate = (prisma as any).listComment
-
-      const comment = await commentDelegate.findUnique({
+    requireAuth: true,
+    async handler({ params, session, prisma, notifications }) {
+      const comment = await prisma.listComment.findUnique({
         where: { id: params.id || "" },
       })
 
@@ -30,7 +24,9 @@ export default defineRoute({
 
       // Only the list owner can delete comments on their list
       if (comment.listOwnerId !== session.user.id) {
-        throw new Forbidden("Only the list owner can delete comments on this list.")
+        throw new Forbidden(
+          "Only the list owner can delete comments on this list."
+        )
       }
 
       // Send notification to commentator (if commentator is someone else)
@@ -40,13 +36,16 @@ export default defineRoute({
             where: { id: session.user.id },
             select: { customization: true },
           })
-          const ownerProfile = getProfileCustomization(ownerRecord?.customization)
-          const ownerName = ownerProfile.displayName || session.user.username || "List owner"
+          const ownerProfile = getProfileCustomization(
+            ownerRecord?.customization
+          )
+          const ownerName =
+            ownerProfile.displayName || session.user.username || "List owner"
           const formattedMediaType =
             params.mediaType.charAt(0).toUpperCase() +
             params.mediaType.slice(1).toLowerCase()
 
-          await sendNotification({
+          await notifications.send({
             userId: comment.authorId,
             app: "IRIS List",
             category: "Social",
@@ -65,12 +64,15 @@ export default defineRoute({
             },
           })
         } catch (notifErr) {
-          console.warn(`[comments:DELETE] Failed to send notification to commentator:`, notifErr)
+          console.warn(
+            `[comments:DELETE] Failed to send notification to commentator:`,
+            notifErr
+          )
         }
       }
 
       // Cascade deletion: ListCommentReply is deleted automatically via onDelete: Cascade
-      await commentDelegate.delete({
+      await prisma.listComment.delete({
         where: { id: comment.id },
       })
 

@@ -4,142 +4,41 @@
   "__export_source": "insomnium.desktop.app:v0.2.3-a",
   "resources": [
     {
-      "_id": "wrk_iris_api",
+      "_id": "wrk_iris_elysia_api",
       "parentId": null,
-      "name": "IRIS API",
-      "description": "Auto-generated Insomnium collection for IRIS Elysia server",
+      "name": "IRIS Elysia API",
+      "description": "Auto-generated collection for IRIS Elysia file-based routes",
       "scope": "collection",
       "_type": "workspace"
     },
     {
-      "_id": "env_iris_base",
-      "parentId": "wrk_iris_api",
-      "name": "Base Environment",
+      "_id": "env_iris_elysia_local",
+      "parentId": "wrk_iris_elysia_api",
+      "name": "Local Development",
       "data": {
         "base_url": "http://localhost:4000",
-        "token": "",
-        "api_key": "iris_dev_key_0192837465abcdef01928374"
+        "api_key": "iris_dev_key_0192837465abcdef01928374",
+        "token": ""
       },
       "dataPropertyOrder": {
         "&": [
           "base_url",
-          "token",
-          "api_key"
+          "api_key",
+          "token"
         ]
       },
-      "color": "#6b46c1",
+      "color": "#8b5cf6",
       "isPrivate": false,
       "_type": "environment"
     },
     {
-      "_id": "req_health_check",
-      "parentId": "wrk_iris_api",
-      "url": "{{ _.base_url }}/health",
-      "name": "GET /health",
-      "description": "Server health and uptime check",
-      "method": "GET",
-      "body": {},
-      "parameters": [],
-      "headers": [],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
       "_id": "fld_IRIS_account",
-      "parentId": "wrk_iris_api",
+      "parentId": "wrk_iris_elysia_api",
       "name": "IRIS-account",
       "description": "Routes for IRIS-account module",
       "environment": {},
       "environmentPropertyOrder": null,
       "_type": "request_group"
-    },
-    {
-      "_id": "req_IRIS-account__auth_api_keys_get",
-      "parentId": "fld_IRIS_account",
-      "url": "{{ _.base_url }}/auth/api-keys",
-      "name": "GET /auth/api-keys",
-      "description": "",
-      "method": "GET",
-      "body": {},
-      "parameters": [
-        {
-          "name": "limit",
-          "value": "50",
-          "disabled": false
-        },
-        {
-          "name": "page",
-          "value": "1",
-          "disabled": false
-        }
-      ],
-      "headers": [
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_IRIS-account__auth_api_keys_post",
-      "parentId": "fld_IRIS_account",
-      "url": "{{ _.base_url }}/auth/api-keys",
-      "name": "POST /auth/api-keys",
-      "description": "",
-      "method": "POST",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"name\": \"string\",\n  \"expirationDays\": {}\n}"
-      },
-      "parameters": [],
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json",
-          "disabled": false
-        },
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
     },
     {
       "_id": "req_IRIS-account__auth_api_keys__id_regenerate_post",
@@ -223,6 +122,87 @@
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"name\": \"string\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_api_keys_get",
+      "parentId": "fld_IRIS_account",
+      "url": "{{ _.base_url }}/auth/api-keys",
+      "name": "GET /auth/api-keys",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "limit",
+          "value": "50",
+          "disabled": false
+        },
+        {
+          "name": "page",
+          "value": "1",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_api_keys_post",
+      "parentId": "fld_IRIS_account",
+      "url": "{{ _.base_url }}/auth/api-keys",
+      "name": "POST /auth/api-keys",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"string\",\n  \"expirationDays\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -375,7 +355,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"mfaTicket\": \"string\",\n  \"code\": \"string\",\n  \"mfaType\": {}\n}"
+        "text": "{\n  \"mfaTicket\": \"string\",\n  \"code\": \"string\",\n  \"mfaType\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -416,6 +396,42 @@
         "mimeType": "application/json",
         "text": "{\n  \"identifier\": \"string\",\n  \"password\": \"string\"\n}"
       },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__auth_passkeys__id_delete",
+      "parentId": "fld_IRIS_account",
+      "url": "{{ _.base_url }}/auth/passkeys/:id",
+      "name": "DELETE /auth/passkeys/:id",
+      "description": "",
+      "method": "DELETE",
+      "body": {},
       "parameters": [],
       "headers": [
         {
@@ -492,7 +508,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"passkeyResponse\": {\n    \"id\": \"string\",\n    \"rawId\": \"string\",\n    \"response\": {},\n    \"type\": \"string\",\n    \"clientExtensionResults\": {}\n  }\n}"
+        "text": "{\n  \"passkeyResponse\": {\n    \"id\": \"string\",\n    \"rawId\": \"string\",\n    \"response\": null,\n    \"type\": \"string\",\n    \"clientExtensionResults\": null\n  }\n}"
       },
       "parameters": [],
       "headers": [
@@ -567,7 +583,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"passkeyResponse\": {\n    \"id\": \"string\",\n    \"rawId\": \"string\",\n    \"response\": {},\n    \"type\": \"string\",\n    \"clientExtensionResults\": {}\n  },\n  \"name\": \"string\"\n}"
+        "text": "{\n  \"passkeyResponse\": {\n    \"id\": \"string\",\n    \"rawId\": \"string\",\n    \"response\": null,\n    \"type\": \"string\",\n    \"clientExtensionResults\": null\n  },\n  \"name\": \"string\"\n}"
       },
       "parameters": [],
       "headers": [
@@ -640,42 +656,6 @@
       "_type": "request"
     },
     {
-      "_id": "req_IRIS-account__auth_passkeys__id_delete",
-      "parentId": "fld_IRIS_account",
-      "url": "{{ _.base_url }}/auth/passkeys/:id",
-      "name": "DELETE /auth/passkeys/:id",
-      "description": "",
-      "method": "DELETE",
-      "body": {},
-      "parameters": [],
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json",
-          "disabled": false
-        },
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
       "_id": "req_IRIS-account__auth_password_change_post",
       "parentId": "fld_IRIS_account",
       "url": "{{ _.base_url }}/auth/password/change",
@@ -723,7 +703,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"email\": \"string\"\n}"
+        "text": "{\n  \"email\": \"user@example.com\"\n}"
       },
       "parameters": [],
       "headers": [
@@ -916,7 +896,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"username\": \"string\",\n  \"email\": \"string\",\n  \"password\": \"string\",\n  \"encryptionPassword\": \"string\"\n}"
+        "text": "{\n  \"username\": \"string\",\n  \"email\": \"user@example.com\",\n  \"password\": \"string\",\n  \"encryptionPassword\": \"string\"\n}"
       },
       "parameters": [],
       "headers": [
@@ -1022,151 +1002,6 @@
       "_type": "request"
     },
     {
-      "_id": "req_IRIS-account__notifications_mark_all_read_post",
-      "parentId": "fld_IRIS_account",
-      "url": "{{ _.base_url }}/notifications/mark-all-read",
-      "name": "POST /notifications/mark-all-read",
-      "description": "",
-      "method": "POST",
-      "body": {},
-      "parameters": [],
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json",
-          "disabled": false
-        },
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_IRIS-account__notifications_get",
-      "parentId": "fld_IRIS_account",
-      "url": "{{ _.base_url }}/notifications",
-      "name": "GET /notifications",
-      "description": "",
-      "method": "GET",
-      "body": {},
-      "parameters": [
-        {
-          "name": "app",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "category",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "type",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "priority",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "isRead",
-          "value": "[object Object]",
-          "disabled": false
-        },
-        {
-          "name": "limit",
-          "value": "50",
-          "disabled": false
-        },
-        {
-          "name": "offset",
-          "value": "0",
-          "disabled": false
-        }
-      ],
-      "headers": [
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_IRIS-account__notifications_delete",
-      "parentId": "fld_IRIS_account",
-      "url": "{{ _.base_url }}/notifications",
-      "name": "DELETE /notifications",
-      "description": "",
-      "method": "DELETE",
-      "body": {},
-      "parameters": [
-        {
-          "name": "onlyRead",
-          "value": "[object Object]",
-          "disabled": false
-        }
-      ],
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json",
-          "disabled": false
-        },
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
       "_id": "req_IRIS-account__notifications__id_action_post",
       "parentId": "fld_IRIS_account",
       "url": "{{ _.base_url }}/notifications/:id/action",
@@ -1175,7 +1010,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"action\": \"string\",\n  \"payload\": {}\n}"
+        "text": "{\n  \"action\": \"string\",\n  \"payload\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -1312,10 +1147,186 @@
       "_type": "request"
     },
     {
+      "_id": "req_IRIS-account__notifications_mark_all_read_post",
+      "parentId": "fld_IRIS_account",
+      "url": "{{ _.base_url }}/notifications/mark-all-read",
+      "name": "POST /notifications/mark-all-read",
+      "description": "",
+      "method": "POST",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__notifications_get",
+      "parentId": "fld_IRIS_account",
+      "url": "{{ _.base_url }}/notifications",
+      "name": "GET /notifications",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "app",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "category",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "type",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "priority",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "isRead",
+          "value": "",
+          "disabled": false
+        },
+        {
+          "name": "limit",
+          "value": "50",
+          "disabled": false
+        },
+        {
+          "name": "offset",
+          "value": "0",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__notifications_delete",
+      "parentId": "fld_IRIS_account",
+      "url": "{{ _.base_url }}/notifications",
+      "name": "DELETE /notifications",
+      "description": "",
+      "method": "DELETE",
+      "body": {},
+      "parameters": [
+        {
+          "name": "onlyRead",
+          "value": "",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
       "_id": "req_IRIS-account__public___get",
       "parentId": "fld_IRIS_account",
       "url": "{{ _.base_url }}/public/*",
       "name": "GET /public/*",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-account__users__username_get",
+      "parentId": "fld_IRIS_account",
+      "url": "{{ _.base_url }}/users/:username",
+      "name": "GET /users/:username",
       "description": "",
       "method": "GET",
       "body": {},
@@ -1351,7 +1362,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"file\": {},\n  \"assetType\": {}\n}"
+        "text": "{\n  \"file\": null,\n  \"assetType\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -1530,7 +1541,7 @@
       "method": "PATCH",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"customization\": {\n    \"profile\": {},\n    \"appearance\": {},\n    \"sidebar\": {},\n    \"dock\": {},\n    \"preferences\": {\n      \"media\": {\n        \"title\": {}\n      }\n    }\n  },\n  \"settings\": {}\n}"
+        "text": "{\n  \"customization\": {\n    \"profile\": null,\n    \"appearance\": null,\n    \"sidebar\": null,\n    \"dock\": null,\n    \"preferences\": {\n      \"media\": {\n        \"title\": null\n      }\n    }\n  },\n  \"settings\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -1539,37 +1550,6 @@
           "value": "application/json",
           "disabled": false
         },
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_IRIS-account__users__username_get",
-      "parentId": "fld_IRIS_account",
-      "url": "{{ _.base_url }}/users/:username",
-      "name": "GET /users/:username",
-      "description": "",
-      "method": "GET",
-      "body": {},
-      "parameters": [],
-      "headers": [
         {
           "name": "x-api-key",
           "value": "{{ _.api_key }}",
@@ -1593,175 +1573,12 @@
     },
     {
       "_id": "fld_IRIS_connections",
-      "parentId": "wrk_iris_api",
+      "parentId": "wrk_iris_elysia_api",
       "name": "IRIS-connections",
       "description": "Routes for IRIS-connections module",
       "environment": {},
       "environmentPropertyOrder": null,
       "_type": "request_group"
-    },
-    {
-      "_id": "req_IRIS-connections__connections_providers_get",
-      "parentId": "fld_IRIS_connections",
-      "url": "{{ _.base_url }}/connections/providers",
-      "name": "GET /connections/providers",
-      "description": "",
-      "method": "GET",
-      "body": {},
-      "parameters": [],
-      "headers": [
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_IRIS-connections__connections_get",
-      "parentId": "fld_IRIS_connections",
-      "url": "{{ _.base_url }}/connections",
-      "name": "GET /connections",
-      "description": "",
-      "method": "GET",
-      "body": {},
-      "parameters": [],
-      "headers": [
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_IRIS-connections__connections_post",
-      "parentId": "fld_IRIS_connections",
-      "url": "{{ _.base_url }}/connections",
-      "name": "POST /connections",
-      "description": "",
-      "method": "POST",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"provider\": \"string\",\n  \"authType\": \"string\",\n  \"apiKey\": \"string\",\n  \"hostUrl\": \"string\",\n  \"username\": \"string\",\n  \"password\": \"string\",\n  \"settings\": {}\n}"
-      },
-      "parameters": [],
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json",
-          "disabled": false
-        },
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_IRIS-connections__connections_search_get",
-      "parentId": "fld_IRIS_connections",
-      "url": "{{ _.base_url }}/connections/search",
-      "name": "GET /connections/search",
-      "description": "",
-      "method": "GET",
-      "body": {},
-      "parameters": [
-        {
-          "name": "provider",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "q",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "id",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "type",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "page",
-          "value": "1",
-          "disabled": false
-        },
-        {
-          "name": "perPage",
-          "value": "1",
-          "disabled": false
-        }
-      ],
-      "headers": [
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
     },
     {
       "_id": "req_IRIS-connections__connections__id_auth_get",
@@ -1907,7 +1724,7 @@
       "method": "PATCH",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"settings\": {},\n  \"displayName\": \"string\"\n}"
+        "text": "{\n  \"settings\": null,\n  \"displayName\": \"string\"\n}"
       },
       "parameters": [],
       "headers": [
@@ -2010,26 +1827,143 @@
       "_type": "request"
     },
     {
-      "_id": "fld_IRIS_list",
-      "parentId": "wrk_iris_api",
-      "name": "IRIS-list",
-      "description": "Routes for IRIS-list module",
-      "environment": {},
-      "environmentPropertyOrder": null,
-      "_type": "request_group"
+      "_id": "req_IRIS-connections__connections_providers_get",
+      "parentId": "fld_IRIS_connections",
+      "url": "{{ _.base_url }}/connections/providers",
+      "name": "GET /connections/providers",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
     },
     {
-      "_id": "req_IRIS-list__user__username_favorites_get",
-      "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/favorites",
-      "name": "GET /user/:username/favorites",
+      "_id": "req_IRIS-connections__connections_get",
+      "parentId": "fld_IRIS_connections",
+      "url": "{{ _.base_url }}/connections",
+      "name": "GET /connections",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-connections__connections_post",
+      "parentId": "fld_IRIS_connections",
+      "url": "{{ _.base_url }}/connections",
+      "name": "POST /connections",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"provider\": \"string\",\n  \"authType\": \"string\",\n  \"apiKey\": \"string\",\n  \"hostUrl\": \"string\",\n  \"username\": \"string\",\n  \"password\": \"string\",\n  \"settings\": null\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-connections__connections_search_get",
+      "parentId": "fld_IRIS_connections",
+      "url": "{{ _.base_url }}/connections/search",
+      "name": "GET /connections/search",
       "description": "",
       "method": "GET",
       "body": {},
       "parameters": [
         {
+          "name": "provider",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "q",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "id",
+          "value": "string",
+          "disabled": false
+        },
+        {
           "name": "type",
-          "value": "[object Object]",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "page",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "perPage",
+          "value": "1",
           "disabled": false
         }
       ],
@@ -2056,6 +1990,15 @@
       "_type": "request"
     },
     {
+      "_id": "fld_IRIS_list",
+      "parentId": "wrk_iris_elysia_api",
+      "name": "IRIS-list",
+      "description": "Routes for IRIS-list module",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "_type": "request_group"
+    },
+    {
       "_id": "req_IRIS-list__user__username_favorites__targetId_get",
       "parentId": "fld_IRIS_list",
       "url": "{{ _.base_url }}/user/:username/favorites/:targetId",
@@ -2066,7 +2009,7 @@
       "parameters": [
         {
           "name": "type",
-          "value": "[object Object]",
+          "value": "",
           "disabled": false
         }
       ],
@@ -2101,7 +2044,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"type\": {},\n  \"title\": \"string\"\n}"
+        "text": "{\n  \"type\": null,\n  \"title\": \"string\"\n}"
       },
       "parameters": [],
       "headers": [
@@ -2142,7 +2085,7 @@
       "parameters": [
         {
           "name": "type",
-          "value": "[object Object]",
+          "value": "",
           "disabled": false
         }
       ],
@@ -2174,88 +2117,17 @@
       "_type": "request"
     },
     {
-      "_id": "req_IRIS-list__user__username_lists_anime_filters_get",
+      "_id": "req_IRIS-list__user__username_favorites_get",
       "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/lists/anime/filters",
-      "name": "GET /user/:username/lists/anime/filters",
-      "description": "",
-      "method": "GET",
-      "body": {},
-      "parameters": [],
-      "headers": [
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_IRIS-list__user__username_lists_anime_get",
-      "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/lists/anime",
-      "name": "GET /user/:username/lists/anime",
+      "url": "{{ _.base_url }}/user/:username/favorites",
+      "name": "GET /user/:username/favorites",
       "description": "",
       "method": "GET",
       "body": {},
       "parameters": [
         {
-          "name": "cursor",
-          "value": "1",
-          "disabled": false
-        },
-        {
-          "name": "limit",
-          "value": "50",
-          "disabled": false
-        },
-        {
-          "name": "status",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "mediaFormat",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "mediaStatus",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "genres",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "year",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "sortBy",
-          "value": "updatedAt",
-          "disabled": false
-        },
-        {
-          "name": "order",
-          "value": "desc",
+          "name": "type",
+          "value": "",
           "disabled": false
         }
       ],
@@ -2396,7 +2268,7 @@
       "method": "PUT",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"status\": {},\n  \"progress\": 1,\n  \"score\": {},\n  \"notes\": {},\n  \"rewatched\": 1,\n  \"private\": true,\n  \"startedAt\": {},\n  \"completedAt\": {},\n  \"rewatchHistory\": {},\n  \"connections\": {}\n}"
+        "text": "{\n  \"status\": null,\n  \"progress\": 0,\n  \"score\": null,\n  \"notes\": null,\n  \"rewatched\": 0,\n  \"private\": true,\n  \"startedAt\": null,\n  \"completedAt\": null,\n  \"rewatchHistory\": null,\n  \"connections\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -2471,7 +2343,7 @@
       "method": "PATCH",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"status\": {},\n  \"progress\": 1,\n  \"score\": {},\n  \"notes\": {},\n  \"rewatched\": 1,\n  \"private\": true,\n  \"startedAt\": {},\n  \"completedAt\": {},\n  \"rewatchHistory\": {},\n  \"connections\": {}\n}"
+        "text": "{\n  \"status\": null,\n  \"progress\": 0,\n  \"score\": null,\n  \"notes\": null,\n  \"rewatched\": 0,\n  \"private\": true,\n  \"startedAt\": null,\n  \"completedAt\": null,\n  \"rewatchHistory\": null,\n  \"connections\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -2502,10 +2374,10 @@
       "_type": "request"
     },
     {
-      "_id": "req_IRIS-list__user__username_lists_book_filters_get",
+      "_id": "req_IRIS-list__user__username_lists_anime_filters_get",
       "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/lists/book/filters",
-      "name": "GET /user/:username/lists/book/filters",
+      "url": "{{ _.base_url }}/user/:username/lists/anime/filters",
+      "name": "GET /user/:username/lists/anime/filters",
       "description": "",
       "method": "GET",
       "body": {},
@@ -2533,10 +2405,10 @@
       "_type": "request"
     },
     {
-      "_id": "req_IRIS-list__user__username_lists_book_get",
+      "_id": "req_IRIS-list__user__username_lists_anime_get",
       "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/lists/book",
-      "name": "GET /user/:username/lists/book",
+      "url": "{{ _.base_url }}/user/:username/lists/anime",
+      "name": "GET /user/:username/lists/anime",
       "description": "",
       "method": "GET",
       "body": {},
@@ -2724,7 +2596,7 @@
       "method": "PUT",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"status\": {},\n  \"progressPages\": 1,\n  \"progressChapters\": 1,\n  \"progressVolumes\": 1,\n  \"score\": {},\n  \"notes\": {},\n  \"reread\": 1,\n  \"private\": true,\n  \"startedAt\": {},\n  \"completedAt\": {},\n  \"rereadHistory\": {},\n  \"connections\": {}\n}"
+        "text": "{\n  \"status\": null,\n  \"progressPages\": 0,\n  \"progressChapters\": 0,\n  \"progressVolumes\": 0,\n  \"score\": null,\n  \"notes\": null,\n  \"reread\": 0,\n  \"private\": true,\n  \"startedAt\": null,\n  \"completedAt\": null,\n  \"rereadHistory\": null,\n  \"connections\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -2799,7 +2671,311 @@
       "method": "PATCH",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"status\": {},\n  \"progressPages\": 1,\n  \"progressChapters\": 1,\n  \"progressVolumes\": 1,\n  \"score\": {},\n  \"notes\": {},\n  \"reread\": 1,\n  \"private\": true,\n  \"startedAt\": {},\n  \"completedAt\": {},\n  \"rereadHistory\": {},\n  \"connections\": {}\n}"
+        "text": "{\n  \"status\": null,\n  \"progressPages\": 0,\n  \"progressChapters\": 0,\n  \"progressVolumes\": 0,\n  \"score\": null,\n  \"notes\": null,\n  \"reread\": 0,\n  \"private\": true,\n  \"startedAt\": null,\n  \"completedAt\": null,\n  \"rereadHistory\": null,\n  \"connections\": null\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-list__user__username_lists_book_filters_get",
+      "parentId": "fld_IRIS_list",
+      "url": "{{ _.base_url }}/user/:username/lists/book/filters",
+      "name": "GET /user/:username/lists/book/filters",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-list__user__username_lists_book_get",
+      "parentId": "fld_IRIS_list",
+      "url": "{{ _.base_url }}/user/:username/lists/book",
+      "name": "GET /user/:username/lists/book",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "cursor",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "limit",
+          "value": "50",
+          "disabled": false
+        },
+        {
+          "name": "status",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "mediaFormat",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "mediaStatus",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "genres",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "year",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "sortBy",
+          "value": "updatedAt",
+          "disabled": false
+        },
+        {
+          "name": "order",
+          "value": "desc",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-list__user__username_lists_custom__watchlistId__id_quick_add_post",
+      "parentId": "fld_IRIS_list",
+      "url": "{{ _.base_url }}/user/:username/lists/custom/:watchlistId/:id/quick-add",
+      "name": "POST /user/:username/lists/custom/:watchlistId/:id/quick-add",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"mediaType\": null\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-list__user__username_lists_custom__watchlistId__id_get",
+      "parentId": "fld_IRIS_list",
+      "url": "{{ _.base_url }}/user/:username/lists/custom/:watchlistId/:id",
+      "name": "GET /user/:username/lists/custom/:watchlistId/:id",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "mediaType",
+          "value": "",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-list__user__username_lists_custom__watchlistId__id_put",
+      "parentId": "fld_IRIS_list",
+      "url": "{{ _.base_url }}/user/:username/lists/custom/:watchlistId/:id",
+      "name": "PUT /user/:username/lists/custom/:watchlistId/:id",
+      "description": "",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"mediaType\": null,\n  \"order\": 1,\n  \"customNotes\": null\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-list__user__username_lists_custom__watchlistId__id_delete",
+      "parentId": "fld_IRIS_list",
+      "url": "{{ _.base_url }}/user/:username/lists/custom/:watchlistId/:id",
+      "name": "DELETE /user/:username/lists/custom/:watchlistId/:id",
+      "description": "",
+      "method": "DELETE",
+      "body": {},
+      "parameters": [
+        {
+          "name": "mediaType",
+          "value": "",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-list__user__username_lists_custom__watchlistId__id_patch",
+      "parentId": "fld_IRIS_list",
+      "url": "{{ _.base_url }}/user/:username/lists/custom/:watchlistId/:id",
+      "name": "PATCH /user/:username/lists/custom/:watchlistId/:id",
+      "description": "",
+      "method": "PATCH",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"mediaType\": null,\n  \"order\": 1,\n  \"customNotes\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -2902,310 +3078,6 @@
         {
           "name": "order",
           "value": "asc",
-          "disabled": false
-        }
-      ],
-      "headers": [
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_IRIS-list__user__username_lists_custom__watchlistId__id_quick_add_post",
-      "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/lists/custom/:watchlistId/:id/quick-add",
-      "name": "POST /user/:username/lists/custom/:watchlistId/:id/quick-add",
-      "description": "",
-      "method": "POST",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"mediaType\": {}\n}"
-      },
-      "parameters": [],
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json",
-          "disabled": false
-        },
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_IRIS-list__user__username_lists_custom__watchlistId__id_get",
-      "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/lists/custom/:watchlistId/:id",
-      "name": "GET /user/:username/lists/custom/:watchlistId/:id",
-      "description": "",
-      "method": "GET",
-      "body": {},
-      "parameters": [
-        {
-          "name": "mediaType",
-          "value": "[object Object]",
-          "disabled": false
-        }
-      ],
-      "headers": [
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_IRIS-list__user__username_lists_custom__watchlistId__id_put",
-      "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/lists/custom/:watchlistId/:id",
-      "name": "PUT /user/:username/lists/custom/:watchlistId/:id",
-      "description": "",
-      "method": "PUT",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"mediaType\": {},\n  \"order\": 1,\n  \"customNotes\": {}\n}"
-      },
-      "parameters": [],
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json",
-          "disabled": false
-        },
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_IRIS-list__user__username_lists_custom__watchlistId__id_delete",
-      "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/lists/custom/:watchlistId/:id",
-      "name": "DELETE /user/:username/lists/custom/:watchlistId/:id",
-      "description": "",
-      "method": "DELETE",
-      "body": {},
-      "parameters": [
-        {
-          "name": "mediaType",
-          "value": "[object Object]",
-          "disabled": false
-        }
-      ],
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json",
-          "disabled": false
-        },
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_IRIS-list__user__username_lists_custom__watchlistId__id_patch",
-      "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/lists/custom/:watchlistId/:id",
-      "name": "PATCH /user/:username/lists/custom/:watchlistId/:id",
-      "description": "",
-      "method": "PATCH",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"mediaType\": {},\n  \"order\": 1,\n  \"customNotes\": {}\n}"
-      },
-      "parameters": [],
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json",
-          "disabled": false
-        },
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_IRIS-list__user__username_lists_game_filters_get",
-      "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/lists/game/filters",
-      "name": "GET /user/:username/lists/game/filters",
-      "description": "",
-      "method": "GET",
-      "body": {},
-      "parameters": [],
-      "headers": [
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_IRIS-list__user__username_lists_game_get",
-      "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/lists/game",
-      "name": "GET /user/:username/lists/game",
-      "description": "",
-      "method": "GET",
-      "body": {},
-      "parameters": [
-        {
-          "name": "cursor",
-          "value": "1",
-          "disabled": false
-        },
-        {
-          "name": "limit",
-          "value": "50",
-          "disabled": false
-        },
-        {
-          "name": "status",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "mediaFormat",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "mediaStatus",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "genres",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "year",
-          "value": "string",
-          "disabled": false
-        },
-        {
-          "name": "sortBy",
-          "value": "updatedAt",
-          "disabled": false
-        },
-        {
-          "name": "order",
-          "value": "desc",
           "disabled": false
         }
       ],
@@ -3346,7 +3218,7 @@
       "method": "PUT",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"status\": {},\n  \"progress\": 1,\n  \"score\": {},\n  \"notes\": {},\n  \"replayed\": 1,\n  \"private\": true,\n  \"startedAt\": {},\n  \"completedAt\": {},\n  \"replayHistory\": {},\n  \"connections\": {}\n}"
+        "text": "{\n  \"status\": null,\n  \"progress\": 0,\n  \"score\": null,\n  \"notes\": null,\n  \"replayed\": 0,\n  \"private\": true,\n  \"startedAt\": null,\n  \"completedAt\": null,\n  \"replayHistory\": null,\n  \"connections\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -3421,7 +3293,7 @@
       "method": "PATCH",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"status\": {},\n  \"progress\": 1,\n  \"score\": {},\n  \"notes\": {},\n  \"replayed\": 1,\n  \"private\": true,\n  \"startedAt\": {},\n  \"completedAt\": {},\n  \"replayHistory\": {},\n  \"connections\": {}\n}"
+        "text": "{\n  \"status\": null,\n  \"progress\": 0,\n  \"score\": null,\n  \"notes\": null,\n  \"replayed\": 0,\n  \"private\": true,\n  \"startedAt\": null,\n  \"completedAt\": null,\n  \"replayHistory\": null,\n  \"connections\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -3452,10 +3324,10 @@
       "_type": "request"
     },
     {
-      "_id": "req_IRIS-list__user__username_lists_manga_filters_get",
+      "_id": "req_IRIS-list__user__username_lists_game_filters_get",
       "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/lists/manga/filters",
-      "name": "GET /user/:username/lists/manga/filters",
+      "url": "{{ _.base_url }}/user/:username/lists/game/filters",
+      "name": "GET /user/:username/lists/game/filters",
       "description": "",
       "method": "GET",
       "body": {},
@@ -3483,10 +3355,10 @@
       "_type": "request"
     },
     {
-      "_id": "req_IRIS-list__user__username_lists_manga_get",
+      "_id": "req_IRIS-list__user__username_lists_game_get",
       "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/lists/manga",
-      "name": "GET /user/:username/lists/manga",
+      "url": "{{ _.base_url }}/user/:username/lists/game",
+      "name": "GET /user/:username/lists/game",
       "description": "",
       "method": "GET",
       "body": {},
@@ -3674,7 +3546,7 @@
       "method": "PUT",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"status\": {},\n  \"chaptersProgress\": 1,\n  \"volumesProgress\": 1,\n  \"score\": {},\n  \"notes\": {},\n  \"reread\": 1,\n  \"private\": true,\n  \"startedAt\": {},\n  \"completedAt\": {},\n  \"rereadHistory\": {},\n  \"connections\": {}\n}"
+        "text": "{\n  \"status\": null,\n  \"chaptersProgress\": 0,\n  \"volumesProgress\": 0,\n  \"score\": null,\n  \"notes\": null,\n  \"reread\": 0,\n  \"private\": true,\n  \"startedAt\": null,\n  \"completedAt\": null,\n  \"rereadHistory\": null,\n  \"connections\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -3749,7 +3621,7 @@
       "method": "PATCH",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"status\": {},\n  \"chaptersProgress\": 1,\n  \"volumesProgress\": 1,\n  \"score\": {},\n  \"notes\": {},\n  \"reread\": 1,\n  \"private\": true,\n  \"startedAt\": {},\n  \"completedAt\": {},\n  \"rereadHistory\": {},\n  \"connections\": {}\n}"
+        "text": "{\n  \"status\": null,\n  \"chaptersProgress\": 0,\n  \"volumesProgress\": 0,\n  \"score\": null,\n  \"notes\": null,\n  \"reread\": 0,\n  \"private\": true,\n  \"startedAt\": null,\n  \"completedAt\": null,\n  \"rereadHistory\": null,\n  \"connections\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -3780,10 +3652,10 @@
       "_type": "request"
     },
     {
-      "_id": "req_IRIS-list__user__username_lists_movie_filters_get",
+      "_id": "req_IRIS-list__user__username_lists_manga_filters_get",
       "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/lists/movie/filters",
-      "name": "GET /user/:username/lists/movie/filters",
+      "url": "{{ _.base_url }}/user/:username/lists/manga/filters",
+      "name": "GET /user/:username/lists/manga/filters",
       "description": "",
       "method": "GET",
       "body": {},
@@ -3811,10 +3683,10 @@
       "_type": "request"
     },
     {
-      "_id": "req_IRIS-list__user__username_lists_movie_get",
+      "_id": "req_IRIS-list__user__username_lists_manga_get",
       "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/lists/movie",
-      "name": "GET /user/:username/lists/movie",
+      "url": "{{ _.base_url }}/user/:username/lists/manga",
+      "name": "GET /user/:username/lists/manga",
       "description": "",
       "method": "GET",
       "body": {},
@@ -4002,7 +3874,7 @@
       "method": "PUT",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"status\": {},\n  \"score\": {},\n  \"notes\": {},\n  \"rewatched\": 1,\n  \"private\": true,\n  \"startedAt\": {},\n  \"completedAt\": {},\n  \"rewatchHistory\": {},\n  \"connections\": {}\n}"
+        "text": "{\n  \"status\": null,\n  \"score\": null,\n  \"notes\": null,\n  \"rewatched\": 0,\n  \"private\": true,\n  \"startedAt\": null,\n  \"completedAt\": null,\n  \"rewatchHistory\": null,\n  \"connections\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -4077,7 +3949,7 @@
       "method": "PATCH",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"status\": {},\n  \"score\": {},\n  \"notes\": {},\n  \"rewatched\": 1,\n  \"private\": true,\n  \"startedAt\": {},\n  \"completedAt\": {},\n  \"rewatchHistory\": {},\n  \"connections\": {}\n}"
+        "text": "{\n  \"status\": null,\n  \"score\": null,\n  \"notes\": null,\n  \"rewatched\": 0,\n  \"private\": true,\n  \"startedAt\": null,\n  \"completedAt\": null,\n  \"rewatchHistory\": null,\n  \"connections\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -4108,10 +3980,10 @@
       "_type": "request"
     },
     {
-      "_id": "req_IRIS-list__user__username_lists_music_filters_get",
+      "_id": "req_IRIS-list__user__username_lists_movie_filters_get",
       "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/lists/music/filters",
-      "name": "GET /user/:username/lists/music/filters",
+      "url": "{{ _.base_url }}/user/:username/lists/movie/filters",
+      "name": "GET /user/:username/lists/movie/filters",
       "description": "",
       "method": "GET",
       "body": {},
@@ -4139,10 +4011,10 @@
       "_type": "request"
     },
     {
-      "_id": "req_IRIS-list__user__username_lists_music_get",
+      "_id": "req_IRIS-list__user__username_lists_movie_get",
       "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/lists/music",
-      "name": "GET /user/:username/lists/music",
+      "url": "{{ _.base_url }}/user/:username/lists/movie",
+      "name": "GET /user/:username/lists/movie",
       "description": "",
       "method": "GET",
       "body": {},
@@ -4330,7 +4202,7 @@
       "method": "PUT",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"status\": {},\n  \"score\": {},\n  \"playCount\": 1,\n  \"notes\": {},\n  \"private\": true,\n  \"startedAt\": {},\n  \"connections\": {}\n}"
+        "text": "{\n  \"status\": null,\n  \"score\": null,\n  \"playCount\": 0,\n  \"notes\": null,\n  \"private\": true,\n  \"startedAt\": null,\n  \"connections\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -4405,7 +4277,7 @@
       "method": "PATCH",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"status\": {},\n  \"score\": {},\n  \"playCount\": 1,\n  \"notes\": {},\n  \"private\": true,\n  \"startedAt\": {},\n  \"connections\": {}\n}"
+        "text": "{\n  \"status\": null,\n  \"score\": null,\n  \"playCount\": 0,\n  \"notes\": null,\n  \"private\": true,\n  \"startedAt\": null,\n  \"connections\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -4436,10 +4308,10 @@
       "_type": "request"
     },
     {
-      "_id": "req_IRIS-list__user__username_lists_tv_filters_get",
+      "_id": "req_IRIS-list__user__username_lists_music_filters_get",
       "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/lists/tv/filters",
-      "name": "GET /user/:username/lists/tv/filters",
+      "url": "{{ _.base_url }}/user/:username/lists/music/filters",
+      "name": "GET /user/:username/lists/music/filters",
       "description": "",
       "method": "GET",
       "body": {},
@@ -4467,10 +4339,10 @@
       "_type": "request"
     },
     {
-      "_id": "req_IRIS-list__user__username_lists_tv_get",
+      "_id": "req_IRIS-list__user__username_lists_music_get",
       "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/lists/tv",
-      "name": "GET /user/:username/lists/tv",
+      "url": "{{ _.base_url }}/user/:username/lists/music",
+      "name": "GET /user/:username/lists/music",
       "description": "",
       "method": "GET",
       "body": {},
@@ -4552,7 +4424,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"seasonNumber\": 1,\n  \"episodeNumber\": 1,\n  \"watched\": true\n}"
+        "text": "{\n  \"seasonNumber\": 0,\n  \"episodeNumber\": 1,\n  \"watched\": true\n}"
       },
       "parameters": [],
       "headers": [
@@ -4694,7 +4566,7 @@
       "method": "PUT",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"status\": {},\n  \"progress\": 1,\n  \"score\": {},\n  \"notes\": {},\n  \"rewatched\": 1,\n  \"private\": true,\n  \"startedAt\": {},\n  \"completedAt\": {},\n  \"rewatchHistory\": {},\n  \"connections\": {},\n  \"seasons\": [],\n  \"watchedEpisodes\": []\n}"
+        "text": "{\n  \"status\": null,\n  \"progress\": 0,\n  \"score\": null,\n  \"notes\": null,\n  \"rewatched\": 0,\n  \"private\": true,\n  \"startedAt\": null,\n  \"completedAt\": null,\n  \"rewatchHistory\": null,\n  \"connections\": null,\n  \"seasons\": [\n    {\n      \"seasonNumber\": 0,\n      \"status\": \"string\",\n      \"progress\": 0,\n      \"score\": null,\n      \"notes\": null,\n      \"rewatched\": 0\n    }\n  ],\n  \"watchedEpisodes\": [\n    {\n      \"seasonNumber\": 0,\n      \"episodeNumber\": 1,\n      \"watchedAt\": \"string\"\n    }\n  ]\n}"
       },
       "parameters": [],
       "headers": [
@@ -4769,7 +4641,7 @@
       "method": "PATCH",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"status\": {},\n  \"progress\": 1,\n  \"score\": {},\n  \"notes\": {},\n  \"rewatched\": 1,\n  \"private\": true,\n  \"startedAt\": {},\n  \"completedAt\": {},\n  \"rewatchHistory\": {},\n  \"connections\": {},\n  \"seasons\": [],\n  \"watchedEpisodes\": []\n}"
+        "text": "{\n  \"status\": null,\n  \"progress\": 0,\n  \"score\": null,\n  \"notes\": null,\n  \"rewatched\": 0,\n  \"private\": true,\n  \"startedAt\": null,\n  \"completedAt\": null,\n  \"rewatchHistory\": null,\n  \"connections\": null,\n  \"seasons\": [\n    {\n      \"seasonNumber\": 0,\n      \"status\": \"string\",\n      \"progress\": 0,\n      \"score\": null,\n      \"notes\": null,\n      \"rewatched\": 0\n    }\n  ],\n  \"watchedEpisodes\": [\n    {\n      \"seasonNumber\": 0,\n      \"episodeNumber\": 1,\n      \"watchedAt\": \"string\"\n    }\n  ]\n}"
       },
       "parameters": [],
       "headers": [
@@ -4800,65 +4672,92 @@
       "_type": "request"
     },
     {
-      "_id": "req_IRIS-list__user__username_watchlists_get",
+      "_id": "req_IRIS-list__user__username_lists_tv_filters_get",
       "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/watchlists",
-      "name": "GET /user/:username/watchlists",
+      "url": "{{ _.base_url }}/user/:username/lists/tv/filters",
+      "name": "GET /user/:username/lists/tv/filters",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-list__user__username_lists_tv_get",
+      "parentId": "fld_IRIS_list",
+      "url": "{{ _.base_url }}/user/:username/lists/tv",
+      "name": "GET /user/:username/lists/tv",
       "description": "",
       "method": "GET",
       "body": {},
       "parameters": [
         {
-          "name": "mediaType",
-          "value": "[object Object]",
-          "disabled": false
-        },
-        {
-          "name": "mediaId",
+          "name": "cursor",
           "value": "1",
           "disabled": false
-        }
-      ],
-      "headers": [
+        },
         {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
+          "name": "limit",
+          "value": "50",
           "disabled": false
         },
         {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_IRIS-list__user__username_watchlists_post",
-      "parentId": "fld_IRIS_list",
-      "url": "{{ _.base_url }}/user/:username/watchlists",
-      "name": "POST /user/:username/watchlists",
-      "description": "",
-      "method": "POST",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"name\": \"string\",\n  \"description\": {},\n  \"isPrivate\": false,\n  \"coverImage\": {}\n}"
-      },
-      "parameters": [],
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json",
+          "name": "status",
+          "value": "string",
           "disabled": false
         },
+        {
+          "name": "mediaFormat",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "mediaStatus",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "genres",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "year",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "sortBy",
+          "value": "updatedAt",
+          "disabled": false
+        },
+        {
+          "name": "order",
+          "value": "desc",
+          "disabled": false
+        }
+      ],
+      "headers": [
         {
           "name": "x-api-key",
           "value": "{{ _.api_key }}",
@@ -5068,8 +4967,89 @@
       "_type": "request"
     },
     {
+      "_id": "req_IRIS-list__user__username_watchlists_get",
+      "parentId": "fld_IRIS_list",
+      "url": "{{ _.base_url }}/user/:username/watchlists",
+      "name": "GET /user/:username/watchlists",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "mediaType",
+          "value": "",
+          "disabled": false
+        },
+        {
+          "name": "mediaId",
+          "value": "1",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-list__user__username_watchlists_post",
+      "parentId": "fld_IRIS_list",
+      "url": "{{ _.base_url }}/user/:username/watchlists",
+      "name": "POST /user/:username/watchlists",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"string\",\n  \"description\": null,\n  \"isPrivate\": false,\n  \"coverImage\": null\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
       "_id": "fld_IRIS_media",
-      "parentId": "wrk_iris_api",
+      "parentId": "wrk_iris_elysia_api",
       "name": "IRIS-media",
       "description": "Routes for IRIS-media module",
       "environment": {},
@@ -6290,104 +6270,12 @@
     },
     {
       "_id": "fld_IRIS_social",
-      "parentId": "wrk_iris_api",
+      "parentId": "wrk_iris_elysia_api",
       "name": "IRIS-social",
       "description": "Routes for IRIS-social module",
       "environment": {},
       "environmentPropertyOrder": null,
       "_type": "request_group"
-    },
-    {
-      "_id": "req_IRIS-social__lists__username__mediaType_comments_get",
-      "parentId": "fld_IRIS_social",
-      "url": "{{ _.base_url }}/lists/:username/:mediaType/comments",
-      "name": "GET /lists/:username/:mediaType/comments",
-      "description": "",
-      "method": "GET",
-      "body": {},
-      "parameters": [
-        {
-          "name": "page",
-          "value": "1",
-          "disabled": false
-        },
-        {
-          "name": "limit",
-          "value": "6",
-          "disabled": false
-        }
-      ],
-      "headers": [
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
-    },
-    {
-      "_id": "req_IRIS-social__lists__username__mediaType_comments_post",
-      "parentId": "fld_IRIS_social",
-      "url": "{{ _.base_url }}/lists/:username/:mediaType/comments",
-      "name": "POST /lists/:username/:mediaType/comments",
-      "description": "",
-      "method": "POST",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"content\": \"string\",\n  \"isSpoiler\": false\n}"
-      },
-      "parameters": [
-        {
-          "name": "page",
-          "value": "1",
-          "disabled": false
-        },
-        {
-          "name": "limit",
-          "value": "6",
-          "disabled": false
-        }
-      ],
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json",
-          "disabled": false
-        },
-        {
-          "name": "x-api-key",
-          "value": "{{ _.api_key }}",
-          "disabled": false
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer {{ _.token }}",
-          "disabled": true
-        }
-      ],
-      "authentication": {},
-      "isPrivate": false,
-      "settingStoreCookies": true,
-      "settingSendCookies": true,
-      "settingDisableRenderRequestBody": false,
-      "settingEncodeUrl": true,
-      "settingRebuildPath": true,
-      "settingFollowRedirects": "global",
-      "_type": "request"
     },
     {
       "_id": "req_IRIS-social__lists__username__mediaType_comments__id_reply_post",
@@ -6540,17 +6428,70 @@
       "_type": "request"
     },
     {
-      "_id": "req_IRIS-social__recommendations_post",
+      "_id": "req_IRIS-social__lists__username__mediaType_comments_get",
       "parentId": "fld_IRIS_social",
-      "url": "{{ _.base_url }}/recommendations",
-      "name": "POST /recommendations",
+      "url": "{{ _.base_url }}/lists/:username/:mediaType/comments",
+      "name": "GET /lists/:username/:mediaType/comments",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "page",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "limit",
+          "value": "6",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-social__lists__username__mediaType_comments_post",
+      "parentId": "fld_IRIS_social",
+      "url": "{{ _.base_url }}/lists/:username/:mediaType/comments",
+      "name": "POST /lists/:username/:mediaType/comments",
       "description": "",
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"sourceType\": \"string\",\n  \"sourceId\": 1,\n  \"targetType\": \"string\",\n  \"targetId\": 1,\n  \"body\": \"string\"\n}"
+        "text": "{\n  \"content\": \"string\",\n  \"isSpoiler\": false\n}"
       },
-      "parameters": [],
+      "parameters": [
+        {
+          "name": "page",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "limit",
+          "value": "6",
+          "disabled": false
+        }
+      ],
       "headers": [
         {
           "name": "Content-Type",
@@ -6696,6 +6637,45 @@
       "_type": "request"
     },
     {
+      "_id": "req_IRIS-social__recommendations_post",
+      "parentId": "fld_IRIS_social",
+      "url": "{{ _.base_url }}/recommendations",
+      "name": "POST /recommendations",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"sourceType\": \"string\",\n  \"sourceId\": 1,\n  \"targetType\": \"string\",\n  \"targetId\": 1,\n  \"body\": \"string\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
       "_id": "req_IRIS-social__reviews__type__id_get",
       "parentId": "fld_IRIS_social",
       "url": "{{ _.base_url }}/reviews/:type/:id",
@@ -6751,7 +6731,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"summary\": \"string\",\n  \"body\": \"string\",\n  \"score\": 1,\n  \"isSpoiler\": false,\n  \"ratings\": {}\n}"
+        "text": "{\n  \"summary\": \"string\",\n  \"body\": \"string\",\n  \"score\": 1,\n  \"isSpoiler\": false,\n  \"ratings\": null\n}"
       },
       "parameters": [
         {
@@ -6806,7 +6786,7 @@
       "method": "DELETE",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"summary\": \"string\",\n  \"body\": \"string\",\n  \"score\": 1,\n  \"isSpoiler\": false,\n  \"ratings\": {}\n}"
+        "text": "{\n  \"summary\": \"string\",\n  \"body\": \"string\",\n  \"score\": 1,\n  \"isSpoiler\": false,\n  \"ratings\": null\n}"
       },
       "parameters": [
         {
@@ -6861,7 +6841,7 @@
       "method": "PATCH",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"summary\": \"string\",\n  \"body\": \"string\",\n  \"score\": 1,\n  \"isSpoiler\": false,\n  \"ratings\": {}\n}"
+        "text": "{\n  \"summary\": \"string\",\n  \"body\": \"string\",\n  \"score\": 1,\n  \"isSpoiler\": false,\n  \"ratings\": null\n}"
       },
       "parameters": [
         {

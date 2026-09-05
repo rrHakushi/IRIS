@@ -66,7 +66,8 @@ export default defineRoute({
 
     const currentProgress = existing ? existing.progress : 0
     const newProgress = currentProgress + count
-    let newStatus: GameListStatus = (existing?.status as GameListStatus) ?? "PLAYING"
+    let newStatus: GameListStatus =
+      (existing?.status as GameListStatus) ?? "PLAYING"
     const completedAt = existing?.completedAt ?? null
 
     if (newStatus === "PLANNING") {
@@ -104,7 +105,9 @@ export default defineRoute({
         gameId: result.gameId,
         status: result.status,
         progress: result.progress,
-        completedAt: result.completedAt ? result.completedAt.toISOString() : null,
+        completedAt: result.completedAt
+          ? result.completedAt.toISOString()
+          : null,
       },
     }
   },

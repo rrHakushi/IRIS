@@ -16,7 +16,8 @@ export default defineRoute({
       200: FilterFacetsResponseSchema,
     },
     detail: {
-      summary: "Get available filter options from custom watchlist with item counts",
+      summary:
+        "Get available filter options from custom watchlist with item counts",
       tags: ["Lists - Custom Watchlist"],
     },
   },

@@ -90,7 +90,8 @@ export function toNormalizedMedia(
     episodeCount:
       typeof media.episodeCount === "number" && media.episodeCount > 0
         ? media.episodeCount
-        : Array.isArray((media as any).episodes) && (media as any).episodes.length > 0
+        : Array.isArray((media as any).episodes) &&
+            (media as any).episodes.length > 0
           ? (media as any).episodes.length
           : null,
     seasonCount: (media as any).seasonCount ?? null,
@@ -122,7 +123,9 @@ export function toNormalizedMedia(
   }
 }
 
-export function toMediaListEntry(entry: ListEntryData["entry"]): MediaListEntryData {
+export function toMediaListEntry(
+  entry: ListEntryData["entry"]
+): MediaListEntryData {
   const e = entry as any
   return {
     id: entry.id,
@@ -216,10 +219,7 @@ export function MediaListGrid({
         upperStatus === "PAUSED"
       ) {
         onHoldSection.items.push(item)
-      } else if (
-        upperStatus === "COMPLETED" ||
-        upperStatus === "FINISHED"
-      ) {
+      } else if (upperStatus === "COMPLETED" || upperStatus === "FINISHED") {
         completedSection.items.push(item)
       } else if (upperStatus === "DROPPED") {
         droppedSection.items.push(item)
@@ -264,7 +264,12 @@ export function MediaListGrid({
   // Initial Loading
   if (isLoading) {
     return (
-      <div className={cn("flex min-h-[360px] w-full items-center justify-center py-20", className)}>
+      <div
+        className={cn(
+          "flex min-h-[360px] w-full items-center justify-center py-20",
+          className
+        )}
+      >
         <Spinner className="size-8 text-primary" />
       </div>
     )
@@ -296,7 +301,7 @@ export function MediaListGrid({
             <div key={section.key} className="flex flex-col gap-3">
               {/* Section Header with Title and Count Badge */}
               <div className="flex items-center gap-2.5">
-                <h2 className="font-heading text-sm sm:text-base font-semibold text-foreground tracking-tight">
+                <h2 className="font-heading text-sm font-semibold tracking-tight text-foreground sm:text-base">
                   {section.title}
                 </h2>
                 <span className="rounded-full bg-muted/80 px-2 py-0.5 font-mono text-[11px] font-medium text-muted-foreground">
@@ -313,8 +318,12 @@ export function MediaListGrid({
                     mediaType={mediaType}
                     mediaTitlePreference={mediaTitlePreference}
                     progressUnit={progressUnit}
-                    onOpenEditModal={(target: ListEntryData) => setEditingItem(target)}
-                    onIncrementProgress={isOwner ? onIncrementProgress : undefined}
+                    onOpenEditModal={(target: ListEntryData) =>
+                      setEditingItem(target)
+                    }
+                    onIncrementProgress={
+                      isOwner ? onIncrementProgress : undefined
+                    }
                   />
                 ))}
               </div>
@@ -330,7 +339,9 @@ export function MediaListGrid({
               mediaType={mediaType}
               mediaTitlePreference={mediaTitlePreference}
               progressUnit={progressUnit}
-              onOpenEditModal={(target: ListEntryData) => setEditingItem(target)}
+              onOpenEditModal={(target: ListEntryData) =>
+                setEditingItem(target)
+              }
               onIncrementProgress={isOwner ? onIncrementProgress : undefined}
             />
           ))}

@@ -2,7 +2,11 @@ import * as React from "react"
 import { cn } from "cn"
 
 import { LinkButton } from "@workspace/ui/components/button"
-import { IconChevronLeft, IconChevronRight, IconDots } from "@tabler/icons-react"
+import {
+  IconChevronLeft,
+  IconChevronRight,
+  IconDots,
+} from "@tabler/icons-react"
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (
@@ -106,8 +110,7 @@ function PaginationEllipsis({
       )}
       {...props}
     >
-      <IconDots
-      />
+      <IconDots />
       <span className="sr-only">More pages</span>
     </span>
   )

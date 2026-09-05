@@ -65,7 +65,8 @@ export default defineRoute({
 
     const currentPlayCount = existing ? existing.playCount : 0
     const newPlayCount = currentPlayCount + count
-    let newStatus: MusicListStatus = (existing?.status as MusicListStatus) ?? "LISTENING"
+    let newStatus: MusicListStatus =
+      (existing?.status as MusicListStatus) ?? "LISTENING"
 
     if (newStatus === "PLANNING") {
       newStatus = "LISTENING"

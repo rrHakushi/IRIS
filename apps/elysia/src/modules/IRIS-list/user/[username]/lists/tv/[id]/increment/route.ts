@@ -120,7 +120,11 @@ export default defineRoute({
         isCompleted = true
         await prisma.tvList.update({
           where: { id: tvList.id },
-          data: { status: "COMPLETED", progress: maxProg, completedAt: new Date() },
+          data: {
+            status: "COMPLETED",
+            progress: maxProg,
+            completedAt: new Date(),
+          },
         })
       } else if (maxProg !== tvList.progress) {
         await prisma.tvList.update({

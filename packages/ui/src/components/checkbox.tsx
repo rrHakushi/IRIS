@@ -26,10 +26,7 @@ function Checkbox({ className, children, ...props }: CheckboxProps) {
               data-slot="checkbox-indicator"
               className="grid place-content-center text-current transition-none [&>svg]:size-3.5"
             >
-              {(isSelected || isIndeterminate) && (
-                <IconCheck
-                />
-              )}
+              {(isSelected || isIndeterminate) && <IconCheck />}
             </span>
             {children}
           </>

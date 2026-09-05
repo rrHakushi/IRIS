@@ -29,7 +29,8 @@ export default defineRoute({
       }),
     },
     detail: {
-      summary: "Increment manga chapters progress with guarded completion check",
+      summary:
+        "Increment manga chapters progress with guarded completion check",
       tags: ["Lists - Manga"],
     },
   },
@@ -66,7 +67,8 @@ export default defineRoute({
 
     const currentProgress = existing ? existing.chaptersProgress : 0
     let newProgress = currentProgress + count
-    let newStatus: MangaListStatus = (existing?.status as MangaListStatus) ?? "READING"
+    let newStatus: MangaListStatus =
+      (existing?.status as MangaListStatus) ?? "READING"
     let completedAt = existing?.completedAt ?? null
 
     // If status was PLANNING, transition to READING
@@ -122,7 +124,9 @@ export default defineRoute({
         mangaId: result.mangaId,
         status: result.status,
         chaptersProgress: result.chaptersProgress,
-        completedAt: result.completedAt ? result.completedAt.toISOString() : null,
+        completedAt: result.completedAt
+          ? result.completedAt.toISOString()
+          : null,
       },
     }
   },

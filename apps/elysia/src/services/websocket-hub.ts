@@ -1,5 +1,13 @@
-import type { ElysiaWS } from "elysia/ws"
+import { ElysiaWS } from "elysia/ws"
 import { logger } from "../utils/logger.js"
+
+export interface IrisWebSocket {
+  send(data: string, compress?: boolean): unknown
+  close?(code?: number, reason?: string): void
+  readonly id?: string
+  readonly subscriptions?: readonly string[]
+  readonly remoteAddress?: string
+}
 
 export interface WsMessagePayload<T = unknown> {
   event: string
@@ -13,16 +21,16 @@ export class WebSocketHub {
   private static logged = false
 
   // Mapping from userId -> Set of active WebSocket connections
-  private userConnections = new Map<string, Set<ElysiaWS<any>>>()
+  private userConnections = new Map<string, Set<IrisWebSocket>>()
 
   // Mapping from connection -> userId
-  private connectionUsers = new Map<ElysiaWS<any>, string>()
+  private connectionUsers = new Map<IrisWebSocket, string>()
 
   // Mapping from channel/topic name -> Set of subscribed WebSockets
-  private channelSubscriptions = new Map<string, Set<ElysiaWS<any>>>()
+  private channelSubscriptions = new Map<string, Set<IrisWebSocket>>()
 
   // Mapping from connection -> Set of channels it subscribed to
-  private connectionChannels = new Map<ElysiaWS<any>, Set<string>>()
+  private connectionChannels = new Map<IrisWebSocket, Set<string>>()
 
   private constructor() {
     WebSocketHub.logStatus()
@@ -41,18 +49,18 @@ export class WebSocketHub {
     return WebSocketHub.instance
   }
 
-  public hasConnection(ws: ElysiaWS<any>): boolean {
+  public hasConnection(ws: IrisWebSocket): boolean {
     return this.connectionUsers.has(ws)
   }
 
-  public getUserId(ws: ElysiaWS<any>): string | undefined {
+  public getUserId(ws: IrisWebSocket): string | undefined {
     return this.connectionUsers.get(ws)
   }
 
   /**
    * Registers a newly opened WebSocket connection.
    */
-  public register(ws: ElysiaWS<any>, userId?: string | null): void {
+  public register(ws: IrisWebSocket, userId?: string | null): void {
     if (userId && typeof userId === "string" && userId.trim().length > 0) {
       const uid = userId.trim()
       this.connectionUsers.set(ws, uid)
@@ -73,7 +81,7 @@ export class WebSocketHub {
   /**
    * Unregisters and cleans up a closed WebSocket connection.
    */
-  public unregister(ws: ElysiaWS<any>): void {
+  public unregister(ws: IrisWebSocket): void {
     const userId = this.connectionUsers.get(ws)
     if (userId) {
       const sockets = this.userConnections.get(userId)
@@ -104,7 +112,7 @@ export class WebSocketHub {
   /**
    * Subscribes a WebSocket connection to a specific channel/topic.
    */
-  public subscribe(ws: ElysiaWS<any>, channel: string): void {
+  public subscribe(ws: IrisWebSocket, channel: string): void {
     let subscribers = this.channelSubscriptions.get(channel)
     if (!subscribers) {
       subscribers = new Set()
@@ -123,7 +131,7 @@ export class WebSocketHub {
   /**
    * Unsubscribes a WebSocket connection from a channel.
    */
-  public unsubscribe(ws: ElysiaWS<any>, channel: string): void {
+  public unsubscribe(ws: IrisWebSocket, channel: string): void {
     const subscribers = this.channelSubscriptions.get(channel)
     if (subscribers) {
       subscribers.delete(ws)
@@ -142,7 +150,7 @@ export class WebSocketHub {
    * Sends an event payload to a single specific WebSocket connection.
    */
   public send(
-    ws: ElysiaWS<any>,
+    ws: IrisWebSocket,
     event: string,
     data: unknown,
     channel?: string
@@ -179,7 +187,7 @@ export class WebSocketHub {
     channel: string,
     event: string,
     data: unknown,
-    excludeWs?: ElysiaWS<any>
+    excludeWs?: IrisWebSocket
   ): void {
     const subscribers = this.channelSubscriptions.get(channel)
     if (!subscribers || subscribers.size === 0) return
@@ -203,25 +211,23 @@ export class WebSocketHub {
   /**
    * Handles incoming message frames from clients.
    */
-  public handleMessage(ws: ElysiaWS<any>, rawMessage: unknown): void {
+  public handleMessage(ws: IrisWebSocket, rawMessage: unknown): void {
     try {
-      let parsed: any = rawMessage
+      let parsed: unknown = rawMessage
       if (typeof rawMessage === "string") {
         parsed = JSON.parse(rawMessage)
       }
 
       if (!parsed || typeof parsed !== "object") return
 
+      const msg = parsed as Record<string, unknown>
+
       if (
-        parsed.type === "auth" &&
-        typeof parsed.userId === "string" &&
-        parsed.userId.trim().length > 0
+        msg.type === "auth" &&
+        typeof msg.userId === "string" &&
+        msg.userId.trim().length > 0
       ) {
-        const uid = parsed.userId.trim()
-        if ((ws as any)._authTimeout) {
-          clearTimeout((ws as any)._authTimeout)
-          delete (ws as any)._authTimeout
-        }
+        const uid = msg.userId.trim()
         const alreadyRegistered = this.connectionUsers.get(ws) === uid
         this.register(ws, uid)
         this.send(ws, "auth:success", { userId: uid })
@@ -231,20 +237,20 @@ export class WebSocketHub {
         return
       }
 
-      if (parsed.type === "ping") {
+      if (msg.type === "ping") {
         this.send(ws, "pong", { timestamp: Date.now() })
         return
       }
 
-      if (parsed.type === "subscribe" && typeof parsed.channel === "string") {
-        this.subscribe(ws, parsed.channel)
-        this.send(ws, "subscribed", { channel: parsed.channel })
+      if (msg.type === "subscribe" && typeof msg.channel === "string") {
+        this.subscribe(ws, msg.channel)
+        this.send(ws, "subscribed", { channel: msg.channel })
         return
       }
 
-      if (parsed.type === "unsubscribe" && typeof parsed.channel === "string") {
-        this.unsubscribe(ws, parsed.channel)
-        this.send(ws, "unsubscribed", { channel: parsed.channel })
+      if (msg.type === "unsubscribe" && typeof msg.channel === "string") {
+        this.unsubscribe(ws, msg.channel)
+        this.send(ws, "unsubscribed", { channel: msg.channel })
         return
       }
     } catch {

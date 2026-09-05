@@ -34,7 +34,10 @@ export async function getUserProfile(
       createdAt: userData.createdAt,
     }
   } catch (error) {
-    console.error(`[getUserProfile] Failed to fetch profile for ${username}:`, error)
+    console.error(
+      `[getUserProfile] Failed to fetch profile for ${username}:`,
+      error
+    )
     return null
   }
 }

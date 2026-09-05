@@ -1,7 +1,6 @@
 import {
   BadRequest,
   Conflict,
-  Forbidden,
   NotFound,
   ErrorResponseSchema,
 } from "@/utils/errors"
@@ -43,43 +42,42 @@ export default defineRoute({
     },
   },
 
-  async POST({ params, body, session, prisma }) {
-    if (!session.hasPermission(IRISFlags.ADMINISTRATOR)) {
-      return new Forbidden("Forbidden: Admin required")
-    }
+  POST: {
+    requirePermissions: [IRISFlags.ADMINISTRATOR],
+    async handler({ params, body, prisma }) {
+      const anime = await prisma.anime.findUnique({ where: { id: params.id } })
+      if (!anime) {
+        throw new NotFound("Anime not found")
+      }
 
-    const anime = await prisma.anime.findUnique({ where: { id: params.id } })
-    if (!anime) {
-      return new NotFound("Anime not found")
-    }
+      if (!anime.anilistId) {
+        throw new BadRequest("Anime is missing anilistId")
+      }
 
-    if (!anime.anilistId) {
-      return new BadRequest("Anime is missing anilistId")
-    }
+      const queued = await queueAnimeFetch(anime.anilistId, {
+        forceRefresh: body?.force,
+        maxDepth: body?.maxDepth,
+        priority: body?.priority,
+        maxRetries: body?.maxRetries,
+      })
 
-    const queued = await queueAnimeFetch(anime.anilistId, {
-      forceRefresh: body?.force,
-      maxDepth: body?.maxDepth,
-      priority: body?.priority,
-      maxRetries: body?.maxRetries,
-    })
+      if (queued?.metadata?.skipped) {
+        throw new Conflict(`${queued.metadata.reason}`)
+      }
 
-    if (queued?.metadata?.skipped) {
-      return new Conflict(`${queued.metadata.reason}`)
-    }
+      if (queued.status === "PROCESSING" || queued.status === "PENDING") {
+        return {
+          success: true,
+          message: "Anime queued for refresh",
+          timestamp: new Date().toISOString(),
+        }
+      }
 
-    if (queued.status === "PROCESSING" || queued.status === "PENDING") {
       return {
-        success: true,
-        message: "Anime queued for refresh",
+        success: false,
+        message: "Failed to queue anime for refresh",
         timestamp: new Date().toISOString(),
       }
-    }
-
-    return {
-      success: false,
-      message: "Failed to queue anime for refresh",
-      timestamp: new Date().toISOString(),
-    }
+    },
   },
 })

@@ -55,19 +55,37 @@ export const HistoryEntrySchema = t.Object({
 export const HistoryArraySchema = t.Optional(
   t.Nullable(
     t.Array(HistoryEntrySchema, {
-      description: "History records containing multiple start and completion dates",
+      description:
+        "History records containing multiple start and completion dates",
     })
   )
 )
 
 export const ListQuerySchema = t.Object({
-  cursor: t.Optional(t.Number({ description: "Entry ID cursor for pagination" })),
+  cursor: t.Optional(
+    t.Number({ description: "Entry ID cursor for pagination" })
+  ),
   limit: t.Optional(t.Number({ default: 50, minimum: 1, maximum: 100 })),
-  status: t.Optional(t.String({ description: "Comma-separated status filter e.g. WATCHING,COMPLETED" })),
-  mediaFormat: t.Optional(t.String({ description: "Comma-separated format filter e.g. TV,MOVIE" })),
-  mediaStatus: t.Optional(t.String({ description: "Comma-separated release status filter e.g. FINISHED,RELEASING" })),
-  genres: t.Optional(t.String({ description: "Comma-separated genre names or IDs" })),
-  year: t.Optional(t.String({ description: "Comma-separated release years e.g. 2023,2024" })),
+  status: t.Optional(
+    t.String({
+      description: "Comma-separated status filter e.g. WATCHING,COMPLETED",
+    })
+  ),
+  mediaFormat: t.Optional(
+    t.String({ description: "Comma-separated format filter e.g. TV,MOVIE" })
+  ),
+  mediaStatus: t.Optional(
+    t.String({
+      description:
+        "Comma-separated release status filter e.g. FINISHED,RELEASING",
+    })
+  ),
+  genres: t.Optional(
+    t.String({ description: "Comma-separated genre names or IDs" })
+  ),
+  year: t.Optional(
+    t.String({ description: "Comma-separated release years e.g. 2023,2024" })
+  ),
   sortBy: t.Optional(
     t.Union(
       [
@@ -80,13 +98,19 @@ export const ListQuerySchema = t.Object({
       { default: "updatedAt" }
     )
   ),
-  order: t.Optional(t.Union([t.Literal("asc"), t.Literal("desc")], { default: "desc" })),
+  order: t.Optional(
+    t.Union([t.Literal("asc"), t.Literal("desc")], { default: "desc" })
+  ),
 })
 
 export const CustomWatchlistQuerySchema = t.Object({
-  cursor: t.Optional(t.String({ description: "Entry UUID cursor for pagination" })),
+  cursor: t.Optional(
+    t.String({ description: "Entry UUID cursor for pagination" })
+  ),
   limit: t.Optional(t.Number({ default: 50, minimum: 1, maximum: 100 })),
-  mediaType: t.Optional(t.String({ description: "Comma-separated media types e.g. ANIME,MOVIE" })),
+  mediaType: t.Optional(
+    t.String({ description: "Comma-separated media types e.g. ANIME,MOVIE" })
+  ),
   genres: t.Optional(t.String({ description: "Comma-separated genre names" })),
   year: t.Optional(t.String({ description: "Comma-separated release years" })),
   sortBy: t.Optional(
@@ -94,7 +118,9 @@ export const CustomWatchlistQuerySchema = t.Object({
       default: "order",
     })
   ),
-  order: t.Optional(t.Union([t.Literal("asc"), t.Literal("desc")], { default: "asc" })),
+  order: t.Optional(
+    t.Union([t.Literal("asc"), t.Literal("desc")], { default: "asc" })
+  ),
 })
 
 export const FilterFacetsResponseSchema = t.Object({
@@ -146,7 +172,7 @@ export async function resolveTargetUserAndAccess(
   const currentUser = session?.isAuthenticated ? session.getUser() : null
   const isOwner = Boolean(
     currentUser &&
-      currentUser.username?.toLowerCase() === dbUser.username.toLowerCase()
+    currentUser.username?.toLowerCase() === dbUser.username.toLowerCase()
   )
 
   return { dbUser, isOwner, currentUser }
@@ -154,7 +180,9 @@ export async function resolveTargetUserAndAccess(
 
 export function assertIsOwner(isOwner: boolean, username?: string) {
   if (!isOwner) {
-    throw new Forbidden(`Cannot modify list for user "${username || "unknown"}"`)
+    throw new Forbidden(
+      `Cannot modify list for user "${username || "unknown"}"`
+    )
   }
 }
 
@@ -366,9 +394,7 @@ export function aggregateFacetsFromItems(
       }
 
       const yr =
-        media.startDateYear ??
-        media.releaseDateYear ??
-        media.firstAiredYear
+        media.startDateYear ?? media.releaseDateYear ?? media.firstAiredYear
 
       if (typeof yr === "number" && yr > 0) {
         yearCounts.set(yr, (yearCounts.get(yr) || 0) + 1)

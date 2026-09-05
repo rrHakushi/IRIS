@@ -2,13 +2,14 @@ import fs from "node:fs"
 import path from "node:path"
 import { Elysia } from "elysia"
 import { websocket } from "elysia/websocket"
+import type { ElysiaWS } from "elysia/ws"
 import { prisma } from "@IRIS/database"
 import { cache } from "./utils/cache"
-import { cors, cron, rateLimiter, session } from "./plugins"
+import { cors, cron, notificationPlugin, rateLimiter, session } from "./plugins"
 import { resolveSessionFromRequest } from "./plugins/session"
 import { wsHub, initServices } from "./services"
 import { createRouterModule } from "./router"
-import { routes } from "./router/routes.generated"
+import { routes } from "./router/generated/routes.generated"
 import { c, colorMethod, colorStatus, colorDuration } from "./utils/colors"
 import { logger } from "./utils/logger"
 import {
@@ -20,8 +21,14 @@ import {
 // Intercept console inside request handlers to group logs by request
 initConsoleInterceptor()
 
+declare global {
+  interface BigInt {
+    toJSON(): number | string
+  }
+}
+
 // Enable native JSON serialization for BigInt values returned by database queries
-;(BigInt.prototype as any).toJSON = function () {
+BigInt.prototype.toJSON = function () {
   const intVal = Number(this)
   return Number.isSafeInteger(intVal) ? intVal : this.toString()
 }
@@ -56,6 +63,8 @@ function loadPlugin<T>(name: string, plugin: T, description?: string): T {
   return plugin
 }
 
+const authTimeouts = new WeakMap<object, ReturnType<typeof setTimeout>>()
+
 // Full server application with database decoration, session derivation, websockets, request logging, and task scheduling
 export const app = new Elysia()
   .decorate("prisma", prisma)
@@ -65,6 +74,13 @@ export const app = new Elysia()
   .use(loadPlugin("session", session(), "multi-source session resolver"))
   .use(loadPlugin("rateLimiter", rateLimiter(), "in-memory ip rate limiting"))
   .use(loadPlugin("cron", cron(), "in-memory task scheduler"))
+  .use(
+    loadPlugin(
+      "notifications",
+      notificationPlugin(),
+      "post-quantum encrypted notification dispatcher"
+    )
+  )
   .request(({ request }) => {
     ;(request as unknown as { _reqStartTime?: number })._reqStartTime =
       performance.now()
@@ -75,12 +91,17 @@ export const app = new Elysia()
       ._reqStartTime
     const durationMs = startTime ? performance.now() - startTime : 0
     const url = new URL(request.url)
-    const resp = (ctx as any).responseValue ?? (ctx as any).response
+    const ctxObj = ctx as Record<string, unknown>
+    const resp = ctxObj.responseValue ?? ctxObj.response
+    const respObj =
+      typeof resp === "object" && resp !== null
+        ? (resp as Record<string, unknown>)
+        : null
     const status =
       (resp instanceof Response
         ? resp.status
-        : typeof (resp as any)?.status === "number"
-          ? (resp as any).status
+        : typeof respObj?.status === "number"
+          ? (respObj.status as number)
           : typeof set.status === "number"
             ? set.status
             : 200) || 200
@@ -108,24 +129,13 @@ export const app = new Elysia()
     printGroupedRequestLogs(logs)
   })
   .ws("/ws", {
-    async open(ws: any) {
-      const request = ws?.data?.request ?? ws?.raw?.request
-      const sessionUser = ws?.data?.session?.user
-      let userId: string | null =
-        sessionUser?.id ??
-        ws?.data?.query?.userId ??
-        (ws as any)?.query?.userId ??
-        null
+    async open(ws) {
+      const request = ws.request
+      const sessionUser = ws.session?.user
+      let userId: string | null = sessionUser?.id ?? ws.query?.userId ?? null
 
       if (!userId) {
-        const rawUrl =
-          typeof request?.url === "string"
-            ? request.url
-            : typeof (ws as any)?.url === "string"
-              ? (ws as any).url
-              : typeof (ws?.raw as any)?.url === "string"
-                ? (ws.raw as any).url
-                : ""
+        const rawUrl = typeof request?.url === "string" ? request.url : ""
         if (rawUrl) {
           try {
             const parsedUrl = new URL(rawUrl, "http://localhost:4000")
@@ -166,15 +176,17 @@ export const app = new Elysia()
             }
           }
         }, 5000)
-        ;(ws as any)._authTimeout = authTimeout
+        authTimeouts.set(ws, authTimeout)
       }
     },
-    message(ws: any, message) {
+    message(ws, message) {
       wsHub.handleMessage(ws, message)
     },
-    close(ws: any) {
-      if ((ws as any)._authTimeout) {
-        clearTimeout((ws as any)._authTimeout)
+    close(ws) {
+      const authTimeout = authTimeouts.get(ws)
+      if (authTimeout) {
+        clearTimeout(authTimeout)
+        authTimeouts.delete(ws)
       }
       const hadUser = wsHub.hasConnection(ws)
       wsHub.unregister(ws)

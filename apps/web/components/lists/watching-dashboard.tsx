@@ -22,17 +22,12 @@ import { elysia } from "@/lib/elysia"
 import { useUser } from "@/context/user-context"
 import { getMediaPreferences } from "@IRIS/shared"
 import { MediaListModal } from "@/components/media/list/media-list-modal"
-import {
-  MediaListCard,
-} from "@/components/lists/media-list-card"
+import { MediaListCard } from "@/components/lists/media-list-card"
 import {
   toNormalizedMedia,
   toMediaListEntry,
 } from "@/components/lists/media-list-grid"
-import type {
-  MediaListType,
-  ListEntryData,
-} from "@/components/lists/types"
+import type { MediaListType, ListEntryData } from "@/components/lists/types"
 import { MEDIA_CATEGORIES } from "@/components/lists/types"
 
 interface ActiveCategorySection {
@@ -264,9 +259,13 @@ export function WatchingDashboard(): React.JSX.Element {
           : mediaType === "anime"
             ? (item.media.episodes ?? (item.media as any).episodeCount ?? null)
             : mediaType === "tv"
-              ? (item.media.episodes ?? (item.media as any).episodeCount ?? null)
+              ? (item.media.episodes ??
+                (item.media as any).episodeCount ??
+                null)
               : mediaType === "book"
-                ? ((item.media as any).chapterCount ?? (item.media as any).pageCount ?? null)
+                ? ((item.media as any).chapterCount ??
+                  (item.media as any).pageCount ??
+                  null)
                 : null
 
       const hasScore =
@@ -282,7 +281,9 @@ export function WatchingDashboard(): React.JSX.Element {
                 if (mediaType === "manga") {
                   const rawNext = (it.entry.chaptersProgress ?? 0) + count
                   const nextProg =
-                    maxCount && maxCount > 0 ? Math.min(rawNext, maxCount) : rawNext
+                    maxCount && maxCount > 0
+                      ? Math.min(rawNext, maxCount)
+                      : rawNext
                   const isCompleted =
                     maxCount && maxCount > 0 && nextProg >= maxCount && hasScore
                   if (isCompleted) return null
@@ -309,7 +310,9 @@ export function WatchingDashboard(): React.JSX.Element {
 
                 const rawNext = (it.entry.progress ?? 0) + count
                 const nextProg =
-                  maxCount && maxCount > 0 ? Math.min(rawNext, maxCount) : rawNext
+                  maxCount && maxCount > 0
+                    ? Math.min(rawNext, maxCount)
+                    : rawNext
                 const isCompleted =
                   maxCount && maxCount > 0 && nextProg >= maxCount && hasScore
                 if (isCompleted) return null
@@ -430,16 +433,16 @@ export function WatchingDashboard(): React.JSX.Element {
   if (authStatus === "unauthenticated" || (!session && !isLoading)) {
     return (
       <div className="flex min-h-[60vh] w-full flex-col items-center justify-center p-4">
-        <div className="flex max-w-md flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/60 p-8 text-center backdrop-blur-md shadow-xs">
-          <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-4 shadow-inner">
+        <div className="flex max-w-md flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/60 p-8 text-center shadow-xs backdrop-blur-md">
+          <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-inner">
             <IconEye className="size-7" />
           </div>
-          <h2 className="font-heading text-xl md:text-2xl font-semibold text-foreground tracking-tight">
+          <h2 className="font-heading text-xl font-semibold tracking-tight text-foreground md:text-2xl">
             Login to Manage Watched Media
           </h2>
-          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-            Sign in to track what you&apos;re watching, reading, or playing, update
-            your episode progress, and organize your media lists.
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Sign in to track what you&apos;re watching, reading, or playing,
+            update your episode progress, and organize your media lists.
           </p>
           <Button
             onPress={() => signIn()}
@@ -460,7 +463,7 @@ export function WatchingDashboard(): React.JSX.Element {
     return (
       <div className="flex min-h-[50vh] w-full flex-col items-center justify-center gap-3">
         <Spinner className="size-6 text-primary" />
-        <span className="text-xs text-muted-foreground font-medium">
+        <span className="text-xs font-medium text-muted-foreground">
           Loading watching media...
         </span>
       </div>
@@ -479,20 +482,21 @@ export function WatchingDashboard(): React.JSX.Element {
     return (
       <div className="flex min-h-[60vh] w-full flex-col items-center justify-center p-4">
         <div className="flex max-w-md flex-col items-center justify-center rounded-2xl border border-dashed border-border/70 bg-card/40 p-8 text-center backdrop-blur-md">
-          <div className="flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground mb-4">
+          <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
             <IconPlayerPlay className="size-7 opacity-75" />
           </div>
-          <h2 className="font-heading text-xl md:text-2xl font-semibold text-foreground tracking-tight">
+          <h2 className="font-heading text-xl font-semibold tracking-tight text-foreground md:text-2xl">
             Start Watching Media
           </h2>
-          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-            You aren&apos;t tracking any active media right now. Browse our library
-            and add titles to your watching, reading, or playing lists.
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            You aren&apos;t tracking any active media right now. Browse our
+            library and add titles to your watching, reading, or playing lists.
           </p>
           <Link
             href="/IRIS-list/browse"
             className={buttonVariants({
-              className: "mt-6 gap-2 rounded-2xl px-5 text-sm font-medium shadow-xs",
+              className:
+                "mt-6 gap-2 rounded-2xl px-5 text-sm font-medium shadow-xs",
             })}
           >
             <IconCompass className="size-4" />
@@ -520,8 +524,8 @@ export function WatchingDashboard(): React.JSX.Element {
             {/* Section Header */}
             <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-2.5">
               <div className="flex items-center gap-2">
-                <SectionIcon className="size-4.5 text-primary shrink-0" />
-                <h2 className="font-heading text-base sm:text-lg font-semibold text-foreground tracking-tight">
+                <SectionIcon className="size-4.5 shrink-0 text-primary" />
+                <h2 className="font-heading text-base font-semibold tracking-tight text-foreground sm:text-lg">
                   {section.label}
                 </h2>
                 <span className="rounded-full bg-muted/80 px-2 py-0.5 font-mono text-[11px] font-medium text-muted-foreground">
@@ -569,7 +573,10 @@ export function WatchingDashboard(): React.JSX.Element {
           onOpenChange={(open) => {
             if (!open) setEditingItem(null)
           }}
-          media={toNormalizedMedia(editingItem.item.media, editingItem.mediaType)}
+          media={toNormalizedMedia(
+            editingItem.item.media,
+            editingItem.mediaType
+          )}
           initialEntry={toMediaListEntry(editingItem.item.entry)}
           onEntryUpdated={(updated) => {
             handleEntryUpdated(editingItem.item.entry.id, updated)

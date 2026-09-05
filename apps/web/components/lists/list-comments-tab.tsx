@@ -29,10 +29,7 @@ import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
 import { Textarea } from "@workspace/ui/components/textarea"
 import { Switch } from "@workspace/ui/components/switch"
-import {
-  Tooltip,
-  TooltipTrigger,
-} from "@workspace/ui/components/tooltip"
+import { Tooltip, TooltipTrigger } from "@workspace/ui/components/tooltip"
 import {
   Dialog,
   DialogHeader,
@@ -114,7 +111,10 @@ function isValidFrameUrl(url?: string | null): url is string {
   )
 }
 
-function formatCommentDate(dateStr: string): { relative: string; full: string } {
+function formatCommentDate(dateStr: string): {
+  relative: string
+  full: string
+} {
   try {
     const d = new Date(dateStr)
     const full = d.toLocaleString(undefined, {
@@ -182,7 +182,8 @@ export function ListCommentsTab({
   isOwner,
 }: ListCommentsTabProps): React.JSX.Element {
   const { data: session, status } = useSession()
-  const isAuthenticated = status === "authenticated" && Boolean(session?.user?.id)
+  const isAuthenticated =
+    status === "authenticated" && Boolean(session?.user?.id)
 
   const [comments, setComments] = useState<ListCommentItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -252,7 +253,9 @@ export function ListCommentsTab({
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
 
   // Revealing Spoilers State
-  const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(new Set())
+  const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(
+    new Set()
+  )
 
   // Inline Reply Form (Owner only)
   const [replyingToId, setReplyingToId] = useState<string | null>(null)
@@ -265,10 +268,12 @@ export function ListCommentsTab({
   const [isSavingEditReply, setIsSavingEditReply] = useState(false)
 
   // Delete Modals State
-  const [deleteCommentTarget, setDeleteCommentTarget] = useState<ListCommentItem | null>(null)
+  const [deleteCommentTarget, setDeleteCommentTarget] =
+    useState<ListCommentItem | null>(null)
   const [isDeletingComment, setIsDeletingComment] = useState(false)
 
-  const [deleteReplyTarget, setDeleteReplyTarget] = useState<CommentReply | null>(null)
+  const [deleteReplyTarget, setDeleteReplyTarget] =
+    useState<CommentReply | null>(null)
   const [isDeletingReply, setIsDeletingReply] = useState(false)
 
   // Data fetching
@@ -280,14 +285,20 @@ export function ListCommentsTab({
       isFetchingRef.current = true
 
       try {
-        const res = await elysia.lists({ username })({ mediaType }).comments.get({
-          query: {
-            page: pageToFetch,
-            limit: COMMENTS_PER_PAGE,
-          },
-        })
+        const res = await elysia
+          .lists({ username })({ mediaType })
+          .comments.get({
+            query: {
+              page: pageToFetch,
+              limit: COMMENTS_PER_PAGE,
+            },
+          })
 
-        if (!res.error && res.data?.success && Array.isArray(res.data.comments)) {
+        if (
+          !res.error &&
+          res.data?.success &&
+          Array.isArray(res.data.comments)
+        ) {
           setComments(res.data.comments as unknown as ListCommentItem[])
           const pagination = (res.data as any).pagination
           if (pagination) {
@@ -403,10 +414,12 @@ export function ListCommentsTab({
 
     setIsSubmittingComment(true)
     try {
-      const res = await elysia.lists({ username })({ mediaType }).comments.post({
-        content: commentText.trim(),
-        isSpoiler,
-      })
+      const res = await elysia
+        .lists({ username })({ mediaType })
+        .comments.post({
+          content: commentText.trim(),
+          isSpoiler,
+        })
 
       const isRateLimited =
         res.status === 429 ||
@@ -445,7 +458,8 @@ export function ListCommentsTab({
       }
     } catch (err: any) {
       toast.error(
-        err?.message || "An unexpected error occurred while posting your comment."
+        err?.message ||
+          "An unexpected error occurred while posting your comment."
       )
     } finally {
       setIsSubmittingComment(false)
@@ -595,14 +609,14 @@ export function ListCommentsTab({
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               rows={2}
-              className="min-h-[44px] w-full resize-none border-0 bg-transparent p-0.5 text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/60"
+              className="min-h-[44px] w-full resize-none border-0 bg-transparent p-0.5 text-sm shadow-none placeholder:text-muted-foreground/60 focus-visible:ring-0"
               maxLength={5000}
               disabled={isSubmittingComment}
             />
 
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/30 pt-2">
               {/* Spoiler Toggle */}
-              <label className="flex cursor-pointer select-none items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground">
+              <label className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors select-none hover:text-foreground">
                 <Switch
                   isSelected={isSpoiler}
                   onChange={setIsSpoiler}
@@ -614,7 +628,11 @@ export function ListCommentsTab({
                   ) : (
                     <IconEye className="size-3.5" />
                   )}
-                  <span className={cn(isSpoiler && "font-semibold text-destructive")}>
+                  <span
+                    className={cn(
+                      isSpoiler && "font-semibold text-destructive"
+                    )}
+                  >
                     Mark as spoiler
                   </span>
                 </div>
@@ -665,7 +683,7 @@ export function ListCommentsTab({
       {isLoading ? (
         <div className="divide-y divide-border/30 rounded-2xl border border-border/50 bg-card/30">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-start gap-3 p-3.5 animate-pulse">
+            <div key={i} className="flex animate-pulse items-start gap-3 p-3.5">
               <div className="size-8 shrink-0 rounded-full bg-muted/70" />
               <div className="flex-1 space-y-1.5">
                 <div className="flex items-center gap-2">
@@ -686,7 +704,8 @@ export function ListCommentsTab({
             No comments yet
           </h3>
           <p className="max-w-xs text-xs text-muted-foreground">
-            Be the first to share your thoughts on {username}&apos;s {mediaType} list.
+            Be the first to share your thoughts on {username}&apos;s {mediaType}{" "}
+            list.
           </p>
         </div>
       ) : (
@@ -703,7 +722,7 @@ export function ListCommentsTab({
 
             const authorHasDisplayName = Boolean(
               comment.author.displayName &&
-                comment.author.displayName.trim() !== ""
+              comment.author.displayName.trim() !== ""
             )
             const authorNameToDisplay = authorHasDisplayName
               ? comment.author.displayName!
@@ -734,7 +753,7 @@ export function ListCommentsTab({
             const reply = comment.reply
             const replyHasDisplayName = Boolean(
               reply?.author.displayName &&
-                reply.author.displayName.trim() !== ""
+              reply.author.displayName.trim() !== ""
             )
             const replyAuthorNameToDisplay = replyHasDisplayName
               ? reply!.author.displayName!
@@ -770,7 +789,7 @@ export function ListCommentsTab({
             return (
               <div
                 key={comment.id}
-                className="p-3.5 sm:p-4 transition-colors hover:bg-muted/10"
+                className="p-3.5 transition-colors hover:bg-muted/10 sm:p-4"
               >
                 <div className="flex items-start gap-3">
                   {/* Avatar with Profile Popover */}
@@ -781,14 +800,14 @@ export function ListCommentsTab({
                     placement="right top"
                     className="group relative flex shrink-0 cursor-pointer items-center justify-center rounded-full transition-transform hover:scale-105 focus:outline-hidden"
                   >
-                    <Avatar className="size-8 sm:size-9 border border-border/80 bg-background shadow-xs">
+                    <Avatar className="size-8 border border-border/80 bg-background shadow-xs sm:size-9">
                       {comment.author.avatarUrl ? (
                         <AvatarImage
                           src={comment.author.avatarUrl}
                           alt={authorNameToDisplay}
                         />
                       ) : null}
-                      <AvatarFallback className="bg-primary/15 text-xs font-black uppercase text-primary">
+                      <AvatarFallback className="bg-primary/15 text-xs font-black text-primary uppercase">
                         {authorNameToDisplay.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -817,7 +836,7 @@ export function ListCommentsTab({
                           isOwner={isAuthorListOwner}
                           placement="right top"
                           className={cn(
-                            "cursor-pointer text-start text-xs sm:text-sm font-semibold tracking-tight transition-all hover:underline focus:outline-hidden",
+                            "cursor-pointer text-start text-xs font-semibold tracking-tight transition-all hover:underline focus:outline-hidden sm:text-sm",
                             authorEffect
                           )}
                           style={authorStyle}
@@ -837,7 +856,7 @@ export function ListCommentsTab({
                         <TooltipTrigger delay={300}>
                           <button
                             type="button"
-                            className="cursor-default text-start text-[11px] text-muted-foreground bg-transparent p-0 border-0 outline-none hover:underline focus-visible:underline"
+                            className="cursor-default border-0 bg-transparent p-0 text-start text-[11px] text-muted-foreground outline-none hover:underline focus-visible:underline"
                           >
                             {commentDate.relative}
                           </button>
@@ -901,7 +920,7 @@ export function ListCommentsTab({
                       </button>
                     ) : (
                       <div className="space-y-1">
-                        <p className="whitespace-pre-wrap break-words text-xs sm:text-sm leading-relaxed text-foreground">
+                        <p className="text-xs leading-relaxed break-words whitespace-pre-wrap text-foreground sm:text-sm">
                           {comment.content}
                         </p>
                         {comment.isSpoiler && isRevealed && (
@@ -918,13 +937,13 @@ export function ListCommentsTab({
 
                     {/* Inline Reply Form for List Owner */}
                     {isOwner && replyingToId === comment.id && (
-                      <div className="mt-2.5 rounded-xl border border-primary/30 bg-muted/20 p-2.5 space-y-2">
+                      <div className="mt-2.5 space-y-2 rounded-xl border border-primary/30 bg-muted/20 p-2.5">
                         <Textarea
                           placeholder="Write your official reply as the list owner..."
                           value={replyText}
                           onChange={(e) => setReplyText(e.target.value)}
                           rows={2}
-                          className="min-h-[40px] w-full resize-none border-0 bg-transparent p-1 text-xs sm:text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/60"
+                          className="min-h-[40px] w-full resize-none border-0 bg-transparent p-1 text-xs shadow-none placeholder:text-muted-foreground/60 focus-visible:ring-0 sm:text-sm"
                           disabled={isSubmittingReply}
                           maxLength={5000}
                           autoFocus
@@ -983,7 +1002,7 @@ export function ListCommentsTab({
                                 alt={replyAuthorNameToDisplay}
                               />
                             ) : null}
-                            <AvatarFallback className="bg-primary/15 text-[10px] font-black uppercase text-primary">
+                            <AvatarFallback className="bg-primary/15 text-[10px] font-black text-primary uppercase">
                               {replyAuthorNameToDisplay.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
@@ -1034,7 +1053,7 @@ export function ListCommentsTab({
                               <TooltipTrigger delay={300}>
                                 <button
                                   type="button"
-                                  className="cursor-default text-start text-[10px] text-muted-foreground bg-transparent p-0 border-0 outline-none hover:underline focus-visible:underline"
+                                  className="cursor-default border-0 bg-transparent p-0 text-start text-[10px] text-muted-foreground outline-none hover:underline focus-visible:underline"
                                 >
                                   {formatCommentDate(reply.createdAt).relative}
                                 </button>
@@ -1086,7 +1105,9 @@ export function ListCommentsTab({
                             <div className="space-y-1.5 pt-0.5">
                               <Textarea
                                 value={editReplyText}
-                                onChange={(e) => setEditReplyText(e.target.value)}
+                                onChange={(e) =>
+                                  setEditReplyText(e.target.value)
+                                }
                                 rows={2}
                                 className="min-h-[38px] w-full resize-none border-0 bg-transparent p-1 text-xs shadow-none focus-visible:ring-0"
                                 disabled={isSavingEditReply}
@@ -1109,8 +1130,12 @@ export function ListCommentsTab({
                                 <Button
                                   variant="default"
                                   size="sm"
-                                  onClick={() => handleSaveEditReply(comment.id)}
-                                  disabled={isSavingEditReply || !editReplyText.trim()}
+                                  onClick={() =>
+                                    handleSaveEditReply(comment.id)
+                                  }
+                                  disabled={
+                                    isSavingEditReply || !editReplyText.trim()
+                                  }
                                   className="h-6 gap-1 rounded-xl px-2.5 text-xs shadow-xs"
                                 >
                                   {isSavingEditReply ? (
@@ -1128,7 +1153,7 @@ export function ListCommentsTab({
                               </div>
                             </div>
                           ) : (
-                            <p className="whitespace-pre-wrap break-words text-xs sm:text-sm leading-relaxed text-foreground">
+                            <p className="text-xs leading-relaxed break-words whitespace-pre-wrap text-foreground sm:text-sm">
                               {reply.content}
                             </p>
                           )}
@@ -1145,7 +1170,7 @@ export function ListCommentsTab({
 
       {/* Comments Pagination */}
       {!isLoading && totalComments > 0 && totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+        <div className="flex flex-col items-center justify-between gap-3 pt-1 sm:flex-row">
           <p className="text-xs text-muted-foreground">
             Showing{" "}
             <span className="font-medium text-foreground">
@@ -1156,9 +1181,7 @@ export function ListCommentsTab({
               )}
             </span>{" "}
             of{" "}
-            <span className="font-medium text-foreground">
-              {totalComments}
-            </span>{" "}
+            <span className="font-medium text-foreground">{totalComments}</span>{" "}
             comments
           </p>
 
@@ -1240,9 +1263,10 @@ export function ListCommentsTab({
             Delete Comment
           </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
-            Are you sure you want to delete this comment? Deleting the comment will
-            also permanently remove any owner replies attached to it, and a notification
-            will be sent to the commentator informing them their comment was removed.
+            Are you sure you want to delete this comment? Deleting the comment
+            will also permanently remove any owner replies attached to it, and a
+            notification will be sent to the commentator informing them their
+            comment was removed.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex justify-end gap-2 pt-3">
@@ -1287,8 +1311,8 @@ export function ListCommentsTab({
             Delete Reply
           </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
-            Are you sure you want to delete your reply? You will be able to post a new
-            reply to this comment afterward.
+            Are you sure you want to delete your reply? You will be able to post
+            a new reply to this comment afterward.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex justify-end gap-2 pt-3">

@@ -41,7 +41,8 @@ export function MediaListWatchlistsTab({
 }: MediaListWatchlistsTabProps) {
   const { data: session } = useSession()
   const { user } = useUser()
-  const username = user?.username || (session?.user as { username?: string })?.username
+  const username =
+    user?.username || (session?.user as { username?: string })?.username
 
   const [watchlists, setWatchlists] = useState<WatchlistSummaryItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -56,14 +57,12 @@ export function MediaListWatchlistsTab({
     if (!username) return
     setLoading(true)
     try {
-      const { data, error } = await elysia
-        .user({ username })
-        .watchlists.get({
-          query: {
-            mediaType: backendMediaType as any,
-            mediaId: mediaId,
-          },
-        })
+      const { data, error } = await elysia.user({ username }).watchlists.get({
+        query: {
+          mediaType: backendMediaType as any,
+          mediaId: mediaId,
+        },
+      })
 
       if (!error && data?.watchlists) {
         setWatchlists(data.watchlists)
@@ -98,7 +97,9 @@ export function MediaListWatchlistsTab({
           ? {
               ...w,
               containsMedia: nextState,
-              entriesCount: nextState ? w.entriesCount + 1 : Math.max(0, w.entriesCount - 1),
+              entriesCount: nextState
+                ? w.entriesCount + 1
+                : Math.max(0, w.entriesCount - 1),
             }
           : w
       )
@@ -108,11 +109,10 @@ export function MediaListWatchlistsTab({
       if (nextState) {
         const { error } = await elysia
           .user({ username })
-          .lists.custom({ watchlistId: watchlist.id })({ id: mediaId })[
-          "quick-add"
-        ].post({
-          mediaType: backendMediaType as any,
-        })
+          .lists.custom({ watchlistId: watchlist.id })({ id: mediaId })
+          ["quick-add"].post({
+            mediaType: backendMediaType as any,
+          })
 
         if (error) {
           throw new Error("Failed to add to custom list")
@@ -139,7 +139,9 @@ export function MediaListWatchlistsTab({
             ? {
                 ...w,
                 containsMedia: !nextState,
-                entriesCount: !nextState ? w.entriesCount + 1 : Math.max(0, w.entriesCount - 1),
+                entriesCount: !nextState
+                  ? w.entriesCount + 1
+                  : Math.max(0, w.entriesCount - 1),
               }
             : w
         )
@@ -162,12 +164,10 @@ export function MediaListWatchlistsTab({
     setCreating(true)
 
     try {
-      const { data, error } = await elysia
-        .user({ username })
-        .watchlists.post({
-          name,
-          isPrivate: false,
-        })
+      const { data, error } = await elysia.user({ username }).watchlists.post({
+        name,
+        isPrivate: false,
+      })
 
       if (error || !data?.watchlist) {
         toast.error("Failed to create custom list")
@@ -179,11 +179,10 @@ export function MediaListWatchlistsTab({
       // Automatically add current media to newly created watchlist
       await elysia
         .user({ username })
-        .lists.custom({ watchlistId: created.id })({ id: mediaId })[
-        "quick-add"
-      ].post({
-        mediaType: backendMediaType as any,
-      })
+        .lists.custom({ watchlistId: created.id })({ id: mediaId })
+        ["quick-add"].post({
+          mediaType: backendMediaType as any,
+        })
 
       setWatchlists((prev) => [
         {
@@ -215,19 +214,20 @@ export function MediaListWatchlistsTab({
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-1">
-        <h3 className="text-sm font-semibold text-foreground">
-          Custom Lists
-        </h3>
+        <h3 className="text-sm font-semibold text-foreground">Custom Lists</h3>
       </div>
 
       {/* New Custom List Inline Creator */}
-      <form onSubmit={handleCreateWatchlist} className="flex items-center gap-2">
+      <form
+        onSubmit={handleCreateWatchlist}
+        className="flex items-center gap-2"
+      >
         <Input
           type="text"
           placeholder="New list name..."
           value={newWatchlistName}
           onChange={(e) => setNewWatchlistName(e.target.value)}
-          className="h-8.5 text-xs rounded-xl"
+          className="h-8.5 rounded-xl text-xs"
         />
         <Button
           type="submit"
@@ -262,7 +262,7 @@ export function MediaListWatchlistsTab({
             return (
               <div
                 key={wl.id}
-                className="flex items-center justify-between gap-3 p-3 transition-colors hover:bg-muted/30 first:rounded-t-2xl last:rounded-b-2xl"
+                className="flex items-center justify-between gap-3 p-3 transition-colors first:rounded-t-2xl last:rounded-b-2xl hover:bg-muted/30"
               >
                 <div className="flex min-w-0 flex-col gap-0.5">
                   <div className="flex items-center gap-1.5">
@@ -293,7 +293,9 @@ export function MediaListWatchlistsTab({
                   <Switch
                     isSelected={isChecked}
                     isDisabled={isPending}
-                    onChange={(checked: boolean) => handleToggleWatchlist(wl, checked)}
+                    onChange={(checked: boolean) =>
+                      handleToggleWatchlist(wl, checked)
+                    }
                     aria-label={`Include in ${wl.name}`}
                   />
                 </div>

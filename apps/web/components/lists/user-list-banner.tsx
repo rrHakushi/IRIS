@@ -78,14 +78,14 @@ export function UserListBanner({
 
       {/* 2. User Info Section */}
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-4 pb-6 pt-1 md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-col gap-4 pt-1 pb-6 md:flex-row md:items-end md:justify-between">
           {/* Avatar and User Identification */}
           <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-end">
             {/* Floating Avatar with Frame */}
-            <div className="-mt-10 sm:-mt-12 relative z-20 shrink-0">
+            <div className="relative z-20 -mt-10 shrink-0 sm:-mt-12">
               <div className="relative flex items-center justify-center">
                 {/* Circular Avatar Container */}
-                <div className="relative size-20 sm:size-24 overflow-hidden rounded-full border-4 border-background bg-card shadow-2xl ring-1 ring-border/40">
+                <div className="relative size-20 overflow-hidden rounded-full border-4 border-background bg-card shadow-2xl ring-1 ring-border/40 sm:size-24">
                   {profile?.avatarUrl ? (
                     <Image
                       src={profile.avatarUrl}
@@ -97,7 +97,7 @@ export function UserListBanner({
                       className="object-cover"
                     />
                   ) : (
-                    <div className="flex size-full items-center justify-center bg-primary/15 font-heading text-2xl font-black text-primary uppercase sm:text-3xl select-none">
+                    <div className="flex size-full items-center justify-center bg-primary/15 font-heading text-2xl font-black text-primary uppercase select-none sm:text-3xl">
                       {initial}
                     </div>
                   )}
@@ -105,7 +105,7 @@ export function UserListBanner({
 
                 {/* Avatar Frame overlay */}
                 {hasValidFrame && (
-                  <div className="pointer-events-none absolute -inset-3 sm:-inset-4 z-30 size-26 sm:size-32 max-w-none select-none">
+                  <div className="pointer-events-none absolute -inset-3 z-30 size-26 max-w-none select-none sm:-inset-4 sm:size-32">
                     <Image
                       src={profile!.avatarFrame!}
                       alt="Avatar Frame"
@@ -122,7 +122,7 @@ export function UserListBanner({
             </div>
 
             {/* Name & Status */}
-            <div className="flex flex-col gap-1 pt-1 ms-2">
+            <div className="ms-2 flex flex-col gap-1 pt-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h1
                   style={nameStyle}
@@ -146,7 +146,7 @@ export function UserListBanner({
 
               {profile?.statusText && (
                 <div className="inline-flex w-fit max-w-xl items-center rounded-2xl border border-border/60 bg-muted/40 px-3.5 py-1 text-xs text-foreground/90 shadow-xs backdrop-blur-xs transition-colors hover:border-border/80 hover:bg-muted/60 sm:text-sm">
-                  <span className="leading-snug break-words font-medium">
+                  <span className="leading-snug font-medium break-words">
                     {profile.statusText}
                   </span>
                 </div>

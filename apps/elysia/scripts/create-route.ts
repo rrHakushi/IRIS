@@ -231,32 +231,45 @@ function generateRouteCode(
     rateLimitBlock = `  rateLimit: {\n    capacity: ${options.rateLimit},\n    duration: 60_000,\n  },\n\n`;
   }
 
-  // Method Handlers
-  const methodHandlers = options.methods.map((method) => {
-    const isBodyMethod = ["POST", "PUT", "PATCH", "DELETE", "ALL"].includes(method);
-    const ctxArgs = [];
-    if (params.length > 0) ctxArgs.push("params");
-    if (method === "GET") ctxArgs.push("query");
-    if (isBodyMethod) ctxArgs.push("body");
-    ctxArgs.push("session");
-    ctxArgs.push("prisma");
-    ctxArgs.push("cache");
+    // Method Handlers
+    const methodHandlers = options.methods.map((method) => {
+      const isBodyMethod = ["POST", "PUT", "PATCH", "DELETE", "ALL"].includes(method);
+      const ctxArgs = [];
+      if (params.length > 0) ctxArgs.push("params");
+      if (method === "GET") ctxArgs.push("query");
+      if (isBodyMethod) ctxArgs.push("body");
+      ctxArgs.push("session");
+      ctxArgs.push("prisma");
+      ctxArgs.push("cache");
+      ctxArgs.push("notifications");
 
-    let authGuard = "";
-    if (options.admin) {
-      authGuard = `    if (!session.hasPermission(IRISFlags.ADMINISTRATOR)) {\n      return new Response(JSON.stringify({ error: "Forbidden: Admin required" }), {\n        status: 403,\n        headers: { "content-type": "application/json" },\n      });\n    }\n\n`;
-    } else if (options.auth) {
-      authGuard = `    if (!session.isAuthenticated) {\n      return new Response(JSON.stringify({ error: "Unauthorized" }), {\n        status: 401,\n        headers: { "content-type": "application/json" },\n      });\n    }\n\n`;
-    }
+      let authConfig = "";
+      if (options.admin) {
+        authConfig = `    requirePermissions: [IRISFlags.ADMINISTRATOR],\n`;
+      } else if (options.auth) {
+        authConfig = `    requireAuth: true,\n`;
+      }
 
-    return `  async ${method}({ ${ctxArgs.join(", ")} }) {
-${authGuard}    return {
+      if (authConfig) {
+        return `  ${method}: {
+${authConfig}    async handler({ ${ctxArgs.join(", ")} }) {
+      return {
+        success: true,
+        message: "${method} ${options.path} handled successfully",
+        timestamp: new Date().toISOString(),
+      };
+    },
+  },`;
+      }
+
+      return `  async ${method}({ ${ctxArgs.join(", ")} }) {
+    return {
       success: true,
       message: "${method} ${options.path} handled successfully",
       timestamp: new Date().toISOString(),
     };
   },`;
-  });
+    });
 
   return `import { defineRoute, t } from "${relativeToRouter}";
 ${importPermissions}

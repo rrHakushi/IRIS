@@ -225,7 +225,10 @@ async function syncTvSeasonsAndEpisodes({
         data: { progress: totalEpisodes },
       })
     }
-  } else if (payload.watchedEpisodes && Array.isArray(payload.watchedEpisodes)) {
+  } else if (
+    payload.watchedEpisodes &&
+    Array.isArray(payload.watchedEpisodes)
+  ) {
     // 3. Otherwise, synchronize watchedEpisodes array in batch
     const existingWatched = await prisma.tvWatchedEpisode.findMany({
       where: { tvListId },
@@ -286,7 +289,8 @@ export default defineRoute({
         }),
       },
       detail: {
-        summary: "Check and get TV list entry with seasons and watched episodes",
+        summary:
+          "Check and get TV list entry with seasons and watched episodes",
         tags: ["Lists - TV"],
       },
     },
@@ -455,7 +459,9 @@ export default defineRoute({
       ...(payload.progress !== undefined ? { progress: payload.progress } : {}),
       ...(payload.score !== undefined ? { score: payload.score } : {}),
       ...(payload.notes !== undefined ? { notes: payload.notes } : {}),
-      ...(payload.rewatched !== undefined ? { rewatched: payload.rewatched } : {}),
+      ...(payload.rewatched !== undefined
+        ? { rewatched: payload.rewatched }
+        : {}),
       ...(payload.private !== undefined ? { private: payload.private } : {}),
       ...(startedAt !== undefined ? { startedAt } : {}),
       ...(completedAt !== undefined ? { completedAt } : {}),
@@ -590,7 +596,9 @@ export default defineRoute({
       ...(payload.progress !== undefined ? { progress: payload.progress } : {}),
       ...(payload.score !== undefined ? { score: payload.score } : {}),
       ...(payload.notes !== undefined ? { notes: payload.notes } : {}),
-      ...(payload.rewatched !== undefined ? { rewatched: payload.rewatched } : {}),
+      ...(payload.rewatched !== undefined
+        ? { rewatched: payload.rewatched }
+        : {}),
       ...(payload.private !== undefined ? { private: payload.private } : {}),
       ...(startedAt !== undefined ? { startedAt } : {}),
       ...(completedAt !== undefined ? { completedAt } : {}),

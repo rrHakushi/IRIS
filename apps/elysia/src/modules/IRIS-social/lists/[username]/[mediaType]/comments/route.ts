@@ -1,6 +1,5 @@
 import { defineRoute, t } from "@/router"
-import { NotFound, Unauthorized, BadRequest, TooManyRequests } from "@/utils/errors"
-import { sendNotification } from "@/services/notification.service"
+import { NotFound, BadRequest, TooManyRequests } from "@/utils/errors"
 import { getProfileCustomization } from "@IRIS/shared"
 
 function formatAuthorProfile(user: {
@@ -57,16 +56,14 @@ export default defineRoute({
       throw new NotFound(`User '${username}' not found.`)
     }
 
-    const commentDelegate = (prisma as any).listComment
-
-    const total = await commentDelegate.count({
+    const total = await prisma.listComment.count({
       where: {
         listOwnerId: listOwner.id,
         mediaType,
       },
     })
 
-    const rawComments = await commentDelegate.findMany({
+    const rawComments = await prisma.listComment.findMany({
       where: {
         listOwnerId: listOwner.id,
         mediaType,
@@ -96,15 +93,21 @@ export default defineRoute({
       },
     })
 
-    const comments = rawComments.map((item: any) => ({
+    const comments = rawComments.map((item) => ({
       id: item.id,
       listOwnerId: item.listOwnerId,
       mediaType: item.mediaType,
       authorId: item.authorId,
       content: item.content,
       isSpoiler: item.isSpoiler,
-      createdAt: item.createdAt instanceof Date ? item.createdAt.toISOString() : item.createdAt,
-      updatedAt: item.updatedAt instanceof Date ? item.updatedAt.toISOString() : item.updatedAt,
+      createdAt:
+        item.createdAt instanceof Date
+          ? item.createdAt.toISOString()
+          : item.createdAt,
+      updatedAt:
+        item.updatedAt instanceof Date
+          ? item.updatedAt.toISOString()
+          : item.updatedAt,
       author: formatAuthorProfile(item.author),
       reply: item.reply
         ? {
@@ -142,17 +145,22 @@ export default defineRoute({
   },
 
   POST: {
+    requireAuth: true,
     schema: {
       body: t.Object({
         content: t.String({ minLength: 1, maxLength: 5000 }),
         isSpoiler: t.Optional(t.Boolean({ default: false })),
       }),
     },
-    async handler({ params, body, session, prisma, cache, set }) {
-      if (!session.isAuthenticated || !session.user) {
-        throw new Unauthorized("Authentication required to post comments.")
-      }
-
+    async handler({
+      params,
+      body,
+      session,
+      prisma,
+      cache,
+      set,
+      notifications,
+    }) {
       const trimmedContent = body.content.trim()
       if (!trimmedContent) {
         throw new BadRequest("Comment content cannot be empty.")
@@ -163,17 +171,15 @@ export default defineRoute({
 
       // Rate limit: 1 comment per list type per minute
       const rateLimitKey = `ratelimit:comment:${session.user.id}:${mediaType}`
+      const rawData = await cache.get(rateLimitKey)
       const rateLimitData =
-        await cache.get<{ expiresAt: number } | number | string>(rateLimitKey)
-      if (rateLimitData) {
-        const expiresAt =
-          typeof rateLimitData === "object" &&
-          rateLimitData !== null &&
-          "expiresAt" in rateLimitData
-            ? (rateLimitData as any).expiresAt
-            : typeof rateLimitData === "number"
-              ? rateLimitData
-              : Date.now() + 60_000
+        typeof rawData === "object" &&
+        rawData !== null &&
+        "expiresAt" in rawData
+          ? (rawData as { expiresAt: number })
+          : null
+      if (rateLimitData?.expiresAt) {
+        const expiresAt = rateLimitData.expiresAt
         const remainingSeconds = Math.max(
           1,
           Math.ceil((expiresAt - Date.now()) / 1000)
@@ -202,9 +208,7 @@ export default defineRoute({
         throw new NotFound(`User '${username}' not found.`)
       }
 
-      const commentDelegate = (prisma as any).listComment
-
-      const rawComment = await commentDelegate.create({
+      const rawComment = await prisma.listComment.create({
         data: {
           listOwnerId: listOwner.id,
           mediaType,
@@ -232,14 +236,17 @@ export default defineRoute({
       // Notify list owner if someone else commented on their list
       if (listOwner.id !== session.user.id) {
         try {
-          const authorName = authorProfile.displayName || session.user.username || "A user"
+          const authorName =
+            authorProfile.displayName || session.user.username || "A user"
           const formattedMediaType =
             params.mediaType.charAt(0).toUpperCase() +
             params.mediaType.slice(1).toLowerCase()
           const snippet =
-            trimmedContent.length > 80 ? `${trimmedContent.slice(0, 80)}...` : trimmedContent
+            trimmedContent.length > 80
+              ? `${trimmedContent.slice(0, 80)}...`
+              : trimmedContent
 
-          await sendNotification({
+          await notifications.send({
             userId: listOwner.id,
             app: "IRIS List",
             category: "Social",
@@ -274,7 +281,10 @@ export default defineRoute({
             },
           })
         } catch (notifErr) {
-          console.warn(`[comments:POST] Failed to send notification to list owner:`, notifErr)
+          console.warn(
+            `[comments:POST] Failed to send notification to list owner:`,
+            notifErr
+          )
         }
       }
 

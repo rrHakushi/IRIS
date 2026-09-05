@@ -1,10 +1,12 @@
 import fs from "node:fs"
 import path from "node:path"
-import util from "node:util"
 import { pathToFileURL } from "node:url"
 import { Elysia } from "elysia"
+import { prisma } from "@IRIS/database"
 import { createRateLimiter } from "../plugins/rate-limiter"
+import { notificationService } from "../plugins/notification"
 import { c, colorMethod } from "../utils/colors"
+import { ensureDevAccount } from "../utils/dev-account"
 import {
   requestLogStorage,
   createRequestLogger,
@@ -18,236 +20,87 @@ import {
   type RouteInstance,
   type RouteDefinition,
   type MethodConfig,
-  type HttpMethodKey,
 } from "./types"
-
-const HTTP_METHODS: readonly HttpMethodKey[] = [
-  "GET",
-  "POST",
-  "PUT",
-  "DELETE",
-  "PATCH",
-  "OPTIONS",
-  "HEAD",
-  "ALL",
-] as const
-
-/**
- * Converts a relative module file path into an Elysia URL route.
- *
- * Rules:
- * - Module directory (first segment) is ignored: `IRIS-account/auth/login/route.ts` -> `/auth/login`
- * - Route groups in parentheses are ignored: `IRIS-account/(public)/auth/login/route.ts` -> `/auth/login`
- * - Dynamic parameters `[id]` -> `:id`
- * - Catch-all parameters `[...slug]` -> `*`
- * - Module root `IRIS-account/route.ts` -> `/`
- */
-export function parseRoutePath(relativeFilePath: string): string {
-  const normalized = relativeFilePath.replace(/\\/g, "/").replace(/^\/+/, "")
-  const parts = normalized.split("/")
-
-  // Need at least module_folder/route.ts
-  if (parts.length < 2) return "/"
-
-  // First segment is module name (ignored), last segment is file name (ignored)
-  const segments = parts.slice(1, -1)
-
-  // Filter out route groups in parentheses like (auth), (admin)
-  const routeSegments = segments.filter((seg) => !/^\(.*\)$/.test(seg))
-
-  if (routeSegments.length === 0) {
-    return "/"
-  }
-
-  const mapped = routeSegments.map((seg) => {
-    if (seg.startsWith("[...") && seg.endsWith("]")) {
-      return "*"
-    }
-    if (seg.startsWith("[") && seg.endsWith("]")) {
-      return `:${seg.slice(1, -1)}`
-    }
-    return seg
-  })
-
-  return "/" + mapped.join("/")
-}
-
-/**
- * Recursively scans a directory for route.ts or route.js files.
- */
-function findRouteFiles(dir: string, baseDir: string = dir): string[] {
-  if (!fs.existsSync(dir)) {
-    return []
-  }
-
-  const results: string[] = []
-  let entries: fs.Dirent[] = []
-  try {
-    entries = fs.readdirSync(dir, { withFileTypes: true })
-  } catch {
-    return []
-  }
-
-  for (const entry of entries) {
-    const name = entry.name
-
-    // Ignore hidden files and directories
-    if (name.startsWith(".")) continue
-
-    // Ignore temporary, backup, or editor duplicate copies
-    if (
-      /\s+copy(\s+\d+)?$/i.test(name) ||
-      /\s*\(\d+\)$/.test(name) ||
-      /\s*\(copy\)/i.test(name)
-    ) {
-      continue
-    }
-    if (/\.bak$|\.tmp$|\.old$|~$/i.test(name)) continue
-
-    const fullPath = path.join(dir, name)
-    if (entry.isDirectory()) {
-      results.push(...findRouteFiles(fullPath, baseDir))
-    } else if (entry.isFile() && (name === "route.ts" || name === "route.js")) {
-      results.push(fullPath)
-    }
-  }
-
-  return results
-}
-
-/**
- * Deeply merges and validates cache keys across routes, throwing on duplicate collisions.
- */
-function deepMergeAndValidateCacheKeys(
-  target: Record<string, any>,
-  source: Record<string, any>,
-  prefix: string,
-  relativePath: string,
-  cacheKeyRegistry: Map<string, string>
-) {
-  for (const [key, val] of Object.entries(source)) {
-    const fullPath = prefix ? `${prefix}.${key}` : key
-    if (typeof val === "function") {
-      const existing = cacheKeyRegistry.get(fullPath)
-      if (existing) {
-        throw new Error(
-          `[Router] Duplicate cache key "${fullPath}" found in "${relativePath}". It was already defined in "${existing}". Cache keys must be unique across all routes.`
-        )
-      }
-      cacheKeyRegistry.set(fullPath, relativePath)
-      target[key] = val
-    } else if (val && typeof val === "object") {
-      if (!target[key] || typeof target[key] !== "object") {
-        target[key] = {}
-      }
-      deepMergeAndValidateCacheKeys(
-        target[key],
-        val,
-        fullPath,
-        relativePath,
-        cacheKeyRegistry
-      )
-    }
-  }
-}
-
-import { prisma } from "@IRIS/database"
+import { parseRoutePath, HTTP_METHODS } from "./helpers/path"
+import { findRouteFiles } from "./helpers/scanner"
+import {
+  assertRouteAuthorization,
+  type AuthGuardConfig,
+} from "./helpers/auth-guard"
 import { generateRoutes } from "./generator"
 import { generateInsomniumConfig } from "./insomnium"
-import { ensureDevAccount } from "../utils/dev-account"
 
 /**
  * Configuration options for the file-based route loader.
  */
-export interface RouterOptions {
-  /** Directory containing file-based routes (defaults to src/modules). */
+export interface RouterModuleOptions {
+  /** Directory containing file-based routes (defaults to `src/modules`). */
   modulesDir?: string
-  /** Suppress console output when loading routes. */
+  /** Suppress console banner and route mapping output. */
   silent?: boolean
 }
 
 /**
- * Creates an Elysia plugin that loads all module routes using file-based routing.
+ * Discovers, loads, validates, and mounts all file-based routes onto an Elysia router instance.
  *
- * Capabilities:
- * - Scans `src/modules` recursively for all `route.ts` and `route.js` files
- * - Parses URL paths supporting route groups `(group)`, params `[id]`, and wildcards `[...slug]`
- * - Preserves TypeBox request and response schemas for OpenAPI validation
- * - Mounts route-level or method-level Token Bucket rate limiters
- * - Integrates request-scoped console grouping (`ctx.log`) via AsyncLocalStorage
- * - Automatically generates `routes.generated.ts` for Eden Treaty client type safety
- * - Generates and synchronizes `insomnium.json` for API testing in development mode
- * - Watches filesystem for route additions/removals with debounced auto-regeneration
+ * This function:
+ * 1. Automatically synchronizes Eden Treaty and Insomnium manifests in development mode.
+ * 2. Traverses `src/modules/` recursively for `route.ts` or `route.js` files.
+ * 3. Mounts route handlers with validation schemas, rate limiters, and authorization guards (`requireAuth`, `requirePermissions`).
+ * 4. Aggregates and validates unique cache key definitions across all routes.
+ * 5. Decorates each route execution context with database, cache, session, and `notifications`.
  *
- * @param options - Router loader options
+ * @param options - Router module configuration options
  * @returns Configured Elysia router instance with all dynamic routes mounted
+ *
+ * @example
+ * ```typescript
+ * const router = await createRouterModule()
+ * app.use(router)
+ * ```
  */
-export async function createRouterModule(options: RouterOptions = {}) {
+export async function createRouterModule(
+  options: RouterModuleOptions = {}
+): Promise<Elysia> {
+  const router = new Elysia({ name: "iris-router" })
   const modulesDir =
     options.modulesDir || path.resolve(import.meta.dirname, "../modules")
-  const router = new Elysia({ name: "iris-file-router" })
+  const isDev = process.env.NODE_ENV === "development"
+  const isWatch =
+    process.argv.includes("--watch") || process.env.BUN_ENV === "watch"
 
-  const isDev = process.env.NODE_ENV !== "production"
-
-  // When in development mode, ensure dev account and API key exist
+  // 1. Ensure dev administrator account and API key exist in development
   let devApiKey: string | undefined
   if (isDev) {
     try {
       const devAccount = await ensureDevAccount(prisma)
-      if (devAccount) {
-        devApiKey = devAccount.apiKey
-      }
-    } catch (err) {
-      if (!options.silent) {
-        console.warn("[Dev Account] Warning:", err)
-      }
+      devApiKey = devAccount?.apiKey
+    } catch {
+      // Ignored if database is not reachable at boot
     }
   }
 
-  // Automatically generate Eden-compatible typed routes manifest
-  try {
-    await generateRoutes({ modulesDir, silent: options.silent })
-  } catch (err) {
-    if (!options.silent) {
-      console.warn("[Router] Route auto-generation warning:", err)
-    }
-  }
-
-  // When in development mode, generate Insomnium config
+  // 2. Synchronize route manifests on startup in development
   if (isDev) {
     try {
-      await generateInsomniumConfig({
-        modulesDir,
-        devApiKey,
-        silent: options.silent,
-      })
+      await generateRoutes({ modulesDir, silent: true })
+      await generateInsomniumConfig({ modulesDir, devApiKey, silent: true })
     } catch (err) {
-      if (!options.silent) {
-        console.warn("[Insomnium] Auto-generation warning:", err)
-      }
+      console.error("[Router] Initial manifest sync failed:", err)
     }
   }
 
-  // In development, watch for file changes to automatically regenerate Eden routes and Insomnium config
-  if (
-    process.env.NODE_ENV !== "production" &&
-    process.env.NODE_ENV !== "test"
-  ) {
-    let debounceTimer: ReturnType<typeof setTimeout> | null = null
+  // 3. Fallback filesystem watcher inside process if running directly with bun --watch
+  if (isDev && isWatch && fs.existsSync(modulesDir)) {
     try {
+      let debounceTimer: ReturnType<typeof setTimeout> | null = null
       const watcher = fs.watch(
         modulesDir,
         { recursive: true },
-        (event, filename) => {
-          // Ignore hidden files, git, or system files
-          if (
-            filename &&
-            (filename.startsWith(".") ||
-              filename.includes(".git") ||
-              filename.includes("node_modules"))
-          ) {
-            return
-          }
+        (_eventType, filename) => {
+          if (!filename) return
+          const ext = path.extname(filename)
+          if (![".ts", ".js"].includes(ext)) return
 
           if (debounceTimer) clearTimeout(debounceTimer)
           debounceTimer = setTimeout(async () => {
@@ -274,7 +127,7 @@ export async function createRouterModule(options: RouterOptions = {}) {
         ;(watcher as { unref: () => void }).unref()
       }
     } catch {
-      // Ignored if recursive fs.watch is not supported
+      // Ignored if recursive fs.watch is not supported by environment
     }
   }
 
@@ -285,6 +138,7 @@ export async function createRouterModule(options: RouterOptions = {}) {
     return router
   }
 
+  // 4. Discover and mount all routes
   const routeFiles = findRouteFiles(modulesDir)
   let loadedCount = 0
   const routesByModule = new Map<
@@ -331,6 +185,7 @@ export async function createRouterModule(options: RouterOptions = {}) {
         continue
       }
 
+      // Merge cache keys
       const routeCacheKeys =
         staticClass?.cacheKeys ||
         instance.cacheKeys ||
@@ -352,6 +207,7 @@ export async function createRouterModule(options: RouterOptions = {}) {
         )
       }
 
+      // Route-level rate limits and authorization options
       const globalRateLimit =
         staticClass?.rateLimit ||
         instance.rateLimit ||
@@ -376,6 +232,19 @@ export async function createRouterModule(options: RouterOptions = {}) {
         (RouteExport as RouteDefinition)?.schemas ||
         {}
 
+      const routeAuthConfig: AuthGuardConfig = {
+        requireAuth:
+          staticClass?.requireAuth ??
+          instance.requireAuth ??
+          (RouteExport as RouteDefinition)?.requireAuth ??
+          importedModule.requireAuth,
+        requirePermissions:
+          staticClass?.requirePermissions ??
+          instance.requirePermissions ??
+          (RouteExport as RouteDefinition)?.requirePermissions ??
+          importedModule.requirePermissions,
+      }
+
       for (const method of HTTP_METHODS) {
         const methodItem =
           (staticClass as Record<string, unknown>)?.[method] ??
@@ -394,8 +263,11 @@ export async function createRouterModule(options: RouterOptions = {}) {
         if (["GET", "HEAD", "OPTIONS"].includes(method) && methodSchema.body) {
           delete methodSchema.body
         }
+
         let customMethodRateLimit =
           perMethodRateLimits[method as keyof typeof perMethodRateLimits]
+
+        let methodAuthConfig: AuthGuardConfig = {}
 
         if (typeof methodItem === "function") {
           handler = methodItem as (ctx: Context) => unknown
@@ -407,6 +279,7 @@ export async function createRouterModule(options: RouterOptions = {}) {
           handler = (methodItem as MethodConfig).handler as (
             ctx: Context
           ) => unknown
+
           if ((methodItem as MethodConfig).schema) {
             methodSchema = {
               ...methodSchema,
@@ -415,6 +288,11 @@ export async function createRouterModule(options: RouterOptions = {}) {
           }
           if ((methodItem as MethodConfig).rateLimit) {
             customMethodRateLimit = (methodItem as MethodConfig).rateLimit
+          }
+
+          methodAuthConfig = {
+            requireAuth: (methodItem as MethodConfig).requireAuth,
+            requirePermissions: (methodItem as MethodConfig).requirePermissions,
           }
         }
 
@@ -444,15 +322,23 @@ export async function createRouterModule(options: RouterOptions = {}) {
 
             const requestLogger = createRequestLogger(store)
             ctx.logger = requestLogger
-            ctx.cacheKeys = globalCacheKeyStorage as any
+            ctx.cacheKeys =
+              globalCacheKeyStorage as unknown as Context["cacheKeys"]
+            ctx.notifications = notificationService
 
             return await requestLogStorage.run(store, async () => {
+              // 1. Enforce route/method authorization guards (method priority over route)
+              assertRouteAuthorization(ctx, methodAuthConfig, routeAuthConfig)
+
+              // 2. Enforce rate limiting
               if (rateLimiter) {
                 const rateLimitError = rateLimiter(ctx)
                 if (rateLimitError) {
                   return rateLimitError
                 }
               }
+
+              // 3. Execute route handler
               const res = await handler.call(instance, ctx)
               if (res instanceof Response) {
                 ctx.set.status = res.status
@@ -511,9 +397,48 @@ export async function createRouterModule(options: RouterOptions = {}) {
   return router
 }
 
+/**
+ * Deeply merges and validates cache keys across routes, throwing on duplicate collisions.
+ */
+function deepMergeAndValidateCacheKeys(
+  target: Record<string, any>,
+  source: Record<string, any>,
+  prefix: string,
+  relativePath: string,
+  cacheKeyRegistry: Map<string, string>
+): void {
+  for (const [key, val] of Object.entries(source)) {
+    const fullPath = prefix ? `${prefix}.${key}` : key
+    if (typeof val === "function") {
+      const existing = cacheKeyRegistry.get(fullPath)
+      if (existing) {
+        throw new Error(
+          `[Router] Duplicate cache key "${fullPath}" found in "${relativePath}". It was already defined in "${existing}". Cache keys must be unique across all routes.`
+        )
+      }
+      cacheKeyRegistry.set(fullPath, relativePath)
+      target[key] = val
+    } else if (val && typeof val === "object") {
+      if (!target[key] || typeof target[key] !== "object") {
+        target[key] = {}
+      }
+      deepMergeAndValidateCacheKeys(
+        target[key],
+        val,
+        fullPath,
+        relativePath,
+        cacheKeyRegistry
+      )
+    }
+  }
+}
+
 export * from "./types"
 export * from "./generator"
 export * from "./insomnium"
+export * from "./helpers/path"
+export * from "./helpers/scanner"
+export * from "./helpers/auth-guard"
 export {
   createRateLimiter,
   rateLimiter,

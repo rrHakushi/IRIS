@@ -114,28 +114,40 @@ export function MediaListModal({
   const isMobile = useIsMobile()
   const { data: session } = useSession()
   const { user } = useUser()
-  const username = user?.username || (session?.user as { username?: string })?.username
+  const username =
+    user?.username || (session?.user as { username?: string })?.username
 
   const category = toCanonicalCategory(media.category)
   const backendMediaType = toBackendMediaType(category)
-  const availableStatuses = useMemo(() => getAvailableStatuses(category), [category])
-  const inProgressStatus = useMemo(() => getInProgressStatus(category), [category])
-  const maxUnits = media.episodeCount && media.episodeCount > 0 ? media.episodeCount : null
+  const availableStatuses = useMemo(
+    () => getAvailableStatuses(category),
+    [category]
+  )
+  const inProgressStatus = useMemo(
+    () => getInProgressStatus(category),
+    [category]
+  )
+  const maxUnits =
+    media.episodeCount && media.episodeCount > 0 ? media.episodeCount : null
   const maxChapters =
     media.chapterCount && media.chapterCount > 0
       ? media.chapterCount
-      : (category === "manga" || category === "book") && media.episodeCount && media.episodeCount > 0
+      : (category === "manga" || category === "book") &&
+          media.episodeCount &&
+          media.episodeCount > 0
         ? media.episodeCount
         : null
   const maxVolumes =
-    media.volumeCount && media.volumeCount > 0
-      ? media.volumeCount
-      : null
+    media.volumeCount && media.volumeCount > 0 ? media.volumeCount : null
   const repeatLabel = useMemo(() => getRepeatLabel(category), [category])
 
-  const [fetchedTvSeasons, setFetchedTvSeasons] = useState<TvSeasonItem[] | null>(null)
+  const [fetchedTvSeasons, setFetchedTvSeasons] = useState<
+    TvSeasonItem[] | null
+  >(null)
   const [fetchedTvEpisodes, setFetchedTvEpisodes] = useState<any[] | null>(null)
-  const [fetchedAnimeEpisodes, setFetchedAnimeEpisodes] = useState<any[] | null>(null)
+  const [fetchedAnimeEpisodes, setFetchedAnimeEpisodes] = useState<
+    any[] | null
+  >(null)
 
   useEffect(() => {
     if (isOpen && category === "tv" && media.id) {
@@ -221,7 +233,9 @@ export function MediaListModal({
         episodes:
           s.episodes && s.episodes.length > 0
             ? s.episodes
-            : allTvEpisodes.filter((ep: any) => ep.seasonNumber === s.seasonNumber),
+            : allTvEpisodes.filter(
+                (ep: any) => ep.seasonNumber === s.seasonNumber
+              ),
       }))
     }
     if (media.episodeCount && media.episodeCount > 0) {
@@ -234,7 +248,14 @@ export function MediaListModal({
       ]
     }
     return []
-  }, [category, media.seasons, fetchedTvSeasons, fetchedTvEpisodes, media.episodes, media.episodeCount])
+  }, [
+    category,
+    media.seasons,
+    fetchedTvSeasons,
+    fetchedTvEpisodes,
+    media.episodes,
+    media.episodeCount,
+  ])
 
   const effectiveAnimeEpisodes = useMemo(() => {
     if (category !== "anime") return []
@@ -254,7 +275,8 @@ export function MediaListModal({
   )
   const [progress, setProgress] = useState<number>(initialEntry?.progress ?? 0)
   const [chaptersProgress, setChaptersProgress] = useState<number>(() => {
-    const raw = (initialEntry as any)?.chaptersProgress ?? initialEntry?.progress ?? 0
+    const raw =
+      (initialEntry as any)?.chaptersProgress ?? initialEntry?.progress ?? 0
     return maxChapters && maxChapters > 0 ? Math.min(maxChapters, raw) : raw
   })
   const [volumesProgress, setVolumesProgress] = useState<number>(() => {
@@ -263,7 +285,9 @@ export function MediaListModal({
   })
   const [score, setScore] = useState<number | null>(initialEntry?.score ?? null)
   const [notes, setNotes] = useState<string>(initialEntry?.notes || "")
-  const [isPrivate, setIsPrivate] = useState<boolean>(initialEntry?.private ?? false)
+  const [isPrivate, setIsPrivate] = useState<boolean>(
+    initialEntry?.private ?? false
+  )
   const [startedAt, setStartedAt] = useState<string>(
     formatDateToYmd(initialEntry?.startedAt)
   )
@@ -279,14 +303,15 @@ export function MediaListModal({
   const [rewatchHistory, setRewatchHistory] = useState<RewatchHistoryItem[]>(
     ((initialEntry as any)?.rereadHistory ??
       (initialEntry as any)?.replayHistory ??
-      initialEntry?.rewatchHistory) || []
+      initialEntry?.rewatchHistory) ||
+      []
   )
   const [watchedEpisodes, setWatchedEpisodes] = useState<WatchedEpisodeItem[]>(
     initialEntry?.watchedEpisodes || []
   )
-  const [connections, setConnections] = useState<Record<string, ConnectionItem>>(
-    (initialEntry?.connections as Record<string, ConnectionItem>) || {}
-  )
+  const [connections, setConnections] = useState<
+    Record<string, ConnectionItem>
+  >((initialEntry?.connections as Record<string, ConnectionItem>) || {})
 
   // Total and watched episode counts for the Episodes tab header
   const totalEpisodesCount = useMemo(() => {
@@ -296,23 +321,37 @@ export function MediaListModal({
         0
       )
       if (tvTotal > 0) return tvTotal
-      if (typeof media.episodeCount === "number" && media.episodeCount > 0) return media.episodeCount
+      if (typeof media.episodeCount === "number" && media.episodeCount > 0)
+        return media.episodeCount
       return null
     }
     if (category === "anime") {
-      if (effectiveAnimeEpisodes.length > 0) return effectiveAnimeEpisodes.length
-      if (typeof media.episodeCount === "number" && media.episodeCount > 0) return media.episodeCount
+      if (effectiveAnimeEpisodes.length > 0)
+        return effectiveAnimeEpisodes.length
+      if (typeof media.episodeCount === "number" && media.episodeCount > 0)
+        return media.episodeCount
       return null
     }
     return maxUnits
-  }, [category, effectiveTvSeasons, effectiveAnimeEpisodes.length, media.episodeCount, maxUnits])
+  }, [
+    category,
+    effectiveTvSeasons,
+    effectiveAnimeEpisodes.length,
+    media.episodeCount,
+    maxUnits,
+  ])
 
   const currentWatchedEpisodesCount = useMemo(() => {
-    if (status === "COMPLETED" && totalEpisodesCount && totalEpisodesCount > 0) {
+    if (
+      status === "COMPLETED" &&
+      totalEpisodesCount &&
+      totalEpisodesCount > 0
+    ) {
       return totalEpisodesCount
     }
     if (category === "tv") {
-      if (watchedEpisodes && watchedEpisodes.length > 0) return watchedEpisodes.length
+      if (watchedEpisodes && watchedEpisodes.length > 0)
+        return watchedEpisodes.length
       return progress || 0
     }
     return progress || 0
@@ -405,11 +444,11 @@ export function MediaListModal({
             (initialEntry.rewatchHistory as RewatchHistoryItem[]) ||
             []
         )
-        let initialWatched: WatchedEpisodeItem[] = initialEntry.watchedEpisodes || []
+        let initialWatched: WatchedEpisodeItem[] =
+          initialEntry.watchedEpisodes || []
         if (category === "tv" && initialWatched.length === 0) {
           const sProg = (initialEntry as any).seasons as
-            | Array<{ seasonNumber: number; progress?: number }>
-            | undefined
+            Array<{ seasonNumber: number; progress?: number }> | undefined
           if (Array.isArray(sProg) && sProg.length > 0) {
             const list: WatchedEpisodeItem[] = []
             for (const sp of sProg) {
@@ -457,8 +496,7 @@ export function MediaListModal({
       initialEntry
     ) {
       const sProg = (initialEntry as any).seasons as
-        | Array<{ seasonNumber: number; progress?: number }>
-        | undefined
+        Array<{ seasonNumber: number; progress?: number }> | undefined
       if (Array.isArray(sProg) && sProg.length > 0) {
         const list: WatchedEpisodeItem[] = []
         for (const sp of sProg) {
@@ -516,7 +554,11 @@ export function MediaListModal({
   useEffect(() => {
     if (isOpen && username && media.id) {
       let isMounted = true
-      fetchFavoriteStatusDeduplicated(username, backendMediaType, Number(media.id))
+      fetchFavoriteStatusDeduplicated(
+        username,
+        backendMediaType,
+        Number(media.id)
+      )
         .then((fav) => {
           if (isMounted) setIsFavorited(fav)
         })
@@ -641,7 +683,12 @@ export function MediaListModal({
       }
       const newStatus = Boolean(data.isFavorited)
       setIsFavorited(newStatus)
-      updateFavoriteCache(username, backendMediaType, Number(media.id), newStatus)
+      updateFavoriteCache(
+        username,
+        backendMediaType,
+        Number(media.id),
+        newStatus
+      )
       window.dispatchEvent(
         new CustomEvent("iris:favorite-updated", {
           detail: {
@@ -651,9 +698,7 @@ export function MediaListModal({
           },
         })
       )
-      toast.success(
-        !prev ? `Added to favorites` : `Removed from favorites`
-      )
+      toast.success(!prev ? `Added to favorites` : `Removed from favorites`)
     } catch {
       setIsFavorited(prev)
       toast.error("Failed to update favorite")
@@ -664,7 +709,8 @@ export function MediaListModal({
 
   // Validation: Score is required if status is COMPLETED
   const isCompletedWithoutScore =
-    status === "COMPLETED" && (score === null || score === undefined || score <= 0)
+    status === "COMPLETED" &&
+    (score === null || score === undefined || score <= 0)
 
   const isSaveDisabled = isSaving || isCompletedWithoutScore
 
@@ -800,7 +846,9 @@ export function MediaListModal({
       }
 
       if (res.error) {
-        throw new Error(res.error.value?.message || "Failed to update list entry")
+        throw new Error(
+          res.error.value?.message || "Failed to update list entry"
+        )
       }
 
       const updatedEntry: MediaListEntryData = {
@@ -827,7 +875,9 @@ export function MediaListModal({
 
       onEntryUpdated?.(updatedEntry)
       toast.success(
-        initialEntry ? "List entry updated" : `Added ${media.titlePrimary} to list`
+        initialEntry
+          ? "List entry updated"
+          : `Added ${media.titlePrimary} to list`
       )
       onOpenChange(false)
     } catch (err: any) {
@@ -847,25 +897,46 @@ export function MediaListModal({
 
       switch (category) {
         case "anime":
-          res = await elysia.user({ username }).lists.anime({ id: media.id }).delete()
+          res = await elysia
+            .user({ username })
+            .lists.anime({ id: media.id })
+            .delete()
           break
         case "manga":
-          res = await elysia.user({ username }).lists.manga({ id: media.id }).delete()
+          res = await elysia
+            .user({ username })
+            .lists.manga({ id: media.id })
+            .delete()
           break
         case "movie":
-          res = await elysia.user({ username }).lists.movie({ id: media.id }).delete()
+          res = await elysia
+            .user({ username })
+            .lists.movie({ id: media.id })
+            .delete()
           break
         case "tv":
-          res = await elysia.user({ username }).lists.tv({ id: media.id }).delete()
+          res = await elysia
+            .user({ username })
+            .lists.tv({ id: media.id })
+            .delete()
           break
         case "game":
-          res = await elysia.user({ username }).lists.game({ id: media.id }).delete()
+          res = await elysia
+            .user({ username })
+            .lists.game({ id: media.id })
+            .delete()
           break
         case "book":
-          res = await elysia.user({ username }).lists.book({ id: media.id }).delete()
+          res = await elysia
+            .user({ username })
+            .lists.book({ id: media.id })
+            .delete()
           break
         case "music":
-          res = await elysia.user({ username }).lists.music({ id: media.id }).delete()
+          res = await elysia
+            .user({ username })
+            .lists.music({ id: media.id })
+            .delete()
           break
       }
 
@@ -883,8 +954,9 @@ export function MediaListModal({
     }
   }
 
-  const currentStatusConfig =
-    availableStatuses.find((st) => st.value === status) ??
+  const currentStatusConfig = availableStatuses.find(
+    (st) => st.value === status
+  ) ??
     availableStatuses[0] ?? {
       value: status,
       label: status,
@@ -915,7 +987,8 @@ export function MediaListModal({
   const StatusIcon = getStatusIcon(status)
 
   // Converted 0-10 score representation
-  const scoreIn10 = score !== null ? (score / 10).toFixed(1).replace(/\.0$/, "") : ""
+  const scoreIn10 =
+    score !== null ? (score / 10).toFixed(1).replace(/\.0$/, "") : ""
 
   const bannerImg = media.bannerImage || media.coverImage
 
@@ -923,7 +996,7 @@ export function MediaListModal({
   const content = (
     <div className="relative flex flex-col overflow-hidden bg-background text-foreground">
       {/* Top Banner Header with Backdrop Image and Overlay Vignette */}
-      <div className="relative h-44 sm:h-52 w-full overflow-hidden bg-muted">
+      <div className="relative h-44 w-full overflow-hidden bg-muted sm:h-52">
         {bannerImg ? (
           <img
             src={bannerImg}
@@ -949,9 +1022,9 @@ export function MediaListModal({
 
         {/* Header Content: Poster + Title + Category Badge + Right Buttons */}
         <div className="absolute inset-x-0 bottom-0 z-20 flex items-end justify-between p-4 sm:p-5">
-          <div className="flex items-end gap-3 sm:gap-4 min-w-0">
+          <div className="flex min-w-0 items-end gap-3 sm:gap-4">
             {/* Poster thumbnail */}
-            <div className="relative aspect-[2/3] w-20 sm:w-24 shrink-0 overflow-hidden rounded-2xl border-2 border-border bg-muted shadow-2xl">
+            <div className="relative aspect-[2/3] w-20 shrink-0 overflow-hidden rounded-2xl border-2 border-border bg-muted shadow-2xl sm:w-24">
               {media.coverImage ? (
                 <img
                   src={media.coverImage}
@@ -959,18 +1032,18 @@ export function MediaListModal({
                   className="size-full object-cover"
                 />
               ) : (
-                <div className="flex size-full items-center justify-center bg-muted text-muted-foreground text-xs">
+                <div className="flex size-full items-center justify-center bg-muted text-xs text-muted-foreground">
                   No Image
                 </div>
               )}
             </div>
 
             {/* Title */}
-            <div className="flex flex-col min-w-0 pb-1">
+            <div className="flex min-w-0 flex-col pb-1">
               <AriaHeading
                 slot="title"
                 id="media-list-modal-title"
-                className="font-heading text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-tight line-clamp-2"
+                className="line-clamp-2 font-heading text-xl leading-tight font-bold tracking-tight text-foreground sm:text-2xl"
               >
                 {media.titlePrimary}
               </AriaHeading>
@@ -988,7 +1061,9 @@ export function MediaListModal({
                   ? "border-primary/60 bg-primary/20 text-primary"
                   : "border-border/40 bg-background/60 text-foreground/80 hover:border-border hover:text-foreground"
               }`}
-              aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+              aria-label={
+                isFavorited ? "Remove from favorites" : "Add to favorites"
+              }
             >
               <IconHeart
                 className={`size-4.5 ${isFavorited ? "fill-primary text-primary" : ""}`}
@@ -1000,7 +1075,7 @@ export function MediaListModal({
               size="sm"
               disabled={isSaveDisabled}
               onClick={handleSave}
-              className="h-9 cursor-pointer rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 font-semibold px-5 text-xs shadow-lg transition-all"
+              className="h-9 cursor-pointer rounded-2xl bg-primary px-5 text-xs font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90"
             >
               {isSaving ? (
                 <IconLoader2 className="size-3.5 animate-spin" />
@@ -1015,7 +1090,7 @@ export function MediaListModal({
       {/* Main Body Area */}
       <div className="flex flex-col gap-4 p-4 sm:p-5">
         {/* Navigation Tabs Pill Bar */}
-        <div className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/60 p-1 backdrop-blur-md w-fit">
+        <div className="inline-flex w-fit items-center gap-1 rounded-full border border-border bg-muted/60 p-1 backdrop-blur-md">
           <button
             type="button"
             onClick={() => setActiveTab("general")}
@@ -1037,7 +1112,8 @@ export function MediaListModal({
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Episodes ({currentWatchedEpisodesCount}/{totalEpisodesCount ?? "?"})
+              Episodes ({currentWatchedEpisodesCount}/
+              {totalEpisodesCount ?? "?"})
             </button>
           )}
           <button
@@ -1068,12 +1144,12 @@ export function MediaListModal({
         {activeTab === "general" && (
           <div className="space-y-3.5">
             {/* Card 1: Status, Score, Rewatches, Start Date, Finish Date */}
-            <div className="rounded-2xl border border-border bg-card p-4 space-y-4 shadow-xs">
+            <div className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-xs">
               {/* Row 1: STATUS, SCORE (0-10), TOTAL REWATCHES */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {/* 1. STATUS */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase flex items-center gap-1.5">
+                  <label className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                     <IconActivity className="size-3" />
                     STATUS
                   </label>
@@ -1085,13 +1161,15 @@ export function MediaListModal({
                     >
                       <div className="flex items-center gap-1.5 truncate">
                         <StatusIcon className="size-3.5 text-primary" />
-                        <span className="truncate">{currentStatusConfig.label}</span>
+                        <span className="truncate">
+                          {currentStatusConfig.label}
+                        </span>
                       </div>
                       <IconChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
                     </button>
 
                     {statusDropdownOpen && (
-                      <div className="absolute left-0 top-full z-50 mt-1 w-full rounded-xl border border-border bg-popover p-1 shadow-xl text-popover-foreground">
+                      <div className="absolute top-full left-0 z-50 mt-1 w-full rounded-xl border border-border bg-popover p-1 text-popover-foreground shadow-xl">
                         {availableStatuses.map((st) => {
                           const IconComp = getStatusIcon(st.value)
                           return (
@@ -1104,7 +1182,7 @@ export function MediaListModal({
                               }}
                               className={`flex w-full cursor-pointer items-center justify-between rounded-lg px-2.5 py-1.5 text-start text-xs font-medium transition-colors ${
                                 status === st.value
-                                  ? "bg-primary/15 text-primary font-semibold"
+                                  ? "bg-primary/15 font-semibold text-primary"
                                   : "text-foreground hover:bg-muted/40"
                               }`}
                             >
@@ -1125,11 +1203,11 @@ export function MediaListModal({
 
                 {/* 2. SCORE (0 - 10) */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase flex items-center gap-1.5">
+                  <label className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                     <IconStar className="size-3 text-muted-foreground" />
                     SCORE (0 - 10)
                     {status === "COMPLETED" && (
-                      <span className="text-destructive font-bold">*</span>
+                      <span className="font-bold text-destructive">*</span>
                     )}
                   </label>
                   <div
@@ -1147,13 +1225,17 @@ export function MediaListModal({
                       placeholder="0"
                       value={scoreIn10}
                       onChange={(e) => {
-                        const val = e.target.value === "" ? null : Number(e.target.value)
+                        const val =
+                          e.target.value === "" ? null : Number(e.target.value)
                         if (val === null) setScore(null)
-                        else setScore(Math.min(100, Math.max(0, Math.round(val * 10))))
+                        else
+                          setScore(
+                            Math.min(100, Math.max(0, Math.round(val * 10)))
+                          )
                       }}
-                      className="w-full bg-transparent text-xs font-semibold text-foreground focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="w-full [appearance:textfield] bg-transparent text-xs font-semibold text-foreground focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     />
-                    <div className="flex flex-col gap-0.5 text-muted-foreground ps-2">
+                    <div className="flex flex-col gap-0.5 ps-2 text-muted-foreground">
                       <button
                         type="button"
                         onClick={() => {
@@ -1182,7 +1264,7 @@ export function MediaListModal({
 
                 {/* 3. REPEAT COUNT (REWATCHES / REREADS / REPLAYS) */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase flex items-center gap-1.5">
+                  <label className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                     <IconRotate2 className="size-3 text-muted-foreground" />
                     {repeatLabel.plural.toUpperCase()}
                   </label>
@@ -1194,9 +1276,9 @@ export function MediaListModal({
                       onChange={(e) =>
                         handleRewatchedChange(Number(e.target.value))
                       }
-                      className="w-full bg-transparent text-xs font-semibold text-foreground focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="w-full [appearance:textfield] bg-transparent text-xs font-semibold text-foreground focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     />
-                    <div className="flex flex-col gap-0.5 text-muted-foreground ps-2">
+                    <div className="flex flex-col gap-0.5 ps-2 text-muted-foreground">
                       <button
                         type="button"
                         onClick={() => handleRewatchedChange(rewatched + 1)}
@@ -1218,10 +1300,10 @@ export function MediaListModal({
 
               {/* Progress: Manga / Books (Chapters, Volumes) */}
               {(category === "manga" || category === "book") && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {/* CHAPTERS PROGRESS */}
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase flex items-center gap-1.5">
+                    <label className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                       <IconBook className="size-3 text-muted-foreground" />
                       CHAPTERS PROGRESS
                     </label>
@@ -1229,7 +1311,11 @@ export function MediaListModal({
                       <input
                         type="number"
                         min={0}
-                        max={maxChapters && maxChapters > 0 ? maxChapters : undefined}
+                        max={
+                          maxChapters && maxChapters > 0
+                            ? maxChapters
+                            : undefined
+                        }
                         value={chaptersProgress}
                         onChange={(e) => {
                           const val = Number(e.target.value)
@@ -1242,14 +1328,14 @@ export function MediaListModal({
                           )
                           setChaptersProgress(clamped)
                         }}
-                        className="w-full bg-transparent text-xs font-semibold text-foreground focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        className="w-full [appearance:textfield] bg-transparent text-xs font-semibold text-foreground focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                       />
                       {Boolean(maxChapters && maxChapters > 0) && (
-                        <span className="text-[11px] font-medium text-muted-foreground pe-1.5 shrink-0">
+                        <span className="shrink-0 pe-1.5 text-[11px] font-medium text-muted-foreground">
                           / {maxChapters}
                         </span>
                       )}
-                      <div className="flex flex-col gap-0.5 text-muted-foreground ps-2">
+                      <div className="flex flex-col gap-0.5 ps-2 text-muted-foreground">
                         <button
                           type="button"
                           onClick={() => {
@@ -1268,7 +1354,9 @@ export function MediaListModal({
                         <button
                           type="button"
                           onClick={() =>
-                            setChaptersProgress(Math.max(0, chaptersProgress - 1))
+                            setChaptersProgress(
+                              Math.max(0, chaptersProgress - 1)
+                            )
                           }
                           className="cursor-pointer hover:text-foreground"
                           aria-label="Decrement chapters"
@@ -1281,7 +1369,7 @@ export function MediaListModal({
 
                   {/* VOLUMES PROGRESS */}
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase flex items-center gap-1.5">
+                    <label className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                       <IconBook2 className="size-3 text-muted-foreground" />
                       VOLUMES PROGRESS
                     </label>
@@ -1289,7 +1377,9 @@ export function MediaListModal({
                       <input
                         type="number"
                         min={0}
-                        max={maxVolumes && maxVolumes > 0 ? maxVolumes : undefined}
+                        max={
+                          maxVolumes && maxVolumes > 0 ? maxVolumes : undefined
+                        }
                         value={volumesProgress}
                         onChange={(e) => {
                           const val = Number(e.target.value)
@@ -1302,14 +1392,14 @@ export function MediaListModal({
                           )
                           setVolumesProgress(clamped)
                         }}
-                        className="w-full bg-transparent text-xs font-semibold text-foreground focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        className="w-full [appearance:textfield] bg-transparent text-xs font-semibold text-foreground focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                       />
                       {Boolean(maxVolumes && maxVolumes > 0) && (
-                        <span className="text-[11px] font-medium text-muted-foreground pe-1.5 shrink-0">
+                        <span className="shrink-0 pe-1.5 text-[11px] font-medium text-muted-foreground">
                           / {maxVolumes}
                         </span>
                       )}
-                      <div className="flex flex-col gap-0.5 text-muted-foreground ps-2">
+                      <div className="flex flex-col gap-0.5 ps-2 text-muted-foreground">
                         <button
                           type="button"
                           onClick={() => {
@@ -1343,9 +1433,9 @@ export function MediaListModal({
 
               {/* Progress: Games (Playtime in Hours) */}
               {category === "game" && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase flex items-center gap-1.5">
+                    <label className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                       <IconClock className="size-3 text-muted-foreground" />
                       PLAYTIME (HOURS)
                     </label>
@@ -1358,12 +1448,12 @@ export function MediaListModal({
                         onChange={(e) =>
                           setProgress(Math.max(0, Number(e.target.value)))
                         }
-                        className="w-full bg-transparent text-xs font-semibold text-foreground focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        className="w-full [appearance:textfield] bg-transparent text-xs font-semibold text-foreground focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                       />
-                      <span className="text-[11px] font-medium text-muted-foreground pe-1.5 shrink-0">
+                      <span className="shrink-0 pe-1.5 text-[11px] font-medium text-muted-foreground">
                         hrs
                       </span>
-                      <div className="flex flex-col gap-0.5 text-muted-foreground ps-2">
+                      <div className="flex flex-col gap-0.5 ps-2 text-muted-foreground">
                         <button
                           type="button"
                           onClick={() => setProgress(progress + 1)}
@@ -1387,10 +1477,10 @@ export function MediaListModal({
               )}
 
               {/* Row 2: START DATE, FINISH DATE */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {/* START DATE */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase flex items-center gap-1.5">
+                  <label className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                     <IconCalendar className="size-3 text-muted-foreground" />
                     START DATE
                   </label>
@@ -1404,7 +1494,7 @@ export function MediaListModal({
 
                 {/* FINISH DATE */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase flex items-center gap-1.5">
+                  <label className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                     <IconCalendar className="size-3 text-muted-foreground" />
                     FINISH DATE
                   </label>
@@ -1421,9 +1511,9 @@ export function MediaListModal({
 
             {/* Card: REPEAT DATES (scrollable, only show 1 at once) */}
             {rewatched > 0 && (
-              <div className="rounded-2xl border border-border bg-card p-4 space-y-3 shadow-xs">
+              <div className="space-y-3 rounded-2xl border border-border bg-card p-4 shadow-xs">
                 <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase flex items-center gap-1.5">
+                  <label className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                     <IconRotate2 className="size-3 text-muted-foreground" />
                     {repeatLabel.plural.toUpperCase()} DATES ({rewatched})
                   </label>
@@ -1433,19 +1523,19 @@ export function MediaListModal({
                         type="button"
                         disabled={activeRewatchIdx === 0}
                         onClick={() => scrollToRewatch(activeRewatchIdx - 1)}
-                        className="flex size-6 cursor-pointer items-center justify-center rounded-lg border border-border bg-muted/40 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="flex size-6 cursor-pointer items-center justify-center rounded-lg border border-border bg-muted/40 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
                         aria-label={`Previous ${repeatLabel.singular.toLowerCase()}`}
                       >
                         <IconChevronLeft className="size-3.5" />
                       </button>
-                      <span className="text-[11px] font-mono text-muted-foreground px-1">
+                      <span className="px-1 font-mono text-[11px] text-muted-foreground">
                         {activeRewatchIdx + 1} / {rewatched}
                       </span>
                       <button
                         type="button"
                         disabled={activeRewatchIdx === rewatched - 1}
                         onClick={() => scrollToRewatch(activeRewatchIdx + 1)}
-                        className="flex size-6 cursor-pointer items-center justify-center rounded-lg border border-border bg-muted/40 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="flex size-6 cursor-pointer items-center justify-center rounded-lg border border-border bg-muted/40 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
                         aria-label={`Next ${repeatLabel.singular.toLowerCase()}`}
                       >
                         <IconChevronRight className="size-3.5" />
@@ -1461,12 +1551,16 @@ export function MediaListModal({
                     const width = el.clientWidth
                     if (width > 0) {
                       const idx = Math.round(el.scrollLeft / width)
-                      if (idx !== activeRewatchIdx && idx >= 0 && idx < rewatched) {
+                      if (
+                        idx !== activeRewatchIdx &&
+                        idx >= 0 &&
+                        idx < rewatched
+                      ) {
                         setActiveRewatchIdx(idx)
                       }
                     }
                   }}
-                  className="flex w-full snap-x snap-mandatory overflow-x-auto no-scrollbar scroll-smooth"
+                  className="no-scrollbar flex w-full snap-x snap-mandatory overflow-x-auto scroll-smooth"
                 >
                   {Array.from({ length: rewatched }, (_, idx) => {
                     const item = rewatchHistory[idx] || {}
@@ -1482,15 +1576,15 @@ export function MediaListModal({
                           <span className="text-[11px] font-semibold text-foreground">
                             {repeatLabel.singular} #{idx + 1}
                           </span>
-                          <span className="text-[10px] text-muted-foreground font-mono">
+                          <span className="font-mono text-[10px] text-muted-foreground">
                             {idx + 1} of {rewatched}
                           </span>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                           {/* Repeat Start Date */}
                           <div className="space-y-1">
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                            <span className="text-[10px] tracking-wider text-muted-foreground uppercase">
                               Start Date
                             </span>
                             <DatePicker
@@ -1512,7 +1606,7 @@ export function MediaListModal({
 
                           {/* Repeat Finish Date */}
                           <div className="space-y-1">
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                            <span className="text-[10px] tracking-wider text-muted-foreground uppercase">
                               Finish Date
                             </span>
                             <DatePicker
@@ -1541,8 +1635,8 @@ export function MediaListModal({
             )}
 
             {/* Card 2: NOTES */}
-            <div className="rounded-2xl border border-border bg-card p-4 space-y-2">
-              <label className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase flex items-center gap-1.5">
+            <div className="space-y-2 rounded-2xl border border-border bg-card p-4">
+              <label className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                 <IconFileText className="size-3 text-muted-foreground" />
                 NOTES
               </label>
@@ -1556,8 +1650,8 @@ export function MediaListModal({
             </div>
 
             {/* Bottom Row: Error Alongside Delete Button */}
-            <div className="flex items-center justify-between gap-3 pt-1 min-h-[32px]">
-              <div className="flex items-center gap-1.5 text-xs text-destructive font-medium">
+            <div className="flex min-h-[32px] items-center justify-between gap-3 pt-1">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-destructive">
                 {isCompletedWithoutScore && (
                   <>
                     <IconAlertCircle className="size-4 shrink-0 text-destructive" />
@@ -1571,7 +1665,7 @@ export function MediaListModal({
                   type="button"
                   disabled={isDeleting}
                   onClick={handleDelete}
-                  className="cursor-pointer rounded-xl border border-border bg-secondary text-secondary-foreground px-4 py-1.5 text-xs font-medium hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
+                  className="cursor-pointer rounded-xl border border-border bg-secondary px-4 py-1.5 text-xs font-medium text-secondary-foreground transition-colors hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
                 >
                   {isDeleting ? "Deleting..." : "Delete"}
                 </button>
@@ -1652,9 +1746,7 @@ export function MediaListModal({
         isDismissable
         className="fixed inset-0 z-50 bg-black/40 transition-opacity duration-150 data-entering:opacity-0 data-exiting:opacity-0 supports-backdrop-filter:backdrop-blur-sm"
       >
-        <AriaModal
-          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92vh] flex-col rounded-t-3xl border-t border-border bg-background p-0 text-foreground overflow-y-auto no-scrollbar outline-none transition duration-200 ease-in-out data-entering:translate-y-[2.5rem] data-exiting:translate-y-[2.5rem]"
-        >
+        <AriaModal className="fixed inset-x-0 bottom-0 z-50 no-scrollbar flex max-h-[92vh] flex-col overflow-y-auto rounded-t-3xl border-t border-border bg-background p-0 text-foreground transition duration-200 ease-in-out outline-none data-entering:translate-y-[2.5rem] data-exiting:translate-y-[2.5rem]">
           <AriaDialog
             aria-label={`Edit ${media.titlePrimary} in list`}
             aria-labelledby="media-list-modal-title"
@@ -1675,9 +1767,7 @@ export function MediaListModal({
       isDismissable
       className="fixed inset-0 isolate z-50 bg-black/40 duration-100 data-entering:animate-in data-entering:fade-in-0 data-exiting:animate-out data-exiting:fade-out-0 supports-backdrop-filter:backdrop-blur-sm"
     >
-      <AriaModal
-        className="fixed start-1/2 top-1/2 z-50 grid w-full max-w-xl sm:max-w-2xl max-h-[90vh] -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-border bg-background p-0 shadow-2xl text-foreground overflow-y-auto no-scrollbar outline-none data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:fade-out-0 data-exiting:zoom-out-95 rtl:translate-x-1/2"
-      >
+      <AriaModal className="fixed start-1/2 top-1/2 z-50 no-scrollbar grid max-h-[90vh] w-full max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border border-border bg-background p-0 text-foreground shadow-2xl outline-none data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:fade-out-0 data-exiting:zoom-out-95 sm:max-w-2xl rtl:translate-x-1/2">
         <AriaDialog
           aria-label={`Edit ${media.titlePrimary} in list`}
           aria-labelledby="media-list-modal-title"

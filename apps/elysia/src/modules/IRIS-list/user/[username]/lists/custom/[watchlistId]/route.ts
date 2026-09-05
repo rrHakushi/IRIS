@@ -125,7 +125,8 @@ export default defineRoute({
 
     const hasMore = entries.length > limit
     const paged = hasMore ? entries.slice(0, limit) : entries
-    const nextCursor = hasMore && paged.length > 0 ? paged[paged.length - 1]?.id : null
+    const nextCursor =
+      hasMore && paged.length > 0 ? paged[paged.length - 1]?.id : null
 
     return {
       success: true,

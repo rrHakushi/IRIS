@@ -195,7 +195,9 @@ export default defineRoute({
     const upsertData: any = {
       ...(payload.status ? { status: payload.status as MusicListStatus } : {}),
       ...(payload.score !== undefined ? { score: payload.score } : {}),
-      ...(payload.playCount !== undefined ? { playCount: payload.playCount } : {}),
+      ...(payload.playCount !== undefined
+        ? { playCount: payload.playCount }
+        : {}),
       ...(payload.notes !== undefined ? { notes: payload.notes } : {}),
       ...(payload.private !== undefined ? { private: payload.private } : {}),
       ...(startedAt !== undefined ? { startedAt } : {}),
@@ -274,7 +276,9 @@ export default defineRoute({
     const upsertData: any = {
       ...(payload.status ? { status: payload.status as MusicListStatus } : {}),
       ...(payload.score !== undefined ? { score: payload.score } : {}),
-      ...(payload.playCount !== undefined ? { playCount: payload.playCount } : {}),
+      ...(payload.playCount !== undefined
+        ? { playCount: payload.playCount }
+        : {}),
       ...(payload.notes !== undefined ? { notes: payload.notes } : {}),
       ...(payload.private !== undefined ? { private: payload.private } : {}),
       ...(startedAt !== undefined ? { startedAt } : {}),

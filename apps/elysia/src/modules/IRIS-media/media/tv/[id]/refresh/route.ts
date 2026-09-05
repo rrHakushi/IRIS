@@ -43,45 +43,44 @@ export default defineRoute({
     },
   },
 
-  async POST({ params, body, session, prisma }) {
-    if (!session.hasPermission(IRISFlags.ADMINISTRATOR)) {
-      return new Forbidden("Forbidden: Admin required")
-    }
+  POST: {
+    requirePermissions: [IRISFlags.ADMINISTRATOR],
+    async handler({ params, body, prisma }) {
+      const tv = await prisma.tv.findUnique({ where: { id: params.id } })
+      if (!tv) {
+        throw new NotFound("TV show not found")
+      }
 
-    const tv = await prisma.tv.findUnique({ where: { id: params.id } })
-    if (!tv) {
-      return new NotFound("TV show not found")
-    }
+      if (!tv.tvDBId) {
+        throw new BadRequest("TV show is missing tvDBId")
+      }
 
-    if (!tv.tvDBId) {
-      return new BadRequest("TV show is missing tvDBId")
-    }
+      const queued = await queueTvFetch(tv.tvDBId, {
+        forceRefresh: body?.force,
+        maxDepth: body?.maxDepth,
+        priority: body?.priority,
+        maxRetries: body?.maxRetries,
+      })
 
-    const queued = await queueTvFetch(tv.tvDBId, {
-      forceRefresh: body?.force,
-      maxDepth: body?.maxDepth,
-      priority: body?.priority,
-      maxRetries: body?.maxRetries,
-    })
+      if (queued?.metadata?.skipped) {
+        throw new Conflict(
+          `${queued.metadata.reason || "TV show is already fresh in database"}`
+        )
+      }
 
-    if (queued?.metadata?.skipped) {
-      return new Conflict(
-        `${queued.metadata.reason || "TV show is already fresh in database"}`
-      )
-    }
+      if (queued.status === "PROCESSING" || queued.status === "PENDING") {
+        return {
+          success: true,
+          message: "TV show queued for refresh",
+          timestamp: new Date().toISOString(),
+        }
+      }
 
-    if (queued.status === "PROCESSING" || queued.status === "PENDING") {
       return {
-        success: true,
-        message: "TV show queued for refresh",
+        success: false,
+        message: "Failed to queue TV show for refresh",
         timestamp: new Date().toISOString(),
       }
-    }
-
-    return {
-      success: false,
-      message: "Failed to queue TV show for refresh",
-      timestamp: new Date().toISOString(),
-    }
+    },
   },
 })

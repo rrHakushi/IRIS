@@ -71,8 +71,12 @@ function sortListItems(
 
     switch (sortBy) {
       case "updatedAt": {
-        const timeA = new Date(a.entry.updatedAt || a.entry.createdAt || 0).getTime()
-        const timeB = new Date(b.entry.updatedAt || b.entry.createdAt || 0).getTime()
+        const timeA = new Date(
+          a.entry.updatedAt || a.entry.createdAt || 0
+        ).getTime()
+        const timeB = new Date(
+          b.entry.updatedAt || b.entry.createdAt || 0
+        ).getTime()
         diff = timeA - timeB
         break
       }
@@ -115,8 +119,12 @@ function sortListItems(
         return isAsc ? diff : -diff
       }
       default: {
-        const timeA = new Date(a.entry.updatedAt || a.entry.createdAt || 0).getTime()
-        const timeB = new Date(b.entry.updatedAt || b.entry.createdAt || 0).getTime()
+        const timeA = new Date(
+          a.entry.updatedAt || a.entry.createdAt || 0
+        ).getTime()
+        const timeB = new Date(
+          b.entry.updatedAt || b.entry.createdAt || 0
+        ).getTime()
         diff = timeA - timeB
         break
       }
@@ -157,7 +165,9 @@ export function UserListView({
   const [searchQuery, setSearchQuery] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [selectedFormats, setSelectedFormats] = useState<string[]>([])
-  const [selectedMediaStatuses, setSelectedMediaStatuses] = useState<string[]>([])
+  const [selectedMediaStatuses, setSelectedMediaStatuses] = useState<string[]>(
+    []
+  )
   const [selectedGenres, setSelectedGenres] = useState<string[]>([])
   const [selectedYears, setSelectedYears] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<SortByOption>("updatedAt")
@@ -169,7 +179,11 @@ export function UserListView({
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search)
       const tabParam = params.get("tab")
-      if (tabParam === "list" || tabParam === "comments" || tabParam === "stats") {
+      if (
+        tabParam === "list" ||
+        tabParam === "comments" ||
+        tabParam === "stats"
+      ) {
         setActiveTab(tabParam)
       }
     }
@@ -180,7 +194,11 @@ export function UserListView({
     const onPopState = () => {
       const params = new URLSearchParams(window.location.search)
       const tabParam = params.get("tab")
-      if (tabParam === "list" || tabParam === "comments" || tabParam === "stats") {
+      if (
+        tabParam === "list" ||
+        tabParam === "comments" ||
+        tabParam === "stats"
+      ) {
         setActiveTab(tabParam)
       } else {
         setActiveTab("list")
@@ -264,8 +282,7 @@ export function UserListView({
       const resource = getListResource(username, mediaType)
 
       // Format query parameters
-      const statusParam =
-        activeStatus === "ALL" ? undefined : activeStatus
+      const statusParam = activeStatus === "ALL" ? undefined : activeStatus
       const formatsParam =
         selectedFormats.length > 0 ? selectedFormats.join(",") : undefined
       const mediaStatusParam =
@@ -327,15 +344,15 @@ export function UserListView({
   // 3. Infinite Scrolling (Fetch Next Page)
   // ---------------------------------------------------------------------------
   const handleLoadMore = useCallback(async () => {
-    if (!hasMore || !nextCursor || isFetchingMoreRef.current || isLoading) return
+    if (!hasMore || !nextCursor || isFetchingMoreRef.current || isLoading)
+      return
     isFetchingMoreRef.current = true
     setIsLoadingMore(true)
 
     try {
       const resource = getListResource(username, mediaType)
 
-      const statusParam =
-        activeStatus === "ALL" ? undefined : activeStatus
+      const statusParam = activeStatus === "ALL" ? undefined : activeStatus
       const formatsParam =
         selectedFormats.length > 0 ? selectedFormats.join(",") : undefined
       const mediaStatusParam =
@@ -403,9 +420,13 @@ export function UserListView({
           : mediaType === "anime"
             ? (item.media.episodes ?? (item.media as any).episodeCount ?? null)
             : mediaType === "tv"
-              ? (item.media.episodes ?? (item.media as any).episodeCount ?? null)
+              ? (item.media.episodes ??
+                (item.media as any).episodeCount ??
+                null)
               : mediaType === "book"
-                ? ((item.media as any).chapterCount ?? (item.media as any).pageCount ?? null)
+                ? ((item.media as any).chapterCount ??
+                  (item.media as any).pageCount ??
+                  null)
                 : null
 
       const nowIso = new Date().toISOString()
@@ -455,7 +476,9 @@ export function UserListView({
           }
         } else {
           const resource = getListResource(username, mediaType)
-          const { error } = await (resource as any)({ id: mediaId }).increment.post({
+          const { error } = await (resource as any)({
+            id: mediaId,
+          }).increment.post({
             count,
           })
           if (error) throw new Error("Failed to update progress")
@@ -572,7 +595,7 @@ export function UserListView({
       />
 
       {/* 2. Main Content Area */}
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+      <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         {/* Status Card Matching Reference Screenshot */}
         <ListStatusCard
           mediaType={mediaType}
@@ -626,7 +649,7 @@ export function UserListView({
 
         {/* Empty State for Stats */}
         {activeTab === "stats" && (
-          <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/60 p-8 text-center backdrop-blur-md shadow-xs">
+          <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/60 p-8 text-center shadow-xs backdrop-blur-md">
             <p className="text-sm font-medium text-muted-foreground">
               Statistics will appear here.
             </p>

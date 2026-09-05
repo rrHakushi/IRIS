@@ -43,45 +43,44 @@ export default defineRoute({
     },
   },
 
-  async POST({ params, body, session, prisma }) {
-    if (!session.hasPermission(IRISFlags.ADMINISTRATOR)) {
-      return new Forbidden("Forbidden: Admin required")
-    }
+  POST: {
+    requirePermissions: [IRISFlags.ADMINISTRATOR],
+    async handler({ params, body, prisma }) {
+      const music = await prisma.music.findUnique({ where: { id: params.id } })
+      if (!music) {
+        throw new NotFound("Music track not found")
+      }
 
-    const music = await prisma.music.findUnique({ where: { id: params.id } })
-    if (!music) {
-      return new NotFound("Music track not found")
-    }
+      if (!music.musicBrainzId) {
+        throw new BadRequest("Music track is missing musicBrainzId")
+      }
 
-    if (!music.musicBrainzId) {
-      return new BadRequest("Music track is missing musicBrainzId")
-    }
+      const queued = await queueMusicFetch(music.musicBrainzId, {
+        forceRefresh: body?.force,
+        maxDepth: body?.maxDepth,
+        priority: body?.priority,
+        maxRetries: body?.maxRetries,
+      })
 
-    const queued = await queueMusicFetch(music.musicBrainzId, {
-      forceRefresh: body?.force,
-      maxDepth: body?.maxDepth,
-      priority: body?.priority,
-      maxRetries: body?.maxRetries,
-    })
+      if (queued?.metadata?.skipped) {
+        throw new Conflict(
+          `${queued.metadata.reason || "Music track is already fresh in database"}`
+        )
+      }
 
-    if (queued?.metadata?.skipped) {
-      return new Conflict(
-        `${queued.metadata.reason || "Music track is already fresh in database"}`
-      )
-    }
+      if (queued.status === "PROCESSING" || queued.status === "PENDING") {
+        return {
+          success: true,
+          message: "Music track queued for refresh",
+          timestamp: new Date().toISOString(),
+        }
+      }
 
-    if (queued.status === "PROCESSING" || queued.status === "PENDING") {
       return {
-        success: true,
-        message: "Music track queued for refresh",
+        success: false,
+        message: "Failed to queue music track for refresh",
         timestamp: new Date().toISOString(),
       }
-    }
-
-    return {
-      success: false,
-      message: "Failed to queue music track for refresh",
-      timestamp: new Date().toISOString(),
-    }
+    },
   },
 })

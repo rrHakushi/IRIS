@@ -262,7 +262,9 @@ export default defineRoute({
         replayed: result.replayed,
         private: result.private,
         startedAt: result.startedAt ? result.startedAt.toISOString() : null,
-        completedAt: result.completedAt ? result.completedAt.toISOString() : null,
+        completedAt: result.completedAt
+          ? result.completedAt.toISOString()
+          : null,
         replayHistory: result.replayHistory,
         connections: result.connections,
         createdAt: result.createdAt.toISOString(),
@@ -358,7 +360,9 @@ export default defineRoute({
         replayed: result.replayed,
         private: result.private,
         startedAt: result.startedAt ? result.startedAt.toISOString() : null,
-        completedAt: result.completedAt ? result.completedAt.toISOString() : null,
+        completedAt: result.completedAt
+          ? result.completedAt.toISOString()
+          : null,
         replayHistory: result.replayHistory,
         connections: result.connections,
         createdAt: result.createdAt.toISOString(),

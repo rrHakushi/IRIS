@@ -1,7 +1,6 @@
 import {
   BadRequest,
   Conflict,
-  Forbidden,
   NotFound,
   ErrorResponseSchema,
 } from "@/utils/errors"
@@ -43,45 +42,44 @@ export default defineRoute({
     },
   },
 
-  async POST({ params, body, session, prisma }) {
-    if (!session.hasPermission(IRISFlags.ADMINISTRATOR)) {
-      return new Forbidden("Forbidden: Admin required")
-    }
+  POST: {
+    requirePermissions: [IRISFlags.ADMINISTRATOR],
+    async handler({ params, body, prisma }) {
+      const book = await prisma.book.findUnique({ where: { id: params.id } })
+      if (!book) {
+        throw new NotFound("Book not found")
+      }
 
-    const book = await prisma.book.findUnique({ where: { id: params.id } })
-    if (!book) {
-      return new NotFound("Book not found")
-    }
+      if (!book.googleBookId) {
+        throw new BadRequest("Book is missing googleBookId")
+      }
 
-    if (!book.googleBookId) {
-      return new BadRequest("Book is missing googleBookId")
-    }
+      const queued = await queueBookFetch(book.googleBookId, {
+        forceRefresh: body?.force,
+        maxDepth: body?.maxDepth,
+        priority: body?.priority,
+        maxRetries: body?.maxRetries,
+      })
 
-    const queued = await queueBookFetch(book.googleBookId, {
-      forceRefresh: body?.force,
-      maxDepth: body?.maxDepth,
-      priority: body?.priority,
-      maxRetries: body?.maxRetries,
-    })
+      if (queued?.metadata?.skipped) {
+        throw new Conflict(
+          `${queued.metadata.reason || "Book is already fresh in database"}`
+        )
+      }
 
-    if (queued?.metadata?.skipped) {
-      return new Conflict(
-        `${queued.metadata.reason || "Book is already fresh in database"}`
-      )
-    }
+      if (queued.status === "PROCESSING" || queued.status === "PENDING") {
+        return {
+          success: true,
+          message: "Book queued for refresh",
+          timestamp: new Date().toISOString(),
+        }
+      }
 
-    if (queued.status === "PROCESSING" || queued.status === "PENDING") {
       return {
-        success: true,
-        message: "Book queued for refresh",
+        success: false,
+        message: "Failed to queue book for refresh",
         timestamp: new Date().toISOString(),
       }
-    }
-
-    return {
-      success: false,
-      message: "Failed to queue book for refresh",
-      timestamp: new Date().toISOString(),
-    }
+    },
   },
 })

@@ -43,7 +43,9 @@ export function resolveMediaTitle(
   )
 }
 
-export function resolveCoverImage(media: ListEntryData["media"]): string | null {
+export function resolveCoverImage(
+  media: ListEntryData["media"]
+): string | null {
   return media.coverImage || media.posterImage || media.bannerImage || null
 }
 
@@ -82,7 +84,8 @@ export function computeTvProgress(item: ListEntryData): {
   // 1. From watchedEpisodes: find the highest season and episode watched
   if (watchedEpisodes.length > 0) {
     const sorted = [...watchedEpisodes].sort((a, b) => {
-      if (b.seasonNumber !== a.seasonNumber) return b.seasonNumber - a.seasonNumber
+      if (b.seasonNumber !== a.seasonNumber)
+        return b.seasonNumber - a.seasonNumber
       return b.episodeNumber - a.episodeNumber
     })
     const latest = sorted[0]
@@ -96,10 +99,15 @@ export function computeTvProgress(item: ListEntryData): {
 
   // 2. From entrySeasons: find latest season with progress > 0
   if (entrySeasons.length > 0) {
-    const sorted = [...entrySeasons].sort((a, b) => b.seasonNumber - a.seasonNumber)
-    const inProgressSeason = sorted.find((s) => (s.progress ?? 0) > 0) || sorted[0]
+    const sorted = [...entrySeasons].sort(
+      (a, b) => b.seasonNumber - a.seasonNumber
+    )
+    const inProgressSeason =
+      sorted.find((s) => (s.progress ?? 0) > 0) || sorted[0]
     if (inProgressSeason) {
-      const sObj = seasons.find((s) => s.seasonNumber === inProgressSeason.seasonNumber)
+      const sObj = seasons.find(
+        (s) => s.seasonNumber === inProgressSeason.seasonNumber
+      )
       return {
         seasonNumber: inProgressSeason.seasonNumber,
         episodeNumber: inProgressSeason.progress ?? 0,
@@ -112,7 +120,9 @@ export function computeTvProgress(item: ListEntryData): {
   const overallProg = entry.progress ?? 0
   if (seasons.length > 0) {
     let remaining = overallProg
-    const sortedSeasons = [...seasons].sort((a, b) => a.seasonNumber - b.seasonNumber)
+    const sortedSeasons = [...seasons].sort(
+      (a, b) => a.seasonNumber - b.seasonNumber
+    )
     for (let i = 0; i < sortedSeasons.length; i++) {
       const s = sortedSeasons[i]
       const count = s.episodeCount || 0
@@ -156,15 +166,17 @@ export function MediaListCard({
         : mediaType === "tv"
           ? (media.episodes ?? (media as any).episodeCount ?? undefined)
           : mediaType === "book"
-            ? ((media as any).chapterCount ?? (media as any).pageCount ?? undefined)
+            ? ((media as any).chapterCount ??
+              (media as any).pageCount ??
+              undefined)
             : undefined
 
   const maxVolumes = mediaType === "manga" ? media.volumes : undefined
 
   const currentProgress =
     mediaType === "manga"
-      ? entry.chaptersProgress ?? entry.progress ?? 0
-      : entry.progress ?? 0
+      ? (entry.chaptersProgress ?? entry.progress ?? 0)
+      : (entry.progress ?? 0)
 
   const volumesProgress = entry.volumesProgress ?? 0
 
@@ -306,7 +318,7 @@ export function MediaListCard({
               isLongPressRef.current = false
             }
           }}
-          className="absolute inset-0 size-full block"
+          className="absolute inset-0 block size-full"
         >
           {cover ? (
             <Image
@@ -330,7 +342,7 @@ export function MediaListCard({
           size="icon-xs"
           onPress={() => onOpenEditModal(item)}
           aria-label="Edit list entry"
-          className="absolute top-1.5 start-1.5 z-20 size-6 rounded-md bg-black/70 text-white/90 backdrop-blur-md opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto hover:bg-black/90 hover:text-white cursor-pointer"
+          className="pointer-events-none absolute start-1.5 top-1.5 z-20 size-6 cursor-pointer rounded-md bg-black/70 text-white/90 opacity-0 backdrop-blur-md group-hover:pointer-events-auto group-hover:opacity-100 hover:bg-black/90 hover:text-white focus-visible:pointer-events-auto focus-visible:opacity-100"
         >
           <IconMenu2 className="size-3.5" />
         </Button>
@@ -343,21 +355,21 @@ export function MediaListCard({
             onPress={handleIncrementClick}
             isDisabled={isAtMax}
             aria-label={`Increment ${progressUnit}`}
-            className="absolute bottom-1.5 end-1.5 z-20 size-6 rounded-md bg-black/70 text-white/90 backdrop-blur-md opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto hover:bg-primary hover:text-primary-foreground shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
+            className="pointer-events-none absolute end-1.5 bottom-1.5 z-20 size-6 cursor-pointer rounded-md bg-black/70 text-white/90 opacity-0 shadow-xs backdrop-blur-md group-hover:pointer-events-auto group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground focus-visible:pointer-events-auto focus-visible:opacity-100 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40"
           >
             <IconPlus className="size-3.5" />
           </Button>
         )}
 
         {/* Bottom-Left: Vertically Stacked Badges */}
-        <div className="absolute bottom-1.5 start-1.5 z-10 flex flex-col items-start gap-1 pointer-events-none select-none max-w-[calc(100%-2rem)]">
+        <div className="pointer-events-none absolute start-1.5 bottom-1.5 z-10 flex max-w-[calc(100%-2rem)] flex-col items-start gap-1 select-none">
           {/* 1. Connections Count Badge */}
           {connectedCount > 0 && (
             <div
-              className="flex items-center gap-1 rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-md shadow-xs"
+              className="flex items-center gap-1 rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md"
               title={`${connectedCount} connected service${connectedCount === 1 ? "" : "s"}`}
             >
-              <IconLink className="size-2.5 text-primary shrink-0" />
+              <IconLink className="size-2.5 shrink-0 text-primary" />
               <span>{connectedCount}</span>
             </div>
           )}
@@ -365,42 +377,50 @@ export function MediaListCard({
           {/* 2. Progress Badge: Season/Episode, Volume/Chapter, Ep, Hrs, or Pages */}
           {mediaType === "movie" ? (
             entry.rewatched && entry.rewatched > 0 ? (
-              <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-md shadow-xs">
+              <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
                 <span>Rewatched {entry.rewatched}x</span>
               </div>
             ) : (
-              <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-md shadow-xs">
+              <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
                 <span>Movie</span>
               </div>
             )
           ) : mediaType === "tv" && tvProg ? (
-            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-md shadow-xs">
-              <span className="font-semibold text-white">S{tvProg.seasonNumber}</span>
+            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
+              <span className="font-semibold text-white">
+                S{tvProg.seasonNumber}
+              </span>
               <span className="text-white/80">
                 /E{tvDisplayEpisode}
-                {tvProg.seasonEpisodeCount ? `/${tvProg.seasonEpisodeCount}` : ""}
+                {tvProg.seasonEpisodeCount
+                  ? `/${tvProg.seasonEpisodeCount}`
+                  : ""}
               </span>
             </div>
           ) : mediaType === "manga" ? (
-            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-md shadow-xs">
+            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
               {typeof maxVolumes === "number" || volumesProgress > 0 ? (
-                <span className="font-semibold text-white">V{volumesProgress}/</span>
+                <span className="font-semibold text-white">
+                  V{volumesProgress}/
+                </span>
               ) : null}
               <span>
                 CH{displayedProgress}
-                {typeof maxProgress === "number" && maxProgress > 0 ? `/${maxProgress}` : ""}
+                {typeof maxProgress === "number" && maxProgress > 0
+                  ? `/${maxProgress}`
+                  : ""}
               </span>
             </div>
           ) : mediaType === "game" ? (
-            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-md shadow-xs">
+            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
               <span>{displayedProgress} Hrs</span>
             </div>
           ) : mediaType === "book" ? (
-            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-md shadow-xs">
+            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
               <span>P {displayedProgress}</span>
             </div>
           ) : (
-            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-md shadow-xs">
+            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
               <span>
                 {progressUnit} {displayedProgress}
                 {typeof maxProgress === "number" && maxProgress > 0
@@ -412,8 +432,8 @@ export function MediaListCard({
 
           {/* 3. Score Badge (score/100) */}
           {typeof entry.score === "number" && entry.score > 0 && (
-            <div className="flex items-center gap-1 rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-bold text-amber-400 backdrop-blur-md shadow-xs">
-              <IconStar className="size-2.5 fill-amber-400 shrink-0" />
+            <div className="flex items-center gap-1 rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-bold text-amber-400 shadow-xs backdrop-blur-md">
+              <IconStar className="size-2.5 shrink-0 fill-amber-400" />
               <span>{entry.score}/100</span>
             </div>
           )}
@@ -432,7 +452,7 @@ export function MediaListCard({
               isLongPressRef.current = false
             }
           }}
-          className="line-clamp-2 text-[11px] sm:text-xs font-semibold text-foreground hover:text-primary leading-tight"
+          className="line-clamp-2 text-[11px] leading-tight font-semibold text-foreground hover:text-primary sm:text-xs"
         >
           {title}
         </Link>

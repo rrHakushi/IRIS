@@ -94,7 +94,9 @@ export function MediaListTvTab({
   watchedEpisodes = [],
   onWatchedEpisodesChange,
 }: MediaListTvTabProps) {
-  const [expandedSeasons, setExpandedSeasons] = useState<Record<number, boolean>>({
+  const [expandedSeasons, setExpandedSeasons] = useState<
+    Record<number, boolean>
+  >({
     1: true,
   })
 
@@ -159,7 +161,10 @@ export function MediaListTvTab({
     } else {
       nextWatchedList = watchedEpisodes.filter(
         (we) =>
-          !(we.seasonNumber === seasonNumber && we.episodeNumber === episodeNumber)
+          !(
+            we.seasonNumber === seasonNumber &&
+            we.episodeNumber === episodeNumber
+          )
       )
     }
 
@@ -167,10 +172,12 @@ export function MediaListTvTab({
     onProgressChange?.(nextWatchedList.length)
   }
 
-  const handleMarkTvSeasonAll = (season: TvSeasonItem, markWatched: boolean) => {
+  const handleMarkTvSeasonAll = (
+    season: TvSeasonItem,
+    markWatched: boolean
+  ) => {
     const seasonNum = season.seasonNumber ?? 1
-    const totalEpisodes =
-      season.episodes?.length || season.episodeCount || 0
+    const totalEpisodes = season.episodes?.length || season.episodeCount || 0
     if (totalEpisodes <= 0) return
 
     let nextWatchedList: WatchedEpisodeItem[]
@@ -179,11 +186,14 @@ export function MediaListTvTab({
         (we) => we.seasonNumber !== seasonNum
       )
       const now = new Date().toISOString()
-      const newSeasonWatched = Array.from({ length: totalEpisodes }, (_, i) => ({
-        seasonNumber: seasonNum,
-        episodeNumber: i + 1,
-        watchedAt: now,
-      }))
+      const newSeasonWatched = Array.from(
+        { length: totalEpisodes },
+        (_, i) => ({
+          seasonNumber: seasonNum,
+          episodeNumber: i + 1,
+          watchedAt: now,
+        })
+      )
       nextWatchedList = [...otherSeasonsWatched, ...newSeasonWatched]
     } else {
       nextWatchedList = watchedEpisodes.filter(
@@ -203,9 +213,12 @@ export function MediaListTvTab({
       return (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
           <IconDeviceTv className="size-8 opacity-40" />
-          <p className="mt-2 text-xs font-medium text-foreground">No Episode Data Available</p>
+          <p className="mt-2 text-xs font-medium text-foreground">
+            No Episode Data Available
+          </p>
           <p className="text-[11px] text-muted-foreground">
-            Use the general progress stepper on the first tab to track overall episodes.
+            Use the general progress stepper on the first tab to track overall
+            episodes.
           </p>
         </div>
       )
@@ -220,7 +233,7 @@ export function MediaListTvTab({
             <h3 className="text-sm font-semibold text-foreground">Episodes</h3>
             <Badge
               variant={isAllWatched ? "default" : "secondary"}
-              className="text-[10px] px-2 py-0.5 font-mono"
+              className="px-2 py-0.5 font-mono text-[10px]"
             >
               {progress} / {animeTotalEpisodes}
             </Badge>
@@ -230,19 +243,20 @@ export function MediaListTvTab({
             variant="outline"
             size="xs"
             onClick={() => handleAnimeMarkAll(!isAllWatched)}
-            className="h-7 cursor-pointer text-xs font-medium border-border px-3"
+            className="h-7 cursor-pointer border-border px-3 text-xs font-medium"
           >
             {isAllWatched ? "Reset All" : "Mark All Watched"}
           </Button>
         </div>
 
         {/* Vertical Scrollable Episodes List */}
-        <div className="max-h-[380px] overflow-y-auto space-y-1.5 pe-1 no-scrollbar rounded-2xl border border-border bg-muted/30 p-2.5">
+        <div className="no-scrollbar max-h-[380px] space-y-1.5 overflow-y-auto rounded-2xl border border-border bg-muted/30 p-2.5 pe-1">
           {Array.from({ length: animeTotalEpisodes }, (_, idx) => {
             const epNum = idx + 1
             const isWatched = epNum <= progress
             const epItem = episodes.find((e) => e.number === epNum)
-            const rawTitle = epItem?.titlePrimary || epItem?.titleSecondary || null
+            const rawTitle =
+              epItem?.titlePrimary || epItem?.titleSecondary || null
             const displayTitle = formatEpisodeTitle(rawTitle, epNum)
 
             return (
@@ -250,21 +264,21 @@ export function MediaListTvTab({
                 key={epNum}
                 type="button"
                 onClick={() => handleAnimeToggleEpisode(epNum)}
-                className={`group flex w-full items-center justify-between gap-3 rounded-xl border p-2.5 text-start transition-colors cursor-pointer ${
+                className={`group flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border p-2.5 text-start transition-colors ${
                   isWatched
                     ? "border-primary/40 bg-primary/10 text-primary"
-                    : "border-border bg-card hover:border-border/80 hover:bg-muted text-muted-foreground hover:text-foreground"
+                    : "border-border bg-card text-muted-foreground hover:border-border/80 hover:bg-muted hover:text-foreground"
                 }`}
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="shrink-0 font-mono text-xs font-bold text-muted-foreground w-12">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="w-12 shrink-0 font-mono text-xs font-bold text-muted-foreground">
                     Ep {epNum}
                   </span>
                   {displayTitle ? (
                     <span
                       className={`truncate text-xs font-medium ${
                         isWatched
-                          ? "text-foreground font-semibold"
+                          ? "font-semibold text-foreground"
                           : "text-foreground"
                       }`}
                     >
@@ -309,9 +323,12 @@ export function MediaListTvTab({
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
         <IconDeviceTv className="size-8 opacity-40" />
-        <p className="mt-2 text-xs font-medium text-foreground">No Season Data Available</p>
+        <p className="mt-2 text-xs font-medium text-foreground">
+          No Season Data Available
+        </p>
         <p className="text-[11px] text-muted-foreground">
-          Use the general progress stepper on the first tab to track overall episodes.
+          Use the general progress stepper on the first tab to track overall
+          episodes.
         </p>
       </div>
     )
@@ -320,7 +337,9 @@ export function MediaListTvTab({
   return (
     <div className="space-y-3">
       <div className="flex flex-col gap-1">
-        <h3 className="text-sm font-semibold text-foreground">Seasons & Episodes</h3>
+        <h3 className="text-sm font-semibold text-foreground">
+          Seasons & Episodes
+        </h3>
       </div>
 
       <div className="space-y-2">
@@ -360,13 +379,14 @@ export function MediaListTvTab({
                   <span className="truncate text-xs font-semibold text-foreground">
                     Season {seasonNum}
                     {season.title &&
-                    season.title.trim().toLowerCase() !== `season ${seasonNum}`.toLowerCase()
+                    season.title.trim().toLowerCase() !==
+                      `season ${seasonNum}`.toLowerCase()
                       ? ` • ${season.title}`
                       : ""}
                   </span>
                   <Badge
                     variant={isFullyWatched ? "default" : "secondary"}
-                    className="text-[10px] px-1.5 py-0 font-mono"
+                    className="px-1.5 py-0 font-mono text-[10px]"
                   >
                     {watchedInSeason} / {count || "?"}
                   </Badge>
@@ -379,8 +399,10 @@ export function MediaListTvTab({
                   <Button
                     variant="outline"
                     size="xs"
-                    onClick={() => handleMarkTvSeasonAll(season, !isFullyWatched)}
-                    className="h-6.5 text-[11px] font-medium border-border"
+                    onClick={() =>
+                      handleMarkTvSeasonAll(season, !isFullyWatched)
+                    }
+                    className="h-6.5 border-border text-[11px] font-medium"
                   >
                     {isFullyWatched ? "Reset" : "Mark Watched"}
                   </Button>
@@ -389,11 +411,13 @@ export function MediaListTvTab({
 
               {/* Episode Vertical Scrollable List */}
               {isExpanded && count > 0 && (
-                <div className="border-t border-border bg-muted/20 p-2.5 max-h-[300px] overflow-y-auto space-y-1.5 pe-1 no-scrollbar">
+                <div className="no-scrollbar max-h-[300px] space-y-1.5 overflow-y-auto border-t border-border bg-muted/20 p-2.5 pe-1">
                   {Array.from({ length: count }, (_, idx) => {
                     const epNum = idx + 1
                     const isWatched = isEpisodeWatched(seasonNum, epNum)
-                    const epItem = season.episodes?.find((e) => e.episodeNumber === epNum)
+                    const epItem = season.episodes?.find(
+                      (e) => e.episodeNumber === epNum
+                    )
                     const rawTitle = epItem?.title || epItem?.name || null
                     const displayTitle = formatEpisodeTitle(rawTitle, epNum)
 
@@ -402,21 +426,21 @@ export function MediaListTvTab({
                         key={epNum}
                         type="button"
                         onClick={() => handleToggleTvEpisode(seasonNum, epNum)}
-                        className={`group flex w-full items-center justify-between gap-3 rounded-xl border p-2 text-xs font-medium transition-colors cursor-pointer ${
+                        className={`group flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border p-2 text-xs font-medium transition-colors ${
                           isWatched
                             ? "border-primary/40 bg-primary/10 text-primary"
-                            : "border-border bg-card hover:border-border/80 hover:bg-muted text-muted-foreground hover:text-foreground"
+                            : "border-border bg-card text-muted-foreground hover:border-border/80 hover:bg-muted hover:text-foreground"
                         }`}
                       >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <span className="shrink-0 font-mono text-xs font-bold text-muted-foreground w-12">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className="w-12 shrink-0 font-mono text-xs font-bold text-muted-foreground">
                             Ep {epNum}
                           </span>
                           {displayTitle ? (
                             <span
                               className={`truncate text-xs font-medium ${
                                 isWatched
-                                  ? "text-foreground font-semibold"
+                                  ? "font-semibold text-foreground"
                                   : "text-foreground"
                               }`}
                             >
@@ -431,7 +455,9 @@ export function MediaListTvTab({
                               : "border-border bg-card group-hover:border-foreground/40"
                           }`}
                         >
-                          {isWatched && <IconCheck className="size-2.5 stroke-[3]" />}
+                          {isWatched && (
+                            <IconCheck className="size-2.5 stroke-[3]" />
+                          )}
                         </span>
                       </button>
                     )

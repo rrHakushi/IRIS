@@ -68,9 +68,15 @@ export default defineRoute({
       existing?.score !== undefined &&
       existing?.score > 0
 
-    let newStatus = existing?.status === "COMPLETED" ? "COMPLETED" : hasScore ? "COMPLETED" : "WATCHING"
+    let newStatus =
+      existing?.status === "COMPLETED"
+        ? "COMPLETED"
+        : hasScore
+          ? "COMPLETED"
+          : "WATCHING"
     let newRewatched = existing ? existing.rewatched : 0
-    let completedAt = newStatus === "COMPLETED" ? (existing?.completedAt ?? new Date()) : null
+    let completedAt =
+      newStatus === "COMPLETED" ? (existing?.completedAt ?? new Date()) : null
 
     if (existing && existing.status === "COMPLETED") {
       newRewatched += count
@@ -108,7 +114,9 @@ export default defineRoute({
         movieId: result.movieId,
         status: result.status,
         rewatched: result.rewatched,
-        completedAt: result.completedAt ? result.completedAt.toISOString() : null,
+        completedAt: result.completedAt
+          ? result.completedAt.toISOString()
+          : null,
       },
     }
   },

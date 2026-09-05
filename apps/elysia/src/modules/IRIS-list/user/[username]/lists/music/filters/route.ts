@@ -14,7 +14,8 @@ export default defineRoute({
       200: FilterFacetsResponseSchema,
     },
     detail: {
-      summary: "Get available filter options from user's music list with item counts",
+      summary:
+        "Get available filter options from user's music list with item counts",
       tags: ["Lists - Music"],
     },
   },

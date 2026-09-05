@@ -1,11 +1,5 @@
 export type CanonicalMediaCategory =
-  | "anime"
-  | "manga"
-  | "movie"
-  | "tv"
-  | "game"
-  | "book"
-  | "music"
+  "anime" | "manga" | "movie" | "tv" | "game" | "book" | "music"
 
 export type MediaListStatus =
   | "PLANNING"
@@ -24,7 +18,9 @@ export interface StatusConfig {
   badgeClass: string
 }
 
-export function toCanonicalCategory(rawCategory: string): CanonicalMediaCategory {
+export function toCanonicalCategory(
+  rawCategory: string
+): CanonicalMediaCategory {
   const normalized = rawCategory.toLowerCase()
   if (normalized === "movies") return "movie"
   if (normalized === "games") return "game"
@@ -62,7 +58,9 @@ export function toBackendMediaType(category: CanonicalMediaCategory): string {
   }
 }
 
-export function getInProgressStatus(category: CanonicalMediaCategory): MediaListStatus {
+export function getInProgressStatus(
+  category: CanonicalMediaCategory
+): MediaListStatus {
   switch (category) {
     case "anime":
     case "movie":
@@ -78,7 +76,9 @@ export function getInProgressStatus(category: CanonicalMediaCategory): MediaList
   }
 }
 
-export function getAvailableStatuses(category: CanonicalMediaCategory): StatusConfig[] {
+export function getAvailableStatuses(
+  category: CanonicalMediaCategory
+): StatusConfig[] {
   const inProgress = getInProgressStatus(category)
 
   const inProgressLabels: Record<MediaListStatus, string> = {
@@ -97,36 +97,31 @@ export function getAvailableStatuses(category: CanonicalMediaCategory): StatusCo
       value: "PLANNING",
       label: inProgressLabels.PLANNING,
       color: "secondary",
-      badgeClass:
-        "border-border bg-muted/60 text-muted-foreground",
+      badgeClass: "border-border bg-muted/60 text-muted-foreground",
     },
     {
       value: inProgress,
       label: inProgressLabels[inProgress],
       color: "primary",
-      badgeClass:
-        "border-primary/40 bg-primary/10 text-primary",
+      badgeClass: "border-primary/40 bg-primary/10 text-primary",
     },
     {
       value: "COMPLETED",
       label: inProgressLabels.COMPLETED,
       color: "primary",
-      badgeClass:
-        "border-primary/40 bg-primary/10 text-primary",
+      badgeClass: "border-primary/40 bg-primary/10 text-primary",
     },
     {
       value: "ON_HOLD",
       label: inProgressLabels.ON_HOLD,
       color: "secondary",
-      badgeClass:
-        "border-border bg-muted/60 text-muted-foreground",
+      badgeClass: "border-border bg-muted/60 text-muted-foreground",
     },
     {
       value: "DROPPED",
       label: inProgressLabels.DROPPED,
       color: "destructive",
-      badgeClass:
-        "border-destructive/40 bg-destructive/10 text-destructive",
+      badgeClass: "border-destructive/40 bg-destructive/10 text-destructive",
     },
   ]
 }

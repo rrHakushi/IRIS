@@ -202,9 +202,14 @@ export function printGroupedRequestLogs(logs: RequestLogItem[]): void {
 export async function executeWithRequestLogs(
   ctx: unknown,
   handler?: (ctx: unknown) => unknown,
-  rateLimiter?: ((ctx: any) => unknown) | null
+  rateLimiter?: ((ctx: any) => unknown) | null,
+  authGuard?: ((ctx: any) => void) | null
 ): Promise<unknown> {
   if (!handler) return undefined
+
+  if (authGuard) {
+    authGuard(ctx)
+  }
 
   if (rateLimiter) {
     const errorResponse = rateLimiter(ctx)

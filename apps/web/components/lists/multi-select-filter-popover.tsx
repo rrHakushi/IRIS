@@ -1,11 +1,7 @@
 "use client"
 
 import React, { useState, useMemo } from "react"
-import {
-  DialogTrigger,
-  Popover,
-  Dialog,
-} from "react-aria-components"
+import { DialogTrigger, Popover, Dialog } from "react-aria-components"
 import {
   IconChevronDown,
   IconCheck,
@@ -63,9 +59,7 @@ export function MultiSelectFilterPopover({
   }
 
   const hasSelection = selected.length > 0
-  const triggerText = hasSelection
-    ? `${label} (${selected.length})`
-    : allLabel
+  const triggerText = hasSelection ? `${label} (${selected.length})` : allLabel
 
   return (
     <DialogTrigger>
@@ -81,21 +75,23 @@ export function MultiSelectFilterPopover({
         )}
       >
         <span>{triggerText}</span>
-        <IconChevronDown className="size-3.5 opacity-60 shrink-0" />
+        <IconChevronDown className="size-3.5 shrink-0 opacity-60" />
       </Button>
 
       <Popover
         placement="bottom start"
         offset={6}
         className={cn(
-          "z-50 w-64 overflow-hidden rounded-2xl border border-border/70 bg-popover/95 p-0 text-popover-foreground shadow-2xl backdrop-blur-2xl outline-hidden duration-100",
+          "z-50 w-64 overflow-hidden rounded-2xl border border-border/70 bg-popover/95 p-0 text-popover-foreground shadow-2xl outline-hidden backdrop-blur-2xl duration-100",
           "data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:fade-out-0 data-exiting:zoom-out-95"
         )}
       >
         <Dialog className="flex flex-col outline-hidden">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border/50 px-3 py-2">
-            <span className="text-xs font-semibold text-foreground">{label}</span>
+            <span className="text-xs font-semibold text-foreground">
+              {label}
+            </span>
             {hasSelection && (
               <Button
                 variant="link"
@@ -111,7 +107,7 @@ export function MultiSelectFilterPopover({
           {/* Search bar inside popover */}
           {searchable && options.length > 7 && (
             <div className="relative border-b border-border/40 p-2">
-              <IconSearch className="pointer-events-none absolute start-4 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground z-10" />
+              <IconSearch className="pointer-events-none absolute start-4 top-1/2 z-10 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder={`Filter ${label.toLowerCase()}...`}
@@ -125,7 +121,7 @@ export function MultiSelectFilterPopover({
                   size="icon-xs"
                   onPress={clearAll}
                   aria-label="Clear filter search"
-                  className="absolute end-3.5 top-1/2 -translate-y-1/2 size-5 rounded-full text-muted-foreground hover:text-foreground z-10"
+                  className="absolute end-3.5 top-1/2 z-10 size-5 -translate-y-1/2 rounded-full text-muted-foreground hover:text-foreground"
                 >
                   <IconX className="size-3" />
                 </Button>
@@ -149,9 +145,9 @@ export function MultiSelectFilterPopover({
                     size="sm"
                     onPress={() => toggleOption(opt.value)}
                     className={cn(
-                      "flex h-auto w-full items-center justify-between rounded-xl px-2.5 py-1.5 text-xs text-start select-none",
+                      "flex h-auto w-full items-center justify-between rounded-xl px-2.5 py-1.5 text-start text-xs select-none",
                       isChecked
-                        ? "bg-primary/10 text-primary font-medium hover:bg-primary/15"
+                        ? "bg-primary/10 font-medium text-primary hover:bg-primary/15"
                         : "text-foreground hover:bg-muted/60"
                     )}
                   >
@@ -172,7 +168,7 @@ export function MultiSelectFilterPopover({
                     {opt.count !== undefined && (
                       <span
                         className={cn(
-                          "text-[11px] font-mono",
+                          "font-mono text-[11px]",
                           isChecked
                             ? "text-primary/80"
                             : "text-muted-foreground"

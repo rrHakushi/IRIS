@@ -83,7 +83,7 @@ export function ProfilePreviewCard({
       className={cn(
         "isolate flex w-[340px] max-w-full flex-col overflow-hidden transition-all duration-300",
         isPopover
-          ? "rounded-[24px] border border-border/80 bg-card/95 text-card-foreground shadow-2xl backdrop-blur-2xl ring-1 ring-white/10 select-none"
+          ? "rounded-[24px] border border-border/80 bg-card/95 text-card-foreground shadow-2xl ring-1 ring-white/10 backdrop-blur-2xl select-none"
           : "rounded-2xl border border-border/60 bg-card/80 shadow-md backdrop-blur-xl",
         className
       )}
@@ -102,7 +102,7 @@ export function ProfilePreviewCard({
         {/* 1. Full Profile Card View */}
         <div
           className={cn(
-            "relative overflow-hidden bg-card flex flex-col min-h-[410px]",
+            "relative flex min-h-[410px] flex-col overflow-hidden bg-card",
             isPopover
               ? "rounded-none border-0 shadow-none"
               : "rounded-2xl border border-border/60 shadow-sm"
@@ -134,12 +134,12 @@ export function ProfilePreviewCard({
           <div className="relative flex flex-1 flex-col px-4 pt-0 pb-4">
             {/* Floating Avatar with Frame and Status Speech Bubble */}
             <div className="-mt-10 mb-3 flex items-end justify-between gap-2">
-              <div className="flex items-end gap-2.5 min-w-0">
+              <div className="flex min-w-0 items-end gap-2.5">
                 {/* Clickable Avatar opening UserPreviewModal */}
                 <button
                   type="button"
                   onClick={handleOpenPreviewModal}
-                  className="group relative flex shrink-0 cursor-pointer items-center justify-center rounded-full transition-transform hover:scale-105 active:scale-95 focus:outline-hidden"
+                  className="group relative flex shrink-0 cursor-pointer items-center justify-center rounded-full transition-transform hover:scale-105 focus:outline-hidden active:scale-95"
                   title={`View ${nameToShow}'s preview`}
                 >
                   <Avatar className="size-20 border-2 border-card bg-background shadow-md">
@@ -168,15 +168,15 @@ export function ProfilePreviewCard({
 
                 {/* Status Message Speech Bubble (Discord-style next to avatar, up to 2 lines) */}
                 {profile.statusText && (
-                  <div className="relative mb-2.5 flex items-center min-w-0 flex-1 max-w-[210px]">
+                  <div className="relative mb-2.5 flex max-w-[210px] min-w-0 flex-1 items-center">
                     {/* Speech bubble tail dots */}
-                    <div className="flex items-center gap-0.5 pe-1 select-none shrink-0">
+                    <div className="flex shrink-0 items-center gap-0.5 pe-1 select-none">
                       <span className="size-1 rounded-full bg-border/80" />
                       <span className="size-1.5 rounded-full bg-border/90" />
                     </div>
                     {/* Speech bubble body */}
                     <div
-                      className="line-clamp-2 break-words rounded-2xl border border-border/70 bg-secondary/90 px-3 py-1.5 text-xs font-semibold leading-snug text-foreground shadow-xs backdrop-blur-xs"
+                      className="line-clamp-2 rounded-2xl border border-border/70 bg-secondary/90 px-3 py-1.5 text-xs leading-snug font-semibold break-words text-foreground shadow-xs backdrop-blur-xs"
                       title={profile.statusText}
                     >
                       {profile.statusText}
@@ -217,7 +217,7 @@ export function ProfilePreviewCard({
 
               {/* Badges row under username */}
               {isOwner && (
-                <div className="pt-1.5 flex flex-wrap items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5 pt-1.5">
                   <Badge
                     variant="outline"
                     className="h-5 gap-0.5 border-amber-500/40 bg-amber-500/10 px-1.5 text-[9px] font-bold text-amber-400"
@@ -234,7 +234,7 @@ export function ProfilePreviewCard({
               <div className="mb-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                 {t("aboutMe")}
               </div>
-              <div className="min-h-[110px] max-h-44 flex-1 overflow-y-auto rounded-xl border border-border/30 bg-muted/20 p-2.5 text-xs leading-relaxed">
+              <div className="max-h-44 min-h-[110px] flex-1 overflow-y-auto rounded-xl border border-border/30 bg-muted/20 p-2.5 text-xs leading-relaxed">
                 {renderBioMarkdown(profile.bio || "", t("noBio"))}
               </div>
             </div>
@@ -305,7 +305,7 @@ export function UserProfilePopover({
       <PopoverTrigger>
         <AriaButton
           className={cn(
-            "cursor-pointer outline-none bg-transparent p-0 border-0 text-start",
+            "cursor-pointer border-0 bg-transparent p-0 text-start outline-none",
             className
           )}
           style={style}
@@ -315,9 +315,12 @@ export function UserProfilePopover({
         <Popover
           placement={placement}
           offset={8}
-          className="w-[340px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[24px] border border-border/80 bg-card/95 p-0 text-card-foreground shadow-2xl backdrop-blur-2xl ring-1 ring-white/10 outline-none"
+          className="w-[340px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[24px] border border-border/80 bg-card/95 p-0 text-card-foreground shadow-2xl ring-1 ring-white/10 backdrop-blur-2xl outline-none"
         >
-          <AriaDialog aria-label={`${username}'s profile`} className="outline-none">
+          <AriaDialog
+            aria-label={`${username}'s profile`}
+            className="outline-none"
+          >
             {({ close }) => (
               <ProfilePreviewCard
                 profile={profile}

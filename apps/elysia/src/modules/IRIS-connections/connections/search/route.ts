@@ -153,9 +153,7 @@ export default defineRoute({
           r.externalId !== "undefined" &&
           r.externalId !== "null"
         const hasValidId =
-          Boolean(r.id) &&
-          r.id !== "undefined" &&
-          r.id !== "null"
+          Boolean(r.id) && r.id !== "undefined" && r.id !== "null"
         const finalId = hasValidExt
           ? r.externalId
           : hasValidId

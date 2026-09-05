@@ -44,7 +44,10 @@ function ContextMenu({
       placement={placement}
       offset={offset}
       crossOffset={crossOffset}
-      className={cn("z-50 w-(--trigger-width) min-w-36 origin-(--trigger-anchor-point) overflow-x-hidden overflow-y-auto rounded-2xl p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/5 duration-100 outline-none data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:overflow-hidden data-exiting:fade-out-0 data-exiting:zoom-out-95 data-[placement=bottom]:slide-in-from-top-2 data-[placement=left]:slide-in-from-right-2 data-[placement=right]:slide-in-from-left-2 data-[placement=top]:slide-in-from-bottom-2 **:data-[slot$=-item]:data-focused:bg-foreground/10 dark:ring-foreground/10 animate-none! relative bg-popover/70 before:pointer-events-none before:absolute before:inset-0 before:-z-1 before:rounded-[inherit] before:backdrop-blur-2xl before:backdrop-saturate-150 **:data-[slot$=-item]:focus:bg-foreground/10 **:data-[slot$=-item]:data-highlighted:bg-foreground/10 **:data-[slot$=-separator]:bg-foreground/5 **:data-[slot$=-trigger]:focus:bg-foreground/10 **:data-[slot$=-trigger]:aria-expanded:bg-foreground/10! **:data-[variant=destructive]:focus:bg-foreground/10! **:data-[variant=destructive]:text-accent-foreground! **:data-[variant=destructive]:**:text-accent-foreground!", className )}
+      className={cn(
+        "relative z-50 w-(--trigger-width) min-w-36 origin-(--trigger-anchor-point) animate-none! overflow-x-hidden overflow-y-auto rounded-2xl bg-popover/70 p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/5 duration-100 outline-none before:pointer-events-none before:absolute before:inset-0 before:-z-1 before:rounded-[inherit] before:backdrop-blur-2xl before:backdrop-saturate-150 data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:overflow-hidden data-exiting:fade-out-0 data-exiting:zoom-out-95 data-[placement=bottom]:slide-in-from-top-2 data-[placement=left]:slide-in-from-right-2 data-[placement=right]:slide-in-from-left-2 data-[placement=top]:slide-in-from-bottom-2 **:data-[slot$=-item]:focus:bg-foreground/10 **:data-[slot$=-item]:data-focused:bg-foreground/10 **:data-[slot$=-item]:data-highlighted:bg-foreground/10 **:data-[slot$=-separator]:bg-foreground/5 **:data-[slot$=-trigger]:focus:bg-foreground/10 **:data-[slot$=-trigger]:aria-expanded:bg-foreground/10! **:data-[variant=destructive]:**:text-accent-foreground! **:data-[variant=destructive]:text-accent-foreground! **:data-[variant=destructive]:focus:bg-foreground/10! dark:ring-foreground/10",
+        className
+      )}
     >
       <MenuPrimitive
         className="max-h-[inherit] overflow-x-hidden overflow-y-auto outline-hidden"
@@ -103,9 +106,9 @@ const contextMenuItemVariants = cva(
       selectionMode: {
         none: "min-h-7 gap-2 rounded-xl px-2 py-1.5 text-sm focus:bg-accent focus:text-accent-foreground data-inset:ps-7 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 [&_svg:not([class*='size-'])]:size-4 focus:*:[svg]:text-accent-foreground data-[variant=destructive]:*:[svg]:text-destructive",
         single:
-          "min-h-7 gap-2 rounded-xl py-1.5 pe-8 ps-2 text-sm focus:bg-accent focus:text-accent-foreground data-inset:ps-7 [&_svg:not([class*='size-'])]:size-4",
+          "min-h-7 gap-2 rounded-xl py-1.5 ps-2 pe-8 text-sm focus:bg-accent focus:text-accent-foreground data-inset:ps-7 [&_svg:not([class*='size-'])]:size-4",
         multiple:
-          "min-h-7 gap-2 rounded-xl py-1.5 pe-8 ps-2 text-sm focus:bg-accent focus:text-accent-foreground data-inset:ps-7 [&_svg:not([class*='size-'])]:size-4",
+          "min-h-7 gap-2 rounded-xl py-1.5 ps-2 pe-8 text-sm focus:bg-accent focus:text-accent-foreground data-inset:ps-7 [&_svg:not([class*='size-'])]:size-4",
       },
     },
   }
@@ -145,10 +148,7 @@ function ContextMenuItem({
                     : "context-menu-checkbox-item-indicator"
                 }
               >
-                {isSelected ? (
-                  <IconCheck
-                  />
-                ) : null}
+                {isSelected ? <IconCheck /> : null}
               </span>
             ) : null}
             {children}
@@ -187,7 +187,7 @@ function ContextMenuSubTrigger({
       {composeRenderProps(children, (children) => (
         <>
           {children}
-          <IconChevronRight className="rtl:rotate-180 ms-auto" />
+          <IconChevronRight className="ms-auto rtl:rotate-180" />
         </>
       ))}
     </MenuItemPrimitive>
@@ -204,7 +204,10 @@ function ContextMenuSubContent({
   return (
     <ContextMenu
       data-slot="context-menu-sub-content"
-      className={cn("w-auto min-w-32 rounded-2xl p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/5 duration-100 dark:ring-foreground/10 animate-none! relative bg-popover/70 before:pointer-events-none before:absolute before:inset-0 before:-z-1 before:rounded-[inherit] before:backdrop-blur-2xl before:backdrop-saturate-150 **:data-[slot$=-item]:focus:bg-foreground/10 **:data-[slot$=-item]:data-highlighted:bg-foreground/10 **:data-[slot$=-separator]:bg-foreground/5 **:data-[slot$=-trigger]:focus:bg-foreground/10 **:data-[slot$=-trigger]:aria-expanded:bg-foreground/10! **:data-[variant=destructive]:focus:bg-foreground/10! **:data-[variant=destructive]:text-accent-foreground! **:data-[variant=destructive]:**:text-accent-foreground!", className )}
+      className={cn(
+        "relative w-auto min-w-32 animate-none! rounded-2xl bg-popover/70 p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/5 duration-100 before:pointer-events-none before:absolute before:inset-0 before:-z-1 before:rounded-[inherit] before:backdrop-blur-2xl before:backdrop-saturate-150 **:data-[slot$=-item]:focus:bg-foreground/10 **:data-[slot$=-item]:data-highlighted:bg-foreground/10 **:data-[slot$=-separator]:bg-foreground/5 **:data-[slot$=-trigger]:focus:bg-foreground/10 **:data-[slot$=-trigger]:aria-expanded:bg-foreground/10! **:data-[variant=destructive]:**:text-accent-foreground! **:data-[variant=destructive]:text-accent-foreground! **:data-[variant=destructive]:focus:bg-foreground/10! dark:ring-foreground/10",
+        className
+      )}
       placement={placement}
       crossOffset={crossOffset}
       offset={offset}

@@ -127,7 +127,8 @@ export default defineRoute({
 
     const hasMore = items.length > limit
     const paged = hasMore ? items.slice(0, limit) : items
-    const nextCursor = hasMore && paged.length > 0 ? paged[paged.length - 1]?.id : null
+    const nextCursor =
+      hasMore && paged.length > 0 ? paged[paged.length - 1]?.id : null
 
     return {
       success: true,
@@ -150,7 +151,9 @@ export default defineRoute({
             ? item.watchedEpisodes.map((we: any) => ({
                 seasonNumber: we.seasonNumber,
                 episodeNumber: we.episodeNumber,
-                watchedAt: we.watchedAt ? we.watchedAt.toISOString() : new Date().toISOString(),
+                watchedAt: we.watchedAt
+                  ? we.watchedAt.toISOString()
+                  : new Date().toISOString(),
               }))
             : [],
           watchedEpisodesCount: item._count?.watchedEpisodes ?? 0,

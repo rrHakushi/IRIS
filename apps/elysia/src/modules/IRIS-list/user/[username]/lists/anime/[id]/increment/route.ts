@@ -66,7 +66,8 @@ export default defineRoute({
 
     const currentProgress = existing ? existing.progress : 0
     let newProgress = currentProgress + count
-    let newStatus: AnimeListStatus = (existing?.status as AnimeListStatus) ?? "WATCHING"
+    let newStatus: AnimeListStatus =
+      (existing?.status as AnimeListStatus) ?? "WATCHING"
     let completedAt = existing?.completedAt ?? null
 
     // If status was PLANNING, transition to WATCHING
@@ -121,7 +122,9 @@ export default defineRoute({
         animeId: result.animeId,
         status: result.status,
         progress: result.progress,
-        completedAt: result.completedAt ? result.completedAt.toISOString() : null,
+        completedAt: result.completedAt
+          ? result.completedAt.toISOString()
+          : null,
       },
     }
   },

@@ -3,7 +3,8 @@ import { WatchingDashboard } from "@/components/lists/watching-dashboard"
 
 export const metadata: Metadata = {
   title: "IRIS List | Home",
-  description: "Track your in-progress watching, reading, and gaming library on IRIS List",
+  description:
+    "Track your in-progress watching, reading, and gaming library on IRIS List",
 }
 
 export default function IRISListPage() {

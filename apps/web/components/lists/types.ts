@@ -8,13 +8,7 @@ import {
   IconMusic,
 } from "@tabler/icons-react"
 
-export type MediaListType =
-  | "anime"
-  | "manga"
-  | "movie"
-  | "tv"
-  | "game"
-  | "book"
+export type MediaListType = "anime" | "manga" | "movie" | "tv" | "game" | "book"
 
 export interface MediaCategoryConfig {
   key: MediaListType
@@ -78,12 +72,7 @@ export const MEDIA_CATEGORIES: MediaCategoryConfig[] = [
 ]
 
 export type StatusKey =
-  | "ALL"
-  | "WATCHING"
-  | "ON_HOLD"
-  | "COMPLETED"
-  | "DROPPED"
-  | "PLANNING"
+  "ALL" | "WATCHING" | "ON_HOLD" | "COMPLETED" | "DROPPED" | "PLANNING"
 
 export interface StatusOption {
   key: StatusKey
@@ -91,7 +80,8 @@ export interface StatusOption {
   badgeKey?: string
 }
 
-export type SortByOption = "updatedAt" | "score" | "title" | "progress" | "addedAt"
+export type SortByOption =
+  "updatedAt" | "score" | "title" | "progress" | "addedAt"
 export type SortOrderOption = "asc" | "desc"
 export type ListViewTab = "list" | "comments" | "stats"
 

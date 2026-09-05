@@ -42,7 +42,7 @@ export function UserPreviewModal({
             {profile?.avatarUrl ? (
               <AvatarImage src={profile.avatarUrl} alt={displayName} />
             ) : null}
-            <AvatarFallback className="bg-primary/15 text-xs font-black uppercase text-primary">
+            <AvatarFallback className="bg-primary/15 text-xs font-black text-primary uppercase">
               {initial}
             </AvatarFallback>
           </Avatar>

@@ -222,7 +222,9 @@ export default defineRoute({
     })
 
     let targetChaptersProgress =
-      payload.chaptersProgress !== undefined ? payload.chaptersProgress : existing?.chaptersProgress
+      payload.chaptersProgress !== undefined
+        ? payload.chaptersProgress
+        : existing?.chaptersProgress
     if (
       mangaExists.chapterCount &&
       mangaExists.chapterCount > 0 &&
@@ -300,7 +302,9 @@ export default defineRoute({
         reread: result.reread,
         private: result.private,
         startedAt: result.startedAt ? result.startedAt.toISOString() : null,
-        completedAt: result.completedAt ? result.completedAt.toISOString() : null,
+        completedAt: result.completedAt
+          ? result.completedAt.toISOString()
+          : null,
         rereadHistory: result.rereadHistory,
         connections: result.connections,
         createdAt: result.createdAt.toISOString(),
@@ -353,7 +357,9 @@ export default defineRoute({
     })
 
     let targetChaptersProgress =
-      payload.chaptersProgress !== undefined ? payload.chaptersProgress : existing?.chaptersProgress
+      payload.chaptersProgress !== undefined
+        ? payload.chaptersProgress
+        : existing?.chaptersProgress
     if (
       mangaExists.chapterCount &&
       mangaExists.chapterCount > 0 &&
@@ -431,7 +437,9 @@ export default defineRoute({
         reread: result.reread,
         private: result.private,
         startedAt: result.startedAt ? result.startedAt.toISOString() : null,
-        completedAt: result.completedAt ? result.completedAt.toISOString() : null,
+        completedAt: result.completedAt
+          ? result.completedAt.toISOString()
+          : null,
         rereadHistory: result.rereadHistory,
         connections: result.connections,
         createdAt: result.createdAt.toISOString(),

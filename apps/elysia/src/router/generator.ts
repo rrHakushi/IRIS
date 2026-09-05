@@ -2,115 +2,15 @@ import fs from "node:fs"
 import path from "node:path"
 import { pathToFileURL } from "node:url"
 import { c } from "../utils/colors"
-
-const HTTP_METHODS = [
-  "GET",
-  "POST",
-  "PUT",
-  "DELETE",
-  "PATCH",
-  "OPTIONS",
-  "HEAD",
-  "ALL",
-] as const
-
-type HttpMethod = (typeof HTTP_METHODS)[number]
+import { findRouteFiles } from "./helpers/scanner"
+import { parseRoutePath, HTTP_METHODS, type HttpMethod } from "./helpers/path"
+import { renderTypeMap, extractTypeSignatures } from "./helpers/types-renderer"
 
 /**
- * Converts a relative module file path into an Elysia URL route.
- *
- * Rules:
- * - Omits the root module directory
- * - Strips route groupings wrapped in parentheses: `(group)/user` -> `/user`
- * - Transforms dynamic parameters: `[id]` -> `:id`
- * - Transforms wildcard catch-all segments: `[...slug]` -> `*`
- *
- * @param relativeFilePath - File path relative to the modules root directory
- * @returns Formatted URL route path string starting with a leading slash
- *
- * @example
- * ```typescript
- * parseRoutePath("IRIS-account/user/[id]/list/route.ts") // returns "/user/:id/list"
- * ```
- */
-export function parseRoutePath(relativeFilePath: string): string {
-  const normalized = relativeFilePath.replace(/\\/g, "/").replace(/^\/+/, "")
-  const parts = normalized.split("/")
-
-  if (parts.length < 2) return "/"
-
-  const segments = parts.slice(1, -1)
-  const routeSegments = segments.filter((seg) => !/^\(.*\)$/.test(seg))
-
-  if (routeSegments.length === 0) {
-    return "/"
-  }
-
-  const mapped = routeSegments.map((seg) => {
-    if (seg.startsWith("[...") && seg.endsWith("]")) {
-      return "*"
-    }
-    if (seg.startsWith("[") && seg.endsWith("]")) {
-      return `:${seg.slice(1, -1)}`
-    }
-    return seg
-  })
-
-  return "/" + mapped.join("/")
-}
-
-/**
- * Recursively scans a filesystem directory for all `route.ts` or `route.js` files.
- *
- * @param dir - Starting directory path to traverse
- * @param baseDir - Base reference directory
- * @returns Array of absolute file paths matching route files
- */
-export function findRouteFiles(dir: string, baseDir: string = dir): string[] {
-  if (!fs.existsSync(dir)) {
-    return []
-  }
-
-  const results: string[] = []
-  let entries: fs.Dirent[] = []
-  try {
-    entries = fs.readdirSync(dir, { withFileTypes: true })
-  } catch {
-    return []
-  }
-
-  for (const entry of entries) {
-    const name = entry.name
-
-    // Ignore hidden files and directories
-    if (name.startsWith(".")) continue
-
-    // Ignore temporary, backup, or editor duplicate copies (e.g. 'refresh copy', 'folder (1)', '*.bak')
-    if (
-      /\s+copy(\s+\d+)?$/i.test(name) ||
-      /\s*\(\d+\)$/.test(name) ||
-      /\s*\(copy\)/i.test(name)
-    ) {
-      continue
-    }
-    if (/\.bak$|\.tmp$|\.old$|~$/i.test(name)) continue
-
-    const fullPath = path.join(dir, name)
-    if (entry.isDirectory()) {
-      results.push(...findRouteFiles(fullPath, baseDir))
-    } else if (entry.isFile() && (name === "route.ts" || name === "route.js")) {
-      results.push(fullPath)
-    }
-  }
-
-  return results
-}
-
-/**
- * Options configuring the Elysia route manifest generator.
+ * Configuration options for the Elysia route manifest generator.
  */
 export interface GeneratorOptions {
-  /** Directory containing file-based routes (defaults to src/modules). */
+  /** Directory containing file-based routes (defaults to `src/modules`). */
   modulesDir?: string
   /** Output file destination for the generated Elysia app manifest. */
   outputFile?: string
@@ -121,185 +21,119 @@ export interface GeneratorOptions {
 }
 
 /**
- * Generates a statically typed Elysia route manifest (routes.generated.ts)
- * and cache keys type definition (cache-keys.generated.ts) from all route.ts files in src/modules.
+ * Generates statically typed Elysia route and cache key manifests from all `route.ts` files.
  *
- * Inspects default route exports, aggregates all cacheKeys with duplicate detection,
- * preserves TypeBox response schemas without casting to any, wraps request handlers
- * in logging and rate limiting contexts, and outputs an Elysia router.
+ * This function:
+ * 1. Scans `src/modules/` recursively for all route handler files.
+ * 2. Statically imports each route module into `src/router/generated/routes.generated.ts`.
+ * 3. Chained `.get()`, `.post()`, etc. calls with their associated validation schemas, rate limiters,
+ *    and authorization guards (`requireAuth`, `requirePermissions`).
+ * 4. Extracts all declared `cacheKeys` into `src/router/generated/cache-keys.generated.ts` for global type safety.
+ * 5. Uses idempotent file writes to prevent infinite reload loops during `bun --watch`.
  *
  * @param options - Generator configuration options
+ *
+ * @example
+ * ```typescript
+ * await generateRoutes({ silent: true })
+ * ```
  */
-export async function generateRoutes(options: GeneratorOptions = {}) {
-  const rootDir = path.resolve(import.meta.dirname, "..")
-  const modulesDir = options.modulesDir || path.resolve(rootDir, "modules")
+export async function generateRoutes(
+  options: GeneratorOptions = {}
+): Promise<void> {
+  const routerDir = import.meta.dirname
+  const modulesDir = options.modulesDir || path.resolve(routerDir, "../modules")
+  const generatedDir = path.resolve(routerDir, "generated")
   const outputFile =
-    options.outputFile ||
-    path.resolve(import.meta.dirname, "routes.generated.ts")
+    options.outputFile || path.resolve(generatedDir, "routes.generated.ts")
   const cacheKeysOutputFile =
     options.cacheKeysOutputFile ||
-    path.resolve(import.meta.dirname, "cache-keys.generated.ts")
+    path.resolve(generatedDir, "cache-keys.generated.ts")
 
-  type NestedTypeMap = { [key: string]: string | NestedTypeMap }
-
-  function collectCacheKeysRecursively(
-    obj: Record<string, any>,
-    prefix: string,
-    relativePath: string,
-    targetTypeMap: NestedTypeMap,
-    cacheKeyRegistry: Map<string, string>,
-    sourceCode: string
-  ) {
-    for (const [key, val] of Object.entries(obj)) {
-      const fullPath = prefix ? `${prefix}.${key}` : key
-      if (typeof val === "function") {
-        const existing = cacheKeyRegistry.get(fullPath)
-        if (existing) {
-          throw new Error(
-            `[Eden Generator] Duplicate cache key "${fullPath}" found in "${relativePath}". It was already defined in "${existing}". Cache keys must be unique across all routes.`
-          )
-        }
-        cacheKeyRegistry.set(fullPath, relativePath)
-
-        // Extract function parameter signature from source code if available
-        let paramSig = "...args: any[]"
-        if (sourceCode) {
-          const keyRegex = new RegExp(
-            `(?:['"]?${key}['"]?\\s*:\\s*(?:async\\s*)?\\(([^)]*)\\)|(?:async\\s*)?${key}\\s*\\(([^)]*)\\))`,
-            "m"
-          )
-          const m = sourceCode.match(keyRegex)
-          if (m) {
-            const rawParams = (m[1] || m[2] || "").trim()
-            paramSig = rawParams ? rawParams : ""
-          }
-        }
-        targetTypeMap[key] = `(${paramSig}) => string`
-      } else if (val && typeof val === "object") {
-        if (!targetTypeMap[key] || typeof targetTypeMap[key] !== "object") {
-          targetTypeMap[key] = {}
-        }
-        collectCacheKeysRecursively(
-          val,
-          fullPath,
-          relativePath,
-          targetTypeMap[key] as NestedTypeMap,
-          cacheKeyRegistry,
-          sourceCode
-        )
-      }
-    }
-  }
-
-  function renderTypeMap(map: NestedTypeMap, indentLevel = 1): string {
-    const indent = "  ".repeat(indentLevel)
-    let out = ""
-    const keys = Object.keys(map).sort()
-    for (const k of keys) {
-      const val = map[k]
-      if (typeof val === "string") {
-        out += `${indent}${k}: ${val};\n`
-      } else if (val && typeof val === "object") {
-        out += `${indent}${k}: {\n`
-        out += renderTypeMap(val, indentLevel + 1)
-        out += `${indent}};\n`
-      }
-    }
-    return out
+  // Ensure generated output directory exists
+  if (!fs.existsSync(generatedDir)) {
+    fs.mkdirSync(generatedDir, { recursive: true })
   }
 
   const routeFiles = findRouteFiles(modulesDir)
+
+  // Sort files for deterministic code generation
   routeFiles.sort()
 
   const imports: string[] = []
   const routeChains: string[] = []
-  const routesWithCacheKeys: Array<{
-    importName: string
-    relativeImport: string
-    filePath: string
-  }> = []
-  const cacheKeyRegistry = new Map<string, string>()
-  const globalTypeSignatures: NestedTypeMap = {}
-
+  const globalTypeSignatures: Record<string, any> = {}
+  const routesWithCacheKeys: Array<{ importName: string }> = []
   let routeIndex = 0
 
   for (const filePath of routeFiles) {
-    const relativeModulePath = path.relative(modulesDir, filePath)
-    const routePath = parseRoutePath(relativeModulePath)
-
-    // Compute relative import path from outputFile directory to the route file (without .ts extension)
-    let relativeImport = path
-      .relative(path.dirname(outputFile), filePath)
+    const relativePath = path.relative(modulesDir, filePath)
+    const routePath = parseRoutePath(relativePath)
+    const importName = `Route_${routeIndex}`
+    const relativeImport = path
+      .relative(generatedDir, filePath)
       .replace(/\\/g, "/")
-    if (!relativeImport.startsWith(".")) {
-      relativeImport = "./" + relativeImport
-    }
-    relativeImport = relativeImport.replace(/\.(ts|js)$/, "")
+      .replace(/\.(ts|js)$/, "")
 
     try {
       const fileUrl = pathToFileURL(filePath).href
-      const mod = await import(fileUrl)
-      const routeExport = mod.default
+      const importedModule = await import(fileUrl)
+      const RouteExport = importedModule.default
 
-      if (!routeExport) continue
+      if (!RouteExport) continue
 
-      const importName = `route_${routeIndex}`
-      imports.push(`import ${importName} from "${relativeImport}";`)
-
-      let instance: Record<string, unknown>
-      if (typeof routeExport === "function") {
+      let instance: Record<string, any> = {}
+      if (typeof RouteExport === "function") {
         try {
-          instance = new (routeExport as any)()
+          instance = new RouteExport()
         } catch {
-          instance = routeExport as any
+          instance = RouteExport
         }
-      } else {
-        instance = routeExport as any
+      } else if (typeof RouteExport === "object" && RouteExport !== null) {
+        instance = RouteExport
       }
 
-      // Check and aggregate cacheKeys with duplicate collision validation
+      const exportObj = RouteExport as Record<string, unknown> | undefined
+
+      // Collect cache key type signatures
       const routeCacheKeys =
-        (instance as any)?.cacheKeys ||
-        (routeExport as any)?.cacheKeys ||
-        mod.cacheKeys
+        instance.cacheKeys ||
+        exportObj?.cacheKeys ||
+        importedModule.cacheKeys ||
+        {}
 
       if (
         routeCacheKeys &&
         typeof routeCacheKeys === "object" &&
         Object.keys(routeCacheKeys).length > 0
       ) {
-        let sourceCode = ""
-        try {
-          sourceCode = fs.readFileSync(filePath, "utf-8")
-        } catch {
-          // ignore
-        }
-
-        collectCacheKeysRecursively(
-          routeCacheKeys,
-          "",
-          relativeModulePath,
-          globalTypeSignatures,
-          cacheKeyRegistry,
-          sourceCode
-        )
-
-        routesWithCacheKeys.push({
-          importName,
-          relativeImport,
-          filePath: relativeModulePath,
-        })
+        extractTypeSignatures(globalTypeSignatures, routeCacheKeys)
+        routesWithCacheKeys.push({ importName })
       }
 
+      // Check which HTTP methods are implemented
+      const implementedMethods: HttpMethod[] = []
       for (const method of HTTP_METHODS) {
         const hasMethod =
           typeof instance[method] === "function" ||
           (typeof instance[method] === "object" &&
             instance[method] !== null &&
-            "handler" in (instance[method] as object))
+            "handler" in instance[method]) ||
+          typeof exportObj?.[method] === "function" ||
+          (typeof exportObj?.[method] === "object" &&
+            exportObj?.[method] !== null &&
+            "handler" in (exportObj?.[method] as object))
 
-        if (!hasMethod) continue
+        if (hasMethod) {
+          implementedMethods.push(method)
+        }
+      }
 
+      if (implementedMethods.length === 0) continue
+
+      imports.push(`import ${importName} from "${relativeImport}";`)
+
+      for (const method of implementedMethods) {
         const elysiaMethod = method === "ALL" ? "all" : method.toLowerCase()
 
         // Check if schema is defined on route or method
@@ -316,30 +150,34 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
           schemaExpr = `${importName}.schema`
         }
 
+        const handlerCall = `async (ctx: unknown) => {
+      const route = ${importName} as Record<string, unknown>;
+      const methodItem = route.${method} as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
+      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
+      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
+      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.${method} ?? route.rateLimit) as RateLimitConfig | undefined;
+      const limiter = rateLimitConfig ? getRouteLimiter("${importName}_${method}", rateLimitConfig) : null;
+      const authConfig = {
+        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
+        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
+      };
+      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
+        ? (c: Context) => assertRouteAuthorization(c, authConfig)
+        : null;
+      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
+      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
+    }`
+
         if (schemaExpr) {
           routeChains.push(`  .${elysiaMethod}(
     "${routePath}",
     ${schemaExpr},
-    async (ctx: any) => {
-      const methodItem = (${importName} as any).${method};
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (${importName} as any).rateLimits?.${method} ?? (${importName} as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("${importName}_${method}", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
+    ${handlerCall}
   )`)
         } else {
           routeChains.push(`  .${elysiaMethod}(
     "${routePath}",
-    async (ctx: any) => {
-      const methodItem = (${importName} as any).${method};
-      const handler = typeof methodItem === "function" ? methodItem : methodItem?.handler;
-      const rateLimitConfig = methodItem?.rateLimit ?? (${importName} as any).rateLimits?.${method} ?? (${importName} as any).rateLimit;
-      const limiter = rateLimitConfig ? getRouteLimiter("${importName}_${method}", rateLimitConfig) : null;
-      ctx.cacheKeys = globalCacheKeyStorage;
-      return executeWithRequestLogs(ctx, handler, limiter) as any;
-    }
+    ${handlerCall}
   )`)
         }
       }
@@ -350,8 +188,8 @@ export async function generateRoutes(options: GeneratorOptions = {}) {
     }
   }
 
-  // Generate cache-keys.generated.ts
-  let cacheKeysContent = `/* eslint-disable */
+  // 1. Generate cache-keys.generated.ts
+  const cacheKeysContent = `/* eslint-disable */
 // Automatically generated by the IRIS file router for cache key type safety.
 // Do not edit manually.
 
@@ -361,18 +199,12 @@ ${renderTypeMap(globalTypeSignatures, 1)}}
 export type GlobalCacheKeyStorage = GlobalCacheKeys;
 `
 
-  if (fs.existsSync(cacheKeysOutputFile)) {
-    const currentKeys = fs.readFileSync(cacheKeysOutputFile, "utf-8")
-    if (currentKeys !== cacheKeysContent) {
-      fs.writeFileSync(cacheKeysOutputFile, cacheKeysContent, "utf-8")
-    }
-  } else {
-    fs.writeFileSync(cacheKeysOutputFile, cacheKeysContent, "utf-8")
-  }
+  writeIfChanged(cacheKeysOutputFile, cacheKeysContent)
 
+  // 2. Generate routes.generated.ts
   const globalKeysInit =
     routesWithCacheKeys.length > 0
-      ? `function deepMergeCacheKeys(target: Record<string, any>, source: Record<string, any>) {
+      ? `function deepMergeCacheKeys(target: Record<string, unknown>, source: Record<string, unknown>) {
   for (const [key, val] of Object.entries(source)) {
     if (typeof val === "function") {
       target[key] = val;
@@ -380,39 +212,45 @@ export type GlobalCacheKeyStorage = GlobalCacheKeys;
       if (!target[key] || typeof target[key] !== "object") {
         target[key] = {};
       }
-      deepMergeCacheKeys(target[key], val);
+      deepMergeCacheKeys(target[key] as Record<string, unknown>, val as Record<string, unknown>);
     }
   }
 }
 ` +
         routesWithCacheKeys
           .map(
-            (r) => `if ((${r.importName} as any)?.cacheKeys) {
-  deepMergeCacheKeys(globalCacheKeyStorage, (${r.importName} as any).cacheKeys);
+            (
+              r
+            ) => `const ${r.importName}_keys = (${r.importName} as Record<string, unknown>)?.cacheKeys;
+if (${r.importName}_keys && typeof ${r.importName}_keys === "object") {
+  deepMergeCacheKeys(globalCacheKeyStorage, ${r.importName}_keys as Record<string, unknown>);
 }`
           )
           .join("\n")
       : ""
 
-  const fileContent = `/* eslint-disable */
+  const routesContent = `/* eslint-disable */
 // Automatically generated by the IRIS file router for Eden Treaty.
 // Do not edit manually.
 import { Elysia } from "elysia";
-import { executeWithRequestLogs } from "../utils/request-logger";
-import { createRateLimiter } from "../plugins/rate-limiter";
+import type { Context, RateLimitConfig } from "../types";
+import type { IRISBitFieldResolvable } from "@IRIS/permissions";
+import { executeWithRequestLogs } from "../../utils/request-logger";
+import { createRateLimiter } from "../../plugins/rate-limiter";
+import { assertRouteAuthorization } from "../helpers/auth-guard";
 ${imports.join("\n")}
 
 const routeLimiters = new Map<string, ReturnType<typeof createRateLimiter>>();
-function getRouteLimiter(key: string, config: unknown) {
+function getRouteLimiter(key: string, config: RateLimitConfig) {
   let l = routeLimiters.get(key);
   if (!l) {
-    l = createRateLimiter(config as any);
+    l = createRateLimiter(config);
     routeLimiters.set(key, l);
   }
   return l;
 }
 
-export const globalCacheKeyStorage: Record<string, Record<string, any>> = {};
+export const globalCacheKeyStorage: Record<string, Record<string, unknown>> = {};
 ${globalKeysInit}
 
 export const routes = new Elysia({ name: "iris-routes" })
@@ -426,23 +264,28 @@ ${routeChains.join("\n")};
 export type App = typeof routes;
 `
 
-  if (fs.existsSync(outputFile)) {
-    const current = fs.readFileSync(outputFile, "utf-8")
-    if (current === fileContent) {
-      // Content has not changed: avoid touching file to prevent bun --watch restart loop
-      return
-    }
-  }
-
-  fs.writeFileSync(outputFile, fileContent, "utf-8")
+  writeIfChanged(outputFile, routesContent)
 
   if (!options.silent) {
     console.log(
-      `${c.cyan(c.bold("[Eden Generator]"))} ${c.green("Generated")} ${c.bold(routeIndex)} ${c.green("routes in:")} ${c.dim(outputFile)}`
+      `${c.cyan("[Eden Generator]")} Generated manifests for ${c.bold(routeIndex)} route files in ${c.underline(path.relative(process.cwd(), generatedDir))}`
     )
   }
 }
 
-if (import.meta.main) {
-  generateRoutes()
+/**
+ * Idempotently writes content to a file, skipping if the content is identical
+ * to prevent unnecessary watcher trigger cascades.
+ */
+function writeIfChanged(filePath: string, newContent: string): void {
+  if (fs.existsSync(filePath)) {
+    const existing = fs.readFileSync(filePath, "utf-8")
+    if (existing === newContent) {
+      return
+    }
+  }
+  fs.writeFileSync(filePath, newContent, "utf-8")
 }
+
+export { findRouteFiles } from "./helpers/scanner"
+export { parseRoutePath } from "./helpers/path"

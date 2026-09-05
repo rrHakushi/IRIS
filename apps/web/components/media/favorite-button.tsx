@@ -34,7 +34,10 @@ export interface FavoriteButtonProps {
 }
 
 // Module-level deduplication cache and in-flight request tracker
-const favoriteStatusCache = new Map<string, { isFavorited: boolean; timestamp: number }>()
+const favoriteStatusCache = new Map<
+  string,
+  { isFavorited: boolean; timestamp: number }
+>()
 const favoriteInFlight = new Map<string, Promise<boolean>>()
 const CACHE_TTL_MS = 60_000
 
@@ -65,7 +68,10 @@ export async function fetchFavoriteStatusDeduplicated(
         })
 
       const isFav = !error && Boolean(data?.isFavorited)
-      favoriteStatusCache.set(fetchKey, { isFavorited: isFav, timestamp: Date.now() })
+      favoriteStatusCache.set(fetchKey, {
+        isFavorited: isFav,
+        timestamp: Date.now(),
+      })
       return isFav
     } catch {
       return false
@@ -99,7 +105,8 @@ export function FavoriteButton({
 }: FavoriteButtonProps) {
   const { data: session } = useSession()
   const { user } = useUser()
-  const username = user?.username || (session?.user as { username?: string })?.username
+  const username =
+    user?.username || (session?.user as { username?: string })?.username
   const isAuthenticated = Boolean(username)
 
   const numericTargetId = Number(targetId)
@@ -122,11 +129,13 @@ export function FavoriteButton({
     }
 
     let isMounted = true
-    fetchFavoriteStatusDeduplicated(username, type, numericTargetId).then((status) => {
-      if (isMounted) {
-        setIsFavorited(status)
+    fetchFavoriteStatusDeduplicated(username, type, numericTargetId).then(
+      (status) => {
+        if (isMounted) {
+          setIsFavorited(status)
+        }
       }
-    })
+    )
 
     return () => {
       isMounted = false
@@ -148,7 +157,12 @@ export function FavoriteButton({
       ) {
         setIsFavorited(customEvent.detail.isFavorited)
         if (username) {
-          updateFavoriteCache(username, type, numericTargetId, customEvent.detail.isFavorited)
+          updateFavoriteCache(
+            username,
+            type,
+            numericTargetId,
+            customEvent.detail.isFavorited
+          )
         }
       }
     }
@@ -212,11 +226,17 @@ export function FavoriteButton({
     } finally {
       setIsPending(false)
     }
-  }, [isAuthenticated, username, isPending, isFavorited, numericTargetId, type, title])
+  }, [
+    isAuthenticated,
+    username,
+    isPending,
+    isFavorited,
+    numericTargetId,
+    type,
+    title,
+  ])
 
-  const tooltipText = isFavorited
-    ? "Remove from favorites"
-    : "Add to favorites"
+  const tooltipText = isFavorited ? "Remove from favorites" : "Add to favorites"
 
   const buttonContent = (
     <Button

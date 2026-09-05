@@ -88,11 +88,19 @@ export interface ProviderSearchResult {
   url?: string | null
 }
 
-function formatStatusLabel(status?: string | null, category?: CanonicalMediaCategory): string {
+function formatStatusLabel(
+  status?: string | null,
+  category?: CanonicalMediaCategory
+): string {
   if (!status) return "Planning"
   const upper = status.toUpperCase()
   if (upper === "PLANNING") return "Planning"
-  if (upper === "WATCHING") return category === "manga" ? "Reading" : category === "game" ? "Playing" : "Watching"
+  if (upper === "WATCHING")
+    return category === "manga"
+      ? "Reading"
+      : category === "game"
+        ? "Playing"
+        : "Watching"
   if (upper === "READING") return "Reading"
   if (upper === "PLAYING") return "Playing"
   if (upper === "COMPLETED") return "Completed"
@@ -101,7 +109,10 @@ function formatStatusLabel(status?: string | null, category?: CanonicalMediaCate
   return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
 }
 
-function formatInheritedDates(startedAt?: unknown, completedAt?: unknown): string {
+function formatInheritedDates(
+  startedAt?: unknown,
+  completedAt?: unknown
+): string {
   const start = formatDateToYmd(startedAt) || null
   const finish = formatDateToYmd(completedAt) || null
   if (start && finish) {
@@ -129,7 +140,8 @@ async function fetchRemoteMediaDetails(
   externalUrl?: string | null
 } | null> {
   const strId = String(externalId).trim()
-  if (!strId || strId === "linked" || strId === "undefined" || strId === "null") return null
+  if (!strId || strId === "linked" || strId === "undefined" || strId === "null")
+    return null
 
   // 1. Simkl: Query via server proxy
   if (providerKey === "simkl") {
@@ -151,7 +163,11 @@ async function fetchRemoteMediaDetails(
         },
       })
 
-      if (res.data?.success && Array.isArray(res.data?.results) && res.data.results.length > 0) {
+      if (
+        res.data?.success &&
+        Array.isArray(res.data?.results) &&
+        res.data.results.length > 0
+      ) {
         const item = res.data.results[0]
         const coverUrl =
           item.coverImage?.large ||
@@ -233,7 +249,9 @@ async function fetchRemoteMediaDetails(
         coverImage: coverUrl,
         year: m.seasonYear ?? null,
         format: m.format ?? null,
-        externalUrl: m.siteUrl || `https://anilist.co/${category === "manga" ? "manga" : "anime"}/${m.id}`,
+        externalUrl:
+          m.siteUrl ||
+          `https://anilist.co/${category === "manga" ? "manga" : "anime"}/${m.id}`,
       }
     } catch {
       return null
@@ -248,12 +266,15 @@ async function fetchRemoteMediaDetails(
       const json = await resp.json()
       const d = json?.data
       if (!d) return null
-      const coverUrl = d.images?.jpg?.large_image_url || d.images?.jpg?.image_url || null
+      const coverUrl =
+        d.images?.jpg?.large_image_url || d.images?.jpg?.image_url || null
       return {
         title: d.title || d.title_english,
         cover: coverUrl,
         coverImage: coverUrl,
-        year: d.year || (d.aired?.from ? new Date(d.aired.from).getFullYear() : null),
+        year:
+          d.year ||
+          (d.aired?.from ? new Date(d.aired.from).getFullYear() : null),
         format: d.type ?? null,
         externalUrl: d.url || `https://myanimelist.net/${malType}/${numId}`,
       }
@@ -279,10 +300,13 @@ export function MediaListConnectionsTab({
   const localConnections = connections || {}
 
   // Collapsed / Expanded state per provider card (default to closed)
-  const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({})
+  const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>(
+    {}
+  )
 
   // Provider search dialog state
-  const [searchModalProvider, setSearchModalProvider] = useState<ProviderMeta | null>(null)
+  const [searchModalProvider, setSearchModalProvider] =
+    useState<ProviderMeta | null>(null)
   const [searchQuery, setSearchQuery] = useState<string>("")
   const [isSearching, setIsSearching] = useState<boolean>(false)
   const [searchResults, setSearchResults] = useState<ProviderSearchResult[]>([])
@@ -406,7 +430,11 @@ export function MediaListConnectionsTab({
       // Skip if already fetched from external API in current session
       if (item.extra?.fetchedExternally) return
 
-      const remoteData = await fetchRemoteMediaDetails(provider.key, activeId, category)
+      const remoteData = await fetchRemoteMediaDetails(
+        provider.key,
+        activeId,
+        category
+      )
       if (remoteData && !isCancelled) {
         const coverUrl =
           remoteData.cover ||
@@ -425,7 +453,10 @@ export function MediaListConnectionsTab({
             coverImage: coverUrl,
             year: remoteData.year ?? item.year ?? mediaYear,
             format: remoteData.format ?? item.format ?? media.format,
-            externalUrl: remoteData.externalUrl || item.externalUrl || provider.externalUrl,
+            externalUrl:
+              remoteData.externalUrl ||
+              item.externalUrl ||
+              provider.externalUrl,
             extra: {
               ...(item.extra || {}),
               fetchedExternally: true,
@@ -441,7 +472,10 @@ export function MediaListConnectionsTab({
   }, [category, availableProviders, mediaYear])
 
   // Connect a provider
-  const handleConnect = async (provider: ProviderMeta, customId?: string | number) => {
+  const handleConnect = async (
+    provider: ProviderMeta,
+    customId?: string | number
+  ) => {
     const idToUse = customId || provider.detectedId || "linked"
     const currentItem = localConnections[provider.key]
 
@@ -475,12 +509,14 @@ export function MediaListConnectionsTab({
 
     // Attempt live metadata fetch from external site
     if (idToUse !== "linked") {
-      const remoteData = await fetchRemoteMediaDetails(provider.key, idToUse, category)
+      const remoteData = await fetchRemoteMediaDetails(
+        provider.key,
+        idToUse,
+        category
+      )
       if (remoteData) {
         const coverUrl =
-          remoteData.cover ||
-          remoteData.coverImage ||
-          initialCover
+          remoteData.cover || remoteData.coverImage || initialCover
 
         onConnectionsChange?.({
           ...updated,
@@ -512,7 +548,10 @@ export function MediaListConnectionsTab({
   }
 
   // Update specific fields of a connection
-  const handleUpdateItem = (providerKey: string, changes: Partial<ConnectionItem>) => {
+  const handleUpdateItem = (
+    providerKey: string,
+    changes: Partial<ConnectionItem>
+  ) => {
     const current = localConnections[providerKey]
     if (!current) return
     const updated: Record<string, ConnectionItem> = {
@@ -542,7 +581,10 @@ export function MediaListConnectionsTab({
     if (willBeActive) {
       if (field === "overrideStatus" && !current.status) {
         changes.status = inheritedStatus || "PLANNING"
-      } else if (field === "overrideProgress" && current.progress === undefined) {
+      } else if (
+        field === "overrideProgress" &&
+        current.progress === undefined
+      ) {
         changes.progress = inheritedProgress ?? 0
       } else if (field === "overrideDates") {
         if (!current.startedAt && inheritedStartedAt) {
@@ -602,7 +644,11 @@ export function MediaListConnectionsTab({
             },
           })
 
-          if (res.data?.success && Array.isArray(res.data?.results) && res.data.results.length > 0) {
+          if (
+            res.data?.success &&
+            Array.isArray(res.data?.results) &&
+            res.data.results.length > 0
+          ) {
             const mapped: ProviderSearchResult[] = res.data.results
               .map((r: any, idx: number) => {
                 let resolvedId =
@@ -641,7 +687,8 @@ export function MediaListConnectionsTab({
                     r.title ||
                     "Untitled",
                   titleSecondary:
-                    r.title?.english && r.title?.english !== r.title?.userPreferred
+                    r.title?.english &&
+                    r.title?.english !== r.title?.userPreferred
                       ? r.title?.english
                       : r.title?.romaji || null,
                   coverImage:
@@ -655,7 +702,10 @@ export function MediaListConnectionsTab({
                   url: r.url ?? null,
                 }
               })
-              .filter((item: ProviderSearchResult) => Boolean(item.externalId) && item.externalId !== "undefined")
+              .filter(
+                (item: ProviderSearchResult) =>
+                  Boolean(item.externalId) && item.externalId !== "undefined"
+              )
 
             if (mapped.length > 0) {
               setSearchResults(mapped)
@@ -723,7 +773,9 @@ export function MediaListConnectionsTab({
               format: m.format ?? null,
               episodes: m.episodes ?? m.chapters ?? null,
               status: m.status ?? null,
-              url: m.siteUrl || `https://anilist.co/${category === "manga" ? "manga" : "anime"}/${m.id}`,
+              url:
+                m.siteUrl ||
+                `https://anilist.co/${category === "manga" ? "manga" : "anime"}/${m.id}`,
             }))
             setSearchResults(mapped)
             setIsSearching(false)
@@ -739,17 +791,29 @@ export function MediaListConnectionsTab({
           )
           const json = await resp.json()
           if (Array.isArray(json?.data) && json.data.length > 0) {
-            const mapped: ProviderSearchResult[] = json.data.map((item: any) => ({
-              externalId: String(item.mal_id),
-              title: item.title || "Untitled",
-              titleSecondary: item.title_english || item.title_japanese || null,
-              coverImage: item.images?.jpg?.large_image_url || item.images?.jpg?.image_url || null,
-              releaseYear: item.year || (item.aired?.from ? new Date(item.aired.from).getFullYear() : null),
-              format: item.type ?? null,
-              episodes: item.episodes ?? item.chapters ?? null,
-              status: item.status ?? null,
-              url: item.url ?? `https://myanimelist.net/${malType}/${item.mal_id}`,
-            }))
+            const mapped: ProviderSearchResult[] = json.data.map(
+              (item: any) => ({
+                externalId: String(item.mal_id),
+                title: item.title || "Untitled",
+                titleSecondary:
+                  item.title_english || item.title_japanese || null,
+                coverImage:
+                  item.images?.jpg?.large_image_url ||
+                  item.images?.jpg?.image_url ||
+                  null,
+                releaseYear:
+                  item.year ||
+                  (item.aired?.from
+                    ? new Date(item.aired.from).getFullYear()
+                    : null),
+                format: item.type ?? null,
+                episodes: item.episodes ?? item.chapters ?? null,
+                status: item.status ?? null,
+                url:
+                  item.url ??
+                  `https://myanimelist.net/${malType}/${item.mal_id}`,
+              })
+            )
             setSearchResults(mapped)
             setIsSearching(false)
             return
@@ -782,8 +846,13 @@ export function MediaListConnectionsTab({
   }
 
   // Apply selected series from search
-  const handleSelectSeries = (provider: ProviderMeta, result: ProviderSearchResult) => {
-    const current: ConnectionItem = localConnections[provider.key] || { id: "linked" }
+  const handleSelectSeries = (
+    provider: ProviderMeta,
+    result: ProviderSearchResult
+  ) => {
+    const current: ConnectionItem = localConnections[provider.key] || {
+      id: "linked",
+    }
     const coverUrl =
       result.coverImage ||
       current.cover ||
@@ -813,17 +882,20 @@ export function MediaListConnectionsTab({
   }
 
   const inheritedStatusLabel = formatStatusLabel(inheritedStatus, category)
-  const inheritedDatesSummary = formatInheritedDates(inheritedStartedAt, inheritedCompletedAt)
+  const inheritedDatesSummary = formatInheritedDates(
+    inheritedStartedAt,
+    inheritedCompletedAt
+  )
 
   return (
     <div className="space-y-4">
       {/* Tab Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+        <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
           <IconLink className="size-4 text-primary" />
           <span>Connected Services</span>
         </h3>
-        <span className="text-[11px] text-muted-foreground font-medium">
+        <span className="text-[11px] font-medium text-muted-foreground">
           {connectedProviders.length} active
         </span>
       </div>
@@ -831,33 +903,38 @@ export function MediaListConnectionsTab({
       {/* Connected Providers List */}
       {connectedProviders.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border p-6 text-center text-muted-foreground">
-          <IconAlertCircle className="size-8 opacity-40 text-muted-foreground" />
-          <p className="mt-2 text-xs font-semibold text-foreground">No Active Connections</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5 max-w-xs">
-            Connect an external tracking service below to sync status, progress, and dates.
+          <IconAlertCircle className="size-8 text-muted-foreground opacity-40" />
+          <p className="mt-2 text-xs font-semibold text-foreground">
+            No Active Connections
+          </p>
+          <p className="mt-0.5 max-w-xs text-[11px] text-muted-foreground">
+            Connect an external tracking service below to sync status, progress,
+            and dates.
           </p>
         </div>
       ) : (
         <div className="space-y-3">
           {connectedProviders.map((provider) => {
-            const item: ConnectionItem = localConnections[provider.key] || { id: "linked" }
+            const item: ConnectionItem = localConnections[provider.key] || {
+              id: "linked",
+            }
             const isExpanded = Boolean(expandedCards[provider.key])
             const activeId = item.id || provider.detectedId || ""
 
             return (
               <div
                 key={provider.key}
-                className="rounded-2xl border border-border bg-card p-4 transition-all shadow-xs"
+                className="rounded-2xl border border-border bg-card p-4 shadow-xs transition-all"
               >
                 {/* Header: ANILIST #184356 ^ X */}
                 <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex min-w-0 items-center gap-2">
                     <span className="text-xs font-black tracking-wider text-foreground uppercase">
                       {provider.name}
                     </span>
 
                     {/* Remote ID Badge */}
-                    <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[11px] font-mono font-medium text-muted-foreground border border-border/60">
+                    <span className="inline-flex items-center rounded-md border border-border/60 bg-muted px-2 py-0.5 font-mono text-[11px] font-medium text-muted-foreground">
                       #{activeId}
                     </span>
 
@@ -865,8 +942,12 @@ export function MediaListConnectionsTab({
                     <button
                       type="button"
                       onClick={() => toggleExpand(provider.key)}
-                      aria-label={isExpanded ? `Collapse ${provider.name}` : `Expand ${provider.name}`}
-                      className="cursor-pointer p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label={
+                        isExpanded
+                          ? `Collapse ${provider.name}`
+                          : `Expand ${provider.name}`
+                      }
+                      className="cursor-pointer p-0.5 text-muted-foreground transition-colors hover:text-foreground"
                     >
                       {isExpanded ? (
                         <IconChevronUp className="size-4" />
@@ -879,9 +960,11 @@ export function MediaListConnectionsTab({
                   {/* Disconnect X button */}
                   <button
                     type="button"
-                    onClick={() => handleDisconnect(provider.key, provider.name)}
+                    onClick={() =>
+                      handleDisconnect(provider.key, provider.name)
+                    }
                     aria-label={`Disconnect ${provider.name}`}
-                    className="flex size-6 cursor-pointer items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                    className="flex size-6 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   >
                     <IconX className="size-3.5" />
                   </button>
@@ -889,34 +972,41 @@ export function MediaListConnectionsTab({
 
                 {/* Collapsible Content (Closed by default) */}
                 {isExpanded && (
-                  <div className="space-y-3.5 pt-3.5 mt-1 border-t border-border/40">
+                  <div className="mt-1 space-y-3.5 border-t border-border/40 pt-3.5">
                     {/* 1. Override Status */}
                     <div className="space-y-2">
-                      <label className="flex items-start gap-2.5 cursor-pointer select-none group">
+                      <label className="group flex cursor-pointer items-start gap-2.5 select-none">
                         <div
                           role="checkbox"
                           aria-checked={Boolean(item.overrideStatus)}
                           tabIndex={0}
-                          onClick={() => handleToggleOverride(provider.key, "overrideStatus")}
+                          onClick={() =>
+                            handleToggleOverride(provider.key, "overrideStatus")
+                          }
                           onKeyDown={(e) => {
                             if (e.key === " " || e.key === "Enter") {
                               e.preventDefault()
-                              handleToggleOverride(provider.key, "overrideStatus")
+                              handleToggleOverride(
+                                provider.key,
+                                "overrideStatus"
+                              )
                             }
                           }}
-                          className={`mt-0.5 size-4.5 rounded-md border flex items-center justify-center transition-colors shrink-0 ${
+                          className={`mt-0.5 flex size-4.5 shrink-0 items-center justify-center rounded-md border transition-colors ${
                             item.overrideStatus
-                              ? "bg-primary border-primary text-primary-foreground"
+                              ? "border-primary bg-primary text-primary-foreground"
                               : "border-muted-foreground/40 bg-muted/20 group-hover:border-muted-foreground/60"
                           }`}
                         >
-                          {item.overrideStatus && <IconCheck className="size-3 stroke-[3]" />}
+                          {item.overrideStatus && (
+                            <IconCheck className="size-3 stroke-[3]" />
+                          )}
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-bold text-foreground leading-tight">
+                          <span className="text-xs leading-tight font-bold text-foreground">
                             Override status
                           </span>
-                          <span className="text-[11px] italic text-muted-foreground leading-tight mt-0.5">
+                          <span className="mt-0.5 text-[11px] leading-tight text-muted-foreground italic">
                             Inherited: {inheritedStatusLabel}
                           </span>
                         </div>
@@ -927,18 +1017,25 @@ export function MediaListConnectionsTab({
                         <div className="ms-7 flex flex-wrap gap-1.5 pt-1">
                           {statusChoices.map((st) => {
                             const isSelected =
-                              (item.status || inheritedStatus || "PLANNING").toUpperCase() ===
-                              st.value.toUpperCase()
+                              (
+                                item.status ||
+                                inheritedStatus ||
+                                "PLANNING"
+                              ).toUpperCase() === st.value.toUpperCase()
 
                             return (
                               <button
                                 key={st.value}
                                 type="button"
-                                onClick={() => handleUpdateItem(provider.key, { status: st.value })}
+                                onClick={() =>
+                                  handleUpdateItem(provider.key, {
+                                    status: st.value,
+                                  })
+                                }
                                 className={`cursor-pointer rounded-lg px-2.5 py-1 text-[11px] font-medium transition-all ${
                                   isSelected
-                                    ? "bg-primary text-primary-foreground font-semibold shadow-xs"
-                                    : "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/50"
+                                    ? "bg-primary font-semibold text-primary-foreground shadow-xs"
+                                    : "border border-border/50 bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground"
                                 }`}
                               >
                                 {st.label}
@@ -951,31 +1048,43 @@ export function MediaListConnectionsTab({
 
                     {/* 2. Override Ep progress */}
                     <div className="space-y-2">
-                      <label className="flex items-start gap-2.5 cursor-pointer select-none group">
+                      <label className="group flex cursor-pointer items-start gap-2.5 select-none">
                         <div
                           role="checkbox"
                           aria-checked={Boolean(item.overrideProgress)}
                           tabIndex={0}
-                          onClick={() => handleToggleOverride(provider.key, "overrideProgress")}
+                          onClick={() =>
+                            handleToggleOverride(
+                              provider.key,
+                              "overrideProgress"
+                            )
+                          }
                           onKeyDown={(e) => {
                             if (e.key === " " || e.key === "Enter") {
                               e.preventDefault()
-                              handleToggleOverride(provider.key, "overrideProgress")
+                              handleToggleOverride(
+                                provider.key,
+                                "overrideProgress"
+                              )
                             }
                           }}
-                          className={`mt-0.5 size-4.5 rounded-md border flex items-center justify-center transition-colors shrink-0 ${
+                          className={`mt-0.5 flex size-4.5 shrink-0 items-center justify-center rounded-md border transition-colors ${
                             item.overrideProgress
-                              ? "bg-primary border-primary text-primary-foreground"
+                              ? "border-primary bg-primary text-primary-foreground"
                               : "border-muted-foreground/40 bg-muted/20 group-hover:border-muted-foreground/60"
                           }`}
                         >
-                          {item.overrideProgress && <IconCheck className="size-3 stroke-[3]" />}
+                          {item.overrideProgress && (
+                            <IconCheck className="size-3 stroke-[3]" />
+                          )}
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-bold text-foreground leading-tight">
-                            Override {progressUnitLabel ? `${progressUnitLabel} ` : ""}progress
+                          <span className="text-xs leading-tight font-bold text-foreground">
+                            Override{" "}
+                            {progressUnitLabel ? `${progressUnitLabel} ` : ""}
+                            progress
                           </span>
-                          <span className="text-[11px] italic text-muted-foreground leading-tight mt-0.5">
+                          <span className="mt-0.5 text-[11px] leading-tight text-muted-foreground italic">
                             Inherited: {inheritedProgress ?? 0}
                           </span>
                         </div>
@@ -988,12 +1097,13 @@ export function MediaListConnectionsTab({
                             type="button"
                             aria-label="Decrease progress"
                             onClick={() => {
-                              const cur = item.progress ?? inheritedProgress ?? 0
+                              const cur =
+                                item.progress ?? inheritedProgress ?? 0
                               handleUpdateItem(provider.key, {
                                 progress: Math.max(0, cur - 1),
                               })
                             }}
-                            className="flex size-7 cursor-pointer items-center justify-center rounded-lg border border-border bg-card hover:bg-muted text-foreground transition-colors"
+                            className="flex size-7 cursor-pointer items-center justify-center rounded-lg border border-border bg-card text-foreground transition-colors hover:bg-muted"
                           >
                             <IconMinus className="size-3.5" />
                           </button>
@@ -1004,19 +1114,25 @@ export function MediaListConnectionsTab({
                             value={item.progress ?? inheritedProgress ?? 0}
                             onChange={(e) =>
                               handleUpdateItem(provider.key, {
-                                progress: Math.max(0, Number(e.target.value) || 0),
+                                progress: Math.max(
+                                  0,
+                                  Number(e.target.value) || 0
+                                ),
                               })
                             }
-                            className="w-16 rounded-lg border border-border bg-background px-2 py-1 text-center text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                            className="w-16 rounded-lg border border-border bg-background px-2 py-1 text-center text-xs font-semibold text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
                           />
                           <button
                             type="button"
                             aria-label="Increase progress"
                             onClick={() => {
-                              const cur = item.progress ?? inheritedProgress ?? 0
-                              handleUpdateItem(provider.key, { progress: cur + 1 })
+                              const cur =
+                                item.progress ?? inheritedProgress ?? 0
+                              handleUpdateItem(provider.key, {
+                                progress: cur + 1,
+                              })
                             }}
-                            className="flex size-7 cursor-pointer items-center justify-center rounded-lg border border-border bg-card hover:bg-muted text-foreground transition-colors"
+                            className="flex size-7 cursor-pointer items-center justify-center rounded-lg border border-border bg-card text-foreground transition-colors hover:bg-muted"
                           >
                             <IconPlus className="size-3.5" />
                           </button>
@@ -1031,31 +1147,38 @@ export function MediaListConnectionsTab({
 
                     {/* 3. Override dates */}
                     <div className="space-y-2">
-                      <label className="flex items-start gap-2.5 cursor-pointer select-none group">
+                      <label className="group flex cursor-pointer items-start gap-2.5 select-none">
                         <div
                           role="checkbox"
                           aria-checked={Boolean(item.overrideDates)}
                           tabIndex={0}
-                          onClick={() => handleToggleOverride(provider.key, "overrideDates")}
+                          onClick={() =>
+                            handleToggleOverride(provider.key, "overrideDates")
+                          }
                           onKeyDown={(e) => {
                             if (e.key === " " || e.key === "Enter") {
                               e.preventDefault()
-                              handleToggleOverride(provider.key, "overrideDates")
+                              handleToggleOverride(
+                                provider.key,
+                                "overrideDates"
+                              )
                             }
                           }}
-                          className={`mt-0.5 size-4.5 rounded-md border flex items-center justify-center transition-colors shrink-0 ${
+                          className={`mt-0.5 flex size-4.5 shrink-0 items-center justify-center rounded-md border transition-colors ${
                             item.overrideDates
-                              ? "bg-primary border-primary text-primary-foreground"
+                              ? "border-primary bg-primary text-primary-foreground"
                               : "border-muted-foreground/40 bg-muted/20 group-hover:border-muted-foreground/60"
                           }`}
                         >
-                          {item.overrideDates && <IconCheck className="size-3 stroke-[3]" />}
+                          {item.overrideDates && (
+                            <IconCheck className="size-3 stroke-[3]" />
+                          )}
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-bold text-foreground leading-tight">
+                          <span className="text-xs leading-tight font-bold text-foreground">
                             Override dates
                           </span>
-                          <span className="text-[11px] italic text-muted-foreground leading-tight mt-0.5">
+                          <span className="mt-0.5 text-[11px] leading-tight text-muted-foreground italic">
                             Inherited: {inheritedDatesSummary}
                           </span>
                         </div>
@@ -1063,27 +1186,37 @@ export function MediaListConnectionsTab({
 
                       {/* Date Pickers when checked */}
                       {item.overrideDates && (
-                        <div className="ms-7 grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                        <div className="ms-7 grid grid-cols-1 gap-2.5 pt-1 sm:grid-cols-2">
                           <div className="space-y-1">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                            <span className="flex items-center gap-1 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                               <IconCalendar className="size-3 text-muted-foreground" />
                               Start Date
                             </span>
                             <DatePicker
                               value={item.startedAt ?? inheritedStartedAt ?? ""}
-                              onChange={(val) => handleUpdateItem(provider.key, { startedAt: val })}
+                              onChange={(val) =>
+                                handleUpdateItem(provider.key, {
+                                  startedAt: val,
+                                })
+                              }
                               placeholder="Pick start date"
                               ariaLabel="Override start date"
                             />
                           </div>
                           <div className="space-y-1">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                            <span className="flex items-center gap-1 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                               <IconCalendar className="size-3 text-muted-foreground" />
                               Finish Date
                             </span>
                             <DatePicker
-                              value={item.completedAt ?? inheritedCompletedAt ?? ""}
-                              onChange={(val) => handleUpdateItem(provider.key, { completedAt: val })}
+                              value={
+                                item.completedAt ?? inheritedCompletedAt ?? ""
+                              }
+                              onChange={(val) =>
+                                handleUpdateItem(provider.key, {
+                                  completedAt: val,
+                                })
+                              }
                               placeholder="Pick finish date"
                               ariaLabel="Override finish date"
                               align="end"
@@ -1094,19 +1227,26 @@ export function MediaListConnectionsTab({
                     </div>
 
                     {/* 4. Linked Series & Override Section */}
-                    <div className="pt-2 border-t border-border/50">
-                      <div className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-muted/30 border border-border/40">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          {(item.cover || item.coverImage || media.coverImage) && (
+                    <div className="border-t border-border/50 pt-2">
+                      <div className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-muted/30 p-2.5">
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          {(item.cover ||
+                            item.coverImage ||
+                            media.coverImage) && (
                             <img
-                              src={item.cover || item.coverImage || media.coverImage || ""}
+                              src={
+                                item.cover ||
+                                item.coverImage ||
+                                media.coverImage ||
+                                ""
+                              }
                               alt={item.title || media.titlePrimary}
-                              className="size-10 rounded-lg object-cover border border-border shrink-0 bg-muted"
+                              className="size-10 shrink-0 rounded-lg border border-border bg-muted object-cover"
                             />
                           )}
-                          <div className="flex flex-col min-w-0">
+                          <div className="flex min-w-0 flex-col">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-semibold text-foreground truncate">
+                              <span className="truncate text-xs font-semibold text-foreground">
                                 {item.title || media.titlePrimary}
                               </span>
                               {item.externalUrl && (
@@ -1114,23 +1254,28 @@ export function MediaListConnectionsTab({
                                   href={item.externalUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-muted-foreground hover:text-primary transition-colors shrink-0"
+                                  className="shrink-0 text-muted-foreground transition-colors hover:text-primary"
                                   aria-label={`Open on ${provider.name}`}
                                 >
                                   <IconExternalLink className="size-3" />
                                 </a>
                               )}
                             </div>
-                            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
+                            <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
                               {(item.format || media.format) && (
-                                <Badge variant="outline" className="text-[9px] px-1 py-0 border-border">
+                                <Badge
+                                  variant="outline"
+                                  className="border-border px-1 py-0 text-[9px]"
+                                >
                                   {item.format || media.format}
                                 </Badge>
                               )}
                               {(item.year || mediaYear) && (
                                 <span>{item.year || mediaYear}</span>
                               )}
-                              <span className="font-mono text-muted-foreground/80">#{activeId}</span>
+                              <span className="font-mono text-muted-foreground/80">
+                                #{activeId}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -1140,7 +1285,7 @@ export function MediaListConnectionsTab({
                           size="sm"
                           variant="outline"
                           onClick={() => openSearchModal(provider)}
-                          className="shrink-0 text-xs h-7.5 px-2.5 gap-1.5 border-border bg-card hover:bg-muted text-foreground"
+                          className="h-7.5 shrink-0 gap-1.5 border-border bg-card px-2.5 text-xs text-foreground hover:bg-muted"
                         >
                           <IconSearch className="size-3.5 text-muted-foreground" />
                           <span>Override Series</span>
@@ -1157,26 +1302,28 @@ export function MediaListConnectionsTab({
 
       {/* Unconnected / Available Providers Section */}
       {unconnectedProviders.length > 0 && (
-        <div className="space-y-2 pt-2 border-t border-border/40">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+        <div className="space-y-2 border-t border-border/40 pt-2">
+          <span className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
             Available Providers
           </span>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {unconnectedProviders.map((provider) => (
               <div
                 key={provider.key}
-                className="flex items-center justify-between gap-2 p-2.5 rounded-xl border border-border bg-card hover:border-border/80 transition-all"
+                className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card p-2.5 transition-all hover:border-border/80"
               >
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="flex size-7 shrink-0 items-center justify-center rounded-lg font-bold text-[11px] uppercase bg-muted text-muted-foreground">
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-[11px] font-bold text-muted-foreground uppercase">
                     {provider.name.slice(0, 2)}
                   </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-xs font-semibold text-foreground truncate">
+                  <div className="flex min-w-0 flex-col">
+                    <span className="truncate text-xs font-semibold text-foreground">
                       {provider.name}
                     </span>
-                    <span className="text-[10px] text-muted-foreground truncate">
-                      {provider.detectedId ? `#${provider.detectedId}` : "Not linked"}
+                    <span className="truncate text-[10px] text-muted-foreground">
+                      {provider.detectedId
+                        ? `#${provider.detectedId}`
+                        : "Not linked"}
                     </span>
                   </div>
                 </div>
@@ -1189,7 +1336,7 @@ export function MediaListConnectionsTab({
                         size="sm"
                         variant="outline"
                         onClick={() => openSearchModal(provider)}
-                        className="h-7 px-2 text-[11px] gap-1 border-border"
+                        className="h-7 gap-1 border-border px-2 text-[11px]"
                         aria-label={`Search ${provider.name}`}
                       >
                         <IconSearch className="size-3 text-muted-foreground" />
@@ -1198,7 +1345,7 @@ export function MediaListConnectionsTab({
                         type="button"
                         size="sm"
                         onClick={() => handleConnect(provider)}
-                        className="h-7 px-2.5 text-[11px] font-medium bg-primary text-primary-foreground hover:bg-primary/90"
+                        className="h-7 bg-primary px-2.5 text-[11px] font-medium text-primary-foreground hover:bg-primary/90"
                       >
                         Connect
                       </Button>
@@ -1209,7 +1356,7 @@ export function MediaListConnectionsTab({
                       size="sm"
                       variant="outline"
                       onClick={() => openSearchModal(provider)}
-                      className="h-7 px-2.5 text-[11px] font-medium gap-1.5 border-border hover:bg-muted text-foreground"
+                      className="h-7 gap-1.5 border-border px-2.5 text-[11px] font-medium text-foreground hover:bg-muted"
                     >
                       <IconSearch className="size-3 text-muted-foreground" />
                       <span>Search</span>
@@ -1232,9 +1379,7 @@ export function MediaListConnectionsTab({
           isDismissable
           className="fixed inset-0 isolate z-50 bg-black/40 duration-100 data-entering:animate-in data-entering:fade-in-0 data-exiting:animate-out data-exiting:fade-out-0 supports-backdrop-filter:backdrop-blur-sm"
         >
-          <AriaModal
-            className="fixed start-1/2 top-1/2 z-50 grid w-[calc(100vw-2rem)] sm:max-w-lg -translate-x-1/2 -translate-y-1/2 gap-6 rounded-3xl bg-popover p-6 text-sm text-popover-foreground shadow-xl ring-1 ring-foreground/5 duration-100 outline-none data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:fade-out-0 data-exiting:zoom-out-95 rtl:translate-x-1/2 overflow-hidden"
-          >
+          <AriaModal className="fixed start-1/2 top-1/2 z-50 grid w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 gap-6 overflow-hidden rounded-3xl bg-popover p-6 text-sm text-popover-foreground shadow-xl ring-1 ring-foreground/5 duration-100 outline-none data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:fade-out-0 data-exiting:zoom-out-95 sm:max-w-lg rtl:translate-x-1/2">
             <AriaDialog
               aria-label={`Search ${searchModalProvider.name}`}
               className="[display:inherit] [gap:inherit] outline-none"
@@ -1242,197 +1387,213 @@ export function MediaListConnectionsTab({
               <AriaHeading slot="title" className="sr-only">
                 Search {searchModalProvider.name}
               </AriaHeading>
-          <div className="w-full min-w-0 max-w-full space-y-3 overflow-hidden">
-            <DialogHeader className="space-y-1">
-              <DialogTitle
-                id="search-modal-provider-title"
-                className="flex items-center gap-2 text-base font-bold text-foreground"
-              >
-                <IconSearch className="size-4 text-primary" />
-                <span>Search {searchModalProvider.name}</span>
-              </DialogTitle>
-              <DialogDescription className="sr-only">
-                Search and select a series on {searchModalProvider.name} to link with this entry.
-              </DialogDescription>
-            </DialogHeader>
+              <div className="w-full max-w-full min-w-0 space-y-3 overflow-hidden">
+                <DialogHeader className="space-y-1">
+                  <DialogTitle
+                    id="search-modal-provider-title"
+                    className="flex items-center gap-2 text-base font-bold text-foreground"
+                  >
+                    <IconSearch className="size-4 text-primary" />
+                    <span>Search {searchModalProvider.name}</span>
+                  </DialogTitle>
+                  <DialogDescription className="sr-only">
+                    Search and select a series on {searchModalProvider.name} to
+                    link with this entry.
+                  </DialogDescription>
+                </DialogHeader>
 
-            <div className="space-y-3 pt-1 w-full min-w-0 overflow-hidden">
-              {/* Search Input Row */}
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  if (searchModalProvider) {
-                    handleExecuteSearch(searchModalProvider, searchQuery)
-                  }
-                }}
-                className="flex items-center gap-2 w-full min-w-0"
-              >
-                <div className="relative flex-1 min-w-0">
-                  <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder={`Search ${searchModalProvider.name}...`}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="ps-9 pe-3 h-8 text-xs bg-background border-border text-foreground rounded-xl w-full min-w-0"
-                    autoFocus
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={isSearching || !searchQuery.trim()}
-                  className="h-8 px-3 text-xs bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 shrink-0"
-                >
-                  {isSearching ? (
-                    <IconLoader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    "Search"
-                  )}
-                </Button>
-              </form>
+                <div className="w-full min-w-0 space-y-3 overflow-hidden pt-1">
+                  {/* Search Input Row */}
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      if (searchModalProvider) {
+                        handleExecuteSearch(searchModalProvider, searchQuery)
+                      }
+                    }}
+                    className="flex w-full min-w-0 items-center gap-2"
+                  >
+                    <div className="relative min-w-0 flex-1">
+                      <IconSearch className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        placeholder={`Search ${searchModalProvider.name}...`}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="h-8 w-full min-w-0 rounded-xl border-border bg-background ps-9 pe-3 text-xs text-foreground"
+                        autoFocus
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={isSearching || !searchQuery.trim()}
+                      className="h-8 shrink-0 bg-primary px-3 text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      {isSearching ? (
+                        <IconLoader2 className="size-3.5 animate-spin" />
+                      ) : (
+                        "Search"
+                      )}
+                    </Button>
+                  </form>
 
-              {/* Search Results / Status */}
-              <div className="max-h-72 overflow-y-auto overflow-x-hidden space-y-2 pe-1 pt-1 no-scrollbar w-full min-w-0">
-                {isSearching && (
-                  <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                    <IconLoader2 className="size-6 animate-spin text-primary" />
-                    <span className="mt-2 text-xs">Searching {searchModalProvider.name}...</span>
-                  </div>
-                )}
+                  {/* Search Results / Status */}
+                  <div className="no-scrollbar max-h-72 w-full min-w-0 space-y-2 overflow-x-hidden overflow-y-auto pe-1 pt-1">
+                    {isSearching && (
+                      <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                        <IconLoader2 className="size-6 animate-spin text-primary" />
+                        <span className="mt-2 text-xs">
+                          Searching {searchModalProvider.name}...
+                        </span>
+                      </div>
+                    )}
 
-                {!isSearching && searchError && (
-                  <div className="flex items-center gap-2 p-3 rounded-xl border border-destructive/30 bg-destructive/10 text-destructive text-xs">
-                    <IconAlertCircle className="size-4 shrink-0" />
-                    <span>{searchError}</span>
-                  </div>
-                )}
+                    {!isSearching && searchError && (
+                      <div className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+                        <IconAlertCircle className="size-4 shrink-0" />
+                        <span>{searchError}</span>
+                      </div>
+                    )}
 
-                {!isSearching && !searchError && searchResults.length === 0 && (
-                  <div className="py-8 text-center text-xs text-muted-foreground">
-                    No series found. Try entering a different title or keywords.
-                  </div>
-                )}
+                    {!isSearching &&
+                      !searchError &&
+                      searchResults.length === 0 && (
+                        <div className="py-8 text-center text-xs text-muted-foreground">
+                          No series found. Try entering a different title or
+                          keywords.
+                        </div>
+                      )}
 
-                {!isSearching &&
-                  searchResults.map((result, idx) => {
-                    const activeConnId = localConnections[searchModalProvider.key]?.id
-                    const hasValidActiveId =
-                      activeConnId != null &&
-                      String(activeConnId).trim() !== "" &&
-                      String(activeConnId) !== "undefined" &&
-                      String(activeConnId) !== "null" &&
-                      String(activeConnId) !== "linked"
+                    {!isSearching &&
+                      searchResults.map((result, idx) => {
+                        const activeConnId =
+                          localConnections[searchModalProvider.key]?.id
+                        const hasValidActiveId =
+                          activeConnId != null &&
+                          String(activeConnId).trim() !== "" &&
+                          String(activeConnId) !== "undefined" &&
+                          String(activeConnId) !== "null" &&
+                          String(activeConnId) !== "linked"
 
-                    const hasValidResultId =
-                      result.externalId != null &&
-                      String(result.externalId).trim() !== "" &&
-                      String(result.externalId) !== "undefined" &&
-                      String(result.externalId) !== "null"
+                        const hasValidResultId =
+                          result.externalId != null &&
+                          String(result.externalId).trim() !== "" &&
+                          String(result.externalId) !== "undefined" &&
+                          String(result.externalId) !== "null"
 
-                    const isCurrent =
-                      hasValidActiveId &&
-                      hasValidResultId &&
-                      String(activeConnId) === String(result.externalId)
+                        const isCurrent =
+                          hasValidActiveId &&
+                          hasValidResultId &&
+                          String(activeConnId) === String(result.externalId)
 
-                    const itemKey = result.externalId
-                      ? `${result.externalId}-${idx}`
-                      : `search-result-${idx}`
+                        const itemKey = result.externalId
+                          ? `${result.externalId}-${idx}`
+                          : `search-result-${idx}`
 
-                    return (
-                      <div
-                        key={itemKey}
-                        className={`flex items-center justify-between gap-3 p-2.5 rounded-xl border transition-all w-full min-w-0 overflow-hidden ${
-                          isCurrent
-                            ? "border-primary/50 bg-primary/10"
-                            : "border-border bg-card hover:border-border/80"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-hidden">
-                          {result.coverImage ? (
-                            <img
-                              src={result.coverImage}
-                              alt={result.title}
-                              className="w-10 h-14 rounded-md object-cover border border-border bg-muted shrink-0"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <div className="w-10 h-14 rounded-md border border-border bg-muted flex items-center justify-center shrink-0 text-muted-foreground">
-                              {category === "manga" ? (
-                                <IconBook className="size-4" />
+                        return (
+                          <div
+                            key={itemKey}
+                            className={`flex w-full min-w-0 items-center justify-between gap-3 overflow-hidden rounded-xl border p-2.5 transition-all ${
+                              isCurrent
+                                ? "border-primary/50 bg-primary/10"
+                                : "border-border bg-card hover:border-border/80"
+                            }`}
+                          >
+                            <div className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
+                              {result.coverImage ? (
+                                <img
+                                  src={result.coverImage}
+                                  alt={result.title}
+                                  className="h-14 w-10 shrink-0 rounded-md border border-border bg-muted object-cover"
+                                  loading="lazy"
+                                />
                               ) : (
-                                <IconDeviceTv className="size-4" />
+                                <div className="flex h-14 w-10 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground">
+                                  {category === "manga" ? (
+                                    <IconBook className="size-4" />
+                                  ) : (
+                                    <IconDeviceTv className="size-4" />
+                                  )}
+                                </div>
                               )}
-                            </div>
-                          )}
 
-                          <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
-                            <span className="text-xs font-semibold text-foreground truncate block">
-                              {result.title}
-                            </span>
-                            {result.titleSecondary && (
-                              <span className="text-[11px] text-muted-foreground truncate block">
-                                {result.titleSecondary}
-                              </span>
-                            )}
-
-                            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-1 flex-wrap">
-                              {result.format && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-[9px] px-1 py-0 border-border"
-                                >
-                                  {result.format}
-                                </Badge>
-                              )}
-                              {result.releaseYear && <span>{result.releaseYear}</span>}
-                              {result.episodes && (
-                                <span>
-                                  {result.episodes}{" "}
-                                  {category === "manga" ? "chapters" : "episodes"}
+                              <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                                <span className="block truncate text-xs font-semibold text-foreground">
+                                  {result.title}
                                 </span>
-                              )}
-                              {result.externalId &&
-                                result.externalId !== "undefined" &&
-                                result.externalId !== "null" && (
-                                  <span className="font-mono text-muted-foreground/75">
-                                    #{result.externalId}
+                                {result.titleSecondary && (
+                                  <span className="block truncate text-[11px] text-muted-foreground">
+                                    {result.titleSecondary}
                                   </span>
                                 )}
+
+                                <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+                                  {result.format && (
+                                    <Badge
+                                      variant="outline"
+                                      className="border-border px-1 py-0 text-[9px]"
+                                    >
+                                      {result.format}
+                                    </Badge>
+                                  )}
+                                  {result.releaseYear && (
+                                    <span>{result.releaseYear}</span>
+                                  )}
+                                  {result.episodes && (
+                                    <span>
+                                      {result.episodes}{" "}
+                                      {category === "manga"
+                                        ? "chapters"
+                                        : "episodes"}
+                                    </span>
+                                  )}
+                                  {result.externalId &&
+                                    result.externalId !== "undefined" &&
+                                    result.externalId !== "null" && (
+                                      <span className="font-mono text-muted-foreground/75">
+                                        #{result.externalId}
+                                      </span>
+                                    )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="shrink-0">
+                              {isCurrent ? (
+                                <Badge
+                                  variant="outline"
+                                  className="border-primary/40 bg-primary/15 text-[10px] text-primary"
+                                >
+                                  <IconCheck className="me-1 inline size-3" />
+                                  Linked
+                                </Badge>
+                              ) : (
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleSelectSeries(
+                                      searchModalProvider,
+                                      result
+                                    )
+                                  }
+                                  className="h-7 bg-primary px-3 text-xs text-primary-foreground hover:bg-primary/90"
+                                >
+                                  Select
+                                </Button>
+                              )}
                             </div>
                           </div>
-                        </div>
-
-                        <div className="shrink-0">
-                          {isCurrent ? (
-                            <Badge
-                              variant="outline"
-                              className="text-[10px] text-primary border-primary/40 bg-primary/15"
-                            >
-                              <IconCheck className="size-3 me-1 inline" />
-                              Linked
-                            </Badge>
-                          ) : (
-                            <Button
-                              type="button"
-                              size="sm"
-                              onClick={() => handleSelectSeries(searchModalProvider, result)}
-                              className="h-7 px-3 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
-                            >
-                              Select
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
+                        )
+                      })}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
             </AriaDialog>
           </AriaModal>
         </AriaModalOverlay>
       )}
-  </div>
-)
+    </div>
+  )
 }

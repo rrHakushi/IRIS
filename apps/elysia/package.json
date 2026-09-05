@@ -19,7 +19,7 @@
     }
   },
   "scripts": {
-    "dev": "bun run scripts/generate-manifests.ts && dotenvx run -f ../../.env -- bun --no-warnings --watch src/index.ts",
+    "dev": "dotenvx run -f ../../.env -- bun scripts/dev.ts",
     "start": "bun run scripts/generate-manifests.ts && dotenvx run -f ../../.env -- bun --no-warnings run src/index.ts",
     "build": "bun run scripts/generate-manifests.ts && echo \"@IRIS/elysia build completed\"",
     "lint": "eslint",

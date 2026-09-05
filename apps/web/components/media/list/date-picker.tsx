@@ -84,17 +84,19 @@ export function DatePicker({
         disabled={disabled}
         aria-label={ariaLabel}
         className={cn(
-          "relative flex h-9 w-full cursor-pointer items-center justify-between rounded-xl border border-border bg-card px-3 py-2 text-xs font-normal text-foreground transition-colors hover:border-border/80 hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-          disabled && "opacity-50 cursor-not-allowed",
+          "relative flex h-9 w-full cursor-pointer items-center justify-between rounded-xl border border-border bg-card px-3 py-2 text-xs font-normal text-foreground transition-colors hover:border-border/80 hover:bg-accent focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none",
+          disabled && "cursor-not-allowed opacity-50",
           className
         )}
       >
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex min-w-0 items-center gap-2">
           <IconCalendar className="size-3.5 shrink-0 text-muted-foreground" />
           <span
             className={cn(
               "truncate text-xs",
-              formattedDisplay ? "font-medium text-foreground" : "text-muted-foreground"
+              formattedDisplay
+                ? "font-medium text-foreground"
+                : "text-muted-foreground"
             )}
           >
             {formattedDisplay || placeholder}
@@ -115,7 +117,7 @@ export function DatePicker({
                 onChange(null)
               }
             }}
-            className="cursor-pointer text-muted-foreground hover:text-foreground p-0.5 z-10 transition-colors"
+            className="z-10 cursor-pointer p-0.5 text-muted-foreground transition-colors hover:text-foreground"
             aria-label="Clear date"
           >
             <IconX className="size-3" />
@@ -127,12 +129,12 @@ export function DatePicker({
         aria-label={ariaLabel || "Select date"}
         shouldFlip={false}
         placement={align === "end" ? "bottom end" : "bottom start"}
-        className="w-auto p-0 rounded-2xl border border-border bg-popover text-popover-foreground shadow-xl overflow-hidden"
+        className="w-auto overflow-hidden rounded-2xl border border-border bg-popover p-0 text-popover-foreground shadow-xl"
       >
         {({ close }: any) => (
           <Dialog
             aria-label={ariaLabel || "Choose date"}
-            className="outline-none flex flex-col"
+            className="flex flex-col outline-none"
           >
             <Heading slot="title" className="sr-only">
               {ariaLabel || "Choose date"}
@@ -144,18 +146,18 @@ export function DatePicker({
               className="bg-transparent p-3"
             />
             {/* Quick action buttons: Today / Clear */}
-            <div className="flex items-center justify-between border-t border-border px-3 py-2 text-xs bg-muted/30">
+            <div className="flex items-center justify-between border-t border-border bg-muted/30 px-3 py-2 text-xs">
               <button
                 type="button"
                 onClick={() => handleSetToday(close)}
-                className="cursor-pointer font-medium text-primary hover:underline transition-colors"
+                className="cursor-pointer font-medium text-primary transition-colors hover:underline"
               >
                 Today
               </button>
               <button
                 type="button"
                 onClick={() => handleClear(close)}
-                className="cursor-pointer text-muted-foreground hover:text-destructive transition-colors"
+                className="cursor-pointer text-muted-foreground transition-colors hover:text-destructive"
               >
                 Clear
               </button>

@@ -107,7 +107,6 @@ async function updateEntityFavoritesCounter(
   }
 }
 
-
 export default defineRoute({
   schemas: {
     GET: {
@@ -134,13 +133,17 @@ export default defineRoute({
       params: paramsSchema,
       body: t.Object({
         type: FavoriteTypeSchema,
-        title: t.Optional(t.String({ description: "Display title for user feedback" })),
+        title: t.Optional(
+          t.String({ description: "Display title for user feedback" })
+        ),
       }),
       response: {
         200: t.Object({
           success: t.Boolean(),
           isFavorited: t.Boolean(),
-          action: t.Optional(t.Union([t.Literal("added"), t.Literal("removed")])),
+          action: t.Optional(
+            t.Union([t.Literal("added"), t.Literal("removed")])
+          ),
           message: t.String(),
           favorite: t.Optional(t.Nullable(FavoriteItemSchema)),
         }),

@@ -66,7 +66,8 @@ export default defineRoute({
 
     const currentProgress = existing ? existing.progressChapters : 0
     let newProgress = currentProgress + count
-    let newStatus: BookListStatus = (existing?.status as BookListStatus) ?? "READING"
+    let newStatus: BookListStatus =
+      (existing?.status as BookListStatus) ?? "READING"
     let completedAt = existing?.completedAt ?? null
 
     if (newStatus === "PLANNING") {
@@ -121,7 +122,9 @@ export default defineRoute({
         bookId: result.bookId,
         status: result.status,
         progressChapters: result.progressChapters,
-        completedAt: result.completedAt ? result.completedAt.toISOString() : null,
+        completedAt: result.completedAt
+          ? result.completedAt.toISOString()
+          : null,
       },
     }
   },

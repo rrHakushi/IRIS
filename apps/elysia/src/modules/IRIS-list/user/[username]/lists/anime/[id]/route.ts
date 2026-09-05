@@ -218,7 +218,8 @@ export default defineRoute({
       select: { id: true, progress: true, score: true, status: true },
     })
 
-    let targetProgress = payload.progress !== undefined ? payload.progress : existing?.progress
+    let targetProgress =
+      payload.progress !== undefined ? payload.progress : existing?.progress
     if (
       animeExists.episodeCount &&
       animeExists.episodeCount > 0 &&
@@ -233,7 +234,9 @@ export default defineRoute({
       ...(targetProgress !== undefined ? { progress: targetProgress } : {}),
       ...(payload.score !== undefined ? { score: payload.score } : {}),
       ...(payload.notes !== undefined ? { notes: payload.notes } : {}),
-      ...(payload.rewatched !== undefined ? { rewatched: payload.rewatched } : {}),
+      ...(payload.rewatched !== undefined
+        ? { rewatched: payload.rewatched }
+        : {}),
       ...(payload.private !== undefined ? { private: payload.private } : {}),
       ...(startedAt !== undefined ? { startedAt } : {}),
       ...(completedAt !== undefined ? { completedAt } : {}),
@@ -289,7 +292,9 @@ export default defineRoute({
         rewatched: result.rewatched,
         private: result.private,
         startedAt: result.startedAt ? result.startedAt.toISOString() : null,
-        completedAt: result.completedAt ? result.completedAt.toISOString() : null,
+        completedAt: result.completedAt
+          ? result.completedAt.toISOString()
+          : null,
         rewatchHistory: result.rewatchHistory,
         connections: result.connections,
         createdAt: result.createdAt.toISOString(),
@@ -341,7 +346,8 @@ export default defineRoute({
       select: { id: true, progress: true, score: true, status: true },
     })
 
-    let targetProgress = payload.progress !== undefined ? payload.progress : existing?.progress
+    let targetProgress =
+      payload.progress !== undefined ? payload.progress : existing?.progress
     if (
       animeExists.episodeCount &&
       animeExists.episodeCount > 0 &&
@@ -356,7 +362,9 @@ export default defineRoute({
       ...(targetProgress !== undefined ? { progress: targetProgress } : {}),
       ...(payload.score !== undefined ? { score: payload.score } : {}),
       ...(payload.notes !== undefined ? { notes: payload.notes } : {}),
-      ...(payload.rewatched !== undefined ? { rewatched: payload.rewatched } : {}),
+      ...(payload.rewatched !== undefined
+        ? { rewatched: payload.rewatched }
+        : {}),
       ...(payload.private !== undefined ? { private: payload.private } : {}),
       ...(startedAt !== undefined ? { startedAt } : {}),
       ...(completedAt !== undefined ? { completedAt } : {}),
@@ -412,7 +420,9 @@ export default defineRoute({
         rewatched: result.rewatched,
         private: result.private,
         startedAt: result.startedAt ? result.startedAt.toISOString() : null,
-        completedAt: result.completedAt ? result.completedAt.toISOString() : null,
+        completedAt: result.completedAt
+          ? result.completedAt.toISOString()
+          : null,
         rewatchHistory: result.rewatchHistory,
         connections: result.connections,
         createdAt: result.createdAt.toISOString(),
