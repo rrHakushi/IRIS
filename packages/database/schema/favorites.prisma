@@ -5,7 +5,8 @@ enum FavoriteType {
     TV
     GAME
     BOOK
-    MUSIC
+    MUSIC_ALBUM
+    MUSIC_TRACK
     CHARACTER
     PERSON
     STUDIO

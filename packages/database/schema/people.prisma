@@ -15,18 +15,26 @@ enum StaffRole {
     AUTHOR
     ILLUSTRATOR
     CAST
+    ARTIST
+    FEATURED_ARTIST
+    LYRICIST
+    ARRANGER
     OTHER
 }
 
 model Person {
-    id        Int  @id @default(autoincrement())
-    anilistId Int? @unique
-    malId     Int? @unique
-    aniDBId   Int? @unique
-    tvDBId    Int? @unique
-    bangumiId Int? @unique
+    id        Int     @id @default(autoincrement())
+    anilistId Int?    @unique
+    malId     Int?    @unique
+    aniDBId   Int?    @unique
+    tvDBId    Int?    @unique
+    bangumiId Int?    @unique
     imdbId    String? @unique
     tmdbId    Int?    @unique
+
+    musicBrainzId String? @unique
+    lastFmUrl     String? @unique
+    spotifyId     String? @unique
 
     namePrimary     String   @db.Text
     nameNative      String?  @db.Text
@@ -37,7 +45,10 @@ model Person {
     description String? @db.Text
     language    String?
 
-    favorites   Int? @default(0)
+    // Stats
+    lastFmListenersStat Int? @default(0)
+    lastFmPlayCountStat Int? @default(0)
+    favorites           Int? @default(0)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -61,15 +72,21 @@ model MediaStaff {
     movieId Int?
     tvId    Int?
     bookId  Int?
+    albumId Int?
+    trackId Int?
 
-    person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
-    anime  Anime? @relation(fields: [animeId], references: [id], onDelete: Cascade)
-    manga  Manga? @relation(fields: [mangaId], references: [id], onDelete: Cascade)
-    movie  Movie? @relation(fields: [movieId], references: [id], onDelete: Cascade)
-    tv     Tv?    @relation(fields: [tvId], references: [id], onDelete: Cascade)
-    book   Book?  @relation(fields: [bookId], references: [id], onDelete: Cascade)
+    person Person      @relation(fields: [personId], references: [id], onDelete: Cascade)
+    anime  Anime?      @relation(fields: [animeId], references: [id], onDelete: Cascade)
+    manga  Manga?      @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+    movie  Movie?      @relation(fields: [movieId], references: [id], onDelete: Cascade)
+    tv     Tv?         @relation(fields: [tvId], references: [id], onDelete: Cascade)
+    book   Book?       @relation(fields: [bookId], references: [id], onDelete: Cascade)
+    album  MusicAlbum? @relation(fields: [albumId], references: [id], onDelete: Cascade)
+    track  MusicTrack? @relation(fields: [trackId], references: [id], onDelete: Cascade)
 
     @@unique([mediaType, mediaId, personId, role])
     @@index([mediaType, mediaId])
     @@index([personId])
+    @@index([albumId])
+    @@index([trackId])
 }

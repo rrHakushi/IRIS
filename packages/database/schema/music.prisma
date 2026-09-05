@@ -5,51 +5,134 @@ enum MusicStatus {
     UNKNOWN
 }
 
-model Music {
-    id             Int     @id @default(autoincrement())
+enum MusicAlbumType {
+    ALBUM
+    SINGLE
+    EP
+    COMPILATION
+    SOUNDTRACK
+    LIVE
+    REMIX
+    OTHER
+}
+
+enum MusicItemType {
+    ALBUM
+    TRACK
+}
+
+model MusicAlbum {
+    id             Int            @id @default(autoincrement())
+    musicBrainzId  String?        @unique
+    lastFmUrl      String?
     spotifyId      String?
     appleMusicId   String?
-    youtubeMusicId String?
-    musicBrainzId  String? @unique
-    isrc           String?
+    barcode        String?
 
-    titlePrimary   String   @db.Text
-    titleSecondary String?  @db.Text
-    artist         String?  @db.Text
-    artists        String[] @db.Text
-    album          String?  @db.Text
+    titlePrimary   String         @db.Text
+    titleSecondary String?        @db.Text
+    titleNative    String?        @db.Text
+    artistName     String?        @db.Text
 
-    coverImage  String? @db.Text
-    bannerImage String? @db.Text
-    images      Json?   @db.JsonB
+    coverImage     String?        @db.Text
+    bannerImage    String?        @db.Text
+    images         Json?          @db.JsonB
 
-    description      String?   @db.Text
-    duration         Int? // Duration in seconds
+    description    String?        @db.Text
+    albumType      MusicAlbumType @default(ALBUM)
+    totalTracks    Int?
+    duration       Int?           // Duration in seconds
+
     releaseDateYear  Int?
     releaseDateMonth Int?
     releaseDateDay   Int?
     releaseDate      DateTime?
 
-    genres          Genre[]
-    tags            Tag[]
-    audioPreviewUrl String? @db.Text
-    lyrics          String? @db.Text
-    syncedLyrics    String? @db.Text
-    sources         Json?   @db.JsonB
+    genres         Genre[]
+    tags           Tag[]
+    sources        Json?          @db.JsonB
 
-    status     MusicStatus @default(RELEASED)
-    favorites  Int         @default(0)
-    popularity Int         @default(0)
+    status         MusicStatus    @default(RELEASED)
 
-    musicBrainzUpdatedAt Int?
+    // Stats
+    lastFmListenersStat Int?      @default(0)
+    lastFmPlayCountStat Int?      @default(0)
+    listeners           Int       @default(0)
+    playCount           Int       @default(0)
+    favorites           Int       @default(0)
+    popularity          Int       @default(0)
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    lastFmUpdatedAt       Int?
+    musicBrainzUpdatedAt  Int?
 
-    userLists        MusicList[]
-    reviews          MusicReview[]
+    createdAt      DateTime       @default(now())
+    updatedAt      DateTime       @updatedAt
+
+    tracks         MusicTrack[]
+    staff          MediaStaff[]
+    userLists      MusicList[]
+    reviews        MusicReview[]
     watchlistEntries WatchlistEntry[]
 
     @@index([titlePrimary])
-    @@index([artist])
+    @@index([artistName])
+    @@index([popularity(sort: Desc)])
+    @@index([lastFmListenersStat(sort: Desc)])
+}
+
+model MusicTrack {
+    id             Int            @id @default(autoincrement())
+    albumId        Int?
+    album          MusicAlbum?    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+
+    trackNumber    Int?
+    discNumber     Int?           @default(1)
+
+    musicBrainzId  String?        @unique
+    isrc           String?
+    lastFmUrl      String?
+    spotifyId      String?
+    appleMusicId   String?
+    youtubeMusicId String?
+
+    titlePrimary   String         @db.Text
+    titleSecondary String?        @db.Text
+    titleNative    String?        @db.Text
+    artistName     String?        @db.Text
+
+    coverImage     String?        @db.Text
+    duration       Int?           // Duration in seconds
+    audioPreviewUrl String?       @db.Text
+    description    String?        @db.Text
+    lyrics         String?        @db.Text
+    syncedLyrics   String?        @db.Text
+    sources        Json?          @db.JsonB
+
+    genres         Genre[]
+    tags           Tag[]
+    status         MusicStatus    @default(RELEASED)
+
+    // Stats
+    lastFmListenersStat Int?      @default(0)
+    lastFmPlayCountStat Int?      @default(0)
+    listeners           Int       @default(0)
+    playCount           Int       @default(0)
+    favorites           Int       @default(0)
+    popularity          Int       @default(0)
+
+    lastFmUpdatedAt       Int?
+    musicBrainzUpdatedAt  Int?
+
+    createdAt      DateTime       @default(now())
+    updatedAt      DateTime       @updatedAt
+
+    staff          MediaStaff[]
+    userLists      MusicList[]
+    reviews        MusicReview[]
+    watchlistEntries WatchlistEntry[]
+
+    @@index([titlePrimary])
+    @@index([artistName])
+    @@index([albumId])
+    @@index([popularity(sort: Desc)])
 }
