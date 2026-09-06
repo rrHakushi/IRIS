@@ -1,18 +1,11 @@
-import type { Metadata } from "next"
+import { redirect } from "next/navigation"
 
 type Props = {
   params: Promise<{ username: string }>
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export default async function WatchlistsPage({ params }: Props) {
   const { username } = await params
-  const decodedUsername = decodeURIComponent(username)
-  return {
-    title: `IRIS List | Lists > ${decodedUsername}'s Watchlists`,
-    description: `Custom watchlists for ${decodedUsername}`,
-  }
+  redirect(`/IRIS-list/lists/${username}/custom-lists`)
 }
 
-export default function WatchlistsPage() {
-  return <>page</>
-}

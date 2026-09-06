@@ -52,6 +52,7 @@ import {
   getDisplayNameStyleCss,
   getDisplayNameEffectClasses,
   type UserProfileCustomization,
+  type DisplayNameStyle,
 } from "@IRIS/shared"
 import { UserProfilePopover } from "@/components/navigation/settings-tabs/account/profile/profile-preview-card"
 import type { MediaListType } from "./types"
@@ -64,10 +65,11 @@ export interface CommentAuthor {
   avatarFrame: string | null
   bannerUrl?: string | null
   nameplateUrl?: string | null
+  sidebarBannerUrl?: string | null
   bio?: string | null
   statusText?: string | null
   pronouns?: string | null
-  displayNameStyle?: any
+  displayNameStyle?: DisplayNameStyle | null
 }
 
 export interface CommentReply {
@@ -75,8 +77,8 @@ export interface CommentReply {
   commentId: string
   authorId: string
   content: string
-  createdAt: string
-  updatedAt: string
+  createdAt: string | Date
+  updatedAt: string | Date
   author: CommentAuthor
 }
 
@@ -87,8 +89,8 @@ export interface ListCommentItem {
   authorId: string
   content: string
   isSpoiler: boolean
-  createdAt: string
-  updatedAt: string
+  createdAt: string | Date
+  updatedAt: string | Date
   author: CommentAuthor
   reply: CommentReply | null
 }
@@ -111,7 +113,7 @@ function isValidFrameUrl(url?: string | null): url is string {
   )
 }
 
-function formatCommentDate(dateStr: string): {
+function formatCommentDate(dateStr: string | Date): {
   relative: string
   full: string
 } {
@@ -137,7 +139,8 @@ function formatCommentDate(dateStr: string): {
       full,
     }
   } catch {
-    return { relative: dateStr, full: dateStr }
+    const fallback = String(dateStr)
+    return { relative: fallback, full: fallback }
   }
 }
 
@@ -294,13 +297,15 @@ export function ListCommentsTab({
             },
           })
 
+        console.log(res)
+
         if (
           !res.error &&
           res.data?.success &&
           Array.isArray(res.data.comments)
         ) {
-          setComments(res.data.comments as unknown as ListCommentItem[])
-          const pagination = (res.data as any).pagination
+          setComments(res.data.comments)
+          const pagination = res.data.pagination
           if (pagination) {
             const total = pagination.total ?? 0
             const calculatedTotalPages = Math.max(1, pagination.totalPages ?? 1)
@@ -421,20 +426,10 @@ export function ListCommentsTab({
           isSpoiler,
         })
 
-      const isRateLimited =
-        res.status === 429 ||
-        (res.error as any)?.status === 429 ||
-        (res.data as any)?.status === 429
+      const isRateLimited = res.status === 429
 
       if (isRateLimited) {
-        const retryAfter =
-          (res.data as any)?.retryAfter ??
-          (res.error as any)?.value?.retryAfter ??
-          (res.headers?.get?.("retry-after")
-            ? parseInt(res.headers.get("retry-after")!, 10)
-            : null) ??
-          60
-        startRateLimitCountdown(retryAfter)
+        startRateLimitCountdown(60)
         return
       }
 
@@ -449,17 +444,21 @@ export function ListCommentsTab({
           navigateToPage(1, true)
         }
       } else {
-        const rawErr = (res.error as any)?.value
+        const rawErr =
+          res.error && typeof res.error === "object" && "value" in res.error
+            ? (res.error as { value: { message?: string } | string }).value
+            : null
         const errMessage =
           typeof rawErr === "string"
             ? rawErr
             : rawErr?.message || "Failed to post comment."
         toast.error(errMessage)
       }
-    } catch (err: any) {
+    } catch (err) {
       toast.error(
-        err?.message ||
-          "An unexpected error occurred while posting your comment."
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred while posting your comment."
       )
     } finally {
       setIsSubmittingComment(false)
@@ -479,16 +478,19 @@ export function ListCommentsTab({
           content: replyText.trim(),
         })
 
-      if (!res.error && res.data?.success && res.data.reply) {
-        const newReply = res.data.reply as unknown as CommentReply
+      const createdReply = res.data?.reply || res.data?.data
+      if (!res.error && res.data?.success && createdReply) {
         setComments((prev) =>
-          prev.map((c) => (c.id === commentId ? { ...c, reply: newReply } : c))
+          prev.map((c) => (c.id === commentId ? { ...c, reply: createdReply } : c))
         )
         setReplyingToId(null)
         setReplyText("")
         toast.success("Reply posted successfully.")
       } else {
-        const rawErr = (res.error as any)?.value
+        const rawErr =
+          res.error && typeof res.error === "object" && "value" in res.error
+            ? (res.error as { value: { message?: string } | string }).value
+            : null
         const errMessage =
           typeof rawErr === "string"
             ? rawErr
@@ -515,17 +517,23 @@ export function ListCommentsTab({
           content: editReplyText.trim(),
         })
 
-      if (!res.error && res.data?.success && res.data.reply) {
-        const updated = res.data.reply as unknown as CommentReply
+      const updatedReply = res.data?.reply || res.data?.data
+      if (!res.error && res.data?.success && updatedReply) {
         setComments((prev) =>
-          prev.map((c) => (c.id === commentId ? { ...c, reply: updated } : c))
+          prev.map((c) => (c.id === commentId ? { ...c, reply: updatedReply } : c))
         )
         setEditingReplyId(null)
         setEditReplyText("")
         toast.success("Reply updated successfully.")
       } else {
+        const rawErr =
+          res.error && typeof res.error === "object" && "value" in res.error
+            ? (res.error as { value: { message?: string } | string }).value
+            : null
         const errMessage =
-          (res.error as any)?.value?.message || "Failed to update reply."
+          typeof rawErr === "string"
+            ? rawErr
+            : rawErr?.message || "Failed to update reply."
         toast.error(errMessage)
       }
     } catch {
@@ -546,7 +554,7 @@ export function ListCommentsTab({
         .comments({ id: deleteReplyTarget.commentId })
         .reply.delete()
 
-      if (!res.error && res.data?.success) {
+      if (!res.error) {
         setComments((prev) =>
           prev.map((c) =>
             c.id === deleteReplyTarget.commentId ? { ...c, reply: null } : c
@@ -555,8 +563,14 @@ export function ListCommentsTab({
         toast.success("Reply deleted.")
         setDeleteReplyTarget(null)
       } else {
+        const rawErr =
+          res.error && typeof res.error === "object" && "value" in res.error
+            ? (res.error as { value: { message?: string } | string }).value
+            : null
         const errMessage =
-          (res.error as any)?.value?.message || "Failed to delete reply."
+          typeof rawErr === "string"
+            ? rawErr
+            : rawErr?.message || "Failed to delete reply."
         toast.error(errMessage)
       }
     } catch {
@@ -577,7 +591,7 @@ export function ListCommentsTab({
         .comments({ id: deleteCommentTarget.id })
         .delete()
 
-      if (!res.error && res.data?.success) {
+      if (!res.error) {
         toast.success("Comment and any replies deleted.")
         setDeleteCommentTarget(null)
         if (comments.length <= 1 && currentPage > 1) {
@@ -587,8 +601,14 @@ export function ListCommentsTab({
           fetchComments(currentPage)
         }
       } else {
+        const rawErr =
+          res.error && typeof res.error === "object" && "value" in res.error
+            ? (res.error as { value: { message?: string } | string }).value
+            : null
         const errMessage =
-          (res.error as any)?.value?.message || "Failed to delete comment."
+          typeof rawErr === "string"
+            ? rawErr
+            : rawErr?.message || "Failed to delete comment."
         toast.error(errMessage)
       }
     } catch {
@@ -714,10 +734,10 @@ export function ListCommentsTab({
             const isRevealed = revealedSpoilers.has(comment.id)
             const commentDate = formatCommentDate(comment.createdAt)
             const authorStyle = getDisplayNameStyleCss(
-              comment.author.displayNameStyle
+              comment.author.displayNameStyle ?? undefined
             )
             const authorEffect = getDisplayNameEffectClasses(
-              comment.author.displayNameStyle?.effect
+              comment.author.displayNameStyle?.effect ?? undefined
             )
 
             const authorHasDisplayName = Boolean(
@@ -761,29 +781,29 @@ export function ListCommentsTab({
 
             const replyAuthorProfile: UserProfileCustomization | null = reply
               ? {
-                  displayName: reply.author.displayName || "",
-                  displayNameStyle: reply.author.displayNameStyle || {
-                    font: "default",
-                    effect: "solid",
-                    color: "currentColor",
-                    color2: "#8b5cf6",
-                    colors: [
-                      "#a855f7",
-                      "#3b82f6",
-                      "#10b981",
-                      "#f59e0b",
-                      "#ef4444",
-                    ],
-                  },
-                  pronouns: (reply.author as any).pronouns || "",
-                  statusText: (reply.author as any).statusText || "",
-                  bio: (reply.author as any).bio || "",
-                  avatarUrl: reply.author.avatarUrl,
-                  bannerUrl: (reply.author as any).bannerUrl || null,
-                  nameplateUrl: (reply.author as any).nameplateUrl || null,
-                  sidebarBannerUrl: (reply.author as any).nameplateUrl || null,
-                  avatarFrame: reply.author.avatarFrame,
-                }
+                displayName: reply.author.displayName || "",
+                displayNameStyle: reply.author.displayNameStyle || {
+                  font: "default",
+                  effect: "solid",
+                  color: "currentColor",
+                  color2: "#8b5cf6",
+                  colors: [
+                    "#a855f7",
+                    "#3b82f6",
+                    "#10b981",
+                    "#f59e0b",
+                    "#ef4444",
+                  ],
+                },
+                pronouns: reply.author.pronouns || "",
+                statusText: reply.author.statusText || "",
+                bio: reply.author.bio || "",
+                avatarUrl: reply.author.avatarUrl,
+                bannerUrl: reply.author.bannerUrl || null,
+                nameplateUrl: reply.author.nameplateUrl || null,
+                sidebarBannerUrl: reply.author.sidebarBannerUrl || null,
+                avatarFrame: reply.author.avatarFrame,
+              }
               : null
 
             return (
@@ -1032,11 +1052,11 @@ export function ListCommentsTab({
                                 className={cn(
                                   "cursor-pointer text-start text-xs font-semibold text-foreground hover:underline focus:outline-hidden",
                                   getDisplayNameEffectClasses(
-                                    reply.author.displayNameStyle?.effect
+                                    reply.author.displayNameStyle?.effect ?? undefined
                                   )
                                 )}
                                 style={getDisplayNameStyleCss(
-                                  reply.author.displayNameStyle
+                                  reply.author.displayNameStyle ?? undefined
                                 )}
                               >
                                 {replyAuthorNameToDisplay}
@@ -1193,7 +1213,7 @@ export function ListCommentsTab({
                   className={cn(
                     "cursor-pointer",
                     (currentPage <= 1 || isLoading) &&
-                      "pointer-events-none opacity-40"
+                    "pointer-events-none opacity-40"
                   )}
                   onPress={() => {
                     if (currentPage > 1 && !isLoading) {
@@ -1216,7 +1236,7 @@ export function ListCommentsTab({
                       className={cn(
                         "cursor-pointer",
                         page === currentPage &&
-                          "border-primary/40 font-semibold text-primary"
+                        "border-primary/40 font-semibold text-primary"
                       )}
                       onPress={() => {
                         if (!isLoading && page !== currentPage) {
@@ -1236,7 +1256,7 @@ export function ListCommentsTab({
                   className={cn(
                     "cursor-pointer",
                     (currentPage >= totalPages || isLoading) &&
-                      "pointer-events-none opacity-40"
+                    "pointer-events-none opacity-40"
                   )}
                   onPress={() => {
                     if (currentPage < totalPages && !isLoading) {

@@ -109,6 +109,9 @@ export interface VisitedMediaItem {
   visitedAt: number
   type?: "TRACK" | "ALBUM"
   artist?: string | null
+  album?: string | null
+  audioPreviewUrl?: string | null
+  explicitLyrics?: boolean | null
 }
 
 export interface CategoryBrowseHistory {
@@ -259,6 +262,9 @@ export function addBrowseVisitToStore(
     visitedAt: item.visitedAt ?? Date.now(),
     type: item.type,
     artist: item.artist ?? null,
+    album: item.album ?? null,
+    audioPreviewUrl: item.audioPreviewUrl ?? null,
+    explicitLyrics: item.explicitLyrics ?? null,
   }
 
   const existing = catHistory.recentBrowseVisits.filter(

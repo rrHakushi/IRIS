@@ -15,6 +15,7 @@ import {
 import { getCategoryLabel } from "./browse-category-nav"
 
 interface BrowseSearchBarProps {
+  category?: BrowseCategory
   categoryLabel?: string
   value: string
   onChange: (value: string) => void
@@ -26,6 +27,7 @@ interface BrowseSearchBarProps {
 }
 
 export function BrowseSearchBar({
+  category,
   value,
   onChange,
   onClear,
@@ -45,10 +47,14 @@ export function BrowseSearchBar({
     setMounted(true)
   }, [])
 
-  const placeholderText =
-    mounted && isMobile
+  const placeholderText = useMemo(() => {
+    if (category === "music") {
+      return t("searchPlaceholderMusic")
+    }
+    return mounted && isMobile
       ? t("searchPlaceholderPhone")
       : t("searchPlaceholderDesktop")
+  }, [category, mounted, isMobile, t])
 
   // Detect if user is currently typing an @tag prefix e.g. "@", "@an", "@mov"
   const tagQuery = useMemo(() => {

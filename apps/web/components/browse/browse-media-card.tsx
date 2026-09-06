@@ -3,11 +3,17 @@
 import React, { useState } from "react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { IconPhotoOff, IconX } from "@tabler/icons-react"
+import {
+  IconPhotoOff,
+  IconX,
+  IconPlayerPlay,
+  IconPlayerPause,
+} from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import type { BrowseCategory, VisitedMediaItem } from "@/lib/browse-history"
+import { useAudioPreview } from "@/lib/audio-preview-manager"
 
 interface BrowseMediaCardProps {
   item: {
@@ -19,12 +25,23 @@ interface BrowseMediaCardProps {
     queuedForFetch?: boolean
     type?: "TRACK" | "ALBUM"
     artist?: string | null
+    album?: string | null
+    duration?: number | null
+    audioPreviewUrl?: string | null
+    explicitLyrics?: boolean | null
   }
   category: BrowseCategory
   onVisit?: (item: VisitedMediaItem) => void
   onRemove?: (id: number | string, type?: "TRACK" | "ALBUM") => void
   showRemoveButton?: boolean
   className?: string
+}
+
+function formatDuration(seconds?: number | null): string {
+  if (!seconds || seconds <= 0) return ""
+  const mins = Math.floor(seconds / 60)
+  const secs = Math.floor(seconds % 60)
+  return `${mins}:${secs.toString().padStart(2, "0")}`
 }
 
 export function BrowseMediaCard({
@@ -37,6 +54,16 @@ export function BrowseMediaCard({
 }: BrowseMediaCardProps) {
   const t = useTranslations("browse")
   const [imageError, setImageError] = useState(false)
+  const { isCurrentTrackPlaying, togglePlay } = useAudioPreview()
+  const isPlaying = isCurrentTrackPlaying(item.id)
+
+  const handleTogglePlay = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!item.audioPreviewUrl) return
+    togglePlay(item.id, item.audioPreviewUrl)
+  }
+
   const isSquare =
     category === "music" || item.type === "TRACK" || item.type === "ALBUM"
 
@@ -60,6 +87,9 @@ export function BrowseMediaCard({
       queuedForFetch: item.queuedForFetch,
       type: item.type,
       artist: item.artist,
+      album: item.album,
+      audioPreviewUrl: item.audioPreviewUrl,
+      explicitLyrics: item.explicitLyrics,
       visitedAt: Date.now(),
     })
   }
@@ -110,6 +140,15 @@ export function BrowseMediaCard({
                 {item.format}
               </Badge>
             )}
+            {item.explicitLyrics && (
+              <Badge
+                variant="outline"
+                className="border-transparent bg-foreground/80 px-1 py-0 text-[9px] font-bold text-background backdrop-blur-xs"
+                title="Explicit Lyrics"
+              >
+                E
+              </Badge>
+            )}
             {item.year && (
               <Badge
                 variant="outline"
@@ -118,7 +157,36 @@ export function BrowseMediaCard({
                 {item.year}
               </Badge>
             )}
+            {item.duration && (
+              <Badge
+                variant="outline"
+                className="border-transparent bg-foreground/75 px-1.5 py-0 text-[10px] font-semibold text-background backdrop-blur-xs"
+              >
+                {formatDuration(item.duration)}
+              </Badge>
+            )}
           </div>
+
+          {/* Audio Preview Play Button for Music Tracks */}
+          {item.audioPreviewUrl && (
+            <button
+              type="button"
+              onClick={handleTogglePlay}
+              className={cn(
+                "absolute bottom-2 end-2 z-20 flex size-8 items-center justify-center rounded-full text-white shadow-md backdrop-blur-xs transition-all hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400",
+                isPlaying
+                  ? "bg-rose-500 opacity-100 scale-105 shadow-rose-500/50 shadow-md ring-2 ring-white/50"
+                  : "bg-rose-500/90 opacity-0 group-hover:opacity-100 hover:bg-rose-500"
+              )}
+              aria-label={isPlaying ? "Pause preview" : "Play preview"}
+            >
+              {isPlaying ? (
+                <IconPlayerPause className="size-4 fill-white" />
+              ) : (
+                <IconPlayerPlay className="size-4 fill-white ms-0.5" />
+              )}
+            </button>
+          )}
 
           {/* Queued For Fetch Badge */}
           {item.queuedForFetch && (
@@ -146,10 +214,17 @@ export function BrowseMediaCard({
           </h3>
           {item.artist && (
             <p
-              title={item.artist}
+              title={
+                !isAlbum && item.album
+                  ? `${item.artist} • ${item.album}`
+                  : item.artist
+              }
               className="mt-1 line-clamp-1 text-[11px] text-muted-foreground"
             >
-              {item.artist}
+              <span>{item.artist}</span>
+              {!isAlbum && item.album && (
+                <span className="opacity-75"> • {item.album}</span>
+              )}
             </p>
           )}
         </div>

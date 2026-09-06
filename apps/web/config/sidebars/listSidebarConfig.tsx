@@ -118,8 +118,8 @@ export function getListSidebarConfig(
                     icon: <IconList className="size-4" />,
                   },
                   {
-                    label: t("watchlists"),
-                    href: `/IRIS-list/lists/${username}/watchlists`,
+                    label: t("customLists"),
+                    href: `/IRIS-list/lists/${username}/custom-lists`,
                     icon: <IconListDetails className="size-4" />,
                   },
                 ],
@@ -223,9 +223,9 @@ export function getListSidebarConfig(
                 icon: <IconList className="size-4" />,
               },
               {
-                label: t("watchlists"),
-                dataKey: "watchlists",
-                href: `/IRIS-list/lists/${username}/watchlists`,
+                label: t("customLists"),
+                dataKey: "custom-lists",
+                href: `/IRIS-list/lists/${username}/custom-lists`,
                 icon: <IconListDetails className="size-4" />,
               },
             ],

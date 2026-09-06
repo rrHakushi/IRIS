@@ -217,7 +217,7 @@ export interface NormalizedMediaData {
   relations: RelationItem[]
   themeSongs?: ThemeSongsData | null
   trailers?: TrailerItem[] | null
-  images?: Record<string, string[]> | null
+  images?: Record<string, string[] | string | null> | null
   tmdbId?: number | null
   imdbId?: string | null
   simklId?: number | null
@@ -226,7 +226,7 @@ export interface NormalizedMediaData {
   revenue?: number | bigint | string | null
   imdbRating?: number | null
   imdbVotes?: number | null
-  sources?: Record<string, SourceLinkItem> | null
+  sources?: Record<string, SourceLinkItem | string | number | boolean | null> | null
   statusDistribution?: Record<string, number> | null
   scoreDistribution?: Record<string, number> | null
   alAverageScore?: number | null
@@ -269,7 +269,7 @@ export interface NormalizedMediaData {
   steamDeckStatus?: string | null
   linuxSupport?: boolean | null
   languages?: string[] | null
-  requirements?: any | null
+  requirements?: Record<string, string | number | boolean | null> | null
   esrbRating?: string | null
   pegiRating?: string | null
 
@@ -294,6 +294,10 @@ export interface NormalizedMediaData {
   buyLink?: string | null
 
   // Music specific fields
+  deezerId?: string | null
+  bpm?: number | null
+  gain?: number | null
+  explicitLyrics?: boolean | null
   artist?: string | null
   artists?: string[] | null
   artistPersonId?: number | null

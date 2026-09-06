@@ -77,7 +77,7 @@ export default async function AlbumDetailPage({ params, searchParams }: Props) {
     notFound()
   }
 
-  const album: MusicDetails = albumRes.data as unknown as MusicDetails
+  const album = albumRes.data
 
   const normalized: NormalizedMediaData = {
     id: album.id,
@@ -85,17 +85,17 @@ export default async function AlbumDetailPage({ params, searchParams }: Props) {
     titlePrimary: album.titlePrimary,
     titleSecondary: album.titleSecondary,
     titleNative: album.titleNative ?? null,
-    coverImage: album.coverImage,
-    bannerImage: album.bannerImage,
-    description: album.description,
+    coverImage: album.coverImage ?? null,
+    bannerImage: album.bannerImage ?? null,
+    description: album.description ?? null,
     format: album.albumType || "ALBUM",
-    status: album.status,
+    status: album.status ?? null,
     startDateYear: album.releaseDateYear,
     startDateMonth: album.releaseDateMonth,
     startDateDay: album.releaseDateDay,
     releaseDateYear: album.releaseDateYear,
-    genres: album.genres,
-    tags: album.tags,
+    genres: album.genres ?? [],
+    tags: album.tags ?? [],
     characters: [],
     staff: (album.staff || []).map((s) => ({
       id: s.id,
@@ -112,10 +112,11 @@ export default async function AlbumDetailPage({ params, searchParams }: Props) {
     })),
     studios: [],
     relations: album.relations || [],
-    images: album.images as Record<string, string[]> | null,
-    sources: album.sources as NormalizedMediaData["sources"],
+    images: album.images ?? null,
+    sources: album.sources ?? null,
     favorites: album.favorites,
     popularity: album.popularity,
+    deezerId: album.deezerId,
     artist: album.artist,
     artists: album.artists,
     artistPersonId:
@@ -131,18 +132,18 @@ export default async function AlbumDetailPage({ params, searchParams }: Props) {
     duration: album.duration,
     tracks: (album.tracks || []).map((t) => ({
       id: t.id,
-      trackNumber: t.trackNumber,
-      discNumber: t.discNumber,
+      trackNumber: t.trackNumber ?? null,
+      discNumber: t.discNumber ?? null,
       titlePrimary: t.titlePrimary,
-      duration: t.duration,
-      artistName: t.artistName,
+      duration: t.duration ?? null,
+      artistName: t.artistName ?? null,
       artistPersonId:
         (album.staff || []).find(
           (s) => s.role === "ARTIST" || s.role === "VOCALIST"
         )?.person.id ||
         album.staff?.[0]?.person.id ||
         null,
-      audioPreviewUrl: t.audioPreviewUrl,
+      audioPreviewUrl: t.audioPreviewUrl ?? null,
     })),
     spotifyId: album.spotifyId,
     appleMusicId: album.appleMusicId,
@@ -156,20 +157,18 @@ export default async function AlbumDetailPage({ params, searchParams }: Props) {
     updatedAt: album.updatedAt,
   }
 
-  const similarList: SimilarMediaCardItem[] =
-    !similarRes.error && Array.isArray(similarRes.data)
-      ? (similarRes.data as SimilarMediaItem[]).map((item: SimilarMediaItem) => ({
-          id: item.id,
-          type: item.type,
-          format: item.format,
-          coverImage: item.coverImage,
-          titlePrimary: item.titles.primary,
-          titleSecondary: item.titles.secondary,
-          titleNative: item.titles.native,
-          year: null,
-          score: null,
-        }))
-      : []
+  const similarItems = !similarRes.error && Array.isArray(similarRes.data) ? similarRes.data : []
+  const similarList: SimilarMediaCardItem[] = similarItems.map((item) => ({
+    id: item.id,
+    type: item.type,
+    format: item.format,
+    coverImage: item.coverImage,
+    titlePrimary: item.titles.primary,
+    titleSecondary: item.titles.secondary,
+    titleNative: item.titles.native,
+    year: null,
+    score: null,
+  }))
 
   return (
     <MediaDetailView

@@ -65,6 +65,7 @@ export function ConnectDialog({
   const isBangumi = provider.provider === "BANGUMI"
   const isSteam = provider.provider === "STEAM"
   const isRiot = provider.provider === "RIOT_GAMES"
+  const isLastFm = provider.provider === "LASTFM"
 
   const handleManualConnect = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -128,7 +129,9 @@ export function ConnectDialog({
                       ? "Enter your Riot ID (e.g. Player#1234) or API Key."
                       : isSteam
                         ? "Enter your SteamID64 or Steam Web API Key."
-                        : "Enter connection credentials."}
+                        : isLastFm
+                          ? "Enter your Last.fm username or Session Key to scrobble tracks."
+                          : "Enter connection credentials."}
               </DialogDescription>
             </div>
           </div>
@@ -189,7 +192,28 @@ export function ConnectDialog({
             </div>
           )}
 
-          {(isServarr || isBangumi || isSteam || isRiot) && (
+          {isLastFm && (
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="lastFmUsername"
+                className="flex items-center gap-1.5 text-xs font-medium"
+              >
+                <IconUser className="h-3.5 w-3.5 text-muted-foreground" />
+                Last.fm Username
+              </Label>
+              <Input
+                id="lastFmUsername"
+                placeholder="Your Last.fm Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="font-mono text-xs"
+                required
+                autoFocus
+              />
+            </div>
+          )}
+
+          {(isServarr || isBangumi || isSteam || isRiot || isLastFm) && (
             <div className="space-y-1.5">
               <Label
                 htmlFor="apiKey"
@@ -202,7 +226,9 @@ export function ConnectDialog({
                     ? "Steam Web API Key / SteamID"
                     : isRiot
                       ? "Riot API Key (Optional if configured in server .env)"
-                      : "API Key"}
+                      : isLastFm
+                        ? "Last.fm Session Key / API Key (Optional for basic scrobbling)"
+                        : "API Key"}
               </Label>
               <Input
                 id="apiKey"
@@ -214,12 +240,14 @@ export function ConnectDialog({
                       ? "SteamID64 or Web API Key"
                       : isRiot
                         ? "RGAPI-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                        : "Enter 32-character API key"
+                        : isLastFm
+                          ? "Enter Last.fm session key (optional)"
+                          : "Enter 32-character API key"
                 }
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 className="font-mono text-xs"
-                required={!isRiot}
+                required={!isRiot && !isLastFm}
               />
             </div>
           )}

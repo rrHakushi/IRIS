@@ -38,7 +38,13 @@ export function MediaFooter({ media }: MediaFooterProps) {
           {sources.length > 0 ? (
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
               {sources.map(([provider, info]) => {
-                if (!info?.url) return null
+                const url =
+                  typeof info === "object" && info !== null && "url" in info && typeof info.url === "string"
+                    ? info.url
+                    : typeof info === "string" && (info.startsWith("http://") || info.startsWith("https://"))
+                      ? info
+                      : null
+                if (!url) return null
                 const name =
                   provider === "mal"
                     ? "MyAnimeList"
@@ -46,12 +52,16 @@ export function MediaFooter({ media }: MediaFooterProps) {
                       ? "AniList"
                       : provider === "thetvdb"
                         ? "TheTVDB"
-                        : provider.charAt(0).toUpperCase() + provider.slice(1)
+                        : provider === "deezer"
+                          ? "Deezer"
+                          : provider === "lrclib"
+                            ? "LRCLIB"
+                            : provider.charAt(0).toUpperCase() + provider.slice(1)
 
                 return (
                   <a
                     key={provider}
-                    href={info.url}
+                    href={url}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-1 text-muted-foreground outline-none hover:text-foreground hover:underline focus-visible:underline"

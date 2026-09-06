@@ -20,6 +20,8 @@ export interface SearchResultItem {
   artist?: string | null
   album?: string | null
   duration?: number | null
+  audioPreviewUrl?: string | null
+  explicitLyrics?: boolean | null
 }
 
 interface BrowseSearchResultsProps {

@@ -12,7 +12,7 @@ import { Button } from "@workspace/ui/components/button"
 interface ImagesTabProps {
   coverImage: string | null
   bannerImage: string | null
-  images: Record<string, string[]> | null
+  images: Record<string, string[] | string | null> | null
 }
 
 type ImageCategoryKey =
@@ -108,6 +108,13 @@ export function ImagesTab({ coverImage, bannerImage, images }: ImagesTabProps) {
               context = "cover"
             add(u, context)
           }
+        } else if (typeof urls === "string") {
+          let context: "cover" | "banner" | undefined
+          const lowerKey = providerKey.toLowerCase()
+          if (lowerKey.includes("banner")) context = "banner"
+          if (lowerKey.includes("cover") || lowerKey.includes("poster"))
+            context = "cover"
+          add(urls, context)
         }
       }
     }

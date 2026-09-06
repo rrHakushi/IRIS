@@ -77,7 +77,7 @@ export default async function TrackDetailPage({ params, searchParams }: Props) {
     notFound()
   }
 
-  const track: MusicDetails = trackRes.data as unknown as MusicDetails
+  const track = trackRes.data
 
   const normalized: NormalizedMediaData = {
     id: track.id,
@@ -85,17 +85,17 @@ export default async function TrackDetailPage({ params, searchParams }: Props) {
     titlePrimary: track.titlePrimary,
     titleSecondary: track.titleSecondary,
     titleNative: track.titleNative ?? null,
-    coverImage: track.coverImage,
-    bannerImage: track.bannerImage,
-    description: track.description,
+    coverImage: track.coverImage ?? null,
+    bannerImage: track.bannerImage ?? null,
+    description: track.description ?? null,
     format: "TRACK",
-    status: track.status,
+    status: track.status ?? null,
     startDateYear: track.releaseDateYear,
     startDateMonth: track.releaseDateMonth,
     startDateDay: track.releaseDateDay,
     releaseDateYear: track.releaseDateYear,
-    genres: track.genres,
-    tags: track.tags,
+    genres: track.genres ?? [],
+    tags: track.tags ?? [],
     characters: [],
     staff: (track.staff || []).map((s) => ({
       id: s.id,
@@ -112,10 +112,14 @@ export default async function TrackDetailPage({ params, searchParams }: Props) {
     })),
     studios: [],
     relations: track.relations || [],
-    images: track.images as Record<string, string[]> | null,
-    sources: track.sources as NormalizedMediaData["sources"],
+    images: track.images ?? null,
+    sources: track.sources ?? null,
     favorites: track.favorites,
     popularity: track.popularity,
+    deezerId: track.deezerId,
+    bpm: track.bpm,
+    gain: track.gain,
+    explicitLyrics: track.explicitLyrics,
     artist: track.artist,
     artists: track.artists,
     artistPersonId:
@@ -146,20 +150,18 @@ export default async function TrackDetailPage({ params, searchParams }: Props) {
     updatedAt: track.updatedAt,
   }
 
-  const similarList: SimilarMediaCardItem[] =
-    !similarRes.error && Array.isArray(similarRes.data)
-      ? (similarRes.data as SimilarMediaItem[]).map((item: SimilarMediaItem) => ({
-          id: item.id,
-          type: item.type,
-          format: item.format,
-          coverImage: item.coverImage,
-          titlePrimary: item.titles.primary,
-          titleSecondary: item.titles.secondary,
-          titleNative: item.titles.native,
-          year: null,
-          score: null,
-        }))
-      : []
+  const similarItems = !similarRes.error && Array.isArray(similarRes.data) ? similarRes.data : []
+  const similarList: SimilarMediaCardItem[] = similarItems.map((item) => ({
+    id: item.id,
+    type: item.type,
+    format: item.format,
+    coverImage: item.coverImage,
+    titlePrimary: item.titles.primary,
+    titleSecondary: item.titles.secondary,
+    titleNative: item.titles.native,
+    year: null,
+    score: null,
+  }))
 
   return (
     <MediaDetailView

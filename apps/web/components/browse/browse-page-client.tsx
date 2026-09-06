@@ -193,7 +193,8 @@ export function BrowsePageClient() {
       activeCategory,
       debouncedQuery,
       controller.signal,
-      mediaTitlePreference
+      mediaTitlePreference,
+      activeCategory === "music" ? musicType : undefined
     )
       .then((items) => {
         startTransition(() => {
@@ -210,7 +211,13 @@ export function BrowsePageClient() {
     return () => {
       controller.abort()
     }
-  }, [debouncedQuery, activeCategory, addQuery, mediaTitlePreference])
+  }, [
+    debouncedQuery,
+    activeCategory,
+    addQuery,
+    mediaTitlePreference,
+    musicType,
+  ])
 
   const handleQuerySelect = (query: string) => {
     setSearchQuery(query)
@@ -247,6 +254,7 @@ export function BrowsePageClient() {
           />
 
           <BrowseSearchBar
+            category={activeCategory}
             value={searchQuery}
             onChange={setSearchQuery}
             onClear={handleClear}

@@ -297,40 +297,75 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
     const albumMap = new Map<number, MusicAlbumItem>()
     const trackMap = new Map<number, MusicTrackItem>()
 
-    person.mediaStaff.forEach((ms) => {
-      if (ms.mediaType === "MUSIC_ALBUM" && (ms.album || ms.albumId)) {
-        const id = ms.album?.id || ms.albumId || ms.mediaId
-        if (!albumMap.has(id)) {
-          albumMap.set(id, {
-            id,
-            titlePrimary:
-              ms.album?.titlePrimary || ms.customRole || `Album #${id}`,
-            titleSecondary: ms.album?.titleSecondary,
-            titleNative: ms.album?.titleNative,
-            coverImage: ms.album?.coverImage,
-            albumType: ms.album?.albumType,
-            releaseDateYear: ms.album?.releaseDateYear,
-            listeners: ms.album?.lastFmListenersStat ?? ms.album?.listeners,
-            playCount: ms.album?.lastFmPlayCountStat ?? ms.album?.playCount,
-            role: ms.customRole || ms.role,
+    // Process direct artist music tracks & albums
+    const directTracks = ((person as any).musicTracks || []) as any[]
+    directTracks.forEach((m) => {
+      if (m.type === "ALBUM") {
+        if (!albumMap.has(m.id)) {
+          albumMap.set(m.id, {
+            id: m.id,
+            titlePrimary: m.titlePrimary || `Album #${m.id}`,
+            titleSecondary: m.titleSecondary,
+            titleNative: m.titleNative,
+            coverImage: m.coverImage,
+            albumType: m.recordType,
+            releaseDateYear: m.releaseDateYear,
+            listeners: m.listeners,
+            playCount: m.playCount,
+            role: "Artist",
           })
         }
-      } else if (ms.mediaType === "MUSIC_TRACK" && (ms.track || ms.trackId)) {
-        const id = ms.track?.id || ms.trackId || ms.mediaId
-        if (!trackMap.has(id)) {
-          trackMap.set(id, {
-            id,
+      } else {
+        if (!trackMap.has(m.id)) {
+          trackMap.set(m.id, {
+            id: m.id,
+            titlePrimary: m.titlePrimary || `Track #${m.id}`,
+            titleSecondary: m.titleSecondary,
+            titleNative: m.titleNative,
+            coverImage: m.coverImage || m.album?.coverImage,
+            albumId: m.albumId,
+            albumTitle: m.album?.titlePrimary,
+            trackNumber: m.trackPosition,
+            duration: m.duration,
+            listeners: m.listeners,
+            playCount: m.playCount,
+            role: "Artist",
+          })
+        }
+      }
+    })
+
+    person.mediaStaff.forEach((ms) => {
+      const music = (ms as any).music
+      if (music) {
+        if (music.type === "ALBUM" && !albumMap.has(music.id)) {
+          albumMap.set(music.id, {
+            id: music.id,
             titlePrimary:
-              ms.track?.titlePrimary || ms.customRole || `Track #${id}`,
-            titleSecondary: ms.track?.titleSecondary,
-            titleNative: ms.track?.titleNative,
-            coverImage: ms.track?.coverImage || ms.track?.album?.coverImage,
-            albumId: ms.track?.albumId,
-            albumTitle: ms.track?.album?.titlePrimary,
-            trackNumber: ms.track?.trackNumber,
-            duration: ms.track?.duration,
-            listeners: ms.track?.lastFmListenersStat ?? ms.track?.listeners,
-            playCount: ms.track?.lastFmPlayCountStat ?? ms.track?.playCount,
+              music.titlePrimary || ms.customRole || `Album #${music.id}`,
+            titleSecondary: music.titleSecondary,
+            titleNative: music.titleNative,
+            coverImage: music.coverImage,
+            albumType: music.recordType,
+            releaseDateYear: music.releaseDateYear,
+            listeners: music.listeners,
+            playCount: music.playCount,
+            role: ms.customRole || ms.role,
+          })
+        } else if (music.type === "TRACK" && !trackMap.has(music.id)) {
+          trackMap.set(music.id, {
+            id: music.id,
+            titlePrimary:
+              music.titlePrimary || ms.customRole || `Track #${music.id}`,
+            titleSecondary: music.titleSecondary,
+            titleNative: music.titleNative,
+            coverImage: music.coverImage || music.album?.coverImage,
+            albumId: music.albumId,
+            albumTitle: music.album?.titlePrimary,
+            trackNumber: music.trackPosition,
+            duration: music.duration,
+            listeners: music.listeners,
+            playCount: music.playCount,
             role: ms.customRole || ms.role,
           })
         }
@@ -356,7 +391,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
     })
 
     return { musicAlbums: albums, musicTracks: tracks }
-  }, [person.mediaStaff])
+  }, [person.mediaStaff, (person as any).musicTracks])
 
   const totalMusicReleases = musicAlbums.length + musicTracks.length
 
@@ -487,36 +522,6 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                   <span>{person.favorites.toLocaleString()}</span>
                 </Badge>
               )}
-              {typeof person.lastFmListenersStat === "number" &&
-                person.lastFmListenersStat > 0 && (
-                  <Badge
-                    variant="secondary"
-                    className="gap-1 text-[11px] font-semibold text-foreground/80"
-                  >
-                    <IconHeadphones
-                      className="size-3 text-muted-foreground"
-                      aria-hidden="true"
-                    />
-                    <span>
-                      {person.lastFmListenersStat.toLocaleString()} Listeners
-                    </span>
-                  </Badge>
-                )}
-              {typeof person.lastFmPlayCountStat === "number" &&
-                person.lastFmPlayCountStat > 0 && (
-                  <Badge
-                    variant="secondary"
-                    className="gap-1 text-[11px] font-semibold text-foreground/80"
-                  >
-                    <IconPlayerPlay
-                      className="size-3 text-muted-foreground"
-                      aria-hidden="true"
-                    />
-                    <span>
-                      {person.lastFmPlayCountStat.toLocaleString()} Scrobbles
-                    </span>
-                  </Badge>
-                )}
               <FavoriteButton
                 targetId={person.id}
                 type="PERSON"
@@ -659,30 +664,6 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                 </div>
               )}
 
-              {typeof person.lastFmListenersStat === "number" &&
-                person.lastFmListenersStat > 0 && (
-                  <div className="flex items-start justify-between gap-3 py-1.5 text-xs">
-                    <span className="shrink-0 text-muted-foreground">
-                      Listeners
-                    </span>
-                    <span className="text-end font-medium text-foreground tabular-nums">
-                      {person.lastFmListenersStat.toLocaleString()}
-                    </span>
-                  </div>
-                )}
-
-              {typeof person.lastFmPlayCountStat === "number" &&
-                person.lastFmPlayCountStat > 0 && (
-                  <div className="flex items-start justify-between gap-3 py-1.5 text-xs">
-                    <span className="shrink-0 text-muted-foreground">
-                      Scrobbles
-                    </span>
-                    <span className="text-end font-medium text-foreground tabular-nums">
-                      {person.lastFmPlayCountStat.toLocaleString()}
-                    </span>
-                  </div>
-                )}
-
               {person.nameAlternative && person.nameAlternative.length > 0 && (
                 <div className="flex flex-col gap-1 py-1.5 text-xs">
                   <span className="text-muted-foreground">
@@ -712,60 +693,22 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
             person.bangumiId ||
             person.imdbId ||
             person.tmdbId ||
-            person.lastFmUrl ||
-            person.spotifyId ||
-            person.musicBrainzId) && (
+            (person as any).deezerId) && (
             <div className="flex flex-col gap-2.5 rounded-2xl border border-border/40 bg-card/60 p-4 text-xs shadow-xs">
               <h3 className="text-[11px] font-semibold tracking-wider text-foreground text-muted-foreground uppercase">
                 External IDs
               </h3>
               <div className="flex flex-col divide-y divide-border/20">
-                {person.lastFmUrl && (
+                {(person as any).deezerId && (
                   <div className="flex items-center justify-between py-1.5">
-                    <span className="text-muted-foreground">Last.fm</span>
+                    <span className="text-muted-foreground">Deezer</span>
                     <a
-                      href={person.lastFmUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
-                    >
-                      <span>Profile</span>
-                      <IconExternalLink
-                        className="size-3 opacity-60"
-                        aria-hidden="true"
-                      />
-                    </a>
-                  </div>
-                )}
-                {person.spotifyId && (
-                  <div className="flex items-center justify-between py-1.5">
-                    <span className="text-muted-foreground">Spotify</span>
-                    <a
-                      href={`https://open.spotify.com/artist/${person.spotifyId}`}
+                      href={`https://www.deezer.com/artist/${(person as any).deezerId}`}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
                     >
                       <span>Artist</span>
-                      <IconExternalLink
-                        className="size-3 opacity-60"
-                        aria-hidden="true"
-                      />
-                    </a>
-                  </div>
-                )}
-                {person.musicBrainzId && (
-                  <div className="flex items-center justify-between py-1.5">
-                    <span className="text-muted-foreground">MusicBrainz</span>
-                    <a
-                      href={`https://musicbrainz.org/artist/${person.musicBrainzId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
-                    >
-                      <span className="max-w-[120px] truncate">
-                        {person.musicBrainzId.slice(0, 8)}...
-                      </span>
                       <IconExternalLink
                         className="size-3 opacity-60"
                         aria-hidden="true"

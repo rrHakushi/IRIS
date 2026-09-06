@@ -126,6 +126,40 @@ export function ProviderIcon({
         </svg>
       )
 
+    case "DEEZER":
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className={className}
+          {...props}
+        >
+          <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M2 17h3.2v3.6H2V17zm4.8-4.8H10v8.4H6.8v-8.4zm4.8 4.8h3.2v3.6h-3.2V17zm0-4.8h3.2v3.6h-3.2V12.2zm4.8 0h3.2v8.4h-3.2V12.2zm0-4.8h3.2V11h-3.2V7.4zm4.8 9.6H22v3.6h-3.2V17zm0-4.8H22v3.6h-3.2V12.2zm0-4.8H22V11h-3.2V7.4zm0-4.8H22V6.2h-3.2V2.6z"
+            fill="#A238FF"
+          />
+        </svg>
+      )
+
+    case "LASTFM":
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          xmlns="http://www.w3.org/2000/svg"
+          className={className}
+          {...props}
+        >
+          <path
+            d="M10.27 12.03c-.63-.78-1.42-1.28-2.61-1.28-1.92 0-3.3 1.54-3.3 3.63 0 2.21 1.34 3.62 3.4 3.62 1.57 0 2.6-.85 3.09-2.18l1.7.75c-.83 2-2.52 3.15-4.84 3.15-3.08 0-5.36-2.14-5.36-5.34 0-3.15 2.24-5.35 5.31-5.35 1.95 0 3.32.84 4.1 2.24l.51.93.99 2.76c.49 1.39 1.36 2.11 2.76 2.11 1.57 0 2.45-.98 2.45-2.43 0-1.57-.96-2.45-2.67-2.45h-.95v-1.7h1.01c2.72 0 4.41 1.41 4.41 4.1 0 2.5-1.63 4.15-4.29 4.15-2.3 0-3.83-1.2-4.52-3.14l-.89-2.61z"
+            fill="#D51007"
+          />
+        </svg>
+      )
+
     default:
       return (
         <div
