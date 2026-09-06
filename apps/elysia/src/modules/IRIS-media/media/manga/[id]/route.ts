@@ -59,7 +59,7 @@ export default defineRoute({
   },
 
   async GET({ params, prisma, cache, cacheKeys, logger }) {
-    const id = params.id
+    const id = Number(params.id)
     const cacheKey = cacheKeys.manga.id(id)
 
     const cached = await cache.get<MangaDetails>(cacheKey)

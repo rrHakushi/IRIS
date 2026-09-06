@@ -1,8 +1,7 @@
 import { defineRoute, t } from "@/router"
 import {
   mediaDbSyncer,
-  queueMusicAlbumFetch,
-  queueMusicTrackFetch,
+  queueMusicFetch,
 } from "@/services/media-queue"
 import { NotFound } from "elysia"
 import { MusicResponseSchema, type MusicDetails } from "./types"
@@ -40,14 +39,15 @@ export default defineRoute({
     detail: {
       summary: "Get music by ID",
       description:
-        "Fetches music track or album details with tags, genres, staff, and media relations.",
+        "Fetches music track or album details with tags, genres, staff, tracks, and media relations.",
       tags: ["Media - Music"],
     },
   },
 
   async GET({ params, query, prisma, cache, cacheKeys, logger }) {
     const id = Number(params.id)
-    const targetType = (query as any)?.type as "TRACK" | "ALBUM" | undefined
+    const targetType =
+      query?.type === "TRACK" || query?.type === "ALBUM" ? query.type : undefined
     const cacheKey = cacheKeys.music.id(id, targetType)
 
     const cached = await cache.get<MusicDetails>(cacheKey)
@@ -55,15 +55,19 @@ export default defineRoute({
       return cached
     }
 
-    // Try finding track first (unless ALBUM is requested)
-    const track =
-      targetType === "ALBUM"
-        ? null
-        : await prisma.musicTrack.findUnique({
-            where: { id },
+    const item = await prisma.music.findUnique({
+      where: { id },
       include: {
         genres: true,
         tags: true,
+        artist: {
+          select: {
+            id: true,
+            namePrimary: true,
+            nameNative: true,
+            image: true,
+          },
+        },
         album: {
           select: {
             id: true,
@@ -75,122 +79,17 @@ export default defineRoute({
             releaseDate: true,
           },
         },
-        staff: {
-          select: {
-            id: true,
-            role: true,
-            person: {
-              select: {
-                id: true,
-                namePrimary: true,
-                nameNative: true,
-                image: true,
-              },
-            },
-          },
-        },
-      },
-    })
-
-    if (track) {
-      const relations = await fetchMediaRelations(
-        prisma,
-        "MUSIC_TRACK",
-        track.id
-      )
-      const artists = track.artistName ? [track.artistName] : []
-
-      let staff = track.staff
-      if (staff.length === 0 && track.artistName) {
-        const p = await prisma.person.findFirst({
-          where: { namePrimary: { equals: track.artistName, mode: "insensitive" } },
-          select: { id: true, namePrimary: true, nameNative: true, image: true },
-        })
-        if (p) {
-          staff = [{ id: 0, role: "ARTIST" as any, person: p }]
-        }
-      }
-
-      const result: MusicDetails = {
-        id: track.id,
-        type: "TRACK" as const,
-        spotifyId: track.spotifyId,
-        appleMusicId: track.appleMusicId,
-        youtubeMusicId: track.youtubeMusicId,
-        musicBrainzId: track.musicBrainzId,
-        isrc: track.isrc,
-        titlePrimary: track.titlePrimary,
-        titleSecondary: track.titleSecondary,
-        titleNative: track.titleNative,
-        artist: track.artistName,
-        artists,
-        album: track.album?.titlePrimary || null,
-        albumId: track.albumId,
-        albumType: null,
-        totalTracks: null,
-        trackNumber: track.trackNumber,
-        discNumber: track.discNumber,
-        coverImage: track.coverImage || track.album?.coverImage || null,
-        bannerImage: null,
-        images: null,
-        description: track.description,
-        duration: track.duration,
-        releaseDateYear: track.album?.releaseDateYear ?? null,
-        releaseDateMonth: track.album?.releaseDateMonth ?? null,
-        releaseDateDay: track.album?.releaseDateDay ?? null,
-        releaseDate: track.album?.releaseDate ?? null,
-        genres: track.genres,
-        tags: track.tags,
-        audioPreviewUrl: track.audioPreviewUrl,
-        lyrics: track.lyrics,
-        syncedLyrics: track.syncedLyrics,
-        sources: track.sources,
-        status: track.status,
-        favorites: track.favorites,
-        popularity: track.popularity,
-        listeners: track.listeners,
-        playCount: track.playCount,
-        lastFmListeners: track.lastFmListenersStat ?? track.listeners,
-        lastFmPlayCount: track.lastFmPlayCountStat ?? track.playCount,
-        lastFmUrl: track.lastFmUrl,
-        musicBrainzUpdatedAt: track.musicBrainzUpdatedAt,
-        createdAt: track.createdAt,
-        updatedAt: track.updatedAt,
-        relations,
-        staff,
-      }
-
-      await cache.set(cacheKey, result, MUSIC_CACHE_TTL)
-
-      if (mediaDbSyncer.isRecordStale(track, "MUSIC_TRACK")) {
-        void queueMusicTrackFetch(track.id).catch((err) => {
-          logger.error(
-            `[MusicRoute] Failed to queue background fetch for track ${id}:`,
-            err
-          )
-        })
-      }
-
-      return result
-    }
-
-    // Otherwise check album
-    const album = await prisma.musicAlbum.findUnique({
-      where: { id },
-      include: {
-        genres: true,
-        tags: true,
         tracks: {
           select: {
             id: true,
-            trackNumber: true,
-            discNumber: true,
+            trackPosition: true,
+            diskNumber: true,
             titlePrimary: true,
             duration: true,
             artistName: true,
             audioPreviewUrl: true,
           },
-          orderBy: [{ discNumber: "asc" }, { trackNumber: "asc" }],
+          orderBy: [{ diskNumber: "asc" }, { trackPosition: "asc" }],
         },
         staff: {
           select: {
@@ -209,89 +108,123 @@ export default defineRoute({
       },
     })
 
-    if (album) {
-      const relations = await fetchMediaRelations(
-        prisma,
-        "MUSIC_ALBUM",
-        album.id
-      )
-      const artists = album.artistName ? [album.artistName] : []
-
-      let staff = album.staff
-      if (staff.length === 0 && album.artistName) {
-        const p = await prisma.person.findFirst({
-          where: { namePrimary: { equals: album.artistName, mode: "insensitive" } },
-          select: { id: true, namePrimary: true, nameNative: true, image: true },
-        })
-        if (p) {
-          staff = [{ id: 0, role: "ARTIST" as any, person: p }]
-        }
-      }
-
-      const result: MusicDetails = {
-        id: album.id,
-        type: "ALBUM" as const,
-        spotifyId: album.spotifyId,
-        appleMusicId: album.appleMusicId,
-        youtubeMusicId: null,
-        musicBrainzId: album.musicBrainzId,
-        isrc: null,
-        titlePrimary: album.titlePrimary,
-        titleSecondary: album.titleSecondary,
-        titleNative: album.titleNative,
-        artist: album.artistName,
-        artists,
-        album: album.titlePrimary,
-        albumId: album.id,
-        albumType: album.albumType,
-        totalTracks: album.totalTracks ?? album.tracks.length,
-        trackNumber: null,
-        discNumber: null,
-        coverImage: album.coverImage,
-        bannerImage: album.bannerImage,
-        images: album.images,
-        description: album.description,
-        duration: album.duration,
-        releaseDateYear: album.releaseDateYear,
-        releaseDateMonth: album.releaseDateMonth,
-        releaseDateDay: album.releaseDateDay,
-        releaseDate: album.releaseDate,
-        genres: album.genres,
-        tags: album.tags,
-        audioPreviewUrl: null,
-        lyrics: null,
-        syncedLyrics: null,
-        sources: album.sources,
-        status: album.status,
-        favorites: album.favorites,
-        popularity: album.popularity,
-        listeners: album.listeners,
-        playCount: album.playCount,
-        lastFmListeners: album.lastFmListenersStat ?? album.listeners,
-        lastFmPlayCount: album.lastFmPlayCountStat ?? album.playCount,
-        lastFmUrl: album.lastFmUrl,
-        musicBrainzUpdatedAt: album.musicBrainzUpdatedAt,
-        createdAt: album.createdAt,
-        updatedAt: album.updatedAt,
-        relations,
-        staff,
-        tracks: album.tracks,
-      }
-
-      await cache.set(cacheKey, result, MUSIC_CACHE_TTL)
-
-      if (mediaDbSyncer.isRecordStale(album, "MUSIC_ALBUM")) {
-        void queueMusicAlbumFetch(album.id).catch((err) => {
-          logger.error(
-            `[MusicRoute] Failed to queue background fetch for album ${id}:`,
-            err
-          )
-        })
-      }
-
-      return result
+    if (!item) {
+      return new NotFound(`Music not found with ID ${id}`)
     }
 
-    return new NotFound(`Music not found with ID ${id}`)
+    const relations = await fetchMediaRelations(prisma, "MUSIC", item.id)
+    const artists = item.artistName ? [item.artistName] : []
+
+    let staff = item.staff
+    if (staff.length === 0 && item.artist) {
+      staff = [{ id: 0, role: "ARTIST", person: item.artist }]
+    } else if (staff.length === 0 && item.artistName) {
+      const p = await prisma.person.findFirst({
+        where: { namePrimary: { equals: item.artistName, mode: "insensitive" } },
+        select: { id: true, namePrimary: true, nameNative: true, image: true },
+      })
+      if (p) {
+        staff = [{ id: 0, role: "ARTIST", person: p }]
+      }
+    }
+
+    const sources =
+      item.sources && typeof item.sources === "object" && !Array.isArray(item.sources)
+        ? (item.sources as Record<string, string | number | boolean | null>)
+        : null
+
+    const images =
+      item.images && typeof item.images === "object" && !Array.isArray(item.images)
+        ? (item.images as Record<string, string | null>)
+        : null
+
+    const spotifyId = typeof sources?.spotifyId === "string" ? sources.spotifyId : null
+    const appleMusicId = typeof sources?.appleMusicId === "string" ? sources.appleMusicId : null
+    const youtubeMusicId = typeof sources?.youtubeMusicId === "string" ? sources.youtubeMusicId : null
+    const musicBrainzId = typeof sources?.musicBrainzId === "string" ? sources.musicBrainzId : null
+    const musicBrainzUpdatedAt =
+      typeof sources?.musicBrainzUpdatedAt === "number" ? sources.musicBrainzUpdatedAt : null
+
+    const result: MusicDetails = {
+      id: item.id,
+      type: item.type,
+      deezerId: item.deezerId,
+      spotifyId,
+      appleMusicId,
+      youtubeMusicId,
+      musicBrainzId,
+      isrc: item.isrc,
+      titlePrimary: item.titlePrimary,
+      titleSecondary: item.titleSecondary,
+      titleNative: item.titleNative,
+      artist: item.artistName,
+      artists,
+      artistId: item.artistId,
+      album: item.type === "ALBUM" ? item.titlePrimary : item.album?.titlePrimary || null,
+      albumId: item.type === "ALBUM" ? item.id : item.albumId,
+      albumType: item.recordType,
+      totalTracks: item.type === "ALBUM" ? (item.nbTracks ?? item.tracks.length) : null,
+      trackNumber: item.trackPosition,
+      discNumber: item.diskNumber,
+      coverImage: item.coverImage || item.album?.coverImage || null,
+      bannerImage: null,
+      coverImages: images,
+      images,
+      description: item.description,
+      duration: item.duration,
+      releaseDateYear: item.releaseDateYear ?? item.album?.releaseDateYear ?? null,
+      releaseDateMonth: item.releaseDateMonth ?? item.album?.releaseDateMonth ?? null,
+      releaseDateDay: item.releaseDateDay ?? item.album?.releaseDateDay ?? null,
+      releaseDate: item.releaseDate ?? item.album?.releaseDate ?? null,
+      bpm: item.bpm,
+      gain: item.gain,
+      explicitLyrics: item.explicitLyrics,
+      explicitContentCover: item.explicitContentCover,
+      explicitContentLyrics: item.explicitContentLyrics,
+      genres: item.genres,
+      tags: item.tags,
+      audioPreviewUrl: item.audioPreviewUrl,
+      lyrics: item.lyrics,
+      syncedLyrics: item.syncedLyrics,
+      sources,
+      status: item.status,
+      favorites: item.favorites,
+      popularity: item.popularity,
+      listeners: item.listeners,
+      playCount: item.playCount,
+      lastFmListeners: item.listeners,
+      lastFmPlayCount: item.playCount,
+      lastFmUrl: null,
+      deezerUpdatedAt: item.deezerUpdatedAt,
+      musicBrainzUpdatedAt,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+      relations,
+      staff,
+      tracks: item.type === "ALBUM"
+        ? item.tracks.map((t) => ({
+            id: t.id,
+            trackNumber: t.trackPosition,
+            discNumber: t.diskNumber,
+            titlePrimary: t.titlePrimary,
+            duration: t.duration,
+            artistName: t.artistName,
+            audioPreviewUrl: t.audioPreviewUrl,
+          }))
+        : undefined,
+    }
+
+    await cache.set(cacheKey, result, MUSIC_CACHE_TTL)
+
+    if (mediaDbSyncer.isRecordStale(item, "MUSIC")) {
+      void queueMusicFetch(item.id).catch((err) => {
+        logger.error(
+          `[MusicRoute] Failed to queue background fetch for music ${id}:`,
+          err
+        )
+      })
+    }
+
+    return result
   },
 })

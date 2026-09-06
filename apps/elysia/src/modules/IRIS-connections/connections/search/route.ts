@@ -4,7 +4,14 @@ import {
   type ConnectionProvider,
   type MediaType,
 } from "@IRIS/connections"
-import { LastFmProvider } from "@/services/media-queue/providers/lastfm.provider"
+import type { ConnectionProvider as PrismaConnectionProvider } from "@IRIS/database"
+import {
+  LastFmProvider,
+  type LastFmTrackSearchResult,
+  type LastFmAlbumSearchResult,
+  type LastFmTrackInfo,
+  type LastFmAlbumInfo,
+} from "@/services/media-queue/providers/lastfm.provider"
 
 export default defineRoute({
   GET: {
@@ -63,7 +70,7 @@ export default defineRoute({
       const provider = query.provider.toUpperCase() as ConnectionProvider
 
       // Handle Last.fm connection search natively
-      if (provider === ("LASTFM" as any)) {
+      if (provider === "LASTFM") {
         const lastFm = new LastFmProvider()
         const searchQuery = (query.q || query.id || "").trim()
 
@@ -77,13 +84,13 @@ export default defineRoute({
 
         try {
           const rawType = query.type?.toUpperCase()
-          let tracks: any[] = []
-          let albums: any[] = []
+          let tracks: LastFmTrackSearchResult[] = []
+          let albums: LastFmAlbumSearchResult[] = []
 
           // If query.id is a URL or direct identifier
           if (query.id) {
-            let matchedTrack: any = null
-            let matchedAlbum: any = null
+            let matchedTrack: LastFmTrackInfo | null = null
+            let matchedAlbum: LastFmAlbumInfo | null = null
 
             const trackMatch = query.id.match(/\/music\/([^/]+)\/_\/([^/?#]+)/i)
             const albumMatch = query.id.match(/\/music\/([^/]+)\/([^/?#]+)/i)
@@ -191,7 +198,7 @@ export default defineRoute({
                   english: a.name,
                 },
                 coverImage: cover ? { large: cover, medium: cover } : undefined,
-                popularity: a.listeners ? Number(a.listeners) : undefined,
+                popularity: undefined,
                 url: a.url,
               }
             }),
@@ -211,17 +218,16 @@ export default defineRoute({
         }
       }
 
-      let userConnection: any = null
-
-      if (session.isAuthenticated && session.user) {
-        userConnection = await prisma.connection.findFirst({
-          where: {
-            userId: session.user.id,
-            provider: provider as any,
-            status: "CONNECTED",
-          },
-        })
-      }
+      const userConnection =
+        session.isAuthenticated && session.user
+          ? await prisma.connection.findFirst({
+              where: {
+                userId: session.user.id,
+                provider: provider as PrismaConnectionProvider,
+                status: "CONNECTED",
+              },
+            })
+          : null
 
       if (query.id) {
         try {
@@ -256,21 +262,15 @@ export default defineRoute({
                   ...direct,
                   id: hasValidId ? direct.id : finalId,
                   externalId: finalId,
-                  url:
-                    direct.url && !direct.url.endsWith("/undefined")
-                      ? direct.url
-                      : `https://simkl.com/anime/${finalId}`,
                 },
               ],
             }
           }
-        } catch {
-          // Fall back to search
-        }
+        } catch {}
       }
 
-      const searchQuery = query.q || query.id || ""
-      if (!searchQuery.trim()) {
+      const searchQuery = (query.q || "").trim()
+      if (!searchQuery) {
         return {
           success: true,
           provider,
@@ -298,7 +298,7 @@ export default defineRoute({
         }
       )
 
-      const cleanedResults = (results || []).map((r: any, idx: number) => {
+      const cleanedResults = (results || []).map((r, idx: number) => {
         const hasValidExt =
           Boolean(r.externalId) &&
           r.externalId !== "undefined" &&

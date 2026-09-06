@@ -12,7 +12,7 @@ export interface GlobalCacheKeys {
     games: (id: any) => string;
     manga: (id: any) => string;
     movies: (id: any) => string;
-    music: (id: any) => string;
+    music: (id: any, type?: any) => string;
     tv: (id: any) => string;
   };
   book: {
@@ -31,7 +31,7 @@ export interface GlobalCacheKeys {
     id: (id: any) => string;
   };
   music: {
-    id: (id: any, type: any) => string;
+    id: (id: any, type?: any) => string;
   };
   person: {
     id: (id: any) => string;

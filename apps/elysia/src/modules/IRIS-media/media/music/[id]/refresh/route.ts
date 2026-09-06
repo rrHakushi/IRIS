@@ -7,10 +7,7 @@ import {
 } from "@/utils/errors"
 import { defineRoute, t } from "@/router"
 import { IRISFlags } from "@IRIS/permissions"
-import {
-  queueMusicAlbumFetch,
-  queueMusicTrackFetch,
-} from "@/services/media-queue"
+import { queueMusicFetch } from "@/services/media-queue"
 
 export default defineRoute({
   schema: {
@@ -39,9 +36,9 @@ export default defineRoute({
       409: ErrorResponseSchema,
     },
     detail: {
-      summary: "Refresh music track or album metadata",
+      summary: "Refresh music metadata",
       description:
-        "Queues a background refresh job to sync music metadata from external providers. Requires Administrator permission.",
+        "Queues a background refresh job to sync music metadata from Deezer. Requires Administrator permission.",
       tags: ["Media - Music"],
     },
   },
@@ -50,67 +47,37 @@ export default defineRoute({
     requirePermissions: [IRISFlags.ADMINISTRATOR],
     async handler({ params, body, prisma }) {
       const id = Number(params.id)
-      const track = await prisma.musicTrack.findUnique({ where: { id } })
-      if (track) {
-        const queued = await queueMusicTrackFetch(track.id, {
-          forceRefresh: body?.force,
-          maxDepth: body?.maxDepth,
-          priority: body?.priority,
-          maxRetries: body?.maxRetries,
-        })
+      const music = await prisma.music.findUnique({ where: { id } })
+      if (!music) {
+        throw new NotFound("Music item not found")
+      }
 
-        if (queued?.metadata?.skipped) {
-          throw new Conflict(
-            `${queued.metadata.reason || "Music track is already fresh in database"}`
-          )
-        }
+      const queued = await queueMusicFetch(music.id, {
+        forceRefresh: body?.force,
+        maxDepth: body?.maxDepth,
+        priority: body?.priority,
+        maxRetries: body?.maxRetries,
+      })
 
-        if (queued.status === "PROCESSING" || queued.status === "PENDING") {
-          return {
-            success: true,
-            message: "Music track queued for refresh",
-            timestamp: new Date().toISOString(),
-          }
-        }
+      if (queued?.metadata?.skipped) {
+        throw new Conflict(
+          `${queued.metadata.reason || "Music item is already fresh in database"}`
+        )
+      }
 
+      if (queued.status === "PROCESSING" || queued.status === "PENDING") {
         return {
-          success: false,
-          message: "Failed to queue music track for refresh",
+          success: true,
+          message: "Music queued for refresh",
           timestamp: new Date().toISOString(),
         }
       }
 
-      const album = await prisma.musicAlbum.findUnique({ where: { id } })
-      if (album) {
-        const queued = await queueMusicAlbumFetch(album.id, {
-          forceRefresh: body?.force,
-          maxDepth: body?.maxDepth,
-          priority: body?.priority,
-          maxRetries: body?.maxRetries,
-        })
-
-        if (queued?.metadata?.skipped) {
-          throw new Conflict(
-            `${queued.metadata.reason || "Music album is already fresh in database"}`
-          )
-        }
-
-        if (queued.status === "PROCESSING" || queued.status === "PENDING") {
-          return {
-            success: true,
-            message: "Music album queued for refresh",
-            timestamp: new Date().toISOString(),
-          }
-        }
-
-        return {
-          success: false,
-          message: "Failed to queue music album for refresh",
-          timestamp: new Date().toISOString(),
-        }
+      return {
+        success: false,
+        message: "Failed to queue music for refresh",
+        timestamp: new Date().toISOString(),
       }
-
-      throw new NotFound("Music item not found")
     },
   },
 })

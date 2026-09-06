@@ -1,6 +1,6 @@
 import { defineRoute, t } from "@/router"
 import type { Prisma } from "@IRIS/database"
-import { NotFound } from "elysia"
+import { NotFound, type UnwrapSchema } from "elysia"
 import { CharacterResponseSchema } from "./types"
 import { NotFoundResponseSchema } from "../../../../../../types"
 
@@ -80,11 +80,7 @@ export const characterInclude = {
   },
 } as const satisfies Prisma.CharacterInclude
 
-export type CharacterDetails = NonNullable<
-  Prisma.CharacterGetPayload<{
-    include: typeof characterInclude
-  }>
->
+export type CharacterDetails = UnwrapSchema<typeof CharacterResponseSchema>
 
 export default defineRoute({
   cacheKeys: {

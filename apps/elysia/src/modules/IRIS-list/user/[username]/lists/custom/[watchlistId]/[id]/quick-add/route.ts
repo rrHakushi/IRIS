@@ -46,7 +46,7 @@ export default defineRoute({
     )
     assertIsOwner(isOwner, params.username)
 
-    const watchlist = await prisma.watchlist.findUnique({
+    const watchlist = await prisma.customList.findUnique({
       where: { id: params.watchlistId },
       select: { id: true, userId: true },
     })
@@ -56,22 +56,12 @@ export default defineRoute({
 
     const rawMediaType = (body as any).mediaType
     const mediaId = Number(params.id)
-    let resolvedMediaType = rawMediaType as MediaType
+    const resolvedMediaType = rawMediaType as MediaType
 
-    if (rawMediaType === "MUSIC") {
-      const isAlbum = await prisma.musicAlbum.findUnique({
-        where: { id: mediaId },
-        select: { id: true },
-      })
-      resolvedMediaType = isAlbum
-        ? ("MUSIC_ALBUM" as MediaType)
-        : ("MUSIC_TRACK" as MediaType)
-    }
-
-    const existing = await prisma.watchlistEntry.findUnique({
+    const existing = await prisma.customListEntry.findUnique({
       where: {
-        watchlistId_mediaType_mediaId: {
-          watchlistId: watchlist.id,
+        listId_mediaType_mediaId: {
+          listId: watchlist.id,
           mediaType: resolvedMediaType,
           mediaId,
         },
@@ -86,6 +76,11 @@ export default defineRoute({
       }
     }
 
+    const isMusic =
+      resolvedMediaType === "MUSIC" ||
+      (resolvedMediaType as string) === "MUSIC_ALBUM" ||
+      (resolvedMediaType as string) === "MUSIC_TRACK"
+
     const foreignKeyField: any = {
       animeId: resolvedMediaType === "ANIME" ? mediaId : null,
       mangaId: resolvedMediaType === "MANGA" ? mediaId : null,
@@ -93,13 +88,12 @@ export default defineRoute({
       tvId: resolvedMediaType === "TV" ? mediaId : null,
       gameId: resolvedMediaType === "GAME" ? mediaId : null,
       bookId: resolvedMediaType === "BOOK" ? mediaId : null,
-      albumId: resolvedMediaType === "MUSIC_ALBUM" ? mediaId : null,
-      trackId: resolvedMediaType === "MUSIC_TRACK" ? mediaId : null,
+      musicId: isMusic ? mediaId : null,
     }
 
-    const created = await prisma.watchlistEntry.create({
+    const created = await prisma.customListEntry.create({
       data: {
-        watchlistId: watchlist.id,
+        listId: watchlist.id,
         mediaType: resolvedMediaType,
         mediaId,
         ...foreignKeyField,
@@ -112,7 +106,7 @@ export default defineRoute({
       message: "Added media to custom watchlist",
       entry: {
         id: created.id,
-        watchlistId: created.watchlistId,
+        watchlistId: created.listId,
         mediaType: created.mediaType,
         mediaId: created.mediaId,
         addedAt: created.addedAt.toISOString(),

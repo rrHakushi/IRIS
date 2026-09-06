@@ -3104,6 +3104,42 @@
       "_type": "request"
     },
     {
+      "_id": "req_IRIS-list__user__username_lists_custom__watchlistId_delete",
+      "parentId": "fld_IRIS_list",
+      "url": "{{ _.base_url }}/user/:username/lists/custom/:watchlistId",
+      "name": "DELETE /user/:username/lists/custom/:watchlistId",
+      "description": "",
+      "method": "DELETE",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
       "_id": "req_IRIS-list__user__username_lists_game__id_increment_post",
       "parentId": "fld_IRIS_list",
       "url": "{{ _.base_url }}/user/:username/lists/game/:id/increment",
@@ -4220,7 +4256,7 @@
       "method": "PUT",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"status\": null,\n  \"score\": null,\n  \"playCount\": 0,\n  \"notes\": null,\n  \"private\": true,\n  \"startedAt\": null,\n  \"connections\": null\n}"
+        "text": "{\n  \"status\": null,\n  \"score\": null,\n  \"playCount\": 0,\n  \"progress\": 0,\n  \"notes\": null,\n  \"private\": true,\n  \"startedAt\": null,\n  \"connections\": null\n}"
       },
       "parameters": [
         {
@@ -4307,7 +4343,7 @@
       "method": "PATCH",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"status\": null,\n  \"score\": null,\n  \"playCount\": 0,\n  \"notes\": null,\n  \"private\": true,\n  \"startedAt\": null,\n  \"connections\": null\n}"
+        "text": "{\n  \"status\": null,\n  \"score\": null,\n  \"playCount\": 0,\n  \"progress\": 0,\n  \"notes\": null,\n  \"private\": true,\n  \"startedAt\": null,\n  \"connections\": null\n}"
       },
       "parameters": [
         {
@@ -5747,9 +5783,53 @@
           "name": "limit",
           "value": "10",
           "disabled": false
+        },
+        {
+          "name": "type",
+          "value": "",
+          "disabled": false
         }
       ],
       "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-media__media_music_import_deezer_post",
+      "parentId": "fld_IRIS_media",
+      "url": "{{ _.base_url }}/media/music/import/deezer",
+      "name": "POST /media/music/import/deezer",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"playlistId\": null\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
         {
           "name": "x-api-key",
           "value": "{{ _.api_key }}",
@@ -6174,6 +6254,11 @@
         {
           "name": "q",
           "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "type",
+          "value": "",
           "disabled": false
         }
       ],

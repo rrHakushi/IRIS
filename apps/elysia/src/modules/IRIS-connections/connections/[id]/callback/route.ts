@@ -6,6 +6,10 @@ import {
   type ConnectionProvider,
   type OAuthStatePayload,
 } from "@IRIS/connections"
+import type {
+  ConnectionProvider as PrismaConnectionProvider,
+  ConnectionAuthType as PrismaConnectionAuthType,
+} from "@IRIS/database"
 import { cache } from "../../../../../utils/cache"
 
 const oauthCache = cache.withNamespace("oauth:state")
@@ -78,7 +82,9 @@ export default defineRoute({
         rawUrlParams?.get("openid_claimed_id") ||
         rawUrlParams?.get("openid.identity") ||
         query?.openid_claimed_id ||
-        (query as any)?.["openid.claimed_id"] ||
+        (query as Record<string, string | undefined>)?.[
+          "openid.claimed_id"
+        ] ||
         ""
       const code = query?.code || claimedId
       if (!code) {
@@ -112,14 +118,14 @@ export default defineRoute({
           where: {
             userId_provider_externalId: {
               userId: stateData.userId,
-              provider: provider as any,
+              provider: provider as PrismaConnectionProvider,
               externalId: profile.id || "default",
             },
           },
           create: {
             userId: stateData.userId,
-            provider: provider as any,
-            authType: adapter.authType as any,
+            provider: provider as PrismaConnectionProvider,
+            authType: adapter.authType as PrismaConnectionAuthType,
             externalId: profile.id || "default",
             displayName: profile.displayName || profile.username || provider,
             avatarUrl: profile.avatarUrl || null,
@@ -134,7 +140,7 @@ export default defineRoute({
             lastSyncedAt: new Date(),
           },
           update: {
-            authType: adapter.authType as any,
+            authType: adapter.authType as PrismaConnectionAuthType,
             displayName: profile.displayName || profile.username || provider,
             avatarUrl: profile.avatarUrl || null,
             profileUrl: profile.profileUrl || null,

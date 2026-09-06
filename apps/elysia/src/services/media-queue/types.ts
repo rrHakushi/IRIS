@@ -123,6 +123,7 @@ export interface MusicSearchResult {
   artistName?: string | null
   coverImage?: string | null
   duration?: number | null
+  audioPreviewUrl?: string | null
   albumTitle?: string | null
   albumId?: number | null
   totalTracks?: number | null

@@ -80,29 +80,12 @@ async function updateEntityFavoritesCounter(
         })
         break
       case "MUSIC_ALBUM":
-        await prisma.musicAlbum.update({
-          where: { id: targetId },
-          data: { favorites: { increment: delta } },
-        })
-        break
       case "MUSIC_TRACK":
-        await prisma.musicTrack.update({
+      case "MUSIC":
+        await prisma.music.update({
           where: { id: targetId },
           data: { favorites: { increment: delta } },
         })
-        break
-      case "MUSIC":
-        try {
-          await prisma.musicTrack.update({
-            where: { id: targetId },
-            data: { favorites: { increment: delta } },
-          })
-        } catch {
-          await prisma.musicAlbum.update({
-            where: { id: targetId },
-            data: { favorites: { increment: delta } },
-          })
-        }
         break
       case "CHARACTER":
         await prisma.character.update({
@@ -295,11 +278,11 @@ export default defineRoute({
 
     let targetType: FavoriteType = payload.type
     if ((payload.type as string) === "MUSIC") {
-      const isAlbum = await prisma.musicAlbum.findUnique({
+      const music = await prisma.music.findUnique({
         where: { id: targetId },
-        select: { id: true },
+        select: { type: true },
       })
-      targetType = isAlbum ? "MUSIC_ALBUM" : "MUSIC_TRACK"
+      targetType = (music?.type === "ALBUM" ? "MUSIC_ALBUM" : "MUSIC_TRACK") as FavoriteType
     }
     const displayTitle = payload.title?.trim() || `${targetType} #${targetId}`
 

@@ -55,7 +55,7 @@ export interface LastFmAlbumTrack {
     mbid?: string
     url?: string
   }
-  streamable?: any
+  streamable?: string | number | { fulltrack?: string; "#text"?: string } | null
 }
 
 export interface LastFmAlbumInfo {

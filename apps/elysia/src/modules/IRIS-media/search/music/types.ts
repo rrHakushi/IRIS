@@ -11,6 +11,8 @@ export const MusicSearchResultSchema = t.Object({
   album: t.Optional(t.Nullable(t.String())),
   albumId: t.Optional(t.Nullable(t.Number())),
   type: t.Optional(t.Union([t.Literal("ALBUM"), t.Literal("TRACK")])),
+  audioPreviewUrl: t.Optional(t.Nullable(t.String())),
+  explicitLyrics: t.Optional(t.Nullable(t.Boolean())),
   queuedForFetch: t.Optional(t.Boolean()),
 })
 
@@ -27,6 +29,8 @@ export interface MusicSearchResultItem {
   album?: string | null
   albumId?: number | null
   type?: "ALBUM" | "TRACK"
+  audioPreviewUrl?: string | null
+  explicitLyrics?: boolean | null
   queuedForFetch?: boolean
 }
 

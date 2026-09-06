@@ -20,6 +20,7 @@ export const MusicStaffSchema = t.Object({
 export const MusicResponseSchema = t.Object({
   id: t.Number(),
   type: t.Optional(t.Union([t.Literal("ALBUM"), t.Literal("TRACK")])),
+  deezerId: t.Optional(t.Nullable(t.String())),
   spotifyId: t.Nullable(t.String()),
   appleMusicId: t.Nullable(t.String()),
   youtubeMusicId: t.Optional(t.Nullable(t.String())),
@@ -31,6 +32,7 @@ export const MusicResponseSchema = t.Object({
   titleNative: t.Optional(t.Nullable(t.String())),
   artist: t.Nullable(t.String()),
   artists: t.Array(t.String()),
+  artistId: t.Optional(t.Nullable(t.Number())),
   album: t.Optional(t.Nullable(t.String())),
   albumId: t.Optional(t.Nullable(t.Number())),
   albumType: t.Optional(t.Nullable(t.String())),
@@ -38,27 +40,34 @@ export const MusicResponseSchema = t.Object({
   trackNumber: t.Optional(t.Nullable(t.Number())),
   discNumber: t.Optional(t.Nullable(t.Number())),
 
-  coverImage: t.Nullable(t.String()),
-  bannerImage: t.Nullable(t.String()),
-  images: t.Nullable(t.Any()),
+  coverImage: t.Optional(t.Nullable(t.String())),
+  bannerImage: t.Optional(t.Nullable(t.String())),
+  coverImages: t.Optional(t.Nullable(t.Any())),
+  images: t.Optional(t.Nullable(t.Any())),
 
-  description: t.Nullable(t.String()),
-  duration: t.Nullable(t.Number()),
-  releaseDateYear: t.Nullable(t.Number()),
-  releaseDateMonth: t.Nullable(t.Number()),
-  releaseDateDay: t.Nullable(t.Number()),
-  releaseDate: t.Nullable(t.Union([t.Date(), t.String()])),
+  description: t.Optional(t.Nullable(t.String())),
+  duration: t.Optional(t.Nullable(t.Number())),
+  releaseDateYear: t.Optional(t.Nullable(t.Number())),
+  releaseDateMonth: t.Optional(t.Nullable(t.Number())),
+  releaseDateDay: t.Optional(t.Nullable(t.Number())),
+  releaseDate: t.Optional(t.Nullable(t.Union([t.Date(), t.String()]))),
 
-  genres: t.Array(GenreSchema),
-  tags: t.Array(TagSchema),
+  bpm: t.Optional(t.Nullable(t.Number())),
+  gain: t.Optional(t.Nullable(t.Number())),
+  explicitLyrics: t.Optional(t.Nullable(t.Boolean())),
+  explicitContentCover: t.Optional(t.Nullable(t.Number())),
+  explicitContentLyrics: t.Optional(t.Nullable(t.Number())),
+
+  genres: t.Optional(t.Array(GenreSchema)),
+  tags: t.Optional(t.Array(TagSchema)),
   audioPreviewUrl: t.Optional(t.Nullable(t.String())),
   lyrics: t.Optional(t.Nullable(t.String())),
   syncedLyrics: t.Optional(t.Nullable(t.String())),
-  sources: t.Nullable(t.Any()),
+  sources: t.Optional(t.Nullable(t.Any())),
 
-  status: t.String(),
-  favorites: t.Number(),
-  popularity: t.Number(),
+  status: t.Optional(t.String()),
+  favorites: t.Optional(t.Number()),
+  popularity: t.Optional(t.Number()),
 
   listeners: t.Optional(t.Nullable(t.Number())),
   playCount: t.Optional(t.Nullable(t.Number())),
@@ -66,23 +75,24 @@ export const MusicResponseSchema = t.Object({
   lastFmPlayCount: t.Optional(t.Nullable(t.Number())),
   lastFmUrl: t.Optional(t.Nullable(t.String())),
 
-  musicBrainzUpdatedAt: t.Nullable(t.Number()),
+  deezerUpdatedAt: t.Optional(t.Nullable(t.Number())),
+  musicBrainzUpdatedAt: t.Optional(t.Nullable(t.Number())),
 
   createdAt: t.Union([t.Date(), t.String()]),
   updatedAt: t.Union([t.Date(), t.String()]),
 
-  relations: t.Array(MediaRelationSchema),
+  relations: t.Optional(t.Array(MediaRelationSchema)),
   staff: t.Optional(t.Array(MusicStaffSchema)),
   tracks: t.Optional(
     t.Array(
       t.Object({
         id: t.Number(),
-        trackNumber: t.Nullable(t.Number()),
-        discNumber: t.Nullable(t.Number()),
+        trackNumber: t.Optional(t.Nullable(t.Number())),
+        discNumber: t.Optional(t.Nullable(t.Number())),
         titlePrimary: t.String(),
-        duration: t.Nullable(t.Number()),
-        artistName: t.Nullable(t.String()),
-        audioPreviewUrl: t.Nullable(t.String()),
+        duration: t.Optional(t.Nullable(t.Number())),
+        artistName: t.Optional(t.Nullable(t.String())),
+        audioPreviewUrl: t.Optional(t.Nullable(t.String())),
       })
     )
   ),
@@ -112,6 +122,7 @@ export interface MusicStaffMember {
 export interface MusicDetails {
   id: number
   type?: "ALBUM" | "TRACK"
+  deezerId?: string | null
   spotifyId: string | null
   appleMusicId: string | null
   youtubeMusicId?: string | null
@@ -123,6 +134,7 @@ export interface MusicDetails {
   titleNative?: string | null
   artist: string | null
   artists: string[]
+  artistId?: number | null
   album?: string | null
   albumId?: number | null
   albumType?: string | null
@@ -132,7 +144,8 @@ export interface MusicDetails {
 
   coverImage: string | null
   bannerImage: string | null
-  images: any | null
+  coverImages?: Record<string, string | null> | null
+  images?: Record<string, string | null> | null
 
   description: string | null
   duration: number | null
@@ -141,12 +154,18 @@ export interface MusicDetails {
   releaseDateDay: number | null
   releaseDate: Date | string | null
 
+  bpm?: number | null
+  gain?: number | null
+  explicitLyrics?: boolean | null
+  explicitContentCover?: number | null
+  explicitContentLyrics?: number | null
+
   genres: Array<{ id: number; name: string; slug: string }>
   tags: Array<{ id: number; name: string; slug: string; description: string | null }>
   audioPreviewUrl?: string | null
   lyrics?: string | null
   syncedLyrics?: string | null
-  sources: any
+  sources?: Record<string, string | number | boolean | null> | null
 
   status: string
   favorites: number
@@ -158,6 +177,7 @@ export interface MusicDetails {
   lastFmPlayCount?: number | null
   lastFmUrl?: string | null
 
+  deezerUpdatedAt?: number | null
   musicBrainzUpdatedAt: number | null
 
   createdAt: Date | string

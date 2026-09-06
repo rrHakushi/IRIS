@@ -129,6 +129,22 @@ export const PersonMediaStaffItemSchema = t.Object({
       averageScore: t.Nullable(t.Number()),
     })
   ),
+  music: t.Optional(
+    t.Nullable(
+      t.Object({
+        id: t.Number(),
+        titlePrimary: t.String(),
+        titleSecondary: t.Nullable(t.String()),
+        titleNative: t.Nullable(t.String()),
+        coverImage: t.Nullable(t.String()),
+        type: t.String(),
+        releaseDateYear: t.Nullable(t.Number()),
+        popularity: t.Nullable(t.Number()),
+        listeners: t.Nullable(t.Number()),
+        playCount: t.Nullable(t.Number()),
+      })
+    )
+  ),
   album: t.Optional(
     t.Nullable(
       t.Object({
@@ -188,20 +204,45 @@ export const PersonResponseSchema = t.Object({
   imdbId: t.Nullable(t.String()),
   tmdbId: t.Nullable(t.Number()),
 
-  musicBrainzId: t.Optional(t.Nullable(t.String())),
-  lastFmUrl: t.Optional(t.Nullable(t.String())),
+  deezerId: t.Optional(t.Nullable(t.String())),
   spotifyId: t.Optional(t.Nullable(t.String())),
+  lastFmUrl: t.Optional(t.Nullable(t.String())),
+  musicBrainzId: t.Optional(t.Nullable(t.String())),
   lastFmListenersStat: t.Optional(t.Nullable(t.Number())),
   lastFmPlayCountStat: t.Optional(t.Nullable(t.Number())),
 
   namePrimary: t.String(),
   nameNative: t.Nullable(t.String()),
   nameAlternative: t.Array(t.String()),
+  givenName: t.Optional(t.Nullable(t.String())),
+  familyName: t.Optional(t.Nullable(t.String())),
 
   image: t.Nullable(t.String()),
-  images: t.Nullable(t.Any()),
+  images: t.Optional(t.Nullable(t.Record(t.String(), t.String()))),
   description: t.Nullable(t.String()),
+  gender: t.Optional(t.Nullable(t.String())),
+  bloodType: t.Optional(t.Nullable(t.String())),
+  homeTown: t.Optional(t.Nullable(t.String())),
+  birthPlace: t.Optional(t.Nullable(t.String())),
   language: t.Nullable(t.String()),
+  primaryOccupations: t.Optional(t.Array(t.String())),
+
+  dateOfBirth: t.Optional(t.Nullable(t.Union([t.Date(), t.String()]))),
+  dateOfBirthYear: t.Optional(t.Nullable(t.Number())),
+  dateOfBirthMonth: t.Optional(t.Nullable(t.Number())),
+  dateOfBirthDay: t.Optional(t.Nullable(t.Number())),
+  dateOfDeath: t.Optional(t.Nullable(t.Union([t.Date(), t.String()]))),
+  dateOfDeathYear: t.Optional(t.Nullable(t.Number())),
+  dateOfDeathMonth: t.Optional(t.Nullable(t.Number())),
+  dateOfDeathDay: t.Optional(t.Nullable(t.Number())),
+  age: t.Optional(t.Nullable(t.Number())),
+  yearsActive: t.Optional(t.Array(t.Number())),
+
+  nbAlbum: t.Optional(t.Nullable(t.Number())),
+  nbFan: t.Optional(t.Nullable(t.Number())),
+  deezerLink: t.Optional(t.Nullable(t.String())),
+  deezerShare: t.Optional(t.Nullable(t.String())),
+  hasRadio: t.Optional(t.Nullable(t.Boolean())),
 
   favorites: t.Nullable(t.Number()),
 
@@ -210,4 +251,32 @@ export const PersonResponseSchema = t.Object({
 
   voicedCharacters: t.Array(PersonVoicedCharacterItemSchema),
   mediaStaff: t.Array(PersonMediaStaffItemSchema),
+  musicTracks: t.Optional(
+    t.Array(
+      t.Object({
+        id: t.Number(),
+        titlePrimary: t.String(),
+        titleSecondary: t.Nullable(t.String()),
+        type: t.String(),
+        coverImage: t.Nullable(t.String()),
+        duration: t.Nullable(t.Number()),
+        popularity: t.Nullable(t.Number()),
+        releaseDateYear: t.Optional(t.Nullable(t.Number())),
+        recordType: t.Optional(t.Nullable(t.String())),
+        albumId: t.Optional(t.Nullable(t.Number())),
+        trackPosition: t.Optional(t.Nullable(t.Number())),
+        listeners: t.Optional(t.Nullable(t.Number())),
+        playCount: t.Optional(t.Nullable(t.Number())),
+        album: t.Optional(
+          t.Nullable(
+            t.Object({
+              id: t.Number(),
+              titlePrimary: t.String(),
+              coverImage: t.Nullable(t.String()),
+            })
+          )
+        ),
+      })
+    )
+  ),
 })

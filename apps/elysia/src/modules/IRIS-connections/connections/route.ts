@@ -5,6 +5,10 @@ import {
   type ConnectionProvider,
   type ConnectionCredentials,
 } from "@IRIS/connections"
+import type {
+  ConnectionProvider as PrismaConnectionProvider,
+  ConnectionAuthType as PrismaConnectionAuthType,
+} from "@IRIS/database"
 
 export default defineRoute({
   GET: {
@@ -23,7 +27,14 @@ export default defineRoute({
               profileUrl: t.Nullable(t.String()),
               status: t.String(),
               errorMessage: t.Nullable(t.String()),
-              settings: t.Nullable(t.Any()),
+              settings: t.Optional(
+                t.Nullable(
+                  t.Record(
+                    t.String(),
+                    t.Union([t.String(), t.Number(), t.Boolean(), t.Null()])
+                  )
+                )
+              ),
               lastSyncedAt: t.Nullable(t.String()),
               expiresAt: t.Nullable(t.String()),
               createdAt: t.String(),
@@ -80,7 +91,14 @@ export default defineRoute({
         hostUrl: t.Optional(t.String()),
         username: t.Optional(t.String()),
         password: t.Optional(t.String()),
-        settings: t.Optional(t.Any()),
+        settings: t.Optional(
+          t.Nullable(
+            t.Record(
+              t.String(),
+              t.Union([t.String(), t.Number(), t.Boolean(), t.Null()])
+            )
+          )
+        ),
       }),
       response: {
         200: t.Object({
@@ -150,15 +168,16 @@ export default defineRoute({
         where: {
           userId_provider_externalId: {
             userId: session.user.id,
-            provider: provider as any,
+            provider: provider as PrismaConnectionProvider,
             externalId: profile?.id || body.username || "default",
           },
         },
         create: {
           userId: session.user.id,
-          provider: provider as any,
+          provider: provider as PrismaConnectionProvider,
           authType:
-            (body.authType?.toUpperCase() as any) || (adapter.authType as any),
+            (body.authType?.toUpperCase() as PrismaConnectionAuthType) ||
+            (adapter.authType as PrismaConnectionAuthType),
           externalId: profile?.id || body.username || "default",
           displayName:
             profile?.displayName ||

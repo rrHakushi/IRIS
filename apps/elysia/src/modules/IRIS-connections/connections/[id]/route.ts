@@ -58,7 +58,14 @@ export default defineRoute({
         id: t.String(),
       }),
       body: t.Object({
-        settings: t.Optional(t.Any()),
+        settings: t.Optional(
+          t.Nullable(
+            t.Record(
+              t.String(),
+              t.Union([t.String(), t.Number(), t.Boolean(), t.Null()])
+            )
+          )
+        ),
         displayName: t.Optional(t.String()),
       }),
       response: {
@@ -67,7 +74,14 @@ export default defineRoute({
           connection: t.Object({
             id: t.String(),
             displayName: t.Nullable(t.String()),
-            settings: t.Nullable(t.Any()),
+            settings: t.Optional(
+              t.Nullable(
+                t.Record(
+                  t.String(),
+                  t.Union([t.String(), t.Number(), t.Boolean(), t.Null()])
+                )
+              )
+            ),
           }),
         }),
       },

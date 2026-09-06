@@ -27,7 +27,7 @@ export default defineRoute({
     },
   },
 
-  async POST({ params, query, prisma, session }) {
+  async POST({ params, prisma, session }) {
     requireAuth(session)
     const { dbUser, isOwner } = await resolveTargetUserAndAccess(
       prisma,
@@ -37,31 +37,21 @@ export default defineRoute({
     assertIsOwner(isOwner, params.username)
 
     const id = Number(params.id)
-    const targetType = (query as any)?.type as "TRACK" | "ALBUM" | undefined
+    const music = await prisma.music.findUnique({
+      where: { id },
+      select: { id: true, type: true },
+    })
 
-    let track: { id: number } | null = null
-    let album: { id: number } | null = null
-
-    if (targetType === "ALBUM") {
-      album = await prisma.musicAlbum.findUnique({ where: { id }, select: { id: true } })
-    } else if (targetType === "TRACK") {
-      track = await prisma.musicTrack.findUnique({ where: { id }, select: { id: true } })
-    } else {
-      ;[track, album] = await Promise.all([
-        prisma.musicTrack.findUnique({ where: { id }, select: { id: true } }),
-        prisma.musicAlbum.findUnique({ where: { id }, select: { id: true } }),
-      ])
-    }
-
-    if (!track && !album) {
+    if (!music) {
       throw new NotFound(`Music with ID ${id} does not exist`)
     }
 
-    const isAlbum = targetType ? targetType === "ALBUM" : album && !track ? true : false
-    const existing = await prisma.musicList.findFirst({
+    const existing = await prisma.musicList.findUnique({
       where: {
-        userId: dbUser.id,
-        ...(isAlbum ? { albumId: (album || { id }).id } : { trackId: (track || { id }).id }),
+        userId_musicId: {
+          userId: dbUser.id,
+          musicId: id,
+        },
       },
     })
 
@@ -76,8 +66,7 @@ export default defineRoute({
     const created = await prisma.musicList.create({
       data: {
         userId: dbUser.id,
-        itemType: isAlbum ? "ALBUM" : "TRACK",
-        ...(isAlbum ? { albumId: (album || { id }).id } : { trackId: (track || { id }).id }),
+        musicId: id,
         status: "LISTENING",
         playCount: 0,
       },
@@ -90,7 +79,7 @@ export default defineRoute({
       entry: {
         id: created.id,
         musicId: id,
-        itemType: created.itemType,
+        itemType: music.type,
         status: created.status,
         playCount: created.playCount,
         createdAt: created.createdAt.toISOString(),

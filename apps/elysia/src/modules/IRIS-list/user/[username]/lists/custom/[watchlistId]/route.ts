@@ -2,6 +2,7 @@ import { defineRoute, t } from "@/router"
 import {
   CustomWatchlistQuerySchema,
   resolveTargetUserAndAccess,
+  assertIsOwner,
   parseCommaSeparated,
   parseYears,
   animeSelect,
@@ -16,48 +17,121 @@ import {
 import { NotFound } from "@/utils/errors"
 import type { MediaType } from "@IRIS/database"
 
+const CustomListEntryMediaTypeSchema = t.Union([
+  t.Literal("ANIME"),
+  t.Literal("MANGA"),
+  t.Literal("MOVIE"),
+  t.Literal("TV"),
+  t.Literal("GAME"),
+  t.Literal("BOOK"),
+  t.Literal("MUSIC"),
+  t.Literal("MUSIC_ALBUM"),
+  t.Literal("MUSIC_TRACK"),
+])
+
+const CustomListMediaItemSchema = t.Nullable(
+  t.Object({
+    id: t.Number(),
+    titlePrimary: t.String(),
+    titleSecondary: t.Optional(t.Nullable(t.String())),
+    titleNative: t.Optional(t.Nullable(t.String())),
+    coverImage: t.Optional(t.Nullable(t.String())),
+    bannerImage: t.Optional(t.Nullable(t.String())),
+    status: t.Optional(t.Nullable(t.String())),
+    format: t.Optional(t.Nullable(t.String())),
+    averageScore: t.Optional(t.Nullable(t.Number())),
+    artistName: t.Optional(t.Nullable(t.String())),
+    type: t.Optional(t.Nullable(t.String())),
+    duration: t.Optional(t.Nullable(t.Number())),
+    recordType: t.Optional(t.Nullable(t.String())),
+  })
+)
+
 export default defineRoute({
-  schema: {
-    params: t.Object({
-      username: t.String(),
-      watchlistId: t.String({ description: "Watchlist UUID" }),
-    }),
-    query: CustomWatchlistQuerySchema,
-    response: {
-      200: t.Object({
-        success: t.Boolean(),
-        watchlist: t.Object({
-          id: t.String(),
-          name: t.String(),
-          description: t.Nullable(t.String()),
-          isPrivate: t.Boolean(),
-          coverImage: t.Nullable(t.String()),
-        }),
-        items: t.Array(
-          t.Object({
-            entry: t.Object({
-              id: t.String(),
-              watchlistId: t.String(),
-              mediaType: t.String(),
-              mediaId: t.Number(),
-              order: t.Number(),
-              customNotes: t.Nullable(t.String()),
-              addedAt: t.String(),
-            }),
-            media: t.Any(),
-          })
-        ),
-        pagination: t.Object({
-          nextCursor: t.Nullable(t.String()),
-          hasMore: t.Boolean(),
-          total: t.Number(),
-        }),
+  schemas: {
+    GET: {
+      params: t.Object({
+        username: t.String(),
+        watchlistId: t.String({ description: "Watchlist UUID" }),
       }),
+      query: CustomWatchlistQuerySchema,
+      response: {
+        200: t.Object({
+          success: t.Boolean(),
+          watchlist: t.Object({
+            id: t.String(),
+            name: t.String(),
+            description: t.Nullable(t.String()),
+            isPrivate: t.Boolean(),
+            coverImage: t.Nullable(t.String()),
+          }),
+          items: t.Array(
+            t.Object({
+              entry: t.Object({
+                id: t.String(),
+                watchlistId: t.String(),
+                mediaType: CustomListEntryMediaTypeSchema,
+                mediaId: t.Number(),
+                order: t.Number(),
+                customNotes: t.Nullable(t.String()),
+                addedAt: t.String(),
+              }),
+              media: CustomListMediaItemSchema,
+            })
+          ),
+          pagination: t.Object({
+            nextCursor: t.Nullable(t.String()),
+            hasMore: t.Boolean(),
+            total: t.Number(),
+          }),
+        }),
+      },
+      detail: {
+        summary: "Fetch entries of a custom watchlist with cursor pagination",
+        tags: ["Lists - Custom Watchlist"],
+      },
     },
-    detail: {
-      summary: "Fetch entries of a custom watchlist with cursor pagination",
-      tags: ["Lists - Custom Watchlist"],
+    DELETE: {
+      params: t.Object({
+        username: t.String(),
+        watchlistId: t.String({ description: "Watchlist UUID" }),
+      }),
+      response: {
+        200: t.Object({
+          success: t.Boolean(),
+          message: t.String(),
+        }),
+      },
+      detail: {
+        summary: "Delete a custom watchlist and its entries",
+        tags: ["Lists - Custom Watchlist"],
+      },
     },
+  },
+
+  async DELETE({ params, prisma, session }) {
+    const { dbUser, isOwner } = await resolveTargetUserAndAccess(
+      prisma,
+      params.username,
+      session
+    )
+    assertIsOwner(isOwner, dbUser.username)
+
+    const watchlist = await prisma.customList.findUnique({
+      where: { id: params.watchlistId },
+    })
+    if (!watchlist || watchlist.userId !== dbUser.id) {
+      throw new NotFound(`Watchlist "${params.watchlistId}" not found`)
+    }
+
+    await prisma.customList.delete({
+      where: { id: params.watchlistId },
+    })
+
+    return {
+      success: true,
+      message: `Watchlist "${watchlist.name}" deleted successfully`,
+    }
   },
 
   async GET({ params, query, prisma, session }) {
@@ -67,7 +141,7 @@ export default defineRoute({
       session
     )
 
-    const watchlist = await prisma.watchlist.findUnique({
+    const watchlist = await prisma.customList.findUnique({
       where: { id: params.watchlistId },
       select: {
         id: true,
@@ -94,7 +168,7 @@ export default defineRoute({
     const order = (query?.order ?? "asc") as "asc" | "desc"
 
     const whereClause: any = {
-      watchlistId: watchlist.id,
+      listId: watchlist.id,
       ...(mediaTypes.length > 0
         ? { mediaType: { in: mediaTypes as MediaType[] } }
         : {}),
@@ -106,8 +180,8 @@ export default defineRoute({
     }
 
     const [total, entries] = await Promise.all([
-      prisma.watchlistEntry.count({ where: whereClause }),
-      prisma.watchlistEntry.findMany({
+      prisma.customListEntry.count({ where: whereClause }),
+      prisma.customListEntry.findMany({
         where: whereClause,
         take: limit + 1,
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
@@ -119,8 +193,7 @@ export default defineRoute({
           tv: { select: tvSelect },
           game: { select: gameSelect },
           book: { select: bookSelect },
-          album: { select: musicAlbumSelect },
-          track: { select: musicTrackSelect },
+          music: { select: musicAlbumSelect },
         },
       }),
     ])
@@ -147,14 +220,13 @@ export default defineRoute({
           entry.tv ||
           entry.game ||
           entry.book ||
-          entry.album ||
-          entry.track ||
+          entry.music ||
           null
 
         return {
           entry: {
             id: entry.id,
-            watchlistId: entry.watchlistId,
+            watchlistId: entry.listId,
             mediaType: entry.mediaType,
             mediaId: entry.mediaId,
             order: entry.order,

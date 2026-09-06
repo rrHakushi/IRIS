@@ -322,24 +322,17 @@ export const bookSelect = {
   genres: { select: { id: true, name: true } },
 }
 
-export const musicAlbumSelect = {
+export const musicSelect = {
   id: true,
-  titlePrimary: true,
-  titleSecondary: true,
-  artistName: true,
-  coverImage: true,
-  bannerImage: true,
-  releaseDateYear: true,
-  genres: { select: { id: true, name: true } },
-}
-
-export const musicTrackSelect = {
-  id: true,
+  type: true,
   titlePrimary: true,
   titleSecondary: true,
   artistName: true,
   coverImage: true,
   duration: true,
+  releaseDateYear: true,
+  recordType: true,
+  albumId: true,
   genres: { select: { id: true, name: true } },
   album: {
     select: {
@@ -351,7 +344,8 @@ export const musicTrackSelect = {
   },
 }
 
-export const musicSelect = musicAlbumSelect
+export const musicAlbumSelect = musicSelect
+export const musicTrackSelect = musicSelect
 
 // ============================================================================
 // Filter Aggregation Helper

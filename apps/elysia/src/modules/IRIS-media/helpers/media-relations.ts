@@ -260,11 +260,12 @@ export async function fetchMediaRelations(
     )
   }
 
-  if (musicTrackIds.length > 0) {
+  if (musicTrackIds.length > 0 || musicAlbumIds.length > 0) {
+    const allMusicIds = Array.from(new Set([...musicTrackIds, ...musicAlbumIds]))
     queries.push(
-      prisma.musicTrack
+      prisma.music
         .findMany({
-          where: { id: { in: musicTrackIds } },
+          where: { id: { in: allMusicIds } },
           select: {
             id: true,
             titlePrimary: true,
@@ -272,33 +273,13 @@ export async function fetchMediaRelations(
             titleNative: true,
             coverImage: true,
             artistName: true,
+            type: true,
           },
         })
         .then((items) => {
           for (const item of items) {
             targetMap.set(`MUSIC:${item.id}`, item)
             targetMap.set(`MUSIC_TRACK:${item.id}`, item)
-          }
-        })
-    )
-  }
-
-  if (musicAlbumIds.length > 0) {
-    queries.push(
-      prisma.musicAlbum
-        .findMany({
-          where: { id: { in: musicAlbumIds } },
-          select: {
-            id: true,
-            titlePrimary: true,
-            titleSecondary: true,
-            titleNative: true,
-            coverImage: true,
-            artistName: true,
-          },
-        })
-        .then((items) => {
-          for (const item of items) {
             targetMap.set(`MUSIC_ALBUM:${item.id}`, item)
           }
         })

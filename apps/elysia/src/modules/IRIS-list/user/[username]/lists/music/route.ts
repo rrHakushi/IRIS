@@ -84,40 +84,20 @@ export default defineRoute({
       ...(formats.length > 0 ? { itemType: { in: formats } } : {}),
       ...(genres.length > 0 || years.length > 0
         ? {
-            OR: [
-              {
-                album: {
-                  ...(years.length > 0
-                    ? { releaseDateYear: { in: years } }
-                    : {}),
-                  ...(genres.length > 0
-                    ? {
-                        genres: {
-                          some: {
-                            name: { in: genres, mode: "insensitive" },
-                          },
-                        },
-                      }
-                    : {}),
-                },
-              },
-              {
-                track: {
-                  ...(years.length > 0
-                    ? { album: { releaseDateYear: { in: years } } }
-                    : {}),
-                  ...(genres.length > 0
-                    ? {
-                        genres: {
-                          some: {
-                            name: { in: genres, mode: "insensitive" },
-                          },
-                        },
-                      }
-                    : {}),
-                },
-              },
-            ],
+            music: {
+              ...(years.length > 0
+                ? { releaseDateYear: { in: years } }
+                : {}),
+              ...(genres.length > 0
+                ? {
+                    genres: {
+                      some: {
+                        name: { in: genres, mode: "insensitive" },
+                      },
+                    },
+                  }
+                : {}),
+            },
           }
         : {}),
     }
@@ -139,8 +119,7 @@ export default defineRoute({
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
         orderBy: [orderByClause, { id: "desc" }],
         include: {
-          album: { select: musicAlbumSelect },
-          track: { select: musicTrackSelect },
+          music: { select: musicAlbumSelect },
         },
       }),
     ])
@@ -153,29 +132,23 @@ export default defineRoute({
     return {
       success: true,
       items: paged.map((item: any) => {
-        const isAlbum =
-          item.itemType === "ALBUM" || Boolean(item.albumId && !item.trackId)
-        const rawMedia = isAlbum ? item.album : (item.track ?? item.album)
-        const format = isAlbum ? "ALBUM" : "TRACK"
+        const rawMedia = item.music
+        const format = item.itemType || item.music?.type || "TRACK"
         const year =
-          item.album?.releaseDateYear ??
-          item.track?.album?.releaseDateYear ??
+          item.music?.releaseDateYear ??
+          item.music?.album?.releaseDateYear ??
           null
         const coverImage =
-          rawMedia?.coverImage || item.track?.album?.coverImage || null
-        const artist =
-          rawMedia?.artistName ||
-          item.album?.artistName ||
-          item.track?.artistName ||
-          null
+          item.music?.coverImage || item.music?.album?.coverImage || null
+        const artist = item.music?.artistName || null
 
         return {
           entry: {
             id: item.id,
-            musicId: item.albumId ?? item.trackId ?? 0,
-            albumId: item.albumId ?? null,
-            trackId: item.trackId ?? null,
-            itemType: item.itemType || format,
+            musicId: item.musicId,
+            albumId: item.music?.type === "ALBUM" ? item.musicId : (item.music?.albumId ?? null),
+            trackId: item.music?.type === "TRACK" ? item.musicId : null,
+            itemType: format,
             status: item.status,
             score: item.score,
             progress: item.playCount ?? 0,

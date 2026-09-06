@@ -53,7 +53,7 @@ export default defineRoute({
   },
 
   async GET({ params, prisma, cache, cacheKeys, logger }) {
-    const id = params.id
+    const id = Number(params.id)
     const cacheKey = cacheKeys.game.id(id)
 
     const cached = await cache.get<GameDetails>(cacheKey)

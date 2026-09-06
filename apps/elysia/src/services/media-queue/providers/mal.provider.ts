@@ -224,7 +224,7 @@ export class MyAnimeListProvider {
           const linkMatch = rowHtml.match(
             /<a\s+href="([^"]*\/episode\/(\d+))"[^>]*>([\s\S]*?)<\/a>/
           )
-          if (!linkMatch) continue
+          if (!linkMatch || !linkMatch[1] || !linkMatch[2] || !linkMatch[3]) continue
 
           const episodeUrl = linkMatch[1]
           const episodeNum = parseInt(linkMatch[2], 10)
@@ -237,7 +237,7 @@ export class MyAnimeListProvider {
           )
           let titleSecondary: string | undefined
           let titleNative: string | undefined
-          if (subMatch) {
+          if (subMatch && subMatch[1]) {
             const subText = this.decodeHtml(
               subMatch[1]
                 .replace(/<[^>]+>/g, "")
@@ -257,7 +257,7 @@ export class MyAnimeListProvider {
             /<td\s+class="episode-aired[^"]*">([\s\S]*?)<\/td>/
           )
           let airDate: Date | undefined
-          if (airMatch) {
+          if (airMatch && airMatch[1]) {
             const airText = airMatch[1].replace(/<[^>]+>/g, "").trim()
             if (airText && airText !== "N/A" && !airText.includes("?")) {
               const parsed = new Date(airText)

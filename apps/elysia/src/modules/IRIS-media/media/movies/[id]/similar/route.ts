@@ -42,8 +42,9 @@ export default defineRoute({
   },
 
   async GET({ params, query, prisma, cache, cacheKeys }) {
-    const id = params.id
-    const limit = Math.max(1, Math.min(query?.limit ?? 10, 50))
+    const id = Number(params.id)
+    const parsedLimit = Number(query?.limit)
+    const limit = Math.max(1, Math.min(isNaN(parsedLimit) ? 10 : parsedLimit, 50))
 
     const cacheKey = cacheKeys.similar.movies(id)
     const cached = await cache.get<SimilarMediaItem[]>(cacheKey)

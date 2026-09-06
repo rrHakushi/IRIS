@@ -84,7 +84,7 @@ export default defineRoute({
       session
     )
 
-    const watchlists = await prisma.watchlist.findMany({
+    const watchlists = await prisma.customList.findMany({
       where: {
         userId: dbUser.id,
         ...(isOwner ? {} : { isPrivate: false }),
@@ -100,7 +100,7 @@ export default defineRoute({
                 where: {
                   mediaType:
                     query.mediaType === "MUSIC"
-                      ? { in: ["MUSIC_ALBUM", "MUSIC_TRACK"] }
+                      ? { in: ["MUSIC", "MUSIC_ALBUM", "MUSIC_TRACK"] as MediaType[] }
                       : (query.mediaType as MediaType),
                   mediaId: Number(query.mediaId),
                 },
@@ -148,7 +148,7 @@ export default defineRoute({
       coverImage?: string | null
     }
 
-    const created = await prisma.watchlist.create({
+    const created = await prisma.customList.create({
       data: {
         userId: dbUser.id,
         name: b.name.trim(),

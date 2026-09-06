@@ -29,7 +29,7 @@ export default defineRoute({
       session
     )
 
-    const watchlist = await prisma.watchlist.findUnique({
+    const watchlist = await prisma.customList.findUnique({
       where: { id: params.watchlistId },
       select: { id: true, userId: true, isPrivate: true },
     })
@@ -42,8 +42,8 @@ export default defineRoute({
       throw new NotFound(`Watchlist "${params.watchlistId}" not found`)
     }
 
-    const entries = await prisma.watchlistEntry.findMany({
-      where: { watchlistId: watchlist.id },
+    const entries = await prisma.customListEntry.findMany({
+      where: { listId: watchlist.id },
       include: {
         anime: {
           select: {
@@ -89,20 +89,11 @@ export default defineRoute({
             genres: { select: { name: true } },
           },
         },
-        album: {
+        music: {
           select: {
             status: true,
             releaseDateYear: true,
             genres: { select: { name: true } },
-          },
-        },
-        track: {
-          select: {
-            status: true,
-            genres: { select: { name: true } },
-            album: {
-              select: { releaseDateYear: true },
-            },
           },
         },
       },
@@ -116,8 +107,7 @@ export default defineRoute({
         e.tv ||
         e.game ||
         e.book ||
-        e.album ||
-        e.track
+        e.music
       return {
         status: e.mediaType,
         media,

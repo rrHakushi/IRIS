@@ -5,8 +5,7 @@ import {
   assertIsOwner,
   ScoreSchema,
   ConnectionsSchema,
-  musicAlbumSelect,
-  musicTrackSelect,
+  musicSelect,
 } from "@/modules/IRIS-list/helpers"
 import { NotFound } from "@/utils/errors"
 import { MusicListStatus } from "@IRIS/database"
@@ -133,7 +132,7 @@ export default defineRoute({
     },
   },
 
-  async GET({ params, query, prisma, session }) {
+  async GET({ params, prisma, session }) {
     const { dbUser, isOwner } = await resolveTargetUserAndAccess(
       prisma,
       params.username,
@@ -141,25 +140,16 @@ export default defineRoute({
     )
 
     const id = Number(params.id)
-    const targetType = (query as any)?.type as "TRACK" | "ALBUM" | undefined
 
-    const whereCondition: any = {
-      userId: dbUser.id,
-    }
-
-    if (targetType === "ALBUM") {
-      whereCondition.albumId = id
-    } else if (targetType === "TRACK") {
-      whereCondition.trackId = id
-    } else {
-      whereCondition.OR = [{ albumId: id }, { trackId: id }]
-    }
-
-    const entry = await prisma.musicList.findFirst({
-      where: whereCondition,
+    const entry = await prisma.musicList.findUnique({
+      where: {
+        userId_musicId: {
+          userId: dbUser.id,
+          musicId: id,
+        },
+      },
       include: {
-        album: { select: musicAlbumSelect },
-        track: { select: musicTrackSelect },
+        music: { select: musicSelect },
       },
     })
 
@@ -176,10 +166,10 @@ export default defineRoute({
       inList: true,
       entry: {
         id: entry.id,
-        musicId: entry.albumId ?? entry.trackId ?? id,
-        albumId: entry.albumId ?? null,
-        trackId: entry.trackId ?? null,
-        itemType: entry.itemType,
+        musicId: entry.musicId,
+        albumId: entry.music?.type === "ALBUM" ? entry.musicId : (entry.music?.albumId ?? null),
+        trackId: entry.music?.type === "TRACK" ? entry.musicId : null,
+        itemType: entry.music?.type ?? "TRACK",
         status: entry.status,
         score: entry.score,
         progress: entry.playCount,
@@ -187,15 +177,16 @@ export default defineRoute({
         notes: entry.notes,
         private: entry.private,
         startedAt: entry.startedAt ? entry.startedAt.toISOString() : null,
+        completedAt: entry.completedAt ? entry.completedAt.toISOString() : null,
         connections: entry.connections,
         createdAt: entry.createdAt.toISOString(),
         updatedAt: entry.updatedAt.toISOString(),
       },
-      media: entry.album ?? entry.track,
+      media: entry.music,
     }
   },
 
-  async PUT({ params, query, body, prisma, session }) {
+  async PUT({ params, body, prisma, session }) {
     requireAuth(session)
     const { dbUser, isOwner } = await resolveTargetUserAndAccess(
       prisma,
@@ -205,27 +196,11 @@ export default defineRoute({
     assertIsOwner(isOwner, params.username)
 
     const id = Number(params.id)
-    const targetType = (query as any)?.type as "TRACK" | "ALBUM" | undefined
-
-    let track: { id: number } | null = null
-    let album: { id: number } | null = null
-
-    if (targetType === "ALBUM") {
-      album = await prisma.musicAlbum.findUnique({ where: { id }, select: { id: true } })
-    } else if (targetType === "TRACK") {
-      track = await prisma.musicTrack.findUnique({ where: { id }, select: { id: true } })
-    } else {
-      ;[track, album] = await Promise.all([
-        prisma.musicTrack.findUnique({ where: { id }, select: { id: true } }),
-        prisma.musicAlbum.findUnique({ where: { id }, select: { id: true } }),
-      ])
-    }
-
-    if (!track && !album) {
+    const music = await prisma.music.findUnique({ where: { id }, select: { id: true, type: true } })
+    if (!music) {
       throw new NotFound(`Music with ID ${id} does not exist`)
     }
 
-    const isAlbum = targetType ? targetType === "ALBUM" : album && !track ? true : false
     const payload = (body ?? {}) as any
     const startedAt =
       payload.startedAt !== undefined
@@ -249,18 +224,16 @@ export default defineRoute({
         : {}),
     }
 
-    const whereUnique = isAlbum
-      ? { userId_albumId: { userId: dbUser.id, albumId: (album || { id }).id } }
-      : { userId_trackId: { userId: dbUser.id, trackId: (track || { id }).id } }
-
     const result = await prisma.musicList.upsert({
-      where: whereUnique,
+      where: {
+        userId_musicId: {
+          userId: dbUser.id,
+          musicId: id,
+        },
+      },
       create: {
         userId: dbUser.id,
-        itemType: isAlbum ? "ALBUM" : "TRACK",
-        ...(isAlbum
-          ? { albumId: (album || { id }).id }
-          : { trackId: (track || { id }).id }),
+        musicId: id,
         status: payload.status ?? "PLANNING",
         score: payload.score ?? null,
         playCount: plays ?? 0,
@@ -278,9 +251,9 @@ export default defineRoute({
       entry: {
         id: result.id,
         musicId: id,
-        albumId: result.albumId ?? null,
-        trackId: result.trackId ?? null,
-        itemType: result.itemType,
+        albumId: music.type === "ALBUM" ? id : null,
+        trackId: music.type === "TRACK" ? id : null,
+        itemType: music.type,
         status: result.status,
         score: result.score,
         progress: result.playCount,
@@ -288,6 +261,7 @@ export default defineRoute({
         notes: result.notes,
         private: result.private,
         startedAt: result.startedAt ? result.startedAt.toISOString() : null,
+        completedAt: result.completedAt ? result.completedAt.toISOString() : null,
         connections: result.connections,
         createdAt: result.createdAt.toISOString(),
         updatedAt: result.updatedAt.toISOString(),
@@ -295,7 +269,7 @@ export default defineRoute({
     }
   },
 
-  async PATCH({ params, query, body, prisma, session }) {
+  async PATCH({ params, body, prisma, session }) {
     requireAuth(session)
     const { dbUser, isOwner } = await resolveTargetUserAndAccess(
       prisma,
@@ -305,27 +279,11 @@ export default defineRoute({
     assertIsOwner(isOwner, params.username)
 
     const id = Number(params.id)
-    const targetType = (query as any)?.type as "TRACK" | "ALBUM" | undefined
-
-    let track: { id: number } | null = null
-    let album: { id: number } | null = null
-
-    if (targetType === "ALBUM") {
-      album = await prisma.musicAlbum.findUnique({ where: { id }, select: { id: true } })
-    } else if (targetType === "TRACK") {
-      track = await prisma.musicTrack.findUnique({ where: { id }, select: { id: true } })
-    } else {
-      ;[track, album] = await Promise.all([
-        prisma.musicTrack.findUnique({ where: { id }, select: { id: true } }),
-        prisma.musicAlbum.findUnique({ where: { id }, select: { id: true } }),
-      ])
-    }
-
-    if (!track && !album) {
+    const music = await prisma.music.findUnique({ where: { id }, select: { id: true, type: true } })
+    if (!music) {
       throw new NotFound(`Music with ID ${id} does not exist`)
     }
 
-    const isAlbum = targetType ? targetType === "ALBUM" : album && !track ? true : false
     const payload = (body ?? {}) as any
     const startedAt =
       payload.startedAt !== undefined
@@ -349,18 +307,16 @@ export default defineRoute({
         : {}),
     }
 
-    const whereUnique = isAlbum
-      ? { userId_albumId: { userId: dbUser.id, albumId: (album || { id }).id } }
-      : { userId_trackId: { userId: dbUser.id, trackId: (track || { id }).id } }
-
     const result = await prisma.musicList.upsert({
-      where: whereUnique,
+      where: {
+        userId_musicId: {
+          userId: dbUser.id,
+          musicId: id,
+        },
+      },
       create: {
         userId: dbUser.id,
-        itemType: isAlbum ? "ALBUM" : "TRACK",
-        ...(isAlbum
-          ? { albumId: (album || { id }).id }
-          : { trackId: (track || { id }).id }),
+        musicId: id,
         status: payload.status ?? "PLANNING",
         score: payload.score ?? null,
         playCount: plays ?? 0,
@@ -378,9 +334,9 @@ export default defineRoute({
       entry: {
         id: result.id,
         musicId: id,
-        albumId: result.albumId ?? null,
-        trackId: result.trackId ?? null,
-        itemType: result.itemType,
+        albumId: music.type === "ALBUM" ? id : null,
+        trackId: music.type === "TRACK" ? id : null,
+        itemType: music.type,
         status: result.status,
         score: result.score,
         progress: result.playCount,
@@ -388,6 +344,7 @@ export default defineRoute({
         notes: result.notes,
         private: result.private,
         startedAt: result.startedAt ? result.startedAt.toISOString() : null,
+        completedAt: result.completedAt ? result.completedAt.toISOString() : null,
         connections: result.connections,
         createdAt: result.createdAt.toISOString(),
         updatedAt: result.updatedAt.toISOString(),
@@ -395,7 +352,7 @@ export default defineRoute({
     }
   },
 
-  async DELETE({ params, query, prisma, session }) {
+  async DELETE({ params, prisma, session }) {
     requireAuth(session)
     const { dbUser, isOwner } = await resolveTargetUserAndAccess(
       prisma,
@@ -405,22 +362,14 @@ export default defineRoute({
     assertIsOwner(isOwner, params.username)
 
     const id = Number(params.id)
-    const targetType = (query as any)?.type as "TRACK" | "ALBUM" | undefined
 
-    const whereCondition: any = {
-      userId: dbUser.id,
-    }
-
-    if (targetType === "ALBUM") {
-      whereCondition.albumId = id
-    } else if (targetType === "TRACK") {
-      whereCondition.trackId = id
-    } else {
-      whereCondition.OR = [{ albumId: id }, { trackId: id }]
-    }
-
-    const existing = await prisma.musicList.findFirst({
-      where: whereCondition,
+    const existing = await prisma.musicList.findUnique({
+      where: {
+        userId_musicId: {
+          userId: dbUser.id,
+          musicId: id,
+        },
+      },
     })
 
     if (!existing) {

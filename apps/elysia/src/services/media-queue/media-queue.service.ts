@@ -18,6 +18,7 @@ import {
   SimklProvider,
   SteamProvider,
   LastFmProvider,
+  DeezerProvider,
   type AnimeMappingEntry,
   type MangaMappingEntry,
   type EpisodeSkipTimestamps,
@@ -58,6 +59,7 @@ export class MediaQueueService {
   public readonly steam = new SteamProvider()
   public readonly musicbrainz = new MusicBrainzProvider()
   public readonly lrclib = new LrcLibProvider()
+  public readonly deezer = new DeezerProvider()
   public readonly animeMapping = new AnimeMappingProvider()
   public readonly aniskip = new AniSkipProvider()
   public readonly simkl = new SimklProvider()
@@ -384,69 +386,51 @@ export class MediaQueueService {
       case "MUSIC_ALBUM": {
         let record: any = null
         if (!isNaN(extIdNum)) {
-          record = await prisma.musicAlbum.findUnique({
+          record = await prisma.music.findUnique({
             where: { id: extIdNum },
           })
         } else {
           const idStr = String(externalId)
           if (idStr.includes(":::")) {
             const [artist, album] = idStr.split(":::")
-            record = await prisma.musicAlbum.findFirst({
+            record = await prisma.music.findFirst({
               where: {
                 titlePrimary: { equals: album, mode: "insensitive" },
                 artistName: { equals: artist, mode: "insensitive" },
+                type: "ALBUM",
               },
             })
           } else {
-            record = await prisma.musicAlbum.findUnique({
-              where: { musicBrainzId: idStr },
+            record = await prisma.music.findUnique({
+              where: { deezerId: idStr },
             })
           }
         }
         return !mediaDbSyncer.isRecordStale(record as any, "MUSIC_ALBUM")
       }
-      case "MUSIC_TRACK": {
+      case "MUSIC_TRACK":
+      case "MUSIC": {
         let record: any = null
         if (!isNaN(extIdNum)) {
-          record = await prisma.musicTrack.findUnique({
+          record = await prisma.music.findUnique({
             where: { id: extIdNum },
           })
         } else {
           const idStr = String(externalId)
           if (idStr.includes(":::")) {
             const [artist, track] = idStr.split(":::")
-            record = await prisma.musicTrack.findFirst({
+            record = await prisma.music.findFirst({
               where: {
                 titlePrimary: { equals: track, mode: "insensitive" },
                 artistName: { equals: artist, mode: "insensitive" },
+                type: "TRACK",
               },
             })
           } else {
-            record = await prisma.musicTrack.findUnique({
-              where: { musicBrainzId: idStr },
+            record = await prisma.music.findUnique({
+              where: { deezerId: idStr },
             })
           }
-        }
-        if (
-          record &&
-          !record.description &&
-          !record.lyrics &&
-          (!record.lastFmListenersStat || record.lastFmListenersStat === 0)
-        ) {
-          return false
-        }
-        return !mediaDbSyncer.isRecordStale(record as any, "MUSIC_TRACK")
-      }
-      case "MUSIC": {
-        let record: any = null
-        if (!isNaN(extIdNum)) {
-          record = await prisma.musicTrack.findUnique({
-            where: { id: extIdNum },
-          })
-        } else {
-          record = await prisma.musicTrack.findUnique({
-            where: { musicBrainzId: String(externalId) },
-          })
         }
         return !mediaDbSyncer.isRecordStale(record as any, "MUSIC_TRACK")
       }
@@ -500,17 +484,17 @@ export class MediaQueueService {
         if (type === "MUSIC_ALBUM") {
           const albumIdNum = Number(externalId)
           const albumRec = !isNaN(albumIdNum)
-            ? await prisma.musicAlbum.findUnique({
+            ? await prisma.music.findUnique({
                 where: { id: albumIdNum },
-                select: { id: true, tracks: { select: { id: true } } },
+                select: { id: true, tracks: { select: { id: true, deezerId: true } } },
               })
-            : await prisma.musicAlbum.findFirst({
-                where: { musicBrainzId: String(externalId) },
-                select: { id: true, tracks: { select: { id: true } } },
+            : await prisma.music.findFirst({
+                where: { deezerId: String(externalId), type: "ALBUM" },
+                select: { id: true, tracks: { select: { id: true, deezerId: true } } },
               })
           if (albumRec?.tracks && albumRec.tracks.length > 0) {
             for (const t of albumRec.tracks) {
-              await this.enqueueJob("MUSIC_TRACK", t.id, options).catch(() => {})
+              await this.enqueueJob("MUSIC_TRACK", t.deezerId || t.id, options).catch(() => {})
             }
           }
         }
@@ -742,56 +726,38 @@ export class MediaQueueService {
         break
       }
       case "MUSIC_ALBUM": {
-        const albums = await this.lastfm.searchAlbums(cleanQuery, limit)
+        const albums = await this.deezer.searchAlbums(cleanQuery, limit)
         for (const item of albums) {
           try {
             const previewResult =
-              await this.syncer.upsertMusicAlbumSearchPreview({
-                titlePrimary: item.name,
-                artistName: item.artist,
-                coverImage: this.lastfm.getBestImage(item.image),
-                lastFmUrl: item.url,
-                musicBrainzId: item.mbid,
-              })
+              await this.syncer.upsertDeezerAlbumSearchPreview(item)
             results.push(previewResult)
-            const jobExtId = `${item.artist}:::${item.name}`
-            await this.enqueueJob("MUSIC_ALBUM", jobExtId, {
+            await this.enqueueJob("MUSIC_ALBUM", item.id, {
               ...options,
               priority: options?.priority ?? 2,
             })
           } catch (err: any) {
             logQueue(
-              `${c.magenta(c.bold("[MediaQueue]"))} ⚠️ Search stub error for MUSIC_ALBUM:${item.name}: ${err.message}`
+              `${c.magenta(c.bold("[MediaQueue]"))} ⚠️ Search stub error for MUSIC_ALBUM:${item.title}: ${err.message}`
             )
           }
         }
         break
       }
       case "MUSIC_TRACK": {
-        const tracks = await this.lastfm.searchTracks(
-          cleanQuery,
-          undefined,
-          limit
-        )
+        const tracks = await this.deezer.searchTracks(cleanQuery, limit)
         for (const item of tracks) {
           try {
             const previewResult =
-              await this.syncer.upsertMusicTrackSearchPreview({
-                titlePrimary: item.name,
-                artistName: item.artist,
-                coverImage: this.lastfm.getBestImage(item.image),
-                lastFmUrl: item.url,
-                musicBrainzId: item.mbid,
-              })
+              await this.syncer.upsertDeezerTrackSearchPreview(item)
             results.push(previewResult)
-            const jobExtId = `${item.artist}:::${item.name}`
-            await this.enqueueJob("MUSIC_TRACK", jobExtId, {
+            await this.enqueueJob("MUSIC_TRACK", item.id, {
               ...options,
               priority: options?.priority ?? 2,
             })
           } catch (err: any) {
             logQueue(
-              `${c.magenta(c.bold("[MediaQueue]"))} ⚠️ Search stub error for MUSIC_TRACK:${item.name}: ${err.message}`
+              `${c.magenta(c.bold("[MediaQueue]"))} ⚠️ Search stub error for MUSIC_TRACK:${item.title}: ${err.message}`
             )
           }
         }
@@ -800,26 +766,16 @@ export class MediaQueueService {
       case "MUSIC": {
         const halfLimit = Math.max(Math.floor(limit / 2), 3)
         const [albums, tracks] = await Promise.all([
-          this.lastfm.searchAlbums(cleanQuery, halfLimit).catch(() => []),
-          this.lastfm
-            .searchTracks(cleanQuery, undefined, halfLimit)
-            .catch(() => []),
+          this.deezer.searchAlbums(cleanQuery, halfLimit).catch(() => []),
+          this.deezer.searchTracks(cleanQuery, halfLimit).catch(() => []),
         ])
-
 
         for (const item of albums) {
           try {
             const previewResult =
-              await this.syncer.upsertMusicAlbumSearchPreview({
-                titlePrimary: item.name,
-                artistName: item.artist,
-                coverImage: this.lastfm.getBestImage(item.image),
-                lastFmUrl: item.url,
-                musicBrainzId: item.mbid,
-              })
+              await this.syncer.upsertDeezerAlbumSearchPreview(item)
             results.push(previewResult)
-            const jobExtId = `${item.artist}:::${item.name}`
-            await this.enqueueJob("MUSIC_ALBUM", jobExtId, {
+            await this.enqueueJob("MUSIC_ALBUM", item.id, {
               ...options,
               priority: options?.priority ?? 2,
             })
@@ -829,16 +785,9 @@ export class MediaQueueService {
         for (const item of tracks) {
           try {
             const previewResult =
-              await this.syncer.upsertMusicTrackSearchPreview({
-                titlePrimary: item.name,
-                artistName: item.artist,
-                coverImage: this.lastfm.getBestImage(item.image),
-                lastFmUrl: item.url,
-                musicBrainzId: item.mbid,
-              })
+              await this.syncer.upsertDeezerTrackSearchPreview(item)
             results.push(previewResult)
-            const jobExtId = `${item.artist}:::${item.name}`
-            await this.enqueueJob("MUSIC_TRACK", jobExtId, {
+            await this.enqueueJob("MUSIC_TRACK", item.id, {
               ...options,
               priority: options?.priority ?? 2,
             })
@@ -1359,252 +1308,99 @@ export class MediaQueueService {
 
       case "MUSIC_ALBUM": {
         const extStr = String(job.externalId)
-        let artist = ""
-        let album = ""
-        let mbid: string | undefined
+        let deezerAlbumId: string | number = extStr
 
-        if (extStr.includes(":::")) {
-          const parts = extStr.split(":::")
-          artist = parts[0] || ""
-          album = parts[1] || ""
-        } else if (!isNaN(Number(extStr))) {
-          const found = await prisma.musicAlbum.findUnique({
+        if (!isNaN(Number(extStr))) {
+          const found = await prisma.music.findUnique({
             where: { id: Number(extStr) },
           })
-          if (found) {
-            artist = found.artistName || ""
-            album = found.titlePrimary
-            mbid = found.musicBrainzId || undefined
+          if (found?.deezerId) {
+            deezerAlbumId = found.deezerId
           }
-        } else {
-          mbid = extStr
         }
 
-        // PRIMARY DATA SOURCE: Last.fm
         logQueue(
-          `${c.magenta(c.bold("[MediaQueue]"))} 📡 Querying Last.fm (Primary) for Album "${album}" by "${artist}"...`
+          `${c.magenta(c.bold("[MediaQueue]"))} 📡 Querying Deezer (Primary) for Album ID "${deezerAlbumId}"...`
         )
-        let lastFmData = (artist && album)
-          ? await this.lastfm.fetchAlbum(artist, album, mbid)
-          : null
+        let albumData = await this.deezer.getAlbum(deezerAlbumId)
 
-        // If not found with mbid, try artist + album
-        if (!lastFmData && mbid && artist && album) {
-          lastFmData = await this.lastfm.fetchAlbum(artist, album)
+        // If not found by ID and contains :::, search by title and artist
+        if (!albumData && extStr.includes(":::")) {
+          const [artist, album] = extStr.split(":::")
+          const searchResults = await this.deezer.searchAlbums(`${artist} ${album}`, 1)
+          if (searchResults.length > 0 && searchResults[0]) {
+            albumData = await this.deezer.getAlbum(searchResults[0].id)
+          }
         }
 
-        // If only mbid was provided and not found yet, lookup MB release ONLY to resolve artist & title for Last.fm
-        if (!lastFmData && !artist && !album && mbid) {
-          try {
-            const mbLookup = await this.musicbrainz.fetchRelease(mbid)
-            if (mbLookup) {
-              artist = mbLookup["artist-credit"]?.[0]?.name || ""
-              album = mbLookup.title
-              if (artist && album) {
-                lastFmData = await this.lastfm.fetchAlbum(artist, album, mbid)
-              }
-            }
-          } catch {}
-        }
-
-        if (!lastFmData) {
+        if (!albumData) {
           logQueue(
-            `${c.magenta(c.bold("[MediaQueue]"))} ⚠️ Last.fm returned no album data for "${album}" by "${artist}". MusicBrainz is secondary-only, skipping creation.`
+            `${c.magenta(c.bold("[MediaQueue]"))} ⚠️ Deezer returned no album data for "${job.externalId}". Skipping.`
           )
           break
         }
 
-        summaryText = `${lastFmData.name} by ${lastFmData.artist}`
-        const resolvedTitle = lastFmData.name
-        const resolvedArtist = lastFmData.artist
-        const resolvedMbid = lastFmData.mbid || mbid
-
-        const rawTracks = Array.isArray(lastFmData.tracks?.track)
-          ? lastFmData.tracks.track
-          : lastFmData.tracks?.track
-            ? [lastFmData.tracks.track]
-            : []
-
-        const tracks = rawTracks.map((t, idx) => {
-          const durationNum = t.duration
-            ? parseInt(String(t.duration), 10)
-            : undefined
-          const durationSec = durationNum
-            ? durationNum > 10000
-              ? Math.round(durationNum / 1000)
-              : durationNum
-            : undefined
-          return {
-            titlePrimary: t.name,
-            trackNumber: t["@attr"]?.rank
-              ? parseInt(String(t["@attr"].rank), 10)
-              : idx + 1,
-            duration: durationSec,
-            artistName: t.artist?.name || resolvedArtist,
-            lastFmUrl: t.url,
-            musicBrainzId: undefined as string | undefined,
-          }
-        })
-
-        const rawTags = Array.isArray(lastFmData.tags?.tag)
-          ? lastFmData.tags.tag
-          : lastFmData.tags?.tag
-            ? [lastFmData.tags.tag]
-            : []
-        let tags = rawTags.map((tg) => ({
-          name: tg.name,
-          category: "Music Tag",
-        }))
-
-        const lastFmListenersStat = lastFmData.listeners
-          ? parseInt(String(lastFmData.listeners), 10)
-          : 0
-        const lastFmPlayCountStat = lastFmData.playcount
-          ? parseInt(String(lastFmData.playcount), 10)
-          : 0
-        let coverImage =
-          this.lastfm.getBestImage(lastFmData.image) || undefined
-
-        // SECONDARY DATA SOURCE: MusicBrainz (ONLY for missing fields: releaseDate, barcode, albumType, missing track lengths, MBID)
-        let finalMbid = resolvedMbid
-        let releaseDate: Date | null = null
-        let releaseDateYear: number | null = null
-        let releaseDateMonth: number | null = null
-        let releaseDateDay: number | null = null
-        let barcode: string | null = null
-        let albumType: any = "ALBUM"
-        let mbRelease: import("./providers/musicbrainz.provider.js").MusicBrainzReleasePayload | null = null
-
-        try {
-          if (finalMbid) {
-            logQueue(
-              `${c.magenta(c.bold("[MediaQueue]"))} 📡 Querying MusicBrainz (Secondary - Missing Fields) for Release "${finalMbid}"...`
-            )
-            mbRelease = await this.musicbrainz.fetchRelease(finalMbid)
-          }
-
-          if (!mbRelease && resolvedTitle && resolvedArtist) {
-            logQueue(
-              `${c.magenta(c.bold("[MediaQueue]"))} 📡 Searching MusicBrainz (Secondary - Missing Fields) for release: "${resolvedTitle}" by "${resolvedArtist}"...`
-            )
-            const mbSearch = await this.musicbrainz.searchRelease(
-              `release:"${resolvedTitle}" AND artist:"${resolvedArtist}"`,
-              1
-            )
-            if (mbSearch.length > 0 && mbSearch[0]?.id) {
-              mbRelease = await this.musicbrainz.fetchRelease(mbSearch[0].id)
-            }
-          }
-
-          if (mbRelease) {
-            if (!finalMbid && mbRelease.id) {
-              finalMbid = mbRelease.id
-            }
-            if (mbRelease.barcode) {
-              barcode = mbRelease.barcode
-            }
-            if (mbRelease.date) {
-              const parts = mbRelease.date.split("-")
-              if (parts[0] && !isNaN(Number(parts[0]))) {
-                releaseDateYear = Number(parts[0])
-              }
-              if (parts[1] && !isNaN(Number(parts[1]))) {
-                releaseDateMonth = Number(parts[1])
-              }
-              if (parts[2] && !isNaN(Number(parts[2]))) {
-                releaseDateDay = Number(parts[2])
-              }
-              const d = new Date(mbRelease.date)
-              if (!isNaN(d.getTime())) {
-                releaseDate = d
-              }
-            }
-            if (mbRelease["release-group"]?.["primary-type"]) {
-              const pt = mbRelease["release-group"]["primary-type"].toUpperCase()
-              if (["ALBUM", "SINGLE", "EP", "COMPILATION", "SOUNDTRACK", "LIVE", "REMIX"].includes(pt)) {
-                albumType = pt
-              }
-            }
-            if (!coverImage && mbRelease.coverImageUrl) {
-              coverImage = mbRelease.coverImageUrl
-            }
-
-            // Fill missing track durations & MBIDs from MusicBrainz media tracks
-            if (mbRelease.media && mbRelease.media.length > 0) {
-              const mbTracks = mbRelease.media.flatMap((m) => m.tracks || [])
-              for (const localTrk of tracks) {
-                const matchedMbTrk = mbTracks.find(
-                  (mt) =>
-                    mt.number === String(localTrk.trackNumber) ||
-                    mt.title.toLowerCase() === localTrk.titlePrimary.toLowerCase()
-                )
-                if (matchedMbTrk) {
-                  if (!localTrk.duration && matchedMbTrk.length) {
-                    localTrk.duration = Math.round(matchedMbTrk.length / 1000)
-                  }
-                  if (!localTrk.musicBrainzId && (matchedMbTrk.recording?.id || matchedMbTrk.id)) {
-                    localTrk.musicBrainzId = matchedMbTrk.recording?.id || matchedMbTrk.id
-                  }
-                }
-              }
-            }
-
-            // Supplement tags if Last.fm had none
-            if (tags.length === 0 && mbRelease.tags && mbRelease.tags.length > 0) {
-              tags = mbRelease.tags.map((tg) => ({
-                name: tg.name,
-                category: "Music Tag",
-              }))
-            }
-          }
-        } catch (mbErr: any) {
-          logQueue(
-            `${c.magenta(c.bold("[MediaQueue]"))} ⚠️ MusicBrainz secondary supplement error: ${mbErr.message}`
-          )
+        summaryText = `${albumData.title} by ${albumData.artist?.name || "Unknown"}`
+        let releaseDate: Date | undefined
+        let releaseDateYear: number | undefined
+        let releaseDateMonth: number | undefined
+        let releaseDateDay: number | undefined
+        if (albumData.release_date) {
+          const parts = albumData.release_date.split("-").map((s) => parseInt(s, 10))
+          if (parts[0]) releaseDateYear = parts[0]
+          if (parts[1]) releaseDateMonth = parts[1]
+          if (parts[2]) releaseDateDay = parts[2]
+          const d = new Date(albumData.release_date)
+          if (!isNaN(d.getTime())) releaseDate = d
         }
 
-        // Fetch full artist info from Last.fm to save into Person
-        let fullArtistInfo: any = null
-        if (resolvedArtist) {
-          const mbArtistId = mbRelease?.["artist-credit"]?.[0]?.artist?.id
-          fullArtistInfo = await this.syncArtistInfo(resolvedArtist, mbArtistId)
-        }
+        const genres = albumData.genres?.data?.map((g) => g.name) || []
 
         logQueue(
-          `${c.magenta(c.bold("[MediaQueue]"))} 💾 Upserting MusicAlbum & ${tracks.length} tracks to database...`
+          `${c.magenta(c.bold("[MediaQueue]"))} 💾 Upserting Deezer Album & ${albumData.tracks?.data?.length || 0} tracks to database...`
         )
-        const result = await mediaDbSyncer.upsertMusicAlbum({
-          titlePrimary: resolvedTitle,
-          artistName: resolvedArtist,
-          lastFmUrl: lastFmData.url,
-          musicBrainzId: finalMbid,
-          barcode,
-          albumType,
+        const result = await mediaDbSyncer.upsertMusic({
+          type: "ALBUM",
+          deezerId: albumData.id,
+          upc: albumData.upc,
+          titlePrimary: albumData.title,
+          link: albumData.link,
+          share: albumData.share,
+          coverImage: albumData.cover_big || albumData.cover_medium || albumData.cover,
+          images: {
+            small: albumData.cover_small,
+            medium: albumData.cover_medium,
+            big: albumData.cover_big,
+            xl: albumData.cover_xl,
+          },
+          duration: albumData.duration,
           releaseDate,
           releaseDateYear,
           releaseDateMonth,
           releaseDateDay,
-          coverImage,
-          description:
-            lastFmData.wiki?.summary || lastFmData.wiki?.content,
-          totalTracks: tracks.length,
-          lastFmListenersStat,
-          lastFmPlayCountStat,
-          tags,
-          tracks,
-          artists: fullArtistInfo ? [fullArtistInfo] : undefined,
+          recordType: albumData.record_type,
+          label: albumData.label,
+          nbTracks: albumData.nb_tracks,
+          fans: albumData.fans,
+          explicitLyrics: albumData.explicit_lyrics,
+          explicitContentLyrics: albumData.explicit_content_lyrics,
+          explicitContentCover: albumData.explicit_content_cover,
+          genres,
+          artist: albumData.artist,
+          tracks: albumData.tracks?.data || [],
         })
         localId = result.id
+        await cache.del(`music:${result.id}`).catch(() => {})
+        await cache.del(`music:ALBUM:${result.id}`).catch(() => {})
 
-        // When queue is fetching an album, queue all songs from that album too
+        // When queue is fetching an album, queue all child tracks to fetch individual metadata / lyrics if needed
         if (result.trackIds && result.trackIds.length > 0) {
           logQueue(
-            `${c.magenta(c.bold("[MediaQueue]"))} 🎵 Queuing metadata fetch for ${result.trackIds.length} tracks from album "${resolvedTitle}"...`
+            `${c.magenta(c.bold("[MediaQueue]"))} 🎵 Queuing fetch for ${result.trackIds.length} tracks from album "${albumData.title}"...`
           )
           for (const trackId of result.trackIds) {
             await this.enqueueJob("MUSIC_TRACK", trackId, {
               priority: (job.priority ?? 5) + 1,
-              forceRefresh: true,
             }).catch(() => {})
           }
         }
@@ -1614,149 +1410,58 @@ export class MediaQueueService {
       case "MUSIC_TRACK":
       case "MUSIC": {
         const extStr = String(job.externalId)
-        let artist = ""
-        let track = ""
-        let mbid: string | undefined
-        let foundTrack: any = null
+        let deezerTrackId: string | number = extStr
 
-        if (extStr.includes(":::")) {
-          const parts = extStr.split(":::")
-          artist = parts[0] || ""
-          track = parts[1] || ""
-        } else if (!isNaN(Number(extStr))) {
-          foundTrack = await prisma.musicTrack.findUnique({
+        if (!isNaN(Number(extStr))) {
+          const found = await prisma.music.findUnique({
             where: { id: Number(extStr) },
           })
-          if (foundTrack) {
-            artist = foundTrack.artistName || ""
-            track = foundTrack.titlePrimary
-            mbid = foundTrack.musicBrainzId || undefined
+          if (found?.deezerId) {
+            deezerTrackId = found.deezerId
           }
-        } else {
-          mbid = extStr
         }
 
-        // PRIMARY DATA SOURCE: Last.fm
         logQueue(
-          `${c.magenta(c.bold("[MediaQueue]"))} 📡 Querying Last.fm (Primary) for Track "${track}" by "${artist}"...`
+          `${c.magenta(c.bold("[MediaQueue]"))} 📡 Querying Deezer (Primary) for Track ID "${deezerTrackId}"...`
         )
-        let trackInfo = (artist && track)
-          ? await this.lastfm.fetchTrack(artist, track, mbid)
-          : null
+        let trackData = await this.deezer.getTrack(deezerTrackId)
 
-        // If not found with mbid, try artist + track directly
-        if (!trackInfo && mbid && artist && track) {
-          trackInfo = await this.lastfm.fetchTrack(artist, track)
+        // If not found by ID and contains :::, search by title and artist
+        if (!trackData && extStr.includes(":::")) {
+          const [artist, track] = extStr.split(":::")
+          const searchResults = await this.deezer.searchTracks(`${artist} ${track}`, 1)
+          if (searchResults.length > 0 && searchResults[0]) {
+            trackData = await this.deezer.getTrack(searchResults[0].id)
+          }
         }
 
-        // If only mbid was provided and not found yet, lookup MB recording ONLY to resolve artist & title for Last.fm
-        if (!trackInfo && !artist && !track && mbid) {
-          try {
-            const mbLookup = await this.musicbrainz.fetchRecording(mbid)
-            if (mbLookup) {
-              artist = mbLookup["artist-credit"]?.[0]?.name || ""
-              track = mbLookup.title
-              if (artist && track) {
-                trackInfo = await this.lastfm.fetchTrack(artist, track, mbid)
-              }
-            }
-          } catch {}
-        }
-
-        if (!trackInfo) {
+        if (!trackData) {
           logQueue(
-            `${c.magenta(c.bold("[MediaQueue]"))} ⚠️ Last.fm returned no track data for "${track}" by "${artist}". MusicBrainz is secondary-only, skipping creation.`
+            `${c.magenta(c.bold("[MediaQueue]"))} ⚠️ Deezer returned no track data for "${job.externalId}". Skipping.`
           )
           break
         }
 
-        summaryText = `${trackInfo.name} by ${trackInfo.artist?.name || artist}`
-        const resolvedTrack = trackInfo.name
-        const resolvedArtist = trackInfo.artist?.name || artist
-        let albumTitle = trackInfo.album?.title
-        let duration: number | undefined
-        if (trackInfo.duration) {
-          const durNum = parseInt(String(trackInfo.duration), 10)
-          duration = durNum > 10000 ? Math.round(durNum / 1000) : durNum
-        }
-        let coverImage =
-          this.lastfm.getBestImage(trackInfo.album?.image) || undefined
-        const lastFmUrl = trackInfo.url
-        const description =
-          trackInfo.wiki?.summary || trackInfo.wiki?.content
-        const lastFmListenersStat = trackInfo.listeners
-          ? parseInt(String(trackInfo.listeners), 10)
-          : 0
-        const lastFmPlayCountStat = trackInfo.playcount
-          ? parseInt(String(trackInfo.playcount), 10)
-          : 0
+        summaryText = `${trackData.title} by ${trackData.artist?.name || "Unknown"}`
+        const resolvedTrack = trackData.title
+        const resolvedArtist = trackData.artist?.name || ""
+        const albumTitle = trackData.album?.title
+        const duration = trackData.duration
 
-        const rawTags = Array.isArray(trackInfo.toptags?.tag)
-          ? trackInfo.toptags.tag
-          : trackInfo.toptags?.tag
-            ? [trackInfo.toptags.tag]
-            : []
-        let tags = rawTags.map((tg) => ({
-          name: tg.name,
-          category: "Music Tag",
-        }))
-
-        // SECONDARY DATA SOURCE: MusicBrainz (ONLY for missing fields: duration, mbid, isrc, albumTitle, coverImage)
-        let finalMbid = trackInfo.mbid || mbid
-        let isrc: string | undefined
-
-        try {
-          let mbData: import("./providers/musicbrainz.provider.js").MusicBrainzRecordingPayload | null = null
-          if (finalMbid) {
-            logQueue(
-              `${c.magenta(c.bold("[MediaQueue]"))} 📡 Querying MusicBrainz (Secondary - Missing Fields) for Recording "${finalMbid}"...`
-            )
-            mbData = await this.musicbrainz.fetchRecording(finalMbid)
-          }
-
-          if (!mbData && resolvedTrack && resolvedArtist) {
-            logQueue(
-              `${c.magenta(c.bold("[MediaQueue]"))} 📡 Searching MusicBrainz (Secondary - Missing Fields) for recording: "${resolvedTrack}" by "${resolvedArtist}"...`
-            )
-            const mbSearch = await this.musicbrainz.searchRecording(
-              `recording:"${resolvedTrack}" AND artist:"${resolvedArtist}"`,
-              1
-            )
-            if (mbSearch.length > 0 && mbSearch[0]) {
-              mbData = mbSearch[0]
-            }
-          }
-
-          if (mbData) {
-            if (!finalMbid && mbData.id) {
-              finalMbid = mbData.id
-            }
-            if ((!duration || duration === 0) && mbData.length) {
-              duration = Math.round(mbData.length / 1000)
-            }
-            if (mbData.isrcs && mbData.isrcs.length > 0) {
-              isrc = mbData.isrcs[0]
-            }
-            if (!albumTitle && mbData.releases?.[0]?.title) {
-              albumTitle = mbData.releases[0].title
-            }
-            if (!coverImage && mbData.coverImageUrl) {
-              coverImage = mbData.coverImageUrl
-            }
-            if (tags.length === 0 && mbData.tags && mbData.tags.length > 0) {
-              tags = mbData.tags.map((tg) => ({
-                name: tg.name,
-                category: "Music Tag",
-              }))
-            }
-          }
-        } catch (mbErr: any) {
-          logQueue(
-            `${c.magenta(c.bold("[MediaQueue]"))} ⚠️ MusicBrainz secondary supplement error: ${mbErr.message}`
-          )
+        let releaseDate: Date | undefined
+        let releaseDateYear: number | undefined
+        let releaseDateMonth: number | undefined
+        let releaseDateDay: number | undefined
+        if (trackData.release_date) {
+          const parts = trackData.release_date.split("-").map((s) => parseInt(s, 10))
+          if (parts[0]) releaseDateYear = parts[0]
+          if (parts[1]) releaseDateMonth = parts[1]
+          if (parts[2]) releaseDateDay = parts[2]
+          const d = new Date(trackData.release_date)
+          if (!isNaN(d.getTime())) releaseDate = d
         }
 
-        // Query LRCLIB for lyrics
+        // Query LRCLIB for lyrics fallback if needed
         let lyrics:
           | import("./providers/lrclib.provider.js").LrcLibLyricsPayload
           | null = null
@@ -1780,35 +1485,63 @@ export class MediaQueueService {
         logQueue(
           `${c.magenta(c.bold("[MediaQueue]"))} 💾 Upserting Music track to database...`
         )
-        // Fetch full artist info from Last.fm to save into Person
-        let fullArtistInfo: any = null
-        if (resolvedArtist) {
-          fullArtistInfo = await this.syncArtistInfo(resolvedArtist)
+
+        // If track has an album, ensure album exists in Music table and link albumId
+        let linkedAlbumId: number | undefined
+        if (trackData.album?.id) {
+          const albumRecord = await mediaDbSyncer.upsertMusic({
+            type: "ALBUM",
+            deezerId: trackData.album.id,
+            titlePrimary: trackData.album.title,
+            coverImage: trackData.album.cover_big || trackData.album.cover_medium || trackData.album.cover,
+            images: {
+              small: trackData.album.cover_small,
+              medium: trackData.album.cover_medium,
+              big: trackData.album.cover_big,
+              xl: trackData.album.cover_xl,
+            },
+            artist: trackData.artist,
+          })
+          linkedAlbumId = albumRecord.id
         }
 
-        const result = await mediaDbSyncer.upsertMusicTrack(
+        const result = await mediaDbSyncer.upsertMusic(
           {
-            id: foundTrack?.id,
-            albumId: foundTrack?.albumId,
-            trackNumber: foundTrack?.trackNumber,
-            discNumber: foundTrack?.discNumber,
-            titlePrimary: resolvedTrack,
-            titleSecondary:
-              foundTrack && foundTrack.titlePrimary !== resolvedTrack
-                ? foundTrack.titlePrimary
-                : undefined,
-            artistName: resolvedArtist,
+            type: "TRACK",
+            deezerId: trackData.id,
+            isrc: trackData.isrc,
+            titlePrimary: trackData.title,
+            titleSecondary: trackData.title_short,
+            titleVersion: trackData.title_version,
+            link: trackData.link,
+            share: trackData.share,
+            coverImage: trackData.album?.cover_big || trackData.album?.cover_medium || trackData.album?.cover,
+            images: trackData.album
+              ? {
+                  small: trackData.album.cover_small,
+                  medium: trackData.album.cover_medium,
+                  big: trackData.album.cover_big,
+                  xl: trackData.album.cover_xl,
+                }
+              : undefined,
+            duration: trackData.duration,
+            trackPosition: trackData.track_position,
+            diskNumber: trackData.disk_number,
+            rank: trackData.rank,
+            releaseDate,
+            releaseDateYear,
+            releaseDateMonth,
+            releaseDateDay,
+            explicitLyrics: trackData.explicit_lyrics,
+            explicitContentLyrics: trackData.explicit_content_lyrics,
+            explicitContentCover: trackData.explicit_content_cover,
+            audioPreviewUrl: trackData.preview,
+            bpm: trackData.bpm,
+            gain: trackData.gain,
+            availableCountries: trackData.available_countries,
+            albumId: linkedAlbumId,
             albumTitle,
-            duration,
-            coverImage,
-            lastFmUrl,
-            musicBrainzId: finalMbid,
-            isrc,
-            description,
-            lastFmListenersStat,
-            lastFmPlayCountStat,
-            tags,
-            artist: fullArtistInfo || undefined,
+            artist: trackData.artist,
           },
           lyrics
         )

@@ -64,7 +64,7 @@ export default defineRoute({
   },
 
   async GET({ params, prisma, cache, cacheKeys, logger }) {
-    const id = params.id
+    const id = Number(params.id)
     const cacheKey = cacheKeys.movie.id(id)
 
     const cached = await cache.get<MovieDetails>(cacheKey)

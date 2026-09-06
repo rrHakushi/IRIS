@@ -66,7 +66,7 @@ export default defineRoute({
   },
 
   async GET({ params, prisma, cache, cacheKeys, logger }) {
-    const id = params.id
+    const id = Number(params.id)
     const cacheKey = cacheKeys.anime.id(id)
 
     const cached = await cache.get<AnimeDetails>(cacheKey)

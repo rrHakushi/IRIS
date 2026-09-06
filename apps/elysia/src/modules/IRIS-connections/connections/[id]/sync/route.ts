@@ -70,7 +70,16 @@ export default defineRoute({
 
       let itemCount = 0
 
-      if (adapter.getLibrary) {
+      if (connection.provider === "DEEZER" && credentials.accessToken) {
+        const { deezerPlaylistService } = await import(
+          "../../../../../services/connections/deezer-playlist.service.js"
+        )
+        const res = await deezerPlaylistService.importUserPlaylists(
+          session.user.id,
+          credentials.accessToken
+        )
+        itemCount = res.tracksImported
+      } else if (adapter.getLibrary) {
         const library = await adapter.getLibrary(credentials)
         itemCount = library.length
       } else if (adapter.getGames) {
