@@ -7,6 +7,8 @@ import type {
 import {
   AniListAdapter,
   BangumiAdapter,
+  DeezerAdapter,
+  LastFmAdapter,
   MyAnimeListAdapter,
   RadarrAdapter,
   RiotGamesAdapter,
@@ -51,6 +53,8 @@ registerConnectionAdapter(new SteamAdapter());
 registerConnectionAdapter(new RiotGamesAdapter());
 registerConnectionAdapter(new RadarrAdapter());
 registerConnectionAdapter(new SonarrAdapter());
+registerConnectionAdapter(new DeezerAdapter());
+registerConnectionAdapter(new LastFmAdapter());
 
 /**
  * Retrieves the adapter implementation for a given provider.
@@ -126,6 +130,22 @@ export function getSupportedProviders(): ProviderMetadata[] {
       description: "Sync your ACG ratings, episodes, and subject collections with Bangumi.",
       websiteUrl: "https://bgm.tv",
       accentColor: "#F09199",
+    },
+    {
+      provider: "DEEZER",
+      name: "Deezer",
+      category: "MUSIC",
+      description: "Import playlists, sync favorite music, and discover tracks with Deezer.",
+      websiteUrl: "https://www.deezer.com",
+      accentColor: "#A238FF",
+    },
+    {
+      provider: "LASTFM",
+      name: "Last.fm",
+      category: "MUSIC",
+      description: "Scrobble playback progress, synchronize listening history and top tracks via Last.fm.",
+      websiteUrl: "https://www.last.fm",
+      accentColor: "#D51007",
     },
     {
       provider: "STEAM",

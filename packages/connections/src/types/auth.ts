@@ -11,6 +11,8 @@ export type ConnectionProvider =
   | "LIDARR"
   | "JELLYFIN"
   | "PLEX"
+  | "DEEZER"
+  | "LASTFM"
   | "CUSTOM";
 
 export type ConnectionAuthType =

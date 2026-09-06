@@ -81,6 +81,8 @@ export interface ScrobblePayload {
   mediaType: MediaType;
   externalId?: string;
   title: string;
+  artist?: string;
+  album?: string;
   year?: number;
   seasonNumber?: number;
   episodeNumber?: number;
@@ -89,4 +91,5 @@ export interface ScrobblePayload {
   action: "START" | "PAUSE" | "STOP" | "SCROBBLE";
   rating?: number;
   timestamp?: Date;
+  extra?: Record<string, any>;
 }

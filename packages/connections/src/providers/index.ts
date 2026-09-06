@@ -8,3 +8,5 @@ export * from "./gaming/riot.adapter.js";
 export * from "./media/servarr.base.js";
 export * from "./media/radarr.adapter.js";
 export * from "./media/sonarr.adapter.js";
+export * from "./music/deezer.adapter.js";
+export * from "./music/lastfm.adapter.js";
