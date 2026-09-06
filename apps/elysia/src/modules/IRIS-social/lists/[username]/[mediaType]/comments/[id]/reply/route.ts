@@ -26,6 +26,8 @@ function formatAuthorProfile(user: {
   }
 }
 
+import { CommentReplySchema } from "../../route.js"
+
 export default defineRoute({
   schema: {
     params: t.Object({
@@ -42,6 +44,13 @@ export default defineRoute({
       body: t.Object({
         content: t.String({ minLength: 1, maxLength: 5000 }),
       }),
+      response: {
+        200: t.Object({
+          success: t.Boolean(),
+          reply: t.Optional(CommentReplySchema),
+          data: t.Optional(CommentReplySchema),
+        }),
+      },
     },
     async handler({ params, body, session, prisma, notifications }) {
       const trimmedContent = body.content.trim()
@@ -125,16 +134,19 @@ export default defineRoute({
         }
       }
 
+      const replyObject = {
+        id: rawReply.id,
+        commentId: rawReply.commentId,
+        content: rawReply.content,
+        createdAt: rawReply.createdAt.toISOString(),
+        updatedAt: rawReply.updatedAt.toISOString(),
+        author: authorProfile,
+      }
+
       return {
         success: true,
-        data: {
-          id: rawReply.id,
-          commentId: rawReply.commentId,
-          content: rawReply.content,
-          createdAt: rawReply.createdAt.toISOString(),
-          updatedAt: rawReply.updatedAt.toISOString(),
-          author: authorProfile,
-        },
+        reply: replyObject,
+        data: replyObject,
       }
     },
   },
@@ -146,6 +158,13 @@ export default defineRoute({
       body: t.Object({
         content: t.String({ minLength: 1, maxLength: 5000 }),
       }),
+      response: {
+        200: t.Object({
+          success: t.Boolean(),
+          reply: t.Optional(CommentReplySchema),
+          data: t.Optional(CommentReplySchema),
+        }),
+      },
     },
     async handler({ params, body, session, prisma }) {
       const trimmedContent = body.content.trim()
@@ -186,16 +205,19 @@ export default defineRoute({
         },
       })
 
+      const updatedObject = {
+        id: updatedReply.id,
+        commentId: updatedReply.commentId,
+        content: updatedReply.content,
+        createdAt: updatedReply.createdAt.toISOString(),
+        updatedAt: updatedReply.updatedAt.toISOString(),
+        author: formatAuthorProfile(updatedReply.author),
+      }
+
       return {
         success: true,
-        data: {
-          id: updatedReply.id,
-          commentId: updatedReply.commentId,
-          content: updatedReply.content,
-          createdAt: updatedReply.createdAt.toISOString(),
-          updatedAt: updatedReply.updatedAt.toISOString(),
-          author: formatAuthorProfile(updatedReply.author),
-        },
+        reply: updatedObject,
+        data: updatedObject,
       }
     },
   },
@@ -203,6 +225,15 @@ export default defineRoute({
   // 3. Delete existing reply (owner only)
   DELETE: {
     requireAuth: true,
+    schema: {
+      response: {
+        200: t.Object({
+          success: t.Boolean(),
+          message: t.String(),
+          id: t.String(),
+        }),
+      },
+    },
     async handler({ params, session, prisma }) {
       const comment = await prisma.listComment.findUnique({
         where: { id: params.id || "" },

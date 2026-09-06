@@ -13,6 +13,15 @@ export default defineRoute({
 
   DELETE: {
     requireAuth: true,
+    schema: {
+      response: {
+        200: t.Object({
+          success: t.Boolean(),
+          message: t.String(),
+          id: t.String(),
+        }),
+      },
+    },
     async handler({ params, session, prisma, notifications }) {
       const comment = await prisma.listComment.findUnique({
         where: { id: params.id || "" },

@@ -1,4 +1,4 @@
-import { defineRoute, t } from "@/router"
+import { defineRoute, t, type Context } from "@/router"
 import { NotFound, BadRequest, TooManyRequests } from "@/utils/errors"
 import { getProfileCustomization } from "@IRIS/shared"
 
@@ -26,6 +26,43 @@ function formatAuthorProfile(user: {
   }
 }
 
+export const CommentAuthorSchema = t.Object({
+  id: t.String(),
+  username: t.String(),
+  displayName: t.Nullable(t.String()),
+  avatarUrl: t.Nullable(t.String()),
+  avatarFrame: t.Nullable(t.String()),
+  bannerUrl: t.Nullable(t.String()),
+  nameplateUrl: t.Nullable(t.String()),
+  bio: t.Nullable(t.String()),
+  statusText: t.Nullable(t.String()),
+  pronouns: t.Nullable(t.String()),
+  displayNameStyle: t.Optional(t.Nullable(t.Any())),
+})
+
+export const CommentReplySchema = t.Object({
+  id: t.String(),
+  commentId: t.String(),
+  authorId: t.String(),
+  content: t.String(),
+  createdAt: t.Union([t.Date(), t.String()]),
+  updatedAt: t.Union([t.Date(), t.String()]),
+  author: CommentAuthorSchema,
+})
+
+export const ListCommentItemSchema = t.Object({
+  id: t.String(),
+  listOwnerId: t.String(),
+  mediaType: t.String(),
+  authorId: t.String(),
+  content: t.String(),
+  isSpoiler: t.Boolean(),
+  createdAt: t.Union([t.Date(), t.String()]),
+  updatedAt: t.Union([t.Date(), t.String()]),
+  author: CommentAuthorSchema,
+  reply: t.Nullable(CommentReplySchema),
+})
+
 export default defineRoute({
   schema: {
     params: t.Object({
@@ -38,6 +75,19 @@ export default defineRoute({
         limit: t.Optional(t.Numeric({ default: 6, minimum: 1, maximum: 50 })),
       })
     ),
+    response: {
+      200: t.Object({
+        success: t.Boolean(),
+        comments: t.Array(ListCommentItemSchema),
+        pagination: t.Object({
+          page: t.Number(),
+          limit: t.Number(),
+          total: t.Number(),
+          totalPages: t.Number(),
+          hasMore: t.Boolean(),
+        }),
+      }),
+    },
   },
 
   async GET({ params, query, prisma }) {
@@ -151,23 +201,28 @@ export default defineRoute({
         content: t.String({ minLength: 1, maxLength: 5000 }),
         isSpoiler: t.Optional(t.Boolean({ default: false })),
       }),
+      response: {
+        200: t.Object({
+          success: t.Boolean(),
+          comment: ListCommentItemSchema,
+        }),
+      },
     },
-    async handler({
-      params,
-      body,
-      session,
-      prisma,
-      cache,
-      set,
-      notifications,
-    }) {
-      const trimmedContent = body.content.trim()
+    async handler(ctx: Context) {
+      const { params, body, session, prisma, cache, notifications } = ctx
+      const set = ctx.set as { headers?: Record<string, string>; status?: number }
+      const typedBody = body as { content: string; isSpoiler?: boolean }
+      const trimmedContent = typedBody.content.trim()
       if (!trimmedContent) {
         throw new BadRequest("Comment content cannot be empty.")
       }
 
-      const username = params.username || ""
-      const mediaType = (params.mediaType || "").toLowerCase()
+      if (!session.user) {
+        throw new BadRequest("Authentication required.")
+      }
+
+      const username = (params.username as string) || ""
+      const mediaType = ((params.mediaType as string) || "").toLowerCase()
 
       // Rate limit: 1 comment per list type per minute
       const rateLimitKey = `ratelimit:comment:${session.user.id}:${mediaType}`
@@ -176,10 +231,11 @@ export default defineRoute({
         typeof rawData === "object" &&
         rawData !== null &&
         "expiresAt" in rawData
-          ? (rawData as { expiresAt: number })
+          ? (rawData as { expiresAt?: number })
           : null
-      if (rateLimitData?.expiresAt) {
-        const expiresAt = rateLimitData.expiresAt
+      const expiresAt = rateLimitData?.expiresAt
+
+      if (expiresAt && expiresAt > Date.now()) {
         const remainingSeconds = Math.max(
           1,
           Math.ceil((expiresAt - Date.now()) / 1000)
@@ -214,7 +270,7 @@ export default defineRoute({
           mediaType,
           authorId: session.user.id,
           content: trimmedContent,
-          isSpoiler: Boolean(body.isSpoiler),
+          isSpoiler: Boolean(typedBody.isSpoiler),
         },
         include: {
           author: {
@@ -239,8 +295,8 @@ export default defineRoute({
           const authorName =
             authorProfile.displayName || session.user.username || "A user"
           const formattedMediaType =
-            params.mediaType.charAt(0).toUpperCase() +
-            params.mediaType.slice(1).toLowerCase()
+            mediaType.charAt(0).toUpperCase() +
+            mediaType.slice(1).toLowerCase()
           const snippet =
             trimmedContent.length > 80
               ? `${trimmedContent.slice(0, 80)}...`
@@ -255,7 +311,7 @@ export default defineRoute({
             actionHandler: "lists.comment.reply",
             actionPayload: {
               commentId: rawComment.id,
-              mediaType: params.mediaType.toLowerCase(),
+              mediaType: mediaType.toLowerCase(),
               commentatorId: session.user.id,
               commentatorUsername: session.user.username,
             },
@@ -263,7 +319,7 @@ export default defineRoute({
               title: `New Comment on your ${formattedMediaType} List`,
               body: `${authorName}: "${snippet}"`,
               icon: authorProfile.avatarUrl ?? undefined,
-              link: `/IRIS-list/lists/${params.username}/${params.mediaType}?tab=comments`,
+              link: `/IRIS-list/lists/${params.username}/${mediaType}?tab=comments`,
               actionInputs: [
                 {
                   id: "replyContent",
