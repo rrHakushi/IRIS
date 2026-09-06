@@ -144,31 +144,25 @@ model BookReview {
 }
 
 model MusicReview {
-    id        Int           @id @default(autoincrement())
+    id        Int      @id @default(autoincrement())
     userId    String
-    user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-    itemType  MusicItemType @default(ALBUM)
-    albumId   Int?
-    album     MusicAlbum?   @relation(fields: [albumId], references: [id], onDelete: Cascade)
-    trackId   Int?
-    track     MusicTrack?   @relation(fields: [trackId], references: [id], onDelete: Cascade)
-    summary   String        @db.Text
-    body      String        @db.Text
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    musicId   Int
+    music     Music    @relation(fields: [musicId], references: [id], onDelete: Cascade)
+    summary   String   @db.Text
+    body      String   @db.Text
     score     Float
-    upvotes   Int           @default(0)
-    downvotes Int           @default(0)
-    isSpoiler Boolean       @default(false)
-    ratings   Json?         @db.JsonB
+    upvotes   Int      @default(0)
+    downvotes Int      @default(0)
+    isSpoiler Boolean  @default(false)
+    ratings   Json?    @db.JsonB
 
-    createdAt DateTime      @default(now())
-    updatedAt DateTime      @updatedAt
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
-    @@unique([userId, albumId])
-    @@unique([userId, trackId])
-    @@index([albumId])
-    @@index([trackId])
+    @@unique([userId, musicId])
+    @@index([musicId])
     @@index([userId])
-    @@index([itemType])
     @@index([score(sort: Desc)])
 }
 

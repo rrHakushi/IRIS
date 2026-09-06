@@ -11,6 +11,8 @@ enum ConnectionProvider {
     LIDARR
     JELLYFIN
     PLEX
+    DEEZER
+    LASTFM
     CUSTOM
 }
 

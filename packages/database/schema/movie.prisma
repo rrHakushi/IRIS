@@ -68,7 +68,7 @@ model Movie {
     staff            MediaStaff[]
     userLists        MovieList[]
     reviews          MovieReview[]
-    watchlistEntries WatchlistEntry[]
+    customListEntries CustomListEntry[]
 
     @@index([titlePrimary])
     @@index([status])

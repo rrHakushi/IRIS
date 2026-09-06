@@ -5,6 +5,7 @@ enum MediaType {
     TV
     GAME
     BOOK
+    MUSIC
     MUSIC_ALBUM
     MUSIC_TRACK
     OTHER
@@ -66,7 +67,7 @@ enum MusicListStatus {
     DROPPED
 }
 
-model Watchlist {
+model CustomList {
     id          String   @id @default(uuid())
     userId      String
     user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -77,7 +78,7 @@ model Watchlist {
     coverImage  String?  @db.Text
     order       Int      @default(0)
 
-    entries WatchlistEntry[]
+    entries CustomListEntry[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -86,16 +87,16 @@ model Watchlist {
     @@index([userId, isDefault])
 }
 
-model WatchlistEntry {
-    id          String    @id @default(uuid())
-    watchlistId String
-    watchlist   Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+model CustomListEntry {
+    id          String     @id @default(uuid())
+    listId      String
+    customList  CustomList @relation(fields: [listId], references: [id], onDelete: Cascade)
 
     mediaType   MediaType
     mediaId     Int
-    order       Int       @default(0)
-    customNotes String?   @db.Text
-    addedAt     DateTime  @default(now())
+    order       Int        @default(0)
+    customNotes String?    @db.Text
+    addedAt     DateTime   @default(now())
 
     animeId Int?
     mangaId Int?
@@ -103,20 +104,18 @@ model WatchlistEntry {
     tvId    Int?
     gameId  Int?
     bookId  Int?
-    albumId Int?
-    trackId Int?
+    musicId Int?
 
-    anime Anime?      @relation(fields: [animeId], references: [id], onDelete: Cascade)
-    manga Manga?      @relation(fields: [mangaId], references: [id], onDelete: Cascade)
-    movie Movie?      @relation(fields: [movieId], references: [id], onDelete: Cascade)
-    tv    Tv?         @relation(fields: [tvId], references: [id], onDelete: Cascade)
-    game  Game?       @relation(fields: [gameId], references: [id], onDelete: Cascade)
-    book  Book?       @relation(fields: [bookId], references: [id], onDelete: Cascade)
-    album MusicAlbum? @relation(fields: [albumId], references: [id], onDelete: Cascade)
-    track MusicTrack? @relation(fields: [trackId], references: [id], onDelete: Cascade)
+    anime Anime? @relation(fields: [animeId], references: [id], onDelete: Cascade)
+    manga Manga? @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+    movie Movie? @relation(fields: [movieId], references: [id], onDelete: Cascade)
+    tv    Tv?    @relation(fields: [tvId], references: [id], onDelete: Cascade)
+    game  Game?  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    book  Book?  @relation(fields: [bookId], references: [id], onDelete: Cascade)
+    music Music? @relation(fields: [musicId], references: [id], onDelete: Cascade)
 
-    @@unique([watchlistId, mediaType, mediaId])
-    @@index([watchlistId])
+    @@unique([listId, mediaType, mediaId])
+    @@index([listId])
     @@index([mediaType, mediaId])
 }
 
@@ -343,29 +342,26 @@ model MusicList {
     id          Int             @id @default(autoincrement())
     userId      String
     user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-    itemType    MusicItemType   @default(ALBUM)
-    albumId     Int?
-    album       MusicAlbum?     @relation(fields: [albumId], references: [id], onDelete: Cascade)
-    trackId     Int?
-    track       MusicTrack?     @relation(fields: [trackId], references: [id], onDelete: Cascade)
+    musicId     Int
+    music       Music           @relation(fields: [musicId], references: [id], onDelete: Cascade)
     status      MusicListStatus @default(PLANNING)
     score       Float?
     playCount   Int             @default(0)
     notes       String?         @db.Text
     private     Boolean         @default(false)
     startedAt   DateTime?
+    completedAt DateTime?
     connections Json?           @db.JsonB
 
     createdAt   DateTime        @default(now())
     updatedAt   DateTime        @updatedAt
 
-    @@unique([userId, albumId])
-    @@unique([userId, trackId])
+    @@unique([userId, musicId])
     @@index([userId])
-    @@index([albumId])
-    @@index([trackId])
+    @@index([musicId])
     @@index([status])
-    @@index([itemType])
+    @@index([userId, status])
+    @@index([userId, score(sort: Desc)])
 }
 
 model ListComment {

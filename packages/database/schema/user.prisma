@@ -22,7 +22,7 @@ model User {
     connections     Connection[]
 
     // MEDIA LISTS & PLAYLISTS
-    watchlists      Watchlist[]
+    customLists     CustomList[]
     animeList       AnimeList[]
     mangaList       MangaList[]
     movieList       MovieList[]

@@ -141,7 +141,7 @@ model Anime {
     staff            MediaStaff[]
     userLists        AnimeList[]
     reviews          AnimeReview[]
-    watchlistEntries WatchlistEntry[]
+    customListEntries CustomListEntry[]
 
     @@index([titlePrimary])
     @@index([status])

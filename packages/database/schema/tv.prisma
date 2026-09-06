@@ -86,7 +86,7 @@ model Tv {
     staff            MediaStaff[]
     userLists        TvList[]
     reviews          TvReview[]
-    watchlistEntries WatchlistEntry[]
+    customListEntries CustomListEntry[]
 
     @@index([titlePrimary])
     @@index([status])

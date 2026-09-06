@@ -11,8 +11,7 @@ model Tag {
     tv          Tv[]
     games       Game[]
     books       Book[]
-    albums      MusicAlbum[]
-    tracks      MusicTrack[]
+    music       Music[]
 
     createdAt   DateTime @default(now())
     updatedAt   DateTime @updatedAt

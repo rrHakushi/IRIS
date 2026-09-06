@@ -83,7 +83,7 @@ model Book {
     staff            MediaStaff[]
     userLists        BookList[]
     reviews          BookReview[]
-    watchlistEntries WatchlistEntry[]
+    customListEntries CustomListEntry[]
 
     @@index([titlePrimary])
     @@index([status])

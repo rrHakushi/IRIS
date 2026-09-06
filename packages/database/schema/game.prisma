@@ -89,7 +89,7 @@ model Game {
     studios          MediaStudio[]
     userLists        GameList[]
     reviews          GameReview[]
-    watchlistEntries WatchlistEntry[]
+    customListEntries CustomListEntry[]
 
     @@index([titlePrimary])
     @@index([status])

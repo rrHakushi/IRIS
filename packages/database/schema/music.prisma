@@ -1,3 +1,8 @@
+enum MusicType {
+    TRACK
+    ALBUM
+}
+
 enum MusicStatus {
     RELEASED
     UPCOMING
@@ -5,134 +10,90 @@ enum MusicStatus {
     UNKNOWN
 }
 
-enum MusicAlbumType {
-    ALBUM
-    SINGLE
-    EP
-    COMPILATION
-    SOUNDTRACK
-    LIVE
-    REMIX
-    OTHER
-}
+model Music {
+    id             Int         @id @default(autoincrement())
+    type           MusicType   @default(TRACK)
+    deezerId       String?     @unique
+    isrc           String?
+    upc            String?     // Album barcode / UPC
 
-enum MusicItemType {
-    ALBUM
-    TRACK
-}
+    titlePrimary   String      @db.Text
+    titleSecondary String?     @db.Text // title_short
+    titleVersion   String?     @db.Text
+    titleNative    String?     @db.Text
 
-model MusicAlbum {
-    id             Int            @id @default(autoincrement())
-    musicBrainzId  String?        @unique
-    lastFmUrl      String?
-    spotifyId      String?
-    appleMusicId   String?
-    barcode        String?
+    link           String?     @db.Text
+    share          String?     @db.Text
 
-    titlePrimary   String         @db.Text
-    titleSecondary String?        @db.Text
-    titleNative    String?        @db.Text
-    artistName     String?        @db.Text
+    coverImage     String?     @db.Text
+    images         Json?       @db.JsonB // { small, medium, big, xl }
+    md5Image       String?
 
-    coverImage     String?        @db.Text
-    bannerImage    String?        @db.Text
-    images         Json?          @db.JsonB
+    duration       Int?        // Duration in seconds
+    trackPosition  Int?
+    diskNumber     Int?        @default(1)
+    rank           Int?
 
-    description    String?        @db.Text
-    albumType      MusicAlbumType @default(ALBUM)
-    totalTracks    Int?
-    duration       Int?           // Duration in seconds
-
+    releaseDate      DateTime?
     releaseDateYear  Int?
     releaseDateMonth Int?
     releaseDateDay   Int?
-    releaseDate      DateTime?
 
-    genres         Genre[]
-    tags           Tag[]
-    sources        Json?          @db.JsonB
+    explicitLyrics         Boolean  @default(false)
+    explicitContentLyrics  Int?     @default(0)
+    explicitContentCover   Int?     @default(0)
 
-    status         MusicStatus    @default(RELEASED)
+    audioPreviewUrl String?    @db.Text
+    bpm             Float?
+    gain            Float?
+    availableCountries String[] @default([])
 
-    // Stats
-    lastFmListenersStat Int?      @default(0)
-    lastFmPlayCountStat Int?      @default(0)
-    listeners           Int       @default(0)
-    playCount           Int       @default(0)
-    favorites           Int       @default(0)
-    popularity          Int       @default(0)
+    recordType     String?     // "album", "single", "compile", "ep"
+    label          String?     @db.Text
+    nbTracks       Int?
+    fans           Int?        @default(0)
 
-    lastFmUpdatedAt       Int?
-    musicBrainzUpdatedAt  Int?
+    lyrics         String?     @db.Text
+    syncedLyrics   String?     @db.Text
+    lyricsSource   String?
 
-    createdAt      DateTime       @default(now())
-    updatedAt      DateTime       @updatedAt
+    description    String?     @db.Text
+    status         MusicStatus @default(RELEASED)
+    sources        Json?       @db.JsonB
+    deezerUpdatedAt Int?
 
-    tracks         MusicTrack[]
-    staff          MediaStaff[]
-    userLists      MusicList[]
-    reviews        MusicReview[]
-    watchlistEntries WatchlistEntry[]
+    // Local platform stats (application metrics)
+    listeners      Int         @default(0)
+    playCount      Int         @default(0)
+    favorites      Int         @default(0)
+    popularity     Int         @default(0)
 
-    @@index([titlePrimary])
-    @@index([artistName])
-    @@index([popularity(sort: Desc)])
-    @@index([lastFmListenersStat(sort: Desc)])
-}
-
-model MusicTrack {
-    id             Int            @id @default(autoincrement())
+    // Album <-> Tracks self-relation
     albumId        Int?
-    album          MusicAlbum?    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+    album          Music?      @relation("MusicAlbumTracks", fields: [albumId], references: [id], onDelete: Cascade)
+    tracks         Music[]     @relation("MusicAlbumTracks")
 
-    trackNumber    Int?
-    discNumber     Int?           @default(1)
+    // Artist relation
+    artistId       Int?
+    artist         Person?     @relation("MusicArtist", fields: [artistId], references: [id], onDelete: SetNull)
+    artistName     String?     @db.Text
+    deezerArtistId String?
 
-    musicBrainzId  String?        @unique
-    isrc           String?
-    lastFmUrl      String?
-    spotifyId      String?
-    appleMusicId   String?
-    youtubeMusicId String?
-
-    titlePrimary   String         @db.Text
-    titleSecondary String?        @db.Text
-    titleNative    String?        @db.Text
-    artistName     String?        @db.Text
-
-    coverImage     String?        @db.Text
-    duration       Int?           // Duration in seconds
-    audioPreviewUrl String?       @db.Text
-    description    String?        @db.Text
-    lyrics         String?        @db.Text
-    syncedLyrics   String?        @db.Text
-    sources        Json?          @db.JsonB
-
+    // Media relations
+    staff          MediaStaff[]
     genres         Genre[]
     tags           Tag[]
-    status         MusicStatus    @default(RELEASED)
-
-    // Stats
-    lastFmListenersStat Int?      @default(0)
-    lastFmPlayCountStat Int?      @default(0)
-    listeners           Int       @default(0)
-    playCount           Int       @default(0)
-    favorites           Int       @default(0)
-    popularity          Int       @default(0)
-
-    lastFmUpdatedAt       Int?
-    musicBrainzUpdatedAt  Int?
-
-    createdAt      DateTime       @default(now())
-    updatedAt      DateTime       @updatedAt
-
-    staff          MediaStaff[]
     userLists      MusicList[]
     reviews        MusicReview[]
-    watchlistEntries WatchlistEntry[]
+    customListEntries CustomListEntry[]
+
+    createdAt      DateTime    @default(now())
+    updatedAt      DateTime    @updatedAt
 
     @@index([titlePrimary])
     @@index([artistName])
+    @@index([type])
     @@index([albumId])
     @@index([popularity(sort: Desc)])
+    @@index([rank(sort: Desc)])
 }

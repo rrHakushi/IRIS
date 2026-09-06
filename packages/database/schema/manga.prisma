@@ -90,7 +90,7 @@ model Manga {
     staff            MediaStaff[]
     userLists        MangaList[]
     reviews          MangaReview[]
-    watchlistEntries WatchlistEntry[]
+    customListEntries CustomListEntry[]
 
     @@index([titlePrimary])
     @@index([status])

@@ -23,40 +23,76 @@ enum StaffRole {
 }
 
 model Person {
-    id        Int     @id @default(autoincrement())
-    anilistId Int?    @unique
-    malId     Int?    @unique
-    aniDBId   Int?    @unique
-    tvDBId    Int?    @unique
-    bangumiId Int?    @unique
-    imdbId    String? @unique
-    tmdbId    Int?    @unique
+    id Int @id @default(autoincrement())
 
-    musicBrainzId String? @unique
-    lastFmUrl     String? @unique
-    spotifyId     String? @unique
+    // Provider External IDs
+    anilistId   Int?    @unique
+    malId       Int?    @unique
+    aniDBId     Int?    @unique
+    tvDBId      Int?    @unique
+    bangumiId   Int?    @unique
+    imdbId      String? @unique
+    tmdbId      Int?    @unique
+    deezerId    String? @unique
+    lastFmUrl   String? @unique
+    spotifyId   String? @unique
 
+    // Names & Identity
     namePrimary     String   @db.Text
     nameNative      String?  @db.Text
     nameAlternative String[] @db.Text
+    givenName       String?  @db.Text
+    familyName      String?  @db.Text
 
-    image       String? @db.Text
-    images      Json?   @db.JsonB
-    description String? @db.Text
-    language    String?
+    // Visuals (main image and sized variations in images JSON)
+    image  String? @db.Text
+    images Json?   @db.JsonB // { small, medium, big, xl, original }
 
-    // Stats
-    lastFmListenersStat Int? @default(0)
-    lastFmPlayCountStat Int? @default(0)
-    favorites           Int? @default(0)
+    // Biography & Profile
+    description        String?  @db.Text
+    gender             String?
+    bloodType          String?
+    homeTown           String?  @db.Text
+    birthPlace         String?  @db.Text
+    language           String?
+    primaryOccupations String[] @default([])
+
+    // Birth & Death Details
+    dateOfBirth      DateTime?
+    dateOfBirthYear  Int?
+    dateOfBirthMonth Int?
+    dateOfBirthDay   Int?
+    dateOfDeath      DateTime?
+    dateOfDeathYear  Int?
+    dateOfDeathMonth Int?
+    dateOfDeathDay   Int?
+    age              Int?
+    yearsActive      Int[]    @default([])
+
+    // Deezer Artist Specific Fields
+    nbAlbum     Int?     @default(0)
+    nbFan       Int?     @default(0)
+    deezerLink  String?  @db.Text
+    deezerShare String?  @db.Text
+    hasRadio    Boolean? @default(false)
+
+    // Local platform stats (application metrics)
+    favorites Int? @default(0)
+
+    // Sources & Raw metadata
+    sources Json? @db.JsonB
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
     mediaStaff       MediaStaff[]
     voicedCharacters MediaCharacter[]
+    musicTracks      Music[]          @relation("MusicArtist")
 
     @@index([namePrimary])
+    @@index([deezerId])
+    @@index([tvDBId])
+    @@index([anilistId])
 }
 
 model MediaStaff {
@@ -72,21 +108,18 @@ model MediaStaff {
     movieId Int?
     tvId    Int?
     bookId  Int?
-    albumId Int?
-    trackId Int?
+    musicId Int?
 
-    person Person      @relation(fields: [personId], references: [id], onDelete: Cascade)
-    anime  Anime?      @relation(fields: [animeId], references: [id], onDelete: Cascade)
-    manga  Manga?      @relation(fields: [mangaId], references: [id], onDelete: Cascade)
-    movie  Movie?      @relation(fields: [movieId], references: [id], onDelete: Cascade)
-    tv     Tv?         @relation(fields: [tvId], references: [id], onDelete: Cascade)
-    book   Book?       @relation(fields: [bookId], references: [id], onDelete: Cascade)
-    album  MusicAlbum? @relation(fields: [albumId], references: [id], onDelete: Cascade)
-    track  MusicTrack? @relation(fields: [trackId], references: [id], onDelete: Cascade)
+    person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+    anime  Anime? @relation(fields: [animeId], references: [id], onDelete: Cascade)
+    manga  Manga? @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+    movie  Movie? @relation(fields: [movieId], references: [id], onDelete: Cascade)
+    tv     Tv?    @relation(fields: [tvId], references: [id], onDelete: Cascade)
+    book   Book?  @relation(fields: [bookId], references: [id], onDelete: Cascade)
+    music  Music? @relation(fields: [musicId], references: [id], onDelete: Cascade)
 
     @@unique([mediaType, mediaId, personId, role])
     @@index([mediaType, mediaId])
     @@index([personId])
-    @@index([albumId])
-    @@index([trackId])
+    @@index([musicId])
 }
