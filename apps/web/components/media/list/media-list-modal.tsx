@@ -88,6 +88,12 @@ function getRepeatLabel(category: CanonicalMediaCategory): {
   }
 }
 
+function normalizeModalScore(s: number | null | undefined): number | null {
+  if (s == null || isNaN(s)) return null
+  const val = s > 10 ? s / 10 : s
+  return Math.min(10, Math.max(0, Math.round(val * 10) / 10))
+}
+
 export interface RewatchHistoryItem {
   startedAt?: string | Date | null
   completedAt?: string | Date | null
@@ -283,17 +289,27 @@ export function MediaListModal({
     const raw = (initialEntry as any)?.volumesProgress ?? 0
     return maxVolumes && maxVolumes > 0 ? Math.min(maxVolumes, raw) : raw
   })
-  const [score, setScore] = useState<number | null>(initialEntry?.score ?? null)
+  const [score, setScore] = useState<number | null>(() =>
+    normalizeModalScore(initialEntry?.score)
+  )
   const [notes, setNotes] = useState<string>(initialEntry?.notes || "")
   const [isPrivate, setIsPrivate] = useState<boolean>(
     initialEntry?.private ?? false
   )
-  const [startedAt, setStartedAt] = useState<string>(
-    formatDateToYmd(initialEntry?.startedAt)
-  )
-  const [completedAt, setCompletedAt] = useState<string>(
-    formatDateToYmd(initialEntry?.completedAt)
-  )
+  const [startedAt, setStartedAt] = useState<string>(() => {
+    const raw = formatDateToYmd(initialEntry?.startedAt)
+    if (category === "movie") {
+      return formatDateToYmd(initialEntry?.completedAt) || raw
+    }
+    return raw
+  })
+  const [completedAt, setCompletedAt] = useState<string>(() => {
+    const raw = formatDateToYmd(initialEntry?.completedAt)
+    if (category === "movie") {
+      return raw || formatDateToYmd(initialEntry?.startedAt)
+    }
+    return raw
+  })
   const [rewatched, setRewatched] = useState<number>(
     (initialEntry as any)?.playCount ??
       (initialEntry as any)?.reread ??
@@ -433,11 +449,19 @@ export function MediaListModal({
             ? Math.min(maxVolumes, rawVolumes)
             : rawVolumes
         )
-        setScore(initialEntry.score ?? null)
+        setScore(normalizeModalScore(initialEntry.score))
         setNotes(initialEntry.notes || "")
         setIsPrivate(initialEntry.private ?? false)
-        setStartedAt(formatDateToYmd(initialEntry.startedAt))
-        setCompletedAt(formatDateToYmd(initialEntry.completedAt))
+        const rawStart = formatDateToYmd(initialEntry.startedAt)
+        const rawEnd = formatDateToYmd(initialEntry.completedAt)
+        if (category === "movie") {
+          const movieDate = rawEnd || rawStart
+          setStartedAt(movieDate)
+          setCompletedAt(movieDate)
+        } else {
+          setStartedAt(rawStart)
+          setCompletedAt(rawEnd)
+        }
         setRewatched(
           (initialEntry as any)?.playCount ??
             initialEntry.reread ??
@@ -737,13 +761,23 @@ export function MediaListModal({
 
     setIsSaving(true)
 
+    const finalStartedAt =
+      category === "movie" ? completedAt || startedAt : startedAt
+    const finalCompletedAt =
+      category === "movie" ? finalStartedAt : completedAt
+
     const commonPayload = {
       status,
-      score: score !== null && score > 0 ? Number(score) : null,
+      score:
+        score !== null && score > 0
+          ? Math.round(Number(score) * 10) / 10
+          : null,
       notes: notes.trim() || null,
       private: isPrivate,
-      startedAt: startedAt ? new Date(startedAt).toISOString() : null,
-      completedAt: completedAt ? new Date(completedAt).toISOString() : null,
+      startedAt: finalStartedAt ? new Date(finalStartedAt).toISOString() : null,
+      completedAt: finalCompletedAt
+        ? new Date(finalCompletedAt).toISOString()
+        : null,
       connections: Object.keys(connections).length > 0 ? connections : null,
     }
 
@@ -998,7 +1032,7 @@ export function MediaListModal({
 
   // Converted 0-10 score representation
   const scoreIn10 =
-    score !== null ? (score / 10).toFixed(1).replace(/\.0$/, "") : ""
+    score !== null ? score.toFixed(1).replace(/\.0$/, "") : ""
 
   const bannerImg = media.bannerImage || media.coverImage
 
@@ -1237,10 +1271,10 @@ export function MediaListModal({
                       onChange={(e) => {
                         const val =
                           e.target.value === "" ? null : Number(e.target.value)
-                        if (val === null) setScore(null)
+                        if (val === null || isNaN(val)) setScore(null)
                         else
                           setScore(
-                            Math.min(100, Math.max(0, Math.round(val * 10)))
+                            Math.min(10, Math.max(0, Math.round(val * 10) / 10))
                           )
                       }}
                       className="w-full [appearance:textfield] bg-transparent text-xs font-semibold text-foreground focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
@@ -1249,9 +1283,9 @@ export function MediaListModal({
                       <button
                         type="button"
                         onClick={() => {
-                          const cur = score !== null ? score / 10 : 0
-                          const next = Math.min(10, cur + 1)
-                          setScore(Math.round(next * 10))
+                          const cur = score !== null ? score : 0
+                          const next = Math.min(10, cur + 0.5)
+                          setScore(Math.round(next * 10) / 10)
                         }}
                         className="cursor-pointer hover:text-foreground"
                       >
@@ -1260,9 +1294,9 @@ export function MediaListModal({
                       <button
                         type="button"
                         onClick={() => {
-                          const cur = score !== null ? score / 10 : 0
-                          const next = Math.max(0, cur - 1)
-                          setScore(Math.round(next * 10))
+                          const cur = score !== null ? score : 0
+                          const next = Math.max(0, cur - 0.5)
+                          setScore(Math.round(next * 10) / 10)
                         }}
                         className="cursor-pointer hover:text-foreground"
                       >
@@ -1496,7 +1530,13 @@ export function MediaListModal({
                   </label>
                   <DatePicker
                     value={startedAt}
-                    onChange={(val) => setStartedAt(val || "")}
+                    onChange={(val) => {
+                      const newDate = val || ""
+                      setStartedAt(newDate)
+                      if (category === "movie") {
+                        setCompletedAt(newDate)
+                      }
+                    }}
                     placeholder="Pick date"
                     ariaLabel="Start date"
                   />
@@ -1510,7 +1550,13 @@ export function MediaListModal({
                   </label>
                   <DatePicker
                     value={completedAt}
-                    onChange={(val) => setCompletedAt(val || "")}
+                    onChange={(val) => {
+                      const newDate = val || ""
+                      setCompletedAt(newDate)
+                      if (category === "movie") {
+                        setStartedAt(newDate)
+                      }
+                    }}
                     placeholder="Pick date"
                     ariaLabel="Finish date"
                     align="end"

@@ -545,6 +545,46 @@
           "updateSuccess": "Media preferences updated successfully!",
           "updateFailed": "Failed to update media preferences."
         }
+      },
+      "lists": {
+        "import": {
+          "title": "Import Lists",
+          "description": "Import and synchronize your tracking lists and custom collections from third-party services.",
+          "connectedServices": "Connected Services",
+          "connectedServicesDesc": "Import tracking lists directly from your linked accounts.",
+          "fileImportTitle": "File Backup Import",
+          "fileImportDesc": "Import a previously exported IRIS JSON backup file.",
+          "dragDropHere": "Drag & drop your JSON backup here",
+          "clickToBrowse": "or click to browse from device",
+          "clearFile": "Clear File",
+          "importing": "Importing...",
+          "startImport": "Import Lists",
+          "connect": "Connect",
+          "connected": "Connected",
+          "notConnected": "Not Linked",
+          "viewFailed": "View Failed Items",
+          "inProgress": "Importing {processed} of {total} items ({percent}%)",
+          "completed": "Import complete! {processed} items processed.",
+          "failed": "Import failed: {error}",
+          "selectTypesTitle": "Select Media to Import",
+          "selectTypesDesc": "Choose which lists to import from {provider}.",
+          "startImportBtn": "Start Import",
+          "cancel": "Cancel",
+          "close": "Close",
+          "failedModalTitle": "{count} Items Failed to Import",
+          "failedModalDesc": "The following items from {provider} could not be resolved or created automatically:",
+          "tableTitle": "Title",
+          "tableType": "Type",
+          "tableId": "External ID",
+          "tableReason": "Reason",
+          "types": {
+            "anime": "Anime List",
+            "manga": "Manga List",
+            "tv": "TV Shows List",
+            "movie": "Movies List",
+            "custom_lists": "Custom Lists / Playlists"
+          }
+        }
       }
     },
     "sidebar": {

@@ -545,6 +545,46 @@
           "updateSuccess": "メディア設定を更新しました！",
           "updateFailed": "メディア設定の更新に失敗しました。"
         }
+      },
+      "lists": {
+        "import": {
+          "title": "リストのインポート",
+          "description": "外部サービスからトラッキングリストやカスタムコレクションをインポート・同期します。",
+          "connectedServices": "連携サービス",
+          "connectedServicesDesc": "連携済みのアカウントからトラッキングリストを直接インポートします。",
+          "fileImportTitle": "バックアップファイルからインポート",
+          "fileImportDesc": "以前にエクスポートした IRIS JSON バックアップファイルをインポートします。",
+          "dragDropHere": "JSON バックアップファイルをここにドラッグ＆ドロップ",
+          "clickToBrowse": "またはデバイスからファイルを選択",
+          "clearFile": "ファイルを解除",
+          "importing": "インポート中...",
+          "startImport": "リストをインポート",
+          "connect": "連携する",
+          "connected": "連携済み",
+          "notConnected": "未連携",
+          "viewFailed": "失敗したアイテムを確認",
+          "inProgress": "{total} 件中 {processed} 件をインポート中 ({percent}%)",
+          "completed": "インポートが完了しました！ {processed} 件のアイテムが処理されました。",
+          "failed": "インポートに失敗しました: {error}",
+          "selectTypesTitle": "インポートするメディアの選択",
+          "selectTypesDesc": "{provider} からインポートするリストを選択してください。",
+          "startImportBtn": "インポート開始",
+          "cancel": "キャンセル",
+          "close": "閉じる",
+          "failedModalTitle": "{count} 件のインポートに失敗しました",
+          "failedModalDesc": "{provider} の以下のアイテムは自動解決または作成ができませんでした:",
+          "tableTitle": "タイトル",
+          "tableType": "種別",
+          "tableId": "外部ID",
+          "tableReason": "理由",
+          "types": {
+            "anime": "アニメリスト",
+            "manga": "マンガリスト",
+            "tv": "TV番組リスト",
+            "movie": "映画リスト",
+            "custom_lists": "カスタムリスト / プレイリスト"
+          }
+        }
       }
     },
     "sidebar": {

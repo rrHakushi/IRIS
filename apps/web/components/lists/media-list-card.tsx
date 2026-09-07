@@ -447,11 +447,15 @@ export function MediaListCard({
             </div>
           )}
 
-          {/* 3. Score Badge (score/100) */}
+          {/* 3. Score Badge (score/10) */}
           {typeof entry.score === "number" && entry.score > 0 && (
             <div className="flex items-center gap-1 rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-bold text-amber-400 shadow-xs backdrop-blur-md">
               <IconStar className="size-2.5 shrink-0 fill-amber-400" />
-              <span>{entry.score}/100</span>
+              <span>
+                {Number(
+                  (entry.score > 10 ? entry.score / 10 : entry.score).toFixed(1)
+                )}/10
+              </span>
             </div>
           )}
         </div>
