@@ -6,14 +6,11 @@ import { useTranslations } from "next-intl"
 import {
   IconPhotoOff,
   IconX,
-  IconPlayerPlay,
-  IconPlayerPause,
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import type { BrowseCategory, VisitedMediaItem } from "@/lib/browse-history"
-import { useAudioPreview } from "@/lib/audio-preview-manager"
 
 interface BrowseMediaCardProps {
   item: {
@@ -54,15 +51,6 @@ export function BrowseMediaCard({
 }: BrowseMediaCardProps) {
   const t = useTranslations("browse")
   const [imageError, setImageError] = useState(false)
-  const { isCurrentTrackPlaying, togglePlay } = useAudioPreview()
-  const isPlaying = isCurrentTrackPlaying(item.id)
-
-  const handleTogglePlay = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (!item.audioPreviewUrl) return
-    togglePlay(item.id, item.audioPreviewUrl)
-  }
 
   const isSquare =
     category === "music" || item.type === "TRACK" || item.type === "ALBUM"
@@ -167,26 +155,6 @@ export function BrowseMediaCard({
             )}
           </div>
 
-          {/* Audio Preview Play Button for Music Tracks */}
-          {item.audioPreviewUrl && (
-            <button
-              type="button"
-              onClick={handleTogglePlay}
-              className={cn(
-                "absolute bottom-2 end-2 z-20 flex size-8 items-center justify-center rounded-full text-white shadow-md backdrop-blur-xs transition-all hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400",
-                isPlaying
-                  ? "bg-rose-500 opacity-100 scale-105 shadow-rose-500/50 shadow-md ring-2 ring-white/50"
-                  : "bg-rose-500/90 opacity-0 group-hover:opacity-100 hover:bg-rose-500"
-              )}
-              aria-label={isPlaying ? "Pause preview" : "Play preview"}
-            >
-              {isPlaying ? (
-                <IconPlayerPause className="size-4 fill-white" />
-              ) : (
-                <IconPlayerPlay className="size-4 fill-white ms-0.5" />
-              )}
-            </button>
-          )}
 
           {/* Queued For Fetch Badge */}
           {item.queuedForFetch && (
