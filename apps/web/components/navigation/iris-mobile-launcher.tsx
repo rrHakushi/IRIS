@@ -134,8 +134,11 @@ export function IrisMobileLauncher({
                   )}
                 >
                   <div
-                    className="flex size-8 shrink-0 items-center justify-center rounded-xl text-white shadow-xs [&>svg]:size-4.5"
-                    style={{ backgroundColor: app.color }}
+                    suppressHydrationWarning
+                    className={cn(
+                      "flex size-8 shrink-0 items-center justify-center rounded-xl text-white shadow-xs [&>svg]:size-4.5",
+                      app.bgClass || "bg-indigo-500"
+                    )}
                   >
                     {app.icon}
                   </div>

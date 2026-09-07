@@ -47,7 +47,10 @@ export default async function RootLayout({
         oxaniumHeading.variable
       )}
     >
-      <body className="min-h-svh bg-background text-foreground selection:bg-primary/20 selection:text-primary">
+      <body
+        suppressHydrationWarning
+        className="min-h-svh bg-background text-foreground selection:bg-primary/20 selection:text-primary"
+      >
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Providers>{children}</Providers>
         </NextIntlClientProvider>

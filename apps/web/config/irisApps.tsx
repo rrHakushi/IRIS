@@ -8,6 +8,8 @@ export interface IrisApp {
   name: string
   href: string
   color: string
+  colorClass?: string
+  bgClass?: string
   icon?: React.ReactNode
   iconLeftRing?: string
   iconLeftNoRing?: string
@@ -25,6 +27,8 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
       name: t("irisList.name"),
       href: "/IRIS-list",
       color: "#6366f1",
+      colorClass: "text-indigo-500",
+      bgClass: "bg-indigo-500",
       description: t("irisList.description"),
       descriptionShort: t("irisList.descriptionShort"),
       icon: <IconApps className="size-4 text-indigo-500" />,

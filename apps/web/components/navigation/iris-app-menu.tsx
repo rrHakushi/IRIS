@@ -160,8 +160,11 @@ export function IrisAppMenu(): React.JSX.Element {
         </div>
         <div className="flex min-w-0 flex-1 flex-col">
           <span
-            className="truncate text-xs leading-tight font-bold"
-            style={{ color: activeApp?.color }}
+            suppressHydrationWarning
+            className={cn(
+              "truncate text-xs leading-tight font-bold",
+              activeApp?.colorClass || "text-indigo-500"
+            )}
           >
             {activeApp?.name || "IRIS"}
           </span>
@@ -260,8 +263,11 @@ export function IrisAppMenu(): React.JSX.Element {
                 </div>
                 <div className="flex min-w-0 flex-1 items-center justify-between">
                   <span
-                    className="truncate text-xs font-semibold"
-                    style={{ color: app.color }}
+                    suppressHydrationWarning
+                    className={cn(
+                      "truncate text-xs font-semibold",
+                      app.colorClass || "text-indigo-500"
+                    )}
                   >
                     {app.name}
                   </span>
