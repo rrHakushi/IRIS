@@ -84,11 +84,13 @@ export default defineRoute({
               ...(years.length > 0 ? { startDateYear: { in: years } } : {}),
               ...(genres.length > 0
                 ? {
-                    genres: {
-                      some: {
-                        name: { in: genres, mode: "insensitive" },
+                    AND: genres.map((genre) => ({
+                      genres: {
+                        some: {
+                          name: { equals: genre, mode: "insensitive" },
+                        },
                       },
-                    },
+                    })),
                   }
                 : {}),
             },

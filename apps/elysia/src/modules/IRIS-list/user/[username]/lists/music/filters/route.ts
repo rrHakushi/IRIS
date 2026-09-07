@@ -34,18 +34,20 @@ export default defineRoute({
       },
       select: {
         status: true,
-        itemType: true,
-        album: {
+        music: {
           select: {
+            type: true,
+            artistName: true,
             releaseDateYear: true,
-            genres: { select: { name: true } },
-          },
-        },
-        track: {
-          select: {
+            releaseDateMonth: true,
             genres: { select: { name: true } },
             album: {
-              select: { releaseDateYear: true },
+              select: {
+                artistName: true,
+                releaseDateYear: true,
+                releaseDateMonth: true,
+                genres: { select: { name: true } },
+              },
             },
           },
         },

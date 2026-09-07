@@ -4,6 +4,7 @@ import {
   resolveTargetUserAndAccess,
   parseCommaSeparated,
   parseYears,
+  parseMonths,
   musicAlbumSelect,
   musicTrackSelect,
 } from "@/modules/IRIS-list/helpers"
@@ -72,31 +73,83 @@ export default defineRoute({
     const formats = parseCommaSeparated(query?.mediaFormat).map((f) =>
       f.toUpperCase()
     )
+    const validFormats = formats.filter(
+      (f): f is "TRACK" | "ALBUM" => f === "TRACK" || f === "ALBUM"
+    )
     const genres = parseCommaSeparated(query?.genres)
     const years = parseYears(query?.year)
+    const months = parseMonths(query?.month)
+    const artists = parseCommaSeparated(query?.artist)
     const sortBy = (query?.sortBy ?? "updatedAt") as string
     const order = (query?.order ?? "desc") as "asc" | "desc"
+
+    const musicConditions: any[] = []
+
+    if (validFormats.length > 0) {
+      musicConditions.push({ type: { in: validFormats } })
+    }
+
+    if (years.length > 0) {
+      musicConditions.push({
+        OR: [
+          { releaseDateYear: { in: years } },
+          { album: { releaseDateYear: { in: years } } },
+        ],
+      })
+    }
+
+    if (months.length > 0) {
+      musicConditions.push({
+        OR: [
+          { releaseDateMonth: { in: months } },
+          { album: { releaseDateMonth: { in: months } } },
+        ],
+      })
+    }
+
+    if (artists.length > 0) {
+      musicConditions.push({
+        OR: artists.flatMap((artist) => [
+          { artistName: { contains: artist, mode: "insensitive" } },
+          { album: { artistName: { contains: artist, mode: "insensitive" } } },
+        ]),
+      })
+    }
+
+    if (genres.length > 0) {
+      // AND conjunction across all selected genres
+      genres.forEach((genre) => {
+        musicConditions.push({
+          OR: [
+            {
+              genres: {
+                some: {
+                  name: { equals: genre, mode: "insensitive" },
+                },
+              },
+            },
+            {
+              album: {
+                genres: {
+                  some: {
+                    name: { equals: genre, mode: "insensitive" },
+                  },
+                },
+              },
+            },
+          ],
+        })
+      })
+    }
 
     const whereClause: any = {
       userId: dbUser.id,
       ...(!isOwner ? { private: false } : {}),
       ...(statuses.length > 0 ? { status: { in: statuses } } : {}),
-      ...(formats.length > 0 ? { itemType: { in: formats } } : {}),
-      ...(genres.length > 0 || years.length > 0
+      ...(musicConditions.length > 0
         ? {
             music: {
-              ...(years.length > 0
-                ? { releaseDateYear: { in: years } }
-                : {}),
-              ...(genres.length > 0
-                ? {
-                    genres: {
-                      some: {
-                        name: { in: genres, mode: "insensitive" },
-                      },
-                    },
-                  }
-                : {}),
+              AND: musicConditions,
             },
           }
         : {}),
@@ -133,14 +186,19 @@ export default defineRoute({
       success: true,
       items: paged.map((item: any) => {
         const rawMedia = item.music
-        const format = item.itemType || item.music?.type || "TRACK"
+        const format = rawMedia?.type || item.itemType || "TRACK"
         const year =
-          item.music?.releaseDateYear ??
-          item.music?.album?.releaseDateYear ??
+          rawMedia?.releaseDateYear ??
+          rawMedia?.album?.releaseDateYear ??
+          null
+        const month =
+          rawMedia?.releaseDateMonth ??
+          rawMedia?.album?.releaseDateMonth ??
           null
         const coverImage =
-          item.music?.coverImage || item.music?.album?.coverImage || null
-        const artist = item.music?.artistName || null
+          rawMedia?.coverImage || rawMedia?.album?.coverImage || null
+        const artist =
+          rawMedia?.artistName || rawMedia?.album?.artistName || null
 
         return {
           entry: {
@@ -171,6 +229,8 @@ export default defineRoute({
                 year,
                 startDateYear: year,
                 releaseDateYear: year,
+                month,
+                releaseDateMonth: month,
                 artist,
                 artistName: artist,
               }

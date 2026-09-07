@@ -62,6 +62,7 @@ export default defineRoute({
     const limit = Number(query?.limit ?? 50)
     const cursor = query?.cursor ? Number(query.cursor) : undefined
     const statuses = parseCommaSeparated(query?.status)
+    const formats = parseCommaSeparated(query?.mediaFormat)
     const mediaStatuses = parseCommaSeparated(query?.mediaStatus)
     const genres = parseCommaSeparated(query?.genres)
     const years = parseYears(query?.year)
@@ -72,20 +73,28 @@ export default defineRoute({
       userId: dbUser.id,
       ...(!isOwner ? { private: false } : {}),
       ...(statuses.length > 0 ? { status: { in: statuses } } : {}),
-      ...(mediaStatuses.length > 0 || genres.length > 0 || years.length > 0
+      ...(formats.length > 0 ||
+      mediaStatuses.length > 0 ||
+      genres.length > 0 ||
+      years.length > 0
         ? {
             book: {
+              ...(formats.length > 0
+                ? { format: { in: formats, mode: "insensitive" } }
+                : {}),
               ...(mediaStatuses.length > 0
                 ? { status: { in: mediaStatuses } }
                 : {}),
               ...(years.length > 0 ? { releaseDateYear: { in: years } } : {}),
               ...(genres.length > 0
                 ? {
-                    genres: {
-                      some: {
-                        name: { in: genres, mode: "insensitive" },
+                    AND: genres.map((genre) => ({
+                      genres: {
+                        some: {
+                          name: { equals: genre, mode: "insensitive" },
+                        },
                       },
-                    },
+                    })),
                   }
                 : {}),
             },
