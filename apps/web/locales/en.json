@@ -704,5 +704,40 @@
       "people": "Staff",
       "studios": "Studios"
     }
+  },
+  "calendar": {
+    "title": "Release Calendar",
+    "description": "Keep track of upcoming and recent media releases across anime, manga, TV episodes, movies, games, books, and music.",
+    "views": {
+      "month": "Month",
+      "week": "Week",
+      "agenda": "Agenda"
+    },
+    "filters": {
+      "all": "All",
+      "anime": "Anime",
+      "manga": "Manga",
+      "tv": "TV",
+      "movie": "Movie",
+      "game": "Game",
+      "book": "Book",
+      "music": "Music"
+    },
+    "onlyInLists": "In my lists only",
+    "today": "Today",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "searchPlaceholder": "Filter releases by title...",
+    "noReleases": "No releases scheduled for this period.",
+    "moreReleases": "+{count} more",
+    "viewMedia": "View media details",
+    "publishingStart": "Publishing Start",
+    "publishingEnd": "Publishing End",
+    "season": "Season {season}",
+    "episode": "Episode {episode}",
+    "seasonEpisode": "Season {season} • Ep {episode}",
+    "allDay": "All Day",
+    "releasesCount": "{count} releases",
+    "loginToFilterLists": "Sign in to filter releases by your tracked lists"
   }
 }

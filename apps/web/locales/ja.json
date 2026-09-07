@@ -704,5 +704,40 @@
       "people": "スタッフ",
       "studios": "スタジオ"
     }
+  },
+  "calendar": {
+    "title": "リリース カレンダー",
+    "description": "アニメの放送スケジュール、マンガの連載、テレビ番組、映画、ゲーム、書籍、音楽のリリース情報を一覧で確認できます。",
+    "views": {
+      "month": "月",
+      "week": "週",
+      "agenda": "アジェンダ"
+    },
+    "filters": {
+      "all": "すべて",
+      "anime": "アニメ",
+      "manga": "マンガ",
+      "tv": "テレビ",
+      "movie": "映画",
+      "game": "ゲーム",
+      "book": "書籍",
+      "music": "音楽"
+    },
+    "onlyInLists": "マイリストのみ",
+    "today": "今日",
+    "previousMonth": "前月",
+    "nextMonth": "翌月",
+    "searchPlaceholder": "タイトルで絞り込み...",
+    "noReleases": "この期間に予定されているリリースはありません。",
+    "moreReleases": "他 {count} 件",
+    "viewMedia": "詳細を見る",
+    "publishingStart": "連載開始",
+    "publishingEnd": "連載終了",
+    "season": "シーズン {season}",
+    "episode": "第 {episode} 話",
+    "seasonEpisode": "S{season} • 第{episode}話",
+    "allDay": "終日",
+    "releasesCount": "{count} 件のリリース",
+    "loginToFilterLists": "マイリストで絞り込むにはログインしてください"
   }
 }

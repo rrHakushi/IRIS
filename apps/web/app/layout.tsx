@@ -25,6 +25,9 @@ export const metadata: Metadata = {
   title: "IRIS",
   description:
     "Collection of self hosted apps https://github.com/rrHakushi/IRIS",
+  other: {
+    "darkreader-lock": "meta",
+  },
 }
 
 export default async function RootLayout({
@@ -47,6 +50,9 @@ export default async function RootLayout({
         oxaniumHeading.variable
       )}
     >
+      <head>
+        <meta name="darkreader-lock" />
+      </head>
       <body
         suppressHydrationWarning
         className="min-h-svh bg-background text-foreground selection:bg-primary/20 selection:text-primary"
