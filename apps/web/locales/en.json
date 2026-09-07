@@ -549,11 +549,8 @@
       "lists": {
         "import": {
           "title": "Import Lists",
-          "description": "Import and synchronize your tracking lists and custom collections from third-party services.",
           "connectedServices": "Connected Services",
-          "connectedServicesDesc": "Import tracking lists directly from your linked accounts.",
           "fileImportTitle": "File Backup Import",
-          "fileImportDesc": "Import a previously exported IRIS JSON backup file.",
           "dragDropHere": "Drag & drop your JSON backup here",
           "clickToBrowse": "or click to browse from device",
           "clearFile": "Clear File",
@@ -655,7 +652,7 @@
       "unlockPlaceholder": "Enter account or encryption password",
       "unlockButton": "Unlock",
       "noNotifications": "No notifications found",
-      "noNotificationsDesc": "You're all caught up! When you receive post-quantum encrypted alerts, they'll appear here.",
+      "noNotificationsDesc": "You're all caught up!",
       "resetFilters": "Reset filters",
       "approved": "Approved",
       "denied": "Denied",

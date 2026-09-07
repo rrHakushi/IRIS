@@ -97,9 +97,6 @@ export function FileBackupImportCard(): React.JSX.Element {
           <h4 className="text-sm font-semibold text-foreground">
             {t("fileImportTitle")}
           </h4>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {t("fileImportDesc")}
-          </p>
         </div>
 
         <input

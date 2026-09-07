@@ -549,11 +549,8 @@
       "lists": {
         "import": {
           "title": "リストのインポート",
-          "description": "外部サービスからトラッキングリストやカスタムコレクションをインポート・同期します。",
           "connectedServices": "連携サービス",
-          "connectedServicesDesc": "連携済みのアカウントからトラッキングリストを直接インポートします。",
           "fileImportTitle": "バックアップファイルからインポート",
-          "fileImportDesc": "以前にエクスポートした IRIS JSON バックアップファイルをインポートします。",
           "dragDropHere": "JSON バックアップファイルをここにドラッグ＆ドロップ",
           "clickToBrowse": "またはデバイスからファイルを選択",
           "clearFile": "ファイルを解除",
@@ -655,7 +652,7 @@
       "unlockPlaceholder": "パスワードを入力",
       "unlockButton": "ロック解除",
       "noNotifications": "通知はありません",
-      "noNotificationsDesc": "すべて確認済みです！耐量子暗号化された新しい通知が届くとここに表示されます。",
+      "noNotificationsDesc": "すべて確認済みです！",
       "resetFilters": "フィルターをリセット",
       "approved": "承認済み",
       "denied": "拒否済み",

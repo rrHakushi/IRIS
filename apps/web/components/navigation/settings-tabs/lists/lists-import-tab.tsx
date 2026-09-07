@@ -7,9 +7,7 @@ import { ProviderImportCard, type ProviderImportConfig } from "./import/provider
 import { FileBackupImportCard } from "./import/file-backup-import-card"
 import { ConnectDialog } from "../account/connections/connect-dialog"
 import { Spinner } from "@workspace/ui/components/spinner"
-import { Button } from "@workspace/ui/components/button"
 import {
-  IconRefresh,
   IconDeviceTv,
   IconBook,
   IconMovie,
@@ -23,7 +21,6 @@ export function ListsImportSettingsTab({}: SettingsTabProps): React.JSX.Element 
   const [providers, setProviders] = useState<ProviderMetadata[]>([])
   const [connections, setConnections] = useState<UserConnectionItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Manual connect dialog for non-OAuth providers (like Bangumi PAT)
   const [selectedManualProvider, setSelectedManualProvider] =
@@ -32,12 +29,11 @@ export function ListsImportSettingsTab({}: SettingsTabProps): React.JSX.Element 
 
   const inFlightRef = useRef(false)
 
-  const fetchData = useCallback(async (manual = false) => {
-    if (inFlightRef.current && !manual) return
+  const fetchData = useCallback(async (silent = false) => {
+    if (inFlightRef.current && !silent) return
     inFlightRef.current = true
 
-    if (manual) setIsRefreshing(true)
-    else setIsLoading(true)
+    if (!silent) setIsLoading(true)
 
     try {
       const [provRes, connRes] = await Promise.all([
@@ -58,7 +54,6 @@ export function ListsImportSettingsTab({}: SettingsTabProps): React.JSX.Element 
       console.error("Failed to load connections for import:", err)
     } finally {
       setIsLoading(false)
-      setIsRefreshing(false)
       inFlightRef.current = false
     }
   }, [])
@@ -152,29 +147,11 @@ export function ListsImportSettingsTab({}: SettingsTabProps): React.JSX.Element 
 
   return (
     <div className="w-full flex-1 animate-in space-y-6 pb-6 duration-200 fade-in-50">
-      {/* Header section with Title & Refresh */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h3 className="text-base font-bold text-foreground">
-            {t("title")}
-          </h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {t("description")}
-          </p>
-        </div>
-
-        <Button
-          variant="outline"
-          size="icon-sm"
-          onClick={() => fetchData(true)}
-          disabled={isLoading || isRefreshing}
-          className="shrink-0"
-        >
-          <IconRefresh
-            className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-          />
-          <span className="sr-only">Refresh</span>
-        </Button>
+      {/* Header section with Title */}
+      <div>
+        <h3 className="text-base font-bold text-foreground">
+          {t("title")}
+        </h3>
       </div>
 
       {isLoading ? (
@@ -189,9 +166,6 @@ export function ListsImportSettingsTab({}: SettingsTabProps): React.JSX.Element 
               <h4 className="text-sm font-semibold text-foreground">
                 {t("connectedServices")}
               </h4>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {t("connectedServicesDesc")}
-              </p>
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
