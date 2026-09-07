@@ -297,9 +297,9 @@ export function LoginForm({ footer }: LoginFormProps) {
 
     try {
       const cleanId = identifier.trim().toLowerCase()
-      const { data, error } = await elysia.auth.passkeys.login.post({
-        identifier: cleanId || undefined,
-      })
+      const { data, error } = await elysia.auth.passkeys.login.post(
+        cleanId ? { identifier: cleanId } : {}
+      )
 
       if (error || !data) {
         throw new Error("FAILED_LOAD_PASSKEY_OPTIONS")
@@ -333,6 +333,7 @@ export function LoginForm({ footer }: LoginFormProps) {
       } else {
         setCredentialsError(t("passkeyFailed"))
       }
+    } finally {
       setLoading(false)
     }
   }
@@ -416,24 +417,29 @@ export function LoginForm({ footer }: LoginFormProps) {
           onSendEmailOtp={handleSendEmailOtp}
           onRetryPasskey={async () => {
             setLoading(true)
+            setMfaError(null)
             try {
               const cleanId = identifier.trim().toLowerCase()
-              const { data } = await elysia.auth.passkeys.login.post({
-                identifier: cleanId || undefined,
+              const { data, error } = await elysia.auth.passkeys.login.post(
+                cleanId ? { identifier: cleanId } : {}
+              )
+              if (error || !data) {
+                throw new Error("FAILED_LOAD_PASSKEY_OPTIONS")
+              }
+              const assertion = await startAuthentication({
+                optionsJSON: data as any,
               })
-              if (data) {
-                const assertion = await startAuthentication({
-                  optionsJSON: data as any,
-                })
-                const res = await signIn("credentials", {
-                  redirect: false,
-                  mfaTicket,
-                  mfaType: "passkey",
-                  passkeyResponse: JSON.stringify(assertion),
-                })
-                if (res?.ok) {
-                  handleSafeRedirect()
-                }
+              const res = await signIn("credentials", {
+                redirect: false,
+                mfaTicket,
+                mfaType: "passkey",
+                passkeyResponse: JSON.stringify(assertion),
+              })
+              if (res?.error) {
+                throw new Error(res.error)
+              }
+              if (res?.ok) {
+                handleSafeRedirect()
               }
             } catch (err: any) {
               if (
@@ -441,9 +447,12 @@ export function LoginForm({ footer }: LoginFormProps) {
                 err.message?.includes("NotAllowedError")
               ) {
                 setMfaError(t("passkeyVerificationCancelled"))
+              } else if (err.message === "FAILED_LOAD_PASSKEY_OPTIONS") {
+                setMfaError(t("failedLoadPasskeyOptions"))
               } else {
                 setMfaError(t("passkeyFailed"))
               }
+            } finally {
               setLoading(false)
             }
           }}

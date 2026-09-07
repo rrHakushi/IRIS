@@ -82,7 +82,14 @@ export default defineRoute({
 
     let rpID = "localhost"
     try {
-      rpID = process.env.RP_ID || new URL(origin).hostname
+      const hostname = new URL(origin).hostname
+      if (hostname === "localhost" || hostname === "127.0.0.1") {
+        rpID = "localhost"
+      } else if (process.env.RP_ID && process.env.RP_ID.trim()) {
+        rpID = process.env.RP_ID.trim()
+      } else {
+        rpID = hostname
+      }
     } catch {
       rpID = "localhost"
     }

@@ -31,9 +31,19 @@ export default defineRoute({
   },
 
   async POST({ body, prisma, cache, request }) {
+    const payload = body as {
+      passkeyResponse: {
+        id: string
+        rawId: string
+        response: any
+        type?: string
+        clientExtensionResults?: any
+      }
+    }
+
     // 1. Locate passkey and user in database
     const passkey = await prisma.passkey.findUnique({
-      where: { id: body.passkeyResponse.id },
+      where: { id: payload.passkeyResponse.id },
       include: { user: true },
     })
 
@@ -50,7 +60,7 @@ export default defineRoute({
     // 2. Extract challenge from clientDataJSON
     let challenge: string | null = null
     try {
-      const clientDataJSON = body.passkeyResponse.response?.clientDataJSON
+      const clientDataJSON = payload.passkeyResponse.response?.clientDataJSON
       if (clientDataJSON) {
         const clientData = JSON.parse(
           Buffer.from(clientDataJSON, "base64url").toString("utf8")
@@ -88,17 +98,30 @@ export default defineRoute({
 
     const originHeader =
       request?.headers.get("origin") || request?.headers.get("referer")
-    let expectedOrigin = process.env.NEXTAUTH_URL!
+    const allowedOrigins = new Set<string>()
+    if (process.env.NEXTAUTH_URL) allowedOrigins.add(process.env.NEXTAUTH_URL)
+    if (process.env.NEXT_PUBLIC_URL) allowedOrigins.add(process.env.NEXT_PUBLIC_URL)
+    allowedOrigins.add("http://localhost:3000")
+    allowedOrigins.add("http://127.0.0.1:3000")
     if (originHeader) {
       try {
         const u = new URL(originHeader)
-        expectedOrigin = `${u.protocol}//${u.host}`
+        allowedOrigins.add(`${u.protocol}//${u.host}`)
       } catch {}
     }
+    const expectedOrigin = Array.from(allowedOrigins)
 
     let expectedRPID = "localhost"
     try {
-      expectedRPID = process.env.RP_ID || new URL(expectedOrigin).hostname
+      const primaryOrigin = process.env.NEXTAUTH_URL || "http://localhost:3000"
+      const hostname = originHeader ? new URL(originHeader).hostname : new URL(primaryOrigin).hostname
+      if (hostname === "localhost" || hostname === "127.0.0.1") {
+        expectedRPID = "localhost"
+      } else if (process.env.RP_ID && process.env.RP_ID.trim()) {
+        expectedRPID = process.env.RP_ID.trim()
+      } else {
+        expectedRPID = hostname
+      }
     } catch {
       expectedRPID = "localhost"
     }
@@ -107,7 +130,7 @@ export default defineRoute({
     let verification
     try {
       verification = await verifyAuthenticationResponse({
-        response: body.passkeyResponse as any,
+        response: payload.passkeyResponse as any,
         expectedChallenge,
         expectedOrigin,
         expectedRPID,

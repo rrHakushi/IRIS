@@ -8,7 +8,7 @@ export default defineRoute({
   schema: {
     body: t.Optional(
       t.Object({
-        identifier: t.Optional(t.String({ minLength: 3 })),
+        identifier: t.Optional(t.String()),
       })
     ),
     response: {
@@ -49,7 +49,14 @@ export default defineRoute({
 
     let rpID = "localhost"
     try {
-      rpID = process.env.RP_ID || new URL(origin).hostname
+      const hostname = new URL(origin).hostname
+      if (hostname === "localhost" || hostname === "127.0.0.1") {
+        rpID = "localhost"
+      } else if (process.env.RP_ID && process.env.RP_ID.trim()) {
+        rpID = process.env.RP_ID.trim()
+      } else {
+        rpID = hostname
+      }
     } catch {
       rpID = "localhost"
     }
@@ -62,8 +69,9 @@ export default defineRoute({
         }[]
       | undefined = undefined
 
-    if (body?.identifier) {
-      const rawIdentifier = body.identifier.trim()
+    const bodyObj = body as { identifier?: string } | undefined
+    if (bodyObj?.identifier) {
+      const rawIdentifier = bodyObj.identifier.trim()
       const lowerIdentifier = rawIdentifier.toLowerCase()
 
       const user = await prisma.user.findFirst({
