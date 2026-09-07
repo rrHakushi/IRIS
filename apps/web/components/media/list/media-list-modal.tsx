@@ -134,17 +134,23 @@ export function MediaListModal({
     [category]
   )
   const maxUnits =
-    media.episodeCount && media.episodeCount > 0 ? media.episodeCount : null
+    typeof media.episodeCount === "number" && media.episodeCount > 0
+      ? media.episodeCount
+      : Array.isArray(media.episodes) && media.episodes.length > 0
+        ? media.episodes.length
+        : null
   const maxChapters =
-    media.chapterCount && media.chapterCount > 0
+    typeof media.chapterCount === "number" && media.chapterCount > 0
       ? media.chapterCount
       : (category === "manga" || category === "book") &&
-          media.episodeCount &&
+          typeof media.episodeCount === "number" &&
           media.episodeCount > 0
         ? media.episodeCount
         : null
   const maxVolumes =
-    media.volumeCount && media.volumeCount > 0 ? media.volumeCount : null
+    typeof media.volumeCount === "number" && media.volumeCount > 0
+      ? media.volumeCount
+      : null
   const repeatLabel = useMemo(() => getRepeatLabel(category), [category])
 
   const [fetchedTvSeasons, setFetchedTvSeasons] = useState<
@@ -279,7 +285,10 @@ export function MediaListModal({
   const [status, setStatus] = useState<MediaListStatus>(
     category === "music" ? "LISTENING" : initialEntry?.status || "PLANNING"
   )
-  const [progress, setProgress] = useState<number>(initialEntry?.progress ?? 0)
+  const [progress, setProgress] = useState<number>(() => {
+    const raw = initialEntry?.progress ?? 0
+    return maxUnits && maxUnits > 0 ? Math.min(maxUnits, raw) : raw
+  })
   const [chaptersProgress, setChaptersProgress] = useState<number>(() => {
     const raw =
       (initialEntry as any)?.chaptersProgress ?? initialEntry?.progress ?? 0
@@ -436,6 +445,12 @@ export function MediaListModal({
       setActiveRewatchIdx(0)
       if (initialEntry) {
         setStatus(category === "music" ? "LISTENING" : initialEntry.status)
+        const rawProgress = initialEntry.progress ?? 0
+        setProgress(
+          maxUnits && maxUnits > 0
+            ? Math.min(maxUnits, rawProgress)
+            : rawProgress
+        )
         const rawChapters =
           initialEntry.chaptersProgress ?? initialEntry.progress ?? 0
         setChaptersProgress(
@@ -517,7 +532,7 @@ export function MediaListModal({
         setConnections({})
       }
     }
-  }, [isOpen, initialEntry, media, maxChapters, maxVolumes])
+  }, [isOpen, initialEntry, media, maxChapters, maxVolumes, maxUnits])
 
   // Sync watchedEpisodes for TV when effectiveTvSeasons is available and watchedEpisodes is empty
   useEffect(() => {

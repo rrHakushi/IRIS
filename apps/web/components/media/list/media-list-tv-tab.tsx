@@ -114,7 +114,10 @@ export function MediaListTvTab({
   const handleAnimeToggleEpisode = (episodeNumber: number) => {
     const isCurrentProgress = progress === episodeNumber
     const nextProgress = isCurrentProgress ? episodeNumber - 1 : episodeNumber
-    const clampedProgress = Math.max(0, nextProgress)
+    const clampedProgress =
+      animeTotalEpisodes > 0
+        ? Math.min(animeTotalEpisodes, Math.max(0, nextProgress))
+        : Math.max(0, nextProgress)
     onProgressChange?.(clampedProgress)
   }
 
@@ -224,7 +227,10 @@ export function MediaListTvTab({
       )
     }
 
-    const isAllWatched = progress >= animeTotalEpisodes
+    const isAllWatched =
+      animeTotalEpisodes > 0 && progress >= animeTotalEpisodes
+    const displayProgress =
+      animeTotalEpisodes > 0 ? Math.min(progress, animeTotalEpisodes) : progress
 
     return (
       <div className="space-y-3">
@@ -235,7 +241,7 @@ export function MediaListTvTab({
               variant={isAllWatched ? "default" : "secondary"}
               className="px-2 py-0.5 font-mono text-[10px]"
             >
-              {progress} / {animeTotalEpisodes}
+              {displayProgress} / {animeTotalEpisodes}
             </Badge>
           </div>
 

@@ -13,6 +13,7 @@ import { UserListBanner } from "./user-list-banner"
 import { ListStatusCard } from "./list-status-card"
 import { MediaListGrid } from "./media-list-grid"
 import { ListCommentsTab } from "./list-comments-tab"
+import { ListActivityTab } from "./list-activity-tab"
 import type {
   MediaListType,
   StatusKey,
@@ -180,7 +181,7 @@ export function UserListView({
   const [sortOrder, setSortOrder] = useState<SortOrderOption>("desc")
   const [activeTab, setActiveTab] = useState<ListViewTab>("list")
 
-  // Sync initial tab from URL search parameters (?tab=list | comments | stats)
+  // Sync initial tab from URL search parameters (?tab=list | comments | stats | activity)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search)
@@ -188,7 +189,8 @@ export function UserListView({
       if (
         tabParam === "list" ||
         tabParam === "comments" ||
-        tabParam === "stats"
+        tabParam === "stats" ||
+        tabParam === "activity"
       ) {
         setActiveTab(tabParam)
       }
@@ -203,7 +205,8 @@ export function UserListView({
       if (
         tabParam === "list" ||
         tabParam === "comments" ||
-        tabParam === "stats"
+        tabParam === "stats" ||
+        tabParam === "activity"
       ) {
         setActiveTab(tabParam)
       } else {
@@ -462,20 +465,91 @@ export function UserListView({
     async (item: ListEntryData, count: number) => {
       const entryId = item.entry.id
       const mediaId = item.media.id
-      const maxCount =
+      const maxCount: number | null = (() => {
+        if (mediaType === "manga") {
+          if (
+            typeof (item.media as any).chapterCount === "number" &&
+            (item.media as any).chapterCount > 0
+          ) {
+            return (item.media as any).chapterCount
+          }
+          if (
+            typeof (item.media as any).chapters === "number" &&
+            (item.media as any).chapters > 0
+          ) {
+            return (item.media as any).chapters
+          }
+          return null
+        }
+        if (mediaType === "anime") {
+          if (
+            typeof (item.media as any).episodeCount === "number" &&
+            (item.media as any).episodeCount > 0
+          ) {
+            return (item.media as any).episodeCount
+          }
+          if (
+            Array.isArray((item.media as any).episodes) &&
+            (item.media as any).episodes.length > 0
+          ) {
+            return (item.media as any).episodes.length
+          }
+          if (
+            typeof (item.media as any).episodes === "number" &&
+            (item.media as any).episodes > 0
+          ) {
+            return (item.media as any).episodes
+          }
+          return null
+        }
+        if (mediaType === "tv") {
+          if (
+            typeof (item.media as any).episodeCount === "number" &&
+            (item.media as any).episodeCount > 0
+          ) {
+            return (item.media as any).episodeCount
+          }
+          if (
+            Array.isArray((item.media as any).episodes) &&
+            (item.media as any).episodes.length > 0
+          ) {
+            return (item.media as any).episodes.length
+          }
+          if (
+            typeof (item.media as any).episodes === "number" &&
+            (item.media as any).episodes > 0
+          ) {
+            return (item.media as any).episodes
+          }
+          return null
+        }
+        if (mediaType === "book") {
+          if (
+            typeof (item.media as any).chapterCount === "number" &&
+            (item.media as any).chapterCount > 0
+          ) {
+            return (item.media as any).chapterCount
+          }
+          if (
+            typeof (item.media as any).pageCount === "number" &&
+            (item.media as any).pageCount > 0
+          ) {
+            return (item.media as any).pageCount
+          }
+          return null
+        }
+        return null
+      })()
+
+      const currentProgress =
         mediaType === "manga"
-          ? (item.media.chapters ?? (item.media as any).chapterCount ?? null)
-          : mediaType === "anime"
-            ? (item.media.episodes ?? (item.media as any).episodeCount ?? null)
-            : mediaType === "tv"
-              ? (item.media.episodes ??
-                (item.media as any).episodeCount ??
-                null)
-              : mediaType === "book"
-                ? ((item.media as any).chapterCount ??
-                  (item.media as any).pageCount ??
-                  null)
-                : null
+          ? (item.entry.chaptersProgress ?? 0)
+          : (item.entry.progress ?? 0)
+
+      if (maxCount !== null && currentProgress >= maxCount) {
+        toast.error("Already at maximum progress")
+        return
+      }
 
       const nowIso = new Date().toISOString()
 
@@ -487,11 +561,17 @@ export function UserListView({
               const rawNext = (it.entry.chaptersProgress ?? 0) + count
               const nextProg =
                 maxCount && maxCount > 0 ? Math.min(rawNext, maxCount) : rawNext
+              const isCompleted =
+                maxCount && maxCount > 0 && nextProg >= maxCount
               return {
                 ...it,
                 entry: {
                   ...it.entry,
                   chaptersProgress: nextProg,
+                  status: isCompleted ? "COMPLETED" : it.entry.status,
+                  completedAt: isCompleted
+                    ? it.entry.completedAt || nowIso
+                    : it.entry.completedAt,
                   updatedAt: nowIso,
                 },
               }
@@ -499,11 +579,17 @@ export function UserListView({
             const rawNext = (it.entry.progress ?? 0) + count
             const nextProg =
               maxCount && maxCount > 0 ? Math.min(rawNext, maxCount) : rawNext
+            const isCompleted =
+              maxCount && maxCount > 0 && nextProg >= maxCount
             return {
               ...it,
               entry: {
                 ...it.entry,
                 progress: nextProg,
+                status: isCompleted ? "COMPLETED" : it.entry.status,
+                completedAt: isCompleted
+                  ? it.entry.completedAt || nowIso
+                  : it.entry.completedAt,
                 updatedAt: nowIso,
               },
             }
@@ -721,6 +807,15 @@ export function UserListView({
         {/* Comments Tab */}
         {activeTab === "comments" && (
           <ListCommentsTab
+            username={username}
+            mediaType={mediaType}
+            isOwner={isOwner}
+          />
+        )}
+
+        {/* Activity Tab */}
+        {activeTab === "activity" && (
+          <ListActivityTab
             username={username}
             mediaType={mediaType}
             isOwner={isOwner}

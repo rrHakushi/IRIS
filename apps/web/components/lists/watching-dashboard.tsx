@@ -255,23 +255,91 @@ export function WatchingDashboard(): React.JSX.Element {
       const mediaId = item.media.id
       const nowIso = new Date().toISOString()
 
-      const maxCount =
-        mediaType === "manga"
-          ? (item.media.chapters ?? (item.media as any).chapterCount ?? null)
-          : mediaType === "anime"
-            ? (item.media.episodes ?? (item.media as any).episodeCount ?? null)
-            : mediaType === "tv"
-              ? (item.media.episodes ??
-                (item.media as any).episodeCount ??
-                null)
-              : mediaType === "book"
-                ? ((item.media as any).chapterCount ??
-                  (item.media as any).pageCount ??
-                  null)
-                : null
+      const maxCount: number | null = (() => {
+        if (mediaType === "manga") {
+          if (
+            typeof (item.media as any).chapterCount === "number" &&
+            (item.media as any).chapterCount > 0
+          ) {
+            return (item.media as any).chapterCount
+          }
+          if (
+            typeof (item.media as any).chapters === "number" &&
+            (item.media as any).chapters > 0
+          ) {
+            return (item.media as any).chapters
+          }
+          return null
+        }
+        if (mediaType === "anime") {
+          if (
+            typeof (item.media as any).episodeCount === "number" &&
+            (item.media as any).episodeCount > 0
+          ) {
+            return (item.media as any).episodeCount
+          }
+          if (
+            Array.isArray((item.media as any).episodes) &&
+            (item.media as any).episodes.length > 0
+          ) {
+            return (item.media as any).episodes.length
+          }
+          if (
+            typeof (item.media as any).episodes === "number" &&
+            (item.media as any).episodes > 0
+          ) {
+            return (item.media as any).episodes
+          }
+          return null
+        }
+        if (mediaType === "tv") {
+          if (
+            typeof (item.media as any).episodeCount === "number" &&
+            (item.media as any).episodeCount > 0
+          ) {
+            return (item.media as any).episodeCount
+          }
+          if (
+            Array.isArray((item.media as any).episodes) &&
+            (item.media as any).episodes.length > 0
+          ) {
+            return (item.media as any).episodes.length
+          }
+          if (
+            typeof (item.media as any).episodes === "number" &&
+            (item.media as any).episodes > 0
+          ) {
+            return (item.media as any).episodes
+          }
+          return null
+        }
+        if (mediaType === "book") {
+          if (
+            typeof (item.media as any).chapterCount === "number" &&
+            (item.media as any).chapterCount > 0
+          ) {
+            return (item.media as any).chapterCount
+          }
+          if (
+            typeof (item.media as any).pageCount === "number" &&
+            (item.media as any).pageCount > 0
+          ) {
+            return (item.media as any).pageCount
+          }
+          return null
+        }
+        return null
+      })()
 
-      const hasScore =
-        typeof item.entry.score === "number" && item.entry.score > 0
+      const currentProgress =
+        mediaType === "manga"
+          ? (item.entry.chaptersProgress ?? 0)
+          : (item.entry.progress ?? 0)
+
+      if (maxCount !== null && currentProgress >= maxCount) {
+        toast.error("Already at maximum progress")
+        return
+      }
 
       // Optimistic update in section items
       setSections((prev) =>
@@ -287,7 +355,7 @@ export function WatchingDashboard(): React.JSX.Element {
                       ? Math.min(rawNext, maxCount)
                       : rawNext
                   const isCompleted =
-                    maxCount && maxCount > 0 && nextProg >= maxCount && hasScore
+                    maxCount && maxCount > 0 && nextProg >= maxCount
                   if (isCompleted) return null
                   return {
                     ...it,
@@ -300,14 +368,7 @@ export function WatchingDashboard(): React.JSX.Element {
                 }
 
                 if (mediaType === "movie") {
-                  if (hasScore) return null
-                  return {
-                    ...it,
-                    entry: {
-                      ...it.entry,
-                      updatedAt: nowIso,
-                    },
-                  }
+                  return null
                 }
 
                 const rawNext = (it.entry.progress ?? 0) + count
@@ -316,7 +377,7 @@ export function WatchingDashboard(): React.JSX.Element {
                     ? Math.min(rawNext, maxCount)
                     : rawNext
                 const isCompleted =
-                  maxCount && maxCount > 0 && nextProg >= maxCount && hasScore
+                  maxCount && maxCount > 0 && nextProg >= maxCount
                 if (isCompleted) return null
                 return {
                   ...it,

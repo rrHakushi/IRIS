@@ -9,6 +9,18 @@ const apiUrl = rawApiUrl.replace(/\$\{ELYSIA_PORT\}|\$ELYSIA_PORT/g, "4000")
 const nextConfig: NextConfig = {
   output: "standalone",
   transpilePackages: ["@workspace/ui"],
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "**.anilist.co" },
+      { protocol: "https", hostname: "cdn.myanimelist.net" },
+      { protocol: "https", hostname: "**.simkl.in" },
+      { protocol: "https", hostname: "**.thetvdb.com" },
+      { protocol: "https", hostname: "images.igdb.com" },
+      { protocol: "https", hostname: "books.google.com" },
+      { protocol: "https", hostname: "**.deezer.com" },
+      { protocol: "https", hostname: "lastfm.freetls.fastly.net" },
+    ],
+  },
   async rewrites() {
     return [
       {

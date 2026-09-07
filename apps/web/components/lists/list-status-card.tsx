@@ -389,6 +389,12 @@ export function ListStatusCard({
             >
               Stats
             </Tab>
+            <Tab
+              id="activity"
+              className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
+            >
+              Activity
+            </Tab>
           </TabList>
         </Tabs>
       </div>
