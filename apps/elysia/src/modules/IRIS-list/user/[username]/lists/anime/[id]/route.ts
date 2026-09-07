@@ -10,6 +10,7 @@ import {
 } from "@/modules/IRIS-list/helpers"
 import { NotFound, BadRequest } from "@/utils/errors"
 import { AnimeListStatus } from "@IRIS/database"
+import { syncConnectionMedia } from "@/services/connections/connection-media-sync.service.js"
 
 const AnimeEntryResponseSchema = t.Object({
   id: t.Number(),
@@ -188,7 +189,12 @@ export default defineRoute({
 
     const animeExists = await prisma.anime.findUnique({
       where: { id },
-      select: { id: true, episodeCount: true },
+      select: {
+        id: true,
+        episodeCount: true,
+        titlePrimary: true,
+        titleSecondary: true,
+      },
     })
     if (!animeExists) {
       throw new NotFound(`Anime with ID ${id} does not exist`)
@@ -278,6 +284,34 @@ export default defineRoute({
       },
       update: upsertData,
     })
+
+    const connectionsToSync = payload.connections ?? result.connections
+    if (
+      connectionsToSync &&
+      typeof connectionsToSync === "object" &&
+      Object.keys(connectionsToSync).length > 0
+    ) {
+      await syncConnectionMedia({
+        userId: dbUser.id,
+        username: dbUser.username,
+        animeId: id,
+        animeTitle:
+          animeExists.titlePrimary ||
+          animeExists.titleSecondary ||
+          "Anime",
+        entry: {
+          status: result.status,
+          progress: result.progress,
+          score: result.score,
+          notes: result.notes,
+          rewatched: result.rewatched,
+          startedAt: result.startedAt,
+          completedAt: result.completedAt,
+        },
+        connections: connectionsToSync,
+        prisma,
+      })
+    }
 
     return {
       success: true,
@@ -316,7 +350,12 @@ export default defineRoute({
 
     const animeExists = await prisma.anime.findUnique({
       where: { id },
-      select: { id: true, episodeCount: true },
+      select: {
+        id: true,
+        episodeCount: true,
+        titlePrimary: true,
+        titleSecondary: true,
+      },
     })
     if (!animeExists) {
       throw new NotFound(`Anime with ID ${id} does not exist`)
@@ -406,6 +445,34 @@ export default defineRoute({
       },
       update: upsertData,
     })
+
+    const patchConnectionsToSync = payload.connections ?? result.connections
+    if (
+      patchConnectionsToSync &&
+      typeof patchConnectionsToSync === "object" &&
+      Object.keys(patchConnectionsToSync).length > 0
+    ) {
+      await syncConnectionMedia({
+        userId: dbUser.id,
+        username: dbUser.username,
+        animeId: id,
+        animeTitle:
+          animeExists.titlePrimary ||
+          animeExists.titleSecondary ||
+          "Anime",
+        entry: {
+          status: result.status,
+          progress: result.progress,
+          score: result.score,
+          notes: result.notes,
+          rewatched: result.rewatched,
+          startedAt: result.startedAt,
+          completedAt: result.completedAt,
+        },
+        connections: patchConnectionsToSync,
+        prisma,
+      })
+    }
 
     return {
       success: true,

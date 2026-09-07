@@ -1,6 +1,7 @@
 import {
   BaseConnectionAdapter,
   ConnectionAuthError,
+  ConnectionError,
 } from "../base.adapter.js";
 import type {
   AuthUrlOptions,
@@ -15,6 +16,7 @@ import type {
   ProviderCapability,
   ScrobblePayload,
   SearchOptions,
+  UpdateMediaPayload,
 } from "../../types/index.js";
 
 export class SimklAdapter extends BaseConnectionAdapter {
@@ -360,6 +362,119 @@ export class SimklAdapter extends BaseConnectionAdapter {
       },
       body: JSON.stringify(body),
     });
+
+    return true;
+  }
+
+  async updateMediaEntry(
+    credentials: ConnectionCredentials,
+    payload: UpdateMediaPayload
+  ): Promise<boolean> {
+    if (!credentials.accessToken) {
+      throw new ConnectionAuthError(
+        "Missing access token for Simkl update",
+        this.provider
+      );
+    }
+
+    const clientId = this.getClientId();
+    if (!clientId) {
+      throw new ConnectionError("Missing SIMKL_CLIENT_ID configuration", this.provider);
+    }
+
+    const providerId = Number(payload.mediaId);
+    if (Number.isNaN(providerId) || providerId <= 0) {
+      throw new ConnectionError(`Invalid Simkl media ID: ${payload.mediaId}`, this.provider);
+    }
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${credentials.accessToken}`,
+      "simkl-api-key": clientId,
+    };
+
+    // 1. Sync Watchlist Status
+    let simklStatus: string | undefined;
+    if (payload.status) {
+      const s = payload.status.toUpperCase();
+      switch (s) {
+        case "WATCHING":
+        case "REPEATING":
+          simklStatus = "watching";
+          break;
+        case "PLANNING":
+        case "PLAN_TO_WATCH":
+          simklStatus = "plantowatch";
+          break;
+        case "COMPLETED":
+          simklStatus = "completed";
+          break;
+        case "PAUSED":
+        case "ON_HOLD":
+        case "HOLD":
+          simklStatus = "hold";
+          break;
+        case "DROPPED":
+          simklStatus = "dropped";
+          break;
+      }
+    }
+
+    if (simklStatus) {
+      await this.fetchJson("https://api.simkl.com/sync/add-to-list", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          shows: [
+            {
+              ids: { simkl: providerId },
+              to: simklStatus,
+            },
+          ],
+        }),
+      });
+    }
+
+    // 2. Sync Ratings/Score (if score > 0)
+    if (payload.score !== undefined && payload.score !== null && payload.score > 0) {
+      await this.fetchJson("https://api.simkl.com/sync/ratings", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          shows: [
+            {
+              ids: { simkl: providerId },
+              rating: Math.round(Number(payload.score)),
+            },
+          ],
+        }),
+      });
+    }
+
+    // 3. Sync Episode History (if progress > 0)
+    if (payload.progress !== undefined && payload.progress !== null && payload.progress > 0) {
+      const episodes = Array.from({ length: Number(payload.progress) }, (_, i) => ({
+        number: i + 1,
+      }));
+
+      await this.fetchJson("https://api.simkl.com/sync/history", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          shows: [
+            {
+              ids: { simkl: providerId },
+              seasons: [
+                {
+                  number: 1,
+                  episodes,
+                },
+              ],
+            },
+          ],
+        }),
+      });
+    }
 
     return true;
   }

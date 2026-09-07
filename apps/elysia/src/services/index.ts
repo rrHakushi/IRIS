@@ -68,3 +68,4 @@ export {
 export * from "./media-queue/types.js"
 export * from "./media-queue/providers/index.js"
 export * from "./connections/list-import.service.js"
+export * from "./connections/connection-media-sync.service.js"

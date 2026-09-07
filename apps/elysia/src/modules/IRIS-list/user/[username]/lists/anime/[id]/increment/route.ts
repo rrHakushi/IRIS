@@ -7,6 +7,7 @@ import {
 } from "@/modules/IRIS-list/helpers"
 import { NotFound } from "@/utils/errors"
 import { AnimeListStatus } from "@IRIS/database"
+import { syncConnectionMedia } from "@/services/connections/connection-media-sync.service.js"
 
 export default defineRoute({
   schema: {
@@ -47,7 +48,12 @@ export default defineRoute({
 
     const anime = await prisma.anime.findUnique({
       where: { id },
-      select: { id: true, episodeCount: true },
+      select: {
+        id: true,
+        episodeCount: true,
+        titlePrimary: true,
+        titleSecondary: true,
+      },
     })
     if (!anime) {
       throw new NotFound(`Anime with ID ${id} does not exist`)
@@ -105,14 +111,45 @@ export default defineRoute({
         progress: newProgress,
         startedAt: new Date(),
         completedAt,
+        connections: (body as any)?.connections ?? null,
       },
       update: {
         status: newStatus,
         progress: newProgress,
         completedAt,
         ...(existing?.status === "PLANNING" ? { startedAt: new Date() } : {}),
+        ...((body as any)?.connections !== undefined
+          ? { connections: (body as any).connections }
+          : {}),
       },
     })
+
+    const connectionsToSync =
+      (body as any)?.connections ?? result.connections
+    if (
+      connectionsToSync &&
+      typeof connectionsToSync === "object" &&
+      Object.keys(connectionsToSync).length > 0
+    ) {
+      await syncConnectionMedia({
+        userId: dbUser.id,
+        username: dbUser.username,
+        animeId: id,
+        animeTitle:
+          anime.titlePrimary || anime.titleSecondary || "Anime",
+        entry: {
+          status: result.status,
+          progress: result.progress,
+          score: existing?.score ?? null,
+          notes: existing?.notes ?? null,
+          rewatched: existing?.rewatched ?? 0,
+          startedAt: result.startedAt,
+          completedAt: result.completedAt,
+        },
+        connections: connectionsToSync,
+        prisma,
+      })
+    }
 
     return {
       success: true,

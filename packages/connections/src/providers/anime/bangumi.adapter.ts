@@ -1,6 +1,7 @@
 import {
   BaseConnectionAdapter,
   ConnectionAuthError,
+  ConnectionError,
 } from "../base.adapter.js";
 import type {
   AuthUrlOptions,
@@ -15,6 +16,7 @@ import type {
   OAuthTokens,
   ProviderCapability,
   SearchOptions,
+  UpdateMediaPayload,
 } from "../../types/index.js";
 
 export class BangumiAdapter extends BaseConnectionAdapter {
@@ -311,5 +313,76 @@ export class BangumiAdapter extends BaseConnectionAdapter {
       updatedAt: entry.updated_at ? new Date(entry.updated_at) : undefined,
       notes: entry.comment,
     }));
+  }
+
+  async updateMediaEntry(
+    credentials: ConnectionCredentials,
+    payload: UpdateMediaPayload
+  ): Promise<boolean> {
+    if (!credentials.accessToken) {
+      throw new ConnectionAuthError(
+        "Missing access token for Bangumi update",
+        this.provider
+      );
+    }
+
+    const providerId = Number(payload.mediaId);
+    if (Number.isNaN(providerId) || providerId <= 0) {
+      throw new ConnectionError(
+        `Invalid Bangumi media ID: ${payload.mediaId}`,
+        this.provider
+      );
+    }
+
+    // 1: wish, 2: collect, 3: do, 4: on_hold, 5: dropped
+    let bangumiType = 3;
+    if (payload.status) {
+      const s = payload.status.toUpperCase();
+      switch (s) {
+        case "PLANNING":
+        case "PLAN_TO_WATCH":
+          bangumiType = 1;
+          break;
+        case "COMPLETED":
+          bangumiType = 2;
+          break;
+        case "WATCHING":
+        case "REPEATING":
+          bangumiType = 3;
+          break;
+        case "ON_HOLD":
+        case "PAUSED":
+        case "HOLD":
+          bangumiType = 4;
+          break;
+        case "DROPPED":
+          bangumiType = 5;
+          break;
+      }
+    }
+
+    const body: Record<string, unknown> = {
+      type: bangumiType,
+    };
+    if (payload.score !== undefined && payload.score !== null && payload.score > 0) {
+      body.rate = Math.min(10, Math.max(1, Math.round(Number(payload.score))));
+    }
+    if (payload.progress !== undefined && payload.progress !== null) {
+      body.ep_status = Number(payload.progress);
+    }
+    if (payload.notes !== undefined && payload.notes !== null) {
+      body.comment = String(payload.notes);
+    }
+
+    await this.fetchJson(`https://bgm.tv/v0/users/-/collections/${providerId}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${credentials.accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    return true;
   }
 }

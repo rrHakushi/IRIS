@@ -2206,7 +2206,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"count\": 1\n}"
+        "text": "{\n  \"count\": 1,\n  \"connections\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -2493,6 +2493,16 @@
           "disabled": false
         },
         {
+          "name": "month",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "artist",
+          "value": "string",
+          "disabled": false
+        },
+        {
           "name": "sortBy",
           "value": "updatedAt",
           "disabled": false
@@ -2534,7 +2544,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"count\": 1\n}"
+        "text": "{\n  \"count\": 1,\n  \"connections\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -2817,6 +2827,16 @@
         },
         {
           "name": "year",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "month",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "artist",
           "value": "string",
           "disabled": false
         },
@@ -3192,7 +3212,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"count\": 1\n}"
+        "text": "{\n  \"count\": 1,\n  \"connections\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -3479,6 +3499,16 @@
           "disabled": false
         },
         {
+          "name": "month",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "artist",
+          "value": "string",
+          "disabled": false
+        },
+        {
           "name": "sortBy",
           "value": "updatedAt",
           "disabled": false
@@ -3520,7 +3550,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"count\": 1\n}"
+        "text": "{\n  \"count\": 1,\n  \"connections\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -3807,6 +3837,16 @@
           "disabled": false
         },
         {
+          "name": "month",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "artist",
+          "value": "string",
+          "disabled": false
+        },
+        {
           "name": "sortBy",
           "value": "updatedAt",
           "disabled": false
@@ -3848,7 +3888,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"count\": 1\n}"
+        "text": "{\n  \"count\": 1,\n  \"connections\": null\n}"
       },
       "parameters": [],
       "headers": [
@@ -4135,6 +4175,16 @@
           "disabled": false
         },
         {
+          "name": "month",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "artist",
+          "value": "string",
+          "disabled": false
+        },
+        {
           "name": "sortBy",
           "value": "updatedAt",
           "disabled": false
@@ -4176,7 +4226,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"count\": 1\n}"
+        "text": "{\n  \"count\": 1,\n  \"connections\": null\n}"
       },
       "parameters": [
         {
@@ -4495,6 +4545,16 @@
         },
         {
           "name": "year",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "month",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "artist",
           "value": "string",
           "disabled": false
         },
@@ -4859,6 +4919,16 @@
         },
         {
           "name": "year",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "month",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "artist",
           "value": "string",
           "disabled": false
         },

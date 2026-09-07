@@ -1,6 +1,7 @@
 import {
   BaseConnectionAdapter,
   ConnectionAuthError,
+  ConnectionError,
 } from "../base.adapter.js";
 import type {
   AuthUrlOptions,
@@ -15,6 +16,7 @@ import type {
   OAuthTokens,
   ProviderCapability,
   SearchOptions,
+  UpdateMediaPayload,
 } from "../../types/index.js";
 
 export class AniListAdapter extends BaseConnectionAdapter {
@@ -378,5 +380,104 @@ export class AniListAdapter extends BaseConnectionAdapter {
     }
 
     return items;
+  }
+
+  async updateMediaEntry(
+    credentials: ConnectionCredentials,
+    payload: UpdateMediaPayload
+  ): Promise<boolean> {
+    if (!credentials.accessToken) {
+      throw new ConnectionAuthError(
+        "Missing access token for AniList update",
+        this.provider
+      );
+    }
+
+    const mediaId = Number(payload.mediaId);
+    if (Number.isNaN(mediaId) || mediaId <= 0) {
+      throw new ConnectionError(
+        `Invalid AniList media ID: ${payload.mediaId}`,
+        this.provider
+      );
+    }
+
+    let status = payload.status;
+    if (status) {
+      const s = status.toUpperCase();
+      if (s === "WATCHING" || s === "REPEATING") {
+        status = "CURRENT";
+      } else if (s === "ON_HOLD" || s === "HOLD") {
+        status = "PAUSED";
+      } else if (s === "PLANNING" || s === "PLAN_TO_WATCH" || s === "PLAN_TO_READ") {
+        status = "PLANNING";
+      } else if (s === "COMPLETED") {
+        status = "COMPLETED";
+      } else if (s === "DROPPED") {
+        status = "DROPPED";
+      }
+    }
+
+    const toFuzzy = (d?: Date | string | null) => {
+      if (!d) return undefined;
+      const date = new Date(d);
+      if (Number.isNaN(date.getTime())) return undefined;
+      return {
+        year: date.getUTCFullYear(),
+        month: date.getUTCMonth() + 1,
+        day: date.getUTCDate(),
+      };
+    };
+
+    const variables: Record<string, unknown> = {
+      mediaId,
+    };
+
+    if (status) variables.status = status;
+    if (payload.progress !== undefined && payload.progress !== null) {
+      variables.progress = Number(payload.progress);
+    }
+    if (payload.score !== undefined && payload.score !== null) {
+      variables.score = Number(payload.score);
+    }
+    if (payload.notes !== undefined && payload.notes !== null) {
+      variables.notes = String(payload.notes);
+    }
+    if (payload.rewatched !== undefined && payload.rewatched !== null) {
+      variables.repeat = Number(payload.rewatched);
+    }
+    const start = toFuzzy(payload.startedAt);
+    if (start) variables.startedAt = start;
+    const finish = toFuzzy(payload.completedAt);
+    if (finish) variables.completedAt = finish;
+
+    const mutation = `
+      mutation (
+        $mediaId: Int!
+        $status: MediaListStatus
+        $progress: Int
+        $score: Float
+        $startedAt: FuzzyDateInput
+        $completedAt: FuzzyDateInput
+        $notes: String
+        $repeat: Int
+      ) {
+        SaveMediaListEntry(
+          mediaId: $mediaId
+          status: $status
+          progress: $progress
+          score: $score
+          startedAt: $startedAt
+          completedAt: $completedAt
+          notes: $notes
+          repeat: $repeat
+        ) {
+          id
+          status
+        }
+      }
+    `;
+
+    await this.executeGraphQL(mutation, variables, credentials.accessToken);
+    return true;
   }
 }

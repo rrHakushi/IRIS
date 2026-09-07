@@ -19,6 +19,8 @@ export const ScoreSchema = t.Optional(
 export const ConnectionItemSchema = t.Object(
   {
     id: t.Union([t.String(), t.Number()]),
+    sync: t.Optional(t.Boolean()),
+    progressOffset: t.Optional(t.Number()),
     title: t.Optional(t.Nullable(t.String())),
     cover: t.Optional(t.Nullable(t.String())),
     coverImage: t.Optional(t.Nullable(t.String())),
@@ -156,6 +158,7 @@ export const QuickAddResponseSchema = t.Object({
 export const IncrementBodySchema = t.Optional(
   t.Object({
     count: t.Optional(t.Number({ default: 1, minimum: 1 })),
+    connections: ConnectionsSchema,
   })
 )
 

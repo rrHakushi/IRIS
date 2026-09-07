@@ -12,6 +12,7 @@ import type {
   MediaSearchResult,
   MediaType,
   ScrobblePayload,
+  UpdateMediaPayload,
 } from "./media.js";
 
 export interface AuthUrlResult {
@@ -132,6 +133,14 @@ export interface ConnectionProviderAdapter {
    * Fetches owned games for gaming providers.
    */
   getGames?(credentials: ConnectionCredentials): Promise<GameItem[]>;
+
+  /**
+   * Updates media status, progress, score, etc. on the provider's platform.
+   */
+  updateMediaEntry?(
+    credentials: ConnectionCredentials,
+    payload: UpdateMediaPayload
+  ): Promise<boolean>;
 
   /**
    * Fetches gaming profile.

@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import {
   BaseConnectionAdapter,
   ConnectionAuthError,
+  ConnectionError,
 } from "../base.adapter.js";
 import type {
   AuthUrlOptions,
@@ -16,6 +17,7 @@ import type {
   OAuthTokens,
   ProviderCapability,
   SearchOptions,
+  UpdateMediaPayload,
 } from "../../types/index.js";
 
 export class MyAnimeListAdapter extends BaseConnectionAdapter {
@@ -337,5 +339,107 @@ export class MyAnimeListAdapter extends BaseConnectionAdapter {
       updatedAt: item.list_status.updated_at ? new Date(item.list_status.updated_at) : undefined,
       notes: item.list_status.comments,
     }));
+  }
+
+  async updateMediaEntry(
+    credentials: ConnectionCredentials,
+    payload: UpdateMediaPayload
+  ): Promise<boolean> {
+    if (!credentials.accessToken) {
+      throw new ConnectionAuthError(
+        "Missing access token for MyAnimeList update",
+        this.provider
+      );
+    }
+
+    const mediaId = Number(payload.mediaId);
+    if (Number.isNaN(mediaId) || mediaId <= 0) {
+      throw new ConnectionError(
+        `Invalid MyAnimeList media ID: ${payload.mediaId}`,
+        this.provider
+      );
+    }
+
+    const isManga = payload.mediaType === "MANGA";
+    const endpoint = isManga ? "manga" : "anime";
+
+    let malStatus: string | undefined;
+    if (payload.status) {
+      const s = payload.status.toUpperCase();
+      switch (s) {
+        case "WATCHING":
+        case "REPEATING":
+          malStatus = isManga ? "reading" : "watching";
+          break;
+        case "COMPLETED":
+          malStatus = "completed";
+          break;
+        case "PAUSED":
+        case "ON_HOLD":
+        case "HOLD":
+          malStatus = "on_hold";
+          break;
+        case "DROPPED":
+          malStatus = "dropped";
+          break;
+        case "PLANNING":
+        case "PLAN_TO_WATCH":
+        case "PLAN_TO_READ":
+          malStatus = isManga ? "plan_to_read" : "plan_to_watch";
+          break;
+        default:
+          malStatus = isManga ? "reading" : "watching";
+          break;
+      }
+    }
+
+    const bodyParams = new URLSearchParams();
+    if (malStatus) {
+      bodyParams.set("status", malStatus);
+    }
+    if (payload.score !== undefined && payload.score !== null) {
+      const score = Math.min(10, Math.max(0, Math.round(Number(payload.score))));
+      bodyParams.set("score", String(score));
+    }
+    if (payload.progress !== undefined && payload.progress !== null) {
+      const progressKey = isManga ? "num_chapters_read" : "num_watched_episodes";
+      bodyParams.set(progressKey, String(payload.progress));
+    }
+    if (payload.status === "REPEATING") {
+      bodyParams.set(isManga ? "is_rereading" : "is_rewatching", "true");
+    }
+    if (payload.rewatched !== undefined && payload.rewatched !== null) {
+      bodyParams.set(
+        isManga ? "num_times_reread" : "num_times_rewatched",
+        String(payload.rewatched)
+      );
+    }
+    if (payload.notes !== undefined && payload.notes !== null) {
+      bodyParams.set("comments", String(payload.notes));
+    }
+
+    const toMalDate = (d?: Date | string | null) => {
+      if (!d) return undefined;
+      const date = new Date(d);
+      if (Number.isNaN(date.getTime())) return undefined;
+      return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+    };
+
+    const start = toMalDate(payload.startedAt);
+    if (start) bodyParams.set("start_date", start);
+    const finish = toMalDate(payload.completedAt);
+    if (finish) bodyParams.set("finish_date", finish);
+
+    const url = `https://api.myanimelist.net/v2/${endpoint}/${mediaId}/my_list_status`;
+    await this.fetchJson(url, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${credentials.accessToken}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: bodyParams.toString(),
+    });
+
+    return true;
   }
 }

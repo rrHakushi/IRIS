@@ -93,3 +93,16 @@ export interface ScrobblePayload {
   timestamp?: Date;
   extra?: Record<string, any>;
 }
+
+export interface UpdateMediaPayload {
+  mediaId: string | number;
+  mediaType?: MediaType;
+  status?: string;
+  progress?: number;
+  score?: number | null;
+  notes?: string | null;
+  rewatched?: number;
+  startedAt?: Date | string | null;
+  completedAt?: Date | string | null;
+  extra?: Record<string, unknown>;
+}
