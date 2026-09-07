@@ -6,6 +6,7 @@ import {
 } from "@/modules/IRIS-list/helpers"
 import { NotFound } from "@/utils/errors"
 import { TvListStatus } from "@IRIS/database"
+import { recordMediaListActivity } from "@/services/activity.service.js"
 
 export default defineRoute({
   schema: {
@@ -13,6 +14,31 @@ export default defineRoute({
       username: t.String(),
       id: t.Number({ minimum: 1, description: "TV ID" }),
     }),
+    body: t.Optional(
+      t.Object({
+        count: t.Optional(t.Number({ minimum: 1 })),
+        type: t.Optional(
+          t.Union([
+            t.Literal("EPISODE"),
+            t.Literal("SEASON"),
+            t.Literal("episode"),
+            t.Literal("season"),
+          ])
+        ),
+      })
+    ),
+    query: t.Optional(
+      t.Object({
+        type: t.Optional(
+          t.Union([
+            t.Literal("EPISODE"),
+            t.Literal("SEASON"),
+            t.Literal("episode"),
+            t.Literal("season"),
+          ])
+        ),
+      })
+    ),
     response: {
       200: t.Object({
         success: t.Boolean(),
@@ -20,10 +46,10 @@ export default defineRoute({
         episode: t.Optional(
           t.Nullable(
             t.Object({
-              id: t.Number(),
+              id: t.Optional(t.Number()),
               seasonNumber: t.Number(),
-              episodeNumber: t.Number(),
-              title: t.String(),
+              episodeNumber: t.Optional(t.Number()),
+              title: t.Optional(t.String()),
             })
           )
         ),
@@ -35,12 +61,12 @@ export default defineRoute({
     },
     detail: {
       summary:
-        "Increment TV progress to next sequential episode with season auto-completion",
+        "Increment TV progress to next sequential episode or season with overflow guards",
       tags: ["Lists - TV"],
     },
   },
 
-  async POST({ params, prisma, session }) {
+  async POST({ params, body, query, prisma, session }) {
     requireAuth(session)
     const { dbUser, isOwner } = await resolveTargetUserAndAccess(
       prisma,
@@ -50,6 +76,8 @@ export default defineRoute({
     assertIsOwner(isOwner, params.username)
 
     const id = Number(params.id)
+    const rawType = (body as any)?.type || (query as any)?.type || "EPISODE"
+    const isSeasonIncrement = String(rawType).toUpperCase() === "SEASON"
 
     const tv = await prisma.tv.findUnique({
       where: { id },
@@ -86,6 +114,213 @@ export default defineRoute({
       })
     }
 
+    const maxEpisodes =
+      tv.episodeCount && tv.episodeCount > 0
+        ? tv.episodeCount
+        : tv.episodes.length > 0
+          ? tv.episodes.length
+          : null
+
+    const maxSeasons =
+      tv.seasonCount && tv.seasonCount > 0
+        ? tv.seasonCount
+        : tv.seasons.length > 0
+          ? tv.seasons.length
+          : null
+
+    // -------------------------------------------------------------------------
+    // A. Season Increment Flow
+    // -------------------------------------------------------------------------
+    if (isSeasonIncrement) {
+      const completedSeasonRecords = await prisma.tvSeasonProgress.findMany({
+        where: {
+          tvListId: tvList.id,
+          status: "COMPLETED",
+        },
+        select: { seasonNumber: true },
+      })
+      const completedSeasonNums = new Set(
+        completedSeasonRecords.map((s) => s.seasonNumber)
+      )
+
+      if (maxSeasons !== null && completedSeasonRecords.length >= maxSeasons) {
+        const clampedProg =
+          maxEpisodes !== null
+            ? Math.min(tvList.progress, maxEpisodes)
+            : tvList.progress
+        const updatedList = await prisma.tvList.update({
+          where: { id: tvList.id },
+          data: {
+            status: "COMPLETED",
+            progress: clampedProg,
+            completedAt: tvList.completedAt || new Date(),
+          },
+        })
+        return {
+          success: true,
+          message: `Already at maximum seasons (${maxSeasons}/${maxSeasons})`,
+          episode: null,
+          seasonCompleted: true,
+          showCompleted: true,
+          progress: updatedList.progress,
+          status: updatedList.status,
+        }
+      }
+
+      // Find the next incomplete season
+      const eligibleSeasons =
+        tv.seasons.length > 0
+          ? tv.seasons.filter((s) => s.seasonNumber >= 1)
+          : Array.from({ length: maxSeasons || 1 }, (_, i) => ({
+              id: 0,
+              seasonNumber: i + 1,
+              episodeCount: 0,
+            }))
+
+      const nextSeason =
+        eligibleSeasons.find((s) => !completedSeasonNums.has(s.seasonNumber)) ||
+        eligibleSeasons[0]
+
+      const targetSeasonNumber = nextSeason ? nextSeason.seasonNumber : 1
+      const seasonEpisodes = tv.episodes.filter(
+        (e) => e.seasonNumber === targetSeasonNumber
+      )
+
+      // Mark all episodes in this season as watched
+      if (seasonEpisodes.length > 0) {
+        await prisma.tvWatchedEpisode.createMany({
+          data: seasonEpisodes.map((ep) => ({
+            tvListId: tvList.id,
+            seasonNumber: ep.seasonNumber,
+            episodeNumber: ep.episodeNumber,
+            episodeId: ep.id,
+            watchedAt: new Date(),
+          })),
+          skipDuplicates: true,
+        })
+      }
+
+      const seasonEpisodeCount =
+        nextSeason?.episodeCount && nextSeason.episodeCount > 0
+          ? nextSeason.episodeCount
+          : seasonEpisodes.length
+
+      if (nextSeason && nextSeason.id > 0) {
+        await prisma.tvSeasonProgress.upsert({
+          where: {
+            tvListId_seasonNumber: {
+              tvListId: tvList.id,
+              seasonNumber: targetSeasonNumber,
+            },
+          },
+          create: {
+            tvListId: tvList.id,
+            seasonId: nextSeason.id,
+            seasonNumber: targetSeasonNumber,
+            status: "COMPLETED",
+            progress: seasonEpisodeCount,
+            startedAt: new Date(),
+            completedAt: new Date(),
+          },
+          update: {
+            status: "COMPLETED",
+            progress: seasonEpisodeCount,
+            completedAt: new Date(),
+          },
+        })
+      }
+
+      const totalWatchedCount = await prisma.tvWatchedEpisode.count({
+        where: { tvListId: tvList.id },
+      })
+      let newTotalProgress =
+        totalWatchedCount > 0
+          ? totalWatchedCount
+          : tvList.progress + seasonEpisodeCount
+
+      let isShowCompleted = false
+      if (maxEpisodes !== null && newTotalProgress >= maxEpisodes) {
+        newTotalProgress = maxEpisodes
+        isShowCompleted = true
+      }
+      if (
+        maxSeasons !== null &&
+        completedSeasonRecords.length + 1 >= maxSeasons
+      ) {
+        isShowCompleted = true
+      }
+
+      const updatedList = await prisma.tvList.update({
+        where: { id: tvList.id },
+        data: {
+          status: isShowCompleted ? "COMPLETED" : "WATCHING",
+          progress: newTotalProgress,
+          completedAt: isShowCompleted
+            ? tvList.completedAt || new Date()
+            : tvList.completedAt,
+          ...(tvList.status === "PLANNING" ? { startedAt: new Date() } : {}),
+        },
+      })
+
+      recordMediaListActivity({
+        userId: dbUser.id,
+        mediaType: "TV",
+        mediaId: id,
+        action: isShowCompleted ? "COMPLETED" : "PROGRESS_CHANGED",
+        title: tv.titlePrimary || tv.titleSecondary || "TV",
+        coverImage: tv.coverImage,
+        bannerImage: tv.bannerImage,
+        format: "TV",
+        status: updatedList.status,
+        progress: updatedList.progress,
+        score: tvList.score,
+        prevStatus: tvList.status,
+        prevProgress: tvList.progress,
+        prevScore: tvList.score,
+        isPrivate: tvList.private,
+      })
+
+      return {
+        success: true,
+        message: `Season ${targetSeasonNumber} marked completed`,
+        episode: {
+          seasonNumber: targetSeasonNumber,
+        },
+        seasonCompleted: true,
+        showCompleted: isShowCompleted,
+        progress: updatedList.progress,
+        status: updatedList.status,
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // B. Episode Increment Flow
+    // -------------------------------------------------------------------------
+    // Overflow guard: if already at or beyond maxEpisodes, clamp and return
+    if (maxEpisodes !== null && tvList.progress >= maxEpisodes) {
+      let clampedEntry = tvList
+      if (tvList.progress > maxEpisodes || tvList.status !== "COMPLETED") {
+        clampedEntry = await prisma.tvList.update({
+          where: { id: tvList.id },
+          data: {
+            status: "COMPLETED",
+            progress: maxEpisodes,
+            completedAt: tvList.completedAt || new Date(),
+          },
+        })
+      }
+
+      return {
+        success: true,
+        message: `Already at maximum episodes (${maxEpisodes}/${maxEpisodes})`,
+        episode: null,
+        seasonCompleted: false,
+        showCompleted: true,
+        progress: clampedEntry.progress,
+        status: clampedEntry.status,
+      }
+    }
+
     // Query watched episodes
     const watchedEpisodes = await prisma.tvWatchedEpisode.findMany({
       where: { tvListId: tvList.id },
@@ -105,42 +340,82 @@ export default defineRoute({
       (e) => !watchedSet.has(`${e.seasonNumber}:${e.episodeNumber}`)
     )
 
-    if (!nextEpisode) {
-      let currentStatus: TvListStatus = tvList.status
-      let isCompleted = currentStatus === "COMPLETED"
-      const hasScore =
-        tvList.score !== null && tvList.score !== undefined && tvList.score > 0
-      const maxProg =
-        tv.episodeCount && tv.episodeCount > 0
-          ? Math.min(tvList.progress, tv.episodeCount)
-          : tvList.progress
-
-      if (!isCompleted && hasScore) {
-        currentStatus = "COMPLETED"
+    // Handle case where TV has no episode rows in DB, but has episodeCount
+    if (!nextEpisode && eligibleEpisodes.length === 0) {
+      const count = (body as any)?.count ?? 1
+      let newProg = tvList.progress + count
+      let isCompleted = false
+      if (maxEpisodes !== null && newProg >= maxEpisodes) {
+        newProg = maxEpisodes
         isCompleted = true
-        await prisma.tvList.update({
-          where: { id: tvList.id },
-          data: {
-            status: "COMPLETED",
-            progress: maxProg,
-            completedAt: new Date(),
-          },
-        })
-      } else if (maxProg !== tvList.progress) {
-        await prisma.tvList.update({
-          where: { id: tvList.id },
-          data: { progress: maxProg },
-        })
       }
+
+      const updatedList = await prisma.tvList.update({
+        where: { id: tvList.id },
+        data: {
+          status: isCompleted ? "COMPLETED" : "WATCHING",
+          progress: newProg,
+          completedAt: isCompleted
+            ? tvList.completedAt || new Date()
+            : tvList.completedAt,
+          ...(tvList.status === "PLANNING" ? { startedAt: new Date() } : {}),
+        },
+      })
+
+      recordMediaListActivity({
+        userId: dbUser.id,
+        mediaType: "TV",
+        mediaId: id,
+        action: isCompleted ? "COMPLETED" : "PROGRESS_CHANGED",
+        title: tv.titlePrimary || tv.titleSecondary || "TV",
+        coverImage: tv.coverImage,
+        bannerImage: tv.bannerImage,
+        format: "TV",
+        status: updatedList.status,
+        progress: updatedList.progress,
+        score: tvList.score,
+        prevStatus: tvList.status,
+        prevProgress: tvList.progress,
+        prevScore: tvList.score,
+        isPrivate: tvList.private,
+      })
+
+      return {
+        success: true,
+        message: `Marked episode ${newProg} watched`,
+        episode: {
+          seasonNumber: 1,
+          episodeNumber: newProg,
+        },
+        seasonCompleted: false,
+        showCompleted: isCompleted,
+        progress: updatedList.progress,
+        status: updatedList.status,
+      }
+    }
+
+    if (!nextEpisode) {
+      const clampedProg =
+        maxEpisodes !== null
+          ? Math.min(tvList.progress, maxEpisodes)
+          : tvList.progress
+      await prisma.tvList.update({
+        where: { id: tvList.id },
+        data: {
+          status: "COMPLETED",
+          progress: clampedProg,
+          completedAt: tvList.completedAt || new Date(),
+        },
+      })
 
       return {
         success: true,
         message: "All available episodes have already been watched",
         episode: null,
         seasonCompleted: false,
-        showCompleted: isCompleted,
-        progress: maxProg,
-        status: currentStatus,
+        showCompleted: true,
+        progress: clampedProg,
+        status: "COMPLETED",
       }
     }
 
@@ -202,11 +477,9 @@ export default defineRoute({
     // Check show completion (guarded against missing episodeCount)
     let finalProgress = newProgress
     let isAllEpisodesWatched = false
-    if (tv.episodeCount && tv.episodeCount > 0) {
-      if (finalProgress >= tv.episodeCount) {
-        finalProgress = tv.episodeCount
-        isAllEpisodesWatched = true
-      }
+    if (maxEpisodes !== null && finalProgress >= maxEpisodes) {
+      finalProgress = maxEpisodes
+      isAllEpisodesWatched = true
     } else {
       const remainingUnwatched = eligibleEpisodes.filter(
         (e) =>
@@ -221,20 +494,14 @@ export default defineRoute({
       }
     }
 
-    const hasScore =
-      tvList.score !== null && tvList.score !== undefined && tvList.score > 0
     let showCompleted = false
     let newStatus: TvListStatus = tvList.status
     let completedAt = tvList.completedAt
 
     if (isAllEpisodesWatched) {
-      if (hasScore) {
-        showCompleted = true
-        newStatus = "COMPLETED"
-        completedAt = new Date()
-      } else {
-        newStatus = "WATCHING"
-      }
+      showCompleted = true
+      newStatus = "COMPLETED"
+      completedAt = completedAt || new Date()
     } else if (tvList.status === "PLANNING") {
       newStatus = "WATCHING"
     }
@@ -247,6 +514,24 @@ export default defineRoute({
         completedAt,
         ...(tvList.status === "PLANNING" ? { startedAt: new Date() } : {}),
       },
+    })
+
+    recordMediaListActivity({
+      userId: dbUser.id,
+      mediaType: "TV",
+      mediaId: id,
+      action: showCompleted ? "COMPLETED" : "PROGRESS_CHANGED",
+      title: tv.titlePrimary || tv.titleSecondary || "TV",
+      coverImage: tv.coverImage,
+      bannerImage: tv.bannerImage,
+      format: "TV",
+      status: updatedList.status,
+      progress: updatedList.progress,
+      score: tvList.score,
+      prevStatus: tvList.status,
+      prevProgress: tvList.progress,
+      prevScore: tvList.score,
+      isPrivate: tvList.private,
     })
 
     return {

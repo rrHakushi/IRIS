@@ -6,6 +6,7 @@ import {
   QuickAddResponseSchema,
 } from "@/modules/IRIS-list/helpers"
 import { NotFound } from "@/utils/errors"
+import { recordMediaListActivity } from "@/services/activity.service.js"
 
 export default defineRoute({
   schema: {
@@ -35,7 +36,14 @@ export default defineRoute({
 
     const manga = await prisma.manga.findUnique({
       where: { id },
-      select: { id: true },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+        format: true,
+      },
     })
     if (!manga) {
       throw new NotFound(`Manga with ID ${id} does not exist`)
@@ -66,6 +74,20 @@ export default defineRoute({
         chaptersProgress: 0,
         volumesProgress: 0,
       },
+    })
+
+    recordMediaListActivity({
+      userId: dbUser.id,
+      mediaType: "MANGA",
+      mediaId: id,
+      action: "ADDED",
+      title: manga.titlePrimary || manga.titleSecondary || "Manga",
+      coverImage: manga.coverImage,
+      bannerImage: manga.bannerImage,
+      format: manga.format,
+      status: created.status,
+      progress: created.chaptersProgress,
+      isPrivate: false,
     })
 
     return {

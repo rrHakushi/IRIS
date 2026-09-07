@@ -7,9 +7,11 @@ import {
   ConnectionsSchema,
   HistoryArraySchema,
   gameSelect,
+  recordEntryMutationActivity,
 } from "@/modules/IRIS-list/helpers"
 import { NotFound } from "@/utils/errors"
 import { GameListStatus } from "@IRIS/database"
+import { recordMediaListActivity } from "@/services/activity.service.js"
 
 const GameEntryResponseSchema = t.Object({
   id: t.Number(),
@@ -188,11 +190,33 @@ export default defineRoute({
 
     const gameExists = await prisma.game.findUnique({
       where: { id },
-      select: { id: true },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+      },
     })
     if (!gameExists) {
       throw new NotFound(`Game with ID ${id} does not exist`)
     }
+
+    const existing = await prisma.gameList.findUnique({
+      where: {
+        userId_gameId: {
+          userId: dbUser.id,
+          gameId: id,
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+        progress: true,
+        score: true,
+        private: true,
+      },
+    })
 
     const payload = (body ?? {}) as any
     const startedAt =
@@ -247,6 +271,16 @@ export default defineRoute({
         connections: payload.connections ?? null,
       },
       update: upsertData,
+    })
+
+    recordEntryMutationActivity({
+      userId: dbUser.id,
+      mediaType: "GAME",
+      mediaId: id,
+      media: gameExists,
+      existing,
+      result,
+      payload,
     })
 
     return {
@@ -286,11 +320,33 @@ export default defineRoute({
 
     const gameExists = await prisma.game.findUnique({
       where: { id },
-      select: { id: true },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+      },
     })
     if (!gameExists) {
       throw new NotFound(`Game with ID ${id} does not exist`)
     }
+
+    const existing = await prisma.gameList.findUnique({
+      where: {
+        userId_gameId: {
+          userId: dbUser.id,
+          gameId: id,
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+        progress: true,
+        score: true,
+        private: true,
+      },
+    })
 
     const payload = (body ?? {}) as any
     const startedAt =
@@ -345,6 +401,16 @@ export default defineRoute({
         connections: payload.connections ?? null,
       },
       update: upsertData,
+    })
+
+    recordEntryMutationActivity({
+      userId: dbUser.id,
+      mediaType: "GAME",
+      mediaId: id,
+      media: gameExists,
+      existing,
+      result,
+      payload,
     })
 
     return {
@@ -397,6 +463,30 @@ export default defineRoute({
 
     await prisma.gameList.delete({
       where: { id: existing.id },
+    })
+
+    const game = await prisma.game.findUnique({
+      where: { id },
+      select: {
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+      },
+    })
+
+    recordMediaListActivity({
+      userId: dbUser.id,
+      mediaType: "GAME",
+      mediaId: id,
+      action: "REMOVED",
+      title: game?.titlePrimary || game?.titleSecondary || "Game",
+      coverImage: game?.coverImage,
+      bannerImage: game?.bannerImage,
+      status: existing.status,
+      progress: existing.progress,
+      score: existing.score,
+      isPrivate: existing.private,
     })
 
     return {

@@ -6,6 +6,7 @@ import {
   QuickAddResponseSchema,
 } from "@/modules/IRIS-list/helpers"
 import { NotFound } from "@/utils/errors"
+import { recordMediaListActivity } from "@/services/activity.service.js"
 
 export default defineRoute({
   schema: {
@@ -35,7 +36,13 @@ export default defineRoute({
 
     const game = await prisma.game.findUnique({
       where: { id },
-      select: { id: true },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+      },
     })
     if (!game) {
       throw new NotFound(`Game with ID ${id} does not exist`)
@@ -65,6 +72,19 @@ export default defineRoute({
         status: "PLANNING",
         progress: 0,
       },
+    })
+
+    recordMediaListActivity({
+      userId: dbUser.id,
+      mediaType: "GAME",
+      mediaId: id,
+      action: "ADDED",
+      title: game.titlePrimary || game.titleSecondary || "Game",
+      coverImage: game.coverImage,
+      bannerImage: game.bannerImage,
+      status: created.status,
+      progress: created.progress,
+      isPrivate: false,
     })
 
     return {

@@ -7,9 +7,11 @@ import {
   ConnectionsSchema,
   HistoryArraySchema,
   movieSelect,
+  recordEntryMutationActivity,
 } from "@/modules/IRIS-list/helpers"
 import { NotFound } from "@/utils/errors"
 import { MovieListStatus } from "@IRIS/database"
+import { recordMediaListActivity } from "@/services/activity.service.js"
 
 const MovieEntryResponseSchema = t.Object({
   id: t.Number(),
@@ -184,11 +186,32 @@ export default defineRoute({
 
     const movieExists = await prisma.movie.findUnique({
       where: { id },
-      select: { id: true },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+      },
     })
     if (!movieExists) {
       throw new NotFound(`Movie with ID ${id} does not exist`)
     }
+
+    const existing = await prisma.movieList.findUnique({
+      where: {
+        userId_movieId: {
+          userId: dbUser.id,
+          movieId: id,
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+        score: true,
+        private: true,
+      },
+    })
 
     const payload = (body ?? {}) as any
     const rawStartedAt =
@@ -262,6 +285,16 @@ export default defineRoute({
       update: upsertData,
     })
 
+    recordEntryMutationActivity({
+      userId: dbUser.id,
+      mediaType: "MOVIE",
+      mediaId: id,
+      media: movieExists,
+      existing,
+      result,
+      payload,
+    })
+
     return {
       success: true,
       message: "Movie list entry updated successfully",
@@ -298,11 +331,32 @@ export default defineRoute({
 
     const movieExists = await prisma.movie.findUnique({
       where: { id },
-      select: { id: true },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+      },
     })
     if (!movieExists) {
       throw new NotFound(`Movie with ID ${id} does not exist`)
     }
+
+    const existing = await prisma.movieList.findUnique({
+      where: {
+        userId_movieId: {
+          userId: dbUser.id,
+          movieId: id,
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+        score: true,
+        private: true,
+      },
+    })
 
     const payload = (body ?? {}) as any
     const rawStartedAt =
@@ -380,6 +434,16 @@ export default defineRoute({
       update: upsertData,
     })
 
+    recordEntryMutationActivity({
+      userId: dbUser.id,
+      mediaType: "MOVIE",
+      mediaId: id,
+      media: movieExists,
+      existing,
+      result,
+      payload,
+    })
+
     return {
       success: true,
       message: "Movie list entry updated successfully",
@@ -429,6 +493,29 @@ export default defineRoute({
 
     await prisma.movieList.delete({
       where: { id: existing.id },
+    })
+
+    const movie = await prisma.movie.findUnique({
+      where: { id },
+      select: {
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+      },
+    })
+
+    recordMediaListActivity({
+      userId: dbUser.id,
+      mediaType: "MOVIE",
+      mediaId: id,
+      action: "REMOVED",
+      title: movie?.titlePrimary || movie?.titleSecondary || "Movie",
+      coverImage: movie?.coverImage,
+      bannerImage: movie?.bannerImage,
+      status: existing.status,
+      score: existing.score,
+      isPrivate: existing.private,
     })
 
     return {

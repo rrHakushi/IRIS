@@ -7,9 +7,11 @@ import {
   ConnectionsSchema,
   HistoryArraySchema,
   mangaSelect,
+  recordEntryMutationActivity,
 } from "@/modules/IRIS-list/helpers"
 import { NotFound } from "@/utils/errors"
 import { MangaListStatus } from "@IRIS/database"
+import { recordMediaListActivity } from "@/services/activity.service.js"
 
 const MangaEntryResponseSchema = t.Object({
   id: t.Number(),
@@ -191,7 +193,15 @@ export default defineRoute({
 
     const mangaExists = await prisma.manga.findUnique({
       where: { id },
-      select: { id: true, chapterCount: true },
+      select: {
+        id: true,
+        chapterCount: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+        format: true,
+      },
     })
     if (!mangaExists) {
       throw new NotFound(`Manga with ID ${id} does not exist`)
@@ -286,6 +296,16 @@ export default defineRoute({
         connections: payload.connections ?? null,
       },
       update: upsertData,
+    })
+
+    recordEntryMutationActivity({
+      userId: dbUser.id,
+      mediaType: "MANGA",
+      mediaId: id,
+      media: mangaExists,
+      existing,
+      result,
+      payload,
     })
 
     return {
@@ -326,7 +346,15 @@ export default defineRoute({
 
     const mangaExists = await prisma.manga.findUnique({
       where: { id },
-      select: { id: true, chapterCount: true },
+      select: {
+        id: true,
+        chapterCount: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+        format: true,
+      },
     })
     if (!mangaExists) {
       throw new NotFound(`Manga with ID ${id} does not exist`)
@@ -421,6 +449,16 @@ export default defineRoute({
         connections: payload.connections ?? null,
       },
       update: upsertData,
+    })
+
+    recordEntryMutationActivity({
+      userId: dbUser.id,
+      mediaType: "MANGA",
+      mediaId: id,
+      media: mangaExists,
+      existing,
+      result,
+      payload,
     })
 
     return {
@@ -474,6 +512,32 @@ export default defineRoute({
 
     await prisma.mangaList.delete({
       where: { id: existing.id },
+    })
+
+    const manga = await prisma.manga.findUnique({
+      where: { id },
+      select: {
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+        format: true,
+      },
+    })
+
+    recordMediaListActivity({
+      userId: dbUser.id,
+      mediaType: "MANGA",
+      mediaId: id,
+      action: "REMOVED",
+      title: manga?.titlePrimary || manga?.titleSecondary || "Manga",
+      coverImage: manga?.coverImage,
+      bannerImage: manga?.bannerImage,
+      format: manga?.format,
+      status: existing.status,
+      progress: existing.chaptersProgress,
+      score: existing.score,
+      isPrivate: existing.private,
     })
 
     return {

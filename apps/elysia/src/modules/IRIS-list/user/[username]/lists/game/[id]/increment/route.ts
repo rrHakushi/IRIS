@@ -7,6 +7,7 @@ import {
 } from "@/modules/IRIS-list/helpers"
 import { NotFound } from "@/utils/errors"
 import { GameListStatus } from "@IRIS/database"
+import { recordMediaListActivity } from "@/services/activity.service.js"
 
 export default defineRoute({
   schema: {
@@ -47,7 +48,13 @@ export default defineRoute({
 
     const game = await prisma.game.findUnique({
       where: { id },
-      select: { id: true },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+      },
     })
     if (!game) {
       throw new NotFound(`Game with ID ${id} does not exist`)
@@ -95,6 +102,23 @@ export default defineRoute({
         completedAt,
         ...(existing?.status === "PLANNING" ? { startedAt: new Date() } : {}),
       },
+    })
+
+    recordMediaListActivity({
+      userId: dbUser.id,
+      mediaType: "GAME",
+      mediaId: id,
+      action: "PROGRESS_CHANGED",
+      title: game.titlePrimary || game.titleSecondary || "Game",
+      coverImage: game.coverImage,
+      bannerImage: game.bannerImage,
+      status: result.status,
+      progress: result.progress,
+      score: existing?.score ?? null,
+      prevStatus: existing?.status,
+      prevProgress: currentProgress,
+      prevScore: existing?.score,
+      isPrivate: existing?.private ?? false,
     })
 
     return {

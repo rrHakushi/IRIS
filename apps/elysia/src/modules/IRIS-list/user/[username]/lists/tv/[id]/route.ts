@@ -7,9 +7,11 @@ import {
   ConnectionsSchema,
   HistoryArraySchema,
   tvSelect,
+  recordEntryMutationActivity,
 } from "@/modules/IRIS-list/helpers"
 import { NotFound } from "@/utils/errors"
 import { TvListStatus } from "@IRIS/database"
+import { recordMediaListActivity } from "@/services/activity.service.js"
 
 const TvSeasonProgressSchema = t.Object({
   id: t.Number(),
@@ -473,6 +475,22 @@ export default defineRoute({
         : {}),
     }
 
+    const existing = await prisma.tvList.findUnique({
+      where: {
+        userId_tvId: {
+          userId: dbUser.id,
+          tvId: id,
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+        progress: true,
+        score: true,
+        private: true,
+      },
+    })
+
     const result = await prisma.tvList.upsert({
       where: {
         userId_tvId: {
@@ -519,6 +537,16 @@ export default defineRoute({
           orderBy: [{ seasonNumber: "asc" }, { episodeNumber: "asc" }],
         },
       },
+    })
+
+    recordEntryMutationActivity({
+      userId: dbUser.id,
+      mediaType: "TV",
+      mediaId: id,
+      media: tv,
+      existing,
+      result,
+      payload,
     })
 
     return {
@@ -610,6 +638,22 @@ export default defineRoute({
         : {}),
     }
 
+    const existing = await prisma.tvList.findUnique({
+      where: {
+        userId_tvId: {
+          userId: dbUser.id,
+          tvId: id,
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+        progress: true,
+        score: true,
+        private: true,
+      },
+    })
+
     const result = await prisma.tvList.upsert({
       where: {
         userId_tvId: {
@@ -656,6 +700,16 @@ export default defineRoute({
           orderBy: [{ seasonNumber: "asc" }, { episodeNumber: "asc" }],
         },
       },
+    })
+
+    recordEntryMutationActivity({
+      userId: dbUser.id,
+      mediaType: "TV",
+      mediaId: id,
+      media: tv,
+      existing,
+      result,
+      payload,
     })
 
     return {
@@ -721,6 +775,30 @@ export default defineRoute({
 
     await prisma.tvList.delete({
       where: { id: existing.id },
+    })
+
+    const tv = await prisma.tv.findUnique({
+      where: { id },
+      select: {
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+      },
+    })
+
+    recordMediaListActivity({
+      userId: dbUser.id,
+      mediaType: "TV",
+      mediaId: id,
+      action: "REMOVED",
+      title: tv?.titlePrimary || tv?.titleSecondary || "TV",
+      coverImage: tv?.coverImage,
+      bannerImage: tv?.bannerImage,
+      status: existing.status,
+      progress: existing.progress,
+      score: existing.score,
+      isPrivate: existing.private,
     })
 
     return {

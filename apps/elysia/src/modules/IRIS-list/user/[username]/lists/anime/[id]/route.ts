@@ -7,10 +7,12 @@ import {
   ConnectionsSchema,
   HistoryArraySchema,
   animeSelect,
+  recordEntryMutationActivity,
 } from "@/modules/IRIS-list/helpers"
 import { NotFound, BadRequest } from "@/utils/errors"
 import { AnimeListStatus } from "@IRIS/database"
 import { syncConnectionMedia } from "@/services/connections/connection-media-sync.service.js"
+import { recordMediaListActivity } from "@/services/activity.service.js"
 
 const AnimeEntryResponseSchema = t.Object({
   id: t.Number(),
@@ -194,6 +196,9 @@ export default defineRoute({
         episodeCount: true,
         titlePrimary: true,
         titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+        format: true,
       },
     })
     if (!animeExists) {
@@ -313,6 +318,16 @@ export default defineRoute({
       })
     }
 
+    recordEntryMutationActivity({
+      userId: dbUser.id,
+      mediaType: "ANIME",
+      mediaId: id,
+      media: animeExists,
+      existing,
+      result,
+      payload,
+    })
+
     return {
       success: true,
       message: "Anime list entry updated successfully",
@@ -355,6 +370,9 @@ export default defineRoute({
         episodeCount: true,
         titlePrimary: true,
         titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+        format: true,
       },
     })
     if (!animeExists) {
@@ -474,6 +492,16 @@ export default defineRoute({
       })
     }
 
+    recordEntryMutationActivity({
+      userId: dbUser.id,
+      mediaType: "ANIME",
+      mediaId: id,
+      media: animeExists,
+      existing,
+      result,
+      payload,
+    })
+
     return {
       success: true,
       message: "Anime list entry updated successfully",
@@ -524,6 +552,32 @@ export default defineRoute({
 
     await prisma.animeList.delete({
       where: { id: existing.id },
+    })
+
+    const anime = await prisma.anime.findUnique({
+      where: { id },
+      select: {
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+        format: true,
+      },
+    })
+
+    recordMediaListActivity({
+      userId: dbUser.id,
+      mediaType: "ANIME",
+      mediaId: id,
+      action: "REMOVED",
+      title: anime?.titlePrimary || anime?.titleSecondary || "Anime",
+      coverImage: anime?.coverImage,
+      bannerImage: anime?.bannerImage,
+      format: anime?.format,
+      status: existing.status,
+      progress: existing.progress,
+      score: existing.score,
+      isPrivate: existing.private,
     })
 
     return {

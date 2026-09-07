@@ -1,6 +1,7 @@
 import { t } from "@/router"
-import type { PrismaClient } from "@IRIS/database"
+import type { PrismaClient, MediaType } from "@IRIS/database"
 import { NotFound, Forbidden, Unauthorized, BadRequest } from "@/utils/errors"
+import { recordMediaListActivity } from "@/services/activity.service.js"
 
 // ============================================================================
 // Shared Validation Schemas
@@ -513,4 +514,149 @@ export function aggregateFacetsFromItems(
     .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value))
 
   return { statuses, formats, genres, years, mediaStatuses, months, artists }
+}
+
+// ============================================================================
+// Activity Logging Helper for Entry Mutations
+// ============================================================================
+
+export function recordEntryMutationActivity({
+  userId,
+  mediaType,
+  mediaId,
+  media,
+  existing,
+  result,
+  payload,
+}: {
+  userId: string
+  mediaType: MediaType
+  mediaId: number
+  media: {
+    titlePrimary?: string | null
+    titleSecondary?: string | null
+    coverImage?: string | null
+    bannerImage?: string | null
+    format?: string | null
+  } | null
+  existing: {
+    status?: string | null
+    progress?: number | null
+    chaptersProgress?: number | null
+    score?: number | null
+    private?: boolean | null
+  } | null
+  result: {
+    status: string
+    progress?: number | null
+    chaptersProgress?: number | null
+    score?: number | null
+    private?: boolean | null
+  }
+  payload?: any
+}) {
+  const title =
+    media?.titlePrimary || media?.titleSecondary || String(mediaType)
+  const isPrivate = result.private ?? false
+  const currentProgress = result.progress ?? result.chaptersProgress ?? null
+  const oldProgress = existing ? (existing.progress ?? existing.chaptersProgress ?? null) : null
+
+  if (!existing) {
+    recordMediaListActivity({
+      userId,
+      mediaType,
+      mediaId,
+      action: "ADDED",
+      title,
+      coverImage: media?.coverImage,
+      bannerImage: media?.bannerImage,
+      format: media?.format,
+      status: result.status,
+      progress: currentProgress,
+      score: result.score,
+      isPrivate,
+    })
+    return
+  }
+
+  const statusChanged = Boolean(payload?.status && payload.status !== existing.status)
+  const progressChanged = Boolean(
+    (payload?.progress !== undefined && payload.progress !== oldProgress) ||
+    (payload?.chaptersProgress !== undefined && payload.chaptersProgress !== oldProgress)
+  )
+  const scoreChanged = Boolean(payload?.score !== undefined && payload.score !== existing.score)
+
+  if (statusChanged && result.status === "COMPLETED") {
+    recordMediaListActivity({
+      userId,
+      mediaType,
+      mediaId,
+      action: "COMPLETED",
+      title,
+      coverImage: media?.coverImage,
+      bannerImage: media?.bannerImage,
+      format: media?.format,
+      status: result.status,
+      progress: currentProgress,
+      score: result.score,
+      prevStatus: existing.status,
+      prevProgress: oldProgress,
+      prevScore: existing.score,
+      isPrivate,
+    })
+  } else if (statusChanged) {
+    recordMediaListActivity({
+      userId,
+      mediaType,
+      mediaId,
+      action: "STATUS_CHANGED",
+      title,
+      coverImage: media?.coverImage,
+      bannerImage: media?.bannerImage,
+      format: media?.format,
+      status: result.status,
+      progress: currentProgress,
+      score: result.score,
+      prevStatus: existing.status,
+      prevProgress: oldProgress,
+      prevScore: existing.score,
+      isPrivate,
+    })
+  } else if (progressChanged) {
+    recordMediaListActivity({
+      userId,
+      mediaType,
+      mediaId,
+      action: "PROGRESS_CHANGED",
+      title,
+      coverImage: media?.coverImage,
+      bannerImage: media?.bannerImage,
+      format: media?.format,
+      status: result.status,
+      progress: currentProgress,
+      score: result.score,
+      prevStatus: existing.status,
+      prevProgress: oldProgress,
+      prevScore: existing.score,
+      isPrivate,
+    })
+  } else if (scoreChanged) {
+    recordMediaListActivity({
+      userId,
+      mediaType,
+      mediaId,
+      action: "SCORE_CHANGED",
+      title,
+      coverImage: media?.coverImage,
+      bannerImage: media?.bannerImage,
+      format: media?.format,
+      status: result.status,
+      progress: currentProgress,
+      score: result.score,
+      prevStatus: existing.status,
+      prevProgress: oldProgress,
+      prevScore: existing.score,
+      isPrivate,
+    })
+  }
 }

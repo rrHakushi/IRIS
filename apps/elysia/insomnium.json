@@ -3550,9 +3550,15 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"count\": 1,\n  \"connections\": null\n}"
+        "text": "{\n  \"count\": 1,\n  \"type\": null,\n  \"connections\": null\n}"
       },
-      "parameters": [],
+      "parameters": [
+        {
+          "name": "type",
+          "value": "",
+          "disabled": false
+        }
+      ],
       "headers": [
         {
           "name": "Content-Type",
@@ -4637,8 +4643,17 @@
       "name": "POST /user/:username/lists/tv/:id/increment",
       "description": "",
       "method": "POST",
-      "body": {},
-      "parameters": [],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"count\": 1,\n  \"type\": null\n}"
+      },
+      "parameters": [
+        {
+          "name": "type",
+          "value": "",
+          "disabled": false
+        }
+      ],
       "headers": [
         {
           "name": "Content-Type",
@@ -6569,6 +6584,89 @@
       "environment": {},
       "environmentPropertyOrder": null,
       "_type": "request_group"
+    },
+    {
+      "_id": "req_IRIS-social__lists__username__mediaType_activity__id_delete",
+      "parentId": "fld_IRIS_social",
+      "url": "{{ _.base_url }}/lists/:username/:mediaType/activity/:id",
+      "name": "DELETE /lists/:username/:mediaType/activity/:id",
+      "description": "",
+      "method": "DELETE",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-social__lists__username__mediaType_activity_get",
+      "parentId": "fld_IRIS_social",
+      "url": "{{ _.base_url }}/lists/:username/:mediaType/activity",
+      "name": "GET /lists/:username/:mediaType/activity",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "page",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "limit",
+          "value": "15",
+          "disabled": false
+        },
+        {
+          "name": "action",
+          "value": "string",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
     },
     {
       "_id": "req_IRIS-social__lists__username__mediaType_comments__id_reply_post",

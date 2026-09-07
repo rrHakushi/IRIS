@@ -6,6 +6,7 @@ import {
   QuickAddResponseSchema,
 } from "@/modules/IRIS-list/helpers"
 import { NotFound } from "@/utils/errors"
+import { recordMediaListActivity } from "@/services/activity.service.js"
 
 export default defineRoute({
   schema: {
@@ -39,7 +40,13 @@ export default defineRoute({
     const id = Number(params.id)
     const music = await prisma.music.findUnique({
       where: { id },
-      select: { id: true, type: true },
+      select: {
+        id: true,
+        type: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+      },
     })
 
     if (!music) {
@@ -70,6 +77,20 @@ export default defineRoute({
         status: "LISTENING",
         playCount: 0,
       },
+    })
+
+    recordMediaListActivity({
+      userId: dbUser.id,
+      mediaType: "MUSIC",
+      mediaId: id,
+      action: "ADDED",
+      title: music.titlePrimary || music.titleSecondary || "Music",
+      coverImage: music.coverImage,
+      format: music.type,
+      status: created.status,
+      progress: created.playCount,
+      score: null,
+      isPrivate: false,
     })
 
     return {

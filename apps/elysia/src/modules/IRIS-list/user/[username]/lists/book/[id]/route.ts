@@ -7,9 +7,11 @@ import {
   ConnectionsSchema,
   HistoryArraySchema,
   bookSelect,
+  recordEntryMutationActivity,
 } from "@/modules/IRIS-list/helpers"
 import { NotFound } from "@/utils/errors"
 import { BookListStatus } from "@IRIS/database"
+import { recordMediaListActivity } from "@/services/activity.service.js"
 
 const BookEntryResponseSchema = t.Object({
   id: t.Number(),
@@ -194,11 +196,35 @@ export default defineRoute({
 
     const bookExists = await prisma.book.findUnique({
       where: { id },
-      select: { id: true },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+      },
     })
     if (!bookExists) {
       throw new NotFound(`Book with ID ${id} does not exist`)
     }
+
+    const existing = await prisma.bookList.findUnique({
+      where: {
+        userId_bookId: {
+          userId: dbUser.id,
+          bookId: id,
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+        progressPages: true,
+        progressChapters: true,
+        progressVolumes: true,
+        score: true,
+        private: true,
+      },
+    })
 
     const payload = (body ?? {}) as any
     const startedAt =
@@ -263,6 +289,16 @@ export default defineRoute({
         connections: payload.connections ?? null,
       },
       update: upsertData,
+    })
+
+    recordEntryMutationActivity({
+      userId: dbUser.id,
+      mediaType: "BOOK",
+      mediaId: id,
+      media: bookExists,
+      existing,
+      result,
+      payload,
     })
 
     return {
@@ -304,11 +340,35 @@ export default defineRoute({
 
     const bookExists = await prisma.book.findUnique({
       where: { id },
-      select: { id: true },
+      select: {
+        id: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+      },
     })
     if (!bookExists) {
       throw new NotFound(`Book with ID ${id} does not exist`)
     }
+
+    const existing = await prisma.bookList.findUnique({
+      where: {
+        userId_bookId: {
+          userId: dbUser.id,
+          bookId: id,
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+        progressPages: true,
+        progressChapters: true,
+        progressVolumes: true,
+        score: true,
+        private: true,
+      },
+    })
 
     const payload = (body ?? {}) as any
     const startedAt =
@@ -373,6 +433,16 @@ export default defineRoute({
         connections: payload.connections ?? null,
       },
       update: upsertData,
+    })
+
+    recordEntryMutationActivity({
+      userId: dbUser.id,
+      mediaType: "BOOK",
+      mediaId: id,
+      media: bookExists,
+      existing,
+      result,
+      payload,
     })
 
     return {
@@ -427,6 +497,30 @@ export default defineRoute({
 
     await prisma.bookList.delete({
       where: { id: existing.id },
+    })
+
+    const book = await prisma.book.findUnique({
+      where: { id },
+      select: {
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+      },
+    })
+
+    recordMediaListActivity({
+      userId: dbUser.id,
+      mediaType: "BOOK",
+      mediaId: id,
+      action: "REMOVED",
+      title: book?.titlePrimary || book?.titleSecondary || "Book",
+      coverImage: book?.coverImage,
+      bannerImage: book?.bannerImage,
+      status: existing.status,
+      progress: existing.progressChapters,
+      score: existing.score,
+      isPrivate: existing.private,
     })
 
     return {

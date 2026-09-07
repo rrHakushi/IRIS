@@ -6,9 +6,11 @@ import {
   ScoreSchema,
   ConnectionsSchema,
   musicSelect,
+  recordEntryMutationActivity,
 } from "@/modules/IRIS-list/helpers"
 import { NotFound } from "@/utils/errors"
 import { MusicListStatus } from "@IRIS/database"
+import { recordMediaListActivity } from "@/services/activity.service.js"
 
 const MusicEntryResponseSchema = t.Object({
   id: t.Number(),
@@ -196,7 +198,16 @@ export default defineRoute({
     assertIsOwner(isOwner, params.username)
 
     const id = Number(params.id)
-    const music = await prisma.music.findUnique({ where: { id }, select: { id: true, type: true } })
+    const music = await prisma.music.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        type: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+      },
+    })
     if (!music) {
       throw new NotFound(`Music with ID ${id} does not exist`)
     }
@@ -211,6 +222,16 @@ export default defineRoute({
 
     const plays =
       payload.playCount !== undefined ? payload.playCount : payload.progress
+
+    const existing = await prisma.musicList.findUnique({
+      where: {
+        userId_musicId: {
+          userId: dbUser.id,
+          musicId: id,
+        },
+      },
+      select: { id: true, playCount: true, score: true, status: true },
+    })
 
     const upsertData: any = {
       ...(payload.status ? { status: payload.status as MusicListStatus } : {}),
@@ -243,6 +264,36 @@ export default defineRoute({
         connections: payload.connections ?? null,
       },
       update: upsertData,
+    })
+
+    recordEntryMutationActivity({
+      userId: dbUser.id,
+      mediaType: "MUSIC",
+      mediaId: id,
+      media: {
+        titlePrimary: music.titlePrimary,
+        titleSecondary: music.titleSecondary,
+        coverImage: music.coverImage,
+        format: music.type,
+      },
+      existing: existing
+        ? {
+            status: existing.status,
+            progress: existing.playCount,
+            score: existing.score,
+          }
+        : null,
+      result: {
+        status: result.status,
+        progress: result.playCount,
+        score: result.score,
+        private: result.private,
+      },
+      payload: {
+        status: payload.status,
+        progress: plays,
+        score: payload.score,
+      },
     })
 
     return {
@@ -279,7 +330,16 @@ export default defineRoute({
     assertIsOwner(isOwner, params.username)
 
     const id = Number(params.id)
-    const music = await prisma.music.findUnique({ where: { id }, select: { id: true, type: true } })
+    const music = await prisma.music.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        type: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+      },
+    })
     if (!music) {
       throw new NotFound(`Music with ID ${id} does not exist`)
     }
@@ -294,6 +354,16 @@ export default defineRoute({
 
     const plays =
       payload.playCount !== undefined ? payload.playCount : payload.progress
+
+    const existing = await prisma.musicList.findUnique({
+      where: {
+        userId_musicId: {
+          userId: dbUser.id,
+          musicId: id,
+        },
+      },
+      select: { id: true, playCount: true, score: true, status: true },
+    })
 
     const upsertData: any = {
       ...(payload.status ? { status: payload.status as MusicListStatus } : {}),
@@ -326,6 +396,36 @@ export default defineRoute({
         connections: payload.connections ?? null,
       },
       update: upsertData,
+    })
+
+    recordEntryMutationActivity({
+      userId: dbUser.id,
+      mediaType: "MUSIC",
+      mediaId: id,
+      media: {
+        titlePrimary: music.titlePrimary,
+        titleSecondary: music.titleSecondary,
+        coverImage: music.coverImage,
+        format: music.type,
+      },
+      existing: existing
+        ? {
+            status: existing.status,
+            progress: existing.playCount,
+            score: existing.score,
+          }
+        : null,
+      result: {
+        status: result.status,
+        progress: result.playCount,
+        score: result.score,
+        private: result.private,
+      },
+      payload: {
+        status: payload.status,
+        progress: plays,
+        score: payload.score,
+      },
     })
 
     return {
@@ -378,6 +478,30 @@ export default defineRoute({
 
     await prisma.musicList.delete({
       where: { id: existing.id },
+    })
+
+    const music = await prisma.music.findUnique({
+      where: { id },
+      select: {
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        type: true,
+      },
+    })
+
+    recordMediaListActivity({
+      userId: dbUser.id,
+      mediaType: "MUSIC",
+      mediaId: id,
+      action: "REMOVED",
+      title: music?.titlePrimary || music?.titleSecondary || "Music",
+      coverImage: music?.coverImage,
+      format: music?.type,
+      status: existing.status,
+      progress: existing.playCount,
+      score: existing.score,
+      isPrivate: existing.private,
     })
 
     return {

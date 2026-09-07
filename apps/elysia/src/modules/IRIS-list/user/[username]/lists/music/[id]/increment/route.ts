@@ -7,6 +7,7 @@ import {
 } from "@/modules/IRIS-list/helpers"
 import { NotFound } from "@/utils/errors"
 import { MusicListStatus } from "@IRIS/database"
+import { recordMediaListActivity } from "@/services/activity.service.js"
 
 export default defineRoute({
   schema: {
@@ -51,7 +52,13 @@ export default defineRoute({
     const id = Number(params.id)
     const music = await prisma.music.findUnique({
       where: { id },
-      select: { id: true, type: true },
+      select: {
+        id: true,
+        type: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+      },
     })
 
     if (!music) {
@@ -95,6 +102,23 @@ export default defineRoute({
         playCount: newPlayCount,
         status: newStatus,
       },
+    })
+
+    recordMediaListActivity({
+      userId: dbUser.id,
+      mediaType: "MUSIC",
+      mediaId: id,
+      action: "PROGRESS_CHANGED",
+      title: music.titlePrimary || music.titleSecondary || "Music",
+      coverImage: music.coverImage,
+      format: music.type,
+      status: result.status,
+      progress: result.playCount,
+      score: result.score,
+      prevStatus: existing?.status,
+      prevProgress: currentPlayCount,
+      prevScore: existing?.score,
+      isPrivate: result.private,
     })
 
     return {

@@ -7,6 +7,7 @@ import {
 } from "@/modules/IRIS-list/helpers"
 import { NotFound } from "@/utils/errors"
 import { BookListStatus } from "@IRIS/database"
+import { recordMediaListActivity } from "@/services/activity.service.js"
 
 export default defineRoute({
   schema: {
@@ -47,7 +48,15 @@ export default defineRoute({
 
     const book = await prisma.book.findUnique({
       where: { id },
-      select: { id: true, pageCount: true, chapterCount: true },
+      select: {
+        id: true,
+        pageCount: true,
+        chapterCount: true,
+        titlePrimary: true,
+        titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+      },
     })
     if (!book) {
       throw new NotFound(`Book with ID ${id} does not exist`)
@@ -112,6 +121,23 @@ export default defineRoute({
         completedAt,
         ...(existing?.status === "PLANNING" ? { startedAt: new Date() } : {}),
       },
+    })
+
+    recordMediaListActivity({
+      userId: dbUser.id,
+      mediaType: "BOOK",
+      mediaId: id,
+      action: newStatus === "COMPLETED" ? "COMPLETED" : "PROGRESS_CHANGED",
+      title: book.titlePrimary || book.titleSecondary || "Book",
+      coverImage: book.coverImage,
+      bannerImage: book.bannerImage,
+      status: result.status,
+      progress: result.progressChapters,
+      score: existing?.score ?? null,
+      prevStatus: existing?.status,
+      prevProgress: currentProgress,
+      prevScore: existing?.score,
+      isPrivate: existing?.private ?? false,
     })
 
     return {

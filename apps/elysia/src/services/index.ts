@@ -21,6 +21,12 @@ import {
 } from "./media-queue/index.js"
 import { statsQueueService, StatsQueueService } from "./stats-queue.service.js"
 import { listImportService, ListImportService } from "./connections/list-import.service.js"
+import {
+  activityService,
+  ActivityService,
+  recordMediaListActivity,
+  purgeOldActivities,
+} from "./activity.service.js"
 
 const loadedServices: string[] = [
   "websocket-hub",
@@ -28,6 +34,7 @@ const loadedServices: string[] = [
   "media-queue",
   "stats-queue",
   "list-import",
+  "activity",
 ]
 
 /**
@@ -39,6 +46,8 @@ export function initServices(): void {
   MediaQueueService.logStatus()
   StatsQueueService.logStatus()
   ListImportService.logStatus()
+  ActivityService.logStatus()
+  activityService.initCron()
 
   logger.service.total(loadedServices.length)
 }
@@ -69,3 +78,4 @@ export * from "./media-queue/types.js"
 export * from "./media-queue/providers/index.js"
 export * from "./connections/list-import.service.js"
 export * from "./connections/connection-media-sync.service.js"
+export * from "./activity.service.js"

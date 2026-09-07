@@ -8,6 +8,7 @@ import {
 import { NotFound } from "@/utils/errors"
 import { AnimeListStatus } from "@IRIS/database"
 import { syncConnectionMedia } from "@/services/connections/connection-media-sync.service.js"
+import { recordMediaListActivity } from "@/services/activity.service.js"
 
 export default defineRoute({
   schema: {
@@ -53,6 +54,10 @@ export default defineRoute({
         episodeCount: true,
         titlePrimary: true,
         titleSecondary: true,
+        coverImage: true,
+        bannerImage: true,
+        format: true,
+        _count: { select: { episodes: true } },
       },
     })
     if (!anime) {
@@ -70,7 +75,44 @@ export default defineRoute({
       },
     })
 
+    const maxEpisodes =
+      anime.episodeCount && anime.episodeCount > 0
+        ? anime.episodeCount
+        : anime._count?.episodes && anime._count.episodes > 0
+          ? anime._count.episodes
+          : null
+
     const currentProgress = existing ? existing.progress : 0
+
+    // Overflow guard: if already at or beyond maximum episodes, clamp and prevent further increment
+    if (maxEpisodes !== null && currentProgress >= maxEpisodes) {
+      let clampedEntry = existing
+      if (existing && (existing.progress > maxEpisodes || existing.status !== "COMPLETED")) {
+        clampedEntry = await prisma.animeList.update({
+          where: { id: existing.id },
+          data: {
+            progress: maxEpisodes,
+            status: "COMPLETED",
+            completedAt: existing.completedAt || new Date(),
+          },
+        })
+      }
+
+      return {
+        success: true,
+        message: `Already at maximum episodes (${maxEpisodes}/${maxEpisodes})`,
+        entry: {
+          id: clampedEntry!.id,
+          animeId: clampedEntry!.animeId,
+          status: clampedEntry!.status,
+          progress: clampedEntry!.progress,
+          completedAt: clampedEntry!.completedAt
+            ? clampedEntry!.completedAt.toISOString()
+            : null,
+        },
+      }
+    }
+
     let newProgress = currentProgress + count
     let newStatus: AnimeListStatus =
       (existing?.status as AnimeListStatus) ?? "WATCHING"
@@ -81,17 +123,12 @@ export default defineRoute({
       newStatus = "WATCHING"
     }
 
-    const hasScore =
-      existing?.score !== null &&
-      existing?.score !== undefined &&
-      existing?.score > 0
-
-    // Completion guard: if episodeCount is known, cap at max and require score for COMPLETED
-    if (anime.episodeCount && anime.episodeCount > 0) {
-      if (newProgress >= anime.episodeCount) {
-        newProgress = anime.episodeCount
-        if (hasScore) {
-          newStatus = "COMPLETED"
+    // Overflow guard & completion check: clamp at maxEpisodes and set COMPLETED
+    if (maxEpisodes !== null) {
+      if (newProgress >= maxEpisodes) {
+        newProgress = maxEpisodes
+        newStatus = "COMPLETED"
+        if (!completedAt) {
           completedAt = new Date()
         }
       }
@@ -150,6 +187,24 @@ export default defineRoute({
         prisma,
       })
     }
+
+    recordMediaListActivity({
+      userId: dbUser.id,
+      mediaType: "ANIME",
+      mediaId: id,
+      action: newStatus === "COMPLETED" ? "COMPLETED" : "PROGRESS_CHANGED",
+      title: anime.titlePrimary || anime.titleSecondary || "Anime",
+      coverImage: anime.coverImage,
+      bannerImage: anime.bannerImage,
+      format: anime.format,
+      status: result.status,
+      progress: result.progress,
+      score: existing?.score ?? null,
+      prevStatus: existing?.status,
+      prevProgress: currentProgress,
+      prevScore: existing?.score,
+      isPrivate: existing?.private ?? false,
+    })
 
     return {
       success: true,
