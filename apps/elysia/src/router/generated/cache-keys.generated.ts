@@ -18,6 +18,9 @@ export interface GlobalCacheKeys {
   book: {
     id: (id: any) => string;
   };
+  calendar: {
+    range: (start: any, end?: any, types?: any, userScope?: any) => string;
+  };
   character: {
     id: (id: any) => string;
   };

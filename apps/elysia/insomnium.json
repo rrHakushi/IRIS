@@ -5457,6 +5457,58 @@
       "_type": "request"
     },
     {
+      "_id": "req_IRIS-media__media_calendar_get",
+      "parentId": "fld_IRIS_media",
+      "url": "{{ _.base_url }}/media/calendar",
+      "name": "GET /media/calendar",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "start",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "end",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "types",
+          "value": "string",
+          "disabled": false
+        },
+        {
+          "name": "onlyInLists",
+          "value": "",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
       "_id": "req_IRIS-media__media_characters__id_get",
       "parentId": "fld_IRIS_media",
       "url": "{{ _.base_url }}/media/characters/:id",
