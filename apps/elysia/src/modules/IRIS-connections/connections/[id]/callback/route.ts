@@ -23,6 +23,7 @@ export default defineRoute({
       query: t.Optional(
         t.Object({
           code: t.Optional(t.String()),
+          token: t.Optional(t.String()),
           state: t.Optional(t.String()),
           error: t.Optional(t.String()),
           error_description: t.Optional(t.String()),
@@ -76,7 +77,7 @@ export default defineRoute({
       // Cleanup cache if it was stored
       await oauthCache.del(state)
 
-      // Support standard OAuth2 code and Steam OpenID claimed_id
+      // Support standard OAuth2 code, Last.fm token, and Steam OpenID claimed_id
       const claimedId =
         rawUrlParams?.get("openid.claimed_id") ||
         rawUrlParams?.get("openid_claimed_id") ||
@@ -86,7 +87,12 @@ export default defineRoute({
           "openid.claimed_id"
         ] ||
         ""
-      const code = query?.code || claimedId
+      const code =
+        query?.code ||
+        query?.token ||
+        rawUrlParams?.get("code") ||
+        rawUrlParams?.get("token") ||
+        claimedId
       if (!code) {
         return defaultErrorRedirect(
           "Missing authorization code or OpenID identity from provider"

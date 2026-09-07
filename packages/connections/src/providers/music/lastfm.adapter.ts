@@ -76,9 +76,12 @@ export class LastFmAdapter extends BaseConnectionAdapter {
     const { apiKey } = this.getCredentials();
     const state = options.state || Math.random().toString(36).substring(2);
 
+    const cbUrl = new URL(options.redirectUri);
+    cbUrl.searchParams.set("state", state);
+
     const url = new URL("https://www.last.fm/api/auth/");
     url.searchParams.set("api_key", apiKey);
-    url.searchParams.set("cb", options.redirectUri);
+    url.searchParams.set("cb", cbUrl.toString());
 
     return {
       url: url.toString(),
