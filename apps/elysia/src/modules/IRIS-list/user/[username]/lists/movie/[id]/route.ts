@@ -191,22 +191,37 @@ export default defineRoute({
     }
 
     const payload = (body ?? {}) as any
-    const startedAt =
+    const rawStartedAt =
       payload.startedAt !== undefined
         ? payload.startedAt
           ? new Date(payload.startedAt)
           : null
         : undefined
-    const completedAt =
+    const rawCompletedAt =
       payload.completedAt !== undefined
         ? payload.completedAt
           ? new Date(payload.completedAt)
           : null
         : undefined
 
+    // For movies, startDate should be the same as finish date
+    const movieDate =
+      rawCompletedAt !== undefined ? rawCompletedAt : rawStartedAt
+    const startedAt = movieDate !== undefined ? movieDate : undefined
+    const completedAt = movieDate !== undefined ? movieDate : undefined
+
+    const normalizedScore =
+      payload.score !== undefined
+        ? payload.score !== null
+          ? payload.score > 10
+            ? Math.round((payload.score / 10) * 10) / 10
+            : Math.round(payload.score * 10) / 10
+          : null
+        : undefined
+
     const upsertData: any = {
       ...(payload.status ? { status: payload.status as MovieListStatus } : {}),
-      ...(payload.score !== undefined ? { score: payload.score } : {}),
+      ...(normalizedScore !== undefined ? { score: normalizedScore } : {}),
       ...(payload.notes !== undefined ? { notes: payload.notes } : {}),
       ...(payload.rewatched !== undefined
         ? { rewatched: payload.rewatched }
@@ -222,6 +237,8 @@ export default defineRoute({
         : {}),
     }
 
+    const initialMovieDate = rawCompletedAt ?? rawStartedAt ?? null
+
     const result = await prisma.movieList.upsert({
       where: {
         userId_movieId: {
@@ -233,12 +250,12 @@ export default defineRoute({
         userId: dbUser.id,
         movieId: id,
         status: payload.status ?? "PLANNING",
-        score: payload.score ?? null,
+        score: normalizedScore ?? null,
         notes: payload.notes ?? null,
         rewatched: payload.rewatched ?? 0,
         private: payload.private ?? false,
-        startedAt: startedAt ?? null,
-        completedAt: completedAt ?? null,
+        startedAt: initialMovieDate,
+        completedAt: initialMovieDate,
         rewatchHistory: payload.rewatchHistory ?? null,
         connections: payload.connections ?? null,
       },
@@ -288,22 +305,41 @@ export default defineRoute({
     }
 
     const payload = (body ?? {}) as any
-    const startedAt =
+    const rawStartedAt =
       payload.startedAt !== undefined
         ? payload.startedAt
           ? new Date(payload.startedAt)
           : null
         : undefined
-    const completedAt =
+    const rawCompletedAt =
       payload.completedAt !== undefined
         ? payload.completedAt
           ? new Date(payload.completedAt)
           : null
         : undefined
 
+    const movieDate =
+      rawCompletedAt !== undefined
+        ? rawCompletedAt
+        : rawStartedAt !== undefined
+          ? rawStartedAt
+          : undefined
+
+    const startedAt = movieDate !== undefined ? movieDate : undefined
+    const completedAt = movieDate !== undefined ? movieDate : undefined
+
+    const normalizedScore =
+      payload.score !== undefined
+        ? payload.score !== null
+          ? payload.score > 10
+            ? Math.round((payload.score / 10) * 10) / 10
+            : Math.round(payload.score * 10) / 10
+          : null
+        : undefined
+
     const upsertData: any = {
       ...(payload.status ? { status: payload.status as MovieListStatus } : {}),
-      ...(payload.score !== undefined ? { score: payload.score } : {}),
+      ...(normalizedScore !== undefined ? { score: normalizedScore } : {}),
       ...(payload.notes !== undefined ? { notes: payload.notes } : {}),
       ...(payload.rewatched !== undefined
         ? { rewatched: payload.rewatched }
@@ -319,6 +355,8 @@ export default defineRoute({
         : {}),
     }
 
+    const initialMovieDate = rawCompletedAt ?? rawStartedAt ?? null
+
     const result = await prisma.movieList.upsert({
       where: {
         userId_movieId: {
@@ -330,12 +368,12 @@ export default defineRoute({
         userId: dbUser.id,
         movieId: id,
         status: payload.status ?? "PLANNING",
-        score: payload.score ?? null,
+        score: normalizedScore ?? null,
         notes: payload.notes ?? null,
         rewatched: payload.rewatched ?? 0,
         private: payload.private ?? false,
-        startedAt: startedAt ?? null,
-        completedAt: completedAt ?? null,
+        startedAt: initialMovieDate,
+        completedAt: initialMovieDate,
         rewatchHistory: payload.rewatchHistory ?? null,
         connections: payload.connections ?? null,
       },

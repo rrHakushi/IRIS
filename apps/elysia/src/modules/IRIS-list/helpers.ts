@@ -10,8 +10,8 @@ export const ScoreSchema = t.Optional(
   t.Nullable(
     t.Number({
       minimum: 0,
-      maximum: 100,
-      description: "User rating float from 0 to 100",
+      maximum: 10,
+      description: "User rating float from 0 to 10",
     })
   )
 )

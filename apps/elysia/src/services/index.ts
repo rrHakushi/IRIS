@@ -20,12 +20,14 @@ import {
   queueMusicFetch,
 } from "./media-queue/index.js"
 import { statsQueueService, StatsQueueService } from "./stats-queue.service.js"
+import { listImportService, ListImportService } from "./connections/list-import.service.js"
 
 const loadedServices: string[] = [
   "websocket-hub",
   "notification",
   "media-queue",
   "stats-queue",
+  "list-import",
 ]
 
 /**
@@ -36,6 +38,7 @@ export function initServices(): void {
   logNotificationServiceStatus()
   MediaQueueService.logStatus()
   StatsQueueService.logStatus()
+  ListImportService.logStatus()
 
   logger.service.total(loadedServices.length)
 }
@@ -59,6 +62,9 @@ export {
   queueMusicFetch,
   statsQueueService,
   StatsQueueService,
+  listImportService,
+  ListImportService,
 }
 export * from "./media-queue/types.js"
 export * from "./media-queue/providers/index.js"
+export * from "./connections/list-import.service.js"

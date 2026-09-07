@@ -1685,6 +1685,45 @@
       "_type": "request"
     },
     {
+      "_id": "req_IRIS-connections__connections__id_import_post",
+      "parentId": "fld_IRIS_connections",
+      "url": "{{ _.base_url }}/connections/:id/import",
+      "name": "POST /connections/:id/import",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"mediaTypes\": [\n    \"string\"\n  ],\n  \"customLists\": true\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "disabled": false
+        },
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
       "_id": "req_IRIS-connections__connections__id_delete",
       "parentId": "fld_IRIS_connections",
       "url": "{{ _.base_url }}/connections/:id",
