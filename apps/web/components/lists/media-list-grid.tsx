@@ -301,14 +301,11 @@ export function MediaListGrid({
         <div className="flex flex-col gap-8">
           {groupedSections.map((section) => (
             <div key={section.key} className="flex flex-col gap-3">
-              {/* Section Header with Title and Count Badge */}
+              {/* Section Header with Title */}
               <div className="flex items-center gap-2.5">
                 <h2 className="font-heading text-sm font-semibold tracking-tight text-foreground sm:text-base">
                   {section.title}
                 </h2>
-                <span className="rounded-full bg-muted/80 px-2 py-0.5 font-mono text-[11px] font-medium text-muted-foreground">
-                  {section.items.length}
-                </span>
               </div>
 
               {/* 8-Card Responsive Grid */}

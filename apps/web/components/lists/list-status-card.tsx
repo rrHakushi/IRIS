@@ -42,6 +42,10 @@ export interface ListStatusCardProps {
   onGenresChange: (genres: string[]) => void
   selectedYears: string[]
   onYearsChange: (years: string[]) => void
+  selectedMonths?: string[]
+  onMonthsChange?: (months: string[]) => void
+  selectedArtists?: string[]
+  onArtistsChange?: (artists: string[]) => void
   sortBy: SortByOption
   onSortByChange: (sort: SortByOption) => void
   sortOrder: SortOrderOption
@@ -75,6 +79,10 @@ export function ListStatusCard({
   onGenresChange,
   selectedYears,
   onYearsChange,
+  selectedMonths,
+  onMonthsChange,
+  selectedArtists,
+  onArtistsChange,
   sortBy,
   onSortByChange,
   sortOrder,
@@ -252,6 +260,46 @@ export function ListStatusCard({
     return fallbackYears
   }, [facets.years])
 
+  const monthOptions = React.useMemo(() => {
+    const monthNames: Record<number, string> = {
+      1: "January",
+      2: "February",
+      3: "March",
+      4: "April",
+      5: "May",
+      6: "June",
+      7: "July",
+      8: "August",
+      9: "September",
+      10: "October",
+      11: "November",
+      12: "December",
+    }
+
+    if (facets.months && facets.months.length > 0) {
+      return facets.months.map((m) => ({
+        value: String(m.value),
+        label: monthNames[m.value] || `Month ${m.value}`,
+        count: m.count,
+      }))
+    }
+    return Object.entries(monthNames).map(([val, label]) => ({
+      value: val,
+      label,
+    }))
+  }, [facets.months])
+
+  const artistOptions = React.useMemo(() => {
+    if (facets.artists && facets.artists.length > 0) {
+      return facets.artists.map((a) => ({
+        value: a.value,
+        label: a.value,
+        count: a.count,
+      }))
+    }
+    return []
+  }, [facets.artists])
+
   const currentSortLabel =
     SORT_OPTIONS.find((s) => s.value === sortBy)?.label || "Last Updated"
 
@@ -380,6 +428,18 @@ export function ListStatusCard({
 
             {/* Right: Multi-select dropdowns & Sort controls */}
             <div className="no-scrollbar flex flex-wrap items-center gap-2 overflow-x-auto pt-1 lg:pt-0">
+              {/* Artists Dropdown (for music or whenever artist facets exist) */}
+              {(mediaType === "music" || artistOptions.length > 0) &&
+                onArtistsChange && (
+                  <MultiSelectFilterPopover
+                    label="Artists"
+                    allLabel="All Artists"
+                    options={artistOptions}
+                    selected={selectedArtists || []}
+                    onChange={onArtistsChange}
+                  />
+                )}
+
               {/* Formats Dropdown (hidden for music because top tabs handle All / Albums / Tracks) */}
               {mediaType !== "music" && (
                 <MultiSelectFilterPopover
@@ -419,6 +479,19 @@ export function ListStatusCard({
                 selected={selectedYears}
                 onChange={onYearsChange}
               />
+
+              {/* Months Dropdown (for music or whenever month facets exist) */}
+              {(mediaType === "music" ||
+                (facets.months && facets.months.length > 0)) &&
+                onMonthsChange && (
+                  <MultiSelectFilterPopover
+                    label="Months"
+                    allLabel="All Months"
+                    options={monthOptions}
+                    selected={selectedMonths || []}
+                    onChange={onMonthsChange}
+                  />
+                )}
 
               {/* SORT Divider & Label */}
               <div className="hidden items-center gap-1.5 ps-1 sm:flex">

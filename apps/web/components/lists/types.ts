@@ -113,6 +113,8 @@ export interface ListFilterFacets {
   genres: Array<{ value: string; count: number }>
   years: Array<{ value: number; count: number }>
   mediaStatuses?: Array<{ value: string; count: number }>
+  months?: Array<{ value: number; count: number }>
+  artists?: Array<{ value: string; count: number }>
 }
 
 export interface ListEntryData {

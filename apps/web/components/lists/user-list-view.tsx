@@ -35,6 +35,8 @@ const DEFAULT_FACETS: ListFilterFacets = {
   genres: [],
   years: [],
   mediaStatuses: [],
+  months: [],
+  artists: [],
 }
 
 /**
@@ -172,6 +174,8 @@ export function UserListView({
   )
   const [selectedGenres, setSelectedGenres] = useState<string[]>([])
   const [selectedYears, setSelectedYears] = useState<string[]>([])
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([])
+  const [selectedArtists, setSelectedArtists] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<SortByOption>("updatedAt")
   const [sortOrder, setSortOrder] = useState<SortOrderOption>("desc")
   const [activeTab, setActiveTab] = useState<ListViewTab>("list")
@@ -261,6 +265,8 @@ export function UserListView({
           genres: data.genres || [],
           years: data.years || [],
           mediaStatuses: data.mediaStatuses || [],
+          months: data.months || [],
+          artists: data.artists || [],
         })
       }
     } catch {
@@ -307,6 +313,10 @@ export function UserListView({
         selectedGenres.length > 0 ? selectedGenres.join(",") : undefined
       const yearsParam =
         selectedYears.length > 0 ? selectedYears.join(",") : undefined
+      const monthsParam =
+        selectedMonths.length > 0 ? selectedMonths.join(",") : undefined
+      const artistsParam =
+        selectedArtists.length > 0 ? selectedArtists.join(",") : undefined
 
       const { data, error } = await resource.get({
         query: {
@@ -316,6 +326,8 @@ export function UserListView({
           mediaStatus: mediaStatusParam,
           genres: genresParam,
           year: yearsParam,
+          month: monthsParam,
+          artist: artistsParam,
           sortBy,
           order: sortOrder,
         },
@@ -346,6 +358,8 @@ export function UserListView({
     selectedMediaStatuses,
     selectedGenres,
     selectedYears,
+    selectedMonths,
+    selectedArtists,
     sortBy,
     sortOrder,
   ])
@@ -389,6 +403,10 @@ export function UserListView({
         selectedGenres.length > 0 ? selectedGenres.join(",") : undefined
       const yearsParam =
         selectedYears.length > 0 ? selectedYears.join(",") : undefined
+      const monthsParam =
+        selectedMonths.length > 0 ? selectedMonths.join(",") : undefined
+      const artistsParam =
+        selectedArtists.length > 0 ? selectedArtists.join(",") : undefined
 
       const { data, error } = await resource.get({
         query: {
@@ -399,6 +417,8 @@ export function UserListView({
           mediaStatus: mediaStatusParam,
           genres: genresParam,
           year: yearsParam,
+          month: monthsParam,
+          artist: artistsParam,
           sortBy,
           order: sortOrder,
         },
@@ -429,6 +449,8 @@ export function UserListView({
     selectedMediaStatuses,
     selectedGenres,
     selectedYears,
+    selectedMonths,
+    selectedArtists,
     sortBy,
     sortOrder,
   ])
@@ -629,6 +651,8 @@ export function UserListView({
         media.titleNative,
         media.title,
         media.name,
+        media.artist,
+        media.artistName,
       ]
         .filter(Boolean)
         .map((t) => String(t).toLowerCase())
@@ -666,6 +690,10 @@ export function UserListView({
           onGenresChange={setSelectedGenres}
           selectedYears={selectedYears}
           onYearsChange={setSelectedYears}
+          selectedMonths={selectedMonths}
+          onMonthsChange={setSelectedMonths}
+          selectedArtists={selectedArtists}
+          onArtistsChange={setSelectedArtists}
           sortBy={sortBy}
           onSortByChange={setSortBy}
           sortOrder={sortOrder}

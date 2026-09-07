@@ -361,7 +361,7 @@ export function MediaListCard({
         </Button>
 
         {/* Bottom-Right: Quick Increment (+) Button (Visible on hover, only when active) */}
-        {isWatchingOrActive && onIncrementProgress && (
+        {isWatchingOrActive && onIncrementProgress && mediaType !== "movie" && (
           <Button
             variant="ghost"
             size="icon-xs"
@@ -393,36 +393,38 @@ export function MediaListCard({
               <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
                 <span>Rewatched {entry.rewatched}x</span>
               </div>
-            ) : (
-              <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
-                <span>Movie</span>
-              </div>
-            )
+            ) : null
           ) : mediaType === "tv" && tvProg ? (
             <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
               <span className="font-semibold text-white">
                 S{tvProg.seasonNumber}
               </span>
-              <span className="text-white/80">
-                /E{tvDisplayEpisode}
-                {tvProg.seasonEpisodeCount
-                  ? `/${tvProg.seasonEpisodeCount}`
-                  : ""}
-              </span>
+              <span className="text-white/80">/E{tvDisplayEpisode}</span>
+              {tvProg.seasonEpisodeCount ? (
+                <span className="font-semibold text-primary">
+                  /{tvProg.seasonEpisodeCount}
+                </span>
+              ) : null}
             </div>
           ) : mediaType === "manga" ? (
             <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
               {typeof maxVolumes === "number" || volumesProgress > 0 ? (
                 <span className="font-semibold text-white">
-                  V{volumesProgress}/
+                  V{volumesProgress}
+                  {typeof maxVolumes === "number" && maxVolumes > 0 ? (
+                    <span className="font-semibold text-primary">
+                      /{maxVolumes}
+                    </span>
+                  ) : null}
+                  /
                 </span>
               ) : null}
-              <span>
-                CH{displayedProgress}
-                {typeof maxProgress === "number" && maxProgress > 0
-                  ? `/${maxProgress}`
-                  : ""}
-              </span>
+              <span>CH{displayedProgress}</span>
+              {typeof maxProgress === "number" && maxProgress > 0 ? (
+                <span className="font-semibold text-primary">
+                  /{maxProgress}
+                </span>
+              ) : null}
             </div>
           ) : mediaType === "game" ? (
             <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
@@ -431,6 +433,11 @@ export function MediaListCard({
           ) : mediaType === "book" ? (
             <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
               <span>P {displayedProgress}</span>
+              {typeof maxProgress === "number" && maxProgress > 0 ? (
+                <span className="font-semibold text-primary">
+                  /{maxProgress}
+                </span>
+              ) : null}
             </div>
           ) : mediaType === "music" ? (
             <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
@@ -440,10 +447,12 @@ export function MediaListCard({
             <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
               <span>
                 {progressUnit} {displayedProgress}
-                {typeof maxProgress === "number" && maxProgress > 0
-                  ? `/${maxProgress}`
-                  : ""}
               </span>
+              {typeof maxProgress === "number" && maxProgress > 0 ? (
+                <span className="font-semibold text-primary">
+                  /{maxProgress}
+                </span>
+              ) : null}
             </div>
           )}
 
