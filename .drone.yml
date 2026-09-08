@@ -4,24 +4,17 @@ name: default
 
 steps:
   - name: Environment
-    image: alpine:latest
+    image: node:22-alpine
     environment:
       ENV_FILE:
         from_secret: ENV_FILE
     commands:
+      - apk add --no-cache libc6-compat openssl
       - 'if [ -z "$ENV_FILE" ]; then echo "WARNING: ENV_FILE secret is empty"; fi'
       - 'printf "%s\n" "$ENV_FILE" > .env'
       - chmod 600 .env
-
-  - name: Packages
-    image: node:22-alpine
-    commands:
-      - apk add --no-cache libc6-compat
       - corepack enable
       - pnpm install --frozen-lockfile
-      - pnpm turbo run build --filter="./packages/*"
-    depends_on:
-      - Environment
 
   - name: Prisma Push
     image: node:22-alpine
@@ -30,7 +23,7 @@ steps:
       - corepack enable
       - pnpm --filter @IRIS/database db:push
     depends_on:
-      - Packages
+      - Environment
 
   - name: Prisma Generation
     image: node:22-alpine
@@ -41,6 +34,15 @@ steps:
     depends_on:
       - Prisma Push
 
+  - name: Packages
+    image: node:22-alpine
+    commands:
+      - apk add --no-cache libc6-compat openssl
+      - corepack enable
+      - pnpm turbo run build --filter="./packages/*"
+    depends_on:
+      - Prisma Generation
+
   - name: Backend
     image: docker:latest
     volumes:
@@ -50,7 +52,7 @@ steps:
       - export DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1
       - docker compose build elysia
     depends_on:
-      - Prisma Generation
+      - Packages
 
   - name: Frontend
     image: docker:latest
