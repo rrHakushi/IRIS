@@ -2,68 +2,90 @@ kind: pipeline
 type: docker
 name: default
 
-# services:
-#   - name: IRIS-database
-#     image: postgres:latest
-#     environment:
-#       POSTGRES_USER: postgres
-#       POSTGRES_PASSWORD: password
-#       POSTGRES_DB: IRIS-dev
-#     ports:
-#       - 5432
-
-#   - name: IRIS-cache
-#     image: redis:latest
-#     ports:
-#       - 6379
-
 steps:
   - name: Environment
-    image: node:22-alpine
+    image: alpine:latest
     environment:
       ENV_FILE:
         from_secret: ENV_FILE
     commands:
-      - apk add --no-cache libc6-compat openssl
-      - echo "$ENV_FILE" > .env
+      - if [ -z "$ENV_FILE" ]; then echo "WARNING: ENV_FILE secret is empty"; fi
+      - printf "%s\n" "$ENV_FILE" > .env
+      - chmod 600 .env
+
+  - name: Packages
+    image: node:22-alpine
+    commands:
+      - apk add --no-cache libc6-compat
       - corepack enable
       - pnpm install --frozen-lockfile
+      - pnpm turbo run build --filter="./packages/*"
+    depends_on:
+      - Environment
 
-  - name: Prisma push
+  - name: Prisma Push
     image: node:22-alpine
     commands:
       - apk add --no-cache libc6-compat openssl
       - corepack enable
-      - pnpm db:push
+      - pnpm --filter @IRIS/database db:push
+    depends_on:
+      - Packages
 
-  - name: Prisma generate
+  - name: Prisma Generation
     image: node:22-alpine
     commands:
       - apk add --no-cache libc6-compat openssl
       - corepack enable
-      - pnpm db:generate
+      - pnpm --filter @IRIS/database db:generate
+    depends_on:
+      - Prisma Push
 
-  - name: Elysia build
-    image: oven/bun:1-alpine
+  - name: Backend
+    image: docker:latest
+    volumes:
+      - name: docker_sock
+        path: /var/run/docker.sock
     commands:
-      - bun run route:sync
+      - export DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1
+      - docker compose build elysia
+    depends_on:
+      - Prisma Generation
 
-  - name: Build packages
-    image: node:22-alpine
+  - name: Frontend
+    image: docker:latest
+    volumes:
+      - name: docker_sock
+        path: /var/run/docker.sock
     commands:
-      - apk add --no-cache libc6-compat openssl
-      - corepack enable
-      - pnpm build:packages
-
-  - name: Web build
-    image: node:22-alpine
-    environment:
-      NODE_ENV: production
-    commands:
-      - corepack enable
-      - pnpm --filter web build
+      - export DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1
+      - docker compose build web
+      - docker compose up -d --remove-orphans
+      - sleep 5
+      - docker compose ps
+      - docker compose logs elysia --tail=50
+      - docker compose logs web --tail=50
+    depends_on:
+      - Backend
 
   - name: Cleanup
-    image: node:22-alpine
+    image: docker:latest
+    volumes:
+      - name: docker_sock
+        path: /var/run/docker.sock
     commands:
-      - rm -rf .turbo node_modules/.cache
+      - docker image prune -f
+      - docker builder prune -f --keep-storage 5GB || true
+    depends_on:
+      - Frontend
+
+volumes:
+  - name: docker_sock
+    host:
+      path: /var/run/docker.sock
+
+trigger:
+  branch:
+    - main
+  event:
+    - push

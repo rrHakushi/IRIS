@@ -31,7 +31,7 @@ RUN pnpm install --frozen-lockfile
 COPY --from=pruner /app/out/full/ .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
-RUN pnpm --filter web build
+RUN pnpm db:generate && pnpm build:packages && pnpm --filter web build
 
 # ==========================================
 # Production Runner Stage
