@@ -12,6 +12,33 @@ import { AuthUser } from "./types.js";
  * - Lean JWT session storage containing exclusively `id`, `username`, `email`, and `passwordChangedAt`.
  * - Automatic session revocation if `passwordChangedAt` is newer than the token issue timestamp (`iat`).
  */
+function getCookieDomain(): string | undefined {
+  if (process.env.COOKIE_DOMAIN) {
+    return process.env.COOKIE_DOMAIN
+  }
+  const urlStr =
+    process.env.NEXTAUTH_URL ||
+    process.env.NEXT_PUBLIC_URL ||
+    process.env.NEXT_PUBLIC_API_URL
+  if (urlStr) {
+    try {
+      const { hostname } = new URL(urlStr)
+      if (hostname !== "localhost" && !/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+        const parts = hostname.split(".")
+        if (parts.length >= 2) {
+          return `.${parts.slice(-2).join(".")}`
+        }
+      }
+    } catch {
+      // fallback
+    }
+  }
+  if (process.env.NODE_ENV === "production") {
+    return ".runerra.org"
+  }
+  return undefined
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [createCredentialsProvider(), ...getOAuthProviders()],
 
@@ -33,6 +60,7 @@ export const authOptions: NextAuthOptions = {
         sameSite: "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
+        domain: getCookieDomain(),
       },
     },
   },

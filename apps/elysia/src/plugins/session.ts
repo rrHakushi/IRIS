@@ -159,8 +159,12 @@ export async function verifyNextAuthJwt(
   secret: string | null | undefined = process.env.NEXTAUTH_SECRET
 ): Promise<JWT | null> {
   if (!rawToken || rawToken.trim().length === 0) return null
-  const effectiveSecret = secret ?? process.env.NEXTAUTH_SECRET
+  let effectiveSecret =
+    secret ?? process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET
   if (!effectiveSecret) return null
+
+  // Strip any surrounding quotes or whitespace from env file parsing
+  effectiveSecret = effectiveSecret.trim().replace(/^["']|["']$/g, "")
 
   try {
     const decoded = await decode({
@@ -169,7 +173,8 @@ export async function verifyNextAuthJwt(
     })
     if (!decoded || typeof decoded !== "object") return null
     return decoded as JWT
-  } catch {
+  } catch (err) {
+    console.error("[Session] Error decoding NextAuth JWT:", err)
     return null
   }
 }

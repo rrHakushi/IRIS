@@ -127,10 +127,12 @@ export async function verifyNextAuthJwt(
     return null;
   }
 
-  const effectiveSecret = secret ?? process.env.NEXTAUTH_SECRET;
+  let effectiveSecret =
+    secret ?? process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
   if (!effectiveSecret) {
     return null;
   }
+  effectiveSecret = effectiveSecret.trim().replace(/^["']|["']$/g, "");
 
   try {
     const decoded = await decode({
