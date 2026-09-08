@@ -25,7 +25,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@IRIS/elysia": "workspace:*",
     "@elysiajs/eden": "^1.4.9",
     "elysia": "2.0.0-beta.6",
     "next-auth": "^4.24.15"
