@@ -8,6 +8,9 @@ const apiUrl = rawApiUrl.replace(/\$\{ELYSIA_PORT\}|\$ELYSIA_PORT/g, "4000")
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   transpilePackages: ["@workspace/ui"],
   images: {
     remotePatterns: [

@@ -1,5 +1,5 @@
 import React from "react"
-import nodemailer from "nodemailer"
+import nodemailer, { type Transporter } from "nodemailer"
 import { render } from "@react-email/render"
 import { c } from "./colors.js"
 import { logger } from "./logger.js"
@@ -12,9 +12,9 @@ interface SendMailParams {
   text: string
 }
 
-let transporter: nodemailer.Transporter | null = null
+let transporter: Transporter | null = null
 
-function getTransporter(): nodemailer.Transporter | null {
+function getTransporter(): Transporter | null {
   if (transporter) {
     return transporter
   }

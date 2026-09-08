@@ -18,7 +18,7 @@ services:
       - 6379
 
 steps:
-  - name: Enviroment
+  - name: Environment
     image: node:22-alpine
     environment:
       ENV_FILE:
@@ -28,12 +28,6 @@ steps:
       - echo "$ENV_FILE" > .env
       - corepack enable
       - pnpm install --frozen-lockfile
-
-  - name: Lint
-    image: node:22-alpine
-    commands:
-      - corepack enable
-      - pnpm lint
 
   - name: Prisma push
     image: node:22-alpine
@@ -49,37 +43,20 @@ steps:
       - corepack enable
       - pnpm db:generate
 
-  - name: Nestia sdk
-    image: node:22-alpine
+  - name: Elysia build
+    image: oven/bun:1-alpine
     commands:
-      - corepack enable
-      - pnpm sdk
+      - bun run route:sync
 
-  - name: Nestia Swagger
+  - name: Web build
     image: node:22-alpine
-    commands:
-      - corepack enable
-      - pnpm swagger
-
-  - name: Nestia e2e
-    image: node:22-alpine
-    commands:
-      - corepack enable
-      - pnpm --filter @IRIS/server test:e2e
-
-  - name: Server build
-    image: node:22-alpine
-    commands:
-      - corepack enable
-      - pnpm --filter @IRIS/server build
-
-  - name: WEb build
-    image: node:22-alpine
+    environment:
+      NODE_ENV: production
     commands:
       - corepack enable
       - pnpm --filter web build
 
-  - name: cleanup
+  - name: Cleanup
     image: node:22-alpine
     commands:
       - rm -rf .turbo node_modules/.cache

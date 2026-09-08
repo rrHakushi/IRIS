@@ -110,7 +110,7 @@ export default async function GameDetailPage({ params, searchParams }: Props) {
     pegiRating: game.pegiRating,
     ageRating: game.ageRating || game.esrbRating || game.pegiRating,
     tagline: game.tagline,
-    requirements: game.requirements,
+    requirements: game.requirements as NormalizedMediaData["requirements"],
     languages: game.languages,
     linuxSupport: game.linuxSupport,
     rawgId: game.rawgId,

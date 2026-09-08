@@ -27,7 +27,7 @@
     "pg": "^8.23.0"
   },
   "devDependencies": {
-    "prisma": "8.0.0-rc.13",
+    "prisma": "^7.10.0",
     "typescript": "^7.0.2"
   }
 }

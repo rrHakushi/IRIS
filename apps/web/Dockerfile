@@ -30,6 +30,7 @@ RUN pnpm install --frozen-lockfile
 # Copy full pruned source code and build Next.js application
 COPY --from=pruner /app/out/full/ .
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
 RUN pnpm --filter web build
 
 # ==========================================
