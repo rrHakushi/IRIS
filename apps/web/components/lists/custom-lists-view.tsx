@@ -263,7 +263,9 @@ export function CustomListsView({
     try {
       const { error } = await elysia
         .user({ username })
-        .lists.custom({ watchlistId: selectedList.id })({ id: item.entry.mediaId })
+        .lists.custom({ watchlistId: selectedList.id })({
+          id: item.entry.mediaId,
+        })
         .delete({
           query: { mediaType: item.entry.mediaType },
         })
@@ -273,9 +275,7 @@ export function CustomListsView({
         return
       }
 
-      setEntries((prev) =>
-        prev.filter((e) => e.entry.id !== item.entry.id)
-      )
+      setEntries((prev) => prev.filter((e) => e.entry.id !== item.entry.id))
       setLists((prev) =>
         prev.map((l) =>
           l.id === selectedList.id
@@ -361,10 +361,7 @@ export function CustomListsView({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <UserListBanner
-        username={username}
-        profile={initialProfile}
-      />
+      <UserListBanner username={username} profile={initialProfile} />
 
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {/* Navigation Breadcrumb / Header */}
@@ -399,7 +396,7 @@ export function CustomListsView({
                   placeholder="Search lists..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="ps-9 h-9 rounded-xl text-xs"
+                  className="h-9 rounded-xl ps-9 text-xs"
                 />
               </div>
             )}
@@ -440,12 +437,18 @@ export function CustomListsView({
                       {selectedList.name}
                     </h2>
                     {selectedList.isPrivate ? (
-                      <Badge variant="outline" className="gap-1 text-xs font-medium text-muted-foreground">
+                      <Badge
+                        variant="outline"
+                        className="gap-1 text-xs font-medium text-muted-foreground"
+                      >
                         <IconLock className="size-3" />
                         Private
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="gap-1 text-xs font-medium text-muted-foreground/80">
+                      <Badge
+                        variant="outline"
+                        className="gap-1 text-xs font-medium text-muted-foreground/80"
+                      >
                         <IconWorld className="size-3" />
                         Public
                       </Badge>
@@ -457,7 +460,8 @@ export function CustomListsView({
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground/75">
-                    {entries.length} {entries.length === 1 ? "entry" : "entries"}
+                    {entries.length}{" "}
+                    {entries.length === 1 ? "entry" : "entries"}
                   </p>
                 </div>
 
@@ -469,14 +473,16 @@ export function CustomListsView({
                       placeholder="Search entries..."
                       value={entrySearchQuery}
                       onChange={(e) => setEntrySearchQuery(e.target.value)}
-                      className="ps-9 h-8.5 rounded-xl text-xs"
+                      className="h-8.5 rounded-xl ps-9 text-xs"
                     />
                   </div>
                   {isOwner && (
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => handleDeleteList(selectedList.id, selectedList.name)}
+                      onClick={() =>
+                        handleDeleteList(selectedList.id, selectedList.name)
+                      }
                       disabled={deletingId === selectedList.id}
                       className="h-8.5 gap-1.5 rounded-xl text-xs"
                     >
@@ -497,9 +503,12 @@ export function CustomListsView({
             ) : filteredEntries.length === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 p-12 text-center text-muted-foreground">
                 <IconListDetails className="size-10 opacity-30" />
-                <p className="mt-3 text-sm font-semibold">No entries in this custom list</p>
+                <p className="mt-3 text-sm font-semibold">
+                  No entries in this custom list
+                </p>
                 <p className="text-xs text-muted-foreground/75">
-                  Browse media and use the "Custom Lists" modal tab to add items.
+                  Browse media and use the "Custom Lists" modal tab to add
+                  items.
                 </p>
               </div>
             ) : (
@@ -511,7 +520,8 @@ export function CustomListsView({
                     media?.titleEnglish ||
                     media?.titleRomaji ||
                     "Untitled"
-                  const cover = media?.coverImage || media?.images?.coverMedium || null
+                  const cover =
+                    media?.coverImage || media?.images?.coverMedium || null
                   const href = getMediaUrl(item)
 
                   return (
@@ -583,7 +593,7 @@ export function CustomListsView({
                               onClick={() => handleRemoveEntry(item)}
                               className="h-7 px-2 text-[11px] text-muted-foreground hover:text-destructive"
                             >
-                              <IconTrash className="size-3.5 me-1" />
+                              <IconTrash className="me-1 size-3.5" />
                               Remove
                             </Button>
                           </div>
@@ -606,7 +616,9 @@ export function CustomListsView({
             ) : filteredLists.length === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 p-12 text-center text-muted-foreground">
                 <IconListDetails className="size-12 opacity-30" />
-                <p className="mt-3 text-sm font-semibold">No custom lists found</p>
+                <p className="mt-3 text-sm font-semibold">
+                  No custom lists found
+                </p>
                 <p className="text-xs text-muted-foreground/75">
                   {isOwner
                     ? "Create your first custom collection using the button above."
@@ -640,12 +652,18 @@ export function CustomListsView({
                           </h3>
                         </div>
                         {list.isPrivate ? (
-                          <Badge variant="outline" className="gap-1 text-[10px] text-muted-foreground">
+                          <Badge
+                            variant="outline"
+                            className="gap-1 text-[10px] text-muted-foreground"
+                          >
                             <IconLock className="size-2.5" />
                             Private
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="gap-1 text-[10px] text-muted-foreground/70">
+                          <Badge
+                            variant="outline"
+                            className="gap-1 text-[10px] text-muted-foreground/70"
+                          >
                             <IconWorld className="size-2.5" />
                             Public
                           </Badge>
@@ -657,7 +675,7 @@ export function CustomListsView({
                           {list.description}
                         </p>
                       ) : (
-                        <p className="mt-2 text-xs italic text-muted-foreground/50">
+                        <p className="mt-2 text-xs text-muted-foreground/50 italic">
                           No description provided
                         </p>
                       )}
@@ -665,9 +683,10 @@ export function CustomListsView({
 
                     <div className="mt-4 flex items-center justify-between border-t border-border/30 pt-3 text-xs text-muted-foreground">
                       <span>
-                        {list.entriesCount} {list.entriesCount === 1 ? "item" : "items"}
+                        {list.entriesCount}{" "}
+                        {list.entriesCount === 1 ? "item" : "items"}
                       </span>
-                      <div className="flex items-center gap-1 text-rose-500 group-hover:translate-x-0.5 transition-transform">
+                      <div className="flex items-center gap-1 text-rose-500 transition-transform group-hover:translate-x-0.5">
                         <span className="text-[11px] font-medium">View</span>
                         <IconChevronRight className="size-3.5" />
                       </div>
@@ -686,74 +705,74 @@ export function CustomListsView({
           <DialogHeader>
             <DialogTitle>Create Custom List</DialogTitle>
           </DialogHeader>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">
-                List Name
-              </label>
-              <Input
-                type="text"
-                placeholder="e.g. Favorite Soundtracks, Weekend Marathon"
-                value={newListName}
-                onChange={(e) => setNewListName(e.target.value)}
-                maxLength={100}
-                required
-                className="rounded-xl"
-              />
-            </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">
+              List Name
+            </label>
+            <Input
+              type="text"
+              placeholder="e.g. Favorite Soundtracks, Weekend Marathon"
+              value={newListName}
+              onChange={(e) => setNewListName(e.target.value)}
+              maxLength={100}
+              required
+              className="rounded-xl"
+            />
+          </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">
-                Description (Optional)
-              </label>
-              <textarea
-                rows={3}
-                placeholder="A brief note about this collection..."
-                value={newListDescription}
-                onChange={(e) => setNewListDescription(e.target.value)}
-                className="w-full rounded-xl border border-input bg-transparent px-3 py-2 text-xs shadow-xs placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-              />
-            </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">
+              Description (Optional)
+            </label>
+            <textarea
+              rows={3}
+              placeholder="A brief note about this collection..."
+              value={newListDescription}
+              onChange={(e) => setNewListDescription(e.target.value)}
+              className="w-full rounded-xl border border-input bg-transparent px-3 py-2 text-xs shadow-xs placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+            />
+          </div>
 
-            <div className="flex items-center justify-between rounded-xl border border-border/50 p-3 bg-muted/20">
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                  <IconLock className="size-3.5 text-muted-foreground" />
-                  <span>Private List</span>
-                </div>
-                <p className="text-[11px] text-muted-foreground">
-                  Only you will be able to see this list.
-                </p>
+          <div className="flex items-center justify-between rounded-xl border border-border/50 bg-muted/20 p-3">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                <IconLock className="size-3.5 text-muted-foreground" />
+                <span>Private List</span>
               </div>
-              <input
-                type="checkbox"
-                checked={newListIsPrivate}
-                onChange={(e) => setNewListIsPrivate(e.target.checked)}
-                className="h-4 w-4 rounded accent-rose-500 cursor-pointer"
-              />
+              <p className="text-[11px] text-muted-foreground">
+                Only you will be able to see this list.
+              </p>
             </div>
+            <input
+              type="checkbox"
+              checked={newListIsPrivate}
+              onChange={(e) => setNewListIsPrivate(e.target.checked)}
+              className="h-4 w-4 cursor-pointer rounded accent-rose-500"
+            />
+          </div>
 
-            <DialogFooter className="pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setCreateDialogOpen(false)}
-                className="rounded-xl"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={!newListName.trim() || creating}
-                className="rounded-xl bg-rose-500 font-semibold text-white hover:bg-rose-600"
-              >
-                {creating ? (
-                  <IconLoader2 className="size-4 animate-spin" />
-                ) : (
-                  "Create List"
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
+          <DialogFooter className="pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCreateDialogOpen(false)}
+              className="rounded-xl"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={!newListName.trim() || creating}
+              className="rounded-xl bg-rose-500 font-semibold text-white hover:bg-rose-600"
+            >
+              {creating ? (
+                <IconLoader2 className="size-4 animate-spin" />
+              ) : (
+                "Create List"
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
       </Dialog>
 
       {/* Import Deezer Playlist Dialog */}
@@ -778,7 +797,9 @@ export function CustomListsView({
               className="rounded-xl text-xs"
             />
             <p className="text-[11px] text-muted-foreground">
-              Tracks will be saved to your Music library (with synced lyrics from LRCLIB if available), artists to Person, and a new Custom List will be created.
+              Tracks will be saved to your Music library (with synced lyrics
+              from LRCLIB if available), artists to Person, and a new Custom
+              List will be created.
             </p>
           </div>
 

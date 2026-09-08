@@ -15,19 +15,24 @@ export default function proxy(request: NextRequest) {
   const domain = getCookieDomain()
 
   if (domain) {
-    const sessionCookie = request.cookies.get("__Secure-next-auth.session-token")
+    const sessionCookie = request.cookies.get(
+      "__Secure-next-auth.session-token"
+    )
     if (sessionCookie?.value) {
-      response.cookies.set("__Secure-next-auth.session-token", sessionCookie.value, {
-        domain,
-        path: "/",
-        httpOnly: true,
-        secure: true,
-        sameSite: "lax",
-        maxAge: 365 * 24 * 60 * 60,
-      })
+      response.cookies.set(
+        "__Secure-next-auth.session-token",
+        sessionCookie.value,
+        {
+          domain,
+          path: "/",
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax",
+          maxAge: 365 * 24 * 60 * 60,
+        }
+      )
     }
   }
 
   return response
 }
-

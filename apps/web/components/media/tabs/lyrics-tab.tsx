@@ -20,7 +20,10 @@ export function LyricsTab({
   if (!lyrics && !syncedLyrics) {
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 py-12 text-center">
-        <IconMicrophone className="size-8 text-muted-foreground/40" aria-hidden="true" />
+        <IconMicrophone
+          className="size-8 text-muted-foreground/40"
+          aria-hidden="true"
+        />
         <p className="mt-2 text-sm text-muted-foreground">
           No lyrics available for this track.
         </p>

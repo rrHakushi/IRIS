@@ -83,9 +83,7 @@ export default defineRoute({
         rawUrlParams?.get("openid_claimed_id") ||
         rawUrlParams?.get("openid.identity") ||
         query?.openid_claimed_id ||
-        (query as Record<string, string | undefined>)?.[
-          "openid.claimed_id"
-        ] ||
+        (query as Record<string, string | undefined>)?.["openid.claimed_id"] ||
         ""
       const code =
         query?.code ||

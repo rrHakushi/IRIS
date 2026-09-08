@@ -87,7 +87,10 @@ export default defineRoute({
     // Overflow guard: if already at or beyond maximum episodes, clamp and prevent further increment
     if (maxEpisodes !== null && currentProgress >= maxEpisodes) {
       let clampedEntry = existing
-      if (existing && (existing.progress > maxEpisodes || existing.status !== "COMPLETED")) {
+      if (
+        existing &&
+        (existing.progress > maxEpisodes || existing.status !== "COMPLETED")
+      ) {
         clampedEntry = await prisma.animeList.update({
           where: { id: existing.id },
           data: {
@@ -161,8 +164,7 @@ export default defineRoute({
       },
     })
 
-    const connectionsToSync =
-      (body as any)?.connections ?? result.connections
+    const connectionsToSync = (body as any)?.connections ?? result.connections
     if (
       connectionsToSync &&
       typeof connectionsToSync === "object" &&
@@ -172,8 +174,7 @@ export default defineRoute({
         userId: dbUser.id,
         username: dbUser.username,
         animeId: id,
-        animeTitle:
-          anime.titlePrimary || anime.titleSecondary || "Anime",
+        animeTitle: anime.titlePrimary || anime.titleSecondary || "Anime",
         entry: {
           status: result.status,
           progress: result.progress,

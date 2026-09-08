@@ -9,13 +9,7 @@ import {
 } from "@tabler/icons-react"
 
 export type MediaListType =
-  | "anime"
-  | "manga"
-  | "movie"
-  | "tv"
-  | "game"
-  | "book"
-  | "music"
+  "anime" | "manga" | "movie" | "tv" | "game" | "book" | "music"
 
 export interface MediaCategoryConfig {
   key: MediaListType

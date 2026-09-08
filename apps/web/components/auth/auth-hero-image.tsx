@@ -14,7 +14,9 @@ export function AuthHeroImage({
   alt = "IRIS Companion",
 }: AuthHeroImageProps) {
   const { illustration } = useAuthIllustration()
-  const [imgSrc, setImgSrc] = React.useState<string>(illustration || fallbackSrc)
+  const [imgSrc, setImgSrc] = React.useState<string>(
+    illustration || fallbackSrc
+  )
 
   React.useEffect(() => {
     setImgSrc(illustration || fallbackSrc)

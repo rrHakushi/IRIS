@@ -201,7 +201,8 @@ export class MusicBrainzProvider {
     try {
       const res = await fetch(url, {
         headers: {
-          "User-Agent": "IRIS-Platform/1.0 (https://iris.app; contact@iris.app)",
+          "User-Agent":
+            "IRIS-Platform/1.0 (https://iris.app; contact@iris.app)",
           Accept: "application/json",
         },
       })
@@ -286,7 +287,9 @@ export class MusicBrainzProvider {
       }
       return json.releases || []
     } catch (err: any) {
-      console.error(`[MusicBrainzProvider] searchRelease failed: ${err.message}`)
+      console.error(
+        `[MusicBrainzProvider] searchRelease failed: ${err.message}`
+      )
       return []
     }
   }

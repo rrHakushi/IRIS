@@ -1,8 +1,4 @@
-import {
-  prisma,
-  type ActivityType,
-  type MediaType,
-} from "@IRIS/database"
+import { prisma, type ActivityType, type MediaType } from "@IRIS/database"
 import { logger } from "../utils/logger.js"
 import { Patterns, schedule } from "../plugins/cron.js"
 import { statsQueueService } from "./stats-queue.service.js"

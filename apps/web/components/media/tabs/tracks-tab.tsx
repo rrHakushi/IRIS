@@ -80,7 +80,7 @@ export function TracksTab({
               placeholder="Search tracks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-8 ps-8 rounded-2xl text-xs"
+              className="h-8 rounded-2xl ps-8 text-xs"
             />
           </div>
         )}

@@ -10,7 +10,10 @@ import {
   IconArrowRight,
 } from "@tabler/icons-react"
 import type { UserConnectionItem } from "../../account/connections/types"
-import { ImportMediaDialog, type ImportMediaTypeOption } from "./import-media-dialog"
+import {
+  ImportMediaDialog,
+  type ImportMediaTypeOption,
+} from "./import-media-dialog"
 import { toast } from "sonner"
 import { elysia } from "@/lib/elysia"
 import { useTranslations } from "next-intl"
@@ -139,9 +142,7 @@ export function ProviderImportCard({
                   {isConnected ? (
                     <div className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                      <span>
-                        {connection?.displayName || t("connected")}
-                      </span>
+                      <span>{connection?.displayName || t("connected")}</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
@@ -155,7 +156,10 @@ export function ProviderImportCard({
 
             {/* Top Action or Status Badge */}
             {isConnected ? (
-              <Badge variant="outline" className="border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <Badge
+                variant="outline"
+                className="border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+              >
                 <IconCheck className="me-1 h-3 w-3" />
                 {t("connected")}
               </Badge>

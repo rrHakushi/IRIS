@@ -273,7 +273,9 @@ export function StatsTab({ media }: StatsTabProps) {
         {/* Local Listeners (Music) */}
         {media.category === "music" && (
           <div className="flex flex-col gap-1 rounded-2xl border border-border/40 bg-card p-4">
-            <span className="text-xs text-muted-foreground">Local Listeners</span>
+            <span className="text-xs text-muted-foreground">
+              Local Listeners
+            </span>
             <div className="flex items-center gap-1.5 text-xl font-bold text-foreground">
               <IconHeadphones
                 className="size-5 text-primary"
@@ -294,7 +296,9 @@ export function StatsTab({ media }: StatsTabProps) {
         {/* Local Scrobbles (Music) */}
         {media.category === "music" && (
           <div className="flex flex-col gap-1 rounded-2xl border border-border/40 bg-card p-4">
-            <span className="text-xs text-muted-foreground">Local Scrobbles</span>
+            <span className="text-xs text-muted-foreground">
+              Local Scrobbles
+            </span>
             <div className="flex items-center gap-1.5 text-xl font-bold text-foreground">
               <IconPlayerPlay
                 className="size-5 text-primary"
@@ -333,7 +337,9 @@ export function StatsTab({ media }: StatsTabProps) {
       </div>
 
       {/* Dedicated Last.fm Engagement Section for Music */}
-      {Boolean(media.lastFmListeners || media.lastFmPlayCount || media.lastFmUrl) && (
+      {Boolean(
+        media.lastFmListeners || media.lastFmPlayCount || media.lastFmUrl
+      ) && (
         <section
           aria-labelledby="lastfm-heading"
           className="rounded-2xl border border-border/40 bg-card p-5"
@@ -378,7 +384,9 @@ export function StatsTab({ media }: StatsTabProps) {
                 Listeners
               </span>
               <span className="text-lg font-bold text-foreground tabular-nums">
-                {media.lastFmListeners ? media.lastFmListeners.toLocaleString() : "0"}
+                {media.lastFmListeners
+                  ? media.lastFmListeners.toLocaleString()
+                  : "0"}
               </span>
               <span className="text-[10px] text-muted-foreground">
                 Total unique listeners
@@ -390,7 +398,9 @@ export function StatsTab({ media }: StatsTabProps) {
                 Scrobbles
               </span>
               <span className="text-lg font-bold text-foreground tabular-nums">
-                {media.lastFmPlayCount ? media.lastFmPlayCount.toLocaleString() : "0"}
+                {media.lastFmPlayCount
+                  ? media.lastFmPlayCount.toLocaleString()
+                  : "0"}
               </span>
               <span className="text-[10px] text-muted-foreground">
                 Total scrobbles

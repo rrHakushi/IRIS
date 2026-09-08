@@ -98,7 +98,9 @@ export async function syncConnectionMedia(
     // Skip if user explicitly disabled sync on this connection
     if (rawConn.sync === false) return
 
-    const providerId = Number(rawConn.id ?? rawConn.simklId ?? rawConn.providerId)
+    const providerId = Number(
+      rawConn.id ?? rawConn.simklId ?? rawConn.providerId
+    )
     if (Number.isNaN(providerId) || providerId <= 0) return
 
     const normProvider = providerKey.trim().toUpperCase() as ConnectionProvider
@@ -148,7 +150,9 @@ export async function syncConnectionMedia(
       new Date(userConn.expiresAt).getTime() - Date.now() < 300000
     if (isExpiring && credentials.refreshToken && adapter.refreshAccessToken) {
       try {
-        const refreshed = await adapter.refreshAccessToken(credentials.refreshToken)
+        const refreshed = await adapter.refreshAccessToken(
+          credentials.refreshToken
+        )
         credentials = { ...credentials, ...refreshed }
         const updatedEncrypted = encryptConnectionData(credentials, userId)
         const newExpiresAt = refreshed.expiresAt
@@ -278,7 +282,9 @@ export async function syncConnectionMedia(
     const res = results[i]!
     if (res.status === "rejected") {
       const providerKey = providerKeys[i]!
-      const normProvider = providerKey.trim().toUpperCase() as ConnectionProvider
+      const normProvider = providerKey
+        .trim()
+        .toUpperCase() as ConnectionProvider
       const displayName = PROVIDER_DISPLAY_NAMES[normProvider] || normProvider
       const errMsg = res.reason?.message || String(res.reason)
 

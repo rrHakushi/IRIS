@@ -261,7 +261,9 @@ export async function fetchMediaRelations(
   }
 
   if (musicTrackIds.length > 0 || musicAlbumIds.length > 0) {
-    const allMusicIds = Array.from(new Set([...musicTrackIds, ...musicAlbumIds]))
+    const allMusicIds = Array.from(
+      new Set([...musicTrackIds, ...musicAlbumIds])
+    )
     queries.push(
       prisma.music
         .findMany({

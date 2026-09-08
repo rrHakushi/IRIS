@@ -169,7 +169,10 @@ export default defineRoute({
       entry: {
         id: entry.id,
         musicId: entry.musicId,
-        albumId: entry.music?.type === "ALBUM" ? entry.musicId : (entry.music?.albumId ?? null),
+        albumId:
+          entry.music?.type === "ALBUM"
+            ? entry.musicId
+            : (entry.music?.albumId ?? null),
         trackId: entry.music?.type === "TRACK" ? entry.musicId : null,
         itemType: entry.music?.type ?? "TRACK",
         status: entry.status,
@@ -312,7 +315,9 @@ export default defineRoute({
         notes: result.notes,
         private: result.private,
         startedAt: result.startedAt ? result.startedAt.toISOString() : null,
-        completedAt: result.completedAt ? result.completedAt.toISOString() : null,
+        completedAt: result.completedAt
+          ? result.completedAt.toISOString()
+          : null,
         connections: result.connections,
         createdAt: result.createdAt.toISOString(),
         updatedAt: result.updatedAt.toISOString(),
@@ -444,7 +449,9 @@ export default defineRoute({
         notes: result.notes,
         private: result.private,
         startedAt: result.startedAt ? result.startedAt.toISOString() : null,
-        completedAt: result.completedAt ? result.completedAt.toISOString() : null,
+        completedAt: result.completedAt
+          ? result.completedAt.toISOString()
+          : null,
         connections: result.connections,
         createdAt: result.createdAt.toISOString(),
         updatedAt: result.updatedAt.toISOString(),

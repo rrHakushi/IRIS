@@ -44,7 +44,10 @@ export default defineRoute({
   async GET({ params, query, prisma, cache, cacheKeys }) {
     const id = Number(params.id)
     const parsedLimit = Number(query?.limit)
-    const limit = Math.max(1, Math.min(isNaN(parsedLimit) ? 10 : parsedLimit, 50))
+    const limit = Math.max(
+      1,
+      Math.min(isNaN(parsedLimit) ? 10 : parsedLimit, 50)
+    )
 
     const cacheKey = cacheKeys.similar.manga(id)
     const cached = await cache.get<SimilarMediaItem[]>(cacheKey)

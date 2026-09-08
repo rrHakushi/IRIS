@@ -118,11 +118,16 @@ export default defineRoute({
                     mediaType: "MUSIC_TRACK",
                     format: "TRACK",
                     title: {
-                      userPreferred: `${matchedTrack.name} - ${matchedTrack.artist?.name || ""}`.trim(),
+                      userPreferred:
+                        `${matchedTrack.name} - ${matchedTrack.artist?.name || ""}`.trim(),
                       english: matchedTrack.name,
                     },
-                    coverImage: cover ? { large: cover, medium: cover } : undefined,
-                    popularity: matchedTrack.listeners ? Number(matchedTrack.listeners) : undefined,
+                    coverImage: cover
+                      ? { large: cover, medium: cover }
+                      : undefined,
+                    popularity: matchedTrack.listeners
+                      ? Number(matchedTrack.listeners)
+                      : undefined,
                     url: matchedTrack.url || query.id,
                   },
                 ],
@@ -142,11 +147,16 @@ export default defineRoute({
                     mediaType: "MUSIC_ALBUM",
                     format: "ALBUM",
                     title: {
-                      userPreferred: `${matchedAlbum.name} - ${matchedAlbum.artist}`.trim(),
+                      userPreferred:
+                        `${matchedAlbum.name} - ${matchedAlbum.artist}`.trim(),
                       english: matchedAlbum.name,
                     },
-                    coverImage: cover ? { large: cover, medium: cover } : undefined,
-                    popularity: matchedAlbum.listeners ? Number(matchedAlbum.listeners) : undefined,
+                    coverImage: cover
+                      ? { large: cover, medium: cover }
+                      : undefined,
+                    popularity: matchedAlbum.listeners
+                      ? Number(matchedAlbum.listeners)
+                      : undefined,
                     url: matchedAlbum.url || query.id,
                   },
                 ],
@@ -157,7 +167,11 @@ export default defineRoute({
           if (rawType === "ALBUM" || rawType === "MUSIC_ALBUM") {
             albums = await lastFm.searchAlbums(searchQuery, query.perPage || 15)
           } else if (rawType === "TRACK" || rawType === "MUSIC_TRACK") {
-            tracks = await lastFm.searchTracks(searchQuery, undefined, query.perPage || 15)
+            tracks = await lastFm.searchTracks(
+              searchQuery,
+              undefined,
+              query.perPage || 15
+            )
           } else {
             const [tRes, aRes] = await Promise.all([
               lastFm.searchTracks(searchQuery, undefined, 10),

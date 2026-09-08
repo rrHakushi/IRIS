@@ -157,7 +157,8 @@ export default async function AlbumDetailPage({ params, searchParams }: Props) {
     updatedAt: album.updatedAt,
   }
 
-  const similarItems = !similarRes.error && Array.isArray(similarRes.data) ? similarRes.data : []
+  const similarItems =
+    !similarRes.error && Array.isArray(similarRes.data) ? similarRes.data : []
   const similarList: SimilarMediaCardItem[] = similarItems.map((item) => ({
     id: item.id,
     type: item.type,

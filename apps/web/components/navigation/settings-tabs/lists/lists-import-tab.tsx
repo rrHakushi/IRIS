@@ -2,8 +2,14 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react"
 import type { SettingsTabProps } from "../types"
-import type { ProviderMetadata, UserConnectionItem } from "../account/connections/types"
-import { ProviderImportCard, type ProviderImportConfig } from "./import/provider-import-card"
+import type {
+  ProviderMetadata,
+  UserConnectionItem,
+} from "../account/connections/types"
+import {
+  ProviderImportCard,
+  type ProviderImportConfig,
+} from "./import/provider-import-card"
 import { FileBackupImportCard } from "./import/file-backup-import-card"
 import { ConnectDialog } from "../account/connections/connect-dialog"
 import { Spinner } from "@workspace/ui/components/spinner"
@@ -84,7 +90,11 @@ export function ListsImportSettingsTab({}: SettingsTabProps): React.JSX.Element 
       availableMediaTypes: [
         { id: "anime", label: t("types.anime"), icon: IconDeviceTv },
         { id: "manga", label: t("types.manga"), icon: IconBook },
-        { id: "custom_lists", label: t("types.custom_lists"), icon: IconPlaylist },
+        {
+          id: "custom_lists",
+          label: t("types.custom_lists"),
+          icon: IconPlaylist,
+        },
       ],
     },
     {
@@ -140,7 +150,11 @@ export function ListsImportSettingsTab({}: SettingsTabProps): React.JSX.Element 
       websiteUrl: "https://deezer.com",
       supportsOAuth: true,
       availableMediaTypes: [
-        { id: "custom_lists", label: t("types.custom_lists"), icon: IconPlaylist },
+        {
+          id: "custom_lists",
+          label: t("types.custom_lists"),
+          icon: IconPlaylist,
+        },
       ],
     },
   ]
@@ -149,9 +163,7 @@ export function ListsImportSettingsTab({}: SettingsTabProps): React.JSX.Element 
     <div className="w-full flex-1 animate-in space-y-6 pb-6 duration-200 fade-in-50">
       {/* Header section with Title */}
       <div>
-        <h3 className="text-base font-bold text-foreground">
-          {t("title")}
-        </h3>
+        <h3 className="text-base font-bold text-foreground">{t("title")}</h3>
       </div>
 
       {isLoading ? (

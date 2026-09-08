@@ -23,7 +23,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       }
     }
 
-    const title = data.titlePrimary || data.titleSecondary || `Music #${numericId}`
+    const title =
+      data.titlePrimary || data.titleSecondary || `Music #${numericId}`
     const artist = data.artist ? ` by ${data.artist}` : ""
     return {
       title: `${title}${artist} | IRIS List`,

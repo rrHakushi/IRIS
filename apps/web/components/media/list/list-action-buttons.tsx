@@ -211,10 +211,9 @@ export function ListActionButtons({
           break
         case "music":
           res = await (
-            elysia
-              .user({ username })
-              .lists.music({ id: media.id })
-              ["quick-add"] as any
+            elysia.user({ username }).lists.music({ id: media.id })[
+              "quick-add"
+            ] as any
           ).post(undefined, {
             query: {
               type: media.format === "TRACK" ? "TRACK" : "ALBUM",

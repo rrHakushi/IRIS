@@ -150,7 +150,8 @@ export default async function TrackDetailPage({ params, searchParams }: Props) {
     updatedAt: track.updatedAt,
   }
 
-  const similarItems = !similarRes.error && Array.isArray(similarRes.data) ? similarRes.data : []
+  const similarItems =
+    !similarRes.error && Array.isArray(similarRes.data) ? similarRes.data : []
   const similarList: SimilarMediaCardItem[] = similarItems.map((item) => ({
     id: item.id,
     type: item.type,

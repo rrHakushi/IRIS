@@ -861,9 +861,10 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
           </section>
 
           {/* Tab Switcher (Discography, Voiced Roles, Staff Credits) */}
-          {((totalMusicReleases > 0 ? 1 : 0) +
+          {(totalMusicReleases > 0 ? 1 : 0) +
             (deduplicatedVoicedRoles.length > 0 ? 1 : 0) +
-            (deduplicatedStaffRoles.length > 0 ? 1 : 0)) > 1 && (
+            (deduplicatedStaffRoles.length > 0 ? 1 : 0) >
+            1 && (
             <div className="flex items-center gap-2 border-b border-border/40 pb-2">
               {totalMusicReleases > 0 && (
                 <button
@@ -1038,7 +1039,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                           <Link
                             key={`album-${album.id}`}
                             href={albumHref}
-                            className="group flex flex-col overflow-hidden rounded-2xl border border-border/40 bg-card/60 p-2.5 transition-all hover:border-border/80 hover:bg-card hover:shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            className="group flex flex-col overflow-hidden rounded-2xl border border-border/40 bg-card/60 p-2.5 transition-all outline-none hover:border-border/80 hover:bg-card hover:shadow-xs focus-visible:ring-2 focus-visible:ring-ring"
                           >
                             <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-muted">
                               {album.coverImage ? (
@@ -1057,10 +1058,10 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                                 </div>
                               )}
                               {album.albumType && (
-                                <div className="absolute top-2 start-2">
+                                <div className="absolute start-2 top-2">
                                   <Badge
                                     variant="secondary"
-                                    className="bg-background/85 backdrop-blur-xs text-[9px] font-semibold uppercase px-1.5 py-0 shadow-xs"
+                                    className="bg-background/85 px-1.5 py-0 text-[9px] font-semibold uppercase shadow-xs backdrop-blur-xs"
                                   >
                                     {album.albumType}
                                   </Badge>
@@ -1070,12 +1071,12 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
 
                             <div className="flex flex-1 flex-col justify-between pt-2.5">
                               <div>
-                                <h4 className="line-clamp-1 text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
+                                <h4 className="line-clamp-1 text-xs font-semibold text-foreground transition-colors group-hover:text-primary">
                                   {album.titlePrimary}
                                 </h4>
                                 {album.titleNative &&
                                   album.titleNative !== album.titlePrimary && (
-                                    <p className="line-clamp-1 font-japanese text-[10px] text-muted-foreground opacity-80">
+                                    <p className="font-japanese line-clamp-1 text-[10px] text-muted-foreground opacity-80">
                                       {album.titleNative}
                                     </p>
                                   )}
@@ -1115,7 +1116,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                   <div className="flex flex-col gap-3">
                     {selectedMusicFilter === "ALL" &&
                       musicAlbums.length > 0 && (
-                        <div className="flex items-center gap-2 border-b border-border/20 pb-1.5 pt-2">
+                        <div className="flex items-center gap-2 border-b border-border/20 pt-2 pb-1.5">
                           <h3 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
                             Popular Tracks
                           </h3>
@@ -1135,7 +1136,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                           >
                             <Link
                               href={trackHref}
-                              className="flex min-w-0 flex-1 items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl"
+                              className="flex min-w-0 flex-1 items-center gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
                               <div className="relative aspect-square w-12 shrink-0 overflow-hidden rounded-xl bg-muted">
                                 {track.coverImage ? (
@@ -1156,7 +1157,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                               </div>
 
                               <div className="flex min-w-0 flex-1 flex-col">
-                                <span className="truncate text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
+                                <span className="truncate text-xs font-semibold text-foreground transition-colors group-hover:text-primary">
                                   {track.titlePrimary}
                                 </span>
                                 {track.albumTitle && (
@@ -1167,7 +1168,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                                 {track.titleNative &&
                                   track.titleNative !== track.titlePrimary &&
                                   !track.albumTitle && (
-                                    <span className="truncate font-japanese text-[10px] text-muted-foreground opacity-80">
+                                    <span className="font-japanese truncate text-[10px] text-muted-foreground opacity-80">
                                       {track.titleNative}
                                     </span>
                                   )}
@@ -1187,7 +1188,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                                 )}
                               {typeof track.playCount === "number" &&
                               track.playCount > 0 ? (
-                                <span className="inline-flex items-center gap-0.5 font-medium tabular-nums text-foreground/80">
+                                <span className="inline-flex items-center gap-0.5 font-medium text-foreground/80 tabular-nums">
                                   <IconPlayerPlay
                                     className="size-3 opacity-60"
                                     aria-hidden="true"
@@ -1198,7 +1199,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                                 </span>
                               ) : typeof track.listeners === "number" &&
                                 track.listeners > 0 ? (
-                                <span className="inline-flex items-center gap-0.5 font-medium tabular-nums text-foreground/80">
+                                <span className="inline-flex items-center gap-0.5 font-medium text-foreground/80 tabular-nums">
                                   <IconHeadphones
                                     className="size-3 opacity-60"
                                     aria-hidden="true"
@@ -1415,174 +1416,173 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
 
           {/* 3. Staff Credits Section */}
           {currentTab === "STAFF" && deduplicatedStaffRoles.length > 0 && (
-              <section
-                aria-labelledby="staff-heading"
-                className="flex flex-col gap-4"
-              >
-                <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-2">
-                    <IconBriefcase
-                      className="size-4 text-primary"
-                      aria-hidden="true"
-                    />
-                    <h2
-                      id="staff-heading"
-                      className="text-base font-semibold text-foreground"
-                    >
-                      Production Staff ({deduplicatedStaffRoles.length})
-                    </h2>
-                  </div>
-
-                  {/* Media Type Filter Pills */}
-                  <div className="flex flex-wrap items-center gap-1">
-                    {(
-                      ["ALL", "ANIME", "MANGA", "MOVIE", "TV", "BOOK"] as const
-                    ).map((type) => {
-                      const count = staffCounts[type]
-                      if (type !== "ALL" && count === 0) return null
-                      const isSelected = selectedStaffMediaType === type
-                      const labelMap: Record<MediaFilterKey, string> = {
-                        ALL: "All",
-                        ANIME: "Anime",
-                        MANGA: "Manga",
-                        MOVIE: "Movies",
-                        TV: "TV Shows",
-                        BOOK: "Books",
-                      }
-                      return (
-                        <button
-                          key={type}
-                          type="button"
-                          onClick={() => setSelectedStaffMediaType(type)}
-                          className={cn(
-                            "inline-flex cursor-pointer items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                            isSelected
-                              ? "bg-primary text-primary-foreground shadow-xs"
-                              : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
-                          )}
-                        >
-                          <span>{labelMap[type]}</span>
-                          <span
-                            className={cn(
-                              "py-0.2 rounded-full px-1.5 text-[9px] font-bold",
-                              isSelected
-                                ? "bg-primary-foreground/20 text-primary-foreground"
-                                : "bg-background/80 text-muted-foreground"
-                            )}
-                          >
-                            {count}
-                          </span>
-                        </button>
-                      )
-                    })}
-                  </div>
+            <section
+              aria-labelledby="staff-heading"
+              className="flex flex-col gap-4"
+            >
+              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2">
+                  <IconBriefcase
+                    className="size-4 text-primary"
+                    aria-hidden="true"
+                  />
+                  <h2
+                    id="staff-heading"
+                    className="text-base font-semibold text-foreground"
+                  >
+                    Production Staff ({deduplicatedStaffRoles.length})
+                  </h2>
                 </div>
 
-                {/* Render Staff Groups Separated by Media Type */}
-                {visibleStaffGroups.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-border/60 p-8 text-center text-sm text-muted-foreground">
-                    No staff credits found in this category.
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-6">
-                    {visibleStaffGroups.map((group) => (
-                      <div key={group.type} className="flex flex-col gap-3">
-                        {/* Section Header */}
-                        <div className="flex items-center gap-2 border-b border-border/20 pb-1.5">
-                          <h3 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
-                            {group.title}
-                          </h3>
-                          <span className="py-0.2 rounded-full bg-muted px-2 text-[10px] font-semibold text-muted-foreground tabular-nums">
-                            {group.count}
-                          </span>
-                        </div>
+                {/* Media Type Filter Pills */}
+                <div className="flex flex-wrap items-center gap-1">
+                  {(
+                    ["ALL", "ANIME", "MANGA", "MOVIE", "TV", "BOOK"] as const
+                  ).map((type) => {
+                    const count = staffCounts[type]
+                    if (type !== "ALL" && count === 0) return null
+                    const isSelected = selectedStaffMediaType === type
+                    const labelMap: Record<MediaFilterKey, string> = {
+                      ALL: "All",
+                      ANIME: "Anime",
+                      MANGA: "Manga",
+                      MOVIE: "Movies",
+                      TV: "TV Shows",
+                      BOOK: "Books",
+                    }
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setSelectedStaffMediaType(type)}
+                        className={cn(
+                          "inline-flex cursor-pointer items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          isSelected
+                            ? "bg-primary text-primary-foreground shadow-xs"
+                            : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+                        )}
+                      >
+                        <span>{labelMap[type]}</span>
+                        <span
+                          className={cn(
+                            "py-0.2 rounded-full px-1.5 text-[9px] font-bold",
+                            isSelected
+                              ? "bg-primary-foreground/20 text-primary-foreground"
+                              : "bg-background/80 text-muted-foreground"
+                          )}
+                        >
+                          {count}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
 
-                        {/* Staff Cards Grid */}
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                          {group.items.map((item) => {
-                            const mediaTypeSlug =
-                              item.mediaType.toLowerCase() === "movie"
-                                ? "movies"
-                                : item.mediaType.toLowerCase()
-                            const mediaHref = `/IRIS-list/media/${mediaTypeSlug}/${item.mediaId}`
+              {/* Render Staff Groups Separated by Media Type */}
+              {visibleStaffGroups.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border/60 p-8 text-center text-sm text-muted-foreground">
+                  No staff credits found in this category.
+                </div>
+              ) : (
+                <div className="flex flex-col gap-6">
+                  {visibleStaffGroups.map((group) => (
+                    <div key={group.type} className="flex flex-col gap-3">
+                      {/* Section Header */}
+                      <div className="flex items-center gap-2 border-b border-border/20 pb-1.5">
+                        <h3 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                          {group.title}
+                        </h3>
+                        <span className="py-0.2 rounded-full bg-muted px-2 text-[10px] font-semibold text-muted-foreground tabular-nums">
+                          {group.count}
+                        </span>
+                      </div>
 
-                            return (
-                              <div
-                                key={item.key}
-                                className="flex items-center gap-3 rounded-2xl border border-border/40 bg-card/60 p-2.5 transition-colors hover:border-border/60"
+                      {/* Staff Cards Grid */}
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        {group.items.map((item) => {
+                          const mediaTypeSlug =
+                            item.mediaType.toLowerCase() === "movie"
+                              ? "movies"
+                              : item.mediaType.toLowerCase()
+                          const mediaHref = `/IRIS-list/media/${mediaTypeSlug}/${item.mediaId}`
+
+                          return (
+                            <div
+                              key={item.key}
+                              className="flex items-center gap-3 rounded-2xl border border-border/40 bg-card/60 p-2.5 transition-colors hover:border-border/60"
+                            >
+                              <Link
+                                href={mediaHref}
+                                className="relative aspect-[3/4] w-14 shrink-0 overflow-hidden rounded-xl bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
                               >
+                                {item.mediaCover ? (
+                                  <img
+                                    src={item.mediaCover}
+                                    alt={item.mediaTitle}
+                                    loading="lazy"
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center text-muted-foreground/40">
+                                    <IconPhotoOff
+                                      className="size-4"
+                                      aria-hidden="true"
+                                    />
+                                  </div>
+                                )}
+                              </Link>
+
+                              <div className="flex min-w-0 flex-1 flex-col">
                                 <Link
                                   href={mediaHref}
-                                  className="relative aspect-[3/4] w-14 shrink-0 overflow-hidden rounded-xl bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                  className="truncate text-xs font-semibold text-foreground outline-none hover:underline focus-visible:underline"
                                 >
-                                  {item.mediaCover ? (
-                                    <img
-                                      src={item.mediaCover}
-                                      alt={item.mediaTitle}
-                                      loading="lazy"
-                                      className="h-full w-full object-cover"
-                                    />
-                                  ) : (
-                                    <div className="flex h-full w-full items-center justify-center text-muted-foreground/40">
-                                      <IconPhotoOff
-                                        className="size-4"
-                                        aria-hidden="true"
-                                      />
-                                    </div>
-                                  )}
+                                  {item.mediaTitle}
                                 </Link>
 
-                                <div className="flex min-w-0 flex-1 flex-col">
-                                  <Link
-                                    href={mediaHref}
-                                    className="truncate text-xs font-semibold text-foreground outline-none hover:underline focus-visible:underline"
-                                  >
-                                    {item.mediaTitle}
-                                  </Link>
+                                {item.mediaTitleNative &&
+                                  item.mediaTitleNative !== item.mediaTitle && (
+                                    <span className="font-japanese truncate text-[10px] text-muted-foreground opacity-75">
+                                      {item.mediaTitleNative}
+                                    </span>
+                                  )}
 
-                                  {item.mediaTitleNative &&
-                                    item.mediaTitleNative !==
-                                      item.mediaTitle && (
-                                      <span className="font-japanese truncate text-[10px] text-muted-foreground opacity-75">
-                                        {item.mediaTitleNative}
+                                <div className="flex items-center gap-1.5 pt-1 text-[10px] text-muted-foreground">
+                                  <Badge
+                                    variant="outline"
+                                    className="px-1.5 py-0 text-[9px] font-semibold uppercase"
+                                  >
+                                    {item.customRole ||
+                                      item.role.replace(/_/g, " ")}
+                                  </Badge>
+                                  <span>
+                                    {formatMediaFormat(
+                                      item.mediaFormat,
+                                      item.mediaType
+                                    )}
+                                  </span>
+                                  {item.mediaYear && (
+                                    <span>• {item.mediaYear}</span>
+                                  )}
+                                  {typeof item.mediaScore === "number" &&
+                                    item.mediaScore > 0 && (
+                                      <span className="font-medium text-amber-500 tabular-nums">
+                                        • {item.mediaScore}%
                                       </span>
                                     )}
-
-                                  <div className="flex items-center gap-1.5 pt-1 text-[10px] text-muted-foreground">
-                                    <Badge
-                                      variant="outline"
-                                      className="px-1.5 py-0 text-[9px] font-semibold uppercase"
-                                    >
-                                      {item.customRole ||
-                                        item.role.replace(/_/g, " ")}
-                                    </Badge>
-                                    <span>
-                                      {formatMediaFormat(
-                                        item.mediaFormat,
-                                        item.mediaType
-                                      )}
-                                    </span>
-                                    {item.mediaYear && (
-                                      <span>• {item.mediaYear}</span>
-                                    )}
-                                    {typeof item.mediaScore === "number" &&
-                                      item.mediaScore > 0 && (
-                                        <span className="font-medium text-amber-500 tabular-nums">
-                                          • {item.mediaScore}%
-                                        </span>
-                                      )}
-                                  </div>
                                 </div>
                               </div>
-                            )
-                          })}
-                        </div>
+                            </div>
+                          )
+                        })}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-            )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
 
           {totalMusicReleases === 0 &&
             deduplicatedVoicedRoles.length === 0 &&

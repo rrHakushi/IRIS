@@ -579,8 +579,7 @@ export function UserListView({
             const rawNext = (it.entry.progress ?? 0) + count
             const nextProg =
               maxCount && maxCount > 0 ? Math.min(rawNext, maxCount) : rawNext
-            const isCompleted =
-              maxCount && maxCount > 0 && nextProg >= maxCount
+            const isCompleted = maxCount && maxCount > 0 && nextProg >= maxCount
             return {
               ...it,
               entry: {

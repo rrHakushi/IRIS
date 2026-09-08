@@ -210,7 +210,10 @@ export default defineRoute({
     },
     async handler(ctx: Context) {
       const { params, body, session, prisma, cache, notifications } = ctx
-      const set = ctx.set as { headers?: Record<string, string>; status?: number }
+      const set = ctx.set as {
+        headers?: Record<string, string>
+        status?: number
+      }
       const typedBody = body as { content: string; isSpoiler?: boolean }
       const trimmedContent = typedBody.content.trim()
       if (!trimmedContent) {
@@ -295,8 +298,7 @@ export default defineRoute({
           const authorName =
             authorProfile.displayName || session.user.username || "A user"
           const formattedMediaType =
-            mediaType.charAt(0).toUpperCase() +
-            mediaType.slice(1).toLowerCase()
+            mediaType.charAt(0).toUpperCase() + mediaType.slice(1).toLowerCase()
           const snippet =
             trimmedContent.length > 80
               ? `${trimmedContent.slice(0, 80)}...`

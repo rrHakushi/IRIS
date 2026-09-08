@@ -114,12 +114,20 @@ export function MusicPlayerPreview({
             size="icon"
             onClick={togglePlay}
             className="size-10 rounded-full bg-primary text-primary-foreground shadow-xs transition-transform hover:scale-105 hover:bg-primary/90"
-            aria-label={isPlaying ? "Pause audio preview" : "Play audio preview"}
+            aria-label={
+              isPlaying ? "Pause audio preview" : "Play audio preview"
+            }
           >
             {isPlaying ? (
-              <IconPlayerPause className="size-5 fill-current" aria-hidden="true" />
+              <IconPlayerPause
+                className="size-5 fill-current"
+                aria-hidden="true"
+              />
             ) : (
-              <IconPlayerPlay className="size-5 fill-current ps-0.5" aria-hidden="true" />
+              <IconPlayerPlay
+                className="size-5 fill-current ps-0.5"
+                aria-hidden="true"
+              />
             )}
           </Button>
 
@@ -128,7 +136,10 @@ export function MusicPlayerPreview({
               <span className="truncate text-sm font-semibold text-foreground">
                 {title}
               </span>
-              <Badge variant="secondary" className="text-[10px] font-mono py-0 h-4">
+              <Badge
+                variant="secondary"
+                className="h-4 py-0 font-mono text-[10px]"
+              >
                 30s Preview
               </Badge>
             </div>
@@ -172,7 +183,7 @@ export function MusicPlayerPreview({
             aria-label="Seek audio preview"
           />
         </div>
-        <div className="flex items-center justify-between text-[11px] font-mono text-muted-foreground">
+        <div className="flex items-center justify-between font-mono text-[11px] text-muted-foreground">
           <span>{formatTime(currentTime)}</span>
           <span>{formatTime(duration)}</span>
         </div>

@@ -39,9 +39,14 @@ export function MediaFooter({ media }: MediaFooterProps) {
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
               {sources.map(([provider, info]) => {
                 const url =
-                  typeof info === "object" && info !== null && "url" in info && typeof info.url === "string"
+                  typeof info === "object" &&
+                  info !== null &&
+                  "url" in info &&
+                  typeof info.url === "string"
                     ? info.url
-                    : typeof info === "string" && (info.startsWith("http://") || info.startsWith("https://"))
+                    : typeof info === "string" &&
+                        (info.startsWith("http://") ||
+                          info.startsWith("https://"))
                       ? info
                       : null
                 if (!url) return null
@@ -56,7 +61,8 @@ export function MediaFooter({ media }: MediaFooterProps) {
                           ? "Deezer"
                           : provider === "lrclib"
                             ? "LRCLIB"
-                            : provider.charAt(0).toUpperCase() + provider.slice(1)
+                            : provider.charAt(0).toUpperCase() +
+                              provider.slice(1)
 
                 return (
                   <a

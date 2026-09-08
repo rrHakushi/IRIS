@@ -131,7 +131,7 @@ export default defineRoute({
     const currentUser = session?.isAuthenticated ? session.getUser() : null
     const isOwner = Boolean(
       currentUser &&
-        currentUser.username?.toLowerCase() === listOwner.username.toLowerCase()
+      currentUser.username?.toLowerCase() === listOwner.username.toLowerCase()
     )
     const isAdmin = Boolean(
       session?.isAuthenticated && session.hasPermission(IRISFlags.ADMINISTRATOR)
@@ -141,7 +141,8 @@ export default defineRoute({
     const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
 
     let typeFilter: ActivityType | undefined
-    const actionQuery = typeof query?.action === "string" ? query.action : undefined
+    const actionQuery =
+      typeof query?.action === "string" ? query.action : undefined
     if (actionQuery && actionQuery !== "ALL") {
       switch (actionQuery.toUpperCase()) {
         case "ADDED":

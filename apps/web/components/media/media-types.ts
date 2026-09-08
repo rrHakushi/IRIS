@@ -226,7 +226,10 @@ export interface NormalizedMediaData {
   revenue?: number | bigint | string | null
   imdbRating?: number | null
   imdbVotes?: number | null
-  sources?: Record<string, SourceLinkItem | string | number | boolean | null> | null
+  sources?: Record<
+    string,
+    SourceLinkItem | string | number | boolean | null
+  > | null
   statusDistribution?: Record<string, number> | null
   scoreDistribution?: Record<string, number> | null
   alAverageScore?: number | null

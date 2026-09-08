@@ -35,7 +35,9 @@ export default defineRoute({
   },
 
   async GET({ query, prisma, cache, cacheKeys, logger }) {
-    const cleanQuery = decodeURIComponent(String(query.q || "")).replace(/\+/g, " ").trim()
+    const cleanQuery = decodeURIComponent(String(query.q || ""))
+      .replace(/\+/g, " ")
+      .trim()
     const cacheKey = cacheKeys.search.anime(cleanQuery)
 
     if (!cleanQuery || cleanQuery.length < 3) {

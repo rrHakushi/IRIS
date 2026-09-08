@@ -15,11 +15,7 @@ export default defineRoute({
         minLength: 2,
       }),
       type: t.Optional(
-        t.Union([
-          t.Literal("ALL"),
-          t.Literal("TRACK"),
-          t.Literal("ALBUM"),
-        ])
+        t.Union([t.Literal("ALL"), t.Literal("TRACK"), t.Literal("ALBUM")])
       ),
     }),
     response: {
@@ -42,9 +38,13 @@ export default defineRoute({
 
   async GET({ query, prisma, cache, cacheKeys, logger }) {
     const { q, type } = query
-    const cleanQuery = decodeURIComponent(String(q || "")).replace(/\+/g, " ").trim()
+    const cleanQuery = decodeURIComponent(String(q || ""))
+      .replace(/\+/g, " ")
+      .trim()
     const filterType = type && type !== "ALL" ? type : undefined
-    const cacheKey = cacheKeys.search.music(`${filterType || "ALL"}:${cleanQuery}`)
+    const cacheKey = cacheKeys.search.music(
+      `${filterType || "ALL"}:${cleanQuery}`
+    )
 
     if (!cleanQuery || cleanQuery.length < 2) {
       return new NotFound("Query must be at least 2 characters long")
@@ -58,8 +58,15 @@ export default defineRoute({
     const whereClause = {
       ...(filterType ? { type: filterType } : {}),
       OR: [
-        { titlePrimary: { contains: cleanQuery, mode: "insensitive" as const } },
-        { titleSecondary: { contains: cleanQuery, mode: "insensitive" as const } },
+        {
+          titlePrimary: { contains: cleanQuery, mode: "insensitive" as const },
+        },
+        {
+          titleSecondary: {
+            contains: cleanQuery,
+            mode: "insensitive" as const,
+          },
+        },
         { artistName: { contains: cleanQuery, mode: "insensitive" as const } },
       ],
     }
@@ -108,8 +115,13 @@ export default defineRoute({
           : "MUSIC"
 
     if (data.length === 0) {
-      logger.warn(`No data found for query: ${cleanQuery} (type: ${filterType || "ALL"}), triggering refresh`)
-      const rawResults = await mediaQueueService.enqueueSearchFetch(queueType, cleanQuery)
+      logger.warn(
+        `No data found for query: ${cleanQuery} (type: ${filterType || "ALL"}), triggering refresh`
+      )
+      const rawResults = await mediaQueueService.enqueueSearchFetch(
+        queueType,
+        cleanQuery
+      )
       const results: MusicSearchResponse = rawResults.map((item) => ({
         id: item.id,
         titlePrimary: item.titlePrimary,
@@ -130,12 +142,14 @@ export default defineRoute({
     }
 
     await cache.set(cacheKey, data, SEARCH_MUSIC_TTL)
-    void mediaQueueService.enqueueSearchFetch(queueType, cleanQuery).catch((err: Error) => {
-      logger.error(
-        `[SearchMusicRoute] Failed to queue background search for "${cleanQuery}":`,
-        err
-      )
-    })
+    void mediaQueueService
+      .enqueueSearchFetch(queueType, cleanQuery)
+      .catch((err: Error) => {
+        logger.error(
+          `[SearchMusicRoute] Failed to queue background search for "${cleanQuery}":`,
+          err
+        )
+      })
 
     return data
   },

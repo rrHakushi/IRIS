@@ -128,11 +128,7 @@ function getServerSnapshot(): AudioPreviewState {
 }
 
 export function useAudioPreview() {
-  const state = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot
-  )
+  const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
   const togglePlay = useCallback(
     (trackId: number | string, previewUrl?: string | null) => {

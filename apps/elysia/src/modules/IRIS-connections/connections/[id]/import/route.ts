@@ -5,7 +5,10 @@ export default defineRoute({
   POST: {
     schema: {
       params: t.Object({
-        id: t.String({ description: "Connection ID or provider name (e.g. anilist, mal, simkl, bangumi, deezer)" }),
+        id: t.String({
+          description:
+            "Connection ID or provider name (e.g. anilist, mal, simkl, bangumi, deezer)",
+        }),
       }),
       body: t.Optional(
         t.Object({

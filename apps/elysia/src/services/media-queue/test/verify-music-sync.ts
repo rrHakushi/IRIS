@@ -25,7 +25,9 @@ async function runMusicSyncVerification() {
     console.log(`  ✓ Deezer tracks found: ${deezerTracks.length}`)
     if (deezerTracks.length > 0 && deezerTracks[0]) {
       const first = deezerTracks[0]
-      console.log(`    - First match: "${first.title}" by ${first.artist?.name} (Deezer ID: ${first.id})`)
+      console.log(
+        `    - First match: "${first.title}" by ${first.artist?.name} (Deezer ID: ${first.id})`
+      )
     }
   } catch (err: any) {
     console.warn(`  ⚠️ Deezer track search error: ${err.message}`)
@@ -33,15 +35,24 @@ async function runMusicSyncVerification() {
 
   try {
     const lyrics = await lrclib.fetchLyrics("Bohemian Rhapsody", "Queen")
-    console.log(`  ✓ LRCLIB: Lyrics found (${lyrics?.plainLyrics ? `${lyrics.plainLyrics.length} chars` : "none"})`)
+    console.log(
+      `  ✓ LRCLIB: Lyrics found (${lyrics?.plainLyrics ? `${lyrics.plainLyrics.length} chars` : "none"})`
+    )
   } catch (err: any) {
     console.warn(`  ⚠️ LRCLIB error: ${err.message}`)
   }
 
   // 2. Test enqueueSearchFetch("MUSIC", "Bohemian Rhapsody")
-  console.log("\n[2/7] Testing mediaQueueService.enqueueSearchFetch('MUSIC', 'Bohemian Rhapsody')...")
-  const searchResults = await mediaQueueService.enqueueSearchFetch("MUSIC", "Bohemian Rhapsody")
-  console.log(`  ✓ enqueueSearchFetch returned ${searchResults.length} search results`)
+  console.log(
+    "\n[2/7] Testing mediaQueueService.enqueueSearchFetch('MUSIC', 'Bohemian Rhapsody')..."
+  )
+  const searchResults = await mediaQueueService.enqueueSearchFetch(
+    "MUSIC",
+    "Bohemian Rhapsody"
+  )
+  console.log(
+    `  ✓ enqueueSearchFetch returned ${searchResults.length} search results`
+  )
 
   if (searchResults.length === 0) {
     throw new Error("No search results returned from enqueueSearchFetch")
@@ -67,7 +78,9 @@ async function runMusicSyncVerification() {
   }
 
   const upsertedTrack = await mediaDbSyncer.upsertMusic(testTrackData)
-  console.log(`  ✓ Synced Music Track ID: ${upsertedTrack.id} ("${testTrackData.titlePrimary}")`)
+  console.log(
+    `  ✓ Synced Music Track ID: ${upsertedTrack.id} ("${testTrackData.titlePrimary}")`
+  )
 
   const testAlbumData: any = {
     deezerId: "test-album-999999",
@@ -79,7 +92,9 @@ async function runMusicSyncVerification() {
   }
 
   const upsertedAlbum = await mediaDbSyncer.upsertMusic(testAlbumData)
-  console.log(`  ✓ Synced Music Album ID: ${upsertedAlbum.id} ("${testAlbumData.titlePrimary}")`)
+  console.log(
+    `  ✓ Synced Music Album ID: ${upsertedAlbum.id} ("${testAlbumData.titlePrimary}")`
+  )
 
   // Link track to album
   const linkedTrack = await prisma.music.update({
@@ -89,7 +104,9 @@ async function runMusicSyncVerification() {
   console.log(`  ✓ Linked track ${linkedTrack.id} to album ${upsertedAlbum.id}`)
 
   // 4. Test Search Music Route Handler
-  console.log("\n[4/7] Testing Search Music Route Handler (apps/elysia/src/modules/IRIS-media/search/music)...")
+  console.log(
+    "\n[4/7] Testing Search Music Route Handler (apps/elysia/src/modules/IRIS-media/search/music)..."
+  )
   const dummySearchContext: any = {
     query: { q: "Bohemian Rhapsody" },
     prisma,
@@ -101,20 +118,29 @@ async function runMusicSyncVerification() {
     },
     logger: {
       warn: (msg: string) => console.log(`    [Route Logger WARN] ${msg}`),
-      error: (msg: string, err: any) => console.error(`    [Route Logger ERROR] ${msg}`, err),
+      error: (msg: string, err: any) =>
+        console.error(`    [Route Logger ERROR] ${msg}`, err),
       info: (msg: string) => console.log(`    [Route Logger INFO] ${msg}`),
     },
   }
 
-  const routeResults: any = await (searchMusicRoute as any).GET(dummySearchContext)
-  console.log(`  ✓ Route returned ${Array.isArray(routeResults) ? routeResults.length : 0} results`)
+  const routeResults: any = await (searchMusicRoute as any).GET(
+    dummySearchContext
+  )
+  console.log(
+    `  ✓ Route returned ${Array.isArray(routeResults) ? routeResults.length : 0} results`
+  )
   if (Array.isArray(routeResults) && routeResults.length > 0) {
     const rSample = routeResults[0]
-    console.log(`    - First match: [${rSample.type}] "${rSample.titlePrimary}" by ${rSample.artistName || rSample.artist} (ID: ${rSample.id})`)
+    console.log(
+      `    - First match: [${rSample.type}] "${rSample.titlePrimary}" by ${rSample.artistName || rSample.artist} (ID: ${rSample.id})`
+    )
   }
 
   // 5. Test Media Music By ID Route Handler (Track & Album)
-  console.log("\n[5/7] Testing Media Music [id] Route Handler (apps/elysia/src/modules/IRIS-media/media/music/[id])...")
+  console.log(
+    "\n[5/7] Testing Media Music [id] Route Handler (apps/elysia/src/modules/IRIS-media/media/music/[id])..."
+  )
   const trackDetails: any = await (getMusicByIdRoute as any).GET({
     params: { id: upsertedTrack.id },
     query: { type: "TRACK" },
@@ -123,7 +149,9 @@ async function runMusicSyncVerification() {
     cacheKeys: { music: { id: (id: number) => `music:${id}` } },
     logger: { error: () => {} },
   })
-  console.log(`  ✓ Fetched track details: [${trackDetails.type}] "${trackDetails.titlePrimary}" (Album: ${trackDetails.album})`)
+  console.log(
+    `  ✓ Fetched track details: [${trackDetails.type}] "${trackDetails.titlePrimary}" (Album: ${trackDetails.album})`
+  )
 
   const albumDetails: any = await (getMusicByIdRoute as any).GET({
     params: { id: upsertedAlbum.id },
@@ -133,18 +161,32 @@ async function runMusicSyncVerification() {
     cacheKeys: { music: { id: (id: number) => `music:${id}` } },
     logger: { error: () => {} },
   })
-  console.log(`  ✓ Fetched album details: [${albumDetails.type}] "${albumDetails.titlePrimary}" (${albumDetails.tracks?.length ?? 0} tracks)`)
+  console.log(
+    `  ✓ Fetched album details: [${albumDetails.type}] "${albumDetails.titlePrimary}" (${albumDetails.tracks?.length ?? 0} tracks)`
+  )
 
   // 6. Test User Music List Route Handlers
-  console.log("\n[6/7] Testing User Music List Route Handlers (quick-add, increment, GET list, GET [id], PATCH, DELETE)...")
-  const testUser = await prisma.user.findFirst({ select: { id: true, username: true } })
+  console.log(
+    "\n[6/7] Testing User Music List Route Handlers (quick-add, increment, GET list, GET [id], PATCH, DELETE)..."
+  )
+  const testUser = await prisma.user.findFirst({
+    select: { id: true, username: true },
+  })
   if (testUser) {
     console.log(`  ✓ Target user: @${testUser.username} (${testUser.id})`)
     const fakeSession: any = {
       isAuthenticated: true,
       userId: testUser.id,
-      user: { id: testUser.id, username: testUser.username, name: testUser.username },
-      getUser: () => ({ id: testUser.id, username: testUser.username, name: testUser.username }),
+      user: {
+        id: testUser.id,
+        username: testUser.username,
+        name: testUser.username,
+      },
+      getUser: () => ({
+        id: testUser.id,
+        username: testUser.username,
+        name: testUser.username,
+      }),
     }
 
     // A. Quick-add track
@@ -153,7 +195,9 @@ async function runMusicSyncVerification() {
       session: fakeSession,
       prisma,
     })
-    console.log(`  ✓ Quick-add track response: status=${quickAddTrackRes.entry?.status}, playCount=${quickAddTrackRes.entry?.playCount}`)
+    console.log(
+      `  ✓ Quick-add track response: status=${quickAddTrackRes.entry?.status}, playCount=${quickAddTrackRes.entry?.playCount}`
+    )
 
     // B. Increment playCount for track
     const incrementRes: any = await (incrementRoute as any).POST({
@@ -162,7 +206,9 @@ async function runMusicSyncVerification() {
       session: fakeSession,
       prisma,
     })
-    console.log(`  ✓ Increment track playCount response: new playCount=${incrementRes.entry?.playCount}`)
+    console.log(
+      `  ✓ Increment track playCount response: new playCount=${incrementRes.entry?.playCount}`
+    )
 
     // C. Fetch user music list
     const listRes: any = await (musicListRoute as any).GET({
@@ -171,9 +217,15 @@ async function runMusicSyncVerification() {
       session: fakeSession,
       prisma,
     })
-    console.log(`  ✓ User music list fetched: total=${listRes.pagination?.total}, items=${listRes.items?.length}`)
-    const listTrackItem = listRes.items?.find((i: any) => i.entry?.musicId === upsertedTrack.id)
-    console.log(`    - Track item found in list: ${Boolean(listTrackItem)} (playCount: ${listTrackItem?.entry?.playCount})`)
+    console.log(
+      `  ✓ User music list fetched: total=${listRes.pagination?.total}, items=${listRes.items?.length}`
+    )
+    const listTrackItem = listRes.items?.find(
+      (i: any) => i.entry?.musicId === upsertedTrack.id
+    )
+    console.log(
+      `    - Track item found in list: ${Boolean(listTrackItem)} (playCount: ${listTrackItem?.entry?.playCount})`
+    )
 
     // D. Fetch individual entry via GET [id]
     const singleEntryRes: any = await (musicListItemRoute as any).GET({
@@ -181,7 +233,9 @@ async function runMusicSyncVerification() {
       session: fakeSession,
       prisma,
     })
-    console.log(`  ✓ Individual entry fetched: itemType=${singleEntryRes.entry?.itemType}, status=${singleEntryRes.entry?.status}`)
+    console.log(
+      `  ✓ Individual entry fetched: itemType=${singleEntryRes.entry?.itemType}, status=${singleEntryRes.entry?.status}`
+    )
 
     // E. Update entry via PATCH [id]
     const patchRes: any = await (musicListItemRoute as any).PATCH({
@@ -190,7 +244,9 @@ async function runMusicSyncVerification() {
       session: fakeSession,
       prisma,
     })
-    console.log(`  ✓ Updated entry via PATCH: status=${patchRes.entry?.status}, score=${patchRes.entry?.score}`)
+    console.log(
+      `  ✓ Updated entry via PATCH: status=${patchRes.entry?.status}, score=${patchRes.entry?.score}`
+    )
 
     // F. Delete track list entry via DELETE [id]
     await (musicListItemRoute as any).DELETE({

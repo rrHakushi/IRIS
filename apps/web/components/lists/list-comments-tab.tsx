@@ -481,7 +481,9 @@ export function ListCommentsTab({
       const createdReply = res.data?.reply || res.data?.data
       if (!res.error && res.data?.success && createdReply) {
         setComments((prev) =>
-          prev.map((c) => (c.id === commentId ? { ...c, reply: createdReply } : c))
+          prev.map((c) =>
+            c.id === commentId ? { ...c, reply: createdReply } : c
+          )
         )
         setReplyingToId(null)
         setReplyText("")
@@ -520,7 +522,9 @@ export function ListCommentsTab({
       const updatedReply = res.data?.reply || res.data?.data
       if (!res.error && res.data?.success && updatedReply) {
         setComments((prev) =>
-          prev.map((c) => (c.id === commentId ? { ...c, reply: updatedReply } : c))
+          prev.map((c) =>
+            c.id === commentId ? { ...c, reply: updatedReply } : c
+          )
         )
         setEditingReplyId(null)
         setEditReplyText("")
@@ -781,29 +785,29 @@ export function ListCommentsTab({
 
             const replyAuthorProfile: UserProfileCustomization | null = reply
               ? {
-                displayName: reply.author.displayName || "",
-                displayNameStyle: reply.author.displayNameStyle || {
-                  font: "default",
-                  effect: "solid",
-                  color: "currentColor",
-                  color2: "#8b5cf6",
-                  colors: [
-                    "#a855f7",
-                    "#3b82f6",
-                    "#10b981",
-                    "#f59e0b",
-                    "#ef4444",
-                  ],
-                },
-                pronouns: reply.author.pronouns || "",
-                statusText: reply.author.statusText || "",
-                bio: reply.author.bio || "",
-                avatarUrl: reply.author.avatarUrl,
-                bannerUrl: reply.author.bannerUrl || null,
-                nameplateUrl: reply.author.nameplateUrl || null,
-                sidebarBannerUrl: reply.author.sidebarBannerUrl || null,
-                avatarFrame: reply.author.avatarFrame,
-              }
+                  displayName: reply.author.displayName || "",
+                  displayNameStyle: reply.author.displayNameStyle || {
+                    font: "default",
+                    effect: "solid",
+                    color: "currentColor",
+                    color2: "#8b5cf6",
+                    colors: [
+                      "#a855f7",
+                      "#3b82f6",
+                      "#10b981",
+                      "#f59e0b",
+                      "#ef4444",
+                    ],
+                  },
+                  pronouns: reply.author.pronouns || "",
+                  statusText: reply.author.statusText || "",
+                  bio: reply.author.bio || "",
+                  avatarUrl: reply.author.avatarUrl,
+                  bannerUrl: reply.author.bannerUrl || null,
+                  nameplateUrl: reply.author.nameplateUrl || null,
+                  sidebarBannerUrl: reply.author.sidebarBannerUrl || null,
+                  avatarFrame: reply.author.avatarFrame,
+                }
               : null
 
             return (
@@ -1052,7 +1056,8 @@ export function ListCommentsTab({
                                 className={cn(
                                   "cursor-pointer text-start text-xs font-semibold text-foreground hover:underline focus:outline-hidden",
                                   getDisplayNameEffectClasses(
-                                    reply.author.displayNameStyle?.effect ?? undefined
+                                    reply.author.displayNameStyle?.effect ??
+                                      undefined
                                   )
                                 )}
                                 style={getDisplayNameStyleCss(
@@ -1213,7 +1218,7 @@ export function ListCommentsTab({
                   className={cn(
                     "cursor-pointer",
                     (currentPage <= 1 || isLoading) &&
-                    "pointer-events-none opacity-40"
+                      "pointer-events-none opacity-40"
                   )}
                   onPress={() => {
                     if (currentPage > 1 && !isLoading) {
@@ -1236,7 +1241,7 @@ export function ListCommentsTab({
                       className={cn(
                         "cursor-pointer",
                         page === currentPage &&
-                        "border-primary/40 font-semibold text-primary"
+                          "border-primary/40 font-semibold text-primary"
                       )}
                       onPress={() => {
                         if (!isLoading && page !== currentPage) {
@@ -1256,7 +1261,7 @@ export function ListCommentsTab({
                   className={cn(
                     "cursor-pointer",
                     (currentPage >= totalPages || isLoading) &&
-                    "pointer-events-none opacity-40"
+                      "pointer-events-none opacity-40"
                   )}
                   onPress={() => {
                     if (currentPage < totalPages && !isLoading) {

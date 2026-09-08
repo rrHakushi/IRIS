@@ -10,11 +10,7 @@ export type MediaJobType =
   | "MUSIC_TRACK"
 
 export type MediaJobStatus =
-  | "PENDING"
-  | "PROCESSING"
-  | "COMPLETED"
-  | "FAILED"
-  | "CANCELLED"
+  "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | "CANCELLED"
 
 export interface MediaJob {
   id: string // Unique job ID (e.g. "ANIME:16498")

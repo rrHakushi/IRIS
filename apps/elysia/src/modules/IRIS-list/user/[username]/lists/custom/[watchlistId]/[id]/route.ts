@@ -388,7 +388,11 @@ export default defineRoute({
       mediaId: Number(params.id),
       ...(query?.mediaType
         ? query.mediaType === "MUSIC"
-          ? { mediaType: { in: ["MUSIC", "MUSIC_ALBUM", "MUSIC_TRACK"] as MediaType[] } }
+          ? {
+              mediaType: {
+                in: ["MUSIC", "MUSIC_ALBUM", "MUSIC_TRACK"] as MediaType[],
+              },
+            }
           : { mediaType: query.mediaType as MediaType }
         : {}),
     }

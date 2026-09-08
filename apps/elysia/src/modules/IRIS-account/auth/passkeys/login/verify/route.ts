@@ -100,7 +100,8 @@ export default defineRoute({
       request?.headers.get("origin") || request?.headers.get("referer")
     const allowedOrigins = new Set<string>()
     if (process.env.NEXTAUTH_URL) allowedOrigins.add(process.env.NEXTAUTH_URL)
-    if (process.env.NEXT_PUBLIC_URL) allowedOrigins.add(process.env.NEXT_PUBLIC_URL)
+    if (process.env.NEXT_PUBLIC_URL)
+      allowedOrigins.add(process.env.NEXT_PUBLIC_URL)
     allowedOrigins.add("http://localhost:3000")
     allowedOrigins.add("http://127.0.0.1:3000")
     if (originHeader) {
@@ -114,7 +115,9 @@ export default defineRoute({
     let expectedRPID = "localhost"
     try {
       const primaryOrigin = process.env.NEXTAUTH_URL || "http://localhost:3000"
-      const hostname = originHeader ? new URL(originHeader).hostname : new URL(primaryOrigin).hostname
+      const hostname = originHeader
+        ? new URL(originHeader).hostname
+        : new URL(primaryOrigin).hostname
       if (hostname === "localhost" || hostname === "127.0.0.1") {
         expectedRPID = "localhost"
       } else if (process.env.RP_ID && process.env.RP_ID.trim()) {

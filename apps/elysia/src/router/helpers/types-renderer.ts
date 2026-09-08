@@ -58,7 +58,8 @@ export function extractTypeSignatures(
         .filter(Boolean)
         .map((a, index) => {
           const isOptional = a.includes("=") || a.includes("?") || index > 0
-          const argName = a.split(/[=:]/)[0]?.replace(/\?$/, "").trim() || a.trim()
+          const argName =
+            a.split(/[=:]/)[0]?.replace(/\?$/, "").trim() || a.trim()
           return `${argName}${isOptional ? "?" : ""}: any`
         })
         .join(", ")

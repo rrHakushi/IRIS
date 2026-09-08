@@ -43,7 +43,9 @@ export default defineRoute({
     const isAdmin = session.hasPermission(IRISFlags.ADMINISTRATOR)
 
     if (!isOwner && !isAdmin) {
-      throw new Forbidden("You do not have permission to delete this activity log.")
+      throw new Forbidden(
+        "You do not have permission to delete this activity log."
+      )
     }
 
     await prisma.activityLog.delete({

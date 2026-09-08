@@ -118,7 +118,9 @@ export class DeezerProvider {
   private async fetchJson<T>(endpoint: string): Promise<T | null> {
     await this.waitForRateLimit()
     try {
-      const url = endpoint.startsWith("http") ? endpoint : `${this.baseUrl}${endpoint}`
+      const url = endpoint.startsWith("http")
+        ? endpoint
+        : `${this.baseUrl}${endpoint}`
       const res = await fetch(url, {
         headers: {
           "User-Agent": "IRIS-Platform/1.0 (https://iris.app)",
@@ -127,7 +129,8 @@ export class DeezerProvider {
       })
       if (!res.ok) return null
       const data = await res.json()
-      if (typeof data === "object" && data !== null && "error" in data) return null
+      if (typeof data === "object" && data !== null && "error" in data)
+        return null
       return data as T
     } catch {
       return null
@@ -146,7 +149,9 @@ export class DeezerProvider {
     return this.fetchJson<DeezerArtistPayload>(`/artist/${id}`)
   }
 
-  async getPlaylist(id: number | string): Promise<DeezerPlaylistPayload | null> {
+  async getPlaylist(
+    id: number | string
+  ): Promise<DeezerPlaylistPayload | null> {
     return this.fetchJson<DeezerPlaylistPayload>(`/playlist/${id}`)
   }
 
@@ -164,7 +169,10 @@ export class DeezerProvider {
     return res?.data ?? []
   }
 
-  async searchArtists(query: string, limit = 25): Promise<DeezerArtistPayload[]> {
+  async searchArtists(
+    query: string,
+    limit = 25
+  ): Promise<DeezerArtistPayload[]> {
     const res = await this.fetchJson<{ data?: DeezerArtistPayload[] }>(
       `/search/artist?q=${encodeURIComponent(query)}&limit=${limit}`
     )

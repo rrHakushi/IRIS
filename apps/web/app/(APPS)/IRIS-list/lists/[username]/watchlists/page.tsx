@@ -8,4 +8,3 @@ export default async function WatchlistsPage({ params }: Props) {
   const { username } = await params
   redirect(`/IRIS-list/lists/${username}/custom-lists`)
 }
-

@@ -161,7 +161,12 @@ export interface MusicDetails {
   explicitContentLyrics?: number | null
 
   genres: Array<{ id: number; name: string; slug: string }>
-  tags: Array<{ id: number; name: string; slug: string; description: string | null }>
+  tags: Array<{
+    id: number
+    name: string
+    slug: string
+    description: string | null
+  }>
   audioPreviewUrl?: string | null
   lyrics?: string | null
   syncedLyrics?: string | null

@@ -1,8 +1,5 @@
 import { defineRoute, t } from "@/router"
-import {
-  mediaDbSyncer,
-  queueMusicFetch,
-} from "@/services/media-queue"
+import { mediaDbSyncer, queueMusicFetch } from "@/services/media-queue"
 import { NotFound } from "elysia"
 import { MusicResponseSchema, type MusicDetails } from "./types"
 import { NotFoundResponseSchema } from "../../../../../../types"
@@ -47,7 +44,9 @@ export default defineRoute({
   async GET({ params, query, prisma, cache, cacheKeys, logger }) {
     const id = Number(params.id)
     const targetType =
-      query?.type === "TRACK" || query?.type === "ALBUM" ? query.type : undefined
+      query?.type === "TRACK" || query?.type === "ALBUM"
+        ? query.type
+        : undefined
     const cacheKey = cacheKeys.music.id(id, targetType)
 
     const cached = await cache.get<MusicDetails>(cacheKey)
@@ -120,7 +119,9 @@ export default defineRoute({
       staff = [{ id: 0, role: "ARTIST", person: item.artist }]
     } else if (staff.length === 0 && item.artistName) {
       const p = await prisma.person.findFirst({
-        where: { namePrimary: { equals: item.artistName, mode: "insensitive" } },
+        where: {
+          namePrimary: { equals: item.artistName, mode: "insensitive" },
+        },
         select: { id: true, namePrimary: true, nameNative: true, image: true },
       })
       if (p) {
@@ -129,21 +130,33 @@ export default defineRoute({
     }
 
     const sources =
-      item.sources && typeof item.sources === "object" && !Array.isArray(item.sources)
+      item.sources &&
+      typeof item.sources === "object" &&
+      !Array.isArray(item.sources)
         ? (item.sources as Record<string, string | number | boolean | null>)
         : null
 
     const images =
-      item.images && typeof item.images === "object" && !Array.isArray(item.images)
+      item.images &&
+      typeof item.images === "object" &&
+      !Array.isArray(item.images)
         ? (item.images as Record<string, string | null>)
         : null
 
-    const spotifyId = typeof sources?.spotifyId === "string" ? sources.spotifyId : null
-    const appleMusicId = typeof sources?.appleMusicId === "string" ? sources.appleMusicId : null
-    const youtubeMusicId = typeof sources?.youtubeMusicId === "string" ? sources.youtubeMusicId : null
-    const musicBrainzId = typeof sources?.musicBrainzId === "string" ? sources.musicBrainzId : null
+    const spotifyId =
+      typeof sources?.spotifyId === "string" ? sources.spotifyId : null
+    const appleMusicId =
+      typeof sources?.appleMusicId === "string" ? sources.appleMusicId : null
+    const youtubeMusicId =
+      typeof sources?.youtubeMusicId === "string"
+        ? sources.youtubeMusicId
+        : null
+    const musicBrainzId =
+      typeof sources?.musicBrainzId === "string" ? sources.musicBrainzId : null
     const musicBrainzUpdatedAt =
-      typeof sources?.musicBrainzUpdatedAt === "number" ? sources.musicBrainzUpdatedAt : null
+      typeof sources?.musicBrainzUpdatedAt === "number"
+        ? sources.musicBrainzUpdatedAt
+        : null
 
     const result: MusicDetails = {
       id: item.id,
@@ -160,10 +173,14 @@ export default defineRoute({
       artist: item.artistName,
       artists,
       artistId: item.artistId,
-      album: item.type === "ALBUM" ? item.titlePrimary : item.album?.titlePrimary || null,
+      album:
+        item.type === "ALBUM"
+          ? item.titlePrimary
+          : item.album?.titlePrimary || null,
       albumId: item.type === "ALBUM" ? item.id : item.albumId,
       albumType: item.recordType,
-      totalTracks: item.type === "ALBUM" ? (item.nbTracks ?? item.tracks.length) : null,
+      totalTracks:
+        item.type === "ALBUM" ? (item.nbTracks ?? item.tracks.length) : null,
       trackNumber: item.trackPosition,
       discNumber: item.diskNumber,
       coverImage: item.coverImage || item.album?.coverImage || null,
@@ -172,8 +189,10 @@ export default defineRoute({
       images,
       description: item.description,
       duration: item.duration,
-      releaseDateYear: item.releaseDateYear ?? item.album?.releaseDateYear ?? null,
-      releaseDateMonth: item.releaseDateMonth ?? item.album?.releaseDateMonth ?? null,
+      releaseDateYear:
+        item.releaseDateYear ?? item.album?.releaseDateYear ?? null,
+      releaseDateMonth:
+        item.releaseDateMonth ?? item.album?.releaseDateMonth ?? null,
       releaseDateDay: item.releaseDateDay ?? item.album?.releaseDateDay ?? null,
       releaseDate: item.releaseDate ?? item.album?.releaseDate ?? null,
       bpm: item.bpm,
@@ -201,17 +220,18 @@ export default defineRoute({
       updatedAt: item.updatedAt,
       relations,
       staff,
-      tracks: item.type === "ALBUM"
-        ? item.tracks.map((t) => ({
-            id: t.id,
-            trackNumber: t.trackPosition,
-            discNumber: t.diskNumber,
-            titlePrimary: t.titlePrimary,
-            duration: t.duration,
-            artistName: t.artistName,
-            audioPreviewUrl: t.audioPreviewUrl,
-          }))
-        : undefined,
+      tracks:
+        item.type === "ALBUM"
+          ? item.tracks.map((t) => ({
+              id: t.id,
+              trackNumber: t.trackPosition,
+              discNumber: t.diskNumber,
+              titlePrimary: t.titlePrimary,
+              duration: t.duration,
+              artistName: t.artistName,
+              audioPreviewUrl: t.audioPreviewUrl,
+            }))
+          : undefined,
     }
 
     await cache.set(cacheKey, result, MUSIC_CACHE_TTL)

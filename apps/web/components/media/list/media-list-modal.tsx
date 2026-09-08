@@ -778,8 +778,7 @@ export function MediaListModal({
 
     const finalStartedAt =
       category === "movie" ? completedAt || startedAt : startedAt
-    const finalCompletedAt =
-      category === "movie" ? finalStartedAt : completedAt
+    const finalCompletedAt = category === "movie" ? finalStartedAt : completedAt
 
     const commonPayload = {
       status,
@@ -1046,8 +1045,7 @@ export function MediaListModal({
   const StatusIcon = getStatusIcon(status)
 
   // Converted 0-10 score representation
-  const scoreIn10 =
-    score !== null ? score.toFixed(1).replace(/\.0$/, "") : ""
+  const scoreIn10 = score !== null ? score.toFixed(1).replace(/\.0$/, "") : ""
 
   const bannerImg = media.bannerImage || media.coverImage
 

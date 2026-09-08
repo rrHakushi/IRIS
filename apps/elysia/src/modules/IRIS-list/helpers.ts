@@ -92,9 +92,7 @@ export const ListQuerySchema = t.Object({
   month: t.Optional(
     t.String({ description: "Comma-separated release months e.g. 1,2,12" })
   ),
-  artist: t.Optional(
-    t.String({ description: "Comma-separated artist names" })
-  ),
+  artist: t.Optional(t.String({ description: "Comma-separated artist names" })),
   sortBy: t.Optional(
     t.Union(
       [
@@ -559,7 +557,9 @@ export function recordEntryMutationActivity({
     media?.titlePrimary || media?.titleSecondary || String(mediaType)
   const isPrivate = result.private ?? false
   const currentProgress = result.progress ?? result.chaptersProgress ?? null
-  const oldProgress = existing ? (existing.progress ?? existing.chaptersProgress ?? null) : null
+  const oldProgress = existing
+    ? (existing.progress ?? existing.chaptersProgress ?? null)
+    : null
 
   if (!existing) {
     recordMediaListActivity({
@@ -579,12 +579,17 @@ export function recordEntryMutationActivity({
     return
   }
 
-  const statusChanged = Boolean(payload?.status && payload.status !== existing.status)
+  const statusChanged = Boolean(
+    payload?.status && payload.status !== existing.status
+  )
   const progressChanged = Boolean(
     (payload?.progress !== undefined && payload.progress !== oldProgress) ||
-    (payload?.chaptersProgress !== undefined && payload.chaptersProgress !== oldProgress)
+    (payload?.chaptersProgress !== undefined &&
+      payload.chaptersProgress !== oldProgress)
   )
-  const scoreChanged = Boolean(payload?.score !== undefined && payload.score !== existing.score)
+  const scoreChanged = Boolean(
+    payload?.score !== undefined && payload.score !== existing.score
+  )
 
   if (statusChanged && result.status === "COMPLETED") {
     recordMediaListActivity({

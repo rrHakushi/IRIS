@@ -140,14 +140,14 @@ export function MediaHero({
 
                   {/* Music: Artist and Album info */}
                   {media.category === "music" ? (
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground pt-0.5">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 pt-0.5 text-xs text-muted-foreground">
                       {media.artist && (
                         <span className="font-semibold text-foreground/90">
                           by{" "}
                           {media.artistPersonId ? (
                             <Link
                               href={`/IRIS-list/media/people/${media.artistPersonId}`}
-                              className="text-foreground/90 hover:text-primary hover:underline transition-colors"
+                              className="text-foreground/90 transition-colors hover:text-primary hover:underline"
                             >
                               {media.artist}
                             </Link>
@@ -156,24 +156,26 @@ export function MediaHero({
                           )}
                         </span>
                       )}
-                      {media.album && media.albumId && media.format === "TRACK" && (
-                        <>
-                          <span>•</span>
-                          <span>
-                            From album{" "}
-                            <Link
-                              href={`/IRIS-list/media/music/albums/${media.albumId}`}
-                              className="font-medium text-primary hover:underline"
-                            >
-                              {media.album}
-                            </Link>
-                          </span>
-                        </>
-                      )}
+                      {media.album &&
+                        media.albumId &&
+                        media.format === "TRACK" && (
+                          <>
+                            <span>•</span>
+                            <span>
+                              From album{" "}
+                              <Link
+                                href={`/IRIS-list/media/music/albums/${media.albumId}`}
+                                className="font-medium text-primary hover:underline"
+                              >
+                                {media.album}
+                              </Link>
+                            </span>
+                          </>
+                        )}
                       {media.format && (
                         <>
                           <span>•</span>
-                          <span className="capitalize text-muted-foreground">
+                          <span className="text-muted-foreground capitalize">
                             {media.format.toLowerCase().replace(/_/g, " ")}
                           </span>
                         </>

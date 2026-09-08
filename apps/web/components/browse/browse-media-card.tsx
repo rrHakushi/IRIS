@@ -3,10 +3,7 @@
 import React, { useState } from "react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import {
-  IconPhotoOff,
-  IconX,
-} from "@tabler/icons-react"
+import { IconPhotoOff, IconX } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
@@ -154,7 +151,6 @@ export function BrowseMediaCard({
               </Badge>
             )}
           </div>
-
 
           {/* Queued For Fetch Badge */}
           {item.queuedForFetch && (

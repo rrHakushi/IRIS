@@ -33,10 +33,7 @@ import {
   DialogFooter,
 } from "@workspace/ui/components/dialog"
 import { Skeleton } from "@workspace/ui/components/skeleton"
-import {
-  Tooltip,
-  TooltipTrigger,
-} from "@workspace/ui/components/tooltip"
+import { Tooltip, TooltipTrigger } from "@workspace/ui/components/tooltip"
 import { cn } from "@workspace/ui/lib/utils"
 import {
   getDisplayNameStyleCss,
@@ -95,13 +92,7 @@ export interface ListActivityTabProps {
 }
 
 type ActivityActionFilter =
-  | "ALL"
-  | "ADDED"
-  | "PROGRESS"
-  | "STATUS"
-  | "COMPLETED"
-  | "SCORE"
-  | "REMOVED"
+  "ALL" | "ADDED" | "PROGRESS" | "STATUS" | "COMPLETED" | "SCORE" | "REMOVED"
 
 const FILTER_OPTIONS: Array<{
   id: ActivityActionFilter
@@ -252,8 +243,7 @@ function getActivityActionPhrasing(
     case "LIST_SCORE_UPDATED":
       return {
         actionText: "rated",
-        detailText:
-          exactScore !== null ? `${exactScore} / 10` : undefined,
+        detailText: exactScore !== null ? `${exactScore} / 10` : undefined,
         badgeVariant: "outline" as const,
         badgeLabel: exactScore !== null ? `★ ${exactScore}` : "Rated",
         colorClass: "text-yellow-500 dark:text-yellow-400",
@@ -283,7 +273,8 @@ export function ListActivityTab({
   isOwner,
 }: ListActivityTabProps): React.JSX.Element {
   const [activities, setActivities] = useState<ListActivityItem[]>([])
-  const [selectedFilter, setSelectedFilter] = useState<ActivityActionFilter>("ALL")
+  const [selectedFilter, setSelectedFilter] =
+    useState<ActivityActionFilter>("ALL")
   const [page, setPage] = useState<number>(1)
   const [totalPages, setTotalPages] = useState<number>(1)
   const [totalCount, setTotalCount] = useState<number>(0)
@@ -294,11 +285,17 @@ export function ListActivityTab({
   const [isPending, startTransition] = useTransition()
 
   // Deletion state
-  const [deleteTarget, setDeleteTarget] = useState<ListActivityItem | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<ListActivityItem | null>(
+    null
+  )
   const [isDeleting, setIsDeleting] = useState<boolean>(false)
 
   const fetchActivities = useCallback(
-    async (targetPage: number, actionFilter: ActivityActionFilter, isAppend = false) => {
+    async (
+      targetPage: number,
+      actionFilter: ActivityActionFilter,
+      isAppend = false
+    ) => {
       try {
         if (targetPage === 1 && !isAppend) {
           setIsLoading(true)
@@ -316,7 +313,11 @@ export function ListActivityTab({
             },
           })
 
-        if (!res.error && res.data?.success && Array.isArray(res.data.activities)) {
+        if (
+          !res.error &&
+          res.data?.success &&
+          Array.isArray(res.data.activities)
+        ) {
           const fetched = res.data.activities as unknown as ListActivityItem[]
           if (isAppend) {
             setActivities((prev) => [...prev, ...fetched])
@@ -595,7 +596,9 @@ export function ListActivityTab({
                         {phrasing.actionText}
                       </span>
                       {phrasing.detailText && (
-                        <span className={cn("font-medium", phrasing.colorClass)}>
+                        <span
+                          className={cn("font-medium", phrasing.colorClass)}
+                        >
                           {phrasing.detailText}
                         </span>
                       )}
@@ -619,7 +622,7 @@ export function ListActivityTab({
                           variant="ghost"
                           size="icon-xs"
                           onPress={() => setDeleteTarget(activity)}
-                          className="size-6 rounded-full text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                          className="size-6 rounded-full text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
                           aria-label="Delete activity"
                         >
                           <IconTrash className="size-3.5" />
@@ -748,7 +751,9 @@ export function ListActivityTab({
                     <span>Loading more activities...</span>
                   </>
                 ) : (
-                  <span>Load More ({totalCount - activities.length} remaining)</span>
+                  <span>
+                    Load More ({totalCount - activities.length} remaining)
+                  </span>
                 )}
               </Button>
             </div>

@@ -224,7 +224,8 @@ export class MyAnimeListProvider {
           const linkMatch = rowHtml.match(
             /<a\s+href="([^"]*\/episode\/(\d+))"[^>]*>([\s\S]*?)<\/a>/
           )
-          if (!linkMatch || !linkMatch[1] || !linkMatch[2] || !linkMatch[3]) continue
+          if (!linkMatch || !linkMatch[1] || !linkMatch[2] || !linkMatch[3])
+            continue
 
           const episodeUrl = linkMatch[1]
           const episodeNum = parseInt(linkMatch[2], 10)

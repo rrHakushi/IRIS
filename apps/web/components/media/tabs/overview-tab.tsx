@@ -602,7 +602,10 @@ export function OverviewTab({
 
           {/* Music: Audio Preview Player for Tracks */}
           {media.category === "music" && media.audioPreviewUrl && (
-            <section aria-labelledby="preview-heading" className="flex flex-col gap-2">
+            <section
+              aria-labelledby="preview-heading"
+              className="flex flex-col gap-2"
+            >
               <MusicPlayerPreview
                 audioUrl={media.audioPreviewUrl}
                 title={media.titlePrimary}
@@ -613,7 +616,10 @@ export function OverviewTab({
 
           {/* Music: From the Album Card for Tracks */}
           {media.category === "music" && media.album && media.albumId && (
-            <section aria-labelledby="parent-album-heading" className="flex flex-col gap-2.5">
+            <section
+              aria-labelledby="parent-album-heading"
+              className="flex flex-col gap-2.5"
+            >
               <div className="flex items-center gap-2">
                 <IconDisc className="size-4 text-primary" aria-hidden="true" />
                 <h2
@@ -644,7 +650,7 @@ export function OverviewTab({
                   </div>
 
                   <div className="flex min-w-0 flex-col gap-0.5">
-                    <span className="truncate text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                    <span className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
                       {media.album}
                     </span>
                     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -661,60 +667,72 @@ export function OverviewTab({
 
                 <div className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary">
                   <span className="hidden sm:inline">View Album</span>
-                  <IconArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                  <IconArrowRight
+                    className="size-4 transition-transform group-hover:translate-x-0.5"
+                    aria-hidden="true"
+                  />
                 </div>
               </Link>
             </section>
           )}
 
           {/* Music: Album Tracklist Preview for Albums */}
-          {media.category === "music" && media.tracks && media.tracks.length > 0 && (
-            <section aria-labelledby="tracklist-heading" className="flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <IconDisc className="size-4 text-primary" aria-hidden="true" />
-                  <h2
-                    id="tracklist-heading"
-                    className="text-base font-semibold text-foreground"
-                  >
-                    Tracklist
-                  </h2>
-                  <span className="text-xs text-muted-foreground">
-                    ({media.tracks.length} tracks)
-                  </span>
+          {media.category === "music" &&
+            media.tracks &&
+            media.tracks.length > 0 && (
+              <section
+                aria-labelledby="tracklist-heading"
+                className="flex flex-col gap-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <IconDisc
+                      className="size-4 text-primary"
+                      aria-hidden="true"
+                    />
+                    <h2
+                      id="tracklist-heading"
+                      className="text-base font-semibold text-foreground"
+                    >
+                      Tracklist
+                    </h2>
+                    <span className="text-xs text-muted-foreground">
+                      ({media.tracks.length} tracks)
+                    </span>
+                  </div>
+                  {media.tracks.length > 8 && onViewAllTracks && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onViewAllTracks}
+                      className="h-7 gap-1 text-xs text-primary hover:text-primary/80"
+                    >
+                      <span>View all</span>
+                      <IconArrowRight className="size-3" aria-hidden="true" />
+                    </Button>
+                  )}
                 </div>
-                {media.tracks.length > 8 && onViewAllTracks && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onViewAllTracks}
-                    className="h-7 gap-1 text-xs text-primary hover:text-primary/80"
-                  >
-                    <span>View all</span>
-                    <IconArrowRight className="size-3" aria-hidden="true" />
-                  </Button>
-                )}
-              </div>
 
-              <MusicTracklist
-                tracks={media.tracks}
-                albumTitle={media.titlePrimary}
-                albumArtistPersonId={media.artistPersonId}
-                limit={8}
-                onViewAll={onViewAllTracks}
-              />
-            </section>
-          )}
+                <MusicTracklist
+                  tracks={media.tracks}
+                  albumTitle={media.titlePrimary}
+                  albumArtistPersonId={media.artistPersonId}
+                  limit={8}
+                  onViewAll={onViewAllTracks}
+                />
+              </section>
+            )}
 
           {/* Music: Lyrics for Tracks */}
-          {media.category === "music" && (media.lyrics || media.syncedLyrics) && (
-            <MusicLyrics
-              lyrics={media.lyrics}
-              syncedLyrics={media.syncedLyrics}
-              title={media.titlePrimary}
-              artist={media.artist}
-            />
-          )}
+          {media.category === "music" &&
+            (media.lyrics || media.syncedLyrics) && (
+              <MusicLyrics
+                lyrics={media.lyrics}
+                syncedLyrics={media.syncedLyrics}
+                title={media.titlePrimary}
+                artist={media.artist}
+              />
+            )}
 
           {/* 2. Featured Characters (MAX 2 next to each other) */}
           {featuredCharacters.length > 0 && (
@@ -1421,7 +1439,7 @@ export function OverviewTab({
                   {media.artistPersonId ? (
                     <Link
                       href={`/IRIS-list/media/people/${media.artistPersonId}`}
-                      className="text-end font-medium text-primary hover:underline transition-colors"
+                      className="text-end font-medium text-primary transition-colors hover:underline"
                     >
                       {media.artist}
                     </Link>
@@ -1452,7 +1470,8 @@ export function OverviewTab({
                   <span className="shrink-0 text-muted-foreground">Track</span>
                   <span className="text-end font-medium text-foreground tabular-nums">
                     #{media.trackNumber}
-                    {typeof media.discNumber === "number" && media.discNumber > 1
+                    {typeof media.discNumber === "number" &&
+                    media.discNumber > 1
                       ? ` (Disc ${media.discNumber})`
                       : ""}
                   </span>
@@ -1460,20 +1479,25 @@ export function OverviewTab({
               )}
 
               {/* Music: Total Tracks (for Albums) */}
-              {typeof media.totalTracks === "number" && media.totalTracks > 0 && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">Tracks</span>
-                  <span className="text-end font-medium text-foreground tabular-nums">
-                    {media.totalTracks}
-                  </span>
-                </div>
-              )}
+              {typeof media.totalTracks === "number" &&
+                media.totalTracks > 0 && (
+                  <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                    <span className="shrink-0 text-muted-foreground">
+                      Tracks
+                    </span>
+                    <span className="text-end font-medium text-foreground tabular-nums">
+                      {media.totalTracks}
+                    </span>
+                  </div>
+                )}
 
               {/* Music: Duration */}
               {typeof media.duration === "number" && media.duration > 0 && (
                 <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">Duration</span>
-                  <span className="text-end font-medium text-foreground tabular-nums font-mono">
+                  <span className="shrink-0 text-muted-foreground">
+                    Duration
+                  </span>
+                  <span className="text-end font-mono font-medium text-foreground tabular-nums">
                     {media.duration >= 3600
                       ? `${Math.floor(media.duration / 3600)}h ${Math.floor((media.duration % 3600) / 60)}m`
                       : `${Math.floor(media.duration / 60)}m ${media.duration % 60}s`}
@@ -1492,24 +1516,30 @@ export function OverviewTab({
               )}
 
               {/* Music: Local Listeners */}
-              {typeof media.listeners === "number" && media.category === "music" && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">Listeners</span>
-                  <span className="text-end font-medium text-foreground tabular-nums">
-                    {media.listeners.toLocaleString()}
-                  </span>
-                </div>
-              )}
+              {typeof media.listeners === "number" &&
+                media.category === "music" && (
+                  <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                    <span className="shrink-0 text-muted-foreground">
+                      Listeners
+                    </span>
+                    <span className="text-end font-medium text-foreground tabular-nums">
+                      {media.listeners.toLocaleString()}
+                    </span>
+                  </div>
+                )}
 
               {/* Music: Local Scrobbles */}
-              {typeof media.playCount === "number" && media.category === "music" && (
-                <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
-                  <span className="shrink-0 text-muted-foreground">Scrobbles</span>
-                  <span className="text-end font-medium text-foreground tabular-nums">
-                    {media.playCount.toLocaleString()}
-                  </span>
-                </div>
-              )}
+              {typeof media.playCount === "number" &&
+                media.category === "music" && (
+                  <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
+                    <span className="shrink-0 text-muted-foreground">
+                      Scrobbles
+                    </span>
+                    <span className="text-end font-medium text-foreground tabular-nums">
+                      {media.playCount.toLocaleString()}
+                    </span>
+                  </div>
+                )}
 
               {/* Status */}
               {media.status && (
@@ -1867,7 +1897,10 @@ export function OverviewTab({
                     className="inline-flex items-center gap-1 rounded-lg bg-[#D51007]/10 px-2 py-1 text-[11px] font-medium text-[#D51007] hover:bg-[#D51007]/20"
                   >
                     <span>Last.fm</span>
-                    <IconExternalLink className="size-3 opacity-60" aria-hidden="true" />
+                    <IconExternalLink
+                      className="size-3 opacity-60"
+                      aria-hidden="true"
+                    />
                   </a>
                 )}
                 {media.spotifyId && (
@@ -1878,7 +1911,10 @@ export function OverviewTab({
                     className="inline-flex items-center gap-1 rounded-lg bg-[#1DB954]/10 px-2 py-1 text-[11px] font-medium text-[#1DB954] hover:bg-[#1DB954]/20"
                   >
                     <span>Spotify</span>
-                    <IconExternalLink className="size-3 opacity-60" aria-hidden="true" />
+                    <IconExternalLink
+                      className="size-3 opacity-60"
+                      aria-hidden="true"
+                    />
                   </a>
                 )}
                 {media.appleMusicId && (
@@ -1889,7 +1925,10 @@ export function OverviewTab({
                     className="inline-flex items-center gap-1 rounded-lg bg-[#FA243C]/10 px-2 py-1 text-[11px] font-medium text-[#FA243C] hover:bg-[#FA243C]/20"
                   >
                     <span>Apple Music</span>
-                    <IconExternalLink className="size-3 opacity-60" aria-hidden="true" />
+                    <IconExternalLink
+                      className="size-3 opacity-60"
+                      aria-hidden="true"
+                    />
                   </a>
                 )}
                 {media.youtubeMusicId && (
@@ -1900,7 +1939,10 @@ export function OverviewTab({
                     className="inline-flex items-center gap-1 rounded-lg bg-[#FF0000]/10 px-2 py-1 text-[11px] font-medium text-[#FF0000] hover:bg-[#FF0000]/20"
                   >
                     <span>YouTube Music</span>
-                    <IconExternalLink className="size-3 opacity-60" aria-hidden="true" />
+                    <IconExternalLink
+                      className="size-3 opacity-60"
+                      aria-hidden="true"
+                    />
                   </a>
                 )}
                 {media.musicBrainzId && (
@@ -1911,7 +1953,10 @@ export function OverviewTab({
                     className="inline-flex items-center gap-1 rounded-lg bg-[#BA478F]/10 px-2 py-1 text-[11px] font-medium text-[#BA478F] hover:bg-[#BA478F]/20"
                   >
                     <span>MusicBrainz</span>
-                    <IconExternalLink className="size-3 opacity-60" aria-hidden="true" />
+                    <IconExternalLink
+                      className="size-3 opacity-60"
+                      aria-hidden="true"
+                    />
                   </a>
                 )}
                 {media.siteUrl && (

@@ -167,43 +167,73 @@ export function MediaListCard({
 
   const maxProgress: number | undefined = (() => {
     if (mediaType === "manga") {
-      if (typeof (media as any).chapterCount === "number" && (media as any).chapterCount > 0) {
+      if (
+        typeof (media as any).chapterCount === "number" &&
+        (media as any).chapterCount > 0
+      ) {
         return (media as any).chapterCount
       }
-      if (typeof (media as any).chapters === "number" && (media as any).chapters > 0) {
+      if (
+        typeof (media as any).chapters === "number" &&
+        (media as any).chapters > 0
+      ) {
         return (media as any).chapters
       }
       return undefined
     }
     if (mediaType === "anime") {
-      if (typeof (media as any).episodeCount === "number" && (media as any).episodeCount > 0) {
+      if (
+        typeof (media as any).episodeCount === "number" &&
+        (media as any).episodeCount > 0
+      ) {
         return (media as any).episodeCount
       }
-      if (Array.isArray((media as any).episodes) && (media as any).episodes.length > 0) {
+      if (
+        Array.isArray((media as any).episodes) &&
+        (media as any).episodes.length > 0
+      ) {
         return (media as any).episodes.length
       }
-      if (typeof (media as any).episodes === "number" && (media as any).episodes > 0) {
+      if (
+        typeof (media as any).episodes === "number" &&
+        (media as any).episodes > 0
+      ) {
         return (media as any).episodes
       }
       return undefined
     }
     if (mediaType === "tv") {
-      if (typeof (media as any).episodeCount === "number" && (media as any).episodeCount > 0) {
+      if (
+        typeof (media as any).episodeCount === "number" &&
+        (media as any).episodeCount > 0
+      ) {
         return (media as any).episodeCount
       }
-      if (Array.isArray((media as any).episodes) && (media as any).episodes.length > 0) {
+      if (
+        Array.isArray((media as any).episodes) &&
+        (media as any).episodes.length > 0
+      ) {
         return (media as any).episodes.length
       }
-      if (typeof (media as any).episodes === "number" && (media as any).episodes > 0) {
+      if (
+        typeof (media as any).episodes === "number" &&
+        (media as any).episodes > 0
+      ) {
         return (media as any).episodes
       }
       return undefined
     }
     if (mediaType === "book") {
-      if (typeof (media as any).chapterCount === "number" && (media as any).chapterCount > 0) {
+      if (
+        typeof (media as any).chapterCount === "number" &&
+        (media as any).chapterCount > 0
+      ) {
         return (media as any).chapterCount
       }
-      if (typeof (media as any).pageCount === "number" && (media as any).pageCount > 0) {
+      if (
+        typeof (media as any).pageCount === "number" &&
+        (media as any).pageCount > 0
+      ) {
         return (media as any).pageCount
       }
       return undefined
@@ -213,10 +243,16 @@ export function MediaListCard({
 
   const maxVolumes: number | undefined = (() => {
     if (mediaType === "manga") {
-      if (typeof (media as any).volumeCount === "number" && (media as any).volumeCount > 0) {
+      if (
+        typeof (media as any).volumeCount === "number" &&
+        (media as any).volumeCount > 0
+      ) {
         return (media as any).volumeCount
       }
-      if (typeof (media as any).volumes === "number" && (media as any).volumes > 0) {
+      if (
+        typeof (media as any).volumes === "number" &&
+        (media as any).volumes > 0
+      ) {
         return (media as any).volumes
       }
     }
@@ -513,7 +549,8 @@ export function MediaListCard({
               <span>
                 {Number(
                   (entry.score > 10 ? entry.score / 10 : entry.score).toFixed(1)
-                )}/10
+                )}
+                /10
               </span>
             </div>
           )}

@@ -188,9 +188,7 @@ export default defineRoute({
         const rawMedia = item.music
         const format = rawMedia?.type || item.itemType || "TRACK"
         const year =
-          rawMedia?.releaseDateYear ??
-          rawMedia?.album?.releaseDateYear ??
-          null
+          rawMedia?.releaseDateYear ?? rawMedia?.album?.releaseDateYear ?? null
         const month =
           rawMedia?.releaseDateMonth ??
           rawMedia?.album?.releaseDateMonth ??
@@ -204,7 +202,10 @@ export default defineRoute({
           entry: {
             id: item.id,
             musicId: item.musicId,
-            albumId: item.music?.type === "ALBUM" ? item.musicId : (item.music?.albumId ?? null),
+            albumId:
+              item.music?.type === "ALBUM"
+                ? item.musicId
+                : (item.music?.albumId ?? null),
             trackId: item.music?.type === "TRACK" ? item.musicId : null,
             itemType: format,
             status: item.status,

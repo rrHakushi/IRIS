@@ -71,9 +71,8 @@ export default defineRoute({
       let itemCount = 0
 
       if (connection.provider === "DEEZER" && credentials.accessToken) {
-        const { deezerPlaylistService } = await import(
-          "../../../../../services/connections/deezer-playlist.service.js"
-        )
+        const { deezerPlaylistService } =
+          await import("../../../../../services/connections/deezer-playlist.service.js")
         const res = await deezerPlaylistService.importUserPlaylists(
           session.user.id,
           credentials.accessToken

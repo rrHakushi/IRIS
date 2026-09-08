@@ -301,9 +301,7 @@ export default defineRoute({
         username: dbUser.username,
         animeId: id,
         animeTitle:
-          animeExists.titlePrimary ||
-          animeExists.titleSecondary ||
-          "Anime",
+          animeExists.titlePrimary || animeExists.titleSecondary || "Anime",
         entry: {
           status: result.status,
           progress: result.progress,
@@ -475,9 +473,7 @@ export default defineRoute({
         username: dbUser.username,
         animeId: id,
         animeTitle:
-          animeExists.titlePrimary ||
-          animeExists.titleSecondary ||
-          "Anime",
+          animeExists.titlePrimary || animeExists.titleSecondary || "Anime",
         entry: {
           status: result.status,
           progress: result.progress,

@@ -141,13 +141,17 @@ export class LastFmProvider {
     // Prefer mega, then extralarge, then large
     const order = ["mega", "extralarge", "large", "medium", "small"]
     for (const size of order) {
-      const match = images.find((img) => img.size === size && img["#text"]?.trim())
+      const match = images.find(
+        (img) => img.size === size && img["#text"]?.trim()
+      )
       if (match && match["#text"].trim()) {
         return match["#text"].trim()
       }
     }
     // Fallback to last available with text
-    const lastWithText = [...images].reverse().find((img) => img["#text"]?.trim())
+    const lastWithText = [...images]
+      .reverse()
+      .find((img) => img["#text"]?.trim())
     return lastWithText ? lastWithText["#text"].trim() : null
   }
 

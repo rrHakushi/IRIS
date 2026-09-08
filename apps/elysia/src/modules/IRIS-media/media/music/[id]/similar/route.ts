@@ -121,7 +121,8 @@ async function findSimilarMusic(
   const formattedList: SimilarMediaItem[] = scoredList.map(({ candidate }) => ({
     id: candidate.id,
     type: "MUSIC",
-    format: candidate.type === "ALBUM" ? (candidate.recordType || "ALBUM") : "TRACK",
+    format:
+      candidate.type === "ALBUM" ? candidate.recordType || "ALBUM" : "TRACK",
     coverImage: candidate.coverImage ?? null,
     titles: {
       primary: candidate.titlePrimary,
@@ -166,7 +167,10 @@ export default defineRoute({
 
   async GET({ params, query, prisma, cache, cacheKeys }) {
     const id = Number(params.id)
-    const limit = Math.max(1, Math.min(Number((query as any)?.limit ?? 10) || 10, 50))
+    const limit = Math.max(
+      1,
+      Math.min(Number((query as any)?.limit ?? 10) || 10, 50)
+    )
     const targetType = (query as any)?.type as "TRACK" | "ALBUM" | undefined
 
     const cacheKey = cacheKeys.similar.music(id, targetType)

@@ -20,7 +20,10 @@ import {
   queueMusicFetch,
 } from "./media-queue/index.js"
 import { statsQueueService, StatsQueueService } from "./stats-queue.service.js"
-import { listImportService, ListImportService } from "./connections/list-import.service.js"
+import {
+  listImportService,
+  ListImportService,
+} from "./connections/list-import.service.js"
 import {
   activityService,
   ActivityService,

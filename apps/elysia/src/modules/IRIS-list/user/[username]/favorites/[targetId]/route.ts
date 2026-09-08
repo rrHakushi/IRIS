@@ -282,7 +282,9 @@ export default defineRoute({
         where: { id: targetId },
         select: { type: true },
       })
-      targetType = (music?.type === "ALBUM" ? "MUSIC_ALBUM" : "MUSIC_TRACK") as FavoriteType
+      targetType = (
+        music?.type === "ALBUM" ? "MUSIC_ALBUM" : "MUSIC_TRACK"
+      ) as FavoriteType
     }
     const displayTitle = payload.title?.trim() || `${targetType} #${targetId}`
 

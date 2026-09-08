@@ -1,7 +1,11 @@
 import { prisma } from "@IRIS/database"
 import { mediaDbSyncer } from "../media-queue/media-db.syncer.js"
 import { LrcLibProvider } from "../media-queue/providers/lrclib.provider.js"
-import { DeezerProvider, type DeezerPlaylistPayload, type DeezerTrackPayload } from "../media-queue/providers/deezer.provider.js"
+import {
+  DeezerProvider,
+  type DeezerPlaylistPayload,
+  type DeezerTrackPayload,
+} from "../media-queue/providers/deezer.provider.js"
 import { logger } from "../../utils/logger.js"
 
 export interface DeezerImportResult {
@@ -90,7 +94,11 @@ export class DeezerPlaylistService {
 
       const playlists = json.data || []
       let totalTracksImported = 0
-      const importedCustomLists: Array<{ id: string; name: string; trackCount: number }> = []
+      const importedCustomLists: Array<{
+        id: string
+        name: string
+        trackCount: number
+      }> = []
 
       for (const pl of playlists) {
         if (!pl.title) continue
@@ -107,7 +115,9 @@ export class DeezerPlaylistService {
             data: {
               userId,
               name: pl.title,
-              description: pl.description || `Imported from Deezer playlist (${pl.nb_tracks} tracks)`,
+              description:
+                pl.description ||
+                `Imported from Deezer playlist (${pl.nb_tracks} tracks)`,
               coverImage,
             },
           })
@@ -125,11 +135,15 @@ export class DeezerPlaylistService {
           try {
             // Save artist to Person
             if (track.artist) {
-              await mediaDbSyncer.upsertDeezerArtist(track.artist).catch(() => {})
+              await mediaDbSyncer
+                .upsertDeezerArtist(track.artist)
+                .catch(() => {})
             }
 
             // Fallback to LRCLIB for lyrics
-            let lyrics: import("../media-queue/providers/lrclib.provider.js").LrcLibLyricsPayload | null = null
+            let lyrics:
+              | import("../media-queue/providers/lrclib.provider.js").LrcLibLyricsPayload
+              | null = null
             if (track.artist?.name && track.title) {
               lyrics = await this.lrclib.fetchLyrics(
                 track.title,
@@ -150,7 +164,10 @@ export class DeezerPlaylistService {
                 titleVersion: track.title_version,
                 link: track.link,
                 share: track.share,
-                coverImage: track.album?.cover_big || track.album?.cover_medium || track.album?.cover,
+                coverImage:
+                  track.album?.cover_big ||
+                  track.album?.cover_medium ||
+                  track.album?.cover,
                 images: track.album
                   ? {
                       small: track.album.cover_small,
@@ -219,7 +236,8 @@ export class DeezerPlaylistService {
             plTrackCount++
             totalTracksImported++
           } catch (trackErr) {
-            const msg = trackErr instanceof Error ? trackErr.message : String(trackErr)
+            const msg =
+              trackErr instanceof Error ? trackErr.message : String(trackErr)
             logger.warn(
               `[DeezerPlaylist] Failed importing track "${track.title}" for list "${pl.title}": ${msg}`
             )
@@ -240,7 +258,8 @@ export class DeezerPlaylistService {
         customLists: importedCustomLists,
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to import Deezer playlists"
+      const msg =
+        err instanceof Error ? err.message : "Failed to import Deezer playlists"
       return {
         success: false,
         playlistsImported: 0,
@@ -312,7 +331,9 @@ export class DeezerPlaylistService {
             await mediaDbSyncer.upsertDeezerArtist(track.artist).catch(() => {})
           }
 
-          let lyrics: import("../media-queue/providers/lrclib.provider.js").LrcLibLyricsPayload | null = null
+          let lyrics:
+            | import("../media-queue/providers/lrclib.provider.js").LrcLibLyricsPayload
+            | null = null
           if (track.artist?.name && track.title) {
             lyrics = await this.lrclib.fetchLyrics(
               track.title,
@@ -401,7 +422,8 @@ export class DeezerPlaylistService {
 
           tracksImported++
         } catch (trackErr) {
-          const msg = trackErr instanceof Error ? trackErr.message : String(trackErr)
+          const msg =
+            trackErr instanceof Error ? trackErr.message : String(trackErr)
           logger.warn(
             `[DeezerPlaylist] Failed importing track "${track.title}" for list "${fullPlaylist.title}": ${msg}`
           )
@@ -418,7 +440,8 @@ export class DeezerPlaylistService {
         tracksImported,
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to import Deezer playlist"
+      const msg =
+        err instanceof Error ? err.message : "Failed to import Deezer playlist"
       return {
         success: false,
         tracksImported: 0,

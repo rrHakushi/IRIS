@@ -101,13 +101,7 @@ export default defineRoute({
 
     const items = entries.map((e) => {
       const media =
-        e.anime ||
-        e.manga ||
-        e.movie ||
-        e.tv ||
-        e.game ||
-        e.book ||
-        e.music
+        e.anime || e.manga || e.movie || e.tv || e.game || e.book || e.music
       return {
         status: e.mediaType,
         media,

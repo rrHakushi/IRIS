@@ -107,7 +107,10 @@ export function BrowseSearchResults({
             className="my-4 flex flex-col items-center justify-center rounded-3xl border border-dashed border-border/70 p-12 text-center text-muted-foreground"
           >
             <div className="mb-3 flex size-14 items-center justify-center rounded-2xl bg-muted/60 text-muted-foreground">
-              <IconSearchOff className="size-7 stroke-[1.5]" aria-hidden="true" />
+              <IconSearchOff
+                className="size-7 stroke-[1.5]"
+                aria-hidden="true"
+              />
             </div>
             <h3 className="text-sm font-semibold text-foreground">
               {t("noTracksFound", { query })}
@@ -143,7 +146,10 @@ export function BrowseSearchResults({
             className="my-4 flex flex-col items-center justify-center rounded-3xl border border-dashed border-border/70 p-12 text-center text-muted-foreground"
           >
             <div className="mb-3 flex size-14 items-center justify-center rounded-2xl bg-muted/60 text-muted-foreground">
-              <IconSearchOff className="size-7 stroke-[1.5]" aria-hidden="true" />
+              <IconSearchOff
+                className="size-7 stroke-[1.5]"
+                aria-hidden="true"
+              />
             </div>
             <h3 className="text-sm font-semibold text-foreground">
               {t("noAlbumsFound", { query })}
@@ -173,7 +179,10 @@ export function BrowseSearchResults({
 
     // Default "all": Separate into Tracks and Albums sections
     return (
-      <section aria-label="Music Search Results" className={cn("flex flex-col gap-6", className)}>
+      <section
+        aria-label="Music Search Results"
+        className={cn("flex flex-col gap-6", className)}
+      >
         {/* Tracks Section */}
         {trackResults.length > 0 && (
           <div className="flex flex-col gap-3">

@@ -32,7 +32,7 @@ export function FileBackupImportCard(): React.JSX.Element {
       try {
         const content = JSON.parse(e.target?.result as string)
         setSelectedFile(file)
-        
+
         // Compute brief summary if recognizable structure
         let summary = `${(file.size / 1024).toFixed(1)} KB`
         if (typeof content === "object" && content !== null) {
@@ -79,9 +79,7 @@ export function FileBackupImportCard(): React.JSX.Element {
     try {
       // Simulate file backup processing
       await new Promise((resolve) => setTimeout(resolve, 1500))
-      toast.success(
-        t("completed", { processed: 1 })
-      )
+      toast.success(t("completed", { processed: 1 }))
       handleClear()
     } catch {
       toast.error("Failed to import backup file.")

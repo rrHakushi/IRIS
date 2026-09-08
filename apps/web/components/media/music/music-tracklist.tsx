@@ -115,8 +115,13 @@ export function MusicTracklist({
   if (tracks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 py-10 text-center">
-        <IconDisc className="size-8 text-muted-foreground/40" aria-hidden="true" />
-        <p className="mt-2 text-sm text-muted-foreground">No tracks available for this album.</p>
+        <IconDisc
+          className="size-8 text-muted-foreground/40"
+          aria-hidden="true"
+        />
+        <p className="mt-2 text-sm text-muted-foreground">
+          No tracks available for this album.
+        </p>
       </div>
     )
   }
@@ -129,11 +134,13 @@ export function MusicTracklist({
             <div className="flex items-center gap-2 px-1 text-xs font-semibold text-muted-foreground">
               <IconDisc className="size-3.5 text-primary" aria-hidden="true" />
               <span>Disc {discNumber}</span>
-              <span className="text-muted-foreground/60">• {discTracks.length} tracks</span>
+              <span className="text-muted-foreground/60">
+                • {discTracks.length} tracks
+              </span>
             </div>
           )}
 
-          <div className="overflow-hidden rounded-2xl border border-border/40 bg-card/60 divide-y divide-border/20 shadow-xs">
+          <div className="divide-y divide-border/20 overflow-hidden rounded-2xl border border-border/40 bg-card/60 shadow-xs">
             {discTracks.map((track, idx) => {
               const trackNum = track.trackNumber ?? idx + 1
               const isPlaying = playingTrackId === track.id
@@ -153,27 +160,39 @@ export function MusicTracklist({
                           type="button"
                           onClick={(e) => handleTogglePlay(e, track)}
                           className={cn(
-                            "flex size-7 items-center justify-center rounded-full transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+                            "flex size-7 items-center justify-center rounded-full transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden",
                             isPlaying
-                              ? "bg-primary text-primary-foreground shadow-xs scale-105"
-                              : "text-muted-foreground hover:bg-primary/10 hover:text-primary group-hover:scale-105"
+                              ? "scale-105 bg-primary text-primary-foreground shadow-xs"
+                              : "text-muted-foreground group-hover:scale-105 hover:bg-primary/10 hover:text-primary"
                           )}
-                          title={isPlaying ? "Pause Preview" : "Play 30s Preview"}
-                          aria-label={isPlaying ? `Pause preview of ${track.titlePrimary}` : `Play preview of ${track.titlePrimary}`}
+                          title={
+                            isPlaying ? "Pause Preview" : "Play 30s Preview"
+                          }
+                          aria-label={
+                            isPlaying
+                              ? `Pause preview of ${track.titlePrimary}`
+                              : `Play preview of ${track.titlePrimary}`
+                          }
                         >
                           {isPlaying ? (
-                            <IconPlayerPause className="size-3.5 fill-current" aria-hidden="true" />
+                            <IconPlayerPause
+                              className="size-3.5 fill-current"
+                              aria-hidden="true"
+                            />
                           ) : (
                             <>
-                              <span className="text-xs font-mono text-muted-foreground group-hover:hidden">
+                              <span className="font-mono text-xs text-muted-foreground group-hover:hidden">
                                 {trackNum}
                               </span>
-                              <IconPlayerPlay className="size-3.5 hidden group-hover:block fill-current ps-0.5" aria-hidden="true" />
+                              <IconPlayerPlay
+                                className="hidden size-3.5 fill-current ps-0.5 group-hover:block"
+                                aria-hidden="true"
+                              />
                             </>
                           )}
                         </button>
                       ) : (
-                        <span className="text-xs font-mono text-muted-foreground/80">
+                        <span className="font-mono text-xs text-muted-foreground/80">
                           {trackNum}
                         </span>
                       )}
@@ -183,16 +202,16 @@ export function MusicTracklist({
                     <div className="flex min-w-0 flex-1 flex-col">
                       <Link
                         href={`/IRIS-list/media/music/tracks/${track.id}`}
-                        className="truncate text-sm font-medium text-foreground transition-colors hover:text-primary focus-visible:outline-hidden focus-visible:underline"
+                        className="truncate text-sm font-medium text-foreground transition-colors hover:text-primary focus-visible:underline focus-visible:outline-hidden"
                         title={track.titlePrimary}
                       >
                         {track.titlePrimary}
                       </Link>
-                      {track.artistName && (
-                        track.artistPersonId || albumArtistPersonId ? (
+                      {track.artistName &&
+                        (track.artistPersonId || albumArtistPersonId ? (
                           <Link
                             href={`/IRIS-list/media/people/${track.artistPersonId || albumArtistPersonId}`}
-                            className="truncate text-xs text-muted-foreground hover:text-primary hover:underline transition-colors"
+                            className="truncate text-xs text-muted-foreground transition-colors hover:text-primary hover:underline"
                           >
                             {track.artistName}
                           </Link>
@@ -200,8 +219,7 @@ export function MusicTracklist({
                           <span className="truncate text-xs text-muted-foreground">
                             {track.artistName}
                           </span>
-                        )
-                      )}
+                        ))}
                     </div>
                   </div>
 
@@ -210,17 +228,17 @@ export function MusicTracklist({
                     {hasPreview && (
                       <Badge
                         variant="secondary"
-                        className="hidden text-[10px] font-mono sm:inline-flex py-0 px-1.5 h-4"
+                        className="hidden h-4 px-1.5 py-0 font-mono text-[10px] sm:inline-flex"
                       >
                         Preview
                       </Badge>
                     )}
-                    <span className="text-xs font-mono text-muted-foreground tabular-nums">
+                    <span className="font-mono text-xs text-muted-foreground tabular-nums">
                       {formatDuration(track.duration)}
                     </span>
                     <Link
                       href={`/IRIS-list/media/music/tracks/${track.id}`}
-                      className="rounded-lg p-1 text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+                      className="rounded-lg p-1 text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden"
                       aria-label={`View track details for ${track.titlePrimary}`}
                     >
                       <IconMusic className="size-4" aria-hidden="true" />
@@ -239,7 +257,7 @@ export function MusicTracklist({
             variant="outline"
             size="sm"
             onClick={onViewAll}
-            className="rounded-2xl text-xs font-medium gap-1.5"
+            className="gap-1.5 rounded-2xl text-xs font-medium"
           >
             <span>View all {totalTracksCount} tracks</span>
           </Button>

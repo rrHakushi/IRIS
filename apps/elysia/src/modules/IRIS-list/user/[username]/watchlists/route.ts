@@ -100,7 +100,13 @@ export default defineRoute({
                 where: {
                   mediaType:
                     query.mediaType === "MUSIC"
-                      ? { in: ["MUSIC", "MUSIC_ALBUM", "MUSIC_TRACK"] as MediaType[] }
+                      ? {
+                          in: [
+                            "MUSIC",
+                            "MUSIC_ALBUM",
+                            "MUSIC_TRACK",
+                          ] as MediaType[],
+                        }
                       : (query.mediaType as MediaType),
                   mediaId: Number(query.mediaId),
                 },
