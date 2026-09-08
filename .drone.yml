@@ -9,8 +9,8 @@ steps:
       ENV_FILE:
         from_secret: ENV_FILE
     commands:
-      - if [ -z "$ENV_FILE" ]; then echo "WARNING: ENV_FILE secret is empty"; fi
-      - printf "%s\n" "$ENV_FILE" > .env
+      - 'if [ -z "$ENV_FILE" ]; then echo "WARNING: ENV_FILE secret is empty"; fi'
+      - 'printf "%s\n" "$ENV_FILE" > .env'
       - chmod 600 .env
 
   - name: Packages
