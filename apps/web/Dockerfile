@@ -14,7 +14,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 RUN npm install -g turbo@^2
 COPY . .
-RUN turbo prune web --docker
+RUN turbo prune web --docker --use-gitignore=false
 
 # ==========================================
 # Builder Stage
@@ -31,7 +31,7 @@ RUN pnpm install --frozen-lockfile
 COPY --from=pruner /app/out/full/ .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
-RUN pnpm db:generate && pnpm build:packages && pnpm --filter web build
+RUN pnpm --filter web build
 
 # ==========================================
 # Production Runner Stage

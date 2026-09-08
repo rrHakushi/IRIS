@@ -12,7 +12,7 @@ RUN apk add --no-cache libc6-compat nodejs npm
 WORKDIR /app
 RUN npm install -g turbo@^2
 COPY . .
-RUN turbo prune @IRIS/elysia --docker
+RUN turbo prune @IRIS/elysia --docker --use-gitignore=false
 
 # ==========================================
 # Builder Stage
