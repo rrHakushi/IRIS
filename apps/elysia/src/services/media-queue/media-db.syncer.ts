@@ -1460,42 +1460,47 @@ export class MediaDbSyncer {
       const existing = await prisma.character.findUnique({
         where: { anilistId: data.anilistId },
       })
-      if (existing) return existing
+      if (existing) {
+        if (!existing.image && data.image) {
+          await prisma.character
+            .update({
+              where: { id: existing.id },
+              data: { image: data.image },
+            })
+            .catch(() => {})
+        }
+        return existing
+      }
     }
     if (data.malId) {
       const existing = await prisma.character.findUnique({
         where: { malId: data.malId },
       })
-      if (existing) return existing
+      if (existing) {
+        if (!existing.image && data.image) {
+          await prisma.character
+            .update({
+              where: { id: existing.id },
+              data: { image: data.image },
+            })
+            .catch(() => {})
+        }
+        return existing
+      }
     }
     if (data.tvDBId) {
       const existing = await prisma.character.findUnique({
         where: { tvDBId: data.tvDBId },
       })
-      if (existing) return existing
-    }
-
-    if (data.namePrimary) {
-      const existing = await prisma.character.findFirst({
-        where: {
-          namePrimary: { equals: data.namePrimary, mode: "insensitive" },
-        },
-      })
       if (existing) {
-        await prisma.character.update({
-          where: { id: existing.id },
-          data: {
-            anilistId: existing.anilistId || data.anilistId,
-            malId: existing.malId || data.malId,
-            tvDBId: existing.tvDBId || data.tvDBId,
-            image: existing.image || data.image,
-            nameAlternativeSpoiler:
-              existing.nameAlternativeSpoiler &&
-              existing.nameAlternativeSpoiler.length > 0
-                ? existing.nameAlternativeSpoiler
-                : data.nameAlternativeSpoiler || [],
-          },
-        })
+        if (!existing.image && data.image) {
+          await prisma.character
+            .update({
+              where: { id: existing.id },
+              data: { image: data.image },
+            })
+            .catch(() => {})
+        }
         return existing
       }
     }

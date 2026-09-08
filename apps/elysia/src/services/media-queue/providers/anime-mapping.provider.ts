@@ -1,6 +1,8 @@
 import { cache } from "../../../utils/cache.js"
 
 export interface AnimeMappingEntry {
+  anilistId?: number
+  malId?: number
   anidbId?: number
   tvdbId?: number
   bangumiId?: number
@@ -133,7 +135,16 @@ export class AnimeMappingProvider {
         ? entry.themoviedb_id?.tv || entry.themoviedb_id?.movie
         : entry?.themoviedb_id
 
+    const anilistId =
+      identifiers.anilistId ||
+      (entry?.anilist_id ? parseInt(entry.anilist_id, 10) : undefined)
+    const malId =
+      identifiers.malId ||
+      (entry?.mal_id ? parseInt(entry.mal_id, 10) : undefined)
+
     return {
+      anilistId,
+      malId,
       anidbId: entry?.anidb_id,
       tvdbId: entry?.tvdb_id,
       bangumiId: bangumiId || undefined,

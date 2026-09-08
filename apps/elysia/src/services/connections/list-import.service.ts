@@ -5,10 +5,7 @@ import {
   type ConnectionProvider,
   type ConnectionCredentials,
 } from "@IRIS/connections"
-import {
-  mediaDbSyncer,
-  mediaQueueService,
-} from "../media-queue/index.js"
+import { mediaDbSyncer, mediaQueueService } from "../media-queue/index.js"
 import { AnimeMappingProvider } from "../media-queue/providers/anime-mapping.provider.js"
 import { deezerPlaylistService } from "./deezer-playlist.service.js"
 import { sendNotification } from "../notification.service.js"
@@ -81,7 +78,8 @@ function fuzzyDateToDate(
 }
 
 function normalizeScore(score: unknown): number | null {
-  if (score === null || score === undefined || score === "" || score === 0) return null
+  if (score === null || score === undefined || score === "" || score === 0)
+    return null
   const num = typeof score === "number" ? score : Number(score)
   if (isNaN(num) || num <= 0) return null
   const scaled = num > 10 ? num / 10 : num
@@ -175,10 +173,7 @@ export class ListImportService {
     const connection = await prisma.connection.findFirst({
       where: {
         userId,
-        OR: [
-          { provider: providerKey as any },
-          { id: providerName },
-        ],
+        OR: [{ provider: providerKey as any }, { id: providerName }],
       },
     })
 
@@ -318,7 +313,9 @@ export class ListImportService {
       throw new BadRequest("AniList connection is missing an access token")
     }
 
-    let numericUserId = connection.externalId ? Number(connection.externalId) : null
+    let numericUserId = connection.externalId
+      ? Number(connection.externalId)
+      : null
     if (!numericUserId || isNaN(numericUserId)) {
       const viewerRes = await fetch("https://graphql.anilist.co", {
         method: "POST",
@@ -338,7 +335,11 @@ export class ListImportService {
       throw new Error("Could not resolve AniList numeric user ID")
     }
 
-    const requestedTypes = options?.mediaTypes || ["anime", "manga", "custom_lists"]
+    const requestedTypes = options?.mediaTypes || [
+      "anime",
+      "manga",
+      "custom_lists",
+    ]
     const shouldFetchAnime = requestedTypes.includes("anime")
     const shouldFetchManga = requestedTypes.includes("manga")
     const shouldFetchCustomLists =
@@ -395,7 +396,10 @@ export class ListImportService {
           "Content-Type": "application/json",
           Authorization: `Bearer ${credentials.accessToken}`,
         },
-        body: JSON.stringify({ query, variables: { userId: numericUserId, type } }),
+        body: JSON.stringify({
+          query,
+          variables: { userId: numericUserId, type },
+        }),
       })
       if (!res.ok) {
         throw new Error(`AniList ${type} list query failed: HTTP ${res.status}`)
@@ -428,11 +432,19 @@ export class ListImportService {
             `AniList ${media.id}`
 
           try {
-            const dbAnime = await this.ensureAnimeInDb(media.id, media.idMal, title, media)
+            const dbAnime = await this.ensureAnimeInDb(
+              media.id,
+              media.idMal,
+              title,
+              media
+            )
             const animeId = dbAnime.id
 
-            let status: "PLANNING" | "WATCHING" | "COMPLETED" | "ON_HOLD" | "DROPPED" = "PLANNING"
-            if (entry.status === "CURRENT" || entry.status === "REPEATING") status = "WATCHING"
+            let status:
+              "PLANNING" | "WATCHING" | "COMPLETED" | "ON_HOLD" | "DROPPED" =
+              "PLANNING"
+            if (entry.status === "CURRENT" || entry.status === "REPEATING")
+              status = "WATCHING"
             else if (entry.status === "COMPLETED") status = "COMPLETED"
             else if (entry.status === "PAUSED") status = "ON_HOLD"
             else if (entry.status === "DROPPED") status = "DROPPED"
@@ -465,14 +477,18 @@ export class ListImportService {
                 progress: entry.progress || existing?.progress || 0,
                 score: normalizeScore(entry.score) || existing?.score || null,
                 notes: entry.notes || existing?.notes || null,
-                startedAt: fuzzyDateToDate(entry.startedAt) || existing?.startedAt,
-                completedAt: fuzzyDateToDate(entry.completedAt) || existing?.completedAt,
+                startedAt:
+                  fuzzyDateToDate(entry.startedAt) || existing?.startedAt,
+                completedAt:
+                  fuzzyDateToDate(entry.completedAt) || existing?.completedAt,
                 connections,
               },
             })
             importedAnime++
           } catch (err: any) {
-            logger.warn(`[ListImport] AniList anime import failed for "${title}": ${err?.message || err}`)
+            logger.warn(
+              `[ListImport] AniList anime import failed for "${title}": ${err?.message || err}`
+            )
             failedAnime++
           }
         }
@@ -505,10 +521,17 @@ export class ListImportService {
             `AniList ${media.id}`
 
           try {
-            const dbManga = await this.ensureMangaInDb(media.id, media.idMal, title, media)
+            const dbManga = await this.ensureMangaInDb(
+              media.id,
+              media.idMal,
+              title,
+              media
+            )
             const mangaId = dbManga.id
 
-            let status: "PLANNING" | "READING" | "COMPLETED" | "ON_HOLD" | "DROPPED" = "PLANNING"
+            let status:
+              "PLANNING" | "READING" | "COMPLETED" | "ON_HOLD" | "DROPPED" =
+              "PLANNING"
             if (entry.status === "CURRENT") status = "READING"
             else if (entry.status === "COMPLETED") status = "COMPLETED"
             else if (entry.status === "PAUSED") status = "ON_HOLD"
@@ -540,18 +563,24 @@ export class ListImportService {
               },
               update: {
                 status,
-                chaptersProgress: entry.progress || existing?.chaptersProgress || 0,
-                volumesProgress: entry.progressVolumes || existing?.volumesProgress || 0,
+                chaptersProgress:
+                  entry.progress || existing?.chaptersProgress || 0,
+                volumesProgress:
+                  entry.progressVolumes || existing?.volumesProgress || 0,
                 score: normalizeScore(entry.score) || existing?.score || null,
                 notes: entry.notes || existing?.notes || null,
-                startedAt: fuzzyDateToDate(entry.startedAt) || existing?.startedAt,
-                completedAt: fuzzyDateToDate(entry.completedAt) || existing?.completedAt,
+                startedAt:
+                  fuzzyDateToDate(entry.startedAt) || existing?.startedAt,
+                completedAt:
+                  fuzzyDateToDate(entry.completedAt) || existing?.completedAt,
                 connections,
               },
             })
             importedManga++
           } catch (err: any) {
-            logger.warn(`[ListImport] AniList manga import failed for "${title}": ${err?.message || err}`)
+            logger.warn(
+              `[ListImport] AniList manga import failed for "${title}": ${err?.message || err}`
+            )
             failedManga++
           }
         }
@@ -570,7 +599,9 @@ export class ListImportService {
     // 2.3 Process AniList Custom Lists
     if (shouldFetchCustomLists) {
       let importedCustom = 0
-      const allCustomLists = [...animeLists, ...mangaLists].filter((l) => Boolean(l.isCustomList))
+      const allCustomLists = [...animeLists, ...mangaLists].filter((l) =>
+        Boolean(l.isCustomList)
+      )
 
       for (const list of allCustomLists) {
         let order = 0
@@ -584,15 +615,39 @@ export class ListImportService {
 
           try {
             if (media.type === "ANIME") {
-              const dbAnime = await this.ensureAnimeInDb(media.id, media.idMal, title, media)
-              await this.addToCustomList(userId, list.name, "ANIME", dbAnime.id, order++)
+              const dbAnime = await this.ensureAnimeInDb(
+                media.id,
+                media.idMal,
+                title,
+                media
+              )
+              await this.addToCustomList(
+                userId,
+                list.name,
+                "ANIME",
+                dbAnime.id,
+                order++
+              )
             } else {
-              const dbManga = await this.ensureMangaInDb(media.id, media.idMal, title, media)
-              await this.addToCustomList(userId, list.name, "MANGA", dbManga.id, order++)
+              const dbManga = await this.ensureMangaInDb(
+                media.id,
+                media.idMal,
+                title,
+                media
+              )
+              await this.addToCustomList(
+                userId,
+                list.name,
+                "MANGA",
+                dbManga.id,
+                order++
+              )
             }
             importedCustom++
           } catch (err: any) {
-            logger.warn(`[ListImport] AniList custom list item failed for "${title}": ${err?.message || err}`)
+            logger.warn(
+              `[ListImport] AniList custom list item failed for "${title}": ${err?.message || err}`
+            )
           }
         }
       }
@@ -625,8 +680,12 @@ export class ListImportService {
       const expiresAtDate = new Date(credentials.expiresAt)
       if (expiresAtDate.getTime() - Date.now() < 300000) {
         try {
-          const adapter = getConnectionAdapter("MAL" as ConnectionProvider) as any
-          const refreshed = await adapter.refreshAccessToken(credentials.refreshToken)
+          const adapter = getConnectionAdapter(
+            "MAL" as ConnectionProvider
+          ) as any
+          const refreshed = await adapter.refreshAccessToken(
+            credentials.refreshToken
+          )
           token = refreshed.accessToken
         } catch {
           // Proceed with current token
@@ -659,6 +718,10 @@ export class ListImportService {
 
     const icon = "https://cdn.simpleicons.org/myanimelist/2E51A2"
 
+    // Track skipped items that don't exist on AniList
+    const skippedAnime: Array<{ title: string; malId: number }> = []
+    const skippedManga: Array<{ title: string; malId: number }> = []
+
     // 3.1 MAL Anime List
     if (shouldFetchAnime) {
       let importedAnime = 0
@@ -674,24 +737,64 @@ export class ListImportService {
         const title = node.title || `MAL Anime ${node.id}`
 
         try {
-          const dbAnime = await this.ensureAnimeInDb(undefined, node.id, title, {
-            coverImage: { large: node.main_picture?.large || node.main_picture?.medium },
-            episodes: node.num_episodes,
+          // Resolve AniList ID to verify existence
+          let anilistId: number | undefined
+          const existing = await prisma.anime.findUnique({
+            where: { malId: node.id },
+            select: { id: true, anilistId: true },
           })
+          if (existing?.anilistId) {
+            anilistId = existing.anilistId
+          } else {
+            const mapped = await this.animeMapping.lookup({ malId: node.id })
+            if (mapped?.anilistId) {
+              anilistId = mapped.anilistId
+            } else {
+              const alMedia = await mediaQueueService.anilist.findMediaByMalId(
+                node.id,
+                "ANIME"
+              )
+              if (alMedia?.id) {
+                anilistId = alMedia.id
+              }
+            }
+          }
+
+          if (!anilistId) {
+            logger.info(
+              `[ListImport] Skipping MAL Anime "${title}" (MAL ID: ${node.id}): does not exist on AniList`
+            )
+            skippedAnime.push({ title, malId: node.id })
+            continue
+          }
+
+          const dbAnime = await this.ensureAnimeInDb(
+            anilistId,
+            node.id,
+            title,
+            {
+              coverImage: {
+                large: node.main_picture?.large || node.main_picture?.medium,
+              },
+              episodes: node.num_episodes,
+            }
+          )
           const animeId = dbAnime.id
 
-          let status: "PLANNING" | "WATCHING" | "COMPLETED" | "ON_HOLD" | "DROPPED" = "PLANNING"
+          let status:
+            "PLANNING" | "WATCHING" | "COMPLETED" | "ON_HOLD" | "DROPPED" =
+            "PLANNING"
           if (listStatus.status === "watching") status = "WATCHING"
           else if (listStatus.status === "completed") status = "COMPLETED"
           else if (listStatus.status === "on_hold") status = "ON_HOLD"
           else if (listStatus.status === "dropped") status = "DROPPED"
 
-          const existing = await prisma.animeList.findUnique({
+          const existingList = await prisma.animeList.findUnique({
             where: { userId_animeId: { userId, animeId } },
           })
 
           const connections = mergeConnectionsJson(
-            existing?.connections,
+            existingList?.connections,
             "mal",
             node.id
           )
@@ -711,26 +814,36 @@ export class ListImportService {
             },
             update: {
               status,
-              progress: listStatus.num_episodes_watched || existing?.progress || 0,
-              score: normalizeScore(listStatus.score) || existing?.score || null,
-              notes: listStatus.comments || existing?.notes || null,
-              startedAt: parseDate(listStatus.start_date) || existing?.startedAt,
-              completedAt: parseDate(listStatus.finish_date) || existing?.completedAt,
+              progress:
+                listStatus.num_episodes_watched || existingList?.progress || 0,
+              score:
+                normalizeScore(listStatus.score) || existingList?.score || null,
+              notes: listStatus.comments || existingList?.notes || null,
+              startedAt:
+                parseDate(listStatus.start_date) || existingList?.startedAt,
+              completedAt:
+                parseDate(listStatus.finish_date) || existingList?.completedAt,
               connections,
             },
           })
           importedAnime++
         } catch (err: any) {
-          logger.warn(`[ListImport] MAL anime import failed for "${title}": ${err?.message || err}`)
+          logger.warn(
+            `[ListImport] MAL anime import failed for "${title}": ${err?.message || err}`
+          )
           failedAnime++
         }
       }
 
       if (animeEntries.length > 0) {
+        const skippedMsg =
+          skippedAnime.length > 0
+            ? `, ${skippedAnime.length} skipped (not on AniList)`
+            : ""
         await this.sendImportNotification(
           userId,
           "Anime List Imported",
-          `Finished importing your Anime list from MyAnimeList (${importedAnime} item${importedAnime === 1 ? "" : "s"} imported${failedAnime > 0 ? `, ${failedAnime} failed` : ""}).`,
+          `Finished importing your Anime list from MyAnimeList (${importedAnime} item${importedAnime === 1 ? "" : "s"} imported${skippedMsg}${failedAnime > 0 ? `, ${failedAnime} failed` : ""}).`,
           icon
         )
       }
@@ -751,25 +864,60 @@ export class ListImportService {
         const title = node.title || `MAL Manga ${node.id}`
 
         try {
-          const dbManga = await this.ensureMangaInDb(undefined, node.id, title, {
-            coverImage: { large: node.main_picture?.large || node.main_picture?.medium },
-            chapters: node.num_chapters,
-            volumes: node.num_volumes,
+          // Resolve AniList ID to verify existence
+          let anilistId: number | undefined
+          const existing = await prisma.manga.findUnique({
+            where: { malId: node.id },
+            select: { id: true, anilistId: true },
           })
+          if (existing?.anilistId) {
+            anilistId = existing.anilistId
+          } else {
+            const alMedia = await mediaQueueService.anilist.findMediaByMalId(
+              node.id,
+              "MANGA"
+            )
+            if (alMedia?.id) {
+              anilistId = alMedia.id
+            }
+          }
+
+          if (!anilistId) {
+            logger.info(
+              `[ListImport] Skipping MAL Manga "${title}" (MAL ID: ${node.id}): does not exist on AniList`
+            )
+            skippedManga.push({ title, malId: node.id })
+            continue
+          }
+
+          const dbManga = await this.ensureMangaInDb(
+            anilistId,
+            node.id,
+            title,
+            {
+              coverImage: {
+                large: node.main_picture?.large || node.main_picture?.medium,
+              },
+              chapters: node.num_chapters,
+              volumes: node.num_volumes,
+            }
+          )
           const mangaId = dbManga.id
 
-          let status: "PLANNING" | "READING" | "COMPLETED" | "ON_HOLD" | "DROPPED" = "PLANNING"
+          let status:
+            "PLANNING" | "READING" | "COMPLETED" | "ON_HOLD" | "DROPPED" =
+            "PLANNING"
           if (listStatus.status === "reading") status = "READING"
           else if (listStatus.status === "completed") status = "COMPLETED"
           else if (listStatus.status === "on_hold") status = "ON_HOLD"
           else if (listStatus.status === "dropped") status = "DROPPED"
 
-          const existing = await prisma.mangaList.findUnique({
+          const existingList = await prisma.mangaList.findUnique({
             where: { userId_mangaId: { userId, mangaId } },
           })
 
           const connections = mergeConnectionsJson(
-            existing?.connections,
+            existingList?.connections,
             "mal",
             node.id
           )
@@ -790,30 +938,71 @@ export class ListImportService {
             },
             update: {
               status,
-              chaptersProgress: listStatus.num_chapters_read || existing?.chaptersProgress || 0,
-              volumesProgress: listStatus.num_volumes_read || existing?.volumesProgress || 0,
-              score: normalizeScore(listStatus.score) || existing?.score || null,
-              notes: listStatus.comments || existing?.notes || null,
-              startedAt: parseDate(listStatus.start_date) || existing?.startedAt,
-              completedAt: parseDate(listStatus.finish_date) || existing?.completedAt,
+              chaptersProgress:
+                listStatus.num_chapters_read ||
+                existingList?.chaptersProgress ||
+                0,
+              volumesProgress:
+                listStatus.num_volumes_read ||
+                existingList?.volumesProgress ||
+                0,
+              score:
+                normalizeScore(listStatus.score) || existingList?.score || null,
+              notes: listStatus.comments || existingList?.notes || null,
+              startedAt:
+                parseDate(listStatus.start_date) || existingList?.startedAt,
+              completedAt:
+                parseDate(listStatus.finish_date) || existingList?.completedAt,
               connections,
             },
           })
           importedManga++
         } catch (err: any) {
-          logger.warn(`[ListImport] MAL manga import failed for "${title}": ${err?.message || err}`)
+          logger.warn(
+            `[ListImport] MAL manga import failed for "${title}": ${err?.message || err}`
+          )
           failedManga++
         }
       }
 
       if (mangaEntries.length > 0) {
+        const skippedMsg =
+          skippedManga.length > 0
+            ? `, ${skippedManga.length} skipped (not on AniList)`
+            : ""
         await this.sendImportNotification(
           userId,
           "Manga List Imported",
-          `Finished importing your Manga list from MyAnimeList (${importedManga} item${importedManga === 1 ? "" : "s"} imported${failedManga > 0 ? `, ${failedManga} failed` : ""}).`,
+          `Finished importing your Manga list from MyAnimeList (${importedManga} item${importedManga === 1 ? "" : "s"} imported${skippedMsg}${failedManga > 0 ? `, ${failedManga} failed` : ""}).`,
           icon
         )
       }
+    }
+
+    // Send dedicated notification with all skipped entries if any were missing on AniList
+    if (skippedAnime.length > 0 || skippedManga.length > 0) {
+      const parts: string[] = []
+      if (skippedAnime.length > 0) {
+        const list = skippedAnime
+          .map((s) => `• ${s.title} (MAL ID: ${s.malId})`)
+          .join("\n")
+        parts.push(`Anime (${skippedAnime.length}):\n${list}`)
+      }
+      if (skippedManga.length > 0) {
+        const list = skippedManga
+          .map((s) => `• ${s.title} (MAL ID: ${s.malId})`)
+          .join("\n")
+        parts.push(`Manga (${skippedManga.length}):\n${list}`)
+      }
+
+      await this.sendImportNotification(
+        userId,
+        "MAL Import: Items Missing on AniList",
+        `The following ${skippedAnime.length + skippedManga.length} item(s) could not be imported because they do not exist on AniList:\n\n${parts.join("\n\n")}`,
+        icon,
+        NotificationType.INFO,
+        NotificationPriority.HIGH
+      )
     }
   }
 
@@ -840,7 +1029,13 @@ export class ListImportService {
     if (requestedTypes.includes("tv")) typesToFetch.push("tv")
     if (requestedTypes.includes("movie")) typesToFetch.push("movies")
 
-    const statuses = ["watching", "plantowatch", "completed", "dropped", "onhold"]
+    const statuses = [
+      "watching",
+      "plantowatch",
+      "completed",
+      "dropped",
+      "onhold",
+    ]
 
     const headers = {
       "Content-Type": "application/json",
@@ -897,7 +1092,11 @@ export class ListImportService {
         const mediaItem = entry.anime
         if (!mediaItem) continue
 
-        const title = mediaItem.title || mediaItem.title_en || mediaItem.title_romaji || `Simkl ${entry.id}`
+        const title =
+          mediaItem.title ||
+          mediaItem.title_en ||
+          mediaItem.title_romaji ||
+          `Simkl ${entry.id}`
         const ids = mediaItem.ids || {}
         const simklId = ids.simkl || entry.id
 
@@ -906,12 +1105,18 @@ export class ListImportService {
           const malId = ids.mal ? Number(ids.mal) : undefined
 
           const dbAnime = await this.ensureAnimeInDb(anilistId, malId, title, {
-            coverImage: { large: mediaItem.poster ? `https://simkl.in/posters/${mediaItem.poster}_m.jpg` : undefined },
+            coverImage: {
+              large: mediaItem.poster
+                ? `https://simkl.in/posters/${mediaItem.poster}_m.jpg`
+                : undefined,
+            },
             episodes: mediaItem.ep_count,
           })
           const animeId = dbAnime.id
 
-          let status: "PLANNING" | "WATCHING" | "COMPLETED" | "ON_HOLD" | "DROPPED" = "PLANNING"
+          let status:
+            "PLANNING" | "WATCHING" | "COMPLETED" | "ON_HOLD" | "DROPPED" =
+            "PLANNING"
           if (rawStatus === "watching") status = "WATCHING"
           else if (rawStatus === "completed") status = "COMPLETED"
           else if (rawStatus === "onhold") status = "ON_HOLD"
@@ -921,7 +1126,11 @@ export class ListImportService {
             where: { userId_animeId: { userId, animeId } },
           })
 
-          const connections = mergeConnectionsJson(existing?.connections, "simkl", simklId)
+          const connections = mergeConnectionsJson(
+            existing?.connections,
+            "simkl",
+            simklId
+          )
 
           await prisma.animeList.upsert({
             where: { userId_animeId: { userId, animeId } },
@@ -933,22 +1142,33 @@ export class ListImportService {
               score: normalizeScore(entry.user_rating),
               notes: entry.memo || null,
               startedAt: parseDate(entry.created_at || entry.watched_at),
-              completedAt: rawStatus === "completed" ? parseDate(entry.last_watched_at) : null,
+              completedAt:
+                rawStatus === "completed"
+                  ? parseDate(entry.last_watched_at)
+                  : null,
               connections,
             },
             update: {
               status,
               progress: entry.watched_episodes_count || existing?.progress || 0,
-              score: normalizeScore(entry.user_rating) || existing?.score || null,
+              score:
+                normalizeScore(entry.user_rating) || existing?.score || null,
               notes: entry.memo || existing?.notes || null,
-              startedAt: parseDate(entry.created_at || entry.watched_at) || existing?.startedAt,
-              completedAt: (rawStatus === "completed" ? parseDate(entry.last_watched_at) : null) || existing?.completedAt,
+              startedAt:
+                parseDate(entry.created_at || entry.watched_at) ||
+                existing?.startedAt,
+              completedAt:
+                (rawStatus === "completed"
+                  ? parseDate(entry.last_watched_at)
+                  : null) || existing?.completedAt,
               connections,
             },
           })
           importedAnime++
         } catch (err: any) {
-          logger.warn(`[ListImport] Simkl anime import failed for "${title}": ${err?.message || err}`)
+          logger.warn(
+            `[ListImport] Simkl anime import failed for "${title}": ${err?.message || err}`
+          )
           failedAnime++
         }
       }
@@ -971,16 +1191,27 @@ export class ListImportService {
         const mediaItem = entry.show
         if (!mediaItem) continue
 
-        const title = mediaItem.title || mediaItem.title_en || mediaItem.title_romaji || `Simkl ${entry.id}`
+        const title =
+          mediaItem.title ||
+          mediaItem.title_en ||
+          mediaItem.title_romaji ||
+          `Simkl ${entry.id}`
         const ids = mediaItem.ids || {}
         const simklId = ids.simkl || entry.id
 
         try {
           const tvdbId = ids.tvdb ? Number(ids.tvdb) : undefined
-          const dbTv = await this.ensureTvInDb(tvdbId, title, simklId, mediaItem)
+          const dbTv = await this.ensureTvInDb(
+            tvdbId,
+            title,
+            simklId,
+            mediaItem
+          )
           const tvId = dbTv.id
 
-          let status: "PLANNING" | "WATCHING" | "COMPLETED" | "ON_HOLD" | "DROPPED" = "PLANNING"
+          let status:
+            "PLANNING" | "WATCHING" | "COMPLETED" | "ON_HOLD" | "DROPPED" =
+            "PLANNING"
           if (rawStatus === "watching") status = "WATCHING"
           else if (rawStatus === "completed") status = "COMPLETED"
           else if (rawStatus === "onhold") status = "ON_HOLD"
@@ -990,7 +1221,11 @@ export class ListImportService {
             where: { userId_tvId: { userId, tvId } },
           })
 
-          const connections = mergeConnectionsJson(existing?.connections, "simkl", simklId || tvdbId || tvId)
+          const connections = mergeConnectionsJson(
+            existing?.connections,
+            "simkl",
+            simklId || tvdbId || tvId
+          )
 
           const listEntry = await prisma.tvList.upsert({
             where: { userId_tvId: { userId, tvId } },
@@ -1002,16 +1237,25 @@ export class ListImportService {
               score: normalizeScore(entry.user_rating),
               notes: entry.memo || null,
               startedAt: parseDate(entry.created_at || entry.watched_at),
-              completedAt: rawStatus === "completed" ? parseDate(entry.last_watched_at) : null,
+              completedAt:
+                rawStatus === "completed"
+                  ? parseDate(entry.last_watched_at)
+                  : null,
               connections,
             },
             update: {
               status,
               progress: entry.watched_episodes_count || existing?.progress || 0,
-              score: normalizeScore(entry.user_rating) || existing?.score || null,
+              score:
+                normalizeScore(entry.user_rating) || existing?.score || null,
               notes: entry.memo || existing?.notes || null,
-              startedAt: parseDate(entry.created_at || entry.watched_at) || existing?.startedAt,
-              completedAt: (rawStatus === "completed" ? parseDate(entry.last_watched_at) : null) || existing?.completedAt,
+              startedAt:
+                parseDate(entry.created_at || entry.watched_at) ||
+                existing?.startedAt,
+              completedAt:
+                (rawStatus === "completed"
+                  ? parseDate(entry.last_watched_at)
+                  : null) || existing?.completedAt,
               connections,
             },
           })
@@ -1024,24 +1268,26 @@ export class ListImportService {
                 for (const ep of s.episodes) {
                   const epNum = ep.number
                   if (ep.watched_at || ep.completed) {
-                    await prisma.tvWatchedEpisode.upsert({
-                      where: {
-                        tvListId_seasonNumber_episodeNumber: {
+                    await prisma.tvWatchedEpisode
+                      .upsert({
+                        where: {
+                          tvListId_seasonNumber_episodeNumber: {
+                            tvListId: listEntry.id,
+                            seasonNumber: seasonNum,
+                            episodeNumber: epNum,
+                          },
+                        },
+                        create: {
                           tvListId: listEntry.id,
                           seasonNumber: seasonNum,
                           episodeNumber: epNum,
+                          watchedAt: parseDate(ep.watched_at) || new Date(),
                         },
-                      },
-                      create: {
-                        tvListId: listEntry.id,
-                        seasonNumber: seasonNum,
-                        episodeNumber: epNum,
-                        watchedAt: parseDate(ep.watched_at) || new Date(),
-                      },
-                      update: {
-                        watchedAt: parseDate(ep.watched_at) || new Date(),
-                      },
-                    }).catch(() => {})
+                        update: {
+                          watchedAt: parseDate(ep.watched_at) || new Date(),
+                        },
+                      })
+                      .catch(() => {})
                   }
                 }
               }
@@ -1049,7 +1295,9 @@ export class ListImportService {
           }
           importedTv++
         } catch (err: any) {
-          logger.warn(`[ListImport] Simkl TV import failed for "${title}": ${err?.message || err}`)
+          logger.warn(
+            `[ListImport] Simkl TV import failed for "${title}": ${err?.message || err}`
+          )
           failedTv++
         }
       }
@@ -1072,16 +1320,26 @@ export class ListImportService {
         const mediaItem = entry.movie
         if (!mediaItem) continue
 
-        const title = mediaItem.title || mediaItem.title_en || mediaItem.title_romaji || `Simkl ${entry.id}`
+        const title =
+          mediaItem.title ||
+          mediaItem.title_en ||
+          mediaItem.title_romaji ||
+          `Simkl ${entry.id}`
         const ids = mediaItem.ids || {}
         const simklId = ids.simkl || entry.id
 
         try {
           const tvdbId = ids.tvdb ? Number(ids.tvdb) : undefined
-          const dbMovie = await this.ensureMovieInDb(tvdbId, title, simklId, mediaItem)
+          const dbMovie = await this.ensureMovieInDb(
+            tvdbId,
+            title,
+            simklId,
+            mediaItem
+          )
           const movieId = dbMovie.id
 
-          let status: "PLANNING" | "WATCHING" | "COMPLETED" | "DROPPED" = "PLANNING"
+          let status: "PLANNING" | "WATCHING" | "COMPLETED" | "DROPPED" =
+            "PLANNING"
           if (rawStatus === "watching") status = "WATCHING"
           else if (rawStatus === "completed") status = "COMPLETED"
           else if (rawStatus === "dropped") status = "DROPPED"
@@ -1090,10 +1348,16 @@ export class ListImportService {
             where: { userId_movieId: { userId, movieId } },
           })
 
-          const connections = mergeConnectionsJson(existing?.connections, "simkl", simklId || tvdbId || movieId)
+          const connections = mergeConnectionsJson(
+            existing?.connections,
+            "simkl",
+            simklId || tvdbId || movieId
+          )
 
           // Movie requirement: startDate should be the same as finish date
-          const finishDate = parseDate(entry.last_watched_at || entry.watched_at || entry.created_at)
+          const finishDate = parseDate(
+            entry.last_watched_at || entry.watched_at || entry.created_at
+          )
           const startDate = finishDate
 
           await prisma.movieList.upsert({
@@ -1110,16 +1374,21 @@ export class ListImportService {
             },
             update: {
               status,
-              score: normalizeScore(entry.user_rating) || existing?.score || null,
+              score:
+                normalizeScore(entry.user_rating) || existing?.score || null,
               notes: entry.memo || existing?.notes || null,
-              startedAt: finishDate ?? existing?.completedAt ?? existing?.startedAt,
-              completedAt: finishDate ?? existing?.completedAt ?? existing?.startedAt,
+              startedAt:
+                finishDate ?? existing?.completedAt ?? existing?.startedAt,
+              completedAt:
+                finishDate ?? existing?.completedAt ?? existing?.startedAt,
               connections,
             },
           })
           importedMovies++
         } catch (err: any) {
-          logger.warn(`[ListImport] Simkl movie import failed for "${title}": ${err?.message || err}`)
+          logger.warn(
+            `[ListImport] Simkl movie import failed for "${title}": ${err?.message || err}`
+          )
           failedMovies++
         }
       }
@@ -1145,7 +1414,9 @@ export class ListImportService {
     const token = credentials.accessToken || credentials.apiKey
     const username = connection.externalId || credentials.username
     if (!token || !username) {
-      throw new BadRequest("Bangumi connection requires an access token and username")
+      throw new BadRequest(
+        "Bangumi connection requires an access token and username"
+      )
     }
 
     const requestedTypes = options?.mediaTypes || ["anime", "manga"]
@@ -1173,7 +1444,8 @@ export class ListImportService {
       offset += limit
     }
 
-    const icon = "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/svg/bangumi.svg"
+    const icon =
+      "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/svg/bangumi.svg"
 
     // 5.1 Bangumi Anime (subject_type === 2)
     if (shouldFetchAnime) {
@@ -1184,16 +1456,27 @@ export class ListImportService {
       for (const item of animeItems) {
         const subject = item.subject || {}
         const subjectId = item.subject_id
-        const title = subject.name_cn || subject.name || `Bangumi Subject ${subjectId}`
+        const title =
+          subject.name_cn || subject.name || `Bangumi Subject ${subjectId}`
 
         try {
-          const dbAnime = await this.ensureAnimeInDb(undefined, undefined, title, {
-            coverImage: { large: subject.images?.large || subject.images?.medium },
-            episodes: subject.eps,
-          }, subjectId)
+          const dbAnime = await this.ensureAnimeInDb(
+            undefined,
+            undefined,
+            title,
+            {
+              coverImage: {
+                large: subject.images?.large || subject.images?.medium,
+              },
+              episodes: subject.eps,
+            },
+            subjectId
+          )
           const animeId = dbAnime.id
 
-          let status: "PLANNING" | "WATCHING" | "COMPLETED" | "ON_HOLD" | "DROPPED" = "PLANNING"
+          let status:
+            "PLANNING" | "WATCHING" | "COMPLETED" | "ON_HOLD" | "DROPPED" =
+            "PLANNING"
           if (item.type === 1) status = "PLANNING"
           else if (item.type === 2) status = "COMPLETED"
           else if (item.type === 3) status = "WATCHING"
@@ -1204,7 +1487,11 @@ export class ListImportService {
             where: { userId_animeId: { userId, animeId } },
           })
 
-          const connections = mergeConnectionsJson(existing?.connections, "bangumi", subjectId)
+          const connections = mergeConnectionsJson(
+            existing?.connections,
+            "bangumi",
+            subjectId
+          )
 
           await prisma.animeList.upsert({
             where: { userId_animeId: { userId, animeId } },
@@ -1225,13 +1512,17 @@ export class ListImportService {
               score: normalizeScore(item.rate) || existing?.score || null,
               notes: item.comment || existing?.notes || null,
               startedAt: parseDate(item.updated_at) || existing?.startedAt,
-              completedAt: (item.type === 2 ? parseDate(item.updated_at) : null) || existing?.completedAt,
+              completedAt:
+                (item.type === 2 ? parseDate(item.updated_at) : null) ||
+                existing?.completedAt,
               connections,
             },
           })
           importedAnime++
         } catch (err: any) {
-          logger.warn(`[ListImport] Bangumi anime import failed for "${title}": ${err?.message || err}`)
+          logger.warn(
+            `[ListImport] Bangumi anime import failed for "${title}": ${err?.message || err}`
+          )
           failedAnime++
         }
       }
@@ -1255,17 +1546,28 @@ export class ListImportService {
       for (const item of mangaItems) {
         const subject = item.subject || {}
         const subjectId = item.subject_id
-        const title = subject.name_cn || subject.name || `Bangumi Subject ${subjectId}`
+        const title =
+          subject.name_cn || subject.name || `Bangumi Subject ${subjectId}`
 
         try {
-          const dbManga = await this.ensureMangaInDb(undefined, undefined, title, {
-            coverImage: { large: subject.images?.large || subject.images?.medium },
-            chapters: subject.eps,
-            volumes: subject.volumes,
-          }, subjectId)
+          const dbManga = await this.ensureMangaInDb(
+            undefined,
+            undefined,
+            title,
+            {
+              coverImage: {
+                large: subject.images?.large || subject.images?.medium,
+              },
+              chapters: subject.eps,
+              volumes: subject.volumes,
+            },
+            subjectId
+          )
           const mangaId = dbManga.id
 
-          let status: "PLANNING" | "READING" | "COMPLETED" | "ON_HOLD" | "DROPPED" = "PLANNING"
+          let status:
+            "PLANNING" | "READING" | "COMPLETED" | "ON_HOLD" | "DROPPED" =
+            "PLANNING"
           if (item.type === 1) status = "PLANNING"
           else if (item.type === 2) status = "COMPLETED"
           else if (item.type === 3) status = "READING"
@@ -1276,7 +1578,11 @@ export class ListImportService {
             where: { userId_mangaId: { userId, mangaId } },
           })
 
-          const connections = mergeConnectionsJson(existing?.connections, "bangumi", subjectId)
+          const connections = mergeConnectionsJson(
+            existing?.connections,
+            "bangumi",
+            subjectId
+          )
 
           await prisma.mangaList.upsert({
             where: { userId_mangaId: { userId, mangaId } },
@@ -1294,18 +1600,24 @@ export class ListImportService {
             },
             update: {
               status,
-              chaptersProgress: item.ep_status || existing?.chaptersProgress || 0,
-              volumesProgress: item.vol_status || existing?.volumesProgress || 0,
+              chaptersProgress:
+                item.ep_status || existing?.chaptersProgress || 0,
+              volumesProgress:
+                item.vol_status || existing?.volumesProgress || 0,
               score: normalizeScore(item.rate) || existing?.score || null,
               notes: item.comment || existing?.notes || null,
               startedAt: parseDate(item.updated_at) || existing?.startedAt,
-              completedAt: (item.type === 2 ? parseDate(item.updated_at) : null) || existing?.completedAt,
+              completedAt:
+                (item.type === 2 ? parseDate(item.updated_at) : null) ||
+                existing?.completedAt,
               connections,
             },
           })
           importedManga++
         } catch (err: any) {
-          logger.warn(`[ListImport] Bangumi manga import failed for "${title}": ${err?.message || err}`)
+          logger.warn(
+            `[ListImport] Bangumi manga import failed for "${title}": ${err?.message || err}`
+          )
           failedManga++
         }
       }
@@ -1338,11 +1650,25 @@ export class ListImportService {
     }
     if (malId) {
       const existing = await prisma.anime.findUnique({ where: { malId } })
-      if (existing) return { id: existing.id }
+      if (existing?.anilistId) return { id: existing.id }
     }
     if (bangumiId) {
       const existing = await prisma.anime.findFirst({ where: { bangumiId } })
-      if (existing) return { id: existing.id }
+      if (existing?.anilistId) return { id: existing.id }
+    }
+
+    // Resolve AniList ID if not provided
+    if (!anilistId && malId) {
+      const mapped = await this.animeMapping.lookup({ malId })
+      if (mapped?.anilistId) {
+        anilistId = mapped.anilistId
+      } else {
+        const al = await mediaQueueService.anilist.findMediaByMalId(
+          malId,
+          "ANIME"
+        )
+        if (al?.id) anilistId = al.id
+      }
     }
 
     if (anilistId) {
@@ -1353,24 +1679,37 @@ export class ListImportService {
           if (res?.id) return { id: res.id }
         }
       } catch {
-        // Fall back to preview stub creation
+        // Fall back to preview stub creation with canonical anilistId
       }
     }
 
+    if (!anilistId) {
+      throw new Error(
+        `Anime "${title || malId}" does not exist on AniList and was skipped`
+      )
+    }
+
     const preview = await mediaDbSyncer.upsertAnimeSearchPreview({
-      id: anilistId || malId || Math.floor(Math.random() * 1000000),
-      title: typeof title === "object" ? title : { userPreferred: title || "Unknown" },
-      coverImage: fallback?.coverImage?.large ? { large: fallback.coverImage.large } : undefined,
+      id: anilistId,
+      title:
+        typeof title === "object"
+          ? title
+          : { userPreferred: title || "Unknown" },
+      coverImage: fallback?.coverImage?.large
+        ? { large: fallback.coverImage.large }
+        : undefined,
     })
 
     if (malId || bangumiId) {
-      await prisma.anime.update({
-        where: { id: preview.id },
-        data: {
-          ...(malId ? { malId } : {}),
-          ...(bangumiId ? { bangumiId } : {}),
-        },
-      }).catch(() => {})
+      await prisma.anime
+        .update({
+          where: { id: preview.id },
+          data: {
+            ...(malId ? { malId } : {}),
+            ...(bangumiId ? { bangumiId } : {}),
+          },
+        })
+        .catch(() => {})
     }
 
     return { id: preview.id }
@@ -1389,11 +1728,20 @@ export class ListImportService {
     }
     if (malId) {
       const existing = await prisma.manga.findFirst({ where: { malId } })
-      if (existing) return { id: existing.id }
+      if (existing?.anilistId) return { id: existing.id }
     }
     if (bangumiId) {
       const existing = await prisma.manga.findFirst({ where: { bangumiId } })
-      if (existing) return { id: existing.id }
+      if (existing?.anilistId) return { id: existing.id }
+    }
+
+    // Resolve AniList ID if not provided
+    if (!anilistId && malId) {
+      const al = await mediaQueueService.anilist.findMediaByMalId(
+        malId,
+        "MANGA"
+      )
+      if (al?.id) anilistId = al.id
     }
 
     if (anilistId) {
@@ -1404,24 +1752,37 @@ export class ListImportService {
           if (res?.id) return { id: res.id }
         }
       } catch {
-        // Fall back to stub
+        // Fall back to stub with canonical anilistId
       }
     }
 
+    if (!anilistId) {
+      throw new Error(
+        `Manga "${title || malId}" does not exist on AniList and was skipped`
+      )
+    }
+
     const preview = await mediaDbSyncer.upsertMangaSearchPreview({
-      id: anilistId || malId || Math.floor(Math.random() * 1000000),
-      title: typeof title === "object" ? title : { userPreferred: title || "Unknown" },
-      coverImage: fallback?.coverImage?.large ? { large: fallback.coverImage.large } : undefined,
+      id: anilistId,
+      title:
+        typeof title === "object"
+          ? title
+          : { userPreferred: title || "Unknown" },
+      coverImage: fallback?.coverImage?.large
+        ? { large: fallback.coverImage.large }
+        : undefined,
     })
 
     if (malId || bangumiId) {
-      await prisma.manga.update({
-        where: { id: preview.id },
-        data: {
-          ...(malId ? { malId } : {}),
-          ...(bangumiId ? { bangumiId } : {}),
-        },
-      }).catch(() => {})
+      await prisma.manga
+        .update({
+          where: { id: preview.id },
+          data: {
+            ...(malId ? { malId } : {}),
+            ...(bangumiId ? { bangumiId } : {}),
+          },
+        })
+        .catch(() => {})
     }
 
     return { id: preview.id }
@@ -1438,7 +1799,9 @@ export class ListImportService {
       if (existing) return { id: existing.id }
     }
     if (simklId) {
-      const existing = await prisma.tv.findFirst({ where: { simklId: Number(simklId) } })
+      const existing = await prisma.tv.findFirst({
+        where: { simklId: Number(simklId) },
+      })
       if (existing) return { id: existing.id }
     }
 
@@ -1447,14 +1810,18 @@ export class ListImportService {
         const preview = await mediaDbSyncer.upsertTvSearchPreview({
           tvdb_id: tvdbId,
           name: title,
-          image_url: fallback?.poster ? `https://simkl.in/posters/${fallback.poster}_m.jpg` : undefined,
+          image_url: fallback?.poster
+            ? `https://simkl.in/posters/${fallback.poster}_m.jpg`
+            : undefined,
         })
         if (preview?.id) {
           if (simklId) {
-            await prisma.tv.update({
-              where: { id: preview.id },
-              data: { simklId: Number(simklId) },
-            }).catch(() => {})
+            await prisma.tv
+              .update({
+                where: { id: preview.id },
+                data: { simklId: Number(simklId) },
+              })
+              .catch(() => {})
           }
           return { id: preview.id }
         }
@@ -1471,10 +1838,12 @@ export class ListImportService {
           const preview = await mediaDbSyncer.upsertTvSearchPreview(first)
           if (preview?.id) {
             if (simklId) {
-              await prisma.tv.update({
-                where: { id: preview.id },
-                data: { simklId: Number(simklId) },
-              }).catch(() => {})
+              await prisma.tv
+                .update({
+                  where: { id: preview.id },
+                  data: { simklId: Number(simklId) },
+                })
+                .catch(() => {})
             }
             return { id: preview.id }
           }
@@ -1489,7 +1858,9 @@ export class ListImportService {
         titlePrimary: typeof title === "string" ? title : "Unknown TV Show",
         tvDBId: tvdbId || null,
         simklId: simklId ? Number(simklId) : null,
-        coverImage: fallback?.poster ? `https://simkl.in/posters/${fallback.poster}_m.jpg` : null,
+        coverImage: fallback?.poster
+          ? `https://simkl.in/posters/${fallback.poster}_m.jpg`
+          : null,
       },
     })
     return { id: created.id }
@@ -1502,11 +1873,15 @@ export class ListImportService {
     fallback?: any
   ): Promise<{ id: number }> {
     if (tvdbId) {
-      const existing = await prisma.movie.findUnique({ where: { tvDBId: tvdbId } })
+      const existing = await prisma.movie.findUnique({
+        where: { tvDBId: tvdbId },
+      })
       if (existing) return { id: existing.id }
     }
     if (simklId) {
-      const existing = await prisma.movie.findFirst({ where: { simklId: Number(simklId) } })
+      const existing = await prisma.movie.findFirst({
+        where: { simklId: Number(simklId) },
+      })
       if (existing) return { id: existing.id }
     }
 
@@ -1515,14 +1890,18 @@ export class ListImportService {
         const preview = await mediaDbSyncer.upsertMovieSearchPreview({
           tvdb_id: tvdbId,
           name: title,
-          image_url: fallback?.poster ? `https://simkl.in/posters/${fallback.poster}_m.jpg` : undefined,
+          image_url: fallback?.poster
+            ? `https://simkl.in/posters/${fallback.poster}_m.jpg`
+            : undefined,
         })
         if (preview?.id) {
           if (simklId) {
-            await prisma.movie.update({
-              where: { id: preview.id },
-              data: { simklId: Number(simklId) },
-            }).catch(() => {})
+            await prisma.movie
+              .update({
+                where: { id: preview.id },
+                data: { simklId: Number(simklId) },
+              })
+              .catch(() => {})
           }
           return { id: preview.id }
         }
@@ -1539,10 +1918,12 @@ export class ListImportService {
           const preview = await mediaDbSyncer.upsertMovieSearchPreview(first)
           if (preview?.id) {
             if (simklId) {
-              await prisma.movie.update({
-                where: { id: preview.id },
-                data: { simklId: Number(simklId) },
-              }).catch(() => {})
+              await prisma.movie
+                .update({
+                  where: { id: preview.id },
+                  data: { simklId: Number(simklId) },
+                })
+                .catch(() => {})
             }
             return { id: preview.id }
           }
@@ -1557,7 +1938,9 @@ export class ListImportService {
         titlePrimary: typeof title === "string" ? title : "Unknown Movie",
         tvDBId: tvdbId || null,
         simklId: simklId ? Number(simklId) : null,
-        coverImage: fallback?.poster ? `https://simkl.in/posters/${fallback.poster}_m.jpg` : null,
+        coverImage: fallback?.poster
+          ? `https://simkl.in/posters/${fallback.poster}_m.jpg`
+          : null,
       },
     })
     return { id: created.id }

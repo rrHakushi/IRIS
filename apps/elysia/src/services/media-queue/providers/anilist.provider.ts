@@ -1102,4 +1102,86 @@ export class AniListProvider {
       return []
     }
   }
+
+  /**
+   * Finds an anime or manga on AniList by its MyAnimeList ID.
+   * Returns basic media info (including AniList ID) or null if it does not exist on AniList.
+   */
+  async findMediaByMalId(
+    malId: number,
+    type: "ANIME" | "MANGA"
+  ): Promise<{
+    id: number
+    idMal?: number
+    type: "ANIME" | "MANGA"
+    format?: string
+    title: {
+      userPreferred: string
+      romaji?: string
+      english?: string
+      native?: string
+    }
+    coverImage?: {
+      extraLarge?: string
+      large?: string
+      medium?: string
+    }
+  } | null> {
+    if (!malId || isNaN(malId) || malId <= 0) return null
+
+    const query = `
+      query GetMediaByMalId($idMal: Int, $type: MediaType) {
+        Media(idMal: $idMal, type: $type) {
+          id
+          idMal
+          type
+          format
+          title {
+            userPreferred
+            romaji
+            english
+            native
+          }
+          coverImage {
+            extraLarge
+            large
+            medium
+          }
+        }
+      }
+    `
+
+    try {
+      const data = await this.executeGraphQL<{
+        Media: {
+          id: number
+          idMal?: number
+          type: "ANIME" | "MANGA"
+          format?: string
+          title: {
+            userPreferred: string
+            romaji?: string
+            english?: string
+            native?: string
+          }
+          coverImage?: {
+            extraLarge?: string
+            large?: string
+            medium?: string
+          }
+        } | null
+      }>(query, { idMal: malId, type })
+
+      return data?.Media || null
+    } catch (err: any) {
+      if (
+        err?.status === 404 ||
+        err?.message?.includes("Not Found") ||
+        err?.message?.includes("404")
+      ) {
+        return null
+      }
+      return null
+    }
+  }
 }
