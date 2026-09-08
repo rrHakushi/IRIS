@@ -29,6 +29,8 @@ RUN pnpm install --frozen-lockfile
 
 # Copy full pruned source code and build Next.js application
 COPY --from=pruner /app/out/full/ .
+ARG NEXT_PUBLIC_API_URL=https://api.runerra.org
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 RUN pnpm --filter web build

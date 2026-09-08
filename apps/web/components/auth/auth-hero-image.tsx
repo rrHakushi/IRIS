@@ -14,17 +14,22 @@ export function AuthHeroImage({
   alt = "IRIS Companion",
 }: AuthHeroImageProps) {
   const { illustration } = useAuthIllustration()
-  const src = illustration || fallbackSrc
+  const [imgSrc, setImgSrc] = React.useState<string>(illustration || fallbackSrc)
+
+  React.useEffect(() => {
+    setImgSrc(illustration || fallbackSrc)
+  }, [illustration, fallbackSrc])
 
   return (
     <div className="relative hidden overflow-hidden bg-black select-none md:block">
       <Image
-        src={src}
+        src={imgSrc}
         alt={alt}
         fill
         priority
         sizes="(min-width: 768px) 50vw, 100vw"
         className="object-contain p-2 transition-opacity duration-200 select-none"
+        onError={() => setImgSrc(fallbackSrc)}
       />
     </div>
   )

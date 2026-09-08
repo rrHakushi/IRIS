@@ -77,7 +77,6 @@ steps:
         path: /var/run/docker.sock
     commands:
       - docker image prune -f
-      - docker builder prune -f --keep-storage 5GB || true
     depends_on:
       - Frontend
 

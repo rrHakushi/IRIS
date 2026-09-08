@@ -80,9 +80,14 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.runerra.org}
     restart: unless-stopped
     env_file:
       - .env
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.runerra.org}
+      - ELYSIA_INTERNAL_URL=http://elysia:4000
     depends_on:
       - elysia
     networks:
