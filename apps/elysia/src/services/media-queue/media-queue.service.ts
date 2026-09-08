@@ -486,15 +486,25 @@ export class MediaQueueService {
           const albumRec = !isNaN(albumIdNum)
             ? await prisma.music.findUnique({
                 where: { id: albumIdNum },
-                select: { id: true, tracks: { select: { id: true, deezerId: true } } },
+                select: {
+                  id: true,
+                  tracks: { select: { id: true, deezerId: true } },
+                },
               })
             : await prisma.music.findFirst({
                 where: { deezerId: String(externalId), type: "ALBUM" },
-                select: { id: true, tracks: { select: { id: true, deezerId: true } } },
+                select: {
+                  id: true,
+                  tracks: { select: { id: true, deezerId: true } },
+                },
               })
           if (albumRec?.tracks && albumRec.tracks.length > 0) {
             for (const t of albumRec.tracks) {
-              await this.enqueueJob("MUSIC_TRACK", t.deezerId || t.id, options).catch(() => {})
+              await this.enqueueJob(
+                "MUSIC_TRACK",
+                t.deezerId || t.id,
+                options
+              ).catch(() => {})
             }
           }
         }
@@ -1094,18 +1104,32 @@ export class MediaQueueService {
         } catch {}
 
         // Fetch English translation if available (English is always primary)
-        let engTranslation: { name?: string; overview?: string } | null = null
-        try {
-          engTranslation = await this.tvdb.fetchTvSeriesTranslation(
-            tvdbId,
-            "eng"
-          )
-          if (engTranslation?.name) {
-            logQueue(
-              `${c.magenta(c.bold("[MediaQueue]"))} 🌐 English translation found: "${c.bold(engTranslation.name)}"`
+        let engTranslation: {
+          name?: string
+          overview?: string
+          aliases?: string[]
+        } | null = series.engTranslation || null
+        if (!engTranslation) {
+          try {
+            engTranslation = await this.tvdb.fetchTvSeriesTranslation(
+              tvdbId,
+              "eng"
             )
-          }
-        } catch {}
+            if (engTranslation?.name) {
+              logQueue(
+                `${c.magenta(c.bold("[MediaQueue]"))} 🌐 English translation found: "${c.bold(engTranslation.name)}"`
+              )
+            }
+          } catch {}
+        } else if (engTranslation.name) {
+          logQueue(
+            `${c.magenta(c.bold("[MediaQueue]"))} 🌐 English translation found: "${c.bold(engTranslation.name)}"`
+          )
+        }
+
+        if (engTranslation?.name) {
+          summaryText = engTranslation.name
+        }
 
         logQueue(
           `${c.magenta(c.bold("[MediaQueue]"))} 💾 Upserting TV Show, Seasons, Episodes, and Cast to database...`
@@ -1119,6 +1143,7 @@ export class MediaQueueService {
           engTranslation
         )
         localId = result.id
+        await cache.del(`tv:${result.id}`).catch(() => {})
         break
       }
 
@@ -1184,15 +1209,32 @@ export class MediaQueueService {
         } catch {}
 
         // Fetch English translation if available (English is always primary)
-        let engTranslation: { name?: string; overview?: string } | null = null
-        try {
-          engTranslation = await this.tvdb.fetchMovieTranslation(tvdbId, "eng")
-          if (engTranslation?.name) {
-            logQueue(
-              `${c.magenta(c.bold("[MediaQueue]"))} 🌐 English translation found: "${c.bold(engTranslation.name)}"`
+        let engTranslation: {
+          name?: string
+          overview?: string
+          aliases?: string[]
+        } | null = movie.engTranslation || null
+        if (!engTranslation) {
+          try {
+            engTranslation = await this.tvdb.fetchMovieTranslation(
+              tvdbId,
+              "eng"
             )
-          }
-        } catch {}
+            if (engTranslation?.name) {
+              logQueue(
+                `${c.magenta(c.bold("[MediaQueue]"))} 🌐 English translation found: "${c.bold(engTranslation.name)}"`
+              )
+            }
+          } catch {}
+        } else if (engTranslation.name) {
+          logQueue(
+            `${c.magenta(c.bold("[MediaQueue]"))} 🌐 English translation found: "${c.bold(engTranslation.name)}"`
+          )
+        }
+
+        if (engTranslation?.name) {
+          summaryText = engTranslation.name
+        }
 
         logQueue(
           `${c.magenta(c.bold("[MediaQueue]"))} 💾 Upserting Movie to database...`
@@ -1204,6 +1246,7 @@ export class MediaQueueService {
           engTranslation
         )
         localId = result.id
+        await cache.del(`movie:${result.id}`).catch(() => {})
         break
       }
 
@@ -1327,7 +1370,10 @@ export class MediaQueueService {
         // If not found by ID and contains :::, search by title and artist
         if (!albumData && extStr.includes(":::")) {
           const [artist, album] = extStr.split(":::")
-          const searchResults = await this.deezer.searchAlbums(`${artist} ${album}`, 1)
+          const searchResults = await this.deezer.searchAlbums(
+            `${artist} ${album}`,
+            1
+          )
           if (searchResults.length > 0 && searchResults[0]) {
             albumData = await this.deezer.getAlbum(searchResults[0].id)
           }
@@ -1346,7 +1392,9 @@ export class MediaQueueService {
         let releaseDateMonth: number | undefined
         let releaseDateDay: number | undefined
         if (albumData.release_date) {
-          const parts = albumData.release_date.split("-").map((s) => parseInt(s, 10))
+          const parts = albumData.release_date
+            .split("-")
+            .map((s) => parseInt(s, 10))
           if (parts[0]) releaseDateYear = parts[0]
           if (parts[1]) releaseDateMonth = parts[1]
           if (parts[2]) releaseDateDay = parts[2]
@@ -1366,7 +1414,8 @@ export class MediaQueueService {
           titlePrimary: albumData.title,
           link: albumData.link,
           share: albumData.share,
-          coverImage: albumData.cover_big || albumData.cover_medium || albumData.cover,
+          coverImage:
+            albumData.cover_big || albumData.cover_medium || albumData.cover,
           images: {
             small: albumData.cover_small,
             medium: albumData.cover_medium,
@@ -1429,7 +1478,10 @@ export class MediaQueueService {
         // If not found by ID and contains :::, search by title and artist
         if (!trackData && extStr.includes(":::")) {
           const [artist, track] = extStr.split(":::")
-          const searchResults = await this.deezer.searchTracks(`${artist} ${track}`, 1)
+          const searchResults = await this.deezer.searchTracks(
+            `${artist} ${track}`,
+            1
+          )
           if (searchResults.length > 0 && searchResults[0]) {
             trackData = await this.deezer.getTrack(searchResults[0].id)
           }
@@ -1453,7 +1505,9 @@ export class MediaQueueService {
         let releaseDateMonth: number | undefined
         let releaseDateDay: number | undefined
         if (trackData.release_date) {
-          const parts = trackData.release_date.split("-").map((s) => parseInt(s, 10))
+          const parts = trackData.release_date
+            .split("-")
+            .map((s) => parseInt(s, 10))
           if (parts[0]) releaseDateYear = parts[0]
           if (parts[1]) releaseDateMonth = parts[1]
           if (parts[2]) releaseDateDay = parts[2]
@@ -1463,8 +1517,8 @@ export class MediaQueueService {
 
         // Query LRCLIB for lyrics fallback if needed
         let lyrics:
-          | import("./providers/lrclib.provider.js").LrcLibLyricsPayload
-          | null = null
+          import("./providers/lrclib.provider.js").LrcLibLyricsPayload | null =
+          null
         if (resolvedTrack && resolvedArtist) {
           logQueue(
             `${c.magenta(c.bold("[MediaQueue]"))} 📡 Querying LRCLIB for lyrics ("${resolvedTrack}" - "${resolvedArtist}")...`
@@ -1493,7 +1547,10 @@ export class MediaQueueService {
             type: "ALBUM",
             deezerId: trackData.album.id,
             titlePrimary: trackData.album.title,
-            coverImage: trackData.album.cover_big || trackData.album.cover_medium || trackData.album.cover,
+            coverImage:
+              trackData.album.cover_big ||
+              trackData.album.cover_medium ||
+              trackData.album.cover,
             images: {
               small: trackData.album.cover_small,
               medium: trackData.album.cover_medium,
@@ -1515,7 +1572,10 @@ export class MediaQueueService {
             titleVersion: trackData.title_version,
             link: trackData.link,
             share: trackData.share,
-            coverImage: trackData.album?.cover_big || trackData.album?.cover_medium || trackData.album?.cover,
+            coverImage:
+              trackData.album?.cover_big ||
+              trackData.album?.cover_medium ||
+              trackData.album?.cover,
             images: trackData.album
               ? {
                   small: trackData.album.cover_small,

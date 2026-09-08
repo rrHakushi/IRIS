@@ -459,12 +459,27 @@ export class MediaDbSyncer {
       typeof rawId === "number"
         ? rawId
         : parseInt(String(rawId).replace(/\D/g, ""), 10)
-    const titlePrimary = item.name || "Unknown TV Series"
+
+    const engTitle = item.translations?.eng?.trim()
+    const engOverview = item.overviews?.eng?.trim()
+
+    const titlePrimary = engTitle || item.name || "Unknown TV Series"
+    const titleSecondary =
+      engTitle && engTitle !== item.name ? item.name : undefined
+    const titleNative =
+      item.primary_language &&
+      ["kor", "jpn", "zho", "zhtw", "ko", "ja", "zh"].includes(
+        item.primary_language.toLowerCase()
+      )
+        ? item.name
+        : undefined
+
     const coverImage = normalizeTvdbImageUrl(item.image_url)
     const firstAiredYear = item.year
       ? parseInt(String(item.year).slice(0, 4), 10)
       : undefined
     const status = this.mapTvStatus(item.status)
+    const description = engOverview || item.overview || undefined
 
     if (tvdbId) {
       const existing = await prisma.tv.findUnique({
@@ -478,21 +493,50 @@ export class MediaDbSyncer {
           bannerImage: true,
           firstAiredYear: true,
           status: true,
+          description: true,
         },
       })
-      if (existing) return existing
+      if (existing) {
+        if (
+          (engTitle && existing.titlePrimary !== engTitle) ||
+          (engOverview && !existing.description)
+        ) {
+          return await prisma.tv.update({
+            where: { id: existing.id },
+            data: {
+              titlePrimary: engTitle || existing.titlePrimary,
+              titleSecondary: titleSecondary || existing.titleSecondary,
+              titleNative: titleNative || existing.titleNative,
+              description: engOverview || existing.description,
+            },
+            select: {
+              id: true,
+              titlePrimary: true,
+              titleSecondary: true,
+              titleNative: true,
+              coverImage: true,
+              bannerImage: true,
+              firstAiredYear: true,
+              status: true,
+            },
+          })
+        }
+        return existing
+      }
     }
 
     const created = await prisma.tv.create({
       data: {
         tvDBId: tvdbId || undefined,
         titlePrimary,
+        titleSecondary,
+        titleNative,
         coverImage,
         firstAiredYear: isNaN(firstAiredYear as number)
           ? undefined
           : firstAiredYear,
         status,
-        description: item.overview,
+        description,
         tvdbUpdatedAt: null,
       },
       select: {
@@ -519,12 +563,27 @@ export class MediaDbSyncer {
       typeof rawId === "number"
         ? rawId
         : parseInt(String(rawId).replace(/\D/g, ""), 10)
-    const titlePrimary = item.name || "Unknown Movie"
+
+    const engTitle = item.translations?.eng?.trim()
+    const engOverview = item.overviews?.eng?.trim()
+
+    const titlePrimary = engTitle || item.name || "Unknown Movie"
+    const titleSecondary =
+      engTitle && engTitle !== item.name ? item.name : undefined
+    const titleNative =
+      item.primary_language &&
+      ["kor", "jpn", "zho", "zhtw", "ko", "ja", "zh"].includes(
+        item.primary_language.toLowerCase()
+      )
+        ? item.name
+        : undefined
+
     const coverImage = normalizeTvdbImageUrl(item.image_url)
     const releaseDateYear = item.year
       ? parseInt(String(item.year).slice(0, 4), 10)
       : undefined
     const status = this.mapMovieStatus(item.status)
+    const description = engOverview || item.overview || undefined
 
     if (tvdbId) {
       const existing = await prisma.movie.findUnique({
@@ -538,21 +597,50 @@ export class MediaDbSyncer {
           bannerImage: true,
           releaseDateYear: true,
           status: true,
+          description: true,
         },
       })
-      if (existing) return existing
+      if (existing) {
+        if (
+          (engTitle && existing.titlePrimary !== engTitle) ||
+          (engOverview && !existing.description)
+        ) {
+          return await prisma.movie.update({
+            where: { id: existing.id },
+            data: {
+              titlePrimary: engTitle || existing.titlePrimary,
+              titleSecondary: titleSecondary || existing.titleSecondary,
+              titleNative: titleNative || existing.titleNative,
+              description: engOverview || existing.description,
+            },
+            select: {
+              id: true,
+              titlePrimary: true,
+              titleSecondary: true,
+              titleNative: true,
+              coverImage: true,
+              bannerImage: true,
+              releaseDateYear: true,
+              status: true,
+            },
+          })
+        }
+        return existing
+      }
     }
 
     const created = await prisma.movie.create({
       data: {
         tvDBId: tvdbId || undefined,
         titlePrimary,
+        titleSecondary,
+        titleNative,
         coverImage,
         releaseDateYear: isNaN(releaseDateYear as number)
           ? undefined
           : releaseDateYear,
         status,
-        description: item.overview,
+        description,
         tvdbUpdatedAt: null,
       },
       select: {
@@ -696,7 +784,9 @@ export class MediaDbSyncer {
   }): Promise<MusicSearchResult> {
     const titlePrimary = item.titlePrimary.trim() || "Unknown Album"
     const artist = item.artistName?.trim() || null
-    const deezerIdStr = item.deezerId ? String(item.deezerId) : item.musicBrainzId || null
+    const deezerIdStr = item.deezerId
+      ? String(item.deezerId)
+      : item.musicBrainzId || null
 
     let existing: any = null
     if (deezerIdStr) {
@@ -792,24 +882,26 @@ export class MediaDbSyncer {
 
     if (artist) {
       const person = await this.upsertArtist({ namePrimary: artist })
-      await prisma.mediaStaff.upsert({
-        where: {
-          mediaType_mediaId_personId_role: {
+      await prisma.mediaStaff
+        .upsert({
+          where: {
+            mediaType_mediaId_personId_role: {
+              mediaType: "MUSIC",
+              mediaId: created.id,
+              personId: person.id,
+              role: "ARTIST",
+            },
+          },
+          update: { musicId: created.id },
+          create: {
             mediaType: "MUSIC",
             mediaId: created.id,
+            musicId: created.id,
             personId: person.id,
             role: "ARTIST",
           },
-        },
-        update: { musicId: created.id },
-        create: {
-          mediaType: "MUSIC",
-          mediaId: created.id,
-          musicId: created.id,
-          personId: person.id,
-          role: "ARTIST",
-        },
-      }).catch(() => {})
+        })
+        .catch(() => {})
     }
 
     return {
@@ -841,7 +933,9 @@ export class MediaDbSyncer {
   }): Promise<MusicSearchResult> {
     const titlePrimary = item.titlePrimary.trim() || "Unknown Track"
     const artist = item.artistName?.trim() || null
-    const deezerIdStr = item.deezerId ? String(item.deezerId) : item.musicBrainzId || null
+    const deezerIdStr = item.deezerId
+      ? String(item.deezerId)
+      : item.musicBrainzId || null
 
     const selectFields = {
       id: true,
@@ -855,7 +949,9 @@ export class MediaDbSyncer {
       album: { select: { id: true, titlePrimary: true } },
     } as const satisfies Prisma.MusicSelect
 
-    let existing: Prisma.MusicGetPayload<{ select: typeof selectFields }> | null = null
+    let existing: Prisma.MusicGetPayload<{
+      select: typeof selectFields
+    }> | null = null
     if (deezerIdStr) {
       existing = await prisma.music.findUnique({
         where: { deezerId: deezerIdStr },
@@ -925,24 +1021,26 @@ export class MediaDbSyncer {
 
     if (artist) {
       const person = await this.upsertArtist({ namePrimary: artist })
-      await prisma.mediaStaff.upsert({
-        where: {
-          mediaType_mediaId_personId_role: {
+      await prisma.mediaStaff
+        .upsert({
+          where: {
+            mediaType_mediaId_personId_role: {
+              mediaType: "MUSIC",
+              mediaId: created.id,
+              personId: person.id,
+              role: "ARTIST",
+            },
+          },
+          update: { musicId: created.id },
+          create: {
             mediaType: "MUSIC",
             mediaId: created.id,
+            musicId: created.id,
             personId: person.id,
             role: "ARTIST",
           },
-        },
-        update: { musicId: created.id },
-        create: {
-          mediaType: "MUSIC",
-          mediaId: created.id,
-          musicId: created.id,
-          personId: person.id,
-          role: "ARTIST",
-        },
-      }).catch(() => {})
+        })
+        .catch(() => {})
     }
 
     return {
@@ -2468,21 +2566,27 @@ export class MediaDbSyncer {
     characters: TvdbCharacter[],
     tvdbImages?: string[],
     simklData?: import("./providers/simkl.provider.js").SimklTvPayload | null,
-    engTranslation?: { name?: string; overview?: string } | null
+    engTranslation?: {
+      name?: string
+      overview?: string
+      aliases?: string[]
+    } | null
   ): Promise<{ id: number }> {
     const existing = await prisma.tv.findUnique({
       where: { tvDBId: series.id },
     })
 
+    const resolvedEng = engTranslation || series.engTranslation
+
     // Title resolution (English title is ALWAYS primary)
     const titlePrimary =
-      engTranslation?.name?.trim() ||
+      resolvedEng?.name?.trim() ||
       simklData?.title?.trim() ||
       series.name ||
       "Unknown TV Series"
 
     const titleSecondary =
-      engTranslation?.name && engTranslation.name !== series.name
+      resolvedEng?.name && resolvedEng.name !== series.name
         ? series.name
         : simklData?.title && simklData.title !== titlePrimary
           ? simklData.title
@@ -2498,7 +2602,47 @@ export class MediaDbSyncer {
 
     // Description resolution (English overview is ALWAYS primary)
     const description =
-      engTranslation?.overview?.trim() || simklData?.overview || series.overview
+      resolvedEng?.overview?.trim() || simklData?.overview || series.overview
+
+    // Synonyms / Aliases resolution
+    const synonymsSet = new Set<string>()
+    if (Array.isArray(series.aliases)) {
+      for (const a of series.aliases as any[]) {
+        if (typeof a === "string" && a.trim()) {
+          synonymsSet.add(a.trim())
+        } else if (
+          a &&
+          typeof a === "object" &&
+          typeof a.name === "string" &&
+          a.name.trim()
+        ) {
+          synonymsSet.add(a.name.trim())
+        }
+      }
+    }
+    if (Array.isArray(resolvedEng?.aliases)) {
+      for (const a of resolvedEng.aliases as any[]) {
+        if (typeof a === "string" && a.trim()) {
+          synonymsSet.add(a.trim())
+        }
+      }
+    }
+    if (titleSecondary && titleSecondary !== titlePrimary) {
+      synonymsSet.add(titleSecondary)
+    }
+    if (titleNative && titleNative !== titlePrimary) {
+      synonymsSet.add(titleNative)
+    }
+    if (simklData?.title && simklData.title !== titlePrimary) {
+      synonymsSet.add(simklData.title)
+    }
+    if (existing?.synonyms && Array.isArray(existing.synonyms)) {
+      for (const s of existing.synonyms) {
+        if (s && s !== titlePrimary) synonymsSet.add(s)
+      }
+    }
+    synonymsSet.delete(titlePrimary)
+    const synonyms = Array.from(synonymsSet)
 
     // Date parsing
     let firstAiredYear: number | undefined
@@ -2738,6 +2882,7 @@ export class MediaDbSyncer {
       averageRuntime: avgRuntime,
       genres: existing ? { set: tvGenreRecords } : { connect: tvGenreRecords },
       tags: existing ? { set: tvTagRecords } : { connect: tvTagRecords },
+      synonyms,
       networks:
         series.networks?.map((n) => n.name) ||
         (simklData?.network ? [simklData.network] : []),
@@ -3012,21 +3157,27 @@ export class MediaDbSyncer {
     tvdbImages?: string[],
     simklData?:
       import("./providers/simkl.provider.js").SimklMoviePayload | null,
-    engTranslation?: { name?: string; overview?: string } | null
+    engTranslation?: {
+      name?: string
+      overview?: string
+      aliases?: string[]
+    } | null
   ): Promise<{ id: number }> {
     const existing = await prisma.movie.findUnique({
       where: { tvDBId: movie.id },
     })
 
+    const resolvedEng = engTranslation || movie.engTranslation
+
     // Title resolution (English title is ALWAYS primary)
     const titlePrimary =
-      engTranslation?.name?.trim() ||
+      resolvedEng?.name?.trim() ||
       simklData?.title?.trim() ||
       movie.name ||
       "Unknown Movie"
 
     const titleSecondary =
-      engTranslation?.name && engTranslation.name !== movie.name
+      resolvedEng?.name && resolvedEng.name !== movie.name
         ? movie.name
         : simklData?.title && simklData.title !== titlePrimary
           ? simklData.title
@@ -3042,7 +3193,47 @@ export class MediaDbSyncer {
 
     // Description resolution (English overview is ALWAYS primary)
     const description =
-      engTranslation?.overview?.trim() || simklData?.overview || movie.overview
+      resolvedEng?.overview?.trim() || simklData?.overview || movie.overview
+
+    // Synonyms / Aliases resolution
+    const synonymsSet = new Set<string>()
+    if (Array.isArray(movie.aliases)) {
+      for (const a of movie.aliases as any[]) {
+        if (typeof a === "string" && a.trim()) {
+          synonymsSet.add(a.trim())
+        } else if (
+          a &&
+          typeof a === "object" &&
+          typeof a.name === "string" &&
+          a.name.trim()
+        ) {
+          synonymsSet.add(a.name.trim())
+        }
+      }
+    }
+    if (Array.isArray(resolvedEng?.aliases)) {
+      for (const a of resolvedEng.aliases as any[]) {
+        if (typeof a === "string" && a.trim()) {
+          synonymsSet.add(a.trim())
+        }
+      }
+    }
+    if (titleSecondary && titleSecondary !== titlePrimary) {
+      synonymsSet.add(titleSecondary)
+    }
+    if (titleNative && titleNative !== titlePrimary) {
+      synonymsSet.add(titleNative)
+    }
+    if (simklData?.title && simklData.title !== titlePrimary) {
+      synonymsSet.add(simklData.title)
+    }
+    if (existing?.synonyms && Array.isArray(existing.synonyms)) {
+      for (const s of existing.synonyms) {
+        if (s && s !== titlePrimary) synonymsSet.add(s)
+      }
+    }
+    synonymsSet.delete(titlePrimary)
+    const synonyms = Array.from(synonymsSet)
 
     // Release Date extraction
     let releaseDateYear: number | undefined
@@ -3206,6 +3397,7 @@ export class MediaDbSyncer {
       releaseDateDay,
       genres: existing ? { set: genreRecords } : { connect: genreRecords },
       tags: existing ? { set: tagRecords } : { connect: tagRecords },
+      synonyms,
       status: this.mapMovieStatus(movie.status?.name),
       imdbRating: simklData?.imdbRating,
       imdbVotes: simklData?.imdbVotes,
@@ -4023,7 +4215,9 @@ export class MediaDbSyncer {
       const artistName = artists.join(", ") || "Unknown Artist"
       const release = mb.releases?.[0]
       const albumName = release?.title
-      const durationSeconds = mb.length ? Math.round(mb.length / 1000) : undefined
+      const durationSeconds = mb.length
+        ? Math.round(mb.length / 1000)
+        : undefined
       const rawGenres = mb.genres?.map((g) => g.name) || []
       const rawTags: Array<{ name: string; category?: string }> = []
       if (mb.tags) {
@@ -4053,8 +4247,14 @@ export class MediaDbSyncer {
       )
     }
 
-    const musicType = musicData.type || (musicData.totalTracks || musicData.tracks ? "ALBUM" : "TRACK")
-    const deezerIdStr = musicData.deezerId ? String(musicData.deezerId) : (musicData.musicBrainzId ? String(musicData.musicBrainzId) : null)
+    const musicType =
+      musicData.type ||
+      (musicData.totalTracks || musicData.tracks ? "ALBUM" : "TRACK")
+    const deezerIdStr = musicData.deezerId
+      ? String(musicData.deezerId)
+      : musicData.musicBrainzId
+        ? String(musicData.musicBrainzId)
+        : null
 
     // 1. Find existing record
     let existing: any = null
@@ -4087,11 +4287,18 @@ export class MediaDbSyncer {
       | undefined
     const artistObjName = artistObj?.namePrimary || artistObj?.name
 
-    if (!existing && musicData.titlePrimary && (musicData.artistName || artistObjName)) {
+    if (
+      !existing &&
+      musicData.titlePrimary &&
+      (musicData.artistName || artistObjName)
+    ) {
       const artName = musicData.artistName || artistObjName || ""
       existing = await prisma.music.findFirst({
         where: {
-          titlePrimary: { equals: musicData.titlePrimary.trim(), mode: "insensitive" },
+          titlePrimary: {
+            equals: musicData.titlePrimary.trim(),
+            mode: "insensitive",
+          },
           artistName: { equals: artName.trim(), mode: "insensitive" },
           type: musicType,
         },
@@ -4101,14 +4308,17 @@ export class MediaDbSyncer {
     // 2. Resolve artist into Person table
     let resolvedArtistId = musicData.artistId || null
     let resolvedArtistName = musicData.artistName || null
-    let resolvedDeezerArtistId = musicData.deezerArtistId ? String(musicData.deezerArtistId) : null
+    let resolvedDeezerArtistId = musicData.deezerArtistId
+      ? String(musicData.deezerArtistId)
+      : null
 
     if (artistObj) {
       const isDeezerPayload = typeof artistObj.id === "number"
       const person = isDeezerPayload
         ? await this.upsertDeezerArtist(artistObj as DeezerArtistPayload)
         : await this.upsertArtist({
-            namePrimary: artistObj.namePrimary || artistObj.name || "Unknown Artist",
+            namePrimary:
+              artistObj.namePrimary || artistObj.name || "Unknown Artist",
             deezerId: artistObj.deezerId,
             image: artistObj.image,
           })
@@ -4118,7 +4328,9 @@ export class MediaDbSyncer {
         resolvedDeezerArtistId = String(artistObj.id)
       }
     } else if (resolvedArtistName && !resolvedArtistId) {
-      const person = await this.upsertArtist({ namePrimary: resolvedArtistName.trim() })
+      const person = await this.upsertArtist({
+        namePrimary: resolvedArtistName.trim(),
+      })
       resolvedArtistId = person.id
       resolvedArtistName = person.namePrimary
     }
@@ -4128,8 +4340,14 @@ export class MediaDbSyncer {
     if (!resolvedAlbumId && musicData.albumTitle && resolvedArtistName) {
       const foundAlbum = await prisma.music.findFirst({
         where: {
-          titlePrimary: { equals: musicData.albumTitle.trim(), mode: "insensitive" },
-          artistName: { equals: resolvedArtistName.trim(), mode: "insensitive" },
+          titlePrimary: {
+            equals: musicData.albumTitle.trim(),
+            mode: "insensitive",
+          },
+          artistName: {
+            equals: resolvedArtistName.trim(),
+            mode: "insensitive",
+          },
           type: "ALBUM",
         },
         select: { id: true },
@@ -4151,7 +4369,9 @@ export class MediaDbSyncer {
     if (!fullPlainLyrics && lyrics) {
       fullPlainLyrics =
         lyrics.plainLyrics ||
-        (lyrics.syncedLyrics ? lyrics.syncedLyrics.replace(/\[\d+:\d+\.\d+\]/g, "").trim() : undefined)
+        (lyrics.syncedLyrics
+          ? lyrics.syncedLyrics.replace(/\[\d+:\d+\.\d+\]/g, "").trim()
+          : undefined)
       syncedLyrics = lyrics.syncedLyrics || undefined
       lyricsSource = "lrclib"
     }
@@ -4204,7 +4424,9 @@ export class MediaDbSyncer {
       availableCountries: musicData.availableCountries || [],
       recordType: musicData.recordType || musicData.albumType,
       label: musicData.label,
-      nbTracks: musicData.nbTracks || (musicData.tracks ? musicData.tracks.length : undefined),
+      nbTracks:
+        musicData.nbTracks ||
+        (musicData.tracks ? musicData.tracks.length : undefined),
       fans: musicData.fans ?? 0,
       lyrics: fullPlainLyrics,
       syncedLyrics,
@@ -4270,9 +4492,19 @@ export class MediaDbSyncer {
 
     // 7. Child tracks if saving an Album with tracklist
     const trackIds: number[] = []
-    if (musicType === "ALBUM" && musicData.tracks && musicData.tracks.length > 0) {
+    if (
+      musicType === "ALBUM" &&
+      musicData.tracks &&
+      musicData.tracks.length > 0
+    ) {
       for (const t of musicData.tracks) {
-        const trackDeezerId = t.id ? String(t.id) : (t.deezerId ? String(t.deezerId) : (t.musicBrainzId ? String(t.musicBrainzId) : undefined))
+        const trackDeezerId = t.id
+          ? String(t.id)
+          : t.deezerId
+            ? String(t.deezerId)
+            : t.musicBrainzId
+              ? String(t.musicBrainzId)
+              : undefined
         const trackTitle = t.title || t.titlePrimary
         if (!trackTitle?.trim()) continue
 
@@ -4283,7 +4515,10 @@ export class MediaDbSyncer {
             select: { id: true },
           })
         }
-        if (!existingTrack && (t.track_position != null || t.trackNumber != null)) {
+        if (
+          !existingTrack &&
+          (t.track_position != null || t.trackNumber != null)
+        ) {
           existingTrack = await prisma.music.findFirst({
             where: {
               albumId: music.id,
@@ -4294,10 +4529,13 @@ export class MediaDbSyncer {
           })
         }
 
-        const childArtistName = t.artist?.name || t.artistName || resolvedArtistName
+        const childArtistName =
+          t.artist?.name || t.artistName || resolvedArtistName
         let childArtistId = resolvedArtistId
         if (t.artist && typeof t.artist === "object" && t.artist.id) {
-          const person = await this.upsertDeezerArtist(t.artist).catch(() => null)
+          const person = await this.upsertDeezerArtist(t.artist).catch(
+            () => null
+          )
           if (person) childArtistId = person.id
         }
 
@@ -4380,7 +4618,9 @@ export class MediaDbSyncer {
   /**
    * Compatibility wrapper for albums: maps to upsertMusic with type = ALBUM.
    */
-  async upsertMusicAlbum(albumData: any): Promise<{ id: number; trackIds: number[] }> {
+  async upsertMusicAlbum(
+    albumData: any
+  ): Promise<{ id: number; trackIds: number[] }> {
     const res = await this.upsertMusic({ ...albumData, type: "ALBUM" })
     return { id: res.id, trackIds: res.trackIds || [] }
   }

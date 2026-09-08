@@ -10,6 +10,10 @@ export interface TvdbSearchItem {
   year?: string
   status?: string
   overview?: string
+  primary_language?: string
+  translations?: Record<string, string>
+  overviews?: Record<string, string>
+  aliases?: string[]
 }
 
 export interface TvdbCharacter {
@@ -86,6 +90,15 @@ export interface TvdbSeriesPayload {
   production_countries?: Array<{ id?: number; country?: string; name?: string }>
   remoteIds?: Array<{ id: string; type: number; sourceName: string }>
   averageRuntime?: number
+  nameTranslations?: string[]
+  overviewTranslations?: string[]
+  aliases?: Array<{ language?: string; name?: string }>
+  engTranslation?: {
+    name?: string
+    overview?: string
+    language?: string
+    aliases?: string[]
+  } | null
 }
 
 export interface TvdbMoviePayload {
@@ -128,6 +141,15 @@ export interface TvdbMoviePayload {
   production_countries?: Array<{ id?: number; country?: string; name?: string }>
   remoteIds?: Array<{ id: string; type: number; sourceName: string }>
   characters?: TvdbCharacter[]
+  nameTranslations?: string[]
+  overviewTranslations?: string[]
+  aliases?: Array<{ language?: string; name?: string }>
+  engTranslation?: {
+    name?: string
+    overview?: string
+    language?: string
+    aliases?: string[]
+  } | null
 }
 
 export function normalizeTvdbImageUrl(url?: string): string | undefined {
@@ -146,6 +168,7 @@ export class TheTVDBProvider {
   private tokenExpiresAt = 0
   private lastRequestTime = 0
   private readonly minDelayMs = 200 // 5 req/s
+  private rateLimitPromise: Promise<void> = Promise.resolve()
 
   private getApiKey(): string {
     return (
@@ -158,12 +181,20 @@ export class TheTVDBProvider {
   }
 
   private async waitForRateLimit(): Promise<void> {
+    const current = this.rateLimitPromise
+    let release: () => void = () => {}
+    this.rateLimitPromise = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    await current
+
     const now = Date.now()
     const elapsed = now - this.lastRequestTime
     if (elapsed < this.minDelayMs) {
       await new Promise((r) => setTimeout(r, this.minDelayMs - elapsed))
     }
     this.lastRequestTime = Date.now()
+    release()
   }
 
   private async getValidToken(): Promise<string> {
@@ -246,10 +277,28 @@ export class TheTVDBProvider {
   }
 
   /**
-   * Fetches extended TV series metadata.
+   * Fetches extended TV series metadata and automatically populates English translation if available.
    */
   async fetchTvSeries(tvdbId: number): Promise<TvdbSeriesPayload> {
-    return await this.fetchJson<TvdbSeriesPayload>(`/series/${tvdbId}/extended`)
+    const series = await this.fetchJson<TvdbSeriesPayload>(
+      `/series/${tvdbId}/extended`
+    )
+
+    if (
+      series &&
+      (series.originalLanguage?.toLowerCase() !== "eng" ||
+        series.nameTranslations?.includes("eng") ||
+        series.overviewTranslations?.includes("eng"))
+    ) {
+      const eng = await this.fetchTvSeriesTranslation(tvdbId, "eng").catch(
+        () => null
+      )
+      if (eng) {
+        series.engTranslation = eng
+      }
+    }
+
+    return series
   }
 
   /**
@@ -258,12 +307,18 @@ export class TheTVDBProvider {
   async fetchTvSeriesTranslation(
     tvdbId: number,
     language: string = "eng"
-  ): Promise<{ name?: string; overview?: string; language?: string } | null> {
+  ): Promise<{
+    name?: string
+    overview?: string
+    language?: string
+    aliases?: string[]
+  } | null> {
     try {
       return await this.fetchJson<{
         name?: string
         overview?: string
         language?: string
+        aliases?: string[]
       }>(`/series/${tvdbId}/translations/${language}`)
     } catch {
       return null
@@ -276,12 +331,18 @@ export class TheTVDBProvider {
   async fetchMovieTranslation(
     tvdbId: number,
     language: string = "eng"
-  ): Promise<{ name?: string; overview?: string; language?: string } | null> {
+  ): Promise<{
+    name?: string
+    overview?: string
+    language?: string
+    aliases?: string[]
+  } | null> {
     try {
       return await this.fetchJson<{
         name?: string
         overview?: string
         language?: string
+        aliases?: string[]
       }>(`/movies/${tvdbId}/translations/${language}`)
     } catch {
       return null
@@ -303,19 +364,36 @@ export class TheTVDBProvider {
 
   /**
    * Fetches all episodes across all seasons for a TV series (paginated).
+   * Requests English episode titles/overviews first, falling back to default language.
    */
-  async fetchTvEpisodes(tvdbId: number): Promise<TvdbEpisode[]> {
+  async fetchTvEpisodes(
+    tvdbId: number,
+    language: string = "eng"
+  ): Promise<TvdbEpisode[]> {
     const allEpisodes: TvdbEpisode[] = []
     let page = 0
     let hasMore = true
 
     while (hasMore && page < 20) {
       try {
-        const res = await this.fetchJson<{
-          episodes?: TvdbEpisode[]
-        }>(`/series/${tvdbId}/episodes/default?page=${page}`)
+        let res: { episodes?: TvdbEpisode[] } | null = null
+        if (language) {
+          try {
+            res = await this.fetchJson<{
+              episodes?: TvdbEpisode[]
+            }>(`/series/${tvdbId}/episodes/default/${language}?page=${page}`)
+          } catch {
+            res = null
+          }
+        }
 
-        const episodes = res.episodes || []
+        if (!res || !res.episodes || res.episodes.length === 0) {
+          res = await this.fetchJson<{
+            episodes?: TvdbEpisode[]
+          }>(`/series/${tvdbId}/episodes/default?page=${page}`)
+        }
+
+        const episodes = res?.episodes || []
         if (episodes.length === 0) {
           hasMore = false
         } else {
@@ -377,10 +455,28 @@ export class TheTVDBProvider {
   }
 
   /**
-   * Fetches extended Movie metadata including characters & cast.
+   * Fetches extended Movie metadata including characters & cast, and automatically populates English translation if available.
    */
   async fetchMovie(tvdbId: number): Promise<TvdbMoviePayload> {
-    return await this.fetchJson<TvdbMoviePayload>(`/movies/${tvdbId}/extended`)
+    const movie = await this.fetchJson<TvdbMoviePayload>(
+      `/movies/${tvdbId}/extended`
+    )
+
+    if (
+      movie &&
+      (movie.originalLanguage?.toLowerCase() !== "eng" ||
+        movie.nameTranslations?.includes("eng") ||
+        movie.overviewTranslations?.includes("eng"))
+    ) {
+      const eng = await this.fetchMovieTranslation(tvdbId, "eng").catch(
+        () => null
+      )
+      if (eng) {
+        movie.engTranslation = eng
+      }
+    }
+
+    return movie
   }
 
   /**
