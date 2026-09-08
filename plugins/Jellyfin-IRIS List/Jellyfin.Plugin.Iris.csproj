@@ -2,7 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <RootNamespace>Jellyfin.Plugin.Aquila</RootNamespace>
+    <RootNamespace>Jellyfin.Plugin.Iris</RootNamespace>
+    <AssemblyName>Jellyfin.Plugin.Iris</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
@@ -25,12 +26,13 @@
     <None Include="meta.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Remove="Configuration\configPage.html" />
-    <None Remove="Web\aquila-web-injection.js" />
-    <None Remove="Web\aquila-modal.css" />
+    <None Include="thumb.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <EmbeddedResource Include="thumb.png" />
     <EmbeddedResource Include="Configuration\configPage.html" />
-    <EmbeddedResource Include="Web\aquila-web-injection.js" />
-    <EmbeddedResource Include="Web\aquila-modal.css" />
+    <EmbeddedResource Include="Web\iris-web-injection.js" />
+    <EmbeddedResource Include="Web\iris-modal.css" />
   </ItemGroup>
 
 </Project>

@@ -6,16 +6,16 @@ using MediaBrowser.Common.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.Aquila.Services;
+namespace Jellyfin.Plugin.Iris.Services;
 
 /// <summary>
-/// Service that automatically injects the Aquila web script into Jellyfin Server's index.html files on server start.
+/// Service that automatically injects the Iris web script into Jellyfin Server's index.html files on server start.
 /// </summary>
 public class WebInjectionService : IHostedService
 {
     private readonly IApplicationPaths _applicationPaths;
     private readonly ILogger<WebInjectionService> _logger;
-    private const string ScriptTag = "<script id=\"aquila-web-script\" src=\"/Aquila/aquila-client.js?v=2.0.0\" defer></script>";
+    private const string ScriptTag = "<script id=\"iris-web-script\" src=\"/Iris/WebInjection.js?v=2.0.0\" defer></script>";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WebInjectionService"/> class.
@@ -46,18 +46,18 @@ public class WebInjectionService : IHostedService
                     continue;
                 }
 
-                _logger.LogInformation("[Aquila Plugin] Checking index.html at '{IndexPath}'", indexPath);
+                _logger.LogInformation("[Iris Plugin] Checking index.html at '{IndexPath}'", indexPath);
                 var html = File.ReadAllText(indexPath);
-                if (html.Contains("aquila-web-script", StringComparison.OrdinalIgnoreCase))
+                if (html.Contains("iris-web-script", StringComparison.OrdinalIgnoreCase) || html.Contains("aquila-web-script", StringComparison.OrdinalIgnoreCase))
                 {
-                    _logger.LogInformation("[Aquila Plugin] Updating existing aquila-web-script tag in '{IndexPath}'", indexPath);
-                    var regex = new System.Text.RegularExpressions.Regex(@"<script id=""aquila-web-script"".*?</script>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    _logger.LogInformation("[Iris Plugin] Updating existing script tag in '{IndexPath}'", indexPath);
+                    var regex = new System.Text.RegularExpressions.Regex(@"<script id=""(?:iris|aquila)-web-script"".*?</script>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                     html = regex.Replace(html, ScriptTag);
                     File.WriteAllText(indexPath, html);
                 }
                 else
                 {
-                    _logger.LogInformation("[Aquila Plugin] Injecting script tag into '{IndexPath}'", indexPath);
+                    _logger.LogInformation("[Iris Plugin] Injecting script tag into '{IndexPath}'", indexPath);
                     var bodyEndIndex = html.IndexOf("</body>", StringComparison.OrdinalIgnoreCase);
                     if (bodyEndIndex != -1)
                     {
@@ -68,13 +68,13 @@ public class WebInjectionService : IHostedService
                         html += $"\n{ScriptTag}";
                     }
                     File.WriteAllText(indexPath, html);
-                    _logger.LogInformation("[Aquila Plugin] Successfully injected /Aquila/WebInjection.js script tag into '{IndexPath}'.", indexPath);
+                    _logger.LogInformation("[Iris Plugin] Successfully injected /Iris/WebInjection.js script tag into '{IndexPath}'.", indexPath);
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[Aquila Plugin] Error injecting web script into physical index.html files.");
+            _logger.LogError(ex, "[Iris Plugin] Error injecting web script into physical index.html files.");
         }
 
         return Task.CompletedTask;

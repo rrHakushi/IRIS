@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.Plugin.Aquila.Models;
+namespace Jellyfin.Plugin.Iris.Models;
 
 /// <summary>
-/// Persisted map linking Jellyfin Item ID to Aquila Internal Media ID per user.
+/// Persisted map linking Jellyfin Item ID to Iris Internal Media ID per user.
 /// </summary>
 public class JellyfinItemMapping
 {
@@ -21,10 +23,20 @@ public class JellyfinItemMapping
     public string JellyfinItemId { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the internal Aquila Media ID.
+    /// Gets or sets the internal Iris Media ID.
+    /// </summary>
+    [JsonPropertyName("irisMediaId")]
+    public int IrisMediaId { get; set; }
+
+    /// <summary>
+    /// Backward-compatible alias for IrisMediaId.
     /// </summary>
     [JsonPropertyName("aquilaMediaId")]
-    public int AquilaMediaId { get; set; }
+    public int AquilaMediaId
+    {
+        get => IrisMediaId;
+        set { if (value > 0 && IrisMediaId == 0) IrisMediaId = value; }
+    }
 
     /// <summary>
     /// Gets or sets the mapped Media Type ("anime" | "tv" | "movie").
@@ -42,32 +54,32 @@ public class JellyfinItemMapping
     /// Gets or sets the ordered list of linked media entries for this user and item.
     /// </summary>
     [JsonPropertyName("entries")]
-    public System.Collections.Generic.List<LinkedMediaEntry> Entries { get; set; } = new();
+    public List<LinkedMediaEntry> Entries { get; set; } = new();
 
     /// <summary>
     /// Gets the list of linked media entries sorted by sequence order.
-    /// Falls back to a single entry created from AquilaMediaId for legacy mappings.
+    /// Falls back to a single entry created from IrisMediaId for legacy mappings.
     /// </summary>
-    public System.Collections.Generic.List<LinkedMediaEntry> GetOrderedEntries()
+    public List<LinkedMediaEntry> GetOrderedEntries()
     {
         if (Entries != null && Entries.Count > 0)
         {
-            return System.Linq.Enumerable.ToList(System.Linq.Enumerable.OrderBy(Entries, e => e.Order));
+            return Entries.OrderBy(e => e.Order).ToList();
         }
 
-        if (AquilaMediaId > 0)
+        if (IrisMediaId > 0)
         {
-            return new System.Collections.Generic.List<LinkedMediaEntry>
+            return new List<LinkedMediaEntry>
             {
                 new LinkedMediaEntry
                 {
-                    AquilaMediaId = AquilaMediaId,
+                    IrisMediaId = IrisMediaId,
                     MediaType = MediaType,
                     Order = 1
                 }
             };
         }
 
-        return new System.Collections.Generic.List<LinkedMediaEntry>();
+        return new List<LinkedMediaEntry>();
     }
 }

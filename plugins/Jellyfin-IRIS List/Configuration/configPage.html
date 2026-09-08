@@ -2,22 +2,22 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>Aquila Plugin Configuration</title>
+    <title>Iris Plugin Configuration</title>
 </head>
 <body>
-    <div id="AquilaConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-select">
+    <div id="IrisConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-select">
         <div data-role="content">
             <div class="content-primary">
-                <form id="AquilaConfigForm">
+                <form id="IrisConfigForm">
                     <div class="sectionTitleContainer flex align-items-center">
-                        <h2 class="sectionTitle">Aquila Server Plugin Configuration</h2>
+                        <h2 class="sectionTitle">Iris Server Plugin Configuration</h2>
                     </div>
-                    <p class="fieldDescription">Configure library media type mappings and user Aquila server API access for scrobbling.</p>
+                    <p class="fieldDescription">Configure library media type mappings, per-library scrobble thresholds, and user Iris server API access.</p>
 
                     <!-- Admin Library Mappings -->
                     <div class="verticalSection">
-                        <h3 class="sectionTitle">Library Media Type Assignments</h3>
-                        <p class="fieldDescription">Assign default Aquila Media Types (Anime, TV, Movie) for each Jellyfin Library.</p>
+                        <h3 class="sectionTitle">Library Media Type & Scrobble Assignments</h3>
+                        <p class="fieldDescription">Assign default Iris Media Types (Anime, TV Series, Movie) and independent scrobble thresholds (%) for each Jellyfin Library.</p>
                         <div id="libraryMappingsContainer" class="paperList">
                             <!-- Dynamically populated library mappings -->
                         </div>
@@ -27,21 +27,21 @@
                     <div class="verticalSection">
                         <h3 class="sectionTitle">User API Connection</h3>
                         <div class="inputContainer">
-                            <label class="inputLabel" for="AquilaServerUrl">Aquila Server URL:</label>
-                            <input is="emby-input" id="AquilaServerUrl" type="url" required placeholder="https://api.runerra.org" />
-                            <div class="fieldDescription">Base URL of your Aquila API server instance.</div>
+                            <label class="inputLabel" for="IrisServerUrl">Iris Server URL:</label>
+                            <input is="emby-input" id="IrisServerUrl" type="url" required placeholder="http://localhost:4000" />
+                            <div class="fieldDescription">Base URL of your Iris API server instance (e.g. http://localhost:4000).</div>
                         </div>
 
                         <div class="inputContainer">
-                            <label class="inputLabel" for="AquilaApiKey">Aquila API Key:</label>
-                            <input is="emby-input" id="AquilaApiKey" type="password" required placeholder="Enter your Aquila x-api-key" />
+                            <label class="inputLabel" for="IrisApiKey">Iris API Key:</label>
+                            <input is="emby-input" id="IrisApiKey" type="password" required placeholder="Enter your Iris x-api-key" />
                             <div class="fieldDescription">API Key passed via x-api-key header for authentication.</div>
                         </div>
 
                         <div class="inputContainer">
-                            <label class="inputLabel" for="CompletionThreshold">Playback Scrobble Threshold (%):</label>
-                            <input is="emby-input" id="CompletionThreshold" type="number" min="50" max="100" step="1" value="90" required />
-                            <div class="fieldDescription">Playback percentage at which an episode is marked watched (Default: 90%).</div>
+                            <label class="inputLabel" for="CompletionThreshold">Fallback Playback Scrobble Threshold (%):</label>
+                            <input is="emby-input" id="CompletionThreshold" type="number" min="1" max="100" step="1" value="90" required />
+                            <div class="fieldDescription">Fallback playback percentage when no library-specific threshold is configured (Default: 90%).</div>
                         </div>
                     </div>
 
@@ -53,73 +53,20 @@
                                 <span>Remove All Mappings</span>
                             </button>
                         </div>
-                        <p class="fieldDescription">View and remove persisted links between Jellyfin media items and Aquila internal IDs stored on the server.</p>
+                        <p class="fieldDescription">View and remove persisted links between Jellyfin media items and Iris internal IDs stored on the server.</p>
                         <div id="serverMappingsContainer" class="paperList" style="margin-top:1em; max-height:280px; overflow-y:auto;">
                             <!-- Dynamically populated server item mappings -->
                         </div>
                     </div>
 
-                    <!-- Custom JavaScript Snippet for Jellyfin Web / JavaScript Injector -->
+                    <!-- Client JavaScript Snippet for Jellyfin Web / JavaScript Injector -->
                     <div class="verticalSection">
                         <h3 class="sectionTitle">Client JavaScript Injection Code</h3>
                         <p class="fieldDescription">Paste this 1-line code into <strong>Jellyfin Dashboard &gt; General &gt; Custom JavaScript code</strong> (or into your <strong>JavaScript Injector</strong> plugin):</p>
-                        <textarea is="emby-input" style="width:100%; font-family:monospace; background:rgba(0,0,0,0.5); color:#a78bfa; padding:10px; border-radius:6px; height:60px;" readonly onclick="this.select();">(function(){var s=document.createElement('script');s.src='/Aquila/WebInjection.js?v=10.11.11';document.head.appendChild(s);})();</textarea>
+                        <textarea is="emby-input" style="width:100%; font-family:monospace; background:rgba(0,0,0,0.5); color:#f43f5e; padding:10px; border-radius:6px; height:60px;" readonly onclick="this.select();">(function(){var s=document.createElement('script');s.src='/Iris/WebInjection.js?v=2.0.0';document.head.appendChild(s);})();</textarea>
                     </div>
 
-                    <!-- Manual Endpoint Testing Suite -->
-                    <div class="verticalSection">
-                        <h3 class="sectionTitle">Manual API Endpoint Tests</h3>
-                        <p class="fieldDescription">Test communication between Jellyfin plugin and Aquila server endpoints directly from the dashboard.</p>
-
-                        <div class="inputContainer">
-                            <label class="inputLabel" for="TestMediaId">Test Media ID / Item ID:</label>
-                            <input is="emby-input" id="TestMediaId" type="text" value="3546" placeholder="Enter Aquila Media ID or Jellyfin Item ID (e.g. 3546)" />
-                            <div class="fieldDescription">Specify a specific Media ID or Item ID to test against API endpoints.</div>
-                        </div>
-
-                        <div class="inputContainer">
-                            <label class="inputLabel" for="TestMediaType">Test Media Type:</label>
-                            <select is="emby-select" id="TestMediaType">
-                                <option value="anime">Anime</option>
-                                <option value="tv" selected>TV Series</option>
-                                <option value="movie">Movie</option>
-                            </select>
-                        </div>
-
-                        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
-                            <button is="emby-button" type="button" id="btnTestSearch" class="raised">
-                                <span>Test Search API</span>
-                            </button>
-                            <button is="emby-button" type="button" id="btnTestGetEntry" class="raised">
-                                <span>Test Get Entry</span>
-                            </button>
-                            <button is="emby-button" type="button" id="btnTestGetDetails" class="raised">
-                                <span>Test Get Details</span>
-                            </button>
-                            <button is="emby-button" type="button" id="btnTestGetMapping" class="raised">
-                                <span>Test Get Mapping</span>
-                            </button>
-                            <button is="emby-button" type="button" id="btnTestSaveMapping" class="raised">
-                                <span>Test Save Mapping</span>
-                            </button>
-                            <button is="emby-button" type="button" id="btnTestConnections" class="raised">
-                                <span>Test Connections API</span>
-                            </button>
-                            <button is="emby-button" type="button" id="btnTestMultiEntryAutoAdvance" class="raised" style="background:#8b5cf6; color:#ffffff; font-weight:bold;">
-                                <span>Test Multi-Entry Auto-Advance (Mock)</span>
-                            </button>
-                            <button is="emby-button" type="button" id="btnTestMultiEntryReorder" class="raised" style="background:#06b6d4; color:#ffffff; font-weight:bold;">
-                                <span>Test Multi-Entry Reorder</span>
-                            </button>
-                        </div>
-
-                        <div class="inputContainer">
-                            <label class="inputLabel">Test Output Logs:</label>
-                            <pre id="testOutputLog" style="background:#0f172a; color:#38bdf8; font-family:monospace; padding:12px; border-radius:8px; max-height:220px; overflow-y:auto; font-size:12px; white-space:pre-wrap; border:1px solid #1e293b;">Click any test button above to execute a manual API endpoint request...</pre>
-                        </div>
-                    </div>
-
-                    <div>
+                    <div style="margin-top:2em;">
                         <button is="emby-button" type="submit" class="raised button-submit block">
                             <span>Save Configuration</span>
                         </button>
@@ -132,24 +79,23 @@
             (function () {
                 var pluginId = "f9a4c810-7213-4d43-9821-2e65d8a9b12d";
 
-                // Ensure script is loaded into top document head
                 function ensureTopWebScript() {
                     try {
                         var doc = window.top ? window.top.document : document;
-                        if (!doc.getElementById('aquila-web-script')) {
+                        if (!doc.getElementById('iris-web-script')) {
                             var script = doc.createElement('script');
-                            script.id = 'aquila-web-script';
-                            script.src = '/Aquila/WebInjection.js?v=10.11.11';
+                            script.id = 'iris-web-script';
+                            script.src = '/Iris/WebInjection.js?v=2.0.0';
                             script.defer = true;
                             doc.head.appendChild(script);
-                            console.log('[Aquila Plugin] Injected /Aquila/WebInjection.js into top document head from config page.');
+                            console.log('[Iris Plugin] Injected /Iris/WebInjection.js into top document head from config page.');
                         }
                     } catch (e) {
-                        console.warn('[Aquila Plugin] Could not inject script into top document head:', e);
+                        console.warn('[Iris Plugin] Could not inject script into top document head:', e);
                     }
                 }
 
-                document.getElementById('AquilaConfigPage').addEventListener('pageshow', function () {
+                document.getElementById('IrisConfigPage').addEventListener('pageshow', function () {
                     ensureTopWebScript();
                     Dashboard.showLoadingMsg();
                     var page = this;
@@ -162,12 +108,12 @@
                         var libraries = results[1] || [];
                         var currentUserId = Dashboard.getCurrentUserId();
 
-                        console.log('[Aquila Plugin] Loaded plugin configuration:', config);
+                        console.log('[Iris Plugin] Loaded plugin configuration:', config);
 
                         // Map user settings
                         var userConfig = (config.UserConfigs || []).find(function (u) { return u.JellyfinUserId === currentUserId; }) || {};
-                        page.querySelector('#AquilaServerUrl').value = userConfig.AquilaServerUrl || "";
-                        page.querySelector('#AquilaApiKey').value = userConfig.ApiKey || "";
+                        page.querySelector('#IrisServerUrl').value = userConfig.IrisServerUrl || userConfig.AquilaServerUrl || "";
+                        page.querySelector('#IrisApiKey').value = userConfig.ApiKey || "";
                         page.querySelector('#CompletionThreshold').value = userConfig.CompletionThreshold || 90;
 
                         // Render Admin Library Mappings
@@ -179,6 +125,7 @@
                             var libId = lib.ItemId || lib.Id;
                             var match = existingMappings.find(function (m) { return m.LibraryId === libId; }) || {};
                             var currentType = match.MediaType || "tv";
+                            var currentThreshold = (typeof match.ScrobbleThreshold === 'number' && match.ScrobbleThreshold > 0) ? match.ScrobbleThreshold : 90;
 
                             var itemDiv = document.createElement('div');
                             itemDiv.className = 'listItem listItem-border';
@@ -186,6 +133,8 @@
                             itemDiv.style.display = 'flex';
                             itemDiv.style.alignItems = 'center';
                             itemDiv.style.justifyContent = 'space-between';
+                            itemDiv.style.flexWrap = 'wrap';
+                            itemDiv.style.gap = '12px';
 
                             var labelDiv = document.createElement('div');
                             var titleEl = document.createElement('strong');
@@ -196,6 +145,12 @@
                             labelDiv.appendChild(titleEl);
                             labelDiv.appendChild(descEl);
 
+                            var controlsDiv = document.createElement('div');
+                            controlsDiv.style.display = 'flex';
+                            controlsDiv.style.alignItems = 'center';
+                            controlsDiv.style.gap = '14px';
+
+                            // Type select
                             var selectEl = document.createElement('select');
                             selectEl.setAttribute('is', 'emby-select');
                             selectEl.className = 'library-type-select';
@@ -218,15 +173,50 @@
                                 selectEl.appendChild(optEl);
                             });
 
+                            // Scrobble threshold input
+                            var threshDiv = document.createElement('div');
+                            threshDiv.style.display = 'flex';
+                            threshDiv.style.alignItems = 'center';
+                            threshDiv.style.gap = '6px';
+
+                            var threshLabel = document.createElement('span');
+                            threshLabel.textContent = 'Threshold:';
+                            threshLabel.style.fontSize = '12px';
+                            threshLabel.style.color = '#94a3b8';
+
+                            var threshInput = document.createElement('input');
+                            threshInput.setAttribute('is', 'emby-input');
+                            threshInput.type = 'number';
+                            threshInput.min = '1';
+                            threshInput.max = '100';
+                            threshInput.step = '1';
+                            threshInput.value = currentThreshold;
+                            threshInput.className = 'library-threshold-input';
+                            threshInput.setAttribute('data-lib-id', libId);
+                            threshInput.style.width = '70px';
+                            threshInput.style.textAlign = 'center';
+
+                            var percentSpan = document.createElement('span');
+                            percentSpan.textContent = '%';
+                            percentSpan.style.fontSize = '12px';
+                            percentSpan.style.color = '#94a3b8';
+
+                            threshDiv.appendChild(threshLabel);
+                            threshDiv.appendChild(threshInput);
+                            threshDiv.appendChild(percentSpan);
+
+                            controlsDiv.appendChild(selectEl);
+                            controlsDiv.appendChild(threshDiv);
+
                             itemDiv.appendChild(labelDiv);
-                            itemDiv.appendChild(selectEl);
+                            itemDiv.appendChild(controlsDiv);
                             container.appendChild(itemDiv);
                         });
 
                         function loadServerMappings() {
                             var mapContainer = page.querySelector('#serverMappingsContainer');
                             mapContainer.innerHTML = '<div style="padding:1em; text-align:center; color:#94a3b8;">Loading mappings from server...</div>';
-                            var url = ApiClient.getUrl ? ApiClient.getUrl('Aquila/Api/Mappings') : '/Aquila/Api/Mappings';
+                            var url = ApiClient.getUrl ? ApiClient.getUrl('Iris/Api/Mappings') : '/Iris/Api/Mappings';
 
                             fetch(url).then(function (res) {
                                 return res.json();
@@ -248,11 +238,12 @@
                                     var info = document.createElement('div');
                                     var title = document.createElement('strong');
                                     title.style.color = '#f8fafc';
-                                    title.textContent = (m.mediaType || 'media').toUpperCase() + ' - Aquila ID #' + m.aquilaMediaId;
+                                    var irisId = m.irisMediaId || m.aquilaMediaId || 0;
+                                    title.textContent = (m.mediaType || 'media').toUpperCase() + ' - Iris ID #' + irisId;
 
                                     var sub = document.createElement('div');
                                     sub.className = 'fieldDescription';
-                                    sub.textContent = 'Jellyfin Item: ' + m.jellyfinItemId + ' | User: ' + m.userId;
+                                    sub.textContent = 'Jellyfin Item: ' + m.jellyfinItemId + ' | User: ' + (m.userId || 'Global');
 
                                     info.appendChild(title);
                                     info.appendChild(sub);
@@ -269,8 +260,8 @@
                                     removeBtn.onclick = function () {
                                         var userParam = m.userId ? encodeURIComponent(m.userId) : '';
                                         var deleteUrl = ApiClient.getUrl
-                                            ? ApiClient.getUrl('Aquila/Api/Mapping?userId=' + userParam + '&itemId=' + encodeURIComponent(m.jellyfinItemId))
-                                            : '/Aquila/Api/Mapping?userId=' + userParam + '&itemId=' + encodeURIComponent(m.jellyfinItemId);
+                                            ? ApiClient.getUrl('Iris/Api/Mapping?userId=' + userParam + '&itemId=' + encodeURIComponent(m.jellyfinItemId))
+                                            : '/Iris/Api/Mapping?userId=' + userParam + '&itemId=' + encodeURIComponent(m.jellyfinItemId);
 
                                         fetch(deleteUrl, { method: 'DELETE' }).then(function () {
                                             loadServerMappings();
@@ -289,162 +280,23 @@
                         loadServerMappings();
 
                         page.querySelector('#btnClearAllMappings').onclick = function () {
-                            var clearUrl = ApiClient.getUrl ? ApiClient.getUrl('Aquila/Api/Mappings') : '/Aquila/Api/Mappings';
+                            var clearUrl = ApiClient.getUrl ? ApiClient.getUrl('Iris/Api/Mappings') : '/Iris/Api/Mappings';
                             fetch(clearUrl, { method: 'DELETE' }).then(function () {
                                 loadServerMappings();
                             });
                         };
 
-                        function logTestResult(title, data, success) {
-                            var logEl = page.querySelector('#testOutputLog');
-                            var time = new Date().toLocaleTimeString();
-                            var statusStr = success ? '[SUCCESS]' : '[FAILED]';
-                            var output = time + ' ' + statusStr + ' ' + title + ':\n' + JSON.stringify(data, null, 2) + '\n\n';
-                            logEl.textContent = output + logEl.textContent;
-                        }
-
-                        function getTestParams() {
-                            var mediaIdInput = page.querySelector('#TestMediaId').value.trim();
-                            var mediaTypeSelect = page.querySelector('#TestMediaType').value;
-                            return {
-                                mediaId: mediaIdInput || "3546",
-                                mediaType: mediaTypeSelect || "tv"
-                            };
-                        }
-
-                        page.querySelector('#btnTestSearch').onclick = function () {
-                            var params = getTestParams();
-                            var userId = Dashboard.getCurrentUserId();
-                            var queryParam = isNaN(Number(params.mediaId)) ? params.mediaId : 'One%20Piece';
-                            var url = ApiClient.getUrl ? ApiClient.getUrl('Aquila/Api/Search?mediaType=' + params.mediaType + '&query=' + encodeURIComponent(queryParam) + '&userId=' + encodeURIComponent(userId)) : '/Aquila/Api/Search?mediaType=' + params.mediaType + '&query=' + encodeURIComponent(queryParam);
-                            logTestResult('Executing Search Test (' + params.mediaType + ')', { url: url }, true);
-                            fetch(url).then(function (r) { return r.json(); }).then(function (d) {
-                                logTestResult('Search Test Response', d, true);
-                            }).catch(function (err) {
-                                logTestResult('Search Test Error', { message: err.message }, false);
-                            });
-                        };
-
-                        page.querySelector('#btnTestGetEntry').onclick = function () {
-                            var params = getTestParams();
-                            var url = ApiClient.getUrl ? ApiClient.getUrl('Aquila/Api/Entry?mediaType=' + params.mediaType + '&id=' + encodeURIComponent(params.mediaId)) : '/Aquila/Api/Entry?mediaType=' + params.mediaType + '&id=' + encodeURIComponent(params.mediaId);
-                            logTestResult('Executing Get Entry Test (ID: ' + params.mediaId + ', Type: ' + params.mediaType + ')', { url: url }, true);
-                            fetch(url).then(function (r) { return r.json(); }).then(function (d) {
-                                logTestResult('Get Entry Response', d, true);
-                            }).catch(function (err) {
-                                logTestResult('Get Entry Error / Not Found', { message: err.message }, false);
-                            });
-                        };
-
-                        page.querySelector('#btnTestGetDetails').onclick = function () {
-                            var params = getTestParams();
-                            var url = ApiClient.getUrl ? ApiClient.getUrl('Aquila/Api/Details?mediaType=' + params.mediaType + '&id=' + encodeURIComponent(params.mediaId)) : '/Aquila/Api/Details?mediaType=' + params.mediaType + '&id=' + encodeURIComponent(params.mediaId);
-                            logTestResult('Executing Get Details Test (ID: ' + params.mediaId + ', Type: ' + params.mediaType + ')', { url: url }, true);
-                            fetch(url).then(function (r) { return r.json(); }).then(function (d) {
-                                logTestResult('Get Details Response', d, true);
-                            }).catch(function (err) {
-                                logTestResult('Get Details Error', { message: err.message }, false);
-                            });
-                        };
-
-                        page.querySelector('#btnTestGetMapping').onclick = function () {
-                            var params = getTestParams();
-                            var userId = Dashboard.getCurrentUserId();
-                            var url = ApiClient.getUrl ? ApiClient.getUrl('Aquila/Api/Mapping?userId=' + encodeURIComponent(userId) + '&itemId=' + encodeURIComponent(params.mediaId)) : '/Aquila/Api/Mapping?userId=' + encodeURIComponent(userId) + '&itemId=' + encodeURIComponent(params.mediaId);
-                            logTestResult('Executing Get Mapping Test (ItemID: ' + params.mediaId + ')', { url: url }, true);
-                            fetch(url).then(function (r) { return r.json(); }).then(function (d) {
-                                logTestResult('Get Mapping Response', d, true);
-                            }).catch(function (err) {
-                                logTestResult('Get Mapping Response / Not Found', { message: err.message }, false);
-                            });
-                        };
-
-                        page.querySelector('#btnTestSaveMapping').onclick = function () {
-                            var params = getTestParams();
-                            var userId = Dashboard.getCurrentUserId();
-                            var aquilaId = !isNaN(Number(params.mediaId)) ? Number(params.mediaId) : 101;
-                            var url = ApiClient.getUrl ? ApiClient.getUrl('Aquila/Api/Mapping?userId=' + encodeURIComponent(userId) + '&itemId=' + encodeURIComponent(params.mediaId) + '&aquilaMediaId=' + aquilaId + '&mediaType=' + params.mediaType) : '/Aquila/Api/Mapping?userId=' + encodeURIComponent(userId) + '&itemId=' + encodeURIComponent(params.mediaId) + '&aquilaMediaId=' + aquilaId + '&mediaType=' + params.mediaType;
-                            logTestResult('Executing Save Mapping Test', { url: url }, true);
-                            fetch(url, { method: 'POST' }).then(function (r) { return r.json(); }).then(function (d) {
-                                logTestResult('Save Mapping Response', d, true);
-                            }).catch(function (err) {
-                                logTestResult('Save Mapping Error', { message: err.message }, false);
-                            });
-                        };
-
-                        page.querySelector('#btnTestConnections').onclick = function () {
-                            var params = getTestParams();
-                            var capParam = params.mediaType === 'tv' ? 'TV_SHOWS' : params.mediaType === 'movie' ? 'MOVIES' : params.mediaType.toUpperCase();
-                            var url = ApiClient.getUrl ? ApiClient.getUrl('Aquila/Api/Connections?capabilities=' + encodeURIComponent(capParam)) : '/Aquila/Api/Connections?capabilities=' + encodeURIComponent(capParam);
-                            logTestResult('Executing Connections Test (' + capParam + ')', { url: url }, true);
-                            fetch(url).then(function (r) { return r.json(); }).then(function (d) {
-                                logTestResult('Connections API Response', d, true);
-                            }).catch(function (err) {
-                                logTestResult('Connections API Error', { message: err.message }, false);
-                            });
-                        };
-
-                        page.querySelector('#btnTestMultiEntryAutoAdvance').onclick = function () {
-                            var userId = Dashboard.getCurrentUserId();
-                            var itemId = page.querySelector('#TestMediaId').value.trim() || 'mock-anime-series-100';
-                            var saveUrl = ApiClient.getUrl ? ApiClient.getUrl('Aquila/Api/Mapping?userId=' + encodeURIComponent(userId) + '&itemId=' + encodeURIComponent(itemId)) : '/Aquila/Api/Mapping?userId=' + encodeURIComponent(userId) + '&itemId=' + encodeURIComponent(itemId);
-
-                            var mockEntries = [
-                                { aquilaMediaId: 101, mediaType: 'anime', order: 1, maxProgress: 12, displayTitle: 'Season 1 (12/12 Ep)' },
-                                { aquilaMediaId: 102, mediaType: 'anime', order: 2, maxProgress: 12, displayTitle: 'Season 2 (0/12 Ep)' }
-                            ];
-
-                            logTestResult('1. Saving Multi-Entry Mapping for User ' + userId, { itemId: itemId, entries: mockEntries }, true);
-
-                            fetch(saveUrl, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(mockEntries)
-                            }).then(function (r) { return r.json(); }).then(function (res) {
-                                logTestResult('2. Mapping Saved. Fetching saved mapping from server...', res, true);
-                                var getUrl = ApiClient.getUrl ? ApiClient.getUrl('Aquila/Api/Mapping?userId=' + encodeURIComponent(userId) + '&itemId=' + encodeURIComponent(itemId)) : '/Aquila/Api/Mapping?userId=' + encodeURIComponent(userId) + '&itemId=' + encodeURIComponent(itemId);
-                                return fetch(getUrl);
-                            }).then(function (r) { return r.json(); }).then(function (savedMap) {
-                                logTestResult('3. Server Mapping Retrieved', savedMap, true);
-                                logTestResult('4. Simulating Auto-Advance Logic', {
-                                    explanation: 'Season 1 (ID: 101) progress is 12/12 (Maxed). Next scrobble automatically targets Season 2 (ID: 102).'
-                                }, true);
-                            }).catch(function (err) {
-                                logTestResult('Multi-Entry Auto-Advance Test Error', { message: err.message }, false);
-                            });
-                        };
-
-                        page.querySelector('#btnTestMultiEntryReorder').onclick = function () {
-                            var userId = Dashboard.getCurrentUserId();
-                            var itemId = page.querySelector('#TestMediaId').value.trim() || 'mock-anime-series-100';
-                            var reorderUrl = ApiClient.getUrl ? ApiClient.getUrl('Aquila/Api/Mapping/Reorder?userId=' + encodeURIComponent(userId) + '&itemId=' + encodeURIComponent(itemId)) : '/Aquila/Api/Mapping/Reorder?userId=' + encodeURIComponent(userId) + '&itemId=' + encodeURIComponent(itemId);
-
-                            var newOrderIds = [102, 101]; // Season 2 first, Season 1 second
-                            logTestResult('Reordering Entries to [102, 101]', { itemId: itemId, newOrder: newOrderIds }, true);
-
-                            fetch(reorderUrl, {
-                                method: 'PUT',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(newOrderIds)
-                            }).then(function (r) { return r.json(); }).then(function (d) {
-                                logTestResult('Reorder Result', d, true);
-                                loadServerMappings();
-                            }).catch(function (err) {
-                                logTestResult('Reorder Error', { message: err.message }, false);
-                            });
-                        };
-
                         Dashboard.hideLoadingMsg();
                     }).catch(function (err) {
-                        console.error("[Aquila Plugin] Config page load error:", err);
+                        console.error("[Iris Plugin] Config page load error:", err);
                         Dashboard.hideLoadingMsg();
                     });
                 });
 
-                document.getElementById('AquilaConfigForm').addEventListener('submit', function (e) {
+                document.getElementById('IrisConfigForm').addEventListener('submit', function (e) {
                     e.preventDefault();
                     Dashboard.showLoadingMsg();
-                    var page = document.getElementById('AquilaConfigPage');
+                    var page = document.getElementById('IrisConfigPage');
                     var currentUserId = Dashboard.getCurrentUserId();
 
                     ApiClient.getPluginConfiguration(pluginId).then(function (config) {
@@ -452,14 +304,22 @@
                         config.LibraryMappings = config.LibraryMappings || [];
                         config.UserConfigs = config.UserConfigs || [];
 
-                        // Collect Library Mappings
+                        // Collect Library Mappings with independent ScrobbleThreshold
                         var selects = page.querySelectorAll('.library-type-select');
                         var updatedMappings = [];
                         selects.forEach(function (sel) {
+                            var libId = sel.getAttribute('data-lib-id');
+                            var threshInput = page.querySelector('.library-threshold-input[data-lib-id="' + libId + '"]');
+                            var thresholdVal = threshInput ? parseFloat(threshInput.value) : 90.0;
+                            if (isNaN(thresholdVal) || thresholdVal <= 0 || thresholdVal > 100) {
+                                thresholdVal = 90.0;
+                            }
+
                             updatedMappings.push({
-                                LibraryId: sel.getAttribute('data-lib-id'),
-                                LibraryName: sel.getAttribute('data-lib-name'),
-                                MediaType: sel.value
+                                LibraryId: libId,
+                                LibraryName: sel.getAttribute('data-lib-name') || '',
+                                MediaType: sel.value,
+                                ScrobbleThreshold: thresholdVal
                             });
                         });
                         config.LibraryMappings = updatedMappings;
@@ -470,11 +330,12 @@
                             userConfig = { JellyfinUserId: currentUserId };
                             config.UserConfigs.push(userConfig);
                         }
-                        userConfig.AquilaServerUrl = page.querySelector('#AquilaServerUrl').value.trim();
-                        userConfig.ApiKey = page.querySelector('#AquilaApiKey').value.trim();
-                        userConfig.CompletionThreshold = parseFloat(page.querySelector('#CompletionThreshold').value);
+                        userConfig.IrisServerUrl = page.querySelector('#IrisServerUrl').value.trim();
+                        userConfig.AquilaServerUrl = userConfig.IrisServerUrl;
+                        userConfig.ApiKey = page.querySelector('#IrisApiKey').value.trim();
+                        userConfig.CompletionThreshold = parseFloat(page.querySelector('#CompletionThreshold').value) || 90.0;
 
-                        console.log('[Aquila Plugin] Saving configuration:', config);
+                        console.log('[Iris Plugin] Saving configuration:', config);
 
                         ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {
                             Dashboard.hideLoadingMsg();

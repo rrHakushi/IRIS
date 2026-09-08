@@ -5,14 +5,14 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Jellyfin.Plugin.Aquila.Models;
+using Jellyfin.Plugin.Iris.Models;
 using MediaBrowser.Common.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.Aquila.Services;
+namespace Jellyfin.Plugin.Iris.Services;
 
 /// <summary>
-/// Thread-safe local storage manager for Jellyfin Item ID -> Aquila Media ID mappings.
+/// Thread-safe local storage manager for Jellyfin Item ID -> Iris Media ID mappings.
 /// </summary>
 public class MediaMappingStore
 {
@@ -26,20 +26,32 @@ public class MediaMappingStore
     public MediaMappingStore(IApplicationPaths applicationPaths, ILogger<MediaMappingStore> logger)
     {
         _logger = logger;
-        var dataFolder = Path.Combine(applicationPaths.PluginConfigurationsPath, "Aquila");
+        var dataFolder = Path.Combine(applicationPaths.PluginConfigurationsPath, "Iris");
         Directory.CreateDirectory(dataFolder);
         _filePath = Path.Combine(dataFolder, "item-mappings.json");
-        _logger.LogInformation("[Aquila MappingStore] Storage path: {FilePath}", _filePath);
-        Load();
+        _logger.LogInformation("[Iris MappingStore] Storage path: {FilePath}", _filePath);
+        Load(applicationPaths);
     }
 
-    private void Load()
+    private void Load(IApplicationPaths applicationPaths)
     {
         try
         {
-            if (File.Exists(_filePath))
+            string fileToRead = _filePath;
+            if (!File.Exists(fileToRead))
             {
-                var json = File.ReadAllText(_filePath);
+                // Check legacy Aquila folder for migration
+                var legacyPath = Path.Combine(applicationPaths.PluginConfigurationsPath, "Aquila", "item-mappings.json");
+                if (File.Exists(legacyPath))
+                {
+                    fileToRead = legacyPath;
+                    _logger.LogInformation("[Iris MappingStore] Migrating existing mappings from legacy Aquila folder: {LegacyPath}", legacyPath);
+                }
+            }
+
+            if (File.Exists(fileToRead))
+            {
+                var json = File.ReadAllText(fileToRead);
                 var items = JsonSerializer.Deserialize<List<JellyfinItemMapping>>(json);
                 if (items != null)
                 {
@@ -49,16 +61,22 @@ public class MediaMappingStore
                         _mappings[key] = item;
                     }
                 }
-                _logger.LogInformation("[Aquila MappingStore] Loaded {Count} mappings from storage.", _mappings.Count);
+                _logger.LogInformation("[Iris MappingStore] Loaded {Count} mappings from storage.", _mappings.Count);
+
+                // If read from legacy path, persist immediately to Iris path
+                if (fileToRead != _filePath)
+                {
+                    _ = SaveAsync();
+                }
             }
             else
             {
-                _logger.LogInformation("[Aquila MappingStore] No existing mappings file found at {FilePath}. Starting empty.", _filePath);
+                _logger.LogInformation("[Iris MappingStore] No existing mappings file found at {FilePath}. Starting empty.", _filePath);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[Aquila MappingStore] Failed to load Aquila item mappings from {FilePath}", _filePath);
+            _logger.LogError(ex, "[Iris MappingStore] Failed to load Iris item mappings from {FilePath}", _filePath);
         }
     }
 
@@ -69,11 +87,11 @@ public class MediaMappingStore
             var list = _mappings.Values.ToList();
             var json = JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = true });
             await File.WriteAllTextAsync(_filePath, json).ConfigureAwait(false);
-            _logger.LogInformation("[Aquila MappingStore] Saved {Count} item mappings to disk.", list.Count);
+            _logger.LogInformation("[Iris MappingStore] Saved {Count} item mappings to disk.", list.Count);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[Aquila MappingStore] Failed to save Aquila item mappings to {FilePath}", _filePath);
+            _logger.LogError(ex, "[Iris MappingStore] Failed to save Iris item mappings to {FilePath}", _filePath);
         }
     }
 
@@ -96,308 +114,296 @@ public class MediaMappingStore
         var key = GetKey(userId, itemId);
         if (_mappings.TryGetValue(key, out var mapping) && mapping != null)
         {
-            _logger.LogInformation("[Aquila MappingStore] FOUND mapping for User={UserId}, Item={ItemId} -> AquilaId={AquilaId}",
-                userId, itemId, mapping.AquilaMediaId);
+            _logger.LogInformation("[Iris MappingStore] FOUND mapping for User={UserId}, Item={ItemId} -> IrisId={IrisId}",
+                userId, itemId, mapping.IrisMediaId);
             return mapping;
         }
 
-        var normItem = NormalizeGuid(itemId);
-        mapping = _mappings.Values.FirstOrDefault(m => NormalizeGuid(m.JellyfinItemId) == normItem);
-        if (mapping != null)
+        var globalKey = GetKey(null, itemId);
+        if (_mappings.TryGetValue(globalKey, out var globalMapping) && globalMapping != null)
         {
-            _logger.LogInformation("[Aquila MappingStore] FOUND mapping via itemId fallback for User={UserId}, Item={ItemId} -> AquilaId={AquilaId}",
-                userId, itemId, mapping.AquilaMediaId);
-            return mapping;
+            _logger.LogInformation("[Iris MappingStore] FOUND global fallback mapping for Item={ItemId} -> IrisId={IrisId}",
+                itemId, globalMapping.IrisMediaId);
+            return globalMapping;
         }
 
-        _logger.LogInformation("[Aquila MappingStore] MISSING mapping for User={UserId}, Item={ItemId}", userId, itemId);
         return null;
     }
 
     /// <summary>
-    /// Gets the mapping for a user by searching multiple candidate item IDs (SeriesId, SeasonId, ItemId).
+    /// Attempts to find an item mapping matching the user and any of the candidate IDs (e.g. EpisodeId -> SeasonId -> SeriesId).
     /// </summary>
     public JellyfinItemMapping? GetMappingForCandidateIds(string userId, IEnumerable<string> candidateIds)
     {
-        var normUser = NormalizeGuid(userId);
-        var normCandidates = candidateIds.Select(NormalizeGuid).Where(id => !string.IsNullOrEmpty(id)).ToList();
+        if (candidateIds == null) return null;
 
-        foreach (var itemId in normCandidates)
+        var list = candidateIds.Where(id => !string.IsNullOrWhiteSpace(id)).ToList();
+        foreach (var id in list)
         {
-            var key = $"{normUser}_{itemId}";
-            if (_mappings.TryGetValue(key, out var mapping) && mapping != null)
-            {
-                _logger.LogInformation("[Aquila MappingStore] FOUND candidate mapping for User={UserId}, MatchedItem={ItemId} -> AquilaId={AquilaId}",
-                    userId, itemId, mapping.AquilaMediaId);
-                return mapping;
-            }
-        }
-
-        // Fallback: search by candidate itemId across all stored mappings
-        foreach (var itemId in normCandidates)
-        {
-            var mapping = _mappings.Values.FirstOrDefault(m => NormalizeGuid(m.JellyfinItemId) == itemId);
+            var mapping = GetMapping(userId, id);
             if (mapping != null)
             {
-                _logger.LogInformation("[Aquila MappingStore] FOUND candidate mapping via itemId fallback: MatchedItem={ItemId} -> AquilaId={AquilaId}",
-                    itemId, mapping.AquilaMediaId);
+                _logger.LogInformation("[Iris MappingStore] Resolved candidate ID '{CandidateId}' -> IrisId {IrisId}", id, mapping.IrisMediaId);
                 return mapping;
             }
         }
 
-        _logger.LogInformation("[Aquila MappingStore] MISSING mapping for User={UserId} across candidate IDs: {CandidateIds}",
-            userId, string.Join(", ", candidateIds));
         return null;
     }
 
     /// <summary>
-    /// Saves or updates a mapping with a list of ordered linked entries for a user.
+    /// Persists or updates a mapping for a user and Jellyfin item to a single Iris Media ID.
     /// </summary>
-    public async Task SetMappingAsync(string userId, string itemId, List<LinkedMediaEntry> entries)
+    public async Task SetMappingAsync(string userId, string itemId, int irisMediaId, string mediaType)
     {
         var key = GetKey(userId, itemId);
-
-        // Normalize order sequence (1-indexed)
-        var orderedEntries = entries.Select((e, idx) => new LinkedMediaEntry
-        {
-            AquilaMediaId = e.AquilaMediaId,
-            MediaType = e.MediaType,
-            Order = idx + 1,
-            MaxProgress = e.MaxProgress,
-            DisplayTitle = e.DisplayTitle
-        }).ToList();
-
-        var first = orderedEntries.FirstOrDefault();
-
         var mapping = new JellyfinItemMapping
         {
-            UserId = userId,
+            UserId = userId ?? string.Empty,
             JellyfinItemId = itemId,
-            AquilaMediaId = first?.AquilaMediaId ?? 0,
-            MediaType = first?.MediaType ?? string.Empty,
+            IrisMediaId = irisMediaId,
+            MediaType = mediaType,
             LinkedAt = DateTime.UtcNow,
-            Entries = orderedEntries
+            Entries = new List<LinkedMediaEntry>
+            {
+                new LinkedMediaEntry
+                {
+                    IrisMediaId = irisMediaId,
+                    MediaType = mediaType,
+                    Order = 1
+                }
+            }
         };
 
         _mappings[key] = mapping;
-        _logger.LogInformation("[Aquila MappingStore] SET mapping: User={UserId}, Item={ItemId} -> {Count} ordered entries",
-            userId, itemId, orderedEntries.Count);
         await SaveAsync().ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Saves or updates a single mapping for backward compatibility.
+    /// Persists an ordered list of linked media entries for a user and Jellyfin item.
     /// </summary>
-    public async Task SetMappingAsync(string userId, string itemId, int aquilaMediaId, string mediaType)
+    public async Task SetMappingAsync(string userId, string itemId, List<LinkedMediaEntry> entries)
     {
-        var entries = new List<LinkedMediaEntry>
+        var key = GetKey(userId, itemId);
+        var first = entries.FirstOrDefault();
+        var mapping = new JellyfinItemMapping
         {
-            new LinkedMediaEntry
-            {
-                AquilaMediaId = aquilaMediaId,
-                MediaType = mediaType,
-                Order = 1
-            }
+            UserId = userId ?? string.Empty,
+            JellyfinItemId = itemId,
+            IrisMediaId = first?.IrisMediaId ?? 0,
+            MediaType = first?.MediaType ?? "tv",
+            LinkedAt = DateTime.UtcNow,
+            Entries = entries.OrderBy(e => e.Order).ToList()
         };
-        await SetMappingAsync(userId, itemId, entries).ConfigureAwait(false);
+
+        _mappings[key] = mapping;
+        await SaveAsync().ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Appends or updates a single entry in a user's ordered entries list for a Jellyfin item.
+    /// Adds or updates a single entry in a user's ordered entries list for a Jellyfin item.
     /// </summary>
     public async Task AddOrUpdateEntryAsync(string userId, string itemId, LinkedMediaEntry entry)
     {
-        var mapping = GetMapping(userId, itemId);
-        var entries = mapping?.GetOrderedEntries() ?? new List<LinkedMediaEntry>();
+        var mapping = GetMapping(userId, itemId) ?? new JellyfinItemMapping
+        {
+            UserId = userId ?? string.Empty,
+            JellyfinItemId = itemId,
+            IrisMediaId = entry.IrisMediaId,
+            MediaType = entry.MediaType,
+            LinkedAt = DateTime.UtcNow
+        };
 
-        var existing = entries.FirstOrDefault(e => e.AquilaMediaId == entry.AquilaMediaId);
+        var existing = mapping.Entries.FirstOrDefault(e => e.IrisMediaId == entry.IrisMediaId);
         if (existing != null)
         {
-            existing.MediaType = !string.IsNullOrWhiteSpace(entry.MediaType) ? entry.MediaType : existing.MediaType;
-            if (entry.MaxProgress.HasValue) existing.MaxProgress = entry.MaxProgress;
-            if (!string.IsNullOrWhiteSpace(entry.DisplayTitle)) existing.DisplayTitle = entry.DisplayTitle;
+            existing.DisplayTitle = entry.DisplayTitle;
+            existing.MaxProgress = entry.MaxProgress;
+            existing.MediaType = entry.MediaType;
+            if (entry.Order > 0) existing.Order = entry.Order;
         }
         else
         {
-            entry.Order = entries.Count + 1;
-            entries.Add(entry);
+            if (entry.Order <= 0)
+            {
+                entry.Order = mapping.Entries.Count > 0 ? mapping.Entries.Max(e => e.Order) + 1 : 1;
+            }
+            mapping.Entries.Add(entry);
         }
 
-        await SetMappingAsync(userId, itemId, entries).ConfigureAwait(false);
+        mapping.Entries = mapping.Entries.OrderBy(e => e.Order).ToList();
+        for (int i = 0; i < mapping.Entries.Count; i++)
+        {
+            mapping.Entries[i].Order = i + 1;
+        }
+
+        if (mapping.Entries.Count > 0)
+        {
+            mapping.IrisMediaId = mapping.Entries[0].IrisMediaId;
+            mapping.MediaType = mapping.Entries[0].MediaType;
+        }
+
+        var key = GetKey(userId, itemId);
+        _mappings[key] = mapping;
+        await SaveAsync().ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Removes a specific linked entry from a user's item mapping by Aquila Media ID.
+    /// Removes a specific entry by Iris Media ID from a user's item mapping.
     /// </summary>
-    public async Task<bool> RemoveEntryAsync(string userId, string itemId, int aquilaMediaId)
+    public async Task<bool> RemoveEntryAsync(string userId, string itemId, int irisMediaId)
     {
         var mapping = GetMapping(userId, itemId);
         if (mapping == null) return false;
 
-        var entries = mapping.GetOrderedEntries();
-        int removedCount = entries.RemoveAll(e => e.AquilaMediaId == aquilaMediaId);
-        if (removedCount == 0) return false;
-
-        if (entries.Count == 0)
-        {
-            await RemoveMappingAsync(userId, itemId).ConfigureAwait(false);
-        }
-        else
-        {
-            await SetMappingAsync(userId, itemId, entries).ConfigureAwait(false);
-        }
-
-        return true;
-    }
-
-    /// <summary>
-    /// Reorders the linked entries for a user and Jellyfin item given an ordered list of Aquila Media IDs.
-    /// </summary>
-    public async Task<bool> ReorderEntriesAsync(string userId, string itemId, List<int> aquilaMediaIdsInOrder)
-    {
-        var mapping = GetMapping(userId, itemId);
-        if (mapping == null) return false;
-
-        var currentEntries = mapping.GetOrderedEntries();
-        var entryMap = currentEntries.ToDictionary(e => e.AquilaMediaId);
-
-        var newEntries = new List<LinkedMediaEntry>();
-        foreach (var id in aquilaMediaIdsInOrder)
-        {
-            if (entryMap.TryGetValue(id, out var entry))
-            {
-                newEntries.Add(entry);
-                entryMap.Remove(id);
-            }
-        }
-
-        // Append any remaining entries that weren't specified in the order array
-        foreach (var remaining in entryMap.Values)
-        {
-            newEntries.Add(remaining);
-        }
-
-        await SetMappingAsync(userId, itemId, newEntries).ConfigureAwait(false);
-        return true;
-    }
-
-    /// <summary>
-    /// Gets all item mappings, optionally filtered by user ID.
-    /// </summary>
-    public List<JellyfinItemMapping> GetAllMappings(string? userId = null)
-    {
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            return _mappings.Values.OrderByDescending(m => m.LinkedAt).ToList();
-        }
-
-        var normUser = NormalizeGuid(userId);
-        return _mappings.Values
-            .Where(m => NormalizeGuid(m.UserId) == normUser)
-            .OrderByDescending(m => m.LinkedAt)
-            .ToList();
-    }
-
-    /// <summary>
-    /// Removes a specific mapping for a user and Jellyfin item (and optional candidate IDs).
-    /// </summary>
-    public async Task<bool> RemoveMappingAsync(string? userId, string itemId, IEnumerable<string>? candidateIds = null)
-    {
-        var normUser = NormalizeGuid(userId);
-        var normItem = NormalizeGuid(itemId);
-
-        var normCandidateSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        if (!string.IsNullOrEmpty(normItem))
-        {
-            normCandidateSet.Add(normItem);
-        }
-
-        if (candidateIds != null)
-        {
-            foreach (var cand in candidateIds)
-            {
-                var normCand = NormalizeGuid(cand);
-                if (!string.IsNullOrEmpty(normCand))
-                {
-                    normCandidateSet.Add(normCand);
-                }
-            }
-        }
-
-        var removed = false;
-
-        // Try direct key removals if user is provided
-        if (!string.IsNullOrEmpty(normUser))
-        {
-            foreach (var cand in normCandidateSet)
-            {
-                if (_mappings.TryRemove($"{normUser}_{cand}", out _))
-                {
-                    removed = true;
-                }
-            }
-        }
-
-        // Also remove all mappings matching any of the candidate item IDs (handling item fallback mappings and all user variations)
-        var matchingKeys = _mappings.Where(kvp =>
-            normCandidateSet.Contains(NormalizeGuid(kvp.Value.JellyfinItemId)) ||
-            normCandidateSet.Contains(NormalizeGuid(kvp.Key.Split('_').LastOrDefault() ?? ""))
-        ).Select(kvp => kvp.Key).ToList();
-
-        foreach (var k in matchingKeys)
-        {
-            if (_mappings.TryRemove(k, out _))
-            {
-                removed = true;
-            }
-        }
-
+        var removed = mapping.Entries.RemoveAll(e => e.IrisMediaId == irisMediaId) > 0;
         if (removed)
         {
-            _logger.LogInformation("[Aquila MappingStore] REMOVED mapping: User={UserId}, Item={ItemId}, Candidates=[{CandidateIds}]",
-                userId, itemId, string.Join(", ", normCandidateSet));
+            for (int i = 0; i < mapping.Entries.Count; i++)
+            {
+                mapping.Entries[i].Order = i + 1;
+            }
+
+            if (mapping.Entries.Count > 0)
+            {
+                mapping.IrisMediaId = mapping.Entries[0].IrisMediaId;
+                mapping.MediaType = mapping.Entries[0].MediaType;
+            }
+            else
+            {
+                mapping.IrisMediaId = 0;
+            }
+
+            var key = GetKey(userId, itemId);
+            _mappings[key] = mapping;
             await SaveAsync().ConfigureAwait(false);
-        }
-        else
-        {
-            _logger.LogInformation("[Aquila MappingStore] REMOVE skipped, mapping not found: User={UserId}, Item={ItemId}, Candidates=[{CandidateIds}]",
-                userId, itemId, string.Join(", ", normCandidateSet));
         }
 
         return removed;
     }
 
     /// <summary>
-    /// Removes all stored mappings, or all mappings for a specific user ID.
+    /// Reorders the entries list for a user and Jellyfin item based on an array of Iris Media IDs in desired order.
     /// </summary>
-    public async Task<int> RemoveAllMappingsAsync(string? userId = null)
+    public async Task<bool> ReorderEntriesAsync(string userId, string itemId, List<int> irisMediaIdsInOrder)
     {
-        int removedCount = 0;
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            removedCount = _mappings.Count;
-            _mappings.Clear();
-        }
-        else
-        {
-            var normUser = NormalizeGuid(userId);
-            var keysToRemove = _mappings
-                .Where(kvp => NormalizeGuid(kvp.Value.UserId) == normUser)
-                .Select(kvp => kvp.Key)
-                .ToList();
+        var mapping = GetMapping(userId, itemId);
+        if (mapping == null || mapping.Entries.Count == 0) return false;
 
-            foreach (var key in keysToRemove)
+        var newEntries = new List<LinkedMediaEntry>();
+        int order = 1;
+
+        foreach (var id in irisMediaIdsInOrder)
+        {
+            var match = mapping.Entries.FirstOrDefault(e => e.IrisMediaId == id);
+            if (match != null)
             {
-                if (_mappings.TryRemove(key, out _))
+                match.Order = order++;
+                newEntries.Add(match);
+            }
+        }
+
+        foreach (var remaining in mapping.Entries.Where(e => !irisMediaIdsInOrder.Contains(e.IrisMediaId)))
+        {
+            remaining.Order = order++;
+            newEntries.Add(remaining);
+        }
+
+        mapping.Entries = newEntries;
+        if (mapping.Entries.Count > 0)
+        {
+            mapping.IrisMediaId = mapping.Entries[0].IrisMediaId;
+            mapping.MediaType = mapping.Entries[0].MediaType;
+        }
+
+        var key = GetKey(userId, itemId);
+        _mappings[key] = mapping;
+        await SaveAsync().ConfigureAwait(false);
+        return true;
+    }
+
+    /// <summary>
+    /// Removes a mapping for a user and Jellyfin item (with optional candidate IDs).
+    /// </summary>
+    public async Task<bool> RemoveMappingAsync(string? userId, string itemId, IEnumerable<string>? candidateIds = null)
+    {
+        bool anyRemoved = false;
+        var keysToCheck = new List<string>
+        {
+            GetKey(userId, itemId),
+            GetKey(null, itemId)
+        };
+
+        if (candidateIds != null)
+        {
+            foreach (var cand in candidateIds)
+            {
+                if (!string.IsNullOrWhiteSpace(cand))
                 {
-                    removedCount++;
+                    keysToCheck.Add(GetKey(userId, cand));
+                    keysToCheck.Add(GetKey(null, cand));
                 }
             }
         }
 
-        _logger.LogInformation("[Aquila MappingStore] REMOVED {Count} mappings for User={UserId}", removedCount, userId ?? "ALL");
+        foreach (var key in keysToCheck)
+        {
+            if (_mappings.TryRemove(key, out _))
+            {
+                anyRemoved = true;
+                _logger.LogInformation("[Iris MappingStore] Removed mapping for key: {Key}", key);
+            }
+        }
+
+        if (anyRemoved)
+        {
+            await SaveAsync().ConfigureAwait(false);
+        }
+        return anyRemoved;
+    }
+
+    /// <summary>
+    /// Returns all saved item mappings (optionally filtered by user ID).
+    /// </summary>
+    public List<JellyfinItemMapping> GetAllMappings(string? userId = null)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return _mappings.Values.ToList();
+        }
+
+        return _mappings.Values
+            .Where(m => string.Equals(NormalizeGuid(m.UserId), NormalizeGuid(userId), StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    /// <summary>
+    /// Removes all saved item mappings.
+    /// </summary>
+    public async Task<int> RemoveAllMappingsAsync(string? userId = null)
+    {
+        int count;
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            count = _mappings.Count;
+            _mappings.Clear();
+        }
+        else
+        {
+            var keysToRemove = _mappings
+                .Where(kvp => string.Equals(NormalizeGuid(kvp.Value.UserId), NormalizeGuid(userId), StringComparison.OrdinalIgnoreCase))
+                .Select(kvp => kvp.Key)
+                .ToList();
+
+            count = keysToRemove.Count;
+            foreach (var key in keysToRemove)
+            {
+                _mappings.TryRemove(key, out _);
+            }
+        }
+
         await SaveAsync().ConfigureAwait(false);
-        return removedCount;
+        _logger.LogInformation("[Iris MappingStore] Cleared {Count} item mappings (UserId: {UserId}).", count, userId ?? "ALL");
+        return count;
     }
 }
-

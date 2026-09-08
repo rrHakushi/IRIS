@@ -1,23 +1,25 @@
-using Jellyfin.Plugin.Aquila.Api;
-using Jellyfin.Plugin.Aquila.Services;
+using Jellyfin.Plugin.Iris.Api;
+using Jellyfin.Plugin.Iris.Services;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Jellyfin.Plugin.Aquila;
+namespace Jellyfin.Plugin.Iris;
 
 /// <summary>
-/// Service registrator for dependency injection in Jellyfin.
+/// Registers plugin services in the Jellyfin dependency injection container.
 /// </summary>
 public class PluginServiceRegistrator : IPluginServiceRegistrator
 {
     /// <inheritdoc />
     public void RegisterServices(IServiceCollection serviceCollection, IServerApplicationHost applicationHost)
     {
+        serviceCollection.AddHttpClient<IrisApiClient>(client =>
+        {
+            client.Timeout = System.TimeSpan.FromSeconds(8);
+        });
         serviceCollection.AddSingleton<MediaMappingStore>();
-        serviceCollection.AddHttpClient<AquilaApiClient>();
-        serviceCollection.AddSingleton<AquilaSyncManager>();
+        serviceCollection.AddSingleton<IrisSyncManager>();
         serviceCollection.AddHostedService<PlaybackTracker>();
-        serviceCollection.AddHostedService<WebInjectionService>();
     }
 }

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.Plugin.Aquila.Models;
+namespace Jellyfin.Plugin.Iris.Models;
 
 /// <summary>
 /// Represents a single linked media entry in an ordered sequence for a user and Jellyfin item.
@@ -8,10 +8,20 @@ namespace Jellyfin.Plugin.Aquila.Models;
 public class LinkedMediaEntry
 {
     /// <summary>
-    /// Gets or sets the internal Aquila Media ID.
+    /// Gets or sets the internal Iris Media ID.
+    /// </summary>
+    [JsonPropertyName("irisMediaId")]
+    public int IrisMediaId { get; set; }
+
+    /// <summary>
+    /// Backward-compatible alias for IrisMediaId.
     /// </summary>
     [JsonPropertyName("aquilaMediaId")]
-    public int AquilaMediaId { get; set; }
+    public int AquilaMediaId
+    {
+        get => IrisMediaId;
+        set { if (value > 0 && IrisMediaId == 0) IrisMediaId = value; }
+    }
 
     /// <summary>
     /// Gets or sets the mapped Media Type ("anime" | "tv" | "movie").

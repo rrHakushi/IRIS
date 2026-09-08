@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using MediaBrowser.Model.Plugins;
 
-namespace Jellyfin.Plugin.Aquila.Configuration;
+namespace Jellyfin.Plugin.Iris.Configuration;
 
 /// <summary>
 /// Plugin configuration storing Admin Library mappings and User API configurations.
@@ -14,7 +14,7 @@ public class PluginConfiguration : BasePluginConfiguration
     public PluginConfiguration()
     {
         LibraryMappings = new List<LibraryMappingConfig>();
-        UserConfigs = new List<UserAquilaConfig>();
+        UserConfigs = new List<UserIrisConfig>();
     }
 
     /// <summary>
@@ -23,7 +23,7 @@ public class PluginConfiguration : BasePluginConfiguration
     public List<LibraryMappingConfig> LibraryMappings { get; set; }
 
     /// <summary>
-    /// Gets or sets per-user Aquila configurations.
+    /// Gets or sets per-user Iris configurations.
     /// </summary>
-    public List<UserAquilaConfig> UserConfigs { get; set; }
+    public List<UserIrisConfig> UserConfigs { get; set; }
 }
