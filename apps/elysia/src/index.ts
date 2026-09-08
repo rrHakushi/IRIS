@@ -226,9 +226,10 @@ logger.plugin.total(loadedPlugins.length)
 initServices()
 
 if (process.env.NODE_ENV !== "test") {
-  app.listen(PORT, () => {
+  const HOST = process.env.HOST || "0.0.0.0"
+  app.listen({ port: PORT, hostname: HOST }, () => {
     console.log(
-      `${c.magenta(c.bold("[Elysia]"))} ${c.green("server running at")} ${c.cyan(c.underline(`http://localhost:${PORT}`))}`
+      `${c.magenta(c.bold("[Elysia]"))} ${c.green("server running at")} ${c.cyan(c.underline(`http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`))}`
     )
     if (isDev) {
       console.log(
