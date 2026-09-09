@@ -104,9 +104,10 @@ export class SearchProxyManager {
     provider: ConnectionProvider,
     externalId: string,
     userConnection?: UserConnectionRecord | null,
-    options?: SearchOptions
+    options?: SearchOptions,
+    onTokenUpdate?: TokenUpdateCallback
   ): Promise<MediaSearchResult | null> {
-    const adapter = getConnectionAdapter(provider) as any;
+    const adapter = getConnectionAdapter(provider);
     if (!adapter.getMediaById) {
       return null;
     }
@@ -118,6 +119,39 @@ export class SearchProxyManager {
           userConnection.encryptedData,
           userConnection.userId
         );
+
+        // Check if token is expired or close to expiry (< 5 minutes left)
+        const isExpiring =
+          userConnection.expiresAt &&
+          new Date(userConnection.expiresAt).getTime() - Date.now() < 300000;
+
+        if (isExpiring && credentials.refreshToken && adapter.refreshAccessToken) {
+          try {
+            const refreshed = await adapter.refreshAccessToken(credentials.refreshToken);
+            credentials = {
+              ...credentials,
+              ...refreshed,
+            };
+
+            // Re-encrypt and persist
+            if (onTokenUpdate) {
+              const updatedEncrypted = encryptConnectionData(
+                credentials,
+                userConnection.userId
+              );
+              await onTokenUpdate(
+                userConnection.id,
+                updatedEncrypted,
+                refreshed.expiresAt ? new Date(refreshed.expiresAt) : null
+              );
+            }
+          } catch (refreshErr) {
+            console.warn(
+              `[SearchProxy] Failed to refresh expired token for ${provider}:`,
+              refreshErr
+            );
+          }
+        }
       } catch {
         credentials = undefined;
       }

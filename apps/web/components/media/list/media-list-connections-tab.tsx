@@ -305,8 +305,50 @@ async function fetchRemoteMediaDetails(
     }
   }
 
-  // 3. MAL: Jikan API
+  // 3. MAL: Query via server proxy with fallback to Jikan API
   if (providerKey === "mal") {
+    try {
+      const searchType = category === "manga" ? "MANGA" : "ANIME"
+      const res = await (elysia.connections.search as any).get({
+        query: {
+          provider: "MAL",
+          id: strId,
+          type: searchType,
+        },
+      })
+
+      if (
+        res.data?.success &&
+        Array.isArray(res.data?.results) &&
+        res.data.results.length > 0
+      ) {
+        const item = res.data.results[0]
+        const coverUrl =
+          item.coverImage?.large ||
+          item.coverImage?.medium ||
+          (typeof item.coverImage === "string" ? item.coverImage : null)
+        const primaryTitle =
+          item.title?.userPreferred ||
+          item.title?.english ||
+          item.title?.romaji ||
+          item.title ||
+          null
+
+        return {
+          title: primaryTitle,
+          cover: coverUrl,
+          coverImage: coverUrl,
+          year: item.releaseYear ?? null,
+          format: item.format ?? null,
+          externalUrl:
+            item.url ||
+            `https://myanimelist.net/${category === "manga" ? "manga" : "anime"}/${strId}`,
+        }
+      }
+    } catch {
+      // Fallback to Jikan API below
+    }
+
     try {
       const malType = category === "manga" ? "manga" : "anime"
       const resp = await fetch(`https://api.jikan.moe/v4/${malType}/${numId}`)
@@ -688,11 +730,19 @@ export function MediaListConnectionsTab({
                     : "ALBUM"
                   : "ANIME"
 
+        // Check if query is an explicit ID pattern (e.g. id:25623, mal:25623, #25623, or full MAL URL)
+        const idPrefixMatch = q.match(/^(?:id:|mal:|#)\s*(\d+)$/i)
+        const malUrlMatch = q.match(/myanimelist\.net\/(?:anime|manga)\/(\d+)/i)
+        const isNumeric = /^\d+$/.test(q)
+        const explicitId =
+          idPrefixMatch?.[1] || malUrlMatch?.[1] || (isNumeric ? q : undefined)
+
         try {
           const res = await (elysia.connections.search as any).get({
             query: {
               provider: provider.key.toUpperCase(),
               q,
+              id: explicitId,
               type: searchType,
             },
           })
@@ -839,12 +889,24 @@ export function MediaListConnectionsTab({
         // 3. Client-side direct fallback for MyAnimeList (Jikan)
         if (provider.key === "mal") {
           const malType = category === "manga" ? "manga" : "anime"
-          const resp = await fetch(
-            `https://api.jikan.moe/v4/${malType}?q=${encodeURIComponent(q)}&limit=15`
-          )
+          const cleanMalId =
+            idPrefixMatch?.[1] || malUrlMatch?.[1] || (isNumeric ? q : null)
+
+          let jikanUrl = `https://api.jikan.moe/v4/${malType}?q=${encodeURIComponent(q)}&limit=15`
+          if (cleanMalId) {
+            jikanUrl = `https://api.jikan.moe/v4/${malType}/${cleanMalId}`
+          }
+
+          const resp = await fetch(jikanUrl)
           const json = await resp.json()
-          if (Array.isArray(json?.data) && json.data.length > 0) {
-            const mapped: ProviderSearchResult[] = json.data.map(
+          const rawItems = Array.isArray(json?.data)
+            ? json.data
+            : json?.data
+              ? [json.data]
+              : []
+
+          if (rawItems.length > 0) {
+            const mapped: ProviderSearchResult[] = rawItems.map(
               (item: any) => ({
                 externalId: String(item.mal_id),
                 title: item.title || "Untitled",
@@ -1470,7 +1532,11 @@ export function MediaListConnectionsTab({
                       <IconSearch className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         type="text"
-                        placeholder={`Search ${searchModalProvider.name}...`}
+                        placeholder={
+                          searchModalProvider.key === "mal"
+                            ? "Search title or id:25623..."
+                            : `Search ${searchModalProvider.name}...`
+                        }
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="h-8 w-full min-w-0 rounded-xl border-border bg-background ps-9 pe-3 text-xs text-foreground"

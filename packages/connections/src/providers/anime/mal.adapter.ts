@@ -195,11 +195,149 @@ export class MyAnimeListAdapter extends BaseConnectionAdapter {
     }
   }
 
+  async getMediaById(
+    externalId: string,
+    credentials?: ConnectionCredentials,
+    options?: SearchOptions
+  ): Promise<MediaSearchResult | null> {
+    const raw = String(externalId).trim();
+    if (!raw) return null;
+
+    // Support URLs like "https://myanimelist.net/anime/25623/..." or "/manga/25623/..."
+    const urlMatch = raw.match(/myanimelist\.net\/(anime|manga)\/(\d+)/i);
+    let resolvedType: "anime" | "manga" =
+      options?.type === "MANGA" ? "manga" : "anime";
+    let idStr = raw;
+
+    if (urlMatch && urlMatch[1] && urlMatch[2]) {
+      resolvedType = urlMatch[1].toLowerCase() as "anime" | "manga";
+      idStr = urlMatch[2];
+    } else {
+      // Support formats like "id:25623", "mal:25623", "#25623", "25623"
+      const prefixMatch = raw.match(/^(?:id:|mal:|#)?\s*(\d+)$/i);
+      if (prefixMatch && prefixMatch[1]) {
+        idStr = prefixMatch[1];
+      }
+    }
+
+    const numId = parseInt(idStr, 10);
+    if (isNaN(numId) || numId <= 0) {
+      return null;
+    }
+
+    const headers: Record<string, string> = {};
+    if (credentials?.accessToken) {
+      headers["Authorization"] = `Bearer ${credentials.accessToken}`;
+    } else {
+      const clientId = this.getClientId();
+      if (clientId) {
+        headers["X-MAL-CLIENT-ID"] = clientId;
+      }
+    }
+
+    const fetchDetail = async (type: "anime" | "manga") => {
+      const fields =
+        type === "anime"
+          ? "id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_episodes,status,genres,media_type"
+          : "id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_volumes,num_chapters,status,genres,media_type";
+
+      const url = `https://api.myanimelist.net/v2/${type}/${numId}?fields=${fields}`;
+      return await this.fetchJson<{
+        id: number;
+        title: string;
+        main_picture?: { medium?: string; large?: string };
+        alternative_titles?: { en?: string; ja?: string; synonyms?: string[] };
+        synopsis?: string;
+        mean?: number;
+        popularity?: number;
+        num_episodes?: number;
+        num_chapters?: number;
+        num_volumes?: number;
+        status?: string;
+        genres?: Array<{ id: number; name: string }>;
+        media_type?: string;
+        start_date?: string;
+      }>(url, { headers });
+    };
+
+    try {
+      let data: any = null;
+      let usedType = resolvedType;
+
+      try {
+        data = await fetchDetail(resolvedType);
+      } catch {
+        // If type was not explicitly forced by options?.type and primary call failed, try the alternate type
+        if (!options?.type && !urlMatch) {
+          const altType = resolvedType === "anime" ? "manga" : "anime";
+          try {
+            data = await fetchDetail(altType);
+            usedType = altType;
+          } catch {
+            return null;
+          }
+        } else {
+          return null;
+        }
+      }
+
+      if (!data || !data.id) {
+        return null;
+      }
+
+      return {
+        id: String(data.id),
+        externalId: String(data.id),
+        provider: "MAL",
+        mediaType: usedType === "manga" ? "MANGA" : "ANIME",
+        title: {
+          userPreferred: data.title,
+          english: data.alternative_titles?.en,
+          native: data.alternative_titles?.ja,
+        },
+        description: data.synopsis,
+        coverImage: {
+          large: data.main_picture?.large || data.main_picture?.medium,
+          medium: data.main_picture?.medium,
+        },
+        format: data.media_type?.toUpperCase(),
+        status: data.status?.toUpperCase(),
+        episodes: data.num_episodes,
+        chapters: data.num_chapters,
+        volumes: data.num_volumes,
+        averageScore: data.mean ? Math.round(data.mean * 10) : undefined,
+        popularity: data.popularity,
+        releaseYear: data.start_date
+          ? parseInt(data.start_date.substring(0, 4), 10)
+          : undefined,
+        genres: data.genres?.map((g: any) => g.name),
+        url: `https://myanimelist.net/${usedType}/${data.id}`,
+      };
+    } catch {
+      return null;
+    }
+  }
+
   async searchMedia(
     query: string,
     credentials?: ConnectionCredentials,
     options?: SearchOptions
   ): Promise<MediaSearchResult[]> {
+    const trimmed = (query || "").trim();
+    if (!trimmed) return [];
+
+    // 1. Check for explicit ID patterns: id:25623, mal:25623, #25623 or MAL URLs
+    const explicitIdMatch = trimmed.match(/^(?:id:|mal:|#)\s*(\d+)$/i);
+    const urlMatch = trimmed.match(/myanimelist\.net\/(anime|manga)\/(\d+)/i);
+
+    if (explicitIdMatch || urlMatch) {
+      const direct = await this.getMediaById(trimmed, credentials, options);
+      return direct ? [direct] : [];
+    }
+
+    // 2. Check for plain numeric queries (e.g. "25623")
+    const isPlainNumber = /^\d+$/.test(trimmed);
+
     const headers: Record<string, string> = {};
     if (credentials?.accessToken) {
       headers["Authorization"] = `Bearer ${credentials.accessToken}`;
@@ -216,59 +354,82 @@ export class MyAnimeListAdapter extends BaseConnectionAdapter {
         ? "id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_episodes,status,genres,media_type"
         : "id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_volumes,num_chapters,status,genres,media_type";
 
-    const url = new URL(`https://api.myanimelist.net/v2/${mediaType}`);
-    url.searchParams.set("q", query);
-    url.searchParams.set("limit", String(limit));
-    url.searchParams.set("offset", String(offset));
-    url.searchParams.set("fields", fields);
+    const fetchTextSearch = async (): Promise<MediaSearchResult[]> => {
+      try {
+        const url = new URL(`https://api.myanimelist.net/v2/${mediaType}`);
+        url.searchParams.set("q", trimmed);
+        url.searchParams.set("limit", String(limit));
+        url.searchParams.set("offset", String(offset));
+        url.searchParams.set("fields", fields);
 
-    const data = await this.fetchJson<{
-      data: Array<{
-        node: {
-          id: number;
-          title: string;
-          main_picture?: { medium?: string; large?: string };
-          alternative_titles?: { en?: string; ja?: string; synonyms?: string[] };
-          synopsis?: string;
-          mean?: number;
-          popularity?: number;
-          num_episodes?: number;
-          num_chapters?: number;
-          num_volumes?: number;
-          status?: string;
-          genres?: Array<{ id: number; name: string }>;
-          media_type?: string;
-          start_date?: string;
-        };
-      }>;
-    }>(url.toString(), { headers });
+        const data = await this.fetchJson<{
+          data: Array<{
+            node: {
+              id: number;
+              title: string;
+              main_picture?: { medium?: string; large?: string };
+              alternative_titles?: { en?: string; ja?: string; synonyms?: string[] };
+              synopsis?: string;
+              mean?: number;
+              popularity?: number;
+              num_episodes?: number;
+              num_chapters?: number;
+              num_volumes?: number;
+              status?: string;
+              genres?: Array<{ id: number; name: string }>;
+              media_type?: string;
+              start_date?: string;
+            };
+          }>;
+        }>(url.toString(), { headers });
 
-    return (data.data || []).map(({ node }) => ({
-      id: String(node.id),
-      externalId: String(node.id),
-      provider: "MAL",
-      mediaType: mediaType === "manga" ? "MANGA" : "ANIME",
-      title: {
-        userPreferred: node.title,
-        english: node.alternative_titles?.en,
-        native: node.alternative_titles?.ja,
-      },
-      description: node.synopsis,
-      coverImage: {
-        large: node.main_picture?.large || node.main_picture?.medium,
-        medium: node.main_picture?.medium,
-      },
-      format: node.media_type?.toUpperCase(),
-      status: node.status?.toUpperCase(),
-      episodes: node.num_episodes,
-      chapters: node.num_chapters,
-      volumes: node.num_volumes,
-      averageScore: node.mean ? Math.round(node.mean * 10) : undefined,
-      popularity: node.popularity,
-      releaseYear: node.start_date ? parseInt(node.start_date.substring(0, 4), 10) : undefined,
-      genres: node.genres?.map((g) => g.name),
-      url: `https://myanimelist.net/${mediaType}/${node.id}`,
-    }));
+        return (data.data || []).map(({ node }) => ({
+          id: String(node.id),
+          externalId: String(node.id),
+          provider: "MAL",
+          mediaType: mediaType === "manga" ? "MANGA" : "ANIME",
+          title: {
+            userPreferred: node.title,
+            english: node.alternative_titles?.en,
+            native: node.alternative_titles?.ja,
+          },
+          description: node.synopsis,
+          coverImage: {
+            large: node.main_picture?.large || node.main_picture?.medium,
+            medium: node.main_picture?.medium,
+          },
+          format: node.media_type?.toUpperCase(),
+          status: node.status?.toUpperCase(),
+          episodes: node.num_episodes,
+          chapters: node.num_chapters,
+          volumes: node.num_volumes,
+          averageScore: node.mean ? Math.round(node.mean * 10) : undefined,
+          popularity: node.popularity,
+          releaseYear: node.start_date ? parseInt(node.start_date.substring(0, 4), 10) : undefined,
+          genres: node.genres?.map((g) => g.name),
+          url: `https://myanimelist.net/${mediaType}/${node.id}`,
+        }));
+      } catch {
+        return [];
+      }
+    };
+
+    if (isPlainNumber) {
+      const [idResult, textResults] = await Promise.all([
+        this.getMediaById(trimmed, credentials, options),
+        fetchTextSearch(),
+      ]);
+
+      if (idResult) {
+        // Prepend direct ID match and deduplicate
+        const filtered = textResults.filter((r) => r.externalId !== idResult.externalId);
+        return [idResult, ...filtered];
+      }
+
+      return textResults;
+    }
+
+    return await fetchTextSearch();
   }
 
   async getLibrary(

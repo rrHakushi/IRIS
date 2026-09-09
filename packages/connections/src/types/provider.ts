@@ -114,6 +114,15 @@ export interface ConnectionProviderAdapter {
   ): Promise<MediaSearchResult[]>;
 
   /**
+   * Fetches media details by external ID directly from provider adapter if supported.
+   */
+  getMediaById?(
+    externalId: string,
+    credentials?: ConnectionCredentials,
+    options?: SearchOptions
+  ): Promise<MediaSearchResult | null>;
+
+  /**
    * Fetches the user's watchlist or library items.
    */
   getLibrary?(

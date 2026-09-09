@@ -129,4 +129,57 @@ describe("@IRIS/connections - Search Proxy", () => {
       }
     );
   });
+
+  it("should support getMediaById on MAL adapter and parse ID patterns correctly", async () => {
+    const malAdapter = getConnectionAdapter("MAL") as any;
+    assert.equal(typeof malAdapter.getMediaById, "function", "MAL must implement getMediaById");
+
+    // Test invalid ID returns null
+    const invalidResult = await malAdapter.getMediaById("not-an-id");
+    assert.equal(invalidResult, null);
+
+    // Mock fetchJson on adapter to verify endpoint and header generation
+    let requestedUrl = "";
+    let requestedHeaders: Record<string, string> = {};
+    malAdapter.fetchJson = async (url: string, init?: RequestInit) => {
+      requestedUrl = url;
+      requestedHeaders = (init?.headers as Record<string, string>) || {};
+      return {
+        id: 25623,
+        title: "Test Anime Title",
+        alternative_titles: { en: "Test English Title" },
+        main_picture: { large: "https://cdn.myanimelist.net/large.jpg" },
+        media_type: "tv",
+        status: "finished_airing",
+        num_episodes: 12,
+      };
+    };
+
+    // 1. Direct id:25623 format
+    const resId = await malAdapter.getMediaById("id:25623");
+    assert.ok(resId, "Must return result for id:25623");
+    assert.equal(resId.id, "25623");
+    assert.equal(resId.externalId, "25623");
+    assert.equal(resId.provider, "MAL");
+    assert.equal(resId.title.userPreferred, "Test Anime Title");
+    assert.ok(requestedUrl.includes("/anime/25623"), "URL must target anime/25623");
+
+    // 2. Full MAL URL format with manga type
+    const resUrl = await malAdapter.getMediaById(
+      "https://myanimelist.net/manga/99999/sample_manga"
+    );
+    assert.ok(resUrl);
+    assert.equal(resUrl.id, "25623");
+    assert.ok(requestedUrl.includes("/manga/99999"), "URL must target manga/99999");
+
+    // 3. searchMedia with "id:25623" syntax
+    const searchById = await malAdapter.searchMedia("id:25623");
+    assert.equal(searchById.length, 1);
+    assert.equal(searchById[0]?.id, "25623");
+
+    // 4. SearchProxyManager.getById for MAL
+    const proxyById = await SearchProxyManager.getById("MAL", "id:25623");
+    assert.ok(proxyById);
+    assert.equal(proxyById.id, "25623");
+  });
 });
