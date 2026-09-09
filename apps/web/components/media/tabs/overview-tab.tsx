@@ -24,6 +24,7 @@ import { cn } from "@workspace/ui/lib/utils"
 import { useUser } from "@/context/user-context"
 import { getMediaPreferences } from "@IRIS/shared"
 import { formatMediaTitle } from "@/lib/browse-search"
+import { getMediaDetailHref } from "@/lib/media-routes"
 import type {
   NormalizedMediaData,
   RelationItem,
@@ -811,9 +812,11 @@ export function OverviewTab({
                             >
                               {actorName}
                             </Link>
-                            <span className="text-[10px] text-muted-foreground">
-                              {item.actor.language ?? "Japanese"}
-                            </span>
+                            {item.actor.language && (
+                              <span className="text-[10px] text-muted-foreground">
+                                {item.actor.language}
+                              </span>
+                            )}
                           </div>
 
                           <Link
@@ -949,8 +952,7 @@ export function OverviewTab({
                           : `Media #${rel.targetId}`
                         const targetCover = rel.target?.coverImage ?? null
                         const targetFormat = rel.target?.format ?? null
-                        const relCategory = rel.targetType.toLowerCase()
-                        const href = `/IRIS-list/media/${relCategory}/${rel.targetId}`
+                        const href = getMediaDetailHref(rel.targetType, rel.targetId)
 
                         return (
                           <Link

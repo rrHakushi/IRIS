@@ -190,9 +190,11 @@ export function CharactersTab({ characters }: CharactersTabProps) {
                         >
                           {currentActor.namePrimary}
                         </Link>
-                        <span className="text-[10px] text-muted-foreground">
-                          {currentActor.language ?? "Voice Actor"}
-                        </span>
+                        {currentActor.language && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {currentActor.language}
+                          </span>
+                        )}
                       </div>
 
                       <Link

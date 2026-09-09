@@ -33,6 +33,7 @@ import {
 } from "@workspace/ui/components/dialog"
 import { toast } from "sonner"
 import { elysia } from "@/lib/elysia"
+import { getMediaDetailHref } from "@/lib/media-routes"
 import { UserListBanner } from "./user-list-banner"
 import type { UserProfileCustomization } from "@IRIS/shared"
 import { cn } from "@workspace/ui/lib/utils"
@@ -292,30 +293,10 @@ export function CustomListsView({
   const getMediaUrl = (item: CustomListEntryItem): string => {
     const { mediaType, mediaId } = item.entry
     const media = item.media
-    switch (mediaType) {
-      case "ANIME":
-        return `/IRIS-list/media/anime/${mediaId}`
-      case "MANGA":
-        return `/IRIS-list/media/manga/${mediaId}`
-      case "MOVIE":
-        return `/IRIS-list/media/movie/${mediaId}`
-      case "TV":
-        return `/IRIS-list/media/tv/${mediaId}`
-      case "GAME":
-        return `/IRIS-list/media/game/${mediaId}`
-      case "BOOK":
-        return `/IRIS-list/media/book/${mediaId}`
-      case "MUSIC":
-      case "MUSIC_TRACK":
-      case "MUSIC_ALBUM": {
-        const isTrack = media?.type === "TRACK" || mediaType === "MUSIC_TRACK"
-        return `/IRIS-list/media/music/${isTrack ? "tracks" : "albums"}/${mediaId}`
-      }
-      default: {
-        const fallbackType: string = mediaType
-        return `/IRIS-list/media/${fallbackType.toLowerCase()}/${mediaId}`
-      }
-    }
+    return getMediaDetailHref(mediaType, mediaId, {
+      itemType: media?.type,
+      format: media?.format,
+    })
   }
 
   const getMediaTypeIcon = (mediaType: string) => {

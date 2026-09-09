@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, useTransition } from "react"
+import React, { useState, useEffect, useCallback, useTransition, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { toast } from "sonner"
@@ -18,6 +18,7 @@ import {
   IconExternalLink,
 } from "@tabler/icons-react"
 import { elysia } from "@/lib/elysia"
+import { getMediaDetailHref } from "@/lib/media-routes"
 import {
   Avatar,
   AvatarFallback,
@@ -157,12 +158,7 @@ function getMediaLink(
   format?: string | null
 ): string {
   if (!mediaId) return "#"
-  const lower = mediaType.toLowerCase()
-  if (lower === "music") {
-    const isTrack = format?.toUpperCase() === "TRACK"
-    return `/IRIS-list/media/music/${isTrack ? "tracks" : "albums"}/${mediaId}`
-  }
-  return `/IRIS-list/media/${lower}/${mediaId}`
+  return getMediaDetailHref(mediaType, mediaId, { format })
 }
 
 function formatStatusText(status?: string | null): string {
@@ -290,12 +286,31 @@ export function ListActivityTab({
   )
   const [isDeleting, setIsDeleting] = useState<boolean>(false)
 
+  // Request deduplication refs (React 19 StrictMode safety)
+  const isFetchingRef = useRef<boolean>(false)
+  const lastFetchedKeyRef = useRef<string | null>(null)
+
   const fetchActivities = useCallback(
     async (
       targetPage: number,
       actionFilter: ActivityActionFilter,
-      isAppend = false
+      isAppend = false,
+      force = false
     ) => {
+      if (!username || !mediaType) return
+
+      const requestKey = `${username}:${mediaType}:${targetPage}:${actionFilter}`
+      if (
+        !force &&
+        !isAppend &&
+        (lastFetchedKeyRef.current === requestKey || isFetchingRef.current)
+      ) {
+        return
+      }
+
+      lastFetchedKeyRef.current = requestKey
+      isFetchingRef.current = true
+
       try {
         if (targetPage === 1 && !isAppend) {
           setIsLoading(true)
@@ -335,9 +350,11 @@ export function ListActivityTab({
           if (!isAppend) setActivities([])
         }
       } catch (err) {
+        lastFetchedKeyRef.current = null
         console.error("[ListActivityTab] Error loading activity stream:", err)
         toast.error("Failed to load activity log.")
       } finally {
+        isFetchingRef.current = false
         setIsLoading(false)
         setIsLoadingMore(false)
       }

@@ -23,6 +23,7 @@ import { cn } from "@workspace/ui/lib/utils"
 import type { PersonDetails } from "@IRIS/elysia"
 import { FormattedDescription } from "@/components/media/formatted-description"
 import { FavoriteButton } from "../favorite-button"
+import { getMediaDetailHref } from "@/lib/media-routes"
 
 interface PersonDetailViewProps {
   person: PersonDetails
@@ -1306,11 +1307,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                       {/* Voiced Roles Grid: Left Character, Right Media */}
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {group.items.map((item) => {
-                          const mediaTypeSlug =
-                            item.mediaType.toLowerCase() === "movie"
-                              ? "movies"
-                              : item.mediaType.toLowerCase()
-                          const mediaHref = `/IRIS-list/media/${mediaTypeSlug}/${item.mediaId}`
+                          const mediaHref = getMediaDetailHref(item.mediaType, item.mediaId)
                           const characterHref = `/IRIS-list/media/characters/${item.characterId}`
 
                           return (
@@ -1501,11 +1498,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                       {/* Staff Cards Grid */}
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {group.items.map((item) => {
-                          const mediaTypeSlug =
-                            item.mediaType.toLowerCase() === "movie"
-                              ? "movies"
-                              : item.mediaType.toLowerCase()
-                          const mediaHref = `/IRIS-list/media/${mediaTypeSlug}/${item.mediaId}`
+                          const mediaHref = getMediaDetailHref(item.mediaType, item.mediaId)
 
                           return (
                             <div

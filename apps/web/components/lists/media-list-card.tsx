@@ -12,6 +12,7 @@ import {
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { Button } from "@workspace/ui/components/button"
+import { getMediaDetailHref } from "@/lib/media-routes"
 import type { ListEntryData, MediaListType } from "./types"
 
 export interface MediaListCardProps {
@@ -165,9 +166,12 @@ function MediaListCardInner({
     (media.format === "TRACK" ||
       entry.itemType === "TRACK" ||
       Boolean(entry.trackId && !entry.albumId))
-  const mediaHref = isMusic
-    ? `/IRIS-list/media/music/${isTrack ? "tracks" : "albums"}/${media.id}`
-    : `/IRIS-list/media/${mediaType}/${media.id}`
+  const mediaHref = getMediaDetailHref(mediaType, media.id, {
+    format: media.format,
+    itemType: entry.itemType,
+    trackId: entry.trackId,
+    albumId: entry.albumId,
+  })
 
   const maxProgress: number | undefined = (() => {
     if (mediaType === "manga") {

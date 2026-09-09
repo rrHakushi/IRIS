@@ -1,27 +1,11 @@
 import type { CalendarMediaType } from "./calendar-types"
+import { getMediaDetailHref } from "@/lib/media-routes"
 
 export function getMediaHref(
   mediaType: CalendarMediaType,
   mediaId: number
 ): string {
-  switch (mediaType) {
-    case "anime":
-      return `/IRIS-list/media/anime/${mediaId}`
-    case "manga":
-      return `/IRIS-list/media/manga/${mediaId}`
-    case "tv":
-      return `/IRIS-list/media/tv/${mediaId}`
-    case "movie":
-      return `/IRIS-list/media/movies/${mediaId}`
-    case "game":
-      return `/IRIS-list/media/games/${mediaId}`
-    case "book":
-      return `/IRIS-list/media/books/${mediaId}`
-    case "music":
-      return `/IRIS-list/media/music/${mediaId}`
-    default:
-      return `/IRIS-list/media/${mediaType}/${mediaId}`
-  }
+  return getMediaDetailHref(mediaType, mediaId)
 }
 
 export function getMediaTypeColor(mediaType: CalendarMediaType): {
