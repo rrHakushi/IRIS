@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
+import dynamic from "next/dynamic"
 import { useSession, signIn } from "next-auth/react"
 import {
   IconDeviceTv,
@@ -11,17 +12,17 @@ import {
   IconBook,
   IconEye,
   IconPlayerPlay,
-  IconChevronRight,
+  IconChevronDown,
   IconCompass,
   IconLogin,
 } from "@tabler/icons-react"
+import { cn } from "@workspace/ui/lib/utils"
 import { Button, buttonVariants } from "@workspace/ui/components/button"
 import { Spinner } from "@workspace/ui/components/spinner"
 import { toast } from "sonner"
 import { elysia } from "@/lib/elysia"
 import { useUser } from "@/context/user-context"
 import { getMediaPreferences } from "@IRIS/shared"
-import { MediaListModal } from "@/components/media/list/media-list-modal"
 import { MediaListCard } from "@/components/lists/media-list-card"
 import {
   toNormalizedMedia,
@@ -29,6 +30,14 @@ import {
 } from "@/components/lists/media-list-grid"
 import type { MediaListType, ListEntryData } from "@/components/lists/types"
 import { MEDIA_CATEGORIES } from "@/components/lists/types"
+
+const MediaListModal = dynamic(
+  () =>
+    import("@/components/media/list/media-list-modal").then(
+      (m) => m.MediaListModal
+    ),
+  { ssr: false }
+)
 
 type WatchingMediaListType = Exclude<MediaListType, "music">
 
@@ -109,6 +118,18 @@ export function WatchingDashboard(): React.JSX.Element {
   const [sections, setSections] = useState<ActiveCategorySection[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const isFetchingRef = useRef<boolean>(false)
+  const lastFetchedUserRef = useRef<string | null>(null)
+
+  const INITIAL_SECTION_LIMIT = 16
+
+  // Progressive Disclosure State (expand/collapse when > 16 items)
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({})
+
+  const toggleSectionExpanded = useCallback((type: WatchingMediaListType) => {
+    setExpandedSections((prev) => ({ ...prev, [type]: !prev[type] }))
+  }, [])
 
   // Edit Modal State
   const [editingItem, setEditingItem] = useState<{
@@ -116,17 +137,35 @@ export function WatchingDashboard(): React.JSX.Element {
     mediaType: WatchingMediaListType
   } | null>(null)
 
-  // ---------------------------------------------------------------------------
-  // Fetch All In-Progress Media Concurrently via Eden Treaty
-  // ---------------------------------------------------------------------------
-  const fetchActiveMedia = useCallback(async () => {
-    if (!username) return
-    if (isFetchingRef.current) return
-    isFetchingRef.current = true
-    setIsLoading(true)
+  // Stable callback for opening the edit modal across memoized cards
+  const handleOpenEditModal = useCallback(
+    (item: ListEntryData, mediaType?: MediaListType) => {
+      setEditingItem({
+        item,
+        mediaType: (mediaType as WatchingMediaListType) || "anime",
+      })
+    },
+    []
+  )
 
-    try {
-      const userLists = elysia.user({ username }).lists
+  // ---------------------------------------------------------------------------
+  // Fetch All In-Progress Media Concurrently via Eden Treaty (Guarded)
+  // ---------------------------------------------------------------------------
+  const fetchActiveMedia = useCallback(
+    async (force = false) => {
+      if (!username) return
+      if (
+        !force &&
+        (lastFetchedUserRef.current === username || isFetchingRef.current)
+      ) {
+        return
+      }
+      lastFetchedUserRef.current = username
+      isFetchingRef.current = true
+      setIsLoading(true)
+
+      try {
+        const userLists = elysia.user({ username }).lists
 
       // Parallel guarded requests using allSettled
       const [animeRes, tvRes, movieRes, mangaRes, gameRes, bookRes] =
@@ -245,11 +284,11 @@ export function WatchingDashboard(): React.JSX.Element {
   }, [authStatus, username, fetchActiveMedia])
 
   // ---------------------------------------------------------------------------
-  // Debounced Increment Handler (600ms)
+  // Debounced Increment Handler (600ms) - Stable reference for memoized cards
   // ---------------------------------------------------------------------------
   const handleIncrementProgress = useCallback(
-    async (mediaType: MediaListType, item: ListEntryData, count: number) => {
-      if (!username) return
+    async (item: ListEntryData, count: number, mediaType?: MediaListType) => {
+      if (!username || !mediaType) return
 
       const entryId = item.entry.id
       const mediaId = item.media.id
@@ -434,7 +473,7 @@ export function WatchingDashboard(): React.JSX.Element {
       } catch {
         toast.error("Failed to update progress")
         // Re-synchronize state on error
-        fetchActiveMedia()
+        fetchActiveMedia(true)
       }
     },
     [username, fetchActiveMedia]
@@ -527,7 +566,7 @@ export function WatchingDashboard(): React.JSX.Element {
       <div className="flex min-h-[50vh] w-full flex-col items-center justify-center gap-3">
         <Spinner className="size-6 text-primary" />
         <span className="text-xs font-medium text-muted-foreground">
-          Loading watching media...
+          Loading watching media…
         </span>
       </div>
     )
@@ -577,6 +616,12 @@ export function WatchingDashboard(): React.JSX.Element {
     <div className="flex flex-col gap-8 pb-12">
       {sections.map((section) => {
         const SectionIcon = section.icon
+        const isExpanded = Boolean(expandedSections[section.type])
+        const hasOverflow = section.items.length > INITIAL_SECTION_LIMIT
+        const visibleItems =
+          hasOverflow && !isExpanded
+            ? section.items.slice(0, INITIAL_SECTION_LIMIT)
+            : section.items
 
         return (
           <section
@@ -591,40 +636,51 @@ export function WatchingDashboard(): React.JSX.Element {
                 <h2 className="font-heading text-base font-semibold tracking-tight text-foreground sm:text-lg">
                   {section.label}
                 </h2>
-                <span className="rounded-full bg-muted/80 px-2 py-0.5 font-mono text-[11px] font-medium text-muted-foreground">
+                <span className="rounded-full bg-muted/80 px-2 py-0.5 font-mono text-[11px] font-medium tabular-nums text-muted-foreground">
                   {section.items.length}
                 </span>
               </div>
-
-              {username && (
-                <Link
-                  href={`/IRIS-list/lists/${username}/${section.type}`}
-                  className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-primary"
-                >
-                  <span>View full list</span>
-                  <IconChevronRight className="size-3.5 rtl:rotate-180" />
-                </Link>
-              )}
             </div>
 
             {/* 8-Card Responsive Grid (3 on mobile, 8 on desktop) */}
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2.5 md:grid-cols-5 md:gap-3 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-8">
-              {section.items.map((item) => (
+              {visibleItems.map((item) => (
                 <MediaListCard
                   key={`${item.entry.id}-${item.media.id}`}
                   item={item}
                   mediaType={section.type}
                   mediaTitlePreference={mediaTitlePreference}
                   progressUnit={section.progressUnit}
-                  onOpenEditModal={(target) =>
-                    setEditingItem({ item: target, mediaType: section.type })
-                  }
-                  onIncrementProgress={(target, count) =>
-                    handleIncrementProgress(section.type, target, count)
-                  }
+                  onOpenEditModal={handleOpenEditModal}
+                  onIncrementProgress={handleIncrementProgress}
                 />
               ))}
             </div>
+
+            {/* Expand / Collapse Button if category has > 16 items */}
+            {hasOverflow && (
+              <div className="flex justify-center pt-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onPress={() => toggleSectionExpanded(section.type)}
+                  className="gap-1.5 rounded-xl border-border/60 text-xs font-medium text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                >
+                  <span>
+                    {isExpanded
+                      ? "Show less"
+                      : `Show all ${section.items.length} ${section.label.toLowerCase()}`}
+                  </span>
+                  <IconChevronDown
+                    className={cn(
+                      "size-3.5 transition-transform duration-200",
+                      isExpanded && "rotate-180"
+                    )}
+                    aria-hidden="true"
+                  />
+                </Button>
+              </div>
+            )}
           </section>
         )
       })}

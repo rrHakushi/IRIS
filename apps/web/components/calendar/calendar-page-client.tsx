@@ -9,6 +9,7 @@ import { useUser } from "@/context/user-context"
 import { getMediaPreferences } from "@IRIS/shared"
 import { CalendarHeader } from "./calendar-header"
 import { CalendarMonthView } from "./calendar-month-view"
+import { CalendarMobileMonthView } from "./calendar-mobile-month-view"
 import { CalendarWeekView } from "./calendar-week-view"
 import { CalendarAgendaView } from "./calendar-agenda-view"
 import { CalendarDayDialog } from "./calendar-day-dialog"
@@ -19,8 +20,10 @@ import type {
 } from "./calendar-types"
 import { getMonthGridDays } from "./calendar-utils"
 import { CalendarLoadingFallback } from "./calendar-loading-fallback"
+import { useIsMobile } from "@workspace/ui/hooks/use-mobile"
 
 export function CalendarPageClient() {
+  const isMobile = useIsMobile()
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
@@ -69,9 +72,8 @@ export function CalendarPageClient() {
   const [selectedDayItems, setSelectedDayItems] = useState<CalendarItem[]>([])
   const [isDayDialogOpen, setIsDayDialogOpen] = useState<boolean>(false)
 
-  // Deduplication refs for React 19 StrictMode
-  const lastFetchedKeyRef = useRef<string | null>(null)
-  const isFetchingRef = useRef(false)
+  // Sequence counter to prevent race conditions and guarantee latest request completes
+  const requestSeqRef = useRef(0)
 
   // Calculate range bounds for the current month view grid
   const dateRange = useMemo(() => {
@@ -100,17 +102,10 @@ export function CalendarPageClient() {
 
   // Fetch releases from Elysia via Eden Treaty
   useEffect(() => {
-    const fetchKey = `${dateRange.start}_${dateRange.end}_${onlyInLists}_${isAuthenticated}`
-    if (lastFetchedKeyRef.current === fetchKey || isFetchingRef.current) {
-      return
-    }
-
-    lastFetchedKeyRef.current = fetchKey
-    isFetchingRef.current = true
-    let isMounted = true
+    const seq = ++requestSeqRef.current
+    setIsLoading(true)
 
     async function loadReleases() {
-      setIsLoading(true)
       try {
         const { data, error } = await elysia.media.calendar.get({
           query: {
@@ -120,24 +115,23 @@ export function CalendarPageClient() {
           },
         })
 
-        if (isMounted && !error && data?.success) {
+        if (seq !== requestSeqRef.current) return
+
+        if (!error && data?.success) {
           setItems(data.items)
           setCounts(data.meta.counts)
         }
       } catch {
         // Silently handle error
       } finally {
-        isFetchingRef.current = false
-        if (isMounted) setIsLoading(false)
+        if (seq === requestSeqRef.current) {
+          setIsLoading(false)
+        }
       }
     }
 
     loadReleases()
-
-    return () => {
-      isMounted = false
-    }
-  }, [dateRange, onlyInLists, isAuthenticated])
+  }, [dateRange.start, dateRange.end, onlyInLists, isAuthenticated])
 
   // Navigation handlers
   const handlePrev = useCallback(() => {
@@ -205,7 +199,7 @@ export function CalendarPageClient() {
 
   return (
     <div className="flex w-full flex-1 flex-col bg-background">
-      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 px-3 py-4 pb-32 sm:gap-6 sm:px-6 sm:py-6 sm:pb-8 lg:px-8">
         {/* Header Navigation & Filters */}
         <CalendarHeader
           currentDate={currentDate}
@@ -227,26 +221,46 @@ export function CalendarPageClient() {
         {/* Content Area with Loading Skeleton */}
         {isLoading ? (
           <div className="flex flex-1 flex-col gap-3">
-            <div className="grid grid-cols-7 gap-2">
-              {Array.from({ length: 7 }).map((_, i) => (
-                <Skeleton key={i} className="h-8 w-full rounded-2xl" />
-              ))}
-            </div>
-            <div className="grid grid-cols-7 gap-2">
-              {Array.from({ length: 35 }).map((_, i) => (
-                <Skeleton key={i} className="h-28 w-full rounded-2xl" />
-              ))}
-            </div>
+            {isMobile ? (
+              <div className="flex flex-col gap-3">
+                <Skeleton className="h-64 w-full rounded-3xl" />
+                <Skeleton className="h-20 w-full rounded-2xl" />
+                <Skeleton className="h-20 w-full rounded-2xl" />
+                <Skeleton className="h-20 w-full rounded-2xl" />
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-7 gap-2">
+                  {Array.from({ length: 7 }).map((_, i) => (
+                    <Skeleton key={i} className="h-8 w-full rounded-2xl" />
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 gap-2">
+                  {Array.from({ length: 35 }).map((_, i) => (
+                    <Skeleton key={i} className="h-28 w-full rounded-2xl" />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <div className="flex flex-1 flex-col">
             {viewMode === "month" && (
-              <CalendarMonthView
-                currentDate={currentDate}
-                items={filteredItems}
-                titlePreference={mediaTitlePreference}
-                onSelectDay={handleSelectDay}
-              />
+              isMobile ? (
+                <CalendarMobileMonthView
+                  currentDate={currentDate}
+                  items={filteredItems}
+                  titlePreference={mediaTitlePreference}
+                  onSelectDay={handleSelectDay}
+                />
+              ) : (
+                <CalendarMonthView
+                  currentDate={currentDate}
+                  items={filteredItems}
+                  titlePreference={mediaTitlePreference}
+                  onSelectDay={handleSelectDay}
+                />
+              )
             )}
 
             {viewMode === "week" && (

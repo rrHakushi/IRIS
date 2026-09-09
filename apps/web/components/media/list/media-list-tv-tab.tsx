@@ -96,9 +96,7 @@ export function MediaListTvTab({
 }: MediaListTvTabProps) {
   const [expandedSeasons, setExpandedSeasons] = useState<
     Record<number, boolean>
-  >({
-    1: true,
-  })
+  >({})
 
   // ==========================================
   // Anime Episode Handling (Local state only, saves on Save button)

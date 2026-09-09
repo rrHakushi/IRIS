@@ -1051,9 +1051,9 @@ export function MediaListModal({
 
   // Modal Inner JSX
   const content = (
-    <div className="relative flex flex-col overflow-hidden bg-background text-foreground">
+    <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background text-foreground">
       {/* Top Banner Header with Backdrop Image and Overlay Vignette */}
-      <div className="relative h-44 w-full overflow-hidden bg-muted sm:h-52">
+      <div className="relative h-44 w-full shrink-0 overflow-hidden bg-muted sm:h-52">
         {bannerImg ? (
           <img
             src={bannerImg}
@@ -1145,7 +1145,7 @@ export function MediaListModal({
       </div>
 
       {/* Main Body Area */}
-      <div className="flex flex-col gap-4 p-4 sm:p-5">
+      <div className="flex flex-1 min-h-0 flex-col gap-4 overflow-y-auto p-4 sm:p-5 overscroll-contain touch-pan-y">
         {/* Navigation Tabs Pill Bar */}
         <div className="inline-flex w-fit items-center gap-1 rounded-full border border-border bg-muted/60 p-1 backdrop-blur-md">
           <button
@@ -1815,13 +1815,12 @@ export function MediaListModal({
         isDismissable
         className="fixed inset-0 z-50 bg-black/40 transition-opacity duration-150 data-entering:opacity-0 data-exiting:opacity-0 supports-backdrop-filter:backdrop-blur-sm"
       >
-        <AriaModal className="fixed inset-x-0 bottom-0 z-50 no-scrollbar flex max-h-[92vh] flex-col overflow-y-auto rounded-t-3xl border-t border-border bg-background p-0 text-foreground transition duration-200 ease-in-out outline-none data-entering:translate-y-[2.5rem] data-exiting:translate-y-[2.5rem]">
+        <AriaModal className="fixed inset-x-0 bottom-0 z-50 no-scrollbar flex h-[90dvh] max-h-[90dvh] flex-col overflow-hidden rounded-t-3xl border-t border-border bg-background p-0 text-foreground transition duration-200 ease-in-out outline-none data-entering:translate-y-[2.5rem] data-exiting:translate-y-[2.5rem]">
           <AriaDialog
             aria-label={`Edit ${media.titlePrimary} in list`}
             aria-labelledby="media-list-modal-title"
-            className="[display:inherit] h-full max-h-[inherit] [flex-direction:inherit] [gap:inherit] outline-none"
+            className="flex h-full min-h-0 flex-1 flex-col overflow-hidden outline-none"
           >
-            <div className="mx-auto mt-2.5 h-1.5 w-12 rounded-full bg-muted-foreground/20" />
             {content}
           </AriaDialog>
         </AriaModal>
@@ -1836,11 +1835,11 @@ export function MediaListModal({
       isDismissable
       className="fixed inset-0 isolate z-50 bg-black/40 duration-100 data-entering:animate-in data-entering:fade-in-0 data-exiting:animate-out data-exiting:fade-out-0 supports-backdrop-filter:backdrop-blur-sm"
     >
-      <AriaModal className="fixed start-1/2 top-1/2 z-50 no-scrollbar grid max-h-[90vh] w-full max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border border-border bg-background p-0 text-foreground shadow-2xl outline-none data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:fade-out-0 data-exiting:zoom-out-95 sm:max-w-2xl rtl:translate-x-1/2">
+      <AriaModal className="fixed start-1/2 top-1/2 z-50 no-scrollbar flex max-h-[90vh] w-full max-w-xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-3xl border border-border bg-background p-0 text-foreground shadow-2xl outline-none data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:fade-out-0 data-exiting:zoom-out-95 sm:max-w-2xl rtl:translate-x-1/2">
         <AriaDialog
           aria-label={`Edit ${media.titlePrimary} in list`}
           aria-labelledby="media-list-modal-title"
-          className="[display:inherit] [gap:inherit] outline-none"
+          className="flex h-full min-h-0 flex-1 flex-col overflow-hidden outline-none"
         >
           {content}
         </AriaDialog>

@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { elysia } from "@/lib/elysia"
 import { useUser } from "@/context/user-context"
+import dynamic from "next/dynamic"
 import {
   getMediaPreferences,
   type UserProfileCustomization,
@@ -12,8 +13,15 @@ import {
 import { UserListBanner } from "./user-list-banner"
 import { ListStatusCard } from "./list-status-card"
 import { MediaListGrid } from "./media-list-grid"
-import { ListCommentsTab } from "./list-comments-tab"
-import { ListActivityTab } from "./list-activity-tab"
+
+const ListCommentsTab = dynamic(
+  () => import("./list-comments-tab").then((m) => m.ListCommentsTab),
+  { ssr: false }
+)
+const ListActivityTab = dynamic(
+  () => import("./list-activity-tab").then((m) => m.ListActivityTab),
+  { ssr: false }
+)
 import type {
   MediaListType,
   StatusKey,
@@ -38,6 +46,30 @@ const DEFAULT_FACETS: ListFilterFacets = {
   mediaStatuses: [],
   months: [],
   artists: [],
+}
+
+function matchesMediaSearch(
+  media: ListEntryData["media"],
+  query: string
+): boolean {
+  if (!query) return true
+
+  // Fast direct checks with early return, avoiding array allocations
+  if (media.titlePrimary && media.titlePrimary.toLowerCase().includes(query))
+    return true
+  if (media.titleEnglish && media.titleEnglish.toLowerCase().includes(query))
+    return true
+  if (media.titleRomaji && media.titleRomaji.toLowerCase().includes(query))
+    return true
+  if (media.titleNative && media.titleNative.toLowerCase().includes(query))
+    return true
+  if (media.title && media.title.toLowerCase().includes(query)) return true
+  if (media.name && media.name.toLowerCase().includes(query)) return true
+  if (media.artist && media.artist.toLowerCase().includes(query)) return true
+  if (media.artistName && media.artistName.toLowerCase().includes(query))
+    return true
+
+  return false
 }
 
 /**
@@ -168,7 +200,7 @@ export function UserListView({
   // ---------------------------------------------------------------------------
   const [activeStatus, setActiveStatus] = useState<StatusKey>("ALL")
   const [searchQuery, setSearchQuery] = useState("")
-  const [debouncedSearch, setDebouncedSearch] = useState("")
+  const deferredSearch = React.useDeferredValue(searchQuery)
   const [selectedFormats, setSelectedFormats] = useState<string[]>([])
   const [selectedMediaStatuses, setSelectedMediaStatuses] = useState<string[]>(
     []
@@ -230,13 +262,6 @@ export function UserListView({
     }
   }, [])
 
-  // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery.trim().toLowerCase())
-    }, 250)
-    return () => clearTimeout(timer)
-  }, [searchQuery])
 
   // ---------------------------------------------------------------------------
   // Data States
@@ -253,44 +278,62 @@ export function UserListView({
   // Request deduplication refs (React 19 StrictMode safety)
   const isFetchingRef = useRef(false)
   const isFetchingMoreRef = useRef(false)
+  const lastFetchedItemsKeyRef = useRef<string | null>(null)
+  const lastFetchedFacetsKeyRef = useRef<string | null>(null)
+  const isFetchingFacetsRef = useRef(false)
 
   // ---------------------------------------------------------------------------
-  // 1. Fetch Filter Facets & Counts
+  // 1. Fetch Filter Facets & Counts (Guarded against double-fetching on mount)
   // ---------------------------------------------------------------------------
-  const fetchFacets = useCallback(async () => {
-    try {
-      const resource = getListResource(username, mediaType)
-      const { data, error } = await resource.filters.get()
-      if (!error && data && data.success) {
-        setFacets({
-          statuses: data.statuses || [],
-          formats: data.formats || [],
-          genres: data.genres || [],
-          years: data.years || [],
-          mediaStatuses: data.mediaStatuses || [],
-          months: data.months || [],
-          artists: data.artists || [],
-        })
+  const fetchFacets = useCallback(
+    async (force = false) => {
+      if (!username || !mediaType) return
+
+      const facetsKey = `${username}:${mediaType}`
+      if (
+        !force &&
+        (lastFetchedFacetsKeyRef.current === facetsKey ||
+          isFetchingFacetsRef.current)
+      ) {
+        return
       }
-    } catch {
-      // Graceful fallback
-    }
-  }, [username, mediaType])
+
+      lastFetchedFacetsKeyRef.current = facetsKey
+      isFetchingFacetsRef.current = true
+
+      try {
+        const resource = getListResource(username, mediaType)
+        const { data, error } = await resource.filters.get()
+        if (!error && data && data.success) {
+          setFacets({
+            statuses: data.statuses || [],
+            formats: data.formats || [],
+            genres: data.genres || [],
+            years: data.years || [],
+            mediaStatuses: data.mediaStatuses || [],
+            months: data.months || [],
+            artists: data.artists || [],
+          })
+        }
+      } catch {
+        // Graceful fallback
+      } finally {
+        isFetchingFacetsRef.current = false
+      }
+    },
+    [username, mediaType]
+  )
 
   useEffect(() => {
     fetchFacets()
   }, [fetchFacets])
 
   // ---------------------------------------------------------------------------
-  // 2. Fetch Initial / Filtered Items
+  // 2. Fetch Initial / Filtered Items (Guarded against double-fetching on mount)
   // ---------------------------------------------------------------------------
-  const fetchItems = useCallback(async () => {
-    if (isFetchingRef.current) return
-    isFetchingRef.current = true
-    setIsLoading(true)
-
-    try {
-      const resource = getListResource(username, mediaType)
+  const fetchItems = useCallback(
+    async (force = false) => {
+      if (!username || !mediaType) return
 
       // Format query parameters
       const isMusic = mediaType === "music"
@@ -321,51 +364,69 @@ export function UserListView({
       const artistsParam =
         selectedArtists.length > 0 ? selectedArtists.join(",") : undefined
 
-      const { data, error } = await resource.get({
-        query: {
-          limit: activeStatus === "ALL" ? 100 : 36,
-          status: statusParam,
-          mediaFormat: formatsParam,
-          mediaStatus: mediaStatusParam,
-          genres: genresParam,
-          year: yearsParam,
-          month: monthsParam,
-          artist: artistsParam,
-          sortBy,
-          order: sortOrder,
-        },
-      })
+      const queryKey = `${username}:${mediaType}:${activeStatus}:${statusParam}:${formatsParam}:${mediaStatusParam}:${genresParam}:${yearsParam}:${monthsParam}:${artistsParam}:${sortBy}:${sortOrder}`
 
-      if (!error && data && data.success) {
-        setItems((data.items as ListEntryData[]) || [])
-        setNextCursor(data.pagination?.nextCursor ?? null)
-        setHasMore(Boolean(data.pagination?.hasMore))
-        setTotalCount(data.pagination?.total ?? 0)
-      } else {
-        setItems([])
-        setNextCursor(null)
-        setHasMore(false)
+      if (
+        !force &&
+        (lastFetchedItemsKeyRef.current === queryKey || isFetchingRef.current)
+      ) {
+        return
       }
-    } catch (err) {
-      console.error(`[UserListView] Error fetching items:`, err)
-      setItems([])
-    } finally {
-      setIsLoading(false)
-      isFetchingRef.current = false
-    }
-  }, [
-    username,
-    mediaType,
-    activeStatus,
-    selectedFormats,
-    selectedMediaStatuses,
-    selectedGenres,
-    selectedYears,
-    selectedMonths,
-    selectedArtists,
-    sortBy,
-    sortOrder,
-  ])
+
+      lastFetchedItemsKeyRef.current = queryKey
+      isFetchingRef.current = true
+      setIsLoading(true)
+
+      try {
+        const resource = getListResource(username, mediaType)
+
+        const { data, error } = await resource.get({
+          query: {
+            limit: activeStatus === "ALL" ? 100 : 36,
+            status: statusParam,
+            mediaFormat: formatsParam,
+            mediaStatus: mediaStatusParam,
+            genres: genresParam,
+            year: yearsParam,
+            month: monthsParam,
+            artist: artistsParam,
+            sortBy,
+            order: sortOrder,
+          },
+        })
+
+        if (!error && data && data.success) {
+          setItems((data.items as ListEntryData[]) || [])
+          setNextCursor(data.pagination?.nextCursor ?? null)
+          setHasMore(Boolean(data.pagination?.hasMore))
+          setTotalCount(data.pagination?.total ?? 0)
+        } else {
+          setItems([])
+          setNextCursor(null)
+          setHasMore(false)
+        }
+      } catch (err) {
+        console.error(`[UserListView] Error fetching items:`, err)
+        setItems([])
+      } finally {
+        setIsLoading(false)
+        isFetchingRef.current = false
+      }
+    },
+    [
+      username,
+      mediaType,
+      activeStatus,
+      selectedFormats,
+      selectedMediaStatuses,
+      selectedGenres,
+      selectedYears,
+      selectedMonths,
+      selectedArtists,
+      sortBy,
+      sortOrder,
+    ]
+  )
 
   useEffect(() => {
     fetchItems()
@@ -632,7 +693,7 @@ export function UserListView({
         toast.success(`Progress updated (+${count})`)
       } catch {
         toast.error("Failed to update progress")
-        fetchItems()
+        fetchItems(true)
       }
     },
     [username, mediaType, sortBy, sortOrder, fetchItems]
@@ -646,7 +707,7 @@ export function UserListView({
       if (!updatedEntry) {
         setItems((prev) => prev.filter((i) => i.entry.id !== entryId))
         setTotalCount((prev) => Math.max(0, prev - 1))
-        fetchFacets()
+        fetchFacets(true)
       } else {
         const nowIso = new Date().toISOString()
         const updatedTimestamp = updatedEntry.updatedAt
@@ -716,35 +777,24 @@ export function UserListView({
           // Re-sort items by active sortBy (e.g. updatedAt) and sortOrder
           return sortListItems(next, sortBy, sortOrder)
         })
-        fetchFacets()
+        fetchFacets(true)
       }
     },
     [activeStatus, sortBy, sortOrder, fetchFacets]
   )
 
   // ---------------------------------------------------------------------------
-  // 6. Client-side Search Filter over Loaded Items
+  // 6. Non-blocking Client-side Search Filter over Loaded Items
   // ---------------------------------------------------------------------------
+  const normalizedSearch = deferredSearch.trim().toLowerCase()
+
   const filteredItems = React.useMemo(() => {
-    if (!debouncedSearch) return items
+    if (!normalizedSearch) return items
 
-    return items.filter(({ media }) => {
-      const titles = [
-        media.titlePrimary,
-        media.titleEnglish,
-        media.titleRomaji,
-        media.titleNative,
-        media.title,
-        media.name,
-        media.artist,
-        media.artistName,
-      ]
-        .filter(Boolean)
-        .map((t) => String(t).toLowerCase())
-
-      return titles.some((t) => t.includes(debouncedSearch))
-    })
-  }, [items, debouncedSearch])
+    return items.filter(({ media }) =>
+      matchesMediaSearch(media, normalizedSearch)
+    )
+  }, [items, normalizedSearch])
 
   return (
     <div className="flex min-h-svh w-full flex-col bg-background text-foreground">

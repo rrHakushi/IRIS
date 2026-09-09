@@ -24,3 +24,9 @@ body::-webkit-scrollbar {
   width: 0 !important;
   height: 0 !important;
 }
+
+/* Off-screen rendering containment for large media card grids */
+.media-card-contain {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 280px;
+}

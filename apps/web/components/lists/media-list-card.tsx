@@ -19,8 +19,12 @@ export interface MediaListCardProps {
   mediaType: MediaListType
   mediaTitlePreference?: "primary" | "secondary" | "native"
   progressUnit?: string
-  onOpenEditModal: (item: ListEntryData) => void
-  onIncrementProgress?: (item: ListEntryData, count: number) => Promise<void>
+  onOpenEditModal: (item: ListEntryData, mediaType?: MediaListType) => void
+  onIncrementProgress?: (
+    item: ListEntryData,
+    count: number,
+    mediaType?: MediaListType
+  ) => Promise<void>
 }
 
 export function resolveMediaTitle(
@@ -143,7 +147,7 @@ export function computeTvProgress(item: ListEntryData): {
   }
 }
 
-export function MediaListCard({
+function MediaListCardInner({
   item,
   mediaType,
   mediaTitlePreference = "primary",
@@ -347,7 +351,7 @@ export function MediaListCard({
 
       if (countToIncrement > 0) {
         try {
-          await onIncrementProgress(item, countToIncrement)
+          await onIncrementProgress(item, countToIncrement, mediaType)
         } catch {
           // Revert optimistic delta on error
           setDisplayDelta(0)
@@ -366,7 +370,7 @@ export function MediaListCard({
     isLongPressRef.current = false
     touchTimerRef.current = setTimeout(() => {
       isLongPressRef.current = true
-      onOpenEditModal(item)
+      onOpenEditModal(item, mediaType)
       if (typeof navigator !== "undefined" && navigator.vibrate) {
         try {
           navigator.vibrate(40)
@@ -398,7 +402,7 @@ export function MediaListCard({
       onTouchEnd={handleTouchEnd}
       onTouchMove={handleTouchMove}
       onTouchCancel={handleTouchMove}
-      className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card hover:border-primary/40"
+      className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card hover:border-primary/40 media-card-contain"
     >
       {/* Cover Image & Overlays Container - 1:1 square for music, 2:3 for posters */}
       <div
@@ -417,7 +421,7 @@ export function MediaListCard({
               isLongPressRef.current = false
             }
           }}
-          className="absolute inset-0 block size-full"
+          className="absolute inset-0 block size-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-hidden"
         >
           {cover ? (
             <Image
@@ -426,11 +430,13 @@ export function MediaListCard({
               fill
               sizes="(max-width: 640px) 33vw, (max-width: 1024px) 20vw, 12.5vw"
               unoptimized
+              loading="lazy"
+              decoding="async"
               className="object-cover"
             />
           ) : (
             <div className="flex size-full items-center justify-center text-muted-foreground/50">
-              <IconPhotoOff className="size-6" />
+              <IconPhotoOff className="size-6" aria-hidden="true" />
             </div>
           )}
         </Link>
@@ -439,11 +445,11 @@ export function MediaListCard({
         <Button
           variant="ghost"
           size="icon-xs"
-          onPress={() => onOpenEditModal(item)}
+          onPress={() => onOpenEditModal(item, mediaType)}
           aria-label="Edit list entry"
           className="pointer-events-none absolute start-1.5 top-1.5 z-20 size-6 cursor-pointer rounded-md bg-black/70 text-white/90 opacity-0 backdrop-blur-md group-hover:pointer-events-auto group-hover:opacity-100 hover:bg-black/90 hover:text-white focus-visible:pointer-events-auto focus-visible:opacity-100"
         >
-          <IconMenu2 className="size-3.5" />
+          <IconMenu2 className="size-3.5" aria-hidden="true" />
         </Button>
 
         {/* Bottom-Right: Quick Increment (+) Button (Visible on hover, only when active) */}
@@ -456,7 +462,7 @@ export function MediaListCard({
             aria-label={`Increment ${progressUnit}`}
             className="pointer-events-none absolute end-1.5 bottom-1.5 z-20 size-6 cursor-pointer rounded-md bg-black/70 text-white/90 opacity-0 shadow-xs backdrop-blur-md group-hover:pointer-events-auto group-hover:opacity-100 hover:bg-primary hover:text-primary-foreground focus-visible:pointer-events-auto focus-visible:opacity-100 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <IconPlus className="size-3.5" />
+            <IconPlus className="size-3.5" aria-hidden="true" />
           </Button>
         )}
 
@@ -465,10 +471,10 @@ export function MediaListCard({
           {/* 1. Connections Count Badge */}
           {connectedCount > 0 && (
             <div
-              className="flex items-center gap-1 rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md"
+              className="flex items-center gap-1 rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-white/90 shadow-xs backdrop-blur-md"
               title={`${connectedCount} connected service${connectedCount === 1 ? "" : "s"}`}
             >
-              <IconLink className="size-2.5 shrink-0 text-primary" />
+              <IconLink className="size-2.5 shrink-0 text-primary" aria-hidden="true" />
               <span>{connectedCount}</span>
             </div>
           )}
@@ -476,12 +482,12 @@ export function MediaListCard({
           {/* 2. Progress Badge: Season/Episode, Volume/Chapter, Ep, Hrs, Pages, or Plays */}
           {mediaType === "movie" ? (
             entry.rewatched && entry.rewatched > 0 ? (
-              <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
+              <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-white/90 shadow-xs backdrop-blur-md">
                 <span>Rewatched {entry.rewatched}x</span>
               </div>
             ) : null
           ) : mediaType === "tv" && tvProg ? (
-            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
+            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-white/90 shadow-xs backdrop-blur-md">
               <span className="font-semibold text-white">
                 S{tvProg.seasonNumber}
               </span>
@@ -493,7 +499,7 @@ export function MediaListCard({
               ) : null}
             </div>
           ) : mediaType === "manga" ? (
-            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
+            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-white/90 shadow-xs backdrop-blur-md">
               {typeof maxVolumes === "number" || volumesProgress > 0 ? (
                 <span className="font-semibold text-white">
                   V{volumesProgress}
@@ -513,11 +519,11 @@ export function MediaListCard({
               ) : null}
             </div>
           ) : mediaType === "game" ? (
-            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
+            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-white/90 shadow-xs backdrop-blur-md">
               <span>{displayedProgress} Hrs</span>
             </div>
           ) : mediaType === "book" ? (
-            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
+            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-white/90 shadow-xs backdrop-blur-md">
               <span>P {displayedProgress}</span>
               {typeof maxProgress === "number" && maxProgress > 0 ? (
                 <span className="font-semibold text-primary">
@@ -526,11 +532,11 @@ export function MediaListCard({
               ) : null}
             </div>
           ) : mediaType === "music" ? (
-            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
+            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-white/90 shadow-xs backdrop-blur-md">
               <span>{displayedProgress} Plays</span>
             </div>
           ) : (
-            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 shadow-xs backdrop-blur-md">
+            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-white/90 shadow-xs backdrop-blur-md">
               <span>
                 {progressUnit} {displayedProgress}
               </span>
@@ -544,8 +550,8 @@ export function MediaListCard({
 
           {/* 3. Score Badge (score/10) */}
           {typeof entry.score === "number" && entry.score > 0 && (
-            <div className="flex items-center gap-1 rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-bold text-amber-400 shadow-xs backdrop-blur-md">
-              <IconStar className="size-2.5 shrink-0 fill-amber-400" />
+            <div className="flex items-center gap-1 rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-amber-400 shadow-xs backdrop-blur-md">
+              <IconStar className="size-2.5 shrink-0 fill-amber-400" aria-hidden="true" />
               <span>
                 {Number(
                   (entry.score > 10 ? entry.score / 10 : entry.score).toFixed(1)
@@ -582,3 +588,44 @@ export function MediaListCard({
     </div>
   )
 }
+
+function arePropsEqual(
+  prevProps: MediaListCardProps,
+  nextProps: MediaListCardProps
+): boolean {
+  if (prevProps.mediaType !== nextProps.mediaType) return false
+  if (prevProps.mediaTitlePreference !== nextProps.mediaTitlePreference) return false
+  if (prevProps.progressUnit !== nextProps.progressUnit) return false
+  if (prevProps.onOpenEditModal !== nextProps.onOpenEditModal) return false
+  if (prevProps.onIncrementProgress !== nextProps.onIncrementProgress) return false
+
+  const prevItem = prevProps.item
+  const nextItem = nextProps.item
+  if (prevItem === nextItem) return true
+
+  const pe = prevItem.entry
+  const ne = nextItem.entry
+  if (
+    pe.id !== ne.id ||
+    pe.progress !== ne.progress ||
+    pe.chaptersProgress !== ne.chaptersProgress ||
+    pe.volumesProgress !== ne.volumesProgress ||
+    pe.status !== ne.status ||
+    pe.score !== ne.score ||
+    pe.rewatched !== ne.rewatched ||
+    pe.updatedAt !== ne.updatedAt ||
+    pe.connections !== ne.connections
+  ) {
+    return false
+  }
+
+  const pm = prevItem.media
+  const nm = nextItem.media
+  if (pm.id !== nm.id || pm.updatedAt !== nm.updatedAt) {
+    return false
+  }
+
+  return true
+}
+
+export const MediaListCard = React.memo(MediaListCardInner, arePropsEqual)

@@ -127,14 +127,15 @@ export function DatePicker({
 
       <Popover
         aria-label={ariaLabel || "Select date"}
-        shouldFlip={false}
+        shouldFlip
+        containerPadding={12}
         placement={align === "end" ? "bottom end" : "bottom start"}
         className="w-auto overflow-hidden rounded-2xl border border-border bg-popover p-0 text-popover-foreground shadow-xl"
       >
         {({ close }: any) => (
           <Dialog
             aria-label={ariaLabel || "Choose date"}
-            className="flex flex-col outline-none"
+            className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-y-auto outline-none"
           >
             <Heading slot="title" className="sr-only">
               {ariaLabel || "Choose date"}

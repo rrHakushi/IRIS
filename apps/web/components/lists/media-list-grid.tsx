@@ -1,12 +1,20 @@
 "use client"
 
-import React, { useState, useEffect, useRef, useMemo } from "react"
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
+import dynamic from "next/dynamic"
 import { IconInbox } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { Button } from "@workspace/ui/components/button"
 import { Spinner } from "@workspace/ui/components/spinner"
-import { MediaListModal } from "@/components/media/list/media-list-modal"
 import type { NormalizedMediaData } from "@/components/media/media-types"
+
+const MediaListModal = dynamic(
+  () =>
+    import("@/components/media/list/media-list-modal").then(
+      (m) => m.MediaListModal
+    ),
+  { ssr: false }
+)
 import type {
   MediaListEntryData,
   MediaListStatus,
@@ -169,6 +177,10 @@ export function MediaListGrid({
   // Edit Modal State
   const [editingItem, setEditingItem] = useState<ListEntryData | null>(null)
 
+  const handleOpenEditModal = useCallback((target: ListEntryData) => {
+    setEditingItem(target)
+  }, [])
+
   // When All is selected, separate entries by status in this exact order:
   // 1. Watching (or Reading / Playing)
   // 2. On hold
@@ -301,11 +313,14 @@ export function MediaListGrid({
         <div className="flex flex-col gap-8">
           {groupedSections.map((section) => (
             <div key={section.key} className="flex flex-col gap-3">
-              {/* Section Header with Title */}
-              <div className="flex items-center gap-2.5">
+              {/* Section Header with Title & Count */}
+              <div className="flex items-center gap-2">
                 <h2 className="font-heading text-sm font-semibold tracking-tight text-foreground sm:text-base">
                   {section.title}
                 </h2>
+                <span className="rounded-full bg-muted/80 px-2 py-0.5 font-mono text-[11px] font-medium tabular-nums text-muted-foreground">
+                  {section.items.length}
+                </span>
               </div>
 
               {/* 8-Card Responsive Grid */}
@@ -317,9 +332,7 @@ export function MediaListGrid({
                     mediaType={mediaType}
                     mediaTitlePreference={mediaTitlePreference}
                     progressUnit={progressUnit}
-                    onOpenEditModal={(target: ListEntryData) =>
-                      setEditingItem(target)
-                    }
+                    onOpenEditModal={handleOpenEditModal}
                     onIncrementProgress={
                       isOwner ? onIncrementProgress : undefined
                     }
@@ -338,9 +351,7 @@ export function MediaListGrid({
               mediaType={mediaType}
               mediaTitlePreference={mediaTitlePreference}
               progressUnit={progressUnit}
-              onOpenEditModal={(target: ListEntryData) =>
-                setEditingItem(target)
-              }
+              onOpenEditModal={handleOpenEditModal}
               onIncrementProgress={isOwner ? onIncrementProgress : undefined}
             />
           ))}
@@ -373,7 +384,7 @@ export function MediaListGrid({
         {isLoadingMore && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Spinner className="size-4" />
-            <span>Loading more items...</span>
+            <span>Loading more items…</span>
           </div>
         )}
       </div>

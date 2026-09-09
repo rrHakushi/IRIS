@@ -36,7 +36,9 @@ export function UserListBanner({
   profile,
   className,
 }: UserListBannerProps): React.JSX.Element {
-  const nameToDisplay = profile?.displayName?.trim() || username
+  const displayName = profile?.displayName?.trim()
+  const nameToDisplay = displayName || username
+  const showUsername = Boolean(displayName && displayName !== username)
   const initial = nameToDisplay.charAt(0).toUpperCase()
   const nameStyle = getDisplayNameStyleCss(profile?.displayNameStyle)
   const nameEffect = getDisplayNameEffectClasses(
@@ -78,9 +80,9 @@ export function UserListBanner({
 
       {/* 2. User Info Section */}
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-4 pt-1 pb-6 md:flex-row md:items-end md:justify-between">
-          {/* Avatar and User Identification */}
-          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-end">
+        <div className="flex flex-col gap-4 pt-1 pb-4 sm:pb-6 md:flex-row md:items-end md:justify-between">
+          {/* Avatar and User Identification Row */}
+          <div className="flex items-center gap-3.5 sm:items-end sm:gap-4">
             {/* Floating Avatar with Frame */}
             <div className="relative z-20 -mt-10 shrink-0 sm:-mt-12">
               <div className="relative flex items-center justify-center">
@@ -121,32 +123,40 @@ export function UserListBanner({
               </div>
             </div>
 
-            {/* Name & Status */}
-            <div className="ms-2 flex flex-col gap-1 pt-1">
-              <div className="flex flex-wrap items-center gap-2">
+            {/* Name, Username, Pronouns (Yellow Area) & Status (Green Area) */}
+            <div className="z-20 -mt-10 flex flex-1 min-w-0 flex-col gap-1 sm:-mt-12 sm:gap-1.5 sm:pb-1">
+              {/* Yellow area: displayName(username) pronouns */}
+              <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2">
                 <h1
                   style={nameStyle}
                   className={cn(
-                    "font-heading text-2xl font-bold tracking-tight sm:text-3xl",
+                    "font-heading text-lg font-bold tracking-tight sm:text-2xl md:text-3xl",
                     nameEffect
                   )}
                 >
                   {nameToDisplay}
                 </h1>
 
+                {showUsername && (
+                  <span className="text-xs font-normal text-muted-foreground sm:text-sm">
+                    ({username})
+                  </span>
+                )}
+
                 {profile?.pronouns && (
                   <Badge
                     variant="secondary"
-                    className="rounded-xl px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                    className="rounded-xl px-1.5 py-0.2 text-[10px] font-medium text-muted-foreground sm:px-2 sm:py-0.5 sm:text-xs"
                   >
                     {profile.pronouns}
                   </Badge>
                 )}
               </div>
 
+              {/* Green area: status */}
               {profile?.statusText && (
-                <div className="inline-flex w-fit max-w-xl items-center rounded-2xl border border-border/60 bg-muted/40 px-3.5 py-1 text-xs text-foreground/90 shadow-xs backdrop-blur-xs transition-colors hover:border-border/80 hover:bg-muted/60 sm:text-sm">
-                  <span className="leading-snug font-medium break-words">
+                <div className="inline-flex w-fit max-w-full items-center rounded-xl border border-border/60 bg-muted/40 px-2.5 py-0.5 text-xs text-foreground/90 shadow-xs backdrop-blur-xs transition-colors hover:border-border/80 hover:bg-muted/60 sm:max-w-xl sm:rounded-2xl sm:px-3.5 sm:py-1 sm:text-sm">
+                  <span className="line-clamp-2 leading-snug font-medium break-words sm:line-clamp-none">
                     {profile.statusText}
                   </span>
                 </div>
