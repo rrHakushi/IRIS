@@ -52,6 +52,7 @@ function ProgressContent({
 function Progress({
   className,
   children,
+  "aria-label": ariaLabel,
   ...props
 }: Omit<ProgressPrimitiveProps, "children" | "className"> & {
   children?: React.ReactNode
@@ -60,6 +61,7 @@ function Progress({
   return (
     <ProgressPrimitive
       data-slot="progress"
+      aria-label={ariaLabel ?? (props["aria-labelledby"] || children ? undefined : "Progress")}
       className={cn("flex flex-wrap gap-3", className)}
       {...props}
     >
