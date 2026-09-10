@@ -12,6 +12,7 @@ import {
 import { NotFound } from "@/utils/errors"
 import { MovieListStatus } from "@IRIS/database"
 import { recordMediaListActivity } from "@/services/activity.service.js"
+import { syncConnectionMedia } from "@/services/connections/connection-media-sync.service.js"
 
 const MovieEntryResponseSchema = t.Object({
   id: t.Number(),
@@ -192,6 +193,7 @@ export default defineRoute({
         titleSecondary: true,
         coverImage: true,
         bannerImage: true,
+        simklId: true,
       },
     })
     if (!movieExists) {
@@ -295,6 +297,53 @@ export default defineRoute({
       payload,
     })
 
+    const rawPutConns = (payload.connections ?? result.connections) as any
+    let putConnectionsToSync = rawPutConns
+    const simklId = movieExists.simklId || putConnectionsToSync?.simkl?.id
+    if ((!putConnectionsToSync || !putConnectionsToSync.simkl) && simklId) {
+      putConnectionsToSync = {
+        ...(putConnectionsToSync || {}),
+        simkl: {
+          id: simklId,
+          autoInjected: true,
+        },
+      }
+    }
+
+    if (simklId && !movieExists.simklId) {
+      await prisma.movie
+        .update({
+          where: { id },
+          data: { simklId: Number(simklId) },
+        })
+        .catch(() => {})
+    }
+
+    if (
+      putConnectionsToSync &&
+      typeof putConnectionsToSync === "object" &&
+      Object.keys(putConnectionsToSync).length > 0
+    ) {
+      await syncConnectionMedia({
+        userId: dbUser.id,
+        username: dbUser.username,
+        mediaType: "MOVIE",
+        mediaId: id,
+        mediaTitle:
+          movieExists.titlePrimary || movieExists.titleSecondary || "Movie",
+        entry: {
+          status: result.status,
+          score: result.score,
+          notes: result.notes,
+          rewatched: result.rewatched,
+          startedAt: result.startedAt,
+          completedAt: result.completedAt,
+        },
+        connections: putConnectionsToSync,
+        prisma,
+      })
+    }
+
     return {
       success: true,
       message: "Movie list entry updated successfully",
@@ -337,6 +386,7 @@ export default defineRoute({
         titleSecondary: true,
         coverImage: true,
         bannerImage: true,
+        simklId: true,
       },
     })
     if (!movieExists) {
@@ -443,6 +493,57 @@ export default defineRoute({
       result,
       payload,
     })
+
+    const rawPatchConns = (payload.connections ?? result.connections) as any
+    let patchConnectionsToSync = rawPatchConns
+    const patchSimklId =
+      movieExists.simklId || patchConnectionsToSync?.simkl?.id
+    if (
+      (!patchConnectionsToSync || !patchConnectionsToSync.simkl) &&
+      patchSimklId
+    ) {
+      patchConnectionsToSync = {
+        ...(patchConnectionsToSync || {}),
+        simkl: {
+          id: patchSimklId,
+          autoInjected: true,
+        },
+      }
+    }
+
+    if (patchSimklId && !movieExists.simklId) {
+      await prisma.movie
+        .update({
+          where: { id },
+          data: { simklId: Number(patchSimklId) },
+        })
+        .catch(() => {})
+    }
+
+    if (
+      patchConnectionsToSync &&
+      typeof patchConnectionsToSync === "object" &&
+      Object.keys(patchConnectionsToSync).length > 0
+    ) {
+      await syncConnectionMedia({
+        userId: dbUser.id,
+        username: dbUser.username,
+        mediaType: "MOVIE",
+        mediaId: id,
+        mediaTitle:
+          movieExists.titlePrimary || movieExists.titleSecondary || "Movie",
+        entry: {
+          status: result.status,
+          score: result.score,
+          notes: result.notes,
+          rewatched: result.rewatched,
+          startedAt: result.startedAt,
+          completedAt: result.completedAt,
+        },
+        connections: patchConnectionsToSync,
+        prisma,
+      })
+    }
 
     return {
       success: true,

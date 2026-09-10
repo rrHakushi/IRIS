@@ -4645,7 +4645,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"count\": 1,\n  \"type\": null\n}"
+        "text": "{\n  \"count\": 1,\n  \"type\": null,\n  \"connections\": null\n}"
       },
       "parameters": [
         {

@@ -15,16 +15,22 @@ import { NotificationType, NotificationPriority } from "@IRIS/database"
 export interface SyncConnectionMediaOptions {
   userId: string
   username?: string
-  animeId: number
-  animeTitle: string
+  mediaType?: "ANIME" | "TV" | "MOVIE"
+  animeId?: number
+  mediaId?: number
+  animeTitle?: string
+  mediaTitle?: string
   entry: {
     status: string
-    progress: number
+    progress?: number
     score?: number | null
     notes?: string | null
     rewatched?: number
     startedAt?: Date | string | null
     completedAt?: Date | string | null
+    seasonNumber?: number
+    episodeNumber?: number
+    extra?: Record<string, unknown>
   }
   connections: Record<string, any>
   prisma: PrismaClient
@@ -70,15 +76,18 @@ async function sendSyncNotification({
 }
 
 /**
- * Synchronizes an anime entry to all external services listed in `options.connections`.
+ * Synchronizes a media entry to external services listed in `options.connections`.
  * Uses the user's decrypted tokens from the database and refreshes expired tokens automatically.
  * Partial failures trigger in-app notifications and never crash or terminate the request.
  */
 export async function syncConnectionMedia(
   options: SyncConnectionMediaOptions
 ): Promise<void> {
-  const { connections, prisma, userId, animeTitle } = options
+  const { connections, prisma, userId } = options
   if (!connections || typeof connections !== "object") return
+
+  const mediaType = options.mediaType || "ANIME"
+  const mediaTitle = options.mediaTitle || options.animeTitle || "Media"
 
   const providerKeys = Object.keys(connections)
   if (providerKeys.length === 0) return
@@ -106,6 +115,11 @@ export async function syncConnectionMedia(
     const normProvider = providerKey.trim().toUpperCase() as ConnectionProvider
     const displayName = PROVIDER_DISPLAY_NAMES[normProvider] || normProvider
 
+    // Skip anime-only providers when updating TV or Movie
+    if (mediaType !== "ANIME" && normProvider !== "SIMKL") {
+      return
+    }
+
     let adapter: ConnectionProviderAdapter
     try {
       adapter = getConnectionAdapter(normProvider)
@@ -118,10 +132,15 @@ export async function syncConnectionMedia(
     // Find the user's active connection for this provider
     const userConn = userConnections.find((c) => c.provider === normProvider)
     if (!userConn) {
+      // If the connection was auto-injected from media ID metadata, do not notify if unconfigured
+      if (rawConn.autoInjected) {
+        return
+      }
+
       await sendSyncNotification({
         userId,
         title: `${displayName} Not Connected`,
-        body: `Could not sync "${animeTitle}" to ${displayName}. Please connect your ${displayName} account in Settings > Connections.`,
+        body: `Could not sync "${mediaTitle}" to ${displayName}. Please connect your ${displayName} account in Settings > Connections.`,
         icon: adapter.iconUrl,
       })
       return
@@ -221,7 +240,7 @@ export async function syncConnectionMedia(
 
     const updatePayload: UpdateMediaPayload = {
       mediaId: providerId,
-      mediaType: "ANIME",
+      mediaType,
       status: connStatus,
       progress: connProgress,
       score: connScore,
@@ -229,6 +248,9 @@ export async function syncConnectionMedia(
       rewatched: connRewatched,
       startedAt: connStartDate,
       completedAt: connEndDate,
+      seasonNumber: options.entry.seasonNumber,
+      episodeNumber: options.entry.episodeNumber,
+      extra: options.entry.extra,
     }
 
     // Execute provider update with automatic 401 retry
@@ -289,13 +311,13 @@ export async function syncConnectionMedia(
       const errMsg = res.reason?.message || String(res.reason)
 
       logger.warn(
-        `[ConnectionSync] Failed to sync "${animeTitle}" to ${displayName}: ${errMsg}`
+        `[ConnectionSync] Failed to sync "${mediaTitle}" to ${displayName}: ${errMsg}`
       )
 
       await sendSyncNotification({
         userId,
         title: `${displayName} Sync Failed`,
-        body: `Failed to update "${animeTitle}" on ${displayName}: ${errMsg}`,
+        body: `Failed to update "${mediaTitle}" on ${displayName}: ${errMsg}`,
       })
     }
   }

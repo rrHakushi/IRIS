@@ -7,6 +7,7 @@ import {
 import { NotFound } from "@/utils/errors"
 import { TvListStatus } from "@IRIS/database"
 import { recordMediaListActivity } from "@/services/activity.service.js"
+import { syncConnectionMedia } from "@/services/connections/connection-media-sync.service.js"
 
 export default defineRoute({
   schema: {
@@ -25,6 +26,7 @@ export default defineRoute({
             t.Literal("season"),
           ])
         ),
+        connections: t.Optional(t.Any()),
       })
     ),
     query: t.Optional(
@@ -280,6 +282,63 @@ export default defineRoute({
         isPrivate: tvList.private,
       })
 
+      const rawSeasonConns = (body as any)?.connections ?? tvList.connections
+      let seasonConnectionsToSync = rawSeasonConns
+      const seasonSimklId =
+        tv.simklId ||
+        seasonConnectionsToSync?.simkl?.id ||
+        (tvList.connections as any)?.simkl?.id
+      if (
+        (!seasonConnectionsToSync || !seasonConnectionsToSync.simkl) &&
+        seasonSimklId
+      ) {
+        seasonConnectionsToSync = {
+          ...(seasonConnectionsToSync || {}),
+          simkl: {
+            id: seasonSimklId,
+            autoInjected: true,
+          },
+        }
+      }
+
+      if (seasonSimklId && !tv.simklId) {
+        await prisma.tv
+          .update({
+            where: { id },
+            data: { simklId: Number(seasonSimklId) },
+          })
+          .catch(() => {})
+      }
+
+      if (
+        seasonConnectionsToSync &&
+        typeof seasonConnectionsToSync === "object" &&
+        Object.keys(seasonConnectionsToSync).length > 0
+      ) {
+        await syncConnectionMedia({
+          userId: dbUser.id,
+          username: dbUser.username,
+          mediaType: "TV",
+          mediaId: id,
+          mediaTitle: tv.titlePrimary || tv.titleSecondary || "TV",
+          entry: {
+            status: updatedList.status,
+            progress: updatedList.progress,
+            score: tvList.score,
+            notes: tvList.notes,
+            rewatched: tvList.rewatched,
+            startedAt: updatedList.startedAt,
+            completedAt: updatedList.completedAt,
+            seasonNumber: targetSeasonNumber,
+            extra: {
+              episodes: seasonEpisodes.map((e) => e.episodeNumber),
+            },
+          },
+          connections: seasonConnectionsToSync,
+          prisma,
+        })
+      }
+
       return {
         success: true,
         message: `Season ${targetSeasonNumber} marked completed`,
@@ -379,6 +438,61 @@ export default defineRoute({
         prevScore: tvList.score,
         isPrivate: tvList.private,
       })
+
+      const rawNoEpConns = (body as any)?.connections ?? tvList.connections
+      let noEpConnectionsToSync = rawNoEpConns
+      const noEpSimklId =
+        tv.simklId ||
+        noEpConnectionsToSync?.simkl?.id ||
+        (tvList.connections as any)?.simkl?.id
+      if (
+        (!noEpConnectionsToSync || !noEpConnectionsToSync.simkl) &&
+        noEpSimklId
+      ) {
+        noEpConnectionsToSync = {
+          ...(noEpConnectionsToSync || {}),
+          simkl: {
+            id: noEpSimklId,
+            autoInjected: true,
+          },
+        }
+      }
+
+      if (noEpSimklId && !tv.simklId) {
+        await prisma.tv
+          .update({
+            where: { id },
+            data: { simklId: Number(noEpSimklId) },
+          })
+          .catch(() => {})
+      }
+
+      if (
+        noEpConnectionsToSync &&
+        typeof noEpConnectionsToSync === "object" &&
+        Object.keys(noEpConnectionsToSync).length > 0
+      ) {
+        await syncConnectionMedia({
+          userId: dbUser.id,
+          username: dbUser.username,
+          mediaType: "TV",
+          mediaId: id,
+          mediaTitle: tv.titlePrimary || tv.titleSecondary || "TV",
+          entry: {
+            status: updatedList.status,
+            progress: updatedList.progress,
+            score: tvList.score,
+            notes: tvList.notes,
+            rewatched: tvList.rewatched,
+            startedAt: updatedList.startedAt,
+            completedAt: updatedList.completedAt,
+            seasonNumber: 1,
+            episodeNumber: newProg,
+          },
+          connections: noEpConnectionsToSync,
+          prisma,
+        })
+      }
 
       return {
         success: true,
@@ -533,6 +647,58 @@ export default defineRoute({
       prevScore: tvList.score,
       isPrivate: tvList.private,
     })
+
+    const rawEpConns = (body as any)?.connections ?? tvList.connections
+    let epConnectionsToSync = rawEpConns
+    const epSimklId =
+      tv.simklId ||
+      epConnectionsToSync?.simkl?.id ||
+      (tvList.connections as any)?.simkl?.id
+    if ((!epConnectionsToSync || !epConnectionsToSync.simkl) && epSimklId) {
+      epConnectionsToSync = {
+        ...(epConnectionsToSync || {}),
+        simkl: {
+          id: epSimklId,
+          autoInjected: true,
+        },
+      }
+    }
+
+    if (epSimklId && !tv.simklId) {
+      await prisma.tv
+        .update({
+          where: { id },
+          data: { simklId: Number(epSimklId) },
+        })
+        .catch(() => {})
+    }
+
+    if (
+      epConnectionsToSync &&
+      typeof epConnectionsToSync === "object" &&
+      Object.keys(epConnectionsToSync).length > 0
+    ) {
+      await syncConnectionMedia({
+        userId: dbUser.id,
+        username: dbUser.username,
+        mediaType: "TV",
+        mediaId: id,
+        mediaTitle: tv.titlePrimary || tv.titleSecondary || "TV",
+        entry: {
+          status: updatedList.status,
+          progress: updatedList.progress,
+          score: tvList.score,
+          notes: tvList.notes,
+          rewatched: tvList.rewatched,
+          startedAt: updatedList.startedAt,
+          completedAt: updatedList.completedAt,
+          seasonNumber: nextEpisode.seasonNumber,
+          episodeNumber: nextEpisode.episodeNumber,
+        },
+        connections: epConnectionsToSync,
+        prisma,
+      })
+    }
 
     return {
       success: true,

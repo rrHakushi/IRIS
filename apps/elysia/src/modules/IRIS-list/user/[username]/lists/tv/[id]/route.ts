@@ -12,6 +12,7 @@ import {
 import { NotFound } from "@/utils/errors"
 import { TvListStatus } from "@IRIS/database"
 import { recordMediaListActivity } from "@/services/activity.service.js"
+import { syncConnectionMedia } from "@/services/connections/connection-media-sync.service.js"
 
 const TvSeasonProgressSchema = t.Object({
   id: t.Number(),
@@ -273,6 +274,64 @@ async function syncTvSeasonsAndEpisodes({
       })
     }
   }
+}
+
+function buildTvSeasonsPayload(
+  watchedEpisodes?: Array<{ seasonNumber: number; episodeNumber: number }>,
+  tvSeasons?: Array<{ seasonNumber: number; episodeCount?: number | null }>,
+  totalProgress?: number
+): Array<{ number: number; episodes: Array<{ number: number }> }> {
+  if (watchedEpisodes && watchedEpisodes.length > 0) {
+    const seasonsMap = new Map<number, number[]>()
+    for (const we of watchedEpisodes) {
+      const list = seasonsMap.get(we.seasonNumber) || []
+      list.push(we.episodeNumber)
+      seasonsMap.set(we.seasonNumber, list)
+    }
+    return Array.from(seasonsMap.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([seasonNum, epNums]) => ({
+        number: seasonNum,
+        episodes: epNums
+          .sort((a, b) => a - b)
+          .map((epNum) => ({ number: epNum })),
+      }))
+  }
+
+  if (!totalProgress || totalProgress <= 0) return []
+  let remaining = totalProgress
+  const result: Array<{ number: number; episodes: Array<{ number: number }> }> =
+    []
+
+  const sortedSeasons = [...(tvSeasons || [])].sort(
+    (a, b) => a.seasonNumber - b.seasonNumber
+  )
+  for (const s of sortedSeasons) {
+    if (remaining <= 0) break
+    const maxInSeason =
+      s.episodeCount && s.episodeCount > 0 ? s.episodeCount : remaining
+    const countToTake = Math.min(remaining, maxInSeason)
+    result.push({
+      number: s.seasonNumber,
+      episodes: Array.from({ length: countToTake }, (_, i) => ({
+        number: i + 1,
+      })),
+    })
+    remaining -= countToTake
+  }
+
+  if (remaining > 0) {
+    const lastSeasonNum =
+      sortedSeasons[sortedSeasons.length - 1]?.seasonNumber || 1
+    result.push({
+      number: lastSeasonNum + 1,
+      episodes: Array.from({ length: remaining }, (_, i) => ({
+        number: i + 1,
+      })),
+    })
+  }
+
+  return result
 }
 
 export default defineRoute({
@@ -549,6 +608,65 @@ export default defineRoute({
       payload,
     })
 
+    const rawPutConns = payload.connections ?? result.connections
+    let putConnectionsToSync = rawPutConns
+    const simklId =
+      tv.simklId ||
+      putConnectionsToSync?.simkl?.id ||
+      (result.connections as any)?.simkl?.id
+    if ((!putConnectionsToSync || !putConnectionsToSync.simkl) && simklId) {
+      putConnectionsToSync = {
+        ...(putConnectionsToSync || {}),
+        simkl: {
+          id: simklId,
+          autoInjected: true,
+        },
+      }
+    }
+
+    if (simklId && !tv.simklId) {
+      await prisma.tv
+        .update({
+          where: { id },
+          data: { simklId: Number(simklId) },
+        })
+        .catch(() => {})
+    }
+
+    if (
+      putConnectionsToSync &&
+      typeof putConnectionsToSync === "object" &&
+      Object.keys(putConnectionsToSync).length > 0
+    ) {
+      const seasonsPayload = buildTvSeasonsPayload(
+        updated?.watchedEpisodes,
+        tv.seasons,
+        updated?.progress ?? result.progress
+      )
+
+      await syncConnectionMedia({
+        userId: dbUser.id,
+        username: dbUser.username,
+        mediaType: "TV",
+        mediaId: id,
+        mediaTitle: tv.titlePrimary || tv.titleSecondary || "TV",
+        entry: {
+          status: updated?.status ?? result.status,
+          progress: updated?.progress ?? result.progress,
+          score: updated?.score ?? result.score,
+          notes: updated?.notes ?? result.notes,
+          rewatched: updated?.rewatched ?? result.rewatched,
+          startedAt: updated?.startedAt ?? result.startedAt,
+          completedAt: updated?.completedAt ?? result.completedAt,
+          extra: {
+            seasons: seasonsPayload,
+          },
+        },
+        connections: putConnectionsToSync,
+        prisma,
+      })
+    }
+
     return {
       success: true,
       message: "TV list entry updated successfully",
@@ -711,6 +829,68 @@ export default defineRoute({
       result,
       payload,
     })
+
+    const rawPatchConns = payload.connections ?? result.connections
+    let patchConnectionsToSync = rawPatchConns
+    const patchSimklId =
+      tv.simklId ||
+      patchConnectionsToSync?.simkl?.id ||
+      (result.connections as any)?.simkl?.id
+    if (
+      (!patchConnectionsToSync || !patchConnectionsToSync.simkl) &&
+      patchSimklId
+    ) {
+      patchConnectionsToSync = {
+        ...(patchConnectionsToSync || {}),
+        simkl: {
+          id: patchSimklId,
+          autoInjected: true,
+        },
+      }
+    }
+
+    if (patchSimklId && !tv.simklId) {
+      await prisma.tv
+        .update({
+          where: { id },
+          data: { simklId: Number(patchSimklId) },
+        })
+        .catch(() => {})
+    }
+
+    if (
+      patchConnectionsToSync &&
+      typeof patchConnectionsToSync === "object" &&
+      Object.keys(patchConnectionsToSync).length > 0
+    ) {
+      const seasonsPayload = buildTvSeasonsPayload(
+        updated?.watchedEpisodes,
+        tv.seasons,
+        updated?.progress ?? result.progress
+      )
+
+      await syncConnectionMedia({
+        userId: dbUser.id,
+        username: dbUser.username,
+        mediaType: "TV",
+        mediaId: id,
+        mediaTitle: tv.titlePrimary || tv.titleSecondary || "TV",
+        entry: {
+          status: updated?.status ?? result.status,
+          progress: updated?.progress ?? result.progress,
+          score: updated?.score ?? result.score,
+          notes: updated?.notes ?? result.notes,
+          rewatched: updated?.rewatched ?? result.rewatched,
+          startedAt: updated?.startedAt ?? result.startedAt,
+          completedAt: updated?.completedAt ?? result.completedAt,
+          extra: {
+            seasons: seasonsPayload,
+          },
+        },
+        connections: patchConnectionsToSync,
+        prisma,
+      })
+    }
 
     return {
       success: true,

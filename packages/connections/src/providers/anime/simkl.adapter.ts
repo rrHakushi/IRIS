@@ -2,7 +2,7 @@ import {
   BaseConnectionAdapter,
   ConnectionAuthError,
   ConnectionError,
-} from "../base.adapter.js";
+} from "../base.adapter.js"
 import type {
   AuthUrlOptions,
   AuthUrlResult,
@@ -17,15 +17,15 @@ import type {
   ScrobblePayload,
   SearchOptions,
   UpdateMediaPayload,
-} from "../../types/index.js";
+} from "../../types/index.js"
 
 export class SimklAdapter extends BaseConnectionAdapter {
-  readonly provider: ConnectionProvider = "SIMKL";
-  readonly category: ConnectionCategory = "TRACKING";
-  readonly authType: ConnectionAuthType = "OAUTH2";
-  readonly iconUrl = "https://cdn.simpleicons.org/simkl/00ADEF";
+  readonly provider: ConnectionProvider = "SIMKL"
+  readonly category: ConnectionCategory = "TRACKING"
+  readonly authType: ConnectionAuthType = "OAUTH2"
+  readonly iconUrl = "https://cdn.simpleicons.org/simkl/00ADEF"
 
-  readonly requiredEnvVars = ["SIMKL_CLIENT_ID", "SIMKL_CLIENT_SECRET"] as const;
+  readonly requiredEnvVars = ["SIMKL_CLIENT_ID", "SIMKL_CLIENT_SECRET"] as const
 
   readonly capabilities: ProviderCapability = {
     authType: "OAUTH2",
@@ -37,44 +37,50 @@ export class SimklAdapter extends BaseConnectionAdapter {
     supportsLibrarySync: true,
     supportsScrobble: true,
     supportsGamingLibrary: false,
-  };
+  }
 
   private getClientId(): string {
-    const raw = process.env.SIMKL_CLIENT_ID || "";
-    return raw.trim().replace(/^["']|["']$/g, "").trim();
+    const raw = process.env.SIMKL_CLIENT_ID || ""
+    return raw
+      .trim()
+      .replace(/^["']|["']$/g, "")
+      .trim()
   }
 
   private getClientSecret(): string {
-    const raw = process.env.SIMKL_CLIENT_SECRET || "";
-    return raw.trim().replace(/^["']|["']$/g, "").trim();
+    const raw = process.env.SIMKL_CLIENT_SECRET || ""
+    return raw
+      .trim()
+      .replace(/^["']|["']$/g, "")
+      .trim()
   }
 
   async getAuthUrl(options: AuthUrlOptions): Promise<AuthUrlResult> {
-    const clientId = this.getClientId();
-    const state = options.state || Math.random().toString(36).substring(2);
-    const url = new URL("https://simkl.com/oauth/authorize");
-    url.searchParams.set("response_type", "code");
-    url.searchParams.set("client_id", clientId);
-    url.searchParams.set("redirect_uri", options.redirectUri);
-    url.searchParams.set("state", state);
+    const clientId = this.getClientId()
+    const state = options.state || Math.random().toString(36).substring(2)
+    const url = new URL("https://simkl.com/oauth/authorize")
+    url.searchParams.set("response_type", "code")
+    url.searchParams.set("client_id", clientId)
+    url.searchParams.set("redirect_uri", options.redirectUri)
+    url.searchParams.set("state", state)
 
     return {
       url: url.toString(),
       state,
-    };
+    }
   }
 
   async exchangeAuthCode(
     code: string,
     redirectUri: string
   ): Promise<OAuthTokens> {
-    const clientId = this.getClientId();
-    const clientSecret = this.getClientSecret();
+    const clientId = this.getClientId()
+    const clientSecret = this.getClientSecret()
 
     const res = await this.fetchJson<{
-      access_token: string;
-      token_type: string;
-      scope?: string;
+      access_token: string
+      token_type: string
+      scope?: string
     }>("https://api.simkl.com/oauth/token", {
       method: "POST",
       headers: {
@@ -87,42 +93,45 @@ export class SimklAdapter extends BaseConnectionAdapter {
         redirect_uri: redirectUri,
         grant_type: "authorization_code",
       }),
-    });
+    })
 
     return {
       accessToken: res.access_token,
       tokenType: res.token_type || "Bearer",
       scope: res.scope,
-    };
+    }
   }
 
   async getProfile(
     credentials: ConnectionCredentials
   ): Promise<ConnectionUserProfile> {
-    const token = credentials.accessToken;
-    const clientId = this.getClientId();
+    const token = credentials.accessToken
+    const clientId = this.getClientId()
 
     if (!token) {
-      throw new ConnectionAuthError("Missing access token for Simkl", this.provider);
+      throw new ConnectionAuthError(
+        "Missing access token for Simkl",
+        this.provider
+      )
     }
 
     const data = await this.fetchJson<{
       user: {
-        name: string;
-        avatar?: string;
-        id: number;
-        joined_at?: string;
-      };
+        name: string
+        avatar?: string
+        id: number
+        joined_at?: string
+      }
       account: {
-        id: number;
-        timezone?: string;
-      };
+        id: number
+        timezone?: string
+      }
     }>("https://api.simkl.com/users/settings", {
       headers: {
         Authorization: `Bearer ${token}`,
         "simkl-api-key": clientId,
       },
-    });
+    })
 
     return {
       id: String(data.account?.id || data.user?.id),
@@ -130,20 +139,24 @@ export class SimklAdapter extends BaseConnectionAdapter {
       displayName: data.user.name,
       avatarUrl: data.user.avatar,
       profileUrl: `https://simkl.com/${data.account?.id || data.user?.id}/dashboard`,
-    };
+    }
   }
 
   async testConnection(
     credentials: ConnectionCredentials
-  ): Promise<{ ok: boolean; message?: string; profile?: ConnectionUserProfile }> {
+  ): Promise<{
+    ok: boolean
+    message?: string
+    profile?: ConnectionUserProfile
+  }> {
     try {
-      const profile = await this.getProfile(credentials);
-      return { ok: true, profile };
+      const profile = await this.getProfile(credentials)
+      return { ok: true, profile }
     } catch (err: unknown) {
       return {
         ok: false,
         message: (err as Error).message || "Simkl connection test failed",
-      };
+      }
     }
   }
 
@@ -152,41 +165,56 @@ export class SimklAdapter extends BaseConnectionAdapter {
     credentials?: ConnectionCredentials,
     options?: SearchOptions
   ): Promise<MediaSearchResult[]> {
-    const clientId = this.getClientId();
-    const searchCategory = options?.type === "MOVIE" ? "movie" : options?.type === "TV" ? "tv" : "anime";
-    const pathType = options?.type === "MOVIE" ? "movies" : options?.type === "TV" ? "tv" : "anime";
-    const mediaType = options?.type === "MOVIE" ? "MOVIE" : options?.type === "TV" ? "TV" : "ANIME";
+    const clientId = this.getClientId()
+    const searchCategory =
+      options?.type === "MOVIE"
+        ? "movie"
+        : options?.type === "TV"
+          ? "tv"
+          : "anime"
+    const pathType =
+      options?.type === "MOVIE"
+        ? "movies"
+        : options?.type === "TV"
+          ? "tv"
+          : "anime"
+    const mediaType =
+      options?.type === "MOVIE"
+        ? "MOVIE"
+        : options?.type === "TV"
+          ? "TV"
+          : "ANIME"
 
     const fetchCategory = async (type: string) => {
-      const url = new URL(`https://api.simkl.com/search/${type}`);
-      url.searchParams.set("q", query);
-      url.searchParams.set("limit", String(options?.perPage || 20));
-      url.searchParams.set("extended", "full");
+      const url = new URL(`https://api.simkl.com/search/${type}`)
+      url.searchParams.set("q", query)
+      url.searchParams.set("limit", String(options?.perPage || 20))
+      url.searchParams.set("extended", "full")
       if (clientId) {
-        url.searchParams.set("client_id", clientId);
+        url.searchParams.set("client_id", clientId)
       }
 
-      const headers: Record<string, string> = {};
+      const headers: Record<string, string> = {}
       if (clientId) {
-        headers["simkl-api-key"] = clientId;
+        headers["simkl-api-key"] = clientId
       }
 
       if (credentials?.accessToken) {
-        headers["Authorization"] = `Bearer ${credentials.accessToken}`;
+        headers["Authorization"] = `Bearer ${credentials.accessToken}`
       }
 
-      const items = await this.fetchJson<any[]>(url.toString(), { headers });
-      return Array.isArray(items) ? items : [];
-    };
+      const items = await this.fetchJson<any[]>(url.toString(), { headers })
+      return Array.isArray(items) ? items : []
+    }
 
-    let items = await fetchCategory(searchCategory);
+    let items = await fetchCategory(searchCategory)
 
     // Fallback: If searching "anime" yields no results, also check "tv" in case the entry is under TV
     if (items.length === 0 && searchCategory === "anime") {
       try {
-        const tvItems = await fetchCategory("tv");
+        const tvItems = await fetchCategory("tv")
         if (tvItems.length > 0) {
-          items = tvItems;
+          items = tvItems
         }
       } catch {
         // Ignore fallback errors
@@ -200,36 +228,33 @@ export class SimklAdapter extends BaseConnectionAdapter {
         item.ids?.id ??
         item.simkl_id ??
         item.simkl ??
-        item.id;
+        item.id
 
       let validId =
         simklId != null &&
         String(simklId) !== "undefined" &&
         String(simklId) !== "null"
           ? String(simklId)
-          : "";
+          : ""
 
       if (!validId && item.ids?.slug) {
-        const slugMatch = String(item.ids.slug).match(/-(\d+)$/);
+        const slugMatch = String(item.ids.slug).match(/-(\d+)$/)
         if (slugMatch && slugMatch[1]) {
-          validId = slugMatch[1];
+          validId = slugMatch[1]
         } else {
-          validId = String(item.ids.slug);
+          validId = String(item.ids.slug)
         }
       }
 
       if (!validId && item.url) {
-        const urlMatch = String(item.url).match(/\/(\d+)(?:\/|$)/);
+        const urlMatch = String(item.url).match(/\/(\d+)(?:\/|$)/)
         if (urlMatch && urlMatch[1]) {
-          validId = urlMatch[1];
+          validId = urlMatch[1]
         }
       }
 
       const primaryTitle =
-        item.title_en ||
-        item.title ||
-        item.title_romaji ||
-        "Untitled";
+        item.title_en || item.title || item.title_romaji || "Untitled"
 
       return {
         id: validId || undefined,
@@ -243,9 +268,13 @@ export class SimklAdapter extends BaseConnectionAdapter {
         },
         description: item.overview,
         coverImage: {
-          large: item.poster ? `https://simkl.in/posters/${item.poster}_m.jpg` : undefined,
+          large: item.poster
+            ? `https://simkl.in/posters/${item.poster}_m.jpg`
+            : undefined,
         },
-        bannerImage: item.fanart ? `https://simkl.in/fanart/${item.fanart}_medium.jpg` : undefined,
+        bannerImage: item.fanart
+          ? `https://simkl.in/fanart/${item.fanart}_medium.jpg`
+          : undefined,
         releaseYear: item.year,
         format: item.type ? String(item.type).toUpperCase() : undefined,
         episodes: item.ep_count ?? undefined,
@@ -254,8 +283,8 @@ export class SimklAdapter extends BaseConnectionAdapter {
           : item.url
             ? `https://simkl.com${item.url}`
             : undefined,
-      };
-    });
+      }
+    })
   }
 
   async getMediaById(
@@ -263,25 +292,30 @@ export class SimklAdapter extends BaseConnectionAdapter {
     credentials?: ConnectionCredentials,
     options?: SearchOptions
   ): Promise<MediaSearchResult | null> {
-    const clientId = this.getClientId();
-    const primaryType = options?.type === "MOVIE" ? "movies" : options?.type === "TV" ? "tv" : "anime";
-    const url = new URL(`https://api.simkl.com/${primaryType}/${externalId}`);
-    url.searchParams.set("extended", "full");
+    const clientId = this.getClientId()
+    const primaryType =
+      options?.type === "MOVIE"
+        ? "movies"
+        : options?.type === "TV"
+          ? "tv"
+          : "anime"
+    const url = new URL(`https://api.simkl.com/${primaryType}/${externalId}`)
+    url.searchParams.set("extended", "full")
     if (clientId) {
-      url.searchParams.set("client_id", clientId);
+      url.searchParams.set("client_id", clientId)
     }
 
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = {}
     if (clientId) {
-      headers["simkl-api-key"] = clientId;
+      headers["simkl-api-key"] = clientId
     }
     if (credentials?.accessToken) {
-      headers["Authorization"] = `Bearer ${credentials.accessToken}`;
+      headers["Authorization"] = `Bearer ${credentials.accessToken}`
     }
 
     try {
-      const item = await this.fetchJson<any>(url.toString(), { headers });
-      if (!item || item.error) return null;
+      const item = await this.fetchJson<any>(url.toString(), { headers })
+      if (!item || item.error) return null
 
       const simklId =
         item.ids?.simkl_id ??
@@ -290,19 +324,21 @@ export class SimklAdapter extends BaseConnectionAdapter {
         item.simkl_id ??
         item.simkl ??
         item.id ??
-        externalId;
+        externalId
 
       const primaryTitle =
-        item.title_en ||
-        item.title ||
-        item.title_romaji ||
-        "Untitled";
+        item.title_en || item.title || item.title_romaji || "Untitled"
 
       return {
         id: String(simklId),
         externalId: String(simklId),
         provider: "SIMKL",
-        mediaType: primaryType === "movies" ? "MOVIE" : primaryType === "tv" ? "TV" : "ANIME",
+        mediaType:
+          primaryType === "movies"
+            ? "MOVIE"
+            : primaryType === "tv"
+              ? "TV"
+              : "ANIME",
         title: {
           userPreferred: primaryTitle,
           english: item.title_en,
@@ -310,16 +346,20 @@ export class SimklAdapter extends BaseConnectionAdapter {
         },
         description: item.overview,
         coverImage: {
-          large: item.poster ? `https://simkl.in/posters/${item.poster}_m.jpg` : undefined,
+          large: item.poster
+            ? `https://simkl.in/posters/${item.poster}_m.jpg`
+            : undefined,
         },
-        bannerImage: item.fanart ? `https://simkl.in/fanart/${item.fanart}_medium.jpg` : undefined,
+        bannerImage: item.fanart
+          ? `https://simkl.in/fanart/${item.fanart}_medium.jpg`
+          : undefined,
         releaseYear: item.year,
         format: item.type ? String(item.type).toUpperCase() : undefined,
         episodes: item.ep_count ?? undefined,
         url: `https://simkl.com/${primaryType}/${simklId}`,
-      };
+      }
     } catch {
-      return null;
+      return null
     }
   }
 
@@ -328,11 +368,14 @@ export class SimklAdapter extends BaseConnectionAdapter {
     payload: ScrobblePayload
   ): Promise<boolean> {
     if (!credentials.accessToken) {
-      throw new ConnectionAuthError("Missing access token for Simkl scrobble", this.provider);
+      throw new ConnectionAuthError(
+        "Missing access token for Simkl scrobble",
+        this.provider
+      )
     }
 
-    const clientId = this.getClientId();
-    const isMovie = payload.mediaType === "MOVIE";
+    const clientId = this.getClientId()
+    const isMovie = payload.mediaType === "MOVIE"
 
     const body: Record<string, unknown> = isMovie
       ? {
@@ -351,7 +394,7 @@ export class SimklAdapter extends BaseConnectionAdapter {
               ],
             },
           ],
-        };
+        }
 
     await this.fetchJson("https://api.simkl.com/sync/history", {
       method: "POST",
@@ -361,9 +404,9 @@ export class SimklAdapter extends BaseConnectionAdapter {
         "simkl-api-key": clientId,
       },
       body: JSON.stringify(body),
-    });
+    })
 
-    return true;
+    return true
   }
 
   async updateMediaEntry(
@@ -374,108 +417,244 @@ export class SimklAdapter extends BaseConnectionAdapter {
       throw new ConnectionAuthError(
         "Missing access token for Simkl update",
         this.provider
-      );
+      )
     }
 
-    const clientId = this.getClientId();
+    const clientId = this.getClientId()
     if (!clientId) {
-      throw new ConnectionError("Missing SIMKL_CLIENT_ID configuration", this.provider);
+      throw new ConnectionError(
+        "Missing SIMKL_CLIENT_ID configuration",
+        this.provider
+      )
     }
 
-    const providerId = Number(payload.mediaId);
+    const providerId = Number(payload.mediaId)
     if (Number.isNaN(providerId) || providerId <= 0) {
-      throw new ConnectionError(`Invalid Simkl media ID: ${payload.mediaId}`, this.provider);
+      throw new ConnectionError(
+        `Invalid Simkl media ID: ${payload.mediaId}`,
+        this.provider
+      )
     }
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       Authorization: `Bearer ${credentials.accessToken}`,
       "simkl-api-key": clientId,
-    };
+    }
+
+    const isMovie = payload.mediaType === "MOVIE"
 
     // 1. Sync Watchlist Status
-    let simklStatus: string | undefined;
+    let simklStatus: string | undefined
     if (payload.status) {
-      const s = payload.status.toUpperCase();
+      const s = payload.status.toUpperCase()
       switch (s) {
         case "WATCHING":
         case "REPEATING":
-          simklStatus = "watching";
-          break;
+          simklStatus = "watching"
+          break
         case "PLANNING":
         case "PLAN_TO_WATCH":
-          simklStatus = "plantowatch";
-          break;
+          simklStatus = "plantowatch"
+          break
         case "COMPLETED":
-          simklStatus = "completed";
-          break;
+          simklStatus = "completed"
+          break
         case "PAUSED":
         case "ON_HOLD":
         case "HOLD":
-          simklStatus = "hold";
-          break;
+          simklStatus = "hold"
+          break
         case "DROPPED":
-          simklStatus = "dropped";
-          break;
+          simklStatus = "dropped"
+          break
       }
     }
 
     if (simklStatus) {
+      const addToListBody = isMovie
+        ? {
+            movies: [
+              {
+                ids: { simkl: providerId },
+                to: simklStatus,
+              },
+            ],
+          }
+        : {
+            shows: [
+              {
+                ids: { simkl: providerId },
+                to: simklStatus,
+              },
+            ],
+          }
+
       await this.fetchJson("https://api.simkl.com/sync/add-to-list", {
         method: "POST",
         headers,
-        body: JSON.stringify({
-          shows: [
-            {
-              ids: { simkl: providerId },
-              to: simklStatus,
-            },
-          ],
-        }),
-      });
+        body: JSON.stringify(addToListBody),
+      })
     }
 
     // 2. Sync Ratings/Score (if score > 0)
-    if (payload.score !== undefined && payload.score !== null && payload.score > 0) {
+    if (
+      payload.score !== undefined &&
+      payload.score !== null &&
+      payload.score > 0
+    ) {
+      const ratingBody = isMovie
+        ? {
+            movies: [
+              {
+                ids: { simkl: providerId },
+                rating: Math.round(Number(payload.score)),
+              },
+            ],
+          }
+        : {
+            shows: [
+              {
+                ids: { simkl: providerId },
+                rating: Math.round(Number(payload.score)),
+              },
+            ],
+          }
+
       await this.fetchJson("https://api.simkl.com/sync/ratings", {
         method: "POST",
         headers,
-        body: JSON.stringify({
-          shows: [
-            {
-              ids: { simkl: providerId },
-              rating: Math.round(Number(payload.score)),
-            },
-          ],
-        }),
-      });
+        body: JSON.stringify(ratingBody),
+      })
     }
 
-    // 3. Sync Episode History (if progress > 0)
-    if (payload.progress !== undefined && payload.progress !== null && payload.progress > 0) {
-      const episodes = Array.from({ length: Number(payload.progress) }, (_, i) => ({
-        number: i + 1,
-      }));
+    // 3. Sync History / Progress
+    if (isMovie) {
+      const isCompleted =
+        simklStatus === "completed" ||
+        payload.status?.toUpperCase() === "COMPLETED" ||
+        payload.completedAt != null
 
-      await this.fetchJson("https://api.simkl.com/sync/history", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          shows: [
-            {
-              ids: { simkl: providerId },
-              seasons: [
-                {
-                  number: 1,
-                  episodes,
-                },
-              ],
-            },
-          ],
-        }),
-      });
+      if (isCompleted) {
+        await this.fetchJson("https://api.simkl.com/sync/history", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            movies: [
+              {
+                ids: { simkl: providerId },
+                watched_at: payload.completedAt
+                  ? new Date(payload.completedAt).toISOString()
+                  : new Date().toISOString(),
+              },
+            ],
+          }),
+        })
+      }
+    } else {
+      if (
+        Array.isArray(payload.extra?.seasons) &&
+        payload.extra.seasons.length > 0
+      ) {
+        await this.fetchJson("https://api.simkl.com/sync/history", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            shows: [
+              {
+                ids: { simkl: providerId },
+                seasons: payload.extra.seasons,
+              },
+            ],
+          }),
+        })
+      } else if (
+        payload.seasonNumber !== undefined &&
+        payload.episodeNumber !== undefined
+      ) {
+        await this.fetchJson("https://api.simkl.com/sync/history", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            shows: [
+              {
+                ids: { simkl: providerId },
+                seasons: [
+                  {
+                    number: payload.seasonNumber,
+                    episodes: [
+                      {
+                        number: payload.episodeNumber,
+                        watched_at: new Date().toISOString(),
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          }),
+        })
+      } else if (
+        payload.seasonNumber !== undefined &&
+        Array.isArray(payload.extra?.episodes) &&
+        payload.extra.episodes.length > 0
+      ) {
+        const episodesList = (payload.extra.episodes as number[]).map(
+          (epNum) => ({
+            number: epNum,
+            watched_at: new Date().toISOString(),
+          })
+        )
+
+        await this.fetchJson("https://api.simkl.com/sync/history", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            shows: [
+              {
+                ids: { simkl: providerId },
+                seasons: [
+                  {
+                    number: payload.seasonNumber,
+                    episodes: episodesList,
+                  },
+                ],
+              },
+            ],
+          }),
+        })
+      } else if (
+        payload.progress !== undefined &&
+        payload.progress !== null &&
+        payload.progress > 0
+      ) {
+        const episodes = Array.from(
+          { length: Number(payload.progress) },
+          (_, i) => ({
+            number: i + 1,
+          })
+        )
+
+        await this.fetchJson("https://api.simkl.com/sync/history", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            shows: [
+              {
+                ids: { simkl: providerId },
+                seasons: [
+                  {
+                    number: payload.seasonNumber || 1,
+                    episodes,
+                  },
+                ],
+              },
+            ],
+          }),
+        })
+      }
     }
 
-    return true;
+    return true
   }
 }
