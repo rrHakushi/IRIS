@@ -2536,6 +2536,53 @@
       "_type": "request"
     },
     {
+      "_id": "req_IRIS-list__user__username_lists_anime_stats_get",
+      "parentId": "fld_IRIS_list",
+      "url": "{{ _.base_url }}/user/:username/lists/anime/stats",
+      "name": "GET /user/:username/lists/anime/stats",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "year",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "quarter",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "month",
+          "value": "1",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
       "_id": "req_IRIS-list__user__username_lists_book__id_increment_post",
       "parentId": "fld_IRIS_list",
       "url": "{{ _.base_url }}/user/:username/lists/book/:id/increment",
@@ -2848,6 +2895,100 @@
         {
           "name": "order",
           "value": "desc",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-list__user__username_lists_book_stats_get",
+      "parentId": "fld_IRIS_list",
+      "url": "{{ _.base_url }}/user/:username/lists/book/stats",
+      "name": "GET /user/:username/lists/book/stats",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "year",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "quarter",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "month",
+          "value": "1",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-list__user__username_lists_combined_stats_get",
+      "parentId": "fld_IRIS_list",
+      "url": "{{ _.base_url }}/user/:username/lists/combined/stats",
+      "name": "GET /user/:username/lists/combined/stats",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "year",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "quarter",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "month",
+          "value": "1",
           "disabled": false
         }
       ],
@@ -3542,6 +3683,53 @@
       "_type": "request"
     },
     {
+      "_id": "req_IRIS-list__user__username_lists_game_stats_get",
+      "parentId": "fld_IRIS_list",
+      "url": "{{ _.base_url }}/user/:username/lists/game/stats",
+      "name": "GET /user/:username/lists/game/stats",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "year",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "quarter",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "month",
+          "value": "1",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
       "_id": "req_IRIS-list__user__username_lists_manga__id_increment_post",
       "parentId": "fld_IRIS_list",
       "url": "{{ _.base_url }}/user/:username/lists/manga/:id/increment",
@@ -3886,6 +4074,53 @@
       "_type": "request"
     },
     {
+      "_id": "req_IRIS-list__user__username_lists_manga_stats_get",
+      "parentId": "fld_IRIS_list",
+      "url": "{{ _.base_url }}/user/:username/lists/manga/stats",
+      "name": "GET /user/:username/lists/manga/stats",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "year",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "quarter",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "month",
+          "value": "1",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
       "_id": "req_IRIS-list__user__username_lists_movie__id_increment_post",
       "parentId": "fld_IRIS_list",
       "url": "{{ _.base_url }}/user/:username/lists/movie/:id/increment",
@@ -4198,6 +4433,53 @@
         {
           "name": "order",
           "value": "desc",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-list__user__username_lists_movie_stats_get",
+      "parentId": "fld_IRIS_list",
+      "url": "{{ _.base_url }}/user/:username/lists/movie/stats",
+      "name": "GET /user/:username/lists/movie/stats",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "year",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "quarter",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "month",
+          "value": "1",
           "disabled": false
         }
       ],
@@ -4598,6 +4880,53 @@
       "_type": "request"
     },
     {
+      "_id": "req_IRIS-list__user__username_lists_music_stats_get",
+      "parentId": "fld_IRIS_list",
+      "url": "{{ _.base_url }}/user/:username/lists/music/stats",
+      "name": "GET /user/:username/lists/music/stats",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "year",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "quarter",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "month",
+          "value": "1",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
       "_id": "req_IRIS-list__user__username_lists_tv__id_episodes_post",
       "parentId": "fld_IRIS_list",
       "url": "{{ _.base_url }}/user/:username/lists/tv/:id/episodes",
@@ -4955,6 +5284,53 @@
         {
           "name": "order",
           "value": "desc",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_IRIS-list__user__username_lists_tv_stats_get",
+      "parentId": "fld_IRIS_list",
+      "url": "{{ _.base_url }}/user/:username/lists/tv/stats",
+      "name": "GET /user/:username/lists/tv/stats",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "year",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "quarter",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "name": "month",
+          "value": "1",
           "disabled": false
         }
       ],

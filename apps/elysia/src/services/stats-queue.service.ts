@@ -5,6 +5,7 @@ import {
   type MediaType,
 } from "@IRIS/database"
 import { logger } from "../utils/logger"
+import { mediaStatsService } from "./media-stats.service.js"
 
 /**
  * Payload parameters for enqueueing an activity log event.
@@ -128,6 +129,9 @@ export class StatsQueueService {
               },
             })
           } else if (job.kind === "stats") {
+            // Invalidate real-time cached stats
+            await mediaStatsService.invalidateUserStats(job.data.userId)
+
             // Recalculate or upsert stats partitioned by userId and mediaType
             await prisma.userStats.upsert({
               where: {
