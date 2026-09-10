@@ -22,6 +22,11 @@ const ListActivityTab = dynamic(
   () => import("./list-activity-tab").then((m) => m.ListActivityTab),
   { ssr: false }
 )
+const MediaStatsTab = dynamic(
+  () => import("./stats/media-stats-tab").then((m) => m.MediaStatsTab),
+  { ssr: false }
+)
+import { invalidateClientStats } from "./stats/media-stats-tab"
 import type {
   MediaListType,
   StatusKey,
@@ -691,6 +696,7 @@ export function UserListView({
         }
 
         toast.success(`Progress updated (+${count})`)
+        invalidateClientStats(username, mediaType)
       } catch {
         toast.error("Failed to update progress")
         fetchItems(true)
@@ -704,6 +710,7 @@ export function UserListView({
   // ---------------------------------------------------------------------------
   const handleItemUpdated = useCallback(
     (entryId: number, updatedEntry: any) => {
+      invalidateClientStats(username, mediaType)
       if (!updatedEntry) {
         setItems((prev) => prev.filter((i) => i.entry.id !== entryId))
         setTotalCount((prev) => Math.max(0, prev - 1))
@@ -871,13 +878,9 @@ export function UserListView({
           />
         )}
 
-        {/* Empty State for Stats */}
+        {/* Detailed Media Stats Tab */}
         {activeTab === "stats" && (
-          <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/60 p-8 text-center shadow-xs backdrop-blur-md">
-            <p className="text-sm font-medium text-muted-foreground">
-              Statistics will appear here.
-            </p>
-          </div>
+          <MediaStatsTab username={username} mediaType={mediaType} />
         )}
       </main>
     </div>
