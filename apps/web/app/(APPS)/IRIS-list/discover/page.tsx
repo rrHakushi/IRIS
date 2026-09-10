@@ -1,10 +1,5 @@
-import { Metadata } from "next"
+import { redirect } from "next/navigation"
 
-export const metadata: Metadata = {
-  title: "IRIS List | Discover",
-  description: "IRIS List Discover",
-}
-
-export default function Page() {
-  return <>page</>
+export default function DiscoverRootPage() {
+  redirect("/IRIS-list/discover/anime")
 }
