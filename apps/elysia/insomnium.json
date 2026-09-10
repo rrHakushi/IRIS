@@ -5258,6 +5258,43 @@
       "_type": "request_group"
     },
     {
+      "_id": "req_IRIS-media__discover__media_get",
+      "parentId": "fld_IRIS_media",
+      "url": "{{ _.base_url }}/discover/:media",
+      "name": "GET /discover/:media",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "genre",
+          "value": "string",
+          "disabled": false
+        }
+      ],
+      "headers": [
+        {
+          "name": "x-api-key",
+          "value": "{{ _.api_key }}",
+          "disabled": false
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}",
+          "disabled": true
+        }
+      ],
+      "authentication": {},
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
       "_id": "req_IRIS-media__media_anime__id_refresh_post",
       "parentId": "fld_IRIS_media",
       "url": "{{ _.base_url }}/media/anime/:id/refresh",

@@ -94,54 +94,55 @@ import Route_83 from "../../modules/IRIS-list/user/[username]/lists/tv/route";
 import Route_84 from "../../modules/IRIS-list/user/[username]/watchlists/[id]/entries/route";
 import Route_85 from "../../modules/IRIS-list/user/[username]/watchlists/[id]/route";
 import Route_86 from "../../modules/IRIS-list/user/[username]/watchlists/route";
-import Route_87 from "../../modules/IRIS-media/media/anime/[id]/refresh/route";
-import Route_88 from "../../modules/IRIS-media/media/anime/[id]/route";
-import Route_89 from "../../modules/IRIS-media/media/anime/[id]/similar/route";
-import Route_90 from "../../modules/IRIS-media/media/books/[id]/refresh/route";
-import Route_91 from "../../modules/IRIS-media/media/books/[id]/route";
-import Route_92 from "../../modules/IRIS-media/media/books/[id]/similar/route";
-import Route_93 from "../../modules/IRIS-media/media/calendar/route";
-import Route_94 from "../../modules/IRIS-media/media/characters/[id]/route";
-import Route_95 from "../../modules/IRIS-media/media/games/[id]/refresh/route";
-import Route_96 from "../../modules/IRIS-media/media/games/[id]/route";
-import Route_97 from "../../modules/IRIS-media/media/games/[id]/similar/route";
-import Route_98 from "../../modules/IRIS-media/media/manga/[id]/refresh/route";
-import Route_99 from "../../modules/IRIS-media/media/manga/[id]/route";
-import Route_100 from "../../modules/IRIS-media/media/manga/[id]/similar/route";
-import Route_101 from "../../modules/IRIS-media/media/movies/[id]/refresh/route";
-import Route_102 from "../../modules/IRIS-media/media/movies/[id]/route";
-import Route_103 from "../../modules/IRIS-media/media/movies/[id]/similar/route";
-import Route_104 from "../../modules/IRIS-media/media/music/[id]/refresh/route";
-import Route_105 from "../../modules/IRIS-media/media/music/[id]/route";
-import Route_106 from "../../modules/IRIS-media/media/music/[id]/similar/route";
-import Route_107 from "../../modules/IRIS-media/media/music/import/deezer/route";
-import Route_108 from "../../modules/IRIS-media/media/people/[id]/route";
-import Route_109 from "../../modules/IRIS-media/media/studios/[id]/route";
-import Route_110 from "../../modules/IRIS-media/media/tv/[id]/refresh/route";
-import Route_111 from "../../modules/IRIS-media/media/tv/[id]/route";
-import Route_112 from "../../modules/IRIS-media/media/tv/[id]/similar/route";
-import Route_113 from "../../modules/IRIS-media/search/anime/route";
-import Route_114 from "../../modules/IRIS-media/search/books/route";
-import Route_115 from "../../modules/IRIS-media/search/characters/route";
-import Route_116 from "../../modules/IRIS-media/search/games/route";
-import Route_117 from "../../modules/IRIS-media/search/manga/route";
-import Route_118 from "../../modules/IRIS-media/search/movies/route";
-import Route_119 from "../../modules/IRIS-media/search/music/route";
-import Route_120 from "../../modules/IRIS-media/search/people/route";
-import Route_121 from "../../modules/IRIS-media/search/studios/route";
-import Route_122 from "../../modules/IRIS-media/search/tv/route";
-import Route_123 from "../../modules/IRIS-social/lists/[username]/[mediaType]/activity/[id]/route";
-import Route_124 from "../../modules/IRIS-social/lists/[username]/[mediaType]/activity/route";
-import Route_125 from "../../modules/IRIS-social/lists/[username]/[mediaType]/comments/[id]/reply/route";
-import Route_126 from "../../modules/IRIS-social/lists/[username]/[mediaType]/comments/[id]/route";
-import Route_127 from "../../modules/IRIS-social/lists/[username]/[mediaType]/comments/route";
-import Route_128 from "../../modules/IRIS-social/recommendations/[id]/route";
-import Route_129 from "../../modules/IRIS-social/recommendations/[id]/vote/route";
-import Route_130 from "../../modules/IRIS-social/recommendations/[type]/[id]/route";
-import Route_131 from "../../modules/IRIS-social/recommendations/route";
-import Route_132 from "../../modules/IRIS-social/reviews/[type]/[id]/route";
-import Route_133 from "../../modules/IRIS-social/reviews/[type]/[id]/vote/route";
-import Route_134 from "../../modules/IRIS-social/user/[username]/reviews/route";
+import Route_87 from "../../modules/IRIS-media/discover/[media]/route";
+import Route_88 from "../../modules/IRIS-media/media/anime/[id]/refresh/route";
+import Route_89 from "../../modules/IRIS-media/media/anime/[id]/route";
+import Route_90 from "../../modules/IRIS-media/media/anime/[id]/similar/route";
+import Route_91 from "../../modules/IRIS-media/media/books/[id]/refresh/route";
+import Route_92 from "../../modules/IRIS-media/media/books/[id]/route";
+import Route_93 from "../../modules/IRIS-media/media/books/[id]/similar/route";
+import Route_94 from "../../modules/IRIS-media/media/calendar/route";
+import Route_95 from "../../modules/IRIS-media/media/characters/[id]/route";
+import Route_96 from "../../modules/IRIS-media/media/games/[id]/refresh/route";
+import Route_97 from "../../modules/IRIS-media/media/games/[id]/route";
+import Route_98 from "../../modules/IRIS-media/media/games/[id]/similar/route";
+import Route_99 from "../../modules/IRIS-media/media/manga/[id]/refresh/route";
+import Route_100 from "../../modules/IRIS-media/media/manga/[id]/route";
+import Route_101 from "../../modules/IRIS-media/media/manga/[id]/similar/route";
+import Route_102 from "../../modules/IRIS-media/media/movies/[id]/refresh/route";
+import Route_103 from "../../modules/IRIS-media/media/movies/[id]/route";
+import Route_104 from "../../modules/IRIS-media/media/movies/[id]/similar/route";
+import Route_105 from "../../modules/IRIS-media/media/music/[id]/refresh/route";
+import Route_106 from "../../modules/IRIS-media/media/music/[id]/route";
+import Route_107 from "../../modules/IRIS-media/media/music/[id]/similar/route";
+import Route_108 from "../../modules/IRIS-media/media/music/import/deezer/route";
+import Route_109 from "../../modules/IRIS-media/media/people/[id]/route";
+import Route_110 from "../../modules/IRIS-media/media/studios/[id]/route";
+import Route_111 from "../../modules/IRIS-media/media/tv/[id]/refresh/route";
+import Route_112 from "../../modules/IRIS-media/media/tv/[id]/route";
+import Route_113 from "../../modules/IRIS-media/media/tv/[id]/similar/route";
+import Route_114 from "../../modules/IRIS-media/search/anime/route";
+import Route_115 from "../../modules/IRIS-media/search/books/route";
+import Route_116 from "../../modules/IRIS-media/search/characters/route";
+import Route_117 from "../../modules/IRIS-media/search/games/route";
+import Route_118 from "../../modules/IRIS-media/search/manga/route";
+import Route_119 from "../../modules/IRIS-media/search/movies/route";
+import Route_120 from "../../modules/IRIS-media/search/music/route";
+import Route_121 from "../../modules/IRIS-media/search/people/route";
+import Route_122 from "../../modules/IRIS-media/search/studios/route";
+import Route_123 from "../../modules/IRIS-media/search/tv/route";
+import Route_124 from "../../modules/IRIS-social/lists/[username]/[mediaType]/activity/[id]/route";
+import Route_125 from "../../modules/IRIS-social/lists/[username]/[mediaType]/activity/route";
+import Route_126 from "../../modules/IRIS-social/lists/[username]/[mediaType]/comments/[id]/reply/route";
+import Route_127 from "../../modules/IRIS-social/lists/[username]/[mediaType]/comments/[id]/route";
+import Route_128 from "../../modules/IRIS-social/lists/[username]/[mediaType]/comments/route";
+import Route_129 from "../../modules/IRIS-social/recommendations/[id]/route";
+import Route_130 from "../../modules/IRIS-social/recommendations/[id]/vote/route";
+import Route_131 from "../../modules/IRIS-social/recommendations/[type]/[id]/route";
+import Route_132 from "../../modules/IRIS-social/recommendations/route";
+import Route_133 from "../../modules/IRIS-social/reviews/[type]/[id]/route";
+import Route_134 from "../../modules/IRIS-social/reviews/[type]/[id]/vote/route";
+import Route_135 from "../../modules/IRIS-social/user/[username]/reviews/route";
 
 const routeLimiters = new Map<string, ReturnType<typeof createRateLimiter>>();
 function getRouteLimiter(key: string, config: RateLimitConfig) {
@@ -166,17 +167,17 @@ function deepMergeCacheKeys(target: Record<string, unknown>, source: Record<stri
     }
   }
 }
-const Route_88_keys = (Route_88 as Record<string, unknown>)?.cacheKeys;
-if (Route_88_keys && typeof Route_88_keys === "object") {
-  deepMergeCacheKeys(globalCacheKeyStorage, Route_88_keys as Record<string, unknown>);
+const Route_87_keys = (Route_87 as Record<string, unknown>)?.cacheKeys;
+if (Route_87_keys && typeof Route_87_keys === "object") {
+  deepMergeCacheKeys(globalCacheKeyStorage, Route_87_keys as Record<string, unknown>);
 }
 const Route_89_keys = (Route_89 as Record<string, unknown>)?.cacheKeys;
 if (Route_89_keys && typeof Route_89_keys === "object") {
   deepMergeCacheKeys(globalCacheKeyStorage, Route_89_keys as Record<string, unknown>);
 }
-const Route_91_keys = (Route_91 as Record<string, unknown>)?.cacheKeys;
-if (Route_91_keys && typeof Route_91_keys === "object") {
-  deepMergeCacheKeys(globalCacheKeyStorage, Route_91_keys as Record<string, unknown>);
+const Route_90_keys = (Route_90 as Record<string, unknown>)?.cacheKeys;
+if (Route_90_keys && typeof Route_90_keys === "object") {
+  deepMergeCacheKeys(globalCacheKeyStorage, Route_90_keys as Record<string, unknown>);
 }
 const Route_92_keys = (Route_92 as Record<string, unknown>)?.cacheKeys;
 if (Route_92_keys && typeof Route_92_keys === "object") {
@@ -190,45 +191,45 @@ const Route_94_keys = (Route_94 as Record<string, unknown>)?.cacheKeys;
 if (Route_94_keys && typeof Route_94_keys === "object") {
   deepMergeCacheKeys(globalCacheKeyStorage, Route_94_keys as Record<string, unknown>);
 }
-const Route_96_keys = (Route_96 as Record<string, unknown>)?.cacheKeys;
-if (Route_96_keys && typeof Route_96_keys === "object") {
-  deepMergeCacheKeys(globalCacheKeyStorage, Route_96_keys as Record<string, unknown>);
+const Route_95_keys = (Route_95 as Record<string, unknown>)?.cacheKeys;
+if (Route_95_keys && typeof Route_95_keys === "object") {
+  deepMergeCacheKeys(globalCacheKeyStorage, Route_95_keys as Record<string, unknown>);
 }
 const Route_97_keys = (Route_97 as Record<string, unknown>)?.cacheKeys;
 if (Route_97_keys && typeof Route_97_keys === "object") {
   deepMergeCacheKeys(globalCacheKeyStorage, Route_97_keys as Record<string, unknown>);
 }
-const Route_99_keys = (Route_99 as Record<string, unknown>)?.cacheKeys;
-if (Route_99_keys && typeof Route_99_keys === "object") {
-  deepMergeCacheKeys(globalCacheKeyStorage, Route_99_keys as Record<string, unknown>);
+const Route_98_keys = (Route_98 as Record<string, unknown>)?.cacheKeys;
+if (Route_98_keys && typeof Route_98_keys === "object") {
+  deepMergeCacheKeys(globalCacheKeyStorage, Route_98_keys as Record<string, unknown>);
 }
 const Route_100_keys = (Route_100 as Record<string, unknown>)?.cacheKeys;
 if (Route_100_keys && typeof Route_100_keys === "object") {
   deepMergeCacheKeys(globalCacheKeyStorage, Route_100_keys as Record<string, unknown>);
 }
-const Route_102_keys = (Route_102 as Record<string, unknown>)?.cacheKeys;
-if (Route_102_keys && typeof Route_102_keys === "object") {
-  deepMergeCacheKeys(globalCacheKeyStorage, Route_102_keys as Record<string, unknown>);
+const Route_101_keys = (Route_101 as Record<string, unknown>)?.cacheKeys;
+if (Route_101_keys && typeof Route_101_keys === "object") {
+  deepMergeCacheKeys(globalCacheKeyStorage, Route_101_keys as Record<string, unknown>);
 }
 const Route_103_keys = (Route_103 as Record<string, unknown>)?.cacheKeys;
 if (Route_103_keys && typeof Route_103_keys === "object") {
   deepMergeCacheKeys(globalCacheKeyStorage, Route_103_keys as Record<string, unknown>);
 }
-const Route_105_keys = (Route_105 as Record<string, unknown>)?.cacheKeys;
-if (Route_105_keys && typeof Route_105_keys === "object") {
-  deepMergeCacheKeys(globalCacheKeyStorage, Route_105_keys as Record<string, unknown>);
+const Route_104_keys = (Route_104 as Record<string, unknown>)?.cacheKeys;
+if (Route_104_keys && typeof Route_104_keys === "object") {
+  deepMergeCacheKeys(globalCacheKeyStorage, Route_104_keys as Record<string, unknown>);
 }
 const Route_106_keys = (Route_106 as Record<string, unknown>)?.cacheKeys;
 if (Route_106_keys && typeof Route_106_keys === "object") {
   deepMergeCacheKeys(globalCacheKeyStorage, Route_106_keys as Record<string, unknown>);
 }
-const Route_108_keys = (Route_108 as Record<string, unknown>)?.cacheKeys;
-if (Route_108_keys && typeof Route_108_keys === "object") {
-  deepMergeCacheKeys(globalCacheKeyStorage, Route_108_keys as Record<string, unknown>);
+const Route_107_keys = (Route_107 as Record<string, unknown>)?.cacheKeys;
+if (Route_107_keys && typeof Route_107_keys === "object") {
+  deepMergeCacheKeys(globalCacheKeyStorage, Route_107_keys as Record<string, unknown>);
 }
-const Route_111_keys = (Route_111 as Record<string, unknown>)?.cacheKeys;
-if (Route_111_keys && typeof Route_111_keys === "object") {
-  deepMergeCacheKeys(globalCacheKeyStorage, Route_111_keys as Record<string, unknown>);
+const Route_109_keys = (Route_109 as Record<string, unknown>)?.cacheKeys;
+if (Route_109_keys && typeof Route_109_keys === "object") {
+  deepMergeCacheKeys(globalCacheKeyStorage, Route_109_keys as Record<string, unknown>);
 }
 const Route_112_keys = (Route_112 as Record<string, unknown>)?.cacheKeys;
 if (Route_112_keys && typeof Route_112_keys === "object") {
@@ -273,6 +274,10 @@ if (Route_121_keys && typeof Route_121_keys === "object") {
 const Route_122_keys = (Route_122 as Record<string, unknown>)?.cacheKeys;
 if (Route_122_keys && typeof Route_122_keys === "object") {
   deepMergeCacheKeys(globalCacheKeyStorage, Route_122_keys as Record<string, unknown>);
+}
+const Route_123_keys = (Route_123 as Record<string, unknown>)?.cacheKeys;
+if (Route_123_keys && typeof Route_123_keys === "object") {
+  deepMergeCacheKeys(globalCacheKeyStorage, Route_123_keys as Record<string, unknown>);
 }
 
 export const routes = new Elysia({ name: "iris-routes" })
@@ -2947,16 +2952,37 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
     }
   )
-  .post(
-    "/media/anime/:id/refresh",
+  .get(
+    "/discover/:media",
     Route_87.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_87 as Record<string, unknown>;
+      const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
+      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
+      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
+      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_87_GET", rateLimitConfig) : null;
+      const authConfig = {
+        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
+        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
+      };
+      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
+        ? (c: Context) => assertRouteAuthorization(c, authConfig)
+        : null;
+      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
+      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
+    }
+  )
+  .post(
+    "/media/anime/:id/refresh",
+    Route_88.schema,
+    async (ctx: any): Promise<any> => {
+      const route = Route_88 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
       const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
       const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.POST ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_87_POST", rateLimitConfig) : null;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_88_POST", rateLimitConfig) : null;
       const authConfig = {
         requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
         requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
@@ -2970,27 +2996,6 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .get(
     "/media/anime/:id",
-    Route_88.schema,
-    async (ctx: any): Promise<any> => {
-      const route = Route_88 as Record<string, unknown>;
-      const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
-      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
-      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
-      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_88_GET", rateLimitConfig) : null;
-      const authConfig = {
-        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
-        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
-      };
-      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
-        ? (c: Context) => assertRouteAuthorization(c, authConfig)
-        : null;
-      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
-      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
-    }
-  )
-  .get(
-    "/media/anime/:id/similar",
     Route_89.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_89 as Record<string, unknown>;
@@ -3010,16 +3015,37 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
     }
   )
-  .post(
-    "/media/books/:id/refresh",
+  .get(
+    "/media/anime/:id/similar",
     Route_90.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_90 as Record<string, unknown>;
+      const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
+      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
+      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
+      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_90_GET", rateLimitConfig) : null;
+      const authConfig = {
+        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
+        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
+      };
+      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
+        ? (c: Context) => assertRouteAuthorization(c, authConfig)
+        : null;
+      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
+      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
+    }
+  )
+  .post(
+    "/media/books/:id/refresh",
+    Route_91.schema,
+    async (ctx: any): Promise<any> => {
+      const route = Route_91 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
       const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
       const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.POST ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_90_POST", rateLimitConfig) : null;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_91_POST", rateLimitConfig) : null;
       const authConfig = {
         requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
         requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
@@ -3033,27 +3059,6 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .get(
     "/media/books/:id",
-    Route_91.schema,
-    async (ctx: any): Promise<any> => {
-      const route = Route_91 as Record<string, unknown>;
-      const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
-      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
-      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
-      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_91_GET", rateLimitConfig) : null;
-      const authConfig = {
-        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
-        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
-      };
-      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
-        ? (c: Context) => assertRouteAuthorization(c, authConfig)
-        : null;
-      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
-      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
-    }
-  )
-  .get(
-    "/media/books/:id/similar",
     Route_92.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_92 as Record<string, unknown>;
@@ -3074,7 +3079,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/media/calendar",
+    "/media/books/:id/similar",
     Route_93.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_93 as Record<string, unknown>;
@@ -3095,7 +3100,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/media/characters/:id",
+    "/media/calendar",
     Route_94.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_94 as Record<string, unknown>;
@@ -3115,16 +3120,37 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
     }
   )
-  .post(
-    "/media/games/:id/refresh",
+  .get(
+    "/media/characters/:id",
     Route_95.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_95 as Record<string, unknown>;
+      const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
+      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
+      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
+      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_95_GET", rateLimitConfig) : null;
+      const authConfig = {
+        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
+        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
+      };
+      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
+        ? (c: Context) => assertRouteAuthorization(c, authConfig)
+        : null;
+      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
+      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
+    }
+  )
+  .post(
+    "/media/games/:id/refresh",
+    Route_96.schema,
+    async (ctx: any): Promise<any> => {
+      const route = Route_96 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
       const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
       const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.POST ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_95_POST", rateLimitConfig) : null;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_96_POST", rateLimitConfig) : null;
       const authConfig = {
         requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
         requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
@@ -3138,27 +3164,6 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .get(
     "/media/games/:id",
-    Route_96.schema,
-    async (ctx: any): Promise<any> => {
-      const route = Route_96 as Record<string, unknown>;
-      const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
-      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
-      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
-      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_96_GET", rateLimitConfig) : null;
-      const authConfig = {
-        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
-        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
-      };
-      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
-        ? (c: Context) => assertRouteAuthorization(c, authConfig)
-        : null;
-      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
-      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
-    }
-  )
-  .get(
-    "/media/games/:id/similar",
     Route_97.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_97 as Record<string, unknown>;
@@ -3178,16 +3183,37 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
     }
   )
-  .post(
-    "/media/manga/:id/refresh",
+  .get(
+    "/media/games/:id/similar",
     Route_98.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_98 as Record<string, unknown>;
+      const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
+      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
+      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
+      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_98_GET", rateLimitConfig) : null;
+      const authConfig = {
+        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
+        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
+      };
+      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
+        ? (c: Context) => assertRouteAuthorization(c, authConfig)
+        : null;
+      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
+      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
+    }
+  )
+  .post(
+    "/media/manga/:id/refresh",
+    Route_99.schema,
+    async (ctx: any): Promise<any> => {
+      const route = Route_99 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
       const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
       const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.POST ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_98_POST", rateLimitConfig) : null;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_99_POST", rateLimitConfig) : null;
       const authConfig = {
         requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
         requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
@@ -3201,27 +3227,6 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .get(
     "/media/manga/:id",
-    Route_99.schema,
-    async (ctx: any): Promise<any> => {
-      const route = Route_99 as Record<string, unknown>;
-      const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
-      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
-      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
-      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_99_GET", rateLimitConfig) : null;
-      const authConfig = {
-        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
-        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
-      };
-      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
-        ? (c: Context) => assertRouteAuthorization(c, authConfig)
-        : null;
-      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
-      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
-    }
-  )
-  .get(
-    "/media/manga/:id/similar",
     Route_100.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_100 as Record<string, unknown>;
@@ -3241,16 +3246,37 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
     }
   )
-  .post(
-    "/media/movies/:id/refresh",
+  .get(
+    "/media/manga/:id/similar",
     Route_101.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_101 as Record<string, unknown>;
+      const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
+      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
+      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
+      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_101_GET", rateLimitConfig) : null;
+      const authConfig = {
+        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
+        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
+      };
+      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
+        ? (c: Context) => assertRouteAuthorization(c, authConfig)
+        : null;
+      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
+      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
+    }
+  )
+  .post(
+    "/media/movies/:id/refresh",
+    Route_102.schema,
+    async (ctx: any): Promise<any> => {
+      const route = Route_102 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
       const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
       const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.POST ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_101_POST", rateLimitConfig) : null;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_102_POST", rateLimitConfig) : null;
       const authConfig = {
         requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
         requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
@@ -3264,27 +3290,6 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .get(
     "/media/movies/:id",
-    Route_102.schema,
-    async (ctx: any): Promise<any> => {
-      const route = Route_102 as Record<string, unknown>;
-      const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
-      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
-      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
-      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_102_GET", rateLimitConfig) : null;
-      const authConfig = {
-        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
-        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
-      };
-      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
-        ? (c: Context) => assertRouteAuthorization(c, authConfig)
-        : null;
-      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
-      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
-    }
-  )
-  .get(
-    "/media/movies/:id/similar",
     Route_103.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_103 as Record<string, unknown>;
@@ -3304,16 +3309,37 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
     }
   )
-  .post(
-    "/media/music/:id/refresh",
+  .get(
+    "/media/movies/:id/similar",
     Route_104.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_104 as Record<string, unknown>;
+      const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
+      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
+      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
+      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_104_GET", rateLimitConfig) : null;
+      const authConfig = {
+        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
+        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
+      };
+      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
+        ? (c: Context) => assertRouteAuthorization(c, authConfig)
+        : null;
+      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
+      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
+    }
+  )
+  .post(
+    "/media/music/:id/refresh",
+    Route_105.schema,
+    async (ctx: any): Promise<any> => {
+      const route = Route_105 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
       const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
       const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.POST ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_104_POST", rateLimitConfig) : null;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_105_POST", rateLimitConfig) : null;
       const authConfig = {
         requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
         requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
@@ -3327,27 +3353,6 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .get(
     "/media/music/:id",
-    Route_105.schema,
-    async (ctx: any): Promise<any> => {
-      const route = Route_105 as Record<string, unknown>;
-      const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
-      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
-      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
-      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_105_GET", rateLimitConfig) : null;
-      const authConfig = {
-        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
-        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
-      };
-      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
-        ? (c: Context) => assertRouteAuthorization(c, authConfig)
-        : null;
-      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
-      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
-    }
-  )
-  .get(
-    "/media/music/:id/similar",
     Route_106.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_106 as Record<string, unknown>;
@@ -3367,16 +3372,37 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
     }
   )
-  .post(
-    "/media/music/import/deezer",
-    Route_107.POST!.schema,
+  .get(
+    "/media/music/:id/similar",
+    Route_107.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_107 as Record<string, unknown>;
+      const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
+      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
+      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
+      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_107_GET", rateLimitConfig) : null;
+      const authConfig = {
+        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
+        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
+      };
+      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
+        ? (c: Context) => assertRouteAuthorization(c, authConfig)
+        : null;
+      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
+      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
+    }
+  )
+  .post(
+    "/media/music/import/deezer",
+    Route_108.POST!.schema,
+    async (ctx: any): Promise<any> => {
+      const route = Route_108 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
       const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
       const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.POST ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_107_POST", rateLimitConfig) : null;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_108_POST", rateLimitConfig) : null;
       const authConfig = {
         requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
         requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
@@ -3390,27 +3416,6 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .get(
     "/media/people/:id",
-    Route_108.schema,
-    async (ctx: any): Promise<any> => {
-      const route = Route_108 as Record<string, unknown>;
-      const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
-      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
-      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
-      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_108_GET", rateLimitConfig) : null;
-      const authConfig = {
-        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
-        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
-      };
-      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
-        ? (c: Context) => assertRouteAuthorization(c, authConfig)
-        : null;
-      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
-      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
-    }
-  )
-  .get(
-    "/media/studios/:id",
     Route_109.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_109 as Record<string, unknown>;
@@ -3430,16 +3435,37 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
     }
   )
-  .post(
-    "/media/tv/:id/refresh",
+  .get(
+    "/media/studios/:id",
     Route_110.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_110 as Record<string, unknown>;
+      const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
+      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
+      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
+      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_110_GET", rateLimitConfig) : null;
+      const authConfig = {
+        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
+        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
+      };
+      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
+        ? (c: Context) => assertRouteAuthorization(c, authConfig)
+        : null;
+      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
+      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
+    }
+  )
+  .post(
+    "/media/tv/:id/refresh",
+    Route_111.schema,
+    async (ctx: any): Promise<any> => {
+      const route = Route_111 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
       const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
       const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.POST ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_110_POST", rateLimitConfig) : null;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_111_POST", rateLimitConfig) : null;
       const authConfig = {
         requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
         requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
@@ -3453,27 +3479,6 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .get(
     "/media/tv/:id",
-    Route_111.schema,
-    async (ctx: any): Promise<any> => {
-      const route = Route_111 as Record<string, unknown>;
-      const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
-      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
-      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
-      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_111_GET", rateLimitConfig) : null;
-      const authConfig = {
-        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
-        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
-      };
-      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
-        ? (c: Context) => assertRouteAuthorization(c, authConfig)
-        : null;
-      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
-      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
-    }
-  )
-  .get(
-    "/media/tv/:id/similar",
     Route_112.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_112 as Record<string, unknown>;
@@ -3494,7 +3499,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/anime",
+    "/media/tv/:id/similar",
     Route_113.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_113 as Record<string, unknown>;
@@ -3515,7 +3520,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/books",
+    "/search/anime",
     Route_114.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_114 as Record<string, unknown>;
@@ -3536,7 +3541,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/characters",
+    "/search/books",
     Route_115.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_115 as Record<string, unknown>;
@@ -3557,7 +3562,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/games",
+    "/search/characters",
     Route_116.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_116 as Record<string, unknown>;
@@ -3578,7 +3583,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/manga",
+    "/search/games",
     Route_117.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_117 as Record<string, unknown>;
@@ -3599,7 +3604,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/movies",
+    "/search/manga",
     Route_118.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_118 as Record<string, unknown>;
@@ -3620,7 +3625,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/music",
+    "/search/movies",
     Route_119.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_119 as Record<string, unknown>;
@@ -3641,7 +3646,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/people",
+    "/search/music",
     Route_120.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_120 as Record<string, unknown>;
@@ -3662,7 +3667,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/studios",
+    "/search/people",
     Route_121.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_121 as Record<string, unknown>;
@@ -3683,7 +3688,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .get(
-    "/search/tv",
+    "/search/studios",
     Route_122.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_122 as Record<string, unknown>;
@@ -3703,16 +3708,37 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
     }
   )
-  .delete(
-    "/lists/:username/:mediaType/activity/:id",
+  .get(
+    "/search/tv",
     Route_123.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_123 as Record<string, unknown>;
+      const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
+      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
+      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
+      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_123_GET", rateLimitConfig) : null;
+      const authConfig = {
+        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
+        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
+      };
+      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
+        ? (c: Context) => assertRouteAuthorization(c, authConfig)
+        : null;
+      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
+      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
+    }
+  )
+  .delete(
+    "/lists/:username/:mediaType/activity/:id",
+    Route_124.schema,
+    async (ctx: any): Promise<any> => {
+      const route = Route_124 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
       const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
       const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.DELETE ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_123_DELETE", rateLimitConfig) : null;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_124_DELETE", rateLimitConfig) : null;
       const authConfig = {
         requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
         requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
@@ -3726,14 +3752,14 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .get(
     "/lists/:username/:mediaType/activity",
-    Route_124.schema,
+    Route_125.schema,
     async (ctx: any): Promise<any> => {
-      const route = Route_124 as Record<string, unknown>;
+      const route = Route_125 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
       const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
       const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_124_GET", rateLimitConfig) : null;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_125_GET", rateLimitConfig) : null;
       const authConfig = {
         requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
         requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
@@ -3747,14 +3773,14 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/lists/:username/:mediaType/comments/:id/reply",
-    Route_125.POST!.schema,
+    Route_126.POST!.schema,
     async (ctx: any): Promise<any> => {
-      const route = Route_125 as Record<string, unknown>;
+      const route = Route_126 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
       const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
       const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.POST ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_125_POST", rateLimitConfig) : null;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_126_POST", rateLimitConfig) : null;
       const authConfig = {
         requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
         requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
@@ -3768,14 +3794,14 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .put(
     "/lists/:username/:mediaType/comments/:id/reply",
-    Route_125.PUT!.schema,
+    Route_126.PUT!.schema,
     async (ctx: any): Promise<any> => {
-      const route = Route_125 as Record<string, unknown>;
+      const route = Route_126 as Record<string, unknown>;
       const methodItem = route.PUT as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
       const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
       const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.PUT ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_125_PUT", rateLimitConfig) : null;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_126_PUT", rateLimitConfig) : null;
       const authConfig = {
         requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
         requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
@@ -3789,27 +3815,6 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .delete(
     "/lists/:username/:mediaType/comments/:id/reply",
-    Route_125.DELETE!.schema,
-    async (ctx: any): Promise<any> => {
-      const route = Route_125 as Record<string, unknown>;
-      const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
-      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
-      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
-      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.DELETE ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_125_DELETE", rateLimitConfig) : null;
-      const authConfig = {
-        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
-        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
-      };
-      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
-        ? (c: Context) => assertRouteAuthorization(c, authConfig)
-        : null;
-      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
-      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
-    }
-  )
-  .delete(
-    "/lists/:username/:mediaType/comments/:id",
     Route_126.DELETE!.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_126 as Record<string, unknown>;
@@ -3829,16 +3834,37 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
     }
   )
-  .get(
-    "/lists/:username/:mediaType/comments",
-    Route_127.schema,
+  .delete(
+    "/lists/:username/:mediaType/comments/:id",
+    Route_127.DELETE!.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_127 as Record<string, unknown>;
+      const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
+      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
+      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
+      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.DELETE ?? route.rateLimit) as RateLimitConfig | undefined;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_127_DELETE", rateLimitConfig) : null;
+      const authConfig = {
+        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
+        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
+      };
+      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
+        ? (c: Context) => assertRouteAuthorization(c, authConfig)
+        : null;
+      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
+      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
+    }
+  )
+  .get(
+    "/lists/:username/:mediaType/comments",
+    Route_128.schema,
+    async (ctx: any): Promise<any> => {
+      const route = Route_128 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
       const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
       const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_127_GET", rateLimitConfig) : null;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_128_GET", rateLimitConfig) : null;
       const authConfig = {
         requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
         requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
@@ -3852,14 +3878,14 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/lists/:username/:mediaType/comments",
-    Route_127.POST!.schema,
+    Route_128.POST!.schema,
     async (ctx: any): Promise<any> => {
-      const route = Route_127 as Record<string, unknown>;
+      const route = Route_128 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
       const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
       const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.POST ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_127_POST", rateLimitConfig) : null;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_128_POST", rateLimitConfig) : null;
       const authConfig = {
         requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
         requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
@@ -3873,14 +3899,14 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .delete(
     "/recommendations/:id",
-    Route_128.schema,
+    Route_129.schema,
     async (ctx: any): Promise<any> => {
-      const route = Route_128 as Record<string, unknown>;
+      const route = Route_129 as Record<string, unknown>;
       const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
       const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
       const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.DELETE ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_128_DELETE", rateLimitConfig) : null;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_129_DELETE", rateLimitConfig) : null;
       const authConfig = {
         requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
         requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
@@ -3894,14 +3920,14 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/recommendations/:id/vote",
-    Route_129.schema,
+    Route_130.schema,
     async (ctx: any): Promise<any> => {
-      const route = Route_129 as Record<string, unknown>;
+      const route = Route_130 as Record<string, unknown>;
       const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
       const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
       const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.POST ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_129_POST", rateLimitConfig) : null;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_130_POST", rateLimitConfig) : null;
       const authConfig = {
         requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
         requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
@@ -3915,14 +3941,14 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .get(
     "/recommendations/:type/:id",
-    Route_130.schema,
+    Route_131.schema,
     async (ctx: any): Promise<any> => {
-      const route = Route_130 as Record<string, unknown>;
+      const route = Route_131 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
       const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
       const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_130_GET", rateLimitConfig) : null;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_131_GET", rateLimitConfig) : null;
       const authConfig = {
         requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
         requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
@@ -3936,48 +3962,6 @@ export const routes = new Elysia({ name: "iris-routes" })
   )
   .post(
     "/recommendations",
-    Route_131.schema,
-    async (ctx: any): Promise<any> => {
-      const route = Route_131 as Record<string, unknown>;
-      const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
-      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
-      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
-      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.POST ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_131_POST", rateLimitConfig) : null;
-      const authConfig = {
-        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
-        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
-      };
-      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
-        ? (c: Context) => assertRouteAuthorization(c, authConfig)
-        : null;
-      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
-      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
-    }
-  )
-  .get(
-    "/reviews/:type/:id",
-    Route_132.schema,
-    async (ctx: any): Promise<any> => {
-      const route = Route_132 as Record<string, unknown>;
-      const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
-      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
-      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
-      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_132_GET", rateLimitConfig) : null;
-      const authConfig = {
-        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
-        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
-      };
-      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
-        ? (c: Context) => assertRouteAuthorization(c, authConfig)
-        : null;
-      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
-      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
-    }
-  )
-  .post(
-    "/reviews/:type/:id",
     Route_132.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_132 as Record<string, unknown>;
@@ -3997,37 +3981,16 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
     }
   )
-  .delete(
+  .get(
     "/reviews/:type/:id",
-    Route_132.schema,
+    Route_133.schema,
     async (ctx: any): Promise<any> => {
-      const route = Route_132 as Record<string, unknown>;
-      const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
+      const route = Route_133 as Record<string, unknown>;
+      const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
       const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
-      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.DELETE ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_132_DELETE", rateLimitConfig) : null;
-      const authConfig = {
-        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
-        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
-      };
-      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
-        ? (c: Context) => assertRouteAuthorization(c, authConfig)
-        : null;
-      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
-      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
-    }
-  )
-  .patch(
-    "/reviews/:type/:id",
-    Route_132.schema,
-    async (ctx: any): Promise<any> => {
-      const route = Route_132 as Record<string, unknown>;
-      const methodItem = route.PATCH as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
-      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
-      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
-      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.PATCH ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_132_PATCH", rateLimitConfig) : null;
+      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_133_GET", rateLimitConfig) : null;
       const authConfig = {
         requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
         requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
@@ -4040,7 +4003,7 @@ export const routes = new Elysia({ name: "iris-routes" })
     }
   )
   .post(
-    "/reviews/:type/:id/vote",
+    "/reviews/:type/:id",
     Route_133.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_133 as Record<string, unknown>;
@@ -4060,16 +4023,79 @@ export const routes = new Elysia({ name: "iris-routes" })
       return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
     }
   )
-  .get(
-    "/user/:username/reviews",
+  .delete(
+    "/reviews/:type/:id",
+    Route_133.schema,
+    async (ctx: any): Promise<any> => {
+      const route = Route_133 as Record<string, unknown>;
+      const methodItem = route.DELETE as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
+      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
+      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
+      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.DELETE ?? route.rateLimit) as RateLimitConfig | undefined;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_133_DELETE", rateLimitConfig) : null;
+      const authConfig = {
+        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
+        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
+      };
+      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
+        ? (c: Context) => assertRouteAuthorization(c, authConfig)
+        : null;
+      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
+      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
+    }
+  )
+  .patch(
+    "/reviews/:type/:id",
+    Route_133.schema,
+    async (ctx: any): Promise<any> => {
+      const route = Route_133 as Record<string, unknown>;
+      const methodItem = route.PATCH as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
+      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
+      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
+      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.PATCH ?? route.rateLimit) as RateLimitConfig | undefined;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_133_PATCH", rateLimitConfig) : null;
+      const authConfig = {
+        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
+        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
+      };
+      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
+        ? (c: Context) => assertRouteAuthorization(c, authConfig)
+        : null;
+      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
+      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
+    }
+  )
+  .post(
+    "/reviews/:type/:id/vote",
     Route_134.schema,
     async (ctx: any): Promise<any> => {
       const route = Route_134 as Record<string, unknown>;
+      const methodItem = route.POST as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
+      const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
+      const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
+      const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.POST ?? route.rateLimit) as RateLimitConfig | undefined;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_134_POST", rateLimitConfig) : null;
+      const authConfig = {
+        requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
+        requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,
+      };
+      const authGuard = (authConfig.requireAuth !== undefined || authConfig.requirePermissions !== undefined)
+        ? (c: Context) => assertRouteAuthorization(c, authConfig)
+        : null;
+      (ctx as Context).cacheKeys = globalCacheKeyStorage as unknown as Context["cacheKeys"];
+      return executeWithRequestLogs(ctx as Context, handler, limiter, authGuard);
+    }
+  )
+  .get(
+    "/user/:username/reviews",
+    Route_135.schema,
+    async (ctx: any): Promise<any> => {
+      const route = Route_135 as Record<string, unknown>;
       const methodItem = route.GET as Record<string, unknown> | ((...args: unknown[]) => unknown) | undefined;
       const handler = typeof methodItem === "function" ? methodItem : (methodItem?.handler as ((...args: unknown[]) => unknown) | undefined);
       const methodObj = typeof methodItem === "object" && methodItem !== null ? methodItem : null;
       const rateLimitConfig = (methodObj?.rateLimit ?? (route.rateLimits as Record<string, unknown> | undefined)?.GET ?? route.rateLimit) as RateLimitConfig | undefined;
-      const limiter = rateLimitConfig ? getRouteLimiter("Route_134_GET", rateLimitConfig) : null;
+      const limiter = rateLimitConfig ? getRouteLimiter("Route_135_GET", rateLimitConfig) : null;
       const authConfig = {
         requireAuth: (methodObj?.requireAuth ?? route.requireAuth) as boolean | { message?: string } | undefined,
         requirePermissions: (methodObj?.requirePermissions ?? route.requirePermissions) as IRISBitFieldResolvable[] | undefined,

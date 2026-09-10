@@ -3,6 +3,9 @@
 // Do not edit manually.
 
 export interface GlobalCacheKeys {
+  discover: {
+    media: (media: any, genre?: any) => string;
+  };
   anime: {
     id: (id: any) => string;
   };
