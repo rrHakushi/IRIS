@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useSession, signOut, signIn } from "next-auth/react"
@@ -21,6 +21,26 @@ import { formatBadgeNumber } from "@/lib/numbers"
 import { useUser } from "@/context/user-context"
 import { IrisSidebarUserCard } from "./iris-sidebar-user-card"
 import { IrisUserMenu } from "./iris-user-menu"
+
+function normalizePath(path: string): string {
+  if (!path) return "/"
+  const trimmed = path.replace(/\/+$/, "")
+  return trimmed === "" ? "/" : trimmed
+}
+
+function isRouteActive(currentPath: string, href?: string): boolean {
+  if (!href || href === "#") return false
+  const path = normalizePath(currentPath)
+  const target = normalizePath(href)
+
+  if (path === target) return true
+
+  // App roots and single-segment roots (e.g. "/", "/IRIS-list") must be exact match
+  const segments = target.split("/").filter(Boolean)
+  if (segments.length <= 1) return false
+
+  return path.startsWith(`${target}/`)
+}
 
 export interface IrisMobileLauncherProps {
   open: boolean
@@ -81,6 +101,23 @@ export function IrisMobileLauncher({
       !name.startsWith("#$") && sec.dataKey?.toLowerCase() !== "mobile-dock"
     )
   })
+
+  // Ensure parent items of active children are opened on route change
+  useEffect(() => {
+    launcherSections.forEach((section) => {
+      section.items.forEach((item, iIdx) => {
+        if (item.children && item.children.length > 0) {
+          const hasActiveChild = item.children.some((child) =>
+            isRouteActive(pathname, child.href)
+          )
+          if (hasActiveChild) {
+            const key = item.dataKey || item.label || `item-${iIdx}`
+            setOpenItems((prev) => ({ ...prev, [key]: true }))
+          }
+        }
+      })
+    })
+  }, [pathname, launcherSections])
 
   const handleNavigate = (href?: string) => {
     if (href) {
@@ -189,9 +226,11 @@ export function IrisMobileLauncher({
                     )
                     const isChildActive =
                       hasChildren &&
-                      item.children!.some((child) => pathname === child.href)
-                    const isActive =
-                      (item.href && pathname === item.href) || isChildActive
+                      item.children!.some((child) =>
+                        isRouteActive(pathname, child.href)
+                      )
+                    const isDirectActive = isRouteActive(pathname, item.href)
+                    const isActive = isDirectActive || isChildActive
 
                     // Closed by default like sidebar unless active child or explicitly opened
                     const isOpen =
@@ -219,9 +258,11 @@ export function IrisMobileLauncher({
                                 onClick={() => handleNavigate(item.href)}
                                 className={cn(
                                   "flex min-w-0 flex-1 cursor-pointer items-center justify-between rounded-xl px-3 py-2.5 text-start text-xs font-medium transition-colors",
-                                  isActive
+                                  isDirectActive
                                     ? "bg-primary/10 font-semibold text-primary"
-                                    : "text-foreground hover:bg-muted/60"
+                                    : isChildActive
+                                      ? "font-medium text-foreground"
+                                      : "text-foreground hover:bg-muted/60"
                                 )}
                               >
                                 <span className="flex min-w-0 flex-1 items-center gap-2.5">
@@ -252,9 +293,11 @@ export function IrisMobileLauncher({
                                 onClick={() => toggleItem(itemKey)}
                                 className={cn(
                                   "flex min-w-0 flex-1 cursor-pointer items-center justify-between rounded-xl px-3 py-2.5 text-start text-xs font-medium transition-colors",
-                                  isActive
+                                  isDirectActive
                                     ? "bg-primary/10 font-semibold text-primary"
-                                    : "text-foreground hover:bg-muted/60"
+                                    : isChildActive
+                                      ? "font-medium text-foreground"
+                                      : "text-foreground hover:bg-muted/60"
                                 )}
                               >
                                 <span className="flex min-w-0 flex-1 items-center gap-2.5">
@@ -281,15 +324,11 @@ export function IrisMobileLauncher({
                               </button>
                             )}
 
-                            {/* Dedicated Chevron button to expand/collapse submenu */}
+                            {/* Dropdown toggle button */}
                             <button
                               type="button"
-                              onClick={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
-                                toggleItem(itemKey)
-                              }}
-                              className="ms-1 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-xl text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                              onClick={() => toggleItem(itemKey)}
+                              className="flex size-9 cursor-pointer items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
                               aria-label={isOpen ? t("collapse") : t("expand")}
                             >
                               <IconChevronDown
@@ -303,10 +342,13 @@ export function IrisMobileLauncher({
 
                           {/* Submenu children: closed by default */}
                           {isOpen && (
-                            <div className="my-1 ml-5 space-y-0.5 border-l border-border/50 py-1 pr-1 pl-4">
+                            <div className="my-1 ms-5 space-y-0.5 border-s border-border/50 py-1 ps-4 pe-1">
                               {item.children!.map(
                                 (child: SidebarItemChild, cIdx: number) => {
-                                  const isSubActive = pathname === child.href
+                                  const isSubActive = isRouteActive(
+                                    pathname,
+                                    child.href
+                                  )
 
                                   if (child.component) {
                                     return (

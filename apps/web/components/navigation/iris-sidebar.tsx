@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useMemo, useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
@@ -36,6 +36,26 @@ import { useIrisSidebar } from "./sidebar-provider"
 import { IrisBottomDock } from "./iris-bottom-dock"
 import { IrisAppMenu } from "./iris-app-menu"
 import { IrisUserMenu } from "./iris-user-menu"
+
+function normalizePath(path: string): string {
+  if (!path) return "/"
+  const trimmed = path.replace(/\/+$/, "")
+  return trimmed === "" ? "/" : trimmed
+}
+
+function isRouteActive(currentPath: string, href?: string): boolean {
+  if (!href || href === "#") return false
+  const path = normalizePath(currentPath)
+  const target = normalizePath(href)
+
+  if (path === target) return true
+
+  // App roots and single-segment roots (e.g. "/", "/IRIS-list") must be exact match
+  const segments = target.split("/").filter(Boolean)
+  if (segments.length <= 1) return false
+
+  return path.startsWith(`${target}/`)
+}
 
 function formatBadge(badge: string | number | undefined): string | null {
   if (badge === undefined || badge === null || badge === "") return null
@@ -77,8 +97,23 @@ export function IrisSidebar({
   // Track expanded state of menu items with submenus
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({})
 
-  const toggleItem = (key: string) => {
-    setOpenItems((prev) => ({ ...prev, [key]: !prev[key] }))
+  // Track expanded state for sections (open by default)
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({})
+
+  const toggleSection = (secKey: string) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [secKey]: prev[secKey] !== undefined ? !prev[secKey] : false,
+    }))
+  }
+
+  const toggleItem = (key: string, currentOpen?: boolean) => {
+    setOpenItems((prev) => ({
+      ...prev,
+      [key]: currentOpen !== undefined ? !currentOpen : !prev[key],
+    }))
   }
 
   // Filter and sort items based on permissions and position
@@ -148,6 +183,23 @@ export function IrisSidebar({
 
   const isRight = position === "right"
 
+  // Ensure parent items of active children are opened on route change
+  useEffect(() => {
+    resolvedConfig.forEach((section) => {
+      section.items.forEach((item) => {
+        if (item.children && item.children.length > 0) {
+          const hasActiveChild = item.children.some((child) =>
+            isRouteActive(pathname, child.href)
+          )
+          if (hasActiveChild) {
+            const key = item.dataKey || item.label
+            setOpenItems((prev) => ({ ...prev, [key]: true }))
+          }
+        }
+      })
+    })
+  }, [pathname, resolvedConfig])
+
   return (
     <>
       <Sidebar
@@ -169,190 +221,219 @@ export function IrisSidebar({
             )
             if (visibleItems.length === 0) return null
 
+            const secKey =
+              section.dataKey || section.section || `sec-${sectionIdx}`
+            const isExpanded =
+              state === "collapsed" ? true : (expandedSections[secKey] ?? true)
+
             return (
-              <SidebarGroup key={sectionIdx}>
+              <SidebarGroup key={sectionIdx} className="space-y-1 px-2 py-1">
                 {section.section && (
-                  <SidebarGroupLabel className="px-3 py-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-                    {section.section}
+                  <SidebarGroupLabel
+                    elementType="button"
+                    onClick={() => toggleSection(secKey)}
+                    className="flex w-full cursor-pointer items-center justify-between px-2 py-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase transition-colors select-none group-data-[collapsible=icon]:hidden hover:text-foreground"
+                  >
+                    <span>{section.section}</span>
+                    <IconChevronDown
+                      className={cn(
+                        "size-3.5 transition-transform duration-200",
+                        !isExpanded && "-rotate-90"
+                      )}
+                    />
                   </SidebarGroupLabel>
                 )}
 
-                <SidebarMenu>
-                  {visibleItems.map((item: SidebarItem, itemIdx: number) => {
-                    const itemKey = item.dataKey || item.label
-                    const hasChildren = !!(
-                      item.children && item.children.length > 0
-                    )
-                    const isChildActive =
-                      hasChildren &&
-                      item.children!.some(
-                        (child: SidebarItemChild) => pathname === child.href
+                {isExpanded && (
+                  <SidebarMenu className="gap-1 rounded-2xl border border-border/50 bg-card/50 p-1.5 shadow-xs transition-all group-data-[collapsible=icon]:border-border/40 group-data-[collapsible=icon]:bg-card/40 group-data-[collapsible=icon]:p-1">
+                    {visibleItems.map((item: SidebarItem, itemIdx: number) => {
+                      const itemKey = item.dataKey || item.label
+                      const hasChildren = !!(
+                        item.children && item.children.length > 0
                       )
-                    const isActive =
-                      (item.href && pathname === item.href) || isChildActive
+                      const isChildActive =
+                        hasChildren &&
+                        item.children!.some((child: SidebarItemChild) =>
+                          isRouteActive(pathname, child.href)
+                        )
+                      const isDirectActive = isRouteActive(pathname, item.href)
+                      const isActive = isDirectActive || isChildActive
 
-                    const isOpen =
-                      openItems[itemKey] !== undefined
-                        ? openItems[itemKey]
-                        : isChildActive
+                      const isOpen =
+                        openItems[itemKey] !== undefined
+                          ? openItems[itemKey]
+                          : isChildActive
 
-                    // If item is a custom component, render it directly
-                    if (item.component) {
+                      // If item is a custom component, render it directly
+                      if (item.component) {
+                        return (
+                          <SidebarMenuItem key={itemIdx}>
+                            {item.component}
+                          </SidebarMenuItem>
+                        )
+                      }
+
                       return (
                         <SidebarMenuItem key={itemIdx}>
-                          {item.component}
-                        </SidebarMenuItem>
-                      )
-                    }
-
-                    return (
-                      <SidebarMenuItem key={itemIdx}>
-                        {hasChildren ? (
-                          <div className="flex w-full flex-col">
-                            <div className="relative flex w-full items-center">
-                              <SidebarMenuButton
-                                href={item.href}
-                                isActive={isActive}
-                                tooltip={
-                                  state === "collapsed" ? item.label : undefined
-                                }
-                                className={cn(
-                                  "w-full justify-between gap-2 pe-7",
-                                  isActive && "font-semibold"
-                                )}
-                                onClick={
-                                  !item.href
-                                    ? () => toggleItem(itemKey)
-                                    : undefined
-                                }
-                              >
-                                <span className="flex min-w-0 flex-1 items-center gap-2.5">
-                                  {item.icon && (
-                                    <span className="shrink-0">
-                                      {item.icon}
-                                    </span>
-                                  )}
-                                  <span className="truncate">{item.label}</span>
-                                </span>
-                                {item.badge && (
-                                  <Badge
-                                    variant="secondary"
-                                    className="h-4 shrink-0 px-1.5 text-[10px]"
-                                  >
-                                    {formatBadge(item.badge)}
-                                  </Badge>
-                                )}
-                              </SidebarMenuButton>
-
-                              {/* Dedicated Chevron button to expand/collapse */}
-                              <SidebarMenuAction
-                                showOnHover={false}
-                                className="cursor-pointer"
-                                onClick={(e) => {
-                                  e.preventDefault()
-                                  e.stopPropagation()
-                                  toggleItem(itemKey)
-                                }}
-                                aria-label={
-                                  isOpen ? t("collapse") : t("expand")
-                                }
-                              >
-                                <IconChevronDown
+                          {hasChildren ? (
+                            <div className="flex w-full flex-col">
+                              <div className="relative flex w-full items-center">
+                                <SidebarMenuButton
+                                  href={item.href}
+                                  isActive={isActive}
+                                  tooltip={
+                                    state === "collapsed"
+                                      ? item.label
+                                      : undefined
+                                  }
                                   className={cn(
-                                    "size-3.5 transition-transform duration-200",
-                                    isOpen && "rotate-180"
+                                    "w-full justify-between gap-2 pe-7",
+                                    isDirectActive
+                                      ? "bg-primary/10 font-semibold text-primary hover:bg-primary/15 hover:text-primary"
+                                      : isChildActive
+                                        ? "font-medium text-foreground"
+                                        : ""
                                   )}
-                                />
-                              </SidebarMenuAction>
-                            </div>
+                                  onClick={
+                                    !item.href
+                                      ? () => toggleItem(itemKey, isOpen)
+                                      : undefined
+                                  }
+                                >
+                                  <span className="flex min-w-0 flex-1 items-center gap-2.5">
+                                    {item.icon && (
+                                      <span className="shrink-0">
+                                        {item.icon}
+                                      </span>
+                                    )}
+                                    <span className="truncate">
+                                      {item.label}
+                                    </span>
+                                  </span>
+                                  {item.badge && (
+                                    <Badge
+                                      variant="secondary"
+                                      className="h-4 shrink-0 px-1.5 text-[10px]"
+                                    >
+                                      {formatBadge(item.badge)}
+                                    </Badge>
+                                  )}
+                                </SidebarMenuButton>
 
-                            {isOpen && (
-                              <SidebarMenuSub className="ms-3.5 me-0 mt-1 border-s border-sidebar-border/60 ps-2 pe-0">
-                                {item.children!.map(
-                                  (
-                                    child: SidebarItemChild,
-                                    childIdx: number
-                                  ) => {
-                                    const isSubActive = pathname === child.href
+                                {/* Dedicated Chevron button to expand/collapse */}
+                                <SidebarMenuAction
+                                  showOnHover={false}
+                                  className="cursor-pointer"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    toggleItem(itemKey, isOpen)
+                                  }}
+                                  aria-label={
+                                    isOpen ? t("collapse") : t("expand")
+                                  }
+                                >
+                                  <IconChevronDown
+                                    className={cn(
+                                      "size-3.5 transition-transform duration-200",
+                                      isOpen && "rotate-180"
+                                    )}
+                                  />
+                                </SidebarMenuAction>
+                              </div>
 
-                                    if (child.component) {
+                              {isOpen && (
+                                <SidebarMenuSub className="ms-3.5 me-0 mt-1 border-s border-sidebar-border/60 ps-2 pe-0">
+                                  {item.children!.map(
+                                    (
+                                      child: SidebarItemChild,
+                                      childIdx: number
+                                    ) => {
+                                      const isSubActive = isRouteActive(
+                                        pathname,
+                                        child.href
+                                      )
+
+                                      if (child.component) {
+                                        return (
+                                          <SidebarMenuSubItem key={childIdx}>
+                                            {child.component}
+                                          </SidebarMenuSubItem>
+                                        )
+                                      }
+
                                       return (
                                         <SidebarMenuSubItem key={childIdx}>
-                                          {child.component}
+                                          <SidebarMenuSubButton
+                                            href={child.href || "#"}
+                                            isActive={isSubActive}
+                                            className={cn(
+                                              "w-full justify-between gap-2",
+                                              isSubActive &&
+                                                "bg-primary/10 font-semibold text-primary hover:bg-primary/15 hover:text-primary"
+                                            )}
+                                          >
+                                            <span className="flex min-w-0 flex-1 items-center gap-2">
+                                              {child.icon && (
+                                                <span className="shrink-0">
+                                                  {child.icon}
+                                                </span>
+                                              )}
+                                              <span className="truncate">
+                                                {child.label}
+                                              </span>
+                                            </span>
+                                            {child.badge && (
+                                              <Badge
+                                                variant="secondary"
+                                                className="ml-auto h-4 shrink-0 px-1.5 text-[10px]"
+                                              >
+                                                {formatBadge(child.badge)}
+                                              </Badge>
+                                            )}
+                                          </SidebarMenuSubButton>
                                         </SidebarMenuSubItem>
                                       )
                                     }
-
-                                    return (
-                                      <SidebarMenuSubItem key={childIdx}>
-                                        <SidebarMenuSubButton
-                                          href={child.href || "#"}
-                                          isActive={isSubActive}
-                                          className={cn(
-                                            "w-full justify-between gap-2",
-                                            isSubActive &&
-                                              "font-semibold text-primary"
-                                          )}
-                                        >
-                                          <span className="flex min-w-0 flex-1 items-center gap-2">
-                                            {child.icon && (
-                                              <span className="shrink-0">
-                                                {child.icon}
-                                              </span>
-                                            )}
-                                            <span className="truncate">
-                                              {child.label}
-                                            </span>
-                                          </span>
-                                          {child.badge && (
-                                            <Badge
-                                              variant="secondary"
-                                              className="ml-auto h-4 shrink-0 px-1.5 text-[10px]"
-                                            >
-                                              {formatBadge(child.badge)}
-                                            </Badge>
-                                          )}
-                                        </SidebarMenuSubButton>
-                                      </SidebarMenuSubItem>
-                                    )
-                                  }
-                                )}
-                              </SidebarMenuSub>
-                            )}
-                          </div>
-                        ) : (
-                          <SidebarMenuButton
-                            href={item.href || "#"}
-                            isActive={isActive}
-                            tooltip={
-                              state === "collapsed" ? item.label : undefined
-                            }
-                            className={cn(
-                              "w-full justify-between gap-2",
-                              isActive && "font-semibold"
-                            )}
-                            onClick={item.onClick}
-                          >
-                            <span className="flex min-w-0 flex-1 items-center gap-2.5">
-                              {item.icon && (
-                                <span className="shrink-0">{item.icon}</span>
+                                  )}
+                                </SidebarMenuSub>
                               )}
-                              <span className="truncate">{item.label}</span>
-                            </span>
-                            {item.badge && (
-                              <Badge
-                                variant="secondary"
-                                className="ml-auto h-4 shrink-0 px-1.5 text-[10px]"
-                              >
-                                {formatBadge(item.badge)}
-                              </Badge>
-                            )}
-                          </SidebarMenuButton>
-                        )}
-                      </SidebarMenuItem>
-                    )
-                  })}
-                </SidebarMenu>
+                            </div>
+                          ) : (
+                            <SidebarMenuButton
+                              href={item.href || "#"}
+                              isActive={isDirectActive}
+                              tooltip={
+                                state === "collapsed" ? item.label : undefined
+                              }
+                              className={cn(
+                                "w-full justify-between gap-2",
+                                isDirectActive &&
+                                  "bg-primary/10 font-semibold text-primary hover:bg-primary/15 hover:text-primary"
+                              )}
+                              onClick={item.onClick}
+                            >
+                              <span className="flex min-w-0 flex-1 items-center gap-2.5">
+                                {item.icon && (
+                                  <span className="shrink-0">{item.icon}</span>
+                                )}
+                                <span className="truncate">{item.label}</span>
+                              </span>
+                              {item.badge && (
+                                <Badge
+                                  variant="secondary"
+                                  className="ml-auto h-4 shrink-0 px-1.5 text-[10px]"
+                                >
+                                  {formatBadge(item.badge)}
+                                </Badge>
+                              )}
+                            </SidebarMenuButton>
+                          )}
+                        </SidebarMenuItem>
+                      )
+                    })}
+                  </SidebarMenu>
+                )}
               </SidebarGroup>
             )
           })}
