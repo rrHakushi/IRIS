@@ -139,6 +139,16 @@ export interface SourceLinkItem {
 export interface ThemeSongItem {
   id?: number | null
   text: string
+  anime_id?: number | null
+  musicId?: number | null
+  title?: string | null
+  titleNative?: string | null
+  artist?: string | null
+  episodes?: string | null
+  deezerId?: number | null
+  deezerUrl?: string | null
+  previewUrl?: string | null
+  isDirectMatch?: boolean | null
 }
 
 export interface ThemeSongsData {

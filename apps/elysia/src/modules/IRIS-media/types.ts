@@ -172,6 +172,16 @@ export const MediaThemeSongItemSchema = t.Union([
   t.Object({
     id: t.Optional(t.Nullable(t.Number())),
     text: t.String(),
+    anime_id: t.Optional(t.Nullable(t.Number())),
+    musicId: t.Optional(t.Nullable(t.Number())),
+    title: t.Optional(t.Nullable(t.String())),
+    titleNative: t.Optional(t.Nullable(t.String())),
+    artist: t.Optional(t.Nullable(t.String())),
+    episodes: t.Optional(t.Nullable(t.String())),
+    deezerId: t.Optional(t.Nullable(t.Number())),
+    deezerUrl: t.Optional(t.Nullable(t.String())),
+    previewUrl: t.Optional(t.Nullable(t.String())),
+    isDirectMatch: t.Optional(t.Nullable(t.Boolean())),
   }),
 ])
 

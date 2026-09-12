@@ -17,12 +17,18 @@ import {
   IconTrophy,
   IconWorld,
   IconMicrophone,
+  IconPlayerPlay,
+  IconPlayerPause,
 } from "@tabler/icons-react"
 import { Badge } from "@workspace/ui/components/badge"
-import { Button } from "@workspace/ui/components/button"
+import { Button, buttonVariants } from "@workspace/ui/components/button"
 import { cn } from "@workspace/ui/lib/utils"
 import { useUser } from "@/context/user-context"
-import { getMediaPreferences } from "@IRIS/shared"
+import {
+  getMediaPreferences,
+  parseMalThemeSong,
+  getDeezerFallbackSearchUrl,
+} from "@IRIS/shared"
 import { formatMediaTitle } from "@/lib/browse-search"
 import { getMediaDetailHref } from "@/lib/media-routes"
 import type {
@@ -30,6 +36,7 @@ import type {
   NormalizedMediaData,
   RelationItem,
   SimilarMediaCardItem,
+  ThemeSongItem,
 } from "../media-types"
 import { MusicTracklist } from "../music/music-tracklist"
 import { MusicPlayerPreview } from "../music/music-player-preview"
@@ -266,6 +273,48 @@ export function OverviewTab({
   const opSongs = media.themeSongs?.op ?? []
   const edSongs = media.themeSongs?.ed ?? []
   const hasThemeSongs = opSongs.length > 0 || edSongs.length > 0
+
+  // Theme songs 30s audio preview playback state
+  const [playingThemeAudio, setPlayingThemeAudio] = React.useState<
+    string | null
+  >(null)
+  const themeAudioRef = React.useRef<HTMLAudioElement | null>(null)
+
+  React.useEffect(() => {
+    return () => {
+      if (themeAudioRef.current) {
+        themeAudioRef.current.pause()
+        themeAudioRef.current = null
+      }
+    }
+  }, [])
+
+  const handleToggleThemeAudio = React.useCallback(
+    (audioUrl: string | null) => {
+      if (!audioUrl) return
+
+      if (playingThemeAudio === audioUrl) {
+        if (themeAudioRef.current) {
+          themeAudioRef.current.pause()
+        }
+        setPlayingThemeAudio(null)
+      } else {
+        if (themeAudioRef.current) {
+          themeAudioRef.current.pause()
+        }
+        const audio = new Audio(audioUrl)
+        themeAudioRef.current = audio
+        setPlayingThemeAudio(audioUrl)
+        audio.play().catch(() => {
+          setPlayingThemeAudio(null)
+        })
+        audio.addEventListener("ended", () => {
+          setPlayingThemeAudio(null)
+        })
+      }
+    },
+    [playingThemeAudio]
+  )
 
   // Studios breakdown
   const animationStudios = media.studios
@@ -921,21 +970,16 @@ export function OverviewTab({
                     <h3 className="mb-2.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                       Opening Themes
                     </h3>
-                    <ul className="flex flex-col gap-2">
-                      {opSongs.map((op, idx) => {
-                        const text = typeof op === "string" ? op : op.text
-                        return (
-                          <li
-                            key={idx}
-                            className="flex gap-2 text-xs text-foreground/90"
-                          >
-                            <span className="font-semibold text-muted-foreground tabular-nums">
-                              {idx + 1}.
-                            </span>
-                            <span className="break-words">{text}</span>
-                          </li>
-                        )
-                      })}
+                    <ul className="flex flex-col gap-1.5">
+                      {opSongs.map((op, idx) => (
+                        <ThemeSongRow
+                          key={idx}
+                          item={op}
+                          index={idx}
+                          playingAudioUrl={playingThemeAudio}
+                          onTogglePlay={handleToggleThemeAudio}
+                        />
+                      ))}
                     </ul>
                   </div>
                 )}
@@ -945,21 +989,16 @@ export function OverviewTab({
                     <h3 className="mb-2.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                       Ending Themes
                     </h3>
-                    <ul className="flex flex-col gap-2">
-                      {edSongs.map((ed, idx) => {
-                        const text = typeof ed === "string" ? ed : ed.text
-                        return (
-                          <li
-                            key={idx}
-                            className="flex gap-2 text-xs text-foreground/90"
-                          >
-                            <span className="font-semibold text-muted-foreground tabular-nums">
-                              {idx + 1}.
-                            </span>
-                            <span className="break-words">{text}</span>
-                          </li>
-                        )
-                      })}
+                    <ul className="flex flex-col gap-1.5">
+                      {edSongs.map((ed, idx) => (
+                        <ThemeSongRow
+                          key={idx}
+                          item={ed}
+                          index={idx}
+                          playingAudioUrl={playingThemeAudio}
+                          onTogglePlay={handleToggleThemeAudio}
+                        />
+                      ))}
                     </ul>
                   </div>
                 )}
@@ -2372,5 +2411,137 @@ export function OverviewTab({
         </aside>
       </div>
     </div>
+  )
+}
+
+interface ThemeSongRowProps {
+  item: ThemeSongItem | string
+  index: number
+  playingAudioUrl: string | null
+  onTogglePlay: (audioUrl: string | null) => void
+}
+
+function ThemeSongRow({
+  item,
+  index,
+  playingAudioUrl,
+  onTogglePlay,
+}: ThemeSongRowProps) {
+  const isObj = typeof item === "object" && item !== null
+  const rawText = isObj ? item.text : item
+  const parsed = useMemo(() => parseMalThemeSong(rawText), [rawText])
+
+  const title = isObj && item.title ? item.title : parsed.titleClean
+  const titleNative =
+    isObj && item.titleNative !== undefined
+      ? item.titleNative
+      : parsed.titleNative
+  const artist = isObj && item.artist ? item.artist : parsed.artistClean
+  const episodes =
+    isObj && item.episodes !== undefined ? item.episodes : parsed.episodes
+  const musicId = isObj ? item.musicId : null
+  const previewUrl = isObj ? item.previewUrl : null
+  const isDirectMatch = isObj ? Boolean(item.isDirectMatch) : false
+  const deezerUrl =
+    isObj && item.deezerUrl
+      ? item.deezerUrl
+      : getDeezerFallbackSearchUrl(artist, title)
+
+  const isPlaying = Boolean(previewUrl && playingAudioUrl === previewUrl)
+
+  return (
+    <li className="group flex items-center justify-between gap-2.5 rounded-xl border border-transparent px-2.5 py-1.5 transition-colors hover:border-border/40 hover:bg-muted/40">
+      <div className="flex min-w-0 items-start gap-2.5">
+        <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-muted text-[11px] font-semibold text-muted-foreground tabular-nums">
+          {parsed.index ?? index + 1}
+        </span>
+
+        <div className="flex min-w-0 flex-col text-start">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {musicId ? (
+              <Link
+                href={getMediaDetailHref("music", musicId, {
+                  itemType: "TRACK",
+                })}
+                className="group/link inline-flex items-center gap-1 text-xs font-semibold text-foreground transition-colors hover:text-primary"
+                title={`Open track #${musicId} in IRIS Music`}
+              >
+                <span className="truncate">{title}</span>
+                {titleNative && (
+                  <span className="font-normal text-muted-foreground">
+                    ({titleNative})
+                  </span>
+                )}
+              </Link>
+            ) : (
+              <a
+                href={deezerUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group/link inline-flex items-center gap-1 text-xs font-semibold text-foreground transition-colors hover:text-primary"
+                title={isDirectMatch ? "Listen on Deezer" : "Search on Deezer"}
+              >
+                <span className="truncate">{title}</span>
+                {titleNative && (
+                  <span className="font-normal text-muted-foreground">
+                    ({titleNative})
+                  </span>
+                )}
+                <IconExternalLink className="size-3 text-muted-foreground opacity-0 transition-opacity group-hover/link:opacity-100" />
+              </a>
+            )}
+          </div>
+
+          <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+            {artist && <span>by {artist}</span>}
+            {episodes && (
+              <Badge
+                variant="outline"
+                className="px-1.5 py-0 text-[10px] font-normal text-muted-foreground"
+              >
+                {episodes}
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex shrink-0 items-center gap-1">
+        {previewUrl && (
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={() => onTogglePlay(previewUrl)}
+            className="size-7 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label={isPlaying ? "Pause Preview" : "Play 30s Audio Preview"}
+          >
+            {isPlaying ? (
+              <IconPlayerPause className="size-3.5 animate-pulse text-primary" />
+            ) : (
+              <IconPlayerPlay className="size-3.5" />
+            )}
+          </Button>
+        )}
+
+        <a
+          href={deezerUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "icon-xs" }),
+            "size-7 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+          )}
+          title={isDirectMatch ? "Listen on Deezer" : "Search on Deezer"}
+          aria-label={isDirectMatch ? "Listen on Deezer" : "Search on Deezer"}
+        >
+          <IconDisc
+            className={cn(
+              "size-3.5",
+              isDirectMatch ? "text-primary" : "text-muted-foreground/60"
+            )}
+          />
+        </a>
+      </div>
+    </li>
   )
 }

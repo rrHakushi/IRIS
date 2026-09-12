@@ -18,6 +18,7 @@
     "route:create": "bun run --cwd apps/elysia scripts/create-route.ts",
     "route:delete": "bun run --cwd apps/elysia scripts/delete-route.ts",
     "route:sync": "bun run --cwd apps/elysia scripts/generate-manifests.ts",
+    "anime:theme-songs": "dotenvx run -- bun run apps/elysia/scripts/update-anime-theme-songs.ts --",
     "sdk": "echo \"nestia sdk disabled\"",
     "swagger": "echo \"nestia swagger disabled\"",
     "nestia": "echo \"nestia disabled\""
