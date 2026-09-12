@@ -38,11 +38,26 @@ export interface UserPreferencesCustomization {
   media?: UserMediaPreferences;
 }
 
+export type DockPositions = Record<string, string | null>;
+
+export interface CustomDockGroup {
+  id: string;
+  label: string;
+  icon: string;
+  itemKeys: string[];
+}
+
+export interface UserDockCustomization {
+  positions?: DockPositions;
+  customGroups?: CustomDockGroup[];
+  [key: string]: unknown;
+}
+
 export interface UserCustomization {
   profile?: UserProfileCustomization;
   appearance?: Record<string, unknown>;
   sidebar?: Record<string, unknown>;
-  dock?: Record<string, unknown>;
+  dock?: UserDockCustomization;
   preferences?: UserPreferencesCustomization;
   [key: string]: unknown;
 }
@@ -383,6 +398,64 @@ export function setProfileCustomization(
     displayName: updatedProfile.displayName || undefined,
     avatarUrl: updatedProfile.avatarUrl || null,
     sidebarCardBackgroundUrl: updatedProfile.nameplateUrl || null,
+  };
+}
+
+export const DEFAULT_DOCK_POSITIONS: DockPositions = {
+  "1": null,
+  "2": null,
+  "3": null,
+  "4": null,
+};
+
+/**
+ * Safely extracts and normalizes the dock customization from any User.customization object.
+ */
+export function getDockCustomization(customization?: unknown): UserDockCustomization {
+  if (!customization || typeof customization !== "object") {
+    return { positions: { ...DEFAULT_DOCK_POSITIONS }, customGroups: [] };
+  }
+  const dock = (customization as any)?.dock;
+  if (!dock || typeof dock !== "object") {
+    return { positions: { ...DEFAULT_DOCK_POSITIONS }, customGroups: [] };
+  }
+  return {
+    ...dock,
+    positions: {
+      ...DEFAULT_DOCK_POSITIONS,
+      ...(dock.positions || {}),
+    },
+    customGroups: Array.isArray(dock.customGroups) ? dock.customGroups : [],
+  };
+}
+
+/**
+ * Immutably applies dock customization patch into user customization object.
+ */
+export function setDockCustomization(
+  existingCustomization: unknown,
+  patch: Partial<UserDockCustomization>
+): Record<string, unknown> {
+  const current = (existingCustomization && typeof existingCustomization === "object")
+    ? { ...(existingCustomization as Record<string, unknown>) }
+    : {};
+
+  const currentDock = getDockCustomization(current);
+
+  const updatedDock: UserDockCustomization = {
+    ...currentDock,
+    ...patch,
+    positions: {
+      ...currentDock.positions,
+      ...(patch.positions || {}),
+    },
+    customGroups:
+      patch.customGroups !== undefined ? patch.customGroups : currentDock.customGroups || [],
+  };
+
+  return {
+    ...current,
+    dock: updatedDock,
   };
 }
 

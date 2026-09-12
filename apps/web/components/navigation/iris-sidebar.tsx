@@ -373,13 +373,15 @@ export function IrisSidebar({
         </SidebarFooter>
       </Sidebar>
 
-      {/* Mobile Bottom Dock (CSS md:hidden handles desktop vs mobile rendering) */}
-      <IrisBottomDock
-        pathname={pathname}
-        navConfig={activeConfig}
-        setOpenMobile={setOpenMobile}
-        onOpenSettings={onOpenSettings}
-      />
+      {/* Mobile Bottom Dock (rendered on phones only) */}
+      {isMobile ? (
+        <IrisBottomDock
+          pathname={pathname}
+          navConfig={activeConfig}
+          setOpenMobile={setOpenMobile}
+          onOpenSettings={onOpenSettings}
+        />
+      ) : null}
     </>
   )
 }

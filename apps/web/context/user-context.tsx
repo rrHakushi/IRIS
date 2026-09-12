@@ -13,7 +13,9 @@ import { elysia } from "@/lib/elysia"
 import {
   getProfileCustomization,
   setProfileCustomization,
+  setDockCustomization,
   type UserProfileCustomization,
+  type UserDockCustomization,
   type DisplayNameStyle,
 } from "@IRIS/shared"
 
@@ -55,6 +57,9 @@ interface UserContextValue {
   updateProfile: (
     patch: Partial<UserProfileCustomization>
   ) => Promise<FullUser | null>
+  updateDock: (
+    patch: Partial<UserDockCustomization>
+  ) => Promise<FullUser | null>
 }
 
 const UserContext = createContext<UserContextValue>({
@@ -64,6 +69,7 @@ const UserContext = createContext<UserContextValue>({
   refetchUser: async () => null,
   updateUser: async () => null,
   updateProfile: async () => null,
+  updateDock: async () => null,
 })
 
 // In-memory cache across route changes
@@ -211,6 +217,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return updateUser({ customization: updatedCustomization })
   }
 
+  const updateDock = async (
+    patch: Partial<UserDockCustomization>
+  ): Promise<FullUser | null> => {
+    const updatedCustomization = setDockCustomization(
+      user?.customization,
+      patch
+    )
+    return updateUser({ customization: updatedCustomization })
+  }
+
   return (
     <UserContext.Provider
       value={{
@@ -220,6 +236,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         refetchUser: () => fetchUser(true),
         updateUser,
         updateProfile,
+        updateDock,
       }}
     >
       {children}

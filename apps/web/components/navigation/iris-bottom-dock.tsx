@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useCallback, useEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -15,6 +15,11 @@ import type {
 } from "@/types/sidebar-config"
 import { IconLayoutGrid, IconX } from "@tabler/icons-react"
 import { IrisMobileLauncher } from "./iris-mobile-launcher"
+import { useUser } from "@/context/user-context"
+import { getDockCustomization, type CustomDockGroup } from "@IRIS/shared"
+import { useIsMobile } from "@workspace/ui/hooks/use-mobile"
+import { useAllAppSidebarConfigs } from "@/config/sidebars"
+import { renderDockGroupIcon } from "@/config/dock-group-icons"
 
 export interface IrisBottomDockProps {
   pathname: string
@@ -37,6 +42,8 @@ export interface IrisBottomDockProps {
   tempPositions?: Record<string, string | null>
   /** Optional label for empty slots */
   emptySlotLabel?: string
+  /** Custom groups list (optional override) */
+  customGroups?: CustomDockGroup[]
 }
 
 /**
@@ -155,11 +162,121 @@ export function IrisBottomDock({
   findItemByKey,
   tempPositions,
   emptySlotLabel,
+  customGroups: customGroupsProp,
 }: IrisBottomDockProps): React.JSX.Element | null {
   const t = useTranslations("navigation.dock")
+  const { user } = useUser()
+  const isMobile = useIsMobile()
   const [launcherOpen, setLauncherOpen] = useState(false)
   const isScrollVisible = useDockScrollVisibility(pathname, isPreview)
   const resolvedEmptyLabel = emptySlotLabel || t("empty")
+
+  const allAppConfigs = useAllAppSidebarConfigs(null)
+
+  const [localMap, setLocalMap] = useState<Record<string, string | null> | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("iris-phone-dock-items-default")
+        return stored ? JSON.parse(stored) : null
+      } catch {
+        return null
+      }
+    }
+    return null
+  })
+
+  const [localGroups, setLocalGroups] = useState<CustomDockGroup[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("iris-phone-dock-custom-groups")
+        if (stored) return JSON.parse(stored)
+      } catch {
+        // ignore
+      }
+    }
+    return []
+  })
+
+  const resolvedGroups = useMemo((): CustomDockGroup[] => {
+    if (customGroupsProp) return customGroupsProp
+    if (user?.customization) {
+      const groups = getDockCustomization(user.customization).customGroups
+      if (Array.isArray(groups) && groups.length > 0) return groups
+    }
+    return localGroups
+  }, [customGroupsProp, user?.customization, localGroups])
+
+  // Read initial local storage on mount (client-only)
+  useEffect(() => {
+    if (isPreview) return
+    try {
+      const stored = localStorage.getItem("iris-phone-dock-items-default")
+      if (stored) {
+        setLocalMap(JSON.parse(stored))
+      }
+      const storedGroups = localStorage.getItem("iris-phone-dock-custom-groups")
+      if (storedGroups) {
+        setLocalGroups(JSON.parse(storedGroups))
+      }
+    } catch {
+      // ignore
+    }
+  }, [isPreview])
+
+  // Listen for iris-sidebar-changed to reactively reload local storage
+  useEffect(() => {
+    if (isPreview) return
+    const handleSidebarChanged = () => {
+      try {
+        const stored = localStorage.getItem("iris-phone-dock-items-default")
+        setLocalMap(stored ? JSON.parse(stored) : null)
+        const storedGroups = localStorage.getItem("iris-phone-dock-custom-groups")
+        setLocalGroups(storedGroups ? JSON.parse(storedGroups) : [])
+      } catch {
+        // ignore
+      }
+    }
+    window.addEventListener("iris-sidebar-changed", handleSidebarChanged)
+    return () => {
+      window.removeEventListener("iris-sidebar-changed", handleSidebarChanged)
+    }
+  }, [isPreview])
+
+  // Sync server customization to localStorage when available
+  useEffect(() => {
+    if (isPreview) return
+    if (user?.customization) {
+      const dockCust = getDockCustomization(user.customization)
+      const serverPositions = dockCust.positions
+      if (serverPositions && Object.values(serverPositions).some(Boolean)) {
+        try {
+          localStorage.setItem(
+            "iris-phone-dock-items-default",
+            JSON.stringify(serverPositions)
+          )
+          setLocalMap(serverPositions)
+        } catch {
+          // ignore
+        }
+      }
+      if (Array.isArray(dockCust.customGroups)) {
+        try {
+          localStorage.setItem(
+            "iris-phone-dock-custom-groups",
+            JSON.stringify(dockCust.customGroups)
+          )
+          setLocalGroups(dockCust.customGroups)
+        } catch {
+          // ignore
+        }
+      }
+    }
+  }, [user?.customization, isPreview])
+
+  // Only render on phones (mobile) unless in preview mode (e.g. inside settings modal)
+  if (!isPreview && !isMobile) {
+    return null
+  }
   // If custom items are provided, render custom scrolling dock
   if (customItems) {
     return (
@@ -284,56 +401,103 @@ export function IrisBottomDock({
 
   const rawItems = phoneSection?.items ?? []
 
-  // Check localStorage for customized dock slots
-  let customMap: Record<string, string | null> | null = null
-  if (typeof window !== "undefined") {
-    try {
-      const stored = localStorage.getItem("iris-phone-dock-items-default")
-      if (stored) customMap = JSON.parse(stored)
-    } catch {
-      // ignore
-    }
-  }
+  // Determine active custom dock slots: user profile customization > local storage
+  const userPositions = user?.customization
+    ? getDockCustomization(user.customization).positions
+    : null
+  const hasUserPositions =
+    userPositions && Object.values(userPositions).some(Boolean)
+  const customMap = hasUserPositions ? userPositions : localMap
 
-  // Lookup helper across all config sections
+  // Lookup helper across active config and all registered apps
   const lookupItem = (
     key: string | null | undefined
   ): SidebarItem | undefined => {
     if (!key) return undefined
-    for (const sec of navConfig) {
-      for (const it of sec.items) {
-        const itemKey =
-          it.href || (it.component ? `label:${it.label}` : undefined)
-        if (itemKey === key) return it
-        if (it.children) {
-          for (const ch of it.children) {
-            const childKey =
-              ch.href || (ch.component ? `label:${ch.label}` : undefined)
-            if (childKey === key) return ch as SidebarItem
+
+    // 1. Check current app navConfig
+    if (navConfig) {
+      for (const sec of navConfig) {
+        for (const it of sec.items) {
+          const itemKey =
+            it.href || it.dataKey || (it.component ? `label:${it.label}` : undefined)
+          if (itemKey === key) return it
+          if (it.children) {
+            for (const ch of it.children) {
+              const childKey =
+                ch.href ||
+                (ch as any).dataKey ||
+                (ch.component ? `label:${ch.label}` : undefined)
+              if (childKey === key) return ch as SidebarItem
+            }
           }
         }
       }
     }
+
+    // 2. Cross-app fallback: search all registered app configs
+    for (const app of allAppConfigs) {
+      for (const sec of app.config) {
+        for (const it of sec.items) {
+          const itemKey =
+            it.href || it.dataKey || (it.component ? `label:${it.label}` : undefined)
+          if (itemKey === key) return it
+          if (it.children) {
+            for (const ch of it.children) {
+              const childKey =
+                ch.href ||
+                (ch as any).dataKey ||
+                (ch.component ? `label:${ch.label}` : undefined)
+              if (childKey === key) return ch as SidebarItem
+            }
+          }
+        }
+      }
+    }
+
     return undefined
   }
 
-  const item1 = customMap?.["1"]
-    ? lookupItem(customMap["1"])
-    : rawItems.find((i) => i.position === 1) || rawItems[0]
+  const resolveSlotItem = (pos: string): SidebarItem | undefined => {
+    if (customMap) {
+      if (pos in customMap) {
+        const key = customMap[pos]
+        if (!key) return undefined
 
-  const item2 = customMap?.["2"]
-    ? lookupItem(customMap["2"])
-    : rawItems.find((i) => i.position === 2) || rawItems[1]
+        // Handle custom groups
+        if (key.startsWith("group:")) {
+          const groupId = key.slice("group:".length)
+          const group = resolvedGroups.find((g: CustomDockGroup) => g.id === groupId)
+          if (group) {
+            const children = group.itemKeys
+              .map((k: string) => lookupItem(k))
+              .filter(Boolean) as SidebarItem[]
+            return {
+              label: group.label,
+              icon: renderDockGroupIcon(group.icon, "size-5"),
+              dataKey: key,
+              children: children.map((c) => ({
+                label: c.label,
+                href: c.href,
+                icon: c.icon,
+              })),
+            }
+          }
+          return undefined
+        }
 
-  const item3 = customMap?.["3"]
-    ? lookupItem(customMap["3"])
-    : rawItems.find((i) => i.position === 3) || rawItems[2]
+        return lookupItem(key)
+      }
+    }
+    return rawItems.find((i) => i.position === Number(pos))
+  }
 
-  const item4 = customMap?.["4"]
-    ? lookupItem(customMap["4"])
-    : rawItems.find((i) => i.position === 4) || rawItems[3]
+  const item1 = resolveSlotItem("1")
+  const item2 = resolveSlotItem("2")
+  const item3 = resolveSlotItem("3")
+  const item4 = resolveSlotItem("4")
 
-  if (!item1 && !item2 && !item3 && !item4 && rawItems.length === 0) {
+  if (!item1 && !item2 && !item3 && !item4 && rawItems.length === 0 && !customMap) {
     return null
   }
 
@@ -344,7 +508,13 @@ export function IrisBottomDock({
   }
 
   const mapItem = (item?: SidebarItem) => {
-    if (!item) return <div className="min-h-11 max-w-16 min-w-0 flex-1" />
+    if (!item) {
+      return (
+        <div className="flex max-w-16 min-w-0 flex-1 justify-center">
+          <div className="min-h-11 w-full" aria-hidden="true" />
+        </div>
+      )
+    }
     return (
       <div className="flex max-w-16 min-w-0 flex-1 justify-center">
         <IrisDockItem
@@ -624,13 +794,17 @@ function IrisDockItem({
               }}
             />
             <div
-              className="absolute bottom-full left-1/2 z-50 mb-3 flex max-w-56 min-w-44 -translate-x-1/2 animate-in flex-col gap-0.5 rounded-2xl border border-border/80 bg-card/95 p-1.5 shadow-2xl backdrop-blur-2xl duration-150 fade-in-0 select-none zoom-in-95"
+              className="no-scrollbar absolute bottom-full left-1/2 z-50 mb-3 flex max-h-[276px] max-w-60 min-w-44 -translate-x-1/2 animate-in flex-col gap-0.5 overflow-y-auto overscroll-contain rounded-2xl border border-border/80 bg-card/95 p-1.5 shadow-2xl backdrop-blur-2xl duration-150 fade-in-0 select-none touch-pan-y zoom-in-95"
               onClick={(e) => e.stopPropagation()}
             >
               {item.children.map((child) => {
                 const isChildActive = pathname === child.href
                 return child.component ? (
-                  <div key={child.label} onClick={() => setDropdownOpen(false)}>
+                  <div
+                    key={child.label}
+                    className="shrink-0"
+                    onClick={() => setDropdownOpen(false)}
+                  >
                     {child.component}
                   </div>
                 ) : (
@@ -639,7 +813,7 @@ function IrisDockItem({
                     href={child.href || "#"}
                     onClick={() => setDropdownOpen(false)}
                     className={cn(
-                      "flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-medium transition-colors duration-150",
+                      "flex h-9 shrink-0 w-full items-center justify-between rounded-xl px-3 text-xs font-medium transition-colors duration-150",
                       isChildActive
                         ? "bg-primary/15 font-semibold text-primary"
                         : "text-foreground/90 hover:bg-muted/70 hover:text-foreground active:bg-muted"
