@@ -44,7 +44,7 @@ export function StaffTab({ staff }: StaffTabProps) {
               className="flex items-center gap-3 rounded-2xl border border-border/40 bg-card p-2.5"
             >
               <Link
-                href={`/IRIS-list/media/people/${member.person.id}`}
+                href={`/IRIS-list/people/${member.person.id}`}
                 className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {member.person.image ? (
@@ -63,7 +63,7 @@ export function StaffTab({ staff }: StaffTabProps) {
 
               <div className="flex min-w-0 flex-1 flex-col">
                 <Link
-                  href={`/IRIS-list/media/people/${member.person.id}`}
+                  href={`/IRIS-list/people/${member.person.id}`}
                   className="truncate text-xs font-semibold text-foreground outline-none hover:underline focus-visible:underline"
                 >
                   {member.person.namePrimary}

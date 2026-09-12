@@ -697,7 +697,7 @@ export function CharacterDetailView({ character }: CharacterDetailViewProps) {
                 {uniqueActors.map((actor) => (
                   <Link
                     key={actor.id}
-                    href={`/IRIS-list/media/people/${actor.id}`}
+                    href={`/IRIS-list/people/${actor.id}`}
                     className="group flex items-center gap-3 rounded-2xl border border-border/40 bg-card/60 p-2.5 transition-colors outline-none hover:border-border/60 hover:bg-card focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <div className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-muted">

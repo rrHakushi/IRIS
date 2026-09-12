@@ -59,8 +59,8 @@ export function DiscoverHeroBanner({
 
   const mediaHref =
     category === "music"
-      ? `/IRIS-list/media/music/${currentItem.itemType?.toLowerCase() === "album" ? "albums" : "tracks"}/${currentItem.id}`
-      : `/IRIS-list/media/${category}/${currentItem.id}`
+      ? `/IRIS-list/music/${currentItem.itemType?.toLowerCase() === "album" ? "albums" : "tracks"}/${currentItem.id}`
+      : `/IRIS-list/${category}/${currentItem.id}`
 
   const backdropUrl =
     currentItem.bannerImage ||

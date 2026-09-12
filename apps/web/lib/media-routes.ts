@@ -1,5 +1,5 @@
 /**
- * Canonical URL slug and link helpers for IRIS List media detail pages (/IRIS-list/media/[category]/[id]).
+ * Canonical URL slug and link helpers for IRIS List media detail pages (/IRIS-list/[category]/[id]).
  */
 
 /**
@@ -59,8 +59,8 @@ export function getMediaDetailHref(
       options?.itemType?.toUpperCase() === "TRACK" ||
       Boolean(options?.trackId && !options?.albumId)
     const subpath = isTrack ? "tracks" : "albums"
-    return `/IRIS-list/media/music/${subpath}/${mediaId}${query}`
+    return `/IRIS-list/music/${subpath}/${mediaId}${query}`
   }
 
-  return `/IRIS-list/media/${category}/${mediaId}${query}`
+  return `/IRIS-list/${category}/${mediaId}${query}`
 }

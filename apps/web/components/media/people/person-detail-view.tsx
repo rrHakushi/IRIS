@@ -1035,7 +1035,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
 
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4">
                       {musicAlbums.map((album) => {
-                        const albumHref = `/IRIS-list/media/music/albums/${album.id}`
+                        const albumHref = `/IRIS-list/music/albums/${album.id}`
                         return (
                           <Link
                             key={`album-${album.id}`}
@@ -1129,7 +1129,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
 
                     <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                       {musicTracks.map((track) => {
-                        const trackHref = `/IRIS-list/media/music/tracks/${track.id}`
+                        const trackHref = `/IRIS-list/music/tracks/${track.id}`
                         return (
                           <div
                             key={`track-${track.id}`}
@@ -1308,7 +1308,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {group.items.map((item) => {
                           const mediaHref = getMediaDetailHref(item.mediaType, item.mediaId)
-                          const characterHref = `/IRIS-list/media/characters/${item.characterId}`
+                          const characterHref = `/IRIS-list/characters/${item.characterId}`
 
                           return (
                             <div

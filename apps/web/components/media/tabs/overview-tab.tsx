@@ -632,7 +632,7 @@ export function OverviewTab({
               </div>
 
               <Link
-                href={`/IRIS-list/media/music/albums/${media.albumId}`}
+                href={`/IRIS-list/music/albums/${media.albumId}`}
                 className="group flex items-center justify-between gap-4 rounded-2xl border border-border/40 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:bg-accent/30"
               >
                 <div className="flex min-w-0 items-center gap-3">
@@ -769,7 +769,7 @@ export function OverviewTab({
                       {/* Character Side */}
                       <div className="flex min-w-0 flex-1 items-center gap-2.5">
                         <Link
-                          href={`/IRIS-list/media/characters/${item.characterId}`}
+                          href={`/IRIS-list/characters/${item.characterId}`}
                           className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           {item.image ? (
@@ -791,7 +791,7 @@ export function OverviewTab({
 
                         <div className="flex min-w-0 flex-col">
                           <Link
-                            href={`/IRIS-list/media/characters/${item.characterId}`}
+                            href={`/IRIS-list/characters/${item.characterId}`}
                             className="truncate text-xs font-medium text-foreground outline-none hover:underline focus-visible:underline"
                           >
                             {charName}
@@ -807,7 +807,7 @@ export function OverviewTab({
                         <div className="flex min-w-0 flex-1 items-center justify-end gap-2.5 pl-2 text-end">
                           <div className="flex min-w-0 flex-col">
                             <Link
-                              href={`/IRIS-list/media/people/${item.actor.id}`}
+                              href={`/IRIS-list/people/${item.actor.id}`}
                               className="truncate text-xs font-medium text-foreground outline-none hover:underline focus-visible:underline"
                             >
                               {actorName}
@@ -820,7 +820,7 @@ export function OverviewTab({
                           </div>
 
                           <Link
-                            href={`/IRIS-list/media/people/${item.actor.id}`}
+                            href={`/IRIS-list/people/${item.actor.id}`}
                             className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           >
                             {item.actor.image ? (
@@ -1080,7 +1080,7 @@ export function OverviewTab({
                   return (
                     <Link
                       key={item.id}
-                      href={`/IRIS-list/media/${media.category}/${item.id}`}
+                      href={`/IRIS-list/${media.category}/${item.id}`}
                       className="group flex w-[calc((100%-0.75rem)/2)] shrink-0 flex-col overflow-hidden rounded-xl border border-border/40 bg-card outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-[calc((100%-1.5rem)/3)] md:w-[calc((100%-2.25rem)/4)] lg:w-[calc((100%-3.75rem)/6)]"
                     >
                       <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted">
@@ -1440,7 +1440,7 @@ export function OverviewTab({
                   <span className="shrink-0 text-muted-foreground">Artist</span>
                   {media.artistPersonId ? (
                     <Link
-                      href={`/IRIS-list/media/people/${media.artistPersonId}`}
+                      href={`/IRIS-list/people/${media.artistPersonId}`}
                       className="text-end font-medium text-primary transition-colors hover:underline"
                     >
                       {media.artist}
@@ -1458,7 +1458,7 @@ export function OverviewTab({
                 <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
                   <span className="shrink-0 text-muted-foreground">Album</span>
                   <Link
-                    href={`/IRIS-list/media/music/albums/${media.albumId}`}
+                    href={`/IRIS-list/music/albums/${media.albumId}`}
                     className="text-end font-medium text-primary hover:underline"
                   >
                     {media.album}

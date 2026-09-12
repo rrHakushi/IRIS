@@ -57,10 +57,10 @@ export function BrowseMediaCard({
   const queuedParam = item.queuedForFetch ? "?queuedFetch=true" : ""
   const href =
     category === "music"
-      ? `/IRIS-list/media/music/${musicSubpath}/${item.id}${queuedParam}`
+      ? `/IRIS-list/music/${musicSubpath}/${item.id}${queuedParam}`
       : item.queuedForFetch
-        ? `/IRIS-list/media/${category}/${item.id}?queuedFetch=true`
-        : `/IRIS-list/media/${category}/${item.id}`
+        ? `/IRIS-list/${category}/${item.id}?queuedFetch=true`
+        : `/IRIS-list/${category}/${item.id}`
 
   const handleClick = () => {
     onVisit?.({

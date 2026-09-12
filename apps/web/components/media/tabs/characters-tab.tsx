@@ -141,7 +141,7 @@ export function CharactersTab({ characters }: CharactersTabProps) {
                 {/* Character Side */}
                 <div className="flex min-w-0 flex-1 items-center gap-3">
                   <Link
-                    href={`/IRIS-list/media/characters/${char.characterId}`}
+                    href={`/IRIS-list/characters/${char.characterId}`}
                     className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {char.image ? (
@@ -160,7 +160,7 @@ export function CharactersTab({ characters }: CharactersTabProps) {
 
                   <div className="flex min-w-0 flex-col">
                     <Link
-                      href={`/IRIS-list/media/characters/${char.characterId}`}
+                      href={`/IRIS-list/characters/${char.characterId}`}
                       className="truncate text-xs font-semibold text-foreground outline-none hover:underline focus-visible:underline"
                     >
                       {char.namePrimary}
@@ -185,7 +185,7 @@ export function CharactersTab({ characters }: CharactersTabProps) {
                     <>
                       <div className="flex min-w-0 flex-col">
                         <Link
-                          href={`/IRIS-list/media/people/${currentActor.id}`}
+                          href={`/IRIS-list/people/${currentActor.id}`}
                           className="truncate text-xs font-medium text-foreground outline-none hover:underline focus-visible:underline"
                         >
                           {currentActor.namePrimary}
@@ -198,7 +198,7 @@ export function CharactersTab({ characters }: CharactersTabProps) {
                       </div>
 
                       <Link
-                        href={`/IRIS-list/media/people/${currentActor.id}`}
+                        href={`/IRIS-list/people/${currentActor.id}`}
                         className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         {currentActor.image ? (

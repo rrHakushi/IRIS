@@ -49,8 +49,8 @@ export default async function MusicDetailPage({ params }: Props) {
   }
 
   if (data.type === "ALBUM") {
-    redirect(`/IRIS-list/media/music/albums/${numericId}`)
+    redirect(`/IRIS-list/music/albums/${numericId}`)
   } else {
-    redirect(`/IRIS-list/media/music/tracks/${numericId}`)
+    redirect(`/IRIS-list/music/tracks/${numericId}`)
   }
 }

@@ -130,7 +130,7 @@ export function ItemStatus({ itemId }: { itemId: number }) {
 ### Server Components & Pages (SSR)
 
 ```typescript
-// app/(APPS)/IRIS-list/media/anime/[id]/page.tsx
+// app/(APPS)/IRIS-list/(media)/anime/[id]/page.tsx
 import { notFound } from "next/navigation"
 import { elysia } from "@/lib/elysia"
 import type { AnimeDetails } from "@IRIS/elysia"

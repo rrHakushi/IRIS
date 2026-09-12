@@ -201,7 +201,7 @@ export function MusicTracklist({
                     {/* Track Title and Artist */}
                     <div className="flex min-w-0 flex-1 flex-col">
                       <Link
-                        href={`/IRIS-list/media/music/tracks/${track.id}`}
+                        href={`/IRIS-list/music/tracks/${track.id}`}
                         className="truncate text-sm font-medium text-foreground transition-colors hover:text-primary focus-visible:underline focus-visible:outline-hidden"
                         title={track.titlePrimary}
                       >
@@ -210,7 +210,7 @@ export function MusicTracklist({
                       {track.artistName &&
                         (track.artistPersonId || albumArtistPersonId ? (
                           <Link
-                            href={`/IRIS-list/media/people/${track.artistPersonId || albumArtistPersonId}`}
+                            href={`/IRIS-list/people/${track.artistPersonId || albumArtistPersonId}`}
                             className="truncate text-xs text-muted-foreground transition-colors hover:text-primary hover:underline"
                           >
                             {track.artistName}
@@ -237,7 +237,7 @@ export function MusicTracklist({
                       {formatDuration(track.duration)}
                     </span>
                     <Link
-                      href={`/IRIS-list/media/music/tracks/${track.id}`}
+                      href={`/IRIS-list/music/tracks/${track.id}`}
                       className="rounded-lg p-1 text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden"
                       aria-label={`View track details for ${track.titlePrimary}`}
                     >

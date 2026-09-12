@@ -33,25 +33,17 @@ function normalizeLinkHref(href: string): {
   }
 
   // Rewrite legacy or shortcut internal paths to canonical IRIS list paths
-  if (cleanHref.startsWith("/IRIS-list/characters/")) {
-    cleanHref = cleanHref.replace(
-      "/IRIS-list/characters/",
-      "/IRIS-list/media/characters/"
-    )
-  } else if (cleanHref.startsWith("/IRIS-list/people/")) {
-    cleanHref = cleanHref.replace(
-      "/IRIS-list/people/",
-      "/IRIS-list/media/people/"
-    )
+  if (cleanHref.startsWith("/IRIS-list/media/")) {
+    cleanHref = cleanHref.replace("/IRIS-list/media/", "/IRIS-list/")
   } else if (cleanHref.startsWith("/character/")) {
-    cleanHref = cleanHref.replace("/character/", "/IRIS-list/media/characters/")
+    cleanHref = cleanHref.replace("/character/", "/IRIS-list/characters/")
   } else if (
     cleanHref.startsWith("/staff/") ||
     cleanHref.startsWith("/people/")
   ) {
     cleanHref = cleanHref.replace(
       /^\/(?:staff|people)\//,
-      "/IRIS-list/media/people/"
+      "/IRIS-list/people/"
     )
   }
 

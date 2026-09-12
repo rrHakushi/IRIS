@@ -146,7 +146,7 @@ export function MediaHero({
                           by{" "}
                           {media.artistPersonId ? (
                             <Link
-                              href={`/IRIS-list/media/people/${media.artistPersonId}`}
+                              href={`/IRIS-list/people/${media.artistPersonId}`}
                               className="text-foreground/90 transition-colors hover:text-primary hover:underline"
                             >
                               {media.artist}
@@ -164,7 +164,7 @@ export function MediaHero({
                             <span>
                               From album{" "}
                               <Link
-                                href={`/IRIS-list/media/music/albums/${media.albumId}`}
+                                href={`/IRIS-list/music/albums/${media.albumId}`}
                                 className="font-medium text-primary hover:underline"
                               >
                                 {media.album}

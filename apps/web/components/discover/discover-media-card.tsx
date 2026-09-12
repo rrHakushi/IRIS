@@ -27,8 +27,8 @@ export function DiscoverMediaCard({
 
   const mediaHref =
     category === "music"
-      ? `/IRIS-list/media/music/${item.itemType?.toLowerCase() === "album" ? "albums" : "tracks"}/${item.id}`
-      : `/IRIS-list/media/${category}/${item.id}`
+      ? `/IRIS-list/music/${item.itemType?.toLowerCase() === "album" ? "albums" : "tracks"}/${item.id}`
+      : `/IRIS-list/${category}/${item.id}`
 
   return (
     <div
