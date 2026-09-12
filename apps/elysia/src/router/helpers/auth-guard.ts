@@ -21,6 +21,13 @@ export interface AuthGuardConfig {
    * Method-level configuration takes strict priority over route-level.
    */
   requirePermissions?: IRISBitFieldResolvable[]
+
+  /**
+   * Array of OAuth scopes required to execute this route when accessed via OAuth token.
+   * Automatically enforces `requireAuth: true`.
+   * Method-level configuration takes strict priority over route-level.
+   */
+  requireScopes?: string[]
 }
 
 /**
@@ -61,11 +68,19 @@ export function assertRouteAuthorization(
       ? methodConfig.requirePermissions
       : routeConfig?.requirePermissions
 
+  const scopesOption =
+    methodConfig?.requireScopes !== undefined
+      ? methodConfig.requireScopes
+      : routeConfig?.requireScopes
+
   const hasPermissionsRequirement =
     Array.isArray(permissionsOption) && permissionsOption.length > 0
+  const hasScopesRequirement =
+    Array.isArray(scopesOption) && scopesOption.length > 0
 
-  // Having permissions requirement automatically implies requireAuth
-  const isAuthRequired = Boolean(authOption) || hasPermissionsRequirement
+  // Having permissions or scopes requirement automatically implies requireAuth
+  const isAuthRequired =
+    Boolean(authOption) || hasPermissionsRequirement || hasScopesRequirement
 
   if (!isAuthRequired) {
     return
@@ -84,6 +99,14 @@ export function assertRouteAuthorization(
     for (const permission of permissionsOption) {
       if (!session.hasPermission(permission)) {
         throw new Forbidden("Insufficient permissions to perform this action")
+      }
+    }
+  }
+
+  if (hasScopesRequirement && session.method === "oauth") {
+    for (const scope of scopesOption) {
+      if (!session.hasScope(scope)) {
+        throw new Forbidden(`Insufficient OAuth scope: requires '${scope}'`)
       }
     }
   }

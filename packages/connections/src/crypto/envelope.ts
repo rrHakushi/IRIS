@@ -165,6 +165,8 @@ export interface OAuthStatePayload {
   codeVerifier?: string;
   returnTo?: string;
   timestamp?: number;
+  hostUrl?: string;
+  extra?: Record<string, unknown>;
 }
 
 /**

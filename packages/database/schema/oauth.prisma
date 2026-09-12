@@ -1,0 +1,96 @@
+model OAuthClient {
+    id             String                   @id @default(uuid())
+    clientId       String                   @unique
+    clientSecret   String?                  @db.Text
+    name           String
+    description    String?                  @db.Text
+    logoUrl        String?
+    websiteUrl     String?
+    redirectUris   String[]
+    allowedScopes  String[]                 @default(["identify", "profile"])
+    isPublic       Boolean                  @default(false)
+    isTrusted      Boolean                  @default(false)
+    
+    userId         String
+    user           User                     @relation("UserOAuthClients", fields: [userId], references: [id], onDelete: Cascade)
+
+    codes          OAuthAuthorizationCode[]
+    accessTokens   OAuthAccessToken[]
+    refreshTokens  OAuthRefreshToken[]
+    consents       OAuthConsent[]
+
+    createdAt      DateTime                 @default(now())
+    updatedAt      DateTime                 @updatedAt
+
+    @@index([userId])
+    @@index([clientId])
+}
+
+model OAuthAuthorizationCode {
+    id                  String      @id @default(uuid())
+    code                String      @unique
+    clientId            String
+    client              OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+    userId              String
+    user                User        @relation("UserOAuthAuthorizationCodes", fields: [userId], references: [id], onDelete: Cascade)
+    redirectUri         String
+    scopes              String[]
+    codeChallenge       String?
+    codeChallengeMethod String?
+    expiresAt           DateTime
+    usedAt              DateTime?
+    createdAt           DateTime    @default(now())
+
+    @@index([clientId])
+    @@index([userId])
+    @@index([code])
+}
+
+model OAuthAccessToken {
+    id        String      @id @default(uuid())
+    token     String      @unique
+    clientId  String
+    client    OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+    userId    String
+    user      User        @relation("UserOAuthAccessTokens", fields: [userId], references: [id], onDelete: Cascade)
+    scopes    String[]
+    expiresAt DateTime
+    revokedAt DateTime?
+    createdAt DateTime    @default(now())
+
+    @@index([clientId])
+    @@index([userId])
+    @@index([token])
+}
+
+model OAuthRefreshToken {
+    id        String      @id @default(uuid())
+    token     String      @unique
+    clientId  String
+    client    OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+    userId    String
+    user      User        @relation("UserOAuthRefreshTokens", fields: [userId], references: [id], onDelete: Cascade)
+    scopes    String[]
+    expiresAt DateTime
+    revokedAt DateTime?
+    createdAt DateTime    @default(now())
+
+    @@index([clientId])
+    @@index([userId])
+    @@index([token])
+}
+
+model OAuthConsent {
+    id        String      @id @default(uuid())
+    userId    String
+    user      User        @relation("UserOAuthConsents", fields: [userId], references: [id], onDelete: Cascade)
+    clientId  String
+    client    OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+    scopes    String[]
+    createdAt DateTime    @default(now())
+    updatedAt DateTime    @updatedAt
+
+    @@unique([userId, clientId])
+    @@index([userId])
+    @@index([clientId])
+}

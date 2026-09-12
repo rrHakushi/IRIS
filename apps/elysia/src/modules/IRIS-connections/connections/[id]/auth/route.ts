@@ -19,6 +19,7 @@ export default defineRoute({
         t.Object({
           redirectUri: t.Optional(t.String()),
           returnTo: t.Optional(t.String()),
+          hostUrl: t.Optional(t.String()),
         })
       ),
       response: {
@@ -79,6 +80,7 @@ export default defineRoute({
         redirectUri,
         codeVerifier,
         returnTo: query?.returnTo,
+        hostUrl: query?.hostUrl,
       })
 
       // Construct auth URL once with signed state token and deterministic codeVerifier
@@ -86,7 +88,8 @@ export default defineRoute({
         state,
         redirectUri,
         codeVerifier,
-      })
+        ...(query?.hostUrl ? { hostUrl: query.hostUrl } : {}),
+      } as any)
 
       // Also persist in cache for 15 minutes as fallback
       await oauthCache.set(
@@ -97,6 +100,7 @@ export default defineRoute({
           redirectUri,
           codeVerifier: authRes.codeVerifier || codeVerifier,
           returnTo: query?.returnTo,
+          hostUrl: query?.hostUrl,
         },
         900
       )

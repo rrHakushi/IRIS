@@ -78,7 +78,8 @@ export function ConnectionCard({
     if (
       provider.capabilities.supportsOAuth &&
       provider.provider !== "RADARR" &&
-      provider.provider !== "SONARR"
+      provider.provider !== "SONARR" &&
+      provider.provider !== "IRIS"
     ) {
       handleOAuthConnect()
     } else {

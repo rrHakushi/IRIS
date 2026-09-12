@@ -13,7 +13,8 @@ export type ConnectionProvider =
   | "PLEX"
   | "DEEZER"
   | "LASTFM"
-  | "CUSTOM";
+  | "CUSTOM"
+  | "IRIS";
 
 export type ConnectionAuthType =
   | "OAUTH2"

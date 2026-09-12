@@ -29,6 +29,8 @@ import {
   IconX,
   IconChevronLeft,
   IconChevronRight,
+  IconWorld,
+  IconApps,
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 
@@ -40,6 +42,8 @@ import { EncryptionSettingsTab } from "./settings-tabs/account/encryption-tab"
 import { ApiKeysSettingsTab } from "./settings-tabs/account/api-keys-tab"
 import { ConnectionsSettingsTab } from "./settings-tabs/account/connections-tab"
 import { PrivacySettingsTab } from "./settings-tabs/account/privacy-tab"
+import { OAuthAppsSettingsTab } from "./settings-tabs/account/oauth-apps-tab"
+import { AuthorizedAppsSettingsTab } from "./settings-tabs/account/authorized-apps-tab"
 
 // Customization Tabs
 import { AppearanceSettingsTab } from "./settings-tabs/customization/appearance-tab"
@@ -69,6 +73,8 @@ export type IrisSettingsCategory =
   | "apiKeys"
   | "connections"
   | "privacy"
+  | "oauthApps"
+  | "authorizedApps"
   | "appearance"
   | "sidebar"
   | "dock"
@@ -138,6 +144,20 @@ function renderTabContent(
     case "privacy":
       return (
         <PrivacySettingsTab
+          onOpenChange={onOpenChange}
+          setFooterContent={setFooterContent}
+        />
+      )
+    case "oauthApps":
+      return (
+        <OAuthAppsSettingsTab
+          onOpenChange={onOpenChange}
+          setFooterContent={setFooterContent}
+        />
+      )
+    case "authorizedApps":
+      return (
+        <AuthorizedAppsSettingsTab
           onOpenChange={onOpenChange}
           setFooterContent={setFooterContent}
         />
@@ -274,6 +294,18 @@ export function IrisSettingsModal({
         id: "privacy",
         name: t("tabs.privacy"),
         icon: IconEyeCheck,
+        group: t("groups.account"),
+      },
+      {
+        id: "oauthApps",
+        name: t("tabs.oauthApps"),
+        icon: IconWorld,
+        group: t("groups.account"),
+      },
+      {
+        id: "authorizedApps",
+        name: t("tabs.authorizedApps"),
+        icon: IconApps,
         group: t("groups.account"),
       },
 

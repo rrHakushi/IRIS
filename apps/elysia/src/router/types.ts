@@ -282,6 +282,12 @@ export interface MethodConfig<
    * Method-level configuration has priority over route-level.
    */
   requirePermissions?: TPerms
+  /**
+   * Array of OAuth scopes required to invoke this method via OAuth bearer token.
+   * Automatically enforces authentication.
+   * Method-level configuration has priority over route-level.
+   */
+  requireScopes?: string[]
   handler: RouteHandler<
     TParams,
     TQuery,
@@ -320,6 +326,12 @@ export interface NoBodyMethodConfig<
    * Method-level configuration has priority over route-level.
    */
   requirePermissions?: TPerms
+  /**
+   * Array of OAuth scopes required to invoke this method via OAuth bearer token.
+   * Automatically enforces authentication.
+   * Method-level configuration has priority over route-level.
+   */
+  requireScopes?: string[]
   handler: NoBodyRouteHandler<
     TParams,
     TQuery,
@@ -442,6 +454,7 @@ export interface RouteDefinition<
   rateLimits?: Partial<Record<HttpMethodKey, RateLimitConfig>>
   requireAuth?: boolean | { message?: string }
   requirePermissions?: IRISBitFieldResolvable[]
+  requireScopes?: string[]
   schema?: S
   schemas?: Partial<Record<HttpMethodKey, RouteSchema>>
 
@@ -559,6 +572,7 @@ export interface RouteClass {
   rateLimits?: Partial<Record<string, RateLimitConfig>>
   requireAuth?: boolean | { message?: string }
   requirePermissions?: IRISBitFieldResolvable[]
+  requireScopes?: string[]
   schema?: RouteSchema
   schemas?: Partial<Record<string, RouteSchema>>
   [key: string]: unknown
@@ -572,6 +586,7 @@ export interface RouteInstance {
   rateLimits?: Partial<Record<string, RateLimitConfig>>
   requireAuth?: boolean | { message?: string }
   requirePermissions?: IRISBitFieldResolvable[]
+  requireScopes?: string[]
   schema?: RouteSchema
   schemas?: Partial<Record<string, RouteSchema>>
   GET?: RouteHandler | MethodConfig

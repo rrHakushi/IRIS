@@ -108,8 +108,13 @@ export default defineRoute({
         const tokens = await adapter.exchangeAuthCode(
           code,
           stateData.redirectUri,
-          stateData.codeVerifier
+          stateData.codeVerifier,
+          { hostUrl: stateData.hostUrl }
         )
+
+        if (stateData.hostUrl && !tokens.hostUrl) {
+          tokens.hostUrl = stateData.hostUrl
+        }
 
         const profile = await adapter.getProfile(tokens)
         const encryptedData = encryptConnectionData(tokens, stateData.userId)
@@ -139,6 +144,7 @@ export default defineRoute({
             settings: {
               librarySync: true,
               isPrivate: false,
+              ...(stateData.hostUrl ? { hostUrl: stateData.hostUrl } : {}),
             },
             expiresAt: expiresAtDate,
             lastSyncedAt: new Date(),

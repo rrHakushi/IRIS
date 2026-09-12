@@ -38,6 +38,15 @@ graph TD
 - **API Key Management**:
   - Fine-grained developer token generation (`/auth/api-keys`), permission scoping, regeneration, and lifecycle revocation (`/auth/api-keys/[id]`).
 
+### OAuth 2.0 & OpenID Connect (OIDC) Identity Provider
+- **RFC 6749 & RFC 7636 (PKCE)**: Complete authorization code flow with SHA-256 code challenges (`/oauth/authorize`, `/oauth/token`).
+- **OpenID Connect Discovery**: Automated metadata discovery (`/.well-known/openid-configuration`, `/.well-known/oauth-authorization-server`).
+- **Standard Claims (`/oauth/userinfo`)**: Identity resolution and user profile access for external applications.
+- **Dynamic Client Registration (RFC 7591)**: Automated programmatic application registration (`/oauth/register`).
+- **Developer App & Consent Management**: Built-in developer registration, secret rotation, scope inspection, and user authorization revocation in IRIS Settings.
+- **Cross-Instance IRIS Federation**: Bidirectional account linking and media synchronization between independent IRIS servers.
+- *Detailed Implementation Guide*: See [guides/oauth-implementation.md](file:///c:/Users/yki/Documents/GitHub/IRIS/guides/oauth-implementation.md).
+
 ### User Profiles & Public Presence
 - **Identity & Profile Customization**: Username management, bio, custom avatar, banner styling, and public badge display (`/users/[username]`).
 - **Asset Storage & Serving**: Direct media asset serving and uploads for avatars and profile banners (`/users/me/assets`, `/public/[...key]`).

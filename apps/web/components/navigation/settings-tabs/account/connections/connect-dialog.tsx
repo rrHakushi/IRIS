@@ -41,6 +41,7 @@ export function ConnectDialog({
   const [hostUrl, setHostUrl] = useState("")
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
+  const [useApiKeyForIris, setUseApiKeyForIris] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -49,6 +50,7 @@ export function ConnectDialog({
     setHostUrl(provider?.defaultHostUrl || "")
     setUsername("")
     setPassword("")
+    setUseApiKeyForIris(false)
     setError(null)
   }, [provider])
 
@@ -66,6 +68,44 @@ export function ConnectDialog({
   const isSteam = provider.provider === "STEAM"
   const isRiot = provider.provider === "RIOT_GAMES"
   const isLastFm = provider.provider === "LASTFM"
+  const isIris = provider.provider === "IRIS"
+
+  const handleIrisOAuthConnect = async () => {
+    if (!hostUrl.trim()) {
+      setError("Please enter the remote IRIS instance URL.")
+      return
+    }
+    setIsSubmitting(true)
+    setError(null)
+    try {
+      const returnTo =
+        typeof window !== "undefined"
+          ? window.location.href
+          : "/settings?tab=connections"
+
+      const normalizedHost = hostUrl.trim().replace(/\/+$/, "")
+      const { data, error: authErr } = await elysia
+        .connections({ id: "iris" })
+        .auth.get({
+          query: { returnTo, hostUrl: normalizedHost },
+          fetch: { credentials: "include" },
+        })
+
+      if (authErr || !data?.url) {
+        throw new Error(
+          (authErr as any)?.value?.message ||
+            "Failed to initiate remote IRIS authorization"
+        )
+      }
+
+      window.location.href = data.url
+    } catch (err: unknown) {
+      setError(
+        (err as Error).message || "Failed to connect to remote IRIS instance"
+      )
+      setIsSubmitting(false)
+    }
+  }
 
   const handleManualConnect = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -121,17 +161,19 @@ export function ConnectDialog({
             <div>
               <DialogTitle>Connect {provider.name}</DialogTitle>
               <DialogDescription className="mt-0.5 text-xs">
-                {isServarr
-                  ? "Enter your server host URL and API key to connect."
-                  : isBangumi
-                    ? "Enter your Bangumi Personal Access Token."
-                    : isRiot
-                      ? "Enter your Riot ID (e.g. Player#1234) or API Key."
-                      : isSteam
-                        ? "Enter your SteamID64 or Steam Web API Key."
-                        : isLastFm
-                          ? "Enter your Last.fm username or Session Key to scrobble tracks."
-                          : "Enter connection credentials."}
+                {isIris
+                  ? "Connect to another IRIS instance to federate accounts and synchronize media libraries."
+                  : isServarr
+                    ? "Enter your server host URL and API key to connect."
+                    : isBangumi
+                      ? "Enter your Bangumi Personal Access Token."
+                      : isRiot
+                        ? "Enter your Riot ID (e.g. Player#1234) or API Key."
+                        : isSteam
+                          ? "Enter your SteamID64 or Steam Web API Key."
+                          : isLastFm
+                            ? "Enter your Last.fm username or Session Key to scrobble tracks."
+                            : "Enter connection credentials."}
               </DialogDescription>
             </div>
           </div>
@@ -145,25 +187,29 @@ export function ConnectDialog({
             </div>
           )}
 
-          {isServarr && (
+          {(isServarr || isIris) && (
             <div className="space-y-1.5">
               <Label
                 htmlFor="hostUrl"
                 className="flex items-center gap-1.5 text-xs font-medium"
               >
                 <IconServer className="h-3.5 w-3.5 text-muted-foreground" />
-                Server Host URL
+                {isIris ? "Remote IRIS Instance URL" : "Server Host URL"}
               </Label>
               <Input
                 id="hostUrl"
-                placeholder="http://localhost:7878"
+                placeholder={
+                  isIris ? "https://iris.example.com" : "http://localhost:7878"
+                }
                 value={hostUrl}
                 onChange={(e) => setHostUrl(e.target.value)}
                 className="font-mono text-xs"
                 required
               />
               <p className="text-[11px] text-muted-foreground">
-                Include protocol (http/https) and port without trailing slash.
+                {isIris
+                  ? "Include protocol (https:// or http://) and domain or IP without trailing slash."
+                  : "Include protocol (http/https) and port without trailing slash."}
               </p>
             </div>
           )}
@@ -213,7 +259,12 @@ export function ConnectDialog({
             </div>
           )}
 
-          {(isServarr || isBangumi || isSteam || isRiot || isLastFm) && (
+          {(isServarr ||
+            isBangumi ||
+            isSteam ||
+            isRiot ||
+            isLastFm ||
+            (isIris && useApiKeyForIris)) && (
             <div className="space-y-1.5">
               <Label
                 htmlFor="apiKey"
@@ -228,7 +279,9 @@ export function ConnectDialog({
                       ? "Riot API Key (Optional if configured in server .env)"
                       : isLastFm
                         ? "Last.fm Session Key / API Key (Optional for basic scrobbling)"
-                        : "API Key"}
+                        : isIris
+                          ? "Personal Access Token / API Key"
+                          : "API Key"}
               </Label>
               <Input
                 id="apiKey"
@@ -242,13 +295,29 @@ export function ConnectDialog({
                         ? "RGAPI-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                         : isLastFm
                           ? "Enter Last.fm session key (optional)"
-                          : "Enter 32-character API key"
+                          : isIris
+                            ? "Enter remote IRIS API key or Bearer token"
+                            : "Enter 32-character API key"
                 }
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 className="font-mono text-xs"
                 required={!isRiot && !isLastFm}
               />
+            </div>
+          )}
+
+          {isIris && (
+            <div className="flex items-center justify-start pt-1">
+              <button
+                type="button"
+                onClick={() => setUseApiKeyForIris(!useApiKeyForIris)}
+                className="text-[11px] text-muted-foreground underline-offset-4 hover:text-foreground hover:underline transition-colors"
+              >
+                {useApiKeyForIris
+                  ? "← Switch to OAuth 2.0 (Recommended)"
+                  : "Connect with an API Key instead →"}
+              </button>
             </div>
           )}
 
@@ -274,24 +343,46 @@ export function ConnectDialog({
           >
             Cancel
           </Button>
-          <Button
-            type="submit"
-            size="sm"
-            disabled={isSubmitting}
-            className="gap-2"
-          >
-            {isSubmitting ? (
-              <>
-                <Spinner className="h-3.5 w-3.5" />
-                Testing & Saving...
-              </>
-            ) : (
-              <>
-                <IconCheck className="h-4 w-4" />
-                Connect
-              </>
-            )}
-          </Button>
+          {isIris && !useApiKeyForIris ? (
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleIrisOAuthConnect}
+              disabled={isSubmitting || !hostUrl.trim()}
+              className="gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <Spinner className="h-3.5 w-3.5" />
+                  Connecting...
+                </>
+              ) : (
+                <>
+                  <IconExternalLink className="h-4 w-4" />
+                  Authorize with IRIS
+                </>
+              )}
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isSubmitting}
+              className="gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <Spinner className="h-3.5 w-3.5" />
+                  Testing & Saving...
+                </>
+              ) : (
+                <>
+                  <IconCheck className="h-4 w-4" />
+                  Connect
+                </>
+              )}
+            </Button>
+          )}
         </DialogFooter>
       </form>
     </Dialog>

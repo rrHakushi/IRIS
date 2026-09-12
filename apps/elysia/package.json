@@ -29,7 +29,9 @@
     "route:delete": "bun run scripts/delete-route.ts",
     "route:sync": "bun run scripts/generate-manifests.ts",
     "generate": "bun run scripts/generate-manifests.ts",
-    "character:dedup": "dotenvx run -f ../../.env -- bun scripts/deduplicate-characters.ts"
+    "character:dedup": "dotenvx run -f ../../.env -- bun scripts/deduplicate-characters.ts",
+    "test": "dotenvx run -f ../../.env -- bun test",
+    "test:oauth": "dotenvx run -f ../../.env -- bun test --preload ./test/preload.ts test/oauth.test.ts"
   },
   "dependencies": {
     "@IRIS/cache": "workspace:*",

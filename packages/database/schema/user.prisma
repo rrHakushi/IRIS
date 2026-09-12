@@ -21,6 +21,13 @@ model User {
     notifications   Notification[]
     connections     Connection[]
 
+    // OAUTH
+    oauthClients            OAuthClient[]            @relation("UserOAuthClients")
+    oauthAuthorizationCodes OAuthAuthorizationCode[] @relation("UserOAuthAuthorizationCodes")
+    oauthAccessTokens       OAuthAccessToken[]       @relation("UserOAuthAccessTokens")
+    oauthRefreshTokens      OAuthRefreshToken[]      @relation("UserOAuthRefreshTokens")
+    oauthConsents           OAuthConsent[]           @relation("UserOAuthConsents")
+
     // MEDIA LISTS & PLAYLISTS
     customLists     CustomList[]
     animeList       AnimeList[]

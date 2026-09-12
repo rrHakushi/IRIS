@@ -15,6 +15,7 @@ import {
   SimklAdapter,
   SonarrAdapter,
   SteamAdapter,
+  IrisAdapter,
 } from "./providers/index.js";
 
 export interface ProviderMetadata {
@@ -55,6 +56,7 @@ registerConnectionAdapter(new RadarrAdapter());
 registerConnectionAdapter(new SonarrAdapter());
 registerConnectionAdapter(new DeezerAdapter());
 registerConnectionAdapter(new LastFmAdapter());
+registerConnectionAdapter(new IrisAdapter());
 
 /**
  * Retrieves the adapter implementation for a given provider.
@@ -178,6 +180,14 @@ export function getSupportedProviders(): ProviderMetadata[] {
       description: "Connect your Sonarr instance to search, monitor, and manage TV series downloads.",
       websiteUrl: "https://sonarr.tv",
       accentColor: "#00CDF0",
+    },
+    {
+      provider: "IRIS",
+      name: "IRIS Instance",
+      category: "TRACKING",
+      description: "Link another IRIS instance to synchronize media libraries, activity, and federate accounts.",
+      websiteUrl: "https://github.com/rrHakushi/IRIS",
+      accentColor: "#E11D48",
     },
   ];
 

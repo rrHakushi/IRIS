@@ -185,7 +185,8 @@ export abstract class BaseConnectionAdapter implements ConnectionProviderAdapter
   abstract exchangeAuthCode(
     code: string,
     redirectUri: string,
-    codeVerifier?: string
+    codeVerifier?: string,
+    options?: { hostUrl?: string; [key: string]: unknown }
   ): Promise<OAuthTokens>;
 
   abstract getProfile(

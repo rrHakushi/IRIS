@@ -243,6 +243,11 @@ export async function createRouterModule(
           instance.requirePermissions ??
           (RouteExport as RouteDefinition)?.requirePermissions ??
           importedModule.requirePermissions,
+        requireScopes:
+          staticClass?.requireScopes ??
+          instance.requireScopes ??
+          (RouteExport as RouteDefinition)?.requireScopes ??
+          importedModule.requireScopes,
       }
 
       for (const method of HTTP_METHODS) {
@@ -293,6 +298,7 @@ export async function createRouterModule(
           methodAuthConfig = {
             requireAuth: (methodItem as MethodConfig).requireAuth,
             requirePermissions: (methodItem as MethodConfig).requirePermissions,
+            requireScopes: (methodItem as MethodConfig).requireScopes,
           }
         }
 

@@ -50,11 +50,23 @@ export class Session {
    */
   public readonly apiKeyId: string | null
 
+  /**
+   * Scopes granted if authenticated via OAuth 2.0.
+   */
+  public readonly oauthScopes: string[]
+
+  /**
+   * OAuth Client ID if authenticated via OAuth 2.0.
+   */
+  public readonly oauthClientId: string | null
+
   constructor(data?: SessionInitData | null) {
     this.user = data?.user ?? null
     this.method = data?.method ?? "none"
     this.token = data?.token ?? null
     this.apiKeyId = data?.apiKeyId ?? null
+    this.oauthScopes = data?.oauthScopes ?? []
+    this.oauthClientId = data?.oauthClientId ?? null
     this.status = this.user !== null ? "authenticated" : "unauthenticated"
   }
 
@@ -94,6 +106,21 @@ export class Session {
     const resolvable =
       typeof permission === "number" ? BigInt(permission) : permission
     return bitfield.has(resolvable as IRISBitFieldResolvable)
+  }
+
+  /**
+   * Verifies if the authenticated session has the specified OAuth scope.
+   * If session is not authenticated via OAuth (e.g. cookie session or API key),
+   * this automatically returns true (full scope).
+   */
+  public hasScope(scope: string): boolean {
+    if (this.method !== "oauth") {
+      return true
+    }
+    if (this.oauthScopes.includes("*") || this.oauthScopes.includes("all")) {
+      return true
+    }
+    return this.oauthScopes.includes(scope)
   }
 }
 
@@ -390,6 +417,49 @@ export async function resolveSessionFromRequest(
     }
 
     if (!jwt || typeof jwt.id !== "string" || jwt.id.trim().length === 0) {
+      // Priority 2b: OAuth 2.0 Bearer Access Token
+      try {
+        const oauthToken = await prisma.oAuthAccessToken.findUnique({
+          where: { token: bearerToken },
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                email: true,
+                permissions: true,
+              },
+            },
+          },
+        })
+
+        if (
+          oauthToken &&
+          !oauthToken.revokedAt &&
+          oauthToken.expiresAt.getTime() > Date.now()
+        ) {
+          const user: SessionUser = {
+            id: oauthToken.user.id,
+            username: oauthToken.user.username.trim(),
+            email: oauthToken.user.email,
+            permissions: oauthToken.user.permissions,
+          }
+
+          return {
+            sessionData: {
+              user,
+              method: "oauth",
+              token: bearerToken,
+              oauthScopes: oauthToken.scopes,
+              oauthClientId: oauthToken.clientId,
+            },
+            error: null,
+          }
+        }
+      } catch (err) {
+        console.error("[Session] Error querying OAuth access token:", err)
+      }
+
       return {
         sessionData: null,
         error: {
@@ -624,7 +694,7 @@ export interface SessionUser {
 export type SessionStatus = "authenticated" | "unauthenticated"
 
 /** Authentication mechanism detected for the request. */
-export type AuthMethod = "session" | "token" | "api_key" | "none"
+export type AuthMethod = "session" | "token" | "api_key" | "oauth" | "none"
 
 /**
  * Initialization parameters used to construct a Session instance.
@@ -638,6 +708,10 @@ export interface SessionInitData {
   token?: string | null
   /** Database ID of the API key if authenticated via API key. */
   apiKeyId?: string | null
+  /** Scopes granted if authenticated via OAuth 2.0. */
+  oauthScopes?: string[]
+  /** Client ID if authenticated via OAuth 2.0. */
+  oauthClientId?: string | null
 }
 
 type DatabaseClient = typeof defaultPrisma

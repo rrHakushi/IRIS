@@ -208,6 +208,8 @@
         "apiKeys": "APIキー",
         "connections": "連携アカウント",
         "privacy": "プライバシー",
+        "oauthApps": "OAuthアプリ",
+        "authorizedApps": "認証済みアプリ",
         "appearance": "外観",
         "sidebar": "サイドバー",
         "dock": "ドック",

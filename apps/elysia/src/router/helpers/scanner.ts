@@ -33,8 +33,8 @@ export function findRouteFiles(dir: string, baseDir: string = dir): string[] {
   for (const entry of entries) {
     const name = entry.name
 
-    // Ignore hidden files and directories
-    if (name.startsWith(".")) continue
+    // Ignore hidden files and directories (except RFC 5785 .well-known)
+    if (name.startsWith(".") && name !== ".well-known") continue
 
     // Ignore temporary, backup, or editor duplicate copies (e.g. 'refresh copy', 'folder (1)', '*.bak')
     if (

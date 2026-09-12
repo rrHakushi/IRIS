@@ -208,6 +208,8 @@
         "apiKeys": "Api Keys",
         "connections": "Connections",
         "privacy": "Privacy",
+        "oauthApps": "OAuth Apps",
+        "authorizedApps": "Authorized Apps",
         "appearance": "Appearance",
         "sidebar": "Sidebar",
         "dock": "Dock",

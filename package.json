@@ -21,6 +21,7 @@
     "anime:theme-songs": "dotenvx run -- bun run apps/elysia/scripts/update-anime-theme-songs.ts --",
     "sdk": "echo \"nestia sdk disabled\"",
     "swagger": "echo \"nestia swagger disabled\"",
+    "test:oauth": "pnpm --filter @IRIS/elysia test:oauth",
     "nestia": "echo \"nestia disabled\""
   },
   "devDependencies": {

@@ -79,7 +79,8 @@ export interface ConnectionProviderAdapter {
   exchangeAuthCode(
     code: string,
     redirectUri: string,
-    codeVerifier?: string
+    codeVerifier?: string,
+    options?: { hostUrl?: string; [key: string]: unknown }
   ): Promise<OAuthTokens>;
 
   /**
