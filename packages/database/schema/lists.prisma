@@ -393,3 +393,18 @@ model ListCommentReply {
 
     @@index([authorId])
 }
+
+model ListExportShare {
+    id           String    @id @default(uuid())
+    userId       String
+    user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    passwordHash String    @db.Text
+    mediaTypes   String[]
+    description  String?
+    expiresAt    DateTime?
+    lastUsedAt   DateTime?
+    createdAt    DateTime  @default(now())
+    updatedAt    DateTime  @updatedAt
+
+    @@index([userId])
+}

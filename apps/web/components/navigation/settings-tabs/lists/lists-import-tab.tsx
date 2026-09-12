@@ -10,6 +10,7 @@ import {
   ProviderImportCard,
   type ProviderImportConfig,
 } from "./import/provider-import-card"
+import { RemoteUrlImportCard } from "./import/remote-url-import-card"
 import { FileBackupImportCard } from "./import/file-backup-import-card"
 import { ConnectDialog } from "../account/connections/connect-dialog"
 import { Spinner } from "@workspace/ui/components/spinner"
@@ -198,7 +199,12 @@ export function ListsImportSettingsTab({}: SettingsTabProps): React.JSX.Element 
             </div>
           </div>
 
-          {/* Section 2: JSON Backup File Import */}
+          {/* Section 2: Remote IRIS URL Import */}
+          <div className="space-y-3">
+            <RemoteUrlImportCard />
+          </div>
+
+          {/* Section 3: File Backup Import */}
           <div className="space-y-3">
             <FileBackupImportCard />
           </div>

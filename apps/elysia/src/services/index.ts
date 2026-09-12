@@ -25,6 +25,14 @@ import {
   ListImportService,
 } from "./connections/list-import.service.js"
 import {
+  listExportService,
+  ListExportService,
+} from "./lists/list-export.service.js"
+import {
+  listFileImportService,
+  ListFileImportService,
+} from "./lists/list-file-import.service.js"
+import {
   activityService,
   ActivityService,
   recordMediaListActivity,
@@ -37,6 +45,8 @@ const loadedServices: string[] = [
   "media-queue",
   "stats-queue",
   "list-import",
+  "list-export",
+  "list-file-import",
   "activity",
 ]
 
@@ -49,6 +59,8 @@ export function initServices(): void {
   MediaQueueService.logStatus()
   StatsQueueService.logStatus()
   ListImportService.logStatus()
+  ListExportService.logStatus()
+  ListFileImportService.logStatus()
   ActivityService.logStatus()
   activityService.initCron()
 
@@ -76,6 +88,10 @@ export {
   StatsQueueService,
   listImportService,
   ListImportService,
+  listExportService,
+  ListExportService,
+  listFileImportService,
+  ListFileImportService,
 }
 export * from "./media-queue/types.js"
 export * from "./media-queue/providers/index.js"

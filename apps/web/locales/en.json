@@ -609,6 +609,9 @@
             "movie": "Movies List",
             "custom_lists": "Custom Lists / Playlists"
           }
+        },
+        "export": {
+          "title": "Export Lists"
         }
       }
     },
