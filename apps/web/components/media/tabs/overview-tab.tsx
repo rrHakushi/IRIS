@@ -26,6 +26,7 @@ import { getMediaPreferences } from "@IRIS/shared"
 import { formatMediaTitle } from "@/lib/browse-search"
 import { getMediaDetailHref } from "@/lib/media-routes"
 import type {
+  CharacterItem,
   NormalizedMediaData,
   RelationItem,
   SimilarMediaCardItem,
@@ -71,29 +72,80 @@ export function OverviewTab({
     }
   }
 
-  // 8 characters prioritized by MAIN, with Japanese VA if available
+  // Top 10 characters prioritized by MAIN, with Japanese VA for anime
   const featuredCharacters = useMemo(() => {
-    const list = [...media.characters]
+    const isAnime = media.category === "anime"
 
-    // Sort: MAIN first, then order
-    list.sort((a, b) => {
+    // Group character items by characterId to aggregate all voice actors for each character
+    const charMap = new Map<
+      number,
+      {
+        character: CharacterItem
+        japaneseEntry: CharacterItem | null
+        firstEntry: CharacterItem | null
+      }
+    >()
+
+    for (const item of media.characters) {
+      let existing = charMap.get(item.characterId)
+      if (!existing) {
+        existing = {
+          character: item,
+          japaneseEntry: null,
+          firstEntry: null,
+        }
+        charMap.set(item.characterId, existing)
+      }
+
+      if (item.actor) {
+        const lang = item.actor.language?.trim().toLowerCase()
+        const isJapanese =
+          lang === "japanese" ||
+          lang === "ja" ||
+          lang === "jpn" ||
+          (lang ? lang.includes("japanese") : false)
+
+        if (isJapanese && !existing.japaneseEntry) {
+          existing.japaneseEntry = item
+        } else if (!existing.firstEntry) {
+          existing.firstEntry = item
+        }
+      }
+    }
+
+    // Build unique character list
+    const uniqueList: CharacterItem[] = []
+    for (const { character, japaneseEntry, firstEntry } of charMap.values()) {
+      if (isAnime) {
+        // For anime: ONLY show Japanese voice actor. If no Japanese voice actor exists, show null
+        const entryToUse = japaneseEntry ?? character
+        uniqueList.push({
+          ...entryToUse,
+          actor: japaneseEntry ? japaneseEntry.actor : null,
+        })
+      } else {
+        // For other media: use Japanese VA if available, otherwise first available VA or original entry
+        const entryToUse = japaneseEntry ?? firstEntry ?? character
+        uniqueList.push(entryToUse)
+      }
+    }
+
+    // Sort: MAIN first, characters with Japanese VA (for anime), then by order
+    uniqueList.sort((a, b) => {
       if (a.role === "MAIN" && b.role !== "MAIN") return -1
       if (b.role === "MAIN" && a.role !== "MAIN") return 1
+
+      if (isAnime) {
+        const aHasJa = a.actor ? 1 : 0
+        const bHasJa = b.actor ? 1 : 0
+        if (aHasJa !== bHasJa) return bHasJa - aHasJa
+      }
+
       return (a.order ?? 999) - (b.order ?? 999)
     })
 
-    // Take top 8 unique characters
-    const seen = new Set<number>()
-    const top8 = []
-    for (const char of list) {
-      if (!seen.has(char.characterId)) {
-        seen.add(char.characterId)
-        top8.push(char)
-        if (top8.length >= 8) break
-      }
-    }
-    return top8
-  }, [media.characters])
+    return uniqueList.slice(0, 10)
+  }, [media.characters, media.category])
 
   // Parse description cleanly
   const cleanDescription = useMemo(() => {
@@ -743,9 +795,11 @@ export function OverviewTab({
                   id="characters-preview-heading"
                   className="text-base font-semibold text-foreground"
                 >
-                  {media.category === "movies" || media.format === "MOVIE"
-                    ? "Characters & Cast"
-                    : "Characters & Voice Actors"}
+                  {media.category === "anime"
+                    ? "Characters & Voice Actors"
+                    : media.category === "movies" || media.format === "MOVIE"
+                      ? "Characters & Cast"
+                      : "Characters & Voice Actors"}
                 </h2>
               </div>
 
@@ -763,7 +817,7 @@ export function OverviewTab({
 
                   return (
                     <div
-                      key={item.id}
+                      key={item.characterId}
                       className="flex items-center justify-between rounded-2xl border border-border/40 bg-card p-2.5"
                     >
                       {/* Character Side */}
@@ -952,7 +1006,10 @@ export function OverviewTab({
                           : `Media #${rel.targetId}`
                         const targetCover = rel.target?.coverImage ?? null
                         const targetFormat = rel.target?.format ?? null
-                        const href = getMediaDetailHref(rel.targetType, rel.targetId)
+                        const href = getMediaDetailHref(
+                          rel.targetType,
+                          rel.targetId
+                        )
 
                         return (
                           <Link
