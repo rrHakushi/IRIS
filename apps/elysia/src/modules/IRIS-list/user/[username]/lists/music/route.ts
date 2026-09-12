@@ -8,6 +8,8 @@ import {
   musicAlbumSelect,
   musicTrackSelect,
   buildMusicSearchFilter,
+  fetchPrioritizedList,
+  MEDIA_STATUS_PRIORITY,
 } from "@/modules/IRIS-list/helpers"
 
 export default defineRoute({
@@ -24,9 +26,9 @@ export default defineRoute({
             entry: t.Object({
               id: t.Number(),
               musicId: t.Number(),
-              albumId: t.Optional(t.Nullable(t.Number())),
               trackId: t.Optional(t.Nullable(t.Number())),
-              itemType: t.String(),
+              albumId: t.Optional(t.Nullable(t.Number())),
+              itemType: t.Optional(t.String()),
               status: t.String(),
               score: t.Nullable(t.Number()),
               progress: t.Number(),
@@ -43,7 +45,7 @@ export default defineRoute({
           })
         ),
         pagination: t.Object({
-          nextCursor: t.Nullable(t.Number()),
+          nextCursor: t.Nullable(t.Union([t.String(), t.Number()])),
           hasMore: t.Boolean(),
           total: t.Number(),
         }),
@@ -62,8 +64,8 @@ export default defineRoute({
       session
     )
 
-    const limit = Number(query?.limit ?? 50)
-    const cursor = query?.cursor ? Number(query.cursor) : undefined
+    const limit = Number(query?.limit ?? 30)
+    const cursor = query?.cursor as string | number | undefined
     const statuses = parseCommaSeparated(query?.status).map((s) => {
       const upper = s.toUpperCase()
       if (upper === "WATCHING" || upper === "READING" || upper === "PLAYING") {
@@ -170,23 +172,22 @@ export default defineRoute({
       orderByClause = { createdAt: order }
     }
 
-    const [total, items] = await Promise.all([
-      prisma.musicList.count({ where: whereClause }),
-      prisma.musicList.findMany({
-        where: whereClause,
-        take: limit + 1,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-        orderBy: [orderByClause, { id: "desc" }],
-        include: {
-          music: { select: musicAlbumSelect },
-        },
-      }),
-    ])
-
-    const hasMore = items.length > limit
-    const paged = hasMore ? items.slice(0, limit) : items
-    const nextCursor =
-      hasMore && paged.length > 0 ? paged[paged.length - 1]?.id : null
+    const {
+      items: paged,
+      nextCursor,
+      hasMore,
+      total,
+    } = await fetchPrioritizedList(prisma.musicList, {
+      whereClause,
+      orderByClause,
+      include: {
+        music: { select: musicAlbumSelect },
+      },
+      statusPriority: MEDIA_STATUS_PRIORITY.music,
+      requestedStatuses: statuses,
+      limit,
+      cursor,
+    })
 
     return {
       success: true,

@@ -75,9 +75,11 @@ export const ListQuerySchema = t.Object({
     })
   ),
   cursor: t.Optional(
-    t.Number({ description: "Entry ID cursor for pagination" })
+    t.Union([t.String(), t.Number()], {
+      description: "Entry ID or composite status:id cursor for pagination",
+    })
   ),
-  limit: t.Optional(t.Number({ default: 50, minimum: 1, maximum: 100 })),
+  limit: t.Optional(t.Number({ default: 30, minimum: 1, maximum: 100 })),
   status: t.Optional(
     t.String({
       description: "Comma-separated status filter e.g. WATCHING,COMPLETED",
@@ -742,5 +744,189 @@ export function recordEntryMutationActivity({
       prevScore: existing.score,
       isPrivate,
     })
+  }
+}
+
+// ============================================================================
+// Prioritized List Status Ordering & Waterfall Pagination
+// ============================================================================
+
+export const MEDIA_STATUS_PRIORITY = {
+  anime: ["WATCHING", "ON_HOLD", "COMPLETED", "DROPPED", "PLANNING"],
+  manga: ["READING", "ON_HOLD", "COMPLETED", "DROPPED", "PLANNING"],
+  movie: ["WATCHING", "COMPLETED", "DROPPED", "PLANNING"],
+  tv: ["WATCHING", "ON_HOLD", "COMPLETED", "DROPPED", "PLANNING"],
+  game: ["PLAYING", "ON_HOLD", "COMPLETED", "DROPPED", "PLANNING"],
+  book: ["READING", "ON_HOLD", "COMPLETED", "DROPPED", "PLANNING"],
+  music: ["LISTENING", "ON_HOLD", "COMPLETED", "DROPPED", "PLANNING"],
+} as const
+
+export interface PrioritizedListResult<T> {
+  items: T[]
+  nextCursor: string | null
+  hasMore: boolean
+  total: number
+}
+
+export async function fetchPrioritizedList<
+  T extends { id: number; status: string },
+>(
+  delegate: {
+    findMany: (args: any) => Promise<T[]>
+    findFirst: (args: any) => Promise<any>
+    count: (args: any) => Promise<number>
+  },
+  options: {
+    whereClause: Record<string, any>
+    orderByClause: any
+    include?: any
+    select?: any
+    statusPriority: readonly string[] | string[]
+    requestedStatuses?: string[]
+    limit?: number
+    cursor?: string | number | null | undefined
+  }
+): Promise<PrioritizedListResult<T>> {
+  const {
+    whereClause,
+    orderByClause,
+    include,
+    select,
+    statusPriority,
+    requestedStatuses = [],
+    limit = 30,
+    cursor,
+  } = options
+
+  // Clean base whereClause so it doesn't accidentally contain a pre-filtered status
+  const { status: _ignoredStatus, ...baseWhere } = whereClause
+
+  // 1. Calculate total matching items across the requested filter
+  const totalWhere =
+    requestedStatuses.length > 0
+      ? { ...baseWhere, status: { in: requestedStatuses } }
+      : baseWhere
+  const total = await delegate.count({ where: totalWhere })
+
+  // 2. Determine target statuses to query and order
+  let targetStatuses: readonly string[]
+  if (requestedStatuses.length > 0) {
+    const filtered = statusPriority.filter((s) => requestedStatuses.includes(s))
+    targetStatuses = filtered.length > 0 ? filtered : requestedStatuses
+  } else {
+    targetStatuses = statusPriority
+  }
+
+  // 3. Parse cursor: e.g. "COMPLETED:42", "42", 42, or null
+  let cursorStatus: string | null = null
+  let cursorId: number | null = null
+
+  if (cursor !== undefined && cursor !== null && cursor !== "") {
+    const cursorStr = String(cursor)
+    if (cursorStr.includes(":")) {
+      const [s, idStr] = cursorStr.split(":")
+      cursorStatus = s || null
+      cursorId = Number(idStr) || null
+    } else {
+      const num = Number(cursorStr)
+      if (!Number.isNaN(num) && num > 0) {
+        cursorId = num
+        cursorStatus = targetStatuses[0] ?? null
+      }
+    }
+  }
+
+  // 4. Find starting status index in targetStatuses
+  let startIndex = 0
+  if (cursorStatus) {
+    const idx = targetStatuses.indexOf(cursorStatus)
+    if (idx !== -1) {
+      startIndex = idx
+    }
+  }
+
+  const collectedItems: T[] = []
+  let nextCursor: string | null = null
+  let hasMore = false
+
+  // 5. Query statuses in priority order
+  for (let i = startIndex; i < targetStatuses.length; i++) {
+    const currentStatus = targetStatuses[i]
+    const needed = limit - collectedItems.length
+    if (needed <= 0) break
+
+    const statusWhere = {
+      ...baseWhere,
+      status: currentStatus,
+    }
+
+    // Only apply cursorId if this is the status bucket where cursor stopped
+    const applyCursor = i === startIndex && cursorId !== null && cursorId > 0
+
+    const queryArgs: any = {
+      where: statusWhere,
+      take: needed + 1,
+      orderBy: [orderByClause, { id: "desc" }],
+      ...(include ? { include } : {}),
+      ...(select ? { select } : {}),
+    }
+
+    if (applyCursor) {
+      queryArgs.cursor = { id: cursorId }
+      queryArgs.skip = 1
+    }
+
+    let batch: T[]
+    try {
+      batch = await delegate.findMany(queryArgs)
+    } catch {
+      // Graceful fallback if cursor record was deleted in database
+      if (applyCursor) {
+        delete queryArgs.cursor
+        delete queryArgs.skip
+        batch = await delegate.findMany(queryArgs)
+      } else {
+        batch = []
+      }
+    }
+
+    const bucketHasMore = batch.length > needed
+    const itemsToTake = bucketHasMore ? batch.slice(0, needed) : batch
+
+    collectedItems.push(...itemsToTake)
+
+    if (bucketHasMore) {
+      hasMore = true
+      const lastItem = itemsToTake[itemsToTake.length - 1]
+      if (lastItem) {
+        nextCursor = `${currentStatus}:${lastItem.id}`
+      }
+      break
+    }
+
+    // Bucket exhausted (batch.length <= needed).
+    // If limit is reached, check if subsequent statuses have any entries:
+    if (collectedItems.length >= limit) {
+      for (let nextIdx = i + 1; nextIdx < targetStatuses.length; nextIdx++) {
+        const nextStatus = targetStatuses[nextIdx]
+        const hasNext = await delegate.findFirst({
+          where: { ...baseWhere, status: nextStatus },
+          select: { id: true },
+        })
+        if (hasNext) {
+          hasMore = true
+          nextCursor = `${nextStatus}:0`
+          break
+        }
+      }
+      break
+    }
+  }
+
+  return {
+    items: collectedItems,
+    nextCursor: hasMore ? nextCursor : null,
+    hasMore,
+    total,
   }
 }

@@ -6,6 +6,8 @@ import {
   parseYears,
   tvSelect,
   buildMediaSearchFilter,
+  fetchPrioritizedList,
+  MEDIA_STATUS_PRIORITY,
 } from "@/modules/IRIS-list/helpers"
 
 export default defineRoute({
@@ -42,7 +44,7 @@ export default defineRoute({
           })
         ),
         pagination: t.Object({
-          nextCursor: t.Nullable(t.Number()),
+          nextCursor: t.Nullable(t.Union([t.String(), t.Number()])),
           hasMore: t.Boolean(),
           total: t.Number(),
         }),
@@ -61,8 +63,8 @@ export default defineRoute({
       session
     )
 
-    const limit = Number(query?.limit ?? 50)
-    const cursor = query?.cursor ? Number(query.cursor) : undefined
+    const limit = Number(query?.limit ?? 30)
+    const cursor = query?.cursor as string | number | undefined
     const statuses = parseCommaSeparated(query?.status)
     const formats = parseCommaSeparated(query?.mediaFormat)
     const mediaStatuses = parseCommaSeparated(query?.mediaStatus)
@@ -118,34 +120,33 @@ export default defineRoute({
       orderByClause = { createdAt: order }
     }
 
-    const [total, items] = await Promise.all([
-      prisma.tvList.count({ where: whereClause }),
-      prisma.tvList.findMany({
-        where: whereClause,
-        take: limit + 1,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-        orderBy: [orderByClause, { id: "desc" }],
-        include: {
-          tv: { select: tvSelect },
-          seasons: true,
-          watchedEpisodes: {
-            select: {
-              seasonNumber: true,
-              episodeNumber: true,
-              watchedAt: true,
-            },
-          },
-          _count: {
-            select: { watchedEpisodes: true },
+    const {
+      items: paged,
+      nextCursor,
+      hasMore,
+      total,
+    } = await fetchPrioritizedList(prisma.tvList, {
+      whereClause,
+      orderByClause,
+      include: {
+        tv: { select: tvSelect },
+        seasons: true,
+        watchedEpisodes: {
+          select: {
+            seasonNumber: true,
+            episodeNumber: true,
+            watchedAt: true,
           },
         },
-      }),
-    ])
-
-    const hasMore = items.length > limit
-    const paged = hasMore ? items.slice(0, limit) : items
-    const nextCursor =
-      hasMore && paged.length > 0 ? paged[paged.length - 1]?.id : null
+        _count: {
+          select: { watchedEpisodes: true },
+        },
+      },
+      statusPriority: MEDIA_STATUS_PRIORITY.tv,
+      requestedStatuses: statuses,
+      limit,
+      cursor,
+    })
 
     return {
       success: true,

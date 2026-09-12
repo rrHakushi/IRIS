@@ -6,6 +6,8 @@ import {
   parseYears,
   movieSelect,
   buildMediaSearchFilter,
+  fetchPrioritizedList,
+  MEDIA_STATUS_PRIORITY,
 } from "@/modules/IRIS-list/helpers"
 
 export default defineRoute({
@@ -38,7 +40,7 @@ export default defineRoute({
           })
         ),
         pagination: t.Object({
-          nextCursor: t.Nullable(t.Number()),
+          nextCursor: t.Nullable(t.Union([t.String(), t.Number()])),
           hasMore: t.Boolean(),
           total: t.Number(),
         }),
@@ -57,9 +59,10 @@ export default defineRoute({
       session
     )
 
-    const limit = Number(query?.limit ?? 50)
-    const cursor = query?.cursor ? Number(query.cursor) : undefined
+    const limit = Number(query?.limit ?? 30)
+    const cursor = query?.cursor as string | number | undefined
     const statuses = parseCommaSeparated(query?.status)
+    const formats = parseCommaSeparated(query?.mediaFormat)
     const mediaStatuses = parseCommaSeparated(query?.mediaStatus)
     const genres = parseCommaSeparated(query?.genres)
     const years = parseYears(query?.year)
@@ -69,6 +72,9 @@ export default defineRoute({
     const searchFilter = await buildMediaSearchFilter(prisma, "Movie", query?.q)
 
     const movieConditions: any[] = []
+    if (formats.length > 0) {
+      movieConditions.push({ format: { in: formats } })
+    }
     if (mediaStatuses.length > 0) {
       movieConditions.push({ status: { in: mediaStatuses } })
     }
@@ -110,23 +116,22 @@ export default defineRoute({
       orderByClause = { createdAt: order }
     }
 
-    const [total, items] = await Promise.all([
-      prisma.movieList.count({ where: whereClause }),
-      prisma.movieList.findMany({
-        where: whereClause,
-        take: limit + 1,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-        orderBy: [orderByClause, { id: "desc" }],
-        include: {
-          movie: { select: movieSelect },
-        },
-      }),
-    ])
-
-    const hasMore = items.length > limit
-    const paged = hasMore ? items.slice(0, limit) : items
-    const nextCursor =
-      hasMore && paged.length > 0 ? paged[paged.length - 1]?.id : null
+    const {
+      items: paged,
+      nextCursor,
+      hasMore,
+      total,
+    } = await fetchPrioritizedList(prisma.movieList, {
+      whereClause,
+      orderByClause,
+      include: {
+        movie: { select: movieSelect },
+      },
+      statusPriority: MEDIA_STATUS_PRIORITY.movie,
+      requestedStatuses: statuses,
+      limit,
+      cursor,
+    })
 
     return {
       success: true,
