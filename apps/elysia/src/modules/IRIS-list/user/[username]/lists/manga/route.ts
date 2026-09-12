@@ -5,6 +5,7 @@ import {
   parseCommaSeparated,
   parseYears,
   mangaSelect,
+  buildMediaSearchFilter,
 } from "@/modules/IRIS-list/helpers"
 
 export default defineRoute({
@@ -68,32 +69,41 @@ export default defineRoute({
     const sortBy = (query?.sortBy ?? "updatedAt") as string
     const order = (query?.order ?? "desc") as "asc" | "desc"
 
+    const searchFilter = await buildMediaSearchFilter(prisma, "Manga", query?.q)
+
+    const mangaConditions: any[] = []
+    if (formats.length > 0) {
+      mangaConditions.push({ format: { in: formats } })
+    }
+    if (mediaStatuses.length > 0) {
+      mangaConditions.push({ status: { in: mediaStatuses } })
+    }
+    if (years.length > 0) {
+      mangaConditions.push({ startDateYear: { in: years } })
+    }
+    if (genres.length > 0) {
+      genres.forEach((genre) => {
+        mangaConditions.push({
+          genres: {
+            some: {
+              name: { equals: genre, mode: "insensitive" },
+            },
+          },
+        })
+      })
+    }
+    if (searchFilter) {
+      mangaConditions.push(searchFilter)
+    }
+
     const whereClause: any = {
       userId: dbUser.id,
       ...(!isOwner ? { private: false } : {}),
       ...(statuses.length > 0 ? { status: { in: statuses } } : {}),
-      ...(formats.length > 0 ||
-      mediaStatuses.length > 0 ||
-      genres.length > 0 ||
-      years.length > 0
+      ...(mangaConditions.length > 0
         ? {
             manga: {
-              ...(formats.length > 0 ? { format: { in: formats } } : {}),
-              ...(mediaStatuses.length > 0
-                ? { status: { in: mediaStatuses } }
-                : {}),
-              ...(years.length > 0 ? { startDateYear: { in: years } } : {}),
-              ...(genres.length > 0
-                ? {
-                    AND: genres.map((genre) => ({
-                      genres: {
-                        some: {
-                          name: { equals: genre, mode: "insensitive" },
-                        },
-                      },
-                    })),
-                  }
-                : {}),
+              AND: mangaConditions,
             },
           }
         : {}),

@@ -7,6 +7,7 @@ import {
   parseMonths,
   musicAlbumSelect,
   musicTrackSelect,
+  buildMusicSearchFilter,
 } from "@/modules/IRIS-list/helpers"
 
 export default defineRoute({
@@ -140,6 +141,11 @@ export default defineRoute({
           ],
         })
       })
+    }
+
+    const searchFilter = buildMusicSearchFilter(query?.q)
+    if (searchFilter) {
+      musicConditions.push(searchFilter)
     }
 
     const whereClause: any = {

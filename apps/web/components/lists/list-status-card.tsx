@@ -7,6 +7,7 @@ import {
   IconSortAscending,
   IconSortDescending,
   IconChevronDown,
+  IconLoader2,
 } from "@tabler/icons-react"
 import { DialogTrigger, Popover, Dialog } from "react-aria-components"
 import { cn } from "@workspace/ui/lib/utils"
@@ -33,6 +34,7 @@ export interface ListStatusCardProps {
   onTabChange?: (tab: ListViewTab) => void
   searchQuery: string
   onSearchChange: (q: string) => void
+  isSearching?: boolean
   facets: ListFilterFacets
   selectedFormats: string[]
   onFormatsChange: (formats: string[]) => void
@@ -70,6 +72,7 @@ export function ListStatusCard({
   onTabChange,
   searchQuery,
   onSearchChange,
+  isSearching = false,
   facets,
   selectedFormats,
   onFormatsChange,
@@ -411,7 +414,11 @@ export function ListStatusCard({
           <div className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center lg:justify-between">
             {/* Left: Search input */}
             <div className="relative max-w-md flex-1">
-              <IconSearch className="pointer-events-none absolute start-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
+              {isSearching ? (
+                <IconLoader2 className="pointer-events-none absolute start-3 top-1/2 z-10 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+              ) : (
+                <IconSearch className="pointer-events-none absolute start-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
+              )}
               <Input
                 type="text"
                 placeholder={`Search ${mediaType}...`}

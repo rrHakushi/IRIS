@@ -5,6 +5,7 @@ import {
   parseCommaSeparated,
   parseYears,
   movieSelect,
+  buildMediaSearchFilter,
 } from "@/modules/IRIS-list/helpers"
 
 export default defineRoute({
@@ -65,28 +66,38 @@ export default defineRoute({
     const sortBy = (query?.sortBy ?? "updatedAt") as string
     const order = (query?.order ?? "desc") as "asc" | "desc"
 
+    const searchFilter = await buildMediaSearchFilter(prisma, "Movie", query?.q)
+
+    const movieConditions: any[] = []
+    if (mediaStatuses.length > 0) {
+      movieConditions.push({ status: { in: mediaStatuses } })
+    }
+    if (years.length > 0) {
+      movieConditions.push({ releaseDateYear: { in: years } })
+    }
+    if (genres.length > 0) {
+      genres.forEach((genre) => {
+        movieConditions.push({
+          genres: {
+            some: {
+              name: { equals: genre, mode: "insensitive" },
+            },
+          },
+        })
+      })
+    }
+    if (searchFilter) {
+      movieConditions.push(searchFilter)
+    }
+
     const whereClause: any = {
       userId: dbUser.id,
       ...(!isOwner ? { private: false } : {}),
       ...(statuses.length > 0 ? { status: { in: statuses } } : {}),
-      ...(mediaStatuses.length > 0 || genres.length > 0 || years.length > 0
+      ...(movieConditions.length > 0
         ? {
             movie: {
-              ...(mediaStatuses.length > 0
-                ? { status: { in: mediaStatuses } }
-                : {}),
-              ...(years.length > 0 ? { releaseDateYear: { in: years } } : {}),
-              ...(genres.length > 0
-                ? {
-                    AND: genres.map((genre) => ({
-                      genres: {
-                        some: {
-                          name: { equals: genre, mode: "insensitive" },
-                        },
-                      },
-                    })),
-                  }
-                : {}),
+              AND: movieConditions,
             },
           }
         : {}),

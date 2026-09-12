@@ -167,10 +167,184 @@ export default defineRoute({
     const sortBy = (query?.sortBy ?? "order") as string
     const order = (query?.order ?? "asc") as "asc" | "desc"
 
+    const cleanQuery =
+      typeof query?.q === "string"
+        ? decodeURIComponent(query.q).replace(/\+/g, " ").trim()
+        : ""
+
     const whereClause: any = {
       listId: watchlist.id,
       ...(mediaTypes.length > 0
         ? { mediaType: { in: mediaTypes as MediaType[] } }
+        : {}),
+      ...(cleanQuery
+        ? {
+            OR: [
+              { customNotes: { contains: cleanQuery, mode: "insensitive" } },
+              {
+                anime: {
+                  OR: [
+                    {
+                      titlePrimary: {
+                        contains: cleanQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      titleSecondary: {
+                        contains: cleanQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      titleNative: {
+                        contains: cleanQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                  ],
+                },
+              },
+              {
+                manga: {
+                  OR: [
+                    {
+                      titlePrimary: {
+                        contains: cleanQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      titleSecondary: {
+                        contains: cleanQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      titleNative: {
+                        contains: cleanQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                  ],
+                },
+              },
+              {
+                movie: {
+                  OR: [
+                    {
+                      titlePrimary: {
+                        contains: cleanQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      titleSecondary: {
+                        contains: cleanQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      titleNative: {
+                        contains: cleanQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                  ],
+                },
+              },
+              {
+                tv: {
+                  OR: [
+                    {
+                      titlePrimary: {
+                        contains: cleanQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      titleSecondary: {
+                        contains: cleanQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      titleNative: {
+                        contains: cleanQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                  ],
+                },
+              },
+              {
+                game: {
+                  OR: [
+                    {
+                      titlePrimary: {
+                        contains: cleanQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      titleSecondary: {
+                        contains: cleanQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      titleNative: {
+                        contains: cleanQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                  ],
+                },
+              },
+              {
+                book: {
+                  OR: [
+                    {
+                      titlePrimary: {
+                        contains: cleanQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      titleSecondary: {
+                        contains: cleanQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                  ],
+                },
+              },
+              {
+                music: {
+                  OR: [
+                    {
+                      titlePrimary: {
+                        contains: cleanQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      titleSecondary: {
+                        contains: cleanQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      artistName: {
+                        contains: cleanQuery,
+                        mode: "insensitive",
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          }
         : {}),
     }
 

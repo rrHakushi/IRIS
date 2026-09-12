@@ -42,6 +42,7 @@ export interface MediaListGridProps {
   ) => void
   onIncrementProgress?: (item: ListEntryData, count: number) => Promise<void>
   mediaTitlePreference?: "primary" | "secondary" | "native"
+  searchQuery?: string
   className?: string
 }
 
@@ -70,7 +71,8 @@ export function toNormalizedMedia(
       media.title ||
       media.name ||
       "Untitled",
-    titleSecondary: media.titleEnglish || media.titleRomaji || null,
+    titleSecondary:
+      media.titleSecondary || media.titleEnglish || media.titleRomaji || null,
     titleNative: media.titleNative || null,
     coverImage:
       media.coverImage || media.posterImage || media.bannerImage || null,
@@ -168,6 +170,7 @@ export function MediaListGrid({
   onItemUpdated,
   onIncrementProgress,
   mediaTitlePreference = "primary",
+  searchQuery,
   className,
 }: MediaListGridProps): React.JSX.Element {
   const currentCategory = MEDIA_CATEGORIES.find((c) => c.key === mediaType)
@@ -297,11 +300,14 @@ export function MediaListGrid({
           <IconInbox className="size-7" />
         </div>
         <h3 className="mt-4 font-heading text-base font-semibold text-foreground">
-          No entries found
+          {searchQuery
+            ? `No entries found matching "${searchQuery}"`
+            : "No entries found"}
         </h3>
         <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-          There are no items matching the selected status or filters in this
-          list.
+          {searchQuery
+            ? "No items in this list match your search query or synonyms. Try another keyword or clear the search."
+            : "There are no items matching the selected status or filters in this list."}
         </p>
       </div>
     )
@@ -318,7 +324,7 @@ export function MediaListGrid({
                 <h2 className="font-heading text-sm font-semibold tracking-tight text-foreground sm:text-base">
                   {section.title}
                 </h2>
-                <span className="rounded-full bg-muted/80 px-2 py-0.5 font-mono text-[11px] font-medium tabular-nums text-muted-foreground">
+                <span className="rounded-full bg-muted/80 px-2 py-0.5 font-mono text-[11px] font-medium text-muted-foreground tabular-nums">
                   {section.items.length}
                 </span>
               </div>

@@ -2,6 +2,10 @@ import { t } from "@/router"
 import type { PrismaClient, MediaType } from "@IRIS/database"
 import { NotFound, Forbidden, Unauthorized, BadRequest } from "@/utils/errors"
 import { recordMediaListActivity } from "@/services/activity.service.js"
+import {
+  findMatchingSynonymIds,
+  type MediaSearchTable,
+} from "@/modules/IRIS-media/helpers/search-synonyms"
 
 // ============================================================================
 // Shared Validation Schemas
@@ -65,6 +69,11 @@ export const HistoryArraySchema = t.Optional(
 )
 
 export const ListQuerySchema = t.Object({
+  q: t.Optional(
+    t.String({
+      description: "Search query string to filter by title or synonyms",
+    })
+  ),
   cursor: t.Optional(
     t.Number({ description: "Entry ID cursor for pagination" })
   ),
@@ -111,6 +120,11 @@ export const ListQuerySchema = t.Object({
 })
 
 export const CustomWatchlistQuerySchema = t.Object({
+  q: t.Optional(
+    t.String({
+      description: "Search query string to filter by title or custom notes",
+    })
+  ),
   cursor: t.Optional(
     t.String({ description: "Entry UUID cursor for pagination" })
   ),
@@ -247,16 +261,6 @@ export const animeSelect = {
   averageScore: true,
   startDateYear: true,
   genres: { select: { id: true, name: true } },
-  episodes: {
-    where: { type: "REGULAR" as const },
-    orderBy: { number: "asc" as const },
-    select: {
-      id: true,
-      number: true,
-      titlePrimary: true,
-      titleSecondary: true,
-    },
-  },
 }
 
 export const mangaSelect = {
@@ -307,8 +311,6 @@ export const tvSelect = {
     select: {
       id: true,
       seasonNumber: true,
-      titlePrimary: true,
-      titleSecondary: true,
       episodeCount: true,
     },
   },
@@ -340,6 +342,83 @@ export const bookSelect = {
   averageScore: true,
   releaseDateYear: true,
   genres: { select: { id: true, name: true } },
+}
+
+// ============================================================================
+// Server-side Media Search Filter Builders
+// ============================================================================
+
+export async function buildMediaSearchFilter(
+  prisma: PrismaClient,
+  table: MediaSearchTable,
+  queryStr?: unknown
+) {
+  if (!queryStr || typeof queryStr !== "string") return null
+  const cleanQuery = decodeURIComponent(queryStr).replace(/\+/g, " ").trim()
+  if (!cleanQuery) return null
+
+  const synonymIds = await findMatchingSynonymIds(
+    prisma,
+    table,
+    cleanQuery,
+    100
+  )
+
+  if (table === "Book") {
+    return {
+      OR: [
+        {
+          titlePrimary: { contains: cleanQuery, mode: "insensitive" as const },
+        },
+        {
+          titleSecondary: {
+            contains: cleanQuery,
+            mode: "insensitive" as const,
+          },
+        },
+        { subtitle: { contains: cleanQuery, mode: "insensitive" as const } },
+        ...(synonymIds.length > 0 ? [{ id: { in: synonymIds } }] : []),
+      ],
+    }
+  }
+
+  return {
+    OR: [
+      { titlePrimary: { contains: cleanQuery, mode: "insensitive" as const } },
+      {
+        titleSecondary: { contains: cleanQuery, mode: "insensitive" as const },
+      },
+      { titleNative: { contains: cleanQuery, mode: "insensitive" as const } },
+      ...(synonymIds.length > 0 ? [{ id: { in: synonymIds } }] : []),
+    ],
+  }
+}
+
+export function buildMusicSearchFilter(queryStr?: unknown) {
+  if (!queryStr || typeof queryStr !== "string") return null
+  const cleanQuery = decodeURIComponent(queryStr).replace(/\+/g, " ").trim()
+  if (!cleanQuery) return null
+
+  return {
+    OR: [
+      { titlePrimary: { contains: cleanQuery, mode: "insensitive" as const } },
+      {
+        titleSecondary: { contains: cleanQuery, mode: "insensitive" as const },
+      },
+      { titleVersion: { contains: cleanQuery, mode: "insensitive" as const } },
+      { artistName: { contains: cleanQuery, mode: "insensitive" as const } },
+      {
+        album: {
+          titlePrimary: { contains: cleanQuery, mode: "insensitive" as const },
+        },
+      },
+      {
+        album: {
+          artistName: { contains: cleanQuery, mode: "insensitive" as const },
+        },
+      },
+    ],
+  }
 }
 
 export const musicSelect = {

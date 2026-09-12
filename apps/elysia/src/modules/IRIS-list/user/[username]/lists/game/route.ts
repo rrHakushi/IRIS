@@ -5,6 +5,7 @@ import {
   parseCommaSeparated,
   parseYears,
   gameSelect,
+  buildMediaSearchFilter,
 } from "@/modules/IRIS-list/helpers"
 
 export default defineRoute({
@@ -66,28 +67,38 @@ export default defineRoute({
     const sortBy = (query?.sortBy ?? "updatedAt") as string
     const order = (query?.order ?? "desc") as "asc" | "desc"
 
+    const searchFilter = await buildMediaSearchFilter(prisma, "Game", query?.q)
+
+    const gameConditions: any[] = []
+    if (mediaStatuses.length > 0) {
+      gameConditions.push({ status: { in: mediaStatuses } })
+    }
+    if (years.length > 0) {
+      gameConditions.push({ releaseDateYear: { in: years } })
+    }
+    if (genres.length > 0) {
+      genres.forEach((genre) => {
+        gameConditions.push({
+          genres: {
+            some: {
+              name: { equals: genre, mode: "insensitive" },
+            },
+          },
+        })
+      })
+    }
+    if (searchFilter) {
+      gameConditions.push(searchFilter)
+    }
+
     const whereClause: any = {
       userId: dbUser.id,
       ...(!isOwner ? { private: false } : {}),
       ...(statuses.length > 0 ? { status: { in: statuses } } : {}),
-      ...(mediaStatuses.length > 0 || genres.length > 0 || years.length > 0
+      ...(gameConditions.length > 0
         ? {
             game: {
-              ...(mediaStatuses.length > 0
-                ? { status: { in: mediaStatuses } }
-                : {}),
-              ...(years.length > 0 ? { releaseDateYear: { in: years } } : {}),
-              ...(genres.length > 0
-                ? {
-                    AND: genres.map((genre) => ({
-                      genres: {
-                        some: {
-                          name: { equals: genre, mode: "insensitive" },
-                        },
-                      },
-                    })),
-                  }
-                : {}),
+              AND: gameConditions,
             },
           }
         : {}),

@@ -59,20 +59,35 @@ function matchesMediaSearch(
 ): boolean {
   if (!query) return true
 
-  // Fast direct checks with early return, avoiding array allocations
+  // Direct checks across all titles, Romanizations, and names
   if (media.titlePrimary && media.titlePrimary.toLowerCase().includes(query))
+    return true
+  if (
+    media.titleSecondary &&
+    media.titleSecondary.toLowerCase().includes(query)
+  )
+    return true
+  if (media.titleNative && media.titleNative.toLowerCase().includes(query))
     return true
   if (media.titleEnglish && media.titleEnglish.toLowerCase().includes(query))
     return true
   if (media.titleRomaji && media.titleRomaji.toLowerCase().includes(query))
     return true
-  if (media.titleNative && media.titleNative.toLowerCase().includes(query))
+  if (media.subtitle && media.subtitle.toLowerCase().includes(query))
     return true
   if (media.title && media.title.toLowerCase().includes(query)) return true
   if (media.name && media.name.toLowerCase().includes(query)) return true
   if (media.artist && media.artist.toLowerCase().includes(query)) return true
   if (media.artistName && media.artistName.toLowerCase().includes(query))
     return true
+  if (
+    Array.isArray(media.synonyms) &&
+    media.synonyms.some(
+      (s: string) => typeof s === "string" && s.toLowerCase().includes(query)
+    )
+  ) {
+    return true
+  }
 
   return false
 }
@@ -205,7 +220,7 @@ export function UserListView({
   // ---------------------------------------------------------------------------
   const [activeStatus, setActiveStatus] = useState<StatusKey>("ALL")
   const [searchQuery, setSearchQuery] = useState("")
-  const deferredSearch = React.useDeferredValue(searchQuery)
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [selectedFormats, setSelectedFormats] = useState<string[]>([])
   const [selectedMediaStatuses, setSelectedMediaStatuses] = useState<string[]>(
     []
@@ -218,7 +233,7 @@ export function UserListView({
   const [sortOrder, setSortOrder] = useState<SortOrderOption>("desc")
   const [activeTab, setActiveTab] = useState<ListViewTab>("list")
 
-  // Sync initial tab from URL search parameters (?tab=list | comments | stats | activity)
+  // Sync initial tab and search query from URL search parameters (?tab=list & ?q=...)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search)
@@ -230,6 +245,12 @@ export function UserListView({
         tabParam === "activity"
       ) {
         setActiveTab(tabParam)
+      }
+      const qParam = params.get("q")
+      if (qParam) {
+        const clean = qParam.trim()
+        setSearchQuery(clean)
+        setDebouncedSearch(clean)
       }
     }
   }, [])
@@ -249,10 +270,37 @@ export function UserListView({
       } else {
         setActiveTab("list")
       }
+      const qParam = params.get("q") || ""
+      setSearchQuery(qParam)
+      setDebouncedSearch(qParam.trim())
     }
     window.addEventListener("popstate", onPopState)
     return () => window.removeEventListener("popstate", onPopState)
   }, [])
+
+  // Debounce search query changes (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim())
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // Sync debounced search to URL query parameter (?q=...) without full reload
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href)
+      const currentQ = url.searchParams.get("q") || ""
+      if (debouncedSearch !== currentQ) {
+        if (debouncedSearch) {
+          url.searchParams.set("q", debouncedSearch)
+        } else {
+          url.searchParams.delete("q")
+        }
+        window.history.replaceState({}, "", url.toString())
+      }
+    }
+  }, [debouncedSearch])
 
   // Update activeTab and sync to URL search params (?tab=list | comments | stats)
   const handleTabChange = useCallback((newTab: ListViewTab) => {
@@ -266,7 +314,6 @@ export function UserListView({
       window.history.replaceState({}, "", url.toString())
     }
   }, [])
-
 
   // ---------------------------------------------------------------------------
   // Data States
@@ -369,7 +416,8 @@ export function UserListView({
       const artistsParam =
         selectedArtists.length > 0 ? selectedArtists.join(",") : undefined
 
-      const queryKey = `${username}:${mediaType}:${activeStatus}:${statusParam}:${formatsParam}:${mediaStatusParam}:${genresParam}:${yearsParam}:${monthsParam}:${artistsParam}:${sortBy}:${sortOrder}`
+      const cleanSearch = debouncedSearch.trim()
+      const queryKey = `${username}:${mediaType}:${activeStatus}:${statusParam}:${formatsParam}:${mediaStatusParam}:${genresParam}:${yearsParam}:${monthsParam}:${artistsParam}:${sortBy}:${sortOrder}:${cleanSearch}`
 
       if (
         !force &&
@@ -387,7 +435,7 @@ export function UserListView({
 
         const { data, error } = await resource.get({
           query: {
-            limit: activeStatus === "ALL" ? 100 : 36,
+            limit: activeStatus === "ALL" && !cleanSearch ? 100 : 36,
             status: statusParam,
             mediaFormat: formatsParam,
             mediaStatus: mediaStatusParam,
@@ -397,6 +445,7 @@ export function UserListView({
             artist: artistsParam,
             sortBy,
             order: sortOrder,
+            q: cleanSearch || undefined,
           },
         })
 
@@ -430,6 +479,7 @@ export function UserListView({
       selectedArtists,
       sortBy,
       sortOrder,
+      debouncedSearch,
     ]
   )
 
@@ -477,9 +527,10 @@ export function UserListView({
       const artistsParam =
         selectedArtists.length > 0 ? selectedArtists.join(",") : undefined
 
+      const cleanSearch = debouncedSearch.trim()
       const { data, error } = await resource.get({
         query: {
-          limit: activeStatus === "ALL" ? 100 : 36,
+          limit: activeStatus === "ALL" && !cleanSearch ? 100 : 36,
           cursor: nextCursor,
           status: statusParam,
           mediaFormat: formatsParam,
@@ -490,6 +541,7 @@ export function UserListView({
           artist: artistsParam,
           sortBy,
           order: sortOrder,
+          q: cleanSearch || undefined,
         },
       })
 
@@ -522,6 +574,7 @@ export function UserListView({
     selectedArtists,
     sortBy,
     sortOrder,
+    debouncedSearch,
   ])
 
   // ---------------------------------------------------------------------------
@@ -791,17 +844,30 @@ export function UserListView({
   )
 
   // ---------------------------------------------------------------------------
-  // 6. Non-blocking Client-side Search Filter over Loaded Items
+  // 6. Optimistic Client Filtering & Server Search State
   // ---------------------------------------------------------------------------
-  const normalizedSearch = deferredSearch.trim().toLowerCase()
+  const normalizedSearch = searchQuery.trim().toLowerCase()
 
   const filteredItems = React.useMemo(() => {
     if (!normalizedSearch) return items
 
+    // If server results have already settled for this search query, items are authoritative
+    if (debouncedSearch.toLowerCase() === normalizedSearch) {
+      return items
+    }
+
+    // While user is typing (prior to 300ms debounce response), optimistically filter loaded items
     return items.filter(({ media }) =>
       matchesMediaSearch(media, normalizedSearch)
     )
-  }, [items, normalizedSearch])
+  }, [items, normalizedSearch, debouncedSearch])
+
+  const isSearching = Boolean(
+    searchQuery.trim() &&
+    (isLoading ||
+      isFetchingRef.current ||
+      searchQuery.trim() !== debouncedSearch)
+  )
 
   return (
     <div className="flex min-h-svh w-full flex-col bg-background text-foreground">
@@ -823,6 +889,7 @@ export function UserListView({
           onTabChange={handleTabChange}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          isSearching={isSearching}
           facets={facets}
           selectedFormats={selectedFormats}
           onFormatsChange={setSelectedFormats}
@@ -857,6 +924,7 @@ export function UserListView({
             onItemUpdated={handleItemUpdated}
             onIncrementProgress={isOwner ? handleIncrementProgress : undefined}
             mediaTitlePreference={mediaTitlePreference}
+            searchQuery={searchQuery.trim()}
           />
         )}
 
