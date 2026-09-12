@@ -28,7 +28,8 @@
     "route:create": "bun run scripts/create-route.ts",
     "route:delete": "bun run scripts/delete-route.ts",
     "route:sync": "bun run scripts/generate-manifests.ts",
-    "generate": "bun run scripts/generate-manifests.ts"
+    "generate": "bun run scripts/generate-manifests.ts",
+    "character:dedup": "dotenvx run -f ../../.env -- bun scripts/deduplicate-characters.ts"
   },
   "dependencies": {
     "@IRIS/cache": "workspace:*",

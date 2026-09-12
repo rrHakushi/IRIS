@@ -63,6 +63,83 @@ const VALID_RELATION_TYPES = new Set([
   "SPIN_OFF",
 ])
 
+const GENERIC_CHARACTER_NAMES = new Set([
+  "doctor",
+  "nurse",
+  "police officer",
+  "police",
+  "cop",
+  "detective",
+  "guard",
+  "security guard",
+  "security",
+  "waiter",
+  "waitress",
+  "bartender",
+  "driver",
+  "taxi driver",
+  "cab driver",
+  "reporter",
+  "journalist",
+  "anchor",
+  "newscaster",
+  "priest",
+  "soldier",
+  "pilot",
+  "extra",
+  "uncredited",
+  "additional voices",
+  "man",
+  "woman",
+  "boy",
+  "girl",
+  "student",
+  "teacher",
+  "officer",
+  "lawyer",
+  "judge",
+  "agent",
+  "fbi agent",
+  "cia agent",
+  "paramedic",
+  "passenger",
+  "pedestrian",
+  "customer",
+  "receptionist",
+  "thug",
+  "henchman",
+  "prisoner",
+  "inmate",
+  "host",
+  "guest",
+  "announcer",
+  "bystander",
+  "crowd",
+  "narrator",
+  "himself",
+  "herself",
+  "themselves",
+  "self",
+])
+
+function isGenericCharacterName(name: string): boolean {
+  if (!name) return true
+  const lower = name.trim().toLowerCase()
+  if (GENERIC_CHARACTER_NAMES.has(lower)) return true
+  if (/^(additional|adr\s+cast|uncredited|voice|background)/i.test(lower))
+    return true
+  return false
+}
+
+function extractFranchisePrefix(title: string): string {
+  if (!title) return ""
+  // Remove subtitle after colon, dash, or slash: e.g. "Hotel Transylvania: Transformania" -> "Hotel Transylvania"
+  let base = (title.split(/[:\-\/]/)[0] ?? "").trim()
+  // Remove trailing volume / part numbers / roman numerals: "Shrek 2" -> "Shrek", "Now You See Me 2" -> "Now You See Me"
+  base = base.replace(/\s+(part\s+)?(\d+|[ivxlcdm]+)$/i, "").trim()
+  return base
+}
+
 export class MediaDbSyncer {
   /**
    * Evaluates if a database record is stale and needs a fresh fetch.
@@ -1521,6 +1598,109 @@ export class MediaDbSyncer {
         dateOfBirthYear: data.dateOfBirthYear,
         dateOfBirthMonth: data.dateOfBirthMonth,
         dateOfBirthDay: data.dateOfBirthDay,
+      },
+    })
+  }
+
+  /**
+   * Resolves or creates a Character for Movie/TV media without misusing per-movie TVDB credit IDs.
+   * Uses actor matching (sequel/reprise) and franchise matching (for recasts), preventing cross-franchise conflations.
+   */
+  private async resolveMovieOrTvCharacter(params: {
+    charName: string
+    charImage?: string
+    actorId: number | null
+    mediaType: "MOVIE" | "TV"
+    mediaTitle?: string
+  }): Promise<{ id: number }> {
+    const trimmedName = params.charName.trim()
+    if (!trimmedName) {
+      return await prisma.character.create({
+        data: { namePrimary: "Unknown Character" },
+      })
+    }
+
+    let existingChar: { id: number; image?: string | null } | null = null
+
+    // 1. Sequel / Same Actor match: If actor is known, look for existing character with this name played by same actor
+    if (params.actorId) {
+      existingChar = await prisma.character.findFirst({
+        where: {
+          namePrimary: { equals: trimmedName, mode: "insensitive" },
+          mediaCharacters: {
+            some: {
+              actorId: params.actorId,
+            },
+          },
+        },
+        select: { id: true, image: true },
+      })
+    }
+
+    // 2. Franchise / Recast match: If no actor match, but name is non-generic, check within same franchise
+    if (
+      !existingChar &&
+      !isGenericCharacterName(trimmedName) &&
+      params.mediaTitle
+    ) {
+      const franchisePrefix = extractFranchisePrefix(params.mediaTitle)
+      if (franchisePrefix && franchisePrefix.length >= 3) {
+        if (params.mediaType === "MOVIE") {
+          existingChar = await prisma.character.findFirst({
+            where: {
+              namePrimary: { equals: trimmedName, mode: "insensitive" },
+              mediaCharacters: {
+                some: {
+                  movie: {
+                    titlePrimary: {
+                      startsWith: franchisePrefix,
+                      mode: "insensitive",
+                    },
+                  },
+                },
+              },
+            },
+            select: { id: true, image: true },
+          })
+        } else if (params.mediaType === "TV") {
+          existingChar = await prisma.character.findFirst({
+            where: {
+              namePrimary: { equals: trimmedName, mode: "insensitive" },
+              mediaCharacters: {
+                some: {
+                  tv: {
+                    titlePrimary: {
+                      startsWith: franchisePrefix,
+                      mode: "insensitive",
+                    },
+                  },
+                },
+              },
+            },
+            select: { id: true, image: true },
+          })
+        }
+      }
+    }
+
+    // 3. If found, backfill missing image if available
+    if (existingChar) {
+      if (!existingChar.image && params.charImage) {
+        await prisma.character
+          .update({
+            where: { id: existingChar.id },
+            data: { image: params.charImage },
+          })
+          .catch(() => {})
+      }
+      return existingChar
+    }
+
+    // 4. Otherwise create a new Character record without TVDB credit ID
+    return await prisma.character.create({
+      data: {
+        namePrimary: trimmedName,
+        image: params.charImage || null,
       },
     })
   }
@@ -3040,39 +3220,49 @@ export class MediaDbSyncer {
 
       let localCharId: number | null = null
       if (c.name && isActor) {
-        const char = await this.upsertCharacter({
-          tvDBId: c.id,
-          namePrimary: c.name,
-          image: normalizeTvdbImageUrl(c.image),
+        const char = await this.resolveMovieOrTvCharacter({
+          charName: c.name,
+          charImage: normalizeTvdbImageUrl(c.image),
+          actorId: localPersonId,
+          mediaType: "TV",
+          mediaTitle: series.name,
         })
         localCharId = char.id
       }
 
       if (isActor && localCharId) {
-        await prisma.mediaCharacter
-          .upsert({
-            where: {
-              mediaType_mediaId_characterId_actorId: {
+        const existingMC = await prisma.mediaCharacter.findFirst({
+          where: {
+            mediaType: "TV",
+            mediaId: localTvId,
+            characterId: localCharId,
+          },
+        })
+
+        const role = c.isFeatured ? "MAIN" : "SUPPORTING"
+        if (existingMC) {
+          if (localPersonId && existingMC.actorId !== localPersonId) {
+            await prisma.mediaCharacter
+              .update({
+                where: { id: existingMC.id },
+                data: { actorId: localPersonId, role },
+              })
+              .catch(() => {})
+          }
+        } else {
+          await prisma.mediaCharacter
+            .create({
+              data: {
                 mediaType: "TV",
                 mediaId: localTvId,
+                tvId: localTvId,
                 characterId: localCharId,
-                actorId: localPersonId ?? -1,
+                actorId: localPersonId,
+                role,
               },
-            },
-            update: {
-              tvId: localTvId,
-              role: c.isFeatured ? "MAIN" : "SUPPORTING",
-            },
-            create: {
-              mediaType: "TV",
-              mediaId: localTvId,
-              tvId: localTvId,
-              characterId: localCharId,
-              actorId: localPersonId,
-              role: c.isFeatured ? "MAIN" : "SUPPORTING",
-            },
-          })
-          .catch(() => {})
+            })
+            .catch(() => {})
+        }
       } else if (localPersonId) {
         await prisma.mediaStaff
           .upsert({
@@ -3450,39 +3640,49 @@ export class MediaDbSyncer {
 
         let localCharId: number | null = null
         if (c.name) {
-          const char = await this.upsertCharacter({
-            tvDBId: c.id,
-            namePrimary: c.name,
-            image: normalizeTvdbImageUrl(c.image),
+          const char = await this.resolveMovieOrTvCharacter({
+            charName: c.name,
+            charImage: normalizeTvdbImageUrl(c.image),
+            actorId: localPersonId,
+            mediaType: "MOVIE",
+            mediaTitle: movie.name,
           })
           localCharId = char.id
         }
 
         if (localCharId) {
-          await prisma.mediaCharacter
-            .upsert({
-              where: {
-                mediaType_mediaId_characterId_actorId: {
+          const existingMC = await prisma.mediaCharacter.findFirst({
+            where: {
+              mediaType: "MOVIE",
+              mediaId: localMovieId,
+              characterId: localCharId,
+            },
+          })
+
+          const role = c.isFeatured ? "MAIN" : "SUPPORTING"
+          if (existingMC) {
+            if (localPersonId && existingMC.actorId !== localPersonId) {
+              await prisma.mediaCharacter
+                .update({
+                  where: { id: existingMC.id },
+                  data: { actorId: localPersonId, role },
+                })
+                .catch(() => {})
+            }
+          } else {
+            await prisma.mediaCharacter
+              .create({
+                data: {
                   mediaType: "MOVIE",
                   mediaId: localMovieId,
+                  movieId: localMovieId,
                   characterId: localCharId,
-                  actorId: localPersonId ?? -1,
+                  actorId: localPersonId,
+                  role,
                 },
-              },
-              update: {
-                movieId: localMovieId,
-                role: c.isFeatured ? "MAIN" : "SUPPORTING",
-              },
-              create: {
-                mediaType: "MOVIE",
-                mediaId: localMovieId,
-                movieId: localMovieId,
-                characterId: localCharId,
-                actorId: localPersonId,
-                role: c.isFeatured ? "MAIN" : "SUPPORTING",
-              },
-            })
-            .catch(() => {})
+              })
+              .catch(() => {})
+          }
         } else if (localPersonId) {
           await prisma.mediaStaff
             .upsert({
