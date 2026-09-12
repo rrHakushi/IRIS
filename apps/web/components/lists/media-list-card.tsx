@@ -20,6 +20,7 @@ export interface MediaListCardProps {
   mediaType: MediaListType
   mediaTitlePreference?: "primary" | "secondary" | "native"
   progressUnit?: string
+  priority?: boolean
   onOpenEditModal: (item: ListEntryData, mediaType?: MediaListType) => void
   onIncrementProgress?: (
     item: ListEntryData,
@@ -153,6 +154,7 @@ function MediaListCardInner({
   mediaType,
   mediaTitlePreference = "primary",
   progressUnit = "Ep",
+  priority = false,
   onOpenEditModal,
   onIncrementProgress,
 }: MediaListCardProps): React.JSX.Element {
@@ -432,9 +434,9 @@ function MediaListCardInner({
               src={cover}
               alt={title}
               fill
-              sizes="(max-width: 640px) 33vw, (max-width: 1024px) 20vw, 12.5vw"
-              unoptimized
-              loading="lazy"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1536px) 25vw, 384px"
+              priority={priority}
+              loading={priority ? "eager" : "lazy"}
               decoding="async"
               className="object-cover"
             />
@@ -600,6 +602,7 @@ function arePropsEqual(
   if (prevProps.mediaType !== nextProps.mediaType) return false
   if (prevProps.mediaTitlePreference !== nextProps.mediaTitlePreference) return false
   if (prevProps.progressUnit !== nextProps.progressUnit) return false
+  if (prevProps.priority !== nextProps.priority) return false
   if (prevProps.onOpenEditModal !== nextProps.onOpenEditModal) return false
   if (prevProps.onIncrementProgress !== nextProps.onIncrementProgress) return false
 

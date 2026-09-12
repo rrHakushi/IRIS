@@ -116,14 +116,43 @@ function getListResource(username: string, mediaType: MediaListType) {
   }
 }
 
+const STATUS_PRIORITY_ORDER: Record<string, number> = {
+  WATCHING: 1,
+  READING: 1,
+  PLAYING: 1,
+  LISTENING: 1,
+  CURRENT: 1,
+  ON_HOLD: 2,
+  HOLD: 2,
+  PAUSED: 2,
+  COMPLETED: 3,
+  FINISHED: 3,
+  DROPPED: 4,
+  PLANNING: 5,
+}
+
+function getStatusOrder(status?: string): number {
+  if (!status) return 99
+  return STATUS_PRIORITY_ORDER[status.toUpperCase()] ?? 99
+}
+
 function sortListItems(
   items: ListEntryData[],
   sortBy: SortByOption,
-  sortOrder: SortOrderOption
+  sortOrder: SortOrderOption,
+  preserveStatusPriority = false
 ): ListEntryData[] {
   const isAsc = sortOrder === "asc"
 
   return [...items].sort((a, b) => {
+    if (preserveStatusPriority) {
+      const orderA = getStatusOrder(a.entry.status)
+      const orderB = getStatusOrder(b.entry.status)
+      if (orderA !== orderB) {
+        return orderA - orderB
+      }
+    }
+
     let diff = 0
 
     switch (sortBy) {
@@ -321,7 +350,7 @@ export function UserListView({
   const [items, setItems] = useState<ListEntryData[]>([])
   const [facets, setFacets] = useState<ListFilterFacets>(DEFAULT_FACETS)
   const [totalCount, setTotalCount] = useState<number>(0)
-  const [nextCursor, setNextCursor] = useState<number | null>(null)
+  const [nextCursor, setNextCursor] = useState<string | number | null>(null)
   const [hasMore, setHasMore] = useState<boolean>(false)
 
   const [isLoading, setIsLoading] = useState<boolean>(true)
@@ -435,7 +464,7 @@ export function UserListView({
 
         const { data, error } = await resource.get({
           query: {
-            limit: activeStatus === "ALL" && !cleanSearch ? 100 : 36,
+            limit: 30,
             status: statusParam,
             mediaFormat: formatsParam,
             mediaStatus: mediaStatusParam,
@@ -530,8 +559,8 @@ export function UserListView({
       const cleanSearch = debouncedSearch.trim()
       const { data, error } = await resource.get({
         query: {
-          limit: activeStatus === "ALL" && !cleanSearch ? 100 : 36,
-          cursor: nextCursor,
+          limit: 30,
+          cursor: nextCursor ?? undefined,
           status: statusParam,
           mediaFormat: formatsParam,
           mediaStatus: mediaStatusParam,
@@ -714,7 +743,7 @@ export function UserListView({
           }
           return it
         })
-        return sortListItems(next, sortBy, sortOrder)
+        return sortListItems(next, sortBy, sortOrder, activeStatus === "ALL")
       })
 
       try {
@@ -835,7 +864,7 @@ export function UserListView({
           }
 
           // Re-sort items by active sortBy (e.g. updatedAt) and sortOrder
-          return sortListItems(next, sortBy, sortOrder)
+          return sortListItems(next, sortBy, sortOrder, activeStatus === "ALL")
         })
         fetchFacets(true)
       }

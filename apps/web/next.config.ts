@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
   },
   transpilePackages: ["@workspace/ui"],
   images: {
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       { protocol: "https", hostname: "**.anilist.co" },
       { protocol: "https", hostname: "cdn.myanimelist.net" },
@@ -25,6 +26,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "cdn-images.dzcdn.net" },
       { protocol: "https", hostname: "image.tmdb.org" },
       { protocol: "https", hostname: "lastfm.freetls.fastly.net" },
+      { protocol: "https", hostname: "**" },
     ],
   },
   async rewrites() {

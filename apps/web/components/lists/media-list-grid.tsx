@@ -317,7 +317,7 @@ export function MediaListGrid({
     <div className={cn("flex flex-col gap-6", className)}>
       {groupedSections ? (
         <div className="flex flex-col gap-8">
-          {groupedSections.map((section) => (
+          {groupedSections.map((section, sectionIdx) => (
             <div key={section.key} className="flex flex-col gap-3">
               {/* Section Header with Title & Count */}
               <div className="flex items-center gap-2">
@@ -331,7 +331,7 @@ export function MediaListGrid({
 
               {/* 8-Card Responsive Grid */}
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2.5 md:grid-cols-5 md:gap-3 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-8">
-                {section.items.map((item) => (
+                {section.items.map((item, idx) => (
                   <MediaListCard
                     key={`${item.entry.id}-${item.media.id}`}
                     item={item}
@@ -342,6 +342,7 @@ export function MediaListGrid({
                     onIncrementProgress={
                       isOwner ? onIncrementProgress : undefined
                     }
+                    priority={sectionIdx === 0 && idx === 0}
                   />
                 ))}
               </div>
@@ -350,7 +351,7 @@ export function MediaListGrid({
         </div>
       ) : (
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2.5 md:grid-cols-5 md:gap-3 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-8">
-          {items.map((item) => (
+          {items.map((item, idx) => (
             <MediaListCard
               key={`${item.entry.id}-${item.media.id}`}
               item={item}
@@ -359,6 +360,7 @@ export function MediaListGrid({
               progressUnit={progressUnit}
               onOpenEditModal={handleOpenEditModal}
               onIncrementProgress={isOwner ? onIncrementProgress : undefined}
+              priority={idx === 0}
             />
           ))}
         </div>

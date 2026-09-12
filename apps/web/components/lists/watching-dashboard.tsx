@@ -614,7 +614,7 @@ export function WatchingDashboard(): React.JSX.Element {
   // ---------------------------------------------------------------------------
   return (
     <div className="flex flex-col gap-8 pb-12">
-      {sections.map((section) => {
+      {sections.map((section, secIdx) => {
         const SectionIcon = section.icon
         const isExpanded = Boolean(expandedSections[section.type])
         const hasOverflow = section.items.length > INITIAL_SECTION_LIMIT
@@ -644,7 +644,7 @@ export function WatchingDashboard(): React.JSX.Element {
 
             {/* 8-Card Responsive Grid (3 on mobile, 8 on desktop) */}
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2.5 md:grid-cols-5 md:gap-3 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-8">
-              {visibleItems.map((item) => (
+              {visibleItems.map((item, idx) => (
                 <MediaListCard
                   key={`${item.entry.id}-${item.media.id}`}
                   item={item}
@@ -653,6 +653,7 @@ export function WatchingDashboard(): React.JSX.Element {
                   progressUnit={section.progressUnit}
                   onOpenEditModal={handleOpenEditModal}
                   onIncrementProgress={handleIncrementProgress}
+                  priority={secIdx === 0 && idx === 0}
                 />
               ))}
             </div>
