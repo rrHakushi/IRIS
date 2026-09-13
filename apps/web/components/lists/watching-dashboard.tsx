@@ -157,7 +157,10 @@ function getInitialCollapsedSections(): Record<string, boolean> {
     try {
       const stored = localStorage.getItem(STORAGE_COLLAPSED_KEY)
       if (stored) {
-        return JSON.parse(stored)
+        const parsed = JSON.parse(stored)
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          return parsed
+        }
       }
     } catch {
       // ignore
@@ -309,7 +312,7 @@ function WatchingCategorySection({
 
   // Viewport trigger to fetch data for this section when near viewport
   useEffect(() => {
-    if (data.isLoaded || data.isLoading || isCollapsed) return
+    if (data.isLoaded || data.isLoading) return
     const el = sentinelRef.current
     if (!el) return
 
@@ -325,7 +328,7 @@ function WatchingCategorySection({
 
     observer.observe(el)
     return () => observer.disconnect()
-  }, [data.isLoaded, data.isLoading, isCollapsed, onFetch, type])
+  }, [data.isLoaded, data.isLoading, onFetch, type])
 
   // Not loaded yet: render sentinel / skeleton while loading
   if (!data.isLoaded) {
@@ -337,14 +340,16 @@ function WatchingCategorySection({
               <SectionIcon className="size-4.5 text-primary" />
               <div className="h-5 w-28 rounded bg-muted/40" />
             </div>
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2.5 md:grid-cols-5 md:gap-3 lg:grid-cols-6 xl:grid-cols-8">
-              {Array.from({ length: cols }).map((_, i) => (
-                <div
-                  key={i}
-                  className="aspect-2/3 rounded-2xl border border-border/20 bg-muted/20"
-                />
-              ))}
-            </div>
+            {!isCollapsed && (
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2.5 md:grid-cols-5 md:gap-3 lg:grid-cols-6 xl:grid-cols-8">
+                {Array.from({ length: cols }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="aspect-2/3 rounded-2xl border border-border/20 bg-muted/20"
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -799,6 +804,17 @@ export function WatchingDashboard(): React.JSX.Element {
       fetchCategory(first)
     }
   }, [authStatus, username, categoryOrder, fetchCategory])
+
+  // Pre-fetch remaining categories when reorder dialog is opened so counts are accurate
+  useEffect(() => {
+    if (isReorderOpen && authStatus === "authenticated" && username) {
+      for (const type of DEFAULT_CATEGORY_ORDER) {
+        if (!categoryData[type].isLoaded && !categoryData[type].isLoading) {
+          fetchCategory(type)
+        }
+      }
+    }
+  }, [isReorderOpen, authStatus, username, categoryData, fetchCategory])
 
   // ---------------------------------------------------------------------------
   // Debounced Increment Handler (Optimistic Update)
