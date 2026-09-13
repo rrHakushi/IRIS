@@ -1,0 +1,1159 @@
+{
+  "title": "IRIS SDUI Developer Documentation",
+  "state": {
+    "searchQuery": "Eden Treaty",
+    "endpointUrl": "/api/v1/media/search",
+    "feedbackSent": false,
+    "selectedTopic": "schema"
+  },
+  "actions": {
+    "copyEndpoint": "toast.success('Endpoint copied: ' + state.endpointUrl)",
+    "testPing": "toast.info('Pinging Elysia Gateway: HTTP 200 OK (12ms latency)')",
+    "submitFeedback": "set('feedbackSent', true); toast.success('Thank you! Your feedback has been recorded.')"
+  },
+  "root": {
+    "type": "div",
+    "props": {
+      "className": "w-full space-y-8 p-6 md:p-8 lg:p-10"
+    },
+    "children": [
+      {
+        "type": "section",
+        "props": {
+          "className": "w-full pb-8 border-b border-border/40"
+        },
+        "children": [
+          {
+            "type": "div",
+            "props": {
+              "className": "flex flex-col md:flex-row md:items-center justify-between gap-6"
+            },
+            "children": [
+              {
+                "type": "div",
+                "props": {
+                  "className": "space-y-2 max-w-3xl"
+                },
+                "children": [
+                  {
+                    "type": "div",
+                    "props": {
+                      "className": "flex items-center gap-2"
+                    },
+                    "children": [
+                      {
+                        "type": "Badge",
+                        "props": {
+                          "variant": "outline",
+                          "className": "text-primary border-primary/40 bg-primary/5 font-mono text-xs"
+                        },
+                        "children": "IRIS Docs"
+                      },
+                      {
+                        "type": "Badge",
+                        "props": {
+                          "variant": "secondary",
+                          "className": "font-mono text-xs"
+                        },
+                        "children": "v2.4.0"
+                      },
+                      {
+                        "type": "Badge",
+                        "props": {
+                          "variant": "default",
+                          "className": "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs"
+                        },
+                        "children": "Live Runtime"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "h1",
+                    "props": {
+                      "className": "text-3xl sm:text-4xl font-extrabold font-heading tracking-tight text-foreground"
+                    },
+                    "children": "IRIS Server-Driven UI (SDUI) Engine"
+                  },
+                  {
+                    "type": "p",
+                    "props": {
+                      "className": "text-base text-muted-foreground leading-relaxed"
+                    },
+                    "children": "Declarative JSON schema engine with high-performance runtime reactivity, sandboxed expression evaluation, and native Elysia 2.0 Eden Treaty integration."
+                  }
+                ]
+              },
+              {
+                "type": "div",
+                "props": {
+                  "className": "flex flex-wrap items-center gap-3 shrink-0"
+                },
+                "children": [
+                  {
+                    "type": "Button",
+                    "props": {
+                      "variant": "outline",
+                      "onPress": "actions.testPing()",
+                      "className": "gap-2 shadow-xs"
+                    },
+                    "children": [
+                      {
+                        "type": "IconBolt",
+                        "props": {
+                          "className": "size-4 text-primary"
+                        }
+                      },
+                      "Ping Elysia API"
+                    ]
+                  },
+                  {
+                    "type": "Button",
+                    "props": {
+                      "variant": "default",
+                      "onPress": "actions.copyEndpoint()",
+                      "className": "gap-2 shadow-xs"
+                    },
+                    "children": [
+                      {
+                        "type": "IconCopy",
+                        "props": {
+                          "className": "size-4"
+                        }
+                      },
+                      "Copy Endpoint"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "section",
+        "props": {
+          "className": "w-full"
+        },
+        "children": [
+          {
+            "type": "div",
+            "props": {
+              "className": "grid grid-cols-12 gap-8 w-full items-start"
+            },
+            "children": [
+              {
+                "type": "div",
+                "props": {
+                  "className": "col-span-12 lg:col-span-3 space-y-6"
+                },
+                "children": [
+                  {
+                    "type": "Card",
+                    "props": {
+                      "className": "border-border/60 shadow-xs"
+                    },
+                    "children": [
+                      {
+                        "type": "CardHeader",
+                        "props": {
+                          "className": "pb-3"
+                        },
+                        "children": [
+                          {
+                            "type": "div",
+                            "props": {
+                              "className": "flex items-center gap-2"
+                            },
+                            "children": [
+                              {
+                                "type": "IconBook",
+                                "props": {
+                                  "className": "size-4 text-primary"
+                                }
+                              },
+                              {
+                                "type": "CardTitle",
+                                "props": {
+                                  "className": "text-sm font-semibold"
+                                },
+                                "children": "Table of Contents"
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "type": "CardContent",
+                        "props": {
+                          "className": "space-y-1 text-xs"
+                        },
+                        "children": [
+                          {
+                            "type": "div",
+                            "props": {
+                              "className": "flex items-center justify-between p-2 rounded-lg bg-primary/10 text-primary font-medium cursor-pointer"
+                            },
+                            "children": [
+                              "1. Core Architecture",
+                              {
+                                "type": "Badge",
+                                "props": {
+                                  "variant": "outline",
+                                  "className": "text-[10px] h-4 px-1"
+                                },
+                                "children": "Essential"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "div",
+                            "props": {
+                              "className": "flex items-center justify-between p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                            },
+                            "children": [
+                              "2. Live Sandbox Playground",
+                              {
+                                "type": "Badge",
+                                "props": {
+                                  "variant": "secondary",
+                                  "className": "text-[10px] h-4 px-1"
+                                },
+                                "children": "Interactive"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "div",
+                            "props": {
+                              "className": "flex items-center justify-between p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                            },
+                            "children": [
+                              "3. Technical Deep Dive",
+                              {
+                                "type": "Badge",
+                                "props": {
+                                  "variant": "outline",
+                                  "className": "text-[10px] h-4 px-1"
+                                },
+                                "children": "Specs"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "div",
+                            "props": {
+                              "className": "flex items-center justify-between p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                            },
+                            "children": [
+                              "4. Component Catalog",
+                              {
+                                "type": "Badge",
+                                "props": {
+                                  "variant": "outline",
+                                  "className": "text-[10px] h-4 px-1"
+                                },
+                                "children": "100+ UI"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "div",
+                            "props": {
+                              "className": "flex items-center justify-between p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                            },
+                            "children": "5. FAQ & Troubleshooting"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Card",
+                    "props": {
+                      "className": "border-border/60 shadow-xs"
+                    },
+                    "children": [
+                      {
+                        "type": "CardHeader",
+                        "props": {
+                          "className": "pb-2"
+                        },
+                        "children": [
+                          {
+                            "type": "div",
+                            "props": {
+                              "className": "flex items-center gap-2"
+                            },
+                            "children": [
+                              {
+                                "type": "IconTerminal",
+                                "props": {
+                                  "className": "size-4 text-primary"
+                                }
+                              },
+                              {
+                                "type": "CardTitle",
+                                "props": {
+                                  "className": "text-sm font-semibold"
+                                },
+                                "children": "Host Environment"
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "type": "CardContent",
+                        "props": {
+                          "className": "space-y-3 text-xs"
+                        },
+                        "children": [
+                          {
+                            "type": "div",
+                            "props": {
+                              "className": "flex items-center justify-between border-b border-border/40 pb-2"
+                            },
+                            "children": [
+                              {
+                                "type": "span",
+                                "props": {
+                                  "className": "text-muted-foreground"
+                                },
+                                "children": "User Session"
+                              },
+                              {
+                                "type": "span",
+                                "props": {
+                                  "className": "font-mono font-semibold text-foreground"
+                                },
+                                "children": "{{ user.displayName }}"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "div",
+                            "props": {
+                              "className": "flex items-center justify-between border-b border-border/40 pb-2"
+                            },
+                            "children": [
+                              {
+                                "type": "span",
+                                "props": {
+                                  "className": "text-muted-foreground"
+                                },
+                                "children": "Theme"
+                              },
+                              {
+                                "type": "span",
+                                "props": {
+                                  "className": "capitalize text-foreground font-medium"
+                                },
+                                "children": "{{ theme.theme }}"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "div",
+                            "props": {
+                              "className": "flex items-center justify-between"
+                            },
+                            "children": [
+                              {
+                                "type": "span",
+                                "props": {
+                                  "className": "text-muted-foreground"
+                                },
+                                "children": "Transport"
+                              },
+                              {
+                                "type": "Badge",
+                                "props": {
+                                  "variant": "secondary",
+                                  "className": "text-[10px] font-mono h-4 px-1.5"
+                                },
+                                "children": "Eden Treaty v2"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "div",
+                "props": {
+                  "className": "col-span-12 lg:col-span-9 space-y-8"
+                },
+                "children": [
+                  {
+                    "type": "Alert",
+                    "props": {
+                      "className": "border-primary/30 bg-primary/5 text-foreground rounded-2xl p-4 shadow-xs"
+                    },
+                    "children": [
+                      {
+                        "type": "IconRocket",
+                        "props": {
+                          "className": "size-5 text-primary"
+                        }
+                      },
+                      {
+                        "type": "AlertTitle",
+                        "props": {
+                          "className": "font-bold text-sm tracking-tight text-primary ms-2"
+                        },
+                        "children": "Zero Build-Step Dynamic Rendering"
+                      },
+                      {
+                        "type": "AlertDescription",
+                        "props": {
+                          "className": "text-xs text-muted-foreground mt-1 ms-2 leading-relaxed"
+                        },
+                        "children": "This documentation page itself is executed 100% through the IRIS Server-Driven UI engine from test.json. You can click 'Edit' in the page footer anytime to modify, rearrange, or style these components in the visual builder in real time."
+                      }
+                    ]
+                  },
+                  {
+                    "type": "div",
+                    "props": {
+                      "className": "space-y-4"
+                    },
+                    "children": [
+                      {
+                        "type": "div",
+                        "props": {
+                          "className": "space-y-1"
+                        },
+                        "children": [
+                          {
+                            "type": "h2",
+                            "props": {
+                              "className": "text-xl font-bold font-heading tracking-tight"
+                            },
+                            "children": "Core Capabilities"
+                          },
+                          {
+                            "type": "p",
+                            "props": {
+                              "className": "text-xs text-muted-foreground"
+                            },
+                            "children": "Three foundational pillars powering server-driven frontend engineering in IRIS."
+                          }
+                        ]
+                      },
+                      {
+                        "type": "div",
+                        "props": {
+                          "className": "grid grid-cols-1 md:grid-cols-3 gap-4"
+                        },
+                        "children": [
+                          {
+                            "type": "Card",
+                            "props": {
+                              "className": "border-border/60 hover:border-primary/50 transition-colors shadow-xs"
+                            },
+                            "children": [
+                              {
+                                "type": "CardHeader",
+                                "props": {
+                                  "className": "space-y-2 pb-2"
+                                },
+                                "children": [
+                                  {
+                                    "type": "div",
+                                    "props": {
+                                      "className": "size-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center"
+                                    },
+                                    "children": [
+                                      {
+                                        "type": "IconBolt",
+                                        "props": {
+                                          "className": "size-5"
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "CardTitle",
+                                    "props": {
+                                      "className": "text-sm font-semibold"
+                                    },
+                                    "children": "Declarative JSON AST"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "CardContent",
+                                "props": {
+                                  "className": "text-xs text-muted-foreground leading-relaxed"
+                                },
+                                "children": "Describe complete layouts, hierarchies, and properties as plain JSON. No manual React bundling required."
+                              }
+                            ]
+                          },
+                          {
+                            "type": "Card",
+                            "props": {
+                              "className": "border-border/60 hover:border-primary/50 transition-colors shadow-xs"
+                            },
+                            "children": [
+                              {
+                                "type": "CardHeader",
+                                "props": {
+                                  "className": "space-y-2 pb-2"
+                                },
+                                "children": [
+                                  {
+                                    "type": "div",
+                                    "props": {
+                                      "className": "size-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center"
+                                    },
+                                    "children": [
+                                      {
+                                        "type": "IconCode",
+                                        "props": {
+                                          "className": "size-5"
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "CardTitle",
+                                    "props": {
+                                      "className": "text-sm font-semibold"
+                                    },
+                                    "children": "Two-Way Bindings"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "CardContent",
+                                "props": {
+                                  "className": "text-xs text-muted-foreground leading-relaxed"
+                                },
+                                "children": "Form controls bind directly to page state with bind and bindChecked, updating all dependent expressions dynamically."
+                              }
+                            ]
+                          },
+                          {
+                            "type": "Card",
+                            "props": {
+                              "className": "border-border/60 hover:border-primary/50 transition-colors shadow-xs"
+                            },
+                            "children": [
+                              {
+                                "type": "CardHeader",
+                                "props": {
+                                  "className": "space-y-2 pb-2"
+                                },
+                                "children": [
+                                  {
+                                    "type": "div",
+                                    "props": {
+                                      "className": "size-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center"
+                                    },
+                                    "children": [
+                                      {
+                                        "type": "IconShield",
+                                        "props": {
+                                          "className": "size-5"
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "CardTitle",
+                                    "props": {
+                                      "className": "text-sm font-semibold"
+                                    },
+                                    "children": "Sandboxed Execution"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "CardContent",
+                                "props": {
+                                  "className": "text-xs text-muted-foreground leading-relaxed"
+                                },
+                                "children": "Action scripts run in an isolated scope with guarded globals, providing safe event handling and toast notifications."
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Card",
+                    "props": {
+                      "className": "border-border/60 shadow-xs overflow-hidden"
+                    },
+                    "children": [
+                      {
+                        "type": "CardHeader",
+                        "props": {
+                          "className": "bg-muted/20 border-b border-border/40 pb-3"
+                        },
+                        "children": [
+                          {
+                            "type": "div",
+                            "props": {
+                              "className": "flex items-center justify-between"
+                            },
+                            "children": [
+                              {
+                                "type": "div",
+                                "props": {
+                                  "className": "space-y-0.5"
+                                },
+                                "children": [
+                                  {
+                                    "type": "CardTitle",
+                                    "props": {
+                                      "className": "text-sm font-semibold flex items-center gap-2"
+                                    },
+                                    "children": [
+                                      {
+                                        "type": "IconSparkles",
+                                        "props": {
+                                          "className": "size-4 text-primary"
+                                        }
+                                      },
+                                      "Interactive State Playground"
+                                    ]
+                                  },
+                                  {
+                                    "type": "CardDescription",
+                                    "props": {
+                                      "className": "text-xs"
+                                    },
+                                    "children": "Test live two-way reactive state updates and action execution right on this page."
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "Badge",
+                                "props": {
+                                  "variant": "default",
+                                  "className": "text-[10px] font-mono h-5"
+                                },
+                                "children": "Reactive"
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "type": "CardContent",
+                        "props": {
+                          "className": "p-5 space-y-4"
+                        },
+                        "children": [
+                          {
+                            "type": "div",
+                            "props": {
+                              "className": "grid grid-cols-1 md:grid-cols-2 gap-4"
+                            },
+                            "children": [
+                              {
+                                "type": "div",
+                                "props": {
+                                  "className": "space-y-1.5"
+                                },
+                                "children": [
+                                  {
+                                    "type": "label",
+                                    "props": {
+                                      "className": "text-xs font-semibold text-foreground flex items-center gap-1.5"
+                                    },
+                                    "children": [
+                                      {
+                                        "type": "IconSearch",
+                                        "props": {
+                                          "className": "size-3.5 text-primary"
+                                        }
+                                      },
+                                      "Search Topic / Filter"
+                                    ]
+                                  },
+                                  {
+                                    "type": "Input",
+                                    "props": {
+                                      "bind": "state.searchQuery",
+                                      "placeholder": "Type here to see live synchronization...",
+                                      "className": "text-xs"
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "div",
+                                "props": {
+                                  "className": "space-y-1.5"
+                                },
+                                "children": [
+                                  {
+                                    "type": "label",
+                                    "props": {
+                                      "className": "text-xs font-semibold text-foreground flex items-center gap-1.5"
+                                    },
+                                    "children": [
+                                      {
+                                        "type": "IconTerminal",
+                                        "props": {
+                                          "className": "size-3.5 text-primary"
+                                        }
+                                      },
+                                      "Target API Endpoint"
+                                    ]
+                                  },
+                                  {
+                                    "type": "Input",
+                                    "props": {
+                                      "bind": "state.endpointUrl",
+                                      "placeholder": "/api/v1/...",
+                                      "className": "text-xs font-mono"
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "type": "div",
+                            "props": {
+                              "className": "p-3 rounded-xl bg-muted/40 border border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                            },
+                            "children": [
+                              {
+                                "type": "div",
+                                "props": {
+                                  "className": "space-y-0.5"
+                                },
+                                "children": [
+                                  {
+                                    "type": "div",
+                                    "props": {
+                                      "className": "text-muted-foreground text-[11px]"
+                                    },
+                                    "children": "Evaluated Expression Output:"
+                                  },
+                                  {
+                                    "type": "div",
+                                    "props": {
+                                      "className": "font-mono font-medium text-foreground text-xs"
+                                    },
+                                    "children": "Filter: {{ state.searchQuery }} • Target: {{ state.endpointUrl }}"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "Button",
+                                "props": {
+                                  "size": "sm",
+                                  "variant": "outline",
+                                  "onPress": "actions.testPing()",
+                                  "className": "gap-1.5 shrink-0 text-xs text-primary hover:bg-primary/10"
+                                },
+                                "children": [
+                                  {
+                                    "type": "IconBolt",
+                                    "props": {
+                                      "className": "size-3.5 text-primary"
+                                    }
+                                  },
+                                  "Trigger Action"
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "div",
+                    "props": {
+                      "className": "space-y-4"
+                    },
+                    "children": [
+                      {
+                        "type": "div",
+                        "props": {
+                          "className": "space-y-1"
+                        },
+                        "children": [
+                          {
+                            "type": "h2",
+                            "props": {
+                              "className": "text-xl font-bold font-heading tracking-tight"
+                            },
+                            "children": "Technical Reference"
+                          },
+                          {
+                            "type": "p",
+                            "props": {
+                              "className": "text-xs text-muted-foreground"
+                            },
+                            "children": "Explore schema definitions, component registry bindings, and security guarantees."
+                          }
+                        ]
+                      },
+                      {
+                        "type": "Tabs",
+                        "props": {
+                          "defaultValue": "schema",
+                          "className": "w-full"
+                        },
+                        "children": [
+                          {
+                            "type": "TabList",
+                            "props": {
+                              "className": "grid w-full grid-cols-3 max-w-md h-9"
+                            },
+                            "children": [
+                              {
+                                "type": "Tab",
+                                "props": {
+                                  "id": "schema"
+                                },
+                                "children": "Schema Format"
+                              },
+                              {
+                                "type": "Tab",
+                                "props": {
+                                  "id": "registry"
+                                },
+                                "children": "Component Map"
+                              },
+                              {
+                                "type": "Tab",
+                                "props": {
+                                  "id": "security"
+                                },
+                                "children": "Sandbox Guard"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "TabPanel",
+                            "props": {
+                              "id": "schema",
+                              "className": "pt-4"
+                            },
+                            "children": [
+                              {
+                                "type": "Card",
+                                "props": {
+                                  "className": "border-border/60"
+                                },
+                                "children": [
+                                  {
+                                    "type": "CardContent",
+                                    "props": {
+                                      "className": "p-4 space-y-3 text-xs"
+                                    },
+                                    "children": [
+                                      {
+                                        "type": "p",
+                                        "props": {
+                                          "className": "text-muted-foreground leading-relaxed"
+                                        },
+                                        "children": "Every IRIS page schema is structured into four primary keys: metadata, state dictionary, action handlers, and the root AST node."
+                                      },
+                                      {
+                                        "type": "div",
+                                        "props": {
+                                          "className": "p-3 rounded-xl bg-muted/60 font-mono text-[11px] text-foreground border border-border/40 overflow-x-auto space-y-1"
+                                        },
+                                        "children": [
+                                          "{\n  \"title\": \"Page Name\",\n  \"state\": { \"counter\": 0 },\n  \"actions\": { \"increment\": \"set('counter', state.counter + 1)\" },\n  \"root\": { \"type\": \"section\", \"props\": { \"className\": \"w-full\" }, \"children\": [...] }\n}"
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "type": "TabPanel",
+                            "props": {
+                              "id": "registry",
+                              "className": "pt-4"
+                            },
+                            "children": [
+                              {
+                                "type": "Card",
+                                "props": {
+                                  "className": "border-border/60"
+                                },
+                                "children": [
+                                  {
+                                    "type": "CardContent",
+                                    "props": {
+                                      "className": "p-4 space-y-2 text-xs"
+                                    },
+                                    "children": [
+                                      {
+                                        "type": "p",
+                                        "props": {
+                                          "className": "text-muted-foreground"
+                                        },
+                                        "children": "The IrisPage registry maps string identifiers to native shadcn/ui components, HTML5 tags, and Tabler icons automatically."
+                                      },
+                                      {
+                                        "type": "div",
+                                        "props": {
+                                          "className": "flex flex-wrap gap-1.5 pt-2"
+                                        },
+                                        "children": [
+                                          { "type": "Badge", "props": { "variant": "secondary" }, "children": "Card" },
+                                          { "type": "Badge", "props": { "variant": "secondary" }, "children": "Button" },
+                                          { "type": "Badge", "props": { "variant": "secondary" }, "children": "Badge" },
+                                          { "type": "Badge", "props": { "variant": "secondary" }, "children": "Alert" },
+                                          { "type": "Badge", "props": { "variant": "secondary" }, "children": "Input" },
+                                          { "type": "Badge", "props": { "variant": "secondary" }, "children": "Textarea" },
+                                          { "type": "Badge", "props": { "variant": "secondary" }, "children": "Switch" },
+                                          { "type": "Badge", "props": { "variant": "secondary" }, "children": "Tabs" },
+                                          { "type": "Badge", "props": { "variant": "secondary" }, "children": "Accordion" },
+                                          { "type": "Badge", "props": { "variant": "secondary" }, "children": "Avatar" },
+                                          { "type": "Badge", "props": { "variant": "secondary" }, "children": "1,000+ Tabler Icons" }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "type": "TabPanel",
+                            "props": {
+                              "id": "security",
+                              "className": "pt-4"
+                            },
+                            "children": [
+                              {
+                                "type": "Card",
+                                "props": {
+                                  "className": "border-border/60"
+                                },
+                                "children": [
+                                  {
+                                    "type": "CardContent",
+                                    "props": {
+                                      "className": "p-4 space-y-2 text-xs text-muted-foreground leading-relaxed"
+                                    },
+                                    "children": [
+                                      {
+                                        "type": "p",
+                                        "children": "All string expressions inside double braces (such as state or user properties) and action handlers execute inside an isolated scope. Globals like window, document, and localStorage are masked, preventing cross-site scripting vulnerabilities and accidental DOM mutations."
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "div",
+                    "props": {
+                      "className": "space-y-4"
+                    },
+                    "children": [
+                      {
+                        "type": "div",
+                        "props": {
+                          "className": "space-y-1"
+                        },
+                        "children": [
+                          {
+                            "type": "h2",
+                            "props": {
+                              "className": "text-xl font-bold font-heading tracking-tight"
+                            },
+                            "children": "Frequently Asked Questions"
+                          },
+                          {
+                            "type": "p",
+                            "props": {
+                              "className": "text-xs text-muted-foreground"
+                            },
+                            "children": "Common architectural patterns and troubleshooting answers."
+                          }
+                        ]
+                      },
+                      {
+                        "type": "Accordion",
+                        "props": {
+                          "className": "w-full border border-border/60 rounded-2xl px-4 divide-y divide-border/40 bg-card shadow-xs"
+                        },
+                        "children": [
+                          {
+                            "type": "AccordionItem",
+                            "props": {
+                              "value": "item-1"
+                            },
+                            "children": [
+                              {
+                                "type": "AccordionTrigger",
+                                "props": {
+                                  "className": "text-xs font-semibold py-3 hover:no-underline"
+                                },
+                                "children": "How do I make a section utilize 100% of the display width?"
+                              },
+                              {
+                                "type": "AccordionContent",
+                                "props": {
+                                  "className": "text-xs text-muted-foreground pb-3 leading-relaxed"
+                                },
+                                "children": "Ensure the root container does not have max-w-* or mx-auto classes. You can click the 'Stretch Width' button in the builder top bar or canvas toolbar to automatically stretch the page to edge-to-edge full width."
+                              }
+                            ]
+                          },
+                          {
+                            "type": "AccordionItem",
+                            "props": {
+                              "value": "item-2"
+                            },
+                            "children": [
+                              {
+                                "type": "AccordionTrigger",
+                                "props": {
+                                  "className": "text-xs font-semibold py-3 hover:no-underline"
+                                },
+                                "children": "Can I place components anywhere on screen rather than centered?"
+                              },
+                              {
+                                "type": "AccordionContent",
+                                "props": {
+                                  "className": "text-xs text-muted-foreground pb-3 leading-relaxed"
+                                },
+                                "children": "Yes! Use the 12-Column Grid or 3-Zone Canvas section presets. Child columns accept standard Tailwind grid placement classes like col-span-3, col-span-6, col-start-4, or flex-1 to position elements exactly where you need them."
+                              }
+                            ]
+                          },
+                          {
+                            "type": "AccordionItem",
+                            "props": {
+                              "value": "item-3"
+                            },
+                            "children": [
+                              {
+                                "type": "AccordionTrigger",
+                                "props": {
+                                  "className": "text-xs font-semibold py-3 hover:no-underline"
+                                },
+                                "children": "How do actions communicate with the Elysia backend?"
+                              },
+                              {
+                                "type": "AccordionContent",
+                                "props": {
+                                  "className": "text-xs text-muted-foreground pb-3 leading-relaxed"
+                                },
+                                "children": "The sandbox context exposes the type-safe Eden Treaty client under 'elysia'. Actions can perform asynchronous calls like elysia.api.v1.media.get() and update state variables reactively using set('key', value)."
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Card",
+                    "props": {
+                      "className": "border-dashed border-border/80 bg-muted/20 p-5 rounded-2xl shadow-xs"
+                    },
+                    "children": [
+                      {
+                        "type": "div",
+                        "props": {
+                          "className": "flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                        },
+                        "children": [
+                          {
+                            "type": "div",
+                            "props": {
+                              "className": "space-y-1"
+                            },
+                            "children": [
+                              {
+                                "type": "div",
+                                "props": {
+                                  "className": "text-sm font-semibold text-foreground flex items-center gap-2"
+                                },
+                                "children": [
+                                  {
+                                    "type": "IconCheck",
+                                    "props": {
+                                      "className": "size-4 text-emerald-500"
+                                    }
+                                  },
+                                  "Was this documentation helpful?"
+                                ]
+                              },
+                              {
+                                "type": "div",
+                                "props": {
+                                  "className": "text-xs text-muted-foreground"
+                                },
+                                "children": "Let us know your thoughts to help us improve the IRIS developer experience."
+                              }
+                            ]
+                          },
+                          {
+                            "type": "div",
+                            "props": {
+                              "className": "flex items-center gap-2 shrink-0"
+                            },
+                            "children": [
+                              {
+                                "type": "Button",
+                                "props": {
+                                  "size": "sm",
+                                  "variant": "default",
+                                  "onPress": "actions.submitFeedback()",
+                                  "className": "text-xs gap-1.5"
+                                },
+                                "children": [
+                                  {
+                                    "type": "IconCheck",
+                                    "props": {
+                                      "className": "size-3.5"
+                                    }
+                                  },
+                                  "Yes, Helpful"
+                                ]
+                              },
+                              {
+                                "type": "Button",
+                                "props": {
+                                  "size": "sm",
+                                  "variant": "outline",
+                                  "onPress": "toast.info('Thank you! Please open a feedback ticket on GitHub.')",
+                                  "className": "text-xs"
+                                },
+                                "children": "Suggest Improvement"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
