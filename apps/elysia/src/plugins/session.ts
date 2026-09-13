@@ -534,7 +534,9 @@ export async function resolveSessionFromRequest(
     rawApiKey = authHeader.trim().slice(7).trim()
   } else {
     const queryKey =
-      url.searchParams.get("api_key") ?? url.searchParams.get("apiKey")
+      url.searchParams.get("api_key") ??
+      url.searchParams.get("apiKey") ??
+      url.searchParams.get("apikey")
     if (queryKey && queryKey.trim().length > 0) {
       rawApiKey = queryKey.trim()
     }

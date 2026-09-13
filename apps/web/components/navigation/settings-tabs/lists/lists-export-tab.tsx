@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useRef } from "react"
 import { useSession } from "next-auth/react"
 import type { SettingsTabProps } from "../types"
 import { Button } from "@workspace/ui/components/button"
@@ -30,6 +30,7 @@ import {
 } from "@tabler/icons-react"
 import { toast } from "sonner"
 import { elysia, API_URL } from "@/lib/elysia"
+import { ServarrFeedsCard } from "./servarr-feeds-card"
 
 interface MediaTypeOption {
   id: string
@@ -87,30 +88,49 @@ export function ListsExportSettingsTab({}: SettingsTabProps): React.JSX.Element 
   const [isCreatingShare, setIsCreatingShare] = useState(false)
   const [copiedShareId, setCopiedShareId] = useState<string | null>(null)
 
-  // Fetch active shares
-  const fetchShares = useCallback(async () => {
-    if (!username) return
-    setIsLoadingShares(true)
-    try {
-      const { data, error } = await elysia
-        .user({ username })
-        .lists.export.shares.get({
-          fetch: { credentials: "include" },
-        })
+  const inFlightFetchRef = useRef<Promise<void> | null>(null)
+  const fetchedUserRef = useRef<string | null>(null)
 
-      if (!error && data?.success && Array.isArray(data.shares)) {
-        setShares(data.shares as ExportShareItem[])
+  // Fetch active shares with in-flight deduplication
+  const fetchShares = useCallback(
+    async (force = false) => {
+      if (!username) return
+      if (inFlightFetchRef.current && !force) {
+        return inFlightFetchRef.current
       }
-    } catch (err) {
-      console.error("Failed to load export shares:", err)
-    } finally {
-      setIsLoadingShares(false)
-    }
-  }, [username])
+
+      const task = async () => {
+        setIsLoadingShares(true)
+        try {
+          const { data, error } = await elysia
+            .user({ username })
+            .lists.export.shares.get({
+              fetch: { credentials: "include" },
+            })
+
+          if (!error && data?.success && Array.isArray(data.shares)) {
+            setShares(data.shares as ExportShareItem[])
+          }
+        } catch (err) {
+          console.error("Failed to load export shares:", err)
+        } finally {
+          setIsLoadingShares(false)
+          inFlightFetchRef.current = null
+        }
+      }
+
+      const promise = task()
+      inFlightFetchRef.current = promise
+      return promise
+    },
+    [username]
+  )
 
   useEffect(() => {
+    if (!username || fetchedUserRef.current === username) return
+    fetchedUserRef.current = username
     fetchShares()
-  }, [fetchShares])
+  }, [username, fetchShares])
 
   // When format switches to MAL XML, constrain selection to Anime & Manga
   const handleFormatChange = (format: "iris-json" | "mal-xml") => {
@@ -242,7 +262,7 @@ export function ListsExportSettingsTab({}: SettingsTabProps): React.JSX.Element 
       toast.success("Password-protected export link created successfully!")
       setSharePassword("")
       setShareDescription("")
-      fetchShares()
+      fetchShares(true)
     } catch (err: any) {
       toast.error(err.message || "Failed to create share link.")
     } finally {
@@ -701,6 +721,9 @@ export function ListsExportSettingsTab({}: SettingsTabProps): React.JSX.Element 
           </div>
         </div>
       </div>
+
+      {/* Servarr Automation */}
+      <ServarrFeedsCard />
     </div>
   )
 }
