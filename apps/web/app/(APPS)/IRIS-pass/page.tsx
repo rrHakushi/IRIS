@@ -1,0 +1,417 @@
+"use client"
+
+import React, { useState, useEffect, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
+import { usePass } from "@/context/pass-context"
+import { useEncryption } from "@/context/encryption-context"
+import { PassCipherList } from "./components/pass-cipher-list"
+import { PassCipherDetail } from "./components/pass-cipher-detail"
+import { PassCipherModal } from "./components/pass-cipher-modal"
+import { Button } from "@workspace/ui/components/button"
+import { Input } from "@workspace/ui/components/input"
+import { Label } from "@workspace/ui/components/label"
+import {
+  Dialog,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@workspace/ui/components/dialog"
+import {
+  IconLock,
+  IconLockOpen,
+  IconKey,
+  IconEye,
+  IconEyeOff,
+  IconAlertCircle,
+  IconPlus,
+  IconFolderPlus,
+  IconShieldLock,
+  IconRefresh,
+  IconTrash,
+} from "@tabler/icons-react"
+import { toast } from "sonner"
+
+function PassMainContent() {
+  const searchParams = useSearchParams()
+  const {
+    isUnlocked,
+    isLoading,
+    activeFilter,
+    setActiveFilter,
+    folders,
+    ciphers,
+    lockVault,
+    unlockVault,
+    refreshData,
+    createFolder,
+    emptyTrash,
+    selectedCipherId,
+    setSelectedCipherId,
+  } = usePass()
+
+  const encryption = useEncryption()
+
+  // Sync activeFilter with URL searchParams
+  useEffect(() => {
+    const filterParam = searchParams.get("filter")
+    const folderParam = searchParams.get("folder")
+    if (folderParam) {
+      setActiveFilter(folderParam)
+    } else if (filterParam) {
+      setActiveFilter(filterParam)
+    } else {
+      setActiveFilter("all")
+    }
+  }, [searchParams, setActiveFilter])
+
+  // Mount check to guarantee hydration safety
+  const [isMounted, setIsMounted] = useState(false)
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  // Modals state
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editCipherId, setEditCipherId] = useState<string | null>(null)
+  const [folderModalOpen, setFolderModalOpen] = useState(false)
+  const [folderName, setFolderName] = useState("")
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false)
+
+  // Unlock state
+  const [unlockPassword, setUnlockPassword] = useState("")
+  const [showUnlockPassword, setShowUnlockPassword] = useState(false)
+  const [isUnlocking, setIsUnlocking] = useState(false)
+  const [unlockError, setUnlockError] = useState<string | null>(null)
+
+  const handleUnlock = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!unlockPassword.trim()) return
+
+    setIsUnlocking(true)
+    setUnlockError(null)
+
+    const result = await unlockVault(unlockPassword)
+    setIsUnlocking(false)
+
+    if (result.success) {
+      setUnlockPassword("")
+      toast.success("Vault unlocked successfully")
+    } else {
+      setUnlockError(
+        result.error ||
+          (encryption.hasSeparateEncryptionPassword
+            ? "Incorrect decryption password. Please try again."
+            : "Incorrect account password. Please try again.")
+      )
+    }
+  }
+
+  const handleCreateFolder = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!folderName.trim()) return
+
+    setIsCreatingFolder(true)
+    const newFolder = await createFolder(folderName.trim())
+    setIsCreatingFolder(false)
+
+    if (newFolder) {
+      setFolderName("")
+      setFolderModalOpen(false)
+      toast.success(`Folder "${newFolder.name}" created`)
+    }
+  }
+
+  // Pre-hydration placeholder to match server and client render
+  if (!isMounted) {
+    return (
+      <div className="flex flex-1 items-center justify-center min-h-[calc(100vh-4rem)] bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="size-10 rounded-2xl bg-rose-500/10 flex items-center justify-center animate-pulse">
+            <IconShieldLock className="size-5 text-rose-500" />
+          </div>
+          <span className="text-xs text-muted-foreground animate-pulse">
+            Loading vault...
+          </span>
+        </div>
+      </div>
+    )
+  }
+
+  // If vault is locked, render the standard inline unlock screen reusing existing encryption
+  if (!isUnlocked) {
+    return (
+      <div className="flex flex-1 items-center justify-center p-6 bg-background/50 backdrop-blur-xs min-h-[calc(100vh-4rem)]">
+        <div className="w-full max-w-md space-y-6 rounded-3xl border border-border bg-card p-8 shadow-2xl">
+          <div className="flex flex-col items-center text-center space-y-3">
+            <div className="flex size-16 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-500 shadow-inner ring-1 ring-rose-500/20">
+              <IconShieldLock className="size-8" />
+            </div>
+            <div className="space-y-1">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground font-heading">
+                IRIS Pass Vault Locked
+              </h1>
+              <p className="text-xs text-muted-foreground max-w-sm">
+                {encryption.hasSeparateEncryptionPassword
+                  ? "Enter your dedicated IRIS decryption password to decrypt your zero-knowledge vault."
+                  : "Enter your IRIS account password to decrypt and unlock your zero-knowledge vault."}
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleUnlock} className="space-y-4">
+            {unlockError && (
+              <div className="flex items-center gap-2 rounded-xl bg-destructive/10 p-3 text-xs text-destructive border border-destructive/20">
+                <IconAlertCircle className="size-4 shrink-0" />
+                <span>{unlockError}</span>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="pass-unlock-input"
+                className="text-xs font-medium text-foreground"
+              >
+                {encryption.hasSeparateEncryptionPassword
+                  ? "Decryption Password"
+                  : "Account Password"}
+              </Label>
+              <div className="relative">
+                <Input
+                  id="pass-unlock-input"
+                  type={showUnlockPassword ? "text" : "password"}
+                  placeholder="Enter password to unlock..."
+                  value={unlockPassword}
+                  onChange={(e) => setUnlockPassword(e.target.value)}
+                  autoFocus
+                  className="pe-10 rounded-xl text-xs h-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowUnlockPassword(!showUnlockPassword)}
+                  className="absolute inset-y-0 end-0 flex items-center pe-3 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                  aria-label={showUnlockPassword ? "Hide password" : "Show password"}
+                >
+                  {showUnlockPassword ? (
+                    <IconEyeOff className="size-4" />
+                  ) : (
+                    <IconEye className="size-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={isUnlocking || !unlockPassword.trim()}
+              className="w-full rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-semibold h-10 text-xs shadow-md transition-all cursor-pointer"
+            >
+              <IconLockOpen className="size-4 me-2" />
+              {isUnlocking ? "Decrypting Vault..." : "Unlock Vault"}
+            </Button>
+          </form>
+        </div>
+      </div>
+    )
+  }
+
+  // Current folder name if filtering by folder
+  const currentFolder = folders.find((f) => f.id === activeFilter)
+  const filterLabel = currentFolder
+    ? currentFolder.name
+    : activeFilter === "favorites"
+    ? "Favorites"
+    : activeFilter === "logins"
+    ? "Logins"
+    : activeFilter === "ssh"
+    ? "SSH Keys"
+    : activeFilter === "trash"
+    ? "Trash"
+    : "All Vault Items"
+
+  return (
+    <div className="flex flex-col flex-1 h-full min-h-0 bg-background overflow-hidden">
+      {/* Top Action Bar */}
+      <header className="h-14 shrink-0 border-b border-border/80 px-4 sm:px-6 flex items-center justify-between bg-card/40 backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          <div className="flex size-8 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500">
+            <IconShieldLock className="size-4" />
+          </div>
+          <div>
+            <h1 className="text-sm font-bold text-foreground tracking-tight">
+              {filterLabel}
+            </h1>
+            <p className="text-[11px] text-muted-foreground">
+              {ciphers.filter((c) => (activeFilter === "trash" ? c.deletedAt !== null : c.deletedAt === null)).length}{" "}
+              items in view
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refreshData()}
+            className="rounded-xl text-xs gap-1.5 h-8"
+            aria-label="Refresh vault"
+          >
+            <IconRefresh className="size-3.5" />
+            <span className="hidden sm:inline">Refresh</span>
+          </Button>
+
+          {activeFilter === "trash" ? (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={async () => {
+                if (confirm("Are you sure you want to permanently delete all items in the trash?")) {
+                  await emptyTrash()
+                }
+              }}
+              disabled={ciphers.filter((c) => c.deletedAt !== null).length === 0}
+              className="rounded-xl text-xs gap-1.5 h-8 shadow-xs cursor-pointer"
+            >
+              <IconTrash className="size-3.5" />
+              <span>Empty Trash</span>
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setFolderModalOpen(true)}
+                className="rounded-xl text-xs gap-1.5 h-8"
+                aria-label="Create new folder"
+              >
+                <IconFolderPlus className="size-3.5" />
+                <span className="hidden sm:inline">New Folder</span>
+              </Button>
+
+              <Button
+                size="sm"
+                onClick={() => {
+                  setEditCipherId(null)
+                  setModalOpen(true)
+                }}
+                className="rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs gap-1.5 h-8 shadow-xs"
+              >
+                <IconPlus className="size-3.5" />
+                <span>New Item</span>
+              </Button>
+            </>
+          )}
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              lockVault()
+              toast.info("Vault locked")
+            }}
+            className="rounded-xl text-xs text-muted-foreground hover:text-foreground h-8"
+            aria-label="Lock vault"
+          >
+            <IconLock className="size-3.5" />
+            <span className="hidden sm:inline">Lock</span>
+          </Button>
+        </div>
+      </header>
+
+      {/* Main Dual-Pane Content */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        {/* Left/Middle Column: List of items */}
+        <div className="w-full sm:w-80 md:w-96 lg:w-[420px] shrink-0 h-full overflow-hidden flex flex-col border-e border-border">
+          <PassCipherList
+            onOpenNewCipher={() => {
+              setEditCipherId(null)
+              setModalOpen(true)
+            }}
+          />
+        </div>
+
+        {/* Right Column: Item detail inspector pane */}
+        <div className="hidden sm:flex flex-1 h-full overflow-y-auto bg-card/20">
+          <PassCipherDetail
+            onEditCipher={(id) => {
+              setEditCipherId(id)
+              setModalOpen(true)
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Create / Edit Cipher Modal */}
+      <PassCipherModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        editCipherId={editCipherId}
+      />
+
+      {/* Create Folder Modal */}
+      <Dialog
+        isOpen={folderModalOpen}
+        onOpenChange={setFolderModalOpen}
+        className="sm:max-w-md"
+      >
+        <DialogHeader className="text-start">
+          <DialogTitle className="text-base font-bold text-foreground">
+            Create Folder
+          </DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleCreateFolder} className="space-y-4 pt-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="folder-name-input" className="text-xs font-medium text-foreground">
+              Folder Name
+            </Label>
+            <Input
+              id="folder-name-input"
+              type="text"
+              placeholder="e.g. Work, Personal, Servers..."
+              value={folderName}
+              onChange={(e) => setFolderName(e.target.value)}
+              autoFocus
+              className="rounded-xl text-xs h-9"
+            />
+          </div>
+
+          <DialogFooter className="pt-2 flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setFolderModalOpen(false)}
+              className="rounded-xl text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isCreatingFolder || !folderName.trim()}
+              className="rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs"
+            >
+              {isCreatingFolder ? "Creating..." : "Create Folder"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </Dialog>
+    </div>
+  )
+}
+
+export default function PassPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-1 items-center justify-center p-8">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <IconShieldLock className="size-4 animate-pulse text-rose-500" />
+            <span>Loading IRIS Pass...</span>
+          </div>
+        </div>
+      }
+    >
+      <PassMainContent />
+    </Suspense>
+  )
+}

@@ -205,6 +205,7 @@
         "info": "Info",
         "security": "Security",
         "encryption": "Encryption",
+        "pass": "Passwords & Vault",
         "apiKeys": "Api Keys",
         "connections": "Connections",
         "privacy": "Privacy",

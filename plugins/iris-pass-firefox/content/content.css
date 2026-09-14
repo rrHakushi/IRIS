@@ -1,0 +1,346 @@
+/* IRIS Pass — In-Field Autofill & Passkey Notification Styles */
+
+.iris-pass-field-icon {
+  position: fixed !important;
+  z-index: 2147483640 !important;
+  width: 20px !important;
+  height: 20px !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #18161b !important;
+  border: 1px solid #3b3740 !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    border-color 0.15s ease !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.iris-pass-field-icon.visible {
+  opacity: 0.85 !important;
+  pointer-events: auto !important;
+}
+
+.iris-pass-field-icon.visible:hover,
+.iris-pass-field-icon.visible.active {
+  opacity: 1 !important;
+  transform: scale(1.1) !important;
+  border-color: #f43f5e !important;
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.4) !important;
+}
+
+.iris-pass-field-icon svg {
+  width: 14px !important;
+  height: 14px !important;
+  fill: none !important;
+  stroke: #f43f5e !important;
+  stroke-width: 2 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  pointer-events: none !important;
+}
+
+/* In-Page Dropdown */
+.iris-pass-dropdown {
+  position: fixed !important;
+  z-index: 2147483645 !important;
+  min-width: 240px !important;
+  max-width: 320px !important;
+  background: #18161b !important;
+  border: 1px solid #3b3740 !important;
+  border-radius: 12px !important;
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  overflow: hidden !important;
+  animation: irisFadeIn 0.15s ease-out !important;
+}
+
+@keyframes irisFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.iris-pass-dropdown-header {
+  padding: 8px 12px !important;
+  background: #211f26 !important;
+  border-bottom: 1px solid #2d2a32 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.iris-pass-dropdown-header-title {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #fb7185 !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+}
+
+.iris-pass-dropdown-list {
+  padding: 4px 0 !important;
+  max-height: 220px !important;
+  overflow-y: auto !important;
+}
+
+.iris-pass-dropdown-item {
+  padding: 8px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  cursor: pointer !important;
+  transition: background 0.12s ease !important;
+  border: none !important;
+  background: transparent !important;
+  width: 100% !important;
+  text-align: left !important;
+  box-sizing: border-box !important;
+}
+
+.iris-pass-dropdown-item:hover {
+  background: #28252e !important;
+}
+
+.iris-pass-dropdown-item-title {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #ffffff !important;
+}
+
+.iris-pass-dropdown-item-user {
+  font-size: 11px !important;
+  color: #a19da8 !important;
+}
+
+/* Toast Banner */
+.iris-pass-toast {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  z-index: 2147483647 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 16px !important;
+  background: #18161b !important;
+  border: 1px solid #3b3740 !important;
+  border-left: 4px solid #f43f5e !important;
+  border-radius: 10px !important;
+  color: #ffffff !important;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+  animation: irisToastSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes irisToastSlide {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* In-Page Passkey Modal */
+.iris-passkey-dialog-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(10, 8, 14, 0.7) !important;
+  backdrop-filter: blur(4px) !important;
+  z-index: 2147483647 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px !important;
+  box-sizing: border-box !important;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  animation: irisFadeIn 0.2s ease-out !important;
+}
+
+.iris-passkey-dialog {
+  background: #18161b !important;
+  border: 1px solid #3b3740 !important;
+  border-radius: 16px !important;
+  width: 100% !important;
+  max-width: 360px !important;
+  padding: 20px !important;
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  color: #ffffff !important;
+}
+
+.iris-passkey-icon {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 14px !important;
+  background: rgba(244, 63, 94, 0.12) !important;
+  border: 1px solid rgba(244, 63, 94, 0.25) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-bottom: 12px !important;
+}
+
+.iris-passkey-icon svg {
+  width: 24px !important;
+  height: 24px !important;
+  stroke: #f43f5e !important;
+  fill: none !important;
+  stroke-width: 2 !important;
+}
+
+.iris-passkey-title {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  margin: 0 0 4px 0 !important;
+  color: #ffffff !important;
+}
+
+.iris-passkey-subtitle {
+  font-size: 12px !important;
+  color: #a19da8 !important;
+  margin: 0 0 16px 0 !important;
+  line-height: 1.4 !important;
+}
+
+.iris-passkey-details {
+  width: 100% !important;
+  background: #211f26 !important;
+  border: 1px solid #2d2a32 !important;
+  border-radius: 10px !important;
+  padding: 10px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  margin-bottom: 16px !important;
+  box-sizing: border-box !important;
+}
+
+.iris-passkey-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 12px !important;
+}
+
+.iris-passkey-row-col {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 6px !important;
+  width: 100% !important;
+  text-align: left !important;
+  font-size: 12px !important;
+}
+
+.iris-passkey-select {
+  width: 100% !important;
+  padding: 8px 10px !important;
+  background: #28252e !important;
+  border: 1px solid #3b3740 !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  font-size: 12px !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+}
+
+.iris-passkey-select:focus {
+  border-color: #f43f5e !important;
+}
+
+.iris-passkey-row .label,
+.iris-passkey-row-col .label {
+  color: #a19da8 !important;
+}
+
+.iris-passkey-row .value {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  max-width: 180px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.iris-passkey-actions {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+.iris-passkey-btn {
+  width: 100% !important;
+  padding: 10px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+}
+
+.iris-passkey-btn.primary {
+  background: #f43f5e !important;
+  color: #ffffff !important;
+}
+
+.iris-passkey-btn.primary:hover {
+  background: #fb7185 !important;
+}
+
+.iris-passkey-btn.secondary {
+  background: #28252e !important;
+  border: 1px solid #3b3740 !important;
+  color: #ffffff !important;
+}
+
+.iris-passkey-btn.secondary:hover {
+  background: #34303c !important;
+  border-color: #524d5b !important;
+}
+
+.iris-passkey-btn.text {
+  background: transparent !important;
+  color: #a19da8 !important;
+  padding: 6px !important;
+}
+
+.iris-passkey-btn.text:hover {
+  color: #ffffff !important;
+}

@@ -30,6 +30,8 @@ export interface EncryptionContextValue {
   publicKey: string | null
   /** Encrypted private key payload (salt:iv:authTag:cipher) */
   encryptedPrivateKey: string | null
+  /** Unlocked raw secret key in memory */
+  secretKey: Uint8Array | null
   /** Human-readable SHA-256 fingerprint of the public key */
   fingerprint: string | null
   /** Whether vault data is currently loading */
@@ -56,6 +58,7 @@ const EncryptionContext = createContext<EncryptionContextValue>({
   hasSeparateEncryptionPassword: false,
   publicKey: null,
   encryptedPrivateKey: null,
+  secretKey: null,
   fingerprint: null,
   isLoading: false,
   error: null,
@@ -76,6 +79,7 @@ export function EncryptionProvider({
   const { data: session, status } = useSession()
   const userId = session?.user?.id
 
+  const [secretKey, setSecretKey] = useState<Uint8Array | null>(null)
   const [isActive, setIsActive] = useState<boolean>(false)
   const [hasSeparateEncryptionPassword, setHasSeparateEncryptionPassword] =
     useState<boolean>(false)
@@ -107,6 +111,7 @@ export function EncryptionProvider({
         const sessionSecret = loadSessionSecretKey(userId || undefined)
         if (sessionSecret) {
           inMemorySecretKey = sessionSecret
+          setSecretKey(sessionSecret)
           setIsActive(true)
         }
 
@@ -184,6 +189,7 @@ export function EncryptionProvider({
     const sessionSecret = loadSessionSecretKey(userId || undefined)
     if (sessionSecret) {
       inMemorySecretKey = sessionSecret
+      setSecretKey(sessionSecret)
       setIsActive(true)
     }
 
@@ -241,6 +247,7 @@ export function EncryptionProvider({
     try {
       const decryptedSecret = await decryptPrivateKeyClient(payload, password)
       inMemorySecretKey = decryptedSecret
+      setSecretKey(decryptedSecret)
       setIsActive(true)
 
       saveSessionSecretKey(targetUserId || "active", decryptedSecret)
@@ -281,6 +288,7 @@ export function EncryptionProvider({
       clearSessionSecretKey()
     }
     inMemorySecretKey = null
+    setSecretKey(null)
     setIsActive(false)
     setError(null)
   }, [userId])
@@ -343,6 +351,12 @@ export function EncryptionProvider({
         hasSeparateEncryptionPassword,
         publicKey,
         encryptedPrivateKey,
+        secretKey:
+          secretKey ||
+          inMemorySecretKey ||
+          (typeof window !== "undefined"
+            ? loadSessionSecretKey(userId || undefined)
+            : null),
         fingerprint,
         isLoading,
         error,

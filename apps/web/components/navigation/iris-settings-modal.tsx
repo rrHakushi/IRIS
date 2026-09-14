@@ -13,6 +13,7 @@ import {
   IconUser,
   IconInfoCircle,
   IconShieldCheck,
+  IconShieldLock,
   IconLock,
   IconKey,
   IconLink,
@@ -44,6 +45,7 @@ import { ConnectionsSettingsTab } from "./settings-tabs/account/connections-tab"
 import { PrivacySettingsTab } from "./settings-tabs/account/privacy-tab"
 import { OAuthAppsSettingsTab } from "./settings-tabs/account/oauth-apps-tab"
 import { AuthorizedAppsSettingsTab } from "./settings-tabs/account/authorized-apps-tab"
+import { PassSettingsTab } from "./settings-tabs/pass/pass-tab"
 
 // Customization Tabs
 import { AppearanceSettingsTab } from "./settings-tabs/customization/appearance-tab"
@@ -70,6 +72,7 @@ export type IrisSettingsCategory =
   | "info"
   | "security"
   | "encryption"
+  | "pass"
   | "apiKeys"
   | "connections"
   | "privacy"
@@ -123,6 +126,13 @@ function renderTabContent(
     case "encryption":
       return (
         <EncryptionSettingsTab
+          onOpenChange={onOpenChange}
+          setFooterContent={setFooterContent}
+        />
+      )
+    case "pass":
+      return (
+        <PassSettingsTab
           onOpenChange={onOpenChange}
           setFooterContent={setFooterContent}
         />
@@ -276,6 +286,12 @@ export function IrisSettingsModal({
         id: "encryption",
         name: t("tabs.encryption"),
         icon: IconLock,
+        group: t("groups.account"),
+      },
+      {
+        id: "pass",
+        name: t("tabs.pass"),
+        icon: IconShieldLock,
         group: t("groups.account"),
       },
       {

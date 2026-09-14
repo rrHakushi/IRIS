@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="rose-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fb7185"/>
+      <stop offset="100%" stop-color="#e11d48"/>
+    </linearGradient>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#26232a"/>
+      <stop offset="100%" stop-color="#141216"/>
+    </linearGradient>
+  </defs>
+  <!-- Background squircle -->
+  <rect x="4" y="4" width="120" height="120" rx="32" fill="url(#bg-grad)" stroke="#3b3740" stroke-width="3"/>
+  <!-- Shield outline -->
+  <path d="M64 22 C84 22 96 30 96 46 C96 76 74 98 64 104 C54 98 32 76 32 46 C32 30 44 22 64 22 Z" 
+        fill="none" stroke="url(#rose-grad)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- Inner Lock Shackle -->
+  <path d="M52 56 L52 48 C52 41.37 57.37 36 64 36 C70.63 36 76 41.37 76 48 L76 56" 
+        fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
+  <!-- Lock Body -->
+  <rect x="46" y="56" width="36" height="26" rx="6" fill="url(#rose-grad)"/>
+  <!-- Keyhole -->
+  <circle cx="64" cy="67" r="3.5" fill="#18161b"/>
+  <path d="M64 69 L64 76" stroke="#18161b" stroke-width="3" stroke-linecap="round"/>
+</svg>
