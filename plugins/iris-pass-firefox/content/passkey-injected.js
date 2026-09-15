@@ -2,7 +2,7 @@
  * IRIS Pass — In-Page WebAuthn Passkey Interceptor
  * Runs in page context to mediate navigator.credentials.create and get
  */
-;(function () {
+; (function () {
   if (window.__IRIS_PASSKEY_INJECTED__) return
   window.__IRIS_PASSKEY_INJECTED__ = true
 
@@ -26,7 +26,7 @@
             return true
           }
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // Helper to convert ArrayBuffer or Uint8Array to Base64URL
@@ -123,7 +123,7 @@
             reject(
               new DOMException(
                 event.data.error ||
-                  "The operation either timed out or was not allowed.",
+                "The operation either timed out or was not allowed.",
                 "NotAllowedError"
               )
             )
@@ -139,7 +139,7 @@
           const authDataBuf = attestationBuf.slice(
             res.authDataOffset || 0,
             (res.authDataOffset || 0) +
-              (res.authDataLength || attestationBuf.byteLength)
+            (res.authDataLength || attestationBuf.byteLength)
           )
 
           const spkiBuf = res.spki ? base64UrlToBuffer(res.spki) : null
@@ -167,7 +167,7 @@
                 responseObj,
                 window.AuthenticatorAttestationResponse.prototype
               )
-            } catch (e) {}
+            } catch (e) { }
           }
 
           const cred = {
@@ -203,7 +203,7 @@
           if (window.PublicKeyCredential) {
             try {
               Object.setPrototypeOf(cred, window.PublicKeyCredential.prototype)
-            } catch (e) {}
+            } catch (e) { }
           }
 
           resolve(cred)
@@ -287,7 +287,7 @@
             reject(
               new DOMException(
                 event.data.error ||
-                  "The operation either timed out or was not allowed.",
+                "The operation either timed out or was not allowed.",
                 "NotAllowedError"
               )
             )
@@ -316,7 +316,7 @@
                 responseObj,
                 window.AuthenticatorAssertionResponse.prototype
               )
-            } catch (e) {}
+            } catch (e) { }
           }
 
           const cred = {
@@ -348,7 +348,7 @@
           if (window.PublicKeyCredential) {
             try {
               Object.setPrototypeOf(cred, window.PublicKeyCredential.prototype)
-            } catch (e) {}
+            } catch (e) { }
           }
 
           resolve(cred)

@@ -97,6 +97,15 @@ const editCipherNotes = document.getElementById("edit-cipher-notes")
 const editError = document.getElementById("edit-error")
 const btnEditSave = document.getElementById("btn-edit-save")
 const btnEditCancel = document.getElementById("btn-edit-cancel")
+const editAdditionalPasswordsList = document.getElementById("edit-additional-passwords-list")
+const btnAddAdditionalPass = document.getElementById("btn-add-additional-pass")
+
+// Edit Passkey Elements
+const editPasskeySection = document.getElementById("edit-passkey-section")
+const passkeyDomain = document.getElementById("passkey-domain")
+const passkeyCreated = document.getElementById("passkey-created")
+const btnDeletePasskey = document.getElementById("btn-delete-passkey")
+let currentEditingPasskey = null
 
 // Generator Elements
 const genOutputText = document.getElementById("gen-output-text")
@@ -137,7 +146,7 @@ async function init() {
   try {
     const tabs = await ext.tabs.query({ active: true, currentWindow: true })
     currentTab = tabs[0]
-  } catch (e) {}
+  } catch (e) { }
 
   if (currentTab?.url) {
     try {
@@ -565,6 +574,21 @@ function loadMatchingLogins() {
 }
 
 /**
+ * Helper to extract site favicon URL
+ */
+function getCipherFavicon(cipher) {
+  const uri = cipher.data?.uris?.[0]?.uri || cipher.data?.passkey?.rpId || (cipher.title?.includes(".") ? cipher.title : null)
+  if (!uri) return null
+  try {
+    const url = uri.includes("://") ? uri : `https://${uri}`
+    const host = new URL(url).hostname
+    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=32`
+  } catch {
+    return null
+  }
+}
+
+/**
  * Render Matching Logins List
  */
 function renderMatchingList(ciphers) {
@@ -588,10 +612,15 @@ function renderMatchingList(ciphers) {
     const hasTotp = Boolean(cipher.data?.totpSecret)
     const hasPasskey = Boolean(cipher.data?.passkey)
 
+    const favicon = getCipherFavicon(cipher)
+    const iconHtml = favicon
+      ? `<img src="${favicon}" alt="" class="cipher-favicon" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle; border-radius: 3px;" onerror="this.style.display='none'" />`
+      : ""
+
     card.innerHTML = `
       <div class="cipher-card-top">
         <div>
-          <div class="cipher-title">${cipher.title}</div>
+          <div class="cipher-title">${iconHtml}${cipher.title}</div>
           <div class="cipher-user">${username}</div>
         </div>
         ${hasPasskey ? '<span class="badge" style="font-size: 9px;">Passkey</span>' : ""}
@@ -706,10 +735,15 @@ function renderVaultList(ciphers) {
     const card = document.createElement("div")
     card.className = "cipher-card"
     const username = cipher.data?.username || cipher.type
+    const favicon = getCipherFavicon(cipher)
+    const iconHtml = favicon
+      ? `<img src="${favicon}" alt="" class="cipher-favicon" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle; border-radius: 3px;" onerror="this.style.display='none'" />`
+      : ""
+
     card.innerHTML = `
       <div class="cipher-card-top">
         <div>
-          <div class="cipher-title">${cipher.title}</div>
+          <div class="cipher-title">${iconHtml}${cipher.title}</div>
           <div class="cipher-user">${username}</div>
         </div>
         <span class="badge" style="font-size: 9px;">${cipher.type}</span>
@@ -766,6 +800,53 @@ function renderVaultList(ciphers) {
   })
 }
 
+function escapeHtml(str) {
+  if (!str) return ""
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
+}
+
+function createAdditionalPasswordRow(ap = null) {
+  const row = document.createElement("div")
+  row.className = "additional-pass-row"
+  row.dataset.id = ap?.id || `ap_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+
+  row.innerHTML = `
+    <div style="display: flex; gap: 6px; align-items: center;">
+      <input type="text" class="additional-pass-name" placeholder="Name (e.g. PIN, Backup Code)" value="${escapeHtml(ap?.name || "")}" style="flex: 1; font-size: 11px; padding: 6px 8px;" />
+      <button type="button" class="icon-btn danger btn-remove-add-pass" title="Remove" style="width: 28px; height: 28px; flex-shrink: 0;">
+        <svg viewBox="0 0 24 24" style="width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="input-wrap" style="margin-top: 2px;">
+      <input type="password" class="additional-pass-value" placeholder="Secret or Code" value="${escapeHtml(ap?.value || "")}" style="font-size: 12px;" />
+      <button type="button" class="eye-btn btn-toggle-add-pass-eye" tabindex="-1">
+        <svg viewBox="0 0 24 24">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+      </button>
+    </div>
+  `
+
+  row.querySelector(".btn-remove-add-pass")?.addEventListener("click", () => {
+    row.remove()
+  })
+
+  const valInput = row.querySelector(".additional-pass-value")
+  const eyeBtn = row.querySelector(".btn-toggle-add-pass-eye")
+  eyeBtn?.addEventListener("click", () => {
+    const isPass = valInput.type === "password"
+    valInput.type = isPass ? "text" : "password"
+  })
+
+  return row
+}
+
 /**
  * Open Cipher Edit/Create Form
  */
@@ -775,6 +856,10 @@ function openEditCipher(cipher = null) {
   btnLock.style.display = "none"
   btnSync.style.display = "none"
   editError.style.display = "none"
+
+  if (editAdditionalPasswordsList) {
+    editAdditionalPasswordsList.innerHTML = ""
+  }
 
   if (cipher) {
     editViewTitle.textContent = "Edit Item"
@@ -789,17 +874,41 @@ function openEditCipher(cipher = null) {
       .join(", ")
     editCipherTotp.value = cipher.data?.totpSecret || ""
     editCipherNotes.value = cipher.data?.notes || ""
+
+    if (Array.isArray(cipher.data?.additionalPasswords) && editAdditionalPasswordsList) {
+      cipher.data.additionalPasswords.forEach((ap) => {
+        editAdditionalPasswordsList.appendChild(createAdditionalPasswordRow(ap))
+      })
+    }
+
+    if (cipher.data?.passkey) {
+      currentEditingPasskey = cipher.data.passkey
+      if (editPasskeySection) {
+        editPasskeySection.style.display = "block"
+        if (passkeyDomain) passkeyDomain.textContent = cipher.data.passkey.rpId || "Unknown"
+        if (passkeyCreated) {
+          passkeyCreated.textContent = cipher.data.passkey.createdAt
+            ? new Date(cipher.data.passkey.createdAt).toLocaleDateString()
+            : "Saved"
+        }
+      }
+    } else {
+      currentEditingPasskey = null
+      if (editPasskeySection) editPasskeySection.style.display = "none"
+    }
   } else {
     editViewTitle.textContent = "New Item"
     btnEditDelete.style.display = "none"
     editCipherId.value = ""
+    currentEditingPasskey = null
+    if (editPasskeySection) editPasskeySection.style.display = "none"
     let defaultTitle = ""
     let defaultUri = ""
     if (currentTab?.url && !currentTab.url.startsWith("about:")) {
       defaultUri = currentTab.url
       try {
         defaultTitle = new URL(currentTab.url).hostname.replace(/^www\./, "")
-      } catch {}
+      } catch { }
     }
     editCipherTitle.value = defaultTitle
     editCipherUsername.value = ""
@@ -838,6 +947,14 @@ btnEditGenPass?.addEventListener("click", () => {
   editCipherPassword.type = "text"
 })
 
+btnAddAdditionalPass?.addEventListener("click", () => {
+  if (editAdditionalPasswordsList) {
+    const row = createAdditionalPasswordRow()
+    editAdditionalPasswordsList.appendChild(row)
+    row.querySelector(".additional-pass-name")?.focus()
+  }
+})
+
 formEditCipher?.addEventListener("submit", (e) => {
   e.preventDefault()
   const id = editCipherId.value.trim() || null
@@ -852,10 +969,23 @@ formEditCipher?.addEventListener("submit", (e) => {
 
   const uris = uriStr
     ? uriStr
-        .split(",")
-        .map((u) => ({ uri: u.trim(), match: 0 }))
-        .filter((u) => u.uri.length > 0)
+      .split(",")
+      .map((u) => ({ uri: u.trim(), match: 0 }))
+      .filter((u) => u.uri.length > 0)
     : []
+
+  const additionalPasswordRows = editAdditionalPasswordsList
+    ? editAdditionalPasswordsList.querySelectorAll(".additional-pass-row")
+    : []
+  const additionalPasswords = []
+  additionalPasswordRows.forEach((row) => {
+    const name = row.querySelector(".additional-pass-name")?.value.trim() || ""
+    const value = row.querySelector(".additional-pass-value")?.value || ""
+    const rowId = row.dataset.id || `ap_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+    if (name || value) {
+      additionalPasswords.push({ id: rowId, name: name || "Access Code", value })
+    }
+  })
 
   const data = {
     username,
@@ -863,6 +993,14 @@ formEditCipher?.addEventListener("submit", (e) => {
     uris,
     totpSecret,
     notes,
+  }
+
+  if (additionalPasswords.length > 0) {
+    data.additionalPasswords = additionalPasswords
+  }
+
+  if (currentEditingPasskey) {
+    data.passkey = currentEditingPasskey
   }
 
   btnEditSave.disabled = true
@@ -916,6 +1054,31 @@ btnEditDelete?.addEventListener("click", () => {
     }
   )
 })
+
+btnDeletePasskey?.addEventListener("click", () => {
+  const id = editCipherId.value.trim()
+  if (!id) return
+
+  if (!confirm("Are you sure you want to delete this passkey?")) return
+
+  btnDeletePasskey.disabled = true
+  ext.runtime.sendMessage(
+    {
+      action: "DELETE_PASSKEY",
+      payload: { cipherId: id },
+    },
+    (res) => {
+      btnDeletePasskey.disabled = false
+      if (res?.success) {
+        currentEditingPasskey = null
+        if (editPasskeySection) editPasskeySection.style.display = "none"
+      } else {
+        alert(res?.error || "Failed to delete passkey")
+      }
+    }
+  )
+})
+
 
 // Vault Search Filter
 vaultSearchInput.addEventListener("input", (e) => {

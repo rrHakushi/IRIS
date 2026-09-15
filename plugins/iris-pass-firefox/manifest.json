@@ -17,7 +17,9 @@
     "clipboardWrite",
     "notifications"
   ],
-  "host_permissions": ["<all_urls>"],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "background": {
     "scripts": [
       "lib/noble.js",
@@ -44,16 +46,26 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content/passkey-injected.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content/passkey-injected.js"
+      ],
       "world": "MAIN",
       "run_at": "document_start",
       "all_frames": true
     },
     {
-      "matches": ["<all_urls>"],
-      "js": ["content/content.js"],
-      "css": ["content/content.css"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content/content.js"
+      ],
+      "css": [
+        "content/content.css"
+      ],
       "run_at": "document_start",
       "all_frames": true
     }
@@ -65,7 +77,9 @@
         "icons/icon-16.png",
         "icons/icon-48.png"
       ],
-      "matches": ["<all_urls>"]
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ],
   "commands": {

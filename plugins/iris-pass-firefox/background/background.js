@@ -64,7 +64,7 @@ async function resetAutoLock() {
   const minutes = settings.autoLockMinutes ?? 15 // 15 min default (0 = Never)
 
   if (ext.storage?.session && inMemoryVaultKey) {
-    ext.storage.session.set({ lastActive: Date.now() }).catch(() => {})
+    ext.storage.session.set({ lastActive: Date.now() }).catch(() => { })
   }
 
   if (minutes > 0 && inMemoryVaultKey) {
@@ -87,7 +87,7 @@ function lockVault() {
   inMemoryFolders = []
   if (autoLockTimer) clearTimeout(autoLockTimer)
   if (ext.storage?.session) {
-    ext.storage.session.remove(["vaultKeyHex", "lastActive"]).catch(() => {})
+    ext.storage.session.remove(["vaultKeyHex", "lastActive"]).catch(() => { })
   }
   updateBadge()
 }
@@ -108,7 +108,7 @@ async function updateBadge() {
     const matches = getMatchingLogins(activeTab.url)
     if (matches.length > 0) {
       ext.action.setBadgeText({ text: String(matches.length) })
-      ext.action.setBadgeBackgroundColor({ color: "#e11d48" }) // Rose accent
+      ext.action.setBadgeBackgroundColor({ color: "#d800a6" }) // IRIS Pass accent
     } else {
       ext.action.setBadgeText({ text: "" })
     }
@@ -243,7 +243,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // 1. Vault & Auth Status
   if (action === "GET_STATUS") {
-    ;(async () => {
+    ; (async () => {
       await ensureVaultActive()
       const { authToken, apiKey } = await IrisApi.getToken()
       const serverUrl = await IrisApi.getServerUrl()
@@ -294,7 +294,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // 2. Log in with Username/Email & Password
   if (action === "LOGIN") {
-    ;(async () => {
+    ; (async () => {
       try {
         const { identifier, password, serverUrl } = payload
         if (!identifier || !password)
@@ -353,7 +353,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // 2b. Verify Two-Factor Authentication (TOTP or Backup Code)
   if (action === "VERIFY_MFA") {
-    ;(async () => {
+    ; (async () => {
       try {
         const { mfaTicket, code, mfaType = "totp", password } = payload
         if (!mfaTicket || !code)
@@ -395,7 +395,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // 2c. Log in via API Key & Master Password
   if (action === "LOGIN_API_KEY") {
-    ;(async () => {
+    ; (async () => {
       try {
         const { apiKey, masterPassword, serverUrl } = payload
         if (!apiKey) throw new Error("API Key is required")
@@ -440,7 +440,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // 3. Unlock Vault with Master Password
   if (action === "UNLOCK_VAULT") {
-    ;(async () => {
+    ; (async () => {
       try {
         const { password } = payload
         if (!password) throw new Error("Password required")
@@ -460,7 +460,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // 4. Log Out
   if (action === "LOGOUT") {
-    ;(async () => {
+    ; (async () => {
       lockVault()
       await IrisApi.logout()
       sendResponse({ success: true })
@@ -477,7 +477,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // 6. Get Matching Logins for a URL
   if (action === "GET_MATCHING_LOGINS") {
-    ;(async () => {
+    ; (async () => {
       await ensureVaultActive()
       resetAutoLock()
       const targetUrl = payload?.url
@@ -489,7 +489,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // 7. Get All Ciphers (for popup search)
   if (action === "GET_ALL_CIPHERS") {
-    ;(async () => {
+    ; (async () => {
       await ensureVaultActive()
       resetAutoLock()
       sendResponse({
@@ -503,7 +503,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // 8. Perform Autofill on active tab
   if (action === "PERFORM_AUTOFILL") {
-    ;(async () => {
+    ; (async () => {
       try {
         await ensureVaultActive()
         const { cipherId, tabId } = payload
@@ -545,7 +545,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // 9. Save or Update Credential
   if (action === "SAVE_CIPHER") {
-    ;(async () => {
+    ; (async () => {
       try {
         await ensureVaultActive()
         if (!inMemoryVaultKey) throw new Error("Vault is locked")
@@ -590,7 +590,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // 9b. Delete or Trash Credential
   if (action === "DELETE_CIPHER") {
-    ;(async () => {
+    ; (async () => {
       try {
         await ensureVaultActive()
         if (!inMemoryVaultKey) throw new Error("Vault is locked")
@@ -609,7 +609,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // 9c. Get single cipher by ID
   if (action === "GET_CIPHER_BY_ID") {
-    ;(async () => {
+    ; (async () => {
       await ensureVaultActive()
       const { id } = payload
       const cipher = inMemoryCiphers.find((c) => c.id === id)
@@ -720,14 +720,14 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // 10. Passkey: Find passkeys for RP ID & allowed credentials
   if (action === "PASSKEY_GET_CREDENTIALS") {
-    ;(async () => {
+    ; (async () => {
       await ensureVaultActive()
       const { rpId, url, allowCredentials } = payload || {}
       const matchingPasskeys = []
       const allowedIds = Array.isArray(allowCredentials)
         ? allowCredentials
-            .map((c) => (typeof c === "string" ? c : c?.id))
-            .filter(Boolean)
+          .map((c) => (typeof c === "string" ? c : c?.id))
+          .filter(Boolean)
         : []
 
       for (const c of inMemoryCiphers) {
@@ -774,7 +774,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // 11. Passkey: Generate keypair, encode attestation, and save to vault
   if (action === "PASSKEY_CREATE_CREDENTIAL") {
-    ;(async () => {
+    ; (async () => {
       try {
         await ensureVaultActive()
         if (!inMemoryVaultKey)
@@ -842,7 +842,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         ]
 
         // 5. Construct Authenticator Data
-        const flags = 0x45 // UP (1) + UV (4) + AT (64)
+        const flags = 0x5d // UP (1) + UV (4) + BE (8) + BS (16) + AT (64)
         const aaguid = new Uint8Array(16) // all zeroes
         const authDataParts = [
           ...rpIdHash,
@@ -962,7 +962,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // 12. Passkey: Sign assertion with stored private key
   if (action === "PASSKEY_SIGN_ASSERTION") {
-    ;(async () => {
+    ; (async () => {
       try {
         await ensureVaultActive()
         if (!inMemoryVaultKey)
@@ -1003,20 +1003,25 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         )
         const clientDataHash = new Uint8Array(clientDataHashBuf)
 
-        // 3. Construct AuthenticatorData (UP=1, UV=1 -> flags=0x05)
+        // 3. Construct AuthenticatorData (UP=1, UV=1, BE=1, BS=1 -> flags=0x1d)
+        const effectiveRpId = rpId || matchedPasskey.rpId
         const rpIdHashBuf = await crypto.subtle.digest(
           "SHA-256",
-          enc.encode(rpId)
+          enc.encode(effectiveRpId)
         )
         const rpIdHash = new Uint8Array(rpIdHashBuf)
-        const flags = 0x05
+        const flags = 0x1d
+        const signCount = Math.floor(Date.now() / 1000)
+        const signCountBytes = [
+          (signCount >>> 24) & 0xff,
+          (signCount >>> 16) & 0xff,
+          (signCount >>> 8) & 0xff,
+          signCount & 0xff,
+        ]
         const authData = new Uint8Array([
           ...rpIdHash,
           flags,
-          0x00,
-          0x00,
-          0x00,
-          0x01,
+          ...signCountBytes,
         ])
 
         // 4. Sign authData || clientDataHash with stored private key
@@ -1097,3 +1102,31 @@ ext.commands.onCommand.addListener(async (command) => {
     }
   }
 })
+
+// Auto re-inject content scripts into already-open tabs when the extension is updated or reloaded
+ext.runtime.onInstalled?.addListener(async () => {
+  try {
+    const tabs = await ext.tabs.query({ url: ["http://*/*", "https://*/*"] })
+    for (const tab of tabs) {
+      if (!tab.id) continue
+      try {
+        if (ext.scripting?.executeScript) {
+          await ext.scripting.executeScript({
+            target: { tabId: tab.id, allFrames: true },
+            files: ["content/passkey-injected.js"],
+            world: "MAIN",
+          })
+          await ext.scripting.executeScript({
+            target: { tabId: tab.id, allFrames: true },
+            files: ["content/content.js"],
+          })
+        }
+      } catch {
+        // Tab might be restricted (e.g. browser internal or store pages)
+      }
+    }
+  } catch (err) {
+    console.warn("[IRIS Pass] Auto re-inject tabs warning:", err)
+  }
+})
+

@@ -4,7 +4,10 @@
  * 2. In-Field Autofill Badges & Dropdown (Bitwarden-style, active-only)
  */
 
-;(function () {
+; (function () {
+  if (window.__IRIS_CONTENT_SCRIPT_ATTACHED__) return
+  window.__IRIS_CONTENT_SCRIPT_ATTACHED__ = true
+
   const ext = typeof browser !== "undefined" ? browser : chrome
 
   // ----------------------------------------------------
@@ -18,8 +21,8 @@
       const nonceEl = document.querySelector("script[nonce]")
       if (nonceEl?.nonce) s.nonce = nonceEl.nonce
       s.onload = () => s.remove()
-      ;(document.head || document.documentElement).appendChild(s)
-    } catch (e) {}
+        ; (document.head || document.documentElement).appendChild(s)
+    } catch (e) { }
   }
 
   ensurePasskeyInjected()
@@ -66,6 +69,136 @@
     }
   }
 
+  function escapeHtml(str) {
+    if (!str) return ""
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;")
+  }
+
+  function showUnlockPromptForPasskey(requestId, options, mode) {
+    removePasskeyModal()
+
+    const { rpId } = options || {}
+    const overlay = document.createElement("div")
+    overlay.className = "iris-passkey-dialog-overlay"
+
+    overlay.innerHTML = `
+      <div class="iris-passkey-dialog">
+        <div class="iris-passkey-icon">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
+        <h3 class="iris-passkey-title">IRIS Pass is Locked</h3>
+        <p class="iris-passkey-subtitle">Unlock your vault with your Master Password to access passkeys for ${escapeHtml(rpId || window.location.hostname)}.</p>
+        <div class="iris-passkey-details">
+          <div class="iris-passkey-row-col">
+            <span class="label">Master Password</span>
+            <input type="password" id="iris-pk-unlock-input" class="iris-passkey-input" placeholder="Master Password" />
+            <div id="iris-pk-unlock-error" style="display: none; color: #f43f5e; font-size: 11px; margin-top: 4px; text-align: left;"></div>
+          </div>
+        </div>
+        <div class="iris-passkey-actions">
+          <button type="button" class="iris-passkey-btn primary" id="btn-pk-do-unlock">Unlock & Continue</button>
+          <button type="button" class="iris-passkey-btn secondary" id="btn-pk-unlock-fallback">Use Device Passkey</button>
+          <button type="button" class="iris-passkey-btn text" id="btn-pk-unlock-cancel">Cancel</button>
+        </div>
+      </div>
+    `
+
+    document.body.appendChild(overlay)
+    activePasskeyModal = overlay
+
+    const input = overlay.querySelector("#iris-pk-unlock-input")
+    const btnUnlock = overlay.querySelector("#btn-pk-do-unlock")
+    const btnFallback = overlay.querySelector("#btn-pk-unlock-fallback")
+    const btnCancel = overlay.querySelector("#btn-pk-unlock-cancel")
+    const errorEl = overlay.querySelector("#iris-pk-unlock-error")
+
+    setTimeout(() => input?.focus(), 50)
+
+    btnCancel.addEventListener("click", () => {
+      removePasskeyModal()
+      const actionName =
+        mode === "create" ? "PASSKEY_CREATE_RESPONSE" : "PASSKEY_GET_RESPONSE"
+      window.postMessage(
+        {
+          source: "IRIS_PASSKEY_CONTENT",
+          action: actionName,
+          requestId,
+          canceled: true,
+        },
+        "*"
+      )
+    })
+
+    btnFallback.addEventListener("click", () => {
+      removePasskeyModal()
+      const actionName =
+        mode === "create" ? "PASSKEY_CREATE_RESPONSE" : "PASSKEY_GET_RESPONSE"
+      window.postMessage(
+        {
+          source: "IRIS_PASSKEY_CONTENT",
+          action: actionName,
+          requestId,
+          fallback: true,
+        },
+        "*"
+      )
+    })
+
+    async function doUnlock() {
+      const password = input.value
+      if (!password) {
+        errorEl.textContent = "Please enter your password"
+        errorEl.style.display = "block"
+        return
+      }
+
+      btnUnlock.disabled = true
+      btnUnlock.textContent = "Unlocking..."
+      errorEl.style.display = "none"
+
+      ext.runtime.sendMessage(
+        {
+          action: "UNLOCK_VAULT",
+          payload: { password },
+        },
+        (res) => {
+          btnUnlock.disabled = false
+          btnUnlock.textContent = "Unlock & Continue"
+
+          if (res?.success) {
+            removePasskeyModal()
+            if (mode === "create") {
+              handlePasskeyCreateRequest(requestId, options)
+            } else {
+              handlePasskeyGetRequest(requestId, options)
+            }
+          } else {
+            errorEl.textContent = res?.error || "Incorrect password"
+            errorEl.style.display = "block"
+            input.focus()
+            input.select()
+          }
+        }
+      )
+    }
+
+    btnUnlock.addEventListener("click", doUnlock)
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault()
+        doUnlock()
+      }
+    })
+  }
+
   /**
    * Handle WebAuthn Passkey Registration Request
    */
@@ -89,6 +222,26 @@
         payload: { url: window.location.href },
       },
       (matchesRes) => {
+        if (ext.runtime?.lastError) {
+          console.warn("[IRIS Pass] Extension runtime error:", ext.runtime.lastError)
+          showToast("IRIS Pass was reloaded. Please refresh this page.")
+          window.postMessage(
+            {
+              source: "IRIS_PASSKEY_CONTENT",
+              action: "PASSKEY_CREATE_RESPONSE",
+              requestId,
+              fallback: true,
+            },
+            "*"
+          )
+          return
+        }
+
+        if (matchesRes?.isUnlocked === false) {
+          showUnlockPromptForPasskey(requestId, options, "create")
+          return
+        }
+
         const matches = matchesRes?.matches || []
 
         const overlay = document.createElement("div")
@@ -101,19 +254,19 @@
               <span class="label">Save to Account / Vault Item</span>
               <select id="iris-pk-select-account" class="iris-passkey-select">
                 ${matches
-                  .map((m) => {
-                    const isCurrent =
-                      m.data?.username &&
-                      m.data.username.toLowerCase() ===
-                        (userName || "").toLowerCase()
-                    const hasPasskey = Boolean(m.data?.passkey)
-                    return `
+              .map((m) => {
+                const isCurrent =
+                  m.data?.username &&
+                  m.data.username.toLowerCase() ===
+                  (userName || "").toLowerCase()
+                const hasPasskey = Boolean(m.data?.passkey)
+                return `
                     <option value="${m.id}" ${isCurrent ? "selected" : ""}>
                       ${m.title} (${m.data?.username || "No username"})${hasPasskey ? " • Passkey Saved" : ""}
                     </option>
                   `
-                  })
-                  .join("")}
+              })
+              .join("")}
                 <option value="new" ${matches.every((m) => m.data?.username?.toLowerCase() !== (userName || "").toLowerCase()) ? "selected" : ""}>
                   + Create new vault item "${userName || rpName}"
                 </option>
@@ -262,6 +415,26 @@
         payload: { rpId, url: window.location.href, allowCredentials },
       },
       async (res) => {
+        if (ext.runtime?.lastError) {
+          console.warn("[IRIS Pass] Extension runtime error:", ext.runtime.lastError)
+          showToast("IRIS Pass was reloaded. Please refresh this page.")
+          window.postMessage(
+            {
+              source: "IRIS_PASSKEY_CONTENT",
+              action: "PASSKEY_GET_RESPONSE",
+              requestId,
+              fallback: true,
+            },
+            "*"
+          )
+          return
+        }
+
+        if (res?.isUnlocked === false) {
+          showUnlockPromptForPasskey(requestId, options, "get")
+          return
+        }
+
         const passkeys = res?.passkeys || []
 
         if (passkeys.length === 0) {
@@ -288,12 +461,12 @@
               <span class="label">Select Account</span>
               <select id="iris-pk-auth-account" class="iris-passkey-select">
                 ${passkeys
-                  .map(
-                    (p) => `
+              .map(
+                (p) => `
                   <option value="${p.credentialId}">${p.userName} (${p.title})</option>
                 `
-                  )
-                  .join("")}
+              )
+              .join("")}
               </select>
             </div>
           `
@@ -560,88 +733,196 @@
         dropdown.style.left = `${rect.left}px`
         dropdown.style.minWidth = `${Math.max(rect.width, 260)}px`
 
-        const header = document.createElement("div")
-        header.className = "iris-pass-dropdown-header"
-        header.innerHTML = `
-          <span class="iris-pass-dropdown-header-title">IRIS Pass</span>
-          <span style="font-size: 10px; color: #a19da8;">${matches.length} matching</span>
+        const searchWrap = document.createElement("div")
+        searchWrap.className = "iris-pass-dropdown-search-wrap"
+        searchWrap.innerHTML = `
+          <svg class="iris-pass-dropdown-search-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" class="iris-pass-dropdown-search-input" placeholder="Search logins..." autocomplete="off" />
         `
-        dropdown.appendChild(header)
+        dropdown.appendChild(searchWrap)
+
+        const searchInput = searchWrap.querySelector(".iris-pass-dropdown-search-input")
+        searchWrap.addEventListener("click", (e) => e.stopPropagation())
+        searchWrap.addEventListener("mousedown", (e) => e.stopPropagation())
 
         const list = document.createElement("div")
         list.className = "iris-pass-dropdown-list"
 
-        if (matches.length === 0) {
-          const empty = document.createElement("div")
-          empty.style.padding = "14px 12px"
-          empty.style.fontSize = "11px"
-          empty.style.color = "#a19da8"
-          empty.style.textAlign = "center"
-          empty.textContent = "No matching credentials in vault"
-          list.appendChild(empty)
-        } else {
-          matches.forEach((m) => {
+        function fillCredential(m, passwordVal) {
+          const isTargetPassword = targetInput.type === "password"
+          if (isTargetPassword) {
+            setNativeValue(targetInput, passwordVal || "")
+            // Find companion username
+            const root = targetInput.closest("form") || document.body
+            const uInputs = Array.from(
+              root.querySelectorAll(
+                'input[type="text"], input[type="email"], input[id*="identifier"]'
+              )
+            ).filter((el) => el.offsetParent !== null && el !== targetInput)
+            if (uInputs.length > 0 && m.data?.username) {
+              setNativeValue(uInputs[0], m.data.username)
+            }
+          } else {
+            setNativeValue(targetInput, m.data?.username || "")
+            // Find companion password
+            const root = targetInput.closest("form") || document.body
+            const pInputs = Array.from(
+              root.querySelectorAll('input[type="password"]')
+            ).filter((el) => el.offsetParent !== null)
+            if (pInputs.length > 0 && passwordVal) {
+              setNativeValue(pInputs[0], passwordVal)
+            }
+          }
+
+          showToast(`Autofilled from IRIS Pass (${m.title})`)
+
+          if (m.data?.totpSecret) {
+            ext.runtime.sendMessage({
+              action: "PERFORM_AUTOFILL",
+              payload: { cipherId: m.id },
+            })
+          }
+
+          removeDropdown()
+        }
+
+        let searchQuery = ""
+        function renderItems() {
+          list.innerHTML = ""
+
+          const filtered = matches.filter((m) => {
+            if (!searchQuery) return true
+            const q = searchQuery.toLowerCase()
+            const matchTitle = m.title?.toLowerCase().includes(q)
+            const matchUser = m.data?.username?.toLowerCase().includes(q)
+            return matchTitle || matchUser
+          })
+
+          if (filtered.length === 0) {
+            const empty = document.createElement("div")
+            empty.style.padding = "14px 12px"
+            empty.style.fontSize = "11px"
+            empty.style.color = "#a19da8"
+            empty.style.textAlign = "center"
+            empty.textContent = searchQuery
+              ? "No matching credentials"
+              : "No matching credentials in vault"
+            list.appendChild(empty)
+            return
+          }
+
+          filtered.forEach((m) => {
+            const wrap = document.createElement("div")
+            wrap.className = "iris-pass-dropdown-item-wrap"
+
+            const row = document.createElement("div")
+            row.className = "iris-pass-dropdown-row"
+
             const item = document.createElement("button")
             item.type = "button"
             item.className = "iris-pass-dropdown-item"
             const hasPasskey = Boolean(m.data?.passkey)
             const hasTotp = Boolean(m.data?.totpSecret)
+            const additional = m.data?.additionalPasswords || []
+            const hasMultiplePasswords = additional.length > 0
 
             item.innerHTML = `
               <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                 <span class="iris-pass-dropdown-item-title">${m.title}</span>
                 <div style="display: flex; gap: 4px;">
-                  ${hasPasskey ? '<span style="font-size: 9px; padding: 1px 4px; border-radius: 4px; background: rgba(244,63,94,0.15); color: #f43f5e; border: 1px solid rgba(244,63,94,0.3);">Passkey</span>' : ""}
+                  ${hasPasskey ? '<span style="font-size: 9px; padding: 1px 4px; border-radius: 4px; background: rgba(216,0,166,0.15); color: #d800a6; border: 1px solid rgba(216,0,166,0.3);">Passkey</span>' : ""}
                   ${hasTotp ? '<span style="font-size: 9px; padding: 1px 4px; border-radius: 4px; background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3);">2FA</span>' : ""}
                 </div>
               </div>
               <span class="iris-pass-dropdown-item-user">${m.data?.username || "No username"}</span>
             `
 
+            // Primary click fills primary password
             item.addEventListener("click", (e) => {
               e.preventDefault()
               e.stopPropagation()
-
-              const isTargetPassword = targetInput.type === "password"
-              if (isTargetPassword) {
-                setNativeValue(targetInput, m.data?.password || "")
-                // Find companion username
-                const root = targetInput.closest("form") || document.body
-                const uInputs = Array.from(
-                  root.querySelectorAll(
-                    'input[type="text"], input[type="email"], input[id*="identifier"]'
-                  )
-                ).filter((el) => el.offsetParent !== null && el !== targetInput)
-                if (uInputs.length > 0 && m.data?.username) {
-                  setNativeValue(uInputs[0], m.data.username)
-                }
-              } else {
-                setNativeValue(targetInput, m.data?.username || "")
-                // Find companion password
-                const root = targetInput.closest("form") || document.body
-                const pInputs = Array.from(
-                  root.querySelectorAll('input[type="password"]')
-                ).filter((el) => el.offsetParent !== null)
-                if (pInputs.length > 0 && m.data?.password) {
-                  setNativeValue(pInputs[0], m.data.password)
-                }
-              }
-
-              showToast(`Autofilled from IRIS Pass (${m.title})`)
-
-              if (m.data?.totpSecret) {
-                ext.runtime.sendMessage({
-                  action: "PERFORM_AUTOFILL",
-                  payload: { cipherId: m.id },
-                })
-              }
-
-              removeDropdown()
+              fillCredential(m, m.data?.password || "")
             })
 
-            list.appendChild(item)
+            row.appendChild(item)
+
+            // If has multiple passwords, add arrow dropdown button
+            if (hasMultiplePasswords) {
+              const arrowBtn = document.createElement("button")
+              arrowBtn.type = "button"
+              arrowBtn.className = "iris-pass-dropdown-arrow-btn"
+              arrowBtn.title = "Select password"
+              arrowBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              `
+
+              const subMenu = document.createElement("div")
+              subMenu.className = "iris-pass-dropdown-submenu"
+
+              // Option 1: Primary Password
+              const primarySubBtn = document.createElement("button")
+              primarySubBtn.type = "button"
+              primarySubBtn.className = "iris-pass-dropdown-sub-item"
+              primarySubBtn.innerHTML = `<span>Primary Password</span> <span style="font-size: 10px; color: #7a7782;">(Default)</span>`
+              primarySubBtn.addEventListener("click", (e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                fillCredential(m, m.data?.password || "")
+              })
+              subMenu.appendChild(primarySubBtn)
+
+              // Option 2...N: Additional Passwords
+              additional.forEach((ap) => {
+                const subBtn = document.createElement("button")
+                subBtn.type = "button"
+                subBtn.className = "iris-pass-dropdown-sub-item"
+                subBtn.innerHTML = `<span>${ap.name || "Password"}</span>`
+                subBtn.addEventListener("click", (e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  fillCredential(m, ap.value || "")
+                })
+                subMenu.appendChild(subBtn)
+              })
+
+              arrowBtn.addEventListener("click", (e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                const isOpen = subMenu.classList.contains("open")
+                if (isOpen) {
+                  subMenu.classList.remove("open")
+                  arrowBtn.classList.remove("open")
+                } else {
+                  // Close other open submenus first
+                  list.querySelectorAll(".iris-pass-dropdown-submenu.open").forEach((el) => el.classList.remove("open"))
+                  list.querySelectorAll(".iris-pass-dropdown-arrow-btn.open").forEach((el) => el.classList.remove("open"))
+                  subMenu.classList.add("open")
+                  arrowBtn.classList.add("open")
+                }
+              })
+
+              row.appendChild(arrowBtn)
+              wrap.appendChild(row)
+              wrap.appendChild(subMenu)
+            } else {
+              wrap.appendChild(row)
+            }
+
+            list.appendChild(wrap)
           })
         }
+
+        searchInput.addEventListener("input", (e) => {
+          searchQuery = e.target.value.trim()
+          renderItems()
+        })
+
+        renderItems()
 
         dropdown.appendChild(list)
         document.body.appendChild(dropdown)

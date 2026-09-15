@@ -887,3 +887,13 @@ body {
   border-color: #fb7185;
   color: #fb7185;
 }
+
+.additional-pass-row {
+  background: #1c1a20;
+  border: 1px solid #2d2a32;
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}

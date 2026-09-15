@@ -71,33 +71,63 @@
     opacity: 0;
     transform: translateY(-4px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-.iris-pass-dropdown-header {
-  padding: 8px 12px !important;
+.iris-pass-dropdown-search-wrap {
+  padding: 8px 10px !important;
   background: #211f26 !important;
   border-bottom: 1px solid #2d2a32 !important;
   display: flex !important;
   align-items: center !important;
-  justify-content: space-between !important;
+  gap: 6px !important;
 }
 
-.iris-pass-dropdown-header-title {
+.iris-pass-dropdown-search-icon {
+  color: #a19da8 !important;
+  flex-shrink: 0 !important;
+}
+
+.iris-pass-dropdown-search-input {
+  width: 100% !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: #ffffff !important;
   font-size: 11px !important;
-  font-weight: 700 !important;
-  color: #fb7185 !important;
-  letter-spacing: 0.5px !important;
-  text-transform: uppercase !important;
+  font-family: inherit !important;
+  padding: 0 !important;
+}
+
+.iris-pass-dropdown-search-input::placeholder {
+  color: #7a7782 !important;
 }
 
 .iris-pass-dropdown-list {
   padding: 4px 0 !important;
-  max-height: 220px !important;
+  max-height: 240px !important;
   overflow-y: auto !important;
+}
+
+.iris-pass-dropdown-item-wrap {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+
+.iris-pass-dropdown-item-wrap:last-child {
+  border-bottom: none !important;
+}
+
+.iris-pass-dropdown-row {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
 }
 
 .iris-pass-dropdown-item {
@@ -109,12 +139,13 @@
   transition: background 0.12s ease !important;
   border: none !important;
   background: transparent !important;
-  width: 100% !important;
+  flex: 1 !important;
+  min-width: 0 !important;
   text-align: left !important;
   box-sizing: border-box !important;
 }
 
-.iris-pass-dropdown-item:hover {
+.iris-pass-dropdown-row:hover {
   background: #28252e !important;
 }
 
@@ -128,6 +159,72 @@
   font-size: 11px !important;
   color: #a19da8 !important;
 }
+
+.iris-pass-dropdown-arrow-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 26px !important;
+  height: 26px !important;
+  margin-right: 8px !important;
+  border-radius: 6px !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: #a19da8 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  flex-shrink: 0 !important;
+}
+
+.iris-pass-dropdown-arrow-btn:hover {
+  background: rgba(216, 0, 166, 0.15) !important;
+  color: #d800a6 !important;
+  border-color: rgba(216, 0, 166, 0.3) !important;
+}
+
+.iris-pass-dropdown-arrow-btn svg {
+  transition: transform 0.2s ease !important;
+}
+
+.iris-pass-dropdown-arrow-btn.open svg {
+  transform: rotate(180deg) !important;
+}
+
+.iris-pass-dropdown-submenu {
+  display: none;
+  background: #131216 !important;
+  border-top: 1px solid #2d2a32 !important;
+  padding: 4px 8px !important;
+  box-sizing: border-box !important;
+}
+
+.iris-pass-dropdown-submenu.open {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+.iris-pass-dropdown-sub-item {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  padding: 6px 10px !important;
+  border-radius: 6px !important;
+  border: none !important;
+  background: transparent !important;
+  color: #e2e0e5 !important;
+  font-size: 11px !important;
+  cursor: pointer !important;
+  text-align: left !important;
+  transition: background 0.12s ease, color 0.12s ease !important;
+}
+
+.iris-pass-dropdown-sub-item:hover {
+  background: rgba(216, 0, 166, 0.15) !important;
+  color: #ff00c4 !important;
+}
+
 
 /* Toast Banner */
 .iris-pass-toast {
@@ -157,6 +254,7 @@
     opacity: 0;
     transform: translateY(12px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -204,8 +302,8 @@
   width: 48px !important;
   height: 48px !important;
   border-radius: 14px !important;
-  background: rgba(244, 63, 94, 0.12) !important;
-  border: 1px solid rgba(244, 63, 94, 0.25) !important;
+  background: rgba(216, 0, 166, 0.12) !important;
+  border: 1px solid rgba(216, 0, 166, 0.25) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -215,7 +313,7 @@
 .iris-passkey-icon svg {
   width: 24px !important;
   height: 24px !important;
-  stroke: #f43f5e !important;
+  stroke: #d800a6 !important;
   fill: none !important;
   stroke-width: 2 !important;
 }
@@ -264,7 +362,8 @@
   font-size: 12px !important;
 }
 
-.iris-passkey-select {
+.iris-passkey-select,
+.iris-passkey-input {
   width: 100% !important;
   padding: 8px 10px !important;
   background: #28252e !important;
@@ -274,10 +373,12 @@
   font-size: 12px !important;
   outline: none !important;
   box-sizing: border-box !important;
+  font-family: inherit !important;
 }
 
-.iris-passkey-select:focus {
-  border-color: #f43f5e !important;
+.iris-passkey-select:focus,
+.iris-passkey-input:focus {
+  border-color: #d800a6 !important;
 }
 
 .iris-passkey-row .label,
@@ -316,12 +417,12 @@
 }
 
 .iris-passkey-btn.primary {
-  background: #f43f5e !important;
+  background: #d800a6 !important;
   color: #ffffff !important;
 }
 
 .iris-passkey-btn.primary:hover {
-  background: #fb7185 !important;
+  background: #ff00c4 !important;
 }
 
 .iris-passkey-btn.secondary {
