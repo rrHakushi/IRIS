@@ -130,30 +130,28 @@ export function PassGeneratorDialog({
                 Entropy: {entropyInfo.entropyBits} bits
               </span>
               <span
-                className={`font-semibold ${
-                  entropyInfo.score === 4
+                className={`font-semibold ${entropyInfo.score === 4
                     ? "text-emerald-500"
                     : entropyInfo.score === 3
-                    ? "text-blue-500"
-                    : entropyInfo.score === 2
-                    ? "text-amber-500"
-                    : "text-rose-500"
-                }`}
+                      ? "text-blue-500"
+                      : entropyInfo.score === 2
+                        ? "text-amber-500"
+                        : "text-rose-500"
+                  }`}
               >
                 {entropyInfo.label}
               </span>
             </div>
             <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
               <div
-                className={`h-full transition-all duration-300 ${
-                  entropyInfo.score === 4
+                className={`h-full transition-all duration-300 ${entropyInfo.score === 4
                     ? "w-full bg-emerald-500"
                     : entropyInfo.score === 3
-                    ? "w-3/4 bg-blue-500"
-                    : entropyInfo.score === 2
-                    ? "w-1/2 bg-amber-500"
-                    : "w-1/4 bg-rose-500"
-                }`}
+                      ? "w-3/4 bg-blue-500"
+                      : entropyInfo.score === 2
+                        ? "w-1/2 bg-amber-500"
+                        : "w-1/4 bg-rose-500"
+                  }`}
               />
             </div>
           </div>

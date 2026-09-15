@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, Suspense } from "react"
+import Image from "next/image"
 import { useSearchParams } from "next/navigation"
 import { usePass } from "@/context/pass-context"
 import { useEncryption } from "@/context/encryption-context"
@@ -99,9 +100,9 @@ function PassMainContent() {
     } else {
       setUnlockError(
         result.error ||
-          (encryption.hasSeparateEncryptionPassword
-            ? "Incorrect decryption password. Please try again."
-            : "Incorrect account password. Please try again.")
+        (encryption.hasSeparateEncryptionPassword
+          ? "Incorrect decryption password. Please try again."
+          : "Incorrect account password. Please try again.")
       )
     }
   }
@@ -126,8 +127,14 @@ function PassMainContent() {
     return (
       <div className="flex flex-1 items-center justify-center min-h-[calc(100vh-4rem)] bg-background">
         <div className="flex flex-col items-center gap-3">
-          <div className="size-10 rounded-2xl bg-rose-500/10 flex items-center justify-center animate-pulse">
-            <IconShieldLock className="size-5 text-rose-500" />
+          <div className="size-10 rounded-2xl bg-[#d800a6]/10 flex items-center justify-center animate-pulse">
+            <Image
+              src="/iris-pass512left-ring.png"
+              alt="IRIS Pass"
+              width={24}
+              height={24}
+              className="object-contain"
+            />
           </div>
           <span className="text-xs text-muted-foreground animate-pulse">
             Loading vault...
@@ -143,8 +150,14 @@ function PassMainContent() {
       <div className="flex flex-1 items-center justify-center p-6 bg-background/50 backdrop-blur-xs min-h-[calc(100vh-4rem)]">
         <div className="w-full max-w-md space-y-6 rounded-3xl border border-border bg-card p-8 shadow-2xl">
           <div className="flex flex-col items-center text-center space-y-3">
-            <div className="flex size-16 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-500 shadow-inner ring-1 ring-rose-500/20">
-              <IconShieldLock className="size-8" />
+            <div className="flex size-16 items-center justify-center rounded-2xl bg-[#d800a6]/10 shadow-inner ring-1 ring-[#d800a6]/20">
+              <Image
+                src="/iris-pass512left-ring.png"
+                alt="IRIS Pass"
+                width={36}
+                height={36}
+                className="object-contain"
+              />
             </div>
             <div className="space-y-1">
               <h1 className="text-2xl font-bold tracking-tight text-foreground font-heading">
@@ -220,33 +233,19 @@ function PassMainContent() {
   const filterLabel = currentFolder
     ? currentFolder.name
     : activeFilter === "favorites"
-    ? "Favorites"
-    : activeFilter === "logins"
-    ? "Logins"
-    : activeFilter === "ssh"
-    ? "SSH Keys"
-    : activeFilter === "trash"
-    ? "Trash"
-    : "All Vault Items"
+      ? "Favorites"
+      : activeFilter === "logins"
+        ? "Logins"
+        : activeFilter === "ssh"
+          ? "SSH Keys"
+          : activeFilter === "trash"
+            ? "Trash"
+            : "All Vault Items"
 
   return (
     <div className="flex flex-col flex-1 h-full min-h-0 bg-background overflow-hidden">
       {/* Top Action Bar */}
-      <header className="h-14 shrink-0 border-b border-border/80 px-4 sm:px-6 flex items-center justify-between bg-card/40 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
-          <div className="flex size-8 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500">
-            <IconShieldLock className="size-4" />
-          </div>
-          <div>
-            <h1 className="text-sm font-bold text-foreground tracking-tight">
-              {filterLabel}
-            </h1>
-            <p className="text-[11px] text-muted-foreground">
-              {ciphers.filter((c) => (activeFilter === "trash" ? c.deletedAt !== null : c.deletedAt === null)).length}{" "}
-              items in view
-            </p>
-          </div>
-        </div>
+      <header className="h-14 shrink-0 border-b border-border/80 px-4 sm:px-6 flex items-center justify-end bg-card/40 backdrop-blur-sm">
 
         <div className="flex items-center gap-2">
           <Button
@@ -405,7 +404,13 @@ export default function PassPage() {
       fallback={
         <div className="flex flex-1 items-center justify-center p-8">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <IconShieldLock className="size-4 animate-pulse text-rose-500" />
+            <Image
+              src="/iris-pass512left-ring.png"
+              alt="IRIS Pass"
+              width={16}
+              height={16}
+              className="animate-pulse object-contain"
+            />
             <span>Loading IRIS Pass...</span>
           </div>
         </div>

@@ -104,3 +104,29 @@ export const BITWARDEN_MATCH_LABELS: Record<BitwardenUriMatch, string> = {
   REGULAR_EXPRESSION: "Regular expression",
   NEVER: "Never",
 }
+
+/**
+ * Extracts a clean domain/hostname from a URI string or domain-like title.
+ */
+export function extractDomain(uriOrTitle?: string | null): string | null {
+  if (!uriOrTitle || typeof uriOrTitle !== "string") return null
+  const clean = uriOrTitle.trim()
+  if (!clean) return null
+
+  const parsed = parseUrlSafe(clean)
+  if (parsed?.hostname) return parsed.hostname
+
+  if (clean.includes(".") && !clean.includes(" ") && !clean.includes("/")) {
+    return clean.toLowerCase()
+  }
+  return null
+}
+
+/**
+ * Returns a high-res Google favicon service URL for a given domain/hostname.
+ */
+export function getFaviconUrl(domain?: string | null): string | null {
+  if (!domain) return null
+  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`
+}
+

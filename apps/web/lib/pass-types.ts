@@ -24,6 +24,12 @@ export interface PasskeyData {
   createdAt?: string
 }
 
+export interface AdditionalPassword {
+  id: string
+  name: string
+  value: string
+}
+
 export interface CustomField {
   name: string
   value: string
@@ -37,6 +43,7 @@ export interface CustomField {
 export interface DecryptedLoginData {
   username: string
   password: string
+  additionalPasswords?: AdditionalPassword[]
   uris: LoginUri[]
   totpSecret?: string
   passkey?: PasskeyData

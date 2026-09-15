@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react"
 import { usePass } from "@/context/pass-context"
 import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
+import Image from "next/image"
 import {
   IconKey,
   IconTerminal2,
@@ -18,15 +19,13 @@ import {
   IconDownload,
   IconFolder,
   IconRestore,
-  IconShieldLock,
   IconClock,
   IconFingerprint,
 } from "@tabler/icons-react"
 import { generateTotpCode, getTotpRemainingSeconds } from "@/lib/pass-totp"
-import { calculatePasswordEntropy } from "@/lib/pass-generator"
-import { BITWARDEN_MATCH_LABELS } from "@/lib/pass-matching"
 import { toast } from "sonner"
 import type { DecryptedLoginData, DecryptedSshKeyData } from "@/lib/pass-types"
+import { CipherIcon } from "./pass-cipher-icon"
 
 export function PassCipherDetail({
   onEditCipher,
@@ -40,12 +39,15 @@ export function PassCipherDetail({
     deleteCipher,
     restoreCipher,
     toggleFavorite,
+    updateCipher,
   } = usePass()
 
   const [revealPassword, setRevealPassword] = useState(false)
   const [revealPrivateKey, setRevealPrivateKey] = useState(false)
   const [totpSecondsRemaining, setTotpSecondsRemaining] = useState(30)
   const [totpCode, setTotpCode] = useState("")
+  const [nextTotpCode, setNextTotpCode] = useState("")
+  const [revealedAdditional, setRevealedAdditional] = useState<Record<string, boolean>>({})
 
   const item = ciphers.find((c) => c.id === selectedCipherId)
   const folder = folders.find((f) => f.id === item?.folderId)
@@ -59,6 +61,8 @@ export function PassCipherDetail({
     const updateTotp = () => {
       const now = Date.now()
       setTotpCode(generateTotpCode(d.totpSecret!, now))
+      const nextPeriodMs = (Math.floor(now / 1000 / 30) + 1) * 30 * 1000 + 1000
+      setNextTotpCode(generateTotpCode(d.totpSecret!, nextPeriodMs))
       setTotpSecondsRemaining(getTotpRemainingSeconds(now))
     }
 
@@ -71,7 +75,13 @@ export function PassCipherDetail({
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-muted-foreground bg-card/20 h-full">
         <div className="size-16 rounded-3xl bg-muted/40 flex items-center justify-center mb-4 text-muted-foreground/50">
-          <IconShieldLock className="size-8" />
+          <Image
+            src="/iris-pass512left-ring.png"
+            alt="IRIS Pass"
+            width={36}
+            height={36}
+            className="opacity-40"
+          />
         </div>
         <h3 className="text-base font-semibold text-foreground">
           No Credential Selected
@@ -87,10 +97,6 @@ export function PassCipherDetail({
   const isLogin = item.type === "LOGIN"
   const loginData = isLogin ? (item.data as DecryptedLoginData) : null
   const sshData = !isLogin ? (item.data as DecryptedSshKeyData) : null
-
-  const entropy = loginData?.password
-    ? calculatePasswordEntropy(loginData.password)
-    : null
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text)
@@ -114,19 +120,7 @@ export function PassCipherDetail({
       {/* Detail Header */}
       <div className="p-6 border-b border-border bg-card/40 flex items-start justify-between gap-4">
         <div className="flex items-center gap-3.5 min-w-0">
-          <div
-            className={`size-12 rounded-2xl flex items-center justify-center shrink-0 ${
-              isLogin
-                ? "bg-rose-500/10 text-rose-500"
-                : "bg-emerald-500/10 text-emerald-500"
-            }`}
-          >
-            {isLogin ? (
-              <IconKey className="size-6" />
-            ) : (
-              <IconTerminal2 className="size-6" />
-            )}
-          </div>
+          <CipherIcon item={item} size="lg" />
 
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -244,22 +238,13 @@ export function PassCipherDetail({
               </div>
             )}
 
-            {/* Password Row (NO PASSWORD HISTORY) */}
+            {/* Password Row */}
             {loginData.password && (
               <div className="rounded-2xl border border-border bg-card/60 p-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Password
+                    Primary Password
                   </span>
-                  {entropy && (
-                    <span
-                      className={`text-[11px] font-semibold ${
-                        entropy.score >= 3 ? "text-emerald-500" : "text-amber-500"
-                      }`}
-                    >
-                      {entropy.label} ({entropy.entropyBits} bits)
-                    </span>
-                  )}
                 </div>
 
                 <div className="flex items-center justify-between gap-2">
@@ -285,40 +270,80 @@ export function PassCipherDetail({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleCopy(loginData.password, "Password")}
+                      onClick={() => handleCopy(loginData.password, "Primary Password")}
                       className="size-8 rounded-lg text-muted-foreground hover:text-foreground"
                     >
                       <IconCopy className="size-4" />
                     </Button>
                   </div>
                 </div>
+              </div>
+            )}
 
-                {/* Strength Meter Bar */}
-                {entropy && (
-                  <div className="h-1.5 w-full bg-muted/60 rounded-full overflow-hidden">
+            {/* Additional Passwords & Access Codes */}
+            {loginData.additionalPasswords && loginData.additionalPasswords.length > 0 && (
+              <div className="space-y-3">
+                {loginData.additionalPasswords.map((ap) => {
+                  const isRevealed = Boolean(revealedAdditional[ap.id])
+                  return (
                     <div
-                      className={`h-full transition-all duration-300 ${
-                        entropy.score === 1
-                          ? "bg-destructive w-1/4"
-                          : entropy.score === 2
-                          ? "bg-amber-500 w-2/4"
-                          : entropy.score === 3
-                          ? "bg-emerald-500 w-3/4"
-                          : "bg-emerald-400 w-full"
-                      }`}
-                    />
-                  </div>
-                )}
+                      key={ap.id}
+                      className="rounded-2xl border border-border bg-card/60 p-4 space-y-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          {ap.name || "Additional Password"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium text-foreground font-mono select-all">
+                          {isRevealed ? ap.value : "••••••••••••••••••••"}
+                        </span>
+
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setRevealedAdditional((prev) => ({
+                                ...prev,
+                                [ap.id]: !prev[ap.id],
+                              }))
+                            }
+                            className="size-8 rounded-lg text-muted-foreground hover:text-foreground"
+                            aria-label="Toggle password visibility"
+                          >
+                            {isRevealed ? (
+                              <IconEyeOff className="size-4" />
+                            ) : (
+                              <IconEye className="size-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleCopy(ap.value, ap.name || "Password")}
+                            className="size-8 rounded-lg text-muted-foreground hover:text-foreground"
+                            aria-label="Copy password"
+                          >
+                            <IconCopy className="size-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             )}
 
             {/* TOTP Authenticator Row */}
             {loginData.totpSecret && (
-              <div className="rounded-2xl border border-border bg-rose-500/5 p-4 space-y-2">
+              <div className="rounded-2xl border border-border bg-[#d800a6]/5 p-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-rose-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="text-xs font-semibold text-[#d800a6] uppercase tracking-wider flex items-center gap-1.5">
                     <IconClock className="size-3.5" />
-                    Authenticator (2FA / TOTP)
+                    Authenticator
                   </span>
 
                   {/* Circular 30s Countdown Ring */}
@@ -335,28 +360,36 @@ export function PassCipherDetail({
                         cx="12"
                         cy="12"
                         r="9"
-                        className="stroke-rose-500 fill-none transition-all duration-1000"
+                        className="stroke-[#d800a6] fill-none transition-all duration-1000"
                         strokeWidth="2.5"
                         strokeDasharray={56.5}
                         strokeDashoffset={56.5 * (1 - totpSecondsRemaining / 30)}
                         strokeLinecap="round"
                       />
                     </svg>
-                    <span className="absolute text-[9px] font-bold text-rose-500">
+                    <span className="absolute text-[9px] font-bold text-[#d800a6]">
                       {totpSecondsRemaining}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold font-mono tracking-widest text-foreground select-all">
-                    {totpCode.slice(0, 3)} {totpCode.slice(3)}
-                  </span>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-baseline gap-4">
+                    <span className="text-2xl font-bold font-mono tracking-widest text-foreground select-all">
+                      {totpCode.slice(0, 3)} {totpCode.slice(3)}
+                    </span>
+                    {nextTotpCode && nextTotpCode !== "------" && (
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-mono">
+                        <span className="text-[10px] uppercase font-sans tracking-wider text-muted-foreground/60">Next:</span>
+                        <span className="font-semibold text-foreground/80">{nextTotpCode.slice(0, 3)} {nextTotpCode.slice(3)}</span>
+                      </div>
+                    )}
+                  </div>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleCopy(totpCode, "TOTP Code")}
-                    className="rounded-xl border-rose-500/30 text-rose-500 hover:bg-rose-500/10 gap-1.5 h-8 text-xs"
+                    className="rounded-xl border-[#d800a6]/30 text-[#d800a6] hover:bg-[#d800a6]/10 gap-1.5 h-8 text-xs"
                   >
                     <IconCopy className="size-3.5" />
                     <span>Copy Code</span>
@@ -371,15 +404,29 @@ export function PassCipherDetail({
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
                     <IconFingerprint className="size-4" />
-                    Passkey (FIDO2 / WebAuthn)
+                    Passkey
                   </span>
-                  <Badge variant="outline" className="text-[10px] text-emerald-600 dark:text-emerald-400 border-emerald-500/30">
-                    Saved Passkey
-                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={async () => {
+                      if (!confirm("Are you sure you want to delete this passkey?")) return
+                      const updatedData = { ...loginData }
+                      delete updatedData.passkey
+                      await updateCipher(item.id, {
+                        title: item.title,
+                        folderId: item.folderId,
+                        payload: updatedData,
+                      })
+                      toast.success("Passkey deleted")
+                    }}
+                    className="text-destructive hover:text-destructive h-6 px-2 text-[11px]"
+                  >
+                    Delete Passkey
+                  </Button>
                 </div>
                 <div className="space-y-1 text-xs">
                   <div className="font-medium text-foreground flex items-center justify-between">
-                    <span className="text-muted-foreground">Relying Party:</span>
                     <span className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
                       {loginData.passkey.rpId}
                     </span>
@@ -390,12 +437,6 @@ export function PassCipherDetail({
                       <span className="text-foreground">{loginData.passkey.userName}</span>
                     </div>
                   )}
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Credential ID:</span>
-                    <span className="font-mono text-muted-foreground truncate max-w-[200px]">
-                      {loginData.passkey.credentialId}
-                    </span>
-                  </div>
                 </div>
               </div>
             )}
@@ -404,16 +445,13 @@ export function PassCipherDetail({
             {loginData.uris && loginData.uris.length > 0 && (
               <div className="rounded-2xl border border-border bg-card/60 p-4 space-y-2">
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Websites & Match Detection
+                  Websites
                 </span>
                 <div className="space-y-2">
                   {loginData.uris.map((u, i) => (
                     <div key={i} className="flex items-center justify-between text-sm py-1">
                       <div className="min-w-0 flex items-center gap-2">
                         <span className="truncate text-foreground font-mono text-xs">{u.uri}</span>
-                        <Badge variant="secondary" className="text-[10px] font-normal px-2 py-0 shrink-0">
-                          {BITWARDEN_MATCH_LABELS[u.match || "BASE_DOMAIN"] || "Base domain"}
-                        </Badge>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <Button

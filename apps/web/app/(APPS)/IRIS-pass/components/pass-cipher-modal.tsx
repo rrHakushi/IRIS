@@ -61,6 +61,9 @@ export function PassCipherModal({
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [additionalPasswords, setAdditionalPasswords] = useState<
+    { id: string; name: string; value: string; show?: boolean }[]
+  >([])
   const [uris, setUris] = useState<LoginUri[]>([{ uri: "", match: "BASE_DOMAIN" }])
   const [totpSecret, setTotpSecret] = useState("")
   const [passkey, setPasskey] = useState<PasskeyData | null>(null)
@@ -95,6 +98,9 @@ export function PassCipherModal({
         const d = existingCipher.data as DecryptedLoginData
         setUsername(d.username || "")
         setPassword(d.password || "")
+        setAdditionalPasswords(
+          d.additionalPasswords?.map((p) => ({ ...p, show: false })) || []
+        )
         setUris(
           d.uris && d.uris.length > 0
             ? d.uris.map((u) => ({ uri: u.uri, match: u.match || "BASE_DOMAIN" }))
@@ -119,6 +125,7 @@ export function PassCipherModal({
       setFolderId(null)
       setUsername("")
       setPassword("")
+      setAdditionalPasswords([])
       setUris([{ uri: "", match: "BASE_DOMAIN" }])
       setTotpSecret("")
       setPasskey(null)
@@ -235,9 +242,21 @@ export function PassCipherModal({
           .map((u) => ({ uri: u.uri.trim(), match: u.match || "BASE_DOMAIN" }))
           .filter((u) => u.uri.length > 0)
 
+        const validAdditionalPasswords = additionalPasswords
+          .filter((p) => p.name.trim() || p.value)
+          .map((p) => ({
+            id: p.id || crypto.randomUUID(),
+            name: p.name.trim() || "Password",
+            value: p.value,
+          }))
+
         const payload: DecryptedLoginData = {
           username: username.trim(),
           password,
+          additionalPasswords:
+            validAdditionalPasswords.length > 0
+              ? validAdditionalPasswords
+              : undefined,
           uris: validUris,
           totpSecret: totpSecret.trim() ? totpSecret.trim().toUpperCase() : undefined,
           passkey: passkey || undefined,
@@ -309,11 +328,10 @@ export function PassCipherModal({
             <button
               type="button"
               onClick={() => setType("LOGIN")}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                type === "LOGIN"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${type === "LOGIN"
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+                }`}
             >
               <IconKey className="size-3.5" />
               <span>Login</span>
@@ -321,11 +339,10 @@ export function PassCipherModal({
             <button
               type="button"
               onClick={() => setType("SSH_KEY")}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                type === "SSH_KEY"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${type === "SSH_KEY"
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+                }`}
             >
               <IconTerminal2 className="size-3.5" />
               <span>SSH Key</span>
@@ -391,12 +408,12 @@ export function PassCipherModal({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="item-password" className="text-xs font-medium text-foreground">
-                    Password
+                    Primary Password
                   </Label>
                   <button
                     type="button"
                     onClick={() => setIsGeneratorOpen(true)}
-                    className="text-[11px] text-rose-500 hover:text-rose-600 flex items-center gap-1 font-semibold cursor-pointer"
+                    className="text-[11px] text-[#d800a6] hover:text-[#b8008e] flex items-center gap-1 font-semibold cursor-pointer"
                   >
                     <IconSparkles className="size-3" />
                     <span>Generate Password</span>
@@ -409,7 +426,7 @@ export function PassCipherModal({
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter or generate password..."
+                    placeholder="Enter or generate primary password..."
                     className="pe-10 rounded-xl h-9 font-mono text-xs"
                   />
                   <button
@@ -427,16 +444,100 @@ export function PassCipherModal({
                 </div>
               </div>
 
+              {/* Additional Passwords & Access Codes */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-medium text-foreground">
+                    Additional Passwords / Codes
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setAdditionalPasswords([
+                        ...additionalPasswords,
+                        { id: crypto.randomUUID(), name: "", value: "", show: false },
+                      ])
+                    }
+                    className="text-[11px] text-[#d800a6] hover:text-[#b8008e] flex items-center gap-1 font-medium cursor-pointer"
+                  >
+                    <IconPlus className="size-3" />
+                    <span>Add Password / Code</span>
+                  </button>
+                </div>
+
+                {additionalPasswords.map((ap, index) => (
+                  <div
+                    key={ap.id || index}
+                    className="space-y-1.5 p-3 rounded-2xl border border-border bg-card/60"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <Input
+                        value={ap.name}
+                        onChange={(e) => {
+                          const next = [...additionalPasswords]
+                          next[index] = { ...next[index]!, name: e.target.value }
+                          setAdditionalPasswords(next)
+                        }}
+                        placeholder="Label (e.g. PIN, Access Code, Secondary)"
+                        className="rounded-xl h-8 text-xs font-medium flex-1"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAdditionalPasswords(
+                            additionalPasswords.filter((_, i) => i !== index)
+                          )
+                        }}
+                        className="size-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-muted shrink-0 cursor-pointer"
+                        aria-label="Remove password"
+                      >
+                        <IconTrash className="size-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="relative">
+                      <Input
+                        type={ap.show ? "text" : "password"}
+                        value={ap.value}
+                        onChange={(e) => {
+                          const next = [...additionalPasswords]
+                          next[index] = { ...next[index]!, value: e.target.value }
+                          setAdditionalPasswords(next)
+                        }}
+                        placeholder="Enter secret code or password..."
+                        className="pe-10 rounded-xl h-9 font-mono text-xs"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = [...additionalPasswords]
+                          next[index] = { ...next[index]!, show: !next[index]!.show }
+                          setAdditionalPasswords(next)
+                        }}
+                        className="absolute inset-y-0 end-0 flex items-center pe-3 text-muted-foreground hover:text-foreground cursor-pointer"
+                        tabIndex={-1}
+                      >
+                        {ap.show ? (
+                          <IconEyeOff className="size-4" />
+                        ) : (
+                          <IconEye className="size-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               {/* Multiple Website URLs + Bitwarden Match Detection */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label className="text-xs font-medium text-foreground">
-                    Websites & Match Detection
+                    Websites
                   </Label>
                   <button
                     type="button"
                     onClick={handleAddUri}
-                    className="text-[11px] text-rose-500 hover:text-rose-600 flex items-center gap-1 font-medium cursor-pointer"
+                    className="text-[11px] text-[#d800a6] hover:text-[#b8008e] flex items-center gap-1 font-medium cursor-pointer"
                   >
                     <IconPlus className="size-3" />
                     <span>Add URL</span>
@@ -483,7 +584,7 @@ export function PassCipherModal({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
                     <IconFingerprint className="size-4 text-emerald-500" />
-                    <span>Passkey (FIDO2 / WebAuthn)</span>
+                    <span>Passkey</span>
                   </div>
                   {!passkey && !showPasskeyInputs && (
                     <button
@@ -501,10 +602,7 @@ export function PassCipherModal({
                   <div className="flex items-center justify-between p-2.5 rounded-xl bg-card border border-border text-xs">
                     <div>
                       <span className="font-semibold text-foreground block">
-                        RP: {passkey.rpId}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground font-mono truncate max-w-xs block">
-                        ID: {passkey.credentialId}
+                        {passkey.rpId}
                       </span>
                     </div>
                     <Button
@@ -564,7 +662,7 @@ export function PassCipherModal({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="item-totp" className="text-xs font-medium text-foreground">
-                    Authenticator Key (TOTP 2FA)
+                    Authenticator Key
                   </Label>
                   <button
                     type="button"
@@ -712,13 +810,13 @@ export function PassCipherModal({
             <Button
               type="submit"
               disabled={isSubmitting || !title.trim()}
-              className="rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold"
+              className="rounded-xl bg-[#d800a6] hover:bg-[#b8008e] text-white text-xs font-semibold"
             >
               {isSubmitting
                 ? "Saving..."
                 : isEditing
-                ? "Save Changes"
-                : "Add to Vault"}
+                  ? "Save Changes"
+                  : "Add to Vault"}
             </Button>
           </DialogFooter>
         </form>

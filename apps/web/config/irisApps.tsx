@@ -1,4 +1,5 @@
 import React, { useMemo } from "react"
+import Image from "next/image"
 import { useTranslations } from "next-intl"
 import { type IRISBitFieldResolvable } from "@IRIS/permissions"
 import { IconApps, IconShieldLock } from "@tabler/icons-react"
@@ -37,12 +38,20 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
       id: "iris-pass",
       name: "IRIS Pass",
       href: "/IRIS-pass",
-      color: "#f43f5e",
-      colorClass: "text-rose-500",
-      bgClass: "bg-rose-500",
+      color: "#d800a6",
+      colorClass: "text-[#d800a6]",
+      bgClass: "bg-[#d800a6]",
       description: "Zero-knowledge encrypted password, credential, and SSH key manager.",
       descriptionShort: "Vault & Generator",
-      icon: <IconShieldLock className="size-4 text-rose-500" />,
+      icon: (
+        <Image
+          src="/iris-pass512left-ring.png"
+          alt="IRIS Pass"
+          width={16}
+          height={16}
+          className="size-4 object-contain"
+        />
+      ),
     },
     // {
     //   name: "IRIS Cloud",

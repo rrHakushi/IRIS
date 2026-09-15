@@ -20,6 +20,7 @@ import {
 import { generateTotpCode } from "@/lib/pass-totp"
 import { toast } from "sonner"
 import type { DecryptedLoginData, DecryptedSshKeyData } from "@/lib/pass-types"
+import { CipherIcon } from "./pass-cipher-icon"
 
 export function PassCipherList({
   onOpenNewCipher,
@@ -177,27 +178,14 @@ export function PassCipherList({
               <div
                 key={item.id}
                 onClick={() => setSelectedCipherId(item.id)}
-                className={`group flex items-center justify-between p-3.5 cursor-pointer transition-colors ${
-                  isSelected
-                    ? "bg-primary/10 border-s-2 border-s-primary"
-                    : "hover:bg-muted/40"
-                }`}
+                className={`group flex items-center justify-between p-3.5 cursor-pointer transition-colors ${isSelected
+                  ? "bg-primary/10 border-s-2 border-s-primary"
+                  : "hover:bg-muted/40"
+                  }`}
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   {/* Icon */}
-                  <div
-                    className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${
-                      item.type === "LOGIN"
-                        ? "bg-rose-500/10 text-rose-500"
-                        : "bg-emerald-500/10 text-emerald-500"
-                    }`}
-                  >
-                    {item.type === "LOGIN" ? (
-                      <IconKey className="size-5" />
-                    ) : (
-                      <IconTerminal2 className="size-5" />
-                    )}
-                  </div>
+                  <CipherIcon item={item} size="md" />
 
                   {/* Info */}
                   <div className="min-w-0 flex-1">
@@ -263,7 +251,7 @@ export function PassCipherList({
                                 size="icon"
                                 onClick={(e) => handleCopyTotp(e, totpSecret)}
                                 aria-label="Copy TOTP Code"
-                                className="size-7 rounded-lg text-rose-500 hover:text-rose-600"
+                                className="size-7 rounded-lg text-[#d800a6] hover:text-[#b8008e]"
                               >
                                 <IconClock className="size-3.5" />
                               </Button>

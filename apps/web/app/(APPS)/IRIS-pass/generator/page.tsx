@@ -93,11 +93,10 @@ export default function GeneratorPage() {
           <button
             type="button"
             onClick={() => setMode("password")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-              mode === "password"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${mode === "password"
                 ? "bg-background text-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
-            }`}
+              }`}
           >
             <IconKey className="size-3.5" />
             Password
@@ -105,11 +104,10 @@ export default function GeneratorPage() {
           <button
             type="button"
             onClick={() => setMode("passphrase")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-              mode === "passphrase"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${mode === "passphrase"
                 ? "bg-background text-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
-            }`}
+              }`}
           >
             <IconTypography className="size-3.5" />
             Passphrase
@@ -168,15 +166,14 @@ export default function GeneratorPage() {
               </span>
             </div>
             <span
-              className={`font-semibold text-[11px] uppercase tracking-wider ${
-                entropyInfo.score === 4
+              className={`font-semibold text-[11px] uppercase tracking-wider ${entropyInfo.score === 4
                   ? "text-emerald-500"
                   : entropyInfo.score === 3
-                  ? "text-blue-500"
-                  : entropyInfo.score === 2
-                  ? "text-amber-500"
-                  : "text-rose-500"
-              }`}
+                    ? "text-blue-500"
+                    : entropyInfo.score === 2
+                      ? "text-amber-500"
+                      : "text-rose-500"
+                }`}
             >
               {entropyInfo.label}
             </span>
@@ -185,15 +182,14 @@ export default function GeneratorPage() {
           {/* Strength Bar */}
           <div className="h-1.5 w-full rounded-full bg-muted/80 overflow-hidden">
             <div
-              className={`h-full transition-all duration-300 ${
-                entropyInfo.score === 4
+              className={`h-full transition-all duration-300 ${entropyInfo.score === 4
                   ? "w-full bg-emerald-500"
                   : entropyInfo.score === 3
-                  ? "w-3/4 bg-blue-500"
-                  : entropyInfo.score === 2
-                  ? "w-1/2 bg-amber-500"
-                  : "w-1/4 bg-rose-500"
-              }`}
+                    ? "w-3/4 bg-blue-500"
+                    : entropyInfo.score === 2
+                      ? "w-1/2 bg-amber-500"
+                      : "w-1/4 bg-rose-500"
+                }`}
             />
           </div>
         </div>
@@ -386,11 +382,10 @@ export default function GeneratorPage() {
                     onClick={() =>
                       setPhraseOptions({ ...phraseOptions, separator: sep })
                     }
-                    className={`size-9 rounded-xl font-mono text-xs font-bold border transition-colors cursor-pointer ${
-                      phraseOptions.separator === sep
+                    className={`size-9 rounded-xl font-mono text-xs font-bold border transition-colors cursor-pointer ${phraseOptions.separator === sep
                         ? "border-rose-500 bg-rose-500/10 text-rose-500"
                         : "border-border bg-background text-muted-foreground hover:text-foreground"
-                    }`}
+                      }`}
                   >
                     {sep === " " ? "space" : sep}
                   </button>
