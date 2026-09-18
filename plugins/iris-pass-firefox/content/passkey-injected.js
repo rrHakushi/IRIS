@@ -136,12 +136,7 @@
           const clientDataBuf = base64UrlToBuffer(res.clientDataJSON)
           const attestationBuf = base64UrlToBuffer(res.attestationObject)
 
-          const authDataBuf = attestationBuf.slice(
-            res.authDataOffset || 0,
-            (res.authDataOffset || 0) +
-            (res.authDataLength || attestationBuf.byteLength)
-          )
-
+          const authDataBuf = base64UrlToBuffer(res.authenticatorData)
           const spkiBuf = res.spki ? base64UrlToBuffer(res.spki) : null
 
           const responseObj = {
@@ -193,7 +188,7 @@
                   transports: ["internal"],
                   publicKeyAlgorithm: -7,
                   publicKey: res.spki,
-                  authenticatorData: res.authData,
+                  authenticatorData: res.authenticatorData,
                 },
                 clientExtensionResults: {},
               }
