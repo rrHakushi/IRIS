@@ -36,4 +36,4 @@ To build the submission `.zip` archive:
 ```bash
 npm run build
 ```
-The output package will be generated at `dist/iris_pass-1.4.2.zip`.
+The output package will be generated at `dist/iris_pass-1.5.0.zip`.
