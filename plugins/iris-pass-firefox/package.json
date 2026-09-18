@@ -1,9 +1,10 @@
 {
   "name": "iris-pass-firefox",
-  "version": "1.0.0",
-  "description": "Zero-knowledge encrypted password manager, passkey authenticator, and autofill extension for IRIS.",
+  "version": "1.4.2",
+  "description": "Password manager extension for IRIS.",
   "scripts": {
-    "package": "node -e \"const fs = require('fs'); const archiver = require('archiver'); console.log('Ready for web-ext build');\""
+    "lint": "npx web-ext lint",
+    "build": "npx web-ext build --artifacts-dir dist --overwrite-dest"
   },
   "keywords": [
     "iris",
@@ -13,6 +14,6 @@
     "passkeys",
     "autofill"
   ],
-  "author": "IRIS",
+  "author": "Hakushi",
   "license": "MIT"
 }

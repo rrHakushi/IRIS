@@ -1,12 +1,17 @@
 {
   "manifest_version": 3,
   "name": "IRIS Pass",
-  "version": "1.0.0",
-  "description": "Zero-knowledge encrypted password manager, passkey authenticator, and autofill extension for IRIS.",
+  "version": "1.4.2",
+  "description": "Password manager extension for IRIS.",
   "browser_specific_settings": {
     "gecko": {
-      "id": "pass@iris.local",
-      "strict_min_version": "109.0"
+      "id": "info@runerra.org",
+      "strict_min_version": "142.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
     }
   },
   "permissions": [
@@ -26,6 +31,8 @@
       "lib/crypto.js",
       "lib/matching.js",
       "lib/totp.js",
+      "lib/qr-decoder.js",
+      "lib/storage.js",
       "lib/api.js",
       "background/background.js"
     ]
@@ -42,7 +49,8 @@
   "icons": {
     "16": "icons/icon-16.png",
     "48": "icons/icon-48.png",
-    "128": "icons/icon-128.png"
+    "128": "icons/icon-128.png",
+    "512": "icons/icon-512.png"
   },
   "content_scripts": [
     {
@@ -73,7 +81,6 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "content/passkey-injected.js",
         "icons/icon-16.png",
         "icons/icon-48.png"
       ],
@@ -81,21 +88,5 @@
         "<all_urls>"
       ]
     }
-  ],
-  "commands": {
-    "autofill_credential": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+L",
-        "mac": "Command+Shift+L"
-      },
-      "description": "Auto-fill credentials for the active page"
-    },
-    "generate_password": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+9",
-        "mac": "Command+Shift+9"
-      },
-      "description": "Generate strong password"
-    }
-  }
+  ]
 }

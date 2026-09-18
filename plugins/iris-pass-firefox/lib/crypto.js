@@ -183,21 +183,28 @@
     let charset = ""
     const requiredChars = []
 
+    function getCryptoRandomInt(max) {
+      if (max <= 0) return 0
+      const buf = new Uint32Array(1)
+      crypto.getRandomValues(buf)
+      return buf[0] % max
+    }
+
     if (uppercase && upper.length > 0) {
       charset += upper
-      requiredChars.push(upper[Math.floor(Math.random() * upper.length)])
+      requiredChars.push(upper[getCryptoRandomInt(upper.length)])
     }
     if (lowercase && lower.length > 0) {
       charset += lower
-      requiredChars.push(lower[Math.floor(Math.random() * lower.length)])
+      requiredChars.push(lower[getCryptoRandomInt(lower.length)])
     }
     if (numbers && num.length > 0) {
       charset += num
-      requiredChars.push(num[Math.floor(Math.random() * num.length)])
+      requiredChars.push(num[getCryptoRandomInt(num.length)])
     }
     if (symbols && sym.length > 0) {
       charset += sym
-      requiredChars.push(sym[Math.floor(Math.random() * sym.length)])
+      requiredChars.push(sym[getCryptoRandomInt(sym.length)])
     }
 
     if (!charset) charset = lower || "abcdefghijklmnopqrstuvwxyz"
@@ -537,6 +544,280 @@
     if (/[^a-zA-Z0-9]/.test(password)) pool += 33
     if (pool === 0) pool = 1
     return Math.round(password.length * (Math.log(pool) / Math.LN2))
+  }
+
+  /**
+   * Generates Ed25519 or RSA SSH keypair in-browser using WebCrypto
+   */
+  IrisCrypto.generateSshKeypair = async function (algorithm = "ED25519", comment = "user@iris") {
+    function encodeSshString(data) {
+      const bytes = typeof data === "string" ? new TextEncoder().encode(data) : data
+      const len = bytes.length
+      const res = new Uint8Array(4 + len)
+      res[0] = (len >>> 24) & 0xff
+      res[1] = (len >>> 16) & 0xff
+      res[2] = (len >>> 8) & 0xff
+      res[3] = len & 0xff
+      res.set(bytes, 4)
+      return res
+    }
+
+    function concatArrays(arrays) {
+      const totalLen = arrays.reduce((acc, curr) => acc + curr.length, 0)
+      const res = new Uint8Array(totalLen)
+      let offset = 0
+      for (const arr of arrays) {
+        res.set(arr, offset)
+        offset += arr.length
+      }
+      return res
+    }
+
+    function bytesToBase64(bytes) {
+      let bin = ""
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i])
+      return btoa(bin)
+    }
+
+    function arrayBufferToPem(buffer, label) {
+      const b64 = bytesToBase64(new Uint8Array(buffer))
+      const lines = b64.match(/.{1,64}/g) || []
+      return `-----BEGIN ${label}-----\n${lines.join("\n")}\n-----END ${label}-----`
+    }
+
+    if (algorithm === "ED25519") {
+      const keyPair = await crypto.subtle.generateKey("Ed25519", true, ["sign", "verify"])
+      const rawPublicKey = new Uint8Array(await crypto.subtle.exportKey("raw", keyPair.publicKey))
+      const pkcs8PrivateKey = await crypto.subtle.exportKey("pkcs8", keyPair.privateKey)
+
+      const keyType = "ssh-ed25519"
+      const openSshBlob = concatArrays([encodeSshString(keyType), encodeSshString(rawPublicKey)])
+      const publicKeyOpenSsh = `${keyType} ${bytesToBase64(openSshBlob)} ${comment}`
+      const privateKeyPem = arrayBufferToPem(pkcs8PrivateKey, "PRIVATE KEY")
+
+      const hash = noble ? noble.sha256(openSshBlob) : new Uint8Array(await crypto.subtle.digest("SHA-256", openSshBlob))
+      const fingerprintSha256 = `SHA256:${bytesToBase64(hash).replace(/=+$/, "")}`
+
+      return {
+        algorithm: "ED25519",
+        publicKeyOpenSsh,
+        privateKeyPem,
+        fingerprintSha256,
+      }
+    } else {
+      const modulusLength = algorithm === "RSA_4096" ? 4096 : 2048
+      const keyPair = await crypto.subtle.generateKey(
+        {
+          name: "RSASSA-PKCS1-v1_5",
+          modulusLength,
+          publicExponent: new Uint8Array([1, 0, 1]),
+          hash: "SHA-256",
+        },
+        true,
+        ["sign", "verify"]
+      )
+      const spkiPublicKey = await crypto.subtle.exportKey("spki", keyPair.publicKey)
+      const pkcs8PrivateKey = await crypto.subtle.exportKey("pkcs8", keyPair.privateKey)
+
+      const publicKeyOpenSsh = arrayBufferToPem(spkiPublicKey, "PUBLIC KEY")
+      const privateKeyPem = arrayBufferToPem(pkcs8PrivateKey, "RSA PRIVATE KEY")
+      const hash = noble ? noble.sha256(new Uint8Array(spkiPublicKey)) : new Uint8Array(await crypto.subtle.digest("SHA-256", spkiPublicKey))
+      const fingerprintSha256 = `SHA256:${bytesToBase64(hash).replace(/=+$/, "")}`
+
+      return {
+        algorithm,
+        publicKeyOpenSsh,
+        privateKeyPem,
+        fingerprintSha256,
+      }
+    }
+  }
+
+  /**
+   * Set up PIN unlock: derives key via scrypt and encrypts the 256-bit vault key
+   */
+  IrisCrypto.setupPinUnlock = function (pin, vaultKey) {
+    if (!noble) throw new Error("Cryptographic module not loaded")
+    if (!pin || pin.length < 4) throw new Error("PIN must be at least 4 characters")
+
+    const salt = crypto.getRandomValues(new Uint8Array(16))
+    const iv = crypto.getRandomValues(new Uint8Array(12))
+
+    const pinKey = noble.scrypt(pin.normalize("NFKC"), salt, {
+      N: 16384,
+      r: 8,
+      p: 1,
+      dkLen: 32,
+    })
+
+    const aes = noble.gcm(pinKey, iv)
+    const ciphertextWithTag = aes.encrypt(vaultKey)
+    const cipher = ciphertextWithTag.slice(0, -16)
+    const authTag = ciphertextWithTag.slice(-16)
+
+    return {
+      saltHex: bytesToHex(salt),
+      ivHex: bytesToHex(iv),
+      authTagHex: bytesToHex(authTag),
+      cipherHex: bytesToHex(cipher),
+    }
+  }
+
+  /**
+   * Unlocks vault key using PIN and saved PIN unlock data
+   */
+  IrisCrypto.unlockWithPin = function (pin, pinData) {
+    if (!noble) throw new Error("Cryptographic module not loaded")
+    if (!pinData?.saltHex || !pinData?.ivHex || !pinData?.authTagHex || !pinData?.cipherHex) {
+      throw new Error("Invalid or missing PIN unlock data")
+    }
+
+    const salt = hexToBytes(pinData.saltHex)
+    const iv = hexToBytes(pinData.ivHex)
+    const authTag = hexToBytes(pinData.authTagHex)
+    const cipher = hexToBytes(pinData.cipherHex)
+
+    const pinKey = noble.scrypt(pin.normalize("NFKC"), salt, {
+      N: 16384,
+      r: 8,
+      p: 1,
+      dkLen: 32,
+    })
+
+    const ciphertextWithTag = new Uint8Array(cipher.length + authTag.length)
+    ciphertextWithTag.set(cipher, 0)
+    ciphertextWithTag.set(authTag, cipher.length)
+
+    const aes = noble.gcm(pinKey, iv)
+    try {
+      return aes.decrypt(ciphertextWithTag)
+    } catch (err) {
+      throw new Error("Incorrect PIN")
+    }
+  }
+
+  /**
+   * Check if WebAuthn platform authenticator (Windows Hello, Touch ID) is available
+   */
+  IrisCrypto.isBiometricsAvailable = async function () {
+    try {
+      if (
+        typeof PublicKeyCredential !== "undefined" &&
+        PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable
+      ) {
+        return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
+      }
+    } catch (e) { }
+    return false
+  }
+
+  /**
+   * Helper: Base64 encoding/decoding
+   */
+  IrisCrypto.bytesToBase64 = function (bytes) {
+    let bin = ""
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i])
+    return btoa(bin)
+  }
+
+  IrisCrypto.base64ToBytes = function (b64) {
+    const bin = atob(b64)
+    const bytes = new Uint8Array(bin.length)
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+    return bytes
+  }
+
+  /**
+   * Set up Biometric unlock with platform authenticator
+   */
+  IrisCrypto.setupBiometricUnlock = async function (vaultKey, user) {
+    if (!noble) throw new Error("Cryptographic module not loaded")
+    if (typeof PublicKeyCredential === "undefined") {
+      throw new Error("Biometrics not supported in this browser")
+    }
+
+    const challenge = crypto.getRandomValues(new Uint8Array(32))
+    const userId = new TextEncoder().encode(user?.id || "iris-pass-user")
+    const userName = user?.username || user?.email || "iris-user"
+
+    const credential = await navigator.credentials.create({
+      publicKey: {
+        challenge,
+        rp: { name: "IRIS Pass" },
+        user: {
+          id: userId,
+          name: userName,
+          displayName: user?.displayName || userName,
+        },
+        pubKeyCredParams: [
+          { alg: -7, type: "public-key" },
+          { alg: -257, type: "public-key" },
+        ],
+        authenticatorSelection: {
+          authenticatorAttachment: "platform",
+          userVerification: "required",
+        },
+        timeout: 60000,
+      },
+    })
+
+    if (!credential) throw new Error("Biometric enrollment cancelled")
+
+    const bioKey = crypto.getRandomValues(new Uint8Array(32))
+    const iv = crypto.getRandomValues(new Uint8Array(12))
+    const aes = noble.gcm(bioKey, iv)
+    const ciphertextWithTag = aes.encrypt(vaultKey)
+    const cipher = ciphertextWithTag.slice(0, -16)
+    const authTag = ciphertextWithTag.slice(-16)
+
+    const credIdBase64 = IrisCrypto.bytesToBase64(new Uint8Array(credential.rawId))
+
+    return {
+      credentialId: credIdBase64,
+      bioKeyHex: bytesToHex(bioKey),
+      ivHex: bytesToHex(iv),
+      authTagHex: bytesToHex(authTag),
+      cipherHex: bytesToHex(cipher),
+    }
+  }
+
+  /**
+   * Unlock vault with biometric platform authenticator
+   */
+  IrisCrypto.unlockWithBiometrics = async function (bioData) {
+    if (!noble) throw new Error("Cryptographic module not loaded")
+    if (!bioData?.credentialId) throw new Error("Biometrics not configured")
+
+    const challenge = crypto.getRandomValues(new Uint8Array(32))
+    const credIdBytes = IrisCrypto.base64ToBytes(bioData.credentialId)
+
+    const assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge,
+        allowCredentials: [
+          {
+            id: credIdBytes,
+            type: "public-key",
+          },
+        ],
+        userVerification: "required",
+        timeout: 60000,
+      },
+    })
+
+    if (!assertion) throw new Error("Biometric verification cancelled")
+
+    const bioKey = hexToBytes(bioData.bioKeyHex)
+    const iv = hexToBytes(bioData.ivHex)
+    const authTag = hexToBytes(bioData.authTagHex)
+    const cipher = hexToBytes(bioData.cipherHex)
+
+    const ciphertextWithTag = new Uint8Array(cipher.length + authTag.length)
+    ciphertextWithTag.set(cipher, 0)
+    ciphertextWithTag.set(authTag, cipher.length)
+
+    const aes = noble.gcm(bioKey, iv)
+    return aes.decrypt(ciphertextWithTag)
   }
 
   root.IrisCrypto = IrisCrypto

@@ -14,6 +14,31 @@
   }
   IrisMatching.BitwardenUriMatch = BitwardenUriMatch
 
+  const BITWARDEN_MATCH_LABELS = {
+    BASE_DOMAIN: "Base domain",
+    HOST: "Host",
+    STARTS_WITH: "Starts with",
+    EXACT: "Exact",
+    REGULAR_EXPRESSION: "Regular expression",
+    NEVER: "Never",
+  }
+  IrisMatching.BITWARDEN_MATCH_LABELS = BITWARDEN_MATCH_LABELS
+
+  function normalizeMatchStrategy(strategy) {
+    if (typeof strategy === "number") return strategy
+    if (typeof strategy === "string") {
+      const upper = strategy.toUpperCase()
+      if (upper === "BASE_DOMAIN" || upper === "0") return BitwardenUriMatch.BASE_DOMAIN
+      if (upper === "HOST" || upper === "1") return BitwardenUriMatch.HOST
+      if (upper === "STARTS_WITH" || upper === "STARTSWITH" || upper === "2") return BitwardenUriMatch.STARTS_WITH
+      if (upper === "EXACT" || upper === "3") return BitwardenUriMatch.EXACT
+      if (upper === "REGULAR_EXPRESSION" || upper === "REGEX" || upper === "4") return BitwardenUriMatch.REGULAR_EXPRESSION
+      if (upper === "NEVER" || upper === "5") return BitwardenUriMatch.NEVER
+    }
+    return BitwardenUriMatch.BASE_DOMAIN
+  }
+  IrisMatching.normalizeMatchStrategy = normalizeMatchStrategy
+
   /**
    * Extracts hostname from a URL string safely
    */
@@ -28,6 +53,25 @@
       return urlString.toLowerCase().split("/")[0] || ""
     }
   }
+
+  // Multi-tenant and compound public suffixes
+  const PUBLIC_SUFFIXES = [
+    "co.uk", "org.uk", "me.uk", "gov.uk", "ac.uk",
+    "co.jp", "ne.jp", "ac.jp", "go.jp",
+    "com.au", "net.au", "org.au", "edu.au", "gov.au",
+    "co.nz", "net.nz", "org.nz", "govt.nz",
+    "com.br", "net.br", "org.br",
+    "co.in", "net.in", "org.in", "gov.in",
+    "com.mx", "org.mx", "gob.mx",
+    "com.sg", "net.sg", "org.sg", "gov.sg",
+    "co.za", "org.za", "gov.za",
+    "com.tr", "org.tr", "edu.tr", "gov.tr",
+    "co.kr", "ne.kr", "or.kr", "go.kr",
+    "com.tw", "org.tw", "gov.tw",
+    "github.io", "gitlab.io", "pages.dev", "vercel.app",
+    "netlify.app", "azurewebsites.net", "herokuapp.com",
+    "cloudfront.net", "s3.amazonaws.com"
+  ]
 
   /**
    * Extracts base domain (eTLD+1 approximation)
@@ -44,30 +88,14 @@
     const parts = host.split(".")
     if (parts.length <= 2) return host
 
-    // Common 2-letter ccTLDs compound extensions
-    const compoundTlds = [
-      "co.uk",
-      "org.uk",
-      "me.uk",
-      "co.jp",
-      "ne.jp",
-      "ac.jp",
-      "com.au",
-      "net.au",
-      "org.au",
-      "co.nz",
-      "com.br",
-      "co.in",
-      "com.mx",
-      "com.sg",
-      "co.za",
-      "com.tr",
-      "co.kr",
-      "com.tw",
-    ]
-
     const lastTwo = parts.slice(-2).join(".")
-    if (compoundTlds.includes(lastTwo) && parts.length >= 3) {
+    if (PUBLIC_SUFFIXES.includes(lastTwo) && parts.length >= 3) {
+      return parts.slice(-3).join(".")
+    }
+
+    // Common standard SLD checks (e.g. .co.xx, .com.xx, .gov.xx)
+    const secondToLast = parts[parts.length - 2]
+    if (["co", "com", "org", "net", "edu", "gov", "ac", "ne", "or"].includes(secondToLast) && parts.length >= 3) {
       return parts.slice(-3).join(".")
     }
 
@@ -83,12 +111,13 @@
     matchStrategy = BitwardenUriMatch.BASE_DOMAIN
   ) {
     if (!targetUrl || !vaultUri) return false
-    if (matchStrategy === BitwardenUriMatch.NEVER) return false
+    const strategy = normalizeMatchStrategy(matchStrategy)
+    if (strategy === BitwardenUriMatch.NEVER) return false
 
     const cleanTarget = targetUrl.trim()
     const cleanVault = vaultUri.trim()
 
-    switch (matchStrategy) {
+    switch (strategy) {
       case BitwardenUriMatch.EXACT: {
         const normTarget = cleanTarget.replace(/\/+$/, "").toLowerCase()
         const normVault = cleanVault.replace(/\/+$/, "").toLowerCase()
@@ -96,7 +125,23 @@
       }
 
       case BitwardenUriMatch.STARTS_WITH: {
-        return cleanTarget.toLowerCase().startsWith(cleanVault.toLowerCase())
+        const lowerTarget = cleanTarget.toLowerCase()
+        const lowerVault = cleanVault.toLowerCase()
+        if (!lowerTarget.startsWith(lowerVault)) return false
+        // Boundary check: if match is exact or followed by boundary character (/ ? # : or end)
+        if (lowerTarget.length === lowerVault.length) return true
+        const nextChar = lowerTarget[lowerVault.length]
+        if (lowerVault.endsWith("/") || ["/", "?", "#", ":"].includes(nextChar)) {
+          return true
+        }
+        // If cleanVault didn't specify scheme, test hostname boundary
+        try {
+          const vHost = IrisMatching.extractHost(cleanVault)
+          const tHost = IrisMatching.extractHost(cleanTarget)
+          return tHost === vHost || tHost.endsWith("." + vHost)
+        } catch {
+          return false
+        }
       }
 
       case BitwardenUriMatch.HOST: {

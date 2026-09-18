@@ -48,6 +48,15 @@
   pointer-events: none !important;
 }
 
+.iris-pass-badge-img {
+  width: 14px !important;
+  height: 14px !important;
+  object-fit: contain !important;
+  border-radius: 3px !important;
+  display: block !important;
+  pointer-events: none !important;
+}
+
 /* In-Page Dropdown */
 .iris-pass-dropdown {
   position: fixed !important;
@@ -249,6 +258,15 @@
   animation: irisToastSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
+.iris-pass-toast-img {
+  width: 16px !important;
+  height: 16px !important;
+  object-fit: contain !important;
+  border-radius: 4px !important;
+  display: block !important;
+  flex-shrink: 0 !important;
+}
+
 @keyframes irisToastSlide {
   from {
     opacity: 0;
@@ -316,6 +334,14 @@
   stroke: #d800a6 !important;
   fill: none !important;
   stroke-width: 2 !important;
+}
+
+.iris-passkey-dialog-logo {
+  width: 32px !important;
+  height: 32px !important;
+  object-fit: contain !important;
+  border-radius: 8px !important;
+  display: block !important;
 }
 
 .iris-passkey-title {
@@ -445,3 +471,222 @@
 .iris-passkey-btn.text:hover {
   color: #ffffff !important;
 }
+
+/* Locked Dropdown Card */
+.iris-pass-dropdown-locked-card {
+  padding: 16px 14px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  gap: 10px !important;
+  background: #18161b !important;
+}
+
+.iris-pass-dropdown-locked-icon {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 10px !important;
+  background: rgba(244, 63, 94, 0.12) !important;
+  border: 1px solid rgba(244, 63, 94, 0.25) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #f43f5e !important;
+}
+
+.iris-pass-dropdown-locked-icon svg {
+  width: 18px !important;
+  height: 18px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2 !important;
+}
+
+.iris-pass-dropdown-locked-title {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+}
+
+.iris-pass-dropdown-locked-desc {
+  font-size: 11px !important;
+  color: #a19da8 !important;
+  line-height: 1.4 !important;
+}
+
+.iris-pass-dropdown-unlock-btn {
+  width: 100% !important;
+  padding: 8px 12px !important;
+  background: #f43f5e !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: background 0.15s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+}
+
+.iris-pass-dropdown-unlock-btn:hover {
+  background: #fb7185 !important;
+}
+
+/* QR Screen Capture Crop Overlay */
+.iris-qr-capture-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483646 !important;
+  background: rgba(0, 0, 0, 0.45) !important;
+  cursor: crosshair !important;
+  user-select: none !important;
+}
+
+.iris-qr-capture-banner {
+  position: fixed !important;
+  top: 24px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  background: #1c1a20 !important;
+  border: 1px solid #3b3740 !important;
+  border-radius: 10px !important;
+  padding: 10px 18px !important;
+  color: #ffffff !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+  pointer-events: none !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+.iris-qr-capture-banner .iris-qr-key-badge {
+  background: #28252e !important;
+  border: 1px solid #524d5b !important;
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+  font-size: 10px !important;
+  color: #fb7185 !important;
+}
+
+.iris-qr-selection-box {
+  position: absolute !important;
+  border: 2px dashed #f43f5e !important;
+  background: rgba(244, 63, 94, 0.12) !important;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45) !important;
+  pointer-events: none !important;
+}
+
+.iris-qr-selection-dim {
+  position: absolute !important;
+  bottom: -24px !important;
+  right: 0 !important;
+  background: #18161b !important;
+  border: 1px solid #3b3740 !important;
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+  color: #a19da8 !important;
+  font-size: 10px !important;
+  font-family: monospace !important;
+}
+
+/* Expiring Floating TOTP Countdown Widget */
+.iris-totp-floating-widget {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  z-index: 2147483647 !important;
+  background: #1c1a20 !important;
+  border: 1px solid #3b3740 !important;
+  border-radius: 14px !important;
+  padding: 12px 14px !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  min-width: 250px !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  animation: irisToastSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  user-select: none !important;
+}
+
+.iris-totp-widget-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.iris-totp-widget-title {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #a19da8 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.iris-totp-widget-logo {
+  width: 14px !important;
+  height: 14px !important;
+  object-fit: contain !important;
+  border-radius: 3px !important;
+  display: block !important;
+}
+
+.iris-totp-widget-close {
+  background: transparent !important;
+  border: none !important;
+  color: #716d78 !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  padding: 0 2px !important;
+  line-height: 1 !important;
+}
+
+.iris-totp-widget-close:hover {
+  color: #ffffff !important;
+}
+
+.iris-totp-widget-body {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: #141317 !important;
+  border: 1px solid #2d2a32 !important;
+  border-radius: 10px !important;
+  padding: 8px 12px !important;
+}
+
+.iris-totp-widget-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  letter-spacing: 2px !important;
+  color: #ffffff !important;
+}
+
+.iris-totp-widget-timer-badge {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #f43f5e !important;
+  background: rgba(244, 63, 94, 0.15) !important;
+  padding: 2px 6px !important;
+  border-radius: 6px !important;
+}
+
+.iris-totp-widget-footer {
+  font-size: 10px !important;
+  color: #716d78 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}

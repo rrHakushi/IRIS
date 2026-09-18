@@ -7,20 +7,21 @@
   const DEFAULT_SERVER_URL = "http://localhost:4000"
 
   const ext = typeof browser !== "undefined" ? browser : chrome
+  const storage = typeof IrisStorage !== "undefined" ? IrisStorage : ext.storage.local
 
   IrisApi.getServerUrl = async function () {
-    const data = await ext.storage.local.get(["serverUrl"])
+    const data = await storage.get(["serverUrl"])
     return (data.serverUrl || DEFAULT_SERVER_URL).replace(/\/+$/, "")
   }
 
   IrisApi.setServerUrl = async function (url) {
     const cleanUrl = (url || DEFAULT_SERVER_URL).trim().replace(/\/+$/, "")
-    await ext.storage.local.set({ serverUrl: cleanUrl })
+    await storage.set({ serverUrl: cleanUrl })
     return cleanUrl
   }
 
   IrisApi.getToken = async function () {
-    const data = await ext.storage.local.get(["authToken", "apiKey"])
+    const data = await storage.get(["authToken", "apiKey"])
     return {
       authToken: data.authToken || "",
       apiKey: data.apiKey || "",
@@ -72,11 +73,20 @@
     })
 
     if (data?.token) {
-      await ext.storage.local.set({
+      await storage.set({
         authToken: data.token,
         apiKey: "",
         user: data.user,
       })
+
+      // Fetch full profile (avatar, customization)
+      try {
+        const auth = await IrisApi.checkAuth()
+        if (auth?.authenticated && auth?.user) {
+          data.user = auth.user
+          await storage.set({ user: auth.user })
+        }
+      } catch (e) {}
     }
 
     return data
@@ -96,11 +106,19 @@
     })
 
     if (data?.token) {
-      await ext.storage.local.set({
+      await storage.set({
         authToken: data.token,
         apiKey: "",
         user: data.user,
       })
+
+      try {
+        const auth = await IrisApi.checkAuth()
+        if (auth?.authenticated && auth?.user) {
+          data.user = auth.user
+          await storage.set({ user: auth.user })
+        }
+      } catch (e) {}
     }
 
     return data
@@ -135,7 +153,7 @@
     const data = await res.json()
     const user = data?.user || data
 
-    await ext.storage.local.set({
+    await storage.set({
       apiKey: cleanKey,
       authToken: "",
       user,
@@ -145,10 +163,16 @@
   }
 
   /**
-   * Log out of IRIS account and clear credentials
+   * Log out of IRIS account and clear all credentials
    */
   IrisApi.logout = async function () {
-    await ext.storage.local.remove(["authToken", "apiKey", "user"])
+    await storage.clear()
+    if (ext.storage?.local) {
+      await ext.storage.local.clear().catch(() => {})
+    }
+    if (ext.storage?.session) {
+      await ext.storage.session.clear().catch(() => {})
+    }
   }
 
   /**

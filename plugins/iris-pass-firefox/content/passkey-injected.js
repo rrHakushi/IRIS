@@ -226,7 +226,7 @@
               origin: window.location.origin,
             },
           },
-          "*"
+          window.location.origin
         )
       })
     }
@@ -368,7 +368,7 @@
               origin: window.location.origin,
             },
           },
-          "*"
+          window.location.origin
         )
       })
     }

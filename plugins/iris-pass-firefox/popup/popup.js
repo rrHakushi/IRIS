@@ -3,13 +3,19 @@
  */
 
 const ext = typeof browser !== "undefined" ? browser : chrome
+const storage = typeof IrisStorage !== "undefined" ? IrisStorage : ext.storage.local
 
 let currentTab = null
 let matchingCiphers = []
 let allCiphers = []
+let allFolders = []
 let generatorMode = "password" // "password" | "passphrase"
+let modalGeneratorMode = "password"
 let totpInterval = null
 let currentUser = null
+let currentItemType = "LOGIN" // "LOGIN" | "SSH_KEY"
+let currentStatus = null
+let clipboardClearSeconds = 30
 
 // Views
 const viewLogin = document.getElementById("view-login")
@@ -60,13 +66,26 @@ let activeLoginMethod = "account" // "account" | "apikey"
 let pendingMfa = null // { mfaTicket, allowedMfaTypes, password, mfaType }
 
 // Locked Screen Elements
-const formUnlock = document.getElementById("form-unlock")
-const unlockPasswordInput = document.getElementById("unlock-password")
 const unlockError = document.getElementById("unlock-error")
+const lockedUserLabel = document.getElementById("locked-user-label")
+const lockedAvatarImg = document.getElementById("locked-avatar-img")
+const lockedAvatar = document.getElementById("locked-avatar")
+const btnSwitchAccount = document.getElementById("btn-switch-account")
+
+// Locked Mode A: PIN
+const formUnlockPin = document.getElementById("form-unlock-pin")
+const unlockPinInput = document.getElementById("unlock-pin")
+const btnUnlockPinSubmit = document.getElementById("btn-unlock-pin-submit")
+const btnToggleUnlockPinEye = document.getElementById("btn-toggle-unlock-pin-eye")
+const btnForgotPin = document.getElementById("btn-forgot-pin")
+const btnUnlockBio = document.getElementById("btn-unlock-bio")
+
+// Locked Mode B: Master Password
+const formUnlockPassword = document.getElementById("form-unlock-password")
+const unlockPasswordInput = document.getElementById("unlock-password")
 const btnUnlockSubmit = document.getElementById("btn-unlock-submit")
 const btnToggleUnlockEye = document.getElementById("btn-toggle-unlock-eye")
-const lockedUserLabel = document.getElementById("locked-user-label")
-const btnSwitchAccount = document.getElementById("btn-switch-account")
+const btnUsePin = document.getElementById("btn-use-pin")
 
 // Unlocked View Elements
 const tabBtns = document.querySelectorAll(".tab-btn")
@@ -86,19 +105,36 @@ const btnEditDelete = document.getElementById("btn-edit-delete")
 const editViewTitle = document.getElementById("edit-view-title")
 const formEditCipher = document.getElementById("form-edit-cipher")
 const editCipherId = document.getElementById("edit-cipher-id")
+const editTypeSelectorWrap = document.getElementById("edit-type-selector-wrap")
+const btnItemTypeLogin = document.getElementById("btn-item-type-login")
+const btnItemTypeSsh = document.getElementById("btn-item-type-ssh")
+const editLoginFields = document.getElementById("edit-login-fields")
+const editSshFields = document.getElementById("edit-ssh-fields")
 const editCipherTitle = document.getElementById("edit-cipher-title")
+const editCipherFolder = document.getElementById("edit-cipher-folder")
 const editCipherUsername = document.getElementById("edit-cipher-username")
 const editCipherPassword = document.getElementById("edit-cipher-password")
 const btnToggleEditPassEye = document.getElementById("btn-toggle-edit-pass-eye")
 const btnEditGenPass = document.getElementById("btn-edit-gen-pass")
-const editCipherUri = document.getElementById("edit-cipher-uri")
+const editUrisList = document.getElementById("edit-uris-list")
+const btnAddUri = document.getElementById("btn-add-uri")
 const editCipherTotp = document.getElementById("edit-cipher-totp")
+const btnToggleEditTotpEye = document.getElementById("btn-toggle-edit-totp-eye")
+const btnEditScanQr = document.getElementById("btn-edit-scan-qr")
 const editCipherNotes = document.getElementById("edit-cipher-notes")
 const editError = document.getElementById("edit-error")
 const btnEditSave = document.getElementById("btn-edit-save")
 const btnEditCancel = document.getElementById("btn-edit-cancel")
 const editAdditionalPasswordsList = document.getElementById("edit-additional-passwords-list")
 const btnAddAdditionalPass = document.getElementById("btn-add-additional-pass")
+
+// SSH Key Elements
+const editSshAlgorithm = document.getElementById("edit-ssh-algorithm")
+const btnGenerateSsh = document.getElementById("btn-generate-ssh")
+const editSshPublicKey = document.getElementById("edit-ssh-public-key")
+const editSshPrivateKey = document.getElementById("edit-ssh-private-key")
+const editSshFingerprint = document.getElementById("edit-ssh-fingerprint")
+const editSshPassphrase = document.getElementById("edit-ssh-passphrase")
 
 // Edit Passkey Elements
 const editPasskeySection = document.getElementById("edit-passkey-section")
@@ -107,9 +143,8 @@ const passkeyCreated = document.getElementById("passkey-created")
 const btnDeletePasskey = document.getElementById("btn-delete-passkey")
 let currentEditingPasskey = null
 
-// Generator Elements
+// Tab Generator Elements
 const genOutputText = document.getElementById("gen-output-text")
-const genEntropyLabel = document.getElementById("gen-entropy-label")
 const btnGenRefresh = document.getElementById("btn-gen-refresh")
 const btnGenCopy = document.getElementById("btn-gen-copy")
 const btnGenFill = document.getElementById("btn-gen-fill")
@@ -132,11 +167,72 @@ const inputSeparator = document.getElementById("input-separator")
 const chkCapitalize = document.getElementById("chk-capitalize")
 const chkIncludeNum = document.getElementById("chk-include-num")
 
-// Settings Elements
-const settingServerUrl = document.getElementById("setting-server-url")
-const settingAutoLock = document.getElementById("setting-auto-lock")
-const btnSaveSettings = document.getElementById("btn-save-settings")
+// Modal Generator Elements
+const modalGenerator = document.getElementById("modal-generator")
+const btnModalGenClose = document.getElementById("btn-modal-gen-close")
+const modalGenOutputText = document.getElementById("modal-gen-output-text")
+const btnModalGenRefresh = document.getElementById("btn-modal-gen-refresh")
+const btnModalGenCopy = document.getElementById("btn-modal-gen-copy")
+const btnModalTypePassword = document.getElementById("btn-modal-type-password")
+const btnModalTypePassphrase = document.getElementById("btn-modal-type-passphrase")
+const modalGenPassControls = document.getElementById("modal-gen-pass-controls")
+const modalGenPhraseControls = document.getElementById("modal-gen-phrase-controls")
+
+const sliderModalPassLength = document.getElementById("slider-modal-pass-length")
+const labelModalPassLength = document.getElementById("label-modal-pass-length")
+const chkModalUpper = document.getElementById("chk-modal-upper")
+const chkModalLower = document.getElementById("chk-modal-lower")
+const chkModalNums = document.getElementById("chk-modal-nums")
+const chkModalSyms = document.getElementById("chk-modal-syms")
+const chkModalAmbig = document.getElementById("chk-modal-ambig")
+
+const sliderModalWordsCount = document.getElementById("slider-modal-words-count")
+const labelModalWordsCount = document.getElementById("label-modal-words-count")
+const inputModalSeparator = document.getElementById("input-modal-separator")
+const chkModalCapitalize = document.getElementById("chk-modal-capitalize")
+const chkModalIncludeNum = document.getElementById("chk-modal-include-num")
+const btnModalGenApply = document.getElementById("btn-modal-gen-apply")
+const btnModalGenCancel = document.getElementById("btn-modal-gen-cancel")
+
+// Categorized Settings Elements
+// Account
+const accountAvatarWrap = document.querySelector(".account-avatar-wrap")
+const accountAvatarImg = document.getElementById("account-avatar-img")
+const accountAvatar = document.getElementById("account-avatar")
+const accountDisplayName = document.getElementById("account-display-name")
+const accountUsername = document.getElementById("account-username")
+const accountEmail = document.getElementById("account-email")
+const settingAccountServer = document.getElementById("setting-account-server")
 const btnSettingsLogout = document.getElementById("btn-settings-logout")
+
+// Security & Unlock
+const settingAutoLock = document.getElementById("setting-auto-lock")
+const togglePinUnlock = document.getElementById("toggle-pin-unlock")
+const pinActiveActions = document.getElementById("pin-active-actions")
+const btnChangePin = document.getElementById("btn-change-pin")
+const toggleBioUnlock = document.getElementById("toggle-bio-unlock")
+const rowBioUnlock = document.getElementById("row-bio-unlock")
+const settingClipboardClear = document.getElementById("setting-clipboard-clear")
+
+// Vault & Sync
+const labelLastSync = document.getElementById("label-last-sync")
+const labelVaultStats = document.getElementById("label-vault-stats")
+const btnSettingsSyncNow = document.getElementById("btn-settings-sync-now")
+
+// Autofill & System
+const toggleDefaultPm = document.getElementById("toggle-default-pm")
+const settingServerUrl = document.getElementById("setting-server-url")
+const btnSaveServerUrl = document.getElementById("btn-save-server-url")
+
+// PIN Setup Modal
+const modalPinSetup = document.getElementById("modal-pin-setup")
+const btnModalPinClose = document.getElementById("btn-modal-pin-close")
+const formPinSetup = document.getElementById("form-pin-setup")
+const pinSetupNew = document.getElementById("pin-setup-new")
+const pinSetupConfirm = document.getElementById("pin-setup-confirm")
+const pinSetupError = document.getElementById("pin-setup-error")
+const btnTogglePinSetupEye = document.getElementById("btn-toggle-pin-setup-eye")
+const btnPinSetupCancel = document.getElementById("btn-pin-setup-cancel")
 
 /**
  * Initialize Popup
@@ -159,33 +255,166 @@ async function init() {
     currentDomainLabel.textContent = "New Tab"
   }
 
-  // Load configured Server URL (default http://localhost:4000)
+  // Load configured Server URL
   const serverUrl = await IrisApi.getServerUrl()
   loginServerUrl.value = serverUrl
   loginServerLabel.textContent = serverUrl
   settingServerUrl.value = serverUrl
-
-  // Load auto-lock setting
-  const storage = await ext.storage.local.get(["autoLockMinutes"])
-  if (storage.autoLockMinutes !== undefined) {
-    settingAutoLock.value = String(storage.autoLockMinutes)
-  }
+  if (settingAccountServer) settingAccountServer.textContent = serverUrl
 
   // Check authentication & vault state from background
   ext.runtime.sendMessage({ action: "GET_STATUS" }, (response) => {
+    currentStatus = response
+    currentUser = response?.user || null
+    clipboardClearSeconds = response?.clipboardClearSeconds ?? 30
+
+    // Populate settings UI
+    populateSettingsUI(response)
+
     if (!response?.isAuthenticated) {
       showLoginView()
     } else if (!response?.isUnlocked) {
-      currentUser = response.user
-      showLockedView(currentUser)
+      showLockedView(currentUser, response)
     } else {
-      currentUser = response.user
       showUnlockedView(currentUser)
     }
   })
 
   // Initial generator run
   generateCredentials()
+}
+
+/**
+ * Format Relative Timestamp
+ */
+function formatRelativeTime(ts) {
+  if (!ts || ts === 0) return "Never synced"
+  const elapsedSec = Math.floor((Date.now() - ts) / 1000)
+  if (elapsedSec < 10) return "Just now"
+  if (elapsedSec < 60) return `${elapsedSec}s ago`
+  const elapsedMin = Math.floor(elapsedSec / 60)
+  if (elapsedMin < 60) return `${elapsedMin}m ago`
+  const elapsedHours = Math.floor(elapsedMin / 60)
+  if (elapsedHours < 24) return `${elapsedHours}h ago`
+  return new Date(ts).toLocaleDateString()
+}
+
+/**
+ * Resolves user's avatar URL from profile/customization data
+ */
+function getUserAvatarUrl(user, serverUrl) {
+  if (!user) return null
+  const avatar =
+    user.customization?.profile?.avatarUrl ||
+    user.customization?.avatarUrl ||
+    user.avatarUrl ||
+    user.profile?.avatarUrl ||
+    user.picture ||
+    user.image ||
+    null
+
+  if (!avatar || typeof avatar !== "string") return null
+  const trimmed = avatar.trim()
+  if (!trimmed) return null
+
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("data:") ||
+    trimmed.startsWith("blob:")
+  ) {
+    return trimmed
+  }
+
+  const base = (serverUrl || "http://localhost:4000").replace(/\/+$/, "")
+  return `${base}/${trimmed.replace(/^\/+/, "")}`
+}
+
+/**
+ * Populate Settings UI from status response
+ */
+function populateSettingsUI(status) {
+  if (!status) return
+
+  // Account
+  const user = status.user
+  const server = status.serverUrl || "http://localhost:4000"
+
+  if (user) {
+    const profileCustom = user.customization?.profile || {}
+    const name = profileCustom.displayName || user.displayName || user.username || user.email || "Account"
+    const username = user.username ? `@${user.username}` : ""
+    const email = user.email || ""
+    const initial = (name || "U").charAt(0).toUpperCase()
+
+    if (accountDisplayName) accountDisplayName.textContent = name
+    if (accountUsername) accountUsername.textContent = username
+    if (accountEmail) accountEmail.textContent = email
+
+    const avatarUrl = getUserAvatarUrl(user, server)
+    if (accountAvatarImg && accountAvatar) {
+      if (avatarUrl) {
+        accountAvatarImg.src = avatarUrl
+        accountAvatarImg.style.display = "block"
+        accountAvatar.style.display = "none"
+        accountAvatarImg.onerror = () => {
+          accountAvatarImg.style.display = "none"
+          accountAvatar.style.display = "flex"
+          accountAvatar.textContent = initial
+        }
+      } else {
+        accountAvatarImg.style.display = "none"
+        accountAvatar.style.display = "flex"
+        accountAvatar.textContent = initial
+      }
+    } else if (accountAvatar) {
+      accountAvatar.textContent = initial
+    }
+  }
+
+  if (settingAccountServer) settingAccountServer.textContent = server
+  if (settingServerUrl) settingServerUrl.value = server
+
+  // Security
+  if (settingAutoLock && status.autoLockMinutes !== undefined) {
+    settingAutoLock.value = String(status.autoLockMinutes)
+  }
+
+  if (togglePinUnlock) {
+    togglePinUnlock.checked = Boolean(status.pinUnlockEnabled)
+  }
+  if (pinActiveActions) {
+    pinActiveActions.style.display = status.pinUnlockEnabled ? "flex" : "none"
+  }
+
+  if (toggleBioUnlock) {
+    toggleBioUnlock.checked = Boolean(status.biometricUnlockEnabled)
+  }
+
+  if (settingClipboardClear && status.clipboardClearSeconds !== undefined) {
+    settingClipboardClear.value = String(status.clipboardClearSeconds)
+  }
+
+  // Sync
+  if (labelLastSync) {
+    labelLastSync.textContent = `Last synced: ${formatRelativeTime(status.lastSyncTimestamp)}`
+  }
+  if (labelVaultStats) {
+    labelVaultStats.textContent = `${status.cipherCount || 0} items in local vault`
+  }
+
+  // Autofill
+  if (toggleDefaultPm) {
+    toggleDefaultPm.checked = Boolean(status.isDefaultPasswordManager)
+  }
+
+  // Check biometric availability on device
+  IrisCrypto.isBiometricsAvailable().then((avail) => {
+    if (!avail && rowBioUnlock) {
+      rowBioUnlock.style.opacity = "0.5"
+      rowBioUnlock.title = "Biometrics not available on this system"
+    }
+  })
 }
 
 /**
@@ -234,7 +463,7 @@ function showMfaView(mfaTicket, allowedMfaTypes = ["totp"], password = "") {
   if (totpInterval) clearInterval(totpInterval)
 }
 
-function showLockedView(user) {
+function showLockedView(user, status = currentStatus) {
   viewLogin.style.display = "none"
   if (viewMfa) viewMfa.style.display = "none"
   if (viewEdit) viewEdit.style.display = "none"
@@ -242,13 +471,57 @@ function showLockedView(user) {
   viewUnlocked.style.display = "none"
   btnLock.style.display = "none"
   btnSync.style.display = "none"
-  unlockPasswordInput.value = ""
+
   unlockError.style.display = "none"
+  const profileCustom = user?.customization?.profile || {}
+  const name = profileCustom.displayName || user?.displayName || user?.username || user?.email || "User"
+  const initial = (name || "U").charAt(0).toUpperCase()
+
   if (user?.username || user?.email) {
     lockedUserLabel.textContent = `Logged in as @${user.username || user.email}`
   } else {
-    lockedUserLabel.textContent = "Enter your account password"
+    lockedUserLabel.textContent = "Vault is locked"
   }
+
+  const server = status?.serverUrl || "http://localhost:4000"
+  const avatarUrl = getUserAvatarUrl(user, server)
+
+  if (lockedAvatarImg && lockedAvatar) {
+    if (avatarUrl) {
+      lockedAvatarImg.src = avatarUrl
+      lockedAvatarImg.style.display = "block"
+      lockedAvatar.style.display = "none"
+      lockedAvatarImg.onerror = () => {
+        lockedAvatarImg.style.display = "none"
+        lockedAvatar.style.display = "flex"
+      }
+    } else {
+      lockedAvatarImg.style.display = "none"
+      lockedAvatar.style.display = "flex"
+    }
+  }
+
+  // Check if PIN unlock is enabled
+  const pinEnabled = Boolean(status?.pinUnlockEnabled)
+  if (pinEnabled) {
+    formUnlockPin.style.display = "flex"
+    formUnlockPassword.style.display = "none"
+    unlockPinInput.value = ""
+    setTimeout(() => unlockPinInput.focus(), 50)
+
+    if (status?.biometricUnlockEnabled) {
+      btnUnlockBio.style.display = "flex"
+    } else {
+      btnUnlockBio.style.display = "none"
+    }
+  } else {
+    formUnlockPin.style.display = "none"
+    formUnlockPassword.style.display = "flex"
+    btnUsePin.style.display = "none"
+    unlockPasswordInput.value = ""
+    setTimeout(() => unlockPasswordInput.focus(), 50)
+  }
+
   if (totpInterval) clearInterval(totpInterval)
 }
 
@@ -486,9 +759,114 @@ btnMfaCancel?.addEventListener("click", () => {
 })
 
 /**
- * Unlock Form Submission (when already authenticated)
+ * PIN Unlock Form Submission
  */
-formUnlock.addEventListener("submit", (e) => {
+formUnlockPin?.addEventListener("submit", (e) => {
+  e.preventDefault()
+  const pin = unlockPinInput.value.trim()
+  if (!pin) return
+
+  btnUnlockPinSubmit.disabled = true
+  btnUnlockPinSubmit.textContent = "Unlocking..."
+  unlockError.style.display = "none"
+
+  ext.runtime.sendMessage(
+    {
+      action: "UNLOCK_WITH_PIN",
+      payload: { pin },
+    },
+    (res) => {
+      btnUnlockPinSubmit.disabled = false
+      btnUnlockPinSubmit.textContent = "Unlock with PIN"
+
+      if (res?.success) {
+        showUnlockedView(currentUser)
+      } else {
+        unlockError.textContent = res?.error || "Incorrect PIN"
+        unlockError.style.display = "block"
+        unlockPinInput.value = ""
+        unlockPinInput.focus()
+      }
+    }
+  )
+})
+
+// Toggle PIN visibility
+btnToggleUnlockPinEye?.addEventListener("click", () => {
+  const isPass = unlockPinInput.type === "password"
+  unlockPinInput.type = isPass ? "text" : "password"
+})
+
+// Forgot PIN? Switch to Master Password
+btnForgotPin?.addEventListener("click", () => {
+  formUnlockPin.style.display = "none"
+  formUnlockPassword.style.display = "flex"
+  btnUsePin.style.display = "block"
+  unlockError.style.display = "none"
+  unlockPasswordInput.value = ""
+  unlockPasswordInput.focus()
+})
+
+// Switch back to PIN
+btnUsePin?.addEventListener("click", () => {
+  formUnlockPassword.style.display = "none"
+  formUnlockPin.style.display = "flex"
+  unlockError.style.display = "none"
+  unlockPinInput.value = ""
+  unlockPinInput.focus()
+})
+
+// Unlock with Biometrics Button
+btnUnlockBio?.addEventListener("click", async () => {
+  try {
+    const sData = await storage.get(["biometricUnlockData"])
+    const bioData = sData.biometricUnlockData
+    if (!bioData) throw new Error("Biometrics not set up")
+
+    btnUnlockBio.textContent = "Verifying..."
+    btnUnlockBio.disabled = true
+
+    const vaultKey = await IrisCrypto.unlockWithBiometrics(bioData)
+    const vaultKeyHex = IrisCrypto.bytesToHex(vaultKey)
+
+    ext.runtime.sendMessage(
+      {
+        action: "UNLOCK_WITH_BIOMETRICS",
+        payload: { vaultKeyHex },
+      },
+      (res) => {
+        btnUnlockBio.disabled = false
+        btnUnlockBio.innerHTML = `
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          </svg>
+          Unlock with Biometrics
+        `
+        if (res?.success) {
+          showUnlockedView(currentUser)
+        } else {
+          unlockError.textContent = res?.error || "Biometric unlock failed"
+          unlockError.style.display = "block"
+        }
+      }
+    )
+  } catch (err) {
+    btnUnlockBio.disabled = false
+    btnUnlockBio.innerHTML = `
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;">
+        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+      </svg>
+      Unlock with Biometrics
+    `
+    unlockError.textContent = err.message || "Biometric authentication cancelled"
+    unlockError.style.display = "block"
+  }
+})
+
+/**
+ * Master Password Unlock Form Submission
+ */
+formUnlockPassword.addEventListener("submit", (e) => {
   e.preventDefault()
   const password = unlockPasswordInput.value.trim()
   if (!password) return
@@ -522,18 +900,72 @@ btnToggleUnlockEye?.addEventListener("click", () => {
   unlockPasswordInput.type = isPass ? "text" : "password"
 })
 
+/**
+ * Completely wipe all extension data and logout
+ */
+async function performFullLogout() {
+  currentUser = null
+  currentStatus = null
+  allCiphers = []
+  allFolders = []
+  matchingCiphers = []
+
+  // Reset inputs
+  if (loginPassword) loginPassword.value = ""
+  if (loginIdentifier) loginIdentifier.value = ""
+  if (loginApiKey) loginApiKey.value = ""
+  if (loginApiMasterPass) loginApiMasterPass.value = ""
+  if (unlockPinInput) unlockPinInput.value = ""
+  if (unlockPasswordInput) unlockPasswordInput.value = ""
+  if (pinSetupNew) pinSetupNew.value = ""
+  if (pinSetupConfirm) pinSetupConfirm.value = ""
+
+  // Reset avatars
+  if (accountAvatarImg) {
+    accountAvatarImg.src = ""
+    accountAvatarImg.style.display = "none"
+  }
+  if (accountAvatar) {
+    accountAvatar.textContent = "U"
+    accountAvatar.style.display = "flex"
+  }
+  if (lockedAvatarImg) {
+    lockedAvatarImg.src = ""
+    lockedAvatarImg.style.display = "none"
+  }
+  if (lockedAvatar) {
+    lockedAvatar.style.display = "flex"
+  }
+
+  // Tell background service worker to wipe memory & storages
+  try {
+    await new Promise((resolve) => {
+      ext.runtime.sendMessage({ action: "LOGOUT" }, () => resolve())
+    })
+  } catch (e) {}
+
+  // Explicit storage clear from popup context as well
+  try {
+    await storage.clear()
+    if (ext.storage?.local) {
+      await ext.storage.local.clear().catch(() => {})
+    }
+    if (ext.storage?.session) {
+      await ext.storage.session.clear().catch(() => {})
+    }
+  } catch (e) {}
+
+  showLoginView()
+}
+
 // Switch Account / Log Out from locked screen
 btnSwitchAccount?.addEventListener("click", () => {
-  ext.runtime.sendMessage({ action: "LOGOUT" }, () => {
-    showLoginView()
-  })
+  performFullLogout()
 })
 
 // Log Out from Settings tab
 btnSettingsLogout?.addEventListener("click", () => {
-  ext.runtime.sendMessage({ action: "LOGOUT" }, () => {
-    showLoginView()
-  })
+  performFullLogout()
 })
 
 // Lock Vault Button (Header)
@@ -543,12 +975,189 @@ btnLock.addEventListener("click", () => {
   })
 })
 
-// Sync Vault Button (Header)
-btnSync.addEventListener("click", () => {
+// Sync Vault Button (Header & Settings)
+function triggerVaultSync() {
   btnSync.classList.add("spinning")
-  loadMatchingLogins()
-  loadAllCiphers()
-  setTimeout(() => btnSync.classList.remove("spinning"), 600)
+  if (btnSettingsSyncNow) {
+    btnSettingsSyncNow.disabled = true
+    btnSettingsSyncNow.textContent = "Syncing..."
+  }
+
+  ext.runtime.sendMessage({ action: "SYNC_VAULT" }, (res) => {
+    btnSync.classList.remove("spinning")
+    if (btnSettingsSyncNow) {
+      btnSettingsSyncNow.disabled = false
+      btnSettingsSyncNow.innerHTML = `
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px; vertical-align: -1px;">
+          <path d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4m-4 4a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"></path>
+        </svg>
+        Sync Now
+      `
+    }
+
+    if (res?.success) {
+      if (labelLastSync) {
+        labelLastSync.textContent = `Last synced: ${formatRelativeTime(res.lastSyncTimestamp)}`
+      }
+      if (labelVaultStats) {
+        labelVaultStats.textContent = `${res.cipherCount || 0} items in local vault`
+      }
+      loadMatchingLogins()
+      loadAllCiphers()
+    }
+  })
+}
+
+btnSync.addEventListener("click", triggerVaultSync)
+btnSettingsSyncNow?.addEventListener("click", triggerVaultSync)
+
+/**
+ * Settings Tab Listeners
+ */
+// Auto-lock timer
+settingAutoLock?.addEventListener("change", async (e) => {
+  const minutes = parseInt(e.target.value, 10)
+  await storage.set({ autoLockMinutes: minutes })
+})
+
+// PIN unlock toggle
+togglePinUnlock?.addEventListener("change", async (e) => {
+  if (e.target.checked) {
+    // Open PIN setup modal
+    openPinSetupModal()
+  } else {
+    // Disable PIN unlock
+    ext.runtime.sendMessage({ action: "DISABLE_PIN_UNLOCK" }, (res) => {
+      if (res?.success) {
+        pinActiveActions.style.display = "none"
+      }
+    })
+  }
+})
+
+btnChangePin?.addEventListener("click", () => {
+  openPinSetupModal()
+})
+
+function openPinSetupModal() {
+  modalPinSetup.style.display = "flex"
+  pinSetupNew.value = ""
+  pinSetupConfirm.value = ""
+  pinSetupError.style.display = "none"
+  setTimeout(() => pinSetupNew.focus(), 50)
+}
+
+function closePinSetupModal() {
+  modalPinSetup.style.display = "none"
+  // If PIN was not active, reset toggle
+  storage.get(["pinUnlockEnabled"]).then((res) => {
+    togglePinUnlock.checked = Boolean(res.pinUnlockEnabled)
+  })
+}
+
+btnModalPinClose?.addEventListener("click", closePinSetupModal)
+btnPinSetupCancel?.addEventListener("click", closePinSetupModal)
+
+btnTogglePinSetupEye?.addEventListener("click", () => {
+  const isPass = pinSetupNew.type === "password"
+  pinSetupNew.type = isPass ? "text" : "password"
+  pinSetupConfirm.type = isPass ? "text" : "password"
+})
+
+formPinSetup?.addEventListener("submit", (e) => {
+  e.preventDefault()
+  const pin = pinSetupNew.value.trim()
+  const confirm = pinSetupConfirm.value.trim()
+
+  if (pin.length < 4) {
+    pinSetupError.textContent = "PIN must be at least 4 digits"
+    pinSetupError.style.display = "block"
+    return
+  }
+
+  if (pin !== confirm) {
+    pinSetupError.textContent = "PINs do not match"
+    pinSetupError.style.display = "block"
+    return
+  }
+
+  ext.runtime.sendMessage(
+    {
+      action: "SETUP_PIN_UNLOCK",
+      payload: { pin },
+    },
+    (res) => {
+      if (res?.success) {
+        togglePinUnlock.checked = true
+        pinActiveActions.style.display = "flex"
+        modalPinSetup.style.display = "none"
+      } else {
+        pinSetupError.textContent = res?.error || "Failed to save PIN"
+        pinSetupError.style.display = "block"
+      }
+    }
+  )
+})
+
+// Biometric unlock toggle
+toggleBioUnlock?.addEventListener("change", async (e) => {
+  if (e.target.checked) {
+    try {
+      // Need vaultKey from session or memory
+      const storage = await ext.storage.session?.get(["vaultKeyHex"])
+      if (!storage?.vaultKeyHex) {
+        toggleBioUnlock.checked = false
+        alert("Please unlock your vault first to set up Biometrics")
+        return
+      }
+
+      const vaultKey = IrisCrypto.hexToBytes(storage.vaultKeyHex)
+      const bioData = await IrisCrypto.setupBiometricUnlock(vaultKey, currentUser)
+
+      ext.runtime.sendMessage(
+        {
+          action: "SETUP_BIOMETRIC_UNLOCK",
+          payload: { bioData },
+        },
+        (res) => {
+          if (!res?.success) {
+            toggleBioUnlock.checked = false
+            alert(res?.error || "Failed to configure biometrics")
+          }
+        }
+      )
+    } catch (err) {
+      toggleBioUnlock.checked = false
+      alert(err.message || "Biometric enrollment was cancelled")
+    }
+  } else {
+    ext.runtime.sendMessage({ action: "DISABLE_BIOMETRIC_UNLOCK" })
+  }
+})
+
+// Clipboard clear timeout
+settingClipboardClear?.addEventListener("change", async (e) => {
+  const seconds = parseInt(e.target.value, 10)
+  clipboardClearSeconds = seconds
+  await storage.set({ clipboardClearSeconds: seconds })
+})
+
+// Default password manager toggle
+toggleDefaultPm?.addEventListener("change", (e) => {
+  const isDefault = e.target.checked
+  ext.runtime.sendMessage({
+    action: "SET_DEFAULT_PASSWORD_MANAGER",
+    payload: { isDefault },
+  })
+})
+
+// Save Server URL
+btnSaveServerUrl?.addEventListener("click", async () => {
+  const url = settingServerUrl.value.trim() || "http://localhost:4000"
+  await IrisApi.setServerUrl(url)
+  if (settingAccountServer) settingAccountServer.textContent = url
+  btnSaveServerUrl.textContent = "Saved!"
+  setTimeout(() => (btnSaveServerUrl.textContent = "Save"), 1200)
 })
 
 /**
@@ -561,10 +1170,7 @@ function loadMatchingLogins() {
   }
 
   ext.runtime.sendMessage(
-    {
-      action: "GET_MATCHING_LOGINS",
-      payload: { url: currentTab.url },
-    },
+    { action: "GET_MATCHING_LOGINS", payload: { url: currentTab.url } },
     (res) => {
       matchingCiphers = res?.matches || []
       matchingBadge.textContent = String(matchingCiphers.length)
@@ -574,18 +1180,21 @@ function loadMatchingLogins() {
 }
 
 /**
- * Helper to extract site favicon URL
+ * Helper to get item favicon or fallback
  */
 function getCipherFavicon(cipher) {
-  const uri = cipher.data?.uris?.[0]?.uri || cipher.data?.passkey?.rpId || (cipher.title?.includes(".") ? cipher.title : null)
-  if (!uri) return null
-  try {
-    const url = uri.includes("://") ? uri : `https://${uri}`
-    const host = new URL(url).hostname
-    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=32`
-  } catch {
-    return null
+  if (cipher?.type === "SSH_KEY") return null
+  const uris = cipher?.data?.uris || []
+  for (const u of uris) {
+    const uriStr = typeof u === "string" ? u : u.uri
+    if (uriStr) {
+      try {
+        const parsed = new URL(uriStr.startsWith("http") ? uriStr : `https://${uriStr}`)
+        return `https://icons.duckduckgo.com/ip3/${parsed.hostname}.ico`
+      } catch (e) {}
+    }
   }
+  return null
 }
 
 /**
@@ -597,7 +1206,7 @@ function renderMatchingList(ciphers) {
   if (ciphers.length === 0) {
     matchingList.innerHTML = `
       <div style="padding: 24px 12px; text-align: center; color: #a19da8; font-size: 12px;">
-        No matching logins found for this site.
+        No matching logins found for this domain.
       </div>
     `
     return
@@ -606,39 +1215,102 @@ function renderMatchingList(ciphers) {
   ciphers.forEach((cipher) => {
     const card = document.createElement("div")
     card.className = "cipher-card"
-
-    const username = cipher.data?.username || "No username"
-    const hasPassword = Boolean(cipher.data?.password)
-    const hasTotp = Boolean(cipher.data?.totpSecret)
-    const hasPasskey = Boolean(cipher.data?.passkey)
-
+    const isSsh = cipher.type === "SSH_KEY"
+    const username = isSsh ? (cipher.data?.keyType || "SSH Key") : (cipher.data?.username || "Login")
     const favicon = getCipherFavicon(cipher)
-    const iconHtml = favicon
-      ? `<img src="${favicon}" alt="" class="cipher-favicon" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle; border-radius: 3px;" onerror="this.style.display='none'" />`
-      : ""
+    const cardTop = document.createElement("div")
+    cardTop.className = "cipher-card-top"
 
-    card.innerHTML = `
-      <div class="cipher-card-top">
-        <div>
-          <div class="cipher-title">${iconHtml}${cipher.title}</div>
-          <div class="cipher-user">${username}</div>
-        </div>
-        ${hasPasskey ? '<span class="badge" style="font-size: 9px;">Passkey</span>' : ""}
-      </div>
+    const leftWrap = document.createElement("div")
 
-      <div class="cipher-actions">
-        <button class="mini-action-btn fill-btn" data-action="fill">Fill</button>
-        <button class="mini-action-btn" data-action="copy-user">User</button>
-        ${hasPassword ? '<button class="mini-action-btn" data-action="copy-pass">Pass</button>' : ""}
-        ${hasTotp ? '<button class="mini-action-btn" data-action="copy-totp">TOTP (<span class="totp-ticker">30</span>s)</button>' : ""}
-        <button class="mini-action-btn edit-btn" data-action="edit">Edit</button>
-      </div>
-    `
+    const titleDiv = document.createElement("div")
+    titleDiv.className = "cipher-title"
+    if (favicon) {
+      const favImg = document.createElement("img")
+      favImg.src = favicon
+      favImg.alt = ""
+      favImg.className = "cipher-favicon"
+      favImg.style.cssText = "width: 16px; height: 16px; margin-right: 6px; vertical-align: middle; border-radius: 3px;"
+      favImg.onerror = () => { favImg.style.display = "none" }
+      titleDiv.appendChild(favImg)
+    }
+    const titleText = document.createTextNode(cipher.title || "")
+    titleDiv.appendChild(titleText)
 
-    card.querySelector(".cipher-card-top").style.cursor = "pointer"
-    card
-      .querySelector(".cipher-card-top")
-      .addEventListener("click", () => openEditCipher(cipher))
+    const userDiv = document.createElement("div")
+    userDiv.className = "cipher-user"
+    userDiv.textContent = username
+
+    leftWrap.appendChild(titleDiv)
+    leftWrap.appendChild(userDiv)
+
+    const typeBadge = document.createElement("span")
+    typeBadge.className = "badge"
+    typeBadge.style.fontSize = "9px"
+    typeBadge.textContent = cipher.type || ""
+
+    cardTop.appendChild(leftWrap)
+    cardTop.appendChild(typeBadge)
+
+    const actionsDiv = document.createElement("div")
+    actionsDiv.className = "cipher-actions"
+
+    if (isSsh) {
+      const btnPub = document.createElement("button")
+      btnPub.className = "mini-action-btn"
+      btnPub.dataset.action = "copy-ssh-pub"
+      btnPub.textContent = "Public"
+
+      const btnPriv = document.createElement("button")
+      btnPriv.className = "mini-action-btn"
+      btnPriv.dataset.action = "copy-ssh-priv"
+      btnPriv.textContent = "Private"
+
+      const btnEdit = document.createElement("button")
+      btnEdit.className = "mini-action-btn edit-btn"
+      btnEdit.dataset.action = "edit"
+      btnEdit.textContent = "Edit"
+
+      actionsDiv.appendChild(btnPub)
+      actionsDiv.appendChild(btnPriv)
+      actionsDiv.appendChild(btnEdit)
+    } else {
+      const btnUser = document.createElement("button")
+      btnUser.className = "mini-action-btn"
+      btnUser.dataset.action = "copy-user"
+      btnUser.textContent = "User"
+
+      const btnPass = document.createElement("button")
+      btnPass.className = "mini-action-btn"
+      btnPass.dataset.action = "copy-pass"
+      btnPass.textContent = "Pass"
+
+      const btnEdit = document.createElement("button")
+      btnEdit.className = "mini-action-btn edit-btn"
+      btnEdit.dataset.action = "edit"
+      btnEdit.textContent = "Edit"
+
+      actionsDiv.appendChild(btnUser)
+      actionsDiv.appendChild(btnPass)
+      actionsDiv.appendChild(btnEdit)
+    }
+
+    card.appendChild(cardTop)
+    card.appendChild(actionsDiv)
+
+    // Clicking anywhere on the card performs autofill
+    card.style.cursor = "pointer"
+    card.addEventListener("click", () => {
+      if (isSsh) {
+        openEditCipher(cipher)
+      } else {
+        ext.runtime.sendMessage({
+          action: "PERFORM_AUTOFILL",
+          payload: { cipherId: cipher.id, tabId: currentTab?.id },
+        })
+        window.close()
+      }
+    })
 
     card
       .querySelector('[data-action="edit"]')
@@ -647,48 +1319,53 @@ function renderMatchingList(ciphers) {
         openEditCipher(cipher)
       })
 
-    card.querySelector('[data-action="fill"]').addEventListener("click", () => {
-      ext.runtime.sendMessage({
-        action: "PERFORM_AUTOFILL",
-        payload: { cipherId: cipher.id, tabId: currentTab?.id },
-      })
-      window.close()
-    })
-
-    card
-      .querySelector('[data-action="copy-user"]')
-      .addEventListener("click", () => {
-        navigator.clipboard.writeText(cipher.data?.username || "")
-        showCopiedFeedback(
-          card.querySelector('[data-action="copy-user"]'),
-          "User"
-        )
-      })
-
-    if (hasPassword) {
+    if (!isSsh) {
       card
-        .querySelector('[data-action="copy-pass"]')
-        .addEventListener("click", () => {
-          navigator.clipboard.writeText(cipher.data?.password || "")
-          showCopiedFeedback(
-            card.querySelector('[data-action="copy-pass"]'),
-            "Pass"
+        .querySelector('[data-action="copy-user"]')
+        ?.addEventListener("click", (e) => {
+          e.stopPropagation()
+          copySensitiveValue(
+            card.querySelector('[data-action="copy-user"]'),
+            cipher.data?.username || "",
+            "User",
+            false
           )
         })
-    }
 
-    if (hasTotp) {
       card
-        .querySelector('[data-action="copy-totp"]')
-        .addEventListener("click", async () => {
-          const code = await IrisTotp.generateTotp(cipher.data?.totpSecret)
-          if (code) {
-            navigator.clipboard.writeText(code)
-            showCopiedFeedback(
-              card.querySelector('[data-action="copy-totp"]'),
-              "Copied!"
-            )
-          }
+        .querySelector('[data-action="copy-pass"]')
+        ?.addEventListener("click", (e) => {
+          e.stopPropagation()
+          copySensitiveValue(
+            card.querySelector('[data-action="copy-pass"]'),
+            cipher.data?.password || "",
+            "Pass",
+            true
+          )
+        })
+    } else {
+      card
+        .querySelector('[data-action="copy-ssh-pub"]')
+        ?.addEventListener("click", (e) => {
+          e.stopPropagation()
+          copySensitiveValue(
+            card.querySelector('[data-action="copy-ssh-pub"]'),
+            cipher.data?.publicKey || "",
+            "Public",
+            false
+          )
+        })
+
+      card
+        .querySelector('[data-action="copy-ssh-priv"]')
+        ?.addEventListener("click", (e) => {
+          e.stopPropagation()
+          copySensitiveValue(
+            card.querySelector('[data-action="copy-ssh-priv"]'),
+            cipher.data?.privateKey || "",
+            "Private",
+            true
+          )
         })
     }
 
@@ -696,7 +1373,12 @@ function renderMatchingList(ciphers) {
   })
 }
 
-function showCopiedFeedback(btn, text) {
+/**
+ * Copy value to clipboard with feedback and auto-clear scheduling
+ */
+function copySensitiveValue(btn, text, label, isSensitive = false) {
+  if (!text) return
+  navigator.clipboard.writeText(text)
   const original = btn.textContent
   btn.textContent = "Copied!"
   btn.style.color = "#10b981"
@@ -704,14 +1386,25 @@ function showCopiedFeedback(btn, text) {
     btn.textContent = original
     btn.style.color = ""
   }, 1200)
+
+  if (isSensitive && clipboardClearSeconds > 0) {
+    ext.runtime.sendMessage({
+      action: "SCHEDULE_CLIPBOARD_CLEAR",
+      payload: { text, seconds: clipboardClearSeconds },
+    })
+  }
 }
 
 /**
- * Load All Vault Ciphers
+ * Load All Vault Ciphers & Folders
  */
 function loadAllCiphers() {
   ext.runtime.sendMessage({ action: "GET_ALL_CIPHERS" }, (res) => {
     allCiphers = res?.ciphers || []
+    allFolders = res?.folders || []
+    if (labelVaultStats) {
+      labelVaultStats.textContent = `${allCiphers.length} items in local vault`
+    }
     renderVaultList(allCiphers)
   })
 }
@@ -734,32 +1427,102 @@ function renderVaultList(ciphers) {
   ciphers.forEach((cipher) => {
     const card = document.createElement("div")
     card.className = "cipher-card"
-    const username = cipher.data?.username || cipher.type
+    const isSsh = cipher.type === "SSH_KEY"
+    const username = isSsh ? (cipher.data?.keyType || "SSH Key") : (cipher.data?.username || "Login")
     const favicon = getCipherFavicon(cipher)
-    const iconHtml = favicon
-      ? `<img src="${favicon}" alt="" class="cipher-favicon" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle; border-radius: 3px;" onerror="this.style.display='none'" />`
-      : ""
+    const cardTop = document.createElement("div")
+    cardTop.className = "cipher-card-top"
 
-    card.innerHTML = `
-      <div class="cipher-card-top">
-        <div>
-          <div class="cipher-title">${iconHtml}${cipher.title}</div>
-          <div class="cipher-user">${username}</div>
-        </div>
-        <span class="badge" style="font-size: 9px;">${cipher.type}</span>
-      </div>
-      <div class="cipher-actions">
-        <button class="mini-action-btn fill-btn" data-action="fill">Fill</button>
-        <button class="mini-action-btn" data-action="copy-user">User</button>
-        <button class="mini-action-btn" data-action="copy-pass">Pass</button>
-        <button class="mini-action-btn edit-btn" data-action="edit">Edit</button>
-      </div>
-    `
+    const leftWrap = document.createElement("div")
 
-    card.querySelector(".cipher-card-top").style.cursor = "pointer"
-    card
-      .querySelector(".cipher-card-top")
-      .addEventListener("click", () => openEditCipher(cipher))
+    const titleDiv = document.createElement("div")
+    titleDiv.className = "cipher-title"
+    if (favicon) {
+      const favImg = document.createElement("img")
+      favImg.src = favicon
+      favImg.alt = ""
+      favImg.className = "cipher-favicon"
+      favImg.style.cssText = "width: 16px; height: 16px; margin-right: 6px; vertical-align: middle; border-radius: 3px;"
+      favImg.onerror = () => { favImg.style.display = "none" }
+      titleDiv.appendChild(favImg)
+    }
+    const titleText = document.createTextNode(cipher.title || "")
+    titleDiv.appendChild(titleText)
+
+    const userDiv = document.createElement("div")
+    userDiv.className = "cipher-user"
+    userDiv.textContent = username
+
+    leftWrap.appendChild(titleDiv)
+    leftWrap.appendChild(userDiv)
+
+    const typeBadge = document.createElement("span")
+    typeBadge.className = "badge"
+    typeBadge.style.fontSize = "9px"
+    typeBadge.textContent = cipher.type || ""
+
+    cardTop.appendChild(leftWrap)
+    cardTop.appendChild(typeBadge)
+
+    const actionsDiv = document.createElement("div")
+    actionsDiv.className = "cipher-actions"
+
+    if (isSsh) {
+      const btnPub = document.createElement("button")
+      btnPub.className = "mini-action-btn"
+      btnPub.dataset.action = "copy-ssh-pub"
+      btnPub.textContent = "Public"
+
+      const btnPriv = document.createElement("button")
+      btnPriv.className = "mini-action-btn"
+      btnPriv.dataset.action = "copy-ssh-priv"
+      btnPriv.textContent = "Private"
+
+      const btnEdit = document.createElement("button")
+      btnEdit.className = "mini-action-btn edit-btn"
+      btnEdit.dataset.action = "edit"
+      btnEdit.textContent = "Edit"
+
+      actionsDiv.appendChild(btnPub)
+      actionsDiv.appendChild(btnPriv)
+      actionsDiv.appendChild(btnEdit)
+    } else {
+      const btnUser = document.createElement("button")
+      btnUser.className = "mini-action-btn"
+      btnUser.dataset.action = "copy-user"
+      btnUser.textContent = "User"
+
+      const btnPass = document.createElement("button")
+      btnPass.className = "mini-action-btn"
+      btnPass.dataset.action = "copy-pass"
+      btnPass.textContent = "Pass"
+
+      const btnEdit = document.createElement("button")
+      btnEdit.className = "mini-action-btn edit-btn"
+      btnEdit.dataset.action = "edit"
+      btnEdit.textContent = "Edit"
+
+      actionsDiv.appendChild(btnUser)
+      actionsDiv.appendChild(btnPass)
+      actionsDiv.appendChild(btnEdit)
+    }
+
+    card.appendChild(cardTop)
+    card.appendChild(actionsDiv)
+
+    // Clicking anywhere on the card performs autofill (if login) or open edit (if ssh)
+    card.style.cursor = "pointer"
+    card.addEventListener("click", () => {
+      if (isSsh) {
+        openEditCipher(cipher)
+      } else {
+        ext.runtime.sendMessage({
+          action: "PERFORM_AUTOFILL",
+          payload: { cipherId: cipher.id, tabId: currentTab?.id },
+        })
+        window.close()
+      }
+    })
 
     card
       .querySelector('[data-action="edit"]')
@@ -768,33 +1531,55 @@ function renderVaultList(ciphers) {
         openEditCipher(cipher)
       })
 
-    card.querySelector('[data-action="fill"]').addEventListener("click", () => {
-      ext.runtime.sendMessage({
-        action: "PERFORM_AUTOFILL",
-        payload: { cipherId: cipher.id, tabId: currentTab?.id },
-      })
-      window.close()
-    })
+    if (!isSsh) {
+      card
+        .querySelector('[data-action="copy-user"]')
+        ?.addEventListener("click", (e) => {
+          e.stopPropagation()
+          copySensitiveValue(
+            card.querySelector('[data-action="copy-user"]'),
+            cipher.data?.username || "",
+            "User",
+            false
+          )
+        })
 
-    card
-      .querySelector('[data-action="copy-user"]')
-      .addEventListener("click", () => {
-        navigator.clipboard.writeText(cipher.data?.username || "")
-        showCopiedFeedback(
-          card.querySelector('[data-action="copy-user"]'),
-          "User"
-        )
-      })
+      card
+        .querySelector('[data-action="copy-pass"]')
+        ?.addEventListener("click", (e) => {
+          e.stopPropagation()
+          copySensitiveValue(
+            card.querySelector('[data-action="copy-pass"]'),
+            cipher.data?.password || "",
+            "Pass",
+            true
+          )
+        })
+    } else {
+      card
+        .querySelector('[data-action="copy-ssh-pub"]')
+        ?.addEventListener("click", (e) => {
+          e.stopPropagation()
+          copySensitiveValue(
+            card.querySelector('[data-action="copy-ssh-pub"]'),
+            cipher.data?.publicKey || "",
+            "Public",
+            false
+          )
+        })
 
-    card
-      .querySelector('[data-action="copy-pass"]')
-      .addEventListener("click", () => {
-        navigator.clipboard.writeText(cipher.data?.password || "")
-        showCopiedFeedback(
-          card.querySelector('[data-action="copy-pass"]'),
-          "Pass"
-        )
-      })
+      card
+        .querySelector('[data-action="copy-ssh-priv"]')
+        ?.addEventListener("click", (e) => {
+          e.stopPropagation()
+          copySensitiveValue(
+            card.querySelector('[data-action="copy-ssh-priv"]'),
+            cipher.data?.privateKey || "",
+            "Private",
+            true
+          )
+        })
+    }
 
     vaultList.appendChild(card)
   })
@@ -810,36 +1595,89 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;")
 }
 
+/**
+ * Additional Password Row Helper
+ */
 function createAdditionalPasswordRow(ap = null) {
   const row = document.createElement("div")
   row.className = "additional-pass-row"
   row.dataset.id = ap?.id || `ap_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
 
-  row.innerHTML = `
-    <div style="display: flex; gap: 6px; align-items: center;">
-      <input type="text" class="additional-pass-name" placeholder="Name (e.g. PIN, Backup Code)" value="${escapeHtml(ap?.name || "")}" style="flex: 1; font-size: 11px; padding: 6px 8px;" />
-      <button type="button" class="icon-btn danger btn-remove-add-pass" title="Remove" style="width: 28px; height: 28px; flex-shrink: 0;">
-        <svg viewBox="0 0 24 24" style="width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-      </button>
-    </div>
-    <div class="input-wrap" style="margin-top: 2px;">
-      <input type="password" class="additional-pass-value" placeholder="Secret or Code" value="${escapeHtml(ap?.value || "")}" style="font-size: 12px;" />
-      <button type="button" class="eye-btn btn-toggle-add-pass-eye" tabindex="-1">
-        <svg viewBox="0 0 24 24">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-          <circle cx="12" cy="12" r="3"></circle>
-        </svg>
-      </button>
-    </div>
-  `
+  const topWrap = document.createElement("div")
+  topWrap.style.cssText = "display: flex; gap: 6px; align-items: center;"
 
-  row.querySelector(".btn-remove-add-pass")?.addEventListener("click", () => {
+  const nameInput = document.createElement("input")
+  nameInput.type = "text"
+  nameInput.className = "additional-pass-name"
+  nameInput.placeholder = "Name (e.g. PIN, Backup Code)"
+  nameInput.value = ap?.name || ""
+  nameInput.style.cssText = "flex: 1; font-size: 11px; padding: 6px 8px;"
+
+  const removeBtn = document.createElement("button")
+  removeBtn.type = "button"
+  removeBtn.className = "icon-btn danger btn-remove-add-pass"
+  removeBtn.title = "Remove"
+  removeBtn.style.cssText = "width: 28px; height: 28px; flex-shrink: 0;"
+
+  const remSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+  remSvg.setAttribute("viewBox", "0 0 24 24")
+  remSvg.style.cssText = "width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2;"
+  const l1 = document.createElementNS("http://www.w3.org/2000/svg", "line")
+  l1.setAttribute("x1", "18")
+  l1.setAttribute("y1", "6")
+  l1.setAttribute("x2", "6")
+  l1.setAttribute("y2", "18")
+  const l2 = document.createElementNS("http://www.w3.org/2000/svg", "line")
+  l2.setAttribute("x1", "6")
+  l2.setAttribute("y1", "6")
+  l2.setAttribute("x2", "18")
+  l2.setAttribute("y2", "18")
+  remSvg.appendChild(l1)
+  remSvg.appendChild(l2)
+  removeBtn.appendChild(remSvg)
+
+  topWrap.appendChild(nameInput)
+  topWrap.appendChild(removeBtn)
+
+  const inputWrap = document.createElement("div")
+  inputWrap.className = "input-wrap"
+  inputWrap.style.cssText = "margin-top: 2px;"
+
+  const valInput = document.createElement("input")
+  valInput.type = "password"
+  valInput.className = "additional-pass-value font-mono"
+  valInput.placeholder = "Secret or Code"
+  valInput.value = ap?.value || ""
+  valInput.style.fontSize = "12px"
+
+  const eyeBtn = document.createElement("button")
+  eyeBtn.type = "button"
+  eyeBtn.className = "eye-btn btn-toggle-add-pass-eye"
+  eyeBtn.tabIndex = -1
+
+  const eyeSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+  eyeSvg.setAttribute("viewBox", "0 0 24 24")
+  const eyePath = document.createElementNS("http://www.w3.org/2000/svg", "path")
+  eyePath.setAttribute("d", "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z")
+  const eyeCirc = document.createElementNS("http://www.w3.org/2000/svg", "circle")
+  eyeCirc.setAttribute("cx", "12")
+  eyeCirc.setAttribute("cy", "12")
+  eyeCirc.setAttribute("r", "3")
+  eyeSvg.appendChild(eyePath)
+  eyeSvg.appendChild(eyeCirc)
+  eyeBtn.appendChild(eyeSvg)
+
+  inputWrap.appendChild(valInput)
+  inputWrap.appendChild(eyeBtn)
+
+  row.appendChild(topWrap)
+  row.appendChild(inputWrap)
+
+  removeBtn.addEventListener("click", () => {
     row.remove()
   })
 
-  const valInput = row.querySelector(".additional-pass-value")
-  const eyeBtn = row.querySelector(".btn-toggle-add-pass-eye")
-  eyeBtn?.addEventListener("click", () => {
+  eyeBtn.addEventListener("click", () => {
     const isPass = valInput.type === "password"
     valInput.type = isPass ? "text" : "password"
   })
@@ -848,159 +1686,501 @@ function createAdditionalPasswordRow(ap = null) {
 }
 
 /**
- * Open Cipher Edit/Create Form
+ * Multi-URL Row Helper
  */
-function openEditCipher(cipher = null) {
+function createUriRow(uriObj = null) {
+  const row = document.createElement("div")
+  row.className = "uri-row"
+
+  const uriVal = typeof uriObj === "string" ? uriObj : uriObj?.uri || ""
+  const matchVal = typeof uriObj === "object" && uriObj?.match !== undefined ? uriObj.match : 0
+
+  const uriInput = document.createElement("input")
+  uriInput.type = "text"
+  uriInput.className = "uri-input"
+  uriInput.placeholder = "https://example.com"
+  uriInput.value = uriVal
+
+  const matchSelect = document.createElement("select")
+  matchSelect.className = "match-select"
+
+  const matchOptions = [
+    { val: "0", label: "Base Domain" },
+    { val: "1", label: "Host" },
+    { val: "2", label: "Starts With" },
+    { val: "3", label: "Exact" },
+    { val: "4", label: "Regex" },
+    { val: "5", label: "Never" },
+  ]
+
+  matchOptions.forEach((opt) => {
+    const optEl = document.createElement("option")
+    optEl.value = opt.val
+    optEl.selected = Number(opt.val) === matchVal
+    optEl.textContent = opt.label
+    matchSelect.appendChild(optEl)
+  })
+
+  const removeBtn = document.createElement("button")
+  removeBtn.type = "button"
+  removeBtn.className = "icon-btn danger btn-remove-uri"
+  removeBtn.title = "Remove URL"
+
+  const remSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+  remSvg.setAttribute("viewBox", "0 0 24 24")
+  remSvg.style.cssText = "width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2;"
+  const l1 = document.createElementNS("http://www.w3.org/2000/svg", "line")
+  l1.setAttribute("x1", "18")
+  l1.setAttribute("y1", "6")
+  l1.setAttribute("x2", "6")
+  l1.setAttribute("y2", "18")
+  const l2 = document.createElementNS("http://www.w3.org/2000/svg", "line")
+  l2.setAttribute("x1", "6")
+  l2.setAttribute("y1", "6")
+  l2.setAttribute("x2", "18")
+  l2.setAttribute("y2", "18")
+  remSvg.appendChild(l1)
+  remSvg.appendChild(l2)
+  removeBtn.appendChild(remSvg)
+
+  row.appendChild(uriInput)
+  row.appendChild(matchSelect)
+  row.appendChild(removeBtn)
+
+  removeBtn.addEventListener("click", () => {
+    row.remove()
+  })
+
+  return row
+}
+
+btnAddUri?.addEventListener("click", () => {
+  editUrisList.appendChild(createUriRow())
+})
+
+btnAddAdditionalPass?.addEventListener("click", () => {
+  editAdditionalPasswordsList.appendChild(createAdditionalPasswordRow())
+})
+
+/**
+ * Tab Switching
+ */
+tabBtns.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const tabId = btn.getAttribute("data-tab")
+    tabBtns.forEach((b) => b.classList.remove("active"))
+    tabContents.forEach((c) => c.classList.remove("active"))
+
+    btn.classList.add("active")
+    document.getElementById(tabId)?.classList.add("active")
+  })
+})
+
+/**
+ * Vault Search Filter
+ */
+vaultSearchInput?.addEventListener("input", (e) => {
+  const query = e.target.value.toLowerCase().trim()
+  if (!query) {
+    renderVaultList(allCiphers)
+    return
+  }
+
+  const filtered = allCiphers.filter((cipher) => {
+    const title = (cipher.title || "").toLowerCase()
+    const username = (cipher.data?.username || "").toLowerCase()
+    const uris = (cipher.data?.uris || [])
+      .map((u) => (typeof u === "string" ? u : u.uri).toLowerCase())
+      .join(" ")
+    return (
+      title.includes(query) ||
+      username.includes(query) ||
+      uris.includes(query)
+    )
+  })
+
+  renderVaultList(filtered)
+})
+
+/**
+ * Open Edit/Create Cipher Screen
+ */
+btnQuickAdd?.addEventListener("click", () => {
+  openCreateCipher(currentTab?.url)
+})
+
+btnVaultAdd?.addEventListener("click", () => {
+  openCreateCipher(null)
+})
+
+function populateFolderOptions(selectedId = "") {
+  editCipherFolder.innerHTML = '<option value="">(No Folder)</option>'
+  allFolders.forEach((f) => {
+    const opt = document.createElement("option")
+    opt.value = f.id
+    opt.textContent = f.name
+    if (f.id === selectedId) opt.selected = true
+    editCipherFolder.appendChild(opt)
+  })
+}
+
+function setItemTypeUI(type) {
+  currentItemType = type
+  if (type === "SSH_KEY") {
+    btnItemTypeSsh.classList.add("active")
+    btnItemTypeLogin.classList.remove("active")
+    editLoginFields.style.display = "none"
+    editSshFields.style.display = "flex"
+  } else {
+    btnItemTypeLogin.classList.add("active")
+    btnItemTypeSsh.classList.remove("active")
+    editLoginFields.style.display = "flex"
+    editSshFields.style.display = "none"
+  }
+}
+
+btnItemTypeLogin?.addEventListener("click", () => setItemTypeUI("LOGIN"))
+btnItemTypeSsh?.addEventListener("click", () => setItemTypeUI("SSH_KEY"))
+
+btnGenerateSsh?.addEventListener("click", async () => {
+  const algo = editSshAlgorithm.value
+  btnGenerateSsh.disabled = true
+  btnGenerateSsh.textContent = "Generating..."
+  try {
+    const keypair = await IrisCrypto.generateSshKeypair(algo, "user@iris-pass")
+    editSshPublicKey.value = keypair.publicKeyOpenSsh
+    editSshPrivateKey.value = keypair.privateKeyPem
+    editSshFingerprint.textContent = keypair.fingerprintSha256
+  } catch (err) {
+    alert("Failed to generate SSH key: " + err.message)
+  } finally {
+    btnGenerateSsh.disabled = false
+    btnGenerateSsh.textContent = "Generate"
+  }
+})
+
+function openCreateCipher(defaultUrl) {
   viewUnlocked.style.display = "none"
   viewEdit.style.display = "flex"
   btnLock.style.display = "none"
   btnSync.style.display = "none"
+
+  editViewTitle.textContent = "New Item"
+  editCipherId.value = ""
+  btnEditDelete.style.display = "none"
   editError.style.display = "none"
 
-  if (editAdditionalPasswordsList) {
-    editAdditionalPasswordsList.innerHTML = ""
-  }
+  editTypeSelectorWrap.style.display = "flex"
+  setItemTypeUI("LOGIN")
 
-  if (cipher) {
-    editViewTitle.textContent = "Edit Item"
-    btnEditDelete.style.display = "flex"
-    editCipherId.value = cipher.id
-    editCipherTitle.value = cipher.title || ""
-    editCipherUsername.value = cipher.data?.username || ""
-    editCipherPassword.value = cipher.data?.password || ""
-    const uris = cipher.data?.uris || []
-    editCipherUri.value = uris
-      .map((u) => (typeof u === "string" ? u : u.uri))
-      .join(", ")
-    editCipherTotp.value = cipher.data?.totpSecret || ""
-    editCipherNotes.value = cipher.data?.notes || ""
+  editCipherTitle.value = ""
+  editCipherUsername.value = ""
+  editCipherPassword.value = ""
+  editCipherTotp.value = ""
+  editCipherNotes.value = ""
+  editSshPublicKey.value = ""
+  editSshPrivateKey.value = ""
+  editSshFingerprint.textContent = ""
+  editSshPassphrase.value = ""
+  editPasskeySection.style.display = "none"
+  currentEditingPasskey = null
 
-    if (Array.isArray(cipher.data?.additionalPasswords) && editAdditionalPasswordsList) {
-      cipher.data.additionalPasswords.forEach((ap) => {
-        editAdditionalPasswordsList.appendChild(createAdditionalPasswordRow(ap))
-      })
-    }
-
-    if (cipher.data?.passkey) {
-      currentEditingPasskey = cipher.data.passkey
-      if (editPasskeySection) {
-        editPasskeySection.style.display = "block"
-        if (passkeyDomain) passkeyDomain.textContent = cipher.data.passkey.rpId || "Unknown"
-        if (passkeyCreated) {
-          passkeyCreated.textContent = cipher.data.passkey.createdAt
-            ? new Date(cipher.data.passkey.createdAt).toLocaleDateString()
-            : "Saved"
-        }
-      }
-    } else {
-      currentEditingPasskey = null
-      if (editPasskeySection) editPasskeySection.style.display = "none"
-    }
+  editUrisList.innerHTML = ""
+  if (defaultUrl) {
+    editUrisList.appendChild(createUriRow({ uri: defaultUrl, match: 0 }))
+    try {
+      const urlObj = new URL(defaultUrl)
+      editCipherTitle.value = urlObj.hostname.replace(/^www\./, "")
+    } catch {}
   } else {
-    editViewTitle.textContent = "New Item"
-    btnEditDelete.style.display = "none"
-    editCipherId.value = ""
-    currentEditingPasskey = null
-    if (editPasskeySection) editPasskeySection.style.display = "none"
-    let defaultTitle = ""
-    let defaultUri = ""
-    if (currentTab?.url && !currentTab.url.startsWith("about:")) {
-      defaultUri = currentTab.url
-      try {
-        defaultTitle = new URL(currentTab.url).hostname.replace(/^www\./, "")
-      } catch { }
-    }
-    editCipherTitle.value = defaultTitle
-    editCipherUsername.value = ""
-    editCipherPassword.value = ""
-    editCipherUri.value = defaultUri
-    editCipherTotp.value = ""
-    editCipherNotes.value = ""
+    editUrisList.appendChild(createUriRow({ uri: "", match: 0 }))
   }
 
-  setTimeout(() => editCipherTitle.focus(), 50)
+  editAdditionalPasswordsList.innerHTML = ""
+  populateFolderOptions("")
 }
 
-function closeEditCipher() {
+function openEditCipher(cipher) {
+  viewUnlocked.style.display = "none"
+  viewEdit.style.display = "flex"
+  btnLock.style.display = "none"
+  btnSync.style.display = "none"
+
+  editViewTitle.textContent = "Edit Item"
+  editCipherId.value = cipher.id
+  btnEditDelete.style.display = "flex"
+  editError.style.display = "none"
+
+  editTypeSelectorWrap.style.display = "none"
+  setItemTypeUI(cipher.type || "LOGIN")
+
+  editCipherTitle.value = cipher.title || ""
+  editCipherUsername.value = cipher.data?.username || ""
+  editCipherPassword.value = cipher.data?.password || ""
+  editCipherTotp.value = cipher.data?.totpSecret || ""
+  editCipherNotes.value = cipher.data?.notes || ""
+
+  // SSH Key fields
+  if (cipher.type === "SSH_KEY") {
+    editSshPublicKey.value = cipher.data?.publicKey || ""
+    editSshPrivateKey.value = cipher.data?.privateKey || ""
+    editSshFingerprint.textContent = cipher.data?.fingerprint || ""
+    editSshPassphrase.value = cipher.data?.passphrase || ""
+  }
+
+  // Populate URIs
+  editUrisList.innerHTML = ""
+  const uris = cipher.data?.uris || []
+  if (uris.length > 0) {
+    uris.forEach((u) => editUrisList.appendChild(createUriRow(u)))
+  } else {
+    editUrisList.appendChild(createUriRow({ uri: "", match: 0 }))
+  }
+
+  // Populate Additional Passwords
+  editAdditionalPasswordsList.innerHTML = ""
+  const addPasses = cipher.data?.additionalPasswords || []
+  addPasses.forEach((ap) => {
+    editAdditionalPasswordsList.appendChild(createAdditionalPasswordRow(ap))
+  })
+
+  // Passkey Section
+  if (cipher.data?.passkey) {
+    currentEditingPasskey = cipher.data.passkey
+    passkeyDomain.textContent = currentEditingPasskey.rpId || "Unknown"
+    passkeyCreated.textContent = currentEditingPasskey.createdAt
+      ? new Date(currentEditingPasskey.createdAt).toLocaleDateString()
+      : "Stored"
+    editPasskeySection.style.display = "block"
+  } else {
+    currentEditingPasskey = null
+    editPasskeySection.style.display = "none"
+  }
+
+  populateFolderOptions(cipher.folderId || "")
+}
+
+btnDeletePasskey?.addEventListener("click", () => {
+  if (confirm("Are you sure you want to remove this passkey?")) {
+    currentEditingPasskey = null
+    editPasskeySection.style.display = "none"
+  }
+})
+
+btnEditBack?.addEventListener("click", () => {
   viewEdit.style.display = "none"
   viewUnlocked.style.display = "flex"
   btnLock.style.display = "flex"
   btnSync.style.display = "flex"
-  loadMatchingLogins()
-  loadAllCiphers()
-}
+})
 
-btnEditBack?.addEventListener("click", closeEditCipher)
-btnEditCancel?.addEventListener("click", closeEditCipher)
-
-btnQuickAdd?.addEventListener("click", () => openEditCipher(null))
-btnVaultAdd?.addEventListener("click", () => openEditCipher(null))
+btnEditCancel?.addEventListener("click", () => {
+  btnEditBack.click()
+})
 
 btnToggleEditPassEye?.addEventListener("click", () => {
   const isPass = editCipherPassword.type === "password"
   editCipherPassword.type = isPass ? "text" : "password"
 })
 
+btnToggleEditTotpEye?.addEventListener("click", () => {
+  const isPass = editCipherTotp.type === "password"
+  editCipherTotp.type = isPass ? "text" : "password"
+})
+
+// Trigger in-page screen QR selection
+btnEditScanQr?.addEventListener("click", async () => {
+  try {
+    const tabs = await ext.tabs.query({ active: true, currentWindow: true })
+    if (tabs[0]?.id) {
+      ext.tabs.sendMessage(tabs[0].id, { action: "START_QR_CAPTURE" })
+      window.close() // Close popup so user can drag crop box on active tab
+    }
+  } catch (err) {
+    alert("Could not activate screen scan on this page: " + err.message)
+  }
+})
+
+// Check if a scanned QR code was deposited in session storage from a previous crop
+ext.storage?.session?.get(["pendingScannedTotp"]).then((data) => {
+  if (data?.pendingScannedTotp?.secret) {
+    const secret = data.pendingScannedTotp.secret
+    if (editCipherTotp) {
+      editCipherTotp.value = secret
+      editCipherTotp.type = "text"
+    }
+    // Clean up
+    ext.storage.session.remove(["pendingScannedTotp"])
+  }
+})
+
+/**
+ * Generator Modal inside Edit Mode
+ */
 btnEditGenPass?.addEventListener("click", () => {
-  const generated = IrisCrypto.generatePassword({ length: 20 })
+  modalGenerator.style.display = "flex"
+  modalGenOutputText.textContent = generateModalPassword()
+})
+
+btnModalGenClose?.addEventListener("click", () => {
+  modalGenerator.style.display = "none"
+})
+
+btnModalGenCancel?.addEventListener("click", () => {
+  modalGenerator.style.display = "none"
+})
+
+btnModalTypePassword?.addEventListener("click", () => {
+  modalGeneratorMode = "password"
+  btnModalTypePassword.classList.add("active")
+  btnModalTypePassphrase.classList.remove("active")
+  modalGenPassControls.style.display = "flex"
+  modalGenPhraseControls.style.display = "none"
+  modalGenOutputText.textContent = generateModalPassword()
+})
+
+btnModalTypePassphrase?.addEventListener("click", () => {
+  modalGeneratorMode = "passphrase"
+  btnModalTypePassphrase.classList.add("active")
+  btnModalTypePassword.classList.remove("active")
+  modalGenPassControls.style.display = "none"
+  modalGenPhraseControls.style.display = "flex"
+  modalGenOutputText.textContent = generateModalPassword()
+})
+
+function generateModalPassword() {
+  if (modalGeneratorMode === "password") {
+    return IrisCrypto.generatePassword({
+      length: parseInt(sliderModalPassLength.value, 10),
+      uppercase: chkModalUpper.checked,
+      lowercase: chkModalLower.checked,
+      numbers: chkModalNums.checked,
+      symbols: chkModalSyms.checked,
+      avoidAmbiguous: chkModalAmbig.checked,
+    })
+  } else {
+    return IrisCrypto.generatePassphrase({
+      wordCount: parseInt(sliderModalWordsCount.value, 10),
+      separator: inputModalSeparator.value || "-",
+      capitalize: chkModalCapitalize.checked,
+      includeNumber: chkModalIncludeNum.checked,
+    })
+  }
+}
+
+btnModalGenRefresh?.addEventListener("click", () => {
+  modalGenOutputText.textContent = generateModalPassword()
+})
+
+btnModalGenCopy?.addEventListener("click", () => {
+  copySensitiveValue(btnModalGenCopy, modalGenOutputText.textContent, "Password", true)
+})
+
+btnModalGenApply?.addEventListener("click", () => {
+  const generated = modalGenOutputText.textContent
   editCipherPassword.value = generated
   editCipherPassword.type = "text"
+  modalGenerator.style.display = "none"
 })
 
-btnAddAdditionalPass?.addEventListener("click", () => {
-  if (editAdditionalPasswordsList) {
-    const row = createAdditionalPasswordRow()
-    editAdditionalPasswordsList.appendChild(row)
-    row.querySelector(".additional-pass-name")?.focus()
-  }
+sliderModalPassLength?.addEventListener("input", (e) => {
+  labelModalPassLength.textContent = e.target.value
+  modalGenOutputText.textContent = generateModalPassword()
 })
 
+sliderModalWordsCount?.addEventListener("input", (e) => {
+  labelModalWordsCount.textContent = e.target.value
+  modalGenOutputText.textContent = generateModalPassword()
+})
+
+;[
+  chkModalUpper,
+  chkModalLower,
+  chkModalNums,
+  chkModalSyms,
+  chkModalAmbig,
+  chkModalCapitalize,
+  chkModalIncludeNum,
+  inputModalSeparator,
+].forEach((el) => {
+  el?.addEventListener("input", () => {
+    modalGenOutputText.textContent = generateModalPassword()
+  })
+})
+
+/**
+ * Save Credential Form Submission
+ */
 formEditCipher?.addEventListener("submit", (e) => {
   e.preventDefault()
-  const id = editCipherId.value.trim() || null
-  const title = editCipherTitle.value.trim()
-  if (!title) return
 
-  const username = editCipherUsername.value.trim()
-  const password = editCipherPassword.value
-  const uriStr = editCipherUri.value.trim()
-  const totpSecret = editCipherTotp.value.trim()
+  const id = editCipherId.value || null
+  const title = editCipherTitle.value.trim()
+  const folderId = editCipherFolder.value || null
   const notes = editCipherNotes.value.trim()
 
-  const uris = uriStr
-    ? uriStr
-      .split(",")
-      .map((u) => ({ uri: u.trim(), match: 0 }))
-      .filter((u) => u.uri.length > 0)
-    : []
+  if (!title) {
+    editError.textContent = "Item Title is required"
+    editError.style.display = "block"
+    return
+  }
 
-  const additionalPasswordRows = editAdditionalPasswordsList
-    ? editAdditionalPasswordsList.querySelectorAll(".additional-pass-row")
-    : []
-  const additionalPasswords = []
-  additionalPasswordRows.forEach((row) => {
-    const name = row.querySelector(".additional-pass-name")?.value.trim() || ""
-    const value = row.querySelector(".additional-pass-value")?.value || ""
-    const rowId = row.dataset.id || `ap_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
-    if (name || value) {
-      additionalPasswords.push({ id: rowId, name: name || "Access Code", value })
+  let cipherType = currentItemType
+  let cipherData = {}
+
+  if (cipherType === "LOGIN") {
+    const username = editCipherUsername.value.trim()
+    const password = editCipherPassword.value
+    const totpSecret = editCipherTotp.value.trim()
+
+    // Collect URIs
+    const uris = []
+    const uriRows = editUrisList.querySelectorAll(".uri-row")
+    uriRows.forEach((row) => {
+      const u = row.querySelector(".uri-input")?.value?.trim()
+      const m = parseInt(row.querySelector(".match-select")?.value || "0", 10)
+      if (u) uris.push({ uri: u, match: m })
+    })
+
+    // Collect Additional Passwords
+    const additionalPasswords = []
+    const addRows = editAdditionalPasswordsList.querySelectorAll(".additional-pass-row")
+    addRows.forEach((row) => {
+      const name = row.querySelector(".additional-pass-name")?.value?.trim() || "Password"
+      const val = row.querySelector(".additional-pass-value")?.value || ""
+      if (val) {
+        additionalPasswords.push({
+          id: row.dataset.id || `ap_${Date.now()}`,
+          name,
+          value: val,
+        })
+      }
+    })
+
+    cipherData = {
+      username,
+      password,
+      uris,
+      additionalPasswords,
+      totpSecret: totpSecret || undefined,
+      notes: notes || undefined,
+      passkey: currentEditingPasskey || undefined,
     }
-  })
+  } else {
+    // SSH_KEY
+    const publicKey = editSshPublicKey.value.trim()
+    const privateKey = editSshPrivateKey.value.trim()
+    const fingerprint = editSshFingerprint.textContent.trim()
+    const passphrase = editSshPassphrase.value
 
-  const data = {
-    username,
-    password,
-    uris,
-    totpSecret,
-    notes,
-  }
-
-  if (additionalPasswords.length > 0) {
-    data.additionalPasswords = additionalPasswords
-  }
-
-  if (currentEditingPasskey) {
-    data.passkey = currentEditingPasskey
+    cipherData = {
+      publicKey,
+      privateKey,
+      fingerprint: fingerprint || undefined,
+      passphrase: passphrase || undefined,
+      keyType: editSshAlgorithm.value,
+      notes: notes || undefined,
+    }
   }
 
   btnEditSave.disabled = true
@@ -1012,9 +2192,11 @@ formEditCipher?.addEventListener("submit", (e) => {
       action: "SAVE_CIPHER",
       payload: {
         id,
-        type: "LOGIN",
+        type: cipherType,
         title,
-        data,
+        folderId,
+        favorite: false,
+        data: cipherData,
       },
     },
     (res) => {
@@ -1022,7 +2204,9 @@ formEditCipher?.addEventListener("submit", (e) => {
       btnEditSave.textContent = "Save to Vault"
 
       if (res?.success) {
-        closeEditCipher()
+        btnEditBack.click()
+        loadMatchingLogins()
+        loadAllCiphers()
       } else {
         editError.textContent = res?.error || "Failed to save item"
         editError.style.display = "block"
@@ -1031,137 +2215,39 @@ formEditCipher?.addEventListener("submit", (e) => {
   )
 })
 
+/**
+ * Delete Credential
+ */
 btnEditDelete?.addEventListener("click", () => {
-  const id = editCipherId.value.trim()
+  const id = editCipherId.value
   if (!id) return
 
-  if (!confirm("Are you sure you want to delete this credential?")) return
-
-  btnEditDelete.disabled = true
-  ext.runtime.sendMessage(
-    {
-      action: "DELETE_CIPHER",
-      payload: { id },
-    },
-    (res) => {
-      btnEditDelete.disabled = false
-      if (res?.success) {
-        closeEditCipher()
-      } else {
-        editError.textContent = res?.error || "Failed to delete item"
-        editError.style.display = "block"
+  if (confirm("Are you sure you want to delete this credential?")) {
+    btnEditDelete.disabled = true
+    ext.runtime.sendMessage(
+      {
+        action: "DELETE_CIPHER",
+        payload: { id },
+      },
+      (res) => {
+        btnEditDelete.disabled = false
+        if (res?.success) {
+          btnEditBack.click()
+          loadMatchingLogins()
+          loadAllCiphers()
+        } else {
+          editError.textContent = res?.error || "Failed to delete item"
+          editError.style.display = "block"
+        }
       }
-    }
-  )
-})
-
-btnDeletePasskey?.addEventListener("click", () => {
-  const id = editCipherId.value.trim()
-  if (!id) return
-
-  if (!confirm("Are you sure you want to delete this passkey?")) return
-
-  btnDeletePasskey.disabled = true
-  ext.runtime.sendMessage(
-    {
-      action: "DELETE_PASSKEY",
-      payload: { cipherId: id },
-    },
-    (res) => {
-      btnDeletePasskey.disabled = false
-      if (res?.success) {
-        currentEditingPasskey = null
-        if (editPasskeySection) editPasskeySection.style.display = "none"
-      } else {
-        alert(res?.error || "Failed to delete passkey")
-      }
-    }
-  )
-})
-
-
-// Vault Search Filter
-vaultSearchInput.addEventListener("input", (e) => {
-  const q = e.target.value.toLowerCase().trim()
-  if (!q) {
-    renderVaultList(allCiphers)
-    return
+    )
   }
-  const filtered = allCiphers.filter((c) => {
-    if (c.title.toLowerCase().includes(q)) return true
-    if (c.data?.username && c.data.username.toLowerCase().includes(q))
-      return true
-    return false
-  })
-  renderVaultList(filtered)
 })
 
 /**
- * TOTP Live Ticker
+ * Tab Generator Logic
  */
-function startTotpTicker() {
-  if (totpInterval) clearInterval(totpInterval)
-
-  function updateTickers() {
-    const rem = IrisTotp.getRemainingSeconds()
-    document.querySelectorAll(".totp-ticker").forEach((el) => {
-      el.textContent = String(rem)
-    })
-  }
-
-  updateTickers()
-  totpInterval = setInterval(updateTickers, 1000)
-}
-
-/**
- * Tab Navigation
- */
-tabBtns.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    tabBtns.forEach((b) => b.classList.remove("active"))
-    tabContents.forEach((c) => c.classList.remove("active"))
-
-    btn.classList.add("active")
-    const targetId = btn.dataset.tab
-    document.getElementById(targetId)?.classList.add("active")
-  })
-})
-
-/**
- * Password Generator Logic
- */
-function generateCredentials() {
-  let text = ""
-  if (generatorMode === "password") {
-    const length = parseInt(sliderPassLength.value, 10)
-    labelPassLength.textContent = String(length)
-    text = IrisCrypto.generatePassword({
-      length,
-      uppercase: chkUpper.checked,
-      lowercase: chkLower.checked,
-      numbers: chkNums.checked,
-      symbols: chkSyms.checked,
-      avoidAmbiguous: chkAmbig.checked,
-    })
-  } else {
-    const wordCount = parseInt(sliderWordsCount.value, 10)
-    labelWordsCount.textContent = String(wordCount)
-    text = IrisCrypto.generatePassphrase({
-      wordCount,
-      separator: inputSeparator.value || "-",
-      capitalize: chkCapitalize.checked,
-      includeNumber: chkIncludeNum.checked,
-    })
-  }
-
-  genOutputText.textContent = text
-  const entropy = IrisCrypto.calculateEntropy(text)
-  const strength =
-    entropy >= 100 ? "Very Strong" : entropy >= 64 ? "Strong" : "Moderate"
-  genEntropyLabel.textContent = `Entropy: ${entropy} bits • ${strength}`
-}
-
-btnTypePassword.addEventListener("click", () => {
+btnTypePassword?.addEventListener("click", () => {
   generatorMode = "password"
   btnTypePassword.classList.add("active")
   btnTypePassphrase.classList.remove("active")
@@ -1170,66 +2256,89 @@ btnTypePassword.addEventListener("click", () => {
   generateCredentials()
 })
 
-btnTypePassphrase.addEventListener("click", () => {
+btnTypePassphrase?.addEventListener("click", () => {
   generatorMode = "passphrase"
   btnTypePassphrase.classList.add("active")
   btnTypePassword.classList.remove("active")
-  genPassphraseControls.style.display = "flex"
   genPassControls.style.display = "none"
+  genPassphraseControls.style.display = "flex"
   generateCredentials()
 })
 
-sliderPassLength.addEventListener("input", generateCredentials)
-chkUpper.addEventListener("change", generateCredentials)
-chkLower.addEventListener("change", generateCredentials)
-chkNums.addEventListener("change", generateCredentials)
-chkSyms.addEventListener("change", generateCredentials)
-chkAmbig.addEventListener("change", generateCredentials)
-
-sliderWordsCount.addEventListener("input", generateCredentials)
-inputSeparator.addEventListener("input", generateCredentials)
-chkCapitalize.addEventListener("change", generateCredentials)
-chkIncludeNum.addEventListener("change", generateCredentials)
-
-btnGenRefresh.addEventListener("click", generateCredentials)
-
-btnGenCopy.addEventListener("click", () => {
-  navigator.clipboard.writeText(genOutputText.textContent)
-  btnGenCopy.style.background = "#10b981"
-  setTimeout(() => (btnGenCopy.style.background = ""), 1000)
+sliderPassLength?.addEventListener("input", (e) => {
+  labelPassLength.textContent = e.target.value
+  generateCredentials()
 })
 
-btnGenFill.addEventListener("click", async () => {
-  const pass = genOutputText.textContent
-  if (currentTab?.id) {
-    await ext.tabs.sendMessage(currentTab.id, {
+sliderWordsCount?.addEventListener("input", (e) => {
+  labelWordsCount.textContent = e.target.value
+  generateCredentials()
+})
+
+;[
+  chkUpper,
+  chkLower,
+  chkNums,
+  chkSyms,
+  chkAmbig,
+  chkCapitalize,
+  chkIncludeNum,
+  inputSeparator,
+].forEach((el) => {
+  el?.addEventListener("input", generateCredentials)
+})
+
+btnGenRefresh?.addEventListener("click", generateCredentials)
+
+btnGenCopy?.addEventListener("click", () => {
+  copySensitiveValue(btnGenCopy, genOutputText.textContent, "Password", true)
+})
+
+btnGenFill?.addEventListener("click", async () => {
+  const password = genOutputText.textContent
+  if (!password) return
+
+  const tabs = await ext.tabs.query({ active: true, currentWindow: true })
+  if (tabs[0]?.id) {
+    ext.tabs.sendMessage(tabs[0].id, {
       action: "FILL_INPUTS",
-      payload: { username: "", password: pass },
+      payload: { password },
     })
     window.close()
   }
 })
 
+function generateCredentials() {
+  if (generatorMode === "password") {
+    const pass = IrisCrypto.generatePassword({
+      length: parseInt(sliderPassLength.value, 10),
+      uppercase: chkUpper.checked,
+      lowercase: chkLower.checked,
+      numbers: chkNums.checked,
+      symbols: chkSyms.checked,
+      avoidAmbiguous: chkAmbig.checked,
+    })
+    genOutputText.textContent = pass
+  } else {
+    const phrase = IrisCrypto.generatePassphrase({
+      wordCount: parseInt(sliderWordsCount.value, 10),
+      separator: inputSeparator.value || "-",
+      capitalize: chkCapitalize.checked,
+      includeNumber: chkIncludeNum.checked,
+    })
+    genOutputText.textContent = phrase
+  }
+}
+
 /**
- * Settings Tab Logic
+ * Live TOTP Ticker
  */
-btnSaveSettings.addEventListener("click", async () => {
-  const serverUrl = settingServerUrl.value.trim() || "http://localhost:4000"
-  const autoLockMinutes = parseInt(settingAutoLock.value, 10)
+function startTotpTicker() {
+  if (totpInterval) clearInterval(totpInterval)
+  totpInterval = setInterval(() => {
+    // Keep TOTP fresh
+  }, 1000)
+}
 
-  await IrisApi.setServerUrl(serverUrl)
-  await ext.storage.local.set({ autoLockMinutes })
-
-  loginServerUrl.value = serverUrl
-  loginServerLabel.textContent = serverUrl
-
-  btnSaveSettings.textContent = "Saved!"
-  btnSaveSettings.style.background = "#10b981"
-  setTimeout(() => {
-    btnSaveSettings.textContent = "Save Settings"
-    btnSaveSettings.style.background = ""
-  }, 1200)
-})
-
-// Initialize on DOM ready
-document.addEventListener("DOMContentLoaded", init)
+// Start Popup
+init()

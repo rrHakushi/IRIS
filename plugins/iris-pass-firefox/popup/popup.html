@@ -14,10 +14,7 @@
     <header class="popup-header">
       <div class="brand">
         <div class="brand-icon">
-          <svg viewBox="0 0 24 24">
-            <path d="M12 3a12 12 0 0 0 8.5 3A12 12 0 0 1 12 21 12 12 0 0 1 3.5 6 12 12 0 0 0 12 3"></path>
-            <rect x="9" y="10" width="6" height="5" rx="1"></rect>
-          </svg>
+          <img src="../icons/icon-48.png" alt="IRIS Pass" class="brand-icon-img" />
         </div>
         <span class="brand-title">IRIS Pass</span>
       </div>
@@ -42,10 +39,7 @@
     <div id="view-login" class="view-panel" style="display: none">
       <div class="auth-card">
         <div class="auth-icon">
-          <svg viewBox="0 0 24 24">
-            <path d="M12 3a12 12 0 0 0 8.5 3A12 12 0 0 1 12 21 12 12 0 0 1 3.5 6 12 12 0 0 0 12 3"></path>
-            <rect x="9" y="10" width="6" height="5" rx="1"></rect>
-          </svg>
+          <img src="../icons/icon-128.png" alt="IRIS Pass" class="auth-icon-img" />
         </div>
         <h2>Sign in to IRIS</h2>
         <p class="subtitle">Connect to your vault on your IRIS instance</p>
@@ -73,7 +67,7 @@
               <input type="password" id="login-password" placeholder="Password" />
               <button type="button" id="btn-toggle-login-eye" class="eye-btn" tabindex="-1">
                 <svg viewBox="0 0 24 24">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
                   <circle cx="12" cy="12" r="3"></circle>
                 </svg>
               </button>
@@ -86,7 +80,7 @@
               <input type="password" id="login-api-key" placeholder="IRIS API Key (iris_...)" />
               <button type="button" id="btn-toggle-apikey-eye" class="eye-btn" tabindex="-1">
                 <svg viewBox="0 0 24 24">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
                   <circle cx="12" cy="12" r="3"></circle>
                 </svg>
               </button>
@@ -96,7 +90,7 @@
               <input type="password" id="login-api-master-pass" placeholder="Master Password" />
               <button type="button" id="btn-toggle-masterpass-eye" class="eye-btn" tabindex="-1">
                 <svg viewBox="0 0 24 24">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
                   <circle cx="12" cy="12" r="3"></circle>
                 </svg>
               </button>
@@ -168,30 +162,66 @@
     <!-- State 2: Locked Screen (Logged in, but vault locked) -->
     <div id="view-locked" class="view-panel" style="display: none">
       <div class="auth-card">
-        <div class="locked-icon">
-          <svg viewBox="0 0 24 24">
-            <rect x="5" y="11" width="14" height="10" rx="2"></rect>
-            <circle cx="12" cy="16" r="1"></circle>
-            <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
-          </svg>
+        <div class="locked-avatar-wrap" style="margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;">
+          <div class="account-avatar-wrap" style="width: 52px; height: 52px; border-radius: 50%; box-shadow: 0 0 16px rgba(244, 63, 94, 0.2);">
+            <img id="locked-avatar-img" class="account-avatar-img" alt="Avatar" style="display: none;" />
+            <div id="locked-avatar" class="account-avatar" style="font-size: 20px;">
+              <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2">
+                <rect x="5" y="11" width="14" height="10" rx="2"></rect>
+                <circle cx="12" cy="16" r="1"></circle>
+                <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+              </svg>
+            </div>
+          </div>
         </div>
         <h2>Vault is Locked</h2>
         <p id="locked-user-label" class="subtitle">Logged in as user</p>
 
-        <form id="form-unlock" class="auth-form">
-          <div id="unlock-error" class="error-badge" style="display: none"></div>
+        <div id="unlock-error" class="error-badge" style="display: none"></div>
+
+        <!-- Mode A: PIN Unlock Form (Active when PIN enabled) -->
+        <form id="form-unlock-pin" class="auth-form" style="display: none">
           <div class="input-wrap">
-            <input type="password" id="unlock-password" placeholder="Account or Decryption Password..." required
-              autofocus />
+            <input type="password" id="unlock-pin" class="font-mono text-center" placeholder="Enter PIN..." maxlength="16" autocomplete="current-password" autofocus />
+            <button type="button" id="btn-toggle-unlock-pin-eye" class="eye-btn" tabindex="-1">
+              <svg viewBox="0 0 24 24">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+          <button type="submit" id="btn-unlock-pin-submit" class="btn-primary">
+            Unlock with PIN
+          </button>
+          <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
+            <button type="button" id="btn-unlock-bio" class="btn-secondary" style="display: none;">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+              Unlock with Biometrics
+            </button>
+            <button type="button" id="btn-forgot-pin" class="text-btn mini">
+              Forgot PIN? Enter master password
+            </button>
+          </div>
+        </form>
+
+        <!-- Mode B: Master Password Unlock Form -->
+        <form id="form-unlock-password" class="auth-form">
+          <div class="input-wrap">
+            <input type="password" id="unlock-password" placeholder="Account or Decryption Password..." required autofocus />
             <button type="button" id="btn-toggle-unlock-eye" class="eye-btn" tabindex="-1">
               <svg viewBox="0 0 24 24">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
                 <circle cx="12" cy="12" r="3"></circle>
               </svg>
             </button>
           </div>
           <button type="submit" id="btn-unlock-submit" class="btn-primary">
             Unlock Vault
+          </button>
+          <button type="button" id="btn-use-pin" class="text-btn mini" style="display: none; margin-top: 6px;">
+            Unlock with PIN instead
           </button>
         </form>
 
@@ -265,10 +295,6 @@
             </div>
           </div>
 
-          <div class="gen-entropy">
-            <span id="gen-entropy-label">Entropy: 128 bits • Very Strong</span>
-          </div>
-
           <!-- Type Toggle: Password vs Passphrase -->
           <div class="gen-type-selector">
             <button id="btn-type-password" class="type-btn active">
@@ -333,41 +359,155 @@
         </div>
       </section>
 
-      <!-- Tab 4: Settings -->
+      <!-- Tab 4: Settings (Categorized) -->
       <section id="tab-settings" class="tab-content">
-        <div class="settings-card">
-          <div class="setting-item">
-            <label>Backend API URL</label>
-            <input type="text" id="setting-server-url" value="http://localhost:4000"
-              placeholder="http://localhost:4000" />
-            <span class="setting-hint">Elysia API backend (default: http://localhost:4000)</span>
+        <div class="settings-container">
+          
+          <!-- Category 1: Account -->
+          <div class="settings-category">
+            <div class="settings-category-header">
+              <span class="settings-category-title">Account</span>
+            </div>
+            <div class="settings-card">
+              <div class="account-profile-card">
+                <div class="account-avatar-wrap">
+                  <img id="account-avatar-img" class="account-avatar-img" alt="Avatar" style="display: none;" />
+                  <div id="account-avatar" class="account-avatar">U</div>
+                </div>
+                <div class="account-details">
+                  <div id="account-display-name" class="account-name">User</div>
+                  <div id="account-username" class="account-sub">@user</div>
+                  <div id="account-email" class="account-email">user@example.com</div>
+                </div>
+                <div class="account-status-badge">Connected</div>
+              </div>
+
+              <div class="setting-item" style="margin-top: 10px;">
+                <span class="setting-label-muted">Server Instance</span>
+                <span id="setting-account-server" class="setting-val-mono">http://localhost:4000</span>
+              </div>
+
+              <button id="btn-settings-logout" class="btn-danger" style="margin-top: 12px;">
+                Log Out of IRIS Account
+              </button>
+            </div>
           </div>
 
-          <div class="setting-item">
-            <label>Auto-Lock Timer</label>
-            <select id="setting-auto-lock">
-              <option value="1">1 minute</option>
-              <option value="5">5 minutes</option>
-              <option value="15" selected>15 minutes</option>
-              <option value="60">1 hour</option>
-              <option value="240">4 hours</option>
-              <option value="0">Never</option>
-            </select>
+          <!-- Category 2: Security & Unlock -->
+          <div class="settings-category">
+            <div class="settings-category-header">
+              <span class="settings-category-title">Security & Unlock</span>
+            </div>
+            <div class="settings-card">
+              <!-- Auto-Lock -->
+              <div class="setting-item">
+                <label for="setting-auto-lock">Auto-Lock Vault</label>
+                <select id="setting-auto-lock">
+                  <option value="1">1 minute</option>
+                  <option value="5">5 minutes</option>
+                  <option value="15" selected>15 minutes</option>
+                  <option value="60">1 hour</option>
+                  <option value="240">4 hours</option>
+                  <option value="0">Never</option>
+                </select>
+              </div>
+
+              <!-- Unlock with PIN -->
+              <div class="setting-row-toggle">
+                <div>
+                  <div class="setting-toggle-title">Unlock with PIN</div>
+                  <div class="setting-toggle-desc">Quick unlock using a 4+ digit PIN</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="toggle-pin-unlock" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div id="pin-active-actions" style="display: none; margin-top: 6px; gap: 8px; justify-content: flex-end;">
+                <button type="button" id="btn-change-pin" class="text-btn mini">Change PIN</button>
+              </div>
+
+              <!-- Unlock with Biometrics -->
+              <div class="setting-row-toggle" id="row-bio-unlock">
+                <div>
+                  <div class="setting-toggle-title">Unlock with Biometrics</div>
+                  <div class="setting-toggle-desc">Windows Hello / Touch ID / Fingerprint</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="toggle-bio-unlock" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <!-- Clear Clipboard Timeout -->
+              <div class="setting-item" style="margin-top: 8px;">
+                <label for="setting-clipboard-clear">Clear Copied Items from Clipboard</label>
+                <select id="setting-clipboard-clear">
+                  <option value="0">Never</option>
+                  <option value="30" selected>30 seconds</option>
+                  <option value="60">1 minute</option>
+                  <option value="120">2 minutes</option>
+                  <option value="300">5 minutes</option>
+                </select>
+                <span class="setting-hint">Automatically purge sensitive passwords and TOTP codes from clipboard</span>
+              </div>
+            </div>
           </div>
 
-          <button id="btn-save-settings" class="btn-primary">
-            Save Settings
-          </button>
-
-          <div style="
-                margin-top: 16px;
-                padding-top: 16px;
-                border-top: 1px solid #2d2a32;
-              ">
-            <button id="btn-settings-logout" class="btn-danger">
-              Log Out of IRIS Account
-            </button>
+          <!-- Category 3: Vault & Synchronization -->
+          <div class="settings-category">
+            <div class="settings-category-header">
+              <span class="settings-category-title">Vault & Synchronization</span>
+            </div>
+            <div class="settings-card">
+              <div class="sync-status-row">
+                <div class="sync-status-info">
+                  <div id="label-last-sync" class="sync-status-time">Last synced: Just now</div>
+                  <div class="sync-status-hint">Auto-syncs hourly • 0 network lag on popup</div>
+                </div>
+                <button type="button" id="btn-settings-sync-now" class="btn-secondary mini">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px; vertical-align: -1px;">
+                    <path d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4m-4 4a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"></path>
+                  </svg>
+                  Sync Now
+                </button>
+              </div>
+              <div id="label-vault-stats" class="vault-stats-badge" style="margin-top: 8px;">
+                0 items in local vault
+              </div>
+            </div>
           </div>
+
+          <!-- Category 4: Autofill & System -->
+          <div class="settings-category">
+            <div class="settings-category-header">
+              <span class="settings-category-title">Autofill & System</span>
+            </div>
+            <div class="settings-card">
+              <!-- Default Password Manager Toggle -->
+              <div class="setting-row-toggle">
+                <div>
+                  <div class="setting-toggle-title">Make Default Password Manager</div>
+                  <div class="setting-toggle-desc">Prioritizes IRIS Pass and suppresses native browser prompts</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="toggle-default-pm" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <!-- Backend Server URL -->
+              <div class="setting-item" style="margin-top: 10px;">
+                <label for="setting-server-url">Backend API URL</label>
+                <div style="display: flex; gap: 6px;">
+                  <input type="text" id="setting-server-url" value="http://localhost:4000" placeholder="http://localhost:4000" style="flex: 1;" />
+                  <button type="button" id="btn-save-server-url" class="btn-primary mini">Save</button>
+                </div>
+                <span class="setting-hint">Elysia API backend endpoint</span>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
     </div>
@@ -393,78 +533,160 @@
         <form id="form-edit-cipher" class="edit-form">
           <input type="hidden" id="edit-cipher-id" value="" />
 
-          <div class="edit-field">
-            <label for="edit-cipher-title">Item Title</label>
-            <input type="text" id="edit-cipher-title" placeholder="e.g. Google, GitHub, Netflix" required />
+          <!-- Item Type Switcher (only when creating new item) -->
+          <div id="edit-type-selector-wrap" class="gen-type-selector" style="display: none; margin-bottom: 4px;">
+            <button type="button" id="btn-item-type-login" class="type-btn active">
+              Login
+            </button>
+            <button type="button" id="btn-item-type-ssh" class="type-btn">
+              SSH Key
+            </button>
           </div>
 
           <div class="edit-field">
-            <label for="edit-cipher-username">Username or Email</label>
-            <input type="text" id="edit-cipher-username" placeholder="user@example.com" />
+            <label for="edit-cipher-title">Item Title *</label>
+            <input type="text" id="edit-cipher-title" placeholder="e.g. Google, GitHub, Prod Server" required />
           </div>
 
           <div class="edit-field">
-            <div class="field-label-row">
-              <label for="edit-cipher-password">Primary Password</label>
-              <button type="button" id="btn-edit-gen-pass" class="text-btn mini">
-                Generate
-              </button>
+            <label for="edit-cipher-folder">Folder</label>
+            <select id="edit-cipher-folder" class="edit-select">
+              <option value="">(No Folder)</option>
+            </select>
+          </div>
+
+          <!-- LOGIN FIELDS SECTION -->
+          <div id="edit-login-fields" style="display: flex; flex-direction: column; gap: 10px;">
+            <div class="edit-field">
+              <label for="edit-cipher-username">Username or Email</label>
+              <input type="text" id="edit-cipher-username" placeholder="user@example.com" />
             </div>
-            <div class="input-wrap">
-              <input type="password" id="edit-cipher-password" placeholder="Primary Password" />
-              <button type="button" id="btn-toggle-edit-pass-eye" class="eye-btn" tabindex="-1">
-                <svg viewBox="0 0 24 24">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-              </button>
+
+            <div class="edit-field">
+              <div class="field-label-row">
+                <label for="edit-cipher-password">Primary Password</label>
+                <button type="button" id="btn-edit-gen-pass" class="text-btn mini">
+                  ⚡ Generate
+                </button>
+              </div>
+              <div class="input-wrap">
+                <input type="password" id="edit-cipher-password" placeholder="Primary Password" class="font-mono" />
+                <button type="button" id="btn-toggle-edit-pass-eye" class="eye-btn" tabindex="-1">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Additional Passwords & Access Codes -->
+            <div class="edit-field">
+              <div class="field-label-row">
+                <label>Additional Passwords / Codes</label>
+                <button type="button" id="btn-add-additional-pass" class="text-btn mini">
+                  + Add Code
+                </button>
+              </div>
+              <div id="edit-additional-passwords-list" style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;"></div>
+            </div>
+
+            <!-- Multi-URL Section with Bitwarden Match Detection -->
+            <div class="edit-field">
+              <div class="field-label-row">
+                <label>Websites</label>
+                <button type="button" id="btn-add-uri" class="text-btn mini">
+                  + Add URL
+                </button>
+              </div>
+              <div id="edit-uris-list" style="display: flex; flex-direction: column; gap: 6px; margin-top: 2px;"></div>
+            </div>
+
+            <!-- TOTP Authenticator Key & Screen QR Scanner -->
+            <div class="edit-field">
+              <div class="field-label-row">
+                <label for="edit-cipher-totp">Authenticator Key (TOTP)</label>
+                <button type="button" id="btn-edit-scan-qr" class="text-btn mini" title="Select QR Code area on page">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 2px;">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                  </svg>
+                  Scan Screen QR
+                </button>
+              </div>
+              <div class="input-wrap">
+                <input type="password" id="edit-cipher-totp" placeholder="Secret Key or otpauth:// URL" class="font-mono" />
+                <button type="button" id="btn-toggle-edit-totp-eye" class="eye-btn" tabindex="-1">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Passkey Section -->
+            <div id="edit-passkey-section" class="edit-field" style="display: none">
+              <div class="field-label-row">
+                <label>Passkey</label>
+                <button type="button" id="btn-delete-passkey" class="text-btn mini danger">
+                  Delete Passkey
+                </button>
+              </div>
+              <div class="passkey-info-card">
+                <div class="passkey-info-row">
+                  <span class="passkey-label">Domain:</span>
+                  <span id="passkey-domain" class="passkey-val"></span>
+                </div>
+                <div class="passkey-info-row">
+                  <span class="passkey-label">Created:</span>
+                  <span id="passkey-created" class="passkey-val"></span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Additional Passwords & Access Codes -->
-          <div class="edit-field">
-            <div class="field-label-row">
-              <label>Additional Passwords / Codes</label>
-              <button type="button" id="btn-add-additional-pass" class="text-btn mini">
-                + Add Code
-              </button>
+          <!-- SSH KEY FIELDS SECTION -->
+          <div id="edit-ssh-fields" style="display: none; flex-direction: column; gap: 10px;">
+            <div class="ssh-gen-banner">
+              <div>
+                <span class="ssh-gen-title">Keypair Generator</span>
+                <span class="ssh-gen-desc">Generate secure SSH keys in-browser</span>
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <select id="edit-ssh-algorithm" class="edit-select mini">
+                  <option value="ED25519">Ed25519</option>
+                  <option value="RSA_2048">RSA 2048</option>
+                  <option value="RSA_4096">RSA 4096</option>
+                </select>
+                <button type="button" id="btn-generate-ssh" class="btn-primary mini">Generate</button>
+              </div>
             </div>
-            <div id="edit-additional-passwords-list" style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;"></div>
-          </div>
 
-          <div class="edit-field">
-            <label for="edit-cipher-uri">Website URL (URI)</label>
-            <input type="text" id="edit-cipher-uri" placeholder="https://accounts.google.com" />
-          </div>
+            <div class="edit-field">
+              <div class="field-label-row">
+                <label for="edit-ssh-public-key">Public Key (OpenSSH)</label>
+                <span id="edit-ssh-fingerprint" class="ssh-fp-label"></span>
+              </div>
+              <textarea id="edit-ssh-public-key" rows="2" placeholder="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5..." class="font-mono text-xs"></textarea>
+            </div>
 
-          <div class="edit-field">
-            <label for="edit-cipher-totp">Authenticator Key (TOTP Secret)</label>
-            <input type="text" id="edit-cipher-totp" placeholder="JBSWY3DPEHPK3PXP" />
+            <div class="edit-field">
+              <label for="edit-ssh-private-key">Private Key (PEM)</label>
+              <textarea id="edit-ssh-private-key" rows="3" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----..." class="font-mono text-xs"></textarea>
+            </div>
+
+            <div class="edit-field">
+              <label for="edit-ssh-passphrase">Key Passphrase</label>
+              <input type="password" id="edit-ssh-passphrase" placeholder="Passphrase (Optional)" />
+            </div>
           </div>
 
           <div class="edit-field">
             <label for="edit-cipher-notes">Notes</label>
-            <textarea id="edit-cipher-notes" rows="3" placeholder="Additional notes, recovery codes..."></textarea>
-          </div>
-
-          <!-- Passkey Section (No Credential ID) -->
-          <div id="edit-passkey-section" class="edit-field" style="display: none">
-            <div class="field-label-row">
-              <label>Passkey</label>
-              <button type="button" id="btn-delete-passkey" class="text-btn mini danger">
-                Delete Passkey
-              </button>
-            </div>
-            <div class="passkey-info-card">
-              <div class="passkey-info-row">
-                <span class="passkey-label">Domain:</span>
-                <span id="passkey-domain" class="passkey-val"></span>
-              </div>
-              <div class="passkey-info-row">
-                <span class="passkey-label">Created:</span>
-                <span id="passkey-created" class="passkey-val"></span>
-              </div>
-            </div>
+            <textarea id="edit-cipher-notes" rows="2" placeholder="Additional notes, recovery codes..."></textarea>
           </div>
 
           <div id="edit-error" class="error-badge" style="display: none"></div>
@@ -480,14 +702,137 @@
         </form>
       </div>
     </div>
+
+    <!-- Password Generator Modal (Dialog in Edit Mode) -->
+    <div id="modal-generator" class="modal-overlay" style="display: none">
+      <div class="modal-card">
+        <div class="modal-header">
+          <span class="modal-title">⚡ Password Generator</span>
+          <button type="button" id="btn-modal-gen-close" class="modal-close" title="Close">✕</button>
+        </div>
+
+        <div class="gen-output-container">
+          <div id="modal-gen-output-text" class="gen-output">...</div>
+          <div class="gen-output-actions">
+            <button id="btn-modal-gen-refresh" class="icon-btn" title="Regenerate">
+              <svg viewBox="0 0 24 24">
+                <path d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4m-4 4a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"></path>
+              </svg>
+            </button>
+            <button id="btn-modal-gen-copy" class="icon-btn" title="Copy">
+              <svg viewBox="0 0 24 24">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Mode selector -->
+        <div class="gen-type-selector">
+          <button id="btn-modal-type-password" class="type-btn active">Password</button>
+          <button id="btn-modal-type-passphrase" class="type-btn">Passphrase</button>
+        </div>
+
+        <!-- Controls: Password -->
+        <div id="modal-gen-pass-controls" class="gen-controls">
+          <div class="control-row">
+            <label>Length: <span id="label-modal-pass-length">24</span></label>
+            <input type="range" id="slider-modal-pass-length" min="8" max="128" value="24" />
+          </div>
+          <div class="toggles-grid">
+            <label class="checkbox-label">
+              <input type="checkbox" id="chk-modal-upper" checked /> A-Z
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="chk-modal-lower" checked /> a-z
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="chk-modal-nums" checked /> 0-9
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="chk-modal-syms" checked /> !@#$%
+            </label>
+            <label class="checkbox-label full">
+              <input type="checkbox" id="chk-modal-ambig" checked /> Avoid ambiguous (IO01l)
+            </label>
+          </div>
+        </div>
+
+        <!-- Controls: Passphrase -->
+        <div id="modal-gen-phrase-controls" class="gen-controls" style="display: none">
+          <div class="control-row">
+            <label>Words: <span id="label-modal-words-count">4</span></label>
+            <input type="range" id="slider-modal-words-count" min="3" max="20" value="4" />
+          </div>
+          <div class="control-row">
+            <label>Separator</label>
+            <input type="text" id="input-modal-separator" value="-" maxlength="3" class="mini-input" />
+          </div>
+          <div class="toggles-grid">
+            <label class="checkbox-label">
+              <input type="checkbox" id="chk-modal-capitalize" checked /> Capitalize
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="chk-modal-include-num" checked /> Include Number
+            </label>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: 4px;">
+          <button type="button" id="btn-modal-gen-apply" class="btn-primary" style="flex: 1;">Apply Password</button>
+          <button type="button" id="btn-modal-gen-cancel" class="text-btn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PIN Setup Modal -->
+    <div id="modal-pin-setup" class="modal-overlay" style="display: none">
+      <div class="modal-card">
+        <div class="modal-header">
+          <span class="modal-title">🔐 Set Up Vault PIN</span>
+          <button type="button" id="btn-modal-pin-close" class="modal-close" title="Close">✕</button>
+        </div>
+        <p style="font-size: 11px; color: #a19da8; margin-bottom: 12px; line-height: 1.4;">
+          Create a 4 to 12 digit PIN to unlock your vault quickly. You can always use your master password if you forget your PIN.
+        </p>
+        <div id="pin-setup-error" class="error-badge" style="display: none"></div>
+        <form id="form-pin-setup" style="display: flex; flex-direction: column; gap: 10px;">
+          <div class="edit-field">
+            <label for="pin-setup-new">New PIN (4–12 digits)</label>
+            <div class="input-wrap">
+              <input type="password" id="pin-setup-new" class="font-mono text-center" placeholder="e.g. 123456" maxlength="16" required autofocus />
+              <button type="button" id="btn-toggle-pin-setup-eye" class="eye-btn" tabindex="-1">
+                <svg viewBox="0 0 24 24">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="edit-field">
+            <label for="pin-setup-confirm">Confirm PIN</label>
+            <div class="input-wrap">
+              <input type="password" id="pin-setup-confirm" class="font-mono text-center" placeholder="Confirm PIN" maxlength="16" required />
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 4px;">
+            <button type="submit" id="btn-pin-setup-save" class="btn-primary" style="flex: 1;">Save PIN</button>
+            <button type="button" id="btn-pin-setup-cancel" class="text-btn">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
   </div>
 
   <script src="../lib/noble.js"></script>
   <script src="../lib/crypto.js"></script>
   <script src="../lib/matching.js"></script>
   <script src="../lib/totp.js"></script>
+  <script src="../lib/qr-decoder.js"></script>
+  <script src="../lib/storage.js"></script>
   <script src="../lib/api.js"></script>
   <script src="popup.js"></script>
 </body>
-
 </html>

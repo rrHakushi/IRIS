@@ -86,5 +86,49 @@
     return timeStepSeconds - (epoch % timeStepSeconds)
   }
 
+  /**
+   * Parses an otpauth:// URL or raw Base32 secret string into its parameters.
+   * Format: otpauth://totp/Issuer:account?secret=XYZ&issuer=Issuer
+   */
+  IrisTotp.parseOtpAuthUri = function (uri) {
+    if (!uri || typeof uri !== "string") return null
+    try {
+      const trimmed = uri.trim()
+      if (!trimmed.toLowerCase().startsWith("otpauth://")) {
+        // If user provided raw secret key instead of URI
+        const cleanSecret = trimmed.replace(/[\s\-_=]/g, "").toUpperCase()
+        if (/^[A-Z2-7]+=*$/.test(cleanSecret)) {
+          return { secret: cleanSecret, digits: 6, period: 30 }
+        }
+        return null
+      }
+
+      const url = new URL(trimmed)
+      const secret = url.searchParams.get("secret")
+      if (!secret) return null
+
+      const issuerParam = url.searchParams.get("issuer")
+      const digitsParam = url.searchParams.get("digits")
+      const periodParam = url.searchParams.get("period")
+
+      let label = decodeURIComponent(url.pathname.replace(/^\/\/totp\//, "").replace(/^\/totp\//, ""))
+      if (label.includes(":")) {
+        const parts = label.split(":")
+        label = (parts[parts.length - 1] || "").trim()
+      }
+
+      return {
+        secret: secret.trim().toUpperCase(),
+        label: label || undefined,
+        issuer: issuerParam || undefined,
+        digits: digitsParam ? parseInt(digitsParam, 10) : 6,
+        period: periodParam ? parseInt(periodParam, 10) : 30,
+      }
+    } catch {
+      return null
+    }
+  }
+
   root.IrisTotp = IrisTotp
 })(typeof self !== "undefined" ? self : this)
+
