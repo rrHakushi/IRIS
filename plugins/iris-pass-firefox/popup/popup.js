@@ -121,6 +121,7 @@ const btnAddUri = document.getElementById("btn-add-uri")
 const editCipherTotp = document.getElementById("edit-cipher-totp")
 const btnToggleEditTotpEye = document.getElementById("btn-toggle-edit-totp-eye")
 const btnEditScanQr = document.getElementById("btn-edit-scan-qr")
+const btnCopyEditTotp = document.getElementById("btn-copy-edit-totp")
 const editCipherNotes = document.getElementById("edit-cipher-notes")
 const editError = document.getElementById("edit-error")
 const btnEditSave = document.getElementById("btn-edit-save")
@@ -1285,13 +1286,22 @@ function renderMatchingList(ciphers) {
       btnPass.dataset.action = "copy-pass"
       btnPass.textContent = "Pass"
 
+      actionsDiv.appendChild(btnUser)
+      actionsDiv.appendChild(btnPass)
+
+      if (cipher.data?.totpSecret) {
+        const btnTotp = document.createElement("button")
+        btnTotp.className = "mini-action-btn"
+        btnTotp.dataset.action = "copy-totp"
+        btnTotp.textContent = "TOTP"
+        actionsDiv.appendChild(btnTotp)
+      }
+
       const btnEdit = document.createElement("button")
       btnEdit.className = "mini-action-btn edit-btn"
       btnEdit.dataset.action = "edit"
       btnEdit.textContent = "Edit"
 
-      actionsDiv.appendChild(btnUser)
-      actionsDiv.appendChild(btnPass)
       actionsDiv.appendChild(btnEdit)
     }
 
@@ -1342,6 +1352,30 @@ function renderMatchingList(ciphers) {
             "Pass",
             true
           )
+        })
+
+      card
+        .querySelector('[data-action="copy-totp"]')
+        ?.addEventListener("click", async (e) => {
+          e.stopPropagation()
+          const btnTotp = card.querySelector('[data-action="copy-totp"]')
+          if (cipher.data?.totpSecret && typeof IrisTotp !== "undefined") {
+            try {
+              let secret = cipher.data.totpSecret
+              let period = 30
+              const parsed = IrisTotp.parseOtpAuthUri(secret)
+              if (parsed) {
+                secret = parsed.secret
+                period = parsed.period || 30
+              }
+              const code = await IrisTotp.generateTotp(secret, period)
+              if (code) {
+                copySensitiveValue(btnTotp, code, "TOTP", true)
+              }
+            } catch (err) {
+              console.error("Failed to generate TOTP code:", err)
+            }
+          }
         })
     } else {
       card
@@ -1497,13 +1531,22 @@ function renderVaultList(ciphers) {
       btnPass.dataset.action = "copy-pass"
       btnPass.textContent = "Pass"
 
+      actionsDiv.appendChild(btnUser)
+      actionsDiv.appendChild(btnPass)
+
+      if (cipher.data?.totpSecret) {
+        const btnTotp = document.createElement("button")
+        btnTotp.className = "mini-action-btn"
+        btnTotp.dataset.action = "copy-totp"
+        btnTotp.textContent = "TOTP"
+        actionsDiv.appendChild(btnTotp)
+      }
+
       const btnEdit = document.createElement("button")
       btnEdit.className = "mini-action-btn edit-btn"
       btnEdit.dataset.action = "edit"
       btnEdit.textContent = "Edit"
 
-      actionsDiv.appendChild(btnUser)
-      actionsDiv.appendChild(btnPass)
       actionsDiv.appendChild(btnEdit)
     }
 
@@ -1554,6 +1597,30 @@ function renderVaultList(ciphers) {
             "Pass",
             true
           )
+        })
+
+      card
+        .querySelector('[data-action="copy-totp"]')
+        ?.addEventListener("click", async (e) => {
+          e.stopPropagation()
+          const btnTotp = card.querySelector('[data-action="copy-totp"]')
+          if (cipher.data?.totpSecret && typeof IrisTotp !== "undefined") {
+            try {
+              let secret = cipher.data.totpSecret
+              let period = 30
+              const parsed = IrisTotp.parseOtpAuthUri(secret)
+              if (parsed) {
+                secret = parsed.secret
+                period = parsed.period || 30
+              }
+              const code = await IrisTotp.generateTotp(secret, period)
+              if (code) {
+                copySensitiveValue(btnTotp, code, "TOTP", true)
+              }
+            } catch (err) {
+              console.error("Failed to generate TOTP code:", err)
+            }
+          }
         })
     } else {
       card
@@ -1877,6 +1944,7 @@ function openCreateCipher(defaultUrl) {
   editCipherUsername.value = ""
   editCipherPassword.value = ""
   editCipherTotp.value = ""
+  if (btnCopyEditTotp) btnCopyEditTotp.style.display = "none"
   editCipherNotes.value = ""
   editSshPublicKey.value = ""
   editSshPrivateKey.value = ""
@@ -1918,6 +1986,9 @@ function openEditCipher(cipher) {
   editCipherUsername.value = cipher.data?.username || ""
   editCipherPassword.value = cipher.data?.password || ""
   editCipherTotp.value = cipher.data?.totpSecret || ""
+  if (btnCopyEditTotp) {
+    btnCopyEditTotp.style.display = cipher.data?.totpSecret ? "inline-flex" : "none"
+  }
   editCipherNotes.value = cipher.data?.notes || ""
 
   // SSH Key fields
@@ -1988,6 +2059,32 @@ btnToggleEditTotpEye?.addEventListener("click", () => {
   editCipherTotp.type = isPass ? "text" : "password"
 })
 
+editCipherTotp?.addEventListener("input", () => {
+  if (btnCopyEditTotp) {
+    btnCopyEditTotp.style.display = editCipherTotp.value.trim() ? "inline-flex" : "none"
+  }
+})
+
+btnCopyEditTotp?.addEventListener("click", async () => {
+  const raw = editCipherTotp.value.trim()
+  if (!raw || typeof IrisTotp === "undefined") return
+  try {
+    let secret = raw
+    let period = 30
+    const parsed = IrisTotp.parseOtpAuthUri(raw)
+    if (parsed) {
+      secret = parsed.secret
+      period = parsed.period || 30
+    }
+    const code = await IrisTotp.generateTotp(secret, period)
+    if (code) {
+      copySensitiveValue(btnCopyEditTotp, code, "TOTP", true)
+    }
+  } catch (err) {
+    console.error("Failed to generate TOTP:", err)
+  }
+})
+
 // Trigger in-page screen QR selection
 btnEditScanQr?.addEventListener("click", async () => {
   try {
@@ -2008,6 +2105,9 @@ ext.storage?.session?.get(["pendingScannedTotp"]).then((data) => {
     if (editCipherTotp) {
       editCipherTotp.value = secret
       editCipherTotp.type = "text"
+      if (btnCopyEditTotp) {
+        btnCopyEditTotp.style.display = "inline-flex"
+      }
     }
     // Clean up
     ext.storage.session.remove(["pendingScannedTotp"])
