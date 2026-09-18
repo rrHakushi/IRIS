@@ -5,8 +5,8 @@ import IrisPassNavProvider from "@/components/navigation/providers/iris-pass-nav
 import { PassProvider } from "@/context/pass-context"
 
 export const metadata: Metadata = {
-  title: "IRIS Pass | Zero-Knowledge Vault",
-  description: "Secure, zero-knowledge encrypted password, credential, and SSH key manager.",
+  title: "IRIS Pass | Vault",
+  description: "Encrypted password manager and more.",
 }
 
 export default function PassLayout({
