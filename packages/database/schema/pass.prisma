@@ -1,0 +1,71 @@
+enum PassCipherType {
+  LOGIN
+  SSH_KEY
+}
+
+enum PassRepromptType {
+  NONE
+  REQUIRE_MASTER_PASSWORD
+}
+
+enum SshKeyType {
+  ED25519
+  RSA_2048
+  RSA_4096
+}
+
+model PassFolder {
+  id            String       @id @default(uuid())
+  userId        String
+  user          User         @relation("UserToPassFolders", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Folder name encrypted client-side with VaultKey
+  encryptedName String       @db.Text
+
+  // Hierarchical nesting
+  parentId      String?
+  parent        PassFolder?  @relation("FolderToFolder", fields: [parentId], references: [id], onDelete: Cascade)
+  children      PassFolder[] @relation("FolderToFolder")
+
+  ciphers       PassCipher[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([parentId])
+}
+
+model PassCipher {
+  id             String           @id @default(uuid())
+  userId         String
+  user           User             @relation("UserToPassCiphers", fields: [userId], references: [id], onDelete: Cascade)
+
+  type           PassCipherType   @default(LOGIN)
+  favorite       Boolean          @default(false)
+  reprompt       PassRepromptType @default(NONE)
+
+  // Folder relation
+  folderId       String?
+  folder         PassFolder?      @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
+  // Encrypted item display name / title (encrypted client-side with VaultKey)
+  encryptedTitle String           @db.Text
+
+  // Encrypted JSON data payload (encrypted client-side with VaultKey)
+  // For LOGIN: { username, password, uris: [{ uri, match }], totpSecret, customFields: [...] }
+  // For SSH_KEY: { keyType, publicKey, encryptedPrivateKey, passphrase, fingerprint, notes }
+  // STRICT ZERO PASSWORD HISTORY: Previous passwords are never saved.
+  encryptedData  String           @db.Text
+
+  // Soft Delete / Trash Bin (null = active item)
+  deletedAt      DateTime?
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([userId, type])
+  @@index([userId, deletedAt])
+  @@index([userId, favorite])
+  @@index([folderId])
+  @@index([userId, updatedAt])
+}

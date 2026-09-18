@@ -1,0 +1,19 @@
+{
+  "name": "iris-pass-firefox",
+  "version": "1.4.2",
+  "description": "Password manager extension for IRIS.",
+  "scripts": {
+    "lint": "npx web-ext lint",
+    "build": "npx web-ext build --artifacts-dir dist --overwrite-dest"
+  },
+  "keywords": [
+    "iris",
+    "password-manager",
+    "firefox-extension",
+    "webextension",
+    "passkeys",
+    "autofill"
+  ],
+  "author": "Hakushi",
+  "license": "MIT"
+}

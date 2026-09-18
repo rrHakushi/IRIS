@@ -147,10 +147,43 @@ export default defineRoute({
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : "Passkey verification failed"
-      return new Response(
-        JSON.stringify({ error: "Unauthorized", message: msg }),
-        { status: 401, headers: { "content-type": "application/json" } }
-      )
+      
+      // If error is strictly a signature counter desync on a multi-device/synced passkey:
+      if (msg.includes("was lower than expected")) {
+        console.warn(
+          "[IRIS Passkey] Counter desync detected on multi-device passkey, verifying signature without counter enforcement..."
+        )
+        try {
+          verification = await verifyAuthenticationResponse({
+            response: payload.passkeyResponse as any,
+            expectedChallenge,
+            expectedOrigin,
+            expectedRPID,
+            credential: {
+              id: passkey.id,
+              publicKey: Buffer.from(passkey.publicKey, "base64url"),
+              counter: 0,
+              transports: passkey.transports as any,
+            },
+          })
+        } catch (retryErr: unknown) {
+          const retryMsg =
+            retryErr instanceof Error
+              ? retryErr.message
+              : "Passkey verification failed"
+          console.error("[PASSKEY VERIFICATION FAILED]:", retryMsg, retryErr)
+          return new Response(
+            JSON.stringify({ error: "Unauthorized", message: retryMsg }),
+            { status: 401, headers: { "content-type": "application/json" } }
+          )
+        }
+      } else {
+        console.error("[PASSKEY VERIFICATION FAILED]:", msg, err)
+        return new Response(
+          JSON.stringify({ error: "Unauthorized", message: msg }),
+          { status: 401, headers: { "content-type": "application/json" } }
+        )
+      }
     }
 
     if (!verification.verified || !verification.authenticationInfo) {

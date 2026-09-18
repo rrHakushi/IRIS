@@ -2,6 +2,7 @@ import { useMemo } from "react"
 import type { Session } from "next-auth"
 import type { SidebarConfig } from "@/types/sidebar-config"
 import { useListSidebarConfig, getListSidebarConfig } from "./listSidebarConfig"
+import { usePassSidebarConfig, getPassSidebarConfig } from "./passSidebarConfig"
 
 export interface AppSidebarRegistryEntry {
   appId: string
@@ -17,6 +18,7 @@ export function useAllAppSidebarConfigs(
   session: Session | null
 ): AppSidebarRegistryEntry[] {
   const listConfig = useListSidebarConfig(session)
+  const passConfig = usePassSidebarConfig(session)
 
   return useMemo(
     () => [
@@ -25,8 +27,13 @@ export function useAllAppSidebarConfigs(
         appName: "IRIS List",
         config: listConfig,
       },
+      {
+        appId: "iris-pass",
+        appName: "IRIS Pass",
+        config: passConfig,
+      },
     ],
-    [listConfig]
+    [listConfig, passConfig]
   )
 }
 
@@ -43,7 +50,14 @@ export function getAllAppSidebarConfigs(
       appName: "IRIS List",
       config: getListSidebarConfig(session, tList),
     },
+    {
+      appId: "iris-pass",
+      appName: "IRIS Pass",
+      config: getPassSidebarConfig(session),
+    },
   ]
 }
 
 export * from "./listSidebarConfig"
+export * from "./passSidebarConfig"
+

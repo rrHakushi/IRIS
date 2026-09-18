@@ -205,6 +205,7 @@
         "info": "情報",
         "security": "セキュリティ",
         "encryption": "暗号化",
+        "pass": "パスワードと保管庫",
         "apiKeys": "APIキー",
         "connections": "連携アカウント",
         "privacy": "プライバシー",

@@ -1,6 +1,6 @@
 import {
   generateAuthenticationOptions,
-  type AuthenticatorTransportFuture,
+  type AuthenticatorTransport,
 } from "@simplewebauthn/server"
 import { defineRoute, t } from "../../../../../router"
 
@@ -65,7 +65,7 @@ export default defineRoute({
       | {
           id: string
           type: "public-key"
-          transports?: AuthenticatorTransportFuture[]
+          transports?: AuthenticatorTransport[]
         }[]
       | undefined = undefined
 
@@ -85,7 +85,7 @@ export default defineRoute({
         allowCredentials = user.passkeys.map((pk) => ({
           id: pk.id,
           type: "public-key" as const,
-          transports: pk.transports as AuthenticatorTransportFuture[],
+          transports: pk.transports as AuthenticatorTransport[],
         }))
       }
     }

@@ -66,6 +66,10 @@ model User {
     encryptedPrivateKey    String?
     encryptionPasswordHash String?   @db.Text
 
+    // IRIS PASS RELATIONS
+    passFolders  PassFolder[] @relation("UserToPassFolders")
+    passCiphers  PassCipher[] @relation("UserToPassCiphers")
+
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
