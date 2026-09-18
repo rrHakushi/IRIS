@@ -1356,25 +1356,11 @@ function renderMatchingList(ciphers) {
 
       card
         .querySelector('[data-action="copy-totp"]')
-        ?.addEventListener("click", async (e) => {
+        ?.addEventListener("click", (e) => {
           e.stopPropagation()
           const btnTotp = card.querySelector('[data-action="copy-totp"]')
-          if (cipher.data?.totpSecret && typeof IrisTotp !== "undefined") {
-            try {
-              let secret = cipher.data.totpSecret
-              let period = 30
-              const parsed = IrisTotp.parseOtpAuthUri(secret)
-              if (parsed) {
-                secret = parsed.secret
-                period = parsed.period || 30
-              }
-              const code = await IrisTotp.generateTotp(secret, period)
-              if (code) {
-                copySensitiveValue(btnTotp, code, "TOTP", true)
-              }
-            } catch (err) {
-              console.error("Failed to generate TOTP code:", err)
-            }
+          if (cipher.data?.totpSecret) {
+            copyTotpValueWithCountdown(btnTotp, cipher.data.totpSecret, "TOTP")
           }
         })
     } else {
@@ -1426,6 +1412,91 @@ function copySensitiveValue(btn, text, label, isSensitive = false) {
       action: "SCHEDULE_CLIPBOARD_CLEAR",
       payload: { text, seconds: clipboardClearSeconds },
     })
+  }
+}
+
+let activeTotpCountdownInterval = null
+let activeTotpCountdownBtn = null
+let activeTotpOriginalText = null
+
+/**
+ * Copy TOTP value to clipboard with live countdown feedback until the code expires
+ */
+async function copyTotpValueWithCountdown(btn, rawSecret, originalText = "TOTP") {
+  if (!rawSecret || typeof IrisTotp === "undefined") return
+  try {
+    let secret = rawSecret
+    let period = 30
+    const parsed = IrisTotp.parseOtpAuthUri(rawSecret)
+    if (parsed) {
+      secret = parsed.secret
+      period = parsed.period || 30
+    }
+    const code = await IrisTotp.generateTotp(secret, period)
+    if (!code) return
+
+    await navigator.clipboard.writeText(code)
+
+    if (clipboardClearSeconds > 0) {
+      ext.runtime.sendMessage({
+        action: "SCHEDULE_CLIPBOARD_CLEAR",
+        payload: { text: code, seconds: clipboardClearSeconds },
+      })
+    }
+
+    // Launch in-page floating countdown widget on active tab as well
+    ext.tabs?.query?.({ active: true, currentWindow: true }).then((tabs) => {
+      if (tabs?.[0]?.id) {
+        ext.tabs.sendMessage(tabs[0].id, {
+          action: "SHOW_TOTP_TIMER",
+          payload: {
+            secret: rawSecret,
+            label: "2FA Code",
+            initialCode: code,
+          },
+        }).catch(() => {})
+      }
+    }).catch(() => {})
+
+    // Clear any previous active button countdown
+    if (activeTotpCountdownInterval) {
+      clearInterval(activeTotpCountdownInterval)
+      activeTotpCountdownInterval = null
+      if (activeTotpCountdownBtn && activeTotpOriginalText) {
+        activeTotpCountdownBtn.textContent = activeTotpOriginalText
+        activeTotpCountdownBtn.style.color = ""
+      }
+    }
+
+    activeTotpCountdownBtn = btn
+    activeTotpOriginalText = originalText
+
+    function updateTicker() {
+      const rem = IrisTotp.getRemainingSeconds(period)
+      if (rem <= 1 || rem === period) {
+        // Expired
+        if (activeTotpCountdownInterval) {
+          clearInterval(activeTotpCountdownInterval)
+          activeTotpCountdownInterval = null
+        }
+        btn.textContent = originalText
+        btn.style.color = ""
+        activeTotpCountdownBtn = null
+        activeTotpOriginalText = null
+      } else {
+        btn.textContent = `Copied! (${rem}s)`
+        btn.style.color = "#10b981"
+      }
+    }
+
+    // Initial state: show "Copied! (28s)"
+    const rem = IrisTotp.getRemainingSeconds(period)
+    btn.textContent = `Copied! (${rem}s)`
+    btn.style.color = "#10b981"
+
+    activeTotpCountdownInterval = setInterval(updateTicker, 1000)
+  } catch (err) {
+    console.error("Failed to generate and copy TOTP:", err)
   }
 }
 
@@ -1601,25 +1672,11 @@ function renderVaultList(ciphers) {
 
       card
         .querySelector('[data-action="copy-totp"]')
-        ?.addEventListener("click", async (e) => {
+        ?.addEventListener("click", (e) => {
           e.stopPropagation()
           const btnTotp = card.querySelector('[data-action="copy-totp"]')
-          if (cipher.data?.totpSecret && typeof IrisTotp !== "undefined") {
-            try {
-              let secret = cipher.data.totpSecret
-              let period = 30
-              const parsed = IrisTotp.parseOtpAuthUri(secret)
-              if (parsed) {
-                secret = parsed.secret
-                period = parsed.period || 30
-              }
-              const code = await IrisTotp.generateTotp(secret, period)
-              if (code) {
-                copySensitiveValue(btnTotp, code, "TOTP", true)
-              }
-            } catch (err) {
-              console.error("Failed to generate TOTP code:", err)
-            }
+          if (cipher.data?.totpSecret) {
+            copyTotpValueWithCountdown(btnTotp, cipher.data.totpSecret, "TOTP")
           }
         })
     } else {
@@ -2065,23 +2122,10 @@ editCipherTotp?.addEventListener("input", () => {
   }
 })
 
-btnCopyEditTotp?.addEventListener("click", async () => {
+btnCopyEditTotp?.addEventListener("click", () => {
   const raw = editCipherTotp.value.trim()
-  if (!raw || typeof IrisTotp === "undefined") return
-  try {
-    let secret = raw
-    let period = 30
-    const parsed = IrisTotp.parseOtpAuthUri(raw)
-    if (parsed) {
-      secret = parsed.secret
-      period = parsed.period || 30
-    }
-    const code = await IrisTotp.generateTotp(secret, period)
-    if (code) {
-      copySensitiveValue(btnCopyEditTotp, code, "TOTP", true)
-    }
-  } catch (err) {
-    console.error("Failed to generate TOTP:", err)
+  if (raw) {
+    copyTotpValueWithCountdown(btnCopyEditTotp, raw, "Copy TOTP")
   }
 })
 

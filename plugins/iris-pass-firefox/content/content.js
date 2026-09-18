@@ -1061,38 +1061,81 @@
       navigator.clipboard.writeText(curCode).catch(() => {})
     }
 
+    const initialUrl = window.location.href
+    const initialAuthInputs = Array.from(
+      document.querySelectorAll(
+        'input[type="password"], input[autocomplete="one-time-code"], input[name*="otp" i], input[name*="2fa" i], input[name*="totp" i], input[name*="code" i]'
+      )
+    )
+
     let lastRemaining = getRemaining()
 
     totpCountdownInterval = setInterval(async () => {
+      // Check if user navigated or logged in (SPA route transition / URL change)
+      if (window.location.href !== initialUrl) {
+        dismissWidget(true)
+        return
+      }
+
+      // Check if auth/login form inputs have unmounted/disappeared
+      if (initialAuthInputs.length > 0) {
+        const anyOriginalConnected = initialAuthInputs.some((el) => el.isConnected)
+        const anyCurrentAuth = document.querySelector(
+          'input[type="password"], input[autocomplete="one-time-code"]'
+        )
+        if (!anyOriginalConnected && !anyCurrentAuth) {
+          dismissWidget(true)
+          return
+        }
+      }
+
       const rem = getRemaining()
       if (secondsDisplay) secondsDisplay.textContent = `${rem}s`
 
-      // When timer expires / wraps around to 30 from 1
-      if (rem > lastRemaining || rem === 30) {
-        if (typeof IrisTotp !== "undefined") {
-          const newCode = await IrisTotp.generateTotp(secret)
-          if (newCode) {
-            curCode = newCode
-            if (codeDisplay) codeDisplay.textContent = newCode
-            navigator.clipboard.writeText(newCode).catch(() => {})
-            if (statusHint) {
-              statusHint.textContent = "New code copied!"
-              statusHint.style.color = "#10b981"
-              setTimeout(() => {
-                if (statusHint) {
-                  statusHint.textContent = "Code in clipboard"
-                  statusHint.style.color = ""
-                }
-              }, 2500)
-            }
-          }
+      // When timer expires (countdown reaches 0 or wraps around)
+      if (rem <= 1 && lastRemaining <= 1) {
+        if (secondsDisplay) secondsDisplay.textContent = "0s"
+        if (statusHint) {
+          statusHint.textContent = "Code expired"
+          statusHint.style.color = "#fb7185"
         }
+        setTimeout(() => {
+          dismissWidget(false)
+        }, 500)
+        return
+      }
+      if (rem > lastRemaining || rem === 30) {
+        // Expired into next period
+        dismissWidget(false)
+        return
       }
       lastRemaining = rem
     }, 1000)
 
+    let domObserver = null
+    try {
+      domObserver = new MutationObserver(() => {
+        if (window.location.href !== initialUrl) {
+          dismissWidget(true)
+        } else if (initialAuthInputs.length > 0) {
+          const anyOriginalConnected = initialAuthInputs.some((el) => el.isConnected)
+          const anyCurrentAuth = document.querySelector(
+            'input[type="password"], input[autocomplete="one-time-code"]'
+          )
+          if (!anyOriginalConnected && !anyCurrentAuth) {
+            dismissWidget(true)
+          }
+        }
+      })
+      domObserver.observe(document.body, { childList: true, subtree: true })
+    } catch {}
+
     function dismissWidget(success = false) {
       if (totpCountdownInterval) clearInterval(totpCountdownInterval)
+      if (domObserver) {
+        domObserver.disconnect()
+        domObserver = null
+      }
       if (loginSuccessCleanup) {
         loginSuccessCleanup()
         loginSuccessCleanup = null
@@ -1113,24 +1156,64 @@
             activeTotpWidget.remove()
             activeTotpWidget = null
           }
-        }, 300)
+        }, 350)
       }
     }
 
-    // Login Success Detection
+    // Login Success Event Listeners
+    function handlePotentialLoginClick(e) {
+      const btn = e.target.closest('button, input[type="submit"], [role="button"]')
+      if (!btn) return
+      const text = (btn.textContent || btn.value || "").toLowerCase()
+      if (/sign\s*in|log\s*in|verify|continue|submit|next|authenticate|confirm|enter/i.test(text)) {
+        setTimeout(() => {
+          if (
+            window.location.href !== initialUrl ||
+            !document.querySelector('input[type="password"], input[autocomplete="one-time-code"]')
+          ) {
+            dismissWidget(true)
+          }
+        }, 600)
+        setTimeout(() => {
+          if (
+            window.location.href !== initialUrl ||
+            !document.querySelector('input[type="password"], input[autocomplete="one-time-code"]')
+          ) {
+            dismissWidget(true)
+          }
+        }, 1500)
+      }
+    }
+
+    function handleKeyDown(e) {
+      if (e.key === "Enter") {
+        setTimeout(() => {
+          if (
+            window.location.href !== initialUrl ||
+            !document.querySelector('input[type="password"], input[autocomplete="one-time-code"]')
+          ) {
+            dismissWidget(true)
+          }
+        }, 800)
+      }
+    }
+
     function handleFormSubmit() {
       setTimeout(() => {
         dismissWidget(true)
-      }, 1500)
+      }, 800)
     }
 
     function handleUrlChange() {
       dismissWidget(true)
     }
 
-    document.addEventListener("submit", handleFormSubmit, { capture: true, once: true })
-    window.addEventListener("popstate", handleUrlChange, { once: true })
-    window.addEventListener("hashchange", handleUrlChange, { once: true })
+    document.addEventListener("submit", handleFormSubmit, { capture: true })
+    document.addEventListener("click", handlePotentialLoginClick, { capture: true })
+    document.addEventListener("keydown", handleKeyDown, { capture: true })
+    window.addEventListener("popstate", handleUrlChange)
+    window.addEventListener("hashchange", handleUrlChange)
+    window.addEventListener("pagehide", handleUrlChange)
 
     // Auto dismiss after 3 minutes max
     const autoTimeout = setTimeout(() => {
@@ -1139,9 +1222,16 @@
 
     loginSuccessCleanup = () => {
       clearTimeout(autoTimeout)
+      if (domObserver) {
+        domObserver.disconnect()
+        domObserver = null
+      }
       document.removeEventListener("submit", handleFormSubmit, { capture: true })
+      document.removeEventListener("click", handlePotentialLoginClick, { capture: true })
+      document.removeEventListener("keydown", handleKeyDown, { capture: true })
       window.removeEventListener("popstate", handleUrlChange)
       window.removeEventListener("hashchange", handleUrlChange)
+      window.removeEventListener("pagehide", handleUrlChange)
     }
   }
 
