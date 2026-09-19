@@ -2,16 +2,16 @@ import React, { useMemo } from "react"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
 import { type IRISBitFieldResolvable } from "@IRIS/permissions"
-import { IconApps, IconShieldLock } from "@tabler/icons-react"
+import { cn } from "@workspace/ui/lib/utils"
 
 export interface IrisApp {
-  id?: string
+  id: string
   name: string
   href: string
   color: string
   colorClass?: string
   bgClass?: string
-  icon?: React.ReactNode
+  icon?: string
   iconLeftRing?: string
   iconLeftNoRing?: string
   iconRightRing?: string
@@ -19,6 +19,30 @@ export interface IrisApp {
   description: string
   descriptionShort: string
   permissions?: IRISBitFieldResolvable
+}
+
+export function renderIrisAppIcon(
+  app: IrisApp | null | undefined,
+  className = "size-5",
+  style?: React.CSSProperties
+): React.JSX.Element | null {
+  if (!app) return null
+
+  const iconSrc =
+    app.icon ||
+    app.iconLeftRing ||
+    "/iris-pass512left-ring.png"
+
+  return (
+    <Image
+      src={iconSrc}
+      alt={app.name}
+      width={96}
+      height={96}
+      style={style}
+      className={cn("object-contain rounded-full", className)}
+    />
+  )
 }
 
 export function getIrisApps(t: (key: string) => string): IrisApp[] {
@@ -30,9 +54,9 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
       color: "#6366f1",
       colorClass: "text-indigo-500",
       bgClass: "bg-indigo-500",
+      icon: "/iris-pass512left-ring.png",
       description: t("irisList.description"),
       descriptionShort: t("irisList.descriptionShort"),
-      icon: <IconApps className="size-4 text-indigo-500" />,
     },
     {
       id: "iris-pass",
@@ -41,49 +65,53 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
       color: "#d800a6",
       colorClass: "text-[#d800a6]",
       bgClass: "bg-[#d800a6]",
+      icon: "/iris-pass512left-ring.png",
       description: "Zero-knowledge encrypted password, credential, and SSH key manager.",
       descriptionShort: "Vault & Generator",
-      icon: (
-        <Image
-          src="/iris-pass512left-ring.png"
-          alt="IRIS Pass"
-          width={16}
-          height={16}
-          className="size-4 object-contain"
-        />
-      ),
     },
     // {
+    //   id: "iris-cloud",
     //   name: "IRIS Cloud",
     //   href: "/cloud",
     //   color: "#f59e0b",
+    //   colorClass: "text-amber-500",
+    //   bgClass: "bg-amber-500",
+    //   icon: "/iris-pass512left-ring.png",
     //   description: "Cloud storage and tools.",
     //   descriptionShort: "Cloud storage and tools",
-    //   icon: <IconKey className="size-4 text-amber-500" />,
     // },
     // {
+    //   id: "iris-mail",
     //   name: "IRIS Mail",
     //   href: "/mail",
     //   color: "#06b6d4",
+    //   colorClass: "text-cyan-500",
+    //   bgClass: "bg-cyan-500",
+    //   icon: "/iris-pass512left-ring.png",
     //   description: "Email and stuff.",
     //   descriptionShort: "Email",
-    //   icon: <IconDatabase className="size-4 text-cyan-500" />,
     // },
     // {
+    //   id: "iris-messages",
     //   name: "IRIS Messages",
     //   href: "/messages",
     //   color: "#10b981",
+    //   colorClass: "text-emerald-500",
+    //   bgClass: "bg-emerald-500",
+    //   icon: "/iris-pass512left-ring.png",
     //   description: "Messages and stuff.",
     //   descriptionShort: "Messages",
-    //   icon: <IconChartBar className="size-4 text-emerald-500" />,
     // },
     // {
+    //   id: "iris-docs",
     //   name: "IRIS Docs",
     //   href: "/docs",
     //   color: "#a855f7",
+    //   colorClass: "text-purple-500",
+    //   bgClass: "bg-purple-500",
+    //   icon: "/iris-pass512left-ring.png",
     //   description: "Knowledge base and documentation.",
     //   descriptionShort: "Docs",
-    //   icon: <IconPuzzle className="size-4 text-purple-500" />,
     // },
   ]
 }
@@ -93,14 +121,4 @@ export function useIrisApps(): IrisApp[] {
   return useMemo(() => getIrisApps(t), [t])
 }
 
-// export const irisApps: IrisApp[] = [
-//   {
-//     id: "iris-list",
-//     name: "IRIS List",
-//     href: "/list",
-//     color: "#6366f1",
-//     description: "Track your media. Watch, read, listen, and enjoy.",
-//     descriptionShort: "Media tracking.",
-//     icon: <IconApps className="size-4 text-indigo-500" />,
-//   },
-// ];
+

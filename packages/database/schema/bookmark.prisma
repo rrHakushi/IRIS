@@ -1,0 +1,19 @@
+model Bookmark {
+    id        String   @id @default(uuid())
+    userId    String
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    title     String
+    url       String   @db.Text
+    icon      String?
+    color     String?
+    pinned    Boolean  @default(false)
+    appId     String?
+    group     String?
+    order     Int      @default(0)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId])
+    @@index([userId, pinned])
+    @@index([userId, group])
+}

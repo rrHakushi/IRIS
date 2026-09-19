@@ -53,13 +53,66 @@ export interface UserDockCustomization {
   [key: string]: unknown;
 }
 
+export interface UserBookmark {
+  id: string;
+  title: string;
+  url: string;
+  icon?: string;
+  color?: string;
+  pinned?: boolean;
+  appId?: string;
+  group?: string;
+  order?: number;
+  createdAt?: string;
+}
+
 export interface UserCustomization {
   profile?: UserProfileCustomization;
   appearance?: Record<string, unknown>;
   sidebar?: Record<string, unknown>;
   dock?: UserDockCustomization;
   preferences?: UserPreferencesCustomization;
+  bookmarks?: UserBookmark[];
   [key: string]: unknown;
+}
+
+export function getBookmarksCustomization(customization?: unknown): UserBookmark[] {
+  if (!customization || typeof customization !== "object") {
+    return [];
+  }
+  const bookmarks = (customization as any)?.bookmarks;
+  if (!Array.isArray(bookmarks)) {
+    return [];
+  }
+  return bookmarks
+    .filter(
+      (b): b is UserBookmark =>
+        b && typeof b === "object" && typeof b.id === "string" && typeof b.title === "string" && typeof b.url === "string"
+    )
+    .map((b) => ({
+      id: b.id,
+      title: b.title,
+      url: b.url,
+      icon: typeof b.icon === "string" ? b.icon : undefined,
+      color: typeof b.color === "string" ? b.color : undefined,
+      pinned: Boolean(b.pinned),
+      createdAt: typeof b.createdAt === "string" ? b.createdAt : undefined,
+    }));
+}
+
+export function setBookmarksCustomization(
+  existingCustomization: unknown,
+  bookmarks: UserBookmark[]
+): Record<string, unknown> {
+  const current =
+    existingCustomization && typeof existingCustomization === "object"
+      ? { ...(existingCustomization as Record<string, unknown>) }
+      : {};
+
+  return {
+    ...current,
+    bookmarks,
+  };
 }
 
 export function getMediaPreferences(customization?: unknown): UserMediaPreferences {
