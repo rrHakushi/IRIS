@@ -110,10 +110,10 @@ export function ComponentPickerModal({
           <div className="flex flex-wrap gap-1">
             {[
               { id: "all", label: "All Items" },
+              { id: "docs", label: "Docs" },
               { id: "sections", label: "Sections" },
               { id: "blocks", label: "Blocks" },
               { id: "typography", label: "Typography" },
-              { id: "actions", label: "Actions" },
               { id: "forms", label: "Forms" },
               { id: "feedback", label: "Feedback" },
             ].map((cat) => (

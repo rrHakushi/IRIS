@@ -57,7 +57,7 @@ export function PropertiesPanel({
   onDeleteNode,
 }: PropertiesPanelProps) {
   const selectedNode = React.useMemo(() => {
-    return getNodeByPath(schema.root, selectedPath)
+    return getNodeByPath(schema.root || { type: "div", children: [] }, selectedPath)
   }, [schema.root, selectedPath])
 
   if (!selectedNode) {
@@ -128,13 +128,12 @@ export function PropertiesPanel({
         {isSimpleTextChild && (
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-              <span>Text Content</span>
-              <span className="text-[10px] lowercase font-normal opacity-70">(supports &#123;&#123; expr &#125;&#125;)</span>
+              <span>Text / Markdown Content</span>
             </label>
             <Input
               value={String(selectedNode.children ?? "")}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setChildrenText(e.target.value)}
-              placeholder="Enter text or expression..."
+              placeholder="Enter text content..."
               className="h-8 text-xs rounded-xl"
               aria-label="Text content"
             />
@@ -201,44 +200,6 @@ export function PropertiesPanel({
               placeholder="e.g. flex items-center gap-2 p-4"
               className="h-8 text-xs font-mono rounded-xl"
               aria-label="Tailwind CSS classes"
-            />
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* 3. Two-Way State Binding */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-              <IconVariable className="size-3 text-primary" />
-              <span>Two-Way State Binding</span>
-            </span>
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-[11px] text-muted-foreground">
-              Bind Value (bind: "state.path")
-            </label>
-            <Input
-              value={String(props.bind || "")}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProp("bind", e.target.value)}
-              placeholder="state.formField"
-              className="h-8 text-xs font-mono rounded-xl"
-              aria-label="Two-way binding path"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-[11px] text-muted-foreground">
-              Bind Switch/Checkbox (bindChecked)
-            </label>
-            <Input
-              value={String(props.bindChecked || "")}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProp("bindChecked", e.target.value)}
-              placeholder="state.isEnabled"
-              className="h-8 text-xs font-mono rounded-xl"
-              aria-label="Boolean checked binding path"
             />
           </div>
         </div>
@@ -318,75 +279,6 @@ export function PropertiesPanel({
             )}
           </div>
         )}
-
-        {/* 5. Conditional Visibility */}
-        <div className="space-y-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-            <IconEye className="size-3" />
-            <span>Conditional Visibility</span>
-          </span>
-          <Input
-            value={String(selectedNode.condition || "")}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              const val = e.target.value
-              onUpdateNode(selectedPath, (node) => ({
-                ...node,
-                condition: val.trim() ? val : undefined,
-              }))
-            }}
-            placeholder="e.g. state.count >= 5"
-            className="h-8 text-xs font-mono rounded-xl"
-            aria-label="Condition expression"
-          />
-          <p className="text-[10px] text-muted-foreground">
-            Node only renders if expression evaluates to truthy.
-          </p>
-        </div>
-
-        <Separator />
-
-        {/* 6. Event Handlers & Actions */}
-        <div className="space-y-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-            <IconHandClick className="size-3 text-primary" />
-            <span>Action Script (onPress / onClick)</span>
-          </span>
-
-          <Textarea
-            value={String(props.onPress || props.onClick || "")}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-              const script = e.target.value
-              setProp("onPress", script.trim() ? script : undefined)
-            }}
-            placeholder="e.g. set('count', state.count + 1); toast.success('Updated!')"
-            className="h-20 text-xs font-mono resize-none rounded-xl"
-            aria-label="Event handler script"
-          />
-
-          <div className="flex flex-wrap gap-1">
-            <button
-              type="button"
-              onClick={() => setProp("onPress", "set('count', state.count + 1)")}
-              className="px-2 py-0.5 rounded text-[10px] bg-muted/60 hover:bg-muted text-muted-foreground"
-            >
-              +1 Count
-            </button>
-            <button
-              type="button"
-              onClick={() => setProp("onPress", "toast.success('Action fired from JSON!')")}
-              className="px-2 py-0.5 rounded text-[10px] bg-muted/60 hover:bg-muted text-muted-foreground"
-            >
-              + Toast
-            </button>
-            <button
-              type="button"
-              onClick={() => setProp("onPress", "theme.setTheme(theme.resolvedTheme === 'dark' ? 'light' : 'dark')")}
-              className="px-2 py-0.5 rounded text-[10px] bg-muted/60 hover:bg-muted text-muted-foreground"
-            >
-              + Toggle Theme
-            </button>
-          </div>
-        </div>
       </div>
     </aside>
   )

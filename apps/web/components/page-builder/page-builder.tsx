@@ -18,7 +18,6 @@ import {
   IconPlus,
   IconTemplate,
   IconUpload,
-  IconVariable,
   IconX,
 } from "@tabler/icons-react"
 import { toast } from "sonner"
@@ -33,7 +32,6 @@ import { BUILDER_TEMPLATES } from "./templates"
 import { Canvas } from "./canvas"
 import { NodePropertiesModal } from "./node-properties-modal"
 import { ComponentPickerModal } from "./component-picker-modal"
-import { StateManagerModal } from "./state-manager-modal"
 import {
   createSectionPreset,
   deleteNodeByPath,
@@ -93,7 +91,6 @@ export function PageBuilder({
     position: "inside" | "above" | "below"
   } | null>(null)
   const [isPropertiesModalOpen, setIsPropertiesModalOpen] = React.useState(false)
-  const [isStateModalOpen, setIsStateModalOpen] = React.useState(false)
   const [isImportModalOpen, setIsImportModalOpen] = React.useState(false)
   const [importJsonText, setImportJsonText] = React.useState("")
   const [codeJsonText, setCodeJsonText] = React.useState(() => JSON.stringify(schema, null, 2))
@@ -108,7 +105,7 @@ export function PageBuilder({
     }
   }, [schema])
 
-  // Sync JSON text when switching to code mode
+  // Sync JSON text when switching to code mode or schema changes
   React.useEffect(() => {
     if (mode === "code") {
       setCodeJsonText(JSON.stringify(schema, null, 2))
@@ -154,16 +151,19 @@ export function PageBuilder({
     toast.info("Redo")
   }, [future, schema])
 
+  // Safe root accessor
+  const getSafeRoot = (s: IrisPageSchema): IrisNode => s.root || { type: "div", children: [] }
+
   // Node manipulation handlers
   const handleInsertNode = React.useCallback(
     (newNode: IrisNode) => {
       commitSchema((prev) => {
         const targetPath = selectedPath.length > 0 ? selectedPath : []
-        const { newRoot, newPath } = insertChildNode(prev.root, targetPath, newNode)
+        const { newRoot, newPath } = insertChildNode(getSafeRoot(prev), targetPath, newNode)
         setSelectedPath(newPath)
         return { ...prev, root: newRoot }
       })
-      toast.success(`Added <${newNode.type}> to page`)
+      toast.success(`Added <${newNode.type}> to document`)
     },
     [commitSchema, selectedPath]
   )
@@ -175,7 +175,7 @@ export function PageBuilder({
         return
       }
       commitSchema((prev) => {
-        const { newRoot, newPath } = insertNodeAdjacent(prev.root, targetPath, position, newNode)
+        const { newRoot, newPath } = insertNodeAdjacent(getSafeRoot(prev), targetPath, position, newNode)
         setSelectedPath(newPath)
         return { ...prev, root: newRoot }
       })
@@ -188,7 +188,7 @@ export function PageBuilder({
     (type: SectionPresetType = "3-col") => {
       const sectionNode = createSectionPreset(type)
       commitSchema((prev) => {
-        const { newRoot, newPath } = insertChildNode(prev.root, [], sectionNode)
+        const { newRoot, newPath } = insertChildNode(getSafeRoot(prev), [], sectionNode)
         setSelectedPath(newPath)
         return { ...prev, root: newRoot }
       })
@@ -202,7 +202,7 @@ export function PageBuilder({
       if (!pickerTarget) return
       if (pickerTarget.position === "inside") {
         commitSchema((prev) => {
-          const { newRoot, newPath } = insertChildNode(prev.root, pickerTarget.path, newNode)
+          const { newRoot, newPath } = insertChildNode(getSafeRoot(prev), pickerTarget.path, newNode)
           setSelectedPath(newPath)
           return { ...prev, root: newRoot }
         })
@@ -219,7 +219,7 @@ export function PageBuilder({
     (path: NodePath, updater: (node: IrisNode) => IrisNode) => {
       commitSchema((prev) => ({
         ...prev,
-        root: updateNodeByPath(prev.root, path, updater),
+        root: updateNodeByPath(getSafeRoot(prev), path, updater),
       }))
     },
     [commitSchema]
@@ -228,7 +228,7 @@ export function PageBuilder({
   const handleDeleteNode = React.useCallback(
     (path: NodePath) => {
       commitSchema((prev) => {
-        const { newRoot, newPath } = deleteNodeByPath(prev.root, path)
+        const { newRoot, newPath } = deleteNodeByPath(getSafeRoot(prev), path)
         setSelectedPath(newPath)
         return { ...prev, root: newRoot }
       })
@@ -240,7 +240,7 @@ export function PageBuilder({
   const handleDuplicateNode = React.useCallback(
     (path: NodePath) => {
       commitSchema((prev) => {
-        const { newRoot, newPath } = duplicateNodeByPath(prev.root, path)
+        const { newRoot, newPath } = duplicateNodeByPath(getSafeRoot(prev), path)
         setSelectedPath(newPath)
         return { ...prev, root: newRoot }
       })
@@ -252,7 +252,7 @@ export function PageBuilder({
   const handleMoveNode = React.useCallback(
     (path: NodePath, direction: "up" | "down") => {
       commitSchema((prev) => {
-        const { newRoot, newPath } = moveNodeByPath(prev.root, path, direction)
+        const { newRoot, newPath } = moveNodeByPath(getSafeRoot(prev), path, direction)
         setSelectedPath(newPath)
         return { ...prev, root: newRoot }
       })
@@ -274,14 +274,17 @@ export function PageBuilder({
       if (isClamped) {
         newCls = currentCls.replace(/\bmax-w-\S+\b/g, "").replace(/\bmx-auto\b/g, "").replace(/\s+/g, " ").trim()
         if (!newCls.includes("w-full")) newCls = `w-full ${newCls}`.trim()
-        toast.success("Page stretched to 100% full width")
+        toast.success("Document stretched to 100% full width")
       } else {
         newCls = `max-w-7xl mx-auto ${newCls}`.replace(/\s+/g, " ").trim()
-        toast.info("Page boxed to max-w-7xl")
+        toast.info("Document boxed to max-w-7xl")
       }
       return {
         ...prev,
-        root: { ...prev.root, props: { ...(prev.root?.props || {}), className: newCls } },
+        root: {
+          ...(prev.root || { type: "div", children: [] }),
+          props: { ...(prev.root?.props || {}), className: newCls },
+        },
       }
     })
   }, [commitSchema])
@@ -299,7 +302,7 @@ export function PageBuilder({
   const handleCopyJson = () => {
     const json = JSON.stringify(schema, null, 2)
     navigator.clipboard.writeText(json)
-    toast.success("Schema copied to clipboard!")
+    toast.success("Document schema copied to clipboard!")
   }
 
   // Download JSON File
@@ -309,24 +312,24 @@ export function PageBuilder({
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `${(schema.title || "iris-page").toLowerCase().replace(/[^a-z0-9]/g, "-")}.json`
+    a.download = `${(schema.title || "document").toLowerCase().replace(/[^a-z0-9]/g, "-")}.json`
     a.click()
     URL.revokeObjectURL(url)
-    toast.success("Downloaded page schema JSON")
+    toast.success("Downloaded document schema JSON")
   }
 
   // Import JSON Submission
   const handleApplyImport = () => {
     try {
       const parsed = JSON.parse(importJsonText)
-      if (!parsed.root || !parsed.root.type) {
+      if (!parsed.root) {
         throw new Error("Invalid schema: missing 'root' element")
       }
       commitSchema(parsed)
       setIsImportModalOpen(false)
       setImportJsonText("")
       setSelectedPath([])
-      toast.success("Schema successfully imported!")
+      toast.success("Document schema successfully imported!")
     } catch (err: any) {
       toast.error("Import failed: " + err.message)
     }
@@ -338,7 +341,7 @@ export function PageBuilder({
     setCodeJsonText(text)
     try {
       const parsed = JSON.parse(text)
-      if (parsed.root && parsed.root.type) {
+      if (parsed.root) {
         setSchema(parsed)
         setCodeError(null)
       }
@@ -471,7 +474,7 @@ export function PageBuilder({
           )}
         </div>
 
-        {/* Right: Actions, State, Undo/Redo & Export */}
+        {/* Right: Undo/Redo, Templates, Export & Save */}
         <div className="flex items-center gap-1.5">
           {/* Undo / Redo */}
           <Button
@@ -496,26 +499,15 @@ export function PageBuilder({
 
           <div className="h-4 w-px bg-border/60 mx-1" />
 
-          {/* State & Actions Manager */}
-          <Button
-            size="xs"
-            variant="outline"
-            onPress={() => setIsStateModalOpen(true)}
-            className="gap-1 text-xs"
-          >
-            <IconVariable className="size-3.5 text-primary" />
-            <span className="hidden md:inline">State & Actions</span>
-          </Button>
-
           {/* Templates Dropdown / Picker */}
           <div className="relative group">
             <Button size="xs" variant="outline" className="gap-1 text-xs">
               <IconTemplate className="size-3.5" />
-              <span className="hidden sm:inline">Templates</span>
+              <span className="hidden sm:inline">Doc Templates</span>
             </Button>
-            <div className="invisible group-hover:visible group-focus-within:visible absolute end-0 top-full mt-1 w-56 rounded-2xl border border-border/80 bg-background/95 p-1 shadow-lg backdrop-blur-md z-50">
+            <div className="invisible group-hover:visible group-focus-within:visible absolute end-0 top-full mt-1 w-60 rounded-2xl border border-border/80 bg-background/95 p-1 shadow-lg backdrop-blur-md z-50">
               <div className="p-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Starter Templates
+                Document Templates
               </div>
               {BUILDER_TEMPLATES.map((tpl) => (
                 <button
@@ -569,7 +561,7 @@ export function PageBuilder({
               variant="default"
               onPress={() => {
                 onSave(schema)
-                toast.success("Page schema saved successfully!")
+                toast.success("Document saved successfully!")
               }}
               className="gap-1 bg-primary text-primary-foreground font-semibold"
             >
@@ -599,8 +591,7 @@ export function PageBuilder({
         {mode === "visual" && (
           <>
             <Canvas
-              root={schema.root}
-              state={schema.state}
+              root={getSafeRoot(schema)}
               selectedPath={selectedPath}
               viewport={viewport}
               wireframeMode={wireframeMode}
@@ -611,7 +602,7 @@ export function PageBuilder({
               onInsertChild={(parentPath, newNode) => {
                 if (newNode) {
                   commitSchema((prev) => {
-                    const { newRoot, newPath } = insertChildNode(prev.root, parentPath, newNode)
+                    const { newRoot, newPath } = insertChildNode(getSafeRoot(prev), parentPath, newNode)
                     setSelectedPath(newPath)
                     return { ...prev, root: newRoot }
                   })
@@ -703,27 +694,13 @@ export function PageBuilder({
         )}
       </div>
 
-      {/* 3. State & Actions Modal */}
-      <StateManagerModal
-        isOpen={isStateModalOpen}
-        schema={schema}
-        onClose={() => setIsStateModalOpen(false)}
-        onSave={(updated) => {
-          commitSchema((prev) => ({
-            ...prev,
-            ...updated,
-          }))
-          toast.success("Page state and actions updated")
-        }}
-      />
-
-      {/* 4. Import JSON Modal */}
+      {/* 3. Import JSON Modal */}
       {isImportModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-100">
           <div className="flex w-full max-w-xl flex-col rounded-[min(var(--radius-4xl),24px)] border border-border/80 bg-background shadow-2xl p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-border/40 pb-3">
               <div>
-                <h3 className="text-sm font-semibold">Import IrisPage JSON</h3>
+                <h3 className="text-sm font-semibold">Import Document JSON</h3>
                 <p className="text-xs text-muted-foreground">Paste any valid IrisPage schema JSON to load into the builder studio.</p>
               </div>
               <Button size="icon-xs" variant="ghost" onPress={() => setIsImportModalOpen(false)} aria-label="Close">
@@ -734,7 +711,7 @@ export function PageBuilder({
             <Textarea
               value={importJsonText}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setImportJsonText(e.target.value)}
-              placeholder='Paste JSON schema here... { "title": "My Page", "root": { ... } }'
+              placeholder='Paste JSON schema here... { "title": "My Document", "root": { ... } }'
               className="h-64 font-mono text-xs rounded-xl"
               spellCheck={false}
               aria-label="Paste JSON Schema"

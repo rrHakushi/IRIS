@@ -190,11 +190,50 @@ export const PALETTE_ITEMS: PaletteItem[] = [
     label: "Paragraph",
     icon: "IconFileText",
     category: "typography",
-    description: "Body text with muted styling",
+    description: "Body text with clean typography",
     defaultNode: {
       type: "p",
       props: { className: "text-sm text-muted-foreground leading-relaxed" },
-      children: "Write your description text here. Supports dynamic expressions like {{ user.username }}.",
+      children: "Enter documentation body text here.",
+    },
+  },
+  {
+    id: "callout-tip",
+    label: "Callout Tip",
+    icon: "IconBulb",
+    category: "typography",
+    description: "Highlighted tip banner for documentation",
+    defaultNode: {
+      type: "Callout",
+      props: { variant: "tip", title: "Pro Tip" },
+      children: "Helpful hint or recommendation for users.",
+    },
+  },
+  {
+    id: "callout-info",
+    label: "Callout Info",
+    icon: "IconInfoCircle",
+    category: "typography",
+    description: "Informational callout banner",
+    defaultNode: {
+      type: "Callout",
+      props: { variant: "info", title: "Note" },
+      children: "Background context or important information.",
+    },
+  },
+  {
+    id: "code-block",
+    label: "Code Block",
+    icon: "IconCode",
+    category: "typography",
+    description: "Syntax highlighted code snippet with copy button",
+    defaultNode: {
+      type: "CodeBlock",
+      props: {
+        language: "typescript",
+        filename: "example.ts",
+        code: `export function helloWorld() {\n  return "Hello from IRIS documentation!";\n}`,
+      },
     },
   },
 
@@ -342,20 +381,20 @@ export const PALETTE_ITEMS: PaletteItem[] = [
     },
   },
 
-  // Advanced
+  // Lists & Groups
   {
-    id: "repeater",
-    label: "Array Repeater List",
+    id: "doc-list",
+    label: "Bullet List",
     icon: "IconListDetails",
     category: "advanced",
-    description: "Loop over array in state dynamically",
+    description: "Unordered bullet point list",
     defaultNode: {
-      type: "div",
-      repeat: { items: "state.items", as: "item", indexAs: "idx" },
-      props: { className: "p-3 rounded-2xl border border-border/60 bg-muted/20 flex items-center justify-between" },
+      type: "ul",
+      props: { className: "list-disc list-inside space-y-1 text-sm text-muted-foreground" },
       children: [
-        { type: "span", props: { className: "text-sm font-medium" }, children: "{{ item.name || item }}" },
-        { type: "Badge", props: { variant: "outline" }, children: "#{{ idx + 1 }}" },
+        { type: "li", children: "First documentation point" },
+        { type: "li", children: "Second key takeaway" },
+        { type: "li", children: "Third recommendation" },
       ],
     },
   },

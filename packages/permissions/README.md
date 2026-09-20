@@ -22,6 +22,7 @@ Stores permissions as an array of 32-bit integers (`Int[]` in PostgreSQL/Prisma)
 | Flag | BigInt Value | Raw DB Value (`Int[]`) | Description |
 |---|---|---|---|
 | `ADMINISTRATOR` | `1n << 0n` | `[1]` | Grants unrestricted administrative access across all IRIS systems and endpoints. |
+| `SDUI_ELYSIA_CALLS` | `1n << 1n` | `[2]` | Grants authorization to author, add, and save Elysia API calls in the IrisPage SDUI editor and page builder. |
 
 ---
 

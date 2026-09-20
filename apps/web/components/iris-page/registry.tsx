@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import * as TablerIcons from "@tabler/icons-react"
+import { cn } from "@workspace/ui/lib/utils"
 
 // Import all UI primitives and components from @workspace/ui
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@workspace/ui/components/accordion"
@@ -258,16 +259,6 @@ import { Skeleton } from "@workspace/ui/components/skeleton"
 import { Slider } from "@workspace/ui/components/slider"
 import { Spinner } from "@workspace/ui/components/spinner"
 import { Switch } from "@workspace/ui/components/switch"
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableFooter,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableCaption,
-} from "@workspace/ui/components/table"
 import { Tabs, TabList, Tab, TabPanel } from "@workspace/ui/components/tabs"
 import { Textarea } from "@workspace/ui/components/textarea"
 import { Toggle } from "@workspace/ui/components/toggle"
@@ -380,10 +371,182 @@ export const HTML_TAGS = new Set([
 ])
 
 // ============================================================================
+// Specialized Documentation Primitives
+// ============================================================================
+
+export interface CalloutProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: "info" | "tip" | "warning" | "danger" | "destructive" | "note"
+  title?: string
+  icon?: string
+}
+
+export const Callout: React.FC<CalloutProps> = ({
+  variant = "info",
+  title,
+  icon,
+  className,
+  children,
+  ...props
+}) => {
+  const variantStyles: Record<string, string> = {
+    info: "border-blue-500/30 bg-blue-500/10 text-blue-950 dark:text-blue-200",
+    tip: "border-emerald-500/30 bg-emerald-500/10 text-emerald-950 dark:text-emerald-200",
+    warning: "border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-200",
+    danger: "border-rose-500/30 bg-rose-500/10 text-rose-950 dark:text-rose-200",
+    destructive: "border-destructive/40 bg-destructive/10 text-destructive",
+    note: "border-border/80 bg-muted/50 text-foreground",
+  }
+
+  const defaultIcons: Record<string, React.ComponentType<any>> = {
+    info: TablerIcons.IconInfoCircle,
+    tip: TablerIcons.IconBulb,
+    warning: TablerIcons.IconAlertTriangle,
+    danger: TablerIcons.IconAlertCircle,
+    destructive: TablerIcons.IconAlertCircle,
+    note: TablerIcons.IconNote,
+  }
+
+  const IconComp =
+    icon && (TablerIcons as any)[icon]
+      ? (TablerIcons as any)[icon]
+      : defaultIcons[variant] || defaultIcons.info
+
+  return (
+    <div
+      className={`my-4 flex items-start gap-3 rounded-2xl border p-4 text-sm leading-relaxed ${
+        variantStyles[variant] || variantStyles.info
+      } ${className || ""}`}
+      {...props}
+    >
+      <IconComp className="size-5 shrink-0 mt-0.5 opacity-90" />
+      <div className="flex-1 space-y-1">
+        {title && <div className="font-semibold tracking-tight">{title}</div>}
+        <div className="text-xs md:text-sm opacity-90">{children}</div>
+      </div>
+    </div>
+  )
+}
+Callout.displayName = "Callout"
+
+export interface CodeBlockProps extends React.HTMLAttributes<HTMLDivElement> {
+  code?: string
+  language?: string
+  filename?: string
+  children?: React.ReactNode
+}
+
+export const CodeBlock: React.FC<CodeBlockProps> = ({
+  code,
+  language = "typescript",
+  filename,
+  className,
+  children,
+  ...props
+}) => {
+  const textContent = code || (typeof children === "string" ? children : "")
+  const [copied, setCopied] = React.useState(false)
+
+  const handleCopy = () => {
+    if (textContent) {
+      navigator.clipboard.writeText(textContent)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  return (
+    <div
+      className={`my-4 overflow-hidden rounded-2xl border border-border/80 bg-muted/40 shadow-xs ${
+        className || ""
+      }`}
+      {...props}
+    >
+      {(filename || language) && (
+        <div className="flex items-center justify-between border-b border-border/60 bg-muted/60 px-4 py-2 text-xs text-muted-foreground font-mono">
+          <div className="flex items-center gap-2">
+            <TablerIcons.IconCode className="size-3.5" />
+            <span className="font-semibold text-foreground">{filename || language}</span>
+          </div>
+          {textContent && (
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-sans hover:bg-background/80 hover:text-foreground transition-colors"
+            >
+              {copied ? (
+                <>
+                  <TablerIcons.IconCheck className="size-3.5 text-emerald-500" />
+                  <span className="text-emerald-500 font-medium">Copied</span>
+                </>
+              ) : (
+                <>
+                  <TablerIcons.IconCopy className="size-3.5" />
+                  <span>Copy</span>
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      )}
+      <pre className="overflow-x-auto p-4 font-mono text-xs leading-relaxed text-foreground whitespace-pre">
+        <code>{children || code}</code>
+      </pre>
+    </div>
+  )
+}
+CodeBlock.displayName = "CodeBlock"
+
+export const DocTable: React.FC<React.HTMLAttributes<HTMLTableElement>> = ({ className, ...props }) => (
+  <div className="my-4 relative w-full overflow-x-auto rounded-2xl border border-border/60 bg-card/60 shadow-xs">
+    <table className={cn("w-full caption-bottom text-sm border-collapse text-start", className)} {...props} />
+  </div>
+)
+DocTable.displayName = "DocTable"
+
+export const DocTableHeader: React.FC<React.HTMLAttributes<HTMLTableSectionElement>> = ({ className, ...props }) => (
+  <thead className={cn("[&_tr]:border-b border-border/60 bg-muted/40", className)} {...props} />
+)
+DocTableHeader.displayName = "DocTableHeader"
+
+export const DocTableBody: React.FC<React.HTMLAttributes<HTMLTableSectionElement>> = ({ className, ...props }) => (
+  <tbody className={cn("[&_tr:last-child]:border-0 divide-y divide-border/40", className)} {...props} />
+)
+DocTableBody.displayName = "DocTableBody"
+
+export const DocTableRow: React.FC<React.HTMLAttributes<HTMLTableRowElement>> = ({ className, ...props }) => (
+  <tr className={cn("border-b border-border/40 transition-colors hover:bg-muted/30", className)} {...props} />
+)
+DocTableRow.displayName = "DocTableRow"
+
+export const DocTableHead: React.FC<React.ThHTMLAttributes<HTMLTableCellElement>> = ({ className, ...props }) => (
+  <th className={cn("h-10 px-4 text-start align-middle font-semibold text-xs text-muted-foreground uppercase tracking-wider font-mono", className)} {...props} />
+)
+DocTableHead.displayName = "DocTableHead"
+
+export const DocTableCell: React.FC<React.TdHTMLAttributes<HTMLTableCellElement>> = ({ className, ...props }) => (
+  <td className={cn("p-4 align-middle text-sm", className)} {...props} />
+)
+DocTableCell.displayName = "DocTableCell"
+
+export const DocTableFooter: React.FC<React.HTMLAttributes<HTMLTableSectionElement>> = ({ className, ...props }) => (
+  <tfoot className={cn("border-t bg-muted/50 font-medium", className)} {...props} />
+)
+DocTableFooter.displayName = "DocTableFooter"
+
+export const DocTableCaption: React.FC<React.HTMLAttributes<HTMLTableCaptionElement>> = ({ className, ...props }) => (
+  <caption className={cn("mt-4 text-center text-sm text-muted-foreground", className)} {...props} />
+)
+DocTableCaption.displayName = "DocTableCaption"
+
+// ============================================================================
 // Master UI Component Registry
 // ============================================================================
 
 export const COMPONENT_REGISTRY: Record<string, React.ComponentType<any> | string> = {
+  // Documentation Specialized Primitives
+  Callout,
+  CodeBlock,
+
   // Generic Icon Resolver
   Icon: DynamicIcon,
 
@@ -756,15 +919,15 @@ export const COMPONENT_REGISTRY: Record<string, React.ComponentType<any> | strin
   // Switch
   Switch,
 
-  // Table
-  Table,
-  TableHeader,
-  TableBody,
-  TableFooter,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableCaption,
+  // Table (Documentation-first robust table primitives)
+  Table: DocTable,
+  TableHeader: DocTableHeader,
+  TableBody: DocTableBody,
+  TableFooter: DocTableFooter,
+  TableHead: DocTableHead,
+  TableRow: DocTableRow,
+  TableCell: DocTableCell,
+  TableCaption: DocTableCaption,
 
   // Tabs (supports both React Aria and shadcn names)
   Tabs,
@@ -800,7 +963,9 @@ export const COMPONENT_REGISTRY: Record<string, React.ComponentType<any> | strin
  * 3. All vanilla HTML elements (e.g. "div", "span", "table", "video", "img", "iframe")
  * 4. All Tabler Icons (e.g. "IconSparkles", "Sparkles", "heart", "icon-chevron-right")
  */
-export function resolveComponent(type: string): React.ComponentType<any> | string | undefined {
+export function resolveComponent(
+  type: string
+): React.ComponentType<any> | string | undefined {
   if (!type) return undefined
 
   // 1. Direct registry lookup
