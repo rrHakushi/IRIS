@@ -4,7 +4,8 @@
 
 export interface GlobalCacheKeys {
   discover: {
-    media: (media: any, genre?: any) => string;
+    filters: (media: any) => string;
+    items: (media: any, queryStr?: any) => string;
   };
   anime: {
     id: (id: any) => string;
@@ -40,6 +41,10 @@ export interface GlobalCacheKeys {
     id: (id: any, type?: any) => string;
   };
   person: {
+    id: (id: any) => string;
+  };
+  studio: {
+    creations: (id: any, queryKey?: any) => string;
     id: (id: any) => string;
   };
   tv: {
