@@ -49,18 +49,6 @@ export interface GlobalCacheKeys {
   };
   tv: {
     id: (id: any) => string;
-  };
-  search: {
-    anime: (q: any) => string;
-    books: (q: any) => string;
-    characters: (q: any) => string;
-    games: (q: any) => string;
-    manga: (q: any) => string;
-    movies: (q: any) => string;
-    music: (q: any) => string;
-    people: (q: any) => string;
-    studios: (q: any) => string;
-    tv: (q: any) => string;
   };}
 
 export type GlobalCacheKeyStorage = GlobalCacheKeys;

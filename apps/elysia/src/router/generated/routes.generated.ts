@@ -307,46 +307,6 @@ const Route_143_keys = (Route_143 as Record<string, unknown>)?.cacheKeys;
 if (Route_143_keys && typeof Route_143_keys === "object") {
   deepMergeCacheKeys(globalCacheKeyStorage, Route_143_keys as Record<string, unknown>);
 }
-const Route_144_keys = (Route_144 as Record<string, unknown>)?.cacheKeys;
-if (Route_144_keys && typeof Route_144_keys === "object") {
-  deepMergeCacheKeys(globalCacheKeyStorage, Route_144_keys as Record<string, unknown>);
-}
-const Route_145_keys = (Route_145 as Record<string, unknown>)?.cacheKeys;
-if (Route_145_keys && typeof Route_145_keys === "object") {
-  deepMergeCacheKeys(globalCacheKeyStorage, Route_145_keys as Record<string, unknown>);
-}
-const Route_146_keys = (Route_146 as Record<string, unknown>)?.cacheKeys;
-if (Route_146_keys && typeof Route_146_keys === "object") {
-  deepMergeCacheKeys(globalCacheKeyStorage, Route_146_keys as Record<string, unknown>);
-}
-const Route_147_keys = (Route_147 as Record<string, unknown>)?.cacheKeys;
-if (Route_147_keys && typeof Route_147_keys === "object") {
-  deepMergeCacheKeys(globalCacheKeyStorage, Route_147_keys as Record<string, unknown>);
-}
-const Route_148_keys = (Route_148 as Record<string, unknown>)?.cacheKeys;
-if (Route_148_keys && typeof Route_148_keys === "object") {
-  deepMergeCacheKeys(globalCacheKeyStorage, Route_148_keys as Record<string, unknown>);
-}
-const Route_149_keys = (Route_149 as Record<string, unknown>)?.cacheKeys;
-if (Route_149_keys && typeof Route_149_keys === "object") {
-  deepMergeCacheKeys(globalCacheKeyStorage, Route_149_keys as Record<string, unknown>);
-}
-const Route_150_keys = (Route_150 as Record<string, unknown>)?.cacheKeys;
-if (Route_150_keys && typeof Route_150_keys === "object") {
-  deepMergeCacheKeys(globalCacheKeyStorage, Route_150_keys as Record<string, unknown>);
-}
-const Route_151_keys = (Route_151 as Record<string, unknown>)?.cacheKeys;
-if (Route_151_keys && typeof Route_151_keys === "object") {
-  deepMergeCacheKeys(globalCacheKeyStorage, Route_151_keys as Record<string, unknown>);
-}
-const Route_152_keys = (Route_152 as Record<string, unknown>)?.cacheKeys;
-if (Route_152_keys && typeof Route_152_keys === "object") {
-  deepMergeCacheKeys(globalCacheKeyStorage, Route_152_keys as Record<string, unknown>);
-}
-const Route_153_keys = (Route_153 as Record<string, unknown>)?.cacheKeys;
-if (Route_153_keys && typeof Route_153_keys === "object") {
-  deepMergeCacheKeys(globalCacheKeyStorage, Route_153_keys as Record<string, unknown>);
-}
 
 export const routes = new Elysia({ name: "iris-routes" })
   .get("/health", () => ({

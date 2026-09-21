@@ -8,8 +8,6 @@ import {
 import { NotFoundResponseSchema } from "../../../../../types"
 import { findMatchingAlternativeNameIds } from "../../helpers/search-synonyms"
 
-const SEARCH_CHARACTERS_TTL = 5 * 60 // 5 minutes
-
 export default defineRoute({
   schema: {
     query: t.Object({
@@ -30,25 +28,13 @@ export default defineRoute({
     },
   },
 
-  cacheKeys: {
-    search: {
-      characters: (q: string) => `search:characters:${q}`,
-    },
-  },
-
-  async GET({ query, prisma, cache, cacheKeys }) {
+  async GET({ query, prisma }) {
     const cleanQuery = decodeURIComponent(String(query.q || ""))
       .replace(/\+/g, " ")
       .trim()
-    const cacheKey = cacheKeys.search.characters(cleanQuery)
 
     if (!cleanQuery || cleanQuery.length < 3) {
       return new NotFound("Query must be at least 3 characters long")
-    }
-
-    const cached = await cache.get<CharacterSearchResponse>(cacheKey)
-    if (cached) {
-      return cached
     }
 
     const alternativeNameIds = await findMatchingAlternativeNameIds(
@@ -79,7 +65,6 @@ export default defineRoute({
       },
     })
 
-    await cache.set(cacheKey, data, SEARCH_CHARACTERS_TTL)
     return data
   },
 })

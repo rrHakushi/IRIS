@@ -6,8 +6,6 @@ import { GameSearchResponseSchema, type GameSearchResponse } from "./types"
 import { NotFoundResponseSchema } from "../../../../../types"
 import { findMatchingSynonymIds } from "../../helpers/search-synonyms"
 
-const SEARCH_GAMES_TTL = 5 * 60 // 5 minutes
-
 export default defineRoute({
   schema: {
     query: t.Object({
@@ -28,25 +26,13 @@ export default defineRoute({
     },
   },
 
-  cacheKeys: {
-    search: {
-      games: (q: string) => `search:games:${q}`,
-    },
-  },
-
-  async GET({ query, prisma, cache, cacheKeys, logger }) {
+  async GET({ query, prisma, logger }) {
     const cleanQuery = decodeURIComponent(String(query.q || ""))
       .replace(/\+/g, " ")
       .trim()
-    const cacheKey = cacheKeys.search.games(cleanQuery)
 
     if (!cleanQuery || cleanQuery.length < 3) {
       return new NotFound("Query must be at least 3 characters long")
-    }
-
-    const cached = await cache.get<GameSearchResponse>(cacheKey)
-    if (cached) {
-      return cached
     }
 
     const synonymIds = await findMatchingSynonymIds(prisma, "Game", cleanQuery)
@@ -79,11 +65,9 @@ export default defineRoute({
         ...item,
         queuedForFetch: true,
       }))
-      await cache.set(cacheKey, results, SEARCH_GAMES_TTL)
       return results
     }
 
-    await cache.set(cacheKey, data, SEARCH_GAMES_TTL)
     void queueGameSearchFetch(cleanQuery).catch((err) => {
       logger.error(
         `[SearchGamesRoute] Failed to queue background search for "${cleanQuery}":`,

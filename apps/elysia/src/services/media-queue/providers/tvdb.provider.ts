@@ -520,7 +520,7 @@ export class TheTVDBProvider {
    */
   async searchTvSeries(
     query: string,
-    limit: number = 10
+    limit: number = 25
   ): Promise<TvdbSearchItem[]> {
     const clean = query.trim()
     if (!clean) return []
@@ -543,7 +543,7 @@ export class TheTVDBProvider {
    */
   async searchMovies(
     query: string,
-    limit: number = 10
+    limit: number = 25
   ): Promise<TvdbSearchItem[]> {
     const clean = query.trim()
     if (!clean) return []

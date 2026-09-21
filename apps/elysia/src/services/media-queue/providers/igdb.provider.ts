@@ -268,7 +268,7 @@ export class IGDBProvider {
    */
   async searchGames(
     query: string,
-    limit: number = 10
+    limit: number = 25
   ): Promise<IgdbSearchPreview[]> {
     const clean = query.trim()
     if (!clean) return []

@@ -141,14 +141,14 @@ export class MusicBrainzProvider {
    */
   async searchRecording(
     query: string,
-    limit: number = 10
+    limit: number = 25
   ): Promise<MusicBrainzRecordingPayload[]> {
     const clean = query.trim()
     if (!clean) return []
 
     await this.waitForRateLimit()
 
-    const maxLimit = Math.min(Math.max(limit, 1), 25)
+    const maxLimit = Math.min(Math.max(limit, 1), 50)
     const url = `${this.baseUrl}/recording?query=${encodeURIComponent(clean)}&limit=${maxLimit}&fmt=json`
     try {
       const res = await fetch(url, {
@@ -185,7 +185,7 @@ export class MusicBrainzProvider {
   /**
    * Searches MusicBrainz for music recordings by query and returns recording MBIDs.
    */
-  async searchMusic(query: string, limit: number = 10): Promise<string[]> {
+  async searchMusic(query: string, limit: number = 25): Promise<string[]> {
     const recordings = await this.searchRecording(query, limit)
     return recordings.map((r) => r.id).filter(Boolean)
   }
@@ -253,14 +253,14 @@ export class MusicBrainzProvider {
    */
   async searchRelease(
     query: string,
-    limit: number = 5
+    limit: number = 25
   ): Promise<MusicBrainzReleasePayload[]> {
     const clean = query.trim()
     if (!clean) return []
 
     await this.waitForRateLimit()
 
-    const maxLimit = Math.min(Math.max(limit, 1), 10)
+    const maxLimit = Math.min(Math.max(limit, 1), 25)
     const url = `${this.baseUrl}/release?query=${encodeURIComponent(clean)}&limit=${maxLimit}&fmt=json`
     try {
       const res = await fetch(url, {
