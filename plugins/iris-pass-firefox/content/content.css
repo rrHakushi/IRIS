@@ -1,5 +1,21 @@
 /* IRIS Pass — In-Field Autofill & Passkey Notification Styles */
 
+#iris-pass-portal,
+.iris-pass-portal-root {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  z-index: 2147483647 !important;
+  pointer-events: none !important;
+}
+
+#iris-pass-portal > *,
+.iris-pass-portal-root > * {
+  pointer-events: auto !important;
+}
+
 .iris-pass-field-icon {
   position: fixed !important;
   z-index: 2147483640 !important;
@@ -61,6 +77,7 @@
 .iris-pass-dropdown {
   position: fixed !important;
   z-index: 2147483645 !important;
+  width: 280px !important;
   min-width: 240px !important;
   max-width: 320px !important;
   background: #18161b !important;

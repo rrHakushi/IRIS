@@ -1290,6 +1290,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
             success: false,
             isUnlocked: false,
             credentials: [],
+            passkeys: [],
             error: "Vault is locked",
           })
           return
@@ -1298,11 +1299,19 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const callerUrl = sender.tab?.url || sender?.url || payload?.url || ""
         const callerHost = IrisMatching.extractHost(callerUrl)
         if (!callerHost) {
-          sendResponse({ success: false, credentials: [] })
+          sendResponse({ success: false, credentials: [], passkeys: [] })
           return
         }
 
-        const matched = []
+        const allowedIds =
+          Array.isArray(payload?.allowCredentials) &&
+          payload.allowCredentials.length > 0
+            ? payload.allowCredentials.map((c) =>
+                typeof c === "string" ? c : c.id
+              )
+            : null
+
+        let matched = []
         for (const cipher of inMemoryCiphers) {
           if (cipher.deletedAt || cipher.type !== "LOGIN") continue
           const passkey = cipher.data?.passkey
@@ -1313,19 +1322,57 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
             effectiveRpId &&
             IrisMatching.isUriMatch(callerUrl, effectiveRpId, 0)
           ) {
+            if (allowedIds && !allowedIds.includes(passkey.credentialId)) {
+              continue
+            }
             matched.push({
               id: passkey.credentialId,
+              credentialId: passkey.credentialId,
               rawId: passkey.credentialId,
               type: "public-key",
-              userName: passkey.userName || cipher.data?.username,
+              userName: passkey.userName || cipher.data?.username || "Account",
               userDisplayName:
                 passkey.userDisplayName ||
                 cipher.title ||
-                cipher.data?.username,
+                cipher.data?.username ||
+                "Account",
               userHandle: passkey.userHandle || "",
               cipherId: cipher.id,
-              cipherTitle: cipher.title,
+              cipherTitle: cipher.title || "Passkey",
+              title: cipher.title || passkey.userName || "Passkey",
             })
+          }
+        }
+
+        // If allowCredentials filtering resulted in 0 matches, fallback to all RP matches
+        if (matched.length === 0 && allowedIds) {
+          for (const cipher of inMemoryCiphers) {
+            if (cipher.deletedAt || cipher.type !== "LOGIN") continue
+            const passkey = cipher.data?.passkey
+            if (!passkey) continue
+
+            const effectiveRpId = passkey.rpId
+            if (
+              effectiveRpId &&
+              IrisMatching.isUriMatch(callerUrl, effectiveRpId, 0)
+            ) {
+              matched.push({
+                id: passkey.credentialId,
+                credentialId: passkey.credentialId,
+                rawId: passkey.credentialId,
+                type: "public-key",
+                userName: passkey.userName || cipher.data?.username || "Account",
+                userDisplayName:
+                  passkey.userDisplayName ||
+                  cipher.title ||
+                  cipher.data?.username ||
+                  "Account",
+                userHandle: passkey.userHandle || "",
+                cipherId: cipher.id,
+                cipherTitle: cipher.title || "Passkey",
+                title: cipher.title || passkey.userName || "Passkey",
+              })
+            }
           }
         }
 
@@ -1333,9 +1380,15 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           success: true,
           isUnlocked: true,
           credentials: matched,
+          passkeys: matched,
         })
       } catch (err) {
-        sendResponse({ success: false, credentials: [], error: err.message })
+        sendResponse({
+          success: false,
+          credentials: [],
+          passkeys: [],
+          error: err.message,
+        })
       }
     })()
     return true
