@@ -126,9 +126,14 @@ export class SonarrAdapter extends ServarrBaseAdapter {
       addImportListExclusion?: boolean;
     }
   ): Promise<unknown> {
+    const formattedPayload = {
+      seriesIds: payload.seriesIds,
+      deleteFiles: payload.deleteFiles ?? false,
+      addImportListExclusion: payload.addImportListExclusion ?? false,
+    };
     return await this.servarrFetch("series/editor", credentials, {
       method: "DELETE",
-      body: JSON.stringify(payload),
+      body: JSON.stringify(formattedPayload),
     });
   }
 

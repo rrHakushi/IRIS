@@ -120,11 +120,20 @@ export class RadarrAdapter extends ServarrBaseAdapter {
       movieIds: number[];
       deleteFiles?: boolean;
       addImportListExclusion?: boolean;
+      addImportExclusion?: boolean;
     }
   ): Promise<unknown> {
+    const formattedPayload = {
+      movieIds: payload.movieIds,
+      deleteFiles: payload.deleteFiles ?? false,
+      addImportExclusion:
+        payload.addImportExclusion ?? payload.addImportListExclusion ?? false,
+      addImportListExclusion:
+        payload.addImportListExclusion ?? payload.addImportExclusion ?? false,
+    };
     return await this.servarrFetch("movie/editor", credentials, {
       method: "DELETE",
-      body: JSON.stringify(payload),
+      body: JSON.stringify(formattedPayload),
     });
   }
 
@@ -171,7 +180,7 @@ export class RadarrAdapter extends ServarrBaseAdapter {
     addImportListExclusion: boolean = false
   ): Promise<unknown> {
     return await this.servarrFetch(
-      `movie/${id}?deleteFiles=${deleteFiles}&addImportListExclusion=${addImportListExclusion}`,
+      `movie/${id}?deleteFiles=${deleteFiles}&addImportListExclusion=${addImportListExclusion}&addImportExclusion=${addImportListExclusion}`,
       credentials,
       { method: "DELETE" }
     );

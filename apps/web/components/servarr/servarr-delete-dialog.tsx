@@ -46,21 +46,33 @@ export function ServarrDeleteMediaDialog({
     try {
       let res: any
       if (isMovie) {
-        res = await elysia.servarr.radarr.movies({ id: mediaId }).delete({
-          query: {
+        res = await elysia.servarr.radarr.movies({ id: mediaId }).delete(
+          {
             deleteFiles,
             addImportListExclusion,
           },
-          fetch: { credentials: "include" },
-        })
+          {
+            query: {
+              deleteFiles,
+              addImportListExclusion,
+            },
+            fetch: { credentials: "include" },
+          }
+        )
       } else {
-        res = await elysia.servarr.sonarr.series({ id: mediaId }).delete({
-          query: {
+        res = await elysia.servarr.sonarr.series({ id: mediaId }).delete(
+          {
             deleteFiles,
             addImportListExclusion,
           },
-          fetch: { credentials: "include" },
-        })
+          {
+            query: {
+              deleteFiles,
+              addImportListExclusion,
+            },
+            fetch: { credentials: "include" },
+          }
+        )
       }
 
       if (res?.data?.success) {

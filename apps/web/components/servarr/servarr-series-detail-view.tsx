@@ -260,12 +260,10 @@ export function ServarrSeriesDetailView({
     )
 
     try {
-      const res = await (elysia.servarr.sonarr as any)
-        .episode({ id: ep.id })
-        .put({
-          ...ep,
-          monitored: newMonitored,
-        })
+      const res = await elysia.servarr.sonarr.episode({ id: ep.id }).put({
+        ...ep,
+        monitored: newMonitored,
+      })
       if (res?.data?.success) {
         toast.success(
           `Episode ${ep.episodeNumber} ${newMonitored ? "monitored" : "unmonitored"}`

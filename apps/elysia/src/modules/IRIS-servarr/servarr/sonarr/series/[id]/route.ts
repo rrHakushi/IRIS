@@ -164,10 +164,20 @@ export default defineRoute({
       params: t.Object({
         id: t.Numeric(),
       }),
-      query: t.Object({
-        deleteFiles: t.Optional(t.BooleanString()),
-        addImportListExclusion: t.Optional(t.BooleanString()),
-      }),
+      query: t.Optional(
+        t.Object({
+          deleteFiles: t.Optional(t.Union([t.Boolean(), t.BooleanString()])),
+          addImportListExclusion: t.Optional(
+            t.Union([t.Boolean(), t.BooleanString()])
+          ),
+        })
+      ),
+      body: t.Optional(
+        t.Object({
+          deleteFiles: t.Optional(t.Boolean()),
+          addImportListExclusion: t.Optional(t.Boolean()),
+        })
+      ),
       response: {
         200: t.Object({
           success: t.Boolean(),
@@ -183,7 +193,7 @@ export default defineRoute({
       },
     },
 
-    async handler({ params, query, session, prisma }: any) {
+    async handler({ params, query, body, session, prisma }: any) {
       if (!session.isAuthenticated || !session.user) {
         return new Response(
           JSON.stringify({
@@ -211,10 +221,15 @@ export default defineRoute({
       try {
         const seriesId = Number(params.id)
         const deleteFiles =
-          query?.deleteFiles === "true" || query?.deleteFiles === true
+          query?.deleteFiles === "true" ||
+          query?.deleteFiles === true ||
+          body?.deleteFiles === true ||
+          body?.deleteFiles === "true"
         const addExclusion =
           query?.addImportListExclusion === "true" ||
-          query?.addImportListExclusion === true
+          query?.addImportListExclusion === true ||
+          body?.addImportListExclusion === true ||
+          body?.addImportListExclusion === "true"
         await res.adapter.deleteSeries(
           res.credentials,
           seriesId,

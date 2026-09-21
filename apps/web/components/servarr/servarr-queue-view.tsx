@@ -144,23 +144,37 @@ export function ServarrQueueView({ provider }: ServarrQueueViewProps) {
       let res: any
       const prov = item._provider || provider
       if (prov === "RADARR") {
-        res = await (elysia.servarr.radarr.queue.delete as any)({
-          query: {
+        res = await elysia.servarr.radarr.queue.delete(
+          {
             id: item.id,
             removeFromClient,
             blocklist,
           },
-          fetch: { credentials: "include" },
-        })
+          {
+            query: {
+              id: item.id,
+              removeFromClient,
+              blocklist,
+            },
+            fetch: { credentials: "include" },
+          }
+        )
       } else {
-        res = await (elysia.servarr.sonarr.queue.delete as any)({
-          query: {
+        res = await elysia.servarr.sonarr.queue.delete(
+          {
             id: item.id,
             removeFromClient,
             blocklist,
           },
-          fetch: { credentials: "include" },
-        })
+          {
+            query: {
+              id: item.id,
+              removeFromClient,
+              blocklist,
+            },
+            fetch: { credentials: "include" },
+          }
+        )
       }
 
       if (res?.data?.success) {

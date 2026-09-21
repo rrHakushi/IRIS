@@ -100,9 +100,16 @@ export default defineRoute({
 
   DELETE: {
     schema: {
-      query: t.Object({
-        fileId: t.Numeric(),
-      }),
+      query: t.Optional(
+        t.Object({
+          fileId: t.Optional(t.Numeric()),
+        })
+      ),
+      body: t.Optional(
+        t.Object({
+          fileId: t.Optional(t.Numeric()),
+        })
+      ),
       response: {
         200: t.Object({
           success: t.Boolean(),
@@ -117,7 +124,7 @@ export default defineRoute({
       },
     },
 
-    async handler({ query, session, prisma }: any) {
+    async handler({ query, body, session, prisma }: any) {
       if (!session.isAuthenticated || !session.user) {
         return new Response(
           JSON.stringify({
@@ -157,8 +164,15 @@ export default defineRoute({
       }
 
       try {
+        const fileId = Number(query?.fileId ?? body?.fileId)
+        if (!fileId || isNaN(fileId)) {
+          return {
+            success: false,
+            message: "A valid fileId is required",
+          }
+        }
         const adapter = getConnectionAdapter("RADARR") as any
-        await adapter.deleteMovieFile(credentials, Number(query.fileId))
+        await adapter.deleteMovieFile(credentials, fileId)
 
         return {
           success: true,

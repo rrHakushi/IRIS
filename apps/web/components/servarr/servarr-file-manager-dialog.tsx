@@ -114,15 +114,21 @@ export function ServarrFileManagerDialog({
     try {
       let res: any
       if (provider === "RADARR") {
-        res = await (elysia.servarr.radarr.files.delete as any)({
-          query: { fileId },
-          fetch: { credentials: "include" },
-        })
+        res = await elysia.servarr.radarr.files.delete(
+          { fileId },
+          {
+            query: { fileId },
+            fetch: { credentials: "include" },
+          }
+        )
       } else {
-        res = await (elysia.servarr.sonarr.files.delete as any)({
-          query: { fileId },
-          fetch: { credentials: "include" },
-        })
+        res = await elysia.servarr.sonarr.files.delete(
+          { fileId },
+          {
+            query: { fileId },
+            fetch: { credentials: "include" },
+          }
+        )
       }
 
       if (res?.data?.success) {

@@ -119,11 +119,22 @@ export default defineRoute({
 
   DELETE: {
     schema: {
-      query: t.Object({
-        id: t.Numeric(),
-        removeFromClient: t.Optional(t.Boolean()),
-        blocklist: t.Optional(t.Boolean()),
-      }),
+      query: t.Optional(
+        t.Object({
+          id: t.Optional(t.Numeric()),
+          removeFromClient: t.Optional(
+            t.Union([t.Boolean(), t.BooleanString()])
+          ),
+          blocklist: t.Optional(t.Union([t.Boolean(), t.BooleanString()])),
+        })
+      ),
+      body: t.Optional(
+        t.Object({
+          id: t.Optional(t.Numeric()),
+          removeFromClient: t.Optional(t.Boolean()),
+          blocklist: t.Optional(t.Boolean()),
+        })
+      ),
       response: {
         200: t.Object({
           success: t.Boolean(),
@@ -137,7 +148,7 @@ export default defineRoute({
       },
     },
 
-    async handler({ query, session, prisma }: any) {
+    async handler({ query, body, session, prisma }: any) {
       if (!session.isAuthenticated || !session.user) {
         return new Response(
           JSON.stringify({
@@ -177,10 +188,28 @@ export default defineRoute({
       }
 
       try {
+        const itemId = Number(query?.id ?? body?.id)
+        if (!itemId || isNaN(itemId)) {
+          return {
+            success: false,
+            message: "A valid queue item ID is required",
+          }
+        }
+        const removeFromClient =
+          query?.removeFromClient === "true" ||
+          query?.removeFromClient === true ||
+          body?.removeFromClient === true ||
+          (query?.removeFromClient === undefined &&
+            body?.removeFromClient === undefined)
+        const blocklist =
+          query?.blocklist === "true" ||
+          query?.blocklist === true ||
+          body?.blocklist === true
+
         const adapter = getConnectionAdapter("SONARR") as any
-        await adapter.deleteQueueItem(credentials, query.id, {
-          removeFromClient: query.removeFromClient ?? true,
-          blocklist: query.blocklist ?? false,
+        await adapter.deleteQueueItem(credentials, itemId, {
+          removeFromClient,
+          blocklist,
         })
 
         return {
