@@ -821,7 +821,10 @@ export function CharacterDetailView({ character }: CharacterDetailViewProps) {
                     {/* Cards Grid */}
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       {group.items.map((item) => {
-                        const mediaHref = getMediaDetailHref(item.mediaType, item.mediaId)
+                        const mediaHref = getMediaDetailHref(
+                          item.mediaType,
+                          item.mediaId
+                        )
 
                         return (
                           <div

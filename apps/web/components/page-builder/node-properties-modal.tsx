@@ -76,8 +76,12 @@ export function NodePropertiesModal({
   onDeleteNode,
   onDuplicateNode,
 }: NodePropertiesModalProps) {
-  const [activeTab, setActiveTab] = React.useState<"content" | "styling" | "props">("content")
-  const [propsJsonError, setPropsJsonError] = React.useState<string | null>(null)
+  const [activeTab, setActiveTab] = React.useState<
+    "content" | "styling" | "props"
+  >("content")
+  const [propsJsonError, setPropsJsonError] = React.useState<string | null>(
+    null
+  )
 
   const rootNode = schema.root || { type: "div", children: [] }
 
@@ -137,16 +141,16 @@ export function NodePropertiesModal({
         : ""
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md p-4 animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex animate-in items-center justify-center bg-background/80 p-4 backdrop-blur-md duration-150 fade-in">
       <div
         role="dialog"
         aria-modal="true"
-        className="relative flex flex-col w-full max-w-2xl max-h-[90vh] rounded-[min(var(--radius-4xl),28px)] border border-border/80 bg-card shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150"
+        className="relative flex max-h-[90vh] w-full max-w-2xl animate-in flex-col overflow-hidden rounded-[min(var(--radius-4xl),28px)] border border-border/80 bg-card shadow-2xl duration-150 zoom-in-95"
       >
         {/* 1. Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border/60 bg-muted/20">
+        <div className="flex items-center justify-between border-b border-border/60 bg-muted/20 px-6 py-4">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
+            <div className="rounded-xl border border-primary/20 bg-primary/10 p-2 text-primary">
               <IconAdjustments className="size-4" />
             </div>
             <div>
@@ -154,11 +158,14 @@ export function NodePropertiesModal({
                 <h2 className="text-sm font-bold tracking-tight">
                   &lt;{selectedNode.type}&gt;
                 </h2>
-                <Badge variant="outline" className="font-mono text-[10px] px-1.5 py-0">
+                <Badge
+                  variant="outline"
+                  className="px-1.5 py-0 font-mono text-[10px]"
+                >
                   {isRoot ? "Root Node" : `Index [${selectedPath.join(", ")}]`}
                 </Badge>
               </div>
-              <p className="text-[11px] text-muted-foreground line-clamp-1">
+              <p className="line-clamp-1 text-[11px] text-muted-foreground">
                 {breadcrumbs.map((b) => b.label).join(" / ")}
               </p>
             </div>
@@ -189,18 +196,23 @@ export function NodePropertiesModal({
                 <IconTrash className="size-3.5" />
               </Button>
             )}
-            <Button size="icon-xs" variant="ghost" onPress={onClose} aria-label="Close modal">
+            <Button
+              size="icon-xs"
+              variant="ghost"
+              onPress={onClose}
+              aria-label="Close modal"
+            >
               <IconX className="size-4" />
             </Button>
           </div>
         </div>
 
         {/* 2. Tabs Navigation */}
-        <div className="flex border-b border-border/60 px-6 bg-muted/10 gap-2">
+        <div className="flex gap-2 border-b border-border/60 bg-muted/10 px-6">
           <button
             type="button"
             onClick={() => setActiveTab("content")}
-            className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-semibold border-b-2 transition-all ${
+            className={`flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs font-semibold transition-all ${
               activeTab === "content"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -213,7 +225,7 @@ export function NodePropertiesModal({
           <button
             type="button"
             onClick={() => setActiveTab("styling")}
-            className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-semibold border-b-2 transition-all ${
+            className={`flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs font-semibold transition-all ${
               activeTab === "styling"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -226,7 +238,7 @@ export function NodePropertiesModal({
           <button
             type="button"
             onClick={() => setActiveTab("props")}
-            className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-semibold border-b-2 transition-all ${
+            className={`flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs font-semibold transition-all ${
               activeTab === "props"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -238,10 +250,10 @@ export function NodePropertiesModal({
         </div>
 
         {/* 3. Modal Body Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 space-y-6 overflow-y-auto p-6">
           {/* TAB 1: Content & Text */}
           {activeTab === "content" && (
-            <div className="space-y-4 animate-in fade-in duration-100">
+            <div className="animate-in space-y-4 duration-100 fade-in">
               {/* Component Type & Tag */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -252,7 +264,10 @@ export function NodePropertiesModal({
                     value={selectedNode.type}
                     onChange={(e) => {
                       const newType = e.target.value
-                      onUpdateNode(selectedPath, (node) => ({ ...node, type: newType }))
+                      onUpdateNode(selectedPath, (node) => ({
+                        ...node,
+                        type: newType,
+                      }))
                     }}
                     placeholder="e.g. Card, Callout, h1, p, CodeBlock"
                     className="font-mono text-xs"
@@ -264,7 +279,11 @@ export function NodePropertiesModal({
                     Node Key (Optional)
                   </label>
                   <Input
-                    value={selectedNode.key !== undefined ? String(selectedNode.key) : ""}
+                    value={
+                      selectedNode.key !== undefined
+                        ? String(selectedNode.key)
+                        : ""
+                    }
                     onChange={(e) => {
                       const keyVal = e.target.value
                       onUpdateNode(selectedPath, (node) => ({
@@ -300,7 +319,7 @@ export function NodePropertiesModal({
 
           {/* TAB 2: Styling & Layout */}
           {activeTab === "styling" && (
-            <div className="space-y-5 animate-in fade-in duration-100">
+            <div className="animate-in space-y-5 duration-100 fade-in">
               {/* Variant and Size */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -313,7 +332,12 @@ export function NodePropertiesModal({
                         key={opt}
                         size="xs"
                         variant={props.variant === opt ? "default" : "outline"}
-                        onPress={() => setProp("variant", props.variant === opt ? undefined : opt)}
+                        onPress={() =>
+                          setProp(
+                            "variant",
+                            props.variant === opt ? undefined : opt
+                          )
+                        }
                         className="text-[11px]"
                       >
                         {opt}
@@ -332,8 +356,10 @@ export function NodePropertiesModal({
                         key={opt}
                         size="xs"
                         variant={props.size === opt ? "default" : "outline"}
-                        onPress={() => setProp("size", props.size === opt ? undefined : opt)}
-                        className="text-[11px] uppercase flex-1"
+                        onPress={() =>
+                          setProp("size", props.size === opt ? undefined : opt)
+                        }
+                        className="flex-1 text-[11px] uppercase"
                       >
                         {opt}
                       </Button>
@@ -373,8 +399,10 @@ export function NodePropertiesModal({
                     <Badge
                       key={ic}
                       variant={props.icon === ic ? "default" : "outline"}
-                      className="cursor-pointer text-[10px] hover:border-primary transition-colors font-mono"
-                      onClick={() => setProp("icon", props.icon === ic ? undefined : ic)}
+                      className="cursor-pointer font-mono text-[10px] transition-colors hover:border-primary"
+                      onClick={() =>
+                        setProp("icon", props.icon === ic ? undefined : ic)
+                      }
                     >
                       {ic.replace(/^Icon/, "")}
                     </Badge>
@@ -386,16 +414,18 @@ export function NodePropertiesModal({
 
           {/* TAB 3: Raw Props JSON */}
           {activeTab === "props" && (
-            <div className="space-y-3 animate-in fade-in duration-100">
+            <div className="animate-in space-y-3 duration-100 fade-in">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold text-muted-foreground">
                   Direct Node Properties (JSON Object)
                 </label>
-                <span className="text-[10px] text-muted-foreground font-mono">props: &#123; ... &#125;</span>
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  props: &#123; ... &#125;
+                </span>
               </div>
 
               {propsJsonError && (
-                <div className="rounded-xl bg-destructive/10 border border-destructive/30 px-3 py-1.5 text-xs text-destructive">
+                <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs text-destructive">
                   JSON Error: {propsJsonError}
                 </div>
               )}
@@ -422,12 +452,12 @@ export function NodePropertiesModal({
         </div>
 
         {/* 4. Modal Footer */}
-        <div className="flex items-center justify-between px-6 py-3.5 border-t border-border/60 bg-muted/20">
+        <div className="flex items-center justify-between border-t border-border/60 bg-muted/20 px-6 py-3.5">
           <span className="text-xs text-muted-foreground">
             Changes are saved live to the document.
           </span>
           <Button size="sm" variant="default" onPress={onClose}>
-            <IconCheck className="size-3.5 me-1" />
+            <IconCheck className="me-1 size-3.5" />
             Done
           </Button>
         </div>

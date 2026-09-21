@@ -80,7 +80,7 @@ export function DockShortcutsGrid({
             <button
               type="button"
               onClick={onCreateGroup}
-              className="flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-border/80 bg-card/40 p-3 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-primary select-none"
+              className="flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-border/80 bg-card/40 p-3 text-xs font-medium text-muted-foreground transition-colors select-none hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
             >
               <IconPlus className="size-4" />
               <span>{t("createFirstGroupPrompt")}</span>
@@ -226,16 +226,14 @@ export function DockShortcutsGrid({
                   }
 
                   return (
-                    <DropdownMenuTrigger
-                      key={itemKey || `group:${item.label}`}
-                    >
+                    <DropdownMenuTrigger key={itemKey || `group:${item.label}`}>
                       <Button
                         variant="outline"
                         isDisabled={!focusedSlot}
                         className={cn(
                           "group flex h-auto min-h-12 w-full cursor-pointer items-center justify-between gap-2.5 rounded-2xl border p-2.5 text-start text-xs font-medium transition-all select-none disabled:cursor-not-allowed disabled:opacity-50",
                           isAnyAssigned
-                            ? "border-primary/40 bg-primary/5 text-primary font-semibold shadow-2xs"
+                            ? "border-primary/40 bg-primary/5 font-semibold text-primary shadow-2xs"
                             : "border-border/70 bg-card/60 text-foreground hover:border-border hover:bg-muted/50"
                         )}
                       >
@@ -274,7 +272,7 @@ export function DockShortcutsGrid({
                           {itemKey && (
                             <DropdownMenuItem
                               onAction={() => onSelectItem(itemKey)}
-                              className="flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium cursor-pointer"
+                              className="flex cursor-pointer items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium"
                             >
                               <span className="font-semibold text-foreground">
                                 {item.label} ({t("main")})
@@ -311,13 +309,15 @@ export function DockShortcutsGrid({
                               <DropdownMenuItem
                                 key={childKey}
                                 onAction={() => onSelectItem(childKey)}
-                                className="flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium cursor-pointer"
+                                className="flex cursor-pointer items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium"
                               >
                                 <span className="flex min-w-0 items-center gap-2">
                                   <span className="flex size-5 shrink-0 items-center justify-center rounded-lg border border-border/40 bg-muted/40 text-muted-foreground [&>svg]:size-3">
                                     {child.icon}
                                   </span>
-                                  <span className="truncate">{child.label}</span>
+                                  <span className="truncate">
+                                    {child.label}
+                                  </span>
                                 </span>
                                 {childAssignedPos && (
                                   <Badge
@@ -352,7 +352,7 @@ export function DockShortcutsGrid({
                       className={cn(
                         "group flex h-auto min-h-12 w-full cursor-pointer items-center justify-between gap-2.5 rounded-2xl border p-2.5 text-start text-xs font-medium transition-all select-none disabled:cursor-not-allowed disabled:opacity-50",
                         isAssigned
-                          ? "border-primary/40 bg-primary/5 text-primary font-semibold shadow-2xs"
+                          ? "border-primary/40 bg-primary/5 font-semibold text-primary shadow-2xs"
                           : "border-border/70 bg-card/60 text-foreground hover:border-border hover:bg-muted/50"
                       )}
                     >

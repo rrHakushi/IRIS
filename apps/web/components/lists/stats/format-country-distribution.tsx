@@ -36,18 +36,20 @@ export function FormatCountryDistribution({
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
       {/* 1. Status Distribution */}
       <Card className="flex h-[320px] flex-col rounded-2xl border border-border/60 bg-card/60 p-5 backdrop-blur-md">
-        <h3 className="font-heading text-sm font-semibold tracking-wide text-foreground uppercase mb-3 shrink-0">
+        <h3 className="mb-3 shrink-0 font-heading text-sm font-semibold tracking-wide text-foreground uppercase">
           Status Distribution
         </h3>
 
-        <div className="flex-1 overflow-y-auto pe-1.5 space-y-3">
+        <div className="flex-1 space-y-3 overflow-y-auto pe-1.5">
           {statuses.length === 0 ? (
             <p className="text-xs text-muted-foreground">No entries found</p>
           ) : (
             statuses.map((item) => (
               <div key={item.name} className="space-y-1">
                 <div className="flex items-center justify-between text-xs font-medium">
-                  <span className="text-foreground">{item.name.replace(/_/g, " ")}</span>
+                  <span className="text-foreground">
+                    {item.name.replace(/_/g, " ")}
+                  </span>
                   <span className="text-muted-foreground">
                     {item.count.toLocaleString()} ({item.percentage}%)
                   </span>
@@ -65,18 +67,20 @@ export function FormatCountryDistribution({
 
       {/* 2. Format Distribution */}
       <Card className="flex h-[320px] flex-col rounded-2xl border border-border/60 bg-card/60 p-5 backdrop-blur-md">
-        <h3 className="font-heading text-sm font-semibold tracking-wide text-foreground uppercase mb-3 shrink-0">
+        <h3 className="mb-3 shrink-0 font-heading text-sm font-semibold tracking-wide text-foreground uppercase">
           Format Distribution
         </h3>
 
-        <div className="flex-1 overflow-y-auto pe-1.5 space-y-3">
+        <div className="flex-1 space-y-3 overflow-y-auto pe-1.5">
           {formats.length === 0 ? (
             <p className="text-xs text-muted-foreground">No formats recorded</p>
           ) : (
             formats.map((item) => (
               <div key={item.name} className="space-y-1">
                 <div className="flex items-center justify-between text-xs font-medium">
-                  <span className="text-foreground">{item.name.replace(/_/g, " ")}</span>
+                  <span className="text-foreground">
+                    {item.name.replace(/_/g, " ")}
+                  </span>
                   <span className="text-muted-foreground">
                     {item.count.toLocaleString()} ({item.percentage}%)
                   </span>
@@ -94,16 +98,19 @@ export function FormatCountryDistribution({
 
       {/* 3. Country Distribution */}
       <Card className="flex h-[320px] flex-col rounded-2xl border border-border/60 bg-card/60 p-5 backdrop-blur-md">
-        <h3 className="font-heading text-sm font-semibold tracking-wide text-foreground uppercase mb-3 shrink-0">
+        <h3 className="mb-3 shrink-0 font-heading text-sm font-semibold tracking-wide text-foreground uppercase">
           Country of Origin
         </h3>
 
-        <div className="flex-1 overflow-y-auto pe-1.5 space-y-3">
+        <div className="flex-1 space-y-3 overflow-y-auto pe-1.5">
           {countries.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No country data available</p>
+            <p className="text-xs text-muted-foreground">
+              No country data available
+            </p>
           ) : (
             countries.map((item) => {
-              const displayName = COUNTRY_NAMES[item.name.toUpperCase()] || item.name
+              const displayName =
+                COUNTRY_NAMES[item.name.toUpperCase()] || item.name
               return (
                 <div key={item.name} className="space-y-1">
                   <div className="flex items-center justify-between text-xs font-medium">

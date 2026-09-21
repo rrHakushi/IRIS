@@ -11,7 +11,11 @@ interface CipherIconProps {
   className?: string
 }
 
-export function CipherIcon({ item, size = "md", className = "" }: CipherIconProps) {
+export function CipherIcon({
+  item,
+  size = "md",
+  className = "",
+}: CipherIconProps) {
   const [imgError, setImgError] = useState(false)
 
   const isLogin = item.type === "LOGIN"
@@ -42,7 +46,7 @@ export function CipherIcon({ item, size = "md", className = "" }: CipherIconProp
 
   return (
     <div
-      className={`${containerSizes[size]} flex items-center justify-center shrink-0 overflow-hidden bg-[#d800a6]/10 text-[#d800a6] ${
+      className={`${containerSizes[size]} flex shrink-0 items-center justify-center overflow-hidden bg-[#d800a6]/10 text-[#d800a6] ${
         !isLogin ? "bg-emerald-500/10 text-emerald-500" : ""
       } ${className}`}
     >
@@ -50,7 +54,7 @@ export function CipherIcon({ item, size = "md", className = "" }: CipherIconProp
         <img
           src={faviconUrl}
           alt=""
-          className={`${iconSizes[size]} object-contain rounded-xs`}
+          className={`${iconSizes[size]} rounded-xs object-contain`}
           loading="lazy"
           referrerPolicy="no-referrer"
           onError={() => setImgError(true)}

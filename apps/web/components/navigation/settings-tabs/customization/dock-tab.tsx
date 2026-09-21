@@ -33,10 +33,7 @@ import {
   DEFAULT_DOCK_POSITIONS,
   type CustomDockGroup,
 } from "@IRIS/shared"
-import type {
-  DockPositions,
-  SidebarItem,
-} from "@/types/sidebar-config"
+import type { DockPositions, SidebarItem } from "@/types/sidebar-config"
 import { filterSidebarConfig } from "@/lib/navigation"
 import { useListSidebarConfig } from "@/config/sidebars/listSidebarConfig"
 import { useAllAppSidebarConfigs } from "@/config/sidebars"
@@ -168,7 +165,10 @@ export function DockSettingsTab({
 
     if (user?.customization) {
       const dockCust = getDockCustomization(user.customization)
-      if (dockCust.positions && Object.values(dockCust.positions).some(Boolean)) {
+      if (
+        dockCust.positions &&
+        Object.values(dockCust.positions).some(Boolean)
+      ) {
         initialPos = { ...DEFAULT_DOCK_POSITIONS, ...dockCust.positions }
       }
       if (Array.isArray(dockCust.customGroups)) {
@@ -525,7 +525,7 @@ export function DockSettingsTab({
                 {t("mobileBottomDock")}
               </CardTitle>
             </div>
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -606,4 +606,3 @@ export function DockSettingsTab({
 }
 
 export default DockSettingsTab
-

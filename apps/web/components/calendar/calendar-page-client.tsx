@@ -245,8 +245,8 @@ export function CalendarPageClient() {
           </div>
         ) : (
           <div className="flex flex-1 flex-col">
-            {viewMode === "month" && (
-              isMobile ? (
+            {viewMode === "month" &&
+              (isMobile ? (
                 <CalendarMobileMonthView
                   currentDate={currentDate}
                   items={filteredItems}
@@ -260,8 +260,7 @@ export function CalendarPageClient() {
                   titlePreference={mediaTitlePreference}
                   onSelectDay={handleSelectDay}
                 />
-              )
-            )}
+              ))}
 
             {viewMode === "week" && (
               <CalendarWeekView

@@ -92,23 +92,25 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
         }
       })
 
-      const decryptedItems = rawCiphers.map((c: any) => {
-        try {
-          const title = decryptVaultData(c.encryptedTitle, vaultKey)
-          const data = decryptVaultObject<any>(c.encryptedData, vaultKey)
-          return {
-            id: c.id,
-            type: c.type,
-            title,
-            folderId: c.folderId,
-            favorite: c.favorite,
-            data,
-            createdAt: c.createdAt,
+      const decryptedItems = rawCiphers
+        .map((c: any) => {
+          try {
+            const title = decryptVaultData(c.encryptedTitle, vaultKey)
+            const data = decryptVaultObject<any>(c.encryptedData, vaultKey)
+            return {
+              id: c.id,
+              type: c.type,
+              title,
+              folderId: c.folderId,
+              favorite: c.favorite,
+              data,
+              createdAt: c.createdAt,
+            }
+          } catch {
+            return null
           }
-        } catch {
-          return null
-        }
-      }).filter(Boolean)
+        })
+        .filter(Boolean)
 
       const exportPayload = {
         encrypted: false,
@@ -158,7 +160,9 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
       try {
         parsed = JSON.parse(text)
       } catch {
-        toast.error("Please provide a valid JSON export (Bitwarden or IRIS Pass format)")
+        toast.error(
+          "Please provide a valid JSON export (Bitwarden or IRIS Pass format)"
+        )
         setIsImporting(false)
         return
       }
@@ -190,12 +194,20 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
         const title = item.name || item.title || "Untitled"
         const favorite = Boolean(item.favorite)
 
-        if (item.type === 1 || item.type === "LOGIN" || item.login || item.data?.username) {
+        if (
+          item.type === 1 ||
+          item.type === "LOGIN" ||
+          item.login ||
+          item.data?.username
+        ) {
           const loginPayload = {
             username: item.login?.username || item.data?.username || "",
             password: item.login?.password || item.data?.password || "",
             uris: item.login?.uris
-              ? item.login.uris.map((u: any) => ({ uri: u.uri, match: u.match ?? 0 }))
+              ? item.login.uris.map((u: any) => ({
+                  uri: u.uri,
+                  match: u.match ?? 0,
+                }))
               : item.data?.uris || [],
             totpSecret: item.login?.totp || item.data?.totpSecret || "",
             notes: item.notes || item.data?.notes || "",
@@ -239,7 +251,7 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-base font-semibold text-foreground font-heading">
+        <h2 className="font-heading text-base font-semibold text-foreground">
           IRIS Pass Settings
         </h2>
       </div>
@@ -248,10 +260,10 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
       {!encryption.isActive && (
         <form
           onSubmit={handleUnlock}
-          className="rounded-2xl border border-border bg-card p-5 space-y-3 shadow-xs"
+          className="space-y-3 rounded-2xl border border-border bg-card p-5 shadow-xs"
         >
           {unlockError && (
-            <div className="flex items-center gap-2 rounded-xl bg-destructive/10 p-2.5 text-xs text-destructive border border-destructive/20">
+            <div className="flex items-center gap-2 rounded-xl border border-destructive/20 bg-destructive/10 p-2.5 text-xs text-destructive">
               <IconAlertCircle className="size-4 shrink-0" />
               <span>{unlockError}</span>
             </div>
@@ -273,14 +285,16 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
                 placeholder="Enter password to unlock..."
                 value={unlockPassword}
                 onChange={(e) => setUnlockPassword(e.target.value)}
-                className="pe-10 rounded-xl text-xs h-9"
+                className="h-9 rounded-xl pe-10 text-xs"
               />
               <button
                 type="button"
                 onClick={() => setShowUnlockPassword(!showUnlockPassword)}
-                className="absolute inset-y-0 end-0 flex items-center pe-3 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="absolute inset-y-0 end-0 flex cursor-pointer items-center pe-3 text-muted-foreground transition-colors hover:text-foreground"
                 tabIndex={-1}
-                aria-label={showUnlockPassword ? "Hide password" : "Show password"}
+                aria-label={
+                  showUnlockPassword ? "Hide password" : "Show password"
+                }
               >
                 {showUnlockPassword ? (
                   <IconEyeOff className="size-4" />
@@ -294,25 +308,30 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
           <Button
             type="submit"
             disabled={isUnlocking || !unlockPassword.trim()}
-            className="w-full rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs h-9 font-semibold cursor-pointer"
+            className="h-9 w-full cursor-pointer rounded-xl bg-rose-500 text-xs font-semibold text-white hover:bg-rose-600"
           >
-            <IconLockOpen className="size-3.5 me-1.5" />
-            {isUnlocking ? "Unlocking Vault..." : "Unlock Vault to Manage Passwords"}
+            <IconLockOpen className="me-1.5 size-3.5" />
+            {isUnlocking
+              ? "Unlocking Vault..."
+              : "Unlock Vault to Manage Passwords"}
           </Button>
         </form>
       )}
 
       {/* Import / Export Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {/* Import */}
-        <div className="p-5 rounded-2xl border border-border bg-card space-y-3 flex flex-col justify-between shadow-xs">
+        <div className="flex flex-col justify-between space-y-3 rounded-2xl border border-border bg-card p-5 shadow-xs">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
               <IconUpload className="size-4 text-rose-500" />
-              <h3 className="text-xs font-bold text-foreground">Import Passwords</h3>
+              <h3 className="text-xs font-bold text-foreground">
+                Import Passwords
+              </h3>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Import credentials from Bitwarden JSON or IRIS Pass backup. Credentials are encrypted client-side before syncing.
+              Import credentials from Bitwarden JSON or IRIS Pass backup.
+              Credentials are encrypted client-side before syncing.
             </p>
           </div>
 
@@ -330,7 +349,7 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
               size="sm"
               disabled={!encryption.isActive || isImporting}
               onClick={() => fileInputRef.current?.click()}
-              className="w-full rounded-xl text-xs gap-1.5 h-9 cursor-pointer"
+              className="h-9 w-full cursor-pointer gap-1.5 rounded-xl text-xs"
             >
               <IconUpload className="size-3.5" />
               {isImporting ? "Importing..." : "Choose File to Import"}
@@ -339,14 +358,17 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
         </div>
 
         {/* Export */}
-        <div className="p-5 rounded-2xl border border-border bg-card space-y-3 flex flex-col justify-between shadow-xs">
+        <div className="flex flex-col justify-between space-y-3 rounded-2xl border border-border bg-card p-5 shadow-xs">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
               <IconDownload className="size-4 text-rose-500" />
-              <h3 className="text-xs font-bold text-foreground">Export Passwords</h3>
+              <h3 className="text-xs font-bold text-foreground">
+                Export Passwords
+              </h3>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Export an unencrypted JSON backup of all logins and credentials. Store this file in an encrypted volume.
+              Export an unencrypted JSON backup of all logins and credentials.
+              Store this file in an encrypted volume.
             </p>
           </div>
 
@@ -355,7 +377,7 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
             size="sm"
             disabled={!encryption.isActive || isExporting}
             onClick={handleExport}
-            className="w-full rounded-xl text-xs gap-1.5 h-9 cursor-pointer"
+            className="h-9 w-full cursor-pointer gap-1.5 rounded-xl text-xs"
           >
             <IconDownload className="size-3.5" />
             {isExporting ? "Exporting..." : "Export Unencrypted JSON"}
@@ -364,7 +386,7 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
       </div>
 
       {importSummary && (
-        <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+        <div className="flex items-center gap-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-600 dark:text-emerald-400">
           <IconCheck className="size-4 shrink-0" />
           <span>{importSummary}</span>
         </div>

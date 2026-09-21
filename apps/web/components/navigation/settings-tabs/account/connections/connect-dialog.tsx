@@ -136,6 +136,9 @@ export function ConnectDialog({
       resetForm()
       onOpenChange(false)
       onConnected()
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("iris-connections-changed"))
+      }
     } catch (err: unknown) {
       setError(
         (err as Error).message || "Connection failed. Please check credentials."
@@ -312,7 +315,7 @@ export function ConnectDialog({
               <button
                 type="button"
                 onClick={() => setUseApiKeyForIris(!useApiKeyForIris)}
-                className="text-[11px] text-muted-foreground underline-offset-4 hover:text-foreground hover:underline transition-colors"
+                className="text-[11px] text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
               >
                 {useApiKeyForIris
                   ? "← Switch to OAuth 2.0 (Recommended)"

@@ -7,7 +7,8 @@ export const sectionPresets: ComponentPresetItem[] = [
     name: "12-Column Grid (All 12 Column Slots)",
     category: "sections",
     icon: "IconLayoutGrid",
-    description: "True 12-column grid with 12 distinct column slots across the entire screen width",
+    description:
+      "True 12-column grid with 12 distinct column slots across the entire screen width",
     getNode: () => createSectionPreset("12-col-grid"),
   },
   {
@@ -15,7 +16,8 @@ export const sectionPresets: ComponentPresetItem[] = [
     name: "3-Zone Canvas (3 / 6 / 3 Cols)",
     category: "sections",
     icon: "IconColumns",
-    description: "App layout with left rail (3 cols), center canvas (6 cols), and right panel (3 cols)",
+    description:
+      "App layout with left rail (3 cols), center canvas (6 cols), and right panel (3 cols)",
     getNode: () => createSectionPreset("3-zone-canvas"),
   },
   {
@@ -23,7 +25,8 @@ export const sectionPresets: ComponentPresetItem[] = [
     name: "4-Column Grid (3 Cols Each)",
     category: "sections",
     icon: "IconLayoutGrid",
-    description: "4 equal layout columns across the screen (3 + 3 + 3 + 3 = 12 cols)",
+    description:
+      "4 equal layout columns across the screen (3 + 3 + 3 + 3 = 12 cols)",
     getNode: () => createSectionPreset("4-col-grid"),
   },
   {
@@ -31,7 +34,8 @@ export const sectionPresets: ComponentPresetItem[] = [
     name: "3-Column Grid (4 Cols Each)",
     category: "sections",
     icon: "IconColumns",
-    description: "3 equal layout columns across the screen (4 + 4 + 4 = 12 cols)",
+    description:
+      "3 equal layout columns across the screen (4 + 4 + 4 = 12 cols)",
     getNode: () => createSectionPreset("3-col"),
   },
   {
@@ -47,7 +51,8 @@ export const sectionPresets: ComponentPresetItem[] = [
     name: "Sidebar + Main Canvas (3 / 9 Cols)",
     category: "sections",
     icon: "IconLayoutSidebar",
-    description: "App workspace with fixed 3-column navigation and wide 9-column content canvas",
+    description:
+      "App workspace with fixed 3-column navigation and wide 9-column content canvas",
     getNode: () => createSectionPreset("sidebar-canvas"),
   },
   {
@@ -55,7 +60,8 @@ export const sectionPresets: ComponentPresetItem[] = [
     name: "Fluid Edge-to-Edge Container",
     category: "sections",
     icon: "IconArrowsMaximize",
-    description: "100% full viewport width container without horizontal clamping",
+    description:
+      "100% full viewport width container without horizontal clamping",
     getNode: () => createSectionPreset("fluid-full"),
   },
   {

@@ -1,5 +1,8 @@
 import { defineRoute, t } from "../../../../../../router"
-import { generateClientSecret, hashClientSecret } from "../../../helpers/oauth-utils"
+import {
+  generateClientSecret,
+  hashClientSecret,
+} from "../../../helpers/oauth-utils"
 
 export default defineRoute({
   schema: {
@@ -34,7 +37,9 @@ export default defineRoute({
 
       if (client.isPublic) {
         return new Response(
-          JSON.stringify({ error: "Public clients do not possess client secrets" }),
+          JSON.stringify({
+            error: "Public clients do not possess client secrets",
+          }),
           { status: 400, headers: { "content-type": "application/json" } }
         )
       }

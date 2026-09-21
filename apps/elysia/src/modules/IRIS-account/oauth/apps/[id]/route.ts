@@ -101,11 +101,15 @@ export default defineRoute({
         where: { id: existing.id },
         data: {
           name: body.name !== undefined ? body.name : undefined,
-          description: body.description !== undefined ? body.description : undefined,
-          websiteUrl: body.websiteUrl !== undefined ? body.websiteUrl : undefined,
+          description:
+            body.description !== undefined ? body.description : undefined,
+          websiteUrl:
+            body.websiteUrl !== undefined ? body.websiteUrl : undefined,
           logoUrl: body.logoUrl !== undefined ? body.logoUrl : undefined,
-          redirectUris: body.redirectUris !== undefined ? body.redirectUris : undefined,
-          allowedScopes: body.allowedScopes !== undefined ? body.allowedScopes : undefined,
+          redirectUris:
+            body.redirectUris !== undefined ? body.redirectUris : undefined,
+          allowedScopes:
+            body.allowedScopes !== undefined ? body.allowedScopes : undefined,
           isPublic: body.isPublic !== undefined ? body.isPublic : undefined,
         },
       })

@@ -84,7 +84,7 @@ export function PassGeneratorDialog({
           <div className="flex size-8 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500">
             <IconSparkles className="size-4" />
           </div>
-          <DialogTitle className="text-base font-bold text-foreground font-heading">
+          <DialogTitle className="font-heading text-base font-bold text-foreground">
             Password Generator
           </DialogTitle>
         </div>
@@ -92,18 +92,18 @@ export function PassGeneratorDialog({
 
       <div className="space-y-4 pt-1">
         {/* Output card */}
-        <div className="rounded-2xl border border-border bg-card p-4 space-y-3 shadow-xs">
+        <div className="space-y-3 rounded-2xl border border-border bg-card p-4 shadow-xs">
           <div className="flex items-center justify-between gap-3">
-            <div className="font-mono text-base sm:text-lg font-semibold tracking-wide text-foreground break-all select-all min-w-0 flex-1">
+            <div className="min-w-0 flex-1 font-mono text-base font-semibold tracking-wide break-all text-foreground select-all sm:text-lg">
               {generatedPassword}
             </div>
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex shrink-0 items-center gap-1.5">
               <Button
                 variant="outline"
                 size="icon-sm"
                 onClick={regenerate}
                 aria-label="Regenerate"
-                className="rounded-xl cursor-pointer"
+                className="cursor-pointer rounded-xl"
               >
                 <IconRefresh className="size-3.5" />
               </Button>
@@ -112,7 +112,7 @@ export function PassGeneratorDialog({
                 size="icon-sm"
                 onClick={handleCopy}
                 aria-label="Copy"
-                className="rounded-xl cursor-pointer"
+                className="cursor-pointer rounded-xl"
               >
                 {copied ? (
                   <IconCheck className="size-3.5 text-emerald-500" />
@@ -124,34 +124,36 @@ export function PassGeneratorDialog({
           </div>
 
           {/* Entropy bar */}
-          <div className="space-y-1 pt-1 border-t border-border/50">
+          <div className="space-y-1 border-t border-border/50 pt-1">
             <div className="flex items-center justify-between text-[11px]">
               <span className="text-muted-foreground">
                 Entropy: {entropyInfo.entropyBits} bits
               </span>
               <span
-                className={`font-semibold ${entropyInfo.score === 4
+                className={`font-semibold ${
+                  entropyInfo.score === 4
                     ? "text-emerald-500"
                     : entropyInfo.score === 3
                       ? "text-blue-500"
                       : entropyInfo.score === 2
                         ? "text-amber-500"
                         : "text-rose-500"
-                  }`}
+                }`}
               >
                 {entropyInfo.label}
               </span>
             </div>
-            <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
               <div
-                className={`h-full transition-all duration-300 ${entropyInfo.score === 4
+                className={`h-full transition-all duration-300 ${
+                  entropyInfo.score === 4
                     ? "w-full bg-emerald-500"
                     : entropyInfo.score === 3
                       ? "w-3/4 bg-blue-500"
                       : entropyInfo.score === 2
                         ? "w-1/2 bg-amber-500"
                         : "w-1/4 bg-rose-500"
-                  }`}
+                }`}
               />
             </div>
           </div>
@@ -159,8 +161,11 @@ export function PassGeneratorDialog({
 
         {/* Length Slider (up to 256) */}
         <div className="space-y-1.5">
-          <div className="flex justify-between items-center text-xs">
-            <Label htmlFor="gen-modal-length" className="font-medium text-foreground">
+          <div className="flex items-center justify-between text-xs">
+            <Label
+              htmlFor="gen-modal-length"
+              className="font-medium text-foreground"
+            >
               Length
             </Label>
             <span className="font-mono font-bold text-foreground">
@@ -176,7 +181,7 @@ export function PassGeneratorDialog({
             onChange={(e) =>
               setOptions({ ...options, length: Number(e.target.value) })
             }
-            className="w-full accent-rose-500 cursor-pointer"
+            className="w-full cursor-pointer accent-rose-500"
           />
           <div className="flex justify-between text-[10px] text-muted-foreground">
             <span>8</span>
@@ -189,72 +194,80 @@ export function PassGeneratorDialog({
 
         {/* Character toggles */}
         <div className="grid grid-cols-2 gap-2 text-xs">
-          <label className="flex items-center gap-2 p-2 rounded-xl border border-border bg-background cursor-pointer hover:bg-muted/40 transition-colors">
+          <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-border bg-background p-2 transition-colors hover:bg-muted/40">
             <input
               type="checkbox"
               checked={options.uppercase}
               onChange={(e) =>
                 setOptions({ ...options, uppercase: e.target.checked })
               }
-              className="rounded size-3.5 accent-rose-500"
+              className="size-3.5 rounded accent-rose-500"
             />
-            <span className="text-foreground text-[11px] font-medium">A-Z (Uppercase)</span>
+            <span className="text-[11px] font-medium text-foreground">
+              A-Z (Uppercase)
+            </span>
           </label>
 
-          <label className="flex items-center gap-2 p-2 rounded-xl border border-border bg-background cursor-pointer hover:bg-muted/40 transition-colors">
+          <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-border bg-background p-2 transition-colors hover:bg-muted/40">
             <input
               type="checkbox"
               checked={options.lowercase}
               onChange={(e) =>
                 setOptions({ ...options, lowercase: e.target.checked })
               }
-              className="rounded size-3.5 accent-rose-500"
+              className="size-3.5 rounded accent-rose-500"
             />
-            <span className="text-foreground text-[11px] font-medium">a-z (Lowercase)</span>
+            <span className="text-[11px] font-medium text-foreground">
+              a-z (Lowercase)
+            </span>
           </label>
 
-          <label className="flex items-center gap-2 p-2 rounded-xl border border-border bg-background cursor-pointer hover:bg-muted/40 transition-colors">
+          <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-border bg-background p-2 transition-colors hover:bg-muted/40">
             <input
               type="checkbox"
               checked={options.numbers}
               onChange={(e) =>
                 setOptions({ ...options, numbers: e.target.checked })
               }
-              className="rounded size-3.5 accent-rose-500"
+              className="size-3.5 rounded accent-rose-500"
             />
-            <span className="text-foreground text-[11px] font-medium">0-9 (Numbers)</span>
+            <span className="text-[11px] font-medium text-foreground">
+              0-9 (Numbers)
+            </span>
           </label>
 
-          <label className="flex items-center gap-2 p-2 rounded-xl border border-border bg-background cursor-pointer hover:bg-muted/40 transition-colors">
+          <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-border bg-background p-2 transition-colors hover:bg-muted/40">
             <input
               type="checkbox"
               checked={options.symbols}
               onChange={(e) =>
                 setOptions({ ...options, symbols: e.target.checked })
               }
-              className="rounded size-3.5 accent-rose-500"
+              className="size-3.5 rounded accent-rose-500"
             />
-            <span className="text-foreground text-[11px] font-medium">!@#$ (Symbols)</span>
+            <span className="text-[11px] font-medium text-foreground">
+              !@#$ (Symbols)
+            </span>
           </label>
         </div>
 
         {/* Ambiguous filter */}
-        <label className="flex items-center gap-2 p-2 rounded-xl border border-border bg-background cursor-pointer hover:bg-muted/40 transition-colors text-xs">
+        <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-border bg-background p-2 text-xs transition-colors hover:bg-muted/40">
           <input
             type="checkbox"
             checked={options.avoidAmbiguous}
             onChange={(e) =>
               setOptions({ ...options, avoidAmbiguous: e.target.checked })
             }
-            className="rounded size-3.5 accent-rose-500"
+            className="size-3.5 rounded accent-rose-500"
           />
-          <span className="text-foreground text-[11px]">
+          <span className="text-[11px] text-foreground">
             Avoid ambiguous characters (0, O, 1, l, I)
           </span>
         </label>
       </div>
 
-      <DialogFooter className="pt-3 flex justify-end gap-2">
+      <DialogFooter className="flex justify-end gap-2 pt-3">
         <Button
           type="button"
           variant="outline"
@@ -266,9 +279,9 @@ export function PassGeneratorDialog({
         <Button
           type="button"
           onClick={handleApply}
-          className="rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold"
+          className="rounded-xl bg-rose-500 text-xs font-semibold text-white hover:bg-rose-600"
         >
-          <IconKey className="size-3.5 me-1.5" />
+          <IconKey className="me-1.5 size-3.5" />
           Use Password
         </Button>
       </DialogFooter>

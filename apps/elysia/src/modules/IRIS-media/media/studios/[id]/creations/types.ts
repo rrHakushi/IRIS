@@ -31,4 +31,6 @@ export const StudioCreationsResponseSchema = t.Object({
   }),
 })
 
-export type StudioCreationsResponse = UnwrapSchema<typeof StudioCreationsResponseSchema>
+export type StudioCreationsResponse = UnwrapSchema<
+  typeof StudioCreationsResponseSchema
+>

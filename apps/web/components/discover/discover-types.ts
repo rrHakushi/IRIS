@@ -24,19 +24,10 @@ export type DiscoverCategory =
   | "studios"
 
 export type DiscoverStatusKey =
-  | "ALL"
-  | "RELEASING"
-  | "FINISHED"
-  | "UPCOMING"
-  | "NOT_YET_RELEASED"
+  "ALL" | "RELEASING" | "FINISHED" | "UPCOMING" | "NOT_YET_RELEASED"
 
 export type DiscoverSortByOption =
-  | "popularity"
-  | "score"
-  | "favorites"
-  | "title"
-  | "releaseDate"
-  | "updatedAt"
+  "popularity" | "score" | "favorites" | "title" | "releaseDate" | "updatedAt"
 
 export type DiscoverSortOrderOption = "asc" | "desc"
 

@@ -1,6 +1,5 @@
 export { IrisPage, type IrisPageProps } from "./iris-page"
 export {
-
   COMPONENT_REGISTRY,
   resolveComponent,
   resolveTablerIcon,

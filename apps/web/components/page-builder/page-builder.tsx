@@ -22,7 +22,11 @@ import {
 } from "@tabler/icons-react"
 import { toast } from "sonner"
 
-import { IrisPage, type IrisNode, type IrisPageSchema } from "@/components/iris-page"
+import {
+  IrisPage,
+  type IrisNode,
+  type IrisPageSchema,
+} from "@/components/iris-page"
 import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
 import { Textarea } from "@workspace/ui/components/textarea"
@@ -90,10 +94,13 @@ export function PageBuilder({
     path: NodePath
     position: "inside" | "above" | "below"
   } | null>(null)
-  const [isPropertiesModalOpen, setIsPropertiesModalOpen] = React.useState(false)
+  const [isPropertiesModalOpen, setIsPropertiesModalOpen] =
+    React.useState(false)
   const [isImportModalOpen, setIsImportModalOpen] = React.useState(false)
   const [importJsonText, setImportJsonText] = React.useState("")
-  const [codeJsonText, setCodeJsonText] = React.useState(() => JSON.stringify(schema, null, 2))
+  const [codeJsonText, setCodeJsonText] = React.useState(() =>
+    JSON.stringify(schema, null, 2)
+  )
   const [codeError, setCodeError] = React.useState<string | null>(null)
 
   // Auto-save draft to localStorage
@@ -117,9 +124,12 @@ export function PageBuilder({
    * Commit a new schema with history recording.
    */
   const commitSchema = React.useCallback(
-    (nextSchema: IrisPageSchema | ((prev: IrisPageSchema) => IrisPageSchema)) => {
+    (
+      nextSchema: IrisPageSchema | ((prev: IrisPageSchema) => IrisPageSchema)
+    ) => {
       setSchema((current) => {
-        const resolved = typeof nextSchema === "function" ? nextSchema(current) : nextSchema
+        const resolved =
+          typeof nextSchema === "function" ? nextSchema(current) : nextSchema
         setPast((p) => [...p.slice(-25), current])
         setFuture([])
         return resolved
@@ -152,14 +162,19 @@ export function PageBuilder({
   }, [future, schema])
 
   // Safe root accessor
-  const getSafeRoot = (s: IrisPageSchema): IrisNode => s.root || { type: "div", children: [] }
+  const getSafeRoot = (s: IrisPageSchema): IrisNode =>
+    s.root || { type: "div", children: [] }
 
   // Node manipulation handlers
   const handleInsertNode = React.useCallback(
     (newNode: IrisNode) => {
       commitSchema((prev) => {
         const targetPath = selectedPath.length > 0 ? selectedPath : []
-        const { newRoot, newPath } = insertChildNode(getSafeRoot(prev), targetPath, newNode)
+        const { newRoot, newPath } = insertChildNode(
+          getSafeRoot(prev),
+          targetPath,
+          newNode
+        )
         setSelectedPath(newPath)
         return { ...prev, root: newRoot }
       })
@@ -175,7 +190,12 @@ export function PageBuilder({
         return
       }
       commitSchema((prev) => {
-        const { newRoot, newPath } = insertNodeAdjacent(getSafeRoot(prev), targetPath, position, newNode)
+        const { newRoot, newPath } = insertNodeAdjacent(
+          getSafeRoot(prev),
+          targetPath,
+          position,
+          newNode
+        )
         setSelectedPath(newPath)
         return { ...prev, root: newRoot }
       })
@@ -188,7 +208,11 @@ export function PageBuilder({
     (type: SectionPresetType = "3-col") => {
       const sectionNode = createSectionPreset(type)
       commitSchema((prev) => {
-        const { newRoot, newPath } = insertChildNode(getSafeRoot(prev), [], sectionNode)
+        const { newRoot, newPath } = insertChildNode(
+          getSafeRoot(prev),
+          [],
+          sectionNode
+        )
         setSelectedPath(newPath)
         return { ...prev, root: newRoot }
       })
@@ -202,7 +226,11 @@ export function PageBuilder({
       if (!pickerTarget) return
       if (pickerTarget.position === "inside") {
         commitSchema((prev) => {
-          const { newRoot, newPath } = insertChildNode(getSafeRoot(prev), pickerTarget.path, newNode)
+          const { newRoot, newPath } = insertChildNode(
+            getSafeRoot(prev),
+            pickerTarget.path,
+            newNode
+          )
           setSelectedPath(newPath)
           return { ...prev, root: newRoot }
         })
@@ -240,7 +268,10 @@ export function PageBuilder({
   const handleDuplicateNode = React.useCallback(
     (path: NodePath) => {
       commitSchema((prev) => {
-        const { newRoot, newPath } = duplicateNodeByPath(getSafeRoot(prev), path)
+        const { newRoot, newPath } = duplicateNodeByPath(
+          getSafeRoot(prev),
+          path
+        )
         setSelectedPath(newPath)
         return { ...prev, root: newRoot }
       })
@@ -252,7 +283,11 @@ export function PageBuilder({
   const handleMoveNode = React.useCallback(
     (path: NodePath, direction: "up" | "down") => {
       commitSchema((prev) => {
-        const { newRoot, newPath } = moveNodeByPath(getSafeRoot(prev), path, direction)
+        const { newRoot, newPath } = moveNodeByPath(
+          getSafeRoot(prev),
+          path,
+          direction
+        )
         setSelectedPath(newPath)
         return { ...prev, root: newRoot }
       })
@@ -269,10 +304,15 @@ export function PageBuilder({
   const handleToggleFullWidth = React.useCallback(() => {
     commitSchema((prev) => {
       const currentCls = String(prev.root?.props?.className || "")
-      const isClamped = currentCls.includes("max-w-") || currentCls.includes("mx-auto")
+      const isClamped =
+        currentCls.includes("max-w-") || currentCls.includes("mx-auto")
       let newCls = currentCls
       if (isClamped) {
-        newCls = currentCls.replace(/\bmax-w-\S+\b/g, "").replace(/\bmx-auto\b/g, "").replace(/\s+/g, " ").trim()
+        newCls = currentCls
+          .replace(/\bmax-w-\S+\b/g, "")
+          .replace(/\bmx-auto\b/g, "")
+          .replace(/\s+/g, " ")
+          .trim()
         if (!newCls.includes("w-full")) newCls = `w-full ${newCls}`.trim()
         toast.success("Document stretched to 100% full width")
       } else {
@@ -352,14 +392,14 @@ export function PageBuilder({
 
   return (
     <div
-      className={`flex w-full flex-col bg-background text-foreground overflow-hidden ${
+      className={`flex w-full flex-col overflow-hidden bg-background text-foreground ${
         embedded
           ? "relative min-h-[650px] flex-1 rounded-[min(var(--radius-4xl),24px)] border border-border/60 shadow-lg"
           : "h-svh"
       }`}
     >
       {/* 1. Main Builder Studio Top Bar */}
-      <header className="flex h-12 shrink-0 items-center justify-between border-b border-border/60 bg-background/80 px-4 backdrop-blur-md z-30">
+      <header className="z-30 flex h-12 shrink-0 items-center justify-between border-b border-border/60 bg-background/80 px-4 backdrop-blur-md">
         {/* Mode & Viewport Switchers */}
         <div className="flex items-center gap-2">
           {/* View Mode Toggle */}
@@ -367,9 +407,9 @@ export function PageBuilder({
             <button
               type="button"
               onClick={() => setMode("visual")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-medium transition-all ${
                 mode === "visual"
-                  ? "bg-background text-foreground shadow-xs font-semibold"
+                  ? "bg-background font-semibold text-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -380,9 +420,9 @@ export function PageBuilder({
             <button
               type="button"
               onClick={() => setMode("preview")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-medium transition-all ${
                 mode === "preview"
-                  ? "bg-background text-foreground shadow-xs font-semibold text-primary"
+                  ? "bg-background font-semibold text-foreground text-primary shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -393,9 +433,9 @@ export function PageBuilder({
             <button
               type="button"
               onClick={() => setMode("code")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-medium transition-all ${
                 mode === "code"
-                  ? "bg-background text-foreground shadow-xs font-semibold"
+                  ? "bg-background font-semibold text-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -407,7 +447,7 @@ export function PageBuilder({
           {/* Viewport Width Controls (in visual mode) */}
           {mode === "visual" && (
             <div className="flex items-center gap-1.5">
-              <div className="hidden lg:flex items-center rounded-xl border border-border/60 bg-muted/40 p-1">
+              <div className="hidden items-center rounded-xl border border-border/60 bg-muted/40 p-1 lg:flex">
                 <Button
                   size="icon-xs"
                   variant={viewport === "desktop" ? "default" : "ghost"}
@@ -453,7 +493,9 @@ export function PageBuilder({
                 aria-label="Toggle Full Width"
               >
                 <IconArrowsMaximize className="size-3.5" />
-                <span className="hidden sm:inline">{isRootFullWidth ? "100% Stretched" : "Stretch Width"}</span>
+                <span className="hidden sm:inline">
+                  {isRootFullWidth ? "100% Stretched" : "Stretch Width"}
+                </span>
               </Button>
 
               <Button
@@ -465,7 +507,7 @@ export function PageBuilder({
                     position: "inside",
                   })
                 }}
-                className="gap-1 text-xs text-primary border-primary/30 hover:bg-primary/10 hover:border-primary"
+                className="gap-1 border-primary/30 text-xs text-primary hover:border-primary hover:bg-primary/10"
               >
                 <IconPlus className="size-3.5 text-primary" />
                 <span>Add Component</span>
@@ -497,16 +539,16 @@ export function PageBuilder({
             <IconArrowForwardUp className="size-3.5" />
           </Button>
 
-          <div className="h-4 w-px bg-border/60 mx-1" />
+          <div className="mx-1 h-4 w-px bg-border/60" />
 
           {/* Templates Dropdown / Picker */}
-          <div className="relative group">
+          <div className="group relative">
             <Button size="xs" variant="outline" className="gap-1 text-xs">
               <IconTemplate className="size-3.5" />
               <span className="hidden sm:inline">Doc Templates</span>
             </Button>
-            <div className="invisible group-hover:visible group-focus-within:visible absolute end-0 top-full mt-1 w-60 rounded-2xl border border-border/80 bg-background/95 p-1 shadow-lg backdrop-blur-md z-50">
-              <div className="p-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="invisible absolute end-0 top-full z-50 mt-1 w-60 rounded-2xl border border-border/80 bg-background/95 p-1 shadow-lg backdrop-blur-md group-focus-within:visible group-hover:visible">
+              <div className="p-1.5 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
                 Document Templates
               </div>
               {BUILDER_TEMPLATES.map((tpl) => (
@@ -514,11 +556,15 @@ export function PageBuilder({
                   key={tpl.id}
                   type="button"
                   onClick={() => handleLoadTemplate(tpl.id)}
-                  className="flex w-full items-start gap-2 rounded-xl p-2 text-start text-xs hover:bg-muted/80 transition-colors"
+                  className="flex w-full items-start gap-2 rounded-xl p-2 text-start text-xs transition-colors hover:bg-muted/80"
                 >
                   <div>
-                    <div className="font-semibold text-foreground">{tpl.name}</div>
-                    <div className="text-[11px] text-muted-foreground line-clamp-1">{tpl.description}</div>
+                    <div className="font-semibold text-foreground">
+                      {tpl.name}
+                    </div>
+                    <div className="line-clamp-1 text-[11px] text-muted-foreground">
+                      {tpl.description}
+                    </div>
                   </div>
                 </button>
               ))}
@@ -563,7 +609,7 @@ export function PageBuilder({
                 onSave(schema)
                 toast.success("Document saved successfully!")
               }}
-              className="gap-1 bg-primary text-primary-foreground font-semibold"
+              className="gap-1 bg-primary font-semibold text-primary-foreground"
             >
               <IconDeviceFloppy className="size-3.5" />
               <span>Save</span>
@@ -586,7 +632,7 @@ export function PageBuilder({
       </header>
 
       {/* 2. Workspace Body */}
-      <div className="flex flex-1 overflow-hidden relative">
+      <div className="relative flex flex-1 overflow-hidden">
         {/* Mode A: Visual Builder Canvas with Full Available Space */}
         {mode === "visual" && (
           <>
@@ -602,7 +648,11 @@ export function PageBuilder({
               onInsertChild={(parentPath, newNode) => {
                 if (newNode) {
                   commitSchema((prev) => {
-                    const { newRoot, newPath } = insertChildNode(getSafeRoot(prev), parentPath, newNode)
+                    const { newRoot, newPath } = insertChildNode(
+                      getSafeRoot(prev),
+                      parentPath,
+                      newNode
+                    )
                     setSelectedPath(newPath)
                     return { ...prev, root: newRoot }
                   })
@@ -653,17 +703,17 @@ export function PageBuilder({
 
         {/* Mode B: Live Interactive Preview */}
         {mode === "preview" && (
-          <div className="flex-1 overflow-y-auto bg-muted/20 p-4 md:p-6 lg:p-8 flex flex-col">
+          <div className="flex flex-1 flex-col overflow-y-auto bg-muted/20 p-4 md:p-6 lg:p-8">
             <div
               className={`flex-1 transition-all duration-200 ${
                 viewport === "mobile"
-                  ? "max-w-sm mx-auto w-full"
+                  ? "mx-auto w-full max-w-sm"
                   : viewport === "tablet"
-                    ? "max-w-2xl mx-auto w-full"
+                    ? "mx-auto w-full max-w-2xl"
                     : "w-full"
               }`}
             >
-              <div className="rounded-[min(var(--radius-4xl),24px)] border border-border/60 bg-card p-6 shadow-sm min-h-full flex flex-col">
+              <div className="flex min-h-full flex-col rounded-[min(var(--radius-4xl),24px)] border border-border/60 bg-card p-6 shadow-sm">
                 <IrisPage schema={schema} showEditButton={false} />
               </div>
             </div>
@@ -672,19 +722,19 @@ export function PageBuilder({
 
         {/* Mode C: Raw JSON Code Editor */}
         {mode === "code" && (
-          <div className="flex-1 min-h-0 flex flex-col overflow-hidden p-4 md:p-6 bg-muted/20">
-            <div className="flex w-full flex-1 min-h-0 flex-col rounded-[min(var(--radius-4xl),24px)] border border-border/80 bg-card p-4 shadow-sm space-y-3">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-muted/20 p-4 md:p-6">
+            <div className="flex min-h-0 w-full flex-1 flex-col space-y-3 rounded-[min(var(--radius-4xl),24px)] border border-border/80 bg-card p-4 shadow-sm">
               {codeError && (
-                <div className="shrink-0 rounded-xl bg-destructive/10 border border-destructive/30 px-3 py-1.5 text-xs text-destructive">
+                <div className="shrink-0 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs text-destructive">
                   Syntax Error: {codeError}
                 </div>
               )}
 
-              <div className="flex-1 min-h-0 w-full overflow-hidden">
+              <div className="min-h-0 w-full flex-1 overflow-hidden">
                 <Textarea
                   value={codeJsonText}
                   onChange={handleCodeJsonChange}
-                  className="h-full w-full font-mono text-xs leading-relaxed resize-none rounded-xl border border-input/60 bg-muted/20 p-4 focus-visible:ring-primary overflow-auto whitespace-pre"
+                  className="h-full w-full resize-none overflow-auto rounded-xl border border-input/60 bg-muted/20 p-4 font-mono text-xs leading-relaxed whitespace-pre focus-visible:ring-primary"
                   spellCheck={false}
                   aria-label="Raw JSON Schema Editor"
                 />
@@ -696,29 +746,43 @@ export function PageBuilder({
 
       {/* 3. Import JSON Modal */}
       {isImportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-100">
-          <div className="flex w-full max-w-xl flex-col rounded-[min(var(--radius-4xl),24px)] border border-border/80 bg-background shadow-2xl p-6 space-y-4">
+        <div className="fixed inset-0 z-50 flex animate-in items-center justify-center bg-black/50 p-4 backdrop-blur-xs duration-100 fade-in">
+          <div className="flex w-full max-w-xl flex-col space-y-4 rounded-[min(var(--radius-4xl),24px)] border border-border/80 bg-background p-6 shadow-2xl">
             <div className="flex items-center justify-between border-b border-border/40 pb-3">
               <div>
                 <h3 className="text-sm font-semibold">Import Document JSON</h3>
-                <p className="text-xs text-muted-foreground">Paste any valid IrisPage schema JSON to load into the builder studio.</p>
+                <p className="text-xs text-muted-foreground">
+                  Paste any valid IrisPage schema JSON to load into the builder
+                  studio.
+                </p>
               </div>
-              <Button size="icon-xs" variant="ghost" onPress={() => setIsImportModalOpen(false)} aria-label="Close">
+              <Button
+                size="icon-xs"
+                variant="ghost"
+                onPress={() => setIsImportModalOpen(false)}
+                aria-label="Close"
+              >
                 <IconX className="size-4" />
               </Button>
             </div>
 
             <Textarea
               value={importJsonText}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setImportJsonText(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                setImportJsonText(e.target.value)
+              }
               placeholder='Paste JSON schema here... { "title": "My Document", "root": { ... } }'
-              className="h-64 font-mono text-xs rounded-xl"
+              className="h-64 rounded-xl font-mono text-xs"
               spellCheck={false}
               aria-label="Paste JSON Schema"
             />
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-border/40">
-              <Button size="sm" variant="ghost" onPress={() => setIsImportModalOpen(false)}>
+            <div className="flex justify-end gap-2 border-t border-border/40 pt-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                onPress={() => setIsImportModalOpen(false)}
+              >
                 Cancel
               </Button>
               <Button size="sm" variant="default" onPress={handleApplyImport}>

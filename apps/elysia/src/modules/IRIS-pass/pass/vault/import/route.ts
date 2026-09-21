@@ -50,7 +50,7 @@ export default defineRoute({
       let createdCiphersCount = 0
       for (const cipherItem of body.ciphers) {
         const folderId = cipherItem.folderTempId
-          ? folderMap.get(cipherItem.folderTempId) ?? null
+          ? (folderMap.get(cipherItem.folderTempId) ?? null)
           : null
 
         await prisma.passCipher.create({

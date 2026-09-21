@@ -1,6 +1,10 @@
 import { defineRoute, t } from "@/router"
 import { NotFound } from "elysia"
-import { StudioResponseSchema, type StudioCreationItem, type StudioDetails } from "./types"
+import {
+  StudioResponseSchema,
+  type StudioCreationItem,
+  type StudioDetails,
+} from "./types"
 import { NotFoundResponseSchema } from "../../../../../../types"
 
 const STUDIO_CACHE_TTL = 5 * 60 // 5 minutes
@@ -103,13 +107,14 @@ export function mapMediaStudioRecord(record: any): StudioCreationItem | null {
       coverImage: record.anime.coverImage ?? null,
       bannerImage: record.anime.bannerImage ?? record.anime.coverImage ?? null,
       format: record.anime.format ?? "TV",
-      releaseYear: record.anime.seasonYear ?? record.anime.startDateYear ?? null,
+      releaseYear:
+        record.anime.seasonYear ?? record.anime.startDateYear ?? null,
       averageScore: record.anime.averageScore ?? null,
       popularity: record.anime.popularity ?? null,
       favorites: record.anime.favorites ?? null,
-      genres: (record.anime.genres || []).map((g: any) =>
-        typeof g === "string" ? g : (g?.name ?? "")
-      ).filter(Boolean),
+      genres: (record.anime.genres || [])
+        .map((g: any) => (typeof g === "string" ? g : (g?.name ?? "")))
+        .filter(Boolean),
       status: record.anime.status ?? null,
     }
   }
@@ -129,9 +134,9 @@ export function mapMediaStudioRecord(record: any): StudioCreationItem | null {
       averageScore: record.movie.averageScore ?? null,
       popularity: record.movie.popularity ?? null,
       favorites: record.movie.favorites ?? null,
-      genres: (record.movie.genres || []).map((g: any) =>
-        typeof g === "string" ? g : (g?.name ?? "")
-      ).filter(Boolean),
+      genres: (record.movie.genres || [])
+        .map((g: any) => (typeof g === "string" ? g : (g?.name ?? "")))
+        .filter(Boolean),
       status: record.movie.status ?? null,
     }
   }
@@ -151,9 +156,9 @@ export function mapMediaStudioRecord(record: any): StudioCreationItem | null {
       averageScore: record.tv.averageScore ?? null,
       popularity: record.tv.popularity ?? null,
       favorites: record.tv.favorites ?? null,
-      genres: (record.tv.genres || []).map((g: any) =>
-        typeof g === "string" ? g : (g?.name ?? "")
-      ).filter(Boolean),
+      genres: (record.tv.genres || [])
+        .map((g: any) => (typeof g === "string" ? g : (g?.name ?? "")))
+        .filter(Boolean),
       status: record.tv.status ?? null,
     }
   }
@@ -177,9 +182,9 @@ export function mapMediaStudioRecord(record: any): StudioCreationItem | null {
       averageScore: record.game.averageScore ?? null,
       popularity: record.game.popularity ?? null,
       favorites: record.game.favorites ?? null,
-      genres: (record.game.genres || []).map((g: any) =>
-        typeof g === "string" ? g : (g?.name ?? "")
-      ).filter(Boolean),
+      genres: (record.game.genres || [])
+        .map((g: any) => (typeof g === "string" ? g : (g?.name ?? "")))
+        .filter(Boolean),
       status: record.game.status ?? null,
     }
   }
@@ -199,9 +204,9 @@ export function mapMediaStudioRecord(record: any): StudioCreationItem | null {
       averageScore: record.book.averageScore ?? null,
       popularity: record.book.popularity ?? null,
       favorites: record.book.favorites ?? null,
-      genres: (record.book.genres || []).map((g: any) =>
-        typeof g === "string" ? g : (g?.name ?? "")
-      ).filter(Boolean),
+      genres: (record.book.genres || [])
+        .map((g: any) => (typeof g === "string" ? g : (g?.name ?? "")))
+        .filter(Boolean),
       status: record.book.status ?? null,
     }
   }

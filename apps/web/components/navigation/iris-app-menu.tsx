@@ -46,8 +46,14 @@ function isBookmarkActive(currentPath: string, bookmarkUrl?: string): boolean {
   let targetPath = bookmarkUrl
 
   try {
-    if (bookmarkUrl.startsWith("http://") || bookmarkUrl.startsWith("https://")) {
-      if (typeof window !== "undefined" && window.location.href === bookmarkUrl) {
+    if (
+      bookmarkUrl.startsWith("http://") ||
+      bookmarkUrl.startsWith("https://")
+    ) {
+      if (
+        typeof window !== "undefined" &&
+        window.location.href === bookmarkUrl
+      ) {
         return true
       }
       const parsed = new URL(bookmarkUrl)
@@ -56,7 +62,8 @@ function isBookmarkActive(currentPath: string, bookmarkUrl?: string): boolean {
       if (bookmarkUrl.includes("?") || bookmarkUrl.includes("#")) {
         if (
           typeof window !== "undefined" &&
-          `${window.location.pathname}${window.location.search}${window.location.hash}` === bookmarkUrl
+          `${window.location.pathname}${window.location.search}${window.location.hash}` ===
+            bookmarkUrl
         ) {
           return true
         }
@@ -208,8 +215,10 @@ export function IrisAppMenu(): React.JSX.Element {
           // Fallback matching
           const matchingApp = visibleApps.find((a) => a.id === filterAppId)
           if (matchingApp) {
-            const matchesIcon = b.icon === `app:${matchingApp.id}` || b.icon === matchingApp.id
-            const matchesHref = matchingApp.href !== "/" && b.url.includes(matchingApp.href)
+            const matchesIcon =
+              b.icon === `app:${matchingApp.id}` || b.icon === matchingApp.id
+            const matchesHref =
+              matchingApp.href !== "/" && b.url.includes(matchingApp.href)
             if (!matchesIcon && !matchesHref) return false
           } else {
             return false
@@ -222,7 +231,11 @@ export function IrisAppMenu(): React.JSX.Element {
         if (filterGroup === "ungrouped") {
           if (b.group && b.group.trim()) return false
         } else {
-          if (!b.group || b.group.trim().toLowerCase() !== filterGroup.trim().toLowerCase()) return false
+          if (
+            !b.group ||
+            b.group.trim().toLowerCase() !== filterGroup.trim().toLowerCase()
+          )
+            return false
         }
       }
 
@@ -298,10 +311,7 @@ export function IrisAppMenu(): React.JSX.Element {
     setBookmarks(newBookmarks)
   }
 
-  const togglePinBookmark = async (
-    bm: UserBookmark,
-    e: React.MouseEvent
-  ) => {
+  const togglePinBookmark = async (bm: UserBookmark, e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     const newPinned = !bm.pinned
@@ -312,10 +322,9 @@ export function IrisAppMenu(): React.JSX.Element {
 
     if (isAuthenticated) {
       try {
-        await elysia.users.me.bookmarks({ id: bm.id }).patch(
-          { pinned: newPinned },
-          { fetch: { credentials: "include" } }
-        )
+        await elysia.users.me
+          .bookmarks({ id: bm.id })
+          .patch({ pinned: newPinned }, { fetch: { credentials: "include" } })
         toast.success(newPinned ? t("pinned") : t("unpin"))
       } catch {
         toast.error("Failed to update bookmark pin")
@@ -333,10 +342,9 @@ export function IrisAppMenu(): React.JSX.Element {
 
     if (isAuthenticated) {
       try {
-        await elysia.users.me.bookmarks({ id }).delete(
-          {},
-          { fetch: { credentials: "include" } }
-        )
+        await elysia.users.me
+          .bookmarks({ id })
+          .delete({}, { fetch: { credentials: "include" } })
         toast.success(t("bookmarkDeleted"))
       } catch {
         toast.error("Failed to delete bookmark")
@@ -371,18 +379,20 @@ export function IrisAppMenu(): React.JSX.Element {
     if (data.id) {
       // Update existing
       if (isAuthenticated) {
-        const { data: resData, error } = await elysia.users.me.bookmarks({ id: data.id }).patch(
-          {
-            title: data.title,
-            url: data.url,
-            icon: data.icon,
-            color: data.color,
-            pinned: data.pinned,
-            appId: data.appId,
-            group: data.group,
-          },
-          { fetch: { credentials: "include" } }
-        )
+        const { data: resData, error } = await elysia.users.me
+          .bookmarks({ id: data.id })
+          .patch(
+            {
+              title: data.title,
+              url: data.url,
+              icon: data.icon,
+              color: data.color,
+              pinned: data.pinned,
+              appId: data.appId,
+              group: data.group,
+            },
+            { fetch: { credentials: "include" } }
+          )
         if (error || !resData?.bookmark) {
           throw new Error("Failed to update bookmark")
         }
@@ -465,8 +475,11 @@ export function IrisAppMenu(): React.JSX.Element {
         <DropdownMenu
           placement={isRight ? "left top" : "right top"}
           offset={8}
-          style={{ width: "min(580px, calc(100vw - 32px))", maxWidth: "calc(100vw - 32px)" }}
-          className="w-[580px]! min-w-[360px]! max-w-[92vw]! rounded-3xl p-4 shadow-2xl backdrop-blur-2xl border border-border/80 bg-popover/95"
+          style={{
+            width: "min(580px, calc(100vw - 32px))",
+            maxWidth: "calc(100vw - 32px)",
+          }}
+          className="w-[580px]! max-w-[92vw]! min-w-[360px]! rounded-3xl border border-border/80 bg-popover/95 p-4 shadow-2xl backdrop-blur-2xl"
         >
           {/* Applications Header */}
           <div className="mb-2.5 flex items-center justify-between px-1">
@@ -509,14 +522,14 @@ export function IrisAppMenu(): React.JSX.Element {
           </div>
 
           {/* Top Section: Applications Row (4 Apps Per Row, Horizontally Scrollable) */}
-          <div className="flex gap-3 overflow-x-auto pb-3 pt-1 px-1 scrollbar-thin scrollbar-thumb-border">
+          <div className="scrollbar-thin scrollbar-thumb-border flex gap-3 overflow-x-auto px-1 pt-1 pb-3">
             {sortedApps.map((app, index) => {
               const isCurrent = activeApp?.name === app.name
 
               return (
                 <div
                   key={app.name}
-                  className="flex w-[125px] shrink-0 flex-col items-center gap-1.5 group"
+                  className="group flex w-[125px] shrink-0 flex-col items-center gap-1.5"
                 >
                   <Link
                     href={isEditing ? "#" : app.href}
@@ -524,7 +537,7 @@ export function IrisAppMenu(): React.JSX.Element {
                       if (isEditing) e.preventDefault()
                     }}
                     className={cn(
-                      "flex size-13 aspect-square cursor-pointer items-center justify-center transition-all duration-200 hover:scale-110",
+                      "flex aspect-square size-13 cursor-pointer items-center justify-center transition-all duration-200 hover:scale-110",
                       isCurrent && "scale-105"
                     )}
                   >
@@ -538,7 +551,7 @@ export function IrisAppMenu(): React.JSX.Element {
                       "inline-block max-w-full truncate text-center text-xs transition-colors",
                       isCurrent
                         ? app.gradient
-                          ? "font-bold bg-clip-text text-transparent"
+                          ? "bg-clip-text font-bold text-transparent"
                           : "font-bold text-primary"
                         : "font-medium text-muted-foreground group-hover:text-foreground"
                     )}
@@ -591,13 +604,13 @@ export function IrisAppMenu(): React.JSX.Element {
 
             {/* Search Input In Header (Without Icon) */}
             {isAuthenticated && (bookmarks.length > 0 || searchQuery) && (
-              <div className="relative flex flex-1 max-w-[240px] items-center">
+              <div className="relative flex max-w-[240px] flex-1 items-center">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t("searchBookmarks")}
-                  className="h-7 w-full rounded-lg border border-border/50 bg-muted/40 px-2.5 pe-6 text-[11px] font-normal text-foreground placeholder:text-muted-foreground/60 focus:border-border focus:bg-muted/70 focus:outline-hidden focus:ring-1 focus:ring-ring transition-all"
+                  className="h-7 w-full rounded-lg border border-border/50 bg-muted/40 px-2.5 pe-6 text-[11px] font-normal text-foreground transition-all placeholder:text-muted-foreground/60 focus:border-border focus:bg-muted/70 focus:ring-1 focus:ring-ring focus:outline-hidden"
                 />
                 {searchQuery && (
                   <button
@@ -611,7 +624,6 @@ export function IrisAppMenu(): React.JSX.Element {
                 )}
               </div>
             )}
-
 
             {isAuthenticated && (
               <button
@@ -630,7 +642,7 @@ export function IrisAppMenu(): React.JSX.Element {
           {isAuthenticated && (bookmarks.length > 0 || searchQuery) && (
             <div className="mb-2.5 flex items-center gap-2 overflow-hidden px-1 pb-0.5 text-xs">
               {/* Apps Filter (Horizontally Scrollable, All Apps + ~2 Apps visible) */}
-              <div className="flex max-w-[48%] shrink-0 items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
+              <div className="scrollbar-none flex max-w-[48%] shrink-0 items-center gap-1.5 overflow-x-auto py-0.5">
                 <button
                   type="button"
                   onClick={() => setFilterAppId("all")}
@@ -654,7 +666,7 @@ export function IrisAppMenu(): React.JSX.Element {
                     className={cn(
                       "flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-medium whitespace-nowrap transition-colors",
                       filterAppId === app.id
-                        ? "border border-primary bg-primary/15 text-primary font-semibold"
+                        ? "border border-primary bg-primary/15 font-semibold text-primary"
                         : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                     )}
                   >
@@ -670,7 +682,7 @@ export function IrisAppMenu(): React.JSX.Element {
               <div className="h-4 w-px shrink-0 bg-border/60" />
 
               {/* Groups Filter (Horizontally Scrollable, All Groups + ~2 Groups visible) */}
-              <div className="flex flex-1 min-w-0 items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
+              <div className="scrollbar-none flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto py-0.5">
                 <button
                   type="button"
                   onClick={() => setFilterGroup("all")}
@@ -694,7 +706,7 @@ export function IrisAppMenu(): React.JSX.Element {
                   className={cn(
                     "flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-medium whitespace-nowrap transition-colors",
                     filterGroup === "ungrouped"
-                      ? "border border-primary bg-primary/15 text-primary font-semibold"
+                      ? "border border-primary bg-primary/15 font-semibold text-primary"
                       : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                   )}
                 >
@@ -715,7 +727,7 @@ export function IrisAppMenu(): React.JSX.Element {
                     className={cn(
                       "flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-medium whitespace-nowrap transition-colors",
                       filterGroup.toLowerCase() === grp.toLowerCase()
-                        ? "border border-primary bg-primary/15 text-primary font-semibold"
+                        ? "border border-primary bg-primary/15 font-semibold text-primary"
                         : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                     )}
                   >
@@ -726,7 +738,6 @@ export function IrisAppMenu(): React.JSX.Element {
               </div>
             </div>
           )}
-
 
           {/* Bookmarks Section (6 Per Row Grid, Vertically Scrollable) */}
           {!isAuthenticated ? (
@@ -740,7 +751,7 @@ export function IrisAppMenu(): React.JSX.Element {
             </LinkButton>
           ) : sortedBookmarks.length === 0 ? (
             <div className="my-2 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 py-8 text-center">
-              <IconBookmark className="size-8 text-muted-foreground/40 mb-2" />
+              <IconBookmark className="mb-2 size-8 text-muted-foreground/40" />
               <p className="text-xs font-medium text-muted-foreground/70">
                 {t("noSavedBookmarks")}
               </p>
@@ -755,7 +766,7 @@ export function IrisAppMenu(): React.JSX.Element {
             </div>
           ) : filteredBookmarks.length === 0 ? (
             <div className="my-2 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 py-6 text-center">
-              <IconBookmark className="size-7 text-muted-foreground/40 mb-1.5" />
+              <IconBookmark className="mb-1.5 size-7 text-muted-foreground/40" />
               <p className="text-xs font-medium text-muted-foreground/70">
                 {t("noMatchingBookmarks")}
               </p>
@@ -775,7 +786,7 @@ export function IrisAppMenu(): React.JSX.Element {
           ) : (
             <div
               className={cn(
-                "overflow-y-auto px-1 py-1 scrollbar-thin scrollbar-thumb-border",
+                "scrollbar-thin scrollbar-thumb-border overflow-y-auto px-1 py-1",
                 isEditing ? "max-h-[188px]" : "max-h-[148px]"
               )}
               style={{
@@ -791,7 +802,7 @@ export function IrisAppMenu(): React.JSX.Element {
                 return (
                   <div
                     key={bm.id}
-                    className="relative flex w-full flex-col items-center gap-1 group"
+                    className="group relative flex w-full flex-col items-center gap-1"
                   >
                     <TooltipTrigger delay={200}>
                       <Link
@@ -800,14 +811,14 @@ export function IrisAppMenu(): React.JSX.Element {
                           if (isEditing) e.preventDefault()
                         }}
                         className={cn(
-                          "relative flex size-11 aspect-square cursor-pointer items-center justify-center transition-all duration-200 hover:scale-115",
+                          "relative flex aspect-square size-11 cursor-pointer items-center justify-center transition-all duration-200 hover:scale-115",
                           isBmActive && "scale-105"
                         )}
                       >
                         {/* Pinned Dot / Badge */}
                         {bm.pinned && (
                           <div
-                            className="absolute -top-0.5 -start-0.5 flex size-3.5 items-center justify-center rounded-full bg-background/90 border border-border/60 text-rose-500 shadow-xs"
+                            className="absolute -start-0.5 -top-0.5 flex size-3.5 items-center justify-center rounded-full border border-border/60 bg-background/90 text-rose-500 shadow-xs"
                             title={t("pinned")}
                           >
                             <IconPinFilled className="size-2" />
@@ -816,7 +827,7 @@ export function IrisAppMenu(): React.JSX.Element {
 
                         {/* Quick hover action buttons */}
                         {!isEditing && (
-                          <div className="absolute -top-1 -end-1 z-20 hidden items-center gap-0.5 rounded-lg border border-border/60 bg-background/95 p-0.5 shadow-md backdrop-blur-xs group-hover:flex">
+                          <div className="absolute -end-1 -top-1 z-20 hidden items-center gap-0.5 rounded-lg border border-border/60 bg-background/95 p-0.5 shadow-md backdrop-blur-xs group-hover:flex">
                             <button
                               type="button"
                               onClick={(e) => handleOpenEditDialog(bm, e)}
@@ -909,7 +920,7 @@ export function IrisAppMenu(): React.JSX.Element {
                         >
                           <IconTrash className="size-3" />
                         </button>
-                        <div className="flex items-center gap-0.5 w-full justify-center">
+                        <div className="flex w-full items-center justify-center gap-0.5">
                           <button
                             type="button"
                             disabled={index === 0}
@@ -966,4 +977,3 @@ export function IrisAppMenu(): React.JSX.Element {
     </>
   )
 }
-

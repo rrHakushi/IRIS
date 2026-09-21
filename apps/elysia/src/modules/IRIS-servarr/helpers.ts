@@ -290,3 +290,60 @@ export function parseRadarrAnimeConfig(
         : (["MOVIE"] as AnimeFormat[]),
   }
 }
+
+import {
+  getConnectionAdapter,
+  decryptConnectionData,
+  type ConnectionCredentials,
+} from "@IRIS/connections"
+
+export async function getServarrAdapterAndCredentials(
+  provider: "SONARR" | "RADARR",
+  userId: string,
+  prisma: any
+): Promise<
+  | {
+      connected: false
+      error: string
+      adapter?: undefined
+      credentials?: undefined
+    }
+  | {
+      connected: true
+      error: string
+      adapter?: undefined
+      credentials?: undefined
+    }
+  | {
+      connected: true
+      error?: undefined
+      adapter: any
+      credentials: ConnectionCredentials
+    }
+> {
+  const connection = await prisma.connection.findFirst({
+    where: {
+      userId,
+      provider,
+      status: "CONNECTED",
+    },
+  })
+
+  if (!connection) {
+    return { connected: false, error: `No active ${provider} connection found` }
+  }
+
+  try {
+    const credentials = decryptConnectionData<ConnectionCredentials>(
+      connection.encryptedData,
+      userId
+    )
+    const adapter = getConnectionAdapter(provider) as any
+    return { connected: true, adapter, credentials }
+  } catch {
+    return {
+      connected: true,
+      error: `Failed to decrypt ${provider} connection credentials`,
+    }
+  }
+}

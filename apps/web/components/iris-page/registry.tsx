@@ -5,7 +5,12 @@ import * as TablerIcons from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 
 // Import all UI primitives and components from @workspace/ui
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@workspace/ui/components/accordion"
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@workspace/ui/components/accordion"
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -17,7 +22,11 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@workspace/ui/components/alert-dialog"
-import { Alert, AlertTitle, AlertDescription } from "@workspace/ui/components/alert"
+import {
+  Alert,
+  AlertTitle,
+  AlertDescription,
+} from "@workspace/ui/components/alert"
 import { AspectRatio } from "@workspace/ui/components/aspect-ratio"
 import {
   Attachment,
@@ -30,7 +39,11 @@ import {
   AttachmentAction,
   AttachmentTrigger,
 } from "@workspace/ui/components/attachment"
-import { Avatar, AvatarImage, AvatarFallback } from "@workspace/ui/components/avatar"
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from "@workspace/ui/components/avatar"
 import { Badge } from "@workspace/ui/components/badge"
 import {
   Breadcrumb,
@@ -40,9 +53,17 @@ import {
   BreadcrumbPage,
   BreadcrumbEllipsis,
 } from "@workspace/ui/components/breadcrumb"
-import { Bubble, BubbleGroup, BubbleContent, BubbleReactions } from "@workspace/ui/components/bubble"
+import {
+  Bubble,
+  BubbleGroup,
+  BubbleContent,
+  BubbleReactions,
+} from "@workspace/ui/components/bubble"
 import { Button } from "@workspace/ui/components/button"
-import { ButtonGroup, ButtonGroupText } from "@workspace/ui/components/button-group"
+import {
+  ButtonGroup,
+  ButtonGroupText,
+} from "@workspace/ui/components/button-group"
 import { Calendar } from "@workspace/ui/components/calendar"
 import {
   Card,
@@ -69,7 +90,11 @@ import {
   ChartStyle,
 } from "@workspace/ui/components/chart"
 import { Checkbox } from "@workspace/ui/components/checkbox"
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@workspace/ui/components/collapsible"
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@workspace/ui/components/collapsible"
 import {
   Combobox,
   ComboboxInput,
@@ -141,7 +166,14 @@ import {
   DropdownMenuGroup,
   DropdownMenuShortcut,
 } from "@workspace/ui/components/dropdown-menu"
-import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyContent, EmptyMedia } from "@workspace/ui/components/empty"
+import {
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+  EmptyMedia,
+} from "@workspace/ui/components/empty"
 import {
   Field,
   FieldGroup,
@@ -154,7 +186,10 @@ import {
   FieldContent,
   FieldTitle,
 } from "@workspace/ui/components/field"
-import { HoverCard, HoverCardTrigger } from "@workspace/ui/components/hover-card"
+import {
+  HoverCard,
+  HoverCardTrigger,
+} from "@workspace/ui/components/hover-card"
 import {
   InputGroup,
   InputGroupAddon,
@@ -162,7 +197,12 @@ import {
   InputGroupInput,
   InputGroupTextarea,
 } from "@workspace/ui/components/input-group"
-import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from "@workspace/ui/components/input-otp"
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+  InputOTPSeparator,
+} from "@workspace/ui/components/input-otp"
 import { Input } from "@workspace/ui/components/input"
 import {
   Item,
@@ -175,7 +215,11 @@ import {
 } from "@workspace/ui/components/item"
 import { Kbd, KbdGroup } from "@workspace/ui/components/kbd"
 import { Label } from "@workspace/ui/components/label"
-import { Marker, MarkerIcon, MarkerContent } from "@workspace/ui/components/marker"
+import {
+  Marker,
+  MarkerIcon,
+  MarkerContent,
+} from "@workspace/ui/components/marker"
 import {
   Message,
   MessageGroup,
@@ -192,7 +236,11 @@ import {
   MessageScrollerItem,
   MessageScrollerButton,
 } from "@workspace/ui/components/message-scroller"
-import { NativeSelect, NativeSelectOption, NativeSelectOptGroup } from "@workspace/ui/components/native-select"
+import {
+  NativeSelect,
+  NativeSelectOption,
+  NativeSelectOptGroup,
+} from "@workspace/ui/components/native-select"
 import {
   Pagination,
   PaginationContent,
@@ -202,7 +250,13 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@workspace/ui/components/pagination"
-import { Popover, PopoverTrigger, PopoverHeader, PopoverTitle, PopoverDescription } from "@workspace/ui/components/popover"
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverDescription,
+} from "@workspace/ui/components/popover"
 import {
   Progress,
   ProgressTrack,
@@ -227,8 +281,15 @@ import {
   QuestionnaireSubmit,
   QuestionnaireTitle,
 } from "@workspace/ui/components/questionnaire"
-import { RadioGroup, RadioGroupItem } from "@workspace/ui/components/radio-group"
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@workspace/ui/components/resizable"
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@workspace/ui/components/radio-group"
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@workspace/ui/components/resizable"
 import { ScrollArea } from "@workspace/ui/components/scroll-area"
 import {
   Select,
@@ -262,7 +323,10 @@ import { Switch } from "@workspace/ui/components/switch"
 import { Tabs, TabList, Tab, TabPanel } from "@workspace/ui/components/tabs"
 import { Textarea } from "@workspace/ui/components/textarea"
 import { Toggle } from "@workspace/ui/components/toggle"
-import { ToggleGroup, ToggleGroupItem } from "@workspace/ui/components/toggle-group"
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@workspace/ui/components/toggle-group"
 import { Tooltip, TooltipTrigger } from "@workspace/ui/components/tooltip"
 
 // ============================================================================
@@ -273,7 +337,10 @@ export const TABLER_ICON_MAP = new Map<string, React.ComponentType<any>>()
 export const ALL_TABLER_ICON_NAMES: string[] = []
 
 for (const [exportName, Component] of Object.entries(TablerIcons)) {
-  if (typeof Component === "function" || (typeof Component === "object" && Component !== null)) {
+  if (
+    typeof Component === "function" ||
+    (typeof Component === "object" && Component !== null)
+  ) {
     ALL_TABLER_ICON_NAMES.push(exportName)
     const lowerName = exportName.toLowerCase()
     TABLER_ICON_MAP.set(lowerName, Component as React.ComponentType<any>)
@@ -289,7 +356,9 @@ for (const [exportName, Component] of Object.entries(TablerIcons)) {
  * Resolves any Tabler icon by any variation:
  * "IconSparkles", "Sparkles", "sparkles", "icon-chevron-right", "chevron_right", etc.
  */
-export function resolveTablerIcon(name: string): React.ComponentType<any> | undefined {
+export function resolveTablerIcon(
+  name: string
+): React.ComponentType<any> | undefined {
   if (!name) return undefined
 
   // 1. Direct export lookup
@@ -307,7 +376,9 @@ export function resolveTablerIcon(name: string): React.ComponentType<any> | unde
 
   // 3. Fast normalized lookup (handles kebab-case, snake_case, lowercase)
   const normalized = name.replace(/[-_\s]/g, "").toLowerCase()
-  return TABLER_ICON_MAP.get(normalized) || TABLER_ICON_MAP.get(`icon${normalized}`)
+  return (
+    TABLER_ICON_MAP.get(normalized) || TABLER_ICON_MAP.get(`icon${normalized}`)
+  )
 }
 
 /**
@@ -339,7 +410,12 @@ export function DynamicIcon({
     )
   }
 
-  return React.createElement(IconComponent, { className, size, stroke, ...props })
+  return React.createElement(IconComponent, {
+    className,
+    size,
+    stroke,
+    ...props,
+  })
 }
 
 // ============================================================================
@@ -347,26 +423,117 @@ export function DynamicIcon({
 // ============================================================================
 
 export const HTML_TAGS = new Set([
-  "a", "abbr", "address", "area", "article", "aside", "audio",
-  "b", "base", "bdi", "bdo", "blockquote", "body", "br", "button",
-  "canvas", "caption", "cite", "code", "col", "colgroup",
-  "data", "datalist", "dd", "del", "details", "dfn", "dialog", "div", "dl", "dt",
-  "em", "embed",
-  "fieldset", "figcaption", "figure", "footer", "form",
-  "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "hr", "html",
-  "i", "iframe", "img", "input", "ins",
+  "a",
+  "abbr",
+  "address",
+  "area",
+  "article",
+  "aside",
+  "audio",
+  "b",
+  "base",
+  "bdi",
+  "bdo",
+  "blockquote",
+  "body",
+  "br",
+  "button",
+  "canvas",
+  "caption",
+  "cite",
+  "code",
+  "col",
+  "colgroup",
+  "data",
+  "datalist",
+  "dd",
+  "del",
+  "details",
+  "dfn",
+  "dialog",
+  "div",
+  "dl",
+  "dt",
+  "em",
+  "embed",
+  "fieldset",
+  "figcaption",
+  "figure",
+  "footer",
+  "form",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "head",
+  "header",
+  "hgroup",
+  "hr",
+  "html",
+  "i",
+  "iframe",
+  "img",
+  "input",
+  "ins",
   "kbd",
-  "label", "legend", "li", "link",
-  "main", "map", "mark", "menu", "meta", "meter",
-  "nav", "noscript",
-  "object", "ol", "optgroup", "option", "output",
-  "p", "picture", "pre", "progress",
+  "label",
+  "legend",
+  "li",
+  "link",
+  "main",
+  "map",
+  "mark",
+  "menu",
+  "meta",
+  "meter",
+  "nav",
+  "noscript",
+  "object",
+  "ol",
+  "optgroup",
+  "option",
+  "output",
+  "p",
+  "picture",
+  "pre",
+  "progress",
   "q",
-  "rp", "rt", "ruby",
-  "s", "samp", "script", "section", "select", "slot", "small", "source", "span", "strong", "style", "sub", "summary", "sup", "svg",
-  "table", "tbody", "td", "template", "textarea", "tfoot", "th", "thead", "time", "title", "tr", "track",
-  "u", "ul",
-  "var", "video",
+  "rp",
+  "rt",
+  "ruby",
+  "s",
+  "samp",
+  "script",
+  "section",
+  "select",
+  "slot",
+  "small",
+  "source",
+  "span",
+  "strong",
+  "style",
+  "sub",
+  "summary",
+  "sup",
+  "svg",
+  "table",
+  "tbody",
+  "td",
+  "template",
+  "textarea",
+  "tfoot",
+  "th",
+  "thead",
+  "time",
+  "title",
+  "tr",
+  "track",
+  "u",
+  "ul",
+  "var",
+  "video",
   "wbr",
 ])
 
@@ -391,8 +558,10 @@ export const Callout: React.FC<CalloutProps> = ({
   const variantStyles: Record<string, string> = {
     info: "border-blue-500/30 bg-blue-500/10 text-blue-950 dark:text-blue-200",
     tip: "border-emerald-500/30 bg-emerald-500/10 text-emerald-950 dark:text-emerald-200",
-    warning: "border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-200",
-    danger: "border-rose-500/30 bg-rose-500/10 text-rose-950 dark:text-rose-200",
+    warning:
+      "border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-200",
+    danger:
+      "border-rose-500/30 bg-rose-500/10 text-rose-950 dark:text-rose-200",
     destructive: "border-destructive/40 bg-destructive/10 text-destructive",
     note: "border-border/80 bg-muted/50 text-foreground",
   }
@@ -418,10 +587,10 @@ export const Callout: React.FC<CalloutProps> = ({
       } ${className || ""}`}
       {...props}
     >
-      <IconComp className="size-5 shrink-0 mt-0.5 opacity-90" />
+      <IconComp className="mt-0.5 size-5 shrink-0 opacity-90" />
       <div className="flex-1 space-y-1">
         {title && <div className="font-semibold tracking-tight">{title}</div>}
-        <div className="text-xs md:text-sm opacity-90">{children}</div>
+        <div className="text-xs opacity-90 md:text-sm">{children}</div>
       </div>
     </div>
   )
@@ -462,21 +631,23 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
       {...props}
     >
       {(filename || language) && (
-        <div className="flex items-center justify-between border-b border-border/60 bg-muted/60 px-4 py-2 text-xs text-muted-foreground font-mono">
+        <div className="flex items-center justify-between border-b border-border/60 bg-muted/60 px-4 py-2 font-mono text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             <TablerIcons.IconCode className="size-3.5" />
-            <span className="font-semibold text-foreground">{filename || language}</span>
+            <span className="font-semibold text-foreground">
+              {filename || language}
+            </span>
           </div>
           {textContent && (
             <button
               type="button"
               onClick={handleCopy}
-              className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-sans hover:bg-background/80 hover:text-foreground transition-colors"
+              className="flex items-center gap-1 rounded-md px-2 py-1 font-sans text-[11px] transition-colors hover:bg-background/80 hover:text-foreground"
             >
               {copied ? (
                 <>
                   <TablerIcons.IconCheck className="size-3.5 text-emerald-500" />
-                  <span className="text-emerald-500 font-medium">Copied</span>
+                  <span className="font-medium text-emerald-500">Copied</span>
                 </>
               ) : (
                 <>
@@ -488,7 +659,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
           )}
         </div>
       )}
-      <pre className="overflow-x-auto p-4 font-mono text-xs leading-relaxed text-foreground whitespace-pre">
+      <pre className="overflow-x-auto p-4 font-mono text-xs leading-relaxed whitespace-pre text-foreground">
         <code>{children || code}</code>
       </pre>
     </div>
@@ -496,45 +667,95 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
 }
 CodeBlock.displayName = "CodeBlock"
 
-export const DocTable: React.FC<React.HTMLAttributes<HTMLTableElement>> = ({ className, ...props }) => (
-  <div className="my-4 relative w-full overflow-x-auto rounded-2xl border border-border/60 bg-card/60 shadow-xs">
-    <table className={cn("w-full caption-bottom text-sm border-collapse text-start", className)} {...props} />
+export const DocTable: React.FC<React.HTMLAttributes<HTMLTableElement>> = ({
+  className,
+  ...props
+}) => (
+  <div className="relative my-4 w-full overflow-x-auto rounded-2xl border border-border/60 bg-card/60 shadow-xs">
+    <table
+      className={cn(
+        "w-full caption-bottom border-collapse text-start text-sm",
+        className
+      )}
+      {...props}
+    />
   </div>
 )
 DocTable.displayName = "DocTable"
 
-export const DocTableHeader: React.FC<React.HTMLAttributes<HTMLTableSectionElement>> = ({ className, ...props }) => (
-  <thead className={cn("[&_tr]:border-b border-border/60 bg-muted/40", className)} {...props} />
+export const DocTableHeader: React.FC<
+  React.HTMLAttributes<HTMLTableSectionElement>
+> = ({ className, ...props }) => (
+  <thead
+    className={cn("border-border/60 bg-muted/40 [&_tr]:border-b", className)}
+    {...props}
+  />
 )
 DocTableHeader.displayName = "DocTableHeader"
 
-export const DocTableBody: React.FC<React.HTMLAttributes<HTMLTableSectionElement>> = ({ className, ...props }) => (
-  <tbody className={cn("[&_tr:last-child]:border-0 divide-y divide-border/40", className)} {...props} />
+export const DocTableBody: React.FC<
+  React.HTMLAttributes<HTMLTableSectionElement>
+> = ({ className, ...props }) => (
+  <tbody
+    className={cn(
+      "divide-y divide-border/40 [&_tr:last-child]:border-0",
+      className
+    )}
+    {...props}
+  />
 )
 DocTableBody.displayName = "DocTableBody"
 
-export const DocTableRow: React.FC<React.HTMLAttributes<HTMLTableRowElement>> = ({ className, ...props }) => (
-  <tr className={cn("border-b border-border/40 transition-colors hover:bg-muted/30", className)} {...props} />
+export const DocTableRow: React.FC<
+  React.HTMLAttributes<HTMLTableRowElement>
+> = ({ className, ...props }) => (
+  <tr
+    className={cn(
+      "border-b border-border/40 transition-colors hover:bg-muted/30",
+      className
+    )}
+    {...props}
+  />
 )
 DocTableRow.displayName = "DocTableRow"
 
-export const DocTableHead: React.FC<React.ThHTMLAttributes<HTMLTableCellElement>> = ({ className, ...props }) => (
-  <th className={cn("h-10 px-4 text-start align-middle font-semibold text-xs text-muted-foreground uppercase tracking-wider font-mono", className)} {...props} />
+export const DocTableHead: React.FC<
+  React.ThHTMLAttributes<HTMLTableCellElement>
+> = ({ className, ...props }) => (
+  <th
+    className={cn(
+      "h-10 px-4 text-start align-middle font-mono text-xs font-semibold tracking-wider text-muted-foreground uppercase",
+      className
+    )}
+    {...props}
+  />
 )
 DocTableHead.displayName = "DocTableHead"
 
-export const DocTableCell: React.FC<React.TdHTMLAttributes<HTMLTableCellElement>> = ({ className, ...props }) => (
+export const DocTableCell: React.FC<
+  React.TdHTMLAttributes<HTMLTableCellElement>
+> = ({ className, ...props }) => (
   <td className={cn("p-4 align-middle text-sm", className)} {...props} />
 )
 DocTableCell.displayName = "DocTableCell"
 
-export const DocTableFooter: React.FC<React.HTMLAttributes<HTMLTableSectionElement>> = ({ className, ...props }) => (
-  <tfoot className={cn("border-t bg-muted/50 font-medium", className)} {...props} />
+export const DocTableFooter: React.FC<
+  React.HTMLAttributes<HTMLTableSectionElement>
+> = ({ className, ...props }) => (
+  <tfoot
+    className={cn("border-t bg-muted/50 font-medium", className)}
+    {...props}
+  />
 )
 DocTableFooter.displayName = "DocTableFooter"
 
-export const DocTableCaption: React.FC<React.HTMLAttributes<HTMLTableCaptionElement>> = ({ className, ...props }) => (
-  <caption className={cn("mt-4 text-center text-sm text-muted-foreground", className)} {...props} />
+export const DocTableCaption: React.FC<
+  React.HTMLAttributes<HTMLTableCaptionElement>
+> = ({ className, ...props }) => (
+  <caption
+    className={cn("mt-4 text-center text-sm text-muted-foreground", className)}
+    {...props}
+  />
 )
 DocTableCaption.displayName = "DocTableCaption"
 
@@ -542,7 +763,10 @@ DocTableCaption.displayName = "DocTableCaption"
 // Master UI Component Registry
 // ============================================================================
 
-export const COMPONENT_REGISTRY: Record<string, React.ComponentType<any> | string> = {
+export const COMPONENT_REGISTRY: Record<
+  string,
+  React.ComponentType<any> | string
+> = {
   // Documentation Specialized Primitives
   Callout,
   CodeBlock,

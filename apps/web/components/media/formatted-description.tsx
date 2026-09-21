@@ -41,10 +41,7 @@ function normalizeLinkHref(href: string): {
     cleanHref.startsWith("/staff/") ||
     cleanHref.startsWith("/people/")
   ) {
-    cleanHref = cleanHref.replace(
-      /^\/(?:staff|people)\//,
-      "/IRIS-list/people/"
-    )
+    cleanHref = cleanHref.replace(/^\/(?:staff|people)\//, "/IRIS-list/people/")
   }
 
   const isInternal = cleanHref.startsWith("/") || cleanHref.startsWith("#")

@@ -4,7 +4,8 @@ export const BUILDER_TEMPLATES: BuilderTemplate[] = [
   {
     id: "docs-guide",
     name: "Getting Started Guide",
-    description: "Standard documentation article with callouts, code blocks, and steps",
+    description:
+      "Standard documentation article with callouts, code blocks, and steps",
     icon: "IconBook",
     schema: {
       title: "Getting Started with IRIS",
@@ -21,8 +22,16 @@ export const BUILDER_TEMPLATES: BuilderTemplate[] = [
                 type: "div",
                 props: { className: "flex items-center gap-2" },
                 children: [
-                  { type: "Badge", props: { variant: "secondary" }, text: "Guide" },
-                  { type: "Badge", props: { variant: "outline" }, text: "v2.0" },
+                  {
+                    type: "Badge",
+                    props: { variant: "secondary" },
+                    text: "Guide",
+                  },
+                  {
+                    type: "Badge",
+                    props: { variant: "outline" },
+                    text: "v2.0",
+                  },
                 ],
               },
               {
@@ -32,7 +41,9 @@ export const BUILDER_TEMPLATES: BuilderTemplate[] = [
               },
               {
                 type: "p",
-                props: { className: "text-muted-foreground text-sm leading-relaxed" },
+                props: {
+                  className: "text-muted-foreground text-sm leading-relaxed",
+                },
                 text: "Learn how to compose beautiful documentation pages with modular components, typography, and clean layouts.",
               },
             ],
@@ -56,7 +67,9 @@ export const BUILDER_TEMPLATES: BuilderTemplate[] = [
               },
               {
                 type: "p",
-                props: { className: "text-sm text-muted-foreground leading-relaxed" },
+                props: {
+                  className: "text-sm text-muted-foreground leading-relaxed",
+                },
                 text: "Install the core dependencies in your workspace using pnpm.",
               },
               {
@@ -80,7 +93,9 @@ export const BUILDER_TEMPLATES: BuilderTemplate[] = [
               },
               {
                 type: "p",
-                props: { className: "text-sm text-muted-foreground leading-relaxed" },
+                props: {
+                  className: "text-sm text-muted-foreground leading-relaxed",
+                },
                 text: "You can assemble layouts visually in the Page Builder or write standard TSX code directly.",
               },
               {
@@ -100,7 +115,11 @@ export const BUILDER_TEMPLATES: BuilderTemplate[] = [
               {
                 type: "CardHeader",
                 children: [
-                  { type: "CardTitle", props: { className: "text-base" }, text: "Next Steps" },
+                  {
+                    type: "CardTitle",
+                    props: { className: "text-base" },
+                    text: "Next Steps",
+                  },
                   {
                     type: "CardDescription",
                     props: { className: "text-xs" },
@@ -127,7 +146,8 @@ export const BUILDER_TEMPLATES: BuilderTemplate[] = [
   {
     id: "api-reference",
     name: "API Reference",
-    description: "Endpoint documentation with method badges, parameter table, and code blocks",
+    description:
+      "Endpoint documentation with method badges, parameter table, and code blocks",
     icon: "IconCode",
     schema: {
       title: "User Profile API Reference",
@@ -147,7 +167,10 @@ export const BUILDER_TEMPLATES: BuilderTemplate[] = [
                   { type: "Badge", props: { variant: "default" }, text: "GET" },
                   {
                     type: "code",
-                    props: { className: "font-mono text-sm px-2 py-0.5 rounded bg-muted font-bold" },
+                    props: {
+                      className:
+                        "font-mono text-sm px-2 py-0.5 rounded bg-muted font-bold",
+                    },
                     text: "/api/v1/users/me",
                   },
                 ],
@@ -195,9 +218,25 @@ export const BUILDER_TEMPLATES: BuilderTemplate[] = [
                       {
                         type: "TableRow",
                         children: [
-                          { type: "TableCell", props: { className: "font-mono font-semibold text-xs" }, text: "Authorization" },
-                          { type: "TableCell", props: { className: "font-mono text-xs text-muted-foreground" }, text: "string" },
-                          { type: "TableCell", text: "Bearer token format: Bearer <token>" },
+                          {
+                            type: "TableCell",
+                            props: {
+                              className: "font-mono font-semibold text-xs",
+                            },
+                            text: "Authorization",
+                          },
+                          {
+                            type: "TableCell",
+                            props: {
+                              className:
+                                "font-mono text-xs text-muted-foreground",
+                            },
+                            text: "string",
+                          },
+                          {
+                            type: "TableCell",
+                            text: "Bearer token format: Bearer <token>",
+                          },
                         ],
                       },
                     ],
@@ -252,12 +291,18 @@ export const BUILDER_TEMPLATES: BuilderTemplate[] = [
               },
               {
                 type: "h1",
-                props: { className: "text-3xl md:text-4xl font-extrabold tracking-tight" },
+                props: {
+                  className:
+                    "text-3xl md:text-4xl font-extrabold tracking-tight",
+                },
                 text: "Built for Clean, Beautiful Docs",
               },
               {
                 type: "p",
-                props: { className: "text-base text-muted-foreground max-w-xl mx-auto leading-relaxed" },
+                props: {
+                  className:
+                    "text-base text-muted-foreground max-w-xl mx-auto leading-relaxed",
+                },
                 text: "Modular UI components, markdown support, code blocks, and callouts designed for readability.",
               },
             ],
@@ -274,10 +319,22 @@ export const BUILDER_TEMPLATES: BuilderTemplate[] = [
                     children: [
                       {
                         type: "div",
-                        props: { className: "p-2.5 rounded-xl bg-primary/10 text-primary w-fit mb-2" },
-                        children: [{ type: "Icon", props: { name: "IconBook", className: "size-5" } }],
+                        props: {
+                          className:
+                            "p-2.5 rounded-xl bg-primary/10 text-primary w-fit mb-2",
+                        },
+                        children: [
+                          {
+                            type: "Icon",
+                            props: { name: "IconBook", className: "size-5" },
+                          },
+                        ],
                       },
-                      { type: "CardTitle", props: { className: "text-base" }, text: "Doc Layouts" },
+                      {
+                        type: "CardTitle",
+                        props: { className: "text-base" },
+                        text: "Doc Layouts",
+                      },
                       {
                         type: "CardDescription",
                         props: { className: "text-xs" },
@@ -295,10 +352,22 @@ export const BUILDER_TEMPLATES: BuilderTemplate[] = [
                     children: [
                       {
                         type: "div",
-                        props: { className: "p-2.5 rounded-xl bg-primary/10 text-primary w-fit mb-2" },
-                        children: [{ type: "Icon", props: { name: "IconCode", className: "size-5" } }],
+                        props: {
+                          className:
+                            "p-2.5 rounded-xl bg-primary/10 text-primary w-fit mb-2",
+                        },
+                        children: [
+                          {
+                            type: "Icon",
+                            props: { name: "IconCode", className: "size-5" },
+                          },
+                        ],
                       },
-                      { type: "CardTitle", props: { className: "text-base" }, text: "Code Blocks" },
+                      {
+                        type: "CardTitle",
+                        props: { className: "text-base" },
+                        text: "Code Blocks",
+                      },
                       {
                         type: "CardDescription",
                         props: { className: "text-xs" },
@@ -316,10 +385,25 @@ export const BUILDER_TEMPLATES: BuilderTemplate[] = [
                     children: [
                       {
                         type: "div",
-                        props: { className: "p-2.5 rounded-xl bg-primary/10 text-primary w-fit mb-2" },
-                        children: [{ type: "Icon", props: { name: "IconSparkles", className: "size-5" } }],
+                        props: {
+                          className:
+                            "p-2.5 rounded-xl bg-primary/10 text-primary w-fit mb-2",
+                        },
+                        children: [
+                          {
+                            type: "Icon",
+                            props: {
+                              name: "IconSparkles",
+                              className: "size-5",
+                            },
+                          },
+                        ],
                       },
-                      { type: "CardTitle", props: { className: "text-base" }, text: "Callouts" },
+                      {
+                        type: "CardTitle",
+                        props: { className: "text-base" },
+                        text: "Callouts",
+                      },
                       {
                         type: "CardDescription",
                         props: { className: "text-xs" },

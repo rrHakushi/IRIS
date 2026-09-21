@@ -115,7 +115,19 @@
       "gameList": "ゲーム",
       "musicList": "音楽",
       "bookList": "書籍",
-      "otherLists": "その他"
+      "otherLists": "その他",
+      "servarr": "Servarr",
+      "sonarr": "Sonarr",
+      "radarr": "Radarr",
+      "readarr": "Readarr",
+      "lidarr": "Lidarr",
+      "series": "シリーズ",
+      "movies": "映画",
+      "manageSeries": "シリーズ管理",
+      "manageMovies": "映画管理",
+      "activityQueue": "アクティビティキュー",
+      "wanted": "未取得 & 品質アップグレード",
+      "history": "履歴ログ"
     },
     "appMenu": {
       "appCenter": "アプリセンター",

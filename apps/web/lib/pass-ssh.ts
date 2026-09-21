@@ -149,7 +149,7 @@ export async function generateSshKeypair(
     let nBytes = base64UrlToBytes(jwk.n || "")
 
     // OpenSSH mpint format requires high bit to be 0 for positive numbers
-    if (nBytes.length > 0 && ((nBytes[0] ?? 0) & 0x80)) {
+    if (nBytes.length > 0 && (nBytes[0] ?? 0) & 0x80) {
       const padded = new Uint8Array(nBytes.length + 1)
       padded.set(nBytes, 1)
       nBytes = padded

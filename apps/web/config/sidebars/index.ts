@@ -42,13 +42,14 @@ export function useAllAppSidebarConfigs(
  */
 export function getAllAppSidebarConfigs(
   session: Session | null,
-  tList: (key: string) => string
+  tList: (key: string) => string,
+  connectedServarr?: string[]
 ): AppSidebarRegistryEntry[] {
   return [
     {
       appId: "iris-list",
       appName: "IRIS List",
-      config: getListSidebarConfig(session, tList),
+      config: getListSidebarConfig(session, tList, connectedServarr),
     },
     {
       appId: "iris-pass",
@@ -60,4 +61,3 @@ export function getAllAppSidebarConfigs(
 
 export * from "./listSidebarConfig"
 export * from "./passSidebarConfig"
-

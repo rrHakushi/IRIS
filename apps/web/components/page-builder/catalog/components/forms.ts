@@ -25,7 +25,11 @@ export const formPresets: ComponentPresetItem[] = [
       type: "div",
       props: { className: "flex items-center justify-between gap-2" },
       children: [
-        { type: "span", props: { className: "text-xs font-medium" }, children: "Enable Feature" },
+        {
+          type: "span",
+          props: { className: "text-xs font-medium" },
+          children: "Enable Feature",
+        },
         { type: "Switch", props: { "aria-label": "Enable Feature" } },
       ],
     }),

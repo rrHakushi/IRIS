@@ -44,7 +44,7 @@ export function renderIrisAppIcon(
       width={96}
       height={96}
       style={style}
-      className={cn("object-contain rounded-full", className)}
+      className={cn("rounded-full object-contain", className)}
     />
   )
 }
@@ -58,8 +58,10 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
       color: "#6366f1",
       colorClass: "text-indigo-500",
       bgClass: "bg-indigo-500",
-      gradient: "linear-gradient(135deg, #06b6d4 0%, #3b82f6 32%, #4f46e5 68%, #7c3aed 100%)",
-      gradientStyle: "linear-gradient(135deg, #06b6d4 0%, #3b82f6 32%, #4f46e5 68%, #7c3aed 100%)",
+      gradient:
+        "linear-gradient(135deg, #06b6d4 0%, #3b82f6 32%, #4f46e5 68%, #7c3aed 100%)",
+      gradientStyle:
+        "linear-gradient(135deg, #06b6d4 0%, #3b82f6 32%, #4f46e5 68%, #7c3aed 100%)",
       icon: "/iris-icons/iris-list-ring-left.png",
       iconLeftRing: "/iris-icons/iris-list-ring-left.png",
       description: t("irisList.description"),
@@ -72,11 +74,14 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
       color: "#d800a6",
       colorClass: "text-[#d800a6]",
       bgClass: "bg-[#d800a6]",
-      gradient: "linear-gradient(135deg, #e11d48 0%, #c026d3 34%, #6366f1 72%, #4338ca 100%)",
-      gradientStyle: "linear-gradient(135deg, #e11d48 0%, #c026d3 34%, #6366f1 72%, #4338ca 100%)",
+      gradient:
+        "linear-gradient(135deg, #e11d48 0%, #c026d3 34%, #6366f1 72%, #4338ca 100%)",
+      gradientStyle:
+        "linear-gradient(135deg, #e11d48 0%, #c026d3 34%, #6366f1 72%, #4338ca 100%)",
       icon: "/iris-icons/iris-pass-ring-left.png",
       iconLeftRing: "/iris-icons/iris-pass-ring-left.png",
-      description: "Zero-knowledge encrypted password, credential, and SSH key manager.",
+      description:
+        "Zero-knowledge encrypted password, credential, and SSH key manager.",
       descriptionShort: "Vault & Generator",
     },
     // {
@@ -130,5 +135,3 @@ export function useIrisApps(): IrisApp[] {
   const t = useTranslations("navigation.apps")
   return useMemo(() => getIrisApps(t), [t])
 }
-
-

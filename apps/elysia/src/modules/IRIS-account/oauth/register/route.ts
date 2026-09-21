@@ -34,7 +34,8 @@ export default defineRoute({
         return new Response(
           JSON.stringify({
             error: "server_error",
-            error_description: "Cannot dynamically register application: no user account available",
+            error_description:
+              "Cannot dynamically register application: no user account available",
           }),
           { status: 500, headers: { "content-type": "application/json" } }
         )
@@ -45,7 +46,9 @@ export default defineRoute({
       const rawSecret = isPublic ? null : generateClientSecret()
       const hashedSecret = rawSecret ? hashClientSecret(rawSecret) : null
 
-      const requestedScopes = body.scope ? parseScopes(body.scope) : [...SUPPORTED_SCOPES]
+      const requestedScopes = body.scope
+        ? parseScopes(body.scope)
+        : [...SUPPORTED_SCOPES]
 
       const client = await prisma.oAuthClient.create({
         data: {

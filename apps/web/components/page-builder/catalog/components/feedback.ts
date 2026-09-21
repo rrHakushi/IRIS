@@ -12,7 +12,10 @@ export const feedbackPresets: ComponentPresetItem[] = [
       props: { variant: "default" },
       children: [
         { type: "AlertTitle", children: "Notification" },
-        { type: "AlertDescription", children: "This is an important update or status note." },
+        {
+          type: "AlertDescription",
+          children: "This is an important update or status note.",
+        },
       ],
     }),
   },

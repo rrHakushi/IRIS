@@ -11,9 +11,7 @@ const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
  * Strips whitespace, hyphens, and handles padding.
  */
 export function base32Decode(input: string): Uint8Array {
-  const clean = input
-    .toUpperCase()
-    .replace(/[\s\-_=]/g, "")
+  const clean = input.toUpperCase().replace(/[\s\-_=]/g, "")
 
   if (clean.length === 0) return new Uint8Array(0)
 

@@ -5,10 +5,7 @@ import {
   StudioCreationsResponseSchema,
   type StudioCreationsResponse,
 } from "./types"
-import {
-  mediaStudioInclude,
-  mapMediaStudioRecord,
-} from "../route"
+import { mediaStudioInclude, mapMediaStudioRecord } from "../route"
 import type { StudioCreationItem } from "../types"
 import { NotFoundResponseSchema } from "../../../../../../../types"
 
@@ -42,7 +39,9 @@ export default defineRoute({
   async GET({ params, query, prisma, cache, cacheKeys }) {
     const id = Number(params.id)
     const limit = Number(query?.limit ?? 36)
-    const cursor = query?.cursor ? parseInt(String(query.cursor), 10) : undefined
+    const cursor = query?.cursor
+      ? parseInt(String(query.cursor), 10)
+      : undefined
     const cleanCursor =
       typeof cursor === "number" && !isNaN(cursor) && cursor > 0
         ? cursor

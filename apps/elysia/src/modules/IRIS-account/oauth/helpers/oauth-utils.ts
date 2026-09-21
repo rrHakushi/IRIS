@@ -42,7 +42,8 @@ export const SCOPE_DEFINITIONS: Record<string, ScopeMetadata> = {
   "lists:read": {
     scope: "lists:read",
     name: "Read Media Lists",
-    description: "Read your anime, manga, movie, TV, game, book, and music lists.",
+    description:
+      "Read your anime, manga, movie, TV, game, book, and music lists.",
   },
   "lists:write": {
     scope: "lists:write",
@@ -64,7 +65,8 @@ export const SCOPE_DEFINITIONS: Record<string, ScopeMetadata> = {
   offline_access: {
     scope: "offline_access",
     name: "Offline Access",
-    description: "Stay connected even when you are not actively using the application.",
+    description:
+      "Stay connected even when you are not actively using the application.",
   },
 }
 
@@ -150,7 +152,9 @@ export function verifyPkceChallenge(
   if (method === "plain") {
     return codeVerifier === codeChallenge
   }
-  const hashed = createHash("sha256").update(codeVerifier.trim()).digest("base64url")
+  const hashed = createHash("sha256")
+    .update(codeVerifier.trim())
+    .digest("base64url")
   return hashed === codeChallenge.trim()
 }
 

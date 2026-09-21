@@ -17,7 +17,7 @@ export function DiscoverSkeleton() {
         </div>
 
         {/* Bottom Row: Search Input & Filter Dropdowns */}
-        <div className="flex flex-col gap-3 pt-3 border-t border-border/40 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 border-t border-border/40 pt-3 lg:flex-row lg:items-center lg:justify-between">
           <Skeleton className="h-9 w-full max-w-md rounded-2xl" />
           <div className="flex flex-wrap gap-2">
             {Array.from({ length: 4 }).map((_, i) => (

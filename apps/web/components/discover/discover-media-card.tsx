@@ -79,7 +79,10 @@ export function DiscoverMediaCard({
 
   const scoreFormatted =
     item.averageScore !== null && item.averageScore !== undefined
-      ? (item.averageScore > 10 ? item.averageScore / 10 : item.averageScore).toFixed(1)
+      ? (item.averageScore > 10
+          ? item.averageScore / 10
+          : item.averageScore
+        ).toFixed(1)
       : null
 
   const yearOrSeason = (() => {
@@ -93,7 +96,7 @@ export function DiscoverMediaCard({
     <Link
       href={href}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card/60 transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 select-none",
+        "group relative flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card/60 transition-all duration-200 select-none hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5",
         className
       )}
     >
@@ -166,7 +169,7 @@ export function DiscoverMediaCard({
 
         {/* Bottom Year / Season Pill on hover overlay */}
         {yearOrSeason && (
-          <div className="absolute bottom-1.5 start-1.5 opacity-90 transition-opacity">
+          <div className="absolute start-1.5 bottom-1.5 opacity-90 transition-opacity">
             <span className="rounded-md bg-black/60 px-1.5 py-0.5 font-mono text-[10px] font-medium text-white/90 backdrop-blur-md">
               {yearOrSeason}
             </span>

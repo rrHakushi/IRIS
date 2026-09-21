@@ -37,9 +37,16 @@ export interface CanvasProps {
   onDuplicateNode: (path: NodePath) => void
   onDeleteNode: (path: NodePath) => void
   onInsertChild: (parentPath: NodePath, newNode?: IrisNode) => void
-  onInsertAdjacent?: (targetPath: NodePath, position: "above" | "below", newNode?: IrisNode) => void
+  onInsertAdjacent?: (
+    targetPath: NodePath,
+    position: "above" | "below",
+    newNode?: IrisNode
+  ) => void
   onOpenProperties?: (path: NodePath) => void
-  onOpenPicker?: (targetPath: NodePath, position: "inside" | "above" | "below") => void
+  onOpenPicker?: (
+    targetPath: NodePath,
+    position: "inside" | "above" | "below"
+  ) => void
   onAddSection?: (type?: SectionPresetType) => void
   onToggleRootWidth?: () => void
 }
@@ -49,18 +56,31 @@ export interface CanvasProps {
  * (e.g. <div> inside <table>, <thead>, <tbody>, <tr>, <ul>, <ol>, <select>).
  */
 const TABLE_SECTION_TAGS = new Set([
-  "thead", "tbody", "tfoot", "caption", "colgroup", "col",
-  "doctableheader", "doctablebody", "doctablefooter", "doctablecaption",
-  "tableheader", "tablebody", "tablefooter", "tablecaption",
+  "thead",
+  "tbody",
+  "tfoot",
+  "caption",
+  "colgroup",
+  "col",
+  "doctableheader",
+  "doctablebody",
+  "doctablefooter",
+  "doctablecaption",
+  "tableheader",
+  "tablebody",
+  "tablefooter",
+  "tablecaption",
 ])
 
-const TABLE_ROW_TAGS = new Set([
-  "tr", "doctablerow", "tablerow",
-])
+const TABLE_ROW_TAGS = new Set(["tr", "doctablerow", "tablerow"])
 
 const TABLE_CELL_TAGS = new Set([
-  "th", "td", "doctablehead", "doctablecell",
-  "tablehead", "tablecell",
+  "th",
+  "td",
+  "doctablehead",
+  "doctablecell",
+  "tablehead",
+  "tablecell",
 ])
 
 const LIST_ITEM_TAGS = new Set(["li"])
@@ -92,7 +112,8 @@ function isSelectItem(type: string): boolean {
  */
 function getLayoutPlacementClasses(className?: string): string {
   if (!className) return ""
-  const regex = /\b(?:(?:sm|md|lg|xl|2xl):)?(?:col-span-\S+|col-start-\S+|col-end-\S+|row-span-\S+|row-start-\S+|row-end-\S+|flex-1|flex-auto|flex-initial|flex-none|grow|grow-0|shrink|shrink-0|self-\S+|justify-self-\S+)\b/g
+  const regex =
+    /\b(?:(?:sm|md|lg|xl|2xl):)?(?:col-span-\S+|col-start-\S+|col-end-\S+|row-span-\S+|row-start-\S+|row-end-\S+|flex-1|flex-auto|flex-initial|flex-none|grow|grow-0|shrink|shrink-0|self-\S+|justify-self-\S+)\b/g
   const matches = className.match(regex)
   return matches ? matches.join(" ") : ""
 }
@@ -149,13 +170,16 @@ export function Canvas({
   const renderFloatingToolbar = (node: IrisNode, currentPath: NodePath) => (
     <div
       onClick={(e) => e.stopPropagation()}
-      className="absolute -top-10 start-2 z-50 flex items-center gap-1 rounded-xl border border-border/90 bg-background/95 px-2 py-1 shadow-xl backdrop-blur-md animate-in fade-in zoom-in-95 duration-100 whitespace-nowrap pointer-events-auto"
+      className="pointer-events-auto absolute start-2 -top-10 z-50 flex animate-in items-center gap-1 rounded-xl border border-border/90 bg-background/95 px-2 py-1 whitespace-nowrap shadow-xl backdrop-blur-md duration-100 zoom-in-95 fade-in"
     >
-      <Badge variant="default" className="text-[10px] h-4 px-1.5 font-mono shadow-xs">
+      <Badge
+        variant="default"
+        className="h-4 px-1.5 font-mono text-[10px] shadow-xs"
+      >
         &lt;{node.type}&gt;
       </Badge>
 
-      <div className="h-3 w-px bg-border/60 mx-0.5" />
+      <div className="mx-0.5 h-3 w-px bg-border/60" />
 
       {/* Properties Icon Button */}
       <Button
@@ -194,7 +218,7 @@ export function Canvas({
         <IconRowInsertBottom className="size-3.5" />
       </Button>
 
-      <div className="h-3 w-px bg-border/60 mx-0.5" />
+      <div className="mx-0.5 h-3 w-px bg-border/60" />
 
       <Button
         size="icon-xs"
@@ -264,7 +288,7 @@ export function Canvas({
             e.stopPropagation()
             onSelectPath(currentPath)
           }}
-          className="cursor-pointer hover:underline decoration-primary/50"
+          className="cursor-pointer decoration-primary/50 hover:underline"
         >
           {String(node)}
         </span>
@@ -317,7 +341,7 @@ export function Canvas({
             e.stopPropagation()
             onSelectPath(currentPath)
           }}
-          className="cursor-pointer hover:underline decoration-primary/50"
+          className="cursor-pointer decoration-primary/50 hover:underline"
         >
           {node.text}
         </span>
@@ -332,15 +356,15 @@ export function Canvas({
             e.stopPropagation()
             onSelectPath(currentPath)
           }}
-          className="group/slot relative flex flex-col items-center justify-center min-h-[85px] w-full rounded-2xl border border-dashed border-border/70 bg-muted/15 p-2 overflow-hidden transition-all hover:border-primary/60 hover:bg-primary/5"
+          className="group/slot relative flex min-h-[85px] w-full flex-col items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border/70 bg-muted/15 p-2 transition-all hover:border-primary/60 hover:bg-primary/5"
         >
           {wireframeMode && (
-            <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60 mb-1 select-none truncate max-w-full text-center">
+            <div className="mb-1 max-w-full truncate text-center font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase select-none">
               Layout item
             </div>
           )}
 
-          <div className="flex items-center justify-center text-xs text-muted-foreground max-w-full">
+          <div className="flex max-w-full items-center justify-center text-xs text-muted-foreground">
             <Button
               size="xs"
               variant="outline"
@@ -352,9 +376,9 @@ export function Canvas({
                   onInsertChild(currentPath)
                 }
               }}
-              className="gap-1 text-xs bg-background/90 shadow-xs hover:border-primary hover:text-primary max-w-full truncate px-2"
+              className="max-w-full gap-1 truncate bg-background/90 px-2 text-xs shadow-xs hover:border-primary hover:text-primary"
             >
-              <IconBook className="size-3.5 text-primary shrink-0" />
+              <IconBook className="size-3.5 shrink-0 text-primary" />
               <span className="truncate">Choose component</span>
             </Button>
           </div>
@@ -382,7 +406,7 @@ export function Canvas({
         },
         className: cn(
           resolvedProps.className,
-          selected && "ring-2 ring-primary ring-inset bg-primary/5"
+          selected && "bg-primary/5 ring-2 ring-primary ring-inset"
         ),
       }
       return React.createElement(Component, sectionProps, renderedChildren)
@@ -404,8 +428,9 @@ export function Canvas({
         },
         className: cn(
           resolvedProps.className,
-          selected && "ring-2 ring-primary ring-inset bg-primary/10 relative z-10",
-          !selected && "hover:bg-muted/40 cursor-pointer"
+          selected &&
+            "relative z-10 bg-primary/10 ring-2 ring-primary ring-inset",
+          !selected && "cursor-pointer hover:bg-muted/40"
         ),
       }
       return React.createElement(Component, rowProps, renderedChildren)
@@ -428,8 +453,9 @@ export function Canvas({
         className: cn(
           resolvedProps.className,
           "relative cursor-pointer transition-colors",
-          selected && "ring-2 ring-primary ring-inset bg-primary/10 z-20",
-          !selected && "hover:outline-dashed hover:outline-1 hover:outline-primary/40"
+          selected && "z-20 bg-primary/10 ring-2 ring-primary ring-inset",
+          !selected &&
+            "hover:outline-1 hover:outline-primary/40 hover:outline-dashed"
         ),
       }
       return React.createElement(
@@ -464,8 +490,8 @@ export function Canvas({
           resolvedProps.className,
           "group/node relative transition-all duration-150",
           selected
-            ? "ring-2 ring-primary ring-offset-2 ring-offset-background rounded-xl z-30"
-            : "hover:ring-1 hover:ring-primary/40 hover:rounded-lg"
+            ? "z-30 rounded-xl ring-2 ring-primary ring-offset-2 ring-offset-background"
+            : "hover:rounded-lg hover:ring-1 hover:ring-primary/40"
         ),
       }
       return React.createElement(
@@ -515,7 +541,10 @@ export function Canvas({
     )
 
     // Extract grid and flex layout placement classes for direct parent positioning
-    const rawClassName = typeof node.props?.className === "string" ? node.props.className : undefined
+    const rawClassName =
+      typeof node.props?.className === "string"
+        ? node.props.className
+        : undefined
     const layoutPlacement = getLayoutPlacementClasses(rawClassName)
 
     return (
@@ -533,28 +562,30 @@ export function Canvas({
             onSelectPath(currentPath)
             onOpenProperties?.(currentPath)
           }}
-          className={`group/node relative w-full h-full transition-all duration-150 ${
+          className={`group/node relative h-full w-full transition-all duration-150 ${
             selected
-              ? "ring-2 ring-primary ring-offset-2 ring-offset-background rounded-2xl z-30"
-              : "hover:ring-1 hover:ring-primary/40 hover:rounded-xl"
+              ? "z-30 rounded-2xl ring-2 ring-primary ring-offset-2 ring-offset-background"
+              : "hover:rounded-xl hover:ring-1 hover:ring-primary/40"
           } ${
             wireframeMode && isSection
-              ? "border border-dashed border-border/80 rounded-2xl my-5 pt-1 bg-muted/5 w-full"
+              ? "my-5 w-full rounded-2xl border border-dashed border-border/80 bg-muted/5 pt-1"
               : ""
           }`}
         >
           {/* Section Wireframe Header Bar */}
           {wireframeMode && isSection && (
-            <div className="flex items-center justify-between px-3 py-1.5 border-b border-dashed border-border/60 bg-muted/20 text-[10px] font-mono text-muted-foreground select-none rounded-t-2xl">
+            <div className="flex items-center justify-between rounded-t-2xl border-b border-dashed border-border/60 bg-muted/20 px-3 py-1.5 font-mono text-[10px] text-muted-foreground select-none">
               <div className="flex items-center gap-1.5">
                 <Badge
                   variant="outline"
-                  className="text-[9px] h-4 px-1.5 font-mono uppercase bg-background/80 tracking-wider"
+                  className="h-4 bg-background/80 px-1.5 font-mono text-[9px] tracking-wider uppercase"
                 >
                   PAGE SECTION
                 </Badge>
               </div>
-              <span className="text-[10px] font-medium text-muted-foreground/70">Section</span>
+              <span className="text-[10px] font-medium text-muted-foreground/70">
+                Section
+              </span>
             </div>
           )}
 
@@ -563,8 +594,11 @@ export function Canvas({
 
           {/* Selected Pill Indicator on Root */}
           {selected && isRoot && (
-            <div className="absolute -top-8 start-2 z-30 flex items-center gap-1.5">
-              <Badge variant="default" className="text-[10px] h-5 px-2 font-mono shadow-xs">
+            <div className="absolute start-2 -top-8 z-30 flex items-center gap-1.5">
+              <Badge
+                variant="default"
+                className="h-5 px-2 font-mono text-[10px] shadow-xs"
+              >
                 Root (&lt;{node.type}&gt;)
               </Badge>
               {onToggleRootWidth && (
@@ -572,7 +606,7 @@ export function Canvas({
                   size="xs"
                   variant="outline"
                   onPress={onToggleRootWidth}
-                  className="h-5 gap-1 px-2 text-[10px] font-semibold bg-background shadow-xs hover:border-primary text-primary"
+                  className="h-5 gap-1 bg-background px-2 text-[10px] font-semibold text-primary shadow-xs hover:border-primary"
                   aria-label="Toggle between 100% full width and boxed"
                 >
                   <IconArrowsMaximize className="size-3 text-primary" />
@@ -601,17 +635,19 @@ export function Canvas({
     <div className="flex flex-1 flex-col overflow-hidden bg-muted/20">
       {/* Top Breadcrumbs & Actions Bar */}
       <div className="flex items-center justify-between border-b border-border/40 bg-background/60 px-4 py-2 text-xs text-muted-foreground backdrop-blur-xs">
-        <div className="flex items-center gap-1.5 overflow-x-auto me-2">
-          <span className="font-semibold text-foreground me-1">Hierarchy:</span>
+        <div className="me-2 flex items-center gap-1.5 overflow-x-auto">
+          <span className="me-1 font-semibold text-foreground">Hierarchy:</span>
           {breadcrumbs.map((crumb, idx) => (
             <React.Fragment key={crumb.path.join("-") || "root"}>
-              {idx > 0 && <IconChevronRight className="size-3 text-muted-foreground/60" />}
+              {idx > 0 && (
+                <IconChevronRight className="size-3 text-muted-foreground/60" />
+              )}
               <button
                 type="button"
                 onClick={() => onSelectPath(crumb.path)}
-                className={`rounded px-1.5 py-0.5 transition-colors font-mono text-[11px] ${
+                className={`rounded px-1.5 py-0.5 font-mono text-[11px] transition-colors ${
                   isSelected(crumb.path)
-                    ? "bg-primary/10 text-primary font-bold"
+                    ? "bg-primary/10 font-bold text-primary"
                     : "hover:bg-muted hover:text-foreground"
                 }`}
               >
@@ -621,7 +657,7 @@ export function Canvas({
           ))}
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex shrink-0 items-center gap-1">
           {selectedPath.length > 0 && (
             <>
               <Button
@@ -657,7 +693,7 @@ export function Canvas({
               >
                 <IconTrash className="size-3" />
               </Button>
-              <div className="h-3 w-px bg-border/60 mx-1" />
+              <div className="mx-1 h-3 w-px bg-border/60" />
             </>
           )}
 
@@ -666,7 +702,7 @@ export function Canvas({
               size="xs"
               variant="ghost"
               onPress={() => onOpenProperties(selectedPath)}
-              className="gap-1 text-[11px] text-primary hover:bg-primary/10 shrink-0"
+              className="shrink-0 gap-1 text-[11px] text-primary hover:bg-primary/10"
             >
               <IconAdjustments className="size-3.5" />
               <span className="hidden sm:inline">Properties</span>
@@ -678,7 +714,7 @@ export function Canvas({
       {/* Viewport Frame */}
       <div className="flex-1 overflow-y-auto p-6 md:p-8">
         <div className={`transition-all duration-200 ${viewportWidthClass}`}>
-          <div className="rounded-[min(var(--radius-4xl),24px)] border border-border/60 bg-card p-6 pt-10 shadow-sm min-h-[500px]">
+          <div className="min-h-[500px] rounded-[min(var(--radius-4xl),24px)] border border-border/60 bg-card p-6 pt-10 shadow-sm">
             {renderEditableNode(root, [])}
 
             {/* Bottom Add Section Button (Matches unicorn.com reference) */}
@@ -693,7 +729,7 @@ export function Canvas({
                     onAddSection("3-col")
                   }
                 }}
-                className="gap-2 rounded-2xl border-dashed border-border/80 px-5 py-2.5 text-xs font-semibold hover:border-primary hover:bg-primary/5 hover:text-primary transition-all shadow-xs"
+                className="gap-2 rounded-2xl border-dashed border-border/80 px-5 py-2.5 text-xs font-semibold shadow-xs transition-all hover:border-primary hover:bg-primary/5 hover:text-primary"
               >
                 <IconPlus className="size-4 text-primary" />
                 <span>Add section</span>
@@ -705,4 +741,3 @@ export function Canvas({
     </div>
   )
 }
-

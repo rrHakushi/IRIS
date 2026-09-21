@@ -59,8 +59,14 @@ function isBookmarkActive(currentPath: string, bookmarkUrl?: string): boolean {
   let targetPath = bookmarkUrl
 
   try {
-    if (bookmarkUrl.startsWith("http://") || bookmarkUrl.startsWith("https://")) {
-      if (typeof window !== "undefined" && window.location.href === bookmarkUrl) {
+    if (
+      bookmarkUrl.startsWith("http://") ||
+      bookmarkUrl.startsWith("https://")
+    ) {
+      if (
+        typeof window !== "undefined" &&
+        window.location.href === bookmarkUrl
+      ) {
         return true
       }
       const parsed = new URL(bookmarkUrl)
@@ -69,7 +75,8 @@ function isBookmarkActive(currentPath: string, bookmarkUrl?: string): boolean {
       if (bookmarkUrl.includes("?") || bookmarkUrl.includes("#")) {
         if (
           typeof window !== "undefined" &&
-          `${window.location.pathname}${window.location.search}${window.location.hash}` === bookmarkUrl
+          `${window.location.pathname}${window.location.search}${window.location.hash}` ===
+            bookmarkUrl
         ) {
           return true
         }
@@ -339,7 +346,9 @@ export function IrisMobileLauncher({
           {/* App Switcher Slideable Row (Pure Icons, Horizontally Scrollable) */}
           <section className="space-y-1.5">
             <div className="flex items-center justify-between px-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-              <span>{isEditingApps ? t("reorganizeMenu") : t("applications")}</span>
+              <span>
+                {isEditingApps ? t("reorganizeMenu") : t("applications")}
+              </span>
               {isEditingApps ? (
                 <div className="flex items-center gap-1">
                   <button
@@ -371,7 +380,7 @@ export function IrisMobileLauncher({
               )}
             </div>
 
-            <div className="no-scrollbar flex w-full touch-pan-x items-center gap-3 overflow-x-auto scroll-smooth py-1 px-1">
+            <div className="no-scrollbar flex w-full touch-pan-x items-center gap-3 overflow-x-auto scroll-smooth px-1 py-1">
               {sortedApps.map((app: IrisApp, index: number) => {
                 const isAppActive =
                   app.href !== "/"
@@ -381,7 +390,7 @@ export function IrisMobileLauncher({
                 return (
                   <div
                     key={app.name}
-                    className="flex w-16 shrink-0 flex-col items-center gap-1 group"
+                    className="group flex w-16 shrink-0 flex-col items-center gap-1"
                   >
                     <button
                       type="button"
@@ -394,13 +403,14 @@ export function IrisMobileLauncher({
                       )}
                     >
                       {renderIrisAppIcon(app, "size-[38px]")}
-
                     </button>
                     <span
                       suppressHydrationWarning
                       className={cn(
-                        "w-full truncate text-center text-[11px] font-medium leading-tight",
-                        isAppActive ? "font-semibold text-primary" : "text-muted-foreground"
+                        "w-full truncate text-center text-[11px] leading-tight font-medium",
+                        isAppActive
+                          ? "font-semibold text-primary"
+                          : "text-muted-foreground"
                       )}
                     >
                       {app.name}
@@ -452,7 +462,7 @@ export function IrisMobileLauncher({
               </div>
 
               {bookmarks.length > 0 ? (
-                <div className="no-scrollbar flex w-full touch-pan-x items-center gap-3 overflow-x-auto scroll-smooth py-1 px-1">
+                <div className="no-scrollbar flex w-full touch-pan-x items-center gap-3 overflow-x-auto scroll-smooth px-1 py-1">
                   {bookmarks.map((bm: UserBookmark) => {
                     const isBmActive = isBookmarkActive(pathname, bm.url)
                     const bmColor = bm.color || "#6366f1"
@@ -460,7 +470,7 @@ export function IrisMobileLauncher({
                     return (
                       <div
                         key={bm.id}
-                        className="flex w-16 shrink-0 flex-col items-center gap-1 group"
+                        className="group flex w-16 shrink-0 flex-col items-center gap-1"
                       >
                         <button
                           type="button"
@@ -472,7 +482,7 @@ export function IrisMobileLauncher({
                         >
                           {bm.pinned && (
                             <div
-                              className="absolute -top-0.5 -start-0.5 flex size-3.5 items-center justify-center rounded-full bg-background/90 border border-border/60 text-rose-500 shadow-xs"
+                              className="absolute -start-0.5 -top-0.5 flex size-3.5 items-center justify-center rounded-full border border-border/60 bg-background/90 text-rose-500 shadow-xs"
                               title={t("pinned")}
                             >
                               <IconPinFilled className="size-2" />
@@ -489,8 +499,10 @@ export function IrisMobileLauncher({
                         </button>
                         <span
                           className={cn(
-                            "w-full truncate text-center text-[11px] font-medium leading-tight transition-colors",
-                            isBmActive ? "font-semibold text-primary" : "text-muted-foreground"
+                            "w-full truncate text-center text-[11px] leading-tight font-medium transition-colors",
+                            isBmActive
+                              ? "font-semibold text-primary"
+                              : "text-muted-foreground"
                           )}
                           title={bm.title}
                         >
@@ -542,7 +554,8 @@ export function IrisMobileLauncher({
                 {isExpanded && (
                   <div className="space-y-1 rounded-2xl border border-border/50 bg-card/50 p-1.5">
                     {section.items.map((item: SidebarItem, iIdx: number) => {
-                      const itemKey = item.dataKey || item.label || `item-${iIdx}`
+                      const itemKey =
+                        item.dataKey || item.label || `item-${iIdx}`
                       const hasChildren = !!(
                         item.children && item.children.length > 0
                       )
@@ -651,7 +664,9 @@ export function IrisMobileLauncher({
                                 type="button"
                                 onClick={() => toggleItem(itemKey)}
                                 className="flex size-9 cursor-pointer items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-                                aria-label={isOpen ? t("collapse") : t("expand")}
+                                aria-label={
+                                  isOpen ? t("collapse") : t("expand")
+                                }
                               >
                                 <IconChevronDown
                                   className={cn(
@@ -684,7 +699,9 @@ export function IrisMobileLauncher({
                                       <button
                                         key={cIdx}
                                         type="button"
-                                        onClick={() => handleNavigate(child.href)}
+                                        onClick={() =>
+                                          handleNavigate(child.href)
+                                        }
                                         className={cn(
                                           "flex w-full cursor-pointer items-center justify-between rounded-xl px-2.5 py-2 text-start text-xs font-medium transition-colors",
                                           isSubActive

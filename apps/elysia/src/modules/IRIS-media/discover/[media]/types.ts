@@ -37,7 +37,8 @@ export const DiscoverQuerySchema = t.Object({
   limit: t.Optional(t.Number({ default: 30, minimum: 1, maximum: 100 })),
   status: t.Optional(
     t.String({
-      description: "Comma-separated release status filter e.g. RELEASING,FINISHED",
+      description:
+        "Comma-separated release status filter e.g. RELEASING,FINISHED",
     })
   ),
   mediaFormat: t.Optional(

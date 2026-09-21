@@ -115,7 +115,19 @@
       "gameList": "Game",
       "musicList": "Music",
       "bookList": "Book",
-      "otherLists": "Other"
+      "otherLists": "Other",
+      "servarr": "Servarr",
+      "sonarr": "Sonarr",
+      "radarr": "Radarr",
+      "readarr": "Readarr",
+      "lidarr": "Lidarr",
+      "series": "Series",
+      "movies": "Movies",
+      "manageSeries": "Manage Series",
+      "manageMovies": "Manage Movies",
+      "activityQueue": "Activity Queue",
+      "wanted": "Wanted & Cutoff",
+      "history": "History"
     },
     "appMenu": {
       "appCenter": "App Center",

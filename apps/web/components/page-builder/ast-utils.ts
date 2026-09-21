@@ -18,7 +18,11 @@ export function getNodeByPath(root: IrisNode, path: NodePath): IrisNode | null {
       const child = current.children[idx]
       if (typeof child !== "object" || child === null) return null
       current = child as IrisNode
-    } else if (idx === 0 && typeof current.children === "object" && current.children !== null) {
+    } else if (
+      idx === 0 &&
+      typeof current.children === "object" &&
+      current.children !== null
+    ) {
       current = current.children as IrisNode
     } else {
       return null
@@ -121,13 +125,16 @@ export function deleteNodeByPath(
       return parentClone
     }
 
-    const nextChildren = parentClone.children.filter((_, idx) => idx !== targetIndex)
+    const nextChildren = parentClone.children.filter(
+      (_, idx) => idx !== targetIndex
+    )
     parentClone.children = nextChildren
     return parentClone
   })
 
   // Select parent or previous sibling after deletion
-  const newPath = targetIndex > 0 ? [...parentPath, targetIndex - 1] : parentPath
+  const newPath =
+    targetIndex > 0 ? [...parentPath, targetIndex - 1] : parentPath
   return { newRoot, newPath }
 }
 
@@ -173,7 +180,8 @@ export function moveNodeByPath(
   let didSwap = false
   const newRoot = updateNodeByPath(root, parentPath, (parent) => {
     if (!Array.isArray(parent.children)) return parent
-    if (targetSwapIndex < 0 || targetSwapIndex >= parent.children.length) return parent
+    if (targetSwapIndex < 0 || targetSwapIndex >= parent.children.length)
+      return parent
 
     const children = [...parent.children]
     const temp = children[targetIndex]
@@ -239,7 +247,12 @@ export function insertNodeAdjacent(
 ): { newRoot: IrisNode; newPath: NodePath } {
   // If target is root, append or prepend to root children
   if (targetPath.length === 0) {
-    const insertIdx = position === "above" ? 0 : (Array.isArray(root.children) ? root.children.length : 1)
+    const insertIdx =
+      position === "above"
+        ? 0
+        : Array.isArray(root.children)
+          ? root.children.length
+          : 1
     return insertChildNode(root, [], newNode, insertIdx)
   }
 
@@ -300,17 +313,23 @@ export function createSectionPreset(type: SectionPresetType): IrisNode {
             children: [
               {
                 type: "div",
-                props: { className: "col-span-12 md:col-span-3 space-y-4 min-h-32" },
+                props: {
+                  className: "col-span-12 md:col-span-3 space-y-4 min-h-32",
+                },
                 children: [],
               },
               {
                 type: "div",
-                props: { className: "col-span-12 md:col-span-6 space-y-4 min-h-32" },
+                props: {
+                  className: "col-span-12 md:col-span-6 space-y-4 min-h-32",
+                },
                 children: [],
               },
               {
                 type: "div",
-                props: { className: "col-span-12 md:col-span-3 space-y-4 min-h-32" },
+                props: {
+                  className: "col-span-12 md:col-span-3 space-y-4 min-h-32",
+                },
                 children: [],
               },
             ],
@@ -327,10 +346,34 @@ export function createSectionPreset(type: SectionPresetType): IrisNode {
             type: "div",
             props: { className: "grid grid-cols-12 gap-4 w-full items-start" },
             children: [
-              { type: "div", props: { className: "col-span-12 sm:col-span-6 lg:col-span-3 min-h-24" }, children: [] },
-              { type: "div", props: { className: "col-span-12 sm:col-span-6 lg:col-span-3 min-h-24" }, children: [] },
-              { type: "div", props: { className: "col-span-12 sm:col-span-6 lg:col-span-3 min-h-24" }, children: [] },
-              { type: "div", props: { className: "col-span-12 sm:col-span-6 lg:col-span-3 min-h-24" }, children: [] },
+              {
+                type: "div",
+                props: {
+                  className: "col-span-12 sm:col-span-6 lg:col-span-3 min-h-24",
+                },
+                children: [],
+              },
+              {
+                type: "div",
+                props: {
+                  className: "col-span-12 sm:col-span-6 lg:col-span-3 min-h-24",
+                },
+                children: [],
+              },
+              {
+                type: "div",
+                props: {
+                  className: "col-span-12 sm:col-span-6 lg:col-span-3 min-h-24",
+                },
+                children: [],
+              },
+              {
+                type: "div",
+                props: {
+                  className: "col-span-12 sm:col-span-6 lg:col-span-3 min-h-24",
+                },
+                children: [],
+              },
             ],
           },
         ],
@@ -347,12 +390,16 @@ export function createSectionPreset(type: SectionPresetType): IrisNode {
             children: [
               {
                 type: "div",
-                props: { className: "col-span-12 lg:col-span-3 space-y-4 min-h-48" },
+                props: {
+                  className: "col-span-12 lg:col-span-3 space-y-4 min-h-48",
+                },
                 children: [],
               },
               {
                 type: "div",
-                props: { className: "col-span-12 lg:col-span-9 space-y-6 min-h-48" },
+                props: {
+                  className: "col-span-12 lg:col-span-9 space-y-6 min-h-48",
+                },
                 children: [],
               },
             ],
@@ -367,10 +414,21 @@ export function createSectionPreset(type: SectionPresetType): IrisNode {
         children: [
           {
             type: "div",
-            props: { className: "grid grid-cols-1 lg:grid-cols-2 gap-8 w-full items-start" },
+            props: {
+              className:
+                "grid grid-cols-1 lg:grid-cols-2 gap-8 w-full items-start",
+            },
             children: [
-              { type: "div", props: { className: "w-full space-y-4 min-h-40" }, children: [] },
-              { type: "div", props: { className: "w-full space-y-4 min-h-40" }, children: [] },
+              {
+                type: "div",
+                props: { className: "w-full space-y-4 min-h-40" },
+                children: [],
+              },
+              {
+                type: "div",
+                props: { className: "w-full space-y-4 min-h-40" },
+                children: [],
+              },
             ],
           },
         ],
@@ -379,7 +437,9 @@ export function createSectionPreset(type: SectionPresetType): IrisNode {
     case "fluid-full":
       return {
         type: "section",
-        props: { className: "w-full py-8 px-2 space-y-6 border-b border-border/40" },
+        props: {
+          className: "w-full py-8 px-2 space-y-6 border-b border-border/40",
+        },
         children: [
           {
             type: "div",
@@ -409,10 +469,20 @@ export function createSectionPreset(type: SectionPresetType): IrisNode {
         children: [
           {
             type: "div",
-            props: { className: "grid grid-cols-1 md:grid-cols-2 gap-6 w-full" },
+            props: {
+              className: "grid grid-cols-1 md:grid-cols-2 gap-6 w-full",
+            },
             children: [
-              { type: "div", props: { className: "w-full min-h-24" }, children: [] },
-              { type: "div", props: { className: "w-full min-h-24" }, children: [] },
+              {
+                type: "div",
+                props: { className: "w-full min-h-24" },
+                children: [],
+              },
+              {
+                type: "div",
+                props: { className: "w-full min-h-24" },
+                children: [],
+              },
             ],
           },
         ],
@@ -425,11 +495,25 @@ export function createSectionPreset(type: SectionPresetType): IrisNode {
         children: [
           {
             type: "div",
-            props: { className: "grid grid-cols-1 md:grid-cols-3 gap-6 w-full" },
+            props: {
+              className: "grid grid-cols-1 md:grid-cols-3 gap-6 w-full",
+            },
             children: [
-              { type: "div", props: { className: "w-full min-h-24" }, children: [] },
-              { type: "div", props: { className: "w-full min-h-24" }, children: [] },
-              { type: "div", props: { className: "w-full min-h-24" }, children: [] },
+              {
+                type: "div",
+                props: { className: "w-full min-h-24" },
+                children: [],
+              },
+              {
+                type: "div",
+                props: { className: "w-full min-h-24" },
+                children: [],
+              },
+              {
+                type: "div",
+                props: { className: "w-full min-h-24" },
+                children: [],
+              },
             ],
           },
         ],
@@ -438,17 +522,45 @@ export function createSectionPreset(type: SectionPresetType): IrisNode {
     case "hero":
       return {
         type: "section",
-        props: { className: "w-full py-16 text-center space-y-4 border-b border-border/40" },
+        props: {
+          className:
+            "w-full py-16 text-center space-y-4 border-b border-border/40",
+        },
         children: [
-          { type: "Badge", props: { variant: "secondary" }, children: "Feature Announcement" },
-          { type: "h1", props: { className: "text-4xl font-bold font-heading tracking-tight" }, children: "Next-Gen Component Engine" },
-          { type: "p", props: { className: "text-base text-muted-foreground max-w-xl mx-auto" }, children: "Build dynamic web interfaces directly from JSON with instant wireframe editing." },
+          {
+            type: "Badge",
+            props: { variant: "secondary" },
+            children: "Feature Announcement",
+          },
+          {
+            type: "h1",
+            props: {
+              className: "text-4xl font-bold font-heading tracking-tight",
+            },
+            children: "Next-Gen Component Engine",
+          },
+          {
+            type: "p",
+            props: {
+              className: "text-base text-muted-foreground max-w-xl mx-auto",
+            },
+            children:
+              "Build dynamic web interfaces directly from JSON with instant wireframe editing.",
+          },
           {
             type: "div",
             props: { className: "flex items-center justify-center gap-3 pt-2" },
             children: [
-              { type: "Button", props: { variant: "default" }, children: "Explore Features" },
-              { type: "Button", props: { variant: "outline" }, children: "View Docs" },
+              {
+                type: "Button",
+                props: { variant: "default" },
+                children: "Explore Features",
+              },
+              {
+                type: "Button",
+                props: { variant: "outline" },
+                children: "View Docs",
+              },
             ],
           },
         ],
@@ -461,27 +573,66 @@ export function createSectionPreset(type: SectionPresetType): IrisNode {
         children: [
           {
             type: "div",
-            props: { className: "grid grid-cols-1 md:grid-cols-3 gap-6 w-full" },
+            props: {
+              className: "grid grid-cols-1 md:grid-cols-3 gap-6 w-full",
+            },
             children: [
               {
                 type: "Card",
                 children: [
-                  { type: "CardHeader", children: [{ type: "CardTitle", children: "Feature One" }] },
-                  { type: "CardContent", children: [{ type: "p", children: "Describe your capability with high fidelity." }] },
+                  {
+                    type: "CardHeader",
+                    children: [{ type: "CardTitle", children: "Feature One" }],
+                  },
+                  {
+                    type: "CardContent",
+                    children: [
+                      {
+                        type: "p",
+                        children:
+                          "Describe your capability with high fidelity.",
+                      },
+                    ],
+                  },
                 ],
               },
               {
                 type: "Card",
                 children: [
-                  { type: "CardHeader", children: [{ type: "CardTitle", children: "Feature Two" }] },
-                  { type: "CardContent", children: [{ type: "p", children: "Seamless reactive binding and Elysia treaty." }] },
+                  {
+                    type: "CardHeader",
+                    children: [{ type: "CardTitle", children: "Feature Two" }],
+                  },
+                  {
+                    type: "CardContent",
+                    children: [
+                      {
+                        type: "p",
+                        children:
+                          "Seamless reactive binding and Elysia treaty.",
+                      },
+                    ],
+                  },
                 ],
               },
               {
                 type: "Card",
                 children: [
-                  { type: "CardHeader", children: [{ type: "CardTitle", children: "Feature Three" }] },
-                  { type: "CardContent", children: [{ type: "p", children: "Automatic wireframe layout inspection." }] },
+                  {
+                    type: "CardHeader",
+                    children: [
+                      { type: "CardTitle", children: "Feature Three" },
+                    ],
+                  },
+                  {
+                    type: "CardContent",
+                    children: [
+                      {
+                        type: "p",
+                        children: "Automatic wireframe layout inspection.",
+                      },
+                    ],
+                  },
                 ],
               },
             ],

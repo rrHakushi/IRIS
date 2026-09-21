@@ -1383,17 +1383,19 @@ export function OverviewTab({
                       Production
                     </span>
                     <span className="text-end font-medium text-foreground">
-                      {[...animationStudios, ...producerStudios].map((st, idx) => (
-                        <React.Fragment key={st.id || idx}>
-                          {idx > 0 && ", "}
-                          <Link
-                            href={`/IRIS-list/studios/${st.id}`}
-                            className="transition-colors hover:text-primary hover:underline underline-offset-2"
-                          >
-                            {st.name}
-                          </Link>
-                        </React.Fragment>
-                      ))}
+                      {[...animationStudios, ...producerStudios].map(
+                        (st, idx) => (
+                          <React.Fragment key={st.id || idx}>
+                            {idx > 0 && ", "}
+                            <Link
+                              href={`/IRIS-list/studios/${st.id}`}
+                              className="underline-offset-2 transition-colors hover:text-primary hover:underline"
+                            >
+                              {st.name}
+                            </Link>
+                          </React.Fragment>
+                        )
+                      )}
                     </span>
                   </div>
                 )
@@ -1410,7 +1412,7 @@ export function OverviewTab({
                             {idx > 0 && ", "}
                             <Link
                               href={`/IRIS-list/studios/${st.id}`}
-                              className="transition-colors hover:text-primary hover:underline underline-offset-2"
+                              className="underline-offset-2 transition-colors hover:text-primary hover:underline"
                             >
                               {st.name}
                             </Link>
@@ -1431,7 +1433,7 @@ export function OverviewTab({
                             {idx > 0 && ", "}
                             <Link
                               href={`/IRIS-list/studios/${st.id}`}
-                              className="transition-colors hover:text-primary hover:underline underline-offset-2"
+                              className="underline-offset-2 transition-colors hover:text-primary hover:underline"
                             >
                               {st.name}
                             </Link>

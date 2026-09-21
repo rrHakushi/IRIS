@@ -131,7 +131,14 @@ export function BookmarkDialog({
         setCustomColorVal(initialColor)
       }
     }
-  }, [isOpen, bookmark, defaultAppId, defaultAppColor, defaultTitle, defaultUrl])
+  }, [
+    isOpen,
+    bookmark,
+    defaultAppId,
+    defaultAppColor,
+    defaultTitle,
+    defaultUrl,
+  ])
 
   const handleColorSelect = (colorValue: string) => {
     setSelectedColor(colorValue)
@@ -225,7 +232,10 @@ export function BookmarkDialog({
         </DialogTitle>
       </DialogHeader>
 
-      <form onSubmit={handleSubmit} className="flex min-w-0 max-w-full flex-col gap-3 pt-1 overflow-hidden">
+      <form
+        onSubmit={handleSubmit}
+        className="flex max-w-full min-w-0 flex-col gap-3 overflow-hidden pt-1"
+      >
         {/* Live Preview & Pin Toggle */}
         <div className="flex items-center justify-between rounded-2xl border border-border/50 bg-muted/30 p-2.5">
           <div className="flex min-w-0 items-center gap-2.5">
@@ -235,7 +245,9 @@ export function BookmarkDialog({
                 color: selectedColor,
               }}
             >
-              {renderBookmarkIcon(selectedIcon, "size-7", { color: selectedColor })}
+              {renderBookmarkIcon(selectedIcon, "size-7", {
+                color: selectedColor,
+              })}
             </div>
             <div className="flex min-w-0 flex-col">
               <span className="truncate text-xs font-semibold text-foreground">
@@ -262,7 +274,9 @@ export function BookmarkDialog({
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            <span className="text-[11px] text-muted-foreground">{t("pinToTop")}</span>
+            <span className="text-[11px] text-muted-foreground">
+              {t("pinToTop")}
+            </span>
             <Switch
               isSelected={isPinned}
               onChange={setIsPinned}
@@ -301,7 +315,7 @@ export function BookmarkDialog({
         </div>
 
         {/* Group Selection & Creation */}
-        <div className="flex min-w-0 max-w-full flex-col gap-1.5">
+        <div className="flex max-w-full min-w-0 flex-col gap-1.5">
           <div className="flex items-center justify-between">
             <label className="text-xs font-medium text-foreground">
               {t("bookmarkGroup")}
@@ -313,7 +327,7 @@ export function BookmarkDialog({
                   setSelectedGroup("")
                   setIsCreatingNewGroup(false)
                 }}
-                className="text-[11px] text-muted-foreground hover:text-foreground cursor-pointer"
+                className="cursor-pointer text-[11px] text-muted-foreground hover:text-foreground"
               >
                 {t("ungrouped")}
               </button>
@@ -321,7 +335,7 @@ export function BookmarkDialog({
           </div>
 
           {/* Group Chips Track */}
-          <div className="no-scrollbar flex w-full min-w-0 max-w-full touch-pan-x items-center gap-1.5 overflow-x-auto whitespace-nowrap scroll-smooth py-0.5 px-0.5">
+          <div className="no-scrollbar flex w-full max-w-full min-w-0 touch-pan-x items-center gap-1.5 overflow-x-auto scroll-smooth px-0.5 py-0.5 whitespace-nowrap">
             <button
               type="button"
               onClick={() => handleGroupChipClick("")}
@@ -329,7 +343,7 @@ export function BookmarkDialog({
                 "shrink-0 cursor-pointer rounded-xl px-2.5 py-1 text-xs font-medium transition-colors",
                 !selectedGroup && !isCreatingNewGroup
                   ? "border border-primary bg-primary/15 text-primary"
-                  : "border border-border/60 bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/70"
+                  : "border border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted/70 hover:text-foreground"
               )}
             >
               {t("ungrouped")}
@@ -344,7 +358,7 @@ export function BookmarkDialog({
                   "flex shrink-0 cursor-pointer items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-medium transition-colors",
                   selectedGroup === grp && !isCreatingNewGroup
                     ? "border border-primary bg-primary/15 text-primary"
-                    : "border border-border/60 bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/70"
+                    : "border border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted/70 hover:text-foreground"
                 )}
               >
                 <IconFolder className="size-3" />
@@ -359,7 +373,7 @@ export function BookmarkDialog({
                 "flex shrink-0 cursor-pointer items-center gap-1 rounded-xl border border-dashed px-2.5 py-1 text-xs font-medium transition-colors",
                 isCreatingNewGroup
                   ? "border-primary bg-primary/15 text-primary"
-                  : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/70"
+                  : "border-border text-muted-foreground hover:bg-muted/70 hover:text-foreground"
               )}
             >
               <IconPlus className="size-3" />
@@ -368,14 +382,15 @@ export function BookmarkDialog({
           </div>
 
           {/* New Group Input Field (or manual edit) */}
-          {(isCreatingNewGroup || (selectedGroup && !sanitizedGroups.includes(selectedGroup))) && (
+          {(isCreatingNewGroup ||
+            (selectedGroup && !sanitizedGroups.includes(selectedGroup))) && (
             <div className="flex items-center gap-1.5 pt-0.5">
               <Input
                 value={selectedGroup}
                 onChange={(e) => setSelectedGroup(e.target.value)}
                 placeholder={t("groupPlaceholder")}
                 autoFocus
-                className="h-8 rounded-xl bg-muted/40 text-xs flex-1"
+                className="h-8 flex-1 rounded-xl bg-muted/40 text-xs"
               />
               <button
                 type="button"
@@ -393,11 +408,11 @@ export function BookmarkDialog({
         </div>
 
         {/* Associated App Selector */}
-        <div className="flex min-w-0 max-w-full flex-col gap-1.5">
+        <div className="flex max-w-full min-w-0 flex-col gap-1.5">
           <label className="text-xs font-medium text-foreground">
             {t("associatedApp")}
           </label>
-          <div className="no-scrollbar flex w-full min-w-0 max-w-full touch-pan-x items-center gap-1.5 overflow-x-auto whitespace-nowrap scroll-smooth py-0.5 px-0.5">
+          <div className="no-scrollbar flex w-full max-w-full min-w-0 touch-pan-x items-center gap-1.5 overflow-x-auto scroll-smooth px-0.5 py-0.5 whitespace-nowrap">
             {irisApps.map((app) => {
               const isSelected = selectedAppId === app.id
               return (
@@ -409,7 +424,7 @@ export function BookmarkDialog({
                     "flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-medium transition-colors",
                     isSelected
                       ? "border border-primary bg-primary/15 text-primary"
-                      : "border border-border/60 bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/70"
+                      : "border border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted/70 hover:text-foreground"
                   )}
                 >
                   <div className="size-3.5 shrink-0">
@@ -423,7 +438,7 @@ export function BookmarkDialog({
         </div>
 
         {/* Color Picker */}
-        <div className="flex min-w-0 max-w-full flex-col gap-1.5">
+        <div className="flex max-w-full min-w-0 flex-col gap-1.5">
           <label className="text-xs font-medium text-foreground">
             {t("bookmarkColor")}
           </label>
@@ -439,12 +454,15 @@ export function BookmarkDialog({
                   onClick={() => handleColorSelect(preset.value)}
                   style={{ backgroundColor: preset.value }}
                   className={cn(
-                    "flex size-6 cursor-pointer items-center justify-center rounded-full transition-all hover:scale-110 shadow-xs",
-                    isSelected && "ring-2 ring-foreground ring-offset-2 ring-offset-background"
+                    "flex size-6 cursor-pointer items-center justify-center rounded-full shadow-xs transition-all hover:scale-110",
+                    isSelected &&
+                      "ring-2 ring-foreground ring-offset-2 ring-offset-background"
                   )}
                   title={preset.name}
                 >
-                  {isSelected && <IconCheck className="size-3 text-white drop-shadow-xs" />}
+                  {isSelected && (
+                    <IconCheck className="size-3 text-white drop-shadow-xs" />
+                  )}
                 </button>
               )
             })}
@@ -453,7 +471,8 @@ export function BookmarkDialog({
             <label
               className={cn(
                 "relative flex size-6 cursor-pointer items-center justify-center rounded-full border border-border bg-muted/50 transition-all hover:scale-110",
-                isCustomColor && "ring-2 ring-foreground ring-offset-2 ring-offset-background"
+                isCustomColor &&
+                  "ring-2 ring-foreground ring-offset-2 ring-offset-background"
               )}
               title="Custom Color"
             >
@@ -469,12 +488,12 @@ export function BookmarkDialog({
         </div>
 
         {/* Icon Picker */}
-        <div className="flex min-w-0 max-w-full flex-col gap-1.5">
+        <div className="flex max-w-full min-w-0 flex-col gap-1.5">
           <label className="text-xs font-medium text-foreground">
             {t("bookmarkIcon")}
           </label>
           <div
-            className="max-h-24 w-full overflow-y-auto rounded-2xl border border-border/50 bg-muted/20 p-2 scrollbar-thin scrollbar-thumb-border"
+            className="scrollbar-thin scrollbar-thumb-border max-h-24 w-full overflow-y-auto rounded-2xl border border-border/50 bg-muted/20 p-2"
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fill, minmax(34px, 1fr))",
@@ -516,7 +535,7 @@ export function BookmarkDialog({
               variant="ghost"
               onClick={handleDelete}
               disabled={isSubmitting || isDeleting}
-              className="rounded-2xl text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+              className="cursor-pointer rounded-2xl text-destructive hover:bg-destructive/10 hover:text-destructive"
             >
               <IconTrash className="size-4" />
               <span>{t("deleteBookmark")}</span>
@@ -531,14 +550,14 @@ export function BookmarkDialog({
               variant="ghost"
               onClick={onClose}
               disabled={isSubmitting || isDeleting}
-              className="rounded-2xl cursor-pointer"
+              className="cursor-pointer rounded-2xl"
             >
               {t("cancel")}
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || isDeleting}
-              className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+              className="cursor-pointer rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {isSubmitting ? "..." : t("save")}
             </Button>
@@ -548,4 +567,3 @@ export function BookmarkDialog({
     </Dialog>
   )
 }
-

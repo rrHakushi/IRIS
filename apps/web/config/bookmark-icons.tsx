@@ -62,7 +62,7 @@ export const BOOKMARK_ICON_OPTIONS: BookmarkIconOption[] = [
         alt="IRIS List"
         width={24}
         height={24}
-        className={`${className} object-contain rounded-full`}
+        className={`${className} rounded-full object-contain`}
       />
     ),
   },
@@ -76,7 +76,7 @@ export const BOOKMARK_ICON_OPTIONS: BookmarkIconOption[] = [
         alt="IRIS Pass"
         width={24}
         height={24}
-        className={`${className} object-contain rounded-full`}
+        className={`${className} rounded-full object-contain`}
       />
     ),
   },
@@ -90,7 +90,7 @@ export const BOOKMARK_ICON_OPTIONS: BookmarkIconOption[] = [
         alt="IRIS Cloud"
         width={24}
         height={24}
-        className={`${className} object-contain rounded-full`}
+        className={`${className} rounded-full object-contain`}
       />
     ),
   },
@@ -104,7 +104,7 @@ export const BOOKMARK_ICON_OPTIONS: BookmarkIconOption[] = [
         alt="IRIS Mail"
         width={24}
         height={24}
-        className={`${className} object-contain rounded-full`}
+        className={`${className} rounded-full object-contain`}
       />
     ),
   },
@@ -118,7 +118,7 @@ export const BOOKMARK_ICON_OPTIONS: BookmarkIconOption[] = [
         alt="IRIS Messages"
         width={24}
         height={24}
-        className={`${className} object-contain rounded-full`}
+        className={`${className} rounded-full object-contain`}
       />
     ),
   },
@@ -132,7 +132,7 @@ export const BOOKMARK_ICON_OPTIONS: BookmarkIconOption[] = [
         alt="IRIS Docs"
         width={24}
         height={24}
-        className={`${className} object-contain rounded-full`}
+        className={`${className} rounded-full object-contain`}
       />
     ),
   },
@@ -200,7 +200,7 @@ export function renderBookmarkIcon(
         alt="IRIS List"
         width={96}
         height={96}
-        className={`${className} object-contain rounded-full`}
+        className={`${className} rounded-full object-contain`}
       />
     )
   }
@@ -212,7 +212,7 @@ export function renderBookmarkIcon(
         alt="IRIS Pass"
         width={96}
         height={96}
-        className={`${className} object-contain rounded-full`}
+        className={`${className} rounded-full object-contain`}
       />
     )
   }
@@ -231,8 +231,6 @@ export function renderBookmarkIcon(
   return <IconBookmark className={className} style={style} />
 }
 
-
-
 export const BOOKMARK_COLOR_PRESETS: Array<{
   id: string
   name: string
@@ -245,7 +243,12 @@ export const BOOKMARK_COLOR_PRESETS: Array<{
   { id: "violet", name: "Violet", value: "#8b5cf6", bgClass: "bg-violet-500" },
   { id: "cyan", name: "Cyan", value: "#06b6d4", bgClass: "bg-cyan-500" },
   { id: "sky", name: "Sky", value: "#38bdf8", bgClass: "bg-sky-400" },
-  { id: "emerald", name: "Emerald", value: "#10b981", bgClass: "bg-emerald-500" },
+  {
+    id: "emerald",
+    name: "Emerald",
+    value: "#10b981",
+    bgClass: "bg-emerald-500",
+  },
   { id: "amber", name: "Amber", value: "#f59e0b", bgClass: "bg-amber-500" },
   { id: "crimson", name: "Crimson", value: "#ef4444", bgClass: "bg-red-500" },
   { id: "mauve", name: "Mauve", value: "#94a3b8", bgClass: "bg-slate-400" },

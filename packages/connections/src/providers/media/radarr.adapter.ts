@@ -97,4 +97,136 @@ export class RadarrAdapter extends ServarrBaseAdapter {
       }),
     });
   }
+
+  async bulkUpdateMovies(
+    credentials: ConnectionCredentials,
+    payload: {
+      movieIds: number[];
+      monitored?: boolean;
+      qualityProfileId?: number;
+      minimumAvailability?: string;
+      rootFolderPath?: string;
+    }
+  ): Promise<RadarrMovie[]> {
+    return await this.servarrFetch<RadarrMovie[]>("movie/editor", credentials, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async bulkDeleteMovies(
+    credentials: ConnectionCredentials,
+    payload: {
+      movieIds: number[];
+      deleteFiles?: boolean;
+      addImportListExclusion?: boolean;
+    }
+  ): Promise<unknown> {
+    return await this.servarrFetch("movie/editor", credentials, {
+      method: "DELETE",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getMovieFiles(
+    credentials: ConnectionCredentials,
+    movieId: number
+  ): Promise<any[]> {
+    return await this.servarrFetch<any[]>(
+      `moviefile?movieId=${movieId}`,
+      credentials
+    );
+  }
+
+  async deleteMovieFile(
+    credentials: ConnectionCredentials,
+    fileId: number
+  ): Promise<unknown> {
+    return await this.servarrFetch(`moviefile/${fileId}`, credentials, {
+      method: "DELETE",
+    });
+  }
+
+  async getMovieById(
+    credentials: ConnectionCredentials,
+    id: number
+  ): Promise<RadarrMovie> {
+    return await this.servarrFetch<RadarrMovie>(`movie/${id}`, credentials);
+  }
+
+  async updateMovie(
+    credentials: ConnectionCredentials,
+    movie: Partial<RadarrMovie> & { id: number }
+  ): Promise<RadarrMovie> {
+    return await this.servarrFetch<RadarrMovie>(`movie/${movie.id}`, credentials, {
+      method: "PUT",
+      body: JSON.stringify(movie),
+    });
+  }
+
+  async deleteMovie(
+    credentials: ConnectionCredentials,
+    id: number,
+    deleteFiles: boolean = false,
+    addImportListExclusion: boolean = false
+  ): Promise<unknown> {
+    return await this.servarrFetch(
+      `movie/${id}?deleteFiles=${deleteFiles}&addImportListExclusion=${addImportListExclusion}`,
+      credentials,
+      { method: "DELETE" }
+    );
+  }
+
+  async lookupMovies(
+    credentials: ConnectionCredentials,
+    term: string
+  ): Promise<RadarrMovie[]> {
+    return await this.servarrFetch<RadarrMovie[]>(
+      `movie/lookup?term=${encodeURIComponent(term)}`,
+      credentials
+    );
+  }
+
+  async getWantedMissing(
+    credentials: ConnectionCredentials,
+    params: {
+      page?: number;
+      pageSize?: number;
+      sortKey?: string;
+      sortDirection?: "ascending" | "descending";
+      monitored?: boolean;
+    } = {}
+  ): Promise<any> {
+    const query = new URLSearchParams();
+    if (params.page) query.set("page", String(params.page));
+    if (params.pageSize) query.set("pageSize", String(params.pageSize));
+    if (params.sortKey) query.set("sortKey", params.sortKey);
+    if (params.sortDirection) query.set("sortDirection", params.sortDirection);
+    if (params.monitored !== undefined) query.set("monitored", String(params.monitored));
+
+    const qs = query.toString();
+    return await this.servarrFetch(`wanted/missing${qs ? `?${qs}` : ""}`, credentials);
+  }
+
+  async getWantedCutoff(
+    credentials: ConnectionCredentials,
+    params: {
+      page?: number;
+      pageSize?: number;
+      sortKey?: string;
+      sortDirection?: "ascending" | "descending";
+      monitored?: boolean;
+    } = {}
+  ): Promise<any> {
+    const query = new URLSearchParams();
+    if (params.page) query.set("page", String(params.page));
+    if (params.pageSize) query.set("pageSize", String(params.pageSize));
+    if (params.sortKey) query.set("sortKey", params.sortKey);
+    if (params.sortDirection) query.set("sortDirection", params.sortDirection);
+    if (params.monitored !== undefined) query.set("monitored", String(params.monitored));
+
+    const qs = query.toString();
+    return await this.servarrFetch(`wanted/cutoff${qs ? `?${qs}` : ""}`, credentials);
+  }
 }
+

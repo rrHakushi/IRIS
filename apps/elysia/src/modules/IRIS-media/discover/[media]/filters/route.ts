@@ -74,42 +74,37 @@ export default defineRoute({
 
     switch (media) {
       case "anime": {
-        const [
-          statusGroup,
-          formatGroup,
-          genreRecords,
-          yearGroup,
-          seasonGroup,
-        ] = await Promise.all([
-          prisma.anime.groupBy({
-            by: ["status"],
-            _count: { id: true },
-          }),
-          prisma.anime.groupBy({
-            by: ["format"],
-            _count: { id: true },
-          }),
-          prisma.genre.findMany({
-            where: { anime: { some: {} } },
-            select: {
-              name: true,
-              _count: { select: { anime: true } },
-            },
-            orderBy: { anime: { _count: "desc" } },
-            take: 40,
-          }),
-          prisma.anime.groupBy({
-            by: ["seasonYear"],
-            _count: { id: true },
-            where: { seasonYear: { not: null } },
-            orderBy: { seasonYear: "desc" },
-            take: 30,
-          }),
-          prisma.anime.groupBy({
-            by: ["seasonSeason"],
-            _count: { id: true },
-          }),
-        ])
+        const [statusGroup, formatGroup, genreRecords, yearGroup, seasonGroup] =
+          await Promise.all([
+            prisma.anime.groupBy({
+              by: ["status"],
+              _count: { id: true },
+            }),
+            prisma.anime.groupBy({
+              by: ["format"],
+              _count: { id: true },
+            }),
+            prisma.genre.findMany({
+              where: { anime: { some: {} } },
+              select: {
+                name: true,
+                _count: { select: { anime: true } },
+              },
+              orderBy: { anime: { _count: "desc" } },
+              take: 40,
+            }),
+            prisma.anime.groupBy({
+              by: ["seasonYear"],
+              _count: { id: true },
+              where: { seasonYear: { not: null } },
+              orderBy: { seasonYear: "desc" },
+              take: 30,
+            }),
+            prisma.anime.groupBy({
+              by: ["seasonSeason"],
+              _count: { id: true },
+            }),
+          ])
 
         statuses = statusGroup
           .filter((g) => g.status)

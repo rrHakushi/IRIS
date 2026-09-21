@@ -41,7 +41,7 @@ export function LengthDistributionChart({
 
   return (
     <Card className="flex flex-col rounded-2xl border border-border/60 bg-card/60 p-5 backdrop-blur-md">
-      <h3 className="font-heading text-sm font-semibold tracking-wide text-foreground uppercase mb-4">
+      <h3 className="mb-4 font-heading text-sm font-semibold tracking-wide text-foreground uppercase">
         {getHeader()}
       </h3>
 

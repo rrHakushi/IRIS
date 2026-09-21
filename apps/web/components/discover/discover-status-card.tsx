@@ -257,9 +257,7 @@ export function DiscoverStatusCard({
         : "Genres"
 
   const yearsLabel =
-    category === "characters" || category === "staff"
-      ? "Birth Year"
-      : "Years"
+    category === "characters" || category === "staff" ? "Birth Year" : "Years"
 
   return (
     <div

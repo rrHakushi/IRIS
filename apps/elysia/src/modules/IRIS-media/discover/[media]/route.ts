@@ -127,10 +127,7 @@ export default defineRoute({
     let hasMore = false
 
     // Common search filter builder for title & synonyms
-    const buildSearchWhere = async (
-      table: MediaSearchTable,
-      q: string
-    ) => {
+    const buildSearchWhere = async (table: MediaSearchTable, q: string) => {
       if (!q) return {}
       const synonymIds = await findMatchingSynonymIds(prisma, table, q, 100)
       if (table === "Book") {
@@ -219,9 +216,7 @@ export default defineRoute({
             where,
             orderBy,
             take: limit + 1,
-            ...(cleanCursor
-              ? { cursor: { id: cleanCursor }, skip: 1 }
-              : {}),
+            ...(cleanCursor ? { cursor: { id: cleanCursor }, skip: 1 } : {}),
             include: { genres: { select: { name: true } } },
           }),
           prisma.anime.count({ where }),
@@ -309,9 +304,7 @@ export default defineRoute({
             where,
             orderBy,
             take: limit + 1,
-            ...(cleanCursor
-              ? { cursor: { id: cleanCursor }, skip: 1 }
-              : {}),
+            ...(cleanCursor ? { cursor: { id: cleanCursor }, skip: 1 } : {}),
             include: { genres: { select: { name: true } } },
           }),
           prisma.manga.count({ where }),
@@ -399,9 +392,7 @@ export default defineRoute({
             where,
             orderBy,
             take: limit + 1,
-            ...(cleanCursor
-              ? { cursor: { id: cleanCursor }, skip: 1 }
-              : {}),
+            ...(cleanCursor ? { cursor: { id: cleanCursor }, skip: 1 } : {}),
             include: { genres: { select: { name: true } } },
           }),
           prisma.movie.count({ where }),
@@ -489,9 +480,7 @@ export default defineRoute({
             where,
             orderBy,
             take: limit + 1,
-            ...(cleanCursor
-              ? { cursor: { id: cleanCursor }, skip: 1 }
-              : {}),
+            ...(cleanCursor ? { cursor: { id: cleanCursor }, skip: 1 } : {}),
             include: { genres: { select: { name: true } } },
           }),
           prisma.tv.count({ where }),
@@ -584,9 +573,7 @@ export default defineRoute({
             where,
             orderBy,
             take: limit + 1,
-            ...(cleanCursor
-              ? { cursor: { id: cleanCursor }, skip: 1 }
-              : {}),
+            ...(cleanCursor ? { cursor: { id: cleanCursor }, skip: 1 } : {}),
             include: { genres: { select: { name: true } } },
           }),
           prisma.game.count({ where }),
@@ -608,7 +595,7 @@ export default defineRoute({
           description: item.description,
           format:
             item.platforms && item.platforms.length > 0
-              ? item.platforms[0] ?? null
+              ? (item.platforms[0] ?? null)
               : "GAME",
           averageScore: item.averageScore,
           popularity: item.popularity,
@@ -675,9 +662,7 @@ export default defineRoute({
             where,
             orderBy,
             take: limit + 1,
-            ...(cleanCursor
-              ? { cursor: { id: cleanCursor }, skip: 1 }
-              : {}),
+            ...(cleanCursor ? { cursor: { id: cleanCursor }, skip: 1 } : {}),
             include: { genres: { select: { name: true } } },
           }),
           prisma.book.count({ where }),
@@ -784,9 +769,7 @@ export default defineRoute({
             where,
             orderBy,
             take: limit + 1,
-            ...(cleanCursor
-              ? { cursor: { id: cleanCursor }, skip: 1 }
-              : {}),
+            ...(cleanCursor ? { cursor: { id: cleanCursor }, skip: 1 } : {}),
             include: { genres: { select: { name: true } } },
           }),
           prisma.music.count({ where }),
@@ -924,7 +907,7 @@ export default defineRoute({
           titlePrimary: item.namePrimary,
           titleSecondary:
             item.nameAlternative && item.nameAlternative.length > 0
-              ? item.nameAlternative[0] ?? null
+              ? (item.nameAlternative[0] ?? null)
               : null,
           titleNative: item.nameNative,
           coverImage: item.image,
@@ -1057,9 +1040,15 @@ export default defineRoute({
         }
 
         if (formats.length > 0) {
-          if (formats.includes("ANIMATION_STUDIO") && !formats.includes("STUDIO")) {
+          if (
+            formats.includes("ANIMATION_STUDIO") &&
+            !formats.includes("STUDIO")
+          ) {
             andFilters.push({ isAnimationStudio: true })
-          } else if (formats.includes("STUDIO") && !formats.includes("ANIMATION_STUDIO")) {
+          } else if (
+            formats.includes("STUDIO") &&
+            !formats.includes("ANIMATION_STUDIO")
+          ) {
             andFilters.push({ isAnimationStudio: false })
           }
         }

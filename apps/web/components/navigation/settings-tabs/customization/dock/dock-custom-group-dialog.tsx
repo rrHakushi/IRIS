@@ -241,14 +241,14 @@ export function DockCustomGroupDialog({
 
           {/* Search shortcuts input */}
           <div className="relative">
-            <IconSearch className="text-muted-foreground absolute start-3 top-1/2 size-3.5 -translate-y-1/2" />
+            <IconSearch className="absolute start-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={searchQuery}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setSearchQuery(e.target.value)
               }
               placeholder={t("searchShortcutsPlaceholder")}
-              className="ps-8 bg-muted/40 text-xs"
+              className="bg-muted/40 ps-8 text-xs"
             />
           </div>
 

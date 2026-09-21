@@ -77,7 +77,8 @@ export function PassCipherList({
         if (d.uris?.some((u) => u.uri.toLowerCase().includes(q))) return true
       } else {
         const d = c.data as DecryptedSshKeyData
-        if (d.fingerprint && d.fingerprint.toLowerCase().includes(q)) return true
+        if (d.fingerprint && d.fingerprint.toLowerCase().includes(q))
+          return true
       }
       return false
     })
@@ -98,16 +99,16 @@ export function PassCipherList({
   }
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 bg-background border-e border-border h-full">
+    <div className="flex h-full min-w-0 flex-1 flex-col border-e border-border bg-background">
       {/* Search and Action Bar */}
-      <div className="p-4 border-b border-border flex items-center gap-3">
+      <div className="flex items-center gap-3 border-b border-border p-4">
         <div className="relative flex-1">
-          <IconSearch className="size-4 absolute start-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <IconSearch className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search items..."
-            className="ps-9 rounded-xl border-border bg-card/60 text-sm h-9"
+            className="h-9 rounded-xl border-border bg-card/60 ps-9 text-sm"
           />
         </div>
 
@@ -115,9 +116,9 @@ export function PassCipherList({
           <Button
             onClick={onOpenNewCipher}
             size="sm"
-            className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors h-9 px-3 shrink-0"
+            className="h-9 shrink-0 rounded-xl bg-primary px-3 text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            <IconPlus className="size-4 me-1.5" />
+            <IconPlus className="me-1.5 size-4" />
             <span>New Item</span>
           </Button>
         ) : (
@@ -126,9 +127,9 @@ export function PassCipherList({
               onClick={emptyTrash}
               size="sm"
               variant="destructive"
-              className="rounded-xl h-9 px-3 shrink-0"
+              className="h-9 shrink-0 rounded-xl px-3"
             >
-              <IconTrashX className="size-4 me-1.5" />
+              <IconTrashX className="me-1.5 size-4" />
               <span>Empty Trash</span>
             </Button>
           )
@@ -136,14 +137,14 @@ export function PassCipherList({
       </div>
 
       {/* List Content */}
-      <div className="flex-1 overflow-y-auto divide-y divide-border/40">
+      <div className="flex-1 divide-y divide-border/40 overflow-y-auto">
         {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center p-6 text-muted-foreground">
-            <div className="size-12 rounded-2xl bg-muted/50 flex items-center justify-center mb-3">
+          <div className="flex h-64 flex-col items-center justify-center p-6 text-center text-muted-foreground">
+            <div className="mb-3 flex size-12 items-center justify-center rounded-2xl bg-muted/50">
               <IconSearch className="size-6 text-muted-foreground/60" />
             </div>
             <p className="text-sm font-medium">No items found</p>
-            <p className="text-xs text-muted-foreground/70 mt-1">
+            <p className="mt-1 text-xs text-muted-foreground/70">
               {isTrashView
                 ? "Your trash is completely clean."
                 : "Create your first credential or change your search filter."}
@@ -178,34 +179,35 @@ export function PassCipherList({
               <div
                 key={item.id}
                 onClick={() => setSelectedCipherId(item.id)}
-                className={`group flex items-center justify-between p-3.5 cursor-pointer transition-colors ${isSelected
-                  ? "bg-primary/10 border-s-2 border-s-primary"
-                  : "hover:bg-muted/40"
-                  }`}
+                className={`group flex cursor-pointer items-center justify-between p-3.5 transition-colors ${
+                  isSelected
+                    ? "border-s-2 border-s-primary bg-primary/10"
+                    : "hover:bg-muted/40"
+                }`}
               >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
                   {/* Icon */}
                   <CipherIcon item={item} size="md" />
 
                   {/* Info */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm text-foreground truncate">
+                      <span className="truncate text-sm font-semibold text-foreground">
                         {item.title}
                       </span>
                       {folder && (
                         <Badge
                           variant="outline"
-                          className="text-[10px] px-1.5 py-0 h-4 rounded-md border-border text-muted-foreground gap-1"
+                          className="h-4 gap-1 rounded-md border-border px-1.5 py-0 text-[10px] text-muted-foreground"
                         >
                           <IconFolder className="size-2.5" />
-                          <span className="truncate max-w-[80px]">
+                          <span className="max-w-[80px] truncate">
                             {folder.name}
                           </span>
                         </Badge>
                       )}
                     </div>
-                    <span className="text-xs text-muted-foreground truncate block mt-0.5">
+                    <span className="mt-0.5 block truncate text-xs text-muted-foreground">
                       {subtitle}
                     </span>
                   </div>
@@ -216,7 +218,7 @@ export function PassCipherList({
                   {!isTrashView && (
                     <>
                       {/* Quick copy buttons */}
-                      <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-0.5">
+                      <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
                         {item.type === "LOGIN" && (
                           <>
                             {usernameStr && (
@@ -266,7 +268,7 @@ export function PassCipherList({
                           e.stopPropagation()
                           toggleFavorite(item.id)
                         }}
-                        className="size-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-amber-500 transition-colors"
+                        className="flex size-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-amber-500"
                       >
                         {item.favorite ? (
                           <IconStarFilled className="size-4 text-amber-500" />

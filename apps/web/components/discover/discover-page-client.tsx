@@ -194,10 +194,7 @@ export function DiscoverPageClient({ category }: DiscoverPageClientProps) {
         "artists",
         selectedArtists.length > 0 ? selectedArtists.join(",") : undefined
       )
-      updateParam(
-        "sortBy",
-        sortBy !== "popularity" ? sortBy : undefined
-      )
+      updateParam("sortBy", sortBy !== "popularity" ? sortBy : undefined)
       updateParam("order", sortOrder !== "desc" ? sortOrder : undefined)
 
       window.history.replaceState({}, "", url.toString())
@@ -296,22 +293,20 @@ export function DiscoverPageClient({ category }: DiscoverPageClientProps) {
       setIsLoading(true)
 
       try {
-        const { data, error } = await elysia
-          .discover({ media: category })
-          .get({
-            query: {
-              limit: 32,
-              status: statusParam,
-              mediaFormat: formatsParam,
-              genres: genresParam,
-              year: yearsParam,
-              seasonSeason: seasonsParam,
-              artist: artistsParam,
-              sortBy,
-              order: sortOrder,
-              q: cleanSearch || undefined,
-            },
-          })
+        const { data, error } = await elysia.discover({ media: category }).get({
+          query: {
+            limit: 32,
+            status: statusParam,
+            mediaFormat: formatsParam,
+            genres: genresParam,
+            year: yearsParam,
+            seasonSeason: seasonsParam,
+            artist: artistsParam,
+            sortBy,
+            order: sortOrder,
+            q: cleanSearch || undefined,
+          },
+        })
 
         if (!error && data && data.success) {
           setItems(data.items as DiscoverItem[])
@@ -374,23 +369,21 @@ export function DiscoverPageClient({ category }: DiscoverPageClientProps) {
         selectedArtists.length > 0 ? selectedArtists.join(",") : undefined
 
       const cleanSearch = debouncedSearch.trim()
-      const { data, error } = await elysia
-        .discover({ media: category })
-        .get({
-          query: {
-            limit: 32,
-            cursor: nextCursor ?? undefined,
-            status: statusParam,
-            mediaFormat: formatsParam,
-            genres: genresParam,
-            year: yearsParam,
-            seasonSeason: seasonsParam,
-            artist: artistsParam,
-            sortBy,
-            order: sortOrder,
-            q: cleanSearch || undefined,
-          },
-        })
+      const { data, error } = await elysia.discover({ media: category }).get({
+        query: {
+          limit: 32,
+          cursor: nextCursor ?? undefined,
+          status: statusParam,
+          mediaFormat: formatsParam,
+          genres: genresParam,
+          year: yearsParam,
+          seasonSeason: seasonsParam,
+          artist: artistsParam,
+          sortBy,
+          order: sortOrder,
+          q: cleanSearch || undefined,
+        },
+      })
 
       if (!error && data && data.success) {
         const newItems = (data.items as DiscoverItem[]) || []

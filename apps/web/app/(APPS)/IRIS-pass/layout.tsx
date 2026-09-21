@@ -18,9 +18,7 @@ export default function PassLayout({
     <div className="flex h-svh w-full overflow-hidden">
       <IrisPassNavProvider>
         <SidebarInset className="no-scrollbar flex flex-1 flex-col overflow-y-auto bg-background pt-0">
-          <PassProvider>
-            {children}
-          </PassProvider>
+          <PassProvider>{children}</PassProvider>
         </SidebarInset>
       </IrisPassNavProvider>
     </div>

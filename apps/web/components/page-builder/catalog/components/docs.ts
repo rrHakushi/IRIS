@@ -42,7 +42,8 @@ export const docsPresets: ComponentPresetItem[] = [
     name: "Code Block",
     category: "docs",
     icon: "IconCode",
-    description: "Syntax highlighted code snippet with copy button and filename header",
+    description:
+      "Syntax highlighted code snippet with copy button and filename header",
     getNode: () => ({
       type: "CodeBlock",
       props: {
@@ -81,10 +82,29 @@ export const docsPresets: ComponentPresetItem[] = [
             {
               type: "TableRow",
               children: [
-                { type: "TableCell", props: { className: "font-mono font-semibold text-xs" }, children: "variant" },
-                { type: "TableCell", props: { className: "font-mono text-xs text-muted-foreground" }, children: '"default" | "outline"' },
-                { type: "TableCell", props: { className: "font-mono text-xs text-muted-foreground" }, children: '"default"' },
-                { type: "TableCell", children: "Visual styling variant of the component." },
+                {
+                  type: "TableCell",
+                  props: { className: "font-mono font-semibold text-xs" },
+                  children: "variant",
+                },
+                {
+                  type: "TableCell",
+                  props: {
+                    className: "font-mono text-xs text-muted-foreground",
+                  },
+                  children: '"default" | "outline"',
+                },
+                {
+                  type: "TableCell",
+                  props: {
+                    className: "font-mono text-xs text-muted-foreground",
+                  },
+                  children: '"default"',
+                },
+                {
+                  type: "TableCell",
+                  children: "Visual styling variant of the component.",
+                },
               ],
             },
           ],

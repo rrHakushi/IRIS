@@ -42,7 +42,9 @@ export interface PassContextValue {
   setSearchQuery: (q: string) => void
 
   // Vault Actions
-  unlockVault: (password: string) => Promise<{ success: boolean; error?: string }>
+  unlockVault: (
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>
   lockVault: () => void
   refreshData: () => Promise<void>
 
@@ -73,7 +75,10 @@ export interface PassContextValue {
   emptyTrash: () => Promise<boolean>
 
   // Folder CRUD
-  createFolder: (name: string, parentId?: string | null) => Promise<DecryptedFolder | null>
+  createFolder: (
+    name: string,
+    parentId?: string | null
+  ) => Promise<DecryptedFolder | null>
   updateFolder: (id: string, name: string) => Promise<boolean>
   deleteFolder: (id: string) => Promise<boolean>
 }
@@ -352,7 +357,10 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
   }
 
   // Delete Cipher (trash or permanent)
-  const deleteCipher = async (id: string, permanent = false): Promise<boolean> => {
+  const deleteCipher = async (
+    id: string,
+    permanent = false
+  ): Promise<boolean> => {
     try {
       const res = await (elysia.pass.vault.ciphers as any)({ id }).delete({
         query: { permanent },
@@ -389,7 +397,9 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
     const newFav = !item.favorite
 
     try {
-      const res = await (elysia.pass.vault.ciphers as any)({ id }).favorite.patch({
+      const res = await (elysia.pass.vault.ciphers as any)({
+        id,
+      }).favorite.patch({
         favorite: newFav,
       })
 
@@ -409,7 +419,9 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
   // Restore Cipher
   const restoreCipher = async (id: string): Promise<boolean> => {
     try {
-      const res = await (elysia.pass.vault.ciphers as any)({ id }).restore.post()
+      const res = await (elysia.pass.vault.ciphers as any)({
+        id,
+      }).restore.post()
       if (res?.data?.success) {
         setCiphers((prev) =>
           prev.map((c) => (c.id === id ? { ...c, deletedAt: null } : c))

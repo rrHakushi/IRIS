@@ -80,7 +80,8 @@ export default defineRoute({
           return new Response(
             JSON.stringify({
               error: "invalid_grant",
-              error_description: "Authorization code has already been redeemed. Tokens revoked for security.",
+              error_description:
+                "Authorization code has already been redeemed. Tokens revoked for security.",
             }),
             { status: 400, headers: { "content-type": "application/json" } }
           )
@@ -98,7 +99,10 @@ export default defineRoute({
         }
 
         // Verify client matching
-        if (effectiveClientId && authCode.client.clientId !== effectiveClientId) {
+        if (
+          effectiveClientId &&
+          authCode.client.clientId !== effectiveClientId
+        ) {
           return new Response(
             JSON.stringify({
               error: "invalid_client",
@@ -110,7 +114,13 @@ export default defineRoute({
 
         // Verify client secret if client is confidential (not public)
         if (!authCode.client.isPublic && authCode.client.clientSecret) {
-          if (!effectiveClientSecret || !verifyClientSecret(effectiveClientSecret, authCode.client.clientSecret)) {
+          if (
+            !effectiveClientSecret ||
+            !verifyClientSecret(
+              effectiveClientSecret,
+              authCode.client.clientSecret
+            )
+          ) {
             return new Response(
               JSON.stringify({
                 error: "invalid_client",
@@ -143,8 +153,13 @@ export default defineRoute({
               { status: 400, headers: { "content-type": "application/json" } }
             )
           }
-          const method = (authCode.codeChallengeMethod as "S256" | "plain") || "S256"
-          const pkceValid = verifyPkceChallenge(code_verifier, authCode.codeChallenge, method)
+          const method =
+            (authCode.codeChallengeMethod as "S256" | "plain") || "S256"
+          const pkceValid = verifyPkceChallenge(
+            code_verifier,
+            authCode.codeChallenge,
+            method
+          )
           if (!pkceValid) {
             return new Response(
               JSON.stringify({
@@ -221,11 +236,16 @@ export default defineRoute({
           include: { client: true, user: true },
         })
 
-        if (!tokenRecord || tokenRecord.revokedAt !== null || tokenRecord.expiresAt.getTime() < Date.now()) {
+        if (
+          !tokenRecord ||
+          tokenRecord.revokedAt !== null ||
+          tokenRecord.expiresAt.getTime() < Date.now()
+        ) {
           return new Response(
             JSON.stringify({
               error: "invalid_grant",
-              error_description: "Refresh token is invalid, expired, or revoked",
+              error_description:
+                "Refresh token is invalid, expired, or revoked",
             }),
             { status: 400, headers: { "content-type": "application/json" } }
           )
@@ -233,7 +253,13 @@ export default defineRoute({
 
         // Validate client credentials if confidential
         if (!tokenRecord.client.isPublic && tokenRecord.client.clientSecret) {
-          if (!effectiveClientSecret || !verifyClientSecret(effectiveClientSecret, tokenRecord.client.clientSecret)) {
+          if (
+            !effectiveClientSecret ||
+            !verifyClientSecret(
+              effectiveClientSecret,
+              tokenRecord.client.clientSecret
+            )
+          ) {
             return new Response(
               JSON.stringify({
                 error: "invalid_client",
@@ -297,7 +323,8 @@ export default defineRoute({
           return new Response(
             JSON.stringify({
               error: "invalid_client",
-              error_description: "Client ID and client secret are required for client_credentials grant",
+              error_description:
+                "Client ID and client secret are required for client_credentials grant",
             }),
             { status: 401, headers: { "content-type": "application/json" } }
           )
@@ -308,7 +335,11 @@ export default defineRoute({
           include: { user: true },
         })
 
-        if (!client || !client.clientSecret || !verifyClientSecret(effectiveClientSecret, client.clientSecret)) {
+        if (
+          !client ||
+          !client.clientSecret ||
+          !verifyClientSecret(effectiveClientSecret, client.clientSecret)
+        ) {
           return new Response(
             JSON.stringify({
               error: "invalid_client",

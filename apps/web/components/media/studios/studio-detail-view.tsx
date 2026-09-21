@@ -38,7 +38,8 @@ interface StudioDetailViewProps {
   studio: StudioDetails
 }
 
-type SortByOption = "releaseDate" | "popularity" | "score" | "favorites" | "title"
+type SortByOption =
+  "releaseDate" | "popularity" | "score" | "favorites" | "title"
 type SortOrderOption = "asc" | "desc"
 type MediaTypeFilter = "ALL" | "ANIME" | "MOVIE" | "TV" | "GAME" | "BOOK"
 
@@ -59,20 +60,30 @@ const MEDIA_TYPE_FILTERS: Array<{ value: MediaTypeFilter; label: string }> = [
   { value: "BOOK", label: "Books" },
 ]
 
-export function StudioDetailView({ studio }: StudioDetailViewProps): React.JSX.Element {
+export function StudioDetailView({
+  studio,
+}: StudioDetailViewProps): React.JSX.Element {
   const { user } = useUser()
-  const mediaTitlePreference = getMediaPreferences(user?.customization).title || "primary"
+  const mediaTitlePreference =
+    getMediaPreferences(user?.customization).title || "primary"
 
   // Data & Pagination state
-  const [creations, setCreations] = useState<StudioCreationItem[]>(studio.creations || [])
-  const [nextCursor, setNextCursor] = useState<number | null>(studio.pagination?.nextCursor ?? null)
-  const [hasMore, setHasMore] = useState<boolean>(Boolean(studio.pagination?.hasMore))
+  const [creations, setCreations] = useState<StudioCreationItem[]>(
+    studio.creations || []
+  )
+  const [nextCursor, setNextCursor] = useState<number | null>(
+    studio.pagination?.nextCursor ?? null
+  )
+  const [hasMore, setHasMore] = useState<boolean>(
+    Boolean(studio.pagination?.hasMore)
+  )
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const isFetchingRef = useRef(false)
 
   // Filters & Sorting state
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedMediaType, setSelectedMediaType] = useState<MediaTypeFilter>("ALL")
+  const [selectedMediaType, setSelectedMediaType] =
+    useState<MediaTypeFilter>("ALL")
   const [sortBy, setSortBy] = useState<SortByOption>("releaseDate")
   const [sortOrder, setSortOrder] = useState<SortOrderOption>("desc")
   const [copied, setCopied] = useState(false)
@@ -106,21 +117,25 @@ export function StudioDetailView({ studio }: StudioDetailViewProps): React.JSX.E
 
   // Infinite Scroll fetch function
   const loadMoreCreations = useCallback(async () => {
-    if (!hasMore || !nextCursor || isFetchingRef.current || isLoadingMore) return
+    if (!hasMore || !nextCursor || isFetchingRef.current || isLoadingMore)
+      return
 
     isFetchingRef.current = true
     setIsLoadingMore(true)
 
     try {
-      const { data, error } = await elysia.media.studios({ id: studio.id }).creations.get({
-        query: {
-          cursor: nextCursor,
-          limit: 36,
-          mediaType: selectedMediaType !== "ALL" ? selectedMediaType : undefined,
-          sortBy,
-          order: sortOrder,
-        },
-      })
+      const { data, error } = await elysia.media
+        .studios({ id: studio.id })
+        .creations.get({
+          query: {
+            cursor: nextCursor,
+            limit: 36,
+            mediaType:
+              selectedMediaType !== "ALL" ? selectedMediaType : undefined,
+            sortBy,
+            order: sortOrder,
+          },
+        })
 
       if (!error && data && data.success) {
         setCreations((prev) => {
@@ -140,7 +155,15 @@ export function StudioDetailView({ studio }: StudioDetailViewProps): React.JSX.E
       setIsLoadingMore(false)
       isFetchingRef.current = false
     }
-  }, [studio.id, nextCursor, hasMore, isLoadingMore, selectedMediaType, sortBy, sortOrder])
+  }, [
+    studio.id,
+    nextCursor,
+    hasMore,
+    isLoadingMore,
+    selectedMediaType,
+    sortBy,
+    sortOrder,
+  ])
 
   // Reset creations when changing sort/filter options
   useEffect(() => {
@@ -148,14 +171,17 @@ export function StudioDetailView({ studio }: StudioDetailViewProps): React.JSX.E
 
     const reloadFiltered = async () => {
       try {
-        const { data, error } = await elysia.media.studios({ id: studio.id }).creations.get({
-          query: {
-            limit: 36,
-            mediaType: selectedMediaType !== "ALL" ? selectedMediaType : undefined,
-            sortBy,
-            order: sortOrder,
-          },
-        })
+        const { data, error } = await elysia.media
+          .studios({ id: studio.id })
+          .creations.get({
+            query: {
+              limit: 36,
+              mediaType:
+                selectedMediaType !== "ALL" ? selectedMediaType : undefined,
+              sortBy,
+              order: sortOrder,
+            },
+          })
 
         if (!isCancelled && !error && data && data.success) {
           setCreations(data.items)
@@ -216,7 +242,9 @@ export function StudioDetailView({ studio }: StudioDetailViewProps): React.JSX.E
     const groups = new Map<string, StudioCreationItem[]>()
 
     for (const item of filteredCreations) {
-      const yearKey = item.releaseYear ? String(item.releaseYear) : "TBA / Unknown"
+      const yearKey = item.releaseYear
+        ? String(item.releaseYear)
+        : "TBA / Unknown"
       if (!groups.has(yearKey)) {
         groups.set(yearKey, [])
       }
@@ -224,18 +252,21 @@ export function StudioDetailView({ studio }: StudioDetailViewProps): React.JSX.E
     }
 
     // Sort group keys
-    const sortedEntries = Array.from(groups.entries()).sort(([yearA], [yearB]) => {
-      if (yearA === "TBA / Unknown") return 1
-      if (yearB === "TBA / Unknown") return -1
-      const numA = parseInt(yearA, 10)
-      const numB = parseInt(yearB, 10)
-      return sortOrder === "asc" ? numA - numB : numB - numA
-    })
+    const sortedEntries = Array.from(groups.entries()).sort(
+      ([yearA], [yearB]) => {
+        if (yearA === "TBA / Unknown") return 1
+        if (yearB === "TBA / Unknown") return -1
+        const numA = parseInt(yearA, 10)
+        const numB = parseInt(yearB, 10)
+        return sortOrder === "asc" ? numA - numB : numB - numA
+      }
+    )
 
     return sortedEntries
   }, [filteredCreations, sortOrder])
 
-  const currentSortLabel = SORT_OPTIONS.find((s) => s.value === sortBy)?.label || "Release Date"
+  const currentSortLabel =
+    SORT_OPTIONS.find((s) => s.value === sortBy)?.label || "Release Date"
 
   return (
     <div className="flex w-full flex-col gap-8 pb-16">
@@ -243,7 +274,7 @@ export function StudioDetailView({ studio }: StudioDetailViewProps): React.JSX.E
       <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/90 shadow-sm backdrop-blur-xl">
         {/* Backdrop visual banner */}
         {backdropImage && (
-          <div className="absolute inset-0 z-0 overflow-hidden opacity-20 filter blur-xl">
+          <div className="absolute inset-0 z-0 overflow-hidden opacity-20 blur-xl filter">
             <Image
               src={backdropImage}
               alt={studio.name}
@@ -260,7 +291,7 @@ export function StudioDetailView({ studio }: StudioDetailViewProps): React.JSX.E
             {/* Studio Icon & Info */}
             <div className="flex items-start gap-4 sm:gap-5">
               <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl border border-border/80 bg-muted/80 text-primary shadow-inner sm:size-20">
-                <IconBuildingSkyscraper className="size-8 sm:size-10 stroke-[1.5]" />
+                <IconBuildingSkyscraper className="size-8 stroke-[1.5] sm:size-10" />
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -270,15 +301,17 @@ export function StudioDetailView({ studio }: StudioDetailViewProps): React.JSX.E
                   </h1>
                   <Badge
                     variant="secondary"
-                    className="rounded-full px-3 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-primary bg-primary/10 border-primary/20"
+                    className="rounded-full border-primary/20 bg-primary/10 px-3 py-0.5 text-[11px] font-semibold tracking-wider text-primary uppercase"
                   >
-                    {studio.isAnimationStudio ? "Animation Studio" : "Production Studio"}
+                    {studio.isAnimationStudio
+                      ? "Animation Studio"
+                      : "Production Studio"}
                   </Badge>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground sm:text-sm">
                   <span className="flex items-center gap-1.5">
-                    <IconMovie className="size-4 opacity-70 text-primary" />
+                    <IconMovie className="size-4 text-primary opacity-70" />
                     <strong className="font-semibold text-foreground">
                       {studio.creationsCount}
                     </strong>{" "}
@@ -289,7 +322,7 @@ export function StudioDetailView({ studio }: StudioDetailViewProps): React.JSX.E
                     <>
                       <span className="text-border">•</span>
                       <span className="flex items-center gap-1.5">
-                        <IconCalendar className="size-4 opacity-70 text-primary" />
+                        <IconCalendar className="size-4 text-primary opacity-70" />
                         <span>{yearRange}</span>
                       </span>
                     </>
@@ -355,7 +388,7 @@ export function StudioDetailView({ studio }: StudioDetailViewProps): React.JSX.E
                 size="sm"
                 onPress={() => setSelectedMediaType(f.value)}
                 className={cn(
-                  "h-7 shrink-0 rounded-full px-3 text-xs font-semibold uppercase tracking-wider transition-all select-none",
+                  "h-7 shrink-0 rounded-full px-3 text-xs font-semibold tracking-wider uppercase transition-all select-none",
                   isSelected
                     ? "bg-primary text-primary-foreground shadow-sm shadow-primary/30 hover:bg-primary/90"
                     : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
@@ -392,7 +425,10 @@ export function StudioDetailView({ studio }: StudioDetailViewProps): React.JSX.E
             )}
           </div>
 
-          <Separator orientation="vertical" className="hidden h-5 bg-border/40 sm:block" />
+          <Separator
+            orientation="vertical"
+            className="hidden h-5 bg-border/40 sm:block"
+          />
 
           {/* Sort Menu */}
           <DialogTrigger>
@@ -427,7 +463,9 @@ export function StudioDetailView({ studio }: StudioDetailViewProps): React.JSX.E
                       )}
                     >
                       <span>{opt.label}</span>
-                      {isSelected && <span className="size-1.5 rounded-full bg-primary" />}
+                      {isSelected && (
+                        <span className="size-1.5 rounded-full bg-primary" />
+                      )}
                     </Button>
                   )
                 })}
@@ -440,7 +478,9 @@ export function StudioDetailView({ studio }: StudioDetailViewProps): React.JSX.E
             variant="outline"
             size="icon-sm"
             onPress={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-            aria-label={sortOrder === "asc" ? "Sort Ascending" : "Sort Descending"}
+            aria-label={
+              sortOrder === "asc" ? "Sort Ascending" : "Sort Descending"
+            }
             className="size-8 rounded-2xl border border-border/60 bg-card/60 text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             {sortOrder === "asc" ? (
@@ -488,7 +528,10 @@ export function StudioDetailView({ studio }: StudioDetailViewProps): React.JSX.E
           ))}
 
           {/* Bottom Loading Sentinel & Indicator */}
-          <div ref={sentinelRef} className="flex min-h-12 w-full items-center justify-center py-6">
+          <div
+            ref={sentinelRef}
+            className="flex min-h-12 w-full items-center justify-center py-6"
+          >
             {isLoadingMore ? (
               <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 <IconLoader2 className="size-4 animate-spin text-primary" />
@@ -516,7 +559,9 @@ export function StudioDetailView({ studio }: StudioDetailViewProps): React.JSX.E
           <div className="flex size-14 items-center justify-center rounded-2xl bg-muted/50 text-muted-foreground">
             <IconLayersLinked className="size-7 stroke-[1.5]" />
           </div>
-          <h3 className="mt-4 text-base font-semibold text-foreground">No creations found</h3>
+          <h3 className="mt-4 text-base font-semibold text-foreground">
+            No creations found
+          </h3>
           <p className="mt-1 max-w-sm text-xs text-muted-foreground">
             {searchQuery
               ? `No creations matched "${searchQuery}". Try clearing search or switching filter.`
@@ -571,13 +616,16 @@ function StudioCreationCard({
 
   const scoreFormatted =
     item.averageScore !== null && item.averageScore !== undefined
-      ? (item.averageScore > 10 ? item.averageScore / 10 : item.averageScore).toFixed(1)
+      ? (item.averageScore > 10
+          ? item.averageScore / 10
+          : item.averageScore
+        ).toFixed(1)
       : null
 
   return (
     <Link
       href={href}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card/60 transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 select-none"
+      className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card/60 transition-all duration-200 select-none hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5"
     >
       {/* Cover Image Container */}
       <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted/40">
@@ -626,8 +674,8 @@ function StudioCreationCard({
 
         {/* Main studio indicator pill if isMain is true */}
         {item.isMain && (
-          <div className="absolute bottom-1.5 start-1.5 opacity-90 transition-opacity">
-            <span className="rounded-md bg-primary/90 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary-foreground backdrop-blur-md">
+          <div className="absolute start-1.5 bottom-1.5 opacity-90 transition-opacity">
+            <span className="rounded-md bg-primary/90 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-primary-foreground uppercase backdrop-blur-md">
               Main
             </span>
           </div>

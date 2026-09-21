@@ -43,12 +43,18 @@ export function ScoreDistributionChart({
 
         <div className="flex items-center gap-1.5">
           {meanScore > 0 && (
-            <Badge variant="secondary" className="rounded-xl px-2.5 py-1 text-xs">
+            <Badge
+              variant="secondary"
+              className="rounded-xl px-2.5 py-1 text-xs"
+            >
               {meanScore.toFixed(1)} avg
             </Badge>
           )}
           {unratedCount > 0 && (
-            <Badge variant="secondary" className="rounded-xl px-2.5 py-1 text-xs">
+            <Badge
+              variant="secondary"
+              className="rounded-xl px-2.5 py-1 text-xs"
+            >
               {unratedCount.toLocaleString()} unrated
             </Badge>
           )}
@@ -56,7 +62,10 @@ export function ScoreDistributionChart({
       </div>
 
       <ChartContainer config={chartConfig} className="h-48 w-full">
-        <BarChart data={scores} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+        <BarChart
+          data={scores}
+          margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+        >
           <XAxis
             dataKey="score"
             tickLine={false}
@@ -79,8 +88,12 @@ export function ScoreDistributionChart({
                     <span className="font-semibold text-foreground">
                       {Number(value).toLocaleString()} titles
                     </span>
-                    <span className="text-muted-foreground text-xs">
-                      ({totalScored > 0 ? Math.round((Number(value) / totalScored) * 1000) / 10 : 0}%)
+                    <span className="text-xs text-muted-foreground">
+                      (
+                      {totalScored > 0
+                        ? Math.round((Number(value) / totalScored) * 1000) / 10
+                        : 0}
+                      %)
                     </span>
                   </div>
                 )}

@@ -16,7 +16,8 @@ export default defineRoute({
       200: MediaStatsResponseSchema,
     },
     detail: {
-      summary: "Fetch detailed statistics for user game list with optional rewind filters",
+      summary:
+        "Fetch detailed statistics for user game list with optional rewind filters",
       tags: ["Lists - Game - Stats"],
     },
   },

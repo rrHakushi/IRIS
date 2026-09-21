@@ -52,9 +52,13 @@ export default defineRoute({
           ...(body.url !== undefined ? { url: body.url.trim() } : {}),
           ...(body.icon !== undefined ? { icon: body.icon || null } : {}),
           ...(body.color !== undefined ? { color: body.color || null } : {}),
-          ...(body.pinned !== undefined ? { pinned: Boolean(body.pinned) } : {}),
+          ...(body.pinned !== undefined
+            ? { pinned: Boolean(body.pinned) }
+            : {}),
           ...(body.appId !== undefined ? { appId: body.appId || null } : {}),
-          ...(body.group !== undefined ? { group: body.group.trim() || null } : {}),
+          ...(body.group !== undefined
+            ? { group: body.group.trim() || null }
+            : {}),
           ...(body.order !== undefined ? { order: body.order } : {}),
         },
       })

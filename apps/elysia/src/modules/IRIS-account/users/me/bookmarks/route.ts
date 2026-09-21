@@ -49,11 +49,7 @@ export default defineRoute({
 
       let dbBookmarks = await prisma.bookmark.findMany({
         where: { userId },
-        orderBy: [
-          { pinned: "desc" },
-          { order: "asc" },
-          { createdAt: "asc" },
-        ],
+        orderBy: [{ pinned: "desc" }, { order: "asc" }, { createdAt: "asc" }],
       })
 
       // Auto-migrate legacy bookmarks from customization if DB table is empty
@@ -210,11 +206,7 @@ export default defineRoute({
 
       const dbBookmarks = await prisma.bookmark.findMany({
         where: { userId },
-        orderBy: [
-          { pinned: "desc" },
-          { order: "asc" },
-          { createdAt: "asc" },
-        ],
+        orderBy: [{ pinned: "desc" }, { order: "asc" }, { createdAt: "asc" }],
       })
 
       const bookmarks = dbBookmarks.map((b) => ({

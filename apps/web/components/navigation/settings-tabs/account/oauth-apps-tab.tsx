@@ -14,7 +14,11 @@ import {
 import { elysia } from "@/lib/elysia"
 import { toast } from "sonner"
 import type { SettingsTabProps } from "../types"
-import type { OAuthAppItem, CreateOAuthAppPayload, EditOAuthAppPayload } from "./oauth-apps/types"
+import type {
+  OAuthAppItem,
+  CreateOAuthAppPayload,
+  EditOAuthAppPayload,
+} from "./oauth-apps/types"
 import { OAuthAppItemCard } from "./oauth-apps/oauth-app-item-card"
 import { CreateOAuthAppDialog } from "./oauth-apps/create-oauth-app-dialog"
 import { RevealOAuthSecretDialog } from "./oauth-apps/reveal-oauth-secret-dialog"
@@ -61,7 +65,9 @@ export function OAuthAppsSettingsTab({
 
       if (res.error) {
         const errorData = res.error.value as { message?: string } | undefined
-        throw new Error(errorData?.message || "Failed to load OAuth applications")
+        throw new Error(
+          errorData?.message || "Failed to load OAuth applications"
+        )
       }
 
       if (res.data?.apps) {
@@ -86,7 +92,9 @@ export function OAuthAppsSettingsTab({
   }, [fetchApps])
 
   // Create Application
-  const handleCreateApp = async (payload: CreateOAuthAppPayload): Promise<boolean> => {
+  const handleCreateApp = async (
+    payload: CreateOAuthAppPayload
+  ): Promise<boolean> => {
     setIsCreating(true)
     try {
       const res = await elysia.oauth.apps.post(payload, {
@@ -123,7 +131,10 @@ export function OAuthAppsSettingsTab({
   }
 
   // Edit Application
-  const handleEditApp = async (id: string, payload: EditOAuthAppPayload): Promise<boolean> => {
+  const handleEditApp = async (
+    id: string,
+    payload: EditOAuthAppPayload
+  ): Promise<boolean> => {
     setIsEditing(true)
     try {
       const res = await elysia.oauth.apps({ id }).put(payload, {
@@ -138,7 +149,9 @@ export function OAuthAppsSettingsTab({
 
       if (res.data?.app) {
         const updatedApp = res.data.app as unknown as OAuthAppItem
-        setApps((prev) => prev.map((a) => (a.id === id ? { ...a, ...updatedApp } : a)))
+        setApps((prev) =>
+          prev.map((a) => (a.id === id ? { ...a, ...updatedApp } : a))
+        )
         toast.success("Application updated successfully!")
         return true
       }
@@ -154,16 +167,19 @@ export function OAuthAppsSettingsTab({
   // Regenerate Secret
   const handleRegenerateSecret = async (app: OAuthAppItem) => {
     if (app.isPublic) return
-    if (!confirm(`Are you sure you want to regenerate the client secret for "${app.name}"? The existing secret will stop working immediately.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to regenerate the client secret for "${app.name}"? The existing secret will stop working immediately.`
+      )
+    ) {
       return
     }
 
     setRegeneratingId(app.id)
     try {
-      const res = await elysia.oauth.apps({ id: app.id })["regenerate-secret"].post(
-        {},
-        { fetch: { credentials: "include" } }
-      )
+      const res = await elysia.oauth
+        .apps({ id: app.id })
+        ["regenerate-secret"].post({}, { fetch: { credentials: "include" } })
 
       if (res.error) {
         const errData = res.error.value as { message?: string } | undefined
@@ -187,16 +203,19 @@ export function OAuthAppsSettingsTab({
 
   // Delete Application
   const handleDeleteApp = async (app: OAuthAppItem) => {
-    if (!confirm(`Are you sure you want to delete "${app.name}"? All active user authorizations and access tokens will be revoked.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to delete "${app.name}"? All active user authorizations and access tokens will be revoked.`
+      )
+    ) {
       return
     }
 
     setDeletingId(app.id)
     try {
-      const res = await elysia.oauth.apps({ id: app.id }).delete(
-        {},
-        { fetch: { credentials: "include" } }
-      )
+      const res = await elysia.oauth
+        .apps({ id: app.id })
+        .delete({}, { fetch: { credentials: "include" } })
 
       if (res.error) {
         const errData = res.error.value as { message?: string } | undefined
@@ -226,7 +245,7 @@ export function OAuthAppsSettingsTab({
   return (
     <div className="space-y-6">
       {/* Top Header Card */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-border bg-card/60 p-5">
+      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-border bg-card/60 p-5 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3.5">
           <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
             <IconWorld className="size-6" />
@@ -241,7 +260,7 @@ export function OAuthAppsSettingsTab({
         <Button
           type="button"
           onClick={() => setCreateDialogOpen(true)}
-          className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs h-9 px-4 gap-1.5 shrink-0"
+          className="h-9 shrink-0 gap-1.5 bg-primary px-4 text-xs text-primary-foreground hover:bg-primary/90"
         >
           <IconPlus className="size-4" />
           Register Application
@@ -256,7 +275,7 @@ export function OAuthAppsSettingsTab({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search by application name or client ID..."
-          className="ps-9 text-xs h-9"
+          className="h-9 ps-9 text-xs"
         />
       </div>
 
@@ -264,30 +283,34 @@ export function OAuthAppsSettingsTab({
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <Spinner className="size-7 text-primary" />
-          <p className="mt-3 text-xs text-muted-foreground">Loading applications...</p>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Loading applications...
+          </p>
         </div>
       ) : error ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-destructive/20 bg-destructive/5 p-8 text-center">
-          <IconAlertCircle className="size-8 text-destructive mb-2" />
+          <IconAlertCircle className="mb-2 size-8 text-destructive" />
           <p className="text-sm font-medium text-foreground">{error}</p>
           <Button
             type="button"
             variant="outline"
             onClick={() => fetchApps(true)}
-            className="mt-4 text-xs h-8"
+            className="mt-4 h-8 text-xs"
           >
             Retry
           </Button>
         </div>
       ) : filteredApps.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 p-12 text-center">
-          <div className="flex size-12 items-center justify-center rounded-2xl border border-border bg-muted/40 text-muted-foreground mb-3">
+          <div className="mb-3 flex size-12 items-center justify-center rounded-2xl border border-border bg-muted/40 text-muted-foreground">
             <IconWorld className="size-6" />
           </div>
           <h3 className="font-heading text-sm font-semibold text-foreground">
-            {searchQuery ? "No matching applications" : "No applications registered yet"}
+            {searchQuery
+              ? "No matching applications"
+              : "No applications registered yet"}
           </h3>
-          <p className="mt-1 max-w-sm text-xs text-muted-foreground leading-relaxed">
+          <p className="mt-1 max-w-sm text-xs leading-relaxed text-muted-foreground">
             {searchQuery
               ? "Try adjusting your search keywords."
               : "Register your first third-party client, mobile app, or remote IRIS instance connection."}
@@ -296,7 +319,7 @@ export function OAuthAppsSettingsTab({
             <Button
               type="button"
               onClick={() => setCreateDialogOpen(true)}
-              className="mt-4 bg-primary text-primary-foreground hover:bg-primary/90 text-xs h-8 px-4 gap-1.5"
+              className="mt-4 h-8 gap-1.5 bg-primary px-4 text-xs text-primary-foreground hover:bg-primary/90"
             >
               <IconPlus className="size-3.5" />
               Register Application

@@ -28,11 +28,16 @@ export default defineRoute({
         )
       }
 
-      if (session.method === "oauth" && !session.hasScope("identify") && !session.hasScope("profile")) {
+      if (
+        session.method === "oauth" &&
+        !session.hasScope("identify") &&
+        !session.hasScope("profile")
+      ) {
         return new Response(
           JSON.stringify({
             error: "insufficient_scope",
-            error_description: "The 'identify' or 'profile' scope is required to access userinfo.",
+            error_description:
+              "The 'identify' or 'profile' scope is required to access userinfo.",
           }),
           { status: 403, headers: { "content-type": "application/json" } }
         )
@@ -50,14 +55,16 @@ export default defineRoute({
       })
 
       if (!user) {
-        return new Response(
-          JSON.stringify({ error: "User not found" }),
-          { status: 404, headers: { "content-type": "application/json" } }
-        )
+        return new Response(JSON.stringify({ error: "User not found" }), {
+          status: 404,
+          headers: { "content-type": "application/json" },
+        })
       }
 
-      const canViewEmail = session.method !== "oauth" || session.hasScope("email")
-      const customization = (user.customization as Record<string, unknown>) || {}
+      const canViewEmail =
+        session.method !== "oauth" || session.hasScope("email")
+      const customization =
+        (user.customization as Record<string, unknown>) || {}
       const avatarUrl = (customization.avatarUrl as string) || null
 
       return {

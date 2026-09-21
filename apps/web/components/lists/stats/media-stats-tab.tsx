@@ -36,9 +36,13 @@ export function MediaStatsTab({
 }: MediaStatsTabProps): React.JSX.Element {
   const cacheKey = `${username}:${mediaType}`
   const cached = statsClientCache.get(cacheKey)
-  const isFresh = Boolean(cached && Date.now() - cached.timestamp < CLIENT_CACHE_TTL_MS)
+  const isFresh = Boolean(
+    cached && Date.now() - cached.timestamp < CLIENT_CACHE_TTL_MS
+  )
 
-  const [stats, setStats] = useState<any | null>(() => (isFresh && cached ? cached.data : null))
+  const [stats, setStats] = useState<any | null>(() =>
+    isFresh && cached ? cached.data : null
+  )
   const [isLoading, setIsLoading] = useState(!isFresh)
   const [hasError, setHasError] = useState(false)
 
@@ -153,7 +157,7 @@ export function MediaStatsTab({
   if (hasError || !stats || stats.overview.totalCount === 0) {
     return (
       <div className="flex min-h-[360px] flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/60 p-8 text-center backdrop-blur-md">
-        <div className="flex size-14 items-center justify-center rounded-2xl bg-muted/50 text-muted-foreground mb-3">
+        <div className="mb-3 flex size-14 items-center justify-center rounded-2xl bg-muted/50 text-muted-foreground">
           <IconChartBarOff className="size-7" />
         </div>
         <h3 className="font-heading text-base font-semibold text-foreground">

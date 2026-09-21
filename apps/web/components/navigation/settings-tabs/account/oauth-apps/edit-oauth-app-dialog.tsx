@@ -24,13 +24,37 @@ export interface EditOAuthAppDialogProps {
 
 const AVAILABLE_SCOPES = [
   { id: "identify", label: "Identify", desc: "User ID, username, avatar" },
-  { id: "profile", label: "Profile", desc: "Full profile details & preferences" },
+  {
+    id: "profile",
+    label: "Profile",
+    desc: "Full profile details & preferences",
+  },
   { id: "email", label: "Email", desc: "User primary email address" },
-  { id: "lists:read", label: "Lists: Read", desc: "View anime, manga, movie, TV, and game lists" },
-  { id: "lists:write", label: "Lists: Write", desc: "Add, update, or remove list items" },
-  { id: "activity:read", label: "Activity: Read", desc: "Read activity logs and reviews" },
-  { id: "activity:write", label: "Activity: Write", desc: "Post reviews and ratings" },
-  { id: "offline_access", label: "Offline Access", desc: "Maintain connection with refresh tokens" },
+  {
+    id: "lists:read",
+    label: "Lists: Read",
+    desc: "View anime, manga, movie, TV, and game lists",
+  },
+  {
+    id: "lists:write",
+    label: "Lists: Write",
+    desc: "Add, update, or remove list items",
+  },
+  {
+    id: "activity:read",
+    label: "Activity: Read",
+    desc: "Read activity logs and reviews",
+  },
+  {
+    id: "activity:write",
+    label: "Activity: Write",
+    desc: "Post reviews and ratings",
+  },
+  {
+    id: "offline_access",
+    label: "Offline Access",
+    desc: "Maintain connection with refresh tokens",
+  },
 ]
 
 export function EditOAuthAppDialog({
@@ -62,7 +86,9 @@ export function EditOAuthAppDialog({
 
   const toggleScope = (scopeId: string) => {
     setSelectedScopes((prev) =>
-      prev.includes(scopeId) ? prev.filter((s) => s !== scopeId) : [...prev, scopeId]
+      prev.includes(scopeId)
+        ? prev.filter((s) => s !== scopeId)
+        : [...prev, scopeId]
     )
   }
 
@@ -102,7 +128,11 @@ export function EditOAuthAppDialog({
   }
 
   return (
-    <Dialog isOpen={isOpen} onOpenChange={onOpenChange} className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+    <Dialog
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      className="max-h-[90vh] overflow-y-auto sm:max-w-xl"
+    >
       <DialogHeader>
         <div className="flex items-center gap-2.5 text-primary">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
@@ -127,7 +157,9 @@ export function EditOAuthAppDialog({
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-foreground">Description</label>
+          <label className="text-xs font-medium text-foreground">
+            Description
+          </label>
           <Input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -137,9 +169,11 @@ export function EditOAuthAppDialog({
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-1">
-            <label className="text-xs font-medium text-foreground">Homepage / Website URL</label>
+            <label className="text-xs font-medium text-foreground">
+              Homepage / Website URL
+            </label>
             <Input
               type="url"
               value={websiteUrl}
@@ -149,7 +183,9 @@ export function EditOAuthAppDialog({
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-foreground">Logo URL</label>
+            <label className="text-xs font-medium text-foreground">
+              Logo URL
+            </label>
             <Input
               type="url"
               value={logoUrl}
@@ -165,7 +201,9 @@ export function EditOAuthAppDialog({
             <label className="text-xs font-medium text-foreground">
               Redirect URIs <span className="text-primary">*</span>
             </label>
-            <span className="text-[11px] text-muted-foreground">One URI per line</span>
+            <span className="text-[11px] text-muted-foreground">
+              One URI per line
+            </span>
           </div>
           <textarea
             rows={3}
@@ -173,12 +211,12 @@ export function EditOAuthAppDialog({
             onChange={(e) => setRedirectUrisText(e.target.value)}
             disabled={isLoading}
             required
-            className="w-full rounded-xl border border-input bg-transparent px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-xl border border-input bg-transparent px-3 py-2 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
 
         <div className="rounded-xl border border-border/70 bg-muted/20 p-3">
-          <label className="flex items-start gap-3 cursor-pointer">
+          <label className="flex cursor-pointer items-start gap-3">
             <input
               type="checkbox"
               checked={isPublic}
@@ -187,26 +225,31 @@ export function EditOAuthAppDialog({
               className="mt-0.5 rounded border-border text-primary focus:ring-primary/30"
             />
             <div className="text-xs">
-              <span className="font-medium text-foreground">Public Client (SPA, Mobile, CLI with PKCE)</span>
-              <p className="mt-0.5 text-muted-foreground leading-relaxed">
-                Public clients authenticate exclusively with PKCE code challenges and do not use client secrets.
+              <span className="font-medium text-foreground">
+                Public Client (SPA, Mobile, CLI with PKCE)
+              </span>
+              <p className="mt-0.5 leading-relaxed text-muted-foreground">
+                Public clients authenticate exclusively with PKCE code
+                challenges and do not use client secrets.
               </p>
             </div>
           </label>
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-foreground">Allowed Scopes</label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-xl border border-border/70 p-3 bg-muted/10 max-h-48 overflow-y-auto">
+          <label className="text-xs font-medium text-foreground">
+            Allowed Scopes
+          </label>
+          <div className="grid max-h-48 grid-cols-1 gap-2 overflow-y-auto rounded-xl border border-border/70 bg-muted/10 p-3 sm:grid-cols-2">
             {AVAILABLE_SCOPES.map((scope) => {
               const isChecked = selectedScopes.includes(scope.id)
               return (
                 <label
                   key={scope.id}
-                  className={`flex items-start gap-2.5 p-2 rounded-lg border text-xs cursor-pointer transition-colors ${
+                  className={`flex cursor-pointer items-start gap-2.5 rounded-lg border p-2 text-xs transition-colors ${
                     isChecked
                       ? "border-primary/40 bg-primary/5 text-foreground"
-                      : "border-transparent hover:bg-muted/40 text-muted-foreground"
+                      : "border-transparent text-muted-foreground hover:bg-muted/40"
                   }`}
                 >
                   <input
@@ -217,8 +260,10 @@ export function EditOAuthAppDialog({
                     className="mt-0.5 rounded border-border text-primary focus:ring-primary/30"
                   />
                   <div className="min-w-0">
-                    <span className="font-medium text-foreground block">{scope.label}</span>
-                    <span className="text-[10px] text-muted-foreground line-clamp-1">
+                    <span className="block font-medium text-foreground">
+                      {scope.label}
+                    </span>
+                    <span className="line-clamp-1 text-[10px] text-muted-foreground">
                       {scope.desc}
                     </span>
                   </div>
@@ -234,14 +279,14 @@ export function EditOAuthAppDialog({
             variant="outline"
             disabled={isLoading}
             onClick={() => onOpenChange(false)}
-            className="text-xs h-9 px-4"
+            className="h-9 px-4 text-xs"
           >
             Cancel
           </Button>
           <Button
             type="submit"
             disabled={isLoading}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs h-9 px-5 gap-1.5"
+            className="h-9 gap-1.5 bg-primary px-5 text-xs text-primary-foreground hover:bg-primary/90"
           >
             {isLoading ? (
               <>

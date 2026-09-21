@@ -3,10 +3,18 @@ import { t } from "@/router"
 export const StatsQuerySchema = t.Object({
   year: t.Optional(t.Number({ description: "Rewind year filter e.g. 2026" })),
   quarter: t.Optional(
-    t.Number({ minimum: 1, maximum: 4, description: "Rewind quarter filter 1-4" })
+    t.Number({
+      minimum: 1,
+      maximum: 4,
+      description: "Rewind quarter filter 1-4",
+    })
   ),
   month: t.Optional(
-    t.Number({ minimum: 1, maximum: 12, description: "Rewind month filter 1-12" })
+    t.Number({
+      minimum: 1,
+      maximum: 12,
+      description: "Rewind month filter 1-12",
+    })
   ),
 })
 

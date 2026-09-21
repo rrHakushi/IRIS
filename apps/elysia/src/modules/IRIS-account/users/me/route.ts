@@ -25,7 +25,6 @@ export const BookmarkSchema = t.Object({
   createdAt: t.Optional(t.String()),
 })
 
-
 export const UserCustomizationSchema = t.Partial(
   t.Object({
     profile: t.Optional(t.Any()),

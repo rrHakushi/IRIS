@@ -18,7 +18,7 @@ const PageBuilder = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex flex-1 items-center justify-center p-12 text-sm text-muted-foreground animate-pulse">
+      <div className="flex flex-1 animate-pulse items-center justify-center p-12 text-sm text-muted-foreground">
         Loading IrisPage Builder in current layout...
       </div>
     ),
@@ -67,7 +67,10 @@ export function IrisPage({
               { type: "AlertTitle", children: "Invalid JSON Schema" },
               {
                 type: "AlertDescription",
-                children: err instanceof Error ? err.message : "Syntax error in JSON string",
+                children:
+                  err instanceof Error
+                    ? err.message
+                    : "Syntax error in JSON string",
               },
             ],
           },
@@ -137,7 +140,9 @@ export function IrisPage({
         renderedChildren = node.text
       } else if (node.children !== undefined && node.children !== null) {
         if (Array.isArray(node.children)) {
-          renderedChildren = node.children.map((child, idx) => renderNode(child, idx))
+          renderedChildren = node.children.map((child, idx) =>
+            renderNode(child, idx)
+          )
         } else {
           renderedChildren = renderNode(node.children)
         }
@@ -155,7 +160,7 @@ export function IrisPage({
   // 1. In-Place Visual Builder Mode
   if (isEditing) {
     return (
-      <div className="flex flex-1 flex-col overflow-hidden min-h-[600px] w-full">
+      <div className="flex min-h-[600px] w-full flex-1 flex-col overflow-hidden">
         <PageBuilder
           initialSchema={activeSchema}
           embedded={true}
@@ -175,7 +180,9 @@ export function IrisPage({
   // 2. Pure AST Component Tree Mode with footer at bottom
   return (
     <IrisErrorBoundary>
-      <div className={cn("relative flex w-full flex-col min-h-full", className)}>
+      <div
+        className={cn("relative flex min-h-full w-full flex-col", className)}
+      >
         {/* Main Content Area */}
         <div className="w-full flex-1">
           {activeSchema.root ? renderNode(activeSchema.root) : null}
@@ -183,20 +190,25 @@ export function IrisPage({
 
         {/* Footer always at the bottom of the page */}
         {showEditButton && canEditPage && (
-          <footer className="mt-auto w-full pt-10 pb-8 border-t border-border/40 flex items-center justify-between shrink-0 px-4 md:px-8">
+          <footer className="mt-auto flex w-full shrink-0 items-center justify-between border-t border-border/40 px-4 pt-10 pb-8 md:px-8">
             <div className="text-xs text-muted-foreground">
               {activeSchema.title && (
-                <span className="font-semibold text-foreground/80">{activeSchema.title}</span>
+                <span className="font-semibold text-foreground/80">
+                  {activeSchema.title}
+                </span>
               )}
               {activeSchema.description && (
-                <span className="hidden sm:inline opacity-70"> — {activeSchema.description}</span>
+                <span className="hidden opacity-70 sm:inline">
+                  {" "}
+                  — {activeSchema.description}
+                </span>
               )}
             </div>
 
             <Button
               size="xs"
               variant="outline"
-              className="gap-1.5 text-xs text-muted-foreground hover:text-foreground ms-auto shadow-xs"
+              className="ms-auto gap-1.5 text-xs text-muted-foreground shadow-xs hover:text-foreground"
               onPress={() => {
                 if (onEdit) onEdit()
                 else if (editHref) window.location.href = editHref
