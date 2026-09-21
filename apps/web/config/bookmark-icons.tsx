@@ -58,7 +58,7 @@ export const BOOKMARK_ICON_OPTIONS: BookmarkIconOption[] = [
     type: "app",
     customRender: (className = "size-4") => (
       <Image
-        src="/iris-pass512left-ring.png"
+        src="/iris-icons/iris-list-ring-left.png"
         alt="IRIS List"
         width={24}
         height={24}
@@ -72,7 +72,7 @@ export const BOOKMARK_ICON_OPTIONS: BookmarkIconOption[] = [
     type: "app",
     customRender: (className = "size-4") => (
       <Image
-        src="/iris-pass512left-ring.png"
+        src="/iris-icons/iris-pass-ring-left.png"
         alt="IRIS Pass"
         width={24}
         height={24}
@@ -193,11 +193,23 @@ export function renderBookmarkIcon(
     return <IconBookmark className={className} style={style} />
   }
 
-  if (iconId.startsWith("app:") || iconId === "iris-pass" || iconId === "iris-list") {
+  if (iconId === "app:iris-list" || iconId === "iris-list") {
     return (
       <Image
-        src="/iris-pass512left-ring.png"
-        alt="App"
+        src="/iris-icons/iris-list-ring-left.png"
+        alt="IRIS List"
+        width={96}
+        height={96}
+        className={`${className} object-contain rounded-full`}
+      />
+    )
+  }
+
+  if (iconId === "app:iris-pass" || iconId === "iris-pass") {
+    return (
+      <Image
+        src="/iris-icons/iris-pass-ring-left.png"
+        alt="IRIS Pass"
         width={96}
         height={96}
         className={`${className} object-contain rounded-full`}

@@ -11,6 +11,8 @@ export interface IrisApp {
   color: string
   colorClass?: string
   bgClass?: string
+  gradient?: string
+  gradientStyle?: string
   icon?: string
   iconLeftRing?: string
   iconLeftNoRing?: string
@@ -31,7 +33,9 @@ export function renderIrisAppIcon(
   const iconSrc =
     app.icon ||
     app.iconLeftRing ||
-    "/iris-pass512left-ring.png"
+    (app.id === "iris-list"
+      ? "/iris-icons/iris-list-ring-left.png"
+      : "/iris-icons/iris-pass-ring-left.png")
 
   return (
     <Image
@@ -54,7 +58,10 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
       color: "#6366f1",
       colorClass: "text-indigo-500",
       bgClass: "bg-indigo-500",
-      icon: "/iris-pass512left-ring.png",
+      gradient: "linear-gradient(135deg, #06b6d4 0%, #3b82f6 32%, #4f46e5 68%, #7c3aed 100%)",
+      gradientStyle: "linear-gradient(135deg, #06b6d4 0%, #3b82f6 32%, #4f46e5 68%, #7c3aed 100%)",
+      icon: "/iris-icons/iris-list-ring-left.png",
+      iconLeftRing: "/iris-icons/iris-list-ring-left.png",
       description: t("irisList.description"),
       descriptionShort: t("irisList.descriptionShort"),
     },
@@ -65,7 +72,10 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
       color: "#d800a6",
       colorClass: "text-[#d800a6]",
       bgClass: "bg-[#d800a6]",
-      icon: "/iris-pass512left-ring.png",
+      gradient: "linear-gradient(135deg, #e11d48 0%, #c026d3 34%, #6366f1 72%, #4338ca 100%)",
+      gradientStyle: "linear-gradient(135deg, #e11d48 0%, #c026d3 34%, #6366f1 72%, #4338ca 100%)",
+      icon: "/iris-icons/iris-pass-ring-left.png",
+      iconLeftRing: "/iris-icons/iris-pass-ring-left.png",
       description: "Zero-knowledge encrypted password, credential, and SSH key manager.",
       descriptionShort: "Vault & Generator",
     },

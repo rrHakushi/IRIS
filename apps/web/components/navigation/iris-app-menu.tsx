@@ -13,7 +13,6 @@ import {
 import { Button, LinkButton } from "@workspace/ui/components/button"
 import { Tooltip, TooltipTrigger } from "@workspace/ui/components/tooltip"
 import {
-  IconSelector,
   IconBookmark,
   IconCheck,
   IconPencil,
@@ -29,6 +28,7 @@ import {
   IconEdit,
   IconApps,
   IconFolder,
+  IconSelector,
 } from "@tabler/icons-react"
 import { useIrisApps, renderIrisAppIcon, type IrisApp } from "@/config/irisApps"
 import { renderBookmarkIcon } from "@/config/bookmark-icons"
@@ -433,16 +433,22 @@ export function IrisAppMenu(): React.JSX.Element {
           variant="ghost"
           className="group flex h-12 w-full cursor-pointer items-center justify-between gap-2.5 rounded-xl border border-border/40 p-2 text-start transition-all hover:border-border/80 hover:bg-muted/50 data-[state=open]:border-border data-[state=open]:bg-muted/80"
         >
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
-            {renderIrisAppIcon(activeApp, "size-4 text-primary-foreground", { color: "currentColor" })}
-          </div>
+          {renderIrisAppIcon(activeApp, "size-8 text-primary-foreground")}
+
           <div className="flex min-w-0 flex-1 flex-col">
             <span
               suppressHydrationWarning
               className={cn(
-                "truncate text-xs leading-tight font-bold",
-                activeApp?.colorClass || "text-indigo-500"
+                "w-fit max-w-full truncate text-xs leading-tight font-bold",
+                activeApp?.gradient
+                  ? "bg-clip-text text-transparent"
+                  : activeApp?.colorClass || "text-indigo-500"
               )}
+              style={
+                activeApp?.gradient
+                  ? { backgroundImage: activeApp.gradient }
+                  : undefined
+              }
             >
               {activeApp?.name || "IRIS"}
             </span>
@@ -529,11 +535,18 @@ export function IrisAppMenu(): React.JSX.Element {
                   <span
                     suppressHydrationWarning
                     className={cn(
-                      "w-full truncate text-center text-xs font-medium transition-colors",
+                      "inline-block max-w-full truncate text-center text-xs transition-colors",
                       isCurrent
-                        ? "font-semibold text-primary"
-                        : "text-muted-foreground group-hover:text-foreground"
+                        ? app.gradient
+                          ? "font-bold bg-clip-text text-transparent"
+                          : "font-bold text-primary"
+                        : "font-medium text-muted-foreground group-hover:text-foreground"
                     )}
+                    style={
+                      isCurrent && app.gradient
+                        ? { backgroundImage: app.gradient }
+                        : undefined
+                    }
                     title={app.name}
                   >
                     {app.name}

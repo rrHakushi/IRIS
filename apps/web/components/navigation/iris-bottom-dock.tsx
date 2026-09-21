@@ -20,6 +20,7 @@ import { getDockCustomization, type CustomDockGroup } from "@IRIS/shared"
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile"
 import { useAllAppSidebarConfigs } from "@/config/sidebars"
 import { renderDockGroupIcon } from "@/config/dock-group-icons"
+import { useIrisApps, renderIrisAppIcon } from "@/config/irisApps"
 
 export interface IrisBottomDockProps {
   pathname: string
@@ -172,6 +173,13 @@ export function IrisBottomDock({
   const resolvedEmptyLabel = emptySlotLabel || t("empty")
 
   const allAppConfigs = useAllAppSidebarConfigs(null)
+  const irisApps = useIrisApps()
+  const activeApp = useMemo(() => {
+    const current = irisApps.find((app) =>
+      app.href !== "/" ? pathname.startsWith(app.href) : pathname === "/"
+    )
+    return current || irisApps[0]
+  }, [pathname, irisApps])
 
   const [localMap, setLocalMap] = useState<Record<string, string | null> | null>(() => {
     if (typeof window !== "undefined") {
@@ -368,10 +376,16 @@ export function IrisBottomDock({
         </div>
 
         <div
-          className="mx-1 flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xs"
+          className="mx-1 flex size-10 shrink-0 items-center justify-center rounded-full"
           aria-label={t("toggleDrawer")}
         >
-          <IconLayoutGrid className="size-5" />
+          {activeApp ? (
+            renderIrisAppIcon(activeApp, "size-10")
+          ) : (
+            <div className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xs">
+              <IconLayoutGrid className="size-5" />
+            </div>
+          )}
         </div>
 
         <div className="flex min-w-0 flex-1 items-center justify-around gap-1">
@@ -557,10 +571,16 @@ export function IrisBottomDock({
       <button
         type="button"
         onClick={() => setLauncherOpen(true)}
-        className="mx-1 flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xs transition-transform hover:opacity-90 active:scale-95"
+        className="mx-1 flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full transition-transform hover:scale-105 active:scale-95"
         aria-label={t("toggleLauncher")}
       >
-        <IconLayoutGrid className="size-5" />
+        {activeApp ? (
+          renderIrisAppIcon(activeApp, "size-10")
+        ) : (
+          <div className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xs">
+            <IconLayoutGrid className="size-5" />
+          </div>
+        )}
       </button>
 
       {/* Right items (3 and 4) */}
