@@ -408,7 +408,7 @@ function MediaListCardInner({
       onTouchEnd={handleTouchEnd}
       onTouchMove={handleTouchMove}
       onTouchCancel={handleTouchMove}
-      className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card hover:border-primary/40 media-card-contain"
+      className="group media-card-contain relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card hover:border-primary/40"
     >
       {/* Cover Image & Overlays Container - 1:1 square for music, 2:3 for posters */}
       <div
@@ -477,10 +477,13 @@ function MediaListCardInner({
           {/* 1. Connections Count Badge */}
           {connectedCount > 0 && (
             <div
-              className="flex items-center gap-1 rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-white/90 shadow-xs backdrop-blur-md"
+              className="flex items-center gap-1 rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 tabular-nums shadow-xs backdrop-blur-md"
               title={`${connectedCount} connected service${connectedCount === 1 ? "" : "s"}`}
             >
-              <IconLink className="size-2.5 shrink-0 text-primary" aria-hidden="true" />
+              <IconLink
+                className="size-2.5 shrink-0 text-primary"
+                aria-hidden="true"
+              />
               <span>{connectedCount}</span>
             </div>
           )}
@@ -488,12 +491,12 @@ function MediaListCardInner({
           {/* 2. Progress Badge: Season/Episode, Volume/Chapter, Ep, Hrs, Pages, or Plays */}
           {mediaType === "movie" ? (
             entry.rewatched && entry.rewatched > 0 ? (
-              <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-white/90 shadow-xs backdrop-blur-md">
+              <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 tabular-nums shadow-xs backdrop-blur-md">
                 <span>Rewatched {entry.rewatched}x</span>
               </div>
             ) : null
           ) : mediaType === "tv" && tvProg ? (
-            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-white/90 shadow-xs backdrop-blur-md">
+            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 tabular-nums shadow-xs backdrop-blur-md">
               <span className="font-semibold text-white">
                 S{tvProg.seasonNumber}
               </span>
@@ -505,7 +508,7 @@ function MediaListCardInner({
               ) : null}
             </div>
           ) : mediaType === "manga" ? (
-            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-white/90 shadow-xs backdrop-blur-md">
+            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 tabular-nums shadow-xs backdrop-blur-md">
               {typeof maxVolumes === "number" || volumesProgress > 0 ? (
                 <span className="font-semibold text-white">
                   V{volumesProgress}
@@ -525,11 +528,11 @@ function MediaListCardInner({
               ) : null}
             </div>
           ) : mediaType === "game" ? (
-            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-white/90 shadow-xs backdrop-blur-md">
+            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 tabular-nums shadow-xs backdrop-blur-md">
               <span>{displayedProgress} Hrs</span>
             </div>
           ) : mediaType === "book" ? (
-            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-white/90 shadow-xs backdrop-blur-md">
+            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 tabular-nums shadow-xs backdrop-blur-md">
               <span>P {displayedProgress}</span>
               {typeof maxProgress === "number" && maxProgress > 0 ? (
                 <span className="font-semibold text-primary">
@@ -538,11 +541,11 @@ function MediaListCardInner({
               ) : null}
             </div>
           ) : mediaType === "music" ? (
-            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-white/90 shadow-xs backdrop-blur-md">
+            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 tabular-nums shadow-xs backdrop-blur-md">
               <span>{displayedProgress} Plays</span>
             </div>
           ) : (
-            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-white/90 shadow-xs backdrop-blur-md">
+            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 tabular-nums shadow-xs backdrop-blur-md">
               <span>
                 {progressUnit} {displayedProgress}
               </span>
@@ -556,8 +559,11 @@ function MediaListCardInner({
 
           {/* 3. Score Badge (score/10) */}
           {typeof entry.score === "number" && entry.score > 0 && (
-            <div className="flex items-center gap-1 rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-amber-400 shadow-xs backdrop-blur-md">
-              <IconStar className="size-2.5 shrink-0 fill-amber-400" aria-hidden="true" />
+            <div className="flex items-center gap-1 rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-bold text-amber-400 tabular-nums shadow-xs backdrop-blur-md">
+              <IconStar
+                className="size-2.5 shrink-0 fill-amber-400"
+                aria-hidden="true"
+              />
               <span>
                 {Number(
                   (entry.score > 10 ? entry.score / 10 : entry.score).toFixed(1)
@@ -600,11 +606,13 @@ function arePropsEqual(
   nextProps: MediaListCardProps
 ): boolean {
   if (prevProps.mediaType !== nextProps.mediaType) return false
-  if (prevProps.mediaTitlePreference !== nextProps.mediaTitlePreference) return false
+  if (prevProps.mediaTitlePreference !== nextProps.mediaTitlePreference)
+    return false
   if (prevProps.progressUnit !== nextProps.progressUnit) return false
   if (prevProps.priority !== nextProps.priority) return false
   if (prevProps.onOpenEditModal !== nextProps.onOpenEditModal) return false
-  if (prevProps.onIncrementProgress !== nextProps.onIncrementProgress) return false
+  if (prevProps.onIncrementProgress !== nextProps.onIncrementProgress)
+    return false
 
   const prevItem = prevProps.item
   const nextItem = nextProps.item

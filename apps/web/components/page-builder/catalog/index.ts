@@ -1,10 +1,7 @@
 /**
- * IRIS Page Builder — Unified Catalog System
+ * IRIS Page Builder — Unified Component & Preset Catalog
  *
- * Central export point for all sandboxed actions, component presets, and section layouts.
- * Adding a new action is as simple as creating an action file in `catalog/actions/`.
- * Adding a new component is as simple as adding it in `catalog/components/`.
+ * Central export point for documentation components, blocks, typography, and section layouts.
  */
 
-export * from "./actions"
 export * from "./components"

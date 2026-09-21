@@ -110,12 +110,6 @@ async function runMusicSyncVerification() {
   const dummySearchContext: any = {
     query: { q: "Bohemian Rhapsody" },
     prisma,
-    cache,
-    cacheKeys: {
-      search: {
-        music: (q: string) => `search:music:${q}`,
-      },
-    },
     logger: {
       warn: (msg: string) => console.log(`    [Route Logger WARN] ${msg}`),
       error: (msg: string, err: any) =>

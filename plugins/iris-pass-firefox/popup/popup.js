@@ -121,6 +121,7 @@ const btnAddUri = document.getElementById("btn-add-uri")
 const editCipherTotp = document.getElementById("edit-cipher-totp")
 const btnToggleEditTotpEye = document.getElementById("btn-toggle-edit-totp-eye")
 const btnEditScanQr = document.getElementById("btn-edit-scan-qr")
+const btnCopyEditTotp = document.getElementById("btn-copy-edit-totp")
 const editCipherNotes = document.getElementById("edit-cipher-notes")
 const editError = document.getElementById("edit-error")
 const btnEditSave = document.getElementById("btn-edit-save")
@@ -1285,13 +1286,22 @@ function renderMatchingList(ciphers) {
       btnPass.dataset.action = "copy-pass"
       btnPass.textContent = "Pass"
 
+      actionsDiv.appendChild(btnUser)
+      actionsDiv.appendChild(btnPass)
+
+      if (cipher.data?.totpSecret) {
+        const btnTotp = document.createElement("button")
+        btnTotp.className = "mini-action-btn"
+        btnTotp.dataset.action = "copy-totp"
+        btnTotp.textContent = "TOTP"
+        actionsDiv.appendChild(btnTotp)
+      }
+
       const btnEdit = document.createElement("button")
       btnEdit.className = "mini-action-btn edit-btn"
       btnEdit.dataset.action = "edit"
       btnEdit.textContent = "Edit"
 
-      actionsDiv.appendChild(btnUser)
-      actionsDiv.appendChild(btnPass)
       actionsDiv.appendChild(btnEdit)
     }
 
@@ -1343,6 +1353,16 @@ function renderMatchingList(ciphers) {
             true
           )
         })
+
+      card
+        .querySelector('[data-action="copy-totp"]')
+        ?.addEventListener("click", (e) => {
+          e.stopPropagation()
+          const btnTotp = card.querySelector('[data-action="copy-totp"]')
+          if (cipher.data?.totpSecret) {
+            copyTotpValueWithCountdown(btnTotp, cipher.data.totpSecret, "TOTP")
+          }
+        })
     } else {
       card
         .querySelector('[data-action="copy-ssh-pub"]')
@@ -1392,6 +1412,91 @@ function copySensitiveValue(btn, text, label, isSensitive = false) {
       action: "SCHEDULE_CLIPBOARD_CLEAR",
       payload: { text, seconds: clipboardClearSeconds },
     })
+  }
+}
+
+let activeTotpCountdownInterval = null
+let activeTotpCountdownBtn = null
+let activeTotpOriginalText = null
+
+/**
+ * Copy TOTP value to clipboard with live countdown feedback until the code expires
+ */
+async function copyTotpValueWithCountdown(btn, rawSecret, originalText = "TOTP") {
+  if (!rawSecret || typeof IrisTotp === "undefined") return
+  try {
+    let secret = rawSecret
+    let period = 30
+    const parsed = IrisTotp.parseOtpAuthUri(rawSecret)
+    if (parsed) {
+      secret = parsed.secret
+      period = parsed.period || 30
+    }
+    const code = await IrisTotp.generateTotp(secret, period)
+    if (!code) return
+
+    await navigator.clipboard.writeText(code)
+
+    if (clipboardClearSeconds > 0) {
+      ext.runtime.sendMessage({
+        action: "SCHEDULE_CLIPBOARD_CLEAR",
+        payload: { text: code, seconds: clipboardClearSeconds },
+      })
+    }
+
+    // Launch in-page floating countdown widget on active tab as well
+    ext.tabs?.query?.({ active: true, currentWindow: true }).then((tabs) => {
+      if (tabs?.[0]?.id) {
+        ext.tabs.sendMessage(tabs[0].id, {
+          action: "SHOW_TOTP_TIMER",
+          payload: {
+            secret: rawSecret,
+            label: "2FA Code",
+            initialCode: code,
+          },
+        }).catch(() => {})
+      }
+    }).catch(() => {})
+
+    // Clear any previous active button countdown
+    if (activeTotpCountdownInterval) {
+      clearInterval(activeTotpCountdownInterval)
+      activeTotpCountdownInterval = null
+      if (activeTotpCountdownBtn && activeTotpOriginalText) {
+        activeTotpCountdownBtn.textContent = activeTotpOriginalText
+        activeTotpCountdownBtn.style.color = ""
+      }
+    }
+
+    activeTotpCountdownBtn = btn
+    activeTotpOriginalText = originalText
+
+    function updateTicker() {
+      const rem = IrisTotp.getRemainingSeconds(period)
+      if (rem <= 1 || rem === period) {
+        // Expired
+        if (activeTotpCountdownInterval) {
+          clearInterval(activeTotpCountdownInterval)
+          activeTotpCountdownInterval = null
+        }
+        btn.textContent = originalText
+        btn.style.color = ""
+        activeTotpCountdownBtn = null
+        activeTotpOriginalText = null
+      } else {
+        btn.textContent = `Copied! (${rem}s)`
+        btn.style.color = "#10b981"
+      }
+    }
+
+    // Initial state: show "Copied! (28s)"
+    const rem = IrisTotp.getRemainingSeconds(period)
+    btn.textContent = `Copied! (${rem}s)`
+    btn.style.color = "#10b981"
+
+    activeTotpCountdownInterval = setInterval(updateTicker, 1000)
+  } catch (err) {
+    console.error("Failed to generate and copy TOTP:", err)
   }
 }
 
@@ -1497,13 +1602,22 @@ function renderVaultList(ciphers) {
       btnPass.dataset.action = "copy-pass"
       btnPass.textContent = "Pass"
 
+      actionsDiv.appendChild(btnUser)
+      actionsDiv.appendChild(btnPass)
+
+      if (cipher.data?.totpSecret) {
+        const btnTotp = document.createElement("button")
+        btnTotp.className = "mini-action-btn"
+        btnTotp.dataset.action = "copy-totp"
+        btnTotp.textContent = "TOTP"
+        actionsDiv.appendChild(btnTotp)
+      }
+
       const btnEdit = document.createElement("button")
       btnEdit.className = "mini-action-btn edit-btn"
       btnEdit.dataset.action = "edit"
       btnEdit.textContent = "Edit"
 
-      actionsDiv.appendChild(btnUser)
-      actionsDiv.appendChild(btnPass)
       actionsDiv.appendChild(btnEdit)
     }
 
@@ -1554,6 +1668,16 @@ function renderVaultList(ciphers) {
             "Pass",
             true
           )
+        })
+
+      card
+        .querySelector('[data-action="copy-totp"]')
+        ?.addEventListener("click", (e) => {
+          e.stopPropagation()
+          const btnTotp = card.querySelector('[data-action="copy-totp"]')
+          if (cipher.data?.totpSecret) {
+            copyTotpValueWithCountdown(btnTotp, cipher.data.totpSecret, "TOTP")
+          }
         })
     } else {
       card
@@ -1877,6 +2001,7 @@ function openCreateCipher(defaultUrl) {
   editCipherUsername.value = ""
   editCipherPassword.value = ""
   editCipherTotp.value = ""
+  if (btnCopyEditTotp) btnCopyEditTotp.style.display = "none"
   editCipherNotes.value = ""
   editSshPublicKey.value = ""
   editSshPrivateKey.value = ""
@@ -1918,6 +2043,9 @@ function openEditCipher(cipher) {
   editCipherUsername.value = cipher.data?.username || ""
   editCipherPassword.value = cipher.data?.password || ""
   editCipherTotp.value = cipher.data?.totpSecret || ""
+  if (btnCopyEditTotp) {
+    btnCopyEditTotp.style.display = cipher.data?.totpSecret ? "inline-flex" : "none"
+  }
   editCipherNotes.value = cipher.data?.notes || ""
 
   // SSH Key fields
@@ -1988,6 +2116,19 @@ btnToggleEditTotpEye?.addEventListener("click", () => {
   editCipherTotp.type = isPass ? "text" : "password"
 })
 
+editCipherTotp?.addEventListener("input", () => {
+  if (btnCopyEditTotp) {
+    btnCopyEditTotp.style.display = editCipherTotp.value.trim() ? "inline-flex" : "none"
+  }
+})
+
+btnCopyEditTotp?.addEventListener("click", () => {
+  const raw = editCipherTotp.value.trim()
+  if (raw) {
+    copyTotpValueWithCountdown(btnCopyEditTotp, raw, "Copy TOTP")
+  }
+})
+
 // Trigger in-page screen QR selection
 btnEditScanQr?.addEventListener("click", async () => {
   try {
@@ -2008,6 +2149,9 @@ ext.storage?.session?.get(["pendingScannedTotp"]).then((data) => {
     if (editCipherTotp) {
       editCipherTotp.value = secret
       editCipherTotp.type = "text"
+      if (btnCopyEditTotp) {
+        btnCopyEditTotp.style.display = "inline-flex"
+      }
     }
     // Clean up
     ext.storage.session.remove(["pendingScannedTotp"])

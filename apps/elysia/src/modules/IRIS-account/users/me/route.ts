@@ -13,6 +13,18 @@ export const PreferencesCustomizationSchema = t.Object({
   media: t.Optional(MediaPreferencesSchema),
 })
 
+export const BookmarkSchema = t.Object({
+  id: t.String(),
+  title: t.String({ minLength: 1, maxLength: 120 }),
+  url: t.String({ minLength: 1 }),
+  icon: t.Optional(t.String()),
+  color: t.Optional(t.String()),
+  pinned: t.Optional(t.Boolean()),
+  appId: t.Optional(t.String()),
+  group: t.Optional(t.String()),
+  createdAt: t.Optional(t.String()),
+})
+
 export const UserCustomizationSchema = t.Partial(
   t.Object({
     profile: t.Optional(t.Any()),
@@ -20,6 +32,7 @@ export const UserCustomizationSchema = t.Partial(
     sidebar: t.Optional(t.Any()),
     dock: t.Optional(t.Any()),
     preferences: t.Optional(PreferencesCustomizationSchema),
+    bookmarks: t.Optional(t.Array(BookmarkSchema)),
   }),
   { additionalProperties: true }
 )

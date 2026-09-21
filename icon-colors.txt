@@ -1,0 +1,33 @@
+
+# ------------------------------------------------------------------------------
+# 1. IRIS List
+# ------------------------------------------------------------------------------
+App ID: iris-list
+Icon: /iris-icons/iris-list-ring-left.png
+Base Color: #6366f1 (Indigo 500)
+
+Gradient (4-Stop Cyan -> Electric Violet):
+linear-gradient(135deg, #06b6d4 0%, #3b82f6 32%, #4f46e5 68%, #7c3aed 100%)
+
+Stops:
+- Stop 1 (0%):   #06b6d4 (Luminescent Cyan)
+- Stop 2 (32%):  #3b82f6 (Sky / Azure Blue)
+- Stop 3 (68%):  #4f46e5 (Deep Indigo)
+- Stop 4 (100%): #7c3aed (Electric Violet)
+
+
+# ------------------------------------------------------------------------------
+# 2. IRIS Pass
+# ------------------------------------------------------------------------------
+App ID: iris-pass
+Icon: /iris-icons/iris-pass-ring-left.png
+Base Color: #d800a6 (Fuchsia / Magenta)
+
+Gradient (4-Stop Rose -> Deep Midnight Indigo):
+linear-gradient(135deg, #e11d48 0%, #c026d3 34%, #6366f1 72%, #4338ca 100%)
+
+Stops:
+- Stop 1 (0%):   #e11d48 (Platform Rose Accent)
+- Stop 2 (34%):  #c026d3 (Fuchsia Magenta)
+- Stop 3 (72%):  #6366f1 (IRIS List Indigo)
+- Stop 4 (100%): #4338ca (Deep Midnight Indigo)

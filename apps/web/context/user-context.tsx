@@ -14,8 +14,10 @@ import {
   getProfileCustomization,
   setProfileCustomization,
   setDockCustomization,
+  setBookmarksCustomization,
   type UserProfileCustomization,
   type UserDockCustomization,
+  type UserBookmark,
   type DisplayNameStyle,
 } from "@IRIS/shared"
 
@@ -60,6 +62,7 @@ interface UserContextValue {
   updateDock: (
     patch: Partial<UserDockCustomization>
   ) => Promise<FullUser | null>
+  updateBookmarks: (bookmarks: UserBookmark[]) => Promise<FullUser | null>
 }
 
 const UserContext = createContext<UserContextValue>({
@@ -70,6 +73,7 @@ const UserContext = createContext<UserContextValue>({
   updateUser: async () => null,
   updateProfile: async () => null,
   updateDock: async () => null,
+  updateBookmarks: async () => null,
 })
 
 // In-memory cache across route changes
@@ -227,6 +231,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return updateUser({ customization: updatedCustomization })
   }
 
+  const updateBookmarks = async (
+    bookmarks: UserBookmark[]
+  ): Promise<FullUser | null> => {
+    const updatedCustomization = setBookmarksCustomization(
+      user?.customization,
+      bookmarks
+    )
+    return updateUser({ customization: updatedCustomization })
+  }
+
   return (
     <UserContext.Provider
       value={{
@@ -237,6 +251,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         updateUser,
         updateProfile,
         updateDock,
+        updateBookmarks,
       }}
     >
       {children}

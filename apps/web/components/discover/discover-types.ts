@@ -1,5 +1,44 @@
+import type React from "react"
+import {
+  IconDeviceTv,
+  IconBook2,
+  IconMovie,
+  IconDeviceGamepad,
+  IconBook,
+  IconMusic,
+  IconUserHeart,
+  IconUserCheck,
+  IconBuildingSkyscraper,
+} from "@tabler/icons-react"
+
 export type DiscoverCategory =
-  "anime" | "manga" | "movies" | "tv" | "games" | "books" | "music"
+  | "anime"
+  | "manga"
+  | "movies"
+  | "tv"
+  | "games"
+  | "books"
+  | "music"
+  | "characters"
+  | "staff"
+  | "studios"
+
+export type DiscoverStatusKey =
+  "ALL" | "RELEASING" | "FINISHED" | "UPCOMING" | "NOT_YET_RELEASED"
+
+export type DiscoverSortByOption =
+  "popularity" | "score" | "favorites" | "title" | "releaseDate" | "updatedAt"
+
+export type DiscoverSortOrderOption = "asc" | "desc"
+
+export interface DiscoverFilterFacets {
+  statuses: Array<{ value: string; count: number }>
+  formats: Array<{ value: string; count: number }>
+  genres: Array<{ value: string; count: number }>
+  years: Array<{ value: number; count: number }>
+  seasons?: Array<{ value: string; count: number }>
+  artists?: Array<{ value: string; count: number }>
+}
 
 export interface DiscoverItem {
   id: number
@@ -24,33 +63,13 @@ export interface DiscoverItem {
   audioPreviewUrl?: string | null
 }
 
-export interface DiscoverSection {
-  id: string
-  title: string
-  description?: string | null
-  items: DiscoverItem[]
-}
-
-export interface DiscoverGenre {
-  id: number
-  name: string
-  count?: number
-}
-
-export interface DiscoverResponse {
-  media: string
-  hero: DiscoverItem[]
-  sections: DiscoverSection[]
-  genres: DiscoverGenre[]
-}
-
 export interface DiscoverMediaMeta {
   key: DiscoverCategory
   label: string
   singularLabel: string
   description: string
-  browseCategory: string
   href: string
+  icon: React.ComponentType<{ className?: string }>
 }
 
 export const DISCOVER_MEDIA_METAS: DiscoverMediaMeta[] = [
@@ -60,8 +79,8 @@ export const DISCOVER_MEDIA_METAS: DiscoverMediaMeta[] = [
     singularLabel: "Anime",
     description:
       "Explore trending seasonal anime, critically acclaimed classics, and upcoming series.",
-    browseCategory: "anime",
     href: "/IRIS-list/discover/anime",
+    icon: IconDeviceTv,
   },
   {
     key: "manga",
@@ -69,8 +88,8 @@ export const DISCOVER_MEDIA_METAS: DiscoverMediaMeta[] = [
     singularLabel: "Manga",
     description:
       "Discover ongoing serializations, acclaimed graphic novels, and light novels.",
-    browseCategory: "manga",
     href: "/IRIS-list/discover/manga",
+    icon: IconBook2,
   },
   {
     key: "movies",
@@ -78,8 +97,8 @@ export const DISCOVER_MEDIA_METAS: DiscoverMediaMeta[] = [
     singularLabel: "Movie",
     description:
       "Browse blockbusters, fresh releases, and cinematic hall-of-famers.",
-    browseCategory: "movies",
     href: "/IRIS-list/discover/movies",
+    icon: IconMovie,
   },
   {
     key: "tv",
@@ -87,8 +106,8 @@ export const DISCOVER_MEDIA_METAS: DiscoverMediaMeta[] = [
     singularLabel: "TV Show",
     description:
       "Find binge-worthy television series, returning drama, and trending sitcoms.",
-    browseCategory: "tv",
     href: "/IRIS-list/discover/tv",
+    icon: IconDeviceTv,
   },
   {
     key: "games",
@@ -96,8 +115,8 @@ export const DISCOVER_MEDIA_METAS: DiscoverMediaMeta[] = [
     singularLabel: "Game",
     description:
       "Uncover top video games across PC, consoles, and indie frontiers.",
-    browseCategory: "games",
     href: "/IRIS-list/discover/games",
+    icon: IconDeviceGamepad,
   },
   {
     key: "books",
@@ -105,8 +124,8 @@ export const DISCOVER_MEDIA_METAS: DiscoverMediaMeta[] = [
     singularLabel: "Book",
     description:
       "Explore bestsellers, literary classics, and upcoming author publications.",
-    browseCategory: "books",
     href: "/IRIS-list/discover/books",
+    icon: IconBook,
   },
   {
     key: "music",
@@ -114,7 +133,34 @@ export const DISCOVER_MEDIA_METAS: DiscoverMediaMeta[] = [
     singularLabel: "Music",
     description:
       "Listen to trending audio tracks, acclaimed studio albums, and chart hits.",
-    browseCategory: "music",
     href: "/IRIS-list/discover/music",
+    icon: IconMusic,
+  },
+  {
+    key: "characters",
+    label: "Characters",
+    singularLabel: "Character",
+    description:
+      "Discover popular and beloved fictional characters across anime, manga, and media.",
+    href: "/IRIS-list/discover/characters",
+    icon: IconUserHeart,
+  },
+  {
+    key: "staff",
+    label: "Staff",
+    singularLabel: "Person",
+    description:
+      "Explore voice actors, directors, authors, composers, and creative staff.",
+    href: "/IRIS-list/discover/staff",
+    icon: IconUserCheck,
+  },
+  {
+    key: "studios",
+    label: "Studios",
+    singularLabel: "Studio",
+    description:
+      "Discover leading animation studios, production houses, and game developers.",
+    href: "/IRIS-list/discover/studios",
+    icon: IconBuildingSkyscraper,
   },
 ]

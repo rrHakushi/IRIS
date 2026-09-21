@@ -34,7 +34,8 @@ export const typographyPresets: ComponentPresetItem[] = [
     getNode: () => ({
       type: "p",
       props: { className: "text-sm text-muted-foreground leading-relaxed" },
-      children: "Start typing your content here or connect dynamic state expressions.",
+      children:
+        "Start typing your content here or connect dynamic state expressions.",
     }),
   },
   {

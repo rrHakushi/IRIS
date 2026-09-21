@@ -134,19 +134,26 @@ export function CalendarHeader({
         {/* View Mode Tabs */}
         <Tabs
           selectedKey={viewMode}
-          onSelectionChange={(key) =>
-            onViewModeChange(key as CalendarViewMode)
-          }
+          onSelectionChange={(key) => onViewModeChange(key as CalendarViewMode)}
           className="w-auto"
         >
           <TabList className="h-8 rounded-2xl bg-muted/60 p-1">
-            <Tab id="month" className="cursor-pointer rounded-xl px-2.5 py-1 text-xs">
+            <Tab
+              id="month"
+              className="cursor-pointer rounded-xl px-2.5 py-1 text-xs"
+            >
               Month
             </Tab>
-            <Tab id="week" className="cursor-pointer rounded-xl px-2.5 py-1 text-xs">
+            <Tab
+              id="week"
+              className="cursor-pointer rounded-xl px-2.5 py-1 text-xs"
+            >
               Week
             </Tab>
-            <Tab id="agenda" className="cursor-pointer rounded-xl px-2.5 py-1 text-xs">
+            <Tab
+              id="agenda"
+              className="cursor-pointer rounded-xl px-2.5 py-1 text-xs"
+            >
               Agenda
             </Tab>
           </TabList>
@@ -179,9 +186,7 @@ export function CalendarHeader({
               <IconBookmark className="size-3.5" />
               <span>Only in lists</span>
             </div>
-            <Tooltip>
-              Sign in to filter releases by your tracked lists
-            </Tooltip>
+            <Tooltip>Sign in to filter releases by your tracked lists</Tooltip>
           </TooltipTrigger>
         )}
       </div>
@@ -212,7 +217,7 @@ export function CalendarHeader({
                 {count > 0 && (
                   <span
                     className={cn(
-                      "ms-0.5 rounded-full px-1.5 py-0.2 text-[10px] font-semibold",
+                      "py-0.2 ms-0.5 rounded-full px-1.5 text-[10px] font-semibold",
                       isSelected
                         ? "bg-primary-foreground/20 text-primary-foreground"
                         : "bg-background text-muted-foreground"

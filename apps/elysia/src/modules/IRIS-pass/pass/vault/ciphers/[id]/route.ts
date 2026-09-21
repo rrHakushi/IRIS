@@ -63,18 +63,13 @@ export default defineRoute({
         id: t.String(),
       }),
       body: t.Object({
-        type: t.Optional(
-          t.Union([t.Literal("LOGIN"), t.Literal("SSH_KEY")])
-        ),
+        type: t.Optional(t.Union([t.Literal("LOGIN"), t.Literal("SSH_KEY")])),
         encryptedTitle: t.Optional(t.String()),
         encryptedData: t.Optional(t.String()),
         folderId: t.Optional(t.Nullable(t.String())),
         favorite: t.Optional(t.Boolean()),
         reprompt: t.Optional(
-          t.Union([
-            t.Literal("NONE"),
-            t.Literal("REQUIRE_MASTER_PASSWORD"),
-          ])
+          t.Union([t.Literal("NONE"), t.Literal("REQUIRE_MASTER_PASSWORD")])
         ),
       }),
       response: {

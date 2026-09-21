@@ -54,7 +54,9 @@ export function RevealOAuthSecretDialog({
             <IconKey className="size-4.5" />
           </div>
           <DialogTitle>
-            {isRegenerated ? "Client Secret Regenerated" : "OAuth Application Created"}
+            {isRegenerated
+              ? "Client Secret Regenerated"
+              : "OAuth Application Created"}
           </DialogTitle>
         </div>
       </DialogHeader>
@@ -68,7 +70,9 @@ export function RevealOAuthSecretDialog({
               Save your Client Secret immediately
             </p>
             <p className="leading-relaxed text-amber-300/90">
-              For security reasons, this client secret is never stored in plaintext and will not be displayed again. If you lose it, you will need to regenerate a new one.
+              For security reasons, this client secret is never stored in
+              plaintext and will not be displayed again. If you lose it, you
+              will need to regenerate a new one.
             </p>
           </div>
         </div>
@@ -83,7 +87,7 @@ export function RevealOAuthSecretDialog({
               type="text"
               readOnly
               value={app?.clientId ?? ""}
-              className="w-full rounded-xl border border-border bg-muted/40 px-3.5 py-2 pe-10 font-mono text-xs text-foreground select-all focus:outline-none focus:ring-1 focus:ring-primary/40"
+              className="w-full rounded-xl border border-border bg-muted/40 px-3.5 py-2 pe-10 font-mono text-xs text-foreground select-all focus:ring-1 focus:ring-primary/40 focus:outline-none"
             />
           </div>
         </div>
@@ -99,7 +103,7 @@ export function RevealOAuthSecretDialog({
                 type="text"
                 readOnly
                 value={rawSecret}
-                className="w-full rounded-xl border border-border bg-muted/40 px-3.5 py-2.5 pe-12 font-mono text-xs text-foreground select-all focus:outline-none focus:ring-1 focus:ring-primary/40"
+                className="w-full rounded-xl border border-border bg-muted/40 px-3.5 py-2.5 pe-12 font-mono text-xs text-foreground select-all focus:ring-1 focus:ring-primary/40 focus:outline-none"
               />
               <Button
                 type="button"
@@ -142,7 +146,7 @@ export function RevealOAuthSecretDialog({
         <Button
           type="button"
           onClick={() => onOpenChange(false)}
-          className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs px-5"
+          className="bg-primary px-5 text-xs text-primary-foreground hover:bg-primary/90"
         >
           Done
         </Button>

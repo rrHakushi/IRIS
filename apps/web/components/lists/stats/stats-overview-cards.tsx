@@ -66,7 +66,10 @@ export function StatsOverviewCards({
       label: "Total Titles",
       value: overview.totalCount.toLocaleString(),
       subtext: `${overview.completedCount.toLocaleString()} completed`,
-      icon: mediaType === "manga" || mediaType === "book" ? IconBook2 : IconDeviceTv,
+      icon:
+        mediaType === "manga" || mediaType === "book"
+          ? IconBook2
+          : IconDeviceTv,
       iconColor: "text-rose-500",
     },
     {
@@ -99,7 +102,10 @@ export function StatsOverviewCards({
     },
     {
       label: "Standard Deviation",
-      value: overview.standardDeviation > 0 ? `±${overview.standardDeviation.toFixed(2)}` : "—",
+      value:
+        overview.standardDeviation > 0
+          ? `±${overview.standardDeviation.toFixed(2)}`
+          : "—",
       subtext: "Rating variance",
       icon: IconChartDots,
       iconColor: "text-purple-500",
@@ -126,7 +132,7 @@ export function StatsOverviewCards({
               <span className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                 {card.value}
               </span>
-              <p className="mt-0.5 text-xs text-muted-foreground truncate">
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">
                 {card.subtext}
               </p>
             </div>

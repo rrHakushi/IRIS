@@ -5,8 +5,6 @@ import { NotFound } from "elysia"
 import { MusicSearchResponseSchema, type MusicSearchResponse } from "./types"
 import { NotFoundResponseSchema } from "../../../../../types"
 
-const SEARCH_MUSIC_TTL = 5 * 60 // 5 minutes
-
 export default defineRoute({
   schema: {
     query: t.Object({
@@ -30,29 +28,15 @@ export default defineRoute({
     },
   },
 
-  cacheKeys: {
-    search: {
-      music: (q: string) => `search:music:${q}`,
-    },
-  },
-
-  async GET({ query, prisma, cache, cacheKeys, logger }) {
+  async GET({ query, prisma, logger }) {
     const { q, type } = query
     const cleanQuery = decodeURIComponent(String(q || ""))
       .replace(/\+/g, " ")
       .trim()
     const filterType = type && type !== "ALL" ? type : undefined
-    const cacheKey = cacheKeys.search.music(
-      `${filterType || "ALL"}:${cleanQuery}`
-    )
 
     if (!cleanQuery || cleanQuery.length < 2) {
       return new NotFound("Query must be at least 2 characters long")
-    }
-
-    const cached = await cache.get<MusicSearchResponse>(cacheKey)
-    if (cached) {
-      return cached
     }
 
     const whereClause = {
@@ -137,11 +121,9 @@ export default defineRoute({
         explicitLyrics: item.explicitLyrics ?? null,
         queuedForFetch: true,
       }))
-      await cache.set(cacheKey, results, SEARCH_MUSIC_TTL)
       return results
     }
 
-    await cache.set(cacheKey, data, SEARCH_MUSIC_TTL)
     void mediaQueueService
       .enqueueSearchFetch(queueType, cleanQuery)
       .catch((err: Error) => {

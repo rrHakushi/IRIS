@@ -7,9 +7,7 @@ export default defineRoute({
       query: t.Optional(
         t.Object({
           folderId: t.Optional(t.String()),
-          type: t.Optional(
-            t.Union([t.Literal("LOGIN"), t.Literal("SSH_KEY")])
-          ),
+          type: t.Optional(t.Union([t.Literal("LOGIN"), t.Literal("SSH_KEY")])),
           favorite: t.Optional(t.Boolean()),
           trash: t.Optional(t.Boolean()),
         })
@@ -90,10 +88,7 @@ export default defineRoute({
         folderId: t.Optional(t.Nullable(t.String())),
         favorite: t.Optional(t.Boolean({ default: false })),
         reprompt: t.Optional(
-          t.Union([
-            t.Literal("NONE"),
-            t.Literal("REQUIRE_MASTER_PASSWORD"),
-          ])
+          t.Union([t.Literal("NONE"), t.Literal("REQUIRE_MASTER_PASSWORD")])
         ),
       }),
       response: {

@@ -2,13 +2,18 @@ import { defineRoute, t } from "@/router"
 import { NotFound } from "elysia"
 import { NotFoundResponseSchema } from "../../../../../types"
 import {
-  DiscoverResponseSchema,
-  type DiscoverResponse,
+  DiscoverPaginatedResponseSchema,
+  DiscoverQuerySchema,
   type DiscoverItem,
-  type DiscoverGenre,
+  type DiscoverPaginatedResponse,
 } from "./types"
+import {
+  findMatchingSynonymIds,
+  findMatchingAlternativeNameIds,
+  type MediaSearchTable,
+} from "../../helpers/search-synonyms"
 
-const DISCOVER_CACHE_TTL = 15 * 60 // 15 minutes
+const DISCOVER_CACHE_TTL = 5 * 60 // 5 minutes
 
 const MediaParamSchema = t.Union([
   t.Literal("anime"),
@@ -18,26 +23,24 @@ const MediaParamSchema = t.Union([
   t.Literal("games"),
   t.Literal("books"),
   t.Literal("music"),
+  t.Literal("characters"),
+  t.Literal("staff"),
+  t.Literal("people"),
+  t.Literal("studios"),
 ])
 
-function getCurrentSeason(): "WINTER" | "SPRING" | "SUMMER" | "FALL" {
-  const month = new Date().getMonth() + 1
-  if (month <= 3) return "WINTER"
-  if (month <= 6) return "SPRING"
-  if (month <= 9) return "SUMMER"
-  return "FALL"
+function parseCommaSeparated(val?: unknown): string[] {
+  if (!val || typeof val !== "string") return []
+  return val
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
 }
 
-function sampleRandom<T>(items: T[], count: number): T[] {
-  if (items.length <= count) return items
-  const copy = [...items]
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    const temp = copy[i]!
-    copy[i] = copy[j]!
-    copy[j] = temp
-  }
-  return copy.slice(0, count)
+function parseYears(val?: unknown): number[] {
+  return parseCommaSeparated(val)
+    .map((s) => parseInt(s, 10))
+    .filter((n) => !isNaN(n))
 }
 
 export default defineRoute({
@@ -45,122 +48,186 @@ export default defineRoute({
     params: t.Object({
       media: MediaParamSchema,
     }),
-    query: t.Object({
-      genre: t.Optional(
-        t.String({
-          description: "Optional genre filter",
-        })
-      ),
-    }),
+    query: DiscoverQuerySchema,
     response: {
-      200: DiscoverResponseSchema,
+      200: DiscoverPaginatedResponseSchema,
       404: NotFoundResponseSchema,
     },
     detail: {
-      summary: "Discover media",
+      summary: "Discover paginated media with multi-filters and search",
       description:
-        "Fetches curated discover sections, hero spotlight, and genres for a given media type using local community stats.",
+        "Fetches infinitely scrollable media records with cursor pagination, multi-select filtering (genres, formats, statuses, years), search with synonym matching, and sorting.",
       tags: ["Media - Discover"],
     },
   },
 
   cacheKeys: {
     discover: {
-      media: (media: string, genre?: string) =>
-        `discover:${media}:${genre ? encodeURIComponent(genre) : "all"}`,
+      items: (media: string, queryStr: string) =>
+        `discover:${media}:items:${queryStr}`,
     },
   },
 
   async GET({ params, query, prisma, cache, cacheKeys }) {
     const media = params.media as
-      "anime" | "manga" | "movies" | "tv" | "games" | "books" | "music"
-    const rawGenre = typeof query.genre === "string" ? query.genre : undefined
-    const genre = rawGenre?.trim() || undefined
-    const cacheKey = cacheKeys.discover.media(media, genre)
+      | "anime"
+      | "manga"
+      | "movies"
+      | "tv"
+      | "games"
+      | "books"
+      | "music"
+      | "characters"
+      | "staff"
+      | "people"
+      | "studios"
 
-    const cached = await cache.get<DiscoverResponse>(cacheKey)
+    const limit = Number(query?.limit ?? 30)
+    const cursor = query?.cursor
+      ? parseInt(String(query.cursor), 10)
+      : undefined
+    const cleanCursor =
+      typeof cursor === "number" && !isNaN(cursor) && cursor > 0
+        ? cursor
+        : undefined
+
+    const statuses = parseCommaSeparated(query?.status).sort()
+    const formats = parseCommaSeparated(query?.mediaFormat).sort()
+    const genres = parseCommaSeparated(query?.genres).sort()
+    const years = parseYears(query?.year).sort((a, b) => a - b)
+    const seasons = parseCommaSeparated(query?.seasonSeason).sort()
+    const artists = parseCommaSeparated(query?.artist).sort()
+    const sortBy = (query?.sortBy ?? "popularity") as string
+    const order = (query?.order ?? "desc") as "asc" | "desc"
+    const rawSearch = query?.q ? String(query.q).trim() : ""
+
+    const queryKeyStr = JSON.stringify({
+      cursor: cleanCursor,
+      limit,
+      statuses,
+      formats,
+      genres,
+      years,
+      seasons,
+      artists,
+      sortBy,
+      order,
+      q: rawSearch,
+    })
+
+    const cacheKey = cacheKeys.discover.items(media, queryKeyStr)
+    const cached = await cache.get<DiscoverPaginatedResponse>(cacheKey)
     if (cached) {
       return cached
     }
 
-    const currentYear = new Date().getFullYear()
-    const currentSeason = getCurrentSeason()
-    const genreFilter = genre
-      ? {
-          genres: {
-            some: {
-              name: { equals: genre, mode: "insensitive" as const },
-            },
-          },
-        }
-      : {}
+    let items: DiscoverItem[] = []
+    let total = 0
+    let nextCursor: number | null = null
+    let hasMore = false
 
-    let response: DiscoverResponse
+    // Common search filter builder for title & synonyms
+    const buildSearchWhere = async (table: MediaSearchTable, q: string) => {
+      if (!q) return {}
+      const synonymIds = await findMatchingSynonymIds(prisma, table, q, 100)
+      if (table === "Book") {
+        return {
+          OR: [
+            { titlePrimary: { contains: q, mode: "insensitive" as const } },
+            { titleSecondary: { contains: q, mode: "insensitive" as const } },
+            { subtitle: { contains: q, mode: "insensitive" as const } },
+            ...(synonymIds.length > 0 ? [{ id: { in: synonymIds } }] : []),
+          ],
+        }
+      }
+      return {
+        OR: [
+          { titlePrimary: { contains: q, mode: "insensitive" as const } },
+          { titleSecondary: { contains: q, mode: "insensitive" as const } },
+          { titleNative: { contains: q, mode: "insensitive" as const } },
+          ...(synonymIds.length > 0 ? [{ id: { in: synonymIds } }] : []),
+        ],
+      }
+    }
 
     switch (media) {
       case "anime": {
-        const [
-          heroItems,
-          thisSeason,
-          topRated,
-          popular,
-          nextSeason,
-          genreRecords,
-        ] = await Promise.all([
+        const searchWhere = await buildSearchWhere("Anime", rawSearch)
+        const andFilters: any[] = []
+
+        if (Object.keys(searchWhere).length > 0) {
+          andFilters.push(searchWhere)
+        }
+        if (statuses.length > 0) {
+          andFilters.push({ status: { in: statuses } })
+        }
+        if (formats.length > 0) {
+          andFilters.push({ format: { in: formats } })
+        }
+        if (years.length > 0) {
+          andFilters.push({
+            OR: [
+              { seasonYear: { in: years } },
+              { startDateYear: { in: years } },
+            ],
+          })
+        }
+        if (seasons.length > 0) {
+          andFilters.push({ seasonSeason: { in: seasons } })
+        }
+        if (genres.length > 0) {
+          for (const g of genres) {
+            andFilters.push({
+              genres: {
+                some: {
+                  name: { equals: g, mode: "insensitive" as const },
+                },
+              },
+            })
+          }
+        }
+
+        const where: any = andFilters.length > 0 ? { AND: andFilters } : {}
+
+        let orderBy: any[] = []
+        if (sortBy === "popularity") {
+          orderBy = [{ popularity: order }, { id: "desc" }]
+        } else if (sortBy === "score") {
+          orderBy = [
+            { averageScore: { sort: order, nulls: "last" } },
+            { popularity: "desc" },
+          ]
+        } else if (sortBy === "favorites") {
+          orderBy = [{ favorites: order }, { popularity: "desc" }]
+        } else if (sortBy === "title") {
+          orderBy = [{ titlePrimary: order }, { id: "asc" }]
+        } else if (sortBy === "releaseDate") {
+          orderBy = [
+            { seasonYear: { sort: order, nulls: "last" } },
+            { startDateMonth: { sort: order, nulls: "last" } },
+            { id: "desc" },
+          ]
+        } else {
+          orderBy = [{ updatedAt: order }, { id: "desc" }]
+        }
+
+        const [records, count] = await Promise.all([
           prisma.anime.findMany({
-            where: {
-              ...genreFilter,
-              coverImage: { not: null },
-            },
-            orderBy: [{ popularity: "desc" }, { averageScore: "desc" }],
-            take: 25,
+            where,
+            orderBy,
+            take: limit + 1,
+            ...(cleanCursor ? { cursor: { id: cleanCursor }, skip: 1 } : {}),
             include: { genres: { select: { name: true } } },
           }),
-          prisma.anime.findMany({
-            where: {
-              ...genreFilter,
-              OR: [
-                { seasonYear: currentYear, seasonSeason: currentSeason },
-                { status: "RELEASING" },
-              ],
-            },
-            orderBy: [{ popularity: "desc" }, { favorites: "desc" }],
-            take: 18,
-            include: { genres: { select: { name: true } } },
-          }),
-          prisma.anime.findMany({
-            where: {
-              ...genreFilter,
-              averageScore: { not: null, gt: 0 },
-            },
-            orderBy: [{ averageScore: "desc" }, { popularity: "desc" }],
-            take: 18,
-            include: { genres: { select: { name: true } } },
-          }),
-          prisma.anime.findMany({
-            where: genreFilter,
-            orderBy: [{ popularity: "desc" }, { favorites: "desc" }],
-            take: 18,
-            include: { genres: { select: { name: true } } },
-          }),
-          prisma.anime.findMany({
-            where: {
-              ...genreFilter,
-              status: "NOT_YET_RELEASED",
-            },
-            orderBy: [{ popularity: "desc" }, { favorites: "desc" }],
-            take: 18,
-            include: { genres: { select: { name: true } } },
-          }),
-          prisma.genre.findMany({
-            where: { anime: { some: {} } },
-            select: { id: true, name: true },
-            orderBy: { name: "asc" },
-            take: 25,
-          }),
+          prisma.anime.count({ where }),
         ])
 
-        const mapAnime = (item: any): DiscoverItem => ({
+        total = count
+        hasMore = records.length > limit
+        const paged = hasMore ? records.slice(0, limit) : records
+        nextCursor = paged.length > 0 ? paged[paged.length - 1]!.id : null
+
+        items = paged.map((item) => ({
           id: item.id,
           titlePrimary: item.titlePrimary,
           titleSecondary: item.titleSecondary,
@@ -172,106 +239,83 @@ export default defineRoute({
           averageScore: item.averageScore,
           popularity: item.popularity,
           favorites: item.favorites,
-          genres: (item.genres || []).map((g: any) => g.name),
+          genres: (item.genres || []).map((g) => g.name),
           releaseYear: item.seasonYear || item.startDateYear,
           seasonSeason: item.seasonSeason,
           status: item.status,
           isAdult: item.isAdult,
-        })
-
-        const hero = sampleRandom(heroItems, 6).map(mapAnime)
-        const sections = [
-          {
-            id: "this-season",
-            title: `Trending This Season (${currentSeason} ${currentYear})`,
-            items: thisSeason.map(mapAnime),
-          },
-          {
-            id: "top-rated",
-            title: "Top Rated of All Time",
-            items: topRated.map(mapAnime),
-          },
-          {
-            id: "popular",
-            title: "All-Time Popular",
-            items: popular.map(mapAnime),
-          },
-          {
-            id: "upcoming",
-            title: "Upcoming Releases",
-            items: nextSeason.map(mapAnime),
-          },
-        ]
-
-        response = {
-          media: "anime",
-          hero,
-          sections: sections.filter((s) => s.items.length > 0),
-          genres: genreRecords,
-        }
+        }))
         break
       }
 
       case "manga": {
-        const [
-          heroItems,
-          trending,
-          topRated,
-          popular,
-          lightNovels,
-          genreRecords,
-        ] = await Promise.all([
+        const searchWhere = await buildSearchWhere("Manga", rawSearch)
+        const andFilters: any[] = []
+
+        if (Object.keys(searchWhere).length > 0) {
+          andFilters.push(searchWhere)
+        }
+        if (statuses.length > 0) {
+          andFilters.push({ status: { in: statuses } })
+        }
+        if (formats.length > 0) {
+          andFilters.push({ format: { in: formats } })
+        }
+        if (years.length > 0) {
+          andFilters.push({ startDateYear: { in: years } })
+        }
+        if (genres.length > 0) {
+          for (const g of genres) {
+            andFilters.push({
+              genres: {
+                some: {
+                  name: { equals: g, mode: "insensitive" as const },
+                },
+              },
+            })
+          }
+        }
+
+        const where: any = andFilters.length > 0 ? { AND: andFilters } : {}
+
+        let orderBy: any[] = []
+        if (sortBy === "popularity") {
+          orderBy = [{ popularity: order }, { id: "desc" }]
+        } else if (sortBy === "score") {
+          orderBy = [
+            { averageScore: { sort: order, nulls: "last" } },
+            { popularity: "desc" },
+          ]
+        } else if (sortBy === "favorites") {
+          orderBy = [{ favorites: order }, { popularity: "desc" }]
+        } else if (sortBy === "title") {
+          orderBy = [{ titlePrimary: order }, { id: "asc" }]
+        } else if (sortBy === "releaseDate") {
+          orderBy = [
+            { startDateYear: { sort: order, nulls: "last" } },
+            { id: "desc" },
+          ]
+        } else {
+          orderBy = [{ updatedAt: order }, { id: "desc" }]
+        }
+
+        const [records, count] = await Promise.all([
           prisma.manga.findMany({
-            where: {
-              ...genreFilter,
-              coverImage: { not: null },
-            },
-            orderBy: [{ popularity: "desc" }, { averageScore: "desc" }],
-            take: 25,
+            where,
+            orderBy,
+            take: limit + 1,
+            ...(cleanCursor ? { cursor: { id: cleanCursor }, skip: 1 } : {}),
             include: { genres: { select: { name: true } } },
           }),
-          prisma.manga.findMany({
-            where: {
-              ...genreFilter,
-              status: "RELEASING",
-            },
-            orderBy: [{ popularity: "desc" }, { favorites: "desc" }],
-            take: 18,
-            include: { genres: { select: { name: true } } },
-          }),
-          prisma.manga.findMany({
-            where: {
-              ...genreFilter,
-              averageScore: { not: null, gt: 0 },
-            },
-            orderBy: [{ averageScore: "desc" }, { popularity: "desc" }],
-            take: 18,
-            include: { genres: { select: { name: true } } },
-          }),
-          prisma.manga.findMany({
-            where: genreFilter,
-            orderBy: [{ popularity: "desc" }, { favorites: "desc" }],
-            take: 18,
-            include: { genres: { select: { name: true } } },
-          }),
-          prisma.manga.findMany({
-            where: {
-              ...genreFilter,
-              format: "LIGHT_NOVEL",
-            },
-            orderBy: [{ popularity: "desc" }, { favorites: "desc" }],
-            take: 18,
-            include: { genres: { select: { name: true } } },
-          }),
-          prisma.genre.findMany({
-            where: { manga: { some: {} } },
-            select: { id: true, name: true },
-            orderBy: { name: "asc" },
-            take: 25,
-          }),
+          prisma.manga.count({ where }),
         ])
 
-        const mapManga = (item: any): DiscoverItem => ({
+        total = count
+        hasMore = records.length > limit
+        const paged = hasMore ? records.slice(0, limit) : records
+        nextCursor = paged.length > 0 ? paged[paged.length - 1]!.id : null
+
+        items = paged.map((item) => ({
           id: item.id,
           titlePrimary: item.titlePrimary,
           titleSecondary: item.titleSecondary,
@@ -283,88 +327,83 @@ export default defineRoute({
           averageScore: item.averageScore,
           popularity: item.popularity,
           favorites: item.favorites,
-          genres: (item.genres || []).map((g: any) => g.name),
+          genres: (item.genres || []).map((g) => g.name),
           releaseYear: item.startDateYear,
           seasonSeason: null,
           status: item.status,
           isAdult: false,
-        })
-
-        response = {
-          media: "manga",
-          hero: sampleRandom(heroItems, 6).map(mapManga),
-          sections: [
-            {
-              id: "trending-manga",
-              title: "Trending Manga",
-              items: trending.map(mapManga),
-            },
-            {
-              id: "top-rated-manga",
-              title: "Top Rated Manga",
-              items: topRated.map(mapManga),
-            },
-            {
-              id: "popular-manga",
-              title: "All-Time Popular",
-              items: popular.map(mapManga),
-            },
-            {
-              id: "light-novels",
-              title: "Popular Light Novels",
-              items: lightNovels.map(mapManga),
-            },
-          ].filter((s) => s.items.length > 0),
-          genres: genreRecords,
-        }
+        }))
         break
       }
 
       case "movies": {
-        const [heroItems, trending, topRated, recent, genreRecords] =
-          await Promise.all([
-            prisma.movie.findMany({
-              where: {
-                ...genreFilter,
-                coverImage: { not: null },
-              },
-              orderBy: [{ popularity: "desc" }, { averageScore: "desc" }],
-              take: 25,
-              include: { genres: { select: { name: true } } },
-            }),
-            prisma.movie.findMany({
-              where: genreFilter,
-              orderBy: [{ popularity: "desc" }, { favorites: "desc" }],
-              take: 18,
-              include: { genres: { select: { name: true } } },
-            }),
-            prisma.movie.findMany({
-              where: {
-                ...genreFilter,
-                averageScore: { not: null, gt: 0 },
-              },
-              orderBy: [{ averageScore: "desc" }, { popularity: "desc" }],
-              take: 18,
-              include: { genres: { select: { name: true } } },
-            }),
-            prisma.movie.findMany({
-              where: {
-                ...genreFilter,
-                releaseDateYear: { gte: currentYear - 1 },
-              },
-              orderBy: [{ popularity: "desc" }, { favorites: "desc" }],
-              take: 18,
-              include: { genres: { select: { name: true } } },
-            }),
-            prisma.genre.findMany({
-              where: { movies: { some: {} } },
-              select: { id: true, name: true },
-              orderBy: { name: "asc" },
-              take: 25,
-            }),
-          ])
+        const searchWhere = await buildSearchWhere("Movie", rawSearch)
+        const andFilters: any[] = []
 
-        const mapMovie = (item: any): DiscoverItem => ({
+        if (Object.keys(searchWhere).length > 0) {
+          andFilters.push(searchWhere)
+        }
+        if (statuses.length > 0) {
+          andFilters.push({ status: { in: statuses } })
+        }
+        if (formats.length > 0) {
+          andFilters.push({ format: { in: formats } })
+        }
+        if (years.length > 0) {
+          andFilters.push({ releaseDateYear: { in: years } })
+        }
+        if (genres.length > 0) {
+          for (const g of genres) {
+            andFilters.push({
+              genres: {
+                some: {
+                  name: { equals: g, mode: "insensitive" as const },
+                },
+              },
+            })
+          }
+        }
+
+        const where: any = andFilters.length > 0 ? { AND: andFilters } : {}
+
+        let orderBy: any[] = []
+        if (sortBy === "popularity") {
+          orderBy = [{ popularity: order }, { id: "desc" }]
+        } else if (sortBy === "score") {
+          orderBy = [
+            { averageScore: { sort: order, nulls: "last" } },
+            { popularity: "desc" },
+          ]
+        } else if (sortBy === "favorites") {
+          orderBy = [{ favorites: order }, { popularity: "desc" }]
+        } else if (sortBy === "title") {
+          orderBy = [{ titlePrimary: order }, { id: "asc" }]
+        } else if (sortBy === "releaseDate") {
+          orderBy = [
+            { releaseDateYear: { sort: order, nulls: "last" } },
+            { id: "desc" },
+          ]
+        } else {
+          orderBy = [{ updatedAt: order }, { id: "desc" }]
+        }
+
+        const [records, count] = await Promise.all([
+          prisma.movie.findMany({
+            where,
+            orderBy,
+            take: limit + 1,
+            ...(cleanCursor ? { cursor: { id: cleanCursor }, skip: 1 } : {}),
+            include: { genres: { select: { name: true } } },
+          }),
+          prisma.movie.count({ where }),
+        ])
+
+        total = count
+        hasMore = records.length > limit
+        const paged = hasMore ? records.slice(0, limit) : records
+        nextCursor = paged.length > 0 ? paged[paged.length - 1]!.id : null
+
+        items = paged.map((item) => ({
           id: item.id,
           titlePrimary: item.titlePrimary,
           titleSecondary: item.titleSecondary,
@@ -376,83 +415,83 @@ export default defineRoute({
           averageScore: item.averageScore,
           popularity: item.popularity,
           favorites: item.favorites,
-          genres: (item.genres || []).map((g: any) => g.name),
+          genres: (item.genres || []).map((g) => g.name),
           releaseYear: item.releaseDateYear,
           seasonSeason: null,
           status: item.status,
           isAdult: item.isAdult,
-        })
-
-        response = {
-          media: "movies",
-          hero: sampleRandom(heroItems, 6).map(mapMovie),
-          sections: [
-            {
-              id: "trending-movies",
-              title: "Trending Movies",
-              items: trending.map(mapMovie),
-            },
-            {
-              id: "recent-movies",
-              title: "New & Recent Releases",
-              items: recent.map(mapMovie),
-            },
-            {
-              id: "top-rated-movies",
-              title: "Top Rated Movies",
-              items: topRated.map(mapMovie),
-            },
-          ].filter((s) => s.items.length > 0),
-          genres: genreRecords,
-        }
+        }))
         break
       }
 
       case "tv": {
-        const [heroItems, trending, topRated, returningSeries, genreRecords] =
-          await Promise.all([
-            prisma.tv.findMany({
-              where: {
-                ...genreFilter,
-                coverImage: { not: null },
-              },
-              orderBy: [{ popularity: "desc" }, { averageScore: "desc" }],
-              take: 25,
-              include: { genres: { select: { name: true } } },
-            }),
-            prisma.tv.findMany({
-              where: genreFilter,
-              orderBy: [{ popularity: "desc" }, { favorites: "desc" }],
-              take: 18,
-              include: { genres: { select: { name: true } } },
-            }),
-            prisma.tv.findMany({
-              where: {
-                ...genreFilter,
-                averageScore: { not: null, gt: 0 },
-              },
-              orderBy: [{ averageScore: "desc" }, { popularity: "desc" }],
-              take: 18,
-              include: { genres: { select: { name: true } } },
-            }),
-            prisma.tv.findMany({
-              where: {
-                ...genreFilter,
-                status: "RETURNING_SERIES",
-              },
-              orderBy: [{ popularity: "desc" }, { favorites: "desc" }],
-              take: 18,
-              include: { genres: { select: { name: true } } },
-            }),
-            prisma.genre.findMany({
-              where: { tv: { some: {} } },
-              select: { id: true, name: true },
-              orderBy: { name: "asc" },
-              take: 25,
-            }),
-          ])
+        const searchWhere = await buildSearchWhere("Tv", rawSearch)
+        const andFilters: any[] = []
 
-        const mapTv = (item: any): DiscoverItem => ({
+        if (Object.keys(searchWhere).length > 0) {
+          andFilters.push(searchWhere)
+        }
+        if (statuses.length > 0) {
+          andFilters.push({ status: { in: statuses } })
+        }
+        if (formats.length > 0) {
+          andFilters.push({ format: { in: formats } })
+        }
+        if (years.length > 0) {
+          andFilters.push({ firstAiredYear: { in: years } })
+        }
+        if (genres.length > 0) {
+          for (const g of genres) {
+            andFilters.push({
+              genres: {
+                some: {
+                  name: { equals: g, mode: "insensitive" as const },
+                },
+              },
+            })
+          }
+        }
+
+        const where: any = andFilters.length > 0 ? { AND: andFilters } : {}
+
+        let orderBy: any[] = []
+        if (sortBy === "popularity") {
+          orderBy = [{ popularity: order }, { id: "desc" }]
+        } else if (sortBy === "score") {
+          orderBy = [
+            { averageScore: { sort: order, nulls: "last" } },
+            { popularity: "desc" },
+          ]
+        } else if (sortBy === "favorites") {
+          orderBy = [{ favorites: order }, { popularity: "desc" }]
+        } else if (sortBy === "title") {
+          orderBy = [{ titlePrimary: order }, { id: "asc" }]
+        } else if (sortBy === "releaseDate") {
+          orderBy = [
+            { firstAiredYear: { sort: order, nulls: "last" } },
+            { id: "desc" },
+          ]
+        } else {
+          orderBy = [{ updatedAt: order }, { id: "desc" }]
+        }
+
+        const [records, count] = await Promise.all([
+          prisma.tv.findMany({
+            where,
+            orderBy,
+            take: limit + 1,
+            ...(cleanCursor ? { cursor: { id: cleanCursor }, skip: 1 } : {}),
+            include: { genres: { select: { name: true } } },
+          }),
+          prisma.tv.count({ where }),
+        ])
+
+        total = count
+        hasMore = records.length > limit
+        const paged = hasMore ? records.slice(0, limit) : records
+        nextCursor = paged.length > 0 ? paged[paged.length - 1]!.id : null
+
+        items = paged.map((item) => ({
           id: item.id,
           titlePrimary: item.titlePrimary,
           titleSecondary: item.titleSecondary,
@@ -464,83 +503,88 @@ export default defineRoute({
           averageScore: item.averageScore,
           popularity: item.popularity,
           favorites: item.favorites,
-          genres: (item.genres || []).map((g: any) => g.name),
+          genres: (item.genres || []).map((g) => g.name),
           releaseYear: item.firstAiredYear,
           seasonSeason: null,
           status: item.status,
           isAdult: item.isAdult,
-        })
-
-        response = {
-          media: "tv",
-          hero: sampleRandom(heroItems, 6).map(mapTv),
-          sections: [
-            {
-              id: "trending-tv",
-              title: "Trending TV Shows",
-              items: trending.map(mapTv),
-            },
-            {
-              id: "airing-tv",
-              title: "Returning Series & Airing Now",
-              items: returningSeries.map(mapTv),
-            },
-            {
-              id: "top-rated-tv",
-              title: "Top Rated Shows",
-              items: topRated.map(mapTv),
-            },
-          ].filter((s) => s.items.length > 0),
-          genres: genreRecords,
-        }
+        }))
         break
       }
 
       case "games": {
-        const [heroItems, trending, topRated, recent, genreRecords] =
-          await Promise.all([
-            prisma.game.findMany({
-              where: {
-                ...genreFilter,
-                coverImage: { not: null },
-              },
-              orderBy: [{ popularity: "desc" }, { averageScore: "desc" }],
-              take: 25,
-              include: { genres: { select: { name: true } } },
-            }),
-            prisma.game.findMany({
-              where: genreFilter,
-              orderBy: [{ popularity: "desc" }, { favorites: "desc" }],
-              take: 18,
-              include: { genres: { select: { name: true } } },
-            }),
-            prisma.game.findMany({
-              where: {
-                ...genreFilter,
-                averageScore: { not: null, gt: 0 },
-              },
-              orderBy: [{ averageScore: "desc" }, { popularity: "desc" }],
-              take: 18,
-              include: { genres: { select: { name: true } } },
-            }),
-            prisma.game.findMany({
-              where: {
-                ...genreFilter,
-                releaseDateYear: { gte: currentYear - 2 },
-              },
-              orderBy: [{ popularity: "desc" }, { favorites: "desc" }],
-              take: 18,
-              include: { genres: { select: { name: true } } },
-            }),
-            prisma.genre.findMany({
-              where: { games: { some: {} } },
-              select: { id: true, name: true },
-              orderBy: { name: "asc" },
-              take: 25,
-            }),
-          ])
+        const searchWhere = await buildSearchWhere("Game", rawSearch)
+        const andFilters: any[] = []
 
-        const mapGame = (item: any): DiscoverItem => ({
+        if (Object.keys(searchWhere).length > 0) {
+          andFilters.push(searchWhere)
+        }
+        if (statuses.length > 0) {
+          andFilters.push({ status: { in: statuses } })
+        }
+        if (formats.length > 0) {
+          andFilters.push({
+            OR: [
+              { format: { in: formats } },
+              { platforms: { hasSome: formats } },
+            ],
+          })
+        }
+        if (years.length > 0) {
+          andFilters.push({ releaseDateYear: { in: years } })
+        }
+        if (genres.length > 0) {
+          for (const g of genres) {
+            andFilters.push({
+              genres: {
+                some: {
+                  name: { equals: g, mode: "insensitive" as const },
+                },
+              },
+            })
+          }
+        }
+
+        const where: any = andFilters.length > 0 ? { AND: andFilters } : {}
+
+        let orderBy: any[] = []
+        if (sortBy === "popularity") {
+          orderBy = [{ popularity: order }, { id: "desc" }]
+        } else if (sortBy === "score") {
+          orderBy = [
+            { averageScore: { sort: order, nulls: "last" } },
+            { popularity: "desc" },
+          ]
+        } else if (sortBy === "favorites") {
+          orderBy = [{ favorites: order }, { popularity: "desc" }]
+        } else if (sortBy === "title") {
+          orderBy = [{ titlePrimary: order }, { id: "asc" }]
+        } else if (sortBy === "releaseDate") {
+          orderBy = [
+            { releaseDateYear: { sort: order, nulls: "last" } },
+            { id: "desc" },
+          ]
+        } else {
+          orderBy = [{ updatedAt: order }, { id: "desc" }]
+        }
+
+        const [records, count] = await Promise.all([
+          prisma.game.findMany({
+            where,
+            orderBy,
+            take: limit + 1,
+            ...(cleanCursor ? { cursor: { id: cleanCursor }, skip: 1 } : {}),
+            include: { genres: { select: { name: true } } },
+          }),
+          prisma.game.count({ where }),
+        ])
+
+        total = count
+        hasMore = records.length > limit
+        const paged = hasMore ? records.slice(0, limit) : records
+        nextCursor = paged.length > 0 ? paged[paged.length - 1]!.id : null
+
+        items = paged.map((item) => ({
           id: item.id,
           titlePrimary: item.titlePrimary,
           titleSecondary: item.titleSecondary,
@@ -551,92 +595,89 @@ export default defineRoute({
           description: item.description,
           format:
             item.platforms && item.platforms.length > 0
-              ? item.platforms[0]
+              ? (item.platforms[0] ?? null)
               : "GAME",
           averageScore: item.averageScore,
           popularity: item.popularity,
           favorites: item.favorites,
-          genres: (item.genres || []).map((g: any) => g.name),
+          genres: (item.genres || []).map((g) => g.name),
           releaseYear: item.releaseDateYear,
           seasonSeason: null,
           status: item.status,
           isAdult: item.isAdult,
-        })
-
-        response = {
-          media: "games",
-          hero: sampleRandom(heroItems, 6).map(mapGame),
-          sections: [
-            {
-              id: "trending-games",
-              title: "Trending Games",
-              items: trending.map(mapGame),
-            },
-            {
-              id: "recent-games",
-              title: "Recent Releases",
-              items: recent.map(mapGame),
-            },
-            {
-              id: "top-rated-games",
-              title: "Top Rated of All Time",
-              items: topRated.map(mapGame),
-            },
-          ].filter((s) => s.items.length > 0),
-          genres: genreRecords,
-        }
+        }))
         break
       }
 
       case "books": {
-        const [heroItems, trending, topRated, recent, genreRecords] =
-          await Promise.all([
-            prisma.book.findMany({
-              where: {
-                ...genreFilter,
-                coverImage: { not: null },
-              },
-              orderBy: [{ popularity: "desc" }, { averageScore: "desc" }],
-              take: 25,
-              include: { genres: { select: { name: true } } },
-            }),
-            prisma.book.findMany({
-              where: genreFilter,
-              orderBy: [{ popularity: "desc" }, { favorites: "desc" }],
-              take: 18,
-              include: { genres: { select: { name: true } } },
-            }),
-            prisma.book.findMany({
-              where: {
-                ...genreFilter,
-                averageScore: { not: null, gt: 0 },
-              },
-              orderBy: [{ averageScore: "desc" }, { popularity: "desc" }],
-              take: 18,
-              include: { genres: { select: { name: true } } },
-            }),
-            prisma.book.findMany({
-              where: {
-                ...genreFilter,
-                releaseDateYear: { gte: currentYear - 3 },
-              },
-              orderBy: [{ popularity: "desc" }, { favorites: "desc" }],
-              take: 18,
-              include: { genres: { select: { name: true } } },
-            }),
-            prisma.genre.findMany({
-              where: { books: { some: {} } },
-              select: { id: true, name: true },
-              orderBy: { name: "asc" },
-              take: 25,
-            }),
-          ])
+        const searchWhere = await buildSearchWhere("Book", rawSearch)
+        const andFilters: any[] = []
 
-        const mapBook = (item: any): DiscoverItem => ({
+        if (Object.keys(searchWhere).length > 0) {
+          andFilters.push(searchWhere)
+        }
+        if (formats.length > 0) {
+          andFilters.push({ format: { in: formats } })
+        }
+        if (years.length > 0) {
+          andFilters.push({ releaseDateYear: { in: years } })
+        }
+        if (genres.length > 0) {
+          for (const g of genres) {
+            andFilters.push({
+              genres: {
+                some: {
+                  name: { equals: g, mode: "insensitive" as const },
+                },
+              },
+            })
+          }
+        }
+
+        const where: any = andFilters.length > 0 ? { AND: andFilters } : {}
+
+        let orderBy: any[] = []
+        if (sortBy === "popularity") {
+          orderBy = [{ popularity: order }, { id: "desc" }]
+        } else if (sortBy === "score") {
+          orderBy = [
+            { averageScore: { sort: order, nulls: "last" } },
+            { popularity: "desc" },
+          ]
+        } else if (sortBy === "favorites") {
+          orderBy = [{ favorites: order }, { popularity: "desc" }]
+        } else if (sortBy === "title") {
+          orderBy = [{ titlePrimary: order }, { id: "asc" }]
+        } else if (sortBy === "releaseDate") {
+          orderBy = [
+            { releaseDateYear: { sort: order, nulls: "last" } },
+            { id: "desc" },
+          ]
+        } else {
+          orderBy = [{ updatedAt: order }, { id: "desc" }]
+        }
+
+        const [records, count] = await Promise.all([
+          prisma.book.findMany({
+            where,
+            orderBy,
+            take: limit + 1,
+            ...(cleanCursor ? { cursor: { id: cleanCursor }, skip: 1 } : {}),
+            include: { genres: { select: { name: true } } },
+          }),
+          prisma.book.count({ where }),
+        ])
+
+        total = count
+        hasMore = records.length > limit
+        const paged = hasMore ? records.slice(0, limit) : records
+        nextCursor = paged.length > 0 ? paged[paged.length - 1]!.id : null
+
+        items = paged.map((item) => ({
           id: item.id,
           titlePrimary: item.titlePrimary,
           titleSecondary: item.titleSecondary,
-          titleNative: item.titleNative,
+          titleNative: null,
           coverImage: item.coverImage,
           bannerImage: item.bannerImage || item.coverImage,
           description: item.description,
@@ -644,80 +685,102 @@ export default defineRoute({
           averageScore: item.averageScore,
           popularity: item.popularity,
           favorites: item.favorites,
-          genres: (item.genres || []).map((g: any) => g.name),
+          genres: (item.genres || []).map((g) => g.name),
           releaseYear: item.releaseDateYear,
           seasonSeason: null,
-          status: item.status,
+          status: null,
           isAdult: item.isAdult,
-        })
-
-        response = {
-          media: "books",
-          hero: sampleRandom(heroItems, 6).map(mapBook),
-          sections: [
-            {
-              id: "trending-books",
-              title: "Trending Books",
-              items: trending.map(mapBook),
-            },
-            {
-              id: "top-rated-books",
-              title: "Top Rated Books",
-              items: topRated.map(mapBook),
-            },
-            {
-              id: "recent-books",
-              title: "Recent Releases",
-              items: recent.map(mapBook),
-            },
-          ].filter((s) => s.items.length > 0),
-          genres: genreRecords,
-        }
+        }))
         break
       }
 
       case "music": {
-        const [
-          heroItems,
-          trendingTracks,
-          trendingAlbums,
-          topRanked,
-          genreRecords,
-        ] = await Promise.all([
+        const andFilters: any[] = []
+
+        if (rawSearch) {
+          andFilters.push({
+            OR: [
+              {
+                titlePrimary: {
+                  contains: rawSearch,
+                  mode: "insensitive" as const,
+                },
+              },
+              {
+                titleSecondary: {
+                  contains: rawSearch,
+                  mode: "insensitive" as const,
+                },
+              },
+              {
+                artistName: {
+                  contains: rawSearch,
+                  mode: "insensitive" as const,
+                },
+              },
+            ],
+          })
+        }
+        if (formats.length > 0) {
+          andFilters.push({ type: { in: formats } })
+        }
+        if (years.length > 0) {
+          andFilters.push({ releaseDateYear: { in: years } })
+        }
+        if (artists.length > 0) {
+          andFilters.push({
+            OR: artists.map((a) => ({
+              artistName: { equals: a, mode: "insensitive" as const },
+            })),
+          })
+        }
+        if (genres.length > 0) {
+          for (const g of genres) {
+            andFilters.push({
+              genres: {
+                some: {
+                  name: { equals: g, mode: "insensitive" as const },
+                },
+              },
+            })
+          }
+        }
+
+        const where: any = andFilters.length > 0 ? { AND: andFilters } : {}
+
+        let orderBy: any[] = []
+        if (sortBy === "popularity") {
+          orderBy = [{ popularity: order }, { id: "desc" }]
+        } else if (sortBy === "favorites") {
+          orderBy = [{ favorites: order }, { popularity: "desc" }]
+        } else if (sortBy === "title") {
+          orderBy = [{ titlePrimary: order }, { id: "asc" }]
+        } else if (sortBy === "releaseDate") {
+          orderBy = [
+            { releaseDateYear: { sort: order, nulls: "last" } },
+            { id: "desc" },
+          ]
+        } else {
+          orderBy = [{ updatedAt: order }, { id: "desc" }]
+        }
+
+        const [records, count] = await Promise.all([
           prisma.music.findMany({
-            where: {
-              coverImage: { not: null },
-            },
-            orderBy: [{ popularity: "desc" }, { favorites: "desc" }],
-            take: 25,
+            where,
+            orderBy,
+            take: limit + 1,
+            ...(cleanCursor ? { cursor: { id: cleanCursor }, skip: 1 } : {}),
             include: { genres: { select: { name: true } } },
           }),
-          prisma.music.findMany({
-            where: { type: "TRACK" },
-            orderBy: [{ popularity: "desc" }, { playCount: "desc" }],
-            take: 18,
-            include: { genres: { select: { name: true } } },
-          }),
-          prisma.music.findMany({
-            where: { type: "ALBUM" },
-            orderBy: [{ popularity: "desc" }, { playCount: "desc" }],
-            take: 18,
-            include: { genres: { select: { name: true } } },
-          }),
-          prisma.music.findMany({
-            orderBy: [{ popularity: "desc" }, { rank: "desc" }],
-            take: 18,
-            include: { genres: { select: { name: true } } },
-          }),
-          prisma.genre.findMany({
-            where: { music: { some: {} } },
-            select: { id: true, name: true },
-            orderBy: { name: "asc" },
-            take: 25,
-          }),
+          prisma.music.count({ where }),
         ])
 
-        const mapMusic = (item: any): DiscoverItem => ({
+        total = count
+        hasMore = records.length > limit
+        const paged = hasMore ? records.slice(0, limit) : records
+        nextCursor = paged.length > 0 ? paged[paged.length - 1]!.id : null
+
+        items = paged.map((item) => ({
           id: item.id,
           titlePrimary: item.titlePrimary,
           titleSecondary: item.titleSecondary,
@@ -729,44 +792,330 @@ export default defineRoute({
           averageScore: null,
           popularity: item.popularity,
           favorites: item.favorites,
-          genres: (item.genres || []).map((g: any) => g.name),
+          genres: (item.genres || []).map((g) => g.name),
           releaseYear: item.releaseDateYear,
           seasonSeason: null,
-          status: item.status,
+          status: null,
           isAdult: item.explicitLyrics,
           artistName: item.artistName,
           duration: item.duration,
           itemType: item.type,
           audioPreviewUrl: item.audioPreviewUrl,
-        })
+        }))
+        break
+      }
 
-        response = {
-          media: "music",
-          hero: sampleRandom(heroItems, 6).map(mapMusic),
-          sections: [
-            {
-              id: "trending-tracks",
-              title: "Trending Tracks",
-              items: trendingTracks.map(mapMusic),
-            },
-            {
-              id: "trending-albums",
-              title: "Trending Albums",
-              items: trendingAlbums.map(mapMusic),
-            },
-            {
-              id: "chart-toppers",
-              title: "Chart Toppers",
-              items: topRanked.map(mapMusic),
-            },
-          ].filter((s) => s.items.length > 0),
-          genres: genreRecords,
+      case "characters": {
+        const andFilters: any[] = []
+
+        if (rawSearch) {
+          const altIds = await findMatchingAlternativeNameIds(
+            prisma,
+            "Character",
+            rawSearch,
+            100
+          )
+          andFilters.push({
+            OR: [
+              {
+                namePrimary: {
+                  contains: rawSearch,
+                  mode: "insensitive" as const,
+                },
+              },
+              {
+                nameNative: {
+                  contains: rawSearch,
+                  mode: "insensitive" as const,
+                },
+              },
+              ...(altIds.length > 0 ? [{ id: { in: altIds } }] : []),
+            ],
+          })
         }
+
+        if (formats.length > 0) {
+          andFilters.push({
+            OR: formats.map((f) => ({
+              gender: { equals: f, mode: "insensitive" as const },
+            })),
+          })
+        }
+
+        if (years.length > 0) {
+          andFilters.push({ dateOfBirthYear: { in: years } })
+        }
+
+        if (genres.length > 0) {
+          for (const g of genres) {
+            const upper = g.toUpperCase()
+            if (upper === "ANIME") {
+              andFilters.push({
+                mediaCharacters: { some: { mediaType: "ANIME" } },
+              })
+            } else if (upper === "MANGA") {
+              andFilters.push({
+                mediaCharacters: { some: { mediaType: "MANGA" } },
+              })
+            } else if (upper === "MOVIE" || upper === "MOVIES") {
+              andFilters.push({
+                mediaCharacters: { some: { mediaType: "MOVIE" } },
+              })
+            } else if (upper === "TV" || upper === "TV SHOWS") {
+              andFilters.push({
+                mediaCharacters: { some: { mediaType: "TV" } },
+              })
+            } else if (upper === "BOOK" || upper === "BOOKS") {
+              andFilters.push({
+                mediaCharacters: { some: { mediaType: "BOOK" } },
+              })
+            }
+          }
+        }
+
+        const where: any = andFilters.length > 0 ? { AND: andFilters } : {}
+
+        let orderBy: any[] = []
+        if (sortBy === "title") {
+          orderBy = [{ namePrimary: order }, { id: "asc" }]
+        } else if (sortBy === "favorites" || sortBy === "popularity") {
+          orderBy = [
+            { favorites: { sort: order, nulls: "last" } },
+            { id: "desc" },
+          ]
+        } else {
+          orderBy = [{ id: order }]
+        }
+
+        const [records, count] = await Promise.all([
+          prisma.character.findMany({
+            where,
+            orderBy,
+            take: limit + 1,
+            ...(cleanCursor ? { cursor: { id: cleanCursor }, skip: 1 } : {}),
+          }),
+          prisma.character.count({ where }),
+        ])
+
+        total = count
+        hasMore = records.length > limit
+        const paged = hasMore ? records.slice(0, limit) : records
+        nextCursor = paged.length > 0 ? paged[paged.length - 1]!.id : null
+
+        items = paged.map((item) => ({
+          id: item.id,
+          titlePrimary: item.namePrimary,
+          titleSecondary:
+            item.nameAlternative && item.nameAlternative.length > 0
+              ? (item.nameAlternative[0] ?? null)
+              : null,
+          titleNative: item.nameNative,
+          coverImage: item.image,
+          bannerImage: null,
+          description: item.description ?? null,
+          format: item.gender ? item.gender.toUpperCase() : "CHARACTER",
+          averageScore: null,
+          popularity: item.favorites,
+          favorites: item.favorites,
+          genres: [],
+          releaseYear: item.dateOfBirthYear,
+          seasonSeason: null,
+          status: null,
+          isAdult: false,
+        }))
+        break
+      }
+
+      case "staff":
+      case "people": {
+        const andFilters: any[] = []
+
+        if (rawSearch) {
+          const altIds = await findMatchingAlternativeNameIds(
+            prisma,
+            "Person",
+            rawSearch,
+            100
+          )
+          andFilters.push({
+            OR: [
+              {
+                namePrimary: {
+                  contains: rawSearch,
+                  mode: "insensitive" as const,
+                },
+              },
+              {
+                nameNative: {
+                  contains: rawSearch,
+                  mode: "insensitive" as const,
+                },
+              },
+              ...(altIds.length > 0 ? [{ id: { in: altIds } }] : []),
+            ],
+          })
+        }
+
+        if (formats.length > 0) {
+          andFilters.push({
+            OR: formats.map((f) => ({
+              gender: { equals: f, mode: "insensitive" as const },
+            })),
+          })
+        }
+
+        if (years.length > 0) {
+          andFilters.push({ dateOfBirthYear: { in: years } })
+        }
+
+        if (genres.length > 0) {
+          for (const g of genres) {
+            andFilters.push({ primaryOccupations: { has: g } })
+          }
+        }
+
+        const where: any = andFilters.length > 0 ? { AND: andFilters } : {}
+
+        let orderBy: any[] = []
+        if (sortBy === "title") {
+          orderBy = [{ namePrimary: order }, { id: "asc" }]
+        } else if (sortBy === "favorites" || sortBy === "popularity") {
+          orderBy = [
+            { favorites: { sort: order, nulls: "last" } },
+            { id: "desc" },
+          ]
+        } else {
+          orderBy = [{ id: order }]
+        }
+
+        const [records, count] = await Promise.all([
+          prisma.person.findMany({
+            where,
+            orderBy,
+            take: limit + 1,
+            ...(cleanCursor ? { cursor: { id: cleanCursor }, skip: 1 } : {}),
+          }),
+          prisma.person.count({ where }),
+        ])
+
+        total = count
+        hasMore = records.length > limit
+        const paged = hasMore ? records.slice(0, limit) : records
+        nextCursor = paged.length > 0 ? paged[paged.length - 1]!.id : null
+
+        items = paged.map((item) => ({
+          id: item.id,
+          titlePrimary: item.namePrimary,
+          titleSecondary:
+            item.givenName && item.familyName
+              ? `${item.givenName} ${item.familyName}`
+              : null,
+          titleNative: item.nameNative,
+          coverImage: item.image,
+          bannerImage: null,
+          description: item.description ?? null,
+          format:
+            (item.primaryOccupations && item.primaryOccupations.length > 0
+              ? item.primaryOccupations[0]
+              : item.language) ?? "STAFF",
+          averageScore: null,
+          popularity: item.favorites,
+          favorites: item.favorites,
+          genres: item.primaryOccupations || [],
+          releaseYear: item.dateOfBirthYear,
+          seasonSeason: null,
+          status: null,
+          isAdult: false,
+        }))
+        break
+      }
+
+      case "studios": {
+        const andFilters: any[] = []
+
+        if (rawSearch) {
+          andFilters.push({
+            name: { contains: rawSearch, mode: "insensitive" as const },
+          })
+        }
+
+        if (formats.length > 0) {
+          if (
+            formats.includes("ANIMATION_STUDIO") &&
+            !formats.includes("STUDIO")
+          ) {
+            andFilters.push({ isAnimationStudio: true })
+          } else if (
+            formats.includes("STUDIO") &&
+            !formats.includes("ANIMATION_STUDIO")
+          ) {
+            andFilters.push({ isAnimationStudio: false })
+          }
+        }
+
+        const where: any = andFilters.length > 0 ? { AND: andFilters } : {}
+
+        let orderBy: any[] = []
+        if (sortBy === "title") {
+          orderBy = [{ name: order }, { id: "asc" }]
+        } else if (sortBy === "favorites" || sortBy === "popularity") {
+          orderBy = [
+            { favorites: { sort: order, nulls: "last" } },
+            { id: "desc" },
+          ]
+        } else {
+          orderBy = [{ id: order }]
+        }
+
+        const [records, count] = await Promise.all([
+          prisma.studio.findMany({
+            where,
+            orderBy,
+            take: limit + 1,
+            ...(cleanCursor ? { cursor: { id: cleanCursor }, skip: 1 } : {}),
+          }),
+          prisma.studio.count({ where }),
+        ])
+
+        total = count
+        hasMore = records.length > limit
+        const paged = hasMore ? records.slice(0, limit) : records
+        nextCursor = paged.length > 0 ? paged[paged.length - 1]!.id : null
+
+        items = paged.map((item) => ({
+          id: item.id,
+          titlePrimary: item.name,
+          titleSecondary: null,
+          titleNative: null,
+          coverImage: null,
+          bannerImage: null,
+          description: item.siteUrl,
+          format: item.isAnimationStudio ? "ANIMATION_STUDIO" : "STUDIO",
+          averageScore: null,
+          popularity: item.favorites ?? item.alFavorites,
+          favorites: item.favorites ?? item.alFavorites,
+          genres: [],
+          releaseYear: null,
+          seasonSeason: null,
+          status: null,
+          isAdult: false,
+        }))
         break
       }
 
       default:
         throw new NotFound(`Media type '${media}' not supported`)
+    }
+
+    const response: DiscoverPaginatedResponse = {
+      success: true,
+      media,
+      items,
+      pagination: {
+        nextCursor,
+        hasMore,
+        total,
+      },
     }
 
     await cache.set(cacheKey, response, DISCOVER_CACHE_TTL)

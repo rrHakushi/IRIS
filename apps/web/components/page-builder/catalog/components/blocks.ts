@@ -17,7 +17,10 @@ export const blockPresets: ComponentPresetItem[] = [
             { type: "CardDescription", children: "Card description text." },
           ],
         },
-        { type: "CardContent", children: [{ type: "p", children: "Card body content goes here." }] },
+        {
+          type: "CardContent",
+          children: [{ type: "p", children: "Card body content goes here." }],
+        },
       ],
     }),
   },
@@ -29,7 +32,10 @@ export const blockPresets: ComponentPresetItem[] = [
     description: "Horizontal flex container with gap spacing",
     getNode: () => ({
       type: "div",
-      props: { className: "flex items-center justify-between gap-4 p-4 rounded-2xl border bg-card" },
+      props: {
+        className:
+          "flex items-center justify-between gap-4 p-4 rounded-2xl border bg-card",
+      },
       children: [],
     }),
   },
@@ -41,7 +47,10 @@ export const blockPresets: ComponentPresetItem[] = [
     description: "Empty layout container ready for child elements",
     getNode: () => ({
       type: "div",
-      props: { className: "w-full p-4 rounded-2xl border border-dashed border-border/80 min-h-24" },
+      props: {
+        className:
+          "w-full p-4 rounded-2xl border border-dashed border-border/80 min-h-24",
+      },
       children: [],
     }),
   },

@@ -4,10 +4,13 @@ export {
   resolveComponent,
   resolveTablerIcon,
   DynamicIcon,
+  Callout,
+  CodeBlock,
   ALL_TABLER_ICON_NAMES,
   HTML_TAGS,
+  type CalloutProps,
+  type CodeBlockProps,
 } from "./registry"
-export { evaluateExpression, executeScript, getByPath, setByPath, toggleByPath, pushByPath, removeByPath } from "./sandbox"
 export { resolveProps, isIrisSlot } from "./resolve-props"
 export { IrisErrorBoundary } from "./error-boundary"
 export type {
@@ -16,7 +19,4 @@ export type {
   IrisChild,
   IrisSlot,
   IrisPropValue,
-  IrisRepeatDescriptor,
-  SandboxContext,
-  SandboxThemeContext,
 } from "./types"

@@ -1,12 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-} from "recharts"
+import { BarChart, Bar, XAxis, YAxis } from "recharts"
 import { Card } from "@workspace/ui/components/card"
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -51,7 +46,9 @@ export function YearTimelineChart({
   activityYears,
   mediaType,
 }: YearTimelineChartProps): React.JSX.Element {
-  const [activeMode, setActiveMode] = useState<"release" | "activity">("activity")
+  const [activeMode, setActiveMode] = useState<"release" | "activity">(
+    "activity"
+  )
   const [activeMetric, setActiveMetric] = useState<TimelineMetric>("titles")
 
   const isReading = mediaType === "manga" || mediaType === "book"
@@ -63,7 +60,9 @@ export function YearTimelineChart({
       <div className="flex flex-wrap items-center justify-between gap-2 pb-4">
         <div>
           <h3 className="font-heading text-sm font-semibold tracking-wide text-foreground uppercase">
-            {activeMode === "activity" ? `${activityLabel} Timeline` : "Release Year Timeline"}
+            {activeMode === "activity"
+              ? `${activityLabel} Timeline`
+              : "Release Year Timeline"}
           </h3>
         </div>
 
@@ -125,7 +124,10 @@ export function YearTimelineChart({
           </div>
         ) : (
           <ChartContainer config={chartConfig} className="h-56 w-full">
-            <BarChart data={activeData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <BarChart
+              data={activeData}
+              margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+            >
               <XAxis
                 dataKey="year"
                 tickLine={false}
@@ -149,21 +151,29 @@ export function YearTimelineChart({
                       return (
                         <div className="flex flex-col gap-1 text-xs">
                           <div className="flex items-center justify-between gap-3">
-                            <span className="text-muted-foreground">Titles:</span>
+                            <span className="text-muted-foreground">
+                              Titles:
+                            </span>
                             <span className="font-semibold text-foreground">
                               {data.titles.toLocaleString()}
                             </span>
                           </div>
                           <div className="flex items-center justify-between gap-3">
-                            <span className="text-muted-foreground">Hours:</span>
+                            <span className="text-muted-foreground">
+                              Hours:
+                            </span>
                             <span className="font-semibold text-foreground">
                               {data.hours}h
                             </span>
                           </div>
                           <div className="flex items-center justify-between gap-3">
-                            <span className="text-muted-foreground">Mean Score:</span>
+                            <span className="text-muted-foreground">
+                              Mean Score:
+                            </span>
                             <span className="font-semibold text-foreground">
-                              {data.meanScore > 0 ? data.meanScore.toFixed(1) : "—"}
+                              {data.meanScore > 0
+                                ? data.meanScore.toFixed(1)
+                                : "—"}
                             </span>
                           </div>
                         </div>

@@ -100,7 +100,8 @@ export default defineRoute({
         return new Response(
           JSON.stringify({
             error: "invalid_request",
-            error_description: "The redirect_uri does not match client registration.",
+            error_description:
+              "The redirect_uri does not match client registration.",
           }),
           { status: 400, headers: { "content-type": "application/json" } }
         )
@@ -195,13 +196,21 @@ export default defineRoute({
         return new Response(
           JSON.stringify({
             error: "unauthorized",
-            error_description: "User authentication required to grant authorization.",
+            error_description:
+              "User authentication required to grant authorization.",
           }),
           { status: 401, headers: { "content-type": "application/json" } }
         )
       }
 
-      const { client_id, redirect_uri, scope, state, code_challenge, code_challenge_method } = body
+      const {
+        client_id,
+        redirect_uri,
+        scope,
+        state,
+        code_challenge,
+        code_challenge_method,
+      } = body
 
       const client = await prisma.oAuthClient.findUnique({
         where: { clientId: client_id },
@@ -234,7 +243,8 @@ export default defineRoute({
         return new Response(
           JSON.stringify({
             error: "invalid_request",
-            error_description: "The redirect_uri does not match client registration.",
+            error_description:
+              "The redirect_uri does not match client registration.",
           }),
           { status: 400, headers: { "content-type": "application/json" } }
         )
@@ -265,7 +275,8 @@ export default defineRoute({
             redirectUri: redirect_uri,
             scopes: requestedScopes,
             codeChallenge: code_challenge || null,
-            codeChallengeMethod: code_challenge_method || (code_challenge ? "S256" : null),
+            codeChallengeMethod:
+              code_challenge_method || (code_challenge ? "S256" : null),
             expiresAt,
           },
         }),

@@ -13,6 +13,133 @@
 
 
   // ----------------------------------------------------
+  // Portal & DOM Isolation Helper
+  // ----------------------------------------------------
+  let irisPassPortal = null
+  let inertObserver = null
+
+  function getOrCreatePortal() {
+    if (irisPassPortal && irisPassPortal.isConnected) {
+      return irisPassPortal
+    }
+
+    let portal = document.getElementById("iris-pass-portal")
+    if (!portal) {
+      portal = document.createElement("div")
+      portal.id = "iris-pass-portal"
+      portal.setAttribute("data-iris-pass-portal", "true")
+      portal.className = "iris-pass-portal-root"
+    }
+
+    // Attach to document.documentElement (sibling to <body>).
+    // This completely isolates all IRIS Pass overlays, dialogs, badges, and dropdowns
+    // from <body> modal focus-traps and ariaHideOutside sweeps (React Aria, Radix UI, Base UI, etc.)
+    // which set `inert` or `aria-hidden` on all children of document.body.
+    const targetParent = document.documentElement || document.body
+    if (portal.parentElement !== targetParent) {
+      targetParent.appendChild(portal)
+    }
+
+    // Ensure inert or aria-hidden attributes can never disable IRIS Pass UI
+    if (!inertObserver) {
+      inertObserver = new MutationObserver((mutations) => {
+        for (const m of mutations) {
+          if (m.type === "attributes") {
+            const el = m.target
+            if (m.attributeName === "inert" && el.hasAttribute("inert")) {
+              el.removeAttribute("inert")
+            }
+            if (
+              m.attributeName === "aria-hidden" &&
+              el.getAttribute("aria-hidden") === "true"
+            ) {
+              el.removeAttribute("aria-hidden")
+            }
+          }
+        }
+      })
+      inertObserver.observe(portal, {
+        attributes: true,
+        subtree: true,
+        attributeFilter: ["inert", "aria-hidden"],
+      })
+    }
+
+    irisPassPortal = portal
+    return portal
+  }
+
+  // Prevent host page modal frameworks (React Aria, Radix, Base UI) from stealing focus
+  // or capturing clicks outside their own modals when interacting with IRIS Pass
+  function isIrisPassTarget(target) {
+    if (!target || !(target instanceof Element)) return false
+    return Boolean(
+      target.closest(
+        "#iris-pass-portal, .iris-pass-portal-root, .iris-passkey-dialog-overlay, .iris-passkey-dialog, .iris-pass-dropdown, .iris-pass-field-icon, .iris-totp-floating-widget, .iris-qr-capture-overlay, .iris-pass-toast"
+      )
+    )
+  }
+
+  // Prevent host page modal frameworks (React Aria, Radix UI, Base UI, floating-ui)
+  // from treating clicks/focus on IRIS Pass as "outside interactions" (which dismisses host modals or steals focus)
+  const CAPTURE_ISOLATED_EVENTS = [
+    "pointerdown",
+    "mousedown",
+    "touchstart",
+    "focusin",
+  ]
+
+  CAPTURE_ISOLATED_EVENTS.forEach((evtName) => {
+    window.addEventListener(
+      evtName,
+      (e) => {
+        if (isIrisPassTarget(e.target)) {
+          // Stop propagation in capture phase on window so document-level outside click listeners
+          // (such as React Aria useInteractOutside) never receive the event and never close host modals
+          e.stopPropagation()
+
+          // Ensure focusable IRIS Pass elements receive native focus
+          if (
+            (evtName === "pointerdown" || evtName === "mousedown") &&
+            typeof e.target?.focus === "function" &&
+            (e.target.tagName === "INPUT" ||
+              e.target.tagName === "SELECT" ||
+              e.target.tagName === "BUTTON" ||
+              e.target.tagName === "TEXTAREA" ||
+              e.target.getAttribute("tabindex") !== null)
+          ) {
+            e.target.focus()
+          }
+        }
+      },
+      true // Capture phase!
+    )
+  })
+
+  // Prevent bubbling events inside IRIS Pass UI from reaching document/body handlers
+  const BUBBLE_ISOLATED_EVENTS = [
+    "pointerdown",
+    "mousedown",
+    "mouseup",
+    "click",
+    "touchstart",
+    "touchend",
+    "focusin",
+  ]
+
+  BUBBLE_ISOLATED_EVENTS.forEach((evtName) => {
+    window.addEventListener(
+      evtName,
+      (e) => {
+        if (isIrisPassTarget(e.target)) {
+          e.stopPropagation()
+        }
+      },
+      false
+    )
+  })
+
+  // ----------------------------------------------------
   // Toast Notifications
   // ----------------------------------------------------
   let toastTimeout = null
@@ -38,7 +165,7 @@
 
     toast.appendChild(toastImg)
     toast.appendChild(toastSpan)
-    document.body.appendChild(toast)
+    getOrCreatePortal().appendChild(toast)
 
     toastTimeout = setTimeout(() => {
       toast.style.opacity = "0"
@@ -135,7 +262,7 @@
     dialog.appendChild(actions)
 
     overlay.appendChild(dialog)
-    document.body.appendChild(overlay)
+    getOrCreatePortal().appendChild(overlay)
     activePasskeyModal = overlay
 
     btnCancel.addEventListener("click", () => {
@@ -351,7 +478,7 @@
         dialog.appendChild(actions)
 
         overlay.appendChild(dialog)
-        document.body.appendChild(overlay)
+        getOrCreatePortal().appendChild(overlay)
         activePasskeyModal = overlay
 
         btnCancel.addEventListener("click", () => {
@@ -473,7 +600,7 @@
           return
         }
 
-        const passkeys = res?.passkeys || []
+        const passkeys = res?.passkeys || res?.credentials || []
 
         if (passkeys.length === 0) {
           // No passkeys saved in vault for this RP: fallback to native browser passkeys
@@ -530,8 +657,8 @@
 
           passkeys.forEach((p) => {
             const opt = document.createElement("option")
-            opt.value = p.credentialId
-            opt.textContent = `${p.userName} (${p.title})`
+            opt.value = p.credentialId || p.id
+            opt.textContent = `${p.userName || "Account"} (${p.cipherTitle || p.title || "Passkey"})`
             authSelect.appendChild(opt)
           })
 
@@ -547,7 +674,7 @@
 
           const val = document.createElement("span")
           val.className = "value"
-          val.textContent = passkeys[0].userName
+          val.textContent = passkeys[0].userName || "Passkey"
 
           row.appendChild(label)
           row.appendChild(val)
@@ -598,7 +725,7 @@
         dialog.appendChild(actions)
 
         overlay.appendChild(dialog)
-        document.body.appendChild(overlay)
+        getOrCreatePortal().appendChild(overlay)
         activePasskeyModal = overlay
 
         btnCancel.addEventListener("click", () => {
@@ -633,7 +760,7 @@
 
           const chosenCredId = authSelect
             ? authSelect.value
-            : passkeys[0].credentialId
+            : (passkeys[0].credentialId || passkeys[0].id)
 
           ext.runtime.sendMessage(
             {
@@ -926,7 +1053,7 @@
     document.addEventListener("mouseup", onMouseUp)
     document.addEventListener("keydown", onKeyDown)
 
-    document.body.appendChild(overlay)
+    getOrCreatePortal().appendChild(overlay)
     activeQrOverlay = overlay
   }
 
@@ -1041,7 +1168,7 @@
     widget.appendChild(widgetBody)
     widget.appendChild(widgetFooter)
 
-    document.body.appendChild(widget)
+    getOrCreatePortal().appendChild(widget)
     activeTotpWidget = widget
 
     closeBtn.addEventListener("click", () => {
@@ -1061,38 +1188,81 @@
       navigator.clipboard.writeText(curCode).catch(() => {})
     }
 
+    const initialUrl = window.location.href
+    const initialAuthInputs = Array.from(
+      document.querySelectorAll(
+        'input[type="password"], input[autocomplete="one-time-code"], input[name*="otp" i], input[name*="2fa" i], input[name*="totp" i], input[name*="code" i]'
+      )
+    )
+
     let lastRemaining = getRemaining()
 
     totpCountdownInterval = setInterval(async () => {
+      // Check if user navigated or logged in (SPA route transition / URL change)
+      if (window.location.href !== initialUrl) {
+        dismissWidget(true)
+        return
+      }
+
+      // Check if auth/login form inputs have unmounted/disappeared
+      if (initialAuthInputs.length > 0) {
+        const anyOriginalConnected = initialAuthInputs.some((el) => el.isConnected)
+        const anyCurrentAuth = document.querySelector(
+          'input[type="password"], input[autocomplete="one-time-code"]'
+        )
+        if (!anyOriginalConnected && !anyCurrentAuth) {
+          dismissWidget(true)
+          return
+        }
+      }
+
       const rem = getRemaining()
       if (secondsDisplay) secondsDisplay.textContent = `${rem}s`
 
-      // When timer expires / wraps around to 30 from 1
-      if (rem > lastRemaining || rem === 30) {
-        if (typeof IrisTotp !== "undefined") {
-          const newCode = await IrisTotp.generateTotp(secret)
-          if (newCode) {
-            curCode = newCode
-            if (codeDisplay) codeDisplay.textContent = newCode
-            navigator.clipboard.writeText(newCode).catch(() => {})
-            if (statusHint) {
-              statusHint.textContent = "New code copied!"
-              statusHint.style.color = "#10b981"
-              setTimeout(() => {
-                if (statusHint) {
-                  statusHint.textContent = "Code in clipboard"
-                  statusHint.style.color = ""
-                }
-              }, 2500)
-            }
-          }
+      // When timer expires (countdown reaches 0 or wraps around)
+      if (rem <= 1 && lastRemaining <= 1) {
+        if (secondsDisplay) secondsDisplay.textContent = "0s"
+        if (statusHint) {
+          statusHint.textContent = "Code expired"
+          statusHint.style.color = "#fb7185"
         }
+        setTimeout(() => {
+          dismissWidget(false)
+        }, 500)
+        return
+      }
+      if (rem > lastRemaining || rem === 30) {
+        // Expired into next period
+        dismissWidget(false)
+        return
       }
       lastRemaining = rem
     }, 1000)
 
+    let domObserver = null
+    try {
+      domObserver = new MutationObserver(() => {
+        if (window.location.href !== initialUrl) {
+          dismissWidget(true)
+        } else if (initialAuthInputs.length > 0) {
+          const anyOriginalConnected = initialAuthInputs.some((el) => el.isConnected)
+          const anyCurrentAuth = document.querySelector(
+            'input[type="password"], input[autocomplete="one-time-code"]'
+          )
+          if (!anyOriginalConnected && !anyCurrentAuth) {
+            dismissWidget(true)
+          }
+        }
+      })
+      domObserver.observe(document.body, { childList: true, subtree: true })
+    } catch {}
+
     function dismissWidget(success = false) {
       if (totpCountdownInterval) clearInterval(totpCountdownInterval)
+      if (domObserver) {
+        domObserver.disconnect()
+        domObserver = null
+      }
       if (loginSuccessCleanup) {
         loginSuccessCleanup()
         loginSuccessCleanup = null
@@ -1113,24 +1283,64 @@
             activeTotpWidget.remove()
             activeTotpWidget = null
           }
-        }, 300)
+        }, 350)
       }
     }
 
-    // Login Success Detection
+    // Login Success Event Listeners
+    function handlePotentialLoginClick(e) {
+      const btn = e.target.closest('button, input[type="submit"], [role="button"]')
+      if (!btn) return
+      const text = (btn.textContent || btn.value || "").toLowerCase()
+      if (/sign\s*in|log\s*in|verify|continue|submit|next|authenticate|confirm|enter/i.test(text)) {
+        setTimeout(() => {
+          if (
+            window.location.href !== initialUrl ||
+            !document.querySelector('input[type="password"], input[autocomplete="one-time-code"]')
+          ) {
+            dismissWidget(true)
+          }
+        }, 600)
+        setTimeout(() => {
+          if (
+            window.location.href !== initialUrl ||
+            !document.querySelector('input[type="password"], input[autocomplete="one-time-code"]')
+          ) {
+            dismissWidget(true)
+          }
+        }, 1500)
+      }
+    }
+
+    function handleKeyDown(e) {
+      if (e.key === "Enter") {
+        setTimeout(() => {
+          if (
+            window.location.href !== initialUrl ||
+            !document.querySelector('input[type="password"], input[autocomplete="one-time-code"]')
+          ) {
+            dismissWidget(true)
+          }
+        }, 800)
+      }
+    }
+
     function handleFormSubmit() {
       setTimeout(() => {
         dismissWidget(true)
-      }, 1500)
+      }, 800)
     }
 
     function handleUrlChange() {
       dismissWidget(true)
     }
 
-    document.addEventListener("submit", handleFormSubmit, { capture: true, once: true })
-    window.addEventListener("popstate", handleUrlChange, { once: true })
-    window.addEventListener("hashchange", handleUrlChange, { once: true })
+    document.addEventListener("submit", handleFormSubmit, { capture: true })
+    document.addEventListener("click", handlePotentialLoginClick, { capture: true })
+    document.addEventListener("keydown", handleKeyDown, { capture: true })
+    window.addEventListener("popstate", handleUrlChange)
+    window.addEventListener("hashchange", handleUrlChange)
+    window.addEventListener("pagehide", handleUrlChange)
 
     // Auto dismiss after 3 minutes max
     const autoTimeout = setTimeout(() => {
@@ -1139,9 +1349,16 @@
 
     loginSuccessCleanup = () => {
       clearTimeout(autoTimeout)
+      if (domObserver) {
+        domObserver.disconnect()
+        domObserver = null
+      }
       document.removeEventListener("submit", handleFormSubmit, { capture: true })
+      document.removeEventListener("click", handlePotentialLoginClick, { capture: true })
+      document.removeEventListener("keydown", handleKeyDown, { capture: true })
       window.removeEventListener("popstate", handleUrlChange)
       window.removeEventListener("hashchange", handleUrlChange)
+      window.removeEventListener("pagehide", handleUrlChange)
     }
   }
 
@@ -1179,6 +1396,44 @@
     }
   })
 
+  function updateDropdownPosition(dropdown, targetInput, iconEl) {
+    if (!dropdown || !targetInput) return
+    const inputRect = targetInput.getBoundingClientRect()
+    const iconRect = iconEl ? iconEl.getBoundingClientRect() : null
+
+    const dropdownWidth = 280
+
+    // Anchor horizontally under the icon: align right edge of dropdown with right edge of icon
+    let left =
+      iconRect && iconRect.width > 0
+        ? iconRect.right - dropdownWidth + 4
+        : inputRect.right - dropdownWidth
+
+    // Guard left and right viewport edges
+    if (left < 10) {
+      left = Math.max(10, inputRect.left)
+    }
+    if (left + dropdownWidth > window.innerWidth - 10) {
+      left = window.innerWidth - dropdownWidth - 10
+    }
+
+    let top = inputRect.bottom + 6
+
+    // If dropdown would overflow bottom of viewport, check if it can open upwards
+    const dropdownHeight = dropdown.offsetHeight || 220
+    if (
+      top + dropdownHeight > window.innerHeight - 10 &&
+      inputRect.top > dropdownHeight + 10
+    ) {
+      top = inputRect.top - dropdownHeight - 6
+    }
+
+    dropdown.style.position = "fixed"
+    dropdown.style.top = `${top}px`
+    dropdown.style.left = `${left}px`
+    dropdown.style.width = `${dropdownWidth}px`
+  }
+
   function showFieldDropdown(targetInput, iconEl) {
     removeDropdown()
     activeDropdownTarget = targetInput
@@ -1192,14 +1447,10 @@
       (response) => {
         const isUnlocked = response?.isUnlocked
         const matches = response?.matches || []
-        const rect = targetInput.getBoundingClientRect()
 
         const dropdown = document.createElement("div")
         dropdown.className = "iris-pass-dropdown"
-        dropdown.style.position = "fixed"
-        dropdown.style.top = `${rect.bottom + 4}px`
-        dropdown.style.left = `${rect.left}px`
-        dropdown.style.minWidth = `${Math.max(rect.width, 260)}px`
+        updateDropdownPosition(dropdown, targetInput, iconEl)
 
         // Locked State: show Bitwarden-style unlock card
         if (isUnlocked === false) {
@@ -1276,7 +1527,7 @@
             removeDropdown()
           })
           dropdown.appendChild(lockedCard)
-          document.body.appendChild(dropdown)
+          getOrCreatePortal().appendChild(dropdown)
           activeDropdown = dropdown
           return
         }
@@ -1532,8 +1783,9 @@
         renderItems()
 
         dropdown.appendChild(list)
-        document.body.appendChild(dropdown)
+        getOrCreatePortal().appendChild(dropdown)
         activeDropdown = dropdown
+        updateDropdownPosition(dropdown, targetInput, iconEl)
       }
     )
   }
@@ -1760,7 +2012,7 @@
         showIcon()
       }
 
-      document.body.appendChild(icon)
+      getOrCreatePortal().appendChild(icon)
     })
   }
 
@@ -1771,9 +2023,8 @@
       }
     })
     if (activeDropdown && activeDropdownTarget) {
-      const rect = activeDropdownTarget.getBoundingClientRect()
-      activeDropdown.style.top = `${rect.bottom + 4}px`
-      activeDropdown.style.left = `${rect.left}px`
+      const icon = inputIconMap.get(activeDropdownTarget)
+      updateDropdownPosition(activeDropdown, activeDropdownTarget, icon)
     }
   }
 

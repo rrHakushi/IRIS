@@ -1307,7 +1307,10 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                       {/* Voiced Roles Grid: Left Character, Right Media */}
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {group.items.map((item) => {
-                          const mediaHref = getMediaDetailHref(item.mediaType, item.mediaId)
+                          const mediaHref = getMediaDetailHref(
+                            item.mediaType,
+                            item.mediaId
+                          )
                           const characterHref = `/IRIS-list/characters/${item.characterId}`
 
                           return (
@@ -1498,7 +1501,10 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                       {/* Staff Cards Grid */}
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {group.items.map((item) => {
-                          const mediaHref = getMediaDetailHref(item.mediaType, item.mediaId)
+                          const mediaHref = getMediaDetailHref(
+                            item.mediaType,
+                            item.mediaId
+                          )
 
                           return (
                             <div

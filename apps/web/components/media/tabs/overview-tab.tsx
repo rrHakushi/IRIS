@@ -319,11 +319,11 @@ export function OverviewTab({
   // Studios breakdown
   const animationStudios = media.studios
     .filter((s) => s.studio.isAnimationStudio || s.isMain)
-    .map((s) => s.studio.name)
+    .map((s) => s.studio)
 
   const producerStudios = media.studios
     .filter((s) => !s.studio.isAnimationStudio && !s.isMain)
-    .map((s) => s.studio.name)
+    .map((s) => s.studio)
 
   const isReleasing = media.status?.toUpperCase() === "RELEASING"
 
@@ -1383,7 +1383,19 @@ export function OverviewTab({
                       Production
                     </span>
                     <span className="text-end font-medium text-foreground">
-                      {[...animationStudios, ...producerStudios].join(", ")}
+                      {[...animationStudios, ...producerStudios].map(
+                        (st, idx) => (
+                          <React.Fragment key={st.id || idx}>
+                            {idx > 0 && ", "}
+                            <Link
+                              href={`/IRIS-list/studios/${st.id}`}
+                              className="underline-offset-2 transition-colors hover:text-primary hover:underline"
+                            >
+                              {st.name}
+                            </Link>
+                          </React.Fragment>
+                        )
+                      )}
                     </span>
                   </div>
                 )
@@ -1395,7 +1407,17 @@ export function OverviewTab({
                         Studio
                       </span>
                       <span className="text-end font-medium text-foreground">
-                        {animationStudios.join(", ")}
+                        {animationStudios.map((st, idx) => (
+                          <React.Fragment key={st.id || idx}>
+                            {idx > 0 && ", "}
+                            <Link
+                              href={`/IRIS-list/studios/${st.id}`}
+                              className="underline-offset-2 transition-colors hover:text-primary hover:underline"
+                            >
+                              {st.name}
+                            </Link>
+                          </React.Fragment>
+                        ))}
                       </span>
                     </div>
                   )}
@@ -1406,7 +1428,17 @@ export function OverviewTab({
                         Producers
                       </span>
                       <span className="text-end font-medium text-foreground">
-                        {producerStudios.join(", ")}
+                        {producerStudios.map((st, idx) => (
+                          <React.Fragment key={st.id || idx}>
+                            {idx > 0 && ", "}
+                            <Link
+                              href={`/IRIS-list/studios/${st.id}`}
+                              className="underline-offset-2 transition-colors hover:text-primary hover:underline"
+                            >
+                              {st.name}
+                            </Link>
+                          </React.Fragment>
+                        ))}
                       </span>
                     </div>
                   )}

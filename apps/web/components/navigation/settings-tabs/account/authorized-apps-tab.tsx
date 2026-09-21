@@ -68,11 +68,15 @@ export function AuthorizedAppsSettingsTab({
 
       if (res.error) {
         const errorData = res.error.value as { message?: string } | undefined
-        throw new Error(errorData?.message || "Failed to load authorized applications")
+        throw new Error(
+          errorData?.message || "Failed to load authorized applications"
+        )
       }
 
       if (res.data?.authorizations) {
-        setAuthorizations(res.data.authorizations as unknown as AuthorizationItem[])
+        setAuthorizations(
+          res.data.authorizations as unknown as AuthorizationItem[]
+        )
       }
     } catch (err: any) {
       console.error("[AuthorizedAppsTab] Fetch error:", err)
@@ -103,10 +107,9 @@ export function AuthorizedAppsSettingsTab({
 
     setRevokingId(item.id)
     try {
-      const res = await elysia.oauth.authorizations({ id: item.id }).delete(
-        {},
-        { fetch: { credentials: "include" } }
-      )
+      const res = await elysia.oauth
+        .authorizations({ id: item.id })
+        .delete({}, { fetch: { credentials: "include" } })
 
       if (res.error) {
         const errData = res.error.value as { message?: string } | undefined
@@ -141,37 +144,42 @@ export function AuthorizedAppsSettingsTab({
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <Spinner className="size-7 text-primary" />
-          <p className="mt-3 text-xs text-muted-foreground">Loading authorized applications...</p>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Loading authorized applications...
+          </p>
         </div>
       ) : error ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-destructive/20 bg-destructive/5 p-8 text-center">
-          <IconAlertCircle className="size-8 text-destructive mb-2" />
+          <IconAlertCircle className="mb-2 size-8 text-destructive" />
           <p className="text-sm font-medium text-foreground">{error}</p>
           <Button
             type="button"
             variant="outline"
             onClick={() => fetchAuthorizations(true)}
-            className="mt-4 text-xs h-8"
+            className="mt-4 h-8 text-xs"
           >
             Retry
           </Button>
         </div>
       ) : authorizations.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 p-12 text-center">
-          <div className="flex size-12 items-center justify-center rounded-2xl border border-border bg-muted/40 text-muted-foreground mb-3">
+          <div className="mb-3 flex size-12 items-center justify-center rounded-2xl border border-border bg-muted/40 text-muted-foreground">
             <IconApps className="size-6" />
           </div>
           <h3 className="font-heading text-sm font-semibold text-foreground">
             No authorized applications
           </h3>
-          <p className="mt-1 max-w-sm text-xs text-muted-foreground leading-relaxed">
-            You have not authorized any external applications or remote IRIS instances to access your account.
+          <p className="mt-1 max-w-sm text-xs leading-relaxed text-muted-foreground">
+            You have not authorized any external applications or remote IRIS
+            instances to access your account.
           </p>
         </div>
       ) : (
         <div className="space-y-3">
           {authorizations.map((item) => {
-            const formattedDate = new Date(item.authorizedAt).toLocaleDateString(undefined, {
+            const formattedDate = new Date(
+              item.authorizedAt
+            ).toLocaleDateString(undefined, {
               year: "numeric",
               month: "short",
               day: "numeric",
@@ -190,8 +198,8 @@ export function AuthorizedAppsSettingsTab({
                 className="flex flex-col gap-3 rounded-2xl border border-border/80 bg-card/60 p-4 transition-all hover:border-border hover:bg-card"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border bg-muted/30 overflow-hidden">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/30">
                       {item.client.logoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -205,11 +213,14 @@ export function AuthorizedAppsSettingsTab({
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-heading text-sm font-semibold text-foreground truncate">
+                        <h3 className="truncate font-heading text-sm font-semibold text-foreground">
                           {item.client.name}
                         </h3>
                         {item.client.isTrusted && (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                          <Badge
+                            variant="secondary"
+                            className="h-4 px-1.5 py-0 text-[10px]"
+                          >
                             Verified
                           </Badge>
                         )}
@@ -219,9 +230,11 @@ export function AuthorizedAppsSettingsTab({
                           href={item.client.websiteUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                          className="inline-flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
                         >
-                          <span>{new URL(item.client.websiteUrl).hostname}</span>
+                          <span>
+                            {new URL(item.client.websiteUrl).hostname}
+                          </span>
                           <IconExternalLink className="size-3" />
                         </a>
                       )}
@@ -234,12 +247,12 @@ export function AuthorizedAppsSettingsTab({
                     size="sm"
                     disabled={revokingId === item.id}
                     onClick={() => handleRevoke(item)}
-                    className="h-8 px-3 text-xs text-destructive hover:bg-destructive/10 hover:border-destructive/40 shrink-0"
+                    className="h-8 shrink-0 px-3 text-xs text-destructive hover:border-destructive/40 hover:bg-destructive/10"
                   >
                     {revokingId === item.id ? (
-                      <Spinner className="size-3.5 me-1.5" />
+                      <Spinner className="me-1.5 size-3.5" />
                     ) : (
-                      <IconTrash className="size-3.5 me-1.5" />
+                      <IconTrash className="me-1.5 size-3.5" />
                     )}
                     Revoke
                   </Button>
@@ -251,7 +264,8 @@ export function AuthorizedAppsSettingsTab({
                     <span>Permissions granted</span>
                     <span>
                       Authorized on {formattedDate}
-                      {lastUsedFormatted && ` • Last active: ${lastUsedFormatted}`}
+                      {lastUsedFormatted &&
+                        ` • Last active: ${lastUsedFormatted}`}
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-1">

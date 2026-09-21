@@ -1,12 +1,7 @@
 "use client"
 
 import * as React from "react"
-import {
-  IconBook,
-  IconSearch,
-  IconSparkles,
-  IconX,
-} from "@tabler/icons-react"
+import { IconBook, IconSearch, IconSparkles, IconX } from "@tabler/icons-react"
 
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
@@ -62,14 +57,14 @@ export function ComponentPickerModal({
   })
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md p-4 animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex animate-in items-center justify-center bg-background/80 p-4 backdrop-blur-md duration-150 fade-in">
       <div
         role="dialog"
         aria-modal="true"
-        className="relative flex flex-col w-full max-w-2xl max-h-[85vh] rounded-[min(var(--radius-4xl),28px)] border border-border/80 bg-card shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150"
+        className="relative flex max-h-[85vh] w-full max-w-2xl animate-in flex-col overflow-hidden rounded-[min(var(--radius-4xl),28px)] border border-border/80 bg-card shadow-2xl duration-150 zoom-in-95"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border/60 bg-muted/20">
+        <div className="flex items-center justify-between border-b border-border/60 bg-muted/20 px-6 py-4">
           <div className="flex items-center gap-2.5">
             <div className="flex size-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <IconBook className="size-4.5" />
@@ -78,31 +73,42 @@ export function ComponentPickerModal({
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-bold text-foreground">{title}</h3>
                 {positionLabel && (
-                  <Badge variant="secondary" className="text-[10px] font-mono h-4 px-1.5">
+                  <Badge
+                    variant="secondary"
+                    className="h-4 px-1.5 font-mono text-[10px]"
+                  >
                     {positionLabel}
                   </Badge>
                 )}
               </div>
               <p className="text-[11px] text-muted-foreground">
-                {description || "Select a section layout, container, or component to insert."}
+                {description ||
+                  "Select a section layout, container, or component to insert."}
               </p>
             </div>
           </div>
 
-          <Button size="icon-xs" variant="ghost" onPress={onClose} aria-label="Close picker">
+          <Button
+            size="icon-xs"
+            variant="ghost"
+            onPress={onClose}
+            aria-label="Close picker"
+          >
             <IconX className="size-4" />
           </Button>
         </div>
 
         {/* Search Bar & Category Filters */}
-        <div className="px-6 pt-4 pb-3 space-y-3 border-b border-border/40 bg-muted/10">
+        <div className="space-y-3 border-b border-border/40 bg-muted/10 px-6 pt-4 pb-3">
           <div className="relative">
-            <IconSearch className="size-4 absolute start-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <IconSearch className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={searchQuery}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setSearchQuery(e.target.value)
+              }
               placeholder="Search components or sections (e.g. 3-column, hero, card, button)..."
-              className="h-9 ps-9 text-xs rounded-xl bg-background"
+              className="h-9 rounded-xl bg-background ps-9 text-xs"
               autoFocus
             />
           </div>
@@ -110,10 +116,10 @@ export function ComponentPickerModal({
           <div className="flex flex-wrap gap-1">
             {[
               { id: "all", label: "All Items" },
+              { id: "docs", label: "Docs" },
               { id: "sections", label: "Sections" },
               { id: "blocks", label: "Blocks" },
               { id: "typography", label: "Typography" },
-              { id: "actions", label: "Actions" },
               { id: "forms", label: "Forms" },
               { id: "feedback", label: "Feedback" },
             ].map((cat) => (
@@ -121,9 +127,9 @@ export function ComponentPickerModal({
                 key={cat.id}
                 type="button"
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${
                   selectedCategory === cat.id
-                    ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+                    ? "bg-primary font-semibold text-primary-foreground shadow-xs"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
@@ -135,7 +141,7 @@ export function ComponentPickerModal({
 
         {/* Component Grid List */}
         <div className="flex-1 overflow-y-auto p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {filteredItems.map((item) => {
               const IconComp = resolveTablerIcon(item.icon) || IconSparkles
               return (
@@ -146,21 +152,24 @@ export function ComponentPickerModal({
                     onSelectComponent(item.getNode())
                     onClose()
                   }}
-                  className="flex items-start gap-3 p-3.5 rounded-2xl border border-border/60 bg-background hover:border-primary/60 hover:bg-primary/5 text-start transition-all duration-150 group"
+                  className="group flex items-start gap-3 rounded-2xl border border-border/60 bg-background p-3.5 text-start transition-all duration-150 hover:border-primary/60 hover:bg-primary/5"
                 >
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted/60 group-hover:bg-primary/10 transition-colors">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted/60 transition-colors group-hover:bg-primary/10">
                     <IconComp className="size-4 text-primary" />
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-1">
-                      <span className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
+                      <span className="text-xs font-bold text-foreground transition-colors group-hover:text-primary">
                         {item.name}
                       </span>
-                      <Badge variant="secondary" className="text-[9px] h-3.5 px-1 uppercase font-mono">
+                      <Badge
+                        variant="secondary"
+                        className="h-3.5 px-1 font-mono text-[9px] uppercase"
+                      >
                         {item.category}
                       </Badge>
                     </div>
-                    <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">
+                    <p className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">
                       {item.description}
                     </p>
                   </div>
@@ -177,7 +186,7 @@ export function ComponentPickerModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-3 border-t border-border/60 bg-muted/20 text-[11px] text-muted-foreground">
+        <div className="flex items-center justify-between border-t border-border/60 bg-muted/20 px-6 py-3 text-[11px] text-muted-foreground">
           <span>Click any item to insert immediately.</span>
           <Button size="xs" variant="ghost" onPress={onClose}>
             Cancel

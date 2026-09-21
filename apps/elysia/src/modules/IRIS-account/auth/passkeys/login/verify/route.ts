@@ -147,7 +147,7 @@ export default defineRoute({
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : "Passkey verification failed"
-      
+
       // If error is strictly a signature counter desync on a multi-device/synced passkey:
       if (msg.includes("was lower than expected")) {
         console.warn(

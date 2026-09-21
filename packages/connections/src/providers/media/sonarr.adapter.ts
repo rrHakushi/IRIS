@@ -100,4 +100,173 @@ export class SonarrAdapter extends ServarrBaseAdapter {
       }),
     });
   }
+
+  async bulkUpdateSeries(
+    credentials: ConnectionCredentials,
+    payload: {
+      seriesIds: number[];
+      monitored?: boolean;
+      qualityProfileId?: number;
+      seriesType?: "standard" | "daily" | "anime";
+      seasonFolder?: boolean;
+      rootFolderPath?: string;
+    }
+  ): Promise<SonarrSeries[]> {
+    return await this.servarrFetch<SonarrSeries[]>("series/editor", credentials, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async bulkDeleteSeries(
+    credentials: ConnectionCredentials,
+    payload: {
+      seriesIds: number[];
+      deleteFiles?: boolean;
+      addImportListExclusion?: boolean;
+    }
+  ): Promise<unknown> {
+    const formattedPayload = {
+      seriesIds: payload.seriesIds,
+      deleteFiles: payload.deleteFiles ?? false,
+      addImportListExclusion: payload.addImportListExclusion ?? false,
+    };
+    return await this.servarrFetch("series/editor", credentials, {
+      method: "DELETE",
+      body: JSON.stringify(formattedPayload),
+    });
+  }
+
+  async getEpisodeFiles(
+    credentials: ConnectionCredentials,
+    seriesId: number
+  ): Promise<any[]> {
+    return await this.servarrFetch<any[]>(
+      `episodefile?seriesId=${seriesId}`,
+      credentials
+    );
+  }
+
+  async deleteEpisodeFile(
+    credentials: ConnectionCredentials,
+    fileId: number
+  ): Promise<unknown> {
+    return await this.servarrFetch(`episodefile/${fileId}`, credentials, {
+      method: "DELETE",
+    });
+  }
+
+  async getEpisodes(
+    credentials: ConnectionCredentials,
+    seriesId: number
+  ): Promise<any[]> {
+    return await this.servarrFetch<any[]>(
+      `episode?seriesId=${seriesId}`,
+      credentials
+    );
+  }
+
+  async getSeriesById(
+    credentials: ConnectionCredentials,
+    id: number
+  ): Promise<SonarrSeries> {
+    return await this.servarrFetch<SonarrSeries>(`series/${id}`, credentials);
+  }
+
+  async updateSeries(
+    credentials: ConnectionCredentials,
+    series: Partial<SonarrSeries> & { id: number }
+  ): Promise<SonarrSeries> {
+    return await this.servarrFetch<SonarrSeries>(`series/${series.id}`, credentials, {
+      method: "PUT",
+      body: JSON.stringify(series),
+    });
+  }
+
+  async deleteSeries(
+    credentials: ConnectionCredentials,
+    id: number,
+    deleteFiles: boolean = false,
+    addImportListExclusion: boolean = false
+  ): Promise<unknown> {
+    return await this.servarrFetch(
+      `series/${id}?deleteFiles=${deleteFiles}&addImportListExclusion=${addImportListExclusion}`,
+      credentials,
+      { method: "DELETE" }
+    );
+  }
+
+  async lookupSeries(
+    credentials: ConnectionCredentials,
+    term: string
+  ): Promise<SonarrSeries[]> {
+    return await this.servarrFetch<SonarrSeries[]>(
+      `series/lookup?term=${encodeURIComponent(term)}`,
+      credentials
+    );
+  }
+
+  async getWantedMissing(
+    credentials: ConnectionCredentials,
+    params: {
+      page?: number;
+      pageSize?: number;
+      sortKey?: string;
+      sortDirection?: "ascending" | "descending";
+      monitored?: boolean;
+    } = {}
+  ): Promise<any> {
+    const query = new URLSearchParams();
+    if (params.page) query.set("page", String(params.page));
+    if (params.pageSize) query.set("pageSize", String(params.pageSize));
+    if (params.sortKey) query.set("sortKey", params.sortKey);
+    if (params.sortDirection) query.set("sortDirection", params.sortDirection);
+    if (params.monitored !== undefined) query.set("monitored", String(params.monitored));
+
+    const qs = query.toString();
+    return await this.servarrFetch(`wanted/missing${qs ? `?${qs}` : ""}`, credentials);
+  }
+
+  async getWantedCutoff(
+    credentials: ConnectionCredentials,
+    params: {
+      page?: number;
+      pageSize?: number;
+      sortKey?: string;
+      sortDirection?: "ascending" | "descending";
+      monitored?: boolean;
+    } = {}
+  ): Promise<any> {
+    const query = new URLSearchParams();
+    if (params.page) query.set("page", String(params.page));
+    if (params.pageSize) query.set("pageSize", String(params.pageSize));
+    if (params.sortKey) query.set("sortKey", params.sortKey);
+    if (params.sortDirection) query.set("sortDirection", params.sortDirection);
+    if (params.monitored !== undefined) query.set("monitored", String(params.monitored));
+
+    const qs = query.toString();
+    return await this.servarrFetch(`wanted/cutoff${qs ? `?${qs}` : ""}`, credentials);
+  }
+
+  async updateEpisode(
+    credentials: ConnectionCredentials,
+    episode: { id: number; [key: string]: unknown }
+  ): Promise<any> {
+    return await this.servarrFetch(`episode/${episode.id}`, credentials, {
+      method: "PUT",
+      body: JSON.stringify(episode),
+    });
+  }
+
+  async setEpisodeMonitoring(
+    credentials: ConnectionCredentials,
+    episodeIds: number[],
+    monitored: boolean
+  ): Promise<any> {
+    return await this.servarrFetch("episode/monitor", credentials, {
+      method: "PUT",
+      body: JSON.stringify({ episodeIds, monitored }),
+    });
+  }
 }
+

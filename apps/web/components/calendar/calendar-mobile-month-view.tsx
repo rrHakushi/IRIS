@@ -78,10 +78,7 @@ export function CalendarMobileMonthView({
     return map
   }, [items])
 
-  const selectedDateKey = useMemo(
-    () => toDateKey(selectedDate),
-    [selectedDate]
-  )
+  const selectedDateKey = useMemo(() => toDateKey(selectedDate), [selectedDate])
 
   const selectedDayItems = useMemo(
     () => itemsByDate.get(selectedDateKey) || [],
@@ -154,9 +151,9 @@ export function CalendarMobileMonthView({
                 className={cn(
                   "group relative flex aspect-square cursor-pointer flex-col items-center justify-center rounded-2xl p-1 transition-all outline-none",
                   isSelected
-                    ? "bg-primary text-primary-foreground shadow-xs font-bold"
+                    ? "bg-primary font-bold text-primary-foreground shadow-xs"
                     : day.isToday
-                      ? "border border-primary/50 bg-primary/10 text-primary font-bold"
+                      ? "border border-primary/50 bg-primary/10 font-bold text-primary"
                       : day.isCurrentMonth
                         ? "text-foreground hover:bg-muted/60"
                         : "text-muted-foreground/40 hover:bg-muted/30"
@@ -170,21 +167,21 @@ export function CalendarMobileMonthView({
 
                 {/* Media Indicator Dots / Count */}
                 <div className="mt-1 flex h-1.5 items-center justify-center gap-0.5">
-                  {isSelected ? (
-                    hasReleases && (
-                      <span className="size-1 rounded-full bg-primary-foreground" />
-                    )
-                  ) : hasReleases ? (
-                    uniqueTypes.map((type) => {
-                      const color = getMediaTypeColor(type)
-                      return (
-                        <span
-                          key={type}
-                          className={cn("size-1 rounded-full", color.dot)}
-                        />
+                  {isSelected
+                    ? hasReleases && (
+                        <span className="size-1 rounded-full bg-primary-foreground" />
                       )
-                    })
-                  ) : null}
+                    : hasReleases
+                      ? uniqueTypes.map((type) => {
+                          const color = getMediaTypeColor(type)
+                          return (
+                            <span
+                              key={type}
+                              className={cn("size-1 rounded-full", color.dot)}
+                            />
+                          )
+                        })
+                      : null}
                 </div>
               </button>
             )
@@ -201,7 +198,7 @@ export function CalendarMobileMonthView({
               {isSelectedToday ? "Today" : selectedFormattedDate}
             </h3>
             {isSelectedToday && (
-              <span className="text-xs text-muted-foreground font-normal">
+              <span className="text-xs font-normal text-muted-foreground">
                 ({selectedFormattedDate})
               </span>
             )}
@@ -268,7 +265,8 @@ export function CalendarMobileMonthView({
                 No releases on this day
               </p>
               <p className="text-[11px] text-muted-foreground">
-                Select a highlighted date with indicator dots above to view its releases.
+                Select a highlighted date with indicator dots above to view its
+                releases.
               </p>
             </div>
           </div>

@@ -165,7 +165,7 @@ export class LastFmProvider {
    */
   async searchAlbums(
     query: string,
-    limit: number = 10
+    limit: number = 30
   ): Promise<LastFmAlbumSearchResult[]> {
     const clean = query.trim()
     if (!clean) return []
@@ -184,7 +184,7 @@ export class LastFmProvider {
       const params = new URLSearchParams({
         method: "album.search",
         album: clean,
-        limit: String(Math.min(limit, 30)),
+        limit: String(Math.min(limit, 50)),
         api_key: apiKey,
         format: "json",
       })
@@ -218,7 +218,7 @@ export class LastFmProvider {
   async searchTracks(
     query: string,
     artist?: string,
-    limit: number = 10
+    limit: number = 30
   ): Promise<LastFmTrackSearchResult[]> {
     const clean = query.trim()
     if (!clean) return []
@@ -237,7 +237,7 @@ export class LastFmProvider {
       const params = new URLSearchParams({
         method: "track.search",
         track: clean,
-        limit: String(Math.min(limit, 30)),
+        limit: String(Math.min(limit, 50)),
         api_key: apiKey,
         format: "json",
       })
@@ -273,7 +273,7 @@ export class LastFmProvider {
    */
   async searchArtist(
     query: string,
-    limit: number = 10
+    limit: number = 30
   ): Promise<LastFmArtistSearchResult[]> {
     const clean = query.trim()
     if (!clean) return []
@@ -287,7 +287,7 @@ export class LastFmProvider {
       const params = new URLSearchParams({
         method: "artist.search",
         artist: clean,
-        limit: String(Math.min(limit, 30)),
+        limit: String(Math.min(limit, 50)),
         api_key: apiKey,
         format: "json",
       })

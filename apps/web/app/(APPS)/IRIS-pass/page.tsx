@@ -100,9 +100,9 @@ function PassMainContent() {
     } else {
       setUnlockError(
         result.error ||
-        (encryption.hasSeparateEncryptionPassword
-          ? "Incorrect decryption password. Please try again."
-          : "Incorrect account password. Please try again.")
+          (encryption.hasSeparateEncryptionPassword
+            ? "Incorrect decryption password. Please try again."
+            : "Incorrect account password. Please try again.")
       )
     }
   }
@@ -125,9 +125,9 @@ function PassMainContent() {
   // Pre-hydration placeholder to match server and client render
   if (!isMounted) {
     return (
-      <div className="flex flex-1 items-center justify-center min-h-[calc(100vh-4rem)] bg-background">
+      <div className="flex min-h-[calc(100vh-4rem)] flex-1 items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
-          <div className="size-10 rounded-2xl bg-[#d800a6]/10 flex items-center justify-center animate-pulse">
+          <div className="flex size-10 animate-pulse items-center justify-center rounded-2xl bg-[#d800a6]/10">
             <Image
               src="/iris-pass512left-ring.png"
               alt="IRIS Pass"
@@ -136,7 +136,7 @@ function PassMainContent() {
               className="object-contain"
             />
           </div>
-          <span className="text-xs text-muted-foreground animate-pulse">
+          <span className="animate-pulse text-xs text-muted-foreground">
             Loading vault...
           </span>
         </div>
@@ -147,9 +147,9 @@ function PassMainContent() {
   // If vault is locked, render the standard inline unlock screen reusing existing encryption
   if (!isUnlocked) {
     return (
-      <div className="flex flex-1 items-center justify-center p-6 bg-background/50 backdrop-blur-xs min-h-[calc(100vh-4rem)]">
+      <div className="flex min-h-[calc(100vh-4rem)] flex-1 items-center justify-center bg-background/50 p-6 backdrop-blur-xs">
         <div className="w-full max-w-md space-y-6 rounded-3xl border border-border bg-card p-8 shadow-2xl">
-          <div className="flex flex-col items-center text-center space-y-3">
+          <div className="flex flex-col items-center space-y-3 text-center">
             <div className="flex size-16 items-center justify-center rounded-2xl bg-[#d800a6]/10 shadow-inner ring-1 ring-[#d800a6]/20">
               <Image
                 src="/iris-pass512left-ring.png"
@@ -160,10 +160,10 @@ function PassMainContent() {
               />
             </div>
             <div className="space-y-1">
-              <h1 className="text-2xl font-bold tracking-tight text-foreground font-heading">
+              <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
                 IRIS Pass Vault Locked
               </h1>
-              <p className="text-xs text-muted-foreground max-w-sm">
+              <p className="max-w-sm text-xs text-muted-foreground">
                 {encryption.hasSeparateEncryptionPassword
                   ? "Enter your dedicated IRIS decryption password to decrypt your zero-knowledge vault."
                   : "Enter your IRIS account password to decrypt and unlock your zero-knowledge vault."}
@@ -173,7 +173,7 @@ function PassMainContent() {
 
           <form onSubmit={handleUnlock} className="space-y-4">
             {unlockError && (
-              <div className="flex items-center gap-2 rounded-xl bg-destructive/10 p-3 text-xs text-destructive border border-destructive/20">
+              <div className="flex items-center gap-2 rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive">
                 <IconAlertCircle className="size-4 shrink-0" />
                 <span>{unlockError}</span>
               </div>
@@ -196,14 +196,16 @@ function PassMainContent() {
                   value={unlockPassword}
                   onChange={(e) => setUnlockPassword(e.target.value)}
                   autoFocus
-                  className="pe-10 rounded-xl text-xs h-10"
+                  className="h-10 rounded-xl pe-10 text-xs"
                 />
                 <button
                   type="button"
                   onClick={() => setShowUnlockPassword(!showUnlockPassword)}
-                  className="absolute inset-y-0 end-0 flex items-center pe-3 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute inset-y-0 end-0 flex items-center pe-3 text-muted-foreground transition-colors hover:text-foreground"
                   tabIndex={-1}
-                  aria-label={showUnlockPassword ? "Hide password" : "Show password"}
+                  aria-label={
+                    showUnlockPassword ? "Hide password" : "Show password"
+                  }
                 >
                   {showUnlockPassword ? (
                     <IconEyeOff className="size-4" />
@@ -217,9 +219,9 @@ function PassMainContent() {
             <Button
               type="submit"
               disabled={isUnlocking || !unlockPassword.trim()}
-              className="w-full rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-semibold h-10 text-xs shadow-md transition-all cursor-pointer"
+              className="h-10 w-full cursor-pointer rounded-xl bg-rose-500 text-xs font-semibold text-white shadow-md transition-all hover:bg-rose-600"
             >
-              <IconLockOpen className="size-4 me-2" />
+              <IconLockOpen className="me-2 size-4" />
               {isUnlocking ? "Decrypting Vault..." : "Unlock Vault"}
             </Button>
           </form>
@@ -243,16 +245,15 @@ function PassMainContent() {
             : "All Vault Items"
 
   return (
-    <div className="flex flex-col flex-1 h-full min-h-0 bg-background overflow-hidden">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background">
       {/* Top Action Bar */}
-      <header className="h-14 shrink-0 border-b border-border/80 px-4 sm:px-6 flex items-center justify-end bg-card/40 backdrop-blur-sm">
-
+      <header className="flex h-14 shrink-0 items-center justify-end border-b border-border/80 bg-card/40 px-4 backdrop-blur-sm sm:px-6">
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => refreshData()}
-            className="rounded-xl text-xs gap-1.5 h-8"
+            className="h-8 gap-1.5 rounded-xl text-xs"
             aria-label="Refresh vault"
           >
             <IconRefresh className="size-3.5" />
@@ -264,12 +265,18 @@ function PassMainContent() {
               variant="destructive"
               size="sm"
               onClick={async () => {
-                if (confirm("Are you sure you want to permanently delete all items in the trash?")) {
+                if (
+                  confirm(
+                    "Are you sure you want to permanently delete all items in the trash?"
+                  )
+                ) {
                   await emptyTrash()
                 }
               }}
-              disabled={ciphers.filter((c) => c.deletedAt !== null).length === 0}
-              className="rounded-xl text-xs gap-1.5 h-8 shadow-xs cursor-pointer"
+              disabled={
+                ciphers.filter((c) => c.deletedAt !== null).length === 0
+              }
+              className="h-8 cursor-pointer gap-1.5 rounded-xl text-xs shadow-xs"
             >
               <IconTrash className="size-3.5" />
               <span>Empty Trash</span>
@@ -280,7 +287,7 @@ function PassMainContent() {
                 variant="outline"
                 size="sm"
                 onClick={() => setFolderModalOpen(true)}
-                className="rounded-xl text-xs gap-1.5 h-8"
+                className="h-8 gap-1.5 rounded-xl text-xs"
                 aria-label="Create new folder"
               >
                 <IconFolderPlus className="size-3.5" />
@@ -293,7 +300,7 @@ function PassMainContent() {
                   setEditCipherId(null)
                   setModalOpen(true)
                 }}
-                className="rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs gap-1.5 h-8 shadow-xs"
+                className="h-8 gap-1.5 rounded-xl bg-rose-500 text-xs text-white shadow-xs hover:bg-rose-600"
               >
                 <IconPlus className="size-3.5" />
                 <span>New Item</span>
@@ -308,7 +315,7 @@ function PassMainContent() {
               lockVault()
               toast.info("Vault locked")
             }}
-            className="rounded-xl text-xs text-muted-foreground hover:text-foreground h-8"
+            className="h-8 rounded-xl text-xs text-muted-foreground hover:text-foreground"
             aria-label="Lock vault"
           >
             <IconLock className="size-3.5" />
@@ -318,9 +325,9 @@ function PassMainContent() {
       </header>
 
       {/* Main Dual-Pane Content */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* Left/Middle Column: List of items */}
-        <div className="w-full sm:w-80 md:w-96 lg:w-[420px] shrink-0 h-full overflow-hidden flex flex-col border-e border-border">
+        <div className="flex h-full w-full shrink-0 flex-col overflow-hidden border-e border-border sm:w-80 md:w-96 lg:w-[420px]">
           <PassCipherList
             onOpenNewCipher={() => {
               setEditCipherId(null)
@@ -330,7 +337,7 @@ function PassMainContent() {
         </div>
 
         {/* Right Column: Item detail inspector pane */}
-        <div className="hidden sm:flex flex-1 h-full overflow-y-auto bg-card/20">
+        <div className="hidden h-full flex-1 overflow-y-auto bg-card/20 sm:flex">
           <PassCipherDetail
             onEditCipher={(id) => {
               setEditCipherId(id)
@@ -361,7 +368,10 @@ function PassMainContent() {
 
         <form onSubmit={handleCreateFolder} className="space-y-4 pt-2">
           <div className="space-y-1.5">
-            <Label htmlFor="folder-name-input" className="text-xs font-medium text-foreground">
+            <Label
+              htmlFor="folder-name-input"
+              className="text-xs font-medium text-foreground"
+            >
               Folder Name
             </Label>
             <Input
@@ -371,11 +381,11 @@ function PassMainContent() {
               value={folderName}
               onChange={(e) => setFolderName(e.target.value)}
               autoFocus
-              className="rounded-xl text-xs h-9"
+              className="h-9 rounded-xl text-xs"
             />
           </div>
 
-          <DialogFooter className="pt-2 flex justify-end gap-2">
+          <DialogFooter className="flex justify-end gap-2 pt-2">
             <Button
               type="button"
               variant="outline"
@@ -387,7 +397,7 @@ function PassMainContent() {
             <Button
               type="submit"
               disabled={isCreatingFolder || !folderName.trim()}
-              className="rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs"
+              className="rounded-xl bg-rose-500 text-xs text-white hover:bg-rose-600"
             >
               {isCreatingFolder ? "Creating..." : "Create Folder"}
             </Button>

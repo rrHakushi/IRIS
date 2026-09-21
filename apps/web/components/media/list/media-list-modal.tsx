@@ -1145,7 +1145,7 @@ export function MediaListModal({
       </div>
 
       {/* Main Body Area */}
-      <div className="flex flex-1 min-h-0 flex-col gap-4 overflow-y-auto p-4 sm:p-5 overscroll-contain touch-pan-y">
+      <div className="flex min-h-0 flex-1 touch-pan-y flex-col gap-4 overflow-y-auto overscroll-contain p-4 sm:p-5">
         {/* Navigation Tabs Pill Bar */}
         <div className="inline-flex w-fit items-center gap-1 rounded-full border border-border bg-muted/60 p-1 backdrop-blur-md">
           <button

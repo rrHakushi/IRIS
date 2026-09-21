@@ -4,7 +4,8 @@
 
 export interface GlobalCacheKeys {
   discover: {
-    media: (media: any, genre?: any) => string;
+    filters: (media: any) => string;
+    items: (media: any, queryStr?: any) => string;
   };
   anime: {
     id: (id: any) => string;
@@ -42,20 +43,12 @@ export interface GlobalCacheKeys {
   person: {
     id: (id: any) => string;
   };
-  tv: {
+  studio: {
+    creations: (id: any, queryKey?: any) => string;
     id: (id: any) => string;
   };
-  search: {
-    anime: (q: any) => string;
-    books: (q: any) => string;
-    characters: (q: any) => string;
-    games: (q: any) => string;
-    manga: (q: any) => string;
-    movies: (q: any) => string;
-    music: (q: any) => string;
-    people: (q: any) => string;
-    studios: (q: any) => string;
-    tv: (q: any) => string;
+  tv: {
+    id: (id: any) => string;
   };}
 
 export type GlobalCacheKeyStorage = GlobalCacheKeys;

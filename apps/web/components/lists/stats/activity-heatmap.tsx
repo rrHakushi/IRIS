@@ -63,7 +63,9 @@ export function ActivityHeatmap({
   dayOfWeekData = [],
 }: ActivityHeatmapProps): React.JSX.Element | null {
   const monthlyData = propMonthlyData ?? data ?? []
-  const [activeTab, setActiveTab] = useState<"monthly" | "weekly" | "days">("monthly")
+  const [activeTab, setActiveTab] = useState<"monthly" | "weekly" | "days">(
+    "monthly"
+  )
 
   const hasMonthly = monthlyData.length > 0
   const hasWeekly = weeklyData.length > 0
@@ -72,11 +74,15 @@ export function ActivityHeatmap({
   if (!hasMonthly && !hasWeekly && !hasDaily) return null
 
   // Active years for monthly
-  const monthlyYears = Array.from(new Set(monthlyData.map((d) => d.year))).sort((a, b) => b - a)
+  const monthlyYears = Array.from(new Set(monthlyData.map((d) => d.year))).sort(
+    (a, b) => b - a
+  )
   const currentMonthlyYears = monthlyYears.slice(0, 3)
 
   // Active years for weekly
-  const weeklyYears = Array.from(new Set(weeklyData.map((d) => d.year))).sort((a, b) => b - a)
+  const weeklyYears = Array.from(new Set(weeklyData.map((d) => d.year))).sort(
+    (a, b) => b - a
+  )
   const currentWeeklyYears = weeklyYears.slice(0, 3)
 
   const maxMonthlyCount = Math.max(...monthlyData.map((d) => d.count), 1)
@@ -86,7 +92,7 @@ export function ActivityHeatmap({
   return (
     <Card className="flex flex-col rounded-2xl border border-border/60 bg-card/60 p-5 backdrop-blur-md">
       {/* Header with Title and Mode Switcher */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h3 className="font-heading text-sm font-semibold tracking-wide text-foreground uppercase">
           {activeTab === "monthly"
             ? "Monthly Activity"
@@ -151,7 +157,9 @@ export function ActivityHeatmap({
               <div key={year} className="space-y-2">
                 <div className="flex items-center justify-between text-xs font-semibold">
                   <span className="font-heading text-foreground">{year}</span>
-                  <span className="text-muted-foreground">{yearTotal.toLocaleString()} titles</span>
+                  <span className="text-muted-foreground">
+                    {yearTotal.toLocaleString()} titles
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-6 gap-2 sm:grid-cols-12">
@@ -160,16 +168,21 @@ export function ActivityHeatmap({
                     const count = monthMap[monthNum] || 0
                     const ratio = count / maxMonthlyCount
 
-                    let intensityClass = "bg-muted/30 text-muted-foreground border-border/30"
+                    let intensityClass =
+                      "bg-muted/30 text-muted-foreground border-border/30"
                     if (count > 0) {
                       if (ratio > 0.75) {
-                        intensityClass = "bg-primary text-primary-foreground border-primary shadow-xs font-bold"
+                        intensityClass =
+                          "bg-primary text-primary-foreground border-primary shadow-xs font-bold"
                       } else if (ratio > 0.4) {
-                        intensityClass = "bg-primary/70 text-primary-foreground border-primary/60 font-semibold"
+                        intensityClass =
+                          "bg-primary/70 text-primary-foreground border-primary/60 font-semibold"
                       } else if (ratio > 0.15) {
-                        intensityClass = "bg-primary/35 text-foreground border-primary/30"
+                        intensityClass =
+                          "bg-primary/35 text-foreground border-primary/30"
                       } else {
-                        intensityClass = "bg-primary/15 text-foreground border-primary/20"
+                        intensityClass =
+                          "bg-primary/15 text-foreground border-primary/20"
                       }
                     }
 
@@ -183,7 +196,9 @@ export function ActivityHeatmap({
                         title={`${name} ${year}: ${count} titles`}
                       >
                         <span className="text-[10px] uppercase">{name}</span>
-                        <span className="font-heading text-xs mt-0.5">{count > 0 ? count : "—"}</span>
+                        <span className="mt-0.5 font-heading text-xs">
+                          {count > 0 ? count : "—"}
+                        </span>
                       </div>
                     )
                   })}
@@ -198,7 +213,9 @@ export function ActivityHeatmap({
       {activeTab === "weekly" && (
         <div className="space-y-6">
           {currentWeeklyYears.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-4 text-center">No weekly activity data available.</p>
+            <p className="py-4 text-center text-xs text-muted-foreground">
+              No weekly activity data available.
+            </p>
           ) : (
             currentWeeklyYears.map((year) => {
               const yearData = weeklyData.filter((d) => d.year === year)
@@ -220,7 +237,9 @@ export function ActivityHeatmap({
                 <div key={year} className="space-y-3">
                   <div className="flex items-center justify-between text-xs font-semibold">
                     <span className="font-heading text-foreground">{year}</span>
-                    <span className="text-muted-foreground">{yearTotal.toLocaleString()} titles</span>
+                    <span className="text-muted-foreground">
+                      {yearTotal.toLocaleString()} titles
+                    </span>
                   </div>
 
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -235,13 +254,18 @@ export function ActivityHeatmap({
                       return (
                         <div
                           key={q.label}
-                          className="rounded-xl border border-border/40 bg-background/30 p-3 space-y-2"
+                          className="space-y-2 rounded-xl border border-border/40 bg-background/30 p-3"
                         >
                           <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
                             <span>
-                              {q.label} <span className="text-[10px] font-normal">({q.range})</span>
+                              {q.label}{" "}
+                              <span className="text-[10px] font-normal">
+                                ({q.range})
+                              </span>
                             </span>
-                            <span className="tabular-nums">{qTotal.toLocaleString()} titles</span>
+                            <span className="tabular-nums">
+                              {qTotal.toLocaleString()} titles
+                            </span>
                           </div>
 
                           <div className="grid grid-cols-7 gap-1">
@@ -249,7 +273,8 @@ export function ActivityHeatmap({
                               const count = weekMap[weekNum] || 0
                               const ratio = count / maxWeeklyCount
 
-                              let intensityClass = "bg-muted/20 border-border/20 text-muted-foreground/60"
+                              let intensityClass =
+                                "bg-muted/20 border-border/20 text-muted-foreground/60"
                               if (count > 0) {
                                 if (ratio > 0.75) {
                                   intensityClass =
@@ -258,9 +283,11 @@ export function ActivityHeatmap({
                                   intensityClass =
                                     "bg-primary/70 text-primary-foreground border-primary/60 font-semibold"
                                 } else if (ratio > 0.15) {
-                                  intensityClass = "bg-primary/35 text-foreground border-primary/30"
+                                  intensityClass =
+                                    "bg-primary/35 text-foreground border-primary/30"
                                 } else {
-                                  intensityClass = "bg-primary/15 text-foreground border-primary/20"
+                                  intensityClass =
+                                    "bg-primary/15 text-foreground border-primary/20"
                                 }
                               }
 
@@ -268,18 +295,22 @@ export function ActivityHeatmap({
                                 <div
                                   key={weekNum}
                                   className={cn(
-                                    "flex flex-col items-center justify-center h-8 rounded-lg border text-center transition-all hover:scale-110 cursor-default",
+                                    "flex h-8 cursor-default flex-col items-center justify-center rounded-lg border text-center transition-all hover:scale-110",
                                     intensityClass
                                   )}
                                   title={`Week ${weekNum} (${year}): ${count} titles`}
                                 >
-                                  <span className="text-[9px] font-mono leading-none">W{weekNum}</span>
+                                  <span className="font-mono text-[9px] leading-none">
+                                    W{weekNum}
+                                  </span>
                                   {count > 0 ? (
-                                    <span className="text-[10px] font-heading font-semibold leading-none mt-0.5">
+                                    <span className="mt-0.5 font-heading text-[10px] leading-none font-semibold">
                                       {count}
                                     </span>
                                   ) : (
-                                    <span className="text-[8px] opacity-40 leading-none mt-0.5">·</span>
+                                    <span className="mt-0.5 text-[8px] leading-none opacity-40">
+                                      ·
+                                    </span>
                                   )}
                                 </div>
                               )
@@ -300,7 +331,9 @@ export function ActivityHeatmap({
       {activeTab === "days" && (
         <div className="space-y-2.5">
           {dayOfWeekData.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-4 text-center">No daily activity data available.</p>
+            <p className="py-4 text-center text-xs text-muted-foreground">
+              No daily activity data available.
+            </p>
           ) : (
             ORDERED_DAYS.map((od) => {
               const item = dayOfWeekData.find((d) => d.day === od.day)
@@ -318,11 +351,13 @@ export function ActivityHeatmap({
                 >
                   <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-foreground">{od.name}</span>
+                      <span className="font-semibold text-foreground">
+                        {od.name}
+                      </span>
                       {isBusiest && (
                         <Badge
                           variant="secondary"
-                          className="rounded-lg text-[10px] font-semibold bg-primary/15 text-primary border-primary/30 py-0"
+                          className="rounded-lg border-primary/30 bg-primary/15 py-0 text-[10px] font-semibold text-primary"
                         >
                           Busiest Day
                         </Badge>
@@ -331,22 +366,25 @@ export function ActivityHeatmap({
 
                     <div className="flex items-center gap-2 text-xs">
                       <span className="font-heading font-semibold text-foreground tabular-nums">
-                        {count.toLocaleString()} {count === 1 ? "title" : "titles"}
+                        {count.toLocaleString()}{" "}
+                        {count === 1 ? "title" : "titles"}
                       </span>
-                      <span className="text-muted-foreground tabular-nums w-12 text-end">
+                      <span className="w-12 text-end text-muted-foreground tabular-nums">
                         {percentage.toFixed(1)}%
                       </span>
                     </div>
                   </div>
 
                   {/* Visual distribution bar */}
-                  <div className="h-1.5 w-full rounded-full bg-muted/40 overflow-hidden">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/40">
                     <div
                       className={cn(
                         "h-full rounded-full transition-all duration-500",
                         isBusiest ? "bg-primary" : "bg-primary/60"
                       )}
-                      style={{ width: `${Math.min(100, (count / maxDailyCount) * 100)}%` }}
+                      style={{
+                        width: `${Math.min(100, (count / maxDailyCount) * 100)}%`,
+                      }}
                     />
                   </div>
                 </div>

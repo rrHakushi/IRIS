@@ -6,8 +6,6 @@ import { TvSearchResponseSchema, type TvSearchResponse } from "./types"
 import { NotFoundResponseSchema } from "../../../../../types"
 import { findMatchingSynonymIds } from "../../helpers/search-synonyms"
 
-const SEARCH_TV_TTL = 5 * 60 // 5 minutes
-
 export default defineRoute({
   schema: {
     query: t.Object({
@@ -28,25 +26,13 @@ export default defineRoute({
     },
   },
 
-  cacheKeys: {
-    search: {
-      tv: (q: string) => `search:tv:${q}`,
-    },
-  },
-
-  async GET({ query, prisma, cache, cacheKeys, logger }) {
+  async GET({ query, prisma, logger }) {
     const cleanQuery = decodeURIComponent(String(query.q || ""))
       .replace(/\+/g, " ")
       .trim()
-    const cacheKey = cacheKeys.search.tv(cleanQuery)
 
     if (!cleanQuery || cleanQuery.length < 3) {
       return new NotFound("Query must be at least 3 characters long")
-    }
-
-    const cached = await cache.get<TvSearchResponse>(cacheKey)
-    if (cached) {
-      return cached
     }
 
     const synonymIds = await findMatchingSynonymIds(prisma, "Tv", cleanQuery)
@@ -80,11 +66,9 @@ export default defineRoute({
         ...item,
         queuedForFetch: true,
       }))
-      await cache.set(cacheKey, results, SEARCH_TV_TTL)
       return results
     }
 
-    await cache.set(cacheKey, data, SEARCH_TV_TTL)
     void queueTvSearchFetch(cleanQuery).catch((err) => {
       logger.error(
         `[SearchTvRoute] Failed to queue background search for "${cleanQuery}":`,

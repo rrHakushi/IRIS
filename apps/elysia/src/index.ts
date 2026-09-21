@@ -49,6 +49,11 @@ export type { GameDetails } from "./modules/IRIS-media/media/games/[id]/route"
 export type { BookDetails } from "./modules/IRIS-media/media/books/[id]/route"
 export type { CharacterDetails } from "./modules/IRIS-media/media/characters/[id]/route"
 export type { PersonDetails } from "./modules/IRIS-media/media/people/[id]/route"
+export type {
+  StudioDetails,
+  StudioCreationItem,
+} from "./modules/IRIS-media/media/studios/[id]/types"
+export type { StudioCreationsResponse } from "./modules/IRIS-media/media/studios/[id]/creations/types"
 export type { MusicDetails } from "./modules/IRIS-media/media/music/[id]/types"
 export type { SimilarMediaItem } from "./modules/IRIS-media/helpers/media-similarity"
 

@@ -28,6 +28,11 @@ describe("@IRIS/permissions", () => {
       assert.strictEqual(IRISFlags.ADMINISTRATOR, 1n << 0n);
     });
 
+    it("should define SDUI_ELYSIA_CALLS as a positive BigInt bitmask", () => {
+      assert.strictEqual(typeof IRISFlags.SDUI_ELYSIA_CALLS, "bigint");
+      assert.strictEqual(IRISFlags.SDUI_ELYSIA_CALLS, 1n << 1n);
+    });
+
     it("should have empty DEFAULT_PERMISSIONS", () => {
       assert.deepStrictEqual(DEFAULT_PERMISSIONS, []);
     });
@@ -130,6 +135,15 @@ describe("@IRIS/permissions", () => {
       assert.strictEqual(hasPermission([1], IRISFlags.ADMINISTRATOR), true);
       assert.strictEqual(hasPermission([1], "ADMINISTRATOR"), true);
       assert.strictEqual(hasPermission([1], [IRISFlags.ADMINISTRATOR]), true);
+      // ADMINISTRATOR automatically grants SDUI_ELYSIA_CALLS
+      assert.strictEqual(hasPermission([1], IRISFlags.SDUI_ELYSIA_CALLS), true);
+    });
+
+    it("should evaluate SDUI_ELYSIA_CALLS correctly without ADMINISTRATOR", () => {
+      // 1n << 1n = 2 ([2])
+      assert.strictEqual(hasPermission([2], IRISFlags.SDUI_ELYSIA_CALLS), true);
+      assert.strictEqual(hasPermission([2], "SDUI_ELYSIA_CALLS"), true);
+      assert.strictEqual(hasPermission([2], IRISFlags.ADMINISTRATOR), false);
     });
 
     it("should support checkType 'any'", () => {

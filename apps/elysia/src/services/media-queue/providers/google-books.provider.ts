@@ -122,7 +122,7 @@ export class GoogleBooksProvider {
    */
   async searchBooks(
     query: string,
-    limit: number = 10
+    limit: number = 25
   ): Promise<GoogleBookPayload[]> {
     const clean = query.trim()
     if (!clean) return []

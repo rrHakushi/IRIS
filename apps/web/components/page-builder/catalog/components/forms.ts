@@ -6,12 +6,12 @@ export const formPresets: ComponentPresetItem[] = [
     name: "Text Field",
     category: "forms",
     icon: "IconForms",
-    description: "Labeled text input with state two-way binding",
+    description: "Labeled text input field with placeholder",
     getNode: () => ({
       type: "Field",
       children: [
         { type: "FieldLabel", children: "Field Label" },
-        { type: "Input", props: { placeholder: "Enter text...", bind: "state.textVal" } },
+        { type: "Input", props: { placeholder: "Enter text..." } },
       ],
     }),
   },
@@ -20,13 +20,17 @@ export const formPresets: ComponentPresetItem[] = [
     name: "Switch Toggle",
     category: "forms",
     icon: "IconForms",
-    description: "Boolean toggle switch with bindChecked",
+    description: "Boolean toggle switch component",
     getNode: () => ({
       type: "div",
       props: { className: "flex items-center justify-between gap-2" },
       children: [
-        { type: "span", props: { className: "text-xs font-medium" }, children: "Enable Feature" },
-        { type: "Switch", props: { bindChecked: "state.isEnabled" } },
+        {
+          type: "span",
+          props: { className: "text-xs font-medium" },
+          children: "Enable Feature",
+        },
+        { type: "Switch", props: { "aria-label": "Enable Feature" } },
       ],
     }),
   },

@@ -38,12 +38,13 @@ export default function GeneratorPage() {
   })
 
   // Passphrase options (up to 32 words)
-  const [phraseOptions, setPhraseOptions] = useState<PassphraseGeneratorOptions>({
-    wordCount: 4,
-    separator: "-",
-    capitalize: true,
-    includeNumber: true,
-  })
+  const [phraseOptions, setPhraseOptions] =
+    useState<PassphraseGeneratorOptions>({
+      wordCount: 4,
+      separator: "-",
+      capitalize: true,
+      includeNumber: true,
+    })
 
   // Generated value
   const [generatedValue, setGeneratedValue] = useState("")
@@ -76,27 +77,28 @@ export default function GeneratorPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col p-6 max-w-4xl mx-auto w-full space-y-6">
+    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex size-8 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500">
             <IconSparkles className="size-4" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground font-heading">
+          <h1 className="font-heading text-xl font-bold tracking-tight text-foreground">
             Password Generator
           </h1>
         </div>
 
         {/* Mode Selector */}
-        <div className="flex rounded-xl bg-muted/60 p-1 gap-1">
+        <div className="flex gap-1 rounded-xl bg-muted/60 p-1">
           <button
             type="button"
             onClick={() => setMode("password")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${mode === "password"
+            className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+              mode === "password"
                 ? "bg-background text-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
-              }`}
+            }`}
           >
             <IconKey className="size-3.5" />
             Password
@@ -104,10 +106,11 @@ export default function GeneratorPage() {
           <button
             type="button"
             onClick={() => setMode("passphrase")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${mode === "passphrase"
+            className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+              mode === "passphrase"
                 ? "bg-background text-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
-              }`}
+            }`}
           >
             <IconTypography className="size-3.5" />
             Passphrase
@@ -116,30 +119,30 @@ export default function GeneratorPage() {
       </div>
 
       {/* Main Output Box */}
-      <div className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-4">
+      <div className="space-y-4 rounded-3xl border border-border bg-card p-6 shadow-sm">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">
+            <span className="mb-1 block text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
               Generated {mode === "password" ? "Password" : "Passphrase"}
             </span>
-            <div className="font-mono text-lg sm:text-2xl font-semibold tracking-wide text-foreground break-all select-all selection:bg-rose-500/20">
+            <div className="font-mono text-lg font-semibold tracking-wide break-all text-foreground select-all selection:bg-rose-500/20 sm:text-2xl">
               {generatedValue || "..."}
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex shrink-0 items-center gap-2">
             <Button
               variant="outline"
               size="icon"
               onClick={regenerate}
               aria-label="Regenerate"
-              className="size-10 rounded-2xl cursor-pointer hover:bg-muted"
+              className="size-10 cursor-pointer rounded-2xl hover:bg-muted"
             >
               <IconRefresh className="size-4" />
             </Button>
             <Button
               onClick={handleCopy}
-              className="h-10 px-4 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-semibold text-xs cursor-pointer shadow-xs gap-1.5"
+              className="h-10 cursor-pointer gap-1.5 rounded-2xl bg-rose-500 px-4 text-xs font-semibold text-white shadow-xs hover:bg-rose-600"
             >
               {copied ? (
                 <>
@@ -157,7 +160,7 @@ export default function GeneratorPage() {
         </div>
 
         {/* Entropy & Strength Meter */}
-        <div className="space-y-1.5 pt-2 border-t border-border/60">
+        <div className="space-y-1.5 border-t border-border/60 pt-2">
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">Entropy:</span>
@@ -166,38 +169,40 @@ export default function GeneratorPage() {
               </span>
             </div>
             <span
-              className={`font-semibold text-[11px] uppercase tracking-wider ${entropyInfo.score === 4
+              className={`text-[11px] font-semibold tracking-wider uppercase ${
+                entropyInfo.score === 4
                   ? "text-emerald-500"
                   : entropyInfo.score === 3
                     ? "text-blue-500"
                     : entropyInfo.score === 2
                       ? "text-amber-500"
                       : "text-rose-500"
-                }`}
+              }`}
             >
               {entropyInfo.label}
             </span>
           </div>
 
           {/* Strength Bar */}
-          <div className="h-1.5 w-full rounded-full bg-muted/80 overflow-hidden">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/80">
             <div
-              className={`h-full transition-all duration-300 ${entropyInfo.score === 4
+              className={`h-full transition-all duration-300 ${
+                entropyInfo.score === 4
                   ? "w-full bg-emerald-500"
                   : entropyInfo.score === 3
                     ? "w-3/4 bg-blue-500"
                     : entropyInfo.score === 2
                       ? "w-1/2 bg-amber-500"
                       : "w-1/4 bg-rose-500"
-                }`}
+              }`}
             />
           </div>
         </div>
       </div>
 
       {/* Configuration Controls */}
-      <div className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-6">
-        <h2 className="text-sm font-bold text-foreground font-heading">
+      <div className="space-y-6 rounded-3xl border border-border bg-card p-6 shadow-sm">
+        <h2 className="font-heading text-sm font-bold text-foreground">
           Options
         </h2>
 
@@ -205,8 +210,11 @@ export default function GeneratorPage() {
           <div className="space-y-5">
             {/* Length Slider up to 256 */}
             <div className="space-y-2">
-              <div className="flex justify-between items-center text-xs">
-                <Label htmlFor="length-slider" className="font-medium text-foreground">
+              <div className="flex items-center justify-between text-xs">
+                <Label
+                  htmlFor="length-slider"
+                  className="font-medium text-foreground"
+                >
                   Password Length
                 </Label>
                 <span className="font-mono font-bold text-foreground">
@@ -220,9 +228,12 @@ export default function GeneratorPage() {
                 max={256}
                 value={pwdOptions.length}
                 onChange={(e) =>
-                  setPwdOptions({ ...pwdOptions, length: Number(e.target.value) })
+                  setPwdOptions({
+                    ...pwdOptions,
+                    length: Number(e.target.value),
+                  })
                 }
-                className="w-full accent-rose-500 cursor-pointer"
+                className="w-full cursor-pointer accent-rose-500"
               />
               <div className="flex justify-between text-[10px] text-muted-foreground">
                 <span>8</span>
@@ -234,78 +245,84 @@ export default function GeneratorPage() {
             </div>
 
             {/* Checkbox Toggles */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              <label className="flex items-center gap-3 p-3 rounded-2xl border border-border bg-background hover:bg-muted/40 cursor-pointer transition-colors">
+            <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2">
+              <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-border bg-background p-3 transition-colors hover:bg-muted/40">
                 <input
                   type="checkbox"
                   checked={pwdOptions.uppercase}
                   onChange={(e) =>
-                    setPwdOptions({ ...pwdOptions, uppercase: e.target.checked })
+                    setPwdOptions({
+                      ...pwdOptions,
+                      uppercase: e.target.checked,
+                    })
                   }
-                  className="rounded size-4 accent-rose-500"
+                  className="size-4 rounded accent-rose-500"
                 />
                 <div>
-                  <span className="text-xs font-semibold text-foreground block">
+                  <span className="block text-xs font-semibold text-foreground">
                     Uppercase Letters (A-Z)
                   </span>
-                  <span className="text-[11px] text-muted-foreground font-mono">
+                  <span className="font-mono text-[11px] text-muted-foreground">
                     ABCDEFGHIJK
                   </span>
                 </div>
               </label>
 
-              <label className="flex items-center gap-3 p-3 rounded-2xl border border-border bg-background hover:bg-muted/40 cursor-pointer transition-colors">
+              <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-border bg-background p-3 transition-colors hover:bg-muted/40">
                 <input
                   type="checkbox"
                   checked={pwdOptions.lowercase}
                   onChange={(e) =>
-                    setPwdOptions({ ...pwdOptions, lowercase: e.target.checked })
+                    setPwdOptions({
+                      ...pwdOptions,
+                      lowercase: e.target.checked,
+                    })
                   }
-                  className="rounded size-4 accent-rose-500"
+                  className="size-4 rounded accent-rose-500"
                 />
                 <div>
-                  <span className="text-xs font-semibold text-foreground block">
+                  <span className="block text-xs font-semibold text-foreground">
                     Lowercase Letters (a-z)
                   </span>
-                  <span className="text-[11px] text-muted-foreground font-mono">
+                  <span className="font-mono text-[11px] text-muted-foreground">
                     abcdefghijk
                   </span>
                 </div>
               </label>
 
-              <label className="flex items-center gap-3 p-3 rounded-2xl border border-border bg-background hover:bg-muted/40 cursor-pointer transition-colors">
+              <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-border bg-background p-3 transition-colors hover:bg-muted/40">
                 <input
                   type="checkbox"
                   checked={pwdOptions.numbers}
                   onChange={(e) =>
                     setPwdOptions({ ...pwdOptions, numbers: e.target.checked })
                   }
-                  className="rounded size-4 accent-rose-500"
+                  className="size-4 rounded accent-rose-500"
                 />
                 <div>
-                  <span className="text-xs font-semibold text-foreground block">
+                  <span className="block text-xs font-semibold text-foreground">
                     Numbers (0-9)
                   </span>
-                  <span className="text-[11px] text-muted-foreground font-mono">
+                  <span className="font-mono text-[11px] text-muted-foreground">
                     0123456789
                   </span>
                 </div>
               </label>
 
-              <label className="flex items-center gap-3 p-3 rounded-2xl border border-border bg-background hover:bg-muted/40 cursor-pointer transition-colors">
+              <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-border bg-background p-3 transition-colors hover:bg-muted/40">
                 <input
                   type="checkbox"
                   checked={pwdOptions.symbols}
                   onChange={(e) =>
                     setPwdOptions({ ...pwdOptions, symbols: e.target.checked })
                   }
-                  className="rounded size-4 accent-rose-500"
+                  className="size-4 rounded accent-rose-500"
                 />
                 <div>
-                  <span className="text-xs font-semibold text-foreground block">
+                  <span className="block text-xs font-semibold text-foreground">
                     Special Symbols
                   </span>
-                  <span className="text-[11px] text-muted-foreground font-mono">
+                  <span className="font-mono text-[11px] text-muted-foreground">
                     !@#$%^&*-_=+
                   </span>
                 </div>
@@ -313,17 +330,20 @@ export default function GeneratorPage() {
             </div>
 
             {/* Ambiguous filter toggle */}
-            <label className="flex items-center gap-3 p-3 rounded-2xl border border-border bg-background hover:bg-muted/40 cursor-pointer transition-colors">
+            <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-border bg-background p-3 transition-colors hover:bg-muted/40">
               <input
                 type="checkbox"
                 checked={pwdOptions.avoidAmbiguous}
                 onChange={(e) =>
-                  setPwdOptions({ ...pwdOptions, avoidAmbiguous: e.target.checked })
+                  setPwdOptions({
+                    ...pwdOptions,
+                    avoidAmbiguous: e.target.checked,
+                  })
                 }
-                className="rounded size-4 accent-rose-500"
+                className="size-4 rounded accent-rose-500"
               />
               <div>
-                <span className="text-xs font-semibold text-foreground block">
+                <span className="block text-xs font-semibold text-foreground">
                   Avoid Ambiguous Characters
                 </span>
                 <span className="text-[11px] text-muted-foreground">
@@ -338,8 +358,11 @@ export default function GeneratorPage() {
           <div className="space-y-5">
             {/* Word Count Slider up to 32 */}
             <div className="space-y-2">
-              <div className="flex justify-between items-center text-xs">
-                <Label htmlFor="words-slider" className="font-medium text-foreground">
+              <div className="flex items-center justify-between text-xs">
+                <Label
+                  htmlFor="words-slider"
+                  className="font-medium text-foreground"
+                >
                   Number of Words
                 </Label>
                 <span className="font-mono font-bold text-foreground">
@@ -358,7 +381,7 @@ export default function GeneratorPage() {
                     wordCount: Number(e.target.value),
                   })
                 }
-                className="w-full accent-rose-500 cursor-pointer"
+                className="w-full cursor-pointer accent-rose-500"
               />
               <div className="flex justify-between text-[10px] text-muted-foreground">
                 <span>3 words</span>
@@ -382,10 +405,11 @@ export default function GeneratorPage() {
                     onClick={() =>
                       setPhraseOptions({ ...phraseOptions, separator: sep })
                     }
-                    className={`size-9 rounded-xl font-mono text-xs font-bold border transition-colors cursor-pointer ${phraseOptions.separator === sep
+                    className={`size-9 cursor-pointer rounded-xl border font-mono text-xs font-bold transition-colors ${
+                      phraseOptions.separator === sep
                         ? "border-rose-500 bg-rose-500/10 text-rose-500"
                         : "border-border bg-background text-muted-foreground hover:text-foreground"
-                      }`}
+                    }`}
                   >
                     {sep === " " ? "space" : sep}
                   </button>
@@ -394,8 +418,8 @@ export default function GeneratorPage() {
             </div>
 
             {/* Toggles */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              <label className="flex items-center gap-3 p-3 rounded-2xl border border-border bg-background hover:bg-muted/40 cursor-pointer transition-colors">
+            <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2">
+              <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-border bg-background p-3 transition-colors hover:bg-muted/40">
                 <input
                   type="checkbox"
                   checked={phraseOptions.capitalize}
@@ -405,10 +429,10 @@ export default function GeneratorPage() {
                       capitalize: e.target.checked,
                     })
                   }
-                  className="rounded size-4 accent-rose-500"
+                  className="size-4 rounded accent-rose-500"
                 />
                 <div>
-                  <span className="text-xs font-semibold text-foreground block">
+                  <span className="block text-xs font-semibold text-foreground">
                     Capitalize Words
                   </span>
                   <span className="text-[11px] text-muted-foreground">
@@ -417,7 +441,7 @@ export default function GeneratorPage() {
                 </div>
               </label>
 
-              <label className="flex items-center gap-3 p-3 rounded-2xl border border-border bg-background hover:bg-muted/40 cursor-pointer transition-colors">
+              <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-border bg-background p-3 transition-colors hover:bg-muted/40">
                 <input
                   type="checkbox"
                   checked={phraseOptions.includeNumber}
@@ -427,10 +451,10 @@ export default function GeneratorPage() {
                       includeNumber: e.target.checked,
                     })
                   }
-                  className="rounded size-4 accent-rose-500"
+                  className="size-4 rounded accent-rose-500"
                 />
                 <div>
-                  <span className="text-xs font-semibold text-foreground block">
+                  <span className="block text-xs font-semibold text-foreground">
                     Include Random Number
                   </span>
                   <span className="text-[11px] text-muted-foreground">

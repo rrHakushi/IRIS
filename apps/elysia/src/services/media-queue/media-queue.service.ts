@@ -39,6 +39,7 @@ import type {
 import { logQueue } from "./logger.js"
 
 const REDIS_KEY_PREFIX = "media-queue"
+const SEARCH_FETCH_THROTTLE_TTL = 5 * 60 // 5 minutes
 const MAX_CONCURRENCY = 4
 
 export class MediaQueueService {
@@ -596,7 +597,21 @@ export class MediaQueueService {
     const cleanQuery = query?.trim()
     if (!cleanQuery) return []
 
-    const limit = options?.limit ?? 10
+    const throttleKey = `${REDIS_KEY_PREFIX}:search-throttle:${type}:${cleanQuery.toLowerCase()}`
+
+    if (!options?.forceRefresh) {
+      const isThrottled = await cache.get<boolean>(throttleKey)
+      if (isThrottled) {
+        logQueue(
+          `${c.magenta(c.bold("[MediaQueue]"))} ${c.dim("⏩ Queue search fetch throttled (Already run in last 5m):")} ${c.cyan(type)}: "${c.yellow(cleanQuery)}"`
+        )
+        return []
+      }
+    }
+
+    await cache.set(throttleKey, true, SEARCH_FETCH_THROTTLE_TTL)
+
+    const limit = options?.limit ?? 25
     const results: any[] = []
 
     logQueue(
@@ -774,7 +789,7 @@ export class MediaQueueService {
         break
       }
       case "MUSIC": {
-        const halfLimit = Math.max(Math.floor(limit / 2), 3)
+        const halfLimit = Math.max(Math.floor(limit / 2), 15)
         const [albums, tracks] = await Promise.all([
           this.deezer.searchAlbums(cleanQuery, halfLimit).catch(() => []),
           this.deezer.searchTracks(cleanQuery, halfLimit).catch(() => []),

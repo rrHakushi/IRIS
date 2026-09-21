@@ -606,15 +606,20 @@
             <div class="edit-field">
               <div class="field-label-row">
                 <label for="edit-cipher-totp">Authenticator Key (TOTP)</label>
-                <button type="button" id="btn-edit-scan-qr" class="text-btn mini" title="Select QR Code area on page">
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 2px;">
-                    <rect x="3" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="14" width="7" height="7"></rect>
-                    <rect x="3" y="14" width="7" height="7"></rect>
-                  </svg>
-                  Scan Screen QR
-                </button>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <button type="button" id="btn-copy-edit-totp" class="text-btn mini" style="display: none;">
+                    Copy TOTP
+                  </button>
+                  <button type="button" id="btn-edit-scan-qr" class="text-btn mini" title="Select QR Code area on page">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 2px;">
+                      <rect x="3" y="3" width="7" height="7"></rect>
+                      <rect x="14" y="3" width="7" height="7"></rect>
+                      <rect x="14" y="14" width="7" height="7"></rect>
+                      <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    Scan Screen QR
+                  </button>
+                </div>
               </div>
               <div class="input-wrap">
                 <input type="password" id="edit-cipher-totp" placeholder="Secret Key or otpauth:// URL" class="font-mono" />

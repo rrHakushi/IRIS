@@ -46,11 +46,14 @@ export default defineRoute({
             select: { createdAt: true, expiresAt: true, revokedAt: true },
           })
 
-          const scopeDetails = consent.scopes.map((s) => SCOPE_DEFINITIONS[s] || {
-            scope: s,
-            name: s,
-            description: `Access to ${s}`,
-          })
+          const scopeDetails = consent.scopes.map(
+            (s) =>
+              SCOPE_DEFINITIONS[s] || {
+                scope: s,
+                name: s,
+                description: `Access to ${s}`,
+              }
+          )
 
           return {
             id: consent.id,
@@ -60,8 +63,13 @@ export default defineRoute({
             scopeDetails,
             authorizedAt: consent.createdAt.toISOString(),
             updatedAt: consent.updatedAt.toISOString(),
-            lastUsedAt: lastToken?.createdAt ? lastToken.createdAt.toISOString() : null,
-            isActive: lastToken ? lastToken.revokedAt === null && lastToken.expiresAt.getTime() > Date.now() : true,
+            lastUsedAt: lastToken?.createdAt
+              ? lastToken.createdAt.toISOString()
+              : null,
+            isActive: lastToken
+              ? lastToken.revokedAt === null &&
+                lastToken.expiresAt.getTime() > Date.now()
+              : true,
           }
         })
       )

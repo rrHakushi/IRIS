@@ -1017,7 +1017,7 @@ export class AniListProvider {
    */
   async searchAnime(
     query: string,
-    limit: number = 10
+    limit: number = 25
   ): Promise<AniListAnimeSearchPreview[]> {
     const clean = query.trim()
     if (!clean) return []
@@ -1062,7 +1062,7 @@ export class AniListProvider {
    */
   async searchManga(
     query: string,
-    limit: number = 10
+    limit: number = 25
   ): Promise<AniListMangaSearchPreview[]> {
     const clean = query.trim()
     if (!clean) return []

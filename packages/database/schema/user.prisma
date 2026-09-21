@@ -20,6 +20,7 @@ model User {
     apiKeys         ApiKey[]
     notifications   Notification[]
     connections     Connection[]
+    bookmarks       Bookmark[]
 
     // OAUTH
     oauthClients            OAuthClient[]            @relation("UserOAuthClients")

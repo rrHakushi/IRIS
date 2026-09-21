@@ -77,6 +77,9 @@ export function ConnectionSettingsDialog({
       toast.success("Connection settings updated!")
       onOpenChange(false)
       onUpdated()
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("iris-connections-changed"))
+      }
     } catch (err: unknown) {
       toast.error((err as Error).message || "Failed to update settings")
     } finally {
@@ -105,6 +108,9 @@ export function ConnectionSettingsDialog({
       toast.success(`Disconnected ${provider.name}`)
       onOpenChange(false)
       onDisconnected()
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("iris-connections-changed"))
+      }
     } catch (err: unknown) {
       toast.error((err as Error).message || "Failed to disconnect")
     } finally {

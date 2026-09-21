@@ -1290,6 +1290,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
             success: false,
             isUnlocked: false,
             credentials: [],
+            passkeys: [],
             error: "Vault is locked",
           })
           return
@@ -1298,11 +1299,19 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const callerUrl = sender.tab?.url || sender?.url || payload?.url || ""
         const callerHost = IrisMatching.extractHost(callerUrl)
         if (!callerHost) {
-          sendResponse({ success: false, credentials: [] })
+          sendResponse({ success: false, credentials: [], passkeys: [] })
           return
         }
 
-        const matched = []
+        const allowedIds =
+          Array.isArray(payload?.allowCredentials) &&
+          payload.allowCredentials.length > 0
+            ? payload.allowCredentials.map((c) =>
+                typeof c === "string" ? c : c.id
+              )
+            : null
+
+        let matched = []
         for (const cipher of inMemoryCiphers) {
           if (cipher.deletedAt || cipher.type !== "LOGIN") continue
           const passkey = cipher.data?.passkey
@@ -1313,19 +1322,57 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
             effectiveRpId &&
             IrisMatching.isUriMatch(callerUrl, effectiveRpId, 0)
           ) {
+            if (allowedIds && !allowedIds.includes(passkey.credentialId)) {
+              continue
+            }
             matched.push({
               id: passkey.credentialId,
+              credentialId: passkey.credentialId,
               rawId: passkey.credentialId,
               type: "public-key",
-              userName: passkey.userName || cipher.data?.username,
+              userName: passkey.userName || cipher.data?.username || "Account",
               userDisplayName:
                 passkey.userDisplayName ||
                 cipher.title ||
-                cipher.data?.username,
+                cipher.data?.username ||
+                "Account",
               userHandle: passkey.userHandle || "",
               cipherId: cipher.id,
-              cipherTitle: cipher.title,
+              cipherTitle: cipher.title || "Passkey",
+              title: cipher.title || passkey.userName || "Passkey",
             })
+          }
+        }
+
+        // If allowCredentials filtering resulted in 0 matches, fallback to all RP matches
+        if (matched.length === 0 && allowedIds) {
+          for (const cipher of inMemoryCiphers) {
+            if (cipher.deletedAt || cipher.type !== "LOGIN") continue
+            const passkey = cipher.data?.passkey
+            if (!passkey) continue
+
+            const effectiveRpId = passkey.rpId
+            if (
+              effectiveRpId &&
+              IrisMatching.isUriMatch(callerUrl, effectiveRpId, 0)
+            ) {
+              matched.push({
+                id: passkey.credentialId,
+                credentialId: passkey.credentialId,
+                rawId: passkey.credentialId,
+                type: "public-key",
+                userName: passkey.userName || cipher.data?.username || "Account",
+                userDisplayName:
+                  passkey.userDisplayName ||
+                  cipher.title ||
+                  cipher.data?.username ||
+                  "Account",
+                userHandle: passkey.userHandle || "",
+                cipherId: cipher.id,
+                cipherTitle: cipher.title || "Passkey",
+                title: cipher.title || passkey.userName || "Passkey",
+              })
+            }
           }
         }
 
@@ -1333,9 +1380,15 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           success: true,
           isUnlocked: true,
           credentials: matched,
+          passkeys: matched,
         })
       } catch (err) {
-        sendResponse({ success: false, credentials: [], error: err.message })
+        sendResponse({
+          success: false,
+          credentials: [],
+          passkeys: [],
+          error: err.message,
+        })
       }
     })()
     return true
@@ -1378,12 +1431,35 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           ["sign", "verify"]
         )
 
-        // Export public key to SPKI buffer
+        // Export public key to SPKI buffer and JWKs
         const spki = await crypto.subtle.exportKey("spki", keyPair.publicKey)
         const privJwk = await crypto.subtle.exportKey(
           "jwk",
           keyPair.privateKey
         )
+        const pubJwk = await crypto.subtle.exportKey(
+          "jwk",
+          keyPair.publicKey
+        )
+
+        // Extract raw 32-byte X and Y coordinates for COSE_Key
+        const xBytes = new Uint8Array(base64UrlToBuffer(pubJwk.x))
+        const yBytes = new Uint8Array(base64UrlToBuffer(pubJwk.y))
+
+        // Construct COSE_Key for ES256 (CBOR map with 5 elements)
+        // 1 (kty): 2 (EC2)       -> 0x01, 0x02
+        // 3 (alg): -7 (ES256)    -> 0x03, 0x26 (-1 - 6 = -7 in CBOR)
+        // -1 (crv): 1 (P-256)    -> 0x20, 0x01 (-1 - 0 = -1 in CBOR)
+        // -2 (x): 32 bytes       -> 0x21, 0x58, 0x20, ...xBytes
+        // -3 (y): 32 bytes       -> 0x22, 0x58, 0x20, ...yBytes
+        const coseKey = new Uint8Array([
+          0xa5,
+          0x01, 0x02,
+          0x03, 0x26,
+          0x20, 0x01,
+          0x21, 0x58, 0x20, ...xBytes,
+          0x22, 0x58, 0x20, ...yBytes,
+        ])
 
         // 2. Derive Credential ID (random 32 bytes)
         const credIdBytes = crypto.getRandomValues(new Uint8Array(32))
@@ -1416,7 +1492,6 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           (credIdBytes.length >> 8) & 0xff,
           credIdBytes.length & 0xff,
         ])
-        const pubKeyBytes = new Uint8Array(spki)
 
         const authData = new Uint8Array([
           ...rpIdHash,
@@ -1425,7 +1500,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           ...aaguid,
           ...credIdLen,
           ...credIdBytes,
-          ...pubKeyBytes,
+          ...coseKey,
         ])
 
         // 5. Construct Attestation Object (CBOR)
@@ -1508,9 +1583,8 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
             rawId: credIdB64,
             clientDataJSON: bufferToBase64Url(clientDataJSON),
             attestationObject: bufferToBase64Url(attestationObject),
+            authenticatorData: bufferToBase64Url(authData),
             spki: bufferToBase64Url(spki),
-            authDataOffset: 30,
-            authDataLength: authData.length,
           },
         })
       } catch (err) {

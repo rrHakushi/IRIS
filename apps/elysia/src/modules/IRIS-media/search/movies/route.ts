@@ -6,8 +6,6 @@ import { MovieSearchResponseSchema, type MovieSearchResponse } from "./types"
 import { NotFoundResponseSchema } from "../../../../../types"
 import { findMatchingSynonymIds } from "../../helpers/search-synonyms"
 
-const SEARCH_MOVIES_TTL = 5 * 60 // 5 minutes
-
 export default defineRoute({
   schema: {
     query: t.Object({
@@ -28,25 +26,13 @@ export default defineRoute({
     },
   },
 
-  cacheKeys: {
-    search: {
-      movies: (q: string) => `search:movies:${q}`,
-    },
-  },
-
-  async GET({ query, prisma, cache, cacheKeys, logger }) {
+  async GET({ query, prisma, logger }) {
     const cleanQuery = decodeURIComponent(String(query.q || ""))
       .replace(/\+/g, " ")
       .trim()
-    const cacheKey = cacheKeys.search.movies(cleanQuery)
 
     if (!cleanQuery || cleanQuery.length < 3) {
       return new NotFound("Query must be at least 3 characters long")
-    }
-
-    const cached = await cache.get<MovieSearchResponse>(cacheKey)
-    if (cached) {
-      return cached
     }
 
     const synonymIds = await findMatchingSynonymIds(prisma, "Movie", cleanQuery)
@@ -81,11 +67,9 @@ export default defineRoute({
         ...item,
         queuedForFetch: true,
       }))
-      await cache.set(cacheKey, results, SEARCH_MOVIES_TTL)
       return results
     }
 
-    await cache.set(cacheKey, data, SEARCH_MOVIES_TTL)
     void queueMovieSearchFetch(cleanQuery).catch((err) => {
       logger.error(
         `[SearchMoviesRoute] Failed to queue background search for "${cleanQuery}":`,

@@ -25,7 +25,11 @@ import {
 
 import { Input } from "@workspace/ui/components/input"
 import { Badge } from "@workspace/ui/components/badge"
-import { DynamicIcon, ALL_TABLER_ICON_NAMES, type IrisNode } from "@/components/iris-page"
+import {
+  DynamicIcon,
+  ALL_TABLER_ICON_NAMES,
+  type IrisNode,
+} from "@/components/iris-page"
 import type { PaletteCategory, PaletteItem } from "./types"
 
 export const PALETTE_ITEMS: PaletteItem[] = [
@@ -50,7 +54,11 @@ export const PALETTE_ITEMS: PaletteItem[] = [
           type: "CardContent",
           props: { className: "space-y-2" },
           children: [
-            { type: "p", props: { className: "text-sm text-muted-foreground" }, children: "Put your card content here." },
+            {
+              type: "p",
+              props: { className: "text-sm text-muted-foreground" },
+              children: "Put your card content here.",
+            },
           ],
         },
       ],
@@ -64,7 +72,9 @@ export const PALETTE_ITEMS: PaletteItem[] = [
     description: "Padded box container with border",
     defaultNode: {
       type: "div",
-      props: { className: "rounded-2xl border border-border/60 bg-card p-4 space-y-3" },
+      props: {
+        className: "rounded-2xl border border-border/60 bg-card p-4 space-y-3",
+      },
       children: [],
     },
   },
@@ -80,12 +90,16 @@ export const PALETTE_ITEMS: PaletteItem[] = [
       children: [
         {
           type: "div",
-          props: { className: "p-4 rounded-xl border border-dashed border-border/60" },
+          props: {
+            className: "p-4 rounded-xl border border-dashed border-border/60",
+          },
           children: "Column 1",
         },
         {
           type: "div",
-          props: { className: "p-4 rounded-xl border border-dashed border-border/60" },
+          props: {
+            className: "p-4 rounded-xl border border-dashed border-border/60",
+          },
           children: "Column 2",
         },
       ],
@@ -103,17 +117,23 @@ export const PALETTE_ITEMS: PaletteItem[] = [
       children: [
         {
           type: "div",
-          props: { className: "p-4 rounded-xl border border-dashed border-border/60" },
+          props: {
+            className: "p-4 rounded-xl border border-dashed border-border/60",
+          },
           children: "Column 1",
         },
         {
           type: "div",
-          props: { className: "p-4 rounded-xl border border-dashed border-border/60" },
+          props: {
+            className: "p-4 rounded-xl border border-dashed border-border/60",
+          },
           children: "Column 2",
         },
         {
           type: "div",
-          props: { className: "p-4 rounded-xl border border-dashed border-border/60" },
+          props: {
+            className: "p-4 rounded-xl border border-dashed border-border/60",
+          },
           children: "Column 3",
         },
       ],
@@ -132,7 +152,11 @@ export const PALETTE_ITEMS: PaletteItem[] = [
         {
           type: "TabsList",
           children: [
-            { type: "TabsTrigger", props: { id: "tab1" }, children: "Overview" },
+            {
+              type: "TabsTrigger",
+              props: { id: "tab1" },
+              children: "Overview",
+            },
             { type: "TabsTrigger", props: { id: "tab2" }, children: "Details" },
           ],
         },
@@ -190,11 +214,50 @@ export const PALETTE_ITEMS: PaletteItem[] = [
     label: "Paragraph",
     icon: "IconFileText",
     category: "typography",
-    description: "Body text with muted styling",
+    description: "Body text with clean typography",
     defaultNode: {
       type: "p",
       props: { className: "text-sm text-muted-foreground leading-relaxed" },
-      children: "Write your description text here. Supports dynamic expressions like {{ user.username }}.",
+      children: "Enter documentation body text here.",
+    },
+  },
+  {
+    id: "callout-tip",
+    label: "Callout Tip",
+    icon: "IconBulb",
+    category: "typography",
+    description: "Highlighted tip banner for documentation",
+    defaultNode: {
+      type: "Callout",
+      props: { variant: "tip", title: "Pro Tip" },
+      children: "Helpful hint or recommendation for users.",
+    },
+  },
+  {
+    id: "callout-info",
+    label: "Callout Info",
+    icon: "IconInfoCircle",
+    category: "typography",
+    description: "Informational callout banner",
+    defaultNode: {
+      type: "Callout",
+      props: { variant: "info", title: "Note" },
+      children: "Background context or important information.",
+    },
+  },
+  {
+    id: "code-block",
+    label: "Code Block",
+    icon: "IconCode",
+    category: "typography",
+    description: "Syntax highlighted code snippet with copy button",
+    defaultNode: {
+      type: "CodeBlock",
+      props: {
+        language: "typescript",
+        filename: "example.ts",
+        code: `export function helloWorld() {\n  return "Hello from IRIS documentation!";\n}`,
+      },
     },
   },
 
@@ -234,7 +297,10 @@ export const PALETTE_ITEMS: PaletteItem[] = [
       children: [
         { type: "FieldLabel", children: "Field Name" },
         { type: "Input", props: { placeholder: "Enter text..." } },
-        { type: "FieldDescription", children: "Helper text for the input field" },
+        {
+          type: "FieldDescription",
+          children: "Helper text for the input field",
+        },
       ],
     },
   },
@@ -248,7 +314,10 @@ export const PALETTE_ITEMS: PaletteItem[] = [
       type: "Field",
       children: [
         { type: "FieldLabel", children: "Message" },
-        { type: "Textarea", props: { placeholder: "Write detailed message..." } },
+        {
+          type: "Textarea",
+          props: { placeholder: "Write detailed message..." },
+        },
       ],
     },
   },
@@ -260,13 +329,24 @@ export const PALETTE_ITEMS: PaletteItem[] = [
     description: "Boolean toggle with title and description",
     defaultNode: {
       type: "div",
-      props: { className: "flex items-center justify-between p-3 rounded-2xl border bg-muted/20" },
+      props: {
+        className:
+          "flex items-center justify-between p-3 rounded-2xl border bg-muted/20",
+      },
       children: [
         {
           type: "div",
           children: [
-            { type: "span", props: { className: "text-sm font-medium" }, children: "Enable Feature" },
-            { type: "p", props: { className: "text-xs text-muted-foreground" }, children: "Toggle state on or off" },
+            {
+              type: "span",
+              props: { className: "text-sm font-medium" },
+              children: "Enable Feature",
+            },
+            {
+              type: "p",
+              props: { className: "text-xs text-muted-foreground" },
+              children: "Toggle state on or off",
+            },
           ],
         },
         { type: "Switch", props: { "aria-label": "Toggle" } },
@@ -297,9 +377,15 @@ export const PALETTE_ITEMS: PaletteItem[] = [
       type: "Alert",
       props: { variant: "info" },
       children: [
-        { type: "Icon", props: { name: "IconInfoCircle", className: "size-4" } },
+        {
+          type: "Icon",
+          props: { name: "IconInfoCircle", className: "size-4" },
+        },
         { type: "AlertTitle", children: "Important Notice" },
-        { type: "AlertDescription", children: "Informational message displayed to the user." },
+        {
+          type: "AlertDescription",
+          children: "Informational message displayed to the user.",
+        },
       ],
     },
   },
@@ -325,9 +411,7 @@ export const PALETTE_ITEMS: PaletteItem[] = [
     defaultNode: {
       type: "Avatar",
       props: { size: "lg" },
-      children: [
-        { type: "AvatarFallback", children: "IR" },
-      ],
+      children: [{ type: "AvatarFallback", children: "IR" }],
     },
   },
   {
@@ -342,20 +426,23 @@ export const PALETTE_ITEMS: PaletteItem[] = [
     },
   },
 
-  // Advanced
+  // Lists & Groups
   {
-    id: "repeater",
-    label: "Array Repeater List",
+    id: "doc-list",
+    label: "Bullet List",
     icon: "IconListDetails",
     category: "advanced",
-    description: "Loop over array in state dynamically",
+    description: "Unordered bullet point list",
     defaultNode: {
-      type: "div",
-      repeat: { items: "state.items", as: "item", indexAs: "idx" },
-      props: { className: "p-3 rounded-2xl border border-border/60 bg-muted/20 flex items-center justify-between" },
+      type: "ul",
+      props: {
+        className:
+          "list-disc list-inside space-y-1 text-sm text-muted-foreground",
+      },
       children: [
-        { type: "span", props: { className: "text-sm font-medium" }, children: "{{ item.name || item }}" },
-        { type: "Badge", props: { variant: "outline" }, children: "#{{ idx + 1 }}" },
+        { type: "li", children: "First documentation point" },
+        { type: "li", children: "Second key takeaway" },
+        { type: "li", children: "Third recommendation" },
       ],
     },
   },
@@ -417,7 +504,10 @@ export const PALETTE_ITEMS: PaletteItem[] = [
     description: "Semantic HTML footer element",
     defaultNode: {
       type: "footer",
-      props: { className: "border-t border-border/40 pt-4 mt-8 text-xs text-muted-foreground" },
+      props: {
+        className:
+          "border-t border-border/40 pt-4 mt-8 text-xs text-muted-foreground",
+      },
       children: [],
     },
   },
@@ -489,7 +579,9 @@ export const PALETTE_ITEMS: PaletteItem[] = [
     description: "Top-level HTML heading",
     defaultNode: {
       type: "h1",
-      props: { className: "text-3xl font-extrabold tracking-tight font-heading" },
+      props: {
+        className: "text-3xl font-extrabold tracking-tight font-heading",
+      },
       children: "Main Page Heading",
     },
   },
@@ -582,7 +674,10 @@ export const PALETTE_ITEMS: PaletteItem[] = [
     description: "HTML unordered bullet list",
     defaultNode: {
       type: "ul",
-      props: { className: "list-disc list-inside space-y-1 text-sm text-muted-foreground" },
+      props: {
+        className:
+          "list-disc list-inside space-y-1 text-sm text-muted-foreground",
+      },
       children: [
         { type: "li", children: "First item in unordered list" },
         { type: "li", children: "Second item in unordered list" },
@@ -605,11 +700,26 @@ export const PALETTE_ITEMS: PaletteItem[] = [
           children: [
             {
               type: "tr",
-              props: { className: "border-b border-border text-muted-foreground font-semibold" },
+              props: {
+                className:
+                  "border-b border-border text-muted-foreground font-semibold",
+              },
               children: [
-                { type: "th", props: { className: "p-2 text-start" }, children: "Name" },
-                { type: "th", props: { className: "p-2 text-start" }, children: "Status" },
-                { type: "th", props: { className: "p-2 text-end" }, children: "Value" },
+                {
+                  type: "th",
+                  props: { className: "p-2 text-start" },
+                  children: "Name",
+                },
+                {
+                  type: "th",
+                  props: { className: "p-2 text-start" },
+                  children: "Status",
+                },
+                {
+                  type: "th",
+                  props: { className: "p-2 text-end" },
+                  children: "Value",
+                },
               ],
             },
           ],
@@ -622,8 +732,16 @@ export const PALETTE_ITEMS: PaletteItem[] = [
               props: { className: "border-b border-border/40" },
               children: [
                 { type: "td", props: { className: "p-2" }, children: "Alpha" },
-                { type: "td", props: { className: "p-2 text-emerald-500 font-medium" }, children: "Active" },
-                { type: "td", props: { className: "p-2 text-end font-mono" }, children: "$120.00" },
+                {
+                  type: "td",
+                  props: { className: "p-2 text-emerald-500 font-medium" },
+                  children: "Active",
+                },
+                {
+                  type: "td",
+                  props: { className: "p-2 text-end font-mono" },
+                  children: "$120.00",
+                },
               ],
             },
           ],
@@ -639,10 +757,20 @@ export const PALETTE_ITEMS: PaletteItem[] = [
     description: "HTML native collapsible toggle",
     defaultNode: {
       type: "details",
-      props: { className: "rounded-xl border border-border/60 bg-muted/20 p-3 text-sm" },
+      props: {
+        className: "rounded-xl border border-border/60 bg-muted/20 p-3 text-sm",
+      },
       children: [
-        { type: "summary", props: { className: "cursor-pointer font-medium select-none" }, children: "Click to toggle content" },
-        { type: "p", props: { className: "pt-2 text-muted-foreground text-xs" }, children: "Hidden details revealed natively by HTML!" },
+        {
+          type: "summary",
+          props: { className: "cursor-pointer font-medium select-none" },
+          children: "Click to toggle content",
+        },
+        {
+          type: "p",
+          props: { className: "pt-2 text-muted-foreground text-xs" },
+          children: "Hidden details revealed natively by HTML!",
+        },
       ],
     },
   },
@@ -654,7 +782,10 @@ export const PALETTE_ITEMS: PaletteItem[] = [
     description: "HTML blockquote with border",
     defaultNode: {
       type: "blockquote",
-      props: { className: "border-s-2 border-primary ps-4 italic text-sm text-muted-foreground" },
+      props: {
+        className:
+          "border-s-2 border-primary ps-4 italic text-sm text-muted-foreground",
+      },
       children: "Creativity is intelligence having fun.",
     },
   },
@@ -680,9 +811,21 @@ export const PALETTE_ITEMS: PaletteItem[] = [
     defaultNode: {
       type: "ButtonGroup",
       children: [
-        { type: "Button", props: { variant: "outline", size: "sm" }, children: "Left" },
-        { type: "Button", props: { variant: "outline", size: "sm" }, children: "Middle" },
-        { type: "Button", props: { variant: "outline", size: "sm" }, children: "Right" },
+        {
+          type: "Button",
+          props: { variant: "outline", size: "sm" },
+          children: "Left",
+        },
+        {
+          type: "Button",
+          props: { variant: "outline", size: "sm" },
+          children: "Middle",
+        },
+        {
+          type: "Button",
+          props: { variant: "outline", size: "sm" },
+          children: "Right",
+        },
       ],
     },
   },
@@ -695,7 +838,15 @@ export const PALETTE_ITEMS: PaletteItem[] = [
     defaultNode: {
       type: "Attachment",
       children: [
-        { type: "AttachmentMedia", children: [{ type: "Icon", props: { name: "IconFileText", className: "size-4" } }] },
+        {
+          type: "AttachmentMedia",
+          children: [
+            {
+              type: "Icon",
+              props: { name: "IconFileText", className: "size-4" },
+            },
+          ],
+        },
         {
           type: "AttachmentContent",
           children: [
@@ -716,7 +867,10 @@ export const PALETTE_ITEMS: PaletteItem[] = [
       type: "Bubble",
       props: { variant: "default", align: "start" },
       children: [
-        { type: "BubbleContent", children: "Hello from Server-Driven UI in IRIS!" },
+        {
+          type: "BubbleContent",
+          children: "Hello from Server-Driven UI in IRIS!",
+        },
       ],
     },
   },
@@ -754,9 +908,21 @@ export const PALETTE_ITEMS: PaletteItem[] = [
     defaultNode: {
       type: "NativeSelect",
       children: [
-        { type: "NativeSelectOption", props: { value: "1" }, children: "Option One" },
-        { type: "NativeSelectOption", props: { value: "2" }, children: "Option Two" },
-        { type: "NativeSelectOption", props: { value: "3" }, children: "Option Three" },
+        {
+          type: "NativeSelectOption",
+          props: { value: "1" },
+          children: "Option One",
+        },
+        {
+          type: "NativeSelectOption",
+          props: { value: "2" },
+          children: "Option Two",
+        },
+        {
+          type: "NativeSelectOption",
+          props: { value: "3" },
+          children: "Option Three",
+        },
       ],
     },
   },
@@ -776,7 +942,8 @@ export function ComponentPalette({ onInsertNode }: ComponentPaletteProps) {
         search === "" ||
         item.label.toLowerCase().includes(search.toLowerCase()) ||
         item.description.toLowerCase().includes(search.toLowerCase())
-      const matchesCat = activeCategory === "all" || item.category === activeCategory
+      const matchesCat =
+        activeCategory === "all" || item.category === activeCategory
       return matchesSearch && matchesCat
     })
   }, [search, activeCategory])
@@ -805,35 +972,43 @@ export function ComponentPalette({ onInsertNode }: ComponentPaletteProps) {
   return (
     <aside className="flex h-full w-72 flex-col border-e border-border/60 bg-card/60 backdrop-blur-md">
       {/* Header & Search */}
-      <div className="p-3 border-b border-border/40 space-y-2">
+      <div className="space-y-2 border-b border-border/40 p-3">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
             {activeCategory === "icons" ? "Tabler Icons" : "Components"}
           </span>
-          <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-            {activeCategory === "icons" ? `${matchingIcons.length} Icons` : `${PALETTE_ITEMS.length} Primitives`}
+          <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
+            {activeCategory === "icons"
+              ? `${matchingIcons.length} Icons`
+              : `${PALETTE_ITEMS.length} Primitives`}
           </Badge>
         </div>
         <div className="relative">
           <Input
             value={search}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-            placeholder={activeCategory === "icons" ? "Search 3,500+ icons..." : "Search blocks..."}
-            className="h-8 text-xs ps-8 rounded-xl"
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setSearch(e.target.value)
+            }
+            placeholder={
+              activeCategory === "icons"
+                ? "Search 3,500+ icons..."
+                : "Search blocks..."
+            }
+            className="h-8 rounded-xl ps-8 text-xs"
             aria-label="Search components"
           />
-          <IconSearch className="absolute start-2.5 top-2 size-3.5 text-muted-foreground pointer-events-none" />
+          <IconSearch className="pointer-events-none absolute start-2.5 top-2 size-3.5 text-muted-foreground" />
         </div>
       </div>
 
       {/* Category Pills */}
-      <div className="flex gap-1 overflow-x-auto p-2 border-b border-border/40 no-scrollbar">
+      <div className="no-scrollbar flex gap-1 overflow-x-auto border-b border-border/40 p-2">
         {categories.map((cat) => (
           <button
             key={cat.id}
             type="button"
             onClick={() => setActiveCategory(cat.id)}
-            className={`px-2.5 py-1 text-[11px] rounded-lg font-medium whitespace-nowrap transition-colors ${
+            className={`rounded-lg px-2.5 py-1 text-[11px] font-medium whitespace-nowrap transition-colors ${
               activeCategory === cat.id
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted/50 text-muted-foreground hover:text-foreground"
@@ -846,7 +1021,7 @@ export function ComponentPalette({ onInsertNode }: ComponentPaletteProps) {
 
       {/* Main Content Area: Icons Browser or Component List */}
       {activeCategory === "icons" ? (
-        <div className="flex-1 overflow-y-auto p-2 space-y-2">
+        <div className="flex-1 space-y-2 overflow-y-auto p-2">
           <div className="flex items-center justify-between px-1 text-[11px] text-muted-foreground">
             <span>{matchingIcons.length} matches</span>
             <span>Click to add</span>
@@ -863,17 +1038,20 @@ export function ComponentPalette({ onInsertNode }: ComponentPaletteProps) {
                   })
                 }
                 title={iconName}
-                className="group flex flex-col items-center justify-center p-2 rounded-xl border border-border/40 bg-muted/20 hover:bg-primary/10 hover:border-primary/50 transition-all text-center aspect-square"
+                className="group flex aspect-square flex-col items-center justify-center rounded-xl border border-border/40 bg-muted/20 p-2 text-center transition-all hover:border-primary/50 hover:bg-primary/10"
               >
-                <DynamicIcon name={iconName} className="size-5 text-foreground group-hover:text-primary transition-colors" />
-                <span className="text-[9px] text-muted-foreground truncate w-full mt-1 group-hover:text-primary">
+                <DynamicIcon
+                  name={iconName}
+                  className="size-5 text-foreground transition-colors group-hover:text-primary"
+                />
+                <span className="mt-1 w-full truncate text-[9px] text-muted-foreground group-hover:text-primary">
                   {iconName.replace(/^Icon/, "")}
                 </span>
               </button>
             ))}
           </div>
           {matchingIcons.length > 120 && (
-            <p className="text-center text-[10px] text-muted-foreground py-2">
+            <p className="py-2 text-center text-[10px] text-muted-foreground">
               Showing first 120 matches. Type in search to filter.
             </p>
           )}
@@ -884,25 +1062,31 @@ export function ComponentPalette({ onInsertNode }: ComponentPaletteProps) {
           )}
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
+        <div className="flex-1 space-y-1.5 overflow-y-auto p-2">
           {filteredItems.map((item) => (
             <button
               key={item.id}
               type="button"
-              onClick={() => onInsertNode(JSON.parse(JSON.stringify(item.defaultNode)))}
+              onClick={() =>
+                onInsertNode(JSON.parse(JSON.stringify(item.defaultNode)))
+              }
               className="group flex w-full items-start gap-2.5 rounded-xl border border-transparent p-2.5 text-start transition-all hover:border-border/80 hover:bg-muted/40 hover:shadow-xs focus-visible:ring-2 focus-visible:ring-primary"
             >
-              <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+              <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
                 <IconPlus className="size-3.5" />
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-foreground truncate">{item.label}</span>
-                  <span className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="truncate text-xs font-semibold text-foreground">
+                    {item.label}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
                     + Add
                   </span>
                 </div>
-                <p className="text-[11px] text-muted-foreground line-clamp-1">{item.description}</p>
+                <p className="line-clamp-1 text-[11px] text-muted-foreground">
+                  {item.description}
+                </p>
               </div>
             </button>
           ))}

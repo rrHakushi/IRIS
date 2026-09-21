@@ -82,7 +82,9 @@ function OAuthAuthorizeContent(): React.JSX.Element {
   useEffect(() => {
     if (authStatus === "unauthenticated") {
       const fullUrl = window.location.href
-      router.push(`/IRIS-account/auth/login?callbackUrl=${encodeURIComponent(fullUrl)}`)
+      router.push(
+        `/IRIS-account/auth/login?callbackUrl=${encodeURIComponent(fullUrl)}`
+      )
     }
   }, [authStatus, router])
 
@@ -107,8 +109,13 @@ function OAuthAuthorizeContent(): React.JSX.Element {
       })
 
       if (res.error) {
-        const errData = res.error.value as { error_description?: string; message?: string } | undefined
-        setErrorMessage(errData?.error_description || errData?.message || "Invalid authorization request.")
+        const errData = res.error.value as
+          { error_description?: string; message?: string } | undefined
+        setErrorMessage(
+          errData?.error_description ||
+            errData?.message ||
+            "Invalid authorization request."
+        )
         setIsLoading(false)
         return
       }
@@ -124,7 +131,9 @@ function OAuthAuthorizeContent(): React.JSX.Element {
         setScopeDetails(data.scopeDetails || [])
       }
     } catch (err: any) {
-      setErrorMessage(err.message || "Failed to validate authorization request.")
+      setErrorMessage(
+        err.message || "Failed to validate authorization request."
+      )
     } finally {
       setIsLoading(false)
     }
@@ -155,8 +164,12 @@ function OAuthAuthorizeContent(): React.JSX.Element {
       )
 
       if (res.error) {
-        const errData = res.error.value as { error_description?: string; message?: string } | undefined
-        const msg = errData?.error_description || errData?.message || "Failed to authorize application."
+        const errData = res.error.value as
+          { error_description?: string; message?: string } | undefined
+        const msg =
+          errData?.error_description ||
+          errData?.message ||
+          "Failed to authorize application."
         toast.error(msg)
         setIsSubmitting(false)
         return
@@ -191,7 +204,9 @@ function OAuthAuthorizeContent(): React.JSX.Element {
     return (
       <div className="flex min-h-svh flex-col items-center justify-center p-4">
         <Spinner className="size-8 text-primary" />
-        <p className="mt-4 text-sm text-muted-foreground">Validating authorization request...</p>
+        <p className="mt-4 text-sm text-muted-foreground">
+          Validating authorization request...
+        </p>
       </div>
     )
   }
@@ -206,7 +221,7 @@ function OAuthAuthorizeContent(): React.JSX.Element {
           <h1 className="font-heading text-xl font-semibold tracking-tight text-foreground">
             Authorization Error
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             {errorMessage}
           </p>
           <div className="mt-6 flex justify-center">
@@ -224,7 +239,7 @@ function OAuthAuthorizeContent(): React.JSX.Element {
       <div className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-xl transition-all">
         {/* Header Branding */}
         <div className="border-b border-border bg-muted/40 px-6 py-5 text-center">
-          <div className="mx-auto mb-3 flex size-14 items-center justify-center rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="mx-auto mb-3 flex size-14 items-center justify-center overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             {clientData?.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -245,7 +260,7 @@ function OAuthAuthorizeContent(): React.JSX.Element {
                 href={clientData.websiteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+                className="inline-flex items-center gap-1 transition-colors hover:text-foreground"
               >
                 <span>{new URL(clientData.websiteUrl).hostname}</span>
                 <IconExternalLink className="size-3" />
@@ -254,7 +269,10 @@ function OAuthAuthorizeContent(): React.JSX.Element {
               <span>wants to connect with your IRIS account</span>
             )}
             {clientData?.isTrusted && (
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+              <Badge
+                variant="secondary"
+                className="h-4 px-1.5 py-0 text-[10px]"
+              >
                 Verified
               </Badge>
             )}
@@ -262,7 +280,7 @@ function OAuthAuthorizeContent(): React.JSX.Element {
         </div>
 
         {/* User Account Info */}
-        <div className="flex items-center justify-between border-b border-border/70 px-6 py-3 bg-muted/20 text-xs">
+        <div className="flex items-center justify-between border-b border-border/70 bg-muted/20 px-6 py-3 text-xs">
           <span className="text-muted-foreground">Authorizing as:</span>
           <span className="font-medium text-foreground">
             @{authSession?.user?.username || "user"}
@@ -271,7 +289,7 @@ function OAuthAuthorizeContent(): React.JSX.Element {
 
         {/* Scope Permissions List */}
         <div className="px-6 py-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+          <p className="mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
             Requested Permissions
           </p>
           <div className="space-y-3">
@@ -281,7 +299,7 @@ function OAuthAuthorizeContent(): React.JSX.Element {
                 className="flex items-start gap-3 rounded-xl border border-border/60 bg-muted/10 p-3 transition-colors hover:bg-muted/20"
               >
                 <div className="mt-0.5 shrink-0">{getScopeIcon(s.scope)}</div>
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-foreground">
                       {s.name}
@@ -292,7 +310,7 @@ function OAuthAuthorizeContent(): React.JSX.Element {
                       </span>
                     )}
                   </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
+                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
                     {s.description}
                   </p>
                 </div>
@@ -300,8 +318,10 @@ function OAuthAuthorizeContent(): React.JSX.Element {
             ))}
           </div>
 
-          <div className="mt-5 rounded-xl border border-border/40 bg-muted/20 p-3 text-[11px] text-muted-foreground leading-relaxed">
-            By clicking <strong className="text-foreground">Authorize</strong>, you allow this application to access the resources listed above. You can revoke access at any time in your IRIS Account Settings.
+          <div className="mt-5 rounded-xl border border-border/40 bg-muted/20 p-3 text-[11px] leading-relaxed text-muted-foreground">
+            By clicking <strong className="text-foreground">Authorize</strong>,
+            you allow this application to access the resources listed above. You
+            can revoke access at any time in your IRIS Account Settings.
           </div>
         </div>
 
@@ -314,23 +334,23 @@ function OAuthAuthorizeContent(): React.JSX.Element {
             onClick={handleCancel}
             className="h-9 px-4"
           >
-            <IconX className="size-4 me-1.5" />
+            <IconX className="me-1.5 size-4" />
             Cancel
           </Button>
           <Button
             type="button"
             disabled={isSubmitting}
             onClick={handleAuthorize}
-            className="h-9 px-5 bg-primary text-primary-foreground hover:bg-primary/90"
+            className="h-9 bg-primary px-5 text-primary-foreground hover:bg-primary/90"
           >
             {isSubmitting ? (
               <>
-                <Spinner className="size-4 me-2" />
+                <Spinner className="me-2 size-4" />
                 Authorizing...
               </>
             ) : (
               <>
-                <IconCheck className="size-4 me-1.5" />
+                <IconCheck className="me-1.5 size-4" />
                 Authorize
               </>
             )}

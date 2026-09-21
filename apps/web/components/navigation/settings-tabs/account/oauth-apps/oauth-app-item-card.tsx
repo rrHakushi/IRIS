@@ -58,8 +58,8 @@ export function OAuthAppItemCard({
     <div className="flex flex-col gap-3 rounded-2xl border border-border/80 bg-card/60 p-4 transition-all hover:border-border hover:bg-card">
       {/* Top Header */}
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border bg-muted/30 overflow-hidden">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/30">
             {app.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -73,21 +73,27 @@ export function OAuthAppItemCard({
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="font-heading text-sm font-semibold text-foreground truncate">
+              <h3 className="truncate font-heading text-sm font-semibold text-foreground">
                 {app.name}
               </h3>
               {app.isPublic ? (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-amber-500/30 text-amber-500">
+                <Badge
+                  variant="outline"
+                  className="h-4 border-amber-500/30 px-1.5 py-0 text-[10px] text-amber-500"
+                >
                   Public (PKCE)
                 </Badge>
               ) : (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-primary/30 text-primary">
+                <Badge
+                  variant="outline"
+                  className="h-4 border-primary/30 px-1.5 py-0 text-[10px] text-primary"
+                >
                   Confidential
                 </Badge>
               )}
             </div>
             {app.description && (
-              <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
+              <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
                 {app.description}
               </p>
             )}
@@ -95,7 +101,7 @@ export function OAuthAppItemCard({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex shrink-0 items-center gap-1">
           <Button
             type="button"
             variant="ghost"
@@ -145,11 +151,11 @@ export function OAuthAppItemCard({
 
       {/* Client ID snippet */}
       <div className="flex items-center justify-between rounded-xl border border-border/50 bg-muted/20 px-3 py-1.5 text-xs">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-[11px] font-medium text-muted-foreground shrink-0">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="shrink-0 text-[11px] font-medium text-muted-foreground">
             Client ID:
           </span>
-          <span className="font-mono text-[11px] text-foreground truncate select-all">
+          <span className="truncate font-mono text-[11px] text-foreground select-all">
             {app.clientId}
           </span>
         </div>
@@ -158,7 +164,7 @@ export function OAuthAppItemCard({
           variant="ghost"
           size="icon"
           onClick={handleCopyClientId}
-          className="size-6 text-muted-foreground hover:text-foreground shrink-0"
+          className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
           aria-label="Copy Client ID"
         >
           {copiedClientId ? (
@@ -179,7 +185,7 @@ export function OAuthAppItemCard({
           {app.redirectUris.map((uri, idx) => (
             <span
               key={idx}
-              className="inline-block rounded-md border border-border/40 bg-muted/30 px-2 py-0.5 font-mono text-[10px] text-muted-foreground truncate max-w-xs"
+              className="inline-block max-w-xs truncate rounded-md border border-border/40 bg-muted/30 px-2 py-0.5 font-mono text-[10px] text-muted-foreground"
               title={uri}
             >
               {uri}
@@ -189,7 +195,7 @@ export function OAuthAppItemCard({
       </div>
 
       {/* Footer info: Scopes and active authorizations */}
-      <div className="flex items-center justify-between pt-1 text-xs border-t border-border/40">
+      <div className="flex items-center justify-between border-t border-border/40 pt-1 text-xs">
         <div className="flex flex-wrap gap-1">
           {app.allowedScopes.slice(0, 4).map((scope) => (
             <span

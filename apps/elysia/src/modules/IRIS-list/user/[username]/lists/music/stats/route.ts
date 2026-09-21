@@ -16,7 +16,8 @@ export default defineRoute({
       200: MediaStatsResponseSchema,
     },
     detail: {
-      summary: "Fetch detailed statistics for user music list with optional rewind filters",
+      summary:
+        "Fetch detailed statistics for user music list with optional rewind filters",
       tags: ["Lists - Music - Stats"],
     },
   },

@@ -16,7 +16,8 @@ export default defineRoute({
       200: CombinedStatsResponseSchema,
     },
     detail: {
-      summary: "Fetch overarching multi-media statistics across all 7 media types with optional rewind filters",
+      summary:
+        "Fetch overarching multi-media statistics across all 7 media types with optional rewind filters",
       tags: ["Lists - Combined - Stats"],
     },
   },

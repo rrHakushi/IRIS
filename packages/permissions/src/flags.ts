@@ -10,6 +10,12 @@ export const IRISFlags = {
    * Only increment the number on the right (e.g. 0n, 1n, 2n...)
    */
   ADMINISTRATOR: 1n << 0n,
+
+  /**
+   * SDUI Elysia API calls permission.
+   * Grants authorization to author, add, and save Elysia API calls in the IrisPage SDUI editor and page builder.
+   */
+  SDUI_ELYSIA_CALLS: 1n << 1n,
 } as const;
 
 /**

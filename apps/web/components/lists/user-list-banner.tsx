@@ -124,7 +124,7 @@ export function UserListBanner({
             </div>
 
             {/* Name, Username, Pronouns (Yellow Area) & Status (Green Area) */}
-            <div className="z-20 -mt-10 flex flex-1 min-w-0 flex-col gap-1 sm:-mt-12 sm:gap-1.5 sm:pb-1">
+            <div className="z-20 -mt-10 flex min-w-0 flex-1 flex-col gap-1 sm:-mt-12 sm:gap-1.5 sm:pb-1">
               {/* Yellow area: displayName(username) pronouns */}
               <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2">
                 <h1
@@ -146,7 +146,7 @@ export function UserListBanner({
                 {profile?.pronouns && (
                   <Badge
                     variant="secondary"
-                    className="rounded-xl px-1.5 py-0.2 text-[10px] font-medium text-muted-foreground sm:px-2 sm:py-0.5 sm:text-xs"
+                    className="py-0.2 rounded-xl px-1.5 text-[10px] font-medium text-muted-foreground sm:px-2 sm:py-0.5 sm:text-xs"
                   >
                     {profile.pronouns}
                   </Badge>

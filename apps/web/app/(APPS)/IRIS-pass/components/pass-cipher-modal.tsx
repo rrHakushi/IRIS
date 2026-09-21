@@ -64,7 +64,9 @@ export function PassCipherModal({
   const [additionalPasswords, setAdditionalPasswords] = useState<
     { id: string; name: string; value: string; show?: boolean }[]
   >([])
-  const [uris, setUris] = useState<LoginUri[]>([{ uri: "", match: "BASE_DOMAIN" }])
+  const [uris, setUris] = useState<LoginUri[]>([
+    { uri: "", match: "BASE_DOMAIN" },
+  ])
   const [totpSecret, setTotpSecret] = useState("")
   const [passkey, setPasskey] = useState<PasskeyData | null>(null)
   const [showPasskeyInputs, setShowPasskeyInputs] = useState(false)
@@ -103,7 +105,10 @@ export function PassCipherModal({
         )
         setUris(
           d.uris && d.uris.length > 0
-            ? d.uris.map((u) => ({ uri: u.uri, match: u.match || "BASE_DOMAIN" }))
+            ? d.uris.map((u) => ({
+                uri: u.uri,
+                match: u.match || "BASE_DOMAIN",
+              }))
             : [{ uri: "", match: "BASE_DOMAIN" }]
         )
         setTotpSecret(d.totpSecret || "")
@@ -220,7 +225,9 @@ export function PassCipherModal({
         }
       }
 
-      toast.error("Could not decode QR code. Please paste the secret key manually.")
+      toast.error(
+        "Could not decode QR code. Please paste the secret key manually."
+      )
     } catch {
       toast.error("Failed to read image file")
     }
@@ -258,7 +265,9 @@ export function PassCipherModal({
               ? validAdditionalPasswords
               : undefined,
           uris: validUris,
-          totpSecret: totpSecret.trim() ? totpSecret.trim().toUpperCase() : undefined,
+          totpSecret: totpSecret.trim()
+            ? totpSecret.trim().toUpperCase()
+            : undefined,
           passkey: passkey || undefined,
           notes: notes.trim() || undefined,
         }
@@ -314,7 +323,7 @@ export function PassCipherModal({
       <Dialog
         isOpen={open}
         onOpenChange={onOpenChange}
-        className="sm:max-w-lg max-h-[90vh] overflow-y-auto"
+        className="max-h-[90vh] overflow-y-auto sm:max-w-lg"
       >
         <DialogHeader className="text-start">
           <DialogTitle className="text-lg font-bold text-foreground">
@@ -324,14 +333,15 @@ export function PassCipherModal({
 
         {/* Item Type Switcher (only for new items) */}
         {!isEditing && (
-          <div className="flex rounded-xl bg-muted/60 p-1 gap-1">
+          <div className="flex gap-1 rounded-xl bg-muted/60 p-1">
             <button
               type="button"
               onClick={() => setType("LOGIN")}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${type === "LOGIN"
-                ? "bg-background text-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
-                }`}
+              className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-semibold transition-all ${
+                type === "LOGIN"
+                  ? "bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
             >
               <IconKey className="size-3.5" />
               <span>Login</span>
@@ -339,10 +349,11 @@ export function PassCipherModal({
             <button
               type="button"
               onClick={() => setType("SSH_KEY")}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${type === "SSH_KEY"
-                ? "bg-background text-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
-                }`}
+              className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-semibold transition-all ${
+                type === "SSH_KEY"
+                  ? "bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
             >
               <IconTerminal2 className="size-3.5" />
               <span>SSH Key</span>
@@ -352,30 +363,38 @@ export function PassCipherModal({
 
         <form onSubmit={handleSave} className="space-y-4 pt-2">
           {/* Title & Folder */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="sm:col-span-2 space-y-1.5">
-              <Label htmlFor="item-title" className="text-xs font-medium text-foreground">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label
+                htmlFor="item-title"
+                className="text-xs font-medium text-foreground"
+              >
                 Item Name *
               </Label>
               <Input
                 id="item-title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder={type === "LOGIN" ? "e.g. GitHub" : "e.g. Prod Server"}
+                placeholder={
+                  type === "LOGIN" ? "e.g. GitHub" : "e.g. Prod Server"
+                }
                 required
-                className="rounded-xl h-9 text-xs"
+                className="h-9 rounded-xl text-xs"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="item-folder" className="text-xs font-medium text-foreground">
+              <Label
+                htmlFor="item-folder"
+                className="text-xs font-medium text-foreground"
+              >
                 Folder
               </Label>
               <select
                 id="item-folder"
                 value={folderId || ""}
                 onChange={(e) => setFolderId(e.target.value || null)}
-                className="w-full h-9 rounded-xl border border-input bg-card px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                className="h-9 w-full rounded-xl border border-input bg-card px-3 text-xs text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
               >
                 <option value="">(No Folder)</option>
                 {folders.map((f) => (
@@ -392,7 +411,10 @@ export function PassCipherModal({
             <>
               {/* Username */}
               <div className="space-y-1.5">
-                <Label htmlFor="item-username" className="text-xs font-medium text-foreground">
+                <Label
+                  htmlFor="item-username"
+                  className="text-xs font-medium text-foreground"
+                >
                   Username / Email
                 </Label>
                 <Input
@@ -400,20 +422,23 @@ export function PassCipherModal({
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="username@domain.com"
-                  className="rounded-xl h-9 font-mono text-xs"
+                  className="h-9 rounded-xl font-mono text-xs"
                 />
               </div>
 
               {/* Password + Generator Dialog Trigger */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="item-password" className="text-xs font-medium text-foreground">
+                  <Label
+                    htmlFor="item-password"
+                    className="text-xs font-medium text-foreground"
+                  >
                     Primary Password
                   </Label>
                   <button
                     type="button"
                     onClick={() => setIsGeneratorOpen(true)}
-                    className="text-[11px] text-[#d800a6] hover:text-[#b8008e] flex items-center gap-1 font-semibold cursor-pointer"
+                    className="flex cursor-pointer items-center gap-1 text-[11px] font-semibold text-[#d800a6] hover:text-[#b8008e]"
                   >
                     <IconSparkles className="size-3" />
                     <span>Generate Password</span>
@@ -427,12 +452,12 @@ export function PassCipherModal({
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter or generate primary password..."
-                    className="pe-10 rounded-xl h-9 font-mono text-xs"
+                    className="h-9 rounded-xl pe-10 font-mono text-xs"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 end-0 flex items-center pe-3 text-muted-foreground hover:text-foreground cursor-pointer"
+                    className="absolute inset-y-0 end-0 flex cursor-pointer items-center pe-3 text-muted-foreground hover:text-foreground"
                     tabIndex={-1}
                   >
                     {showPassword ? (
@@ -455,10 +480,15 @@ export function PassCipherModal({
                     onClick={() =>
                       setAdditionalPasswords([
                         ...additionalPasswords,
-                        { id: crypto.randomUUID(), name: "", value: "", show: false },
+                        {
+                          id: crypto.randomUUID(),
+                          name: "",
+                          value: "",
+                          show: false,
+                        },
                       ])
                     }
-                    className="text-[11px] text-[#d800a6] hover:text-[#b8008e] flex items-center gap-1 font-medium cursor-pointer"
+                    className="flex cursor-pointer items-center gap-1 text-[11px] font-medium text-[#d800a6] hover:text-[#b8008e]"
                   >
                     <IconPlus className="size-3" />
                     <span>Add Password / Code</span>
@@ -468,18 +498,21 @@ export function PassCipherModal({
                 {additionalPasswords.map((ap, index) => (
                   <div
                     key={ap.id || index}
-                    className="space-y-1.5 p-3 rounded-2xl border border-border bg-card/60"
+                    className="space-y-1.5 rounded-2xl border border-border bg-card/60 p-3"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <Input
                         value={ap.name}
                         onChange={(e) => {
                           const next = [...additionalPasswords]
-                          next[index] = { ...next[index]!, name: e.target.value }
+                          next[index] = {
+                            ...next[index]!,
+                            name: e.target.value,
+                          }
                           setAdditionalPasswords(next)
                         }}
                         placeholder="Label (e.g. PIN, Access Code, Secondary)"
-                        className="rounded-xl h-8 text-xs font-medium flex-1"
+                        className="h-8 flex-1 rounded-xl text-xs font-medium"
                       />
                       <button
                         type="button"
@@ -488,7 +521,7 @@ export function PassCipherModal({
                             additionalPasswords.filter((_, i) => i !== index)
                           )
                         }}
-                        className="size-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-muted shrink-0 cursor-pointer"
+                        className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-destructive"
                         aria-label="Remove password"
                       >
                         <IconTrash className="size-3.5" />
@@ -501,20 +534,26 @@ export function PassCipherModal({
                         value={ap.value}
                         onChange={(e) => {
                           const next = [...additionalPasswords]
-                          next[index] = { ...next[index]!, value: e.target.value }
+                          next[index] = {
+                            ...next[index]!,
+                            value: e.target.value,
+                          }
                           setAdditionalPasswords(next)
                         }}
                         placeholder="Enter secret code or password..."
-                        className="pe-10 rounded-xl h-9 font-mono text-xs"
+                        className="h-9 rounded-xl pe-10 font-mono text-xs"
                       />
                       <button
                         type="button"
                         onClick={() => {
                           const next = [...additionalPasswords]
-                          next[index] = { ...next[index]!, show: !next[index]!.show }
+                          next[index] = {
+                            ...next[index]!,
+                            show: !next[index]!.show,
+                          }
                           setAdditionalPasswords(next)
                         }}
-                        className="absolute inset-y-0 end-0 flex items-center pe-3 text-muted-foreground hover:text-foreground cursor-pointer"
+                        className="absolute inset-y-0 end-0 flex cursor-pointer items-center pe-3 text-muted-foreground hover:text-foreground"
                         tabIndex={-1}
                       >
                         {ap.show ? (
@@ -537,7 +576,7 @@ export function PassCipherModal({
                   <button
                     type="button"
                     onClick={handleAddUri}
-                    className="text-[11px] text-[#d800a6] hover:text-[#b8008e] flex items-center gap-1 font-medium cursor-pointer"
+                    className="flex cursor-pointer items-center gap-1 text-[11px] font-medium text-[#d800a6] hover:text-[#b8008e]"
                   >
                     <IconPlus className="size-3" />
                     <span>Add URL</span>
@@ -551,25 +590,30 @@ export function PassCipherModal({
                         value={uriItem.uri}
                         onChange={(e) => handleUriChange(index, e.target.value)}
                         placeholder="https://example.com"
-                        className="rounded-xl h-9 font-mono text-xs flex-1"
+                        className="h-9 flex-1 rounded-xl font-mono text-xs"
                       />
                       <select
                         value={uriItem.match || "BASE_DOMAIN"}
                         onChange={(e) =>
-                          handleMatchChange(index, e.target.value as BitwardenUriMatch)
+                          handleMatchChange(
+                            index,
+                            e.target.value as BitwardenUriMatch
+                          )
                         }
-                        className="h-9 rounded-xl border border-input bg-card px-2.5 text-[11px] text-foreground focus:outline-none focus:ring-1 focus:ring-ring w-36 shrink-0"
+                        className="h-9 w-36 shrink-0 rounded-xl border border-input bg-card px-2.5 text-[11px] text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
                       >
-                        {Object.entries(BITWARDEN_MATCH_LABELS).map(([key, label]) => (
-                          <option key={key} value={key}>
-                            {label}
-                          </option>
-                        ))}
+                        {Object.entries(BITWARDEN_MATCH_LABELS).map(
+                          ([key, label]) => (
+                            <option key={key} value={key}>
+                              {label}
+                            </option>
+                          )
+                        )}
                       </select>
                       <button
                         type="button"
                         onClick={() => handleRemoveUri(index)}
-                        className="size-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-muted shrink-0 cursor-pointer"
+                        className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-destructive"
                         aria-label="Remove URL"
                       >
                         <IconTrash className="size-3.5" />
@@ -590,7 +634,7 @@ export function PassCipherModal({
                     <button
                       type="button"
                       onClick={() => setShowPasskeyInputs(true)}
-                      className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer font-medium"
+                      className="flex cursor-pointer items-center gap-1 text-[11px] font-medium text-emerald-600 hover:underline dark:text-emerald-400"
                     >
                       <IconPlus className="size-3" />
                       <span>Attach Passkey</span>
@@ -599,9 +643,9 @@ export function PassCipherModal({
                 </div>
 
                 {passkey ? (
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-card border border-border text-xs">
+                  <div className="flex items-center justify-between rounded-xl border border-border bg-card p-2.5 text-xs">
                     <div>
-                      <span className="font-semibold text-foreground block">
+                      <span className="block font-semibold text-foreground">
                         {passkey.rpId}
                       </span>
                     </div>
@@ -610,25 +654,25 @@ export function PassCipherModal({
                       variant="ghost"
                       size="sm"
                       onClick={() => setPasskey(null)}
-                      className="text-destructive hover:text-destructive text-xs h-7"
+                      className="h-7 text-xs text-destructive hover:text-destructive"
                     >
                       Remove
                     </Button>
                   </div>
                 ) : showPasskeyInputs ? (
                   <div className="space-y-2 pt-1">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                       <Input
                         value={passkeyRpId}
                         onChange={(e) => setPasskeyRpId(e.target.value)}
                         placeholder="RP ID (e.g. github.com)"
-                        className="rounded-xl h-8 text-xs font-mono"
+                        className="h-8 rounded-xl font-mono text-xs"
                       />
                       <Input
                         value={passkeyCredId}
                         onChange={(e) => setPasskeyCredId(e.target.value)}
                         placeholder="Credential ID (Base64/Hex)"
-                        className="rounded-xl h-8 text-xs font-mono"
+                        className="h-8 rounded-xl font-mono text-xs"
                       />
                     </div>
                     <div className="flex justify-end gap-2">
@@ -637,7 +681,7 @@ export function PassCipherModal({
                         variant="ghost"
                         size="sm"
                         onClick={() => setShowPasskeyInputs(false)}
-                        className="text-xs h-7"
+                        className="h-7 text-xs"
                       >
                         Cancel
                       </Button>
@@ -645,7 +689,7 @@ export function PassCipherModal({
                         type="button"
                         size="sm"
                         onClick={handleSaveManualPasskey}
-                        className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs h-7 font-medium"
+                        className="h-7 bg-emerald-500 text-xs font-medium text-white hover:bg-emerald-600"
                       >
                         Save Passkey
                       </Button>
@@ -661,13 +705,16 @@ export function PassCipherModal({
               {/* TOTP 2FA Secret + QR Dropzone */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="item-totp" className="text-xs font-medium text-foreground">
+                  <Label
+                    htmlFor="item-totp"
+                    className="text-xs font-medium text-foreground"
+                  >
                     Authenticator Key
                   </Label>
                   <button
                     type="button"
                     onClick={() => qrInputRef.current?.click()}
-                    className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1 cursor-pointer"
+                    className="flex cursor-pointer items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
                   >
                     <IconQrcode className="size-3" />
                     <span>Scan / Upload QR</span>
@@ -679,7 +726,7 @@ export function PassCipherModal({
                   value={totpSecret}
                   onChange={(e) => setTotpSecret(e.target.value)}
                   placeholder="Secret key or otpauth:// URL"
-                  className="rounded-xl h-9 font-mono text-xs uppercase"
+                  className="h-9 rounded-xl font-mono text-xs uppercase"
                 />
                 <input
                   ref={qrInputRef}
@@ -696,9 +743,9 @@ export function PassCipherModal({
           {type === "SSH_KEY" && (
             <>
               {/* Algorithm + Generate Keypair */}
-              <div className="flex items-center justify-between gap-3 p-3 rounded-2xl border border-border bg-muted/20">
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-muted/20 p-3">
                 <div className="space-y-0.5">
-                  <span className="text-xs font-semibold text-foreground block">
+                  <span className="block text-xs font-semibold text-foreground">
                     In-Browser Keypair Generator
                   </span>
                   <span className="text-[11px] text-muted-foreground">
@@ -709,8 +756,10 @@ export function PassCipherModal({
                 <div className="flex items-center gap-2">
                   <select
                     value={sshAlgorithm}
-                    onChange={(e) => setSshAlgorithm(e.target.value as SshKeyAlgorithm)}
-                    className="h-8 rounded-xl border border-input bg-card px-2.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    onChange={(e) =>
+                      setSshAlgorithm(e.target.value as SshKeyAlgorithm)
+                    }
+                    className="h-8 rounded-xl border border-input bg-card px-2.5 text-xs text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
                   >
                     <option value="ED25519">Ed25519 (Recommended)</option>
                     <option value="RSA_2048">RSA 2048</option>
@@ -722,7 +771,7 @@ export function PassCipherModal({
                     size="sm"
                     disabled={isGeneratingSsh}
                     onClick={handleGenerateSsh}
-                    className="rounded-xl bg-primary text-primary-foreground text-xs h-8"
+                    className="h-8 rounded-xl bg-primary text-xs text-primary-foreground"
                   >
                     {isGeneratingSsh ? "Generating..." : "Generate"}
                   </Button>
@@ -732,11 +781,14 @@ export function PassCipherModal({
               {/* Public Key */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="item-public-key" className="text-xs font-medium text-foreground">
+                  <Label
+                    htmlFor="item-public-key"
+                    className="text-xs font-medium text-foreground"
+                  >
                     Public Key (OpenSSH Format)
                   </Label>
                   {fingerprint && (
-                    <span className="text-[10px] font-mono text-muted-foreground">
+                    <span className="font-mono text-[10px] text-muted-foreground">
                       {fingerprint.slice(0, 20)}...
                     </span>
                   )}
@@ -753,7 +805,10 @@ export function PassCipherModal({
 
               {/* Private Key */}
               <div className="space-y-1.5">
-                <Label htmlFor="item-private-key" className="text-xs font-medium text-foreground">
+                <Label
+                  htmlFor="item-private-key"
+                  className="text-xs font-medium text-foreground"
+                >
                   Private Key (PKCS#8 PEM Format)
                 </Label>
                 <Textarea
@@ -768,7 +823,10 @@ export function PassCipherModal({
 
               {/* Passphrase */}
               <div className="space-y-1.5">
-                <Label htmlFor="item-passphrase" className="text-xs font-medium text-foreground">
+                <Label
+                  htmlFor="item-passphrase"
+                  className="text-xs font-medium text-foreground"
+                >
                   Key Passphrase (Optional)
                 </Label>
                 <Input
@@ -777,7 +835,7 @@ export function PassCipherModal({
                   value={passphrase}
                   onChange={(e) => setPassphrase(e.target.value)}
                   placeholder="Passphrase protecting the private key"
-                  className="rounded-xl h-9 text-xs"
+                  className="h-9 rounded-xl text-xs"
                 />
               </div>
             </>
@@ -785,7 +843,10 @@ export function PassCipherModal({
 
           {/* Notes */}
           <div className="space-y-1.5">
-            <Label htmlFor="item-notes" className="text-xs font-medium text-foreground">
+            <Label
+              htmlFor="item-notes"
+              className="text-xs font-medium text-foreground"
+            >
               Notes
             </Label>
             <Textarea
@@ -798,7 +859,7 @@ export function PassCipherModal({
             />
           </div>
 
-          <DialogFooter className="pt-2 flex justify-end gap-2">
+          <DialogFooter className="flex justify-end gap-2 pt-2">
             <Button
               type="button"
               variant="outline"
@@ -810,7 +871,7 @@ export function PassCipherModal({
             <Button
               type="submit"
               disabled={isSubmitting || !title.trim()}
-              className="rounded-xl bg-[#d800a6] hover:bg-[#b8008e] text-white text-xs font-semibold"
+              className="rounded-xl bg-[#d800a6] text-xs font-semibold text-white hover:bg-[#b8008e]"
             >
               {isSubmitting
                 ? "Saving..."
