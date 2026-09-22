@@ -27,9 +27,14 @@ import { toast } from "sonner"
 import {
   getDisplayNameStyleCss,
   getDisplayNameEffectClasses,
+  getBadgeById,
   type UserProfileCustomization,
 } from "@IRIS/shared"
-import { renderSocialIcon } from "../navigation/settings-tabs/account/profile/social-links-card"
+import {
+  SocialFaviconIcon,
+  getDomainFromUrl,
+} from "../navigation/settings-tabs/account/profile/social-links-card"
+import { renderBadgeIcon } from "../navigation/settings-tabs/account/profile/badge-showcase-card"
 import { ProviderIcon } from "../navigation/settings-tabs/account/connections/icons"
 import { cn } from "@workspace/ui/lib/utils"
 
@@ -71,13 +76,6 @@ export function UserProfileHeader({
     profile.displayNameStyle?.effect
   )
   const hasValidFrame = isValidFrameUrl(profile.avatarFrame)
-
-  const bannerHeightClass =
-    profile.bannerHeight === "compact"
-      ? "h-44 md:h-56"
-      : profile.bannerHeight === "expansive"
-        ? "h-80 md:h-96"
-        : "h-60 md:h-72"
 
   const customAccentColor = profile.accentColor
 
@@ -137,91 +135,114 @@ export function UserProfileHeader({
   }
 
   return (
-    <div className="relative w-full overflow-hidden border-b border-border/60 bg-card/40">
-      {/* 1. Immersive Hero Banner */}
-      <div
-        className={cn(
-          "relative w-full overflow-hidden transition-all duration-300",
-          bannerHeightClass
-        )}
-      >
-        {profile.bannerUrl ? (
-          <Image
-            src={profile.bannerUrl}
-            alt="Profile Banner"
-            fill
-            sizes="100vw"
-            priority
-            unoptimized
-            className="object-cover"
-          />
-        ) : (
-          <div className="flex size-full items-center justify-end bg-gradient-to-br from-card via-background to-muted/30 pr-8 select-none">
-            <span className="font-heading text-8xl md:text-9xl font-black tracking-tighter opacity-15">
-              IRIS
-            </span>
-          </div>
-        )}
+    <div className="relative w-full border-b border-border/60 bg-card/20">
+      {/* Centered Constrained Container keeping 16:5.5 Ratio Scaled Down */}
+      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 pt-4 sm:pt-6">
+        {/* 1. Hero Banner with exact 16:5.5 Aspect Ratio */}
+        <div
+          className="relative w-full overflow-hidden rounded-2xl sm:rounded-3xl border border-border/60 bg-linear-to-r from-primary/30 via-primary/10 to-muted/50 shadow-md min-h-[120px] sm:min-h-[220px]"
+          style={{ aspectRatio: "16 / 5.5" }}
+        >
+          {profile.bannerUrl ? (
+            <Image
+              src={profile.bannerUrl}
+              alt="Profile Banner"
+              fill
+              sizes="(max-width: 1024px) 100vw, 1024px"
+              priority
+              unoptimized
+              className="object-cover"
+            />
+          ) : (
+            <div className="flex size-full items-center justify-end bg-gradient-to-br from-card via-background to-muted/30 pr-8 select-none">
+              <span className="font-heading text-7xl md:text-8xl font-black tracking-tighter opacity-15">
+                IRIS
+              </span>
+            </div>
+          )}
 
-        {/* Dynamic bottom gradient fade to smoothly blend into profile background */}
-        <div className="absolute inset-0 z-2 bg-gradient-to-t from-background via-background/40 to-transparent" />
-      </div>
+          {/* Custom Transparent Banner Overlay Asset */}
+          {profile.bannerOverlayUrl && (
+            <div className="pointer-events-none absolute inset-0 z-1 select-none">
+              <Image
+                src={profile.bannerOverlayUrl}
+                alt="Banner Overlay"
+                fill
+                sizes="(max-width: 1024px) 100vw, 1024px"
+                priority
+                unoptimized
+                className="object-cover"
+              />
+            </div>
+          )}
 
-      {/* 2. Profile Details Bar (Full Width with padding) */}
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-6 sm:px-6 lg:px-8">
-        {/* Top Floating Row: Avatar on Left, Action Toolbar on Right */}
-        <div className="-mt-16 sm:-mt-20 flex flex-wrap items-end justify-between gap-4 pb-4">
-          {/* Avatar + Frame + Status Speech Bubble */}
-          <div className="flex items-end gap-4">
-            <div className="relative flex shrink-0 items-center justify-center">
-              {/* Avatar Circle Container */}
-              <div className="relative size-28 sm:size-32 shrink-0 overflow-hidden rounded-full border-4 border-background bg-card shadow-2xl ring-1 ring-border/50">
-                {profile.avatarUrl ? (
-                  <Image
-                    src={profile.avatarUrl}
-                    alt={nameToShow}
-                    fill
-                    sizes="(max-width: 640px) 112px, 128px"
-                    priority
-                    unoptimized
-                    className="size-full object-cover"
-                  />
-                ) : (
-                  <div className="flex size-full items-center justify-center bg-primary/15 font-heading text-3xl sm:text-4xl font-black text-primary uppercase select-none">
-                    {initial}
+          {/* Dynamic bottom gradient fade */}
+          <div className="absolute inset-0 z-2 bg-gradient-to-t from-background/70 via-transparent to-transparent pointer-events-none" />
+        </div>
+
+        {/* 2. Profile Details Bar */}
+        <div className="relative z-10 w-full px-1 pb-6 sm:px-2">
+          {/* Top Floating Row: Avatar on Left, Action Toolbar on Right */}
+          <div className="-mt-10 sm:-mt-12 flex flex-wrap items-end justify-between gap-4 pb-4">
+            {/* Avatar + Frame + Status Speech Bubble */}
+            <div className="flex items-end gap-3 sm:gap-4">
+              <div className="relative size-20 sm:size-24 shrink-0">
+                {/* Avatar Circle Container */}
+                <div className="relative size-full overflow-hidden rounded-full border-3 border-background bg-card shadow-2xl ring-1 ring-border/50">
+                  {profile.avatarUrl ? (
+                    <Image
+                      src={profile.avatarUrl}
+                      alt={nameToShow}
+                      fill
+                      sizes="(max-width: 640px) 80px, 96px"
+                      priority
+                      unoptimized
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex size-full items-center justify-center bg-primary/15 font-heading text-xl sm:text-2xl font-black text-primary uppercase select-none">
+                      {initial}
+                    </div>
+                  )}
+                </div>
+
+                {/* Avatar Decoration Frame */}
+                {hasValidFrame && (
+                  <div
+                    className="pointer-events-none absolute z-20 select-none"
+                    style={{
+                      width: "130%",
+                      height: "130%",
+                      top: "-15%",
+                      left: "-15%",
+                    }}
+                  >
+                    <Image
+                      src={profile.avatarFrame!}
+                      alt="Avatar Frame"
+                      fill
+                      sizes="(max-width: 640px) 104px, 125px"
+                      unoptimized
+                      priority
+                      className="size-full object-contain"
+                    />
                   </div>
                 )}
               </div>
 
-              {/* Avatar Decoration Frame */}
-              {hasValidFrame && (
-                <div className="pointer-events-none absolute -inset-4 z-20 size-36 sm:size-40 max-w-none select-none">
-                  <Image
-                    src={profile.avatarFrame!}
-                    alt="Avatar Frame"
-                    fill
-                    sizes="160px"
-                    unoptimized
-                    priority
-                    className="object-contain"
-                  />
+              {/* Status text speech bubble */}
+              {profile.statusText && (
+                <div className="hidden sm:flex mb-1.5 max-w-sm items-center">
+                  <div className="flex shrink-0 items-center gap-0.5 pe-1.5 select-none">
+                    <span className="size-1 rounded-full bg-border" />
+                    <span className="size-1.5 rounded-full bg-border/90" />
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-card/90 px-3 py-1.5 text-xs font-semibold text-foreground shadow-xs backdrop-blur-md">
+                    {profile.statusText}
+                  </div>
                 </div>
               )}
             </div>
-
-            {/* Status text speech bubble */}
-            {profile.statusText && (
-              <div className="hidden sm:flex mb-2 max-w-sm items-center">
-                <div className="flex shrink-0 items-center gap-0.5 pe-1.5 select-none">
-                  <span className="size-1 rounded-full bg-border" />
-                  <span className="size-1.5 rounded-full bg-border/90" />
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-card/90 px-3.5 py-1.5 text-xs font-semibold text-foreground shadow-xs backdrop-blur-md">
-                  {profile.statusText}
-                </div>
-              </div>
-            )}
-          </div>
 
           {/* Action Toolbar on Right */}
           <div className="flex items-center gap-2 pb-1">
@@ -339,6 +360,29 @@ export function UserProfileHeader({
                 </a>
               )}
             </div>
+
+            {/* Showcased Badges Strip (Up to 5 badges) */}
+            {profile.showcaseBadgeIds && profile.showcaseBadgeIds.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                {profile.showcaseBadgeIds.slice(0, 5).map((id) => {
+                  const badge = getBadgeById(id)
+                  if (!badge) return null
+                  return (
+                    <div
+                      key={badge.id}
+                      title={`${badge.name}: ${badge.description}`}
+                      className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-card/80 px-2.5 py-1 text-xs font-semibold shadow-2xs backdrop-blur-xs transition-all hover:scale-105"
+                      style={{ borderColor: `${badge.color}50` }}
+                    >
+                      <span style={{ color: badge.color }}>
+                        {renderBadgeIcon(badge.icon, "size-3.5")}
+                      </span>
+                      <span className="text-foreground">{badge.name}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           {/* Right Column: Social Links & Connected Services */}
@@ -354,11 +398,9 @@ export function UserProfileHeader({
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-card/80 px-3 py-1.5 text-xs font-semibold text-foreground transition-all hover:border-primary/40 hover:bg-primary/5 hover:text-primary shadow-2xs backdrop-blur-xs"
                   >
-                    <span className="text-primary">
-                      {renderSocialIcon(link.platform, "size-3.5")}
-                    </span>
+                    <SocialFaviconIcon url={link.url} className="size-3.5" />
                     <span className="max-w-[130px] truncate">
-                      {link.label || link.platform}
+                      {link.label || getDomainFromUrl(link.url)}
                     </span>
                   </a>
                 ))}
@@ -403,5 +445,6 @@ export function UserProfileHeader({
         </div>
       </div>
     </div>
+  </div>
   )
 }

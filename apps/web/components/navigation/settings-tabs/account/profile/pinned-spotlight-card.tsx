@@ -183,7 +183,7 @@ export function PinnedSpotlightCard({
     }
 
     const trimmed = modalSearchQuery.trim()
-    if (trimmed.length < 2) {
+    if (trimmed.length < 3) {
       setSearchResults([])
       setIsSearching(false)
       return
@@ -541,7 +541,7 @@ export function PinnedSpotlightCard({
       <Dialog
         isOpen={categoryModalOpen}
         onOpenChange={setCategoryModalOpen}
-        className="w-full sm:max-w-xl p-6"
+        className="z-[100] w-full sm:max-w-xl p-6"
       >
         <DialogHeader className="pe-8">
           <DialogTitle className="flex items-center gap-2 text-base font-bold">
@@ -600,7 +600,7 @@ export function PinnedSpotlightCard({
       <Dialog
         isOpen={searchModalOpen}
         onOpenChange={setSearchModalOpen}
-        className="w-full sm:max-w-3xl p-6 max-h-[85vh] overflow-hidden [&>[data-slot=dialog]]:flex [&>[data-slot=dialog]]:flex-col [&>[data-slot=dialog]]:gap-3 [&>[data-slot=dialog]]:w-full [&>[data-slot=dialog]]:min-h-0"
+        className="z-[100] w-full sm:max-w-3xl p-6 max-h-[85vh] overflow-hidden [&>[data-slot=dialog]]:flex [&>[data-slot=dialog]]:flex-col [&>[data-slot=dialog]]:gap-3 [&>[data-slot=dialog]]:w-full [&>[data-slot=dialog]]:min-h-0"
       >
         <DialogHeader className="pb-2 pe-8">
           <DialogTitle className="flex items-center gap-2 text-base font-bold">
@@ -761,7 +761,7 @@ export function PinnedSpotlightCard({
             )}
 
             {!isSearching &&
-              modalSearchQuery.trim().length >= 2 &&
+              modalSearchQuery.trim().length >= 3 &&
               searchResults.length === 0 && (
                 <div className="flex min-h-[200px] flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 p-6 text-center text-xs text-muted-foreground">
                   <IconSearch className="mb-2 size-6 opacity-40" />
@@ -769,10 +769,10 @@ export function PinnedSpotlightCard({
                 </div>
               )}
 
-            {!isSearching && modalSearchQuery.trim().length < 2 && (
+            {!isSearching && modalSearchQuery.trim().length < 3 && (
               <div className="flex min-h-[200px] flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 p-6 text-center text-xs text-muted-foreground">
                 <IconSearch className="mb-2 size-6 text-primary/60" />
-                <span>Type at least 2 characters to search the {modalSearchCategory} database</span>
+                <span>Type at least 3 characters to search the {modalSearchCategory} database</span>
               </div>
             )}
           </div>

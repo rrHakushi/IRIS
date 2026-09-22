@@ -69,14 +69,15 @@ export function UserPreviewModal({
     >
       {/* Banner */}
       <div
-        className="relative aspect-[16/6] w-full overflow-hidden"
-        style={
-          customAccentColor
+        className="relative w-full overflow-hidden min-h-[120px]"
+        style={{
+          aspectRatio: "16 / 6",
+          ...(customAccentColor
             ? {
                 background: `linear-gradient(135deg, ${customAccentColor}33 0%, var(--card) 60%, ${customAccentColor}18 100%)`,
               }
-            : undefined
-        }
+            : {}),
+        }}
       >
         {profile?.bannerUrl ? (
           <>
@@ -121,8 +122,8 @@ export function UserPreviewModal({
       <div className="relative px-6 pb-6 pt-0">
         {/* Avatar & Action Button Header */}
         <div className="-mt-12 mb-4 flex items-end justify-between gap-4">
-          <div className="relative flex shrink-0 items-center justify-center">
-            <div className="relative size-20 shrink-0 overflow-hidden rounded-full border-3 border-background bg-card shadow-lg ring-1 ring-border/50">
+          <div className="relative size-20 shrink-0">
+            <div className="relative size-full overflow-hidden rounded-full border-3 border-background bg-card shadow-lg ring-1 ring-border/50">
               {profile?.avatarUrl ? (
                 <Image
                   src={profile.avatarUrl}
@@ -140,7 +141,15 @@ export function UserPreviewModal({
               )}
             </div>
             {profile?.avatarFrame && (
-              <div className="pointer-events-none absolute -inset-3 z-20 size-26 max-w-none select-none">
+              <div
+                className="pointer-events-none absolute z-20 select-none"
+                style={{
+                  width: "130%",
+                  height: "130%",
+                  top: "-15%",
+                  left: "-15%",
+                }}
+              >
                 <Image
                   src={profile.avatarFrame}
                   alt="Avatar Frame"
@@ -148,7 +157,7 @@ export function UserPreviewModal({
                   sizes="104px"
                   priority
                   unoptimized
-                  className="object-contain"
+                  className="size-full object-contain"
                 />
               </div>
             )}

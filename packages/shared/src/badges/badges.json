@@ -1,0 +1,110 @@
+[
+  {
+    "id": 1,
+    "name": "Genesis Pioneer",
+    "description": "Joined IRIS during the founding development phase.",
+    "icon": "IconRocket",
+    "color": "#f43f5e",
+    "category": "special",
+    "hidden": false
+  },
+  {
+    "id": 2,
+    "name": "Verified Otaku",
+    "description": "Logged and completed 100+ anime titles.",
+    "icon": "IconDeviceTv",
+    "color": "#8b5cf6",
+    "category": "media",
+    "hidden": false
+  },
+  {
+    "id": 3,
+    "name": "Manga Scholar",
+    "description": "Read over 1,000 chapters across serialized manga and manhwa.",
+    "icon": "IconBook",
+    "color": "#ec4899",
+    "category": "media",
+    "hidden": false
+  },
+  {
+    "id": 4,
+    "name": "Cinephile Extraordinaire",
+    "description": "Watched 50+ cinematic feature films across global cinema.",
+    "icon": "IconMovie",
+    "color": "#38bdf8",
+    "category": "media",
+    "hidden": false
+  },
+  {
+    "id": 5,
+    "name": "Sonic Maestro",
+    "description": "Scrobbled and synced 500+ music tracks into IRIS.",
+    "icon": "IconHeadphones",
+    "color": "#10b981",
+    "category": "media",
+    "hidden": false
+  },
+  {
+    "id": 6,
+    "name": "Master Architect",
+    "description": "Created and curated 10+ personalized custom media lists.",
+    "icon": "IconFolderHeart",
+    "color": "#f59e0b",
+    "category": "achievement",
+    "hidden": false
+  },
+  {
+    "id": 7,
+    "name": "Apex Gamer",
+    "description": "Reached 100% completion in cataloged video game releases.",
+    "icon": "IconDeviceGamepad",
+    "color": "#06b6d4",
+    "category": "media",
+    "hidden": false
+  },
+  {
+    "id": 8,
+    "name": "Midnight Wanderer",
+    "description": "Active in the dead of night between 2:00 AM and 5:00 AM.",
+    "icon": "IconMoonStars",
+    "color": "#a855f7",
+    "category": "achievement",
+    "hidden": false
+  },
+  {
+    "id": 9,
+    "name": "Code Weaver",
+    "description": "Contributed code, fixes, or extensions to the IRIS ecosystem.",
+    "icon": "IconCode",
+    "color": "#10e599",
+    "category": "special",
+    "hidden": false
+  },
+  {
+    "id": 10,
+    "name": "Sentinel Shield",
+    "description": "Protected privacy with 2FA, passkeys, and encrypted vaults.",
+    "icon": "IconShieldCheck",
+    "color": "#6366f1",
+    "category": "achievement",
+    "hidden": false
+  },
+  {
+    "id": 11,
+    "name": "Shadow Operative",
+    "description": "Discovered the hidden easter egg terminal within the system.",
+    "icon": "IconEyeOff",
+    "color": "#64748b",
+    "category": "special",
+    "hidden": true
+  },
+  {
+    "id": 12,
+    "name": "Astral Ascendant",
+    "description": "Unlocked all customization tiers and mastered the prism spectrum.",
+    "icon": "IconSparkles",
+    "color": "#facc15",
+    "category": "special",
+    "hidden": true
+  }
+]

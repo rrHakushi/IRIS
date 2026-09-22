@@ -29,6 +29,7 @@ export default defineRoute({
             id: t.String(),
             username: t.String(),
             customization: t.Nullable(UserCustomizationSchema),
+            badges: t.Array(t.Number()),
             createdAt: t.String(),
             connections: t.Array(PublicUserConnectionSchema),
           }),
@@ -53,6 +54,7 @@ export default defineRoute({
           id: true,
           username: true,
           customization: true,
+          badges: true,
           createdAt: true,
           connections: {
             where: {
@@ -107,6 +109,7 @@ export default defineRoute({
           id: dbUser.id,
           username: dbUser.username.trim(),
           customization: dbUser.customization as any,
+          badges: dbUser.badges,
           createdAt: dbUser.createdAt.toISOString(),
           connections: publicConnections,
         },

@@ -199,7 +199,13 @@ export function InfoSettingsTab({
     if (user?.profile) {
       setDraftProfile(user.profile)
       setSavedProfile(user.profile)
-      parseLocation(user.profile.location)
+
+      if (user.profile.country || user.profile.region) {
+        setSelectedCountry(user.profile.country || "")
+        setRegionInput(user.profile.region || "")
+      } else {
+        parseLocation(user.profile.location)
+      }
     }
   }, [user?.profile, allCountries])
 
@@ -214,7 +220,12 @@ export function InfoSettingsTab({
     } else if (r) {
       combined = r
     }
-    setDraftProfile((prev) => ({ ...prev, location: combined }))
+    setDraftProfile((prev) => ({
+      ...prev,
+      country: c || null,
+      region: r || null,
+      location: combined,
+    }))
   }
 
   const isDirty =
@@ -236,9 +247,15 @@ export function InfoSettingsTab({
     if (!isDirty || isSaving) return
     setIsSaving(true)
     try {
-      const updated = await updateProfile(draftProfile)
+      const finalProfile: UserProfileCustomization = {
+        ...draftProfile,
+        country: selectedCountry.trim() || null,
+        region: regionInput.trim() || null,
+      }
+      const updated = await updateProfile(finalProfile)
       if (updated) {
-        setSavedProfile(draftProfile)
+        setSavedProfile(finalProfile)
+        setDraftProfile(finalProfile)
         toast.success("Account info updated successfully.")
       } else {
         toast.error("Failed to update account info.")
@@ -252,7 +269,12 @@ export function InfoSettingsTab({
 
   const handleReset = () => {
     setDraftProfile(savedProfile)
-    parseLocation(savedProfile.location)
+    if (savedProfile.country || savedProfile.region) {
+      setSelectedCountry(savedProfile.country || "")
+      setRegionInput(savedProfile.region || "")
+    } else {
+      parseLocation(savedProfile.location)
+    }
     toast.info("Changes reset.")
   }
 
@@ -445,12 +467,19 @@ export function InfoSettingsTab({
                   type="text"
                   placeholder="Select or search timezone (e.g. Asia/Tokyo)..."
                   value={draftProfile.timezone || ""}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const rawVal = e.target.value
+                    const matched = allTimezones.find(
+                      (tz) =>
+                        tz.id.toLowerCase() === rawVal.toLowerCase() ||
+                        tz.label.toLowerCase() === rawVal.toLowerCase()
+                    )
+                    const cleanTz = matched ? matched.id : rawVal
                     setDraftProfile((prev) => ({
                       ...prev,
-                      timezone: e.target.value || null,
+                      timezone: cleanTz || null,
                     }))
-                  }
+                  }}
                   disabled={isLoading || isSaving}
                   className="flex h-8 w-full rounded-xl border border-border/60 bg-muted/20 px-3 py-1 text-xs shadow-2xs transition-colors focus:border-ring focus:outline-hidden placeholder:text-muted-foreground/60"
                 />

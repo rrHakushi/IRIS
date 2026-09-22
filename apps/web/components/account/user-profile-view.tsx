@@ -135,7 +135,7 @@ export function UserProfileView({
       />
 
       {/* 4. Active Tab Main Content */}
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">
         {activeTab === "overview" && (
           <OverviewTab
             username={user.username}

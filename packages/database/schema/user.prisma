@@ -10,6 +10,7 @@ model User {
 
     settings    Json? @db.Json
     permissions Int[] @default([])
+    badges      Int[] @default([])
 
     // MFA
     TOTPSecret      String?

@@ -108,7 +108,7 @@ export function OverviewTab({
                       fill
                       sizes="(max-width: 640px) 96px, 112px"
                       className="object-cover transition-transform duration-300 hover:scale-105"
-                      unoptimized={spotlight.imageUrl.startsWith("data:")}
+                      unoptimized
                     />
                   </div>
                 )}

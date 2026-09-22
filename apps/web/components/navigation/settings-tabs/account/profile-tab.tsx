@@ -29,6 +29,7 @@ import { ProfilePreviewCard } from "./profile/profile-preview-card"
 import { VisualThemeCard } from "./profile/visual-theme-card"
 import { SocialLinksCard } from "./profile/social-links-card"
 import { PinnedSpotlightCard } from "./profile/pinned-spotlight-card"
+import { BadgeShowcaseCard } from "./profile/badge-showcase-card"
 import { elysia } from "@/lib/elysia"
 import {
   IconCheck,
@@ -62,6 +63,7 @@ export function ProfileTab({
   const [pendingFiles, setPendingFiles] = useState<{
     avatar?: File | null
     banner?: File | null
+    bannerOverlay?: File | null
     nameplate?: File | null
     sidebarBanner?: File | null
     avatarFrame?: File | null
@@ -90,7 +92,12 @@ export function ProfileTab({
   // Handle stage pending file from media cards
   const handlePendingFile = (
     assetType:
-      "avatar" | "banner" | "nameplate" | "sidebarBanner" | "avatarFrame",
+      | "avatar"
+      | "banner"
+      | "bannerOverlay"
+      | "nameplate"
+      | "sidebarBanner"
+      | "avatarFrame",
     file: File | null,
     previewUrl: string | null
   ) => {
@@ -98,6 +105,8 @@ export function ProfileTab({
     setDraftProfile((prev) => {
       if (assetType === "avatar") return { ...prev, avatarUrl: previewUrl }
       if (assetType === "banner") return { ...prev, bannerUrl: previewUrl }
+      if (assetType === "bannerOverlay")
+        return { ...prev, bannerOverlayUrl: previewUrl }
       if (assetType === "nameplate" || assetType === "sidebarBanner") {
         return {
           ...prev,
@@ -137,6 +146,7 @@ export function ProfileTab({
 
           if (type === "avatar") finalProfile.avatarUrl = data.url
           else if (type === "banner") finalProfile.bannerUrl = data.url
+          else if (type === "bannerOverlay") finalProfile.bannerOverlayUrl = data.url
           else if (type === "nameplate" || type === "sidebarBanner") {
             finalProfile.nameplateUrl = data.url
             finalProfile.sidebarBannerUrl = data.url
@@ -150,6 +160,9 @@ export function ProfileTab({
           } else if (type === "banner") {
             oldUrl = savedProfile.bannerUrl
             finalProfile.bannerUrl = null
+          } else if (type === "bannerOverlay") {
+            oldUrl = savedProfile.bannerOverlayUrl
+            finalProfile.bannerOverlayUrl = null
           } else if (type === "nameplate" || type === "sidebarBanner") {
             oldUrl = savedProfile.nameplateUrl || savedProfile.sidebarBannerUrl
             finalProfile.nameplateUrl = null
@@ -368,6 +381,20 @@ export function ProfileTab({
             disabled={isLoading || isSaving}
           />
 
+          {/* Card 5b: Banner Overlay Asset */}
+          <MediaAssetCard
+            title="Banner Overlay Asset"
+            description="Upload a transparent PNG, WebP, or SVG decoration to render directly on top of your banner."
+            assetType="bannerOverlay"
+            currentUrl={draftProfile.bannerOverlayUrl}
+            onPendingFileChange={(file, previewUrl) =>
+              handlePendingFile("bannerOverlay", file, previewUrl)
+            }
+            aspectRatio="banner"
+            fallbackInitial={initial}
+            disabled={isLoading || isSaving}
+          />
+
           {/* Card 6: Nameplate */}
           <MediaAssetCard
             title={t("nameplate")}
@@ -384,20 +411,26 @@ export function ProfileTab({
             disabled={isLoading || isSaving}
           />
 
-          {/* Card 7: Visual Theme & Banner Layout */}
+          {/* Card 7: Visual Theme & Accent Colors */}
           <VisualThemeCard
             accentColor={draftProfile.accentColor}
             onAccentColorChange={(accentColor) =>
               setDraftProfile((prev) => ({ ...prev, accentColor }))
             }
-            bannerHeight={draftProfile.bannerHeight}
-            onBannerHeightChange={(bannerHeight) =>
-              setDraftProfile((prev) => ({ ...prev, bannerHeight }))
+            disabled={isLoading || isSaving}
+          />
+
+          {/* Card 8: Profile Badges Showcase */}
+          <BadgeShowcaseCard
+            unlockedBadgeIds={user?.badges || []}
+            showcaseBadgeIds={draftProfile.showcaseBadgeIds || []}
+            onShowcaseBadgeIdsChange={(showcaseBadgeIds) =>
+              setDraftProfile((prev) => ({ ...prev, showcaseBadgeIds }))
             }
             disabled={isLoading || isSaving}
           />
 
-          {/* Card 8: Social & External Links */}
+          {/* Card 9: Social & External Links */}
           <SocialLinksCard
             socialLinks={draftProfile.socialLinks || []}
             onChange={(socialLinks) =>
@@ -406,7 +439,7 @@ export function ProfileTab({
             disabled={isLoading || isSaving}
           />
 
-          {/* Card 9: Pinned Spotlight Showcase */}
+          {/* Card 10: Pinned Spotlight Showcase */}
           <PinnedSpotlightCard
             spotlight={draftProfile.pinnedSpotlight}
             onChange={(pinnedSpotlight) =>

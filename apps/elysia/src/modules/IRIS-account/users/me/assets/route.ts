@@ -14,6 +14,7 @@ export default defineRoute({
         assetType: t.Union([
           t.Literal("avatar"),
           t.Literal("banner"),
+          t.Literal("bannerOverlay"),
           t.Literal("nameplate"),
           t.Literal("sidebarBanner"),
           t.Literal("avatarFrame"),
@@ -95,6 +96,8 @@ export default defineRoute({
             oldUrl = profile.avatarUrl
           } else if (assetType === "banner") {
             oldUrl = profile.bannerUrl
+          } else if (assetType === "bannerOverlay") {
+            oldUrl = profile.bannerOverlayUrl
           } else if (
             assetType === "nameplate" ||
             assetType === "sidebarBanner"
