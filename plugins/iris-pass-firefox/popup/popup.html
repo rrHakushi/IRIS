@@ -194,12 +194,6 @@
             Unlock with PIN
           </button>
           <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
-            <button type="button" id="btn-unlock-bio" class="btn-secondary" style="display: none;">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-              </svg>
-              Unlock with Biometrics
-            </button>
             <button type="button" id="btn-forgot-pin" class="text-btn mini">
               Forgot PIN? Enter master password
             </button>
@@ -425,18 +419,6 @@
               </div>
               <div id="pin-active-actions" style="display: none; margin-top: 6px; gap: 8px; justify-content: flex-end;">
                 <button type="button" id="btn-change-pin" class="text-btn mini">Change PIN</button>
-              </div>
-
-              <!-- Unlock with Biometrics -->
-              <div class="setting-row-toggle" id="row-bio-unlock">
-                <div>
-                  <div class="setting-toggle-title">Unlock with Biometrics</div>
-                  <div class="setting-toggle-desc">Windows Hello / Touch ID / Fingerprint</div>
-                </div>
-                <label class="toggle-switch">
-                  <input type="checkbox" id="toggle-bio-unlock" />
-                  <span class="toggle-slider"></span>
-                </label>
               </div>
 
               <!-- Clear Clipboard Timeout -->

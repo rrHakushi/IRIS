@@ -351,12 +351,7 @@ export function EncryptionProvider({
         hasSeparateEncryptionPassword,
         publicKey,
         encryptedPrivateKey,
-        secretKey:
-          secretKey ||
-          inMemorySecretKey ||
-          (typeof window !== "undefined"
-            ? loadSessionSecretKey(userId || undefined)
-            : null),
+        secretKey: secretKey || inMemorySecretKey,
         fingerprint,
         isLoading,
         error,

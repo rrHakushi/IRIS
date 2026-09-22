@@ -11,7 +11,7 @@ Official zero-knowledge encrypted password manager, passkey authenticator, and a
 - **Passkey (WebAuthn / FIDO2) Support**: In-page mediation intercepts `navigator.credentials.create` and `navigator.credentials.get` to store passkeys in the vault and authenticate with existing passkeys.
 - **Bitwarden Multi-Match Detection**: Matches active tabs using all 6 Bitwarden URI match strategies (`BaseDomain`, `Host`, `StartsWith`, `Exact`, `RegularExpression`, `Never`).
 - **TOTP 2FA Assistant**: Live countdown widget with auto-copy and auto-refresh for 2FA one-time verification codes.
-- **PIN & Biometrics Unlock**: Zero-knowledge PIN and Windows Hello / Touch ID fast unlock with automatic persistent encryption key wrapping.
+- **PIN Unlock**: Zero-knowledge PIN fast unlock with scrypt key wrapping.
 - **Cryptographic Generator**:
   - Passwords up to **256 characters** with customizable charsets.
   - Diceware passphrases up to **32 words**.
@@ -36,4 +36,4 @@ To build the submission `.zip` archive:
 ```bash
 npm run build
 ```
-The output package will be generated at `dist/iris_pass-1.5.1.zip`.
+The output package will be generated at `dist/iris_pass-1.5.2.zip`.

@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
   "name": "IRIS Pass",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "Password manager extension for IRIS.",
   "browser_specific_settings": {
     "gecko": {
-      "id": "info@runerra.orgdev",
+      "id": "info@runerra.org",
       "strict_min_version": "142.0",
       "data_collection_permissions": {
         "required": [

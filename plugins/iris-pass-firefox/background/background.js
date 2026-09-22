@@ -391,7 +391,6 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const sData = await storage.get([
         "user",
         "pinUnlockEnabled",
-        "biometricUnlockEnabled",
         "lastSyncTimestamp",
         "clipboardClearSeconds",
         "isDefaultPasswordManager",
@@ -407,7 +406,6 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           user: null,
           cipherCount: 0,
           pinUnlockEnabled: Boolean(sData.pinUnlockEnabled),
-          biometricUnlockEnabled: Boolean(sData.biometricUnlockEnabled),
           lastSyncTimestamp: sData.lastSyncTimestamp || 0,
           clipboardClearSeconds: sData.clipboardClearSeconds ?? 30,
           isDefaultPasswordManager: Boolean(sData.isDefaultPasswordManager),
@@ -436,7 +434,6 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
               user: null,
               cipherCount: 0,
               pinUnlockEnabled: false,
-              biometricUnlockEnabled: false,
               lastSyncTimestamp: 0,
               clipboardClearSeconds: 30,
               isDefaultPasswordManager: false,
@@ -456,7 +453,6 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         serverUrl,
         cipherCount: inMemoryCiphers.length,
         pinUnlockEnabled: Boolean(sData.pinUnlockEnabled),
-        biometricUnlockEnabled: Boolean(sData.biometricUnlockEnabled),
         lastSyncTimestamp: sData.lastSyncTimestamp || 0,
         clipboardClearSeconds: sData.clipboardClearSeconds ?? 30,
         isDefaultPasswordManager: Boolean(sData.isDefaultPasswordManager),
@@ -731,79 +727,6 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true
   }
 
-  // 3e. Setup Biometric Unlock
-  if (action === "SETUP_BIOMETRIC_UNLOCK") {
-    ; (async () => {
-      try {
-        if (!isPrivilegedSender(sender)) {
-          throw new Error("Unauthorized sender context")
-        }
-        const { bioData } = payload || {}
-        if (!bioData?.credentialId) {
-          throw new Error("Invalid biometric enrollment data")
-        }
-
-        await storage.set({
-          biometricUnlockData: bioData,
-          biometricUnlockEnabled: true,
-        })
-        sendResponse({ success: true })
-      } catch (err) {
-        sendResponse({ success: false, error: err.message })
-      }
-    })()
-    return true
-  }
-
-  // 3f. Unlock Vault with Biometrics
-  if (action === "UNLOCK_WITH_BIOMETRICS") {
-    ; (async () => {
-      try {
-        if (!isPrivilegedSender(sender)) {
-          throw new Error("Unauthorized sender context")
-        }
-        const { vaultKeyHex } = payload || {}
-        if (!vaultKeyHex) throw new Error("Vault key required")
-
-        inMemoryVaultKey = IrisCrypto.hexToBytes(vaultKeyHex)
-
-        if (ext.storage?.session) {
-          await ext.storage.session.set({
-            vaultKeyHex: IrisCrypto.bytesToHex(inMemoryVaultKey),
-            lastActive: Date.now(),
-          })
-        }
-
-        await decryptCachedVault(inMemoryVaultKey)
-        await resetAutoLock()
-        checkHourlySyncDue()
-
-        const sData = await storage.get(["user"])
-        sendResponse({ success: true, user: sData.user })
-      } catch (err) {
-        sendResponse({ success: false, error: err.message })
-      }
-    })()
-    return true
-  }
-
-  // 3g. Disable Biometric Unlock
-  if (action === "DISABLE_BIOMETRIC_UNLOCK") {
-    ; (async () => {
-      try {
-        if (!isPrivilegedSender(sender)) {
-          throw new Error("Unauthorized sender context")
-        }
-        await storage.remove(["biometricUnlockData"])
-        await storage.set({ biometricUnlockEnabled: false })
-        sendResponse({ success: true })
-      } catch (err) {
-        sendResponse({ success: false, error: err.message })
-      }
-    })()
-    return true
-  }
-
   // 3h. Sync Now
   if (action === "SYNC_VAULT") {
     ; (async () => {
@@ -1011,7 +934,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         ext.action.setBadgeText({ text: "" })
       } catch (e) {}
 
-      // Wipe ALL local keys: tokens, ciphers, folders, PIN unlock, Biometrics, sync timestamps, etc.
+      // Wipe ALL local keys: tokens, ciphers, folders, PIN unlock, sync timestamps, etc.
       await storage.clear()
       if (ext.storage?.local) {
         await ext.storage.local.clear().catch(() => {})
@@ -1040,8 +963,9 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
     ; (async () => {
       await ensureVaultActive()
       resetAutoLock()
-      // Prioritize explicit document/frame URL from payload or sender frame, fallback to tab URL
-      const targetUrl = payload?.url || sender.url || sender.tab?.url
+      // Only privileged extension contexts can specify an arbitrary URL filter; content scripts are scoped to their frame URL
+      const isPrivileged = isPrivilegedSender(sender)
+      const targetUrl = isPrivileged && payload?.url ? payload.url : (sender.url || sender.tab?.url || "")
       const matches = getMatchingLogins(targetUrl)
       sendResponse({ matches, isUnlocked: Boolean(inMemoryVaultKey) })
     })()
@@ -1414,7 +1338,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           return
         }
 
-        const callerUrl = sender.tab?.url || sender?.url || payload?.url || ""
+        const callerUrl = sender.url || sender.tab?.url || ""
         const callerHost = IrisMatching.extractHost(callerUrl)
         if (!callerHost) {
           sendResponse({ success: false, credentials: [], passkeys: [] })
@@ -1521,7 +1445,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           throw new Error("Vault is locked. Please unlock IRIS Pass first.")
         }
 
-        const callerUrl = sender.tab?.url || sender?.url || payload?.url || ""
+        const callerUrl = sender.url || sender.tab?.url || ""
         const callerHost = IrisMatching.extractHost(callerUrl)
         if (!callerHost) throw new Error("Untrusted sender context")
 
@@ -1724,7 +1648,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (!inMemoryVaultKey)
           throw new Error("Vault is locked. Please unlock IRIS Pass.")
 
-        const callerUrl = sender.tab?.url || sender?.url || payload?.url || ""
+        const callerUrl = sender.url || sender.tab?.url || ""
         const callerHost = IrisMatching.extractHost(callerUrl)
         if (!callerHost) throw new Error("Untrusted sender context")
 

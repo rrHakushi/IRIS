@@ -78,7 +78,6 @@ const unlockPinInput = document.getElementById("unlock-pin")
 const btnUnlockPinSubmit = document.getElementById("btn-unlock-pin-submit")
 const btnToggleUnlockPinEye = document.getElementById("btn-toggle-unlock-pin-eye")
 const btnForgotPin = document.getElementById("btn-forgot-pin")
-const btnUnlockBio = document.getElementById("btn-unlock-bio")
 
 // Locked Mode B: Master Password
 const formUnlockPassword = document.getElementById("form-unlock-password")
@@ -211,8 +210,6 @@ const settingAutoLock = document.getElementById("setting-auto-lock")
 const togglePinUnlock = document.getElementById("toggle-pin-unlock")
 const pinActiveActions = document.getElementById("pin-active-actions")
 const btnChangePin = document.getElementById("btn-change-pin")
-const toggleBioUnlock = document.getElementById("toggle-bio-unlock")
-const rowBioUnlock = document.getElementById("row-bio-unlock")
 const settingClipboardClear = document.getElementById("setting-clipboard-clear")
 
 // Vault & Sync
@@ -426,10 +423,6 @@ function populateSettingsUI(status) {
     pinActiveActions.style.display = status.pinUnlockEnabled ? "flex" : "none"
   }
 
-  if (toggleBioUnlock) {
-    toggleBioUnlock.checked = Boolean(status.biometricUnlockEnabled)
-  }
-
   if (settingClipboardClear) {
     const sec = status.clipboardClearSeconds !== undefined ? status.clipboardClearSeconds : 30
     settingClipboardClear.value = String(sec)
@@ -448,14 +441,6 @@ function populateSettingsUI(status) {
   if (toggleDefaultPm) {
     toggleDefaultPm.checked = Boolean(status.isDefaultPasswordManager)
   }
-
-  // Check biometric availability on device
-  IrisCrypto.isBiometricsAvailable().then((avail) => {
-    if (!avail && rowBioUnlock) {
-      rowBioUnlock.style.opacity = "0.5"
-      rowBioUnlock.title = "Biometrics not available on this system"
-    }
-  })
 }
 
 /**
@@ -549,12 +534,6 @@ function showLockedView(user, status = currentStatus) {
     formUnlockPassword.style.display = "none"
     unlockPinInput.value = ""
     setTimeout(() => unlockPinInput.focus(), 50)
-
-    if (status?.biometricUnlockEnabled) {
-      btnUnlockBio.style.display = "flex"
-    } else {
-      btnUnlockBio.style.display = "none"
-    }
   } else {
     formUnlockPin.style.display = "none"
     formUnlockPassword.style.display = "flex"
@@ -857,53 +836,6 @@ btnUsePin?.addEventListener("click", () => {
   unlockPinInput.focus()
 })
 
-// Unlock with Biometrics Button
-btnUnlockBio?.addEventListener("click", async () => {
-  try {
-    const sData = await storage.get(["biometricUnlockData"])
-    const bioData = sData.biometricUnlockData
-    if (!bioData) throw new Error("Biometrics not set up")
-
-    btnUnlockBio.textContent = "Verifying..."
-    btnUnlockBio.disabled = true
-
-    const vaultKey = await IrisCrypto.unlockWithBiometrics(bioData)
-    const vaultKeyHex = IrisCrypto.bytesToHex(vaultKey)
-
-    ext.runtime.sendMessage(
-      {
-        action: "UNLOCK_WITH_BIOMETRICS",
-        payload: { vaultKeyHex },
-      },
-      (res) => {
-        btnUnlockBio.disabled = false
-        btnUnlockBio.innerHTML = `
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;">
-            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-          </svg>
-          Unlock with Biometrics
-        `
-        if (res?.success) {
-          showUnlockedView(currentUser)
-        } else {
-          unlockError.textContent = res?.error || "Biometric unlock failed"
-          unlockError.style.display = "block"
-        }
-      }
-    )
-  } catch (err) {
-    btnUnlockBio.disabled = false
-    btnUnlockBio.innerHTML = `
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;">
-        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-      </svg>
-      Unlock with Biometrics
-    `
-    unlockError.textContent = err.message || "Biometric authentication cancelled"
-    unlockError.style.display = "block"
-  }
-})
-
 /**
  * Master Password Unlock Form Submission
  */
@@ -1143,42 +1075,6 @@ formPinSetup?.addEventListener("submit", (e) => {
       }
     }
   )
-})
-
-// Biometric unlock toggle
-toggleBioUnlock?.addEventListener("change", async (e) => {
-  if (e.target.checked) {
-    try {
-      // Need vaultKey from session or memory
-      const sessionData = await ext.storage.session?.get(["vaultKeyHex"])
-      if (!sessionData?.vaultKeyHex) {
-        toggleBioUnlock.checked = false
-        alert("Please unlock your vault first to set up Biometrics")
-        return
-      }
-
-      const vaultKey = IrisCrypto.hexToBytes(sessionData.vaultKeyHex)
-      const bioData = await IrisCrypto.setupBiometricUnlock(vaultKey, currentUser)
-
-      ext.runtime.sendMessage(
-        {
-          action: "SETUP_BIOMETRIC_UNLOCK",
-          payload: { bioData },
-        },
-        (res) => {
-          if (!res?.success) {
-            toggleBioUnlock.checked = false
-            alert(res?.error || "Failed to configure biometrics")
-          }
-        }
-      )
-    } catch (err) {
-      toggleBioUnlock.checked = false
-      alert(err.message || "Biometric enrollment was cancelled")
-    }
-  } else {
-    ext.runtime.sendMessage({ action: "DISABLE_BIOMETRIC_UNLOCK" })
-  }
 })
 
 // Clipboard clear timeout
