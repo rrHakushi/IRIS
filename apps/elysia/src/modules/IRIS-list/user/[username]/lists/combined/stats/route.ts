@@ -29,11 +29,16 @@ export default defineRoute({
       session
     )
 
-    const stats = await mediaStatsService.getCombinedStats(dbUser.id, isOwner, {
-      year: query?.year !== undefined ? Number(query.year) : undefined,
-      quarter: query?.quarter !== undefined ? Number(query.quarter) : undefined,
-      month: query?.month !== undefined ? Number(query.month) : undefined,
-    })
+    const period =
+      query?.year !== undefined || query?.quarter !== undefined || query?.month !== undefined
+        ? {
+            year: query?.year !== undefined ? Number(query.year) : undefined,
+            quarter: query?.quarter !== undefined ? Number(query.quarter) : undefined,
+            month: query?.month !== undefined ? Number(query.month) : undefined,
+          }
+        : undefined
+
+    const stats = await mediaStatsService.getCombinedStats(dbUser.id, isOwner, period)
 
     return {
       success: true,

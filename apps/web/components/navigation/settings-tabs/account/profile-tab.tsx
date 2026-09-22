@@ -26,6 +26,9 @@ import { DisplayNameStyleCard } from "./profile/display-name-style-card"
 import { MarkdownBioEditor } from "./profile/markdown-bio-editor"
 import { MediaAssetCard } from "./profile/media-asset-card"
 import { ProfilePreviewCard } from "./profile/profile-preview-card"
+import { VisualThemeCard } from "./profile/visual-theme-card"
+import { SocialLinksCard } from "./profile/social-links-card"
+import { PinnedSpotlightCard } from "./profile/pinned-spotlight-card"
 import { elysia } from "@/lib/elysia"
 import {
   IconCheck,
@@ -378,6 +381,37 @@ export function ProfileTab({
             }
             aspectRatio="sidebar"
             fallbackInitial={initial}
+            disabled={isLoading || isSaving}
+          />
+
+          {/* Card 7: Visual Theme & Banner Layout */}
+          <VisualThemeCard
+            accentColor={draftProfile.accentColor}
+            onAccentColorChange={(accentColor) =>
+              setDraftProfile((prev) => ({ ...prev, accentColor }))
+            }
+            bannerHeight={draftProfile.bannerHeight}
+            onBannerHeightChange={(bannerHeight) =>
+              setDraftProfile((prev) => ({ ...prev, bannerHeight }))
+            }
+            disabled={isLoading || isSaving}
+          />
+
+          {/* Card 8: Social & External Links */}
+          <SocialLinksCard
+            socialLinks={draftProfile.socialLinks || []}
+            onChange={(socialLinks) =>
+              setDraftProfile((prev) => ({ ...prev, socialLinks }))
+            }
+            disabled={isLoading || isSaving}
+          />
+
+          {/* Card 9: Pinned Spotlight Showcase */}
+          <PinnedSpotlightCard
+            spotlight={draftProfile.pinnedSpotlight}
+            onChange={(pinnedSpotlight) =>
+              setDraftProfile((prev) => ({ ...prev, pinnedSpotlight }))
+            }
             disabled={isLoading || isSaving}
           />
         </div>

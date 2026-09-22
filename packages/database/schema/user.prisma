@@ -13,9 +13,9 @@ model User {
 
     // MFA
     TOTPSecret      String?
-    TOTPEnabled     Boolean   @default(false)
-    emailMfaEnabled Boolean   @default(false)
-    backupCodes     String[]  @default([])
+    TOTPEnabled     Boolean        @default(false)
+    emailMfaEnabled Boolean        @default(false)
+    backupCodes     String[]       @default([])
     passkeys        Passkey[]
     apiKeys         ApiKey[]
     notifications   Notification[]
@@ -30,15 +30,15 @@ model User {
     oauthConsents           OAuthConsent[]           @relation("UserOAuthConsents")
 
     // MEDIA LISTS & PLAYLISTS
-    customLists     CustomList[]
-    animeList       AnimeList[]
-    mangaList       MangaList[]
-    movieList       MovieList[]
-    tvList          TvList[]
-    gameList        GameList[]
-    bookList        BookList[]
-    musicList       MusicList[]
-    exportShares    ListExportShare[]
+    customLists                CustomList[]
+    animeList                  AnimeList[]
+    mangaList                  MangaList[]
+    movieList                  MovieList[]
+    tvList                     TvList[]
+    gameList                   GameList[]
+    bookList                   BookList[]
+    musicList                  MusicList[]
+    exportShares               ListExportShare[]
     listOwnerComments          ListComment[]      @relation("ListOwnerComments")
     authoredListComments       ListComment[]      @relation("AuthorListComments")
     authoredListCommentReplies ListCommentReply[] @relation("AuthorListCommentReplies")
@@ -65,11 +65,11 @@ model User {
     // ENCRYPTION KEYS
     publicKey              String?
     encryptedPrivateKey    String?
-    encryptionPasswordHash String?   @db.Text
+    encryptionPasswordHash String? @db.Text
 
     // IRIS PASS RELATIONS
-    passFolders  PassFolder[] @relation("UserToPassFolders")
-    passCiphers  PassCipher[] @relation("UserToPassCiphers")
+    passFolders PassFolder[] @relation("UserToPassFolders")
+    passCiphers PassCipher[] @relation("UserToPassCiphers")
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

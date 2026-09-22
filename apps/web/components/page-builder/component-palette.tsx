@@ -1008,11 +1008,10 @@ export function ComponentPalette({ onInsertNode }: ComponentPaletteProps) {
             key={cat.id}
             type="button"
             onClick={() => setActiveCategory(cat.id)}
-            className={`rounded-lg px-2.5 py-1 text-[11px] font-medium whitespace-nowrap transition-colors ${
-              activeCategory === cat.id
+            className={`rounded-lg px-2.5 py-1 text-[11px] font-medium whitespace-nowrap transition-colors ${activeCategory === cat.id
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted/50 text-muted-foreground hover:text-foreground"
-            }`}
+              }`}
           >
             {cat.label}
           </button>

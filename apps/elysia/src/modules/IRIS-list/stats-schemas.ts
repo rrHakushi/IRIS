@@ -1,22 +1,24 @@
 import { t } from "@/router"
 
-export const StatsQuerySchema = t.Object({
-  year: t.Optional(t.Number({ description: "Rewind year filter e.g. 2026" })),
-  quarter: t.Optional(
-    t.Number({
-      minimum: 1,
-      maximum: 4,
-      description: "Rewind quarter filter 1-4",
-    })
-  ),
-  month: t.Optional(
-    t.Number({
-      minimum: 1,
-      maximum: 12,
-      description: "Rewind month filter 1-12",
-    })
-  ),
-})
+export const StatsQuerySchema = t.Optional(
+  t.Object({
+    year: t.Optional(t.Numeric({ description: "Rewind year filter e.g. 2026" })),
+    quarter: t.Optional(
+      t.Numeric({
+        minimum: 1,
+        maximum: 4,
+        description: "Rewind quarter filter 1-4",
+      })
+    ),
+    month: t.Optional(
+      t.Numeric({
+        minimum: 1,
+        maximum: 12,
+        description: "Rewind month filter 1-12",
+      })
+    ),
+  })
+)
 
 export const ScoreDistributionItemSchema = t.Object({
   score: t.Number(),
@@ -154,17 +156,21 @@ export const CombinedStatsResponseSchema = t.Object({
   data: t.Object({
     isPeriodFiltered: t.Boolean(),
     period: t.Optional(
-      t.Object({
-        year: t.Optional(t.Number()),
-        quarter: t.Optional(t.Number()),
-        month: t.Optional(t.Number()),
-      })
+      t.Nullable(
+        t.Object({
+          year: t.Optional(t.Number()),
+          quarter: t.Optional(t.Number()),
+          month: t.Optional(t.Number()),
+        })
+      )
     ),
     overview: t.Object({
       totalTitles: t.Number(),
       completedTitles: t.Number(),
+      planningCount: t.Optional(t.Number()),
       totalTimeMinutes: t.Number(),
       daysConsumed: t.Number(),
+      daysPlanned: t.Optional(t.Number()),
       meanScore: t.Number(),
       standardDeviation: t.Number(),
       scoredCount: t.Number(),
@@ -188,6 +194,6 @@ export const CombinedStatsResponseSchema = t.Object({
     monthlyActivity: t.Array(MonthlyActivityItemSchema),
     weeklyActivity: t.Optional(t.Array(WeeklyActivityItemSchema)),
     dayOfWeekActivity: t.Optional(t.Array(DayOfWeekItemSchema)),
-    rewindHighlights: RewindHighlightsSchema,
+    rewindHighlights: t.Optional(t.Nullable(t.Any())),
   }),
 })

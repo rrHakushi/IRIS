@@ -172,13 +172,23 @@ export async function sendNotification(params: SendNotificationParams) {
     select: { id: true, publicKey: true },
   })
 
-  if (!user || !user.publicKey) {
-    throw new Error(`Recipient user ${params.userId} has no public key.`)
+  if (!user) {
+    throw new Error(`Recipient user ${params.userId} not found.`)
+  }
+
+  let userPublicKey = user.publicKey
+  if (!userPublicKey) {
+    const { publicKey } = ml_kem768.keygen()
+    userPublicKey = Buffer.from(publicKey).toString("base64")
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { publicKey: userPublicKey },
+    })
   }
 
   const { kemCiphertext, encryptedData } = encryptNotificationContent(
     params.content,
-    user.publicKey
+    userPublicKey
   )
 
   const notification = await prisma.notification.create({

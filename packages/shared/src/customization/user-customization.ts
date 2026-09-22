@@ -15,6 +15,28 @@ export interface DisplayNameStyle {
   colors?: string[]; // Array of 5 colors for prism or multi-stop gradients
 }
 
+export interface SocialLink {
+  platform: string; // e.g. "discord", "github", "twitter", "x", "twitch", "youtube", "steam", "anilist", "website", "other"
+  url: string;
+  label?: string;
+}
+
+export interface PinnedSpotlight {
+  title?: string;
+  subtitle?: string;
+  mediaType?: string;
+  mediaId?: number;
+  customNote?: string;
+  imageUrl?: string;
+  link?: string;
+}
+
+export interface ProfilePrivacySettings {
+  showBirthday?: "public" | "friends" | "private";
+  showLocation?: "public" | "friends" | "private";
+  allowComments?: "public" | "friends" | "disabled";
+}
+
 export interface UserProfileCustomization {
   displayName?: string;
   displayNameStyle?: DisplayNameStyle;
@@ -26,6 +48,16 @@ export interface UserProfileCustomization {
   nameplateUrl?: string | null;
   sidebarBannerUrl?: string | null; // Backwards-compatible alias for nameplateUrl
   avatarFrame?: string | null; // URL of uploaded PNG/SVG transparent frame overlay
+  socialLinks?: SocialLink[];
+  accentColor?: string | null;
+  bannerHeight?: "compact" | "normal" | "expansive";
+  pinnedSpotlight?: PinnedSpotlight | null;
+  birthday?: string | null;
+  showBirthdayYear?: boolean;
+  location?: string | null;
+  timezone?: string | null;
+  website?: string | null;
+  privacy?: ProfilePrivacySettings;
 }
 
 export type MediaTitleLanguage = "primary" | "secondary" | "native";
@@ -321,6 +353,20 @@ export const DEFAULT_PROFILE_CUSTOMIZATION: UserProfileCustomization = {
   nameplateUrl: null,
   sidebarBannerUrl: null,
   avatarFrame: null,
+  socialLinks: [],
+  accentColor: null,
+  bannerHeight: "normal",
+  pinnedSpotlight: null,
+  birthday: null,
+  showBirthdayYear: true,
+  location: null,
+  timezone: null,
+  website: null,
+  privacy: {
+    showBirthday: "public",
+    showLocation: "public",
+    allowComments: "public",
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -392,6 +438,36 @@ export function getProfileCustomization(customization: unknown): UserProfileCust
         ? profile.sidebarCardBackgroundUrl
         : legacySidebar));
 
+  const socialLinks: SocialLink[] = Array.isArray(profile.socialLinks)
+    ? profile.socialLinks.filter(
+        (link: any): link is SocialLink =>
+          link && typeof link === "object" && typeof link.platform === "string" && typeof link.url === "string"
+      )
+    : [];
+
+  const bannerHeight = ["compact", "normal", "expansive"].includes(profile.bannerHeight)
+    ? (profile.bannerHeight as "compact" | "normal" | "expansive")
+    : "normal";
+
+  const pinnedSpotlight: PinnedSpotlight | null =
+    profile.pinnedSpotlight && typeof profile.pinnedSpotlight === "object"
+      ? {
+          title: typeof profile.pinnedSpotlight.title === "string" ? profile.pinnedSpotlight.title : undefined,
+          subtitle: typeof profile.pinnedSpotlight.subtitle === "string" ? profile.pinnedSpotlight.subtitle : undefined,
+          mediaType: typeof profile.pinnedSpotlight.mediaType === "string" ? profile.pinnedSpotlight.mediaType : undefined,
+          mediaId: typeof profile.pinnedSpotlight.mediaId === "number" ? profile.pinnedSpotlight.mediaId : undefined,
+          customNote: typeof profile.pinnedSpotlight.customNote === "string" ? profile.pinnedSpotlight.customNote : undefined,
+          imageUrl: typeof profile.pinnedSpotlight.imageUrl === "string" ? profile.pinnedSpotlight.imageUrl : undefined,
+          link: typeof profile.pinnedSpotlight.link === "string" ? profile.pinnedSpotlight.link : undefined,
+        }
+      : null;
+
+  const privacy: ProfilePrivacySettings = {
+    showBirthday: profile.privacy?.showBirthday || "public",
+    showLocation: profile.privacy?.showLocation || "public",
+    allowComments: profile.privacy?.allowComments || "public",
+  };
+
   return {
     displayName: (typeof profile.displayName === "string" && profile.displayName.trim() !== "")
       ? profile.displayName
@@ -413,6 +489,16 @@ export function getProfileCustomization(customization: unknown): UserProfileCust
     nameplateUrl,
     sidebarBannerUrl: nameplateUrl,
     avatarFrame: avatarFrameUrl,
+    socialLinks,
+    accentColor: typeof profile.accentColor === "string" ? profile.accentColor : null,
+    bannerHeight,
+    pinnedSpotlight,
+    birthday: typeof profile.birthday === "string" ? profile.birthday : (typeof raw.birthday === "string" ? raw.birthday : null),
+    showBirthdayYear: typeof profile.showBirthdayYear === "boolean" ? profile.showBirthdayYear : true,
+    location: typeof profile.location === "string" ? profile.location : (typeof raw.location === "string" ? raw.location : null),
+    timezone: typeof profile.timezone === "string" ? profile.timezone : (typeof raw.timezone === "string" ? raw.timezone : null),
+    website: typeof profile.website === "string" ? profile.website : (typeof raw.website === "string" ? raw.website : null),
+    privacy,
   };
 }
 
@@ -442,6 +528,10 @@ export function setProfileCustomization(
     displayNameStyle: {
       ...currentProfile.displayNameStyle,
       ...(patch.displayNameStyle || {}),
+    },
+    privacy: {
+      ...currentProfile.privacy,
+      ...(patch.privacy || {}),
     },
   };
 
