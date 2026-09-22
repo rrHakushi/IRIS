@@ -241,48 +241,85 @@ const btnPinSetupCancel = document.getElementById("btn-pin-setup-cancel")
 async function init() {
   // Load active tab info
   try {
-    const tabs = await ext.tabs.query({ active: true, currentWindow: true })
-    currentTab = tabs[0]
-  } catch (e) { }
+    let tabs = await ext.tabs.query({ active: true, currentWindow: true })
+    let tab = tabs[0]
+    // If popup opened in a dedicated window or unlock dialog, find the actual web tab
+    if (tab?.url?.startsWith("moz-extension://") || tab?.url?.startsWith("chrome-extension://")) {
+      const normalTabs = await ext.tabs.query({ active: true, lastFocusedWindow: true })
+      if (normalTabs[0] && !normalTabs[0].url?.startsWith("moz-extension://") && !normalTabs[0].url?.startsWith("chrome-extension://")) {
+        tab = normalTabs[0]
+      }
+    }
+    currentTab = tab || null
+  } catch (e) {
+    console.warn("[IRIS Pass] Tab query error:", e)
+  }
 
   if (currentTab?.url) {
     try {
       const url = new URL(currentTab.url)
-      currentDomainLabel.textContent = url.hostname
+      if (currentDomainLabel) currentDomainLabel.textContent = url.hostname
     } catch {
-      currentDomainLabel.textContent = currentTab.url
+      if (currentDomainLabel) currentDomainLabel.textContent = currentTab.url
     }
   } else {
-    currentDomainLabel.textContent = "New Tab"
+    if (currentDomainLabel) currentDomainLabel.textContent = "New Tab"
   }
 
-  // Load configured Server URL
-  const serverUrl = await IrisApi.getServerUrl()
-  loginServerUrl.value = serverUrl
-  loginServerLabel.textContent = serverUrl
-  settingServerUrl.value = serverUrl
-  if (settingAccountServer) settingAccountServer.textContent = serverUrl
+  let initialized = false
 
-  // Check authentication & vault state from background
-  ext.runtime.sendMessage({ action: "GET_STATUS" }, (response) => {
-    currentStatus = response
-    currentUser = response?.user || null
-    clipboardClearSeconds = response?.clipboardClearSeconds ?? 30
-
-    // Populate settings UI
-    populateSettingsUI(response)
-
-    if (!response?.isAuthenticated) {
+  // Fallback timer: if background is slow to reply, show login screen instead of blank screen
+  const fallbackTimer = setTimeout(() => {
+    if (!initialized) {
+      console.warn("[IRIS Pass] Status request timed out, showing login screen fallback")
       showLoginView()
-    } else if (!response?.isUnlocked) {
-      showLockedView(currentUser, response)
-    } else {
-      showUnlockedView(currentUser)
     }
-  })
+  }, 1200)
+
+  try {
+    // Load configured Server URL safely
+    let serverUrl = "http://localhost:4000"
+    try {
+      serverUrl = await IrisApi.getServerUrl()
+    } catch {}
+
+    if (loginServerUrl) loginServerUrl.value = serverUrl
+    if (loginServerLabel) loginServerLabel.textContent = serverUrl
+    if (settingServerUrl) settingServerUrl.value = serverUrl
+    if (settingAccountServer) settingAccountServer.textContent = serverUrl
+
+    // Check authentication & vault state from background
+    ext.runtime.sendMessage({ action: "GET_STATUS" }, (response) => {
+      initialized = true
+      clearTimeout(fallbackTimer)
+
+      currentStatus = response || null
+      currentUser = response?.user || null
+      clipboardClearSeconds = response?.clipboardClearSeconds ?? 30
+
+      // Populate settings UI
+      if (response) {
+        populateSettingsUI(response)
+      }
+
+      if (!response || !response.isAuthenticated) {
+        showLoginView()
+      } else if (!response.isUnlocked) {
+        showLockedView(currentUser, response)
+      } else {
+        showUnlockedView(currentUser)
+      }
+    })
+  } catch (err) {
+    console.error("[IRIS Pass] Popup init exception:", err)
+    clearTimeout(fallbackTimer)
+    showLoginView()
+  }
 
   // Initial generator run
-  generateCredentials()
+  try {
+    generateCredentials()
+  } catch {}
 }
 
 /**
@@ -377,8 +414,9 @@ function populateSettingsUI(status) {
   if (settingServerUrl) settingServerUrl.value = server
 
   // Security
-  if (settingAutoLock && status.autoLockMinutes !== undefined) {
-    settingAutoLock.value = String(status.autoLockMinutes)
+  if (settingAutoLock) {
+    const autoMins = status.autoLockMinutes !== undefined ? status.autoLockMinutes : 15
+    settingAutoLock.value = String(autoMins)
   }
 
   if (togglePinUnlock) {
@@ -392,8 +430,10 @@ function populateSettingsUI(status) {
     toggleBioUnlock.checked = Boolean(status.biometricUnlockEnabled)
   }
 
-  if (settingClipboardClear && status.clipboardClearSeconds !== undefined) {
-    settingClipboardClear.value = String(status.clipboardClearSeconds)
+  if (settingClipboardClear) {
+    const sec = status.clipboardClearSeconds !== undefined ? status.clipboardClearSeconds : 30
+    settingClipboardClear.value = String(sec)
+    clipboardClearSeconds = sec
   }
 
   // Sync
@@ -1017,8 +1057,13 @@ btnSettingsSyncNow?.addEventListener("click", triggerVaultSync)
  */
 // Auto-lock timer
 settingAutoLock?.addEventListener("change", async (e) => {
-  const minutes = parseInt(e.target.value, 10)
+  const parsed = parseInt(e.target.value, 10)
+  const minutes = isNaN(parsed) ? 15 : parsed
   await storage.set({ autoLockMinutes: minutes })
+  ext.runtime.sendMessage({
+    action: "SET_AUTO_LOCK",
+    payload: { minutes },
+  })
 })
 
 // PIN unlock toggle
@@ -1105,14 +1150,14 @@ toggleBioUnlock?.addEventListener("change", async (e) => {
   if (e.target.checked) {
     try {
       // Need vaultKey from session or memory
-      const storage = await ext.storage.session?.get(["vaultKeyHex"])
-      if (!storage?.vaultKeyHex) {
+      const sessionData = await ext.storage.session?.get(["vaultKeyHex"])
+      if (!sessionData?.vaultKeyHex) {
         toggleBioUnlock.checked = false
         alert("Please unlock your vault first to set up Biometrics")
         return
       }
 
-      const vaultKey = IrisCrypto.hexToBytes(storage.vaultKeyHex)
+      const vaultKey = IrisCrypto.hexToBytes(sessionData.vaultKeyHex)
       const bioData = await IrisCrypto.setupBiometricUnlock(vaultKey, currentUser)
 
       ext.runtime.sendMessage(
@@ -1138,9 +1183,14 @@ toggleBioUnlock?.addEventListener("change", async (e) => {
 
 // Clipboard clear timeout
 settingClipboardClear?.addEventListener("change", async (e) => {
-  const seconds = parseInt(e.target.value, 10)
+  const parsed = parseInt(e.target.value, 10)
+  const seconds = isNaN(parsed) ? 30 : parsed
   clipboardClearSeconds = seconds
   await storage.set({ clipboardClearSeconds: seconds })
+  ext.runtime.sendMessage({
+    action: "SET_CLIPBOARD_CLEAR_TIMEOUT",
+    payload: { seconds },
+  })
 })
 
 // Default password manager toggle

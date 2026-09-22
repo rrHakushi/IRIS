@@ -5,7 +5,7 @@
   "description": "Password manager extension for IRIS.",
   "browser_specific_settings": {
     "gecko": {
-      "id": "info@runerra.org",
+      "id": "info@runerra.orgdev",
       "strict_min_version": "142.0",
       "data_collection_permissions": {
         "required": [
@@ -18,10 +18,12 @@
     "activeTab",
     "tabs",
     "storage",
+    "privacy",
     "scripting",
     "clipboardWrite",
     "notifications"
   ],
+  "incognito": "spanning",
   "host_permissions": [
     "<all_urls>"
   ],
