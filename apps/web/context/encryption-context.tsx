@@ -107,8 +107,8 @@ export function EncryptionProvider({
       setError(null)
 
       try {
-        // 1. Check if we have an active session key in sessionStorage
-        const sessionSecret = loadSessionSecretKey(userId || undefined)
+        // 1. Check if we have an active session key in encrypted session storage
+        const sessionSecret = await loadSessionSecretKey(userId || undefined)
         if (sessionSecret) {
           inMemorySecretKey = sessionSecret
           setSecretKey(sessionSecret)
@@ -185,13 +185,14 @@ export function EncryptionProvider({
   )
 
   useEffect(() => {
-    // Check if session secret key is in sessionStorage
-    const sessionSecret = loadSessionSecretKey(userId || undefined)
-    if (sessionSecret) {
-      inMemorySecretKey = sessionSecret
-      setSecretKey(sessionSecret)
-      setIsActive(true)
-    }
+    // Check if encrypted session secret key is in session storage
+    loadSessionSecretKey(userId || undefined).then((sessionSecret) => {
+      if (sessionSecret) {
+        inMemorySecretKey = sessionSecret
+        setSecretKey(sessionSecret)
+        setIsActive(true)
+      }
+    })
 
     if (status === "authenticated" && userId) {
       if (initialFetchDone.current !== userId) {
@@ -250,7 +251,7 @@ export function EncryptionProvider({
       setSecretKey(decryptedSecret)
       setIsActive(true)
 
-      saveSessionSecretKey(targetUserId || "active", decryptedSecret)
+      await saveSessionSecretKey(targetUserId || "active", decryptedSecret)
 
       if (pubKey && targetUserId) {
         await saveVaultRecord({
@@ -271,7 +272,7 @@ export function EncryptionProvider({
       setError(msg)
       setIsActive(false)
       inMemorySecretKey = null
-      clearSessionSecretKey(targetUserId || undefined)
+      await clearSessionSecretKey(targetUserId || undefined)
       return { success: false, error: msg }
     } finally {
       setIsLoading(false)

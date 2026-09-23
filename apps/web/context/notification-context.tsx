@@ -14,7 +14,6 @@ import { toast } from "sonner"
 import { elysia } from "@/lib/elysia"
 import { useWebSocket } from "./websocket-context"
 import { useEncryption } from "./encryption-context"
-import { loadSessionSecretKey } from "@/lib/encryption-vault"
 import {
   decryptPqeNotification,
   type PqeNotificationContent,
@@ -121,7 +120,7 @@ export function NotificationProvider({
   const { data: session, status } = useSession()
   const userId = session?.user?.id
   const { subscribe, isConnected } = useWebSocket()
-  const { isActive } = useEncryption()
+  const { isActive, secretKey } = useEncryption()
 
   const [rawNotifications, setRawNotifications] = useState<NotificationItem[]>(
     []
@@ -137,14 +136,15 @@ export function NotificationProvider({
   notificationsRef.current = rawNotifications
   const processedNotificationIdsRef = useRef<Set<string>>(new Set())
 
+  // Keep a ref to the latest active secret key so WebSocket subscriptions always access current key
+  const secretKeyRef = useRef<Uint8Array | null>(null)
+  secretKeyRef.current = isActive ? secretKey : null
+
   // Helper to attempt decrypting a single notification item
   const tryDecryptNotification = useCallback(
-    (
-      item: NotificationItem,
-      secretKey: Uint8Array | null
-    ): NotificationItem => {
+    (item: NotificationItem, key: Uint8Array | null): NotificationItem => {
       if (item.isDecrypted && item.content) return item
-      if (!secretKey) {
+      if (!key) {
         return {
           ...item,
           isDecrypted: false,
@@ -157,7 +157,7 @@ export function NotificationProvider({
         const content = decryptPqeNotification(
           item.kemCiphertext,
           item.encryptedData,
-          secretKey
+          key
         )
         return {
           ...item,
@@ -179,18 +179,17 @@ export function NotificationProvider({
 
   // Decrypt all notifications currently held in state
   const decryptAllWithKey = useCallback(
-    (secretKey: Uint8Array | null) => {
+    (key: Uint8Array | null) => {
       setRawNotifications((prev) =>
-        prev.map((item) => tryDecryptNotification(item, secretKey))
+        prev.map((item) => tryDecryptNotification(item, key))
       )
     },
     [tryDecryptNotification]
   )
 
   const decryptAllPending = useCallback(() => {
-    const secretKey = loadSessionSecretKey(userId)
-    decryptAllWithKey(secretKey)
-  }, [userId, decryptAllWithKey])
+    decryptAllWithKey(isActive ? secretKey : null)
+  }, [isActive, secretKey, decryptAllWithKey])
 
   // Fetch notifications from server
   const fetchNotifications = useCallback(async () => {
@@ -205,7 +204,7 @@ export function NotificationProvider({
       })
 
       if (!apiError && data?.success) {
-        const secretKey = loadSessionSecretKey(userId)
+        const currentKey = isActive ? secretKey : null
         const mapped: NotificationItem[] = (data.notifications || []).map(
           (n: any) => {
             const baseItem: NotificationItem = {
@@ -228,7 +227,7 @@ export function NotificationProvider({
               isDecrypted: false,
               content: null,
             }
-            return tryDecryptNotification(baseItem, secretKey)
+            return tryDecryptNotification(baseItem, currentKey)
           }
         )
 
@@ -241,7 +240,7 @@ export function NotificationProvider({
     } finally {
       setIsLoading(false)
     }
-  }, [status, userId, tryDecryptNotification])
+  }, [status, userId, isActive, secretKey, tryDecryptNotification])
 
   // Initial fetch on login
   useEffect(() => {
@@ -253,11 +252,10 @@ export function NotificationProvider({
     }
   }, [status, userId, fetchNotifications])
 
-  // When encryption vault becomes active (or locked), re-attempt decryption
+  // When encryption vault becomes active (or locked) or key changes, re-attempt decryption
   useEffect(() => {
-    const secretKey = isActive ? loadSessionSecretKey(userId) : null
-    decryptAllWithKey(secretKey)
-  }, [isActive, userId, decryptAllWithKey])
+    decryptAllWithKey(isActive ? secretKey : null)
+  }, [isActive, secretKey, decryptAllWithKey])
 
   // Submit interactive notification action
   const submitAction = useCallback(
@@ -313,7 +311,7 @@ export function NotificationProvider({
       }
       processedNotificationIdsRef.current.add(raw.id)
 
-      const secretKey = loadSessionSecretKey(userId)
+      const currentKey = secretKeyRef.current
       const baseItem: NotificationItem = {
         id: raw.id,
         userId: raw.userId,
@@ -335,7 +333,7 @@ export function NotificationProvider({
         content: null,
       }
 
-      const decrypted = tryDecryptNotification(baseItem, secretKey)
+      const decrypted = tryDecryptNotification(baseItem, currentKey)
 
       setRawNotifications((prev) => {
         if (prev.some((n) => n.id === decrypted.id)) return prev
