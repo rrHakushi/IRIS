@@ -24,7 +24,9 @@ import {
   IconPalette,
   IconSparkles,
   IconDeviceTv,
+  IconDeviceTvOld,
   IconBook,
+  IconBooks,
   IconMovie,
   IconHeadphones,
   IconBug,
@@ -40,10 +42,14 @@ import {
   IconDeviceGamepad,
   IconMoonStars,
   IconEyeOff,
+  IconUsers,
+  IconRefresh,
 } from "@tabler/icons-react"
 import { getAllBadges, type IrisBadge } from "@IRIS/shared"
 import { cn } from "@workspace/ui/lib/utils"
 import { toast } from "sonner"
+import { elysia } from "@/lib/elysia"
+import { useUser } from "@/context/user-context"
 
 export interface BadgeShowcaseCardProps {
   unlockedBadgeIds?: number[]
@@ -66,8 +72,12 @@ export function renderBadgeIcon(iconName: string, className = "size-4"): React.J
       return <IconSparkles className={className} />
     case "IconDeviceTv":
       return <IconDeviceTv className={className} />
+    case "IconDeviceTvOld":
+      return <IconDeviceTvOld className={className} />
     case "IconBook":
       return <IconBook className={className} />
+    case "IconBooks":
+      return <IconBooks className={className} />
     case "IconMovie":
       return <IconMovie className={className} />
     case "IconHeadphones":
@@ -86,6 +96,8 @@ export function renderBadgeIcon(iconName: string, className = "size-4"): React.J
       return <IconMoonStars className={className} />
     case "IconEyeOff":
       return <IconEyeOff className={className} />
+    case "IconUsers":
+      return <IconUsers className={className} />
     default:
       return <IconAward className={className} />
   }
@@ -97,7 +109,9 @@ export function BadgeShowcaseCard({
   onShowcaseBadgeIdsChange,
   disabled = false,
 }: BadgeShowcaseCardProps): React.JSX.Element {
+  const { refetchUser } = useUser()
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isSyncing, setIsSyncing] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterTab, setFilterTab] = useState<"all" | "unlocked" | "locked">("all")
 
@@ -105,22 +119,27 @@ export function BadgeShowcaseCard({
   const unlockedSet = useMemo(() => new Set(unlockedBadgeIds), [unlockedBadgeIds])
   const showcasedSet = useMemo(() => new Set(showcaseBadgeIds), [showcaseBadgeIds])
 
+  // Do not show badges that are not earnable unless owned by the user
+  const visibleBadges = useMemo(() => {
+    return allBadges.filter((b) => b.earnable !== false || unlockedSet.has(b.id))
+  }, [allBadges, unlockedSet])
+
   const showcasedBadges = useMemo(
     () =>
       showcaseBadgeIds
         .map((id) => allBadges.find((b) => b.id === id))
         .filter((b): b is IrisBadge => Boolean(b)),
-    [showcaseBadgeIds, allBadges]
+  [showcaseBadgeIds, allBadges]
   )
 
   const unlockedCount = useMemo(
-    () => allBadges.filter((b) => unlockedSet.has(b.id)).length,
-    [allBadges, unlockedSet]
+    () => visibleBadges.filter((b) => unlockedSet.has(b.id)).length,
+    [visibleBadges, unlockedSet]
   )
-  const lockedCount = allBadges.length - unlockedCount
+  const lockedCount = visibleBadges.length - unlockedCount
 
   const filteredBadges = useMemo(() => {
-    return allBadges.filter((badge) => {
+    return visibleBadges.filter((badge) => {
       const isUnlocked = unlockedSet.has(badge.id)
 
       if (filterTab === "unlocked" && !isUnlocked) return false
@@ -142,7 +161,7 @@ export function BadgeShowcaseCard({
 
       return true
     })
-  }, [allBadges, unlockedSet, filterTab, searchQuery])
+  }, [visibleBadges, unlockedSet, filterTab, searchQuery])
 
   const handleToggleBadge = (badgeId: number) => {
     if (disabled) return
@@ -162,8 +181,8 @@ export function BadgeShowcaseCard({
       onShowcaseBadgeIdsChange(showcaseBadgeIds.filter((id) => id !== badgeId))
       toast.success("Removed from showcase")
     } else {
-      if (showcaseBadgeIds.length >= 5) {
-        toast.error("Showcase limit reached (5/5). Remove a pinned badge first.")
+      if (showcaseBadgeIds.length >= 10) {
+        toast.error("Showcase limit reached (10/10). Remove a pinned badge first.")
         return
       }
       onShowcaseBadgeIdsChange([...showcaseBadgeIds, badgeId])
@@ -175,6 +194,32 @@ export function BadgeShowcaseCard({
     e.stopPropagation()
     if (disabled) return
     onShowcaseBadgeIdsChange(showcaseBadgeIds.filter((id) => id !== badgeId))
+  }
+
+  const handleSyncBadges = async () => {
+    if (disabled || isSyncing) return
+    setIsSyncing(true)
+    try {
+      const { data, error } = await elysia.users.me.badges.evaluate.post(
+        {},
+        { fetch: { credentials: "include" } }
+      )
+      if (error) {
+        const errorData = error.value as { message?: string } | undefined
+        toast.error(errorData?.message || "Failed to sync achievements")
+        return
+      }
+      await refetchUser()
+      if (data?.newlyAwardedCount && data.newlyAwardedCount > 0) {
+        toast.success(`🎉 Unlocked ${data.newlyAwardedCount} new achievement badge(s)!`)
+      } else {
+        toast.info(data?.message || "All badge achievements are up to date.")
+      }
+    } catch {
+      toast.error("Error evaluating achievements")
+    } finally {
+      setIsSyncing(false)
+    }
   }
 
   return (
@@ -191,10 +236,10 @@ export function BadgeShowcaseCard({
                 Showcase:
               </span>
               <Badge
-                variant={showcaseBadgeIds.length >= 5 ? "default" : "secondary"}
+                variant={showcaseBadgeIds.length >= 10 ? "default" : "secondary"}
                 className="h-5 px-1.5 text-[10px] font-bold"
               >
-                {showcaseBadgeIds.length} / 5
+                {showcaseBadgeIds.length} / 10
               </Badge>
             </div>
           </div>
@@ -322,7 +367,7 @@ export function BadgeShowcaseCard({
             <div className="flex items-center gap-1 shrink-0 rounded-xl border border-border/40 bg-muted/20 p-1">
               {(
                 [
-                  { key: "all", label: `All (${allBadges.length})` },
+                  { key: "all", label: `All (${visibleBadges.length})` },
                   { key: "unlocked", label: `Available (${unlockedCount})` },
                   { key: "locked", label: `Locked (${lockedCount})` },
                 ] as const
@@ -488,10 +533,10 @@ export function BadgeShowcaseCard({
             <div className="flex items-center gap-2 text-xs">
               <span className="text-muted-foreground">Showcase:</span>
               <Badge
-                variant={showcaseBadgeIds.length >= 5 ? "default" : "secondary"}
+                variant={showcaseBadgeIds.length >= 10 ? "default" : "secondary"}
                 className="h-5 px-1.5 text-[10px] font-bold"
               >
-                {showcaseBadgeIds.length} / 5
+                {showcaseBadgeIds.length} / 10
               </Badge>
               {showcaseBadgeIds.length > 0 && (
                 <button
@@ -504,15 +549,29 @@ export function BadgeShowcaseCard({
               )}
             </div>
 
-            <Button
-              type="button"
-              variant="default"
-              size="sm"
-              onClick={() => setIsModalOpen(false)}
-              className="h-8 rounded-xl px-4 text-xs font-medium cursor-pointer"
-            >
-              Done
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleSyncBadges}
+                disabled={disabled || isSyncing}
+                className="h-8 gap-1.5 rounded-xl px-3 text-xs font-medium cursor-pointer"
+              >
+                <IconRefresh className={cn("size-3.5", isSyncing && "animate-spin")} />
+                <span>{isSyncing ? "Checking..." : "Sync Achievements"}</span>
+              </Button>
+
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={() => setIsModalOpen(false)}
+                className="h-8 rounded-xl px-4 text-xs font-medium cursor-pointer"
+              >
+                Done
+              </Button>
+            </div>
           </DialogFooter>
         </div>
       </Dialog>

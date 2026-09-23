@@ -38,6 +38,10 @@ import {
   recordMediaListActivity,
   purgeOldActivities,
 } from "./activity.service.js"
+import {
+  badgeEvaluatorService,
+  BadgeEvaluatorService,
+} from "./badge-evaluator.service.js"
 
 const loadedServices: string[] = [
   "websocket-hub",
@@ -48,6 +52,7 @@ const loadedServices: string[] = [
   "list-export",
   "list-file-import",
   "activity",
+  "badge-evaluator",
 ]
 
 /**
@@ -62,6 +67,7 @@ export function initServices(): void {
   ListExportService.logStatus()
   ListFileImportService.logStatus()
   ActivityService.logStatus()
+  BadgeEvaluatorService.logStatus()
   activityService.initCron()
 
   logger.service.total(loadedServices.length)
@@ -92,6 +98,8 @@ export {
   ListExportService,
   listFileImportService,
   ListFileImportService,
+  badgeEvaluatorService,
+  BadgeEvaluatorService,
 }
 export * from "./media-queue/types.js"
 export * from "./media-queue/providers/index.js"
@@ -99,3 +107,4 @@ export * from "./connections/list-import.service.js"
 export * from "./connections/connection-media-sync.service.js"
 export * from "./activity.service.js"
 export * from "./media-stats.service.js"
+export * from "./badge-evaluator.service.js"

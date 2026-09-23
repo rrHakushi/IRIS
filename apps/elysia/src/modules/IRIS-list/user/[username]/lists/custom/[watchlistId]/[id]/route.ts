@@ -13,6 +13,7 @@ import {
   musicTrackSelect,
 } from "@/modules/IRIS-list/helpers"
 import { NotFound, BadRequest } from "@/utils/errors"
+import { badgeEvaluatorService } from "@/services/badge-evaluator.service"
 import type { MediaType } from "@IRIS/database"
 
 const WatchlistEntryResponseSchema = t.Object({
@@ -274,6 +275,9 @@ export default defineRoute({
       },
     })
 
+    // Evaluate custom list badges
+    badgeEvaluatorService.evaluateCustomListBadges(dbUser.id).catch(() => {})
+
     return {
       success: true,
       message: "Watchlist entry updated successfully",
@@ -351,6 +355,9 @@ export default defineRoute({
       },
     })
 
+    // Evaluate custom list badges
+    badgeEvaluatorService.evaluateCustomListBadges(dbUser.id).catch(() => {})
+
     return {
       success: true,
       message: "Watchlist entry updated successfully",
@@ -407,6 +414,9 @@ export default defineRoute({
     await prisma.customListEntry.delete({
       where: { id: existing.id },
     })
+
+    // Evaluate custom list badges
+    badgeEvaluatorService.evaluateCustomListBadges(dbUser.id).catch(() => {})
 
     return {
       success: true,

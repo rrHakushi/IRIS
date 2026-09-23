@@ -1,110 +1,912 @@
 [
   {
     "id": 1,
-    "name": "Genesis Pioneer",
-    "description": "Joined IRIS during the founding development phase.",
-    "icon": "IconRocket",
-    "color": "#f43f5e",
-    "category": "special",
-    "hidden": false
+    "name": "Owner",
+    "description": "Founder and platform owner of IRIS.",
+    "icon": "IconCrown",
+    "color": "#f59e0b",
+    "category": "role",
+    "hidden": false,
+    "earnable": false
   },
   {
     "id": 2,
-    "name": "Verified Otaku",
-    "description": "Logged and completed 100+ anime titles.",
-    "icon": "IconDeviceTv",
-    "color": "#8b5cf6",
-    "category": "media",
-    "hidden": false
+    "name": "Admin",
+    "description": "Platform administrator with privileged system access.",
+    "icon": "IconShieldCheck",
+    "color": "#6366f1",
+    "category": "role",
+    "hidden": false,
+    "earnable": false
   },
   {
     "id": 3,
-    "name": "Manga Scholar",
-    "description": "Read over 1,000 chapters across serialized manga and manhwa.",
-    "icon": "IconBook",
-    "color": "#ec4899",
-    "category": "media",
-    "hidden": false
+    "name": "Contributor",
+    "description": "Contributed code, design, or documentation to the IRIS project.",
+    "icon": "IconCode",
+    "color": "#10b981",
+    "category": "role",
+    "hidden": false,
+    "earnable": false
   },
   {
     "id": 4,
-    "name": "Cinephile Extraordinaire",
-    "description": "Watched 50+ cinematic feature films across global cinema.",
-    "icon": "IconMovie",
-    "color": "#38bdf8",
+    "name": "First Anime",
+    "description": "Logged and watched your first anime title.",
+    "icon": "IconDeviceTv",
+    "color": "#64748b",
     "category": "media",
-    "hidden": false
+    "hidden": false,
+    "earnable": true
   },
   {
     "id": 5,
-    "name": "Sonic Maestro",
-    "description": "Scrobbled and synced 500+ music tracks into IRIS.",
-    "icon": "IconHeadphones",
+    "name": "Anime Novice",
+    "description": "Watched 10 anime titles.",
+    "icon": "IconDeviceTv",
     "color": "#10b981",
     "category": "media",
-    "hidden": false
+    "hidden": false,
+    "earnable": true
   },
   {
     "id": 6,
-    "name": "Master Architect",
-    "description": "Created and curated 10+ personalized custom media lists.",
-    "icon": "IconFolderHeart",
-    "color": "#f59e0b",
-    "category": "achievement",
-    "hidden": false
+    "name": "Anime Scout",
+    "description": "Watched 25 anime titles.",
+    "icon": "IconDeviceTv",
+    "color": "#06b6d4",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
   },
   {
     "id": 7,
-    "name": "Apex Gamer",
-    "description": "Reached 100% completion in cataloged video game releases.",
-    "icon": "IconDeviceGamepad",
-    "color": "#06b6d4",
+    "name": "Anime Enthusiast",
+    "description": "Watched 50 anime titles.",
+    "icon": "IconDeviceTv",
+    "color": "#3b82f6",
     "category": "media",
-    "hidden": false
+    "hidden": false,
+    "earnable": true
   },
   {
     "id": 8,
-    "name": "Midnight Wanderer",
-    "description": "Active in the dead of night between 2:00 AM and 5:00 AM.",
-    "icon": "IconMoonStars",
-    "color": "#a855f7",
-    "category": "achievement",
-    "hidden": false
+    "name": "Anime Devotee",
+    "description": "Watched 75 anime titles.",
+    "icon": "IconDeviceTv",
+    "color": "#6366f1",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
   },
   {
     "id": 9,
-    "name": "Code Weaver",
-    "description": "Contributed code, fixes, or extensions to the IRIS ecosystem.",
-    "icon": "IconCode",
-    "color": "#10e599",
-    "category": "special",
-    "hidden": false
+    "name": "Verified Otaku",
+    "description": "Watched 100 anime titles.",
+    "icon": "IconDeviceTv",
+    "color": "#8b5cf6",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
   },
   {
     "id": 10,
-    "name": "Sentinel Shield",
-    "description": "Protected privacy with 2FA, passkeys, and encrypted vaults.",
-    "icon": "IconShieldCheck",
-    "color": "#6366f1",
-    "category": "achievement",
-    "hidden": false
+    "name": "Anime Veteran",
+    "description": "Watched 250 anime titles.",
+    "icon": "IconDeviceTv",
+    "color": "#ec4899",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
   },
   {
     "id": 11,
-    "name": "Shadow Operative",
-    "description": "Discovered the hidden easter egg terminal within the system.",
-    "icon": "IconEyeOff",
-    "color": "#64748b",
-    "category": "special",
-    "hidden": true
+    "name": "Anime Master",
+    "description": "Watched 500 anime titles.",
+    "icon": "IconDeviceTv",
+    "color": "#f43f5e",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
   },
   {
     "id": 12,
-    "name": "Astral Ascendant",
-    "description": "Unlocked all customization tiers and mastered the prism spectrum.",
-    "icon": "IconSparkles",
+    "name": "Anime Luminary",
+    "description": "Watched 750 anime titles.",
+    "icon": "IconDeviceTv",
+    "color": "#f97316",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 13,
+    "name": "Anime Legend",
+    "description": "Watched 1,000 anime titles.",
+    "icon": "IconDeviceTv",
+    "color": "#eab308",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 14,
+    "name": "Anime Immortal",
+    "description": "Watched 5,000 anime titles.",
+    "icon": "IconDeviceTv",
     "color": "#facc15",
-    "category": "special",
-    "hidden": true
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 15,
+    "name": "First Manga",
+    "description": "Logged and read your first manga or comic title.",
+    "icon": "IconBook",
+    "color": "#64748b",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 16,
+    "name": "Manga Novice",
+    "description": "Read 10 manga titles.",
+    "icon": "IconBook",
+    "color": "#10b981",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 17,
+    "name": "Manga Scout",
+    "description": "Read 25 manga titles.",
+    "icon": "IconBook",
+    "color": "#06b6d4",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 18,
+    "name": "Manga Enthusiast",
+    "description": "Read 50 manga titles.",
+    "icon": "IconBook",
+    "color": "#3b82f6",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 19,
+    "name": "Manga Collector",
+    "description": "Read 75 manga titles.",
+    "icon": "IconBook",
+    "color": "#6366f1",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 20,
+    "name": "Manga Scholar",
+    "description": "Read 100 manga titles.",
+    "icon": "IconBook",
+    "color": "#8b5cf6",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 21,
+    "name": "Manga Veteran",
+    "description": "Read 250 manga titles.",
+    "icon": "IconBook",
+    "color": "#ec4899",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 22,
+    "name": "Manga Master",
+    "description": "Read 500 manga titles.",
+    "icon": "IconBook",
+    "color": "#f43f5e",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 23,
+    "name": "Manga Luminary",
+    "description": "Read 750 manga titles.",
+    "icon": "IconBook",
+    "color": "#f97316",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 24,
+    "name": "Manga Legend",
+    "description": "Read 1,000 manga titles.",
+    "icon": "IconBook",
+    "color": "#eab308",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 25,
+    "name": "Manga Immortal",
+    "description": "Read 5,000 manga titles.",
+    "icon": "IconBook",
+    "color": "#facc15",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 26,
+    "name": "First Film",
+    "description": "Logged and watched your first movie.",
+    "icon": "IconMovie",
+    "color": "#64748b",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 27,
+    "name": "Movie Novice",
+    "description": "Watched 10 movies.",
+    "icon": "IconMovie",
+    "color": "#10b981",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 28,
+    "name": "Movie Scout",
+    "description": "Watched 25 movies.",
+    "icon": "IconMovie",
+    "color": "#06b6d4",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 29,
+    "name": "Cinephile Extraordinaire",
+    "description": "Watched 50 movies.",
+    "icon": "IconMovie",
+    "color": "#3b82f6",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 30,
+    "name": "Film Connoisseur",
+    "description": "Watched 75 movies.",
+    "icon": "IconMovie",
+    "color": "#6366f1",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 31,
+    "name": "Cinema Scholar",
+    "description": "Watched 100 movies.",
+    "icon": "IconMovie",
+    "color": "#8b5cf6",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 32,
+    "name": "Film Veteran",
+    "description": "Watched 250 movies.",
+    "icon": "IconMovie",
+    "color": "#ec4899",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 33,
+    "name": "Cinema Master",
+    "description": "Watched 500 movies.",
+    "icon": "IconMovie",
+    "color": "#f43f5e",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 34,
+    "name": "Film Luminary",
+    "description": "Watched 750 movies.",
+    "icon": "IconMovie",
+    "color": "#f97316",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 35,
+    "name": "Cinema Legend",
+    "description": "Watched 1,000 movies.",
+    "icon": "IconMovie",
+    "color": "#eab308",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 36,
+    "name": "Cinema Immortal",
+    "description": "Watched 5,000 movies.",
+    "icon": "IconMovie",
+    "color": "#facc15",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 37,
+    "name": "First TV Show",
+    "description": "Logged and watched your first TV series.",
+    "icon": "IconDeviceTvOld",
+    "color": "#64748b",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 38,
+    "name": "TV Novice",
+    "description": "Watched 10 TV series.",
+    "icon": "IconDeviceTvOld",
+    "color": "#10b981",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 39,
+    "name": "Series Scout",
+    "description": "Watched 25 TV series.",
+    "icon": "IconDeviceTvOld",
+    "color": "#06b6d4",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 40,
+    "name": "Binge Watcher",
+    "description": "Watched 50 TV series.",
+    "icon": "IconDeviceTvOld",
+    "color": "#3b82f6",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 41,
+    "name": "Series Devotee",
+    "description": "Watched 75 TV series.",
+    "icon": "IconDeviceTvOld",
+    "color": "#6366f1",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 42,
+    "name": "TV Connoisseur",
+    "description": "Watched 100 TV series.",
+    "icon": "IconDeviceTvOld",
+    "color": "#8b5cf6",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 43,
+    "name": "Series Veteran",
+    "description": "Watched 250 TV series.",
+    "icon": "IconDeviceTvOld",
+    "color": "#ec4899",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 44,
+    "name": "TV Master",
+    "description": "Watched 500 TV series.",
+    "icon": "IconDeviceTvOld",
+    "color": "#f43f5e",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 45,
+    "name": "Series Luminary",
+    "description": "Watched 750 TV series.",
+    "icon": "IconDeviceTvOld",
+    "color": "#f97316",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 46,
+    "name": "TV Legend",
+    "description": "Watched 1,000 TV series.",
+    "icon": "IconDeviceTvOld",
+    "color": "#eab308",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 47,
+    "name": "TV Immortal",
+    "description": "Watched 5,000 TV series.",
+    "icon": "IconDeviceTvOld",
+    "color": "#facc15",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 48,
+    "name": "First Game",
+    "description": "Logged and played your first game.",
+    "icon": "IconDeviceGamepad",
+    "color": "#64748b",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 49,
+    "name": "Game Novice",
+    "description": "Played 10 games.",
+    "icon": "IconDeviceGamepad",
+    "color": "#10b981",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 50,
+    "name": "Game Scout",
+    "description": "Played 25 games.",
+    "icon": "IconDeviceGamepad",
+    "color": "#06b6d4",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 51,
+    "name": "Dedicated Gamer",
+    "description": "Played 50 games.",
+    "icon": "IconDeviceGamepad",
+    "color": "#3b82f6",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 52,
+    "name": "Game Devotee",
+    "description": "Played 75 games.",
+    "icon": "IconDeviceGamepad",
+    "color": "#6366f1",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 53,
+    "name": "Apex Gamer",
+    "description": "Played 100 games.",
+    "icon": "IconDeviceGamepad",
+    "color": "#8b5cf6",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 54,
+    "name": "Game Veteran",
+    "description": "Played 250 games.",
+    "icon": "IconDeviceGamepad",
+    "color": "#ec4899",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 55,
+    "name": "Game Master",
+    "description": "Played 500 games.",
+    "icon": "IconDeviceGamepad",
+    "color": "#f43f5e",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 56,
+    "name": "Gaming Luminary",
+    "description": "Played 750 games.",
+    "icon": "IconDeviceGamepad",
+    "color": "#f97316",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 57,
+    "name": "Game Legend",
+    "description": "Played 1,000 games.",
+    "icon": "IconDeviceGamepad",
+    "color": "#eab308",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 58,
+    "name": "Gaming Immortal",
+    "description": "Played 5,000 games.",
+    "icon": "IconDeviceGamepad",
+    "color": "#facc15",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 59,
+    "name": "First Book",
+    "description": "Logged and read your first book.",
+    "icon": "IconBooks",
+    "color": "#64748b",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 60,
+    "name": "Book Novice",
+    "description": "Read 10 books.",
+    "icon": "IconBooks",
+    "color": "#10b981",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 61,
+    "name": "Book Scout",
+    "description": "Read 25 books.",
+    "icon": "IconBooks",
+    "color": "#06b6d4",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 62,
+    "name": "Bookworm",
+    "description": "Read 50 books.",
+    "icon": "IconBooks",
+    "color": "#3b82f6",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 63,
+    "name": "Book Devotee",
+    "description": "Read 75 books.",
+    "icon": "IconBooks",
+    "color": "#6366f1",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 64,
+    "name": "Bibliophile",
+    "description": "Read 100 books.",
+    "icon": "IconBooks",
+    "color": "#8b5cf6",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 65,
+    "name": "Literature Veteran",
+    "description": "Read 250 books.",
+    "icon": "IconBooks",
+    "color": "#ec4899",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 66,
+    "name": "Literature Master",
+    "description": "Read 500 books.",
+    "icon": "IconBooks",
+    "color": "#f43f5e",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 67,
+    "name": "Literary Luminary",
+    "description": "Read 750 books.",
+    "icon": "IconBooks",
+    "color": "#f97316",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 68,
+    "name": "Bibliophile Legend",
+    "description": "Read 1,000 books.",
+    "icon": "IconBooks",
+    "color": "#eab308",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 69,
+    "name": "Literary Immortal",
+    "description": "Read 5,000 books.",
+    "icon": "IconBooks",
+    "color": "#facc15",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 70,
+    "name": "First Track",
+    "description": "Logged and listened to your first music track or album.",
+    "icon": "IconHeadphones",
+    "color": "#64748b",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 71,
+    "name": "Music Novice",
+    "description": "Listened to 10 music tracks or albums.",
+    "icon": "IconHeadphones",
+    "color": "#10b981",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 72,
+    "name": "Music Scout",
+    "description": "Listened to 25 music tracks or albums.",
+    "icon": "IconHeadphones",
+    "color": "#06b6d4",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 73,
+    "name": "Melody Enthusiast",
+    "description": "Listened to 50 music tracks or albums.",
+    "icon": "IconHeadphones",
+    "color": "#3b82f6",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 74,
+    "name": "Music Devotee",
+    "description": "Listened to 75 music tracks or albums.",
+    "icon": "IconHeadphones",
+    "color": "#6366f1",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 75,
+    "name": "Sonic Maestro",
+    "description": "Listened to 100 music tracks or albums.",
+    "icon": "IconHeadphones",
+    "color": "#8b5cf6",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 76,
+    "name": "Music Veteran",
+    "description": "Listened to 250 music tracks or albums.",
+    "icon": "IconHeadphones",
+    "color": "#ec4899",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 77,
+    "name": "Sonic Virtuoso",
+    "description": "Listened to 500 music tracks or albums.",
+    "icon": "IconHeadphones",
+    "color": "#f43f5e",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 78,
+    "name": "Symphony Luminary",
+    "description": "Listened to 750 music tracks or albums.",
+    "icon": "IconHeadphones",
+    "color": "#f97316",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 79,
+    "name": "Music Legend",
+    "description": "Listened to 1,000 music tracks or albums.",
+    "icon": "IconHeadphones",
+    "color": "#eab308",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 80,
+    "name": "Sonic Immortal",
+    "description": "Listened to 5,000 music tracks or albums.",
+    "icon": "IconHeadphones",
+    "color": "#facc15",
+    "category": "media",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 81,
+    "name": "List Initiate",
+    "description": "Added your first entry to a custom list.",
+    "icon": "IconFolderHeart",
+    "color": "#64748b",
+    "category": "achievement",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 82,
+    "name": "List Curator",
+    "description": "Added 5 entries across custom lists.",
+    "icon": "IconFolderHeart",
+    "color": "#06b6d4",
+    "category": "achievement",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 83,
+    "name": "Master Architect",
+    "description": "Added 10 entries across custom lists.",
+    "icon": "IconFolderHeart",
+    "color": "#8b5cf6",
+    "category": "achievement",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 84,
+    "name": "Grand Archivist",
+    "description": "Added 25 entries across custom lists.",
+    "icon": "IconFolderHeart",
+    "color": "#eab308",
+    "category": "achievement",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 85,
+    "name": "First Connection",
+    "description": "Connected with your first friend on IRIS.",
+    "icon": "IconUsers",
+    "color": "#64748b",
+    "category": "achievement",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 86,
+    "name": "Friendly Circle",
+    "description": "Connected with 5 friends on IRIS.",
+    "icon": "IconUsers",
+    "color": "#10b981",
+    "category": "achievement",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 87,
+    "name": "Social Circle",
+    "description": "Connected with 10 friends on IRIS.",
+    "icon": "IconUsers",
+    "color": "#06b6d4",
+    "category": "achievement",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 88,
+    "name": "Community Pillar",
+    "description": "Connected with 25 friends on IRIS.",
+    "icon": "IconUsers",
+    "color": "#3b82f6",
+    "category": "achievement",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 89,
+    "name": "Social Maven",
+    "description": "Connected with 50 friends on IRIS.",
+    "icon": "IconUsers",
+    "color": "#8b5cf6",
+    "category": "achievement",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 90,
+    "name": "Network Luminary",
+    "description": "Connected with 75 friends on IRIS.",
+    "icon": "IconUsers",
+    "color": "#ec4899",
+    "category": "achievement",
+    "hidden": false,
+    "earnable": true
+  },
+  {
+    "id": 91,
+    "name": "Centurion of Friends",
+    "description": "Connected with 100 friends on IRIS.",
+    "icon": "IconUsers",
+    "color": "#eab308",
+    "category": "achievement",
+    "hidden": false,
+    "earnable": true
   }
 ]

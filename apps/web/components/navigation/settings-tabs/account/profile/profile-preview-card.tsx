@@ -10,6 +10,7 @@ import {
 } from "@workspace/ui/components/avatar"
 import { Badge } from "@workspace/ui/components/badge"
 import { Popover, PopoverTrigger } from "@workspace/ui/components/popover"
+import { Tooltip, TooltipTrigger } from "@workspace/ui/components/tooltip"
 import {
   IconCrown,
   IconSparkles,
@@ -261,24 +262,39 @@ export function ProfilePreviewCard({
                 @{username}
               </button>
 
-              {/* Showcased Badges Strip (Up to 5 badges) */}
+              {/* Showcased Badges Strip (Up to 10 badges) */}
               {showcaseBadgeIds.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5 pt-2">
-                  {showcaseBadgeIds.slice(0, 5).map((id) => {
+                  {showcaseBadgeIds.slice(0, 10).map((id) => {
                     const badge = getBadgeById(id)
                     if (!badge) return null
                     return (
-                      <div
-                        key={badge.id}
-                        title={`${badge.name}: ${badge.description}`}
-                        className="flex items-center gap-1 rounded-lg border border-border/60 bg-muted/30 px-1.5 py-0.5 text-[10px] font-semibold text-foreground shadow-2xs backdrop-blur-xs"
-                        style={{ borderColor: `${badge.color}40` }}
-                      >
-                        <span style={{ color: badge.color }}>
-                          {renderBadgeIcon(badge.icon, "size-3")}
-                        </span>
-                        <span>{badge.name}</span>
-                      </div>
+                      <TooltipTrigger key={badge.id} delay={150}>
+                        <div
+                          className="group relative flex size-6.5 shrink-0 items-center justify-center rounded-lg border bg-card/80 shadow-2xs backdrop-blur-xs transition-all hover:scale-110 cursor-help"
+                          style={{
+                            borderColor: `${badge.color}60`,
+                            backgroundColor: `${badge.color}15`,
+                            color: badge.color,
+                          }}
+                        >
+                          {renderBadgeIcon(badge.icon, "size-3.5")}
+                        </div>
+                        <Tooltip className="flex flex-col gap-0.5 rounded-xl border border-border/60 bg-popover px-2.5 py-1.5 text-start shadow-xl backdrop-blur-md">
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className="size-2 rounded-full"
+                              style={{ backgroundColor: badge.color }}
+                            />
+                            <span className="text-xs font-bold text-popover-foreground">
+                              {badge.name}
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-muted-foreground">
+                            {badge.description}
+                          </span>
+                        </Tooltip>
+                      </TooltipTrigger>
                     )
                   })}
                 </div>

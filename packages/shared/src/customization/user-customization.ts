@@ -57,7 +57,7 @@ export interface UserProfileCustomization {
   socialLinks?: SocialLink[];
   accentColor?: string | null;
   pinnedSpotlight?: PinnedSpotlight | null;
-  showcaseBadgeIds?: number[]; // Up to 5 showcased badge IDs (scrollable)
+  showcaseBadgeIds?: number[]; // Up to 10 showcased badge IDs
   birthday?: string | null;
   showBirthdayYear?: boolean;
   country?: string | null;
@@ -574,11 +574,11 @@ export function getProfileCustomization(customization: unknown): UserProfileCust
   const showcaseBadgeIds: number[] = Array.isArray(profile.showcaseBadgeIds)
     ? profile.showcaseBadgeIds
         .filter((id: any): id is number => typeof id === "number" && !isNaN(id))
-        .slice(0, 5)
+        .slice(0, 10)
     : (Array.isArray(raw.showcaseBadgeIds)
       ? raw.showcaseBadgeIds
           .filter((id: any): id is number => typeof id === "number" && !isNaN(id))
-          .slice(0, 5)
+          .slice(0, 10)
       : []);
 
   const pinnedSpotlight: PinnedSpotlight | null =

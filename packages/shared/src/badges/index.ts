@@ -8,6 +8,7 @@ export interface IrisBadge {
   color: string;
   category: "achievement" | "role" | "special" | "media";
   hidden: boolean;
+  earnable: boolean;
 }
 
 export const BADGES: readonly IrisBadge[] = badgesData as IrisBadge[];

@@ -6,6 +6,7 @@ import {
 } from "@IRIS/database"
 import { logger } from "../utils/logger"
 import { mediaStatsService } from "./media-stats.service.js"
+import { badgeEvaluatorService } from "./badge-evaluator.service.js"
 
 /**
  * Payload parameters for enqueueing an activity log event.
@@ -149,6 +150,12 @@ export class StatsQueueService {
                 totalCount: { increment: 1 },
               },
             })
+
+            // Automatically evaluate and award media milestone badges
+            await badgeEvaluatorService.evaluateMediaBadges(
+              job.data.userId,
+              job.data.mediaType
+            )
           }
         } catch (jobErr) {
           logger.service.missingEnv(
