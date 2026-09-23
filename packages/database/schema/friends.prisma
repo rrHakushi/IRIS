@@ -1,0 +1,54 @@
+enum FriendRequestStatus {
+    PENDING
+    ACCEPTED
+    DECLINED
+    BLOCKED
+}
+
+model FriendRequest {
+    id         String              @id @default(uuid())
+    senderId   String
+    receiverId String
+    message    String?             @db.VarChar(50)
+    status     FriendRequestStatus @default(PENDING)
+    createdAt  DateTime            @default(now())
+    updatedAt  DateTime            @updatedAt
+
+    sender   User @relation("SentFriendRequests", fields: [senderId], references: [id], onDelete: Cascade)
+    receiver User @relation("ReceivedFriendRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+
+    @@unique([senderId, receiverId])
+    @@index([senderId])
+    @@index([receiverId])
+}
+
+model Friend {
+    id        String   @id @default(uuid())
+    userId    String
+    friendId  String
+    nickname  String?
+    isPrivate Boolean  @default(false)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user   User @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
+    friend User @relation("FriendOfUsers", fields: [friendId], references: [id], onDelete: Cascade)
+
+    @@unique([userId, friendId])
+    @@index([userId])
+    @@index([friendId])
+}
+
+model UserBlock {
+    id        String   @id @default(uuid())
+    blockerId String
+    blockedId String
+    createdAt DateTime @default(now())
+
+    user    User @relation("UserBlocks", fields: [blockerId], references: [id], onDelete: Cascade)
+    blocked User @relation("BlockedByUsers", fields: [blockedId], references: [id], onDelete: Cascade)
+
+    @@unique([blockerId, blockedId])
+    @@index([blockerId])
+    @@index([blockedId])
+}

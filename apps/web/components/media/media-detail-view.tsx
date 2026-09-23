@@ -13,6 +13,8 @@ import { LyricsTab } from "./tabs/lyrics-tab"
 import { ImagesTab } from "./tabs/images-tab"
 import { TrailersTab } from "./tabs/trailers-tab"
 import { StatsTab } from "./tabs/stats-tab"
+import { FriendsMediaTab } from "./tabs/friends-tab"
+import { RecommendationsMediaTab } from "./tabs/recommendations-tab"
 import { EmptyTab } from "./tabs/empty-tab"
 import { MediaFooter } from "./media-footer"
 import type {
@@ -121,9 +123,10 @@ export function MediaDetailView({
       }
     }
 
-    // Stats, Reviews, Recommendations
+    // Stats, Friends, Reviews, Recommendations
     tabs.push(
       { key: "stats", label: "Stats" },
+      { key: "friends", label: "Friends" },
       { key: "reviews", label: "Reviews" },
       { key: "recommendations", label: "Recommendations" }
     )
@@ -208,10 +211,17 @@ export function MediaDetailView({
 
         {validActiveTab === "stats" && <StatsTab media={media} />}
 
+        {validActiveTab === "friends" && (
+          <FriendsMediaTab
+            mediaCategory={media.category}
+            mediaId={media.id}
+          />
+        )}
+
         {validActiveTab === "reviews" && <EmptyTab type="reviews" />}
 
         {validActiveTab === "recommendations" && (
-          <EmptyTab type="recommendations" />
+          <RecommendationsMediaTab media={media} />
         )}
       </main>
 

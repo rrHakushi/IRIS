@@ -97,12 +97,20 @@ export function IrisNotificationToast({
     }
   }
 
-  const handleConfirmAction = async (action: "CONFIRM" | "REJECT") => {
+  const handleConfirmAction = async (
+    action: "CONFIRM" | "REJECT" | "BLOCK"
+  ) => {
     setIsSubmitting(true)
     const success = await onSubmitAction(item.id, action)
     setIsSubmitting(false)
     if (success) {
-      setResolvedStatus(action === "CONFIRM" ? t("approved") : t("denied"))
+      setResolvedStatus(
+        action === "CONFIRM"
+          ? t("approved")
+          : action === "BLOCK"
+            ? "Blocked"
+            : t("denied")
+      )
       setTimeout(onDismiss, 1200)
     }
   }
@@ -235,6 +243,19 @@ export function IrisNotificationToast({
                 <IconX className="mr-1 size-3.5" />
                 {item.content.actionConfirm?.rejectLabel || t("reject")}
               </Button>
+              {(item.actionHandler === "friends.request" ||
+                item.category === "friends") && (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  disabled={isSubmitting}
+                  onPress={() => handleConfirmAction("BLOCK")}
+                  className="h-7.5 cursor-pointer rounded-xl px-2.5 text-xs"
+                >
+                  <IconX className="mr-1 size-3.5" />
+                  Block
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="ghost"

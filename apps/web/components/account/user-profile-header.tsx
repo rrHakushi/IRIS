@@ -13,6 +13,19 @@ import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
 import { Tooltip, TooltipTrigger } from "@workspace/ui/components/tooltip"
 import {
+  DropdownMenu,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@workspace/ui/components/dropdown-menu"
+import {
+  Dialog,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@workspace/ui/components/dialog"
+import { Input } from "@workspace/ui/components/input"
+import {
   IconCake,
   IconMapPin,
   IconClock,
@@ -23,8 +36,14 @@ import {
   IconCheck,
   IconCopy,
   IconLink,
+  IconUserPlus,
+  IconUserCheck,
+  IconTrash,
+  IconSend,
+  IconX,
 } from "@tabler/icons-react"
 import { toast } from "sonner"
+import { elysia } from "@/lib/elysia"
 import {
   getDisplayNameStyleCss,
   getDisplayNameEffectClasses,
@@ -68,7 +87,153 @@ export function UserProfileHeader({
   connections = [],
   onEditProfile,
 }: UserProfileHeaderProps): React.JSX.Element {
+  const { data: session } = useSession()
   const [copied, setCopied] = useState(false)
+
+  // Friend status state for non-owner viewing
+  const [friendStatus, setFriendStatus] = useState<{
+    isFriend: boolean
+    isPendingIncoming: boolean
+    isPendingOutgoing: boolean
+    isBlocked: boolean
+    isBlockedBy: boolean
+    friendId?: string | null
+    nickname?: string | null
+    requestId?: string | null
+  } | null>(null)
+  const [isFriendActionLoading, setIsFriendActionLoading] = useState(false)
+
+  // Add friend dialog state
+  const [addFriendDialogOpen, setAddFriendDialogOpen] = useState(false)
+  const [addFriendMessage, setAddFriendMessage] = useState("")
+  const [isSendingRequest, setIsSendingRequest] = useState(false)
+
+  // Edit nickname dialog state
+  const [nicknameDialogOpen, setNicknameDialogOpen] = useState(false)
+  const [nicknameInput, setNicknameInput] = useState("")
+  const [isSavingNickname, setIsSavingNickname] = useState(false)
+
+  const fetchFriendStatus = React.useCallback(async () => {
+    if (isOwner || !session?.user) return
+    try {
+      const res = await elysia.friends.status({ username }).get()
+      if (!res.error && res.data?.success) {
+        setFriendStatus(res.data)
+      }
+    } catch {
+      // Ignore
+    }
+  }, [isOwner, session?.user, username])
+
+  React.useEffect(() => {
+    fetchFriendStatus()
+  }, [fetchFriendStatus])
+
+  const handleSendFriendRequest = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!session?.user) {
+      toast.error("Please log in to send a friend request.")
+      return
+    }
+    setIsSendingRequest(true)
+    try {
+      const res = await elysia.friends.request.post({
+        targetUsername: username,
+        message: addFriendMessage.trim() || undefined,
+      })
+      if (!res.error && res.data?.success) {
+        toast.success(res.data.message || `Friend request sent to @${username}!`)
+        setAddFriendDialogOpen(false)
+        setAddFriendMessage("")
+        fetchFriendStatus()
+      } else {
+        const errorMsg = (res.error as any)?.value?.message || "Failed to send friend request."
+        toast.error(errorMsg)
+      }
+    } catch {
+      toast.error("Failed to send friend request.")
+    } finally {
+      setIsSendingRequest(false)
+    }
+  }
+
+  const handleCancelRequest = async () => {
+    if (!friendStatus?.requestId) return
+    setIsFriendActionLoading(true)
+    try {
+      const res = await elysia.friends.requests({ id: friendStatus.requestId }).delete()
+      if (!res.error) {
+        toast.success("Friend request cancelled.")
+        fetchFriendStatus()
+      } else {
+        toast.error("Failed to cancel request.")
+      }
+    } catch {
+      toast.error("Failed to cancel request.")
+    } finally {
+      setIsFriendActionLoading(false)
+    }
+  }
+
+  const handleAcceptRequest = async () => {
+    if (!friendStatus?.requestId) return
+    setIsFriendActionLoading(true)
+    try {
+      const res = await elysia.friends.requests({ id: friendStatus.requestId }).respond.post({
+        action: "ACCEPT",
+      })
+      if (!res.error) {
+        toast.success(res.data?.message || "Friend request accepted!")
+        fetchFriendStatus()
+      } else {
+        toast.error("Failed to accept request.")
+      }
+    } catch {
+      toast.error("Failed to accept request.")
+    } finally {
+      setIsFriendActionLoading(false)
+    }
+  }
+
+  const handleRemoveFriend = async () => {
+    if (!friendStatus?.friendId) return
+    setIsFriendActionLoading(true)
+    try {
+      const res = await elysia.friends({ id: friendStatus.friendId }).delete()
+      if (!res.error) {
+        toast.success(`Removed @${username} from friends.`)
+        fetchFriendStatus()
+      } else {
+        toast.error("Failed to remove friend.")
+      }
+    } catch {
+      toast.error("Failed to remove friend.")
+    } finally {
+      setIsFriendActionLoading(false)
+    }
+  }
+
+  const handleSaveNickname = async () => {
+    if (!friendStatus?.friendId) return
+    setIsSavingNickname(true)
+    const newNick = nicknameInput.trim() || null
+    try {
+      const res = await elysia.friends({ id: friendStatus.friendId }).patch({
+        nickname: newNick,
+      })
+      if (!res.error) {
+        toast.success(newNick ? `Nickname set to "${newNick}"` : "Nickname cleared.")
+        setNicknameDialogOpen(false)
+        fetchFriendStatus()
+      } else {
+        toast.error("Failed to update nickname.")
+      }
+    } catch {
+      toast.error("Failed to update nickname.")
+    } finally {
+      setIsSavingNickname(false)
+    }
+  }
 
   const nameToShow = profile.displayName || username
   const initial = nameToShow.charAt(0).toUpperCase()
@@ -247,15 +412,95 @@ export function UserProfileHeader({
 
           {/* Action Toolbar on Right */}
           <div className="flex items-center gap-2 pb-1">
-            {isOwner && onEditProfile && (
-              <Button
-                size="sm"
-                onClick={onEditProfile}
-                className="cursor-pointer gap-1.5 rounded-xl font-bold shadow-xs transition-all hover:scale-[1.02]"
-              >
-                <IconPencil className="size-4" />
-                <span>Edit Profile</span>
-              </Button>
+            {isOwner ? (
+              onEditProfile && (
+                <Button
+                  size="sm"
+                  onClick={onEditProfile}
+                  className="cursor-pointer gap-1.5 rounded-xl font-bold shadow-xs transition-all hover:scale-[1.02]"
+                >
+                  <IconPencil className="size-4" />
+                  <span>Edit Profile</span>
+                </Button>
+              )
+            ) : (
+              /* Non-owner: Friend Action Button */
+              <>
+                {friendStatus?.isFriend ? (
+                  <DropdownMenuTrigger>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="cursor-pointer gap-1.5 rounded-xl border border-primary/30 bg-primary/10 font-bold text-primary shadow-xs transition-all hover:bg-primary/20"
+                    >
+                      <IconUserCheck className="size-4" />
+                      <span>{friendStatus.nickname ? `Friends (${friendStatus.nickname})` : "Friends"}</span>
+                    </Button>
+                    <DropdownMenu placement="bottom end" className="w-44 rounded-xl p-1">
+                      <DropdownMenuItem
+                        onAction={() => {
+                          setNicknameInput(friendStatus.nickname || "")
+                          setNicknameDialogOpen(true)
+                        }}
+                        className="cursor-pointer gap-2"
+                      >
+                        <IconPencil className="size-3.5" />
+                        <span>{friendStatus.nickname ? "Edit Nickname" : "Add Nickname"}</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onAction={handleRemoveFriend}
+                        className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+                      >
+                        <IconTrash className="size-3.5" />
+                        <span>Remove Friend</span>
+                      </DropdownMenuItem>
+                    </DropdownMenu>
+                  </DropdownMenuTrigger>
+                ) : friendStatus?.isPendingOutgoing ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={isFriendActionLoading}
+                    onClick={handleCancelRequest}
+                    className="cursor-pointer gap-1.5 rounded-xl border-amber-500/30 bg-amber-500/10 font-semibold text-amber-500 shadow-2xs hover:bg-amber-500/20"
+                  >
+                    <IconClock className="size-4" />
+                    <span>Request Sent</span>
+                  </Button>
+                ) : friendStatus?.isPendingIncoming ? (
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      size="sm"
+                      disabled={isFriendActionLoading}
+                      onClick={handleAcceptRequest}
+                      className="cursor-pointer gap-1.5 rounded-xl font-bold shadow-xs"
+                    >
+                      <IconCheck className="size-4" />
+                      <span>Accept Request</span>
+                    </Button>
+                  </div>
+                ) : friendStatus?.isBlocked ? (
+                  <Badge variant="destructive" className="rounded-xl px-2.5 py-1 text-xs">
+                    Blocked
+                  </Badge>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      if (!session?.user) {
+                        toast.error("Please log in to send friend requests.")
+                        return
+                      }
+                      setAddFriendDialogOpen(true)
+                    }}
+                    className="cursor-pointer gap-1.5 rounded-xl font-bold shadow-xs transition-all hover:scale-[1.02]"
+                  >
+                    <IconUserPlus className="size-4" />
+                    <span>Add Friend</span>
+                  </Button>
+                )}
+              </>
             )}
 
             <Button
@@ -463,6 +708,114 @@ export function UserProfileHeader({
         </div>
       </div>
     </div>
+
+    {/* ========================================================================= */}
+    {/* 3. ADD FRIEND DIALOG                                                      */}
+    {/* ========================================================================= */}
+    {addFriendDialogOpen && (
+      <Dialog
+        isOpen={addFriendDialogOpen}
+        onOpenChange={setAddFriendDialogOpen}
+        className="max-w-md rounded-2xl p-6"
+      >
+        <DialogHeader>
+          <DialogTitle>Add Friend</DialogTitle>
+          <DialogDescription>
+            Send a friend request to @{username} ({nameToShow}).
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSendFriendRequest} className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <label className="font-semibold text-foreground">
+                Optional Message
+              </label>
+              <span className="font-mono text-[10px] text-muted-foreground">
+                {addFriendMessage.length}/50
+              </span>
+            </div>
+            <Input
+              type="text"
+              maxLength={50}
+              placeholder="Say hello (max 50 chars)..."
+              value={addFriendMessage}
+              onChange={(e) => setAddFriendMessage(e.target.value.slice(0, 50))}
+              className="h-9 rounded-xl text-xs"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setAddFriendDialogOpen(false)}
+              className="cursor-pointer rounded-xl text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isSendingRequest}
+              className="cursor-pointer rounded-xl text-xs font-bold"
+            >
+              <IconSend className="mr-1.5 size-3.5" />
+              <span>{isSendingRequest ? "Sending..." : "Send Request"}</span>
+            </Button>
+          </div>
+        </form>
+      </Dialog>
+    )}
+
+    {/* ========================================================================= */}
+    {/* 4. EDIT NICKNAME DIALOG                                                   */}
+    {/* ========================================================================= */}
+    {nicknameDialogOpen && (
+      <Dialog
+        isOpen={nicknameDialogOpen}
+        onOpenChange={setNicknameDialogOpen}
+        className="max-w-md rounded-2xl p-6"
+      >
+        <DialogHeader>
+          <DialogTitle>Friend Nickname</DialogTitle>
+          <DialogDescription>
+            Assign a private custom nickname for @{username}. Only you will see this.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          <Input
+            type="text"
+            maxLength={30}
+            placeholder="e.g. Bestie, Anime Buddy"
+            value={nicknameInput}
+            onChange={(e) => setNicknameInput(e.target.value)}
+            className="h-9 rounded-xl text-xs"
+          />
+
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setNicknameDialogOpen(false)}
+              className="cursor-pointer rounded-xl text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              disabled={isSavingNickname}
+              onClick={handleSaveNickname}
+              className="cursor-pointer rounded-xl text-xs font-bold"
+            >
+              Save Nickname
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+    )}
   </div>
   )
 }

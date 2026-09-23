@@ -839,6 +839,28 @@ export function IrisNotificationsModal({
                                 {item.content.actionConfirm?.rejectLabel ||
                                   t("reject")}
                               </Button>
+                              {(item.actionHandler === "friends.request" ||
+                                item.category === "friends") && (
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  disabled={form.isSubmitting}
+                                  onPress={async () => {
+                                    setActionFormState((prev) => ({
+                                      ...prev,
+                                      [item.id]: {
+                                        ...prev[item.id],
+                                        isSubmitting: true,
+                                      },
+                                    }))
+                                    await submitAction(item.id, "BLOCK")
+                                  }}
+                                  className="h-8 cursor-pointer rounded-xl px-3 text-xs"
+                                >
+                                  <IconX className="mr-1 size-3.5" />
+                                  Block
+                                </Button>
+                              )}
                             </div>
                           ) : (
                             <div className="flex items-center gap-2">
