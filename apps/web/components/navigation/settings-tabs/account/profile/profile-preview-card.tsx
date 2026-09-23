@@ -270,8 +270,10 @@ export function ProfilePreviewCard({
                     if (!badge) return null
                     return (
                       <TooltipTrigger key={badge.id} delay={150}>
-                        <div
-                          className="group relative flex size-6.5 shrink-0 items-center justify-center rounded-lg border bg-card/80 shadow-2xs backdrop-blur-xs transition-all hover:scale-110 cursor-help"
+                        <button
+                          type="button"
+                          aria-label={badge.name}
+                          className="group relative flex size-6.5 shrink-0 items-center justify-center rounded-lg border bg-card/80 shadow-2xs backdrop-blur-xs transition-all hover:scale-110 cursor-help focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                           style={{
                             borderColor: `${badge.color}60`,
                             backgroundColor: `${badge.color}15`,
@@ -279,7 +281,7 @@ export function ProfilePreviewCard({
                           }}
                         >
                           {renderBadgeIcon(badge.icon, "size-3.5")}
-                        </div>
+                        </button>
                         <Tooltip className="flex flex-col gap-0.5 rounded-xl border border-border/60 bg-popover px-2.5 py-1.5 text-start shadow-xl backdrop-blur-md">
                           <div className="flex items-center gap-1.5">
                             <span

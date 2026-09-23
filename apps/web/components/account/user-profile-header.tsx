@@ -138,7 +138,7 @@ export function UserProfileHeader({
   return (
     <div className="relative w-full border-b border-border/60 bg-card/20">
       {/* Centered Constrained Container keeping 16:5.5 Ratio Scaled Down */}
-      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 pt-4 sm:pt-6">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
         {/* 1. Hero Banner with exact 16:5.5 Aspect Ratio */}
         <div
           className="relative w-full overflow-hidden rounded-2xl sm:rounded-3xl border border-border/60 bg-linear-to-r from-primary/30 via-primary/10 to-muted/50 shadow-md min-h-[120px] sm:min-h-[220px]"
@@ -149,7 +149,7 @@ export function UserProfileHeader({
               src={profile.bannerUrl}
               alt="Profile Banner"
               fill
-              sizes="(max-width: 1024px) 100vw, 1024px"
+              sizes="(max-width: 1280px) 100vw, 1280px"
               priority
               unoptimized
               className="object-cover"
@@ -169,7 +169,7 @@ export function UserProfileHeader({
                 src={profile.bannerOverlayUrl}
                 alt="Banner Overlay"
                 fill
-                sizes="(max-width: 1024px) 100vw, 1024px"
+                sizes="(max-width: 1280px) 100vw, 1280px"
                 priority
                 unoptimized
                 className="object-cover"
@@ -370,8 +370,10 @@ export function UserProfileHeader({
                   if (!badge) return null
                   return (
                     <TooltipTrigger key={badge.id} delay={150}>
-                      <div
-                        className="group relative flex size-7.5 shrink-0 items-center justify-center rounded-xl border bg-card/80 shadow-2xs backdrop-blur-xs transition-all duration-200 hover:scale-110 cursor-help"
+                      <button
+                        type="button"
+                        aria-label={badge.name}
+                        className="group relative flex size-7.5 shrink-0 items-center justify-center rounded-xl border bg-card/80 shadow-2xs backdrop-blur-xs transition-all duration-200 hover:scale-110 cursor-help focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                         style={{
                           borderColor: `${badge.color}60`,
                           backgroundColor: `${badge.color}15`,
@@ -379,7 +381,7 @@ export function UserProfileHeader({
                         }}
                       >
                         {renderBadgeIcon(badge.icon, "size-4")}
-                      </div>
+                      </button>
                       <Tooltip className="flex flex-col gap-0.5 rounded-xl border border-border/60 bg-popover px-2.5 py-1.5 text-start shadow-xl backdrop-blur-md">
                         <div className="flex items-center gap-1.5">
                           <span
