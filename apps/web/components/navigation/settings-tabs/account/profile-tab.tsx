@@ -24,7 +24,8 @@ import {
 } from "@workspace/ui/components/dialog"
 import { DisplayNameStyleCard } from "./profile/display-name-style-card"
 import { MarkdownBioEditor } from "./profile/markdown-bio-editor"
-import { MediaAssetCard } from "./profile/media-asset-card"
+import { AvatarFrameCard } from "./profile/avatar-frame-card"
+import { BannerNameplateCard } from "./profile/banner-nameplate-card"
 import { ProfilePreviewCard } from "./profile/profile-preview-card"
 import { VisualThemeCard } from "./profile/visual-theme-card"
 import { SocialLinksCard } from "./profile/social-links-card"
@@ -335,79 +336,36 @@ export function ProfileTab({
             </CardContent>
           </Card>
 
-          {/* Cards 3 & 4: Avatar and Avatar Frame side by side */}
-          <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2">
-            {/* Card 3: Profile Picture (Avatar) */}
-            <MediaAssetCard
-              title={t("profilePicture")}
-              description={t("profilePictureDesc")}
-              assetType="avatar"
-              currentUrl={draftProfile.avatarUrl}
-              onPendingFileChange={(file, previewUrl) =>
-                handlePendingFile("avatar", file, previewUrl)
-              }
-              aspectRatio="square"
-              fallbackInitial={initial}
-              disabled={isLoading || isSaving}
-            />
-
-            {/* Card 4: Avatar Frame */}
-            <MediaAssetCard
-              title={t("avatarFrame")}
-              description={t("avatarFrameDesc")}
-              assetType="avatarFrame"
-              currentUrl={draftProfile.avatarFrame}
-              avatarUrl={draftProfile.avatarUrl}
-              onPendingFileChange={(file, previewUrl) =>
-                handlePendingFile("avatarFrame", file, previewUrl)
-              }
-              aspectRatio="square"
-              fallbackInitial={initial}
-              disabled={isLoading || isSaving}
-            />
-          </div>
-
-          {/* Card 5: Profile Banner */}
-          <MediaAssetCard
-            title={t("banner")}
-            description={t("bannerDesc")}
-            assetType="banner"
-            currentUrl={draftProfile.bannerUrl}
-            onPendingFileChange={(file, previewUrl) =>
-              handlePendingFile("banner", file, previewUrl)
-            }
-            aspectRatio="banner"
+          {/* Card 3: Profile Picture & Frame (Consolidated into 1 card) */}
+          <AvatarFrameCard
+            avatarUrl={draftProfile.avatarUrl}
+            avatarFrame={draftProfile.avatarFrame}
             fallbackInitial={initial}
+            onPendingAvatarChange={(file, previewUrl) =>
+              handlePendingFile("avatar", file, previewUrl)
+            }
+            onPendingFrameChange={(file, previewUrl) =>
+              handlePendingFile("avatarFrame", file, previewUrl)
+            }
             disabled={isLoading || isSaving}
           />
 
-          {/* Card 5b: Banner Overlay Asset */}
-          <MediaAssetCard
-            title="Banner Overlay Asset"
-            description="Upload a transparent PNG, WebP, or SVG decoration to render directly on top of your banner."
-            assetType="bannerOverlay"
-            currentUrl={draftProfile.bannerOverlayUrl}
-            onPendingFileChange={(file, previewUrl) =>
-              handlePendingFile("bannerOverlay", file, previewUrl)
-            }
-            aspectRatio="banner"
-            fallbackInitial={initial}
-            disabled={isLoading || isSaving}
-          />
-
-          {/* Card 6: Nameplate */}
-          <MediaAssetCard
-            title={t("nameplate")}
-            description={t("nameplateDesc")}
-            assetType="nameplate"
-            currentUrl={
+          {/* Card 5: Banners & Nameplate (Consolidated into 1 card) */}
+          <BannerNameplateCard
+            bannerUrl={draftProfile.bannerUrl}
+            bannerOverlayUrl={draftProfile.bannerOverlayUrl}
+            nameplateUrl={
               draftProfile.nameplateUrl || draftProfile.sidebarBannerUrl
             }
-            onPendingFileChange={(file, previewUrl) =>
+            onPendingBannerChange={(file, previewUrl) =>
+              handlePendingFile("banner", file, previewUrl)
+            }
+            onPendingOverlayChange={(file, previewUrl) =>
+              handlePendingFile("bannerOverlay", file, previewUrl)
+            }
+            onPendingNameplateChange={(file, previewUrl) =>
               handlePendingFile("nameplate", file, previewUrl)
             }
-            aspectRatio="sidebar"
-            fallbackInitial={initial}
             disabled={isLoading || isSaving}
           />
 

@@ -10,6 +10,14 @@ import {
 } from "@workspace/ui/components/card"
 import { Input } from "@workspace/ui/components/input"
 import { Field, FieldLabel, FieldGroup } from "@workspace/ui/components/field"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectPopover,
+  SelectList,
+  SelectItem,
+} from "@workspace/ui/components/select"
 import { cn } from "@workspace/ui/lib/utils"
 import {
   FONT_PRESETS,
@@ -26,11 +34,177 @@ import {
   IconSparkles,
   IconColorSwatch,
   IconCheck,
-  IconPlus,
-  IconTrash,
-  IconArrowsHorizontal,
 } from "@tabler/icons-react"
-import { Button } from "@workspace/ui/components/button"
+import { GradientSpectrumEditor } from "./gradient-spectrum-editor"
+
+function renderEffectPreview(effectId: string, label: string) {
+  switch (effectId) {
+    case "solid":
+      return (
+        <span className="text-xs font-bold tracking-wide text-foreground">
+          {label}
+        </span>
+      )
+    case "gradient":
+      return (
+        <span
+          className="inline-block text-xs font-black tracking-wide"
+          style={{
+            backgroundImage:
+              "linear-gradient(135deg, #2dd4bf 0%, #fde68a 50%, #fda4af 100%)",
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            color: "transparent",
+          }}
+        >
+          {label}
+        </span>
+      )
+    case "neon":
+      return (
+        <span
+          className="text-xs font-extrabold text-white"
+          style={{
+            textShadow:
+              "0 0 4px #d946ef, 0 0 10px #d946ef, 0 0 18px #d946ef",
+          }}
+        >
+          {label}
+        </span>
+      )
+    case "toon":
+      return (
+        <span
+          className="text-xs font-black tracking-wider text-pink-400"
+          style={{
+            textShadow:
+              "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 2px 2px 0px #000",
+          }}
+        >
+          {label}
+        </span>
+      )
+    case "pop":
+      return (
+        <span
+          className="text-xs font-black text-emerald-400"
+          style={{
+            textShadow:
+              "1px 1px 0px #059669, 2px 2px 0px #059669, 3px 3px 0px rgba(0,0,0,0.5)",
+          }}
+        >
+          {label}
+        </span>
+      )
+    case "gummy":
+      return (
+        <span
+          className="inline-block text-xs font-black"
+          style={{
+            backgroundImage:
+              "linear-gradient(180deg, #ffffff 0%, #f472b6 45%, #ec4899 100%)",
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            color: "transparent",
+            filter: "drop-shadow(0 2px 4px rgba(244,114,182,0.6))",
+          }}
+        >
+          {label}
+        </span>
+      )
+    case "prism":
+      return (
+        <span
+          className="inline-block text-xs font-black"
+          style={{
+            backgroundImage:
+              "linear-gradient(90deg, #a855f7 0%, #3b82f6 25%, #10b981 50%, #f59e0b 75%, #ef4444 100%)",
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            color: "transparent",
+            filter: "drop-shadow(0 0 6px rgba(255,255,255,0.3))",
+          }}
+        >
+          {label}
+        </span>
+      )
+    case "glitch":
+      return (
+        <span
+          className="text-xs font-black tracking-wider text-white"
+          style={{
+            textShadow:
+              "-1.5px 0 0 #06b6d4, 1.5px 0 0 #ef4444, 0 0 6px rgba(6,182,212,0.6)",
+          }}
+        >
+          {label}
+        </span>
+      )
+    case "chrome":
+      return (
+        <span
+          className="inline-block text-xs font-black"
+          style={{
+            backgroundImage:
+              "linear-gradient(180deg, #f8fafc 0%, #cbd5e1 35%, #475569 50%, #94a3b8 70%, #f1f5f9 100%)",
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            color: "transparent",
+            filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.7))",
+          }}
+        >
+          {label}
+        </span>
+      )
+    case "flame":
+      return (
+        <span
+          className="inline-block text-xs font-black"
+          style={{
+            backgroundImage:
+              "linear-gradient(180deg, #fef08a 0%, #f97316 45%, #dc2626 100%)",
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            color: "transparent",
+            filter: "drop-shadow(0 0 6px #f97316)",
+          }}
+        >
+          {label}
+        </span>
+      )
+    case "celestial":
+      return (
+        <span
+          className="inline-block text-xs font-black"
+          style={{
+            backgroundImage:
+              "linear-gradient(135deg, #38bdf8 0%, #a855f7 50%, #ec4899 100%)",
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            color: "transparent",
+            filter: "drop-shadow(0 0 6px rgba(168,85,247,0.7))",
+          }}
+        >
+          {label}
+        </span>
+      )
+    default:
+      return (
+        <span
+          className="text-xs font-bold"
+          style={getDisplayNameStyleCss({ effect: effectId as any })}
+        >
+          {label}
+        </span>
+      )
+  }
+}
 
 export interface DisplayNameStyleCardProps {
   displayName: string
@@ -366,260 +540,110 @@ export function DisplayNameStyleCard({
           </div>
         </div>
 
-        {/* Font Selector */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-            <IconTypography className="size-3.5 text-primary" />
-            <span>{t("font")}</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
-            {FONT_PRESETS.map((preset) => {
-              const isSelected = currentFont === preset.id
-              return (
-                <button
-                  key={preset.id}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => onStyleChange({ ...style, font: preset.id })}
-                  className={cn(
-                    "group flex cursor-pointer flex-col items-start rounded-xl border p-2.5 text-start transition-all",
-                    isSelected
-                      ? "border-primary bg-primary/10 shadow-2xs"
-                      : "border-border/60 bg-background/40 hover:border-border hover:bg-muted/40"
-                  )}
-                >
-                  <div className="flex w-full items-center justify-between">
-                    <span
-                      className="truncate text-xs font-semibold"
-                      style={{ fontFamily: preset.family }}
-                    >
-                      {preset.name.split(" ")[0]}
-                    </span>
-                    {isSelected && (
-                      <IconCheck className="size-3.5 shrink-0 text-primary" />
-                    )}
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Text Effects Grid (Matching Runa Realm Style) */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-            <IconSparkles className="size-3.5 text-primary" />
-            <span>{t("effect")}</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-            {TEXT_EFFECT_PRESETS.map((effect) => {
-              const isSelected = currentEffect === effect.id
-              const effectLabel = getEffectLabel(effect.id)
-
-              return (
-                <button
-                  key={effect.id}
-                  type="button"
-                  disabled={disabled}
-                  title={effectLabel}
-                  aria-label={effectLabel}
-                  onClick={() => onStyleChange({ ...style, effect: effect.id })}
-                  className={cn(
-                    "relative flex h-16 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border p-3 text-center transition-all",
-                    isSelected
-                      ? "border-primary bg-primary/10 shadow-md ring-2 ring-primary/40"
-                      : "border-border/60 bg-background/40 hover:border-border hover:bg-muted/40"
-                  )}
-                >
-                  {/* Effect Text Representation */}
-                  {(() => {
-
-                    if (effect.id === "solid") {
-                      return (
-                        <span className="text-xs font-bold tracking-wide text-foreground">
-                          {effectLabel}
-                        </span>
-                      )
-                    }
-                    if (effect.id === "gradient") {
-                      return (
-                        <span
-                          className="inline-block text-xs font-black tracking-wide"
-                          style={{
-                            backgroundImage:
-                              "linear-gradient(135deg, #2dd4bf 0%, #fde68a 50%, #fda4af 100%)",
-                            WebkitBackgroundClip: "text",
-                            backgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
-                            color: "transparent",
-                          }}
-                        >
-                          {effectLabel}
-                        </span>
-                      )
-                    }
-                    if (effect.id === "neon") {
-                      return (
-                        <span
-                          className="text-xs font-extrabold text-white"
-                          style={{
-                            textShadow:
-                              "0 0 4px #d946ef, 0 0 10px #d946ef, 0 0 18px #d946ef",
-                          }}
-                        >
-                          {effectLabel}
-                        </span>
-                      )
-                    }
-                    if (effect.id === "toon") {
-                      return (
-                        <span
-                          className="text-xs font-black tracking-wider text-pink-400"
-                          style={{
-                            textShadow:
-                              "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 2px 2px 0px #000",
-                          }}
-                        >
-                          {effectLabel}
-                        </span>
-                      )
-                    }
-                    if (effect.id === "pop") {
-                      return (
-                        <span
-                          className="text-xs font-black text-emerald-400"
-                          style={{
-                            textShadow:
-                              "1px 1px 0px #059669, 2px 2px 0px #059669, 3px 3px 0px rgba(0,0,0,0.5)",
-                          }}
-                        >
-                          {effectLabel}
-                        </span>
-                      )
-                    }
-                    if (effect.id === "gummy") {
-                      return (
-                        <span
-                          className="inline-block text-xs font-black"
-                          style={{
-                            backgroundImage:
-                              "linear-gradient(180deg, #ffffff 0%, #f472b6 45%, #ec4899 100%)",
-                            WebkitBackgroundClip: "text",
-                            backgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
-                            color: "transparent",
-                            filter:
-                              "drop-shadow(0 2px 4px rgba(244,114,182,0.6))",
-                          }}
-                        >
-                          {effectLabel}
-                        </span>
-                      )
-                    }
-                    if (effect.id === "prism") {
-                      return (
-                        <span
-                          className="inline-block text-xs font-black"
-                          style={{
-                            backgroundImage:
-                              "linear-gradient(90deg, #a855f7 0%, #3b82f6 25%, #10b981 50%, #f59e0b 75%, #ef4444 100%)",
-                            WebkitBackgroundClip: "text",
-                            backgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
-                            color: "transparent",
-                            filter: "drop-shadow(0 0 6px rgba(255,255,255,0.3))",
-                          }}
-                        >
-                          {effectLabel}
-                        </span>
-                      )
-                    }
-                    if (effect.id === "glitch") {
-                      return (
-                        <span
-                          className="text-xs font-black tracking-wider text-white"
-                          style={{
-                            textShadow:
-                              "-1.5px 0 0 #06b6d4, 1.5px 0 0 #ef4444, 0 0 6px rgba(6,182,212,0.6)",
-                          }}
-                        >
-                          {effectLabel}
-                        </span>
-                      )
-                    }
-                    if (effect.id === "chrome") {
-                      return (
-                        <span
-                          className="inline-block text-xs font-black"
-                          style={{
-                            backgroundImage:
-                              "linear-gradient(180deg, #f8fafc 0%, #cbd5e1 35%, #475569 50%, #94a3b8 70%, #f1f5f9 100%)",
-                            WebkitBackgroundClip: "text",
-                            backgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
-                            color: "transparent",
-                            filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.7))",
-                          }}
-                        >
-                          {effectLabel}
-                        </span>
-                      )
-                    }
-                    if (effect.id === "flame") {
-                      return (
-                        <span
-                          className="inline-block text-xs font-black"
-                          style={{
-                            backgroundImage:
-                              "linear-gradient(180deg, #fef08a 0%, #f97316 45%, #dc2626 100%)",
-                            WebkitBackgroundClip: "text",
-                            backgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
-                            color: "transparent",
-                            filter: "drop-shadow(0 0 6px #f97316)",
-                          }}
-                        >
-                          {effectLabel}
-                        </span>
-                      )
-                    }
-                    if (effect.id === "celestial") {
-                      return (
-                        <span
-                          className="inline-block text-xs font-black"
-                          style={{
-                            backgroundImage:
-                              "linear-gradient(135deg, #38bdf8 0%, #a855f7 50%, #ec4899 100%)",
-                            WebkitBackgroundClip: "text",
-                            backgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
-                            color: "transparent",
-                            filter:
-                              "drop-shadow(0 0 6px rgba(168,85,247,0.7))",
-                          }}
-                        >
-                          {effectLabel}
-                        </span>
-                      )
-                    }
+        {/* Font & Effect Selectors (Dropdowns) */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {/* Font Selector */}
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+              <IconTypography className="size-3.5 text-primary" />
+              <span>{t("font")}</span>
+            </div>
+            <Select
+              selectedKey={currentFont}
+              onSelectionChange={(key) =>
+                key && onStyleChange({ ...style, font: key as string })
+              }
+              aria-label={t("font")}
+              isDisabled={disabled}
+              className="w-full"
+            >
+              <SelectTrigger
+                size="default"
+                className="h-10 w-full rounded-xl border border-border/60 bg-background/50 px-3 text-xs font-medium cursor-pointer"
+              >
+                <SelectValue>
+                  {() => {
+                    const fontPreset =
+                      FONT_PRESETS.find((p) => p.id === currentFont) ||
+                      FONT_PRESETS[0]
                     return (
                       <span
-                        className="text-xs font-bold"
-                        style={getDisplayNameStyleCss({ effect: effect.id })}
+                        className="truncate font-semibold text-xs"
+                        style={{ fontFamily: fontPreset?.family }}
                       >
-                        {effectLabel}
+                        {fontPreset?.name}
                       </span>
                     )
-                  })()}
+                  }}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectPopover className="w-(--trigger-width) max-h-64 rounded-xl border border-border/80 bg-popover/95 p-1 text-popover-foreground shadow-lg backdrop-blur-xl">
+                <SelectList className="flex flex-col gap-0.5 p-0">
+                  {FONT_PRESETS.map((preset) => (
+                    <SelectItem
+                      key={preset.id}
+                      id={preset.id}
+                      textValue={preset.name}
+                      className="cursor-pointer rounded-lg px-2.5 py-2 text-xs font-medium"
+                    >
+                      <span
+                        className="truncate"
+                        style={{ fontFamily: preset.family }}
+                      >
+                        {preset.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectList>
+              </SelectPopover>
+            </Select>
+          </div>
 
-                  {isSelected && (
-                    <div className="absolute top-1.5 right-1.5 flex size-4 items-center justify-center rounded-full bg-primary/20">
-                      <IconCheck className="size-3.5 text-primary" />
-                    </div>
-                  )}
-                </button>
-              )
-            })}
+          {/* Text Effect Selector */}
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+              <IconSparkles className="size-3.5 text-primary" />
+              <span>{t("effect")}</span>
+            </div>
+            <Select
+              selectedKey={currentEffect}
+              onSelectionChange={(key) =>
+                key &&
+                onStyleChange({ ...style, effect: key as DisplayNameEffectType })
+              }
+              aria-label={t("effect")}
+              isDisabled={disabled}
+              className="w-full"
+            >
+              <SelectTrigger
+                size="default"
+                className="h-10 w-full rounded-xl border border-border/60 bg-background/50 px-3 text-xs font-medium cursor-pointer"
+              >
+                <SelectValue>
+                  {() => {
+                    const label = getEffectLabel(currentEffect)
+                    return renderEffectPreview(currentEffect, label)
+                  }}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectPopover className="w-(--trigger-width) max-h-72 rounded-xl border border-border/80 bg-popover/95 p-1 text-popover-foreground shadow-lg backdrop-blur-xl">
+                <SelectList className="flex flex-col gap-0.5 p-0">
+                  {TEXT_EFFECT_PRESETS.map((eff) => {
+                    const label = getEffectLabel(eff.id)
+                    return (
+                      <SelectItem
+                        key={eff.id}
+                        id={eff.id}
+                        textValue={label}
+                        className="cursor-pointer rounded-lg px-2.5 py-2 text-xs font-medium"
+                      >
+                        {renderEffectPreview(eff.id, label)}
+                      </SelectItem>
+                    )
+                  })}
+                </SelectList>
+              </SelectPopover>
+            </Select>
           </div>
         </div>
 
@@ -722,97 +746,43 @@ export function DisplayNameStyleCard({
             </div>
           )}
 
-          {/* 2. GRADIENT CONTROLS (2-8 Stops Multi-Stop Blend with Custom Positions) */}
+          {/* 2. GRADIENT CONTROLS (2-8 Stops Multi-Stop Blend with Draggable Spectrum) */}
           {currentEffect === "gradient" && (
             <div className="space-y-4">
-              {/* Header with Title, Even Spacing, and Add Stop Button */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                  <IconColorSwatch className="size-3.5 text-primary" />
-                  <span>
-                    {t("gradientColorsTitle", {
-                      count: currentGradientColors.length,
-                    })}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <span title={t("distributeEvenly")}>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      disabled={disabled}
-                      onClick={handleResetGradientPositions}
-                      aria-label={t("distributeEvenly")}
-                      className="h-7 gap-1 rounded-lg px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground cursor-pointer"
-                    >
-                      <IconArrowsHorizontal className="size-3" />
-                      <span className="hidden sm:inline">{t("distributeEvenly")}</span>
-                    </Button>
-                  </span>
-                  <span className="text-[11px] font-medium text-muted-foreground">
-                    {t("stopsCount", {
-                      count: currentGradientColors.length,
-                      max: 8,
-                    })}
-                  </span>
-                  <span
-                    title={
-                      currentGradientColors.length >= 8
-                        ? t("maxStopsReached")
-                        : t("addStop")
-                    }
-                  >
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      disabled={disabled || currentGradientColors.length >= 8}
-                      onClick={handleAddGradientStop}
-                      className="h-7 gap-1 rounded-lg px-2 text-xs font-semibold shadow-2xs cursor-pointer"
-                    >
-                      <IconPlus className="size-3" />
-                      <span>{t("addStop")}</span>
-                    </Button>
-                  </span>
-                </div>
-              </div>
-
-              {/* Live Real-time Linear Gradient Preview Bar with Exact Stop Pins */}
-              <div className="relative h-7 w-full overflow-hidden rounded-xl border border-border/70 shadow-inner">
-                <div
-                  className="size-full"
-                  style={{
-                    background: `linear-gradient(135deg, ${currentGradientColors
-                      .map(
-                        (col, idx) =>
-                          `${col} ${currentGradientPositions[idx] ?? Math.round((idx / (currentGradientColors.length - 1)) * 100)}%`
-                      )
-                      .join(", ")})`,
-                  }}
-                />
-                {/* Visual Stop Pin Markers positioned at exact stop percentage */}
-                <div className="pointer-events-none absolute inset-0">
-                  {currentGradientColors.map((col, idx) => {
-                    const pos =
-                      currentGradientPositions[idx] ??
-                      Math.round(
-                        (idx / (currentGradientColors.length - 1)) * 100
-                      )
-                    return (
-                      <div
-                        key={idx}
-                        className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 size-4 rounded-full border-2 border-white shadow-md ring-1 ring-black/50 transition-all"
-                        style={{
-                          left: `${pos}%`,
-                          backgroundColor: col,
-                        }}
-                        title={`Stop ${idx + 1}: ${col} (${pos}%)`}
-                      />
-                    )
-                  })}
-                </div>
-              </div>
+              <GradientSpectrumEditor
+                title={t("gradientColorsTitle", {
+                  count: currentGradientColors.length,
+                })}
+                colors={currentGradientColors}
+                positions={currentGradientPositions}
+                onColorsChange={(updatedColors) =>
+                  onStyleChange({
+                    ...style,
+                    color: updatedColors[0] ?? currentColor,
+                    color2:
+                      updatedColors[updatedColors.length - 1] ?? currentColor2,
+                    colors: updatedColors,
+                    positions: currentGradientPositions,
+                  })
+                }
+                onPositionsChange={(updatedPositions) =>
+                  onStyleChange({
+                    ...style,
+                    color: currentGradientColors[0] ?? currentColor,
+                    color2:
+                      currentGradientColors[currentGradientColors.length - 1] ??
+                      currentColor2,
+                    colors: currentGradientColors,
+                    positions: updatedPositions,
+                  })
+                }
+                onResetPositions={handleResetGradientPositions}
+                onAddStop={handleAddGradientStop}
+                onRemoveStop={handleRemoveGradientStop}
+                disabled={disabled}
+                minStops={2}
+                maxStops={8}
+              />
 
               {/* Gradient Presets Grid */}
               <div className="space-y-1.5">
@@ -869,192 +839,39 @@ export function DisplayNameStyleCard({
                   })}
                 </div>
               </div>
-
-              {/* Dynamic Color Stops Cards Grid with Position Sliders */}
-              <div className="space-y-1.5 pt-1">
-                <span className="text-[11px] font-semibold text-muted-foreground">
-                  Custom Color Stops ({currentGradientColors.length})
-                </span>
-                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
-                  {currentGradientColors.map((colorVal, idx) => {
-                    const isMin = currentGradientColors.length <= 2
-                    const pos =
-                      currentGradientPositions[idx] ??
-                      Math.round(
-                        (idx / (currentGradientColors.length - 1)) * 100
-                      )
-                    return (
-                      <div
-                        key={idx}
-                        className="flex flex-col gap-2 rounded-xl border border-border/60 bg-background/40 p-2.5 shadow-2xs"
-                      >
-                        <div className="flex items-center justify-between gap-2 min-w-0">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <input
-                              type="color"
-                              disabled={disabled}
-                              value={
-                                colorVal.startsWith("#") ? colorVal : "#818cf8"
-                              }
-                              onChange={(e) =>
-                                handleGradientStopChange(idx, e.target.value)
-                              }
-                              className="size-6 cursor-pointer rounded-md border border-border bg-transparent shrink-0"
-                            />
-                            <div className="min-w-0 flex flex-col">
-                              <span className="text-[10px] font-semibold text-foreground truncate">
-                                {t("stopNumber", { number: idx + 1 })}
-                              </span>
-                              <span className="font-mono text-[9px] text-muted-foreground uppercase truncate">
-                                {colorVal}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <span className="font-mono text-[10px] font-bold text-primary">
-                              {pos}%
-                            </span>
-                            <button
-                              type="button"
-                              disabled={disabled || isMin}
-                              onClick={() => handleRemoveGradientStop(idx)}
-                              title={isMin ? t("minStopsReached") : t("removeStop")}
-                              className={cn(
-                                "flex size-6 shrink-0 items-center justify-center rounded-lg border transition-all",
-                                isMin
-                                  ? "border-transparent opacity-30 cursor-not-allowed text-muted-foreground"
-                                  : "border-border/60 text-muted-foreground hover:border-destructive/60 hover:bg-destructive/10 hover:text-destructive cursor-pointer"
-                              )}
-                            >
-                              <IconTrash className="size-3" />
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Position Slider */}
-                        <div className="flex items-center gap-1.5 pt-0.5">
-                          <span className="font-mono text-[9px] text-muted-foreground w-5 shrink-0 text-start">
-                            0%
-                          </span>
-                          <input
-                            type="range"
-                            min={0}
-                            max={100}
-                            step={1}
-                            disabled={disabled}
-                            value={pos}
-                            onChange={(e) =>
-                              handleGradientPositionChange(
-                                idx,
-                                Number(e.target.value)
-                              )
-                            }
-                            className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-border/60 accent-primary"
-                            title={t("stopPosition", { percent: pos })}
-                          />
-                          <span className="font-mono text-[9px] text-muted-foreground w-7 shrink-0 text-end">
-                            100%
-                          </span>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
             </div>
           )}
 
-          {/* 3. PRISM COLOR PICKER (2-8 Stops Multi-Stop Rainbow Spectrum with Custom Positions) */}
+          {/* 3. PRISM COLOR PICKER (2-8 Stops Multi-Stop Rainbow Spectrum with Draggable Spectrum) */}
           {currentEffect === "prism" && (
             <div className="space-y-4">
-              {/* Header with Title, Even Spacing, and Add Stop Button */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                  <IconColorSwatch className="size-3.5 text-primary" />
-                  <span>
-                    {t("prismSpectrumTitle", {
-                      count: currentPrismColors.length,
-                    })}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <span title={t("distributeEvenly")}>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      disabled={disabled}
-                      onClick={handleResetPrismPositions}
-                      aria-label={t("distributeEvenly")}
-                      className="h-7 gap-1 rounded-lg px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground cursor-pointer"
-                    >
-                      <IconArrowsHorizontal className="size-3" />
-                      <span className="hidden sm:inline">{t("distributeEvenly")}</span>
-                    </Button>
-                  </span>
-                  <span className="text-[11px] font-medium text-muted-foreground">
-                    {t("stopsCount", {
-                      count: currentPrismColors.length,
-                      max: 8,
-                    })}
-                  </span>
-                  <span
-                    title={
-                      currentPrismColors.length >= 8
-                        ? t("maxStopsReached")
-                        : t("addStop")
-                    }
-                  >
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      disabled={disabled || currentPrismColors.length >= 8}
-                      onClick={handleAddPrismStop}
-                      className="h-7 gap-1 rounded-lg px-2 text-xs font-semibold shadow-2xs cursor-pointer"
-                    >
-                      <IconPlus className="size-3" />
-                      <span>{t("addStop")}</span>
-                    </Button>
-                  </span>
-                </div>
-              </div>
-
-              {/* Live Real-time Prism Gradient Spectrum Bar with Exact Stop Pins */}
-              <div className="relative h-7 w-full overflow-hidden rounded-xl border border-border/70 shadow-inner">
-                <div
-                  className="size-full"
-                  style={{
-                    background: `linear-gradient(90deg, ${currentPrismColors
-                      .map(
-                        (col, idx) =>
-                          `${col} ${currentPrismPositions[idx] ?? Math.round((idx / (currentPrismColors.length - 1)) * 100)}%`
-                      )
-                      .join(", ")})`,
-                  }}
-                />
-                {/* Visual Stop Pin Markers positioned at exact stop percentage */}
-                <div className="pointer-events-none absolute inset-0">
-                  {currentPrismColors.map((col, idx) => {
-                    const pos =
-                      currentPrismPositions[idx] ??
-                      Math.round(
-                        (idx / (currentPrismColors.length - 1)) * 100
-                      )
-                    return (
-                      <div
-                        key={idx}
-                        className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 size-4 rounded-full border-2 border-white shadow-md ring-1 ring-black/50 transition-all"
-                        style={{
-                          left: `${pos}%`,
-                          backgroundColor: col,
-                        }}
-                        title={`Stop ${idx + 1}: ${col} (${pos}%)`}
-                      />
-                    )
-                  })}
-                </div>
-              </div>
+              <GradientSpectrumEditor
+                title={t("prismSpectrumTitle", {
+                  count: currentPrismColors.length,
+                })}
+                colors={currentPrismColors}
+                positions={currentPrismPositions}
+                onColorsChange={(updatedColors) =>
+                  onStyleChange({
+                    ...style,
+                    colors: updatedColors,
+                    positions: currentPrismPositions,
+                  })
+                }
+                onPositionsChange={(updatedPositions) =>
+                  onStyleChange({
+                    ...style,
+                    colors: currentPrismColors,
+                    positions: updatedPositions,
+                  })
+                }
+                onResetPositions={handleResetPrismPositions}
+                onAddStop={handleAddPrismStop}
+                onRemoveStop={handleRemovePrismStop}
+                disabled={disabled}
+                minStops={2}
+                maxStops={8}
+              />
 
               {/* Prism Presets Grid */}
               <div className="space-y-1.5">
@@ -1104,98 +921,6 @@ export function DisplayNameStyleCard({
                           <IconCheck className="size-3 shrink-0 text-primary" />
                         )}
                       </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Dynamic Color Stops Cards Grid with Position Sliders */}
-              <div className="space-y-1.5 pt-1">
-                <span className="text-[11px] font-semibold text-muted-foreground">
-                  Custom Color Stops ({currentPrismColors.length})
-                </span>
-                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
-                  {currentPrismColors.map((colorVal, idx) => {
-                    const isMin = currentPrismColors.length <= 2
-                    const pos =
-                      currentPrismPositions[idx] ??
-                      Math.round(
-                        (idx / (currentPrismColors.length - 1)) * 100
-                      )
-                    return (
-                      <div
-                        key={idx}
-                        className="flex flex-col gap-2 rounded-xl border border-border/60 bg-background/40 p-2.5 shadow-2xs"
-                      >
-                        <div className="flex items-center justify-between gap-2 min-w-0">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <input
-                              type="color"
-                              disabled={disabled}
-                              value={
-                                colorVal.startsWith("#") ? colorVal : "#a855f7"
-                              }
-                              onChange={(e) =>
-                                handlePrismColorChange(idx, e.target.value)
-                              }
-                              className="size-6 cursor-pointer rounded-md border border-border bg-transparent shrink-0"
-                            />
-                            <div className="min-w-0 flex flex-col">
-                              <span className="text-[10px] font-semibold text-foreground truncate">
-                                {t("stopNumber", { number: idx + 1 })}
-                              </span>
-                              <span className="font-mono text-[9px] text-muted-foreground uppercase truncate">
-                                {colorVal}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <span className="font-mono text-[10px] font-bold text-primary">
-                              {pos}%
-                            </span>
-                            <button
-                              type="button"
-                              disabled={disabled || isMin}
-                              onClick={() => handleRemovePrismStop(idx)}
-                              title={isMin ? t("minStopsReached") : t("removeStop")}
-                              className={cn(
-                                "flex size-6 shrink-0 items-center justify-center rounded-lg border transition-all",
-                                isMin
-                                  ? "border-transparent opacity-30 cursor-not-allowed text-muted-foreground"
-                                  : "border-border/60 text-muted-foreground hover:border-destructive/60 hover:bg-destructive/10 hover:text-destructive cursor-pointer"
-                              )}
-                            >
-                              <IconTrash className="size-3" />
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Position Slider */}
-                        <div className="flex items-center gap-1.5 pt-0.5">
-                          <span className="font-mono text-[9px] text-muted-foreground w-5 shrink-0 text-start">
-                            0%
-                          </span>
-                          <input
-                            type="range"
-                            min={0}
-                            max={100}
-                            step={1}
-                            disabled={disabled}
-                            value={pos}
-                            onChange={(e) =>
-                              handlePrismPositionChange(
-                                idx,
-                                Number(e.target.value)
-                              )
-                            }
-                            className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-border/60 accent-primary"
-                            title={t("stopPosition", { percent: pos })}
-                          />
-                          <span className="font-mono text-[9px] text-muted-foreground w-7 shrink-0 text-end">
-                            100%
-                          </span>
-                        </div>
-                      </div>
                     )
                   })}
                 </div>
