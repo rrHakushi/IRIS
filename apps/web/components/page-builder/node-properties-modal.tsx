@@ -212,11 +212,10 @@ export function NodePropertiesModal({
           <button
             type="button"
             onClick={() => setActiveTab("content")}
-            className={`flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs font-semibold transition-all ${
-              activeTab === "content"
+            className={`flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs font-semibold transition-all ${activeTab === "content"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
+              }`}
           >
             <IconLayersLinked className="size-3.5" />
             <span>Content & Text</span>
@@ -225,11 +224,10 @@ export function NodePropertiesModal({
           <button
             type="button"
             onClick={() => setActiveTab("styling")}
-            className={`flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs font-semibold transition-all ${
-              activeTab === "styling"
+            className={`flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs font-semibold transition-all ${activeTab === "styling"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
+              }`}
           >
             <IconPalette className="size-3.5" />
             <span>Styling & Layout</span>
@@ -238,11 +236,10 @@ export function NodePropertiesModal({
           <button
             type="button"
             onClick={() => setActiveTab("props")}
-            className={`flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs font-semibold transition-all ${
-              activeTab === "props"
+            className={`flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs font-semibold transition-all ${activeTab === "props"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
+              }`}
           >
             <IconCode className="size-3.5" />
             <span>Raw Props JSON</span>

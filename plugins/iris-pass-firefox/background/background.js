@@ -391,10 +391,10 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const sData = await storage.get([
         "user",
         "pinUnlockEnabled",
-        "biometricUnlockEnabled",
         "lastSyncTimestamp",
         "clipboardClearSeconds",
         "isDefaultPasswordManager",
+        "autoLockMinutes",
       ])
       let user = sData.user || null
 
@@ -406,8 +406,10 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           user: null,
           cipherCount: 0,
           pinUnlockEnabled: Boolean(sData.pinUnlockEnabled),
-          biometricUnlockEnabled: Boolean(sData.biometricUnlockEnabled),
           lastSyncTimestamp: sData.lastSyncTimestamp || 0,
+          clipboardClearSeconds: sData.clipboardClearSeconds ?? 30,
+          isDefaultPasswordManager: Boolean(sData.isDefaultPasswordManager),
+          autoLockMinutes: sData.autoLockMinutes !== undefined ? sData.autoLockMinutes : 15,
         })
         return
       }
@@ -432,8 +434,10 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
               user: null,
               cipherCount: 0,
               pinUnlockEnabled: false,
-              biometricUnlockEnabled: false,
               lastSyncTimestamp: 0,
+              clipboardClearSeconds: 30,
+              isDefaultPasswordManager: false,
+              autoLockMinutes: 15,
             })
             return
           }
@@ -449,10 +453,10 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         serverUrl,
         cipherCount: inMemoryCiphers.length,
         pinUnlockEnabled: Boolean(sData.pinUnlockEnabled),
-        biometricUnlockEnabled: Boolean(sData.biometricUnlockEnabled),
         lastSyncTimestamp: sData.lastSyncTimestamp || 0,
         clipboardClearSeconds: sData.clipboardClearSeconds ?? 30,
         isDefaultPasswordManager: Boolean(sData.isDefaultPasswordManager),
+        autoLockMinutes: sData.autoLockMinutes !== undefined ? sData.autoLockMinutes : 15,
       })
     })()
     return true
@@ -723,79 +727,6 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true
   }
 
-  // 3e. Setup Biometric Unlock
-  if (action === "SETUP_BIOMETRIC_UNLOCK") {
-    ; (async () => {
-      try {
-        if (!isPrivilegedSender(sender)) {
-          throw new Error("Unauthorized sender context")
-        }
-        const { bioData } = payload || {}
-        if (!bioData?.credentialId) {
-          throw new Error("Invalid biometric enrollment data")
-        }
-
-        await storage.set({
-          biometricUnlockData: bioData,
-          biometricUnlockEnabled: true,
-        })
-        sendResponse({ success: true })
-      } catch (err) {
-        sendResponse({ success: false, error: err.message })
-      }
-    })()
-    return true
-  }
-
-  // 3f. Unlock Vault with Biometrics
-  if (action === "UNLOCK_WITH_BIOMETRICS") {
-    ; (async () => {
-      try {
-        if (!isPrivilegedSender(sender)) {
-          throw new Error("Unauthorized sender context")
-        }
-        const { vaultKeyHex } = payload || {}
-        if (!vaultKeyHex) throw new Error("Vault key required")
-
-        inMemoryVaultKey = IrisCrypto.hexToBytes(vaultKeyHex)
-
-        if (ext.storage?.session) {
-          await ext.storage.session.set({
-            vaultKeyHex: IrisCrypto.bytesToHex(inMemoryVaultKey),
-            lastActive: Date.now(),
-          })
-        }
-
-        await decryptCachedVault(inMemoryVaultKey)
-        await resetAutoLock()
-        checkHourlySyncDue()
-
-        const sData = await storage.get(["user"])
-        sendResponse({ success: true, user: sData.user })
-      } catch (err) {
-        sendResponse({ success: false, error: err.message })
-      }
-    })()
-    return true
-  }
-
-  // 3g. Disable Biometric Unlock
-  if (action === "DISABLE_BIOMETRIC_UNLOCK") {
-    ; (async () => {
-      try {
-        if (!isPrivilegedSender(sender)) {
-          throw new Error("Unauthorized sender context")
-        }
-        await storage.remove(["biometricUnlockData"])
-        await storage.set({ biometricUnlockEnabled: false })
-        sendResponse({ success: true })
-      } catch (err) {
-        sendResponse({ success: false, error: err.message })
-      }
-    })()
-    return true
-  }
-
   // 3h. Sync Now
   if (action === "SYNC_VAULT") {
     ; (async () => {
@@ -829,18 +760,94 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (clipboardClearTimer) clearTimeout(clipboardClearTimer)
         clipboardClearTimer = setTimeout(async () => {
           try {
-            // Check if active tab or offscreen can clear clipboard
-            const tabs = await ext.tabs.query({ active: true, currentWindow: true })
-            if (tabs[0]?.id) {
-              ext.tabs.sendMessage(tabs[0].id, {
-                action: "CLEAR_CLIPBOARD_IF_MATCHES",
-                payload: { text },
-              }).catch(() => {})
+            // 1. Direct clear in background document context
+            let cleared = false
+            try {
+              if (typeof document !== "undefined" && document.createElement) {
+                const ta = document.createElement("textarea")
+                ta.value = ""
+                ta.style.position = "fixed"
+                ta.style.opacity = "0"
+                document.body.appendChild(ta)
+                ta.focus()
+                ta.select()
+                cleared = document.execCommand("copy")
+                ta.remove()
+              }
+            } catch (e) {}
+
+            if (!cleared) {
+              try {
+                if (navigator.clipboard?.writeText) {
+                  await navigator.clipboard.writeText("")
+                  cleared = true
+                }
+              } catch (e) {}
             }
-          } catch (e) { }
+
+            // 2. Also execute in active tab via scripting API or content message
+            try {
+              const tabs = await ext.tabs.query({ active: true, lastFocusedWindow: true })
+              const activeTab = tabs[0] || (await ext.tabs.query({ active: true }))[0]
+              if (activeTab?.id) {
+                // Send message to content script to clear and show toast
+                ext.tabs.sendMessage(activeTab.id, {
+                  action: "CLEAR_CLIPBOARD_IF_MATCHES",
+                  payload: { text },
+                }).catch(() => {})
+
+                // If scripting API is available, also run clear function directly in tab context
+                if (
+                  ext.scripting?.executeScript &&
+                  activeTab.url &&
+                  !activeTab.url.startsWith("about:") &&
+                  !activeTab.url.startsWith("chrome:") &&
+                  !activeTab.url.startsWith("moz-extension:")
+                ) {
+                  ext.scripting.executeScript({
+                    target: { tabId: activeTab.id },
+                    func: () => {
+                      try {
+                        const ta = document.createElement("textarea")
+                        ta.value = ""
+                        ta.style.position = "fixed"
+                        ta.style.opacity = "0"
+                        document.body.appendChild(ta)
+                        ta.focus()
+                        ta.select()
+                        document.execCommand("copy")
+                        ta.remove()
+                      } catch (e) {}
+                    },
+                  }).catch(() => {})
+                }
+              }
+            } catch (e) {}
+          } catch (e) {
+            console.warn("[IRIS Pass] Clipboard clear timer error:", e)
+          }
         }, seconds * 1000)
 
         sendResponse({ success: true, scheduled: true, seconds })
+      } catch (err) {
+        sendResponse({ success: false, error: err.message })
+      }
+    })()
+    return true
+  }
+
+  // 3i2. Set Clipboard Clear Timeout Setting
+  if (action === "SET_CLIPBOARD_CLEAR_TIMEOUT") {
+    ; (async () => {
+      try {
+        if (!isPrivilegedSender(sender)) {
+          throw new Error("Unauthorized sender context")
+        }
+        const { seconds } = payload || {}
+        const parsed = typeof seconds === "number" ? seconds : parseInt(seconds, 10)
+        const sec = isNaN(parsed) ? 30 : parsed
+        await storage.set({ clipboardClearSeconds: sec })
+        sendResponse({ success: true, clipboardClearSeconds: sec })
       } catch (err) {
         sendResponse({ success: false, error: err.message })
       }
@@ -868,12 +875,46 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
             console.warn("[IRIS Pass] Could not modify native passwordSavingEnabled:", e)
           }
         }
+        if (ext.privacy?.services?.autofillAddressEnabled) {
+          try {
+            await ext.privacy.services.autofillAddressEnabled.set({
+              value: !isDefault,
+            })
+          } catch (e) {}
+        }
 
         sendResponse({ success: true, isDefault: Boolean(isDefault) })
       } catch (err) {
         sendResponse({ success: false, error: err.message })
       }
     })()
+    return true
+  }
+
+  // 3k. Set Auto Lock Minutes
+  if (action === "SET_AUTO_LOCK") {
+    ; (async () => {
+      try {
+        if (!isPrivilegedSender(sender)) {
+          throw new Error("Unauthorized sender context")
+        }
+        const { minutes } = payload || {}
+        const parsed = typeof minutes === "number" ? minutes : parseInt(minutes, 10)
+        const mins = isNaN(parsed) ? 15 : parsed
+        await storage.set({ autoLockMinutes: mins })
+        await resetAutoLock()
+        sendResponse({ success: true, autoLockMinutes: mins })
+      } catch (err) {
+        sendResponse({ success: false, error: err.message })
+      }
+    })()
+    return true
+  }
+
+  // 3l. Reset Auto Lock / Activity Ping (from content script or popup)
+  if (action === "RESET_AUTO_LOCK" || action === "PING_ACTIVITY") {
+    resetAutoLock().catch(() => {})
+    sendResponse({ success: true })
     return true
   }
 
@@ -893,7 +934,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         ext.action.setBadgeText({ text: "" })
       } catch (e) {}
 
-      // Wipe ALL local keys: tokens, ciphers, folders, PIN unlock, Biometrics, sync timestamps, etc.
+      // Wipe ALL local keys: tokens, ciphers, folders, PIN unlock, sync timestamps, etc.
       await storage.clear()
       if (ext.storage?.local) {
         await ext.storage.local.clear().catch(() => {})
@@ -922,8 +963,9 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
     ; (async () => {
       await ensureVaultActive()
       resetAutoLock()
-      // If request comes from a content script in a tab, strictly enforce tab URL to prevent cross-domain spoofing
-      const targetUrl = sender.tab?.url || payload?.url
+      // Only privileged extension contexts can specify an arbitrary URL filter; content scripts are scoped to their frame URL
+      const isPrivileged = isPrivilegedSender(sender)
+      const targetUrl = isPrivileged && payload?.url ? payload.url : (sender.url || sender.tab?.url || "")
       const matches = getMatchingLogins(targetUrl)
       sendResponse({ matches, isUnlocked: Boolean(inMemoryVaultKey) })
     })()
@@ -1296,7 +1338,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           return
         }
 
-        const callerUrl = sender.tab?.url || sender?.url || payload?.url || ""
+        const callerUrl = sender.url || sender.tab?.url || ""
         const callerHost = IrisMatching.extractHost(callerUrl)
         if (!callerHost) {
           sendResponse({ success: false, credentials: [], passkeys: [] })
@@ -1403,7 +1445,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           throw new Error("Vault is locked. Please unlock IRIS Pass first.")
         }
 
-        const callerUrl = sender.tab?.url || sender?.url || payload?.url || ""
+        const callerUrl = sender.url || sender.tab?.url || ""
         const callerHost = IrisMatching.extractHost(callerUrl)
         if (!callerHost) throw new Error("Untrusted sender context")
 
@@ -1606,7 +1648,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (!inMemoryVaultKey)
           throw new Error("Vault is locked. Please unlock IRIS Pass.")
 
-        const callerUrl = sender.tab?.url || sender?.url || payload?.url || ""
+        const callerUrl = sender.url || sender.tab?.url || ""
         const callerHost = IrisMatching.extractHost(callerUrl)
         if (!callerHost) throw new Error("Untrusted sender context")
 

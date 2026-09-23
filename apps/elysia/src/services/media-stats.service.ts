@@ -119,8 +119,10 @@ export interface CombinedStatsResponse {
   overview: {
     totalTitles: number
     completedTitles: number
+    planningCount: number
     totalTimeMinutes: number
     daysConsumed: number
+    daysPlanned: number
     meanScore: number
     standardDeviation: number
     scoredCount: number
@@ -195,16 +197,27 @@ function isDateInRange(
   return true
 }
 
+export function normalizeScoreTo10(
+  s: number | null | undefined
+): number | null {
+  if (s === null || s === undefined || s <= 0) return null
+  const normalized = s > 10 ? s / 10 : s
+  return Math.min(10, Math.max(0.1, Math.round(normalized * 100) / 100))
+}
+
 function calculateMeanAndStdDev(scores: number[]): {
   mean: number
   stdDev: number
 } {
-  if (scores.length === 0) return { mean: 0, stdDev: 0 }
-  const sum = scores.reduce((a, b) => a + b, 0)
-  const mean = Math.round((sum / scores.length) * 100) / 100
+  const normalizedScores = scores
+    .map(normalizeScoreTo10)
+    .filter((s): s is number => s !== null && s > 0)
+  if (normalizedScores.length === 0) return { mean: 0, stdDev: 0 }
+  const sum = normalizedScores.reduce((a, b) => a + b, 0)
+  const mean = Math.round((sum / normalizedScores.length) * 100) / 100
   const variance =
-    scores.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) /
-    scores.length
+    normalizedScores.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) /
+    normalizedScores.length
   const stdDev = Math.round(Math.sqrt(variance) * 100) / 100
   return { mean, stdDev }
 }
@@ -227,8 +240,9 @@ function buildScoreDistribution(rawScores: (number | null)[]): {
   }
   let unratedCount = 0
 
-  for (const s of rawScores) {
-    if (s === null || s === undefined || s <= 0) {
+  for (const raw of rawScores) {
+    const s = normalizeScoreTo10(raw)
+    if (s === null || s <= 0) {
       unratedCount++
     } else {
       const rounded = Math.min(10, Math.max(1, Math.round(s)))
@@ -2564,7 +2578,7 @@ export class MediaStatsService {
     isOwner: boolean,
     period?: PeriodFilter
   ): Promise<CombinedStatsResponse> {
-    const cacheKey = `iris:stats:${userId}:combined:${period?.year ?? "all"}:${period?.quarter ?? "all"}:${period?.month ?? "all"}:${isOwner ? "1" : "0"}`
+    const cacheKey = `iris:stats:v2:${userId}:combined:${period?.year ?? "all"}:${period?.quarter ?? "all"}:${period?.month ?? "all"}:${isOwner ? "1" : "0"}`
 
     return cache.getOrSet(
       cacheKey,
@@ -2591,6 +2605,8 @@ export class MediaStatsService {
 
         let totalTitles = 0
         let completedTitles = 0
+        let planningCount = 0
+        let daysPlanned = 0
         let totalTimeMinutes = 0
         let totalScoredCount = 0
         let scoreWeightedSum = 0
@@ -2598,6 +2614,8 @@ export class MediaStatsService {
         for (const { stats } of allStats) {
           totalTitles += stats.overview.totalCount
           completedTitles += stats.overview.completedCount
+          planningCount += stats.overview.planningCount || 0
+          daysPlanned += stats.overview.daysPlanned || 0
           totalTimeMinutes += stats.overview.totalTimeMinutes
           totalScoredCount += stats.overview.scoredCount
           scoreWeightedSum +=
@@ -2650,6 +2668,15 @@ export class MediaStatsService {
             .map((s) => ({ score: s, count: combinedScoreBuckets[s] ?? 0 })),
           unratedCount: combinedUnrated,
         }
+
+        let varianceSum = 0
+        for (const s of scoreDist.scores) {
+          varianceSum += Math.pow(s.score - overallMean, 2) * s.count
+        }
+        const stdDev =
+          totalScoredCount > 0
+            ? Math.round(Math.sqrt(varianceSum / totalScoredCount) * 100) / 100
+            : 0
 
         const combinedStatusCounts: Record<string, number> = {}
         for (const { stats } of allStats) {
@@ -2811,10 +2838,12 @@ export class MediaStatsService {
           overview: {
             totalTitles,
             completedTitles,
+            planningCount,
             totalTimeMinutes,
             daysConsumed: Math.round((totalTimeMinutes / 1440) * 10) / 10,
+            daysPlanned: Math.round(daysPlanned * 10) / 10,
             meanScore: overallMean,
-            standardDeviation: 0,
+            standardDeviation: stdDev,
             scoredCount: totalScoredCount,
           },
           mediaBreakdown,

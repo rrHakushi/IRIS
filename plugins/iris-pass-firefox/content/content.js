@@ -913,17 +913,25 @@
     }
 
     if (message.action === "CLEAR_CLIPBOARD_IF_MATCHES") {
-      const { text } = message.payload || {}
-      if (text && navigator.clipboard?.readText) {
-        navigator.clipboard.readText().then((clipText) => {
-          if (clipText === text) {
+      try {
+        const ta = document.createElement("textarea")
+        ta.value = ""
+        ta.style.position = "fixed"
+        ta.style.opacity = "0"
+        document.body.appendChild(ta)
+        ta.focus()
+        ta.select()
+        document.execCommand("copy")
+        ta.remove()
+        showToast("Clipboard cleared for security")
+      } catch (e) {
+        try {
+          if (navigator.clipboard?.writeText) {
             navigator.clipboard.writeText("").then(() => {
               showToast("Clipboard cleared for security")
             }).catch(() => {})
           }
-        }).catch(() => {
-          navigator.clipboard.writeText("").catch(() => {})
-        })
+        } catch (e2) {}
       }
       sendResponse({ success: true })
       return true
@@ -1820,19 +1828,6 @@
     // Password inputs are always credentials
     if (type === "password") return true
 
-    // Check visibility
-    const rect = el.getBoundingClientRect()
-    if (rect.width < 50 || rect.height < 15) return false
-
-    const style = window.getComputedStyle(el)
-    if (
-      style.visibility === "hidden" ||
-      style.display === "none" ||
-      style.opacity === "0"
-    ) {
-      return false
-    }
-
     // Email inputs are credential candidates
     if (type === "email") return true
 
@@ -1843,12 +1838,13 @@
       auto.includes("email") ||
       auto.includes("webauthn") ||
       auto.includes("current-password") ||
-      auto.includes("new-password")
+      auto.includes("new-password") ||
+      auto.includes("one-time-code")
     ) {
       return true
     }
 
-    // Heuristics on name, id, placeholder, aria-label
+    // Heuristics on name, id, placeholder, aria-label, testid
     const identifier = [
       el.name,
       el.id,
@@ -1861,7 +1857,7 @@
       .toLowerCase()
 
     if (
-      /(user|login|email|identifier|account|member|signin|phone)/i.test(
+      /(user|login|email|identifier|account|member|signin|phone|auth|pass)/i.test(
         identifier
       )
     ) {
@@ -1891,7 +1887,9 @@
       // Check sibling buttons, SVGs, clickable icons inside parent or ancestor container overlapping right edge
       const parent = input.parentElement
       if (parent) {
-        const candidates = parent.querySelectorAll('button, svg, [role="button"], a, [class*="eye" i], [class*="show" i], [class*="toggle" i], [class*="reveal" i], [class*="icon" i]')
+        const candidates = parent.querySelectorAll(
+          'button, svg, [role="button"], a, [class*="eye" i], [class*="show" i], [class*="toggle" i], [class*="reveal" i], [class*="icon" i]'
+        )
         for (const el of candidates) {
           if (el === icon || el.contains(icon) || (icon && icon.contains(el))) continue
           const elRect = el.getBoundingClientRect()
@@ -1918,6 +1916,7 @@
   }
 
   function updateIconPosition(input, icon) {
+    if (!input || !icon) return
     const rect = input.getBoundingClientRect()
     if (
       rect.width === 0 ||
@@ -1935,6 +1934,32 @@
     const left = rect.right - offsetFromRight
     icon.style.top = `${top}px`
     icon.style.left = `${left}px`
+  }
+
+  let fieldResizeObserver = null
+  if (typeof ResizeObserver !== "undefined") {
+    fieldResizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const input = entry.target
+        const icon = inputIconMap.get(input)
+        if (icon) {
+          updateIconPosition(input, icon)
+        }
+      }
+    })
+  }
+
+  let fieldIntersectionObserver = null
+  if (typeof IntersectionObserver !== "undefined") {
+    fieldIntersectionObserver = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        const input = entry.target
+        const icon = inputIconMap.get(input)
+        if (icon && entry.isIntersecting) {
+          updateIconPosition(input, icon)
+        }
+      }
+    }, { threshold: 0.1 })
   }
 
   function attachBadges() {
@@ -1960,6 +1985,10 @@
 
       inputIconMap.set(input, icon)
 
+      // Observe size & visibility changes
+      if (fieldResizeObserver) fieldResizeObserver.observe(input)
+      if (fieldIntersectionObserver) fieldIntersectionObserver.observe(input)
+
       let isInputHovered = false
       let isIconHovered = false
 
@@ -1976,6 +2005,9 @@
       }
 
       input.addEventListener("focus", showIcon)
+      input.addEventListener("input", () => {
+        ext.runtime.sendMessage({ action: "PING_ACTIVITY" }).catch(() => {})
+      })
       input.addEventListener("mouseenter", () => {
         isInputHovered = true
         showIcon()
@@ -2018,7 +2050,7 @@
 
   function updateAllVisibleIcons() {
     inputIconMap.forEach((icon, input) => {
-      if (icon.classList.contains("visible")) {
+      if (icon.classList.contains("visible") || document.activeElement === input) {
         updateIconPosition(input, icon)
       }
     })
@@ -2028,11 +2060,47 @@
     }
   }
 
+  // Global focusin listener: guarantees that when any credential input gets focus (in OAuth popups, external windows, etc.)
+  // badges are attached and the icon appears immediately.
+  document.addEventListener(
+    "focusin",
+    (e) => {
+      const target = e.target
+      if (target && target.tagName === "INPUT") {
+        attachBadges()
+        const icon = inputIconMap.get(target)
+        if (icon) {
+          updateIconPosition(target, icon)
+          icon.classList.add("visible")
+        }
+      }
+    },
+    true
+  )
+
   window.addEventListener("scroll", updateAllVisibleIcons, {
     passive: true,
     capture: true,
   })
   window.addEventListener("resize", updateAllVisibleIcons, { passive: true })
+  window.addEventListener("focus", () => {
+    attachBadges()
+    updateAllVisibleIcons()
+  })
+  window.addEventListener("pageshow", () => {
+    attachBadges()
+    updateAllVisibleIcons()
+  })
+  window.addEventListener("load", () => {
+    attachBadges()
+    updateAllVisibleIcons()
+  })
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      attachBadges()
+      updateAllVisibleIcons()
+    }
+  })
 
   // Scan on DOM load and mutations
   if (document.readyState === "loading") {
@@ -2041,12 +2109,22 @@
     attachBadges()
   }
 
+  let mutationDebounceTimer = null
   const observer = new MutationObserver(() => {
-    attachBadges()
+    if (mutationDebounceTimer) clearTimeout(mutationDebounceTimer)
+    mutationDebounceTimer = setTimeout(() => {
+      attachBadges()
+      updateAllVisibleIcons()
+    }, 40)
   })
 
-  observer.observe(document.body || document.documentElement, {
-    childList: true,
-    subtree: true,
-  })
+  const rootTarget = document.documentElement || document.body
+  if (rootTarget) {
+    observer.observe(rootTarget, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class", "style", "hidden", "type", "disabled", "readonly"],
+    })
+  }
 })()

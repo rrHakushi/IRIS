@@ -85,9 +85,9 @@ export function UserListBanner({
           <div className="flex items-center gap-3.5 sm:items-end sm:gap-4">
             {/* Floating Avatar with Frame */}
             <div className="relative z-20 -mt-10 shrink-0 sm:-mt-12">
-              <div className="relative flex items-center justify-center">
+              <div className="relative size-20 sm:size-24 shrink-0">
                 {/* Circular Avatar Container */}
-                <div className="relative size-20 overflow-hidden rounded-full border-4 border-background bg-card shadow-2xl ring-1 ring-border/40 sm:size-24">
+                <div className="relative size-full overflow-hidden rounded-full border-4 border-background bg-card shadow-2xl ring-1 ring-border/40">
                   {profile?.avatarUrl ? (
                     <Image
                       src={profile.avatarUrl}
@@ -107,7 +107,15 @@ export function UserListBanner({
 
                 {/* Avatar Frame overlay */}
                 {hasValidFrame && (
-                  <div className="pointer-events-none absolute -inset-3 z-30 size-26 max-w-none select-none sm:-inset-4 sm:size-32">
+                  <div
+                    className="pointer-events-none absolute z-30 select-none"
+                    style={{
+                      width: "130%",
+                      height: "130%",
+                      top: "-15%",
+                      left: "-15%",
+                    }}
+                  >
                     <Image
                       src={profile!.avatarFrame!}
                       alt="Avatar Frame"
@@ -116,7 +124,7 @@ export function UserListBanner({
                       unoptimized
                       loading="eager"
                       priority
-                      className="object-contain"
+                      className="size-full object-contain"
                     />
                   </div>
                 )}

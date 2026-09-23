@@ -6,6 +6,7 @@ import {
   QuickAddResponseSchema,
 } from "@/modules/IRIS-list/helpers"
 import { NotFound } from "@/utils/errors"
+import { badgeEvaluatorService } from "@/services/badge-evaluator.service"
 import type { MediaType } from "@IRIS/database"
 
 export default defineRoute({
@@ -99,6 +100,9 @@ export default defineRoute({
         ...foreignKeyField,
       },
     })
+
+    // Evaluate custom list badges
+    badgeEvaluatorService.evaluateCustomListBadges(dbUser.id).catch(() => {})
 
     return {
       success: true,

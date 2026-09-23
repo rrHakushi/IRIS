@@ -23,7 +23,13 @@ import { ImageCropperModal } from "./image-cropper-modal"
 export interface MediaAssetCardProps {
   title: string
   description: string
-  assetType: "avatar" | "banner" | "nameplate" | "sidebarBanner" | "avatarFrame"
+  assetType:
+    | "avatar"
+    | "banner"
+    | "bannerOverlay"
+    | "nameplate"
+    | "sidebarBanner"
+    | "avatarFrame"
   currentUrl?: string | null
   avatarUrl?: string | null
   onPendingFileChange: (file: File | null, previewUrl: string | null) => void
@@ -64,8 +70,8 @@ export function MediaAssetCard({
   const [cropModalOpen, setCropModalOpen] = useState(false)
 
   const acceptedFormats =
-    assetType === "avatarFrame"
-      ? "image/png,image/webp,image/svg+xml"
+    assetType === "avatarFrame" || assetType === "bannerOverlay"
+      ? "image/png,image/webp,image/svg+xml,image/gif"
       : "image/png,image/jpeg,image/webp,image/gif"
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,8 +86,8 @@ export function MediaAssetCard({
 
     // Format validation
     const allowed =
-      assetType === "avatarFrame"
-        ? ["image/png", "image/webp", "image/svg+xml"]
+      assetType === "avatarFrame" || assetType === "bannerOverlay"
+        ? ["image/png", "image/webp", "image/svg+xml", "image/gif"]
         : ["image/png", "image/jpeg", "image/webp", "image/gif"]
 
     if (!allowed.includes(file.type)) {

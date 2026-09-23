@@ -582,9 +582,8 @@ export const Callout: React.FC<CalloutProps> = ({
 
   return (
     <div
-      className={`my-4 flex items-start gap-3 rounded-2xl border p-4 text-sm leading-relaxed ${
-        variantStyles[variant] || variantStyles.info
-      } ${className || ""}`}
+      className={`my-4 flex items-start gap-3 rounded-2xl border p-4 text-sm leading-relaxed ${variantStyles[variant] || variantStyles.info
+        } ${className || ""}`}
       {...props}
     >
       <IconComp className="mt-0.5 size-5 shrink-0 opacity-90" />
@@ -625,9 +624,8 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
 
   return (
     <div
-      className={`my-4 overflow-hidden rounded-2xl border border-border/80 bg-muted/40 shadow-xs ${
-        className || ""
-      }`}
+      className={`my-4 overflow-hidden rounded-2xl border border-border/80 bg-muted/40 shadow-xs ${className || ""
+        }`}
       {...props}
     >
       {(filename || language) && (

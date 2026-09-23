@@ -203,49 +203,31 @@ export function calculateKeyFingerprint(publicKeyBase64: string): string {
 const SESSION_STORAGE_PREFIX = "iris_vault_session_"
 
 /**
- * Persists the decrypted secret key into sessionStorage so the vault remains unlocked across page reloads (F5).
- * Automatically cleared when the browser tab is closed or when explicitly locked.
+ * Kept for interface compatibility — raw private keys must remain strictly in-memory.
+ * Automatically purges any legacy plaintext keys from sessionStorage if found.
  */
 export function saveSessionSecretKey(
-  userId: string,
-  secretKey: Uint8Array
+  _userId: string,
+  _secretKey: Uint8Array
 ): void {
+  // Plaintext master keys are strictly kept in volatile memory (closures/state) to prevent XSS exfiltration
   if (typeof window === "undefined" || !window.sessionStorage) return
   try {
-    const hex = bytesToHex(secretKey)
-    if (userId && userId !== "active") {
-      window.sessionStorage.setItem(`${SESSION_STORAGE_PREFIX}${userId}`, hex)
-    }
-    window.sessionStorage.setItem(`${SESSION_STORAGE_PREFIX}active`, hex)
-  } catch (e) {
-    console.warn("[EncryptionVault] Could not save session secret key:", e)
-  }
-}
-
-/**
- * Loads the decrypted secret key from sessionStorage if it exists for the current user.
- */
-export function loadSessionSecretKey(userId?: string): Uint8Array | null {
-  if (typeof window === "undefined" || !window.sessionStorage) return null
-  try {
-    if (userId && userId !== "active") {
-      const hex = window.sessionStorage.getItem(
-        `${SESSION_STORAGE_PREFIX}${userId}`
-      )
-      if (hex) return hexToBytes(hex)
-    }
-    const fallbackHex = window.sessionStorage.getItem(
-      `${SESSION_STORAGE_PREFIX}active`
-    )
-    if (fallbackHex) return hexToBytes(fallbackHex)
-    return null
+    clearSessionSecretKey()
   } catch {
-    return null
+    // Ignore cleanup errors
   }
 }
 
 /**
- * Removes the decrypted secret key from sessionStorage when locking the vault or logging out.
+ * Loads the decrypted secret key from memory only (sessionStorage persistence disabled for security).
+ */
+export function loadSessionSecretKey(_userId?: string): Uint8Array | null {
+  return null
+}
+
+/**
+ * Purges any legacy decrypted secret keys from sessionStorage when locking the vault or logging out.
  */
 export function clearSessionSecretKey(userId?: string): void {
   if (typeof window === "undefined" || !window.sessionStorage) return

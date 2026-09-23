@@ -1,164 +1,186 @@
 /**
- * IRIS Pass — IndexedDB Storage Engine
+ * IRIS Pass — Resilient Multi-Tier Storage Engine
  * Stores sensitive credentials, encrypted ciphers, PIN unlock metadata, and session tokens
- * in an isolated IndexedDB database under the extension's privileged origin.
+ * in browser.storage.local under the extension's privileged origin.
+ *
+ * Fully compatible with standard and Firefox Private Browsing windows without SecurityError.
  * Web pages & external scripts have zero access to this storage.
  */
 
-; (function (root) {
-  const DB_NAME = "iris_pass_db"
-  const DB_VERSION = 1
-  const STORE_NAME = "vault_store"
+;(function (root) {
+  const ext = typeof browser !== "undefined" ? browser : typeof chrome !== "undefined" ? chrome : null
+  const memoryCache = new Map()
+  let hasMigratedFromIndexedDB = false
 
-  let dbPromise = null
+  /**
+   * Helper to attempt one-time legacy IndexedDB migration to browser.storage.local
+   */
+  async function checkAndMigrateLegacyIndexedDB() {
+    if (hasMigratedFromIndexedDB) return
+    hasMigratedFromIndexedDB = true
 
-  function getDB() {
-    if (dbPromise) return dbPromise
+    if (typeof indexedDB === "undefined") return
+    try {
+      const DB_NAME = "iris_pass_db"
+      const STORE_NAME = "vault_store"
 
-    dbPromise = new Promise((resolve, reject) => {
-      if (typeof indexedDB === "undefined") {
-        reject(new Error("IndexedDB is not available in this environment"))
-        return
-      }
-
-      const request = indexedDB.open(DB_NAME, DB_VERSION)
-
-      request.onupgradeneeded = (event) => {
-        const db = event.target.result
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          db.createObjectStore(STORE_NAME, { keyPath: "key" })
+      await new Promise((resolve) => {
+        let req
+        try {
+          req = indexedDB.open(DB_NAME, 1)
+        } catch {
+          return resolve()
         }
-      }
 
-      request.onsuccess = (event) => {
-        const db = event.target.result
-        db.onversionchange = () => {
-          db.close()
-          dbPromise = null
+        req.onerror = () => resolve()
+        req.onsuccess = (e) => {
+          try {
+            const db = e.target.result
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+              db.close()
+              return resolve()
+            }
+
+            const tx = db.transaction(STORE_NAME, "readonly")
+            const store = tx.objectStore(STORE_NAME)
+            const getAllReq = store.getAll()
+
+            getAllReq.onsuccess = async () => {
+              const rows = getAllReq.result || []
+              if (rows.length > 0 && ext?.storage?.local) {
+                const migrated = {}
+                for (const row of rows) {
+                  if (row && row.key && row.value !== undefined) {
+                    migrated[row.key] = row.value
+                  }
+                }
+                try {
+                  await ext.storage.local.set(migrated)
+                  console.log(`[IRIS Storage] Successfully migrated ${rows.length} records from IndexedDB to browser.storage.local`)
+                } catch (saveErr) {
+                  console.warn("[IRIS Storage] Migration save error:", saveErr)
+                }
+              }
+              db.close()
+              resolve()
+            }
+            getAllReq.onerror = () => {
+              db.close()
+              resolve()
+            }
+          } catch {
+            resolve()
+          }
         }
-        resolve(db)
-      }
-
-      request.onerror = (event) => {
-        console.error("[IRIS Storage] IndexedDB open error:", event.target.error)
-        reject(event.target.error)
-      }
-    })
-
-    return dbPromise
+      })
+    } catch {
+      // Ignore migration errors in private or restricted contexts
+    }
   }
+
+  // Trigger migration in background
+  checkAndMigrateLegacyIndexedDB().catch(() => {})
 
   const IrisStorage = {
     /**
-     * Get one, multiple, or all values from IndexedDB
+     * Get one, multiple, or all values from persistent storage
      * @param {string|string[]|null} [keys]
      * @returns {Promise<Record<string, any>>}
      */
     async get(keys) {
-      const db = await getDB()
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME, "readonly")
-        const store = tx.objectStore(STORE_NAME)
-        const result = {}
-
-        if (!keys) {
-          // Get all records
-          const req = store.getAll()
-          req.onsuccess = () => {
-            const rows = req.result || []
-            for (const row of rows) {
-              result[row.key] = row.value
-            }
-            resolve(result)
+      // 1. Try browser.storage.local (Primary Engine)
+      if (ext?.storage?.local) {
+        try {
+          if (!keys) {
+            const data = await ext.storage.local.get(null)
+            return data || {}
           }
-          req.onerror = () => reject(req.error)
-          return
+          const keyList = Array.isArray(keys) ? keys : [keys]
+          if (keyList.length === 0) return {}
+          const data = await ext.storage.local.get(keyList)
+          return data || {}
+        } catch (err) {
+          console.warn("[IRIS Storage] storage.local.get error, falling back to memory:", err)
         }
+      }
 
-        const keyList = Array.isArray(keys) ? keys : [keys]
-        if (keyList.length === 0) {
-          resolve({})
-          return
+      // 2. Fallback to in-memory cache
+      const result = {}
+      if (!keys) {
+        memoryCache.forEach((val, k) => {
+          result[k] = val
+        })
+        return result
+      }
+      const keyList = Array.isArray(keys) ? keys : [keys]
+      for (const k of keyList) {
+        if (memoryCache.has(k)) {
+          result[k] = memoryCache.get(k)
         }
-
-        let completed = 0
-        for (const k of keyList) {
-          const req = store.get(k)
-          req.onsuccess = () => {
-            if (req.result && req.result.value !== undefined) {
-              result[k] = req.result.value
-            }
-            completed++
-            if (completed === keyList.length) {
-              resolve(result)
-            }
-          }
-          req.onerror = () => {
-            completed++
-            if (completed === keyList.length) {
-              resolve(result)
-            }
-          }
-        }
-      })
+      }
+      return result
     },
 
     /**
-     * Set one or multiple key-value pairs into IndexedDB
+     * Set one or multiple key-value pairs into persistent storage
      * @param {Record<string, any>} items
      * @returns {Promise<void>}
      */
     async set(items) {
       if (!items || typeof items !== "object") return
-      const db = await getDB()
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME, "readwrite")
-        const store = tx.objectStore(STORE_NAME)
 
-        tx.oncomplete = () => resolve()
-        tx.onerror = () => reject(tx.error)
+      // Update in-memory mirror
+      for (const [k, v] of Object.entries(items)) {
+        memoryCache.set(k, v)
+      }
 
-        for (const [key, value] of Object.entries(items)) {
-          store.put({ key, value })
+      if (ext?.storage?.local) {
+        try {
+          await ext.storage.local.set(items)
+          return
+        } catch (err) {
+          console.warn("[IRIS Storage] storage.local.set error:", err)
         }
-      })
+      }
     },
 
     /**
-     * Remove one or multiple keys from IndexedDB
+     * Remove one or multiple keys from storage
      * @param {string|string[]} keys
      * @returns {Promise<void>}
      */
     async remove(keys) {
       if (!keys) return
-      const db = await getDB()
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME, "readwrite")
-        const store = tx.objectStore(STORE_NAME)
+      const keyList = Array.isArray(keys) ? keys : [keys]
 
-        tx.oncomplete = () => resolve()
-        tx.onerror = () => reject(tx.error)
+      for (const k of keyList) {
+        memoryCache.delete(k)
+      }
 
-        const keyList = Array.isArray(keys) ? keys : [keys]
-        for (const k of keyList) {
-          store.delete(k)
+      if (ext?.storage?.local) {
+        try {
+          await ext.storage.local.remove(keyList)
+          return
+        } catch (err) {
+          console.warn("[IRIS Storage] storage.local.remove error:", err)
         }
-      })
+      }
     },
 
     /**
-     * Clear all records in the vault store
+     * Clear all records in storage
      * @returns {Promise<void>}
      */
     async clear() {
-      const db = await getDB()
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME, "readwrite")
-        const store = tx.objectStore(STORE_NAME)
-        const req = store.clear()
-        req.onsuccess = () => resolve()
-        req.onerror = () => reject(req.error)
-      })
+      memoryCache.clear()
+      if (ext?.storage?.local) {
+        try {
+          await ext.storage.local.clear()
+          return
+        } catch (err) {
+          console.warn("[IRIS Storage] storage.local.clear error:", err)
+        }
+      }
     },
   }
 

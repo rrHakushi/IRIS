@@ -24,6 +24,7 @@ export default defineRoute({
               externalId: t.Nullable(t.String()),
               displayName: t.Nullable(t.String()),
               avatarUrl: t.Nullable(t.String()),
+              iconUrl: t.Optional(t.Nullable(t.String())),
               profileUrl: t.Nullable(t.String()),
               status: t.String(),
               errorMessage: t.Nullable(t.String()),
@@ -62,22 +63,33 @@ export default defineRoute({
 
       return {
         success: true,
-        connections: connections.map((conn) => ({
-          id: conn.id,
-          provider: conn.provider,
-          authType: conn.authType,
-          externalId: conn.externalId,
-          displayName: conn.displayName,
-          avatarUrl: conn.avatarUrl,
-          profileUrl: conn.profileUrl,
-          status: conn.status,
-          errorMessage: conn.errorMessage,
-          settings: conn.settings,
-          lastSyncedAt: conn.lastSyncedAt?.toISOString() || null,
-          expiresAt: conn.expiresAt?.toISOString() || null,
-          createdAt: conn.createdAt.toISOString(),
-          updatedAt: conn.updatedAt.toISOString(),
-        })),
+        connections: connections.map((conn) => {
+          let iconUrl: string | null = null
+          try {
+            const adapter = getConnectionAdapter(conn.provider as ConnectionProvider)
+            iconUrl = adapter.iconUrl || null
+          } catch {
+            // ignore
+          }
+
+          return {
+            id: conn.id,
+            provider: conn.provider,
+            authType: conn.authType,
+            externalId: conn.externalId,
+            displayName: conn.displayName,
+            avatarUrl: conn.avatarUrl,
+            iconUrl,
+            profileUrl: conn.profileUrl,
+            status: conn.status,
+            errorMessage: conn.errorMessage,
+            settings: conn.settings,
+            lastSyncedAt: conn.lastSyncedAt?.toISOString() || null,
+            expiresAt: conn.expiresAt?.toISOString() || null,
+            createdAt: conn.createdAt.toISOString(),
+            updatedAt: conn.updatedAt.toISOString(),
+          }
+        }),
       }
     },
   },

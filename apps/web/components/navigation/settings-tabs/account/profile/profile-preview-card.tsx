@@ -10,11 +10,18 @@ import {
 } from "@workspace/ui/components/avatar"
 import { Badge } from "@workspace/ui/components/badge"
 import { Popover, PopoverTrigger } from "@workspace/ui/components/popover"
-import { IconCrown } from "@tabler/icons-react"
+import { Tooltip, TooltipTrigger } from "@workspace/ui/components/tooltip"
+import {
+  IconCrown,
+  IconSparkles,
+  IconExternalLink,
+  IconQuote,
+} from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import {
   getDisplayNameStyleCss,
   getDisplayNameEffectClasses,
+  getBadgeById,
   type UserProfileCustomization,
 } from "@IRIS/shared"
 import {
@@ -24,6 +31,8 @@ import {
 import { renderBioMarkdown } from "./markdown-bio-editor"
 import { IrisSidebarUserCard } from "../../../iris-sidebar-user-card"
 import { UserPreviewModal } from "../../../user-preview-modal"
+import { SocialFaviconIcon, getDomainFromUrl } from "./social-links-card"
+import { renderBadgeIcon } from "./badge-showcase-card"
 
 export interface ProfilePreviewCardProps {
   profile: UserProfileCustomization
@@ -78,6 +87,9 @@ export function ProfilePreviewCard({
     }
   }
 
+  const spotlight = profile.pinnedSpotlight
+  const showcaseBadgeIds = profile.showcaseBadgeIds || []
+
   return (
     <div
       className={cn(
@@ -94,6 +106,17 @@ export function ProfilePreviewCard({
           <span className="text-xs font-bold text-foreground">
             {t("preview")}
           </span>
+          {profile.accentColor && (
+            <div className="flex items-center gap-1.5">
+              <span
+                className="size-2.5 rounded-full border border-white/40 shadow-xs"
+                style={{ backgroundColor: profile.accentColor }}
+              />
+              <span className="font-mono text-[10px] text-muted-foreground uppercase">
+                {profile.accentColor}
+              </span>
+            </div>
+          )}
         </div>
       )}
 
@@ -108,8 +131,11 @@ export function ProfilePreviewCard({
               : "rounded-2xl border border-border/60 shadow-sm"
           )}
         >
-          {/* Banner Header with fixed aspect ratio */}
-          <div className="relative aspect-[16/7] w-full overflow-hidden bg-linear-to-r from-primary/30 via-primary/10 to-muted/50">
+          {/* Banner Header: Fixed aspect 16:5.5 matching cropper modal */}
+          <div
+            className="relative w-full overflow-hidden bg-linear-to-r from-primary/30 via-primary/10 to-muted/50 min-h-[90px]"
+            style={{ aspectRatio: "16 / 5.5" }}
+          >
             {profile.bannerUrl ? (
               <Image
                 src={profile.bannerUrl}
@@ -126,55 +152,76 @@ export function ProfilePreviewCard({
                 </span>
               </div>
             )}
+
+            {/* Custom Transparent Banner Overlay Asset */}
+            {profile.bannerOverlayUrl && (
+              <div className="pointer-events-none absolute inset-0 z-1 select-none">
+                <Image
+                  src={profile.bannerOverlayUrl}
+                  alt="Banner Overlay"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 340px"
+                  unoptimized
+                  className="object-cover"
+                />
+              </div>
+            )}
+
             {/* Dark subtle gradient overlay */}
-            <div className="absolute inset-0 bg-linear-to-t from-card via-card/20 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-card via-card/20 to-transparent pointer-events-none" />
           </div>
 
           {/* Profile Avatar & Info section */}
           <div className="relative flex flex-1 flex-col px-4 pt-0 pb-4">
             {/* Floating Avatar with Frame and Status Speech Bubble */}
-            <div className="-mt-10 mb-3 flex items-end justify-between gap-2">
+            <div className="-mt-8 mb-2 flex items-end justify-between gap-2">
               <div className="flex min-w-0 items-end gap-2.5">
                 {/* Clickable Avatar opening UserPreviewModal */}
                 <button
                   type="button"
                   onClick={handleOpenPreviewModal}
-                  className="group relative flex shrink-0 cursor-pointer items-center justify-center rounded-full transition-transform hover:scale-105 focus:outline-hidden active:scale-95"
+                  className="group relative size-16 shrink-0 cursor-pointer items-center justify-center rounded-full transition-transform hover:scale-105 focus:outline-hidden active:scale-95"
                   title={`View ${nameToShow}'s preview`}
                 >
-                  <Avatar className="size-20 border-2 border-card bg-background shadow-md">
+                  <Avatar className="size-full border-2 border-card bg-background shadow-md">
                     {profile.avatarUrl ? (
                       <AvatarImage src={profile.avatarUrl} alt={nameToShow} />
                     ) : null}
-                    <AvatarFallback className="bg-primary/15 text-xl font-black text-primary uppercase">
+                    <AvatarFallback className="bg-primary/15 text-base font-black text-primary uppercase">
                       {initial}
                     </AvatarFallback>
                   </Avatar>
                   {hasValidFrame && (
-                    <div className="pointer-events-none absolute -inset-3 z-10 size-26 max-w-none select-none">
+                    <div
+                      className="pointer-events-none absolute z-10 select-none"
+                      style={{
+                        width: "130%",
+                        height: "130%",
+                        top: "-15%",
+                        left: "-15%",
+                      }}
+                    >
                       <Image
                         src={profile.avatarFrame!}
                         alt="Avatar Frame"
                         fill
-                        sizes="104px"
+                        sizes="84px"
                         unoptimized
                         loading="eager"
                         priority
-                        className="object-contain"
+                        className="size-full object-contain"
                       />
                     </div>
                   )}
                 </button>
 
-                {/* Status Message Speech Bubble (Discord-style next to avatar, up to 2 lines) */}
+                {/* Status Message Speech Bubble */}
                 {profile.statusText && (
                   <div className="relative mb-2.5 flex max-w-[210px] min-w-0 flex-1 items-center">
-                    {/* Speech bubble tail dots */}
                     <div className="flex shrink-0 items-center gap-0.5 pe-1 select-none">
                       <span className="size-1 rounded-full bg-border/80" />
                       <span className="size-1.5 rounded-full bg-border/90" />
                     </div>
-                    {/* Speech bubble body */}
                     <div
                       className="line-clamp-2 rounded-2xl border border-border/70 bg-secondary/90 px-3 py-1.5 text-xs leading-snug font-semibold break-words text-foreground shadow-xs backdrop-blur-xs"
                       title={profile.statusText}
@@ -186,7 +233,7 @@ export function ProfilePreviewCard({
               </div>
             </div>
 
-            {/* Display Name & Username & Pronouns (Clickable to open UserPreviewModal) */}
+            {/* Display Name & Username & Pronouns */}
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
                 <button
@@ -215,9 +262,49 @@ export function ProfilePreviewCard({
                 @{username}
               </button>
 
-              {/* Badges row under username */}
+              {/* Showcased Badges Strip (Up to 10 badges) */}
+              {showcaseBadgeIds.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-2">
+                  {showcaseBadgeIds.slice(0, 10).map((id) => {
+                    const badge = getBadgeById(id)
+                    if (!badge) return null
+                    return (
+                      <TooltipTrigger key={badge.id} delay={150}>
+                        <button
+                          type="button"
+                          aria-label={badge.name}
+                          className="group relative flex size-6.5 shrink-0 items-center justify-center rounded-lg border bg-card/80 shadow-2xs backdrop-blur-xs transition-all hover:scale-110 cursor-help focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                          style={{
+                            borderColor: `${badge.color}60`,
+                            backgroundColor: `${badge.color}15`,
+                            color: badge.color,
+                          }}
+                        >
+                          {renderBadgeIcon(badge.icon, "size-3.5")}
+                        </button>
+                        <Tooltip className="flex flex-col gap-0.5 rounded-xl border border-border/60 bg-popover px-2.5 py-1.5 text-start shadow-xl backdrop-blur-md">
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className="size-2 rounded-full"
+                              style={{ backgroundColor: badge.color }}
+                            />
+                            <span className="text-xs font-bold text-popover-foreground">
+                              {badge.name}
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-muted-foreground">
+                            {badge.description}
+                          </span>
+                        </Tooltip>
+                      </TooltipTrigger>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* List Owner Badge if applicable */}
               {isOwner && (
-                <div className="flex flex-wrap items-center gap-1.5 pt-1.5">
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
                   <Badge
                     variant="outline"
                     className="h-5 gap-0.5 border-amber-500/40 bg-amber-500/10 px-1.5 text-[9px] font-bold text-amber-400"
@@ -229,12 +316,85 @@ export function ProfilePreviewCard({
               )}
             </div>
 
-            {/* Bio Section (Expanded for taller profile card) */}
-            <div className="mt-4 flex flex-1 flex-col border-t border-border/40 pt-3">
-              <div className="mb-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
+            {/* Social Links Row with Favicons */}
+            {profile.socialLinks && profile.socialLinks.length > 0 && (
+              <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-border/40 pt-2.5">
+                {profile.socialLinks.map((link, idx) => (
+                  <a
+                    key={idx}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-muted/20 px-2 py-1 text-[11px] font-medium text-foreground transition-all hover:border-primary/40 hover:bg-muted/50"
+                  >
+                    <SocialFaviconIcon url={link.url} className="size-3" />
+                    <span className="max-w-[120px] truncate">
+                      {link.label || getDomainFromUrl(link.url)}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {/* Spotlight Showcase Preview */}
+            {spotlight && (spotlight.title || spotlight.customNote) && (
+              <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 p-2.5">
+                <div className="flex items-center justify-between gap-1 pb-1 text-[10px] font-bold uppercase text-primary">
+                  <span className="flex items-center gap-1">
+                    <IconSparkles className="size-3 text-primary" />
+                    Spotlight
+                  </span>
+                  {spotlight.mediaType && (
+                    <Badge
+                      variant="secondary"
+                      className="h-4 px-1 text-[9px] font-bold uppercase"
+                    >
+                      {spotlight.mediaType}
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  {spotlight.imageUrl && (
+                    <div className="relative size-10 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted/40 shadow-2xs">
+                      <Image
+                        src={spotlight.imageUrl}
+                        alt={spotlight.title || "Spotlight item"}
+                        fill
+                        sizes="40px"
+                        unoptimized
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    {spotlight.title && (
+                      <h6 className="font-heading text-xs font-bold text-foreground truncate">
+                        {spotlight.title}
+                      </h6>
+                    )}
+                    {spotlight.subtitle && (
+                      <p className="text-[10px] text-muted-foreground truncate">
+                        {spotlight.subtitle}
+                      </p>
+                    )}
+                    {spotlight.customNote && (
+                      <p className="mt-0.5 text-[10px] italic text-primary/80 line-clamp-1">
+                        &ldquo;{spotlight.customNote}&rdquo;
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Bio Section */}
+            <div className="mt-3 flex flex-1 flex-col border-t border-border/40 pt-2.5">
+              <div className="mb-1 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                 {t("aboutMe")}
               </div>
-              <div className="max-h-44 min-h-[110px] flex-1 overflow-y-auto rounded-xl border border-border/30 bg-muted/20 p-2.5 text-xs leading-relaxed">
+              <div className="max-h-36 min-h-[80px] flex-1 overflow-y-auto rounded-xl border border-border/30 bg-muted/20 p-2.5 text-xs leading-relaxed">
                 {renderBioMarkdown(profile.bio || "", t("noBio"))}
               </div>
             </div>

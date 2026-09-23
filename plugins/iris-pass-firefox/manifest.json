@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "IRIS Pass",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "Password manager extension for IRIS.",
   "browser_specific_settings": {
     "gecko": {
@@ -18,10 +18,12 @@
     "activeTab",
     "tabs",
     "storage",
+    "privacy",
     "scripting",
     "clipboardWrite",
     "notifications"
   ],
+  "incognito": "spanning",
   "host_permissions": [
     "<all_urls>"
   ],

@@ -65,7 +65,22 @@ export function matchUri(
   }
 
   if (matchType === "STARTS_WITH") {
-    return cleanTarget.startsWith(cleanItem)
+    const lowerTarget = cleanTarget.toLowerCase()
+    const lowerItem = cleanItem.toLowerCase()
+    if (!lowerTarget.startsWith(lowerItem)) return false
+    if (lowerTarget.length === lowerItem.length) return true
+    const nextChar = lowerTarget[lowerItem.length]
+    if (lowerItem.endsWith("/") || ["/", "?", "#", ":"].includes(nextChar || "")) {
+      return true
+    }
+    // Check hostname boundary
+    try {
+      const itemHost = new URL(lowerItem.includes("://") ? lowerItem : `https://${lowerItem}`).hostname
+      const targetHost = new URL(lowerTarget.includes("://") ? lowerTarget : `https://${lowerTarget}`).hostname
+      return targetHost === itemHost || targetHost.endsWith("." + itemHost)
+    } catch {
+      return false
+    }
   }
 
   if (matchType === "REGULAR_EXPRESSION") {
