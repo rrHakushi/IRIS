@@ -1,14 +1,12 @@
 import { defineRoute, t } from "@/router"
 
 export default defineRoute({
-  schema: {
-    params: t.Object({
-      mediaType: t.String(),
-      id: t.Number({ minimum: 1 }),
-    }),
-  },
   GET: {
     schema: {
+      params: t.Object({
+        mediaType: t.String(),
+        id: t.Numeric({ minimum: 1 }),
+      }),
       response: {
         200: t.Object({
           success: t.Boolean(),
@@ -39,7 +37,11 @@ export default defineRoute({
 
       const currentUserId = session.user.id
       const mediaType = params.mediaType.toLowerCase()
-      const mediaId = params.id
+      const mediaId = Number(params.id)
+
+      if (!mediaId || isNaN(mediaId) || mediaId <= 0) {
+        return { success: true, friends: [] }
+      }
 
       // 1. Get current user's friends
       const friends = await prisma.friend.findMany({

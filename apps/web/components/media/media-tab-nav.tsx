@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 import { cn } from "@workspace/ui/lib/utils"
 import type { MediaTabItem, MediaTabKey } from "./media-types"
 
@@ -20,7 +20,6 @@ export function MediaTabNav({
   embedded = false,
   className,
 }: MediaTabNavProps) {
-  const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
@@ -36,7 +35,9 @@ export function MediaTabNav({
 
     const query = params.toString()
     const newUrl = query ? `${pathname}?${query}` : pathname
-    router.replace(newUrl, { scroll: false })
+    if (typeof window !== "undefined") {
+      window.history.replaceState({}, "", newUrl)
+    }
   }
 
   const navContent = (

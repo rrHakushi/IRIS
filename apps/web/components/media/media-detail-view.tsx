@@ -41,7 +41,18 @@ export function MediaDetailView({
 
   const [activeTab, setActiveTab] = useState<MediaTabKey>(initialTabFromUrl)
 
-  // Keep state in sync with URL searchParams (e.g. on browser back/forward)
+  // Keep state in sync with URL searchParams and browser history (back/forward)
+  useEffect(() => {
+    const handlePopState = () => {
+      const url = new URL(window.location.href)
+      const tabParam =
+        (url.searchParams.get("tab") as MediaTabKey) || "overview"
+      setActiveTab(tabParam)
+    }
+    window.addEventListener("popstate", handlePopState)
+    return () => window.removeEventListener("popstate", handlePopState)
+  }, [])
+
   useEffect(() => {
     const tabParam = (searchParams.get("tab") as MediaTabKey) || "overview"
     setActiveTab(tabParam)
@@ -212,10 +223,7 @@ export function MediaDetailView({
         {validActiveTab === "stats" && <StatsTab media={media} />}
 
         {validActiveTab === "friends" && (
-          <FriendsMediaTab
-            mediaCategory={media.category}
-            mediaId={media.id}
-          />
+          <FriendsMediaTab mediaCategory={media.category} mediaId={media.id} />
         )}
 
         {validActiveTab === "reviews" && <EmptyTab type="reviews" />}

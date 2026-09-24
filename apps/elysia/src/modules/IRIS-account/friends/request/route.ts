@@ -26,7 +26,9 @@ export default defineRoute({
     },
     async handler({ session, body, prisma }) {
       if (!session.isAuthenticated || !session.user) {
-        throw new Unauthorized("You must be logged in to send a friend request.")
+        throw new Unauthorized(
+          "You must be logged in to send a friend request."
+        )
       }
 
       const senderId = session.user.id
@@ -71,7 +73,9 @@ export default defineRoute({
       })
 
       if (alreadyFriends) {
-        throw new Conflict(`You are already friends with @${targetUser.username}.`)
+        throw new Conflict(
+          `You are already friends with @${targetUser.username}.`
+        )
       }
 
       // Upsert friend request
@@ -122,9 +126,7 @@ export default defineRoute({
           },
           content: {
             title: `Friend request from @${session.user.username}`,
-            body: reqMessage
-              ? `"${reqMessage}" — @${session.user.username} (${senderDisplayName}) sent you a friend request.`
-              : `@${session.user.username} (${senderDisplayName}) sent you a friend request.`,
+            body: reqMessage ? `"${reqMessage}"` : "Sent you a friend request.",
             icon: customization.avatarUrl ?? undefined,
             link: `/IRIS-account/users/${session.user.username}`,
             actionConfirm: {
