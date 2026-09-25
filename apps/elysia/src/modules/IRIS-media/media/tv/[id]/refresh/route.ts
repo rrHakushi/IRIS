@@ -45,7 +45,7 @@ export default defineRoute({
 
   POST: {
     requirePermissions: [IRISFlags.ADMINISTRATOR],
-    async handler({ params, body, prisma }) {
+    async handler({ params, body, prisma, cache }) {
       const tv = await prisma.tv.findUnique({ where: { id: params.id } })
       if (!tv) {
         throw new NotFound("TV show not found")
@@ -54,6 +54,8 @@ export default defineRoute({
       if (!tv.tvDBId) {
         throw new BadRequest("TV show is missing tvDBId")
       }
+
+      await cache.del(`tv:${params.id}`).catch(() => {})
 
       const queued = await queueTvFetch(tv.tvDBId, {
         forceRefresh: body?.force,

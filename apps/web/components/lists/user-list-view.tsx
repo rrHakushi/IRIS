@@ -630,44 +630,32 @@ export function UserListView({
           return null
         }
         if (mediaType === "anime") {
+          const isOngoing =
+            (item.media as any)?.status === "RELEASING" ||
+            !(item.media as any)?.episodeCount
+          if (isOngoing) {
+            return null
+          }
           if (
             typeof (item.media as any).episodeCount === "number" &&
             (item.media as any).episodeCount > 0
           ) {
             return (item.media as any).episodeCount
-          }
-          if (
-            Array.isArray((item.media as any).episodes) &&
-            (item.media as any).episodes.length > 0
-          ) {
-            return (item.media as any).episodes.length
-          }
-          if (
-            typeof (item.media as any).episodes === "number" &&
-            (item.media as any).episodes > 0
-          ) {
-            return (item.media as any).episodes
           }
           return null
         }
         if (mediaType === "tv") {
+          const isOngoing =
+            (item.media as any)?.status === "RETURNING_SERIES" ||
+            !(item.media as any)?.episodeCount
+          if (isOngoing) {
+            return null
+          }
           if (
             typeof (item.media as any).episodeCount === "number" &&
             (item.media as any).episodeCount > 0
           ) {
             return (item.media as any).episodeCount
-          }
-          if (
-            Array.isArray((item.media as any).episodes) &&
-            (item.media as any).episodes.length > 0
-          ) {
-            return (item.media as any).episodes.length
-          }
-          if (
-            typeof (item.media as any).episodes === "number" &&
-            (item.media as any).episodes > 0
-          ) {
-            return (item.media as any).episodes
           }
           return null
         }

@@ -2028,12 +2028,17 @@ export class MediaDbSyncer {
       scheduleMap.size > 0 ? Math.max(...Array.from(scheduleMap.keys())) : 0
     const maxMalEp =
       malEpMap.size > 0 ? Math.max(...Array.from(malEpMap.keys())) : 0
-    const totalEpisodes =
-      al.episodes ||
-      mal?.num_episodes ||
-      maxSchedEp ||
-      maxMalEp ||
-      (al.streamingEpisodes?.length ?? 0)
+    const nextAiringMax = al.nextAiringEpisode?.episode
+      ? al.nextAiringEpisode.episode - 1
+      : 0
+    const totalEpisodes = Math.max(
+      al.episodes ?? 0,
+      mal?.num_episodes ?? 0,
+      maxSchedEp,
+      maxMalEp,
+      nextAiringMax,
+      al.streamingEpisodes?.length ?? 0
+    )
 
     const streamingMap = new Map<
       number,
@@ -2054,9 +2059,18 @@ export class MediaDbSyncer {
         const malEp = malEpMap.get(epNum)
         const streamInfo = streamingMap.get(epNum)
         const sched = scheduleMap.get(epNum)
+        const nextAiringDiff =
+          al.nextAiringEpisode && epNum < al.nextAiringEpisode.episode
+            ? new Date(
+                al.nextAiringEpisode.airingAt * 1000 -
+                  (al.nextAiringEpisode.episode - epNum) * 7 * 24 * 60 * 60 * 1000
+              )
+            : undefined
+
         const airDate =
           malEp?.airDate ||
           sched?.airingAt ||
+          nextAiringDiff ||
           (epNum === 1 &&
           al.startDate?.year &&
           al.startDate?.month &&

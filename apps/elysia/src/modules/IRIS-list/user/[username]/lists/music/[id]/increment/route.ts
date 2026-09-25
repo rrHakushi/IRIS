@@ -9,6 +9,41 @@ import { NotFound } from "@/utils/errors"
 import { MusicListStatus } from "@IRIS/database"
 import { recordMediaListActivity } from "@/services/activity.service.js"
 
+const MusicEntryResponseSchema = t.Object({
+  id: t.Number(),
+  musicId: t.Number(),
+  albumId: t.Nullable(t.Number()),
+  trackId: t.Nullable(t.Number()),
+  itemType: t.String(),
+  status: t.String(),
+  score: t.Nullable(t.Number()),
+  progress: t.Number(),
+  playCount: t.Number(),
+  notes: t.Nullable(t.String()),
+  private: t.Boolean(),
+  startedAt: t.Nullable(t.String()),
+  completedAt: t.Nullable(t.String()),
+  connections: t.Optional(t.Any()),
+  createdAt: t.String(),
+  updatedAt: t.String(),
+})
+
+const MusicIncrementBodySchema = t.Optional(
+  t.Object({
+    count: t.Optional(t.Number({ default: 1, minimum: 1 })),
+    status: t.Optional(
+      t.Union([
+        t.Literal("PLANNING"),
+        t.Literal("LISTENING"),
+        t.Literal("COMPLETED"),
+        t.Literal("ON_HOLD"),
+        t.Literal("DROPPED"),
+      ])
+    ),
+    connections: t.Optional(t.Any()),
+  })
+)
+
 export default defineRoute({
   schema: {
     params: t.Object({
@@ -20,18 +55,12 @@ export default defineRoute({
         type: t.Optional(t.Union([t.Literal("TRACK"), t.Literal("ALBUM")])),
       })
     ),
-    body: IncrementBodySchema,
+    body: MusicIncrementBodySchema,
     response: {
       200: t.Object({
         success: t.Boolean(),
         message: t.String(),
-        entry: t.Object({
-          id: t.Number(),
-          musicId: t.Number(),
-          itemType: t.String(),
-          status: t.String(),
-          playCount: t.Number(),
-        }),
+        entry: MusicEntryResponseSchema,
       }),
     },
     detail: {
@@ -79,7 +108,9 @@ export default defineRoute({
     const currentPlayCount = existing ? existing.playCount : 0
     const newPlayCount = currentPlayCount + count
     let newStatus: MusicListStatus =
-      (existing?.status as MusicListStatus) ?? "LISTENING"
+      (body as any)?.status ??
+      (existing?.status as MusicListStatus) ??
+      "LISTENING"
 
     if (newStatus === "PLANNING") {
       newStatus = "LISTENING"
@@ -97,10 +128,15 @@ export default defineRoute({
         musicId: id,
         status: newStatus,
         playCount: newPlayCount,
+        startedAt: new Date(),
+        connections: (body as any)?.connections ?? null,
       },
       update: {
         playCount: newPlayCount,
         status: newStatus,
+        ...((body as any)?.connections !== undefined
+          ? { connections: (body as any).connections }
+          : {}),
       },
     })
 
@@ -127,9 +163,22 @@ export default defineRoute({
       entry: {
         id: result.id,
         musicId: id,
+        albumId: music.type === "ALBUM" ? id : null,
+        trackId: music.type === "TRACK" ? id : null,
         itemType: music.type,
         status: result.status,
+        score: result.score ?? null,
+        progress: result.playCount,
         playCount: result.playCount,
+        notes: result.notes ?? null,
+        private: result.private ?? false,
+        startedAt: result.startedAt ? result.startedAt.toISOString() : null,
+        completedAt: result.completedAt
+          ? result.completedAt.toISOString()
+          : null,
+        connections: result.connections,
+        createdAt: result.createdAt.toISOString(),
+        updatedAt: result.updatedAt.toISOString(),
       },
     }
   },

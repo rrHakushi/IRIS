@@ -90,24 +90,6 @@ export default defineRoute({
         tags: ["Lists - Anime"],
       },
     },
-    PATCH: {
-      params: t.Object({
-        username: t.String(),
-        id: t.Number({ minimum: 1, description: "Anime ID" }),
-      }),
-      body: AnimeMutationBodySchema,
-      response: {
-        200: t.Object({
-          success: t.Boolean(),
-          message: t.String(),
-          entry: AnimeEntryResponseSchema,
-        }),
-      },
-      detail: {
-        summary: "Partially update anime list entry by anime ID",
-        tags: ["Lists - Anime"],
-      },
-    },
     DELETE: {
       params: t.Object({
         username: t.String(),
@@ -194,6 +176,7 @@ export default defineRoute({
       select: {
         id: true,
         episodeCount: true,
+        status: true,
         titlePrimary: true,
         titleSecondary: true,
         coverImage: true,
@@ -229,9 +212,13 @@ export default defineRoute({
       select: { id: true, progress: true, score: true, status: true },
     })
 
+    const isOngoing =
+      animeExists.status === "RELEASING" || !animeExists.episodeCount
+
     let targetProgress =
       payload.progress !== undefined ? payload.progress : existing?.progress
     if (
+      !isOngoing &&
       animeExists.episodeCount &&
       animeExists.episodeCount > 0 &&
       targetProgress !== undefined &&
@@ -261,7 +248,7 @@ export default defineRoute({
 
     const createProgress =
       payload.progress !== undefined
-        ? animeExists.episodeCount && animeExists.episodeCount > 0
+        ? !isOngoing && animeExists.episodeCount && animeExists.episodeCount > 0
           ? Math.min(payload.progress, animeExists.episodeCount)
           : payload.progress
         : 0
@@ -312,178 +299,6 @@ export default defineRoute({
           completedAt: result.completedAt,
         },
         connections: connectionsToSync,
-        prisma,
-      })
-    }
-
-    recordEntryMutationActivity({
-      userId: dbUser.id,
-      mediaType: "ANIME",
-      mediaId: id,
-      media: animeExists,
-      existing,
-      result,
-      payload,
-    })
-
-    return {
-      success: true,
-      message: "Anime list entry updated successfully",
-      entry: {
-        id: result.id,
-        animeId: result.animeId,
-        status: result.status,
-        progress: result.progress,
-        score: result.score,
-        notes: result.notes,
-        rewatched: result.rewatched,
-        private: result.private,
-        startedAt: result.startedAt ? result.startedAt.toISOString() : null,
-        completedAt: result.completedAt
-          ? result.completedAt.toISOString()
-          : null,
-        rewatchHistory: result.rewatchHistory,
-        connections: result.connections,
-        createdAt: result.createdAt.toISOString(),
-        updatedAt: result.updatedAt.toISOString(),
-      },
-    }
-  },
-
-  async PATCH({ params, body, prisma, session }) {
-    requireAuth(session)
-    const { dbUser, isOwner } = await resolveTargetUserAndAccess(
-      prisma,
-      params.username,
-      session
-    )
-    assertIsOwner(isOwner, params.username)
-
-    const id = Number(params.id)
-
-    const animeExists = await prisma.anime.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        episodeCount: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        bannerImage: true,
-        format: true,
-      },
-    })
-    if (!animeExists) {
-      throw new NotFound(`Anime with ID ${id} does not exist`)
-    }
-
-    const payload = (body ?? {}) as any
-    const startedAt =
-      payload.startedAt !== undefined
-        ? payload.startedAt
-          ? new Date(payload.startedAt)
-          : null
-        : undefined
-    const completedAt =
-      payload.completedAt !== undefined
-        ? payload.completedAt
-          ? new Date(payload.completedAt)
-          : null
-        : undefined
-
-    const existing = await prisma.animeList.findUnique({
-      where: {
-        userId_animeId: {
-          userId: dbUser.id,
-          animeId: id,
-        },
-      },
-      select: { id: true, progress: true, score: true, status: true },
-    })
-
-    let targetProgress =
-      payload.progress !== undefined ? payload.progress : existing?.progress
-    if (
-      animeExists.episodeCount &&
-      animeExists.episodeCount > 0 &&
-      targetProgress !== undefined &&
-      targetProgress > animeExists.episodeCount
-    ) {
-      targetProgress = animeExists.episodeCount
-    }
-
-    const upsertData: any = {
-      ...(payload.status ? { status: payload.status as AnimeListStatus } : {}),
-      ...(targetProgress !== undefined ? { progress: targetProgress } : {}),
-      ...(payload.score !== undefined ? { score: payload.score } : {}),
-      ...(payload.notes !== undefined ? { notes: payload.notes } : {}),
-      ...(payload.rewatched !== undefined
-        ? { rewatched: payload.rewatched }
-        : {}),
-      ...(payload.private !== undefined ? { private: payload.private } : {}),
-      ...(startedAt !== undefined ? { startedAt } : {}),
-      ...(completedAt !== undefined ? { completedAt } : {}),
-      ...(payload.rewatchHistory !== undefined
-        ? { rewatchHistory: payload.rewatchHistory }
-        : {}),
-      ...(payload.connections !== undefined
-        ? { connections: payload.connections }
-        : {}),
-    }
-
-    const createProgress =
-      payload.progress !== undefined
-        ? animeExists.episodeCount && animeExists.episodeCount > 0
-          ? Math.min(payload.progress, animeExists.episodeCount)
-          : payload.progress
-        : 0
-
-    const result = await prisma.animeList.upsert({
-      where: {
-        userId_animeId: {
-          userId: dbUser.id,
-          animeId: id,
-        },
-      },
-      create: {
-        userId: dbUser.id,
-        animeId: id,
-        status: payload.status ?? "PLANNING",
-        progress: createProgress,
-        score: payload.score ?? null,
-        notes: payload.notes ?? null,
-        rewatched: payload.rewatched ?? 0,
-        private: payload.private ?? false,
-        startedAt: startedAt ?? null,
-        completedAt: completedAt ?? null,
-        rewatchHistory: payload.rewatchHistory ?? null,
-        connections: payload.connections ?? null,
-      },
-      update: upsertData,
-    })
-
-    const patchConnectionsToSync = payload.connections ?? result.connections
-    if (
-      patchConnectionsToSync &&
-      typeof patchConnectionsToSync === "object" &&
-      Object.keys(patchConnectionsToSync).length > 0
-    ) {
-      await syncConnectionMedia({
-        userId: dbUser.id,
-        username: dbUser.username,
-        animeId: id,
-        animeTitle:
-          animeExists.titlePrimary || animeExists.titleSecondary || "Anime",
-        entry: {
-          status: result.status,
-          progress: result.progress,
-          score: result.score,
-          notes: result.notes,
-          rewatched: result.rewatched,
-          startedAt: result.startedAt,
-          completedAt: result.completedAt,
-        },
-        connections: patchConnectionsToSync,
         prisma,
       })
     }

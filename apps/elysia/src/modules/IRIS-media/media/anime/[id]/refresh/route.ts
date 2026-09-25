@@ -44,7 +44,7 @@ export default defineRoute({
 
   POST: {
     requirePermissions: [IRISFlags.ADMINISTRATOR],
-    async handler({ params, body, prisma }) {
+    async handler({ params, body, prisma, cache }) {
       const anime = await prisma.anime.findUnique({ where: { id: params.id } })
       if (!anime) {
         throw new NotFound("Anime not found")
@@ -53,6 +53,8 @@ export default defineRoute({
       if (!anime.anilistId) {
         throw new BadRequest("Anime is missing anilistId")
       }
+
+      await cache.del(`anime:${params.id}`).catch(() => {})
 
       const queued = await queueAnimeFetch(anime.anilistId, {
         forceRefresh: body?.force,

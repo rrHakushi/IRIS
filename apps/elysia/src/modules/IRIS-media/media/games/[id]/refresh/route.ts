@@ -44,7 +44,7 @@ export default defineRoute({
 
   POST: {
     requirePermissions: [IRISFlags.ADMINISTRATOR],
-    async handler({ params, body, prisma }) {
+    async handler({ params, body, prisma, cache }) {
       const game = await prisma.game.findUnique({ where: { id: params.id } })
       if (!game) {
         throw new NotFound("Game not found")
@@ -53,6 +53,8 @@ export default defineRoute({
       if (!game.igdbId) {
         throw new BadRequest("Game is missing igdbId")
       }
+
+      await cache.del(`game:${params.id}`).catch(() => {})
 
       const queued = await queueGameFetch(game.igdbId, {
         forceRefresh: body?.force,

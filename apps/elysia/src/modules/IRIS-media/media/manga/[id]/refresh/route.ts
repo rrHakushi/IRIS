@@ -44,7 +44,7 @@ export default defineRoute({
 
   POST: {
     requirePermissions: [IRISFlags.ADMINISTRATOR],
-    async handler({ params, body, prisma }) {
+    async handler({ params, body, prisma, cache }) {
       const manga = await prisma.manga.findUnique({ where: { id: params.id } })
       if (!manga) {
         throw new NotFound("Manga not found")
@@ -53,6 +53,8 @@ export default defineRoute({
       if (!manga.anilistId) {
         throw new BadRequest("Manga is missing anilistId")
       }
+
+      await cache.del(`manga:${params.id}`).catch(() => {})
 
       const queued = await queueMangaFetch(manga.anilistId, {
         forceRefresh: body?.force,

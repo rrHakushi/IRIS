@@ -8,6 +8,25 @@ import {
 import { NotFound } from "@/utils/errors"
 import { MangaListStatus } from "@IRIS/database"
 import { recordMediaListActivity } from "@/services/activity.service.js"
+import { syncConnectionMedia } from "@/services/connections/connection-media-sync.service.js"
+
+const MangaEntryResponseSchema = t.Object({
+  id: t.Number(),
+  mangaId: t.Number(),
+  status: t.String(),
+  chaptersProgress: t.Number(),
+  volumesProgress: t.Number(),
+  score: t.Nullable(t.Number()),
+  notes: t.Nullable(t.String()),
+  reread: t.Number(),
+  private: t.Boolean(),
+  startedAt: t.Nullable(t.String()),
+  completedAt: t.Nullable(t.String()),
+  rereadHistory: t.Optional(t.Any()),
+  connections: t.Optional(t.Any()),
+  createdAt: t.String(),
+  updatedAt: t.String(),
+})
 
 const MangaIncrementBodySchema = t.Optional(
   t.Object({
@@ -18,6 +37,15 @@ const MangaIncrementBodySchema = t.Optional(
         t.Literal("VOLUME"),
         t.Literal("chapter"),
         t.Literal("volume"),
+      ])
+    ),
+    status: t.Optional(
+      t.Union([
+        t.Literal("PLANNING"),
+        t.Literal("READING"),
+        t.Literal("COMPLETED"),
+        t.Literal("ON_HOLD"),
+        t.Literal("DROPPED"),
       ])
     ),
     connections: ConnectionsSchema,
@@ -47,14 +75,7 @@ export default defineRoute({
       200: t.Object({
         success: t.Boolean(),
         message: t.String(),
-        entry: t.Object({
-          id: t.Number(),
-          mangaId: t.Number(),
-          status: t.String(),
-          chaptersProgress: t.Number(),
-          volumesProgress: t.Number(),
-          completedAt: t.Nullable(t.String()),
-        }),
+        entry: MangaEntryResponseSchema,
       }),
     },
     detail: {
@@ -79,6 +100,7 @@ export default defineRoute({
       where: { id },
       select: {
         id: true,
+        status: true,
         chapterCount: true,
         volumeCount: true,
         titlePrimary: true,
@@ -105,10 +127,18 @@ export default defineRoute({
       },
     })
 
+    const isOngoing =
+      String((manga as any).status).toUpperCase() === "RELEASING" ||
+      String((manga as any).status).toUpperCase() === "PUBLISHING" ||
+      !manga.chapterCount ||
+      manga.chapterCount <= 0
+
     const currentChapters = existing ? existing.chaptersProgress : 0
     const currentVolumes = existing ? existing.volumesProgress : 0
     let newStatus: MangaListStatus =
-      (existing?.status as MangaListStatus) ?? "READING"
+      (body as any)?.status ??
+      (existing?.status as MangaListStatus) ??
+      "READING"
     let completedAt = existing?.completedAt ?? null
 
     if (newStatus === "PLANNING") {
@@ -139,9 +169,20 @@ export default defineRoute({
             status: clamped!.status,
             chaptersProgress: clamped!.chaptersProgress,
             volumesProgress: clamped!.volumesProgress,
+            score: clamped!.score ?? null,
+            notes: clamped!.notes ?? null,
+            reread: clamped!.reread ?? 0,
+            private: clamped!.private ?? false,
+            startedAt: clamped!.startedAt
+              ? clamped!.startedAt.toISOString()
+              : null,
             completedAt: clamped!.completedAt
               ? clamped!.completedAt.toISOString()
               : null,
+            rereadHistory: (clamped as any)!.rereadHistory ?? null,
+            connections: clamped!.connections,
+            createdAt: clamped!.createdAt.toISOString(),
+            updatedAt: clamped!.updatedAt.toISOString(),
           },
         }
       }
@@ -159,7 +200,9 @@ export default defineRoute({
       }
     } else {
       const maxChapters =
-        manga.chapterCount && manga.chapterCount > 0 ? manga.chapterCount : null
+        !isOngoing && manga.chapterCount && manga.chapterCount > 0
+          ? manga.chapterCount
+          : null
 
       if (maxChapters !== null && currentChapters >= maxChapters) {
         let clamped = existing
@@ -178,9 +221,20 @@ export default defineRoute({
             status: clamped!.status,
             chaptersProgress: clamped!.chaptersProgress,
             volumesProgress: clamped!.volumesProgress,
+            score: clamped!.score ?? null,
+            notes: clamped!.notes ?? null,
+            reread: clamped!.reread ?? 0,
+            private: clamped!.private ?? false,
+            startedAt: clamped!.startedAt
+              ? clamped!.startedAt.toISOString()
+              : null,
             completedAt: clamped!.completedAt
               ? clamped!.completedAt.toISOString()
               : null,
+            rereadHistory: (clamped as any)!.rereadHistory ?? null,
+            connections: clamped!.connections,
+            createdAt: clamped!.createdAt.toISOString(),
+            updatedAt: clamped!.updatedAt.toISOString(),
           },
         }
       }
@@ -211,6 +265,7 @@ export default defineRoute({
         volumesProgress: newVolumes,
         startedAt: new Date(),
         completedAt,
+        connections: (body as any)?.connections ?? null,
       },
       update: {
         status: newStatus,
@@ -218,8 +273,36 @@ export default defineRoute({
         volumesProgress: newVolumes,
         completedAt,
         ...(existing?.status === "PLANNING" ? { startedAt: new Date() } : {}),
+        ...((body as any)?.connections !== undefined
+          ? { connections: (body as any).connections }
+          : {}),
       },
     })
+
+    const connectionsToSync = (body as any)?.connections ?? result.connections
+    if (
+      connectionsToSync &&
+      typeof connectionsToSync === "object" &&
+      Object.keys(connectionsToSync).length > 0
+    ) {
+      await syncConnectionMedia({
+        userId: dbUser.id,
+        username: dbUser.username,
+        mediaId: id,
+        mediaTitle: manga.titlePrimary || manga.titleSecondary || "Manga",
+        entry: {
+          status: result.status,
+          progress: result.chaptersProgress,
+          score: existing?.score ?? null,
+          notes: existing?.notes ?? null,
+          rewatched: existing?.reread ?? 0,
+          startedAt: result.startedAt,
+          completedAt: result.completedAt,
+        },
+        connections: connectionsToSync,
+        prisma,
+      })
+    }
 
     recordMediaListActivity({
       userId: dbUser.id,
@@ -251,9 +334,18 @@ export default defineRoute({
         status: result.status,
         chaptersProgress: result.chaptersProgress,
         volumesProgress: result.volumesProgress,
+        score: result.score ?? null,
+        notes: result.notes ?? null,
+        reread: result.reread ?? 0,
+        private: result.private ?? false,
+        startedAt: result.startedAt ? result.startedAt.toISOString() : null,
         completedAt: result.completedAt
           ? result.completedAt.toISOString()
           : null,
+        rereadHistory: result.rereadHistory,
+        connections: result.connections,
+        createdAt: result.createdAt.toISOString(),
+        updatedAt: result.updatedAt.toISOString(),
       },
     }
   },
