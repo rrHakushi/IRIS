@@ -1,0 +1,270 @@
+<Window x:Class="IrisTracker.Views.LinkGameWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Link Game to Windows Process"
+        Height="720" Width="740"
+        MinHeight="660" MinWidth="700"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResizeWithGrip"
+        Background="{StaticResource BgCanvasBrush}">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="Link Game Process"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       Foreground="{StaticResource TextPrimaryBrush}" />
+            <TextBlock Text="Connect a Windows executable to your IRIS game list entry for automatic time tracking."
+                       FontSize="12"
+                       Foreground="{StaticResource TextMutedBrush}"
+                       Margin="0,4,0,0" />
+        </StackPanel>
+
+        <!-- Main Content (2 Sections) -->
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" MinHeight="220" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Section 1: IRIS Game Selection -->
+            <Border Grid.Row="0"
+                    Background="{StaticResource BgCardBrush}"
+                    BorderBrush="{StaticResource BorderDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="16"
+                    Margin="0,0,0,14">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Text="1. SELECT IRIS GAME ENTRY"
+                               FontSize="11"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource RosePrimaryBrush}"
+                               Margin="0,0,0,10" />
+
+                    <!-- Search Box -->
+                    <Grid Grid.Row="1" Margin="0,0,0,10">
+                        <TextBox x:Name="TxtSearchGame"
+                                 TextChanged="TxtSearchGame_TextChanged" />
+                        <TextBlock x:Name="TxtSearchPlaceholder"
+                                   Text="Search your IRIS games list..."
+                                   FontSize="12"
+                                   Foreground="{StaticResource TextDimBrush}"
+                                   IsHitTestVisible="False"
+                                   Margin="12,9,0,0" />
+                    </Grid>
+
+                    <!-- Games List Container -->
+                    <Grid Grid.Row="2">
+                        <ListBox x:Name="ListGames"
+                                 MinHeight="160"
+                                 Background="#141316"
+                                 BorderBrush="{StaticResource BorderSubtleBrush}"
+                                 BorderThickness="1"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 SelectionChanged="ListGames_SelectionChanged">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Padding" Value="8,6" />
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="itemBorder"
+                                                    Background="{TemplateBinding Background}"
+                                                    CornerRadius="6"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="itemBorder" Property="Background" Value="#26222A" />
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="itemBorder" Property="Background" Value="#351F26" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="4,2,8,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="36" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Cover Thumbnail -->
+                                    <Border Grid.Column="0"
+                                            Width="32" Height="42"
+                                            CornerRadius="4"
+                                            Background="#252128"
+                                            ClipToBounds="True">
+                                        <Image Source="{Binding CoverImage}" Stretch="UniformToFill" />
+                                    </Border>
+
+                                    <!-- Title Info -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,12,0">
+                                        <TextBlock Text="{Binding DisplayTitle}"
+                                                   FontWeight="SemiBold"
+                                                   FontSize="13"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding ReleaseDateYear, StringFormat='Year: {0}'}"
+                                                   FontSize="11"
+                                                   Foreground="{StaticResource TextMutedBrush}" />
+                                    </StackPanel>
+
+                                    <!-- Current Logged Hours Chip -->
+                                    <Border Grid.Column="2"
+                                            Background="#211E24"
+                                            CornerRadius="4"
+                                            Padding="8,3"
+                                            Margin="0,0,6,0"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding ProgressDisplay}"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{StaticResource RosePrimaryBrush}" />
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <TextBlock x:Name="TxtNoGamesFound"
+                                   Text="No matching games found in your IRIS list."
+                                   FontSize="12"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Visibility="Collapsed" />
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- Section 2: Windows Process / Window Selection -->
+            <Border Grid.Row="1"
+                    Background="{StaticResource BgCardBrush}"
+                    BorderBrush="{StaticResource BorderDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="16"
+                    Margin="0,0,0,14">
+                <StackPanel>
+                    <TextBlock Text="2. WINDOWS PROCESS &amp; WINDOW MATCHING (OBS-STYLE)"
+                               FontSize="11"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource RosePrimaryBrush}"
+                               Margin="0,0,0,10" />
+
+                    <!-- Quick Pick from Running Windows -->
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <ComboBox x:Name="CmbRunningWindows"
+                                  Grid.Column="0"
+                                  Height="34"
+                                  DisplayMemberPath="DisplayText"
+                                  SelectionChanged="CmbRunningWindows_SelectionChanged" />
+
+                        <Button x:Name="BtnRefreshWindows"
+                                Grid.Column="1"
+                                Content="Refresh Windows"
+                                Style="{StaticResource SecondaryButton}"
+                                Margin="8,0,0,0"
+                                Click="BtnRefreshWindows_Click" />
+                    </Grid>
+
+                    <!-- Executable Input & Browse -->
+                    <TextBlock Text="Executable Name (e.g. portal2.exe)"
+                               FontSize="11"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               Margin="0,0,0,4" />
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox x:Name="TxtExecutableName"
+                                 Grid.Column="0" />
+
+                        <Button x:Name="BtnBrowseExe"
+                                Grid.Column="1"
+                                Content="Browse .exe..."
+                                Style="{StaticResource SecondaryButton}"
+                                Margin="8,0,0,0"
+                                Click="BtnBrowseExe_Click" />
+                    </Grid>
+
+                    <!-- Window Title Pattern (Optional OBS Rule) -->
+                    <TextBlock Text="Window Title Pattern (Optional: matches title, fallback to executable)"
+                               FontSize="11"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               Margin="0,0,0,4" />
+                    <TextBox x:Name="TxtWindowTitlePattern" />
+                </StackPanel>
+            </Border>
+
+            <!-- Selected Summary Badge -->
+            <Border Grid.Row="2"
+                    Background="#161418"
+                    BorderBrush="{StaticResource BorderSubtleBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="12,8">
+                <TextBlock x:Name="TxtSummary"
+                           Text="Please select an IRIS game entry and executable name above."
+                           FontSize="12"
+                           Foreground="{StaticResource TextMutedBrush}" />
+            </Border>
+        </Grid>
+
+        <!-- Footer Actions -->
+        <StackPanel Grid.Row="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Margin="0,16,0,0">
+            <Button x:Name="BtnCancel"
+                    Content="Cancel"
+                    Style="{StaticResource SecondaryButton}"
+                    Width="90"
+                    Margin="0,0,10,0"
+                    Click="BtnCancel_Click" />
+
+            <Button x:Name="BtnLink"
+                    Content="Link Game"
+                    Style="{StaticResource PrimaryButton}"
+                    Width="120"
+                    IsEnabled="False"
+                    Click="BtnLink_Click" />
+        </StackPanel>
+    </Grid>
+</Window>

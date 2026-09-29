@@ -1,0 +1,239 @@
+<UserControl x:Class="IrisTracker.Views.LoginControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="800">
+    <Grid Background="{StaticResource BgCanvasBrush}">
+        <!-- Centered Login Card -->
+        <Border Background="{StaticResource BgCardBrush}"
+                BorderBrush="{StaticResource BorderDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Width="460"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center"
+                Padding="32,28">
+            <StackPanel>
+                <!-- IRIS Brand Header -->
+                <StackPanel HorizontalAlignment="Center" Margin="0,0,0,24">
+                    <TextBlock Text="IRIS"
+                               FontSize="26"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource RosePrimaryBrush}"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="Windows Time Tracker"
+                               FontSize="13"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,2,0,0" />
+                </StackPanel>
+
+                <!-- Mode Switcher Tabs -->
+                <Border Background="#161418"
+                        BorderBrush="{StaticResource BorderSubtleBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="3"
+                        Margin="0,0,0,20">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="BtnTabQuickConnect"
+                                Content="Quick Connect"
+                                Style="{StaticResource SecondaryButton}"
+                                Background="{StaticResource RosePrimaryBrush}"
+                                Foreground="#FFFFFF"
+                                BorderThickness="0"
+                                Click="BtnTabQuickConnect_Click"
+                                Grid.Column="0"
+                                Margin="0,0,2,0" />
+                        <Button x:Name="BtnTabPassword"
+                                Content="Password Login"
+                                Style="{StaticResource SecondaryButton}"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Click="BtnTabPassword_Click"
+                                Grid.Column="1"
+                                Margin="2,0,0,0" />
+                    </Grid>
+                </Border>
+
+                <!-- Quick Connect Panel -->
+                <StackPanel x:Name="PanelQuickConnect" Visibility="Visible">
+                    <TextBlock Text="Approve from your IRIS browser or mobile app"
+                               FontSize="12"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,16" />
+
+                    <!-- QR Code & Code Box -->
+                    <Border Background="#131215"
+                            BorderBrush="{StaticResource BorderDefaultBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="16"
+                            HorizontalAlignment="Center">
+                        <StackPanel HorizontalAlignment="Center">
+                            <!-- QR Code Image -->
+                            <Border Width="160" Height="160"
+                                    Background="#FFFFFF"
+                                    CornerRadius="6"
+                                    Padding="4"
+                                    Margin="0,0,0,14">
+                                <Image x:Name="ImgQrCode" Stretch="Uniform" />
+                            </Border>
+
+                            <!-- Pairing Code Display -->
+                            <TextBlock x:Name="TxtPairingCode"
+                                       Text="---- - ----"
+                                       FontSize="22"
+                                       FontWeight="Bold"
+                                       FontFamily="Consolas, Cascadia Code, monospace"
+                                       Foreground="{StaticResource RosePrimaryBrush}"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,6" />
+
+                            <TextBlock x:Name="TxtQuickStatus"
+                                       Text="Waiting for confirmation..."
+                                       FontSize="12"
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0">
+                        <Button x:Name="BtnRefreshCode"
+                                Content="Regenerate Code"
+                                Style="{StaticResource SecondaryButton}"
+                                Click="BtnRefreshCode_Click"
+                                Margin="0,0,8,0" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Password Login Panel -->
+                <StackPanel x:Name="PanelPassword" Visibility="Collapsed">
+                    <!-- API Base URL -->
+                    <TextBlock Text="API URL"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               Margin="0,0,0,6" />
+                    <TextBox x:Name="TxtApiUrl"
+                             Text="http://localhost:3000"
+                             Margin="0,0,0,14" />
+
+                    <!-- Identifier -->
+                    <TextBlock Text="Username or Email"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               Margin="0,0,0,6" />
+                    <TextBox x:Name="TxtIdentifier"
+                             Margin="0,0,0,14" />
+
+                    <!-- Password -->
+                    <TextBlock Text="Password"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               Margin="0,0,0,6" />
+                    <PasswordBox x:Name="TxtPassword"
+                                 Margin="0,0,0,18" />
+
+                    <!-- Sign In Button -->
+                    <Button x:Name="BtnSignIn"
+                            Content="Sign In"
+                            Style="{StaticResource PrimaryButton}"
+                            Height="38"
+                            Click="BtnSignIn_Click" />
+                </StackPanel>
+
+                <!-- Two-Factor Authentication (MFA) Panel -->
+                <StackPanel x:Name="PanelMfa" Visibility="Collapsed">
+                    <TextBlock Text="Two-Factor Authentication"
+                               FontSize="16"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,4" />
+                    <TextBlock Text="Enter the verification code to complete sign-in."
+                               FontSize="12"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,16" />
+
+                    <!-- MFA Method Selection -->
+                    <TextBlock Text="Verification Method"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               Margin="0,0,0,6" />
+                    <ComboBox x:Name="CmbMfaType"
+                              Height="34"
+                              Margin="0,0,0,12"
+                              SelectionChanged="CmbMfaType_SelectionChanged">
+                        <ComboBoxItem Content="Authenticator App (TOTP)" Tag="totp" IsSelected="True" />
+                        <ComboBoxItem Content="Email Verification Code" Tag="email" />
+                        <ComboBoxItem Content="Backup Recovery Code" Tag="backup_code" />
+                    </ComboBox>
+
+                    <!-- Send Email Button (Only shown when Email is selected) -->
+                    <Button x:Name="BtnSendMfaEmail"
+                            Content="Send Code to Email"
+                            Style="{StaticResource SecondaryButton}"
+                            Height="32"
+                            Margin="0,0,0,12"
+                            Visibility="Collapsed"
+                            Click="BtnSendMfaEmail_Click" />
+
+                    <!-- MFA Code Input -->
+                    <TextBlock Text="Verification Code"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               Margin="0,0,0,6" />
+                    <TextBox x:Name="TxtMfaCode"
+                             MaxLength="32"
+                             FontSize="15"
+                             FontFamily="Consolas, Cascadia Code, monospace"
+                             Margin="0,0,0,18" />
+
+                    <!-- Verify Button -->
+                    <Button x:Name="BtnVerifyMfa"
+                            Content="Verify &amp; Sign In"
+                            Style="{StaticResource PrimaryButton}"
+                            Height="38"
+                            Margin="0,0,0,10"
+                            Click="BtnVerifyMfa_Click" />
+
+                    <!-- Back to Login -->
+                    <Button x:Name="BtnBackFromMfa"
+                            Content="Back to Login"
+                            Style="{StaticResource SecondaryButton}"
+                            Height="32"
+                            Click="BtnBackFromMfa_Click" />
+                </StackPanel>
+
+                <!-- Error Message Banner -->
+                <Border x:Name="BorderError"
+                        Background="#2A1B1D"
+                        BorderBrush="#501B20"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="12,8"
+                        Margin="0,16,0,0"
+                        Visibility="Collapsed">
+                    <TextBlock x:Name="TxtError"
+                               Text="An error occurred"
+                               Foreground="#F87171"
+                               FontSize="12"
+                               TextWrapping="Wrap" />
+                </Border>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

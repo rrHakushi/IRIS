@@ -1,0 +1,372 @@
+<UserControl x:Class="IrisTracker.Views.TrackerControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="650" d:DesignWidth="900">
+    <Grid Background="{StaticResource BgCanvasBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Top Header Navigation Bar -->
+        <Border Grid.Row="0"
+                Background="{StaticResource BgSurfaceBrush}"
+                BorderBrush="{StaticResource BorderDefaultBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="20,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Brand / Logo -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="IRIS"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource RosePrimaryBrush}"
+                               VerticalAlignment="Center" />
+                    <TextBlock Text="Tracker"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimaryBrush}"
+                               Margin="6,0,0,0"
+                               VerticalAlignment="Center" />
+
+                    <!-- Server Indicator Pill -->
+                    <Border Background="#1A151C"
+                            BorderBrush="{StaticResource BorderSubtleBrush}"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Padding="8,3"
+                            Margin="16,0,0,0"
+                            VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="6" Height="6" Fill="{StaticResource EmeraldBrush}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                            <TextBlock x:Name="TxtServerUrl"
+                                       Text="http://localhost:3000"
+                                       FontSize="11"
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- User Info & Action Buttons -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- User Profile Chip -->
+                    <Border Background="#201C23"
+                            BorderBrush="{StaticResource BorderDefaultBrush}"
+                            BorderThickness="1"
+                            CornerRadius="14"
+                            Padding="10,4"
+                            Margin="0,0,12,0"
+                            VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="8" Height="8" Fill="{StaticResource RosePrimaryBrush}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                            <TextBlock x:Name="TxtUsername"
+                                       Text="Username"
+                                       FontSize="12"
+                                       FontWeight="Medium"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Link Game Button -->
+                    <Button x:Name="BtnLinkGame"
+                            Content="+ Link Game"
+                            Style="{StaticResource PrimaryButton}"
+                            Height="32"
+                            Padding="12,0"
+                            Margin="0,0,8,0"
+                            Click="BtnLinkGame_Click" />
+
+                    <!-- Sync All Button -->
+                    <Button x:Name="BtnSyncAll"
+                            Content="Sync All"
+                            Style="{StaticResource SecondaryButton}"
+                            Height="32"
+                            Padding="10,0"
+                            Margin="0,0,8,0"
+                            Click="BtnSyncAll_Click" />
+
+                    <!-- Settings Button -->
+                    <Button x:Name="BtnSettings"
+                            Content="Settings"
+                            Style="{StaticResource SecondaryButton}"
+                            Height="32"
+                            Padding="10,0"
+                            Margin="0,0,8,0"
+                            Click="BtnSettings_Click" />
+
+                    <!-- Logout Button -->
+                    <Button x:Name="BtnLogout"
+                            Content="Log Out"
+                            Style="{StaticResource SecondaryButton}"
+                            Height="32"
+                            Padding="10,0"
+                            Click="BtnLogout_Click" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Status / Offline Banner -->
+        <Border x:Name="BannerOffline"
+                Grid.Row="1"
+                Background="#2B1A0A"
+                BorderBrush="#603813"
+                BorderThickness="0,0,0,1"
+                Padding="16,8"
+                Visibility="Collapsed">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="TxtOfflineStatus"
+                           Text="Offline pending increments queued. Will sync automatically when connected."
+                           Foreground="{StaticResource AmberBrush}"
+                           FontSize="12"
+                           VerticalAlignment="Center" />
+                <Button Grid.Column="1"
+                        Content="Retry Sync"
+                        Style="{StaticResource SecondaryButton}"
+                        Padding="10,3"
+                        Click="BtnSyncAll_Click" />
+            </Grid>
+        </Border>
+
+        <!-- Main Body: Games List or Empty State -->
+        <Grid Grid.Row="2" Margin="20">
+            <!-- Empty State Card -->
+            <Border x:Name="CardEmptyState"
+                    Background="{StaticResource BgCardBrush}"
+                    BorderBrush="{StaticResource BorderDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    MaxWidth="480"
+                    MaxHeight="260"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Padding="32"
+                    Visibility="Collapsed">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="🎮"
+                               FontSize="36"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,12" />
+                    <TextBlock Text="No Linked Games Yet"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="Link a Windows executable (e.g. portal2.exe) to an IRIS game list entry to start tracking your playtime automatically."
+                               FontSize="12"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               Margin="0,8,0,20" />
+                    <Button Content="+ Link Your First Game"
+                            Style="{StaticResource PrimaryButton}"
+                            Height="36"
+                            Padding="16,0"
+                            HorizontalAlignment="Center"
+                            Click="BtnLinkGame_Click" />
+                </StackPanel>
+            </Border>
+
+            <!-- Scrollable Game Cards List -->
+            <ScrollViewer x:Name="ScrollGamesList"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl x:Name="ItemsGamesList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{StaticResource BgCardBrush}"
+                                    BorderBrush="{StaticResource BorderDefaultBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="10"
+                                    Padding="16"
+                                    Margin="0,0,0,12">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="64" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Cover Thumbnail -->
+                                    <Border Grid.Column="0"
+                                            Width="56" Height="78"
+                                            CornerRadius="6"
+                                            Background="#26222A"
+                                            ClipToBounds="True"
+                                            VerticalAlignment="Center">
+                                        <Image Source="{Binding CoverImage}" Stretch="UniformToFill" />
+                                    </Border>
+
+                                    <!-- Main Game Info & Progress -->
+                                    <StackPanel Grid.Column="1" Margin="16,0,16,0" VerticalAlignment="Center">
+                                        <!-- Title & Status Badge Row -->
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                            <TextBlock Text="{Binding GameTitle}"
+                                                       FontSize="16"
+                                                       FontWeight="Bold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       MaxWidth="400"
+                                                       VerticalAlignment="Center" />
+
+                                            <!-- Live Status Badge -->
+                                            <Border Background="#161418"
+                                                    BorderBrush="{StaticResource BorderSubtleBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="10"
+                                                    Padding="8,2"
+                                                    Margin="10,0,0,0"
+                                                    VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="6" Height="6"
+                                                             Fill="{Binding StatusColor}"
+                                                             Margin="0,0,5,0"
+                                                             VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding StatusBadgeText}"
+                                                               FontSize="10"
+                                                               FontWeight="Bold"
+                                                               Foreground="{Binding StatusColor}"
+                                                               VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Border>
+
+                                            <!-- Pending Sync Badge -->
+                                            <Border Background="#2B1A0A"
+                                                    BorderBrush="#603813"
+                                                    BorderThickness="1"
+                                                    CornerRadius="10"
+                                                    Padding="8,2"
+                                                    Margin="8,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    Visibility="{Binding HasPendingSync, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}">
+                                                <TextBlock Text="{Binding PendingSyncText}"
+                                                           FontSize="10"
+                                                           Foreground="{StaticResource AmberBrush}"
+                                                           FontWeight="SemiBold"
+                                                           VerticalAlignment="Center" />
+                                            </Border>
+                                        </StackPanel>
+
+                                        <!-- Executable & Matching Rule Info -->
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                            <Border Background="#231F27"
+                                                    CornerRadius="4"
+                                                    Padding="6,2"
+                                                    Margin="0,0,6,0">
+                                                <TextBlock Text="{Binding ExecutableName}"
+                                                           FontSize="11"
+                                                           FontFamily="Consolas, Cascadia Code, monospace"
+                                                           Foreground="{StaticResource TextMutedBrush}" />
+                                            </Border>
+
+                                            <TextBlock Text="{Binding WindowTitlePattern, StringFormat='Window: &quot;{0}&quot;'}"
+                                                       FontSize="11"
+                                                       Foreground="{StaticResource TextDimBrush}"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
+
+                                        <!-- Progress Toward Next 1-Hour Increment -->
+                                        <Grid Margin="0,0,0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding ProgressText, StringFormat='Next +1h increment: {0}'}"
+                                                       FontSize="11"
+                                                       FontWeight="Medium"
+                                                       Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding TotalLoggedHoursText}"
+                                                       FontSize="11"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource RosePrimaryBrush}" />
+                                        </Grid>
+
+                                        <!-- Animated Rose Progress Bar -->
+                                        <ProgressBar Style="{StaticResource RoseProgressBar}"
+                                                     Value="{Binding ProgressPercentage, Mode=OneWay}"
+                                                     Maximum="100" />
+                                    </StackPanel>
+
+                                    <!-- Right Actions -->
+                                    <StackPanel Grid.Column="2"
+                                                VerticalAlignment="Center"
+                                                Orientation="Vertical">
+                                        <Button Content="{Binding PauseResumeButtonText}"
+                                                Style="{StaticResource SecondaryButton}"
+                                                FontSize="11"
+                                                Padding="8,4"
+                                                Margin="0,0,0,6"
+                                                Click="BtnTogglePause_Click"
+                                                Tag="{Binding}" />
+
+                                        <Button Content="Force +1h"
+                                                Style="{StaticResource SecondaryButton}"
+                                                FontSize="11"
+                                                Padding="8,4"
+                                                Margin="0,0,0,6"
+                                                Click="BtnForceHour_Click"
+                                                Tag="{Binding}" />
+
+                                        <Button Content="Reset Timer"
+                                                Style="{StaticResource SecondaryButton}"
+                                                FontSize="11"
+                                                Padding="8,4"
+                                                Margin="0,0,0,6"
+                                                Click="BtnResetTimer_Click"
+                                                Tag="{Binding}" />
+
+                                        <Button Content="Unlink"
+                                                Style="{StaticResource DangerButton}"
+                                                FontSize="11"
+                                                Padding="8,4"
+                                                Click="BtnUnlink_Click"
+                                                Tag="{Binding}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Bottom Footer Status Strip -->
+        <Border Grid.Row="3"
+                Background="{StaticResource BgSurfaceBrush}"
+                BorderBrush="{StaticResource BorderDefaultBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="16,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="TxtFooterStatus"
+                           Text="Tracker active. Monitoring linked processes every 1s..."
+                           FontSize="11"
+                           Foreground="{StaticResource TextDimBrush}" />
+                <TextBlock Grid.Column="1"
+                           Text="Minimizing hides to system tray"
+                           FontSize="11"
+                           Foreground="{StaticResource TextDimBrush}" />
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
