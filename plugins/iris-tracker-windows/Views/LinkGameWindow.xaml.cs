@@ -15,16 +15,18 @@ public partial class LinkGameWindow : Window
 {
     private readonly IrisApiClient _api;
     private readonly string _username;
+    private readonly string? _userId;
     private List<UserGameListItem> _allUserGames = new();
     private UserGameListItem? _selectedGame;
 
     public LinkedProcessEntry? CreatedEntry { get; private set; }
 
-    public LinkGameWindow(IrisApiClient api, string username)
+    public LinkGameWindow(IrisApiClient api, string username, string? userId = null)
     {
         InitializeComponent();
         _api = api;
         _username = username;
+        _userId = userId;
         DarkTitleBarHelper.EnableDarkTitleBar(this);
 
         Loaded += async (s, e) =>
@@ -123,18 +125,34 @@ public partial class LinkGameWindow : Window
         var dialog = new OpenFileDialog
         {
             Filter = "Executables (*.exe)|*.exe|All files (*.*)|*.*",
-            Title = "Select Game Executable"
+            Multiselect = true,
+            Title = "Select Game Executable(s)"
         };
 
         if (dialog.ShowDialog(this) == true)
         {
-            TxtExecutableName.Text = Path.GetFileName(dialog.FileName);
+            var files = dialog.FileNames.Select(Path.GetFileName).Where(f => !string.IsNullOrEmpty(f)).ToList();
+            var existing = TxtExecutableName.Text
+                .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToList();
+
+            foreach (var f in files)
+            {
+                if (!string.IsNullOrEmpty(f) && !existing.Contains(f, StringComparer.OrdinalIgnoreCase))
+                {
+                    existing.Add(f);
+                }
+            }
+
+            TxtExecutableName.Text = string.Join(", ", existing);
             UpdateValidation();
         }
     }
 
     private void UpdateValidation()
     {
+        if (BtnLink == null || TxtSummary == null || TxtExecutableName == null) return;
+
         var exe = TxtExecutableName.Text.Trim();
         bool valid = _selectedGame != null && !string.IsNullOrWhiteSpace(exe);
         BtnLink.IsEnabled = valid;
@@ -163,14 +181,23 @@ public partial class LinkGameWindow : Window
     {
         if (_selectedGame == null || string.IsNullOrWhiteSpace(TxtExecutableName.Text)) return;
 
-        var cleanExe = WindowCaptureHelper.NormalizeExeName(TxtExecutableName.Text);
+        var exes = TxtExecutableName.Text
+            .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(WindowCaptureHelper.NormalizeExeName)
+            .Where(x => !string.IsNullOrEmpty(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (exes.Count == 0) return;
 
         CreatedEntry = new LinkedProcessEntry
         {
+            UserId = _userId,
             GameId = _selectedGame.GameId,
             GameTitle = _selectedGame.DisplayTitle,
             CoverImage = _selectedGame.CoverImage,
-            ExecutableName = cleanExe,
+            ExecutableNames = exes,
+            ExecutableName = exes[0],
             WindowTitlePattern = string.IsNullOrWhiteSpace(TxtWindowTitlePattern.Text)
                 ? null
                 : TxtWindowTitlePattern.Text.Trim(),

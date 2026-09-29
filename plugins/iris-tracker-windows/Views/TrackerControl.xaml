@@ -61,15 +61,18 @@
 
                 <!-- User Info & Action Buttons -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- User Profile Chip -->
-                    <Border Background="#201C23"
+                    <!-- User Profile Chip with Account Switcher Dropdown -->
+                    <Button x:Name="BtnAccountMenu"
+                            Style="{StaticResource SubtleButton}"
+                            Background="#201C23"
                             BorderBrush="{StaticResource BorderDefaultBrush}"
                             BorderThickness="1"
-                            CornerRadius="14"
-                            Padding="10,4"
+                            Height="32"
+                            Padding="10,0"
                             Margin="0,0,12,0"
-                            VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal">
+                            VerticalAlignment="Center"
+                            Click="BtnAccountMenu_Click">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <Ellipse Width="8" Height="8" Fill="{StaticResource RosePrimaryBrush}" Margin="0,0,6,0" VerticalAlignment="Center" />
                             <TextBlock x:Name="TxtUsername"
                                        Text="Username"
@@ -77,8 +80,13 @@
                                        FontWeight="Medium"
                                        Foreground="{StaticResource TextPrimaryBrush}"
                                        VerticalAlignment="Center" />
+                            <TextBlock Text=" ▾"
+                                       FontSize="10"
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       VerticalAlignment="Center"
+                                       Margin="4,0,0,0" />
                         </StackPanel>
-                    </Border>
+                    </Button>
 
                     <!-- Link Game Button -->
                     <Button x:Name="BtnLinkGame"
@@ -269,11 +277,22 @@
                                                     CornerRadius="4"
                                                     Padding="6,2"
                                                     Margin="0,0,6,0">
-                                                <TextBlock Text="{Binding ExecutableName}"
+                                                <TextBlock Text="{Binding ExecutablesDisplay}"
                                                            FontSize="11"
                                                            FontFamily="Consolas, Cascadia Code, monospace"
-                                                           Foreground="{StaticResource TextMutedBrush}" />
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           MaxWidth="340"
+                                                           TextTrimming="CharacterEllipsis" />
                                             </Border>
+
+                                            <Button Content="{Binding ExecutablesCountBadge, StringFormat='Manage ({0})'}"
+                                                    Style="{StaticResource SubtleButton}"
+                                                    FontSize="10"
+                                                    Padding="6,2"
+                                                    Margin="0,0,8,0"
+                                                    VerticalAlignment="Center"
+                                                    Click="BtnManageExes_Click"
+                                                    Tag="{Binding}" />
 
                                             <TextBlock Text="{Binding WindowTitlePattern, StringFormat='Window: &quot;{0}&quot;'}"
                                                        FontSize="11"

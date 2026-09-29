@@ -51,10 +51,16 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ShowLoginView()
+    private void ShowLoginView(bool isAddingAccount = false)
     {
-        var login = new LoginControl(_api, _storage);
+        var login = new LoginControl(_api, _storage, isAddingAccount);
         login.LoggedIn += (user, token) =>
+        {
+            login.Cleanup();
+            ShowTrackerView();
+        };
+
+        login.Cancelled += () =>
         {
             login.Cleanup();
             ShowTrackerView();
@@ -66,16 +72,26 @@ public partial class MainWindow : Window
 
     private void ShowTrackerView()
     {
+        var settings = _storage.LoadSettings();
+        _api.BaseUrl = settings.ApiBaseUrl;
+        _api.AuthToken = StorageService.UnprotectString(settings.EncryptedToken);
+        _tracker.ReloadEntries(settings.ActiveUserId);
+
         var tracker = new TrackerControl(_tracker, _api, _storage);
         tracker.LoggedOut += () =>
         {
-            ShowLoginView();
+            ShowLoginView(false);
+        };
+
+        tracker.RequestAddAccount += () =>
+        {
+            ShowLoginView(true);
         };
 
         tracker.ShowNotification += (title, message) =>
         {
-            var settings = _storage.LoadSettings();
-            if (settings.NotifyOnHourIncrement)
+            var currentSettings = _storage.LoadSettings();
+            if (currentSettings.NotifyOnHourIncrement)
             {
                 _notifyIcon.ShowBalloonTip(title, message, BalloonIcon.Info);
             }

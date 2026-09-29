@@ -17,6 +17,7 @@ public partial class TrackerControl : System.Windows.Controls.UserControl
     private readonly AppSettings _settings;
 
     public event Action? LoggedOut;
+    public event Action? RequestAddAccount;
     public event Action<string, string>? ShowNotification;
 
     public TrackerControl(ProcessTrackerService tracker, IrisApiClient api, StorageService storage)
@@ -45,13 +46,168 @@ public partial class TrackerControl : System.Windows.Controls.UserControl
         };
     }
 
+    private void BtnAccountMenu_Click(object sender, RoutedEventArgs e)
+    {
+        var settings = _storage.LoadSettings();
+        var menu = new ContextMenu();
+
+        var header = new MenuItem
+        {
+            Header = "ACCOUNTS",
+            IsEnabled = false,
+            Foreground = (System.Windows.Media.Brush)FindResource("TextMutedBrush"),
+            FontWeight = FontWeights.Bold,
+            FontSize = 10
+        };
+        menu.Items.Add(header);
+
+        foreach (var account in settings.Accounts)
+        {
+            bool isActive = account.UserId == settings.ActiveUserId;
+            var item = new MenuItem
+            {
+                Header = isActive ? $"✓  {account.Username} (Active)" : $"    Switch to {account.Username}",
+                FontWeight = isActive ? FontWeights.Bold : FontWeights.Normal
+            };
+            if (!isActive)
+            {
+                var targetId = account.UserId;
+                item.Click += (s, args) => SwitchToAccount(targetId);
+            }
+            menu.Items.Add(item);
+        }
+
+        menu.Items.Add(new Separator());
+
+        var addItem = new MenuItem
+        {
+            Header = "+ Add Another Account..."
+        };
+        addItem.Click += (s, args) => RequestAddAccount?.Invoke();
+        menu.Items.Add(addItem);
+
+        menu.Items.Add(new Separator());
+
+        var logoutCurrentItem = new MenuItem
+        {
+            Header = $"Log Out of '{settings.Username}'"
+        };
+        logoutCurrentItem.Click += (s, args) => LogoutActiveAccount();
+        menu.Items.Add(logoutCurrentItem);
+
+        if (settings.Accounts.Count > 1)
+        {
+            var logoutAllItem = new MenuItem
+            {
+                Header = "Log Out of All Accounts"
+            };
+            logoutAllItem.Click += (s, args) => LogoutAllAccounts();
+            menu.Items.Add(logoutAllItem);
+        }
+
+        menu.PlacementTarget = BtnAccountMenu;
+        menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+        menu.IsOpen = true;
+    }
+
+    private void SwitchToAccount(string userId)
+    {
+        _storage.SwitchAccount(_settings, userId);
+        var settings = _storage.LoadSettings();
+
+        _api.BaseUrl = settings.ApiBaseUrl;
+        _api.AuthToken = StorageService.UnprotectString(settings.EncryptedToken);
+
+        TxtUsername.Text = settings.Username ?? "User";
+        TxtServerUrl.Text = _api.BaseUrl;
+
+        _tracker.ReloadEntries(settings.ActiveUserId);
+        UpdateEmptyState();
+        _ = RefreshProgressFromIrisAsync();
+
+        TxtFooterStatus.Text = $"Switched account to '{settings.Username}'.";
+    }
+
+    private void LogoutActiveAccount()
+    {
+        var settings = _storage.LoadSettings();
+        var result = MessageBox.Show(
+            Window.GetWindow(this),
+            $"Are you sure you want to log out of '{settings.Username}'?",
+            "Confirm Logout",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question
+        );
+
+        if (result == MessageBoxResult.Yes)
+        {
+            var currentUid = settings.ActiveUserId ?? string.Empty;
+            _storage.RemoveAccount(settings, currentUid);
+
+            var updated = _storage.LoadSettings();
+            if (updated.Accounts.Count > 0 && !string.IsNullOrEmpty(updated.ActiveUserId))
+            {
+                SwitchToAccount(updated.ActiveUserId);
+            }
+            else
+            {
+                _tracker.Stop();
+                _api.AuthToken = null;
+                LoggedOut?.Invoke();
+            }
+        }
+    }
+
+    private void LogoutAllAccounts()
+    {
+        var result = MessageBox.Show(
+            Window.GetWindow(this),
+            "Are you sure you want to log out of all accounts?",
+            "Confirm Logout All",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question
+        );
+
+        if (result == MessageBoxResult.Yes)
+        {
+            var settings = _storage.LoadSettings();
+            settings.Accounts.Clear();
+            settings.ActiveUserId = null;
+            settings.UserId = null;
+            settings.Username = null;
+            settings.UserEmail = null;
+            settings.EncryptedToken = null;
+            _storage.SaveSettings(settings);
+
+            _tracker.Stop();
+            _api.AuthToken = null;
+            LoggedOut?.Invoke();
+        }
+    }
+
+    private void BtnManageExes_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement el && el.Tag is LinkedProcessEntry entry)
+        {
+            var win = new ManageExecutablesWindow(entry, () =>
+            {
+                _tracker.SaveNow();
+            })
+            {
+                Owner = Window.GetWindow(this)
+            };
+            win.ShowDialog();
+        }
+    }
+
     private async Task RefreshProgressFromIrisAsync()
     {
-        if (string.IsNullOrEmpty(_settings.Username) || string.IsNullOrEmpty(_api.AuthToken)) return;
+        var settings = _storage.LoadSettings();
+        if (string.IsNullOrEmpty(settings.Username) || string.IsNullOrEmpty(_api.AuthToken)) return;
 
         try
         {
-            var res = await _api.GetUserGameListAsync(_settings.Username);
+            var res = await _api.GetUserGameListAsync(settings.Username);
             var lookup = new System.Collections.Generic.Dictionary<int, int>();
             foreach (var item in res.Items)
             {
@@ -65,7 +221,7 @@ public partial class TrackerControl : System.Windows.Controls.UserControl
                     entry.IrisProgressHours = currentHours;
                 }
             }
-            _storage.SaveEntries(_tracker.Entries);
+            _tracker.SaveNow();
         }
         catch
         {
@@ -134,7 +290,8 @@ public partial class TrackerControl : System.Windows.Controls.UserControl
 
     private void BtnLinkGame_Click(object sender, RoutedEventArgs e)
     {
-        var win = new LinkGameWindow(_api, _settings.Username ?? string.Empty)
+        var settings = _storage.LoadSettings();
+        var win = new LinkGameWindow(_api, settings.Username ?? string.Empty, settings.ActiveUserId)
         {
             Owner = Window.GetWindow(this)
         };
@@ -167,26 +324,7 @@ public partial class TrackerControl : System.Windows.Controls.UserControl
 
     private void BtnLogout_Click(object sender, RoutedEventArgs e)
     {
-        var result = MessageBox.Show(
-            Window.GetWindow(this),
-            "Are you sure you want to log out of IRIS Tracker?",
-            "Confirm Logout",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question
-        );
-
-        if (result == MessageBoxResult.Yes)
-        {
-            _tracker.Stop();
-            _settings.EncryptedToken = null;
-            _settings.UserId = null;
-            _settings.Username = null;
-            _settings.UserEmail = null;
-            _storage.SaveSettings(_settings);
-            _api.AuthToken = null;
-
-            LoggedOut?.Invoke();
-        }
+        LogoutActiveAccount();
     }
 
     private void BtnTogglePause_Click(object sender, RoutedEventArgs e)

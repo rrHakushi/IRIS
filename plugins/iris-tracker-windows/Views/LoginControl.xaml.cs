@@ -21,8 +21,9 @@ public partial class LoginControl : System.Windows.Controls.UserControl
     private string? _pendingMfaTicket;
 
     public event Action<IrisUser, string>? LoggedIn;
+    public event Action? Cancelled;
 
-    public LoginControl(IrisApiClient api, StorageService storage)
+    public LoginControl(IrisApiClient api, StorageService storage, bool isAddingAccount = false)
     {
         InitializeComponent();
         _api = api;
@@ -30,6 +31,15 @@ public partial class LoginControl : System.Windows.Controls.UserControl
 
         var settings = _storage.LoadSettings();
         TxtApiUrl.Text = settings.ApiBaseUrl;
+
+        if (isAddingAccount || (settings.Accounts != null && settings.Accounts.Count > 0))
+        {
+            BtnCancelAddAccount.Visibility = Visibility.Visible;
+            if (isAddingAccount)
+            {
+                TxtLoginSubtitle.Text = "Add IRIS Account";
+            }
+        }
 
         Loaded += async (s, e) =>
         {
@@ -40,6 +50,12 @@ public partial class LoginControl : System.Windows.Controls.UserControl
         };
 
         Unloaded += (s, e) => Cleanup();
+    }
+
+    private void BtnCancelAddAccount_Click(object sender, RoutedEventArgs e)
+    {
+        Cleanup();
+        Cancelled?.Invoke();
     }
 
     public void Cleanup()
@@ -238,6 +254,8 @@ public partial class LoginControl : System.Windows.Controls.UserControl
 
     private void CmbMfaType_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (BtnSendMfaEmail == null || CmbMfaType == null) return;
+
         if (CmbMfaType.SelectedItem is ComboBoxItem item)
         {
             var type = item.Tag?.ToString() ?? "totp";
@@ -327,12 +345,16 @@ public partial class LoginControl : System.Windows.Controls.UserControl
         StopQuickConnectPolling();
 
         var settings = _storage.LoadSettings();
-        settings.ApiBaseUrl = _api.BaseUrl;
-        settings.UserId = user.Id;
-        settings.Username = user.Username;
-        settings.UserEmail = user.Email;
-        settings.EncryptedToken = StorageService.ProtectString(token);
-        _storage.SaveSettings(settings);
+        var account = new UserAccount
+        {
+            UserId = user.Id,
+            Username = user.Username,
+            UserEmail = user.Email,
+            EncryptedToken = StorageService.ProtectString(token),
+            ApiBaseUrl = _api.BaseUrl,
+            LastActiveAt = DateTime.UtcNow
+        };
+        _storage.AddOrUpdateAccount(settings, account);
 
         _api.AuthToken = token;
         LoggedIn?.Invoke(user, token);

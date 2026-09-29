@@ -27,8 +27,9 @@ public class ProcessTrackerService
         _storage = storage;
         _api = api;
 
-        // Load existing saved entries
-        var loaded = _storage.LoadEntries();
+        // Load existing saved entries for active user
+        var settings = _storage.LoadSettings();
+        var loaded = _storage.LoadEntries(settings.ActiveUserId);
         foreach (var entry in loaded)
         {
             entry.IsRunning = false;
@@ -50,6 +51,35 @@ public class ProcessTrackerService
         _syncRetryTimer.Tick += async (s, e) => await SyncPendingIncrementsAsync();
     }
 
+    public void ReloadEntries(string? activeUserId = null)
+    {
+        bool wasRunning = _trackerTimer.IsEnabled;
+        if (wasRunning)
+        {
+            _trackerTimer.Stop();
+            _syncRetryTimer.Stop();
+        }
+
+        foreach (var entry in Entries)
+        {
+            entry.IsRunning = false;
+        }
+        SaveNow();
+
+        Entries.Clear();
+        var loaded = _storage.LoadEntries(activeUserId);
+        foreach (var entry in loaded)
+        {
+            entry.IsRunning = false;
+            Entries.Add(entry);
+        }
+
+        if (wasRunning)
+        {
+            Start();
+        }
+    }
+
     public void Start()
     {
         if (!_trackerTimer.IsEnabled)
@@ -67,19 +97,19 @@ public class ProcessTrackerService
         {
             entry.IsRunning = false;
         }
-        _storage.SaveEntries(Entries);
+        SaveNow();
     }
 
     public void AddEntry(LinkedProcessEntry entry)
     {
         Entries.Add(entry);
-        _storage.SaveEntries(Entries);
+        SaveNow();
     }
 
     public void RemoveEntry(LinkedProcessEntry entry)
     {
         Entries.Remove(entry);
-        _storage.SaveEntries(Entries);
+        SaveNow();
     }
 
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, SemaphoreSlim> _syncLocks = new();
@@ -96,10 +126,23 @@ public class ProcessTrackerService
                 continue;
             }
 
-            bool running = WindowCaptureHelper.IsProcessOrWindowRunning(
-                entry.ExecutableName,
-                entry.WindowTitlePattern
-            );
+            bool running = false;
+            var exes = entry.AllExecutables;
+            if (exes.Count == 0 && !string.IsNullOrWhiteSpace(entry.ExecutableName))
+            {
+                exes = new[] { entry.ExecutableName };
+            }
+
+            // Check all linked executables; if multiple active, track ONLY ONE
+            foreach (var exe in exes)
+            {
+                if (string.IsNullOrWhiteSpace(exe)) continue;
+                if (WindowCaptureHelper.IsProcessOrWindowRunning(exe.Trim(), entry.WindowTitlePattern))
+                {
+                    running = true;
+                    break; // If multiple active at the same time then only track one of them
+                }
+            }
 
             if (running)
             {
@@ -125,7 +168,7 @@ public class ProcessTrackerService
                 {
                     // Process just closed: stop counting and save immediately
                     entry.IsRunning = false;
-                    _storage.SaveEntries(Entries);
+                    SaveNow();
                 }
             }
         }
@@ -137,7 +180,7 @@ public class ProcessTrackerService
             if (_secondsSinceLastSave >= 10)
             {
                 _secondsSinceLastSave = 0;
-                _storage.SaveEntries(Entries);
+                SaveNow();
             }
         }
     }
@@ -177,7 +220,7 @@ public class ProcessTrackerService
 
             // Deduct from pending queue upfront to prevent any other caller from reusing this batch
             entry.PendingSyncHours -= hoursToSync;
-            _storage.SaveEntries(Entries);
+            SaveNow();
 
             try
             {
@@ -190,7 +233,7 @@ public class ProcessTrackerService
                 if (res.Success && res.Entry != null)
                 {
                     entry.IrisProgressHours = res.Entry.Progress;
-                    _storage.SaveEntries(Entries);
+                    SaveNow();
                     SyncSucceeded?.Invoke(entry, $"Synced +{hoursToSync}h to IRIS (Total: {entry.IrisProgressHours}h)");
                 }
             }
@@ -198,7 +241,7 @@ public class ProcessTrackerService
             {
                 // Restore the pending hours if the network request failed
                 entry.PendingSyncHours += hoursToSync;
-                _storage.SaveEntries(Entries);
+                SaveNow();
                 SyncFailed?.Invoke(entry, ex);
             }
         }

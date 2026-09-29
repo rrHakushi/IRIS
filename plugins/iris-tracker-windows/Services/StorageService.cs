@@ -56,7 +56,11 @@ public class StorageService
             {
                 var json = File.ReadAllText(_settingsPath);
                 var settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions);
-                return settings ?? new AppSettings();
+                if (settings != null)
+                {
+                    settings.EnsureAccountsMigrated();
+                    return settings;
+                }
             }
         }
         catch (Exception ex)
@@ -64,13 +68,16 @@ public class StorageService
             Console.WriteLine($"[StorageService] Failed to load settings: {ex.Message}");
         }
 
-        return new AppSettings();
+        var fallback = new AppSettings();
+        fallback.EnsureAccountsMigrated();
+        return fallback;
     }
 
     public void SaveSettings(AppSettings settings)
     {
         try
         {
+            settings.EnsureAccountsMigrated();
             var json = JsonSerializer.Serialize(settings, JsonOptions);
             File.WriteAllText(_settingsPath, json);
         }
@@ -80,7 +87,55 @@ public class StorageService
         }
     }
 
-    public List<LinkedProcessEntry> LoadEntries()
+    public void AddOrUpdateAccount(AppSettings settings, UserAccount account)
+    {
+        var existing = settings.Accounts.Find(a =>
+            (!string.IsNullOrEmpty(a.UserId) && a.UserId == account.UserId) ||
+            a.Username.Equals(account.Username, StringComparison.OrdinalIgnoreCase));
+
+        if (existing != null)
+        {
+            existing.UserId = account.UserId;
+            existing.Username = account.Username;
+            existing.UserEmail = account.UserEmail;
+            existing.EncryptedToken = account.EncryptedToken;
+            existing.ApiBaseUrl = account.ApiBaseUrl;
+            existing.LastActiveAt = DateTime.UtcNow;
+        }
+        else
+        {
+            settings.Accounts.Add(account);
+        }
+
+        settings.ActiveUserId = account.UserId;
+        settings.EnsureAccountsMigrated();
+        SaveSettings(settings);
+    }
+
+    public void RemoveAccount(AppSettings settings, string userId)
+    {
+        settings.Accounts.RemoveAll(a => a.UserId == userId);
+        if (settings.ActiveUserId == userId)
+        {
+            settings.ActiveUserId = settings.Accounts.Count > 0 ? settings.Accounts[0].UserId : null;
+        }
+        settings.EnsureAccountsMigrated();
+        SaveSettings(settings);
+    }
+
+    public void SwitchAccount(AppSettings settings, string userId)
+    {
+        var acc = settings.Accounts.Find(a => a.UserId == userId);
+        if (acc != null)
+        {
+            acc.LastActiveAt = DateTime.UtcNow;
+            settings.ActiveUserId = userId;
+            settings.EnsureAccountsMigrated();
+            SaveSettings(settings);
+        }
+    }
+
+    public List<LinkedProcessEntry> LoadEntries(string? userId = null)
     {
         try
         {
@@ -88,7 +143,14 @@ public class StorageService
             {
                 var json = File.ReadAllText(_entriesPath);
                 var entries = JsonSerializer.Deserialize<List<LinkedProcessEntry>>(json, JsonOptions);
-                return entries ?? new List<LinkedProcessEntry>();
+                if (entries != null)
+                {
+                    if (string.IsNullOrEmpty(userId))
+                    {
+                        return entries;
+                    }
+                    return entries.Where(e => string.IsNullOrEmpty(e.UserId) || e.UserId == userId).ToList();
+                }
             }
         }
         catch (Exception ex)
@@ -99,11 +161,33 @@ public class StorageService
         return new List<LinkedProcessEntry>();
     }
 
-    public void SaveEntries(IEnumerable<LinkedProcessEntry> entries)
+    public void SaveEntries(IEnumerable<LinkedProcessEntry> entries, string? activeUserId = null)
     {
         try
         {
-            var json = JsonSerializer.Serialize(entries, JsonOptions);
+            var existing = LoadEntries(null);
+            var currentList = entries.ToList();
+            var currentIds = new HashSet<string>(currentList.Select(e => e.Id));
+
+            // Merge: Keep entries belonging to other accounts
+            var merged = new List<LinkedProcessEntry>(currentList);
+            foreach (var item in existing)
+            {
+                if (!currentIds.Contains(item.Id))
+                {
+                    if (!string.IsNullOrEmpty(activeUserId) && item.UserId != activeUserId)
+                    {
+                        merged.Add(item);
+                    }
+                    else if (string.IsNullOrEmpty(activeUserId))
+                    {
+                        // No active user filter; keep all
+                        merged.Add(item);
+                    }
+                }
+            }
+
+            var json = JsonSerializer.Serialize(merged, JsonOptions);
             File.WriteAllText(_entriesPath, json);
         }
         catch (Exception ex)

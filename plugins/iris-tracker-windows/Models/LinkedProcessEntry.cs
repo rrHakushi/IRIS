@@ -8,10 +8,12 @@ namespace IrisTracker.Models;
 public class LinkedProcessEntry : INotifyPropertyChanged
 {
     private string _id = Guid.NewGuid().ToString();
+    private string? _userId;
     private int _gameId;
     private string _gameTitle = string.Empty;
     private string? _coverImage;
     private string _executableName = string.Empty;
+    private List<string> _executableNames = new();
     private string? _windowTitlePattern;
     private int _accumulatedSeconds;
     private int _irisProgressHours;
@@ -40,6 +42,12 @@ public class LinkedProcessEntry : INotifyPropertyChanged
         set => SetField(ref _id, value);
     }
 
+    public string? UserId
+    {
+        get => _userId;
+        set => SetField(ref _userId, value);
+    }
+
     public int GameId
     {
         get => _gameId;
@@ -60,8 +68,38 @@ public class LinkedProcessEntry : INotifyPropertyChanged
 
     public string ExecutableName
     {
-        get => _executableName;
-        set => SetField(ref _executableName, value);
+        get
+        {
+            if (_executableNames.Count > 0)
+                return string.Join(", ", _executableNames);
+            return _executableName;
+        }
+        set
+        {
+            if (SetField(ref _executableName, value))
+            {
+                if (!string.IsNullOrWhiteSpace(value) && !_executableNames.Contains(value, StringComparer.OrdinalIgnoreCase))
+                {
+                    _executableNames.Add(value);
+                }
+                OnPropertyChanged(nameof(ExecutablesDisplay));
+                OnPropertyChanged(nameof(AllExecutables));
+            }
+        }
+    }
+
+    public List<string> ExecutableNames
+    {
+        get => _executableNames;
+        set
+        {
+            if (SetField(ref _executableNames, value ?? new List<string>()))
+            {
+                OnPropertyChanged(nameof(ExecutableName));
+                OnPropertyChanged(nameof(ExecutablesDisplay));
+                OnPropertyChanged(nameof(AllExecutables));
+            }
+        }
     }
 
     public string? WindowTitlePattern
@@ -200,6 +238,63 @@ public class LinkedProcessEntry : INotifyPropertyChanged
 
     [JsonIgnore]
     public string PendingSyncText => $"{PendingSyncHours} hr pending sync";
+
+    [JsonIgnore]
+    public IReadOnlyList<string> AllExecutables
+    {
+        get
+        {
+            var list = new List<string>(_executableNames);
+            if (!string.IsNullOrWhiteSpace(_executableName) && !list.Contains(_executableName, StringComparer.OrdinalIgnoreCase))
+            {
+                list.Insert(0, _executableName);
+            }
+            return list.Count > 0 ? list : Array.Empty<string>();
+        }
+    }
+
+    [JsonIgnore]
+    public string ExecutablesDisplay => AllExecutables.Count > 0
+        ? string.Join(", ", AllExecutables)
+        : "(No executables linked)";
+
+    [JsonIgnore]
+    public string ExecutablesCountBadge => AllExecutables.Count > 1
+        ? $"{AllExecutables.Count} exes"
+        : (AllExecutables.Count == 1 ? "1 exe" : "0 exes");
+
+    public void AddExecutable(string exe)
+    {
+        if (string.IsNullOrWhiteSpace(exe)) return;
+        var clean = exe.Trim();
+        if (!_executableNames.Contains(clean, StringComparer.OrdinalIgnoreCase))
+        {
+            _executableNames.Add(clean);
+            OnPropertyChanged(nameof(ExecutableNames));
+            OnPropertyChanged(nameof(ExecutableName));
+            OnPropertyChanged(nameof(ExecutablesDisplay));
+            OnPropertyChanged(nameof(ExecutablesCountBadge));
+            OnPropertyChanged(nameof(AllExecutables));
+        }
+    }
+
+    public void RemoveExecutable(string exe)
+    {
+        if (string.IsNullOrWhiteSpace(exe)) return;
+        var clean = exe.Trim();
+        if (_executableNames.RemoveAll(x => x.Equals(clean, StringComparison.OrdinalIgnoreCase)) > 0)
+        {
+            if (_executableName.Equals(clean, StringComparison.OrdinalIgnoreCase))
+            {
+                _executableName = _executableNames.Count > 0 ? _executableNames[0] : string.Empty;
+            }
+            OnPropertyChanged(nameof(ExecutableNames));
+            OnPropertyChanged(nameof(ExecutableName));
+            OnPropertyChanged(nameof(ExecutablesDisplay));
+            OnPropertyChanged(nameof(ExecutablesCountBadge));
+            OnPropertyChanged(nameof(AllExecutables));
+        }
+    }
 
     // --- INotifyPropertyChanged Implementation ---
 
