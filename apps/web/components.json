@@ -6,7 +6,7 @@
   "tailwind": {
     "config": "",
     "css": "../../packages/ui/src/styles/globals.css",
-    "baseColor": "neutral",
+    "baseColor": "zinc",
     "cssVariables": true
   },
   "iconLibrary": "tabler",
@@ -19,5 +19,6 @@
   },
   "rtl": true,
   "menuColor": "default-translucent",
-  "menuAccent": "subtle"
+  "menuAccent": "subtle",
+  "registries": {}
 }

@@ -197,7 +197,7 @@ export class MyAnimeListProvider {
     let offset = 0
     let hasMore = true
 
-    while (hasMore && offset <= 1000) {
+    while (hasMore && offset <= 10000) {
       try {
         const url = `https://myanimelist.net/anime/${malId}/_/episode?offset=${offset}`
         const res = await fetch(url, {

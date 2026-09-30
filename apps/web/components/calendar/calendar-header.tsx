@@ -18,7 +18,7 @@ import {
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
 import { Switch } from "@workspace/ui/components/switch"
-import { Tabs, TabList, Tab } from "@workspace/ui/components/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@workspace/ui/components/tabs"
 import { Tooltip, TooltipTrigger } from "@workspace/ui/components/tooltip"
 import { cn } from "@workspace/ui/lib/utils"
 import type {
@@ -137,26 +137,26 @@ export function CalendarHeader({
           onSelectionChange={(key) => onViewModeChange(key as CalendarViewMode)}
           className="w-auto"
         >
-          <TabList className="h-8 rounded-2xl bg-muted/60 p-1">
-            <Tab
+          <TabsList className="h-8 rounded-2xl bg-muted/60 p-1">
+            <TabsTrigger
               id="month"
               className="cursor-pointer rounded-xl px-2.5 py-1 text-xs"
             >
               Month
-            </Tab>
-            <Tab
+            </TabsTrigger>
+            <TabsTrigger
               id="week"
               className="cursor-pointer rounded-xl px-2.5 py-1 text-xs"
             >
               Week
-            </Tab>
-            <Tab
+            </TabsTrigger>
+            <TabsTrigger
               id="agenda"
               className="cursor-pointer rounded-xl px-2.5 py-1 text-xs"
             >
               Agenda
-            </Tab>
-          </TabList>
+            </TabsTrigger>
+          </TabsList>
         </Tabs>
 
         {/* Only in Lists Toggle */}

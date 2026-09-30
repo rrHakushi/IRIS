@@ -22,6 +22,7 @@ import { Session } from "next-auth"
 import { elysia } from "@/lib/elysia"
 
 let cachedServarrProviders: string[] | null = null
+let inFlightConnectionsPromise: Promise<string[] | null> | null = null
 
 export function getListSidebarConfig(
   session: Session | null,
@@ -366,43 +367,68 @@ export function useListSidebarConfig(
 
     let isMounted = true
 
-    async function fetchConnections() {
-      try {
-        const { data, error } = await elysia.connections.get({
-          fetch: { credentials: "include" },
-        })
+    async function fetchConnections(force = false) {
+      if (!force && cachedServarrProviders !== null) {
+        if (isMounted) setConnectedServarr(cachedServarrProviders)
+        return
+      }
 
-        if (!error && data?.success && isMounted) {
-          const servarrSet = new Set<string>()
-          for (const conn of data.connections) {
-            if (conn.status === "CONNECTED") {
-              const prov = conn.provider.toUpperCase()
-              if (["SONARR", "RADARR", "READARR", "LIDARR"].includes(prov)) {
-                servarrSet.add(prov)
+      if (inFlightConnectionsPromise) {
+        const result = await inFlightConnectionsPromise
+        if (result && isMounted) {
+          setConnectedServarr(result)
+        }
+        return
+      }
+
+      inFlightConnectionsPromise = (async () => {
+        try {
+          const { data, error } = await elysia.connections.get({
+            fetch: { credentials: "include" },
+          })
+
+          if (!error && data?.success) {
+            const servarrSet = new Set<string>()
+            for (const conn of data.connections) {
+              if (conn.status === "CONNECTED") {
+                const prov = conn.provider.toUpperCase()
+                if (["SONARR", "RADARR", "READARR", "LIDARR"].includes(prov)) {
+                  servarrSet.add(prov)
+                }
               }
             }
-          }
-          const list = Array.from(servarrSet)
-          cachedServarrProviders = list
-          setConnectedServarr((prev) => {
-            if (
-              prev.length === list.length &&
-              prev.every((p) => list.includes(p))
-            ) {
-              return prev
-            }
+            const list = Array.from(servarrSet)
+            cachedServarrProviders = list
             return list
-          })
+          }
+          return null
+        } catch {
+          return null
+        } finally {
+          inFlightConnectionsPromise = null
         }
-      } catch {
-        // Silently catch in sidebar
+      })()
+
+      const list = await inFlightConnectionsPromise
+      if (list && isMounted) {
+        setConnectedServarr((prev) => {
+          if (
+            prev.length === list.length &&
+            prev.every((p) => list.includes(p))
+          ) {
+            return prev
+          }
+          return list
+        })
       }
     }
 
-    fetchConnections()
+    if (cachedServarrProviders === null) {
+      fetchConnections()
+    }
 
     const handleUpdate = () => {
-      fetchConnections()
+      fetchConnections(true)
     }
     window.addEventListener("iris-connections-changed", handleUpdate)
     window.addEventListener("iris-sidebar-changed", handleUpdate)

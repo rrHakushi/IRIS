@@ -44,7 +44,7 @@ export default defineRoute({
 
   POST: {
     requirePermissions: [IRISFlags.ADMINISTRATOR],
-    async handler({ params, body, prisma }) {
+    async handler({ params, body, prisma, cache }) {
       const book = await prisma.book.findUnique({ where: { id: params.id } })
       if (!book) {
         throw new NotFound("Book not found")
@@ -53,6 +53,8 @@ export default defineRoute({
       if (!book.googleBookId) {
         throw new BadRequest("Book is missing googleBookId")
       }
+
+      await cache.del(`book:${params.id}`).catch(() => {})
 
       const queued = await queueBookFetch(book.googleBookId, {
         forceRefresh: body?.force,

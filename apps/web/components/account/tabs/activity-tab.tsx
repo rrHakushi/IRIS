@@ -15,6 +15,7 @@ import {
   IconBookmark,
   IconNotes,
   IconTrophy,
+  IconUserHeart,
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { toast } from "sonner"
@@ -174,6 +175,12 @@ export function ActivityTab({
           actionText: "achieved a milestone",
           badgeText: "MILESTONE",
           icon: IconTrophy,
+        }
+      case "FRIEND_ADDED":
+        return {
+          actionText: "became friends with",
+          badgeText: "FRIEND",
+          icon: IconUserHeart,
         }
       default:
         return {

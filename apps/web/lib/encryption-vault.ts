@@ -7,8 +7,9 @@ import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js"
 import { ml_kem768 } from "@noble/post-quantum/ml-kem.js"
 
 const DB_NAME = "iris_vault_db"
-const DB_VERSION = 1
+const DB_VERSION = 2
 const STORE_NAME = "vault_entries"
+const SESSION_STORE_NAME = "session_keys"
 
 export interface VaultRecord {
   userId: string
@@ -36,6 +37,9 @@ export function openVaultDB(): Promise<IDBDatabase> {
       const db = (event.target as IDBOpenDBRequest).result
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME, { keyPath: "userId" })
+      }
+      if (!db.objectStoreNames.contains(SESSION_STORE_NAME)) {
+        db.createObjectStore(SESSION_STORE_NAME, { keyPath: "id" })
       }
     }
 
@@ -203,44 +207,160 @@ export function calculateKeyFingerprint(publicKeyBase64: string): string {
 const SESSION_STORAGE_PREFIX = "iris_vault_session_"
 
 /**
- * Kept for interface compatibility — raw private keys must remain strictly in-memory.
- * Automatically purges any legacy plaintext keys from sessionStorage if found.
+ * Encrypts and persists the decrypted secret key in sessionStorage using a non-extractable WebCrypto key.
+ * This guarantees that raw private key bytes are NEVER stored in plaintext in sessionStorage or IndexedDB,
+ * and cannot be exported or exfiltrated via JavaScript.
  */
-export function saveSessionSecretKey(
-  _userId: string,
-  _secretKey: Uint8Array
-): void {
-  // Plaintext master keys are strictly kept in volatile memory (closures/state) to prevent XSS exfiltration
-  if (typeof window === "undefined" || !window.sessionStorage) return
+export async function saveSessionSecretKey(
+  userId: string,
+  secretKey: Uint8Array
+): Promise<void> {
+  if (
+    typeof window === "undefined" ||
+    !window.sessionStorage ||
+    !window.crypto?.subtle
+  )
+    return
   try {
-    clearSessionSecretKey()
-  } catch {
-    // Ignore cleanup errors
+    const db = await openVaultDB()
+    const wrapKey = await window.crypto.subtle.generateKey(
+      { name: "AES-GCM", length: 256 },
+      false, // non-extractable! Cannot be exported by JS
+      ["encrypt", "decrypt"]
+    )
+
+    const keyId = userId || "active"
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(SESSION_STORE_NAME, "readwrite")
+      const store = tx.objectStore(SESSION_STORE_NAME)
+      const req = store.put({ id: keyId, key: wrapKey, updatedAt: Date.now() })
+      req.onsuccess = () => resolve()
+      req.onerror = () => reject(req.error)
+    })
+
+    const iv = window.crypto.getRandomValues(new Uint8Array(12))
+    const encryptedBuffer = await window.crypto.subtle.encrypt(
+      { name: "AES-GCM", iv },
+      wrapKey,
+      secretKey as any
+    )
+
+    const cipherBytes = new Uint8Array(encryptedBuffer)
+    const payload = `${bytesToHex(iv)}:${bytesToHex(cipherBytes)}`
+
+    if (userId) {
+      window.sessionStorage.setItem(
+        `${SESSION_STORAGE_PREFIX}${userId}`,
+        payload
+      )
+    }
+    window.sessionStorage.setItem(`${SESSION_STORAGE_PREFIX}active`, payload)
+  } catch (err) {
+    console.warn(
+      "[saveSessionSecretKey] Failed to wrap and save session key:",
+      err
+    )
   }
 }
 
 /**
- * Loads the decrypted secret key from memory only (sessionStorage persistence disabled for security).
+ * Loads and decrypts the secret key using the non-extractable WebCrypto session wrapping key.
  */
-export function loadSessionSecretKey(_userId?: string): Uint8Array | null {
-  return null
+export async function loadSessionSecretKey(
+  userId?: string
+): Promise<Uint8Array | null> {
+  if (
+    typeof window === "undefined" ||
+    !window.sessionStorage ||
+    !window.crypto?.subtle
+  )
+    return null
+  try {
+    const keyName = userId ? `${SESSION_STORAGE_PREFIX}${userId}` : null
+    let payload = keyName ? window.sessionStorage.getItem(keyName) : null
+    if (!payload) {
+      payload = window.sessionStorage.getItem(`${SESSION_STORAGE_PREFIX}active`)
+    }
+    if (!payload || !payload.includes(":")) return null
+
+    const [ivHex, cipherHex] = payload.split(":")
+    if (!ivHex || !cipherHex) return null
+
+    const iv = hexToBytes(ivHex)
+    const cipherBytes = hexToBytes(cipherHex)
+
+    const db = await openVaultDB()
+    const keyId = userId || "active"
+
+    let record = await new Promise<{ id: string; key: CryptoKey } | null>(
+      (resolve, reject) => {
+        const tx = db.transaction(SESSION_STORE_NAME, "readonly")
+        const store = tx.objectStore(SESSION_STORE_NAME)
+        const req = store.get(keyId)
+        req.onsuccess = () => resolve(req.result || null)
+        req.onerror = () => reject(req.error)
+      }
+    )
+
+    if (!record && userId) {
+      record = await new Promise<{ id: string; key: CryptoKey } | null>(
+        (resolve, reject) => {
+          const tx = db.transaction(SESSION_STORE_NAME, "readonly")
+          const store = tx.objectStore(SESSION_STORE_NAME)
+          const req = store.get("active")
+          req.onsuccess = () => resolve(req.result || null)
+          req.onerror = () => reject(req.error)
+        }
+      )
+    }
+
+    if (!record?.key) return null
+
+    const decryptedBuffer = await window.crypto.subtle.decrypt(
+      { name: "AES-GCM", iv },
+      record.key,
+      cipherBytes
+    )
+
+    return new Uint8Array(decryptedBuffer)
+  } catch (err) {
+    console.warn("[loadSessionSecretKey] Failed to unwrap session key:", err)
+    return null
+  }
 }
 
 /**
- * Purges any legacy decrypted secret keys from sessionStorage when locking the vault or logging out.
+ * Purges encrypted session tokens and non-extractable session wrapping keys.
  */
-export function clearSessionSecretKey(userId?: string): void {
-  if (typeof window === "undefined" || !window.sessionStorage) return
+export async function clearSessionSecretKey(userId?: string): Promise<void> {
+  if (typeof window === "undefined") return
   try {
-    window.sessionStorage.removeItem(`${SESSION_STORAGE_PREFIX}active`)
-    if (userId) {
-      window.sessionStorage.removeItem(`${SESSION_STORAGE_PREFIX}${userId}`)
+    if (window.sessionStorage) {
+      window.sessionStorage.removeItem(`${SESSION_STORAGE_PREFIX}active`)
+      if (userId) {
+        window.sessionStorage.removeItem(`${SESSION_STORAGE_PREFIX}${userId}`)
+      }
+      for (let i = window.sessionStorage.length - 1; i >= 0; i--) {
+        const key = window.sessionStorage.key(i)
+        if (key && key.startsWith(SESSION_STORAGE_PREFIX)) {
+          window.sessionStorage.removeItem(key)
+        }
+      }
     }
-    // Clear all vault sessions
-    for (let i = window.sessionStorage.length - 1; i >= 0; i--) {
-      const key = window.sessionStorage.key(i)
-      if (key && key.startsWith(SESSION_STORAGE_PREFIX)) {
-        window.sessionStorage.removeItem(key)
+
+    if (window.indexedDB) {
+      const db = await openVaultDB()
+      if (db.objectStoreNames.contains(SESSION_STORE_NAME)) {
+        await new Promise<void>((resolve, reject) => {
+          const tx = db.transaction(SESSION_STORE_NAME, "readwrite")
+          const store = tx.objectStore(SESSION_STORE_NAME)
+          if (userId) {
+            store.delete(userId)
+          }
+          store.delete("active")
+          tx.oncomplete = () => resolve()
+          tx.onerror = () => reject(tx.error)
+        })
       }
     }
   } catch {

@@ -133,12 +133,14 @@ export function MediaListModal({
     () => getInProgressStatus(category),
     [category]
   )
+  const isOngoing =
+    category === "anime" &&
+    (media.status === "RELEASING" || !media.episodeCount)
+
   const maxUnits =
     typeof media.episodeCount === "number" && media.episodeCount > 0
       ? media.episodeCount
-      : Array.isArray(media.episodes) && media.episodes.length > 0
-        ? media.episodes.length
-        : null
+      : null
   const maxChapters =
     typeof media.chapterCount === "number" && media.chapterCount > 0
       ? media.chapterCount
@@ -665,7 +667,20 @@ export function MediaListModal({
       if (!startedAt) {
         setStartedAt(todayIsoDate())
       }
-      if (maxUnits && progress < maxUnits) {
+      if (category === "anime") {
+        const target = maxUnits && maxUnits > 0 ? maxUnits : progress
+        if (target > 0) {
+          setProgress(target)
+          const now = new Date().toISOString()
+          setWatchedEpisodes(
+            Array.from({ length: target }, (_, i) => ({
+              seasonNumber: 1,
+              episodeNumber: i + 1,
+              watchedAt: now,
+            }))
+          )
+        }
+      } else if (maxUnits && progress < maxUnits) {
         setProgress(maxUnits)
       }
       if (maxChapters && maxChapters > 0 && chaptersProgress < maxChapters) {
@@ -700,6 +715,55 @@ export function MediaListModal({
         setWatchedEpisodes(allWatched)
         setProgress(allWatched.length)
       }
+    }
+  }
+
+  const handleProgressDirectChange = (newVal: number) => {
+    const maxLimit =
+      typeof media.episodeCount === "number" && media.episodeCount > 0
+        ? media.episodeCount
+        : undefined
+    const clamped = Math.max(
+      0,
+      maxLimit !== undefined ? Math.min(maxLimit, newVal) : newVal
+    )
+    setProgress(clamped)
+
+    const now = new Date().toISOString()
+    if (category === "anime") {
+      const newWatched: WatchedEpisodeItem[] = Array.from(
+        { length: clamped },
+        (_, i) => ({
+          seasonNumber: 1,
+          episodeNumber: i + 1,
+          watchedAt: now,
+        })
+      )
+      setWatchedEpisodes(newWatched)
+    } else if (category === "tv" && effectiveTvSeasons.length > 0) {
+      const list: WatchedEpisodeItem[] = []
+      let remaining = clamped
+      for (const s of effectiveTvSeasons) {
+        const sNum = s.seasonNumber ?? 1
+        const count = s.episodes?.length || s.episodeCount || 0
+        const take = Math.min(remaining, count)
+        for (let i = 1; i <= take; i++) {
+          list.push({
+            seasonNumber: sNum,
+            episodeNumber: i,
+            watchedAt: now,
+          })
+        }
+        remaining -= take
+        if (remaining <= 0) break
+      }
+      setWatchedEpisodes(list)
+    }
+
+    if (maxLimit !== undefined && clamped >= maxLimit) {
+      handleStatusChange("COMPLETED")
+    } else if (clamped > 0 && status === "PLANNING") {
+      handleStatusChange(inProgressStatus)
     }
   }
 
@@ -1533,6 +1597,72 @@ export function MediaListModal({
                 </div>
               )}
 
+              {/* Progress: Anime & TV (Episode Progress Counter as backup / direct entry) */}
+              {(category === "anime" || category === "tv") && (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
+                      <IconDeviceTv className="size-3 text-muted-foreground" />
+                      EPISODE PROGRESS
+                    </label>
+                    <div className="flex items-center justify-between rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-border/80">
+                      <input
+                        type="number"
+                        min={0}
+                        max={
+                          typeof media.episodeCount === "number" &&
+                          media.episodeCount > 0
+                            ? media.episodeCount
+                            : undefined
+                        }
+                        placeholder="0"
+                        value={progress}
+                        onChange={(e) => {
+                          if (e.target.value === "") {
+                            handleProgressDirectChange(0)
+                            return
+                          }
+                          const val = Number(e.target.value)
+                          if (isNaN(val)) return
+                          handleProgressDirectChange(val)
+                        }}
+                        className="w-full [appearance:textfield] bg-transparent text-xs font-semibold text-foreground focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                      />
+                      {Boolean(
+                        typeof media.episodeCount === "number" &&
+                        media.episodeCount > 0
+                      ) && (
+                        <span className="shrink-0 pe-1.5 text-[11px] font-medium text-muted-foreground">
+                          / {media.episodeCount}
+                        </span>
+                      )}
+                      <div className="flex flex-col gap-0.5 ps-2 text-muted-foreground">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleProgressDirectChange(progress + 1)
+                          }
+                          className="cursor-pointer hover:text-foreground"
+                          aria-label="Increment episode"
+                        >
+                          <IconChevronUp className="size-2.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleProgressDirectChange(progress - 1)
+                          }
+                          className="cursor-pointer hover:text-foreground"
+                          aria-label="Decrement episode"
+                        >
+                          <IconChevronDown className="size-2.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Row 2: START DATE, FINISH DATE */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {/* START DATE */}
@@ -1762,22 +1892,20 @@ export function MediaListModal({
             episodeCount={media.episodeCount}
             progress={progress}
             onProgressChange={(newProgress) => {
-              setProgress(newProgress)
-              if (maxUnits && newProgress >= maxUnits) {
-                handleStatusChange("COMPLETED")
-              } else if (newProgress > 0 && status === "PLANNING") {
-                handleStatusChange(inProgressStatus)
-              }
+              handleProgressDirectChange(newProgress)
             }}
             watchedEpisodes={watchedEpisodes}
             onWatchedEpisodesChange={(newWatched) => {
               setWatchedEpisodes(newWatched)
+              setProgress(newWatched.length)
               const totalTvEpisodes = effectiveTvSeasons.reduce(
                 (sum, s) => sum + (s.episodes?.length || s.episodeCount || 0),
                 0
               )
               if (totalTvEpisodes > 0 && newWatched.length >= totalTvEpisodes) {
                 handleStatusChange("COMPLETED")
+              } else if (newWatched.length > 0 && status === "PLANNING") {
+                handleStatusChange(inProgressStatus)
               }
             }}
           />

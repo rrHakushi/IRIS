@@ -84,10 +84,20 @@
   },
   "navigation": {
     "apps": {
+      "irisAccount": {
+        "name": "IRIS Account",
+        "description": "Unified identity, user profile, security, and sessions.",
+        "descriptionShort": "Identity & Security"
+      },
       "irisList": {
         "name": "IRIS List",
         "description": "Track your media. Watch, read, listen, and enjoy.",
         "descriptionShort": "Media tracking."
+      },
+      "irisPass": {
+        "name": "IRIS Pass",
+        "description": "Zero-knowledge encrypted password, credential, and SSH key manager.",
+        "descriptionShort": "Vault & Generator"
       }
     },
     "listSidebar": {

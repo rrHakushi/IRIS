@@ -9,24 +9,50 @@ import { NotFound } from "@/utils/errors"
 import { syncConnectionMedia } from "@/services/connections/connection-media-sync.service.js"
 import { recordMediaListActivity } from "@/services/activity.service.js"
 
+const MovieEntryResponseSchema = t.Object({
+  id: t.Number(),
+  movieId: t.Number(),
+  status: t.String(),
+  score: t.Nullable(t.Number()),
+  notes: t.Nullable(t.String()),
+  rewatched: t.Number(),
+  private: t.Boolean(),
+  startedAt: t.Nullable(t.String()),
+  completedAt: t.Nullable(t.String()),
+  rewatchHistory: t.Optional(t.Any()),
+  connections: t.Optional(t.Any()),
+  createdAt: t.String(),
+  updatedAt: t.String(),
+})
+
+const MovieIncrementBodySchema = t.Optional(
+  t.Object({
+    count: t.Optional(t.Number({ default: 1, minimum: 1 })),
+    status: t.Optional(
+      t.Union([
+        t.Literal("PLANNING"),
+        t.Literal("WATCHING"),
+        t.Literal("COMPLETED"),
+        t.Literal("ON_HOLD"),
+        t.Literal("DROPPED"),
+      ])
+    ),
+    connections: t.Optional(t.Any()),
+  })
+)
+
 export default defineRoute({
   schema: {
     params: t.Object({
       username: t.String(),
       id: t.Number({ minimum: 1, description: "Movie ID" }),
     }),
-    body: IncrementBodySchema,
+    body: MovieIncrementBodySchema,
     response: {
       200: t.Object({
         success: t.Boolean(),
         message: t.String(),
-        entry: t.Object({
-          id: t.Number(),
-          movieId: t.Number(),
-          status: t.String(),
-          rewatched: t.Number(),
-          completedAt: t.Nullable(t.String()),
-        }),
+        entry: MovieEntryResponseSchema,
       }),
     },
     detail: {
@@ -78,11 +104,12 @@ export default defineRoute({
       existing?.score > 0
 
     let newStatus =
-      existing?.status === "COMPLETED"
+      (body as any)?.status ??
+      (existing?.status === "COMPLETED"
         ? "COMPLETED"
         : hasScore
           ? "COMPLETED"
-          : "WATCHING"
+          : "WATCHING")
     let newRewatched = existing ? existing.rewatched : 0
     let completedAt =
       newStatus === "COMPLETED" ? (existing?.completedAt ?? new Date()) : null
@@ -188,10 +215,18 @@ export default defineRoute({
         id: result.id,
         movieId: result.movieId,
         status: result.status,
-        rewatched: result.rewatched,
+        score: result.score ?? null,
+        notes: result.notes ?? null,
+        rewatched: result.rewatched ?? 0,
+        private: result.private ?? false,
+        startedAt: result.startedAt ? result.startedAt.toISOString() : null,
         completedAt: result.completedAt
           ? result.completedAt.toISOString()
           : null,
+        rewatchHistory: result.rewatchHistory,
+        connections: result.connections,
+        createdAt: result.createdAt.toISOString(),
+        updatedAt: result.updatedAt.toISOString(),
       },
     }
   },

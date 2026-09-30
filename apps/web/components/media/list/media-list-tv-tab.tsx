@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useMemo, useRef, useEffect } from "react"
 import {
   IconChevronDown,
   IconChevronRight,
@@ -97,32 +97,69 @@ export function MediaListTvTab({
   const [expandedSeasons, setExpandedSeasons] = useState<
     Record<number, boolean>
   >({})
+  const activeEpRef = useRef<HTMLButtonElement | null>(null)
 
   // ==========================================
   // Anime Episode Handling (Local state only, saves on Save button)
   // ==========================================
   const isAnime = category === "anime"
-  const animeTotalEpisodes =
-    episodes && episodes.length > 0
-      ? episodes.length
-      : episodeCount && episodeCount > 0
-        ? episodeCount
+  const isOngoing = !episodeCount || episodeCount <= 0
+  const maxKnownCount =
+    typeof episodeCount === "number" && episodeCount > 0
+      ? episodeCount
+      : episodes && episodes.length > 0
+        ? episodes.length
         : 0
+
+  const animeTotalEpisodes = isOngoing
+    ? Math.max(progress + 1, maxKnownCount)
+    : Math.max(progress, maxKnownCount)
+
+  const episodeMap = useMemo(() => {
+    const map = new Map<number, AnimeEpisodeItem>()
+    if (episodes) {
+      for (const ep of episodes) {
+        if (typeof ep.number === "number") {
+          map.set(ep.number, ep)
+        }
+      }
+    }
+    return map
+  }, [episodes])
+
+  useEffect(() => {
+    if (activeEpRef.current) {
+      activeEpRef.current.scrollIntoView({
+        block: "nearest",
+        behavior: "smooth",
+      })
+    }
+  }, [])
 
   const handleAnimeToggleEpisode = (episodeNumber: number) => {
     const isCurrentProgress = progress === episodeNumber
     const nextProgress = isCurrentProgress ? episodeNumber - 1 : episodeNumber
+    const maxLimit =
+      typeof episodeCount === "number" && episodeCount > 0
+        ? episodeCount
+        : undefined
     const clampedProgress =
-      animeTotalEpisodes > 0
-        ? Math.min(animeTotalEpisodes, Math.max(0, nextProgress))
+      maxLimit !== undefined
+        ? Math.min(maxLimit, Math.max(0, nextProgress))
         : Math.max(0, nextProgress)
     onProgressChange?.(clampedProgress)
   }
 
   const handleAnimeMarkAll = (markAll: boolean) => {
-    if (animeTotalEpisodes <= 0) return
-    const nextProgress = markAll ? animeTotalEpisodes : 0
-    onProgressChange?.(nextProgress)
+    if (markAll) {
+      const target =
+        typeof episodeCount === "number" && episodeCount > 0
+          ? episodeCount
+          : animeTotalEpisodes
+      if (target > 0) onProgressChange?.(target)
+    } else {
+      onProgressChange?.(0)
+    }
   }
 
   // ==========================================
@@ -210,7 +247,7 @@ export function MediaListTvTab({
   // RENDER: Anime Mode
   // ==========================================
   if (isAnime) {
-    if (animeTotalEpisodes <= 0) {
+    if (animeTotalEpisodes <= 0 && progress <= 0) {
       return (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
           <IconDeviceTv className="size-8 opacity-40" />
@@ -218,17 +255,16 @@ export function MediaListTvTab({
             No Episode Data Available
           </p>
           <p className="text-[11px] text-muted-foreground">
-            Use the general progress stepper on the first tab to track overall
-            episodes.
+            Use the episode progress input in the General tab to track episodes.
           </p>
         </div>
       )
     }
 
     const isAllWatched =
-      animeTotalEpisodes > 0 && progress >= animeTotalEpisodes
-    const displayProgress =
-      animeTotalEpisodes > 0 ? Math.min(progress, animeTotalEpisodes) : progress
+      typeof episodeCount === "number" && episodeCount > 0
+        ? progress >= episodeCount
+        : animeTotalEpisodes > 0 && progress >= animeTotalEpisodes
 
     return (
       <div className="space-y-3">
@@ -239,7 +275,12 @@ export function MediaListTvTab({
               variant={isAllWatched ? "default" : "secondary"}
               className="px-2 py-0.5 font-mono text-[10px]"
             >
-              {displayProgress} / {animeTotalEpisodes}
+              {progress} /{" "}
+              {typeof episodeCount === "number" && episodeCount > 0
+                ? episodeCount
+                : episodes && episodes.length > 0
+                  ? `${episodes.length}+`
+                  : "?"}
             </Badge>
           </div>
 
@@ -258,14 +299,16 @@ export function MediaListTvTab({
           {Array.from({ length: animeTotalEpisodes }, (_, idx) => {
             const epNum = idx + 1
             const isWatched = epNum <= progress
-            const epItem = episodes.find((e) => e.number === epNum)
+            const epItem = episodeMap.get(epNum)
             const rawTitle =
               epItem?.titlePrimary || epItem?.titleSecondary || null
             const displayTitle = formatEpisodeTitle(rawTitle, epNum)
+            const isCurrentProgress = epNum === progress
 
             return (
               <button
                 key={epNum}
+                ref={isCurrentProgress ? activeEpRef : undefined}
                 type="button"
                 onClick={() => handleAnimeToggleEpisode(epNum)}
                 className={`group flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border p-2.5 text-start transition-colors ${

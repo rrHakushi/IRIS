@@ -3,12 +3,45 @@ import {
   resolveTargetUserAndAccess,
   requireAuth,
   assertIsOwner,
-  IncrementBodySchema,
+  ConnectionsSchema,
 } from "@/modules/IRIS-list/helpers"
 import { NotFound } from "@/utils/errors"
 import { AnimeListStatus } from "@IRIS/database"
 import { syncConnectionMedia } from "@/services/connections/connection-media-sync.service.js"
 import { recordMediaListActivity } from "@/services/activity.service.js"
+
+const AnimeEntryResponseSchema = t.Object({
+  id: t.Number(),
+  animeId: t.Number(),
+  status: t.String(),
+  progress: t.Number(),
+  score: t.Nullable(t.Number()),
+  notes: t.Nullable(t.String()),
+  rewatched: t.Number(),
+  private: t.Boolean(),
+  startedAt: t.Nullable(t.String()),
+  completedAt: t.Nullable(t.String()),
+  rewatchHistory: t.Optional(t.Any()),
+  connections: t.Optional(t.Any()),
+  createdAt: t.String(),
+  updatedAt: t.String(),
+})
+
+const AnimeIncrementBodySchema = t.Optional(
+  t.Object({
+    count: t.Optional(t.Number({ default: 1, minimum: 1 })),
+    status: t.Optional(
+      t.Union([
+        t.Literal("PLANNING"),
+        t.Literal("WATCHING"),
+        t.Literal("COMPLETED"),
+        t.Literal("ON_HOLD"),
+        t.Literal("DROPPED"),
+      ])
+    ),
+    connections: ConnectionsSchema,
+  })
+)
 
 export default defineRoute({
   schema: {
@@ -16,18 +49,12 @@ export default defineRoute({
       username: t.String(),
       id: t.Number({ minimum: 1, description: "Anime ID" }),
     }),
-    body: IncrementBodySchema,
+    body: AnimeIncrementBodySchema,
     response: {
       200: t.Object({
         success: t.Boolean(),
         message: t.String(),
-        entry: t.Object({
-          id: t.Number(),
-          animeId: t.Number(),
-          status: t.String(),
-          progress: t.Number(),
-          completedAt: t.Nullable(t.String()),
-        }),
+        entry: AnimeEntryResponseSchema,
       }),
     },
     detail: {
@@ -52,6 +79,7 @@ export default defineRoute({
       select: {
         id: true,
         episodeCount: true,
+        status: true,
         titlePrimary: true,
         titleSecondary: true,
         coverImage: true,
@@ -75,12 +103,15 @@ export default defineRoute({
       },
     })
 
+    const isOngoing =
+      String(anime.status).toUpperCase() === "RELEASING" ||
+      !anime.episodeCount ||
+      anime.episodeCount <= 0
+
     const maxEpisodes =
-      anime.episodeCount && anime.episodeCount > 0
+      !isOngoing && anime.episodeCount && anime.episodeCount > 0
         ? anime.episodeCount
-        : anime._count?.episodes && anime._count.episodes > 0
-          ? anime._count.episodes
-          : null
+        : null
 
     const currentProgress = existing ? existing.progress : 0
 
@@ -109,16 +140,33 @@ export default defineRoute({
           animeId: clampedEntry!.animeId,
           status: clampedEntry!.status,
           progress: clampedEntry!.progress,
+          score: clampedEntry!.score ?? null,
+          notes: clampedEntry!.notes ?? null,
+          rewatched: clampedEntry!.rewatched ?? 0,
+          private: clampedEntry!.private ?? false,
+          startedAt: clampedEntry!.startedAt
+            ? clampedEntry!.startedAt.toISOString()
+            : null,
           completedAt: clampedEntry!.completedAt
             ? clampedEntry!.completedAt.toISOString()
             : null,
+          rewatchHistory: clampedEntry!.rewatchHistory,
+          connections: clampedEntry!.connections,
+          createdAt: clampedEntry!.createdAt
+            ? clampedEntry!.createdAt.toISOString()
+            : new Date().toISOString(),
+          updatedAt: clampedEntry!.updatedAt
+            ? clampedEntry!.updatedAt.toISOString()
+            : new Date().toISOString(),
         },
       }
     }
 
     let newProgress = currentProgress + count
     let newStatus: AnimeListStatus =
-      (existing?.status as AnimeListStatus) ?? "WATCHING"
+      (body as any)?.status ??
+      (existing?.status as AnimeListStatus) ??
+      "WATCHING"
     let completedAt = existing?.completedAt ?? null
 
     // If status was PLANNING, transition to WATCHING
@@ -215,9 +263,18 @@ export default defineRoute({
         animeId: result.animeId,
         status: result.status,
         progress: result.progress,
+        score: result.score ?? null,
+        notes: result.notes ?? null,
+        rewatched: result.rewatched ?? 0,
+        private: result.private ?? false,
+        startedAt: result.startedAt ? result.startedAt.toISOString() : null,
         completedAt: result.completedAt
           ? result.completedAt.toISOString()
           : null,
+        rewatchHistory: result.rewatchHistory,
+        connections: result.connections,
+        createdAt: result.createdAt.toISOString(),
+        updatedAt: result.updatedAt.toISOString(),
       },
     }
   },

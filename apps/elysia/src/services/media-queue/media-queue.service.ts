@@ -965,6 +965,7 @@ export class MediaQueueService {
           skipMap
         )
         localId = result.id
+        await cache.del(`anime:${result.id}`).catch(() => {})
         relationsToCrawl = result.discoveredRelations
 
         if (result.characterIds && result.characterIds.length > 0) {
@@ -1043,6 +1044,7 @@ export class MediaQueueService {
           mappedMangaIds
         )
         localId = result.id
+        await cache.del(`manga:${result.id}`).catch(() => {})
         relationsToCrawl = result.discoveredRelations
 
         if (result.characterIds && result.characterIds.length > 0) {
@@ -1280,6 +1282,7 @@ export class MediaQueueService {
         )
         const result = await mediaDbSyncer.upsertBook(bookData)
         localId = result.id
+        await cache.del(`book:${result.id}`).catch(() => {})
         break
       }
 
@@ -1361,6 +1364,7 @@ export class MediaQueueService {
           deckData
         )
         localId = result.id
+        await cache.del(`game:${result.id}`).catch(() => {})
         break
       }
 

@@ -16,6 +16,7 @@ enum ActivityType {
     CUSTOM_LIST_CREATED
     FAVORITE_ADDED
     FAVORITE_REMOVED
+    FRIEND_ADDED
 
     // User Text Post / Status
     STATUS_POST

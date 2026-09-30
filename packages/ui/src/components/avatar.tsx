@@ -1,8 +1,7 @@
 "use client"
 
 import * as React from "react"
-
-import { cn } from "@workspace/ui/lib/utils"
+import { cn } from "cn"
 
 function Avatar({
   className,
@@ -26,23 +25,13 @@ function Avatar({
 
 type ImageState = "loading" | "loaded" | "error"
 
-function AvatarImage({
-  className,
-  src,
-  ...props
-}: React.ComponentProps<"img">) {
+function AvatarImage({ className, ...props }: React.ComponentProps<"img">) {
   const [state, setState] = React.useState<ImageState>(
-    src ? "loading" : "error"
+    props.src ? "loading" : "error"
   )
-
-  if (!src || (typeof src === "string" && src.trim() === "")) {
-    return null
-  }
-
   return (
     <img
       data-slot="avatar-image"
-      src={src}
       alt={props.alt || ""}
       data-state={state}
       onLoad={() => setState("loaded")}

@@ -193,7 +193,10 @@ export function IrisSidebar({
           )
           if (hasActiveChild) {
             const key = item.dataKey || item.label
-            setOpenItems((prev) => ({ ...prev, [key]: true }))
+            setOpenItems((prev) => {
+              if (prev[key]) return prev
+              return { ...prev, [key]: true }
+            })
           }
         }
       })

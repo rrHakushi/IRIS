@@ -825,6 +825,15 @@ export function WatchingDashboard(): React.JSX.Element {
 
       const type = mediaType as WatchingMediaListType
       const entryId = item.entry.id
+      const mediaId = Number(
+        item.media?.id ||
+          (item.entry as any)?.animeId ||
+          (item.entry as any)?.mangaId ||
+          (item.entry as any)?.tvId ||
+          (item.entry as any)?.movieId ||
+          (item.entry as any)?.gameId ||
+          (item.entry as any)?.bookId
+      )
       const nowIso = new Date().toISOString()
 
       const maxCount: number | null = (() => {
@@ -844,6 +853,13 @@ export function WatchingDashboard(): React.JSX.Element {
           return null
         }
         if (type === "anime") {
+          const isOngoing =
+            String((item.media as any)?.status).toUpperCase() === "RELEASING" ||
+            !(item.media as any)?.episodeCount ||
+            (item.media as any)?.episodeCount <= 0
+          if (isOngoing) {
+            return null
+          }
           if (
             typeof (item.media as any).episodesCount === "number" &&
             (item.media as any).episodesCount > 0
@@ -856,38 +872,22 @@ export function WatchingDashboard(): React.JSX.Element {
           ) {
             return (item.media as any).episodeCount
           }
-          if (
-            Array.isArray((item.media as any).episodes) &&
-            (item.media as any).episodes.length > 0
-          ) {
-            return (item.media as any).episodes.length
-          }
-          if (
-            typeof (item.media as any).episodes === "number" &&
-            (item.media as any).episodes > 0
-          ) {
-            return (item.media as any).episodes
-          }
           return null
         }
         if (type === "tv") {
+          const isOngoing =
+            String((item.media as any)?.status).toUpperCase() ===
+              "RETURNING_SERIES" ||
+            !(item.media as any)?.episodeCount ||
+            (item.media as any)?.episodeCount <= 0
+          if (isOngoing) {
+            return null
+          }
           if (
             typeof (item.media as any).episodeCount === "number" &&
             (item.media as any).episodeCount > 0
           ) {
             return (item.media as any).episodeCount
-          }
-          if (
-            Array.isArray((item.media as any).episodes) &&
-            (item.media as any).episodes.length > 0
-          ) {
-            return (item.media as any).episodes.length
-          }
-          if (
-            typeof (item.media as any).episodes === "number" &&
-            (item.media as any).episodes > 0
-          ) {
-            return (item.media as any).episodes
           }
           return null
         }
@@ -977,71 +977,59 @@ export function WatchingDashboard(): React.JSX.Element {
         const client = elysia.user({ username }).lists
 
         if (type === "anime") {
-          const rawNext = (item.entry.progress ?? 0) + count
-          const nextProg =
-            maxCount && maxCount > 0 ? Math.min(rawNext, maxCount) : rawNext
+          const { error } = await client
+            .anime({ id: mediaId })
+            .increment.post({ count })
+          if (error) throw new Error("Failed to increment anime progress")
+          const nextProg = (item.entry.progress ?? 0) + count
           const isCompleted = maxCount && maxCount > 0 && nextProg >= maxCount
-
-          await client.anime({ id: entryId }).patch({
-            progress: nextProg,
-            ...(isCompleted ? { status: "COMPLETED" } : {}),
-          })
           toast.success(
             isCompleted
               ? "Completed anime!"
               : `Episode ${nextProg} marked as watched`
           )
         } else if (type === "tv") {
-          const rawNext = (item.entry.progress ?? 0) + count
-          const nextProg =
-            maxCount && maxCount > 0 ? Math.min(rawNext, maxCount) : rawNext
+          const { error } = await client
+            .tv({ id: mediaId })
+            .increment.post({ count })
+          if (error) throw new Error("Failed to increment TV progress")
+          const nextProg = (item.entry.progress ?? 0) + count
           const isCompleted = maxCount && maxCount > 0 && nextProg >= maxCount
-
-          await client.tv({ id: entryId }).patch({
-            progress: nextProg,
-            ...(isCompleted ? { status: "COMPLETED" } : {}),
-          })
           toast.success(
             isCompleted
               ? "Completed TV show!"
               : `Episode ${nextProg} marked as watched`
           )
         } else if (type === "manga") {
-          const rawNext = (item.entry.chaptersProgress ?? 0) + count
-          const nextProg =
-            maxCount && maxCount > 0 ? Math.min(rawNext, maxCount) : rawNext
-          const isCompleted = maxCount && maxCount > 0 && nextProg >= maxCount
-
-          await client.manga({ id: entryId }).patch({
-            chaptersProgress: nextProg,
-            ...(isCompleted ? { status: "COMPLETED" } : {}),
+          const { error } = await client.manga({ id: mediaId }).increment.post({
+            count,
+            type: "CHAPTER",
           })
+          if (error) throw new Error("Failed to increment manga progress")
+          const nextProg = (item.entry.chaptersProgress ?? 0) + count
+          const isCompleted = maxCount && maxCount > 0 && nextProg >= maxCount
           toast.success(
             isCompleted
               ? "Completed manga!"
               : `Chapter ${nextProg} marked as read`
           )
         } else if (type === "movie") {
-          await client.movie({ id: entryId }).patch({
-            status: "COMPLETED",
-          })
+          const { error } = await client.movie({ id: mediaId }).increment.post()
+          if (error) throw new Error("Failed to mark movie as completed")
           toast.success("Movie marked as watched!")
         } else if (type === "game") {
-          const nextProg = (item.entry.progress ?? 0) + count
-          await client.game({ id: entryId }).patch({
-            progress: nextProg,
-          })
+          const { error } = await client
+            .game({ id: mediaId })
+            .increment.post({ count })
+          if (error) throw new Error("Failed to increment playtime")
           toast.success(`Logged +${count} hrs`)
         } else if (type === "book") {
-          const rawNext = (item.entry.progress ?? 0) + count
-          const nextProg =
-            maxCount && maxCount > 0 ? Math.min(rawNext, maxCount) : rawNext
+          const { error } = await client
+            .book({ id: mediaId })
+            .increment.post({ count })
+          if (error) throw new Error("Failed to increment book progress")
+          const nextProg = (item.entry.progress ?? 0) + count
           const isCompleted = maxCount && maxCount > 0 && nextProg >= maxCount
-
-          await client.book({ id: entryId }).patch({
-            progressPages: nextProg,
-            ...(isCompleted ? { status: "COMPLETED" as const } : {}),
-          } as any)
           toast.success(
             isCompleted ? "Completed book!" : `Page ${nextProg} marked as read`
           )
@@ -1049,6 +1037,7 @@ export function WatchingDashboard(): React.JSX.Element {
       } catch (err) {
         console.error("[WatchingDashboard] Failed to increment progress:", err)
         toast.error("Failed to update progress")
+        fetchCategory(type)
       }
     },
     [username]

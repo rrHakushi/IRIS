@@ -45,7 +45,7 @@ export default defineRoute({
 
   POST: {
     requirePermissions: [IRISFlags.ADMINISTRATOR],
-    async handler({ params, body, prisma }) {
+    async handler({ params, body, prisma, cache }) {
       const movie = await prisma.movie.findUnique({ where: { id: params.id } })
       if (!movie) {
         throw new NotFound("Movie not found")
@@ -54,6 +54,8 @@ export default defineRoute({
       if (!movie.tvDBId) {
         throw new BadRequest("Movie is missing tvDBId")
       }
+
+      await cache.del(`movie:${params.id}`).catch(() => {})
 
       const queued = await queueMovieFetch(movie.tvDBId, {
         forceRefresh: body?.force,

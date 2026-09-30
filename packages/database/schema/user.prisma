@@ -57,6 +57,14 @@ model User {
     recommendationVotes MediaRecommendationVote[]
     favorites           Favorite[]
 
+    // FRIENDS & SOCIAL RELATIONS
+    friends                Friend[]        @relation("UserFriends")
+    friendOf               Friend[]        @relation("FriendOfUsers")
+    sentFriendRequests     FriendRequest[] @relation("SentFriendRequests")
+    receivedFriendRequests FriendRequest[] @relation("ReceivedFriendRequests")
+    blockedUsers           UserBlock[]     @relation("UserBlocks")
+    blockedByUsers         UserBlock[]     @relation("BlockedByUsers")
+
     // STATS & ACTIVITY
     userStats       UserStats[]
     activityLogs    ActivityLog[]

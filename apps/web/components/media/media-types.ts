@@ -8,6 +8,7 @@ export type MediaTabKey =
   | "images"
   | "trailers"
   | "stats"
+  | "friends"
   | "reviews"
   | "recommendations"
 

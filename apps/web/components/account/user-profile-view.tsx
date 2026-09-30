@@ -12,12 +12,14 @@ import { ActivityTab } from "./tabs/activity-tab"
 import { ListsTab } from "./tabs/lists-tab"
 import { FavoritesTab } from "./tabs/favorites-tab"
 import { StatsTab } from "./tabs/stats-tab"
+import { ProfileFriendsTab } from "./tabs/friends-tab"
 import {
   IconLayoutDashboard,
   IconPlayerPlay,
   IconList,
   IconHeart,
   IconChartBar,
+  IconUsers,
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import type { UserProfileCustomization } from "@IRIS/shared"
@@ -38,6 +40,7 @@ const TABS = [
   { id: "activity", name: "Activity", icon: IconPlayerPlay },
   { id: "lists", name: "Lists", icon: IconList },
   { id: "favorites", name: "Favorites", icon: IconHeart },
+  { id: "friends", name: "Friends", icon: IconUsers },
   { id: "stats", name: "Stats", icon: IconChartBar },
 ]
 
@@ -155,6 +158,10 @@ export function UserProfileView({
 
         {activeTab === "favorites" && (
           <FavoritesTab username={user.username} isOwner={isOwner} />
+        )}
+
+        {activeTab === "friends" && (
+          <ProfileFriendsTab username={user.username} isOwner={isOwner} />
         )}
 
         {activeTab === "stats" && (

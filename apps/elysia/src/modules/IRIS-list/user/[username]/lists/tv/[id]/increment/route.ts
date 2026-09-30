@@ -26,6 +26,15 @@ export default defineRoute({
             t.Literal("season"),
           ])
         ),
+        status: t.Optional(
+          t.Union([
+            t.Literal("PLANNING"),
+            t.Literal("WATCHING"),
+            t.Literal("COMPLETED"),
+            t.Literal("ON_HOLD"),
+            t.Literal("DROPPED"),
+          ])
+        ),
         connections: t.Optional(t.Any()),
       })
     ),
@@ -59,6 +68,24 @@ export default defineRoute({
         showCompleted: t.Boolean(),
         progress: t.Number(),
         status: t.String(),
+        entry: t.Optional(
+          t.Object({
+            id: t.Number(),
+            tvId: t.Number(),
+            status: t.String(),
+            progress: t.Number(),
+            score: t.Nullable(t.Number()),
+            notes: t.Nullable(t.String()),
+            rewatched: t.Number(),
+            private: t.Boolean(),
+            startedAt: t.Nullable(t.String()),
+            completedAt: t.Nullable(t.String()),
+            rewatchHistory: t.Optional(t.Any()),
+            connections: t.Optional(t.Any()),
+            createdAt: t.String(),
+            updatedAt: t.String(),
+          })
+        ),
       }),
     },
     detail: {
@@ -116,19 +143,15 @@ export default defineRoute({
       })
     }
 
+    const isOngoing = tv.status === "RETURNING_SERIES" || !tv.episodeCount
+
     const maxEpisodes =
-      tv.episodeCount && tv.episodeCount > 0
+      !isOngoing && tv.episodeCount && tv.episodeCount > 0
         ? tv.episodeCount
-        : tv.episodes.length > 0
-          ? tv.episodes.length
-          : null
+        : null
 
     const maxSeasons =
-      tv.seasonCount && tv.seasonCount > 0
-        ? tv.seasonCount
-        : tv.seasons.length > 0
-          ? tv.seasons.length
-          : null
+      !isOngoing && tv.seasonCount && tv.seasonCount > 0 ? tv.seasonCount : null
 
     // -------------------------------------------------------------------------
     // A. Season Increment Flow
@@ -349,6 +372,26 @@ export default defineRoute({
         showCompleted: isShowCompleted,
         progress: updatedList.progress,
         status: updatedList.status,
+        entry: {
+          id: updatedList.id,
+          tvId: updatedList.tvId,
+          status: updatedList.status,
+          progress: updatedList.progress,
+          score: tvList.score ?? null,
+          notes: tvList.notes ?? null,
+          rewatched: tvList.rewatched ?? 0,
+          private: tvList.private ?? false,
+          startedAt: updatedList.startedAt
+            ? updatedList.startedAt.toISOString()
+            : null,
+          completedAt: updatedList.completedAt
+            ? updatedList.completedAt.toISOString()
+            : null,
+          rewatchHistory: tvList.rewatchHistory,
+          connections: tvList.connections,
+          createdAt: updatedList.createdAt.toISOString(),
+          updatedAt: updatedList.updatedAt.toISOString(),
+        },
       }
     }
 
@@ -715,6 +758,26 @@ export default defineRoute({
       showCompleted,
       progress: updatedList.progress,
       status: updatedList.status,
+      entry: {
+        id: updatedList.id,
+        tvId: updatedList.tvId,
+        status: updatedList.status,
+        progress: updatedList.progress,
+        score: tvList.score ?? null,
+        notes: tvList.notes ?? null,
+        rewatched: tvList.rewatched ?? 0,
+        private: tvList.private ?? false,
+        startedAt: updatedList.startedAt
+          ? updatedList.startedAt.toISOString()
+          : null,
+        completedAt: updatedList.completedAt
+          ? updatedList.completedAt.toISOString()
+          : null,
+        rewatchHistory: tvList.rewatchHistory,
+        connections: tvList.connections,
+        createdAt: updatedList.createdAt.toISOString(),
+        updatedAt: updatedList.updatedAt.toISOString(),
+      },
     }
   },
 })

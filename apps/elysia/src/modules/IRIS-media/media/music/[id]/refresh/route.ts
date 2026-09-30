@@ -45,12 +45,18 @@ export default defineRoute({
 
   POST: {
     requirePermissions: [IRISFlags.ADMINISTRATOR],
-    async handler({ params, body, prisma }) {
+    async handler({ params, body, prisma, cache }) {
       const id = Number(params.id)
       const music = await prisma.music.findUnique({ where: { id } })
       if (!music) {
         throw new NotFound("Music item not found")
       }
+
+      await Promise.all([
+        cache.del(`music:${id}`).catch(() => {}),
+        cache.del(`music:TRACK:${id}`).catch(() => {}),
+        cache.del(`music:ALBUM:${id}`).catch(() => {}),
+      ])
 
       const queued = await queueMusicFetch(music.id, {
         forceRefresh: body?.force,
