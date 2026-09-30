@@ -1,4 +1,4 @@
-import { Geist_Mono, Instrument_Sans, Oxanium } from "next/font/google"
+import { Geist_Mono, Instrument_Sans, Oxanium, JetBrains_Mono } from "next/font/google"
 import "@workspace/ui/globals.css"
 import "./globals.css"
 import { cn } from "@workspace/ui/lib/utils"
@@ -16,10 +16,7 @@ const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
 })
-const fontMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-})
+const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' })
 
 export const metadata: Metadata = {
   title: "IRIS",
@@ -55,11 +52,9 @@ export default async function RootLayout({
       suppressHydrationWarning
       className={cn(
         "antialiased",
-        fontMono.variable,
-        "font-sans",
         instrumentSans.variable,
         oxaniumHeading.variable
-      )}
+        , "font-mono", jetbrainsMono.variable)}
     >
       <body
         suppressHydrationWarning

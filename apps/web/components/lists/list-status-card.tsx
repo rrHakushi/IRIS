@@ -14,7 +14,7 @@ import { cn } from "@workspace/ui/lib/utils"
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
 import { Separator } from "@workspace/ui/components/separator"
-import { Tabs, TabList, Tab } from "@workspace/ui/components/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@workspace/ui/components/tabs"
 import {
   type StatusKey,
   type SortByOption,
@@ -370,35 +370,35 @@ export function ListStatusCard({
           }
           className="shrink-0 gap-0"
         >
-          <TabList
+          <TabsList
             aria-label="View Switcher"
             className="h-7 gap-0.5 rounded-full border border-border/40 bg-muted/40 p-0.5"
           >
-            <Tab
+            <TabsTrigger
               id="list"
               className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
             >
               List
-            </Tab>
-            <Tab
+            </TabsTrigger>
+            <TabsTrigger
               id="comments"
               className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
             >
               Comments
-            </Tab>
-            <Tab
+            </TabsTrigger>
+            <TabsTrigger
               id="stats"
               className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
             >
               Stats
-            </Tab>
-            <Tab
+            </TabsTrigger>
+            <TabsTrigger
               id="activity"
               className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
             >
               Activity
-            </Tab>
-          </TabList>
+            </TabsTrigger>
+          </TabsList>
         </Tabs>
       </div>
 
