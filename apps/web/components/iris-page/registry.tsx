@@ -320,7 +320,12 @@ import { Skeleton } from "@workspace/ui/components/skeleton"
 import { Slider } from "@workspace/ui/components/slider"
 import { Spinner } from "@workspace/ui/components/spinner"
 import { Switch } from "@workspace/ui/components/switch"
-import { Tabs, TabList, Tab, TabPanel } from "@workspace/ui/components/tabs"
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@workspace/ui/components/tabs"
 import { Textarea } from "@workspace/ui/components/textarea"
 import { Toggle } from "@workspace/ui/components/toggle"
 import {
@@ -1153,15 +1158,16 @@ export const COMPONENT_REGISTRY: Record<
 
   // Tabs (supports both React Aria and shadcn names)
   Tabs,
-  TabList,
-  TabsList: TabList,
-  Tab,
-  TabsTrigger: Tab,
-  TabPanel,
-  TabsContent: TabPanel,
-  "Tabs.List": TabList,
-  "Tabs.Trigger": Tab,
-  "Tabs.Content": TabPanel,
+  TabList: TabsList,
+  TabsList,
+  Tab: TabsTrigger,
+  TabTrigger: TabsTrigger,
+  TabsTrigger,
+  TabPanel: TabsContent,
+  TabsContent,
+  "Tabs.List": TabsList,
+  "Tabs.Trigger": TabsTrigger,
+  "Tabs.Content": TabsContent,
 
   // Textarea
   Textarea,
