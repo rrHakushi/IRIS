@@ -32,10 +32,7 @@ export function renderIrisAppIcon(
 
   const iconSrc =
     app.icon ||
-    app.iconLeftRing ||
-    (app.id === "iris-list"
-      ? "/iris-icons/iris-list-ring-left.png"
-      : "/iris-icons/iris-pass-ring-left.png")
+    app.iconLeftRing || ""
 
   return (
     <Image
@@ -51,6 +48,26 @@ export function renderIrisAppIcon(
 
 export function getIrisApps(t: (key: string) => string): IrisApp[] {
   return [
+    {
+      id: "iris-account",
+      name: t ? t("irisAccount.name") : "IRIS Account",
+      href: "/IRIS-account",
+      color: "#f59e0b",
+      colorClass: "text-amber-500",
+      bgClass: "bg-amber-500",
+      gradient:
+        "linear-gradient(135deg, #fbbf24 0%, #f97316 25%, #fb7185 50%, #e11d48 75%, #881337 100%)",
+      gradientStyle:
+        "linear-gradient(135deg, #fbbf24 0%, #f97316 25%, #fb7185 50%, #e11d48 75%, #881337 100%)",
+      icon: "/iris-icons/iris-account-ring-left.png",
+      iconLeftRing: "/iris-icons/iris-account-ring-left.png",
+      description: t
+        ? t("irisAccount.description")
+        : "Unified identity, user profile, security, and sessions.",
+      descriptionShort: t
+        ? t("irisAccount.descriptionShort")
+        : "Identity & Security",
+    },
     {
       id: "iris-list",
       name: t("irisList.name"),

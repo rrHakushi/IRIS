@@ -84,10 +84,20 @@
   },
   "navigation": {
     "apps": {
+      "irisAccount": {
+        "name": "IRIS Account",
+        "description": "統合されたID、プロフィール、セキュリティ、セッション管理。",
+        "descriptionShort": "アカウントとセキュリティ"
+      },
       "irisList": {
         "name": "IRIS List",
         "description": "メディアを記録。視聴、読書、リスニングをすべて楽しむ。",
         "descriptionShort": "メディア管理"
+      },
+      "irisPass": {
+        "name": "IRIS Pass",
+        "description": "ゼロ知識暗号化パスワード、認証情報、SSHキー管理。",
+        "descriptionShort": "保管庫・生成"
       }
     },
     "listSidebar": {
