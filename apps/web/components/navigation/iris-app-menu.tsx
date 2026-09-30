@@ -6,10 +6,8 @@ import Image from "next/image"
 import { useTranslations } from "next-intl"
 import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu"
+import { Popover, PopoverTrigger } from "@workspace/ui/components/popover"
+import { Dialog as AriaDialog } from "react-aria-components"
 import { Button, LinkButton } from "@workspace/ui/components/button"
 import { Tooltip, TooltipTrigger } from "@workspace/ui/components/tooltip"
 import {
@@ -78,6 +76,14 @@ function isBookmarkActive(currentPath: string, bookmarkUrl?: string): boolean {
   return normCurrent === normTarget
 }
 
+// In-memory module cache for bookmarks across navigation and sidebar instances
+let cachedBookmarks: UserBookmark[] | null = null
+let cachedServerGroups: string[] | null = null
+let inFlightBookmarksPromise: Promise<{
+  bookmarks: UserBookmark[]
+  groups: string[]
+} | null> | null = null
+
 export function IrisAppMenu(): React.JSX.Element {
   const t = useTranslations("navigation.appMenu")
   const irisApps = useIrisApps()
@@ -105,12 +111,17 @@ export function IrisAppMenu(): React.JSX.Element {
 
   const [isEditing, setIsEditing] = useState(false)
   const [appOrder, setAppOrder] = useState<string[]>([])
-  const [bookmarks, setBookmarks] = useState<UserBookmark[]>([])
-  const [serverGroups, setServerGroups] = useState<string[]>([])
+  const [bookmarks, setBookmarks] = useState<UserBookmark[]>(
+    () => cachedBookmarks ?? []
+  )
+  const [serverGroups, setServerGroups] = useState<string[]>(
+    () => cachedServerGroups ?? []
+  )
   const [searchQuery, setSearchQuery] = useState("")
   const [filterAppId, setFilterAppId] = useState<string>("all")
   const [filterGroup, setFilterGroup] = useState<string>("all")
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [editingBookmark, setEditingBookmark] = useState<UserBookmark | null>(
     null
   )
@@ -131,31 +142,72 @@ export function IrisAppMenu(): React.JSX.Element {
   }, [])
 
   // Sync bookmarks & groups from backend database table
-  const fetchBookmarks = useCallback(async () => {
-    if (!isAuthenticated) {
-      setBookmarks([])
-      setServerGroups([])
-      return
-    }
-
-    try {
-      const { data, error } = await elysia.users.me.bookmarks.get({
-        fetch: { credentials: "include" },
-      })
-      if (!error && data?.bookmarks) {
-        setBookmarks(data.bookmarks)
-        if (data.groups) {
-          setServerGroups(data.groups)
-        }
+  const fetchBookmarks = useCallback(
+    async (force = false) => {
+      if (!isAuthenticated) {
+        cachedBookmarks = null
+        cachedServerGroups = null
+        setBookmarks([])
+        setServerGroups([])
+        return
       }
-    } catch {
-      // ignore
-    }
-  }, [isAuthenticated])
+
+      if (!force && cachedBookmarks !== null) {
+        setBookmarks(cachedBookmarks)
+        if (cachedServerGroups) {
+          setServerGroups(cachedServerGroups)
+        }
+        return
+      }
+
+      if (inFlightBookmarksPromise) {
+        const result = await inFlightBookmarksPromise
+        if (result) {
+          setBookmarks(result.bookmarks)
+          setServerGroups(result.groups)
+        }
+        return
+      }
+
+      inFlightBookmarksPromise = (async () => {
+        try {
+          const { data, error } = await elysia.users.me.bookmarks.get({
+            fetch: { credentials: "include" },
+          })
+          if (!error && data && "bookmarks" in (data as object)) {
+            const resultData = data as {
+              bookmarks: UserBookmark[]
+              groups?: string[]
+            }
+            cachedBookmarks = resultData.bookmarks
+            cachedServerGroups = resultData.groups || []
+            return {
+              bookmarks: resultData.bookmarks,
+              groups: resultData.groups || [],
+            }
+          }
+          return null
+        } catch {
+          return null
+        } finally {
+          inFlightBookmarksPromise = null
+        }
+      })()
+
+      const result = await inFlightBookmarksPromise
+      if (result) {
+        setBookmarks(result.bookmarks)
+        setServerGroups(result.groups)
+      }
+    },
+    [isAuthenticated]
+  )
 
   useEffect(() => {
-    fetchBookmarks()
-  }, [fetchBookmarks])
+    if (cachedBookmarks === null && isAuthenticated) {
+      fetchBookmarks()
+    }
+  }, [fetchBookmarks, isAuthenticated])
 
   // Sorted apps based on saved order
   const sortedApps = useMemo((): IrisApp[] => {
@@ -272,6 +324,7 @@ export function IrisAppMenu(): React.JSX.Element {
           { bookmarks },
           { fetch: { credentials: "include" } }
         )
+        cachedBookmarks = bookmarks
       } catch (err) {
         console.error("Failed to save reordered bookmarks:", err)
       }
@@ -309,6 +362,7 @@ export function IrisAppMenu(): React.JSX.Element {
     newBookmarks.splice(index, 1)
     newBookmarks.splice(targetIndex, 0, moved)
     setBookmarks(newBookmarks)
+    cachedBookmarks = newBookmarks
   }
 
   const togglePinBookmark = async (bm: UserBookmark, e: React.MouseEvent) => {
@@ -319,6 +373,7 @@ export function IrisAppMenu(): React.JSX.Element {
       b.id === bm.id ? { ...b, pinned: newPinned } : b
     )
     setBookmarks(updated)
+    cachedBookmarks = updated
 
     if (isAuthenticated) {
       try {
@@ -339,6 +394,7 @@ export function IrisAppMenu(): React.JSX.Element {
     }
     const updated = bookmarks.filter((b) => b.id !== id)
     setBookmarks(updated)
+    cachedBookmarks = updated
 
     if (isAuthenticated) {
       try {
@@ -357,6 +413,7 @@ export function IrisAppMenu(): React.JSX.Element {
     e.stopPropagation()
     setEditingBookmark(null)
     setDialogOpen(true)
+    setIsMenuOpen(false)
   }
 
   const handleOpenEditDialog = (bm: UserBookmark, e: React.MouseEvent) => {
@@ -364,6 +421,7 @@ export function IrisAppMenu(): React.JSX.Element {
     e.stopPropagation()
     setEditingBookmark(bm)
     setDialogOpen(true)
+    setIsMenuOpen(false)
   }
 
   const handleSaveBookmark = async (data: {
@@ -396,13 +454,17 @@ export function IrisAppMenu(): React.JSX.Element {
         if (error || !resData?.bookmark) {
           throw new Error("Failed to update bookmark")
         }
-        setBookmarks((prev) =>
-          prev.map((b) => (b.id === data.id ? resData.bookmark : b))
+        const updatedList = bookmarks.map((b) =>
+          b.id === data.id ? resData.bookmark : b
         )
+        setBookmarks(updatedList)
+        cachedBookmarks = updatedList
         if (data.group && data.group.trim()) {
-          setServerGroups((prev) =>
-            Array.from(new Set([...prev, data.group!.trim()]))
+          const newGroups = Array.from(
+            new Set([...serverGroups, data.group.trim()])
           )
+          setServerGroups(newGroups)
+          cachedServerGroups = newGroups
         }
         toast.success(t("bookmarkUpdated"))
       }
@@ -424,11 +486,15 @@ export function IrisAppMenu(): React.JSX.Element {
         if (error || !resData?.bookmark) {
           throw new Error("Failed to create bookmark")
         }
-        setBookmarks((prev) => [...prev, resData.bookmark])
+        const updatedList = [...bookmarks, resData.bookmark]
+        setBookmarks(updatedList)
+        cachedBookmarks = updatedList
         if (data.group && data.group.trim()) {
-          setServerGroups((prev) =>
-            Array.from(new Set([...prev, data.group!.trim()]))
+          const newGroups = Array.from(
+            new Set([...serverGroups, data.group.trim()])
           )
+          setServerGroups(newGroups)
+          cachedServerGroups = newGroups
         }
         toast.success(t("bookmarkCreated"))
       }
@@ -437,7 +503,7 @@ export function IrisAppMenu(): React.JSX.Element {
 
   return (
     <>
-      <DropdownMenuTrigger>
+      <PopoverTrigger isOpen={isMenuOpen} onOpenChange={setIsMenuOpen}>
         {/* App Trigger Button in Sidebar */}
         <Button
           variant="ghost"
@@ -471,16 +537,20 @@ export function IrisAppMenu(): React.JSX.Element {
           <IconSelector className="ms-auto size-4 shrink-0 text-muted-foreground opacity-70 group-hover:opacity-100" />
         </Button>
 
-        {/* Large Dropdown Menu Popover */}
-        <DropdownMenu
+        {/* Large Flyout Popover */}
+        <Popover
           placement={isRight ? "left top" : "right top"}
           offset={8}
           style={{
             width: "min(580px, calc(100vw - 32px))",
             maxWidth: "calc(100vw - 32px)",
           }}
-          className="w-[580px]! max-w-[92vw]! min-w-[360px]! rounded-3xl border border-border/80 bg-popover/95 p-4 shadow-2xl backdrop-blur-2xl"
+          className="z-40! w-[580px]! max-w-[92vw]! min-w-[360px]! rounded-3xl border border-border/80 bg-popover/95 p-4 shadow-2xl backdrop-blur-2xl"
         >
+          <AriaDialog
+            aria-label={t("applications")}
+            className="outline-none"
+          >
           {/* Applications Header */}
           <div className="mb-2.5 flex items-center justify-between px-1">
             <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
@@ -535,6 +605,7 @@ export function IrisAppMenu(): React.JSX.Element {
                     href={isEditing ? "#" : app.href}
                     onClick={(e) => {
                       if (isEditing) e.preventDefault()
+                      else setIsMenuOpen(false)
                     }}
                     className={cn(
                       "flex aspect-square size-13 cursor-pointer items-center justify-center transition-all duration-200 hover:scale-110",
@@ -809,6 +880,7 @@ export function IrisAppMenu(): React.JSX.Element {
                         href={isEditing ? "#" : bm.url}
                         onClick={(e) => {
                           if (isEditing) e.preventDefault()
+                          else setIsMenuOpen(false)
                         }}
                         className={cn(
                           "relative flex aspect-square size-11 cursor-pointer items-center justify-center transition-all duration-200 hover:scale-115",
@@ -947,8 +1019,9 @@ export function IrisAppMenu(): React.JSX.Element {
               })}
             </div>
           )}
-        </DropdownMenu>
-      </DropdownMenuTrigger>
+          </AriaDialog>
+        </Popover>
+      </PopoverTrigger>
 
       {/* Bookmark Add/Edit Dialog */}
       <BookmarkDialog

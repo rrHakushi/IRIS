@@ -204,7 +204,7 @@ export function NotificationProvider({
       })
 
       if (!apiError && data?.success) {
-        const currentKey = isActive ? secretKey : null
+        const currentKey = secretKeyRef.current
         const mapped: NotificationItem[] = (data.notifications || []).map(
           (n: any) => {
             const baseItem: NotificationItem = {
@@ -240,7 +240,7 @@ export function NotificationProvider({
     } finally {
       setIsLoading(false)
     }
-  }, [status, userId, isActive, secretKey, tryDecryptNotification])
+  }, [status, userId, tryDecryptNotification])
 
   // Initial fetch on login
   useEffect(() => {
