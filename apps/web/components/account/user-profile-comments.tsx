@@ -53,7 +53,7 @@ import {
   type UserProfileCustomization,
   type DisplayNameStyle,
 } from "@IRIS/shared"
-import { renderBioMarkdown } from "../navigation/settings-tabs/account/profile/markdown-bio-editor"
+import { MarkdownRenderer } from "@/components/markdown"
 
 export interface CommentAuthor {
   id: string
@@ -187,16 +187,18 @@ export function UserProfileComments({
       isFetchingRef.current = true
 
       try {
-        const res = await elysia
-          .users({ username })
-          .comments.get({
-            query: {
-              page: pageToFetch,
-              limit: pageSize,
-            },
-          })
+        const res = await elysia.users({ username }).comments.get({
+          query: {
+            page: pageToFetch,
+            limit: pageSize,
+          },
+        })
 
-        if (!res.error && res.data?.success && Array.isArray(res.data.comments)) {
+        if (
+          !res.error &&
+          res.data?.success &&
+          Array.isArray(res.data.comments)
+        ) {
           setComments(res.data.comments as any)
           const pagination = res.data.pagination
           if (pagination) {
@@ -260,12 +262,10 @@ export function UserProfileComments({
 
     setIsSubmittingComment(true)
     try {
-      const res = await elysia
-        .users({ username })
-        .comments.post({
-          content: commentText.trim(),
-          isSpoiler,
-        })
+      const res = await elysia.users({ username }).comments.post({
+        content: commentText.trim(),
+        isSpoiler,
+      })
 
       if (res.status === 429) {
         startRateLimitCountdown(60)
@@ -282,7 +282,8 @@ export function UserProfileComments({
           setCurrentPage(1)
         }
       } else {
-        const rawErr = (res.error as any)?.value?.message || (res.error as any)?.message
+        const rawErr =
+          (res.error as any)?.value?.message || (res.error as any)?.message
         toast.error(rawErr || "Failed to post comment.")
       }
     } catch {
@@ -432,13 +433,13 @@ export function UserProfileComments({
                 }
               }}
               rows={isInputActive ? 3 : 1}
-              className="w-full resize-none border-border/60 bg-muted/20 text-xs shadow-none placeholder:text-muted-foreground/60 transition-all duration-200"
+              className="w-full resize-none border-border/60 bg-muted/20 text-xs shadow-none transition-all duration-200 placeholder:text-muted-foreground/60"
               maxLength={5000}
               disabled={isSubmittingComment}
             />
 
             {isInputActive && (
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 animate-in fade-in-50 duration-200">
+              <div className="flex animate-in flex-wrap items-center justify-between gap-2 pt-1 duration-200 fade-in-50">
                 <label className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-muted-foreground select-none hover:text-foreground">
                   <Switch
                     isSelected={isSpoiler}
@@ -451,7 +452,11 @@ export function UserProfileComments({
                     ) : (
                       <IconEye className="size-3.5" />
                     )}
-                    <span className={cn(isSpoiler && "font-semibold text-destructive")}>
+                    <span
+                      className={cn(
+                        isSpoiler && "font-semibold text-destructive"
+                      )}
+                    >
                       Mark as spoiler
                     </span>
                   </div>
@@ -462,12 +467,12 @@ export function UserProfileComments({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
+                    onPress={() => {
                       setCommentText("")
                       setIsSpoiler(false)
                       setIsFocused(false)
                     }}
-                    disabled={isSubmittingComment}
+                    isDisabled={isSubmittingComment}
                     className="h-7 cursor-pointer rounded-xl px-2.5 text-xs text-muted-foreground hover:text-foreground"
                   >
                     Cancel
@@ -477,7 +482,11 @@ export function UserProfileComments({
                     type="submit"
                     variant="default"
                     size="sm"
-                    disabled={isSubmittingComment || !commentText.trim() || Boolean(rateLimitSeconds)}
+                    isDisabled={
+                      isSubmittingComment ||
+                      !commentText.trim() ||
+                      Boolean(rateLimitSeconds)
+                    }
                     className="h-7 cursor-pointer gap-1.5 rounded-xl px-3 text-xs shadow-xs"
                   >
                     {isSubmittingComment ? (
@@ -504,7 +513,9 @@ export function UserProfileComments({
         ) : (
           <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border/60 py-3 text-xs text-muted-foreground">
             <IconLock className="size-3.5" />
-            <span>Sign in to leave a message on @{username}&apos;s profile.</span>
+            <span>
+              Sign in to leave a message on @{username}&apos;s profile.
+            </span>
           </div>
         )}
       </div>
@@ -513,7 +524,10 @@ export function UserProfileComments({
       {isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex animate-pulse items-start gap-3 rounded-2xl border border-border/40 bg-card/30 p-4">
+            <div
+              key={i}
+              className="flex animate-pulse items-start gap-3 rounded-2xl border border-border/40 bg-card/30 p-4"
+            >
               <div className="size-9 shrink-0 rounded-full bg-muted/70" />
               <div className="flex-1 space-y-2">
                 <div className="h-3 w-32 rounded bg-muted/60" />
@@ -534,9 +548,14 @@ export function UserProfileComments({
           {comments.map((comment) => {
             const isRevealed = revealedSpoilers.has(comment.id)
             const commentDate = formatCommentDate(comment.createdAt)
-            const authorStyle = getDisplayNameStyleCss(comment.author.displayNameStyle ?? undefined)
-            const authorEffect = getDisplayNameEffectClasses(comment.author.displayNameStyle?.effect ?? undefined)
-            const authorName = comment.author.displayName || comment.author.username
+            const authorStyle = getDisplayNameStyleCss(
+              comment.author.displayNameStyle ?? undefined
+            )
+            const authorEffect = getDisplayNameEffectClasses(
+              comment.author.displayNameStyle?.effect ?? undefined
+            )
+            const authorName =
+              comment.author.displayName || comment.author.username
             const authorInitial = authorName.charAt(0).toUpperCase()
             const hasAuthorFrame = isValidFrameUrl(comment.author.avatarFrame)
             const isCommentAuthor = session?.user?.id === comment.authorId
@@ -544,7 +563,9 @@ export function UserProfileComments({
 
             const reply = comment.reply
             const replyDate = reply ? formatCommentDate(reply.createdAt) : null
-            const replyAuthorName = reply ? (reply.author.displayName || reply.author.username) : ""
+            const replyAuthorName = reply
+              ? reply.author.displayName || reply.author.username
+              : ""
 
             return (
               <div
@@ -560,7 +581,10 @@ export function UserProfileComments({
                     >
                       <Avatar className="size-9 border border-border/60">
                         {comment.author.avatarUrl ? (
-                          <AvatarImage src={comment.author.avatarUrl} alt={authorName} />
+                          <AvatarImage
+                            src={comment.author.avatarUrl}
+                            alt={authorName}
+                          />
                         ) : null}
                         <AvatarFallback className="bg-primary/15 text-xs font-bold text-primary uppercase">
                           {authorInitial}
@@ -584,18 +608,25 @@ export function UserProfileComments({
                       <div className="flex flex-wrap items-center gap-1.5">
                         <Link
                           href={`/IRIS-account/users/${comment.author.username}`}
-                          className={cn("text-xs font-bold hover:underline", authorEffect)}
+                          className={cn(
+                            "text-xs font-bold hover:underline",
+                            authorEffect
+                          )}
                           style={authorStyle}
                         >
                           {authorName}
                         </Link>
-                        {comment.author.username.toLowerCase() === username.toLowerCase() && (
+                        {comment.author.username.toLowerCase() ===
+                          username.toLowerCase() && (
                           <Badge className="h-4 gap-0.5 border-amber-500/30 bg-amber-500/10 px-1 text-[8px] font-bold text-amber-400">
                             <IconCrown className="size-2.5" />
                             <span>Owner</span>
                           </Badge>
                         )}
-                        <span className="text-[10px] text-muted-foreground" title={commentDate.full}>
+                        <span
+                          className="text-[10px] text-muted-foreground"
+                          title={commentDate.full}
+                        >
                           • {commentDate.relative}
                         </span>
                       </div>
@@ -623,7 +654,7 @@ export function UserProfileComments({
                   {comment.isSpoiler && !isRevealed ? (
                     <div
                       onClick={() => toggleSpoiler(comment.id)}
-                      className="flex cursor-pointer items-center justify-between rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/15 select-none"
+                      className="flex cursor-pointer items-center justify-between rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive transition-colors select-none hover:bg-destructive/15"
                     >
                       <div className="flex items-center gap-1.5">
                         <IconEyeOff className="size-3.5" />
@@ -633,7 +664,7 @@ export function UserProfileComments({
                     </div>
                   ) : (
                     <div>
-                      {renderBioMarkdown(comment.content, "")}
+                      <MarkdownRenderer content={comment.content} size="xs" />
                       {comment.isSpoiler && (
                         <button
                           type="button"
@@ -660,7 +691,10 @@ export function UserProfileComments({
                         <Badge className="h-3.5 border-amber-500/30 bg-amber-500/10 px-1 text-[8px] font-bold text-amber-400">
                           Owner Reply
                         </Badge>
-                        <span className="text-[10px] text-muted-foreground" title={replyDate?.full}>
+                        <span
+                          className="text-[10px] text-muted-foreground"
+                          title={replyDate?.full}
+                        >
                           • {replyDate?.relative}
                         </span>
                       </div>
@@ -702,7 +736,7 @@ export function UserProfileComments({
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setEditingReplyId(null)}
+                            onPress={() => setEditingReplyId(null)}
                             className="h-6 text-[10px]"
                           >
                             Cancel
@@ -710,8 +744,10 @@ export function UserProfileComments({
                           <Button
                             variant="default"
                             size="sm"
-                            disabled={isSavingEditReply || !editReplyText.trim()}
-                            onClick={() => handleSaveEditReply(comment.id)}
+                            isDisabled={
+                              isSavingEditReply || !editReplyText.trim()
+                            }
+                            onPress={() => handleSaveEditReply(comment.id)}
                             className="h-6 text-[10px]"
                           >
                             Save
@@ -720,7 +756,7 @@ export function UserProfileComments({
                       </div>
                     ) : (
                       <div className="mt-1.5 text-xs text-foreground">
-                        {renderBioMarkdown(reply.content, "")}
+                        <MarkdownRenderer content={reply.content} size="xs" />
                       </div>
                     )}
                   </div>
@@ -751,7 +787,7 @@ export function UserProfileComments({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setReplyingToId(null)}
+                        onPress={() => setReplyingToId(null)}
                         className="h-7 text-xs"
                       >
                         Cancel
@@ -759,8 +795,8 @@ export function UserProfileComments({
                       <Button
                         variant="default"
                         size="sm"
-                        disabled={isSubmittingReply || !replyText.trim()}
-                        onClick={() => handlePostReply(comment.id)}
+                        isDisabled={isSubmittingReply || !replyText.trim()}
+                        onPress={() => handlePostReply(comment.id)}
                         className="h-7 gap-1 text-xs"
                       >
                         <IconSend className="size-3" />
@@ -784,19 +820,23 @@ export function UserProfileComments({
                       isDisabled={currentPage <= 1}
                     />
                   </PaginationItem>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                    <PaginationItem key={p}>
-                      <PaginationLink
-                        isActive={currentPage === p}
-                        onPress={() => setCurrentPage(p)}
-                      >
-                        {p}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (p) => (
+                      <PaginationItem key={p}>
+                        <PaginationLink
+                          isActive={currentPage === p}
+                          onPress={() => setCurrentPage(p)}
+                        >
+                          {p}
+                        </PaginationLink>
+                      </PaginationItem>
+                    )
+                  )}
                   <PaginationItem>
                     <PaginationNext
-                      onPress={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      onPress={() =>
+                        setCurrentPage((p) => Math.min(totalPages, p + 1))
+                      }
                       isDisabled={currentPage >= totalPages}
                     />
                   </PaginationItem>
@@ -814,20 +854,27 @@ export function UserProfileComments({
         className="rounded-3xl border border-border/80 bg-background/95 p-4 backdrop-blur-xl sm:max-w-md"
       >
         <DialogHeader>
-          <DialogTitle className="text-sm font-bold">Delete Comment</DialogTitle>
+          <DialogTitle className="text-sm font-bold">
+            Delete Comment
+          </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
-            Are you sure you want to delete this comment? This action cannot be undone.
+            Are you sure you want to delete this comment? This action cannot be
+            undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="mt-4 flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => setDeleteCommentTarget(null)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onPress={() => setDeleteCommentTarget(null)}
+          >
             Cancel
           </Button>
           <Button
             variant="destructive"
             size="sm"
-            disabled={isDeletingComment}
-            onClick={handleConfirmDeleteComment}
+            isDisabled={isDeletingComment}
+            onPress={handleConfirmDeleteComment}
           >
             {isDeletingComment ? "Deleting..." : "Delete"}
           </Button>
@@ -847,14 +894,18 @@ export function UserProfileComments({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="mt-4 flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => setDeleteReplyTarget(null)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onPress={() => setDeleteReplyTarget(null)}
+          >
             Cancel
           </Button>
           <Button
             variant="destructive"
             size="sm"
-            disabled={isDeletingReply}
-            onClick={handleConfirmDeleteReply}
+            isDisabled={isDeletingReply}
+            onPress={handleConfirmDeleteReply}
           >
             {isDeletingReply ? "Deleting..." : "Delete"}
           </Button>

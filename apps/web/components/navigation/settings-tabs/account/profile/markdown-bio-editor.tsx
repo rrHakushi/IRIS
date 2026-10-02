@@ -18,6 +18,8 @@ import {
   IconEdit,
 } from "@tabler/icons-react"
 
+import { MarkdownRenderer } from "@/components/markdown"
+
 export interface MarkdownBioEditorProps {
   value: string
   onChange: (value: string) => void
@@ -26,189 +28,23 @@ export interface MarkdownBioEditorProps {
 }
 
 /**
- * Lightweight and safe client-side markdown formatter for user bios.
+ * Client-side markdown formatter for user bios with full GFM and whitespace support.
  */
 export function renderBioMarkdown(
   markdown: string,
   emptyText?: React.ReactNode
 ): React.ReactNode {
-  if (!markdown || !markdown.trim()) {
-    return (
-      <span className="text-xs text-muted-foreground/60 italic">
-        {emptyText ?? "No bio provided yet. Tell others about yourself!"}
-      </span>
-    )
-  }
-
-  const lines = markdown.split("\n")
-  const elements: React.ReactNode[] = []
-
-  for (let i = 0; i < lines.length; i++) {
-    const rawLine = lines[i]
-    if (rawLine === undefined) continue
-    const line = rawLine
-
-    if (!line.trim()) {
-      elements.push(<div key={i} className="h-2" />)
-      continue
-    }
-
-    // Heading ###
-    if (line.startsWith("### ")) {
-      elements.push(
-        <h4 key={i} className="mt-1 mb-0.5 text-xs font-bold text-foreground">
-          {formatInline(line.slice(4))}
-        </h4>
-      )
-      continue
-    }
-    if (line.startsWith("## ")) {
-      elements.push(
-        <h3 key={i} className="mt-1 mb-0.5 text-sm font-bold text-foreground">
-          {formatInline(line.slice(3))}
-        </h3>
-      )
-      continue
-    }
-    if (line.startsWith("# ")) {
-      elements.push(
-        <h2 key={i} className="mt-1 mb-0.5 text-sm font-black text-foreground">
-          {formatInline(line.slice(2))}
-        </h2>
-      )
-      continue
-    }
-
-    // Blockquote >
-    if (line.startsWith("> ")) {
-      elements.push(
-        <blockquote
-          key={i}
-          className="my-1 rounded-r border-l-2 border-primary/60 bg-primary/5 py-0.5 pl-2.5 text-xs text-muted-foreground italic"
-        >
-          {formatInline(line.slice(2))}
-        </blockquote>
-      )
-      continue
-    }
-
-    // Unordered List -
-    if (line.startsWith("- ") || line.startsWith("* ")) {
-      elements.push(
-        <div
-          key={i}
-          className="flex items-start gap-1.5 pl-1 text-xs text-foreground/90"
-        >
-          <span className="text-xs font-bold text-primary select-none">•</span>
-          <span>{formatInline(line.slice(2))}</span>
-        </div>
-      )
-      continue
-    }
-
-    // Normal paragraph line
-    elements.push(
-      <p
-        key={i}
-        className="text-xs leading-relaxed break-words text-foreground/90"
-      >
-        {formatInline(line)}
-      </p>
-    )
-  }
-
-  return <div className="space-y-1">{elements}</div>
-}
-
-function formatInline(text: string): React.ReactNode {
-  // Regex parsing for bold, italic, code, strikethrough, and links
-  const tokens: React.ReactNode[] = []
-  let remaining = text
-  let keyIdx = 0
-
-  while (remaining.length > 0) {
-    // Bold: **text**
-    const boldMatch = remaining.match(/^(\*\*|__)(.*?)\1/)
-    if (boldMatch) {
-      tokens.push(
-        <strong key={keyIdx++} className="font-bold text-foreground">
-          {boldMatch[2]}
-        </strong>
-      )
-      remaining = remaining.slice(boldMatch[0].length)
-      continue
-    }
-
-    // Strikethrough: ~~text~~
-    const strikeMatch = remaining.match(/^~~(.*?)~~/)
-    if (strikeMatch) {
-      tokens.push(
-        <del key={keyIdx++} className="text-muted-foreground line-through">
-          {strikeMatch[1]}
-        </del>
-      )
-      remaining = remaining.slice(strikeMatch[0].length)
-      continue
-    }
-
-    // Code: `code`
-    const codeMatch = remaining.match(/^`([^`]+)`/)
-    if (codeMatch) {
-      tokens.push(
-        <code
-          key={keyIdx++}
-          className="rounded border border-border/50 bg-muted px-1.5 py-0.5 font-mono text-[11px] text-primary"
-        >
-          {codeMatch[1]}
-        </code>
-      )
-      remaining = remaining.slice(codeMatch[0].length)
-      continue
-    }
-
-    // Link: [title](url)
-    const linkMatch = remaining.match(/^\[(.*?)\]\((https?:\/\/[^\s)]+)\)/)
-    if (linkMatch) {
-      tokens.push(
-        <a
-          key={keyIdx++}
-          href={linkMatch[2]}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-0.5 text-primary underline transition-colors hover:text-primary/80"
-        >
-          {linkMatch[1]}
-        </a>
-      )
-      remaining = remaining.slice(linkMatch[0].length)
-      continue
-    }
-
-    // Italic: *text* or _text_
-    const italicMatch = remaining.match(/^(\*|_)(.*?)\1/)
-    if (italicMatch) {
-      tokens.push(
-        <em key={keyIdx++} className="text-foreground/90 italic">
-          {italicMatch[2]}
-        </em>
-      )
-      remaining = remaining.slice(italicMatch[0].length)
-      continue
-    }
-
-    // Plain text character
-    const plainChar = remaining[0]
-    const nextSpecial = remaining.slice(1).search(/[\*\_\[\`\~]/)
-    if (nextSpecial === -1) {
-      tokens.push(remaining)
-      break
-    } else {
-      tokens.push(remaining.slice(0, nextSpecial + 1))
-      remaining = remaining.slice(nextSpecial + 1)
-    }
-  }
-
-  return tokens
+  return (
+    <MarkdownRenderer
+      content={markdown}
+      emptyText={
+        <span className="text-xs text-muted-foreground/60 italic">
+          {emptyText ?? "No bio provided yet. Tell others about yourself!"}
+        </span>
+      }
+      preserveSpaces={true}
+    />
+  )
 }
 
 export function MarkdownBioEditor({
@@ -378,7 +214,7 @@ export function MarkdownBioEditor({
         </div>
       ) : (
         <div className="max-h-60 min-h-[130px] overflow-y-auto rounded-xl border border-border/40 bg-muted/20 p-3.5">
-          {renderBioMarkdown(value, t("noBio"))}
+          <MarkdownRenderer content={value} emptyText={t("noBio")} />
         </div>
       )}
 
