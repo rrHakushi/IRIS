@@ -246,5 +246,6 @@ export async function queueMediaSearchFetch(
 
 export { mediaQueueService, MediaQueueService } from "./media-queue.service.js"
 export { mediaDbSyncer, MediaDbSyncer } from "./media-db.syncer.js"
+export { initActiveMediaCron, syncActiveMedia } from "./media-update.cron.js"
 export * from "./providers/index.js"
 export * from "./types.js"

@@ -11,6 +11,8 @@ import {
   MediaQueueService,
   mediaDbSyncer,
   MediaDbSyncer,
+  initActiveMediaCron,
+  syncActiveMedia,
   queueAnimeFetch,
   queueMangaFetch,
   queueTvFetch,
@@ -69,6 +71,7 @@ export function initServices(): void {
   ActivityService.logStatus()
   BadgeEvaluatorService.logStatus()
   activityService.initCron()
+  mediaQueueService.initCron()
 
   logger.service.total(loadedServices.length)
 }
@@ -83,6 +86,8 @@ export {
   MediaQueueService,
   mediaDbSyncer,
   MediaDbSyncer,
+  initActiveMediaCron,
+  syncActiveMedia,
   queueAnimeFetch,
   queueMangaFetch,
   queueTvFetch,
@@ -101,6 +106,7 @@ export {
   badgeEvaluatorService,
   BadgeEvaluatorService,
 }
+export * from "./media-queue/media-update.cron.js"
 export * from "./media-queue/types.js"
 export * from "./media-queue/providers/index.js"
 export * from "./connections/list-import.service.js"

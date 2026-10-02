@@ -1,4 +1,6 @@
 import { prisma, type Prisma } from "@IRIS/database"
+import { sendNotification } from "../notification.service.js"
+import { logger } from "../../utils/logger.js"
 import type {
   AniListAnimePayload,
   AniListMangaPayload,
@@ -62,6 +64,31 @@ const VALID_RELATION_TYPES = new Set([
   "ALTERNATIVE",
   "SPIN_OFF",
 ])
+
+function formatRelationType(type: string): string {
+  return type
+    .toLowerCase()
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ")
+}
+
+function invertRelationType(type: string): string {
+  switch (type) {
+    case "PREQUEL":
+      return "SEQUEL"
+    case "SEQUEL":
+      return "PREQUEL"
+    case "PARENT":
+      return "SIDE_STORY"
+    case "SIDE_STORY":
+      return "PARENT"
+    case "SUMMARY":
+      return "PARENT"
+    default:
+      return type
+  }
+}
 
 const GENERIC_CHARACTER_NAMES = new Set([
   "doctor",
@@ -237,10 +264,14 @@ export class MediaDbSyncer {
       statusUpper === "RELEASING" ||
       statusUpper === "RETURNING_SERIES" ||
       statusUpper === "IN_PRODUCTION" ||
+      statusUpper === "POST_PRODUCTION" ||
       statusUpper === "AIRING" ||
       statusUpper === "UPCOMING" ||
       statusUpper === "EARLY_ACCESS" ||
-      statusUpper === "NOT_YET_RELEASED"
+      statusUpper === "NOT_YET_RELEASED" ||
+      statusUpper === "HIATUS" ||
+      statusUpper === "ON_HIATUS" ||
+      statusUpper === "DELAYED"
 
     if (isActive) {
       // Releasing / active media: stale if older than 1 week (7 days)
@@ -2346,6 +2377,8 @@ export class MediaDbSyncer {
 
         // Find or create local stub record for target
         let localTargetId: number
+        let targetTitle: string
+        let targetCover: string | undefined
         if (targetType === "ANIME") {
           let targetAnime = await prisma.anime.findUnique({
             where: { anilistId: targetExternalId },
@@ -2364,6 +2397,14 @@ export class MediaDbSyncer {
             })
           }
           localTargetId = targetAnime.id
+          targetTitle =
+            targetAnime.titlePrimary ||
+            edge.node.title.userPreferred ||
+            edge.node.title.english ||
+            edge.node.title.romaji ||
+            `Anime #${targetExternalId}`
+          targetCover =
+            targetAnime.coverImage || edge.node.coverImage?.large || undefined
         } else {
           let targetManga = await prisma.manga.findUnique({
             where: { anilistId: targetExternalId },
@@ -2382,7 +2423,35 @@ export class MediaDbSyncer {
             })
           }
           localTargetId = targetManga.id
+          targetTitle =
+            targetManga.titlePrimary ||
+            edge.node.title.userPreferred ||
+            edge.node.title.english ||
+            edge.node.title.romaji ||
+            `Manga #${targetExternalId}`
+          targetCover =
+            targetManga.coverImage || edge.node.coverImage?.large || undefined
         }
+
+        // Check if relation already existed in either direction
+        const existingRel = await prisma.mediaRelation.findFirst({
+          where: {
+            OR: [
+              {
+                sourceType: "ANIME",
+                sourceId: localAnimeId,
+                targetType: targetType === "MANGA" ? "MANGA" : "ANIME",
+                targetId: localTargetId,
+              },
+              {
+                sourceType: targetType === "MANGA" ? "MANGA" : "ANIME",
+                sourceId: localTargetId,
+                targetType: "ANIME",
+                targetId: localAnimeId,
+              },
+            ],
+          },
+        })
 
         // Upsert relation edge using LOCAL IDs
         await prisma.mediaRelation
@@ -2414,6 +2483,79 @@ export class MediaDbSyncer {
           targetExternalId,
           type: relType as any,
         })
+
+        // Notify users who have either media in their list if this is a newly discovered relation
+        if (!existingRel) {
+          const notifiedUserIds = new Set<string>()
+
+          const sourceUsers = await prisma.animeList.findMany({
+            where: { animeId: localAnimeId },
+            select: { userId: true },
+          })
+
+          const sourceTitleStr = titlePrimary || `Anime #${localAnimeId}`
+          const formattedRel = formatRelationType(relType)
+          const targetCategory = targetType === "MANGA" ? "manga" : "anime"
+
+          for (const u of sourceUsers) {
+            notifiedUserIds.add(u.userId)
+            await sendNotification({
+              userId: u.userId,
+              app: "IRIS-list",
+              category: "MEDIA_UPDATE",
+              type: "INFO",
+              priority: "NORMAL",
+              content: {
+                title: `New Relation: ${sourceTitleStr}`,
+                body: `${targetTitle} (${formattedRel}) has been added as a relation to ${sourceTitleStr} on your list.`,
+                icon: targetCover,
+                link: `/IRIS-list/${targetCategory}/${localTargetId}`,
+              },
+            }).catch((err) => {
+              logger.error(
+                `[MediaDbSyncer] Failed to send anime relation notification to user ${u.userId}:`,
+                err
+              )
+            })
+          }
+
+          const targetUsers =
+            targetType === "MANGA"
+              ? await prisma.mangaList.findMany({
+                  where: { mangaId: localTargetId },
+                  select: { userId: true },
+                })
+              : await prisma.animeList.findMany({
+                  where: { animeId: localTargetId },
+                  select: { userId: true },
+                })
+
+          const invertedFormattedRel = formatRelationType(
+            invertRelationType(relType)
+          )
+          for (const u of targetUsers) {
+            if (notifiedUserIds.has(u.userId)) continue
+            notifiedUserIds.add(u.userId)
+            await sendNotification({
+              userId: u.userId,
+              app: "IRIS-list",
+              category: "MEDIA_UPDATE",
+              type: "INFO",
+              priority: "NORMAL",
+              content: {
+                title: `New Relation: ${targetTitle}`,
+                body: `${sourceTitleStr} (${invertedFormattedRel}) has been added as a relation to ${targetTitle} on your list.`,
+                icon: coverImage || undefined,
+                link: `/IRIS-list/anime/${localAnimeId}`,
+              },
+            }).catch((err) => {
+              logger.error(
+                `[MediaDbSyncer] Failed to send anime relation notification to target user ${u.userId}:`,
+                err
+              )
+            })
+          }
+        }
       }
     }
 
@@ -2683,6 +2825,8 @@ export class MediaDbSyncer {
         const targetExternalId = edge.node.id
 
         let localTargetId: number
+        let targetTitle: string
+        let targetCover: string | undefined
         if (targetType === "ANIME") {
           let targetAnime = await prisma.anime.findUnique({
             where: { anilistId: targetExternalId },
@@ -2701,6 +2845,14 @@ export class MediaDbSyncer {
             })
           }
           localTargetId = targetAnime.id
+          targetTitle =
+            targetAnime.titlePrimary ||
+            edge.node.title.userPreferred ||
+            edge.node.title.english ||
+            edge.node.title.romaji ||
+            `Anime #${targetExternalId}`
+          targetCover =
+            targetAnime.coverImage || edge.node.coverImage?.large || undefined
         } else {
           let targetManga = await prisma.manga.findUnique({
             where: { anilistId: targetExternalId },
@@ -2719,7 +2871,35 @@ export class MediaDbSyncer {
             })
           }
           localTargetId = targetManga.id
+          targetTitle =
+            targetManga.titlePrimary ||
+            edge.node.title.userPreferred ||
+            edge.node.title.english ||
+            edge.node.title.romaji ||
+            `Manga #${targetExternalId}`
+          targetCover =
+            targetManga.coverImage || edge.node.coverImage?.large || undefined
         }
+
+        // Check if relation already existed in either direction
+        const existingRel = await prisma.mediaRelation.findFirst({
+          where: {
+            OR: [
+              {
+                sourceType: "MANGA",
+                sourceId: localMangaId,
+                targetType: targetType === "ANIME" ? "ANIME" : "MANGA",
+                targetId: localTargetId,
+              },
+              {
+                sourceType: targetType === "ANIME" ? "ANIME" : "MANGA",
+                sourceId: localTargetId,
+                targetType: "MANGA",
+                targetId: localMangaId,
+              },
+            ],
+          },
+        })
 
         await prisma.mediaRelation
           .upsert({
@@ -2750,6 +2930,79 @@ export class MediaDbSyncer {
           targetExternalId,
           type: relType as any,
         })
+
+        // Notify users who have either media in their list if this is a newly discovered relation
+        if (!existingRel) {
+          const notifiedUserIds = new Set<string>()
+
+          const sourceUsers = await prisma.mangaList.findMany({
+            where: { mangaId: localMangaId },
+            select: { userId: true },
+          })
+
+          const sourceTitleStr = titlePrimary || `Manga #${localMangaId}`
+          const formattedRel = formatRelationType(relType)
+          const targetCategory = targetType === "ANIME" ? "anime" : "manga"
+
+          for (const u of sourceUsers) {
+            notifiedUserIds.add(u.userId)
+            await sendNotification({
+              userId: u.userId,
+              app: "IRIS-list",
+              category: "MEDIA_UPDATE",
+              type: "INFO",
+              priority: "NORMAL",
+              content: {
+                title: `New Relation: ${sourceTitleStr}`,
+                body: `${targetTitle} (${formattedRel}) has been added as a relation to ${sourceTitleStr} on your list.`,
+                icon: targetCover,
+                link: `/IRIS-list/${targetCategory}/${localTargetId}`,
+              },
+            }).catch((err) => {
+              logger.error(
+                `[MediaDbSyncer] Failed to send manga relation notification to user ${u.userId}:`,
+                err
+              )
+            })
+          }
+
+          const targetUsers =
+            targetType === "ANIME"
+              ? await prisma.animeList.findMany({
+                  where: { animeId: localTargetId },
+                  select: { userId: true },
+                })
+              : await prisma.mangaList.findMany({
+                  where: { mangaId: localTargetId },
+                  select: { userId: true },
+                })
+
+          const invertedFormattedRel = formatRelationType(
+            invertRelationType(relType)
+          )
+          for (const u of targetUsers) {
+            if (notifiedUserIds.has(u.userId)) continue
+            notifiedUserIds.add(u.userId)
+            await sendNotification({
+              userId: u.userId,
+              app: "IRIS-list",
+              category: "MEDIA_UPDATE",
+              type: "INFO",
+              priority: "NORMAL",
+              content: {
+                title: `New Relation: ${targetTitle}`,
+                body: `${sourceTitleStr} (${invertedFormattedRel}) has been added as a relation to ${targetTitle} on your list.`,
+                icon: coverImage || undefined,
+                link: `/IRIS-list/manga/${localMangaId}`,
+              },
+            }).catch((err) => {
+              logger.error(
+                `[MediaDbSyncer] Failed to send manga relation notification to target user ${u.userId}:`,
+                err
+              )
+            })
+          }
+        }
       }
     }
 
@@ -2774,6 +3027,16 @@ export class MediaDbSyncer {
     const existing = await prisma.tv.findUnique({
       where: { tvDBId: series.id },
     })
+
+    const existingSeasons = existing
+      ? await prisma.tvSeason.findMany({
+          where: { tvId: existing.id },
+          select: { seasonNumber: true },
+        })
+      : []
+    const existingSeasonSet = new Set(
+      existingSeasons.map((s) => s.seasonNumber)
+    )
 
     const resolvedEng = engTranslation || series.engTranslation
 
@@ -3202,6 +3465,103 @@ export class MediaDbSyncer {
           sources: episodeSources,
         },
       })
+    }
+
+    // Check if new seasons were added to an existing TV show
+    if (existing && seasonNumbers.size > 0) {
+      const newSeasonNumbers: number[] = []
+      for (const sNum of seasonNumbers) {
+        if (sNum > 0 && !existingSeasonSet.has(sNum)) {
+          newSeasonNumbers.push(sNum)
+        }
+      }
+
+      if (newSeasonNumbers.length > 0) {
+        // Find all users who have this TV show in their list
+        const userTvLists = await prisma.tvList.findMany({
+          where: { tvId: localTvId },
+          select: {
+            id: true,
+            userId: true,
+            status: true,
+          },
+        })
+
+        if (userTvLists.length > 0) {
+          const newSeasonsFormatted =
+            newSeasonNumbers.length === 1
+              ? `Season ${newSeasonNumbers[0]}`
+              : `Seasons ${newSeasonNumbers.sort((a, b) => a - b).join(", ")}`
+
+          for (const userList of userTvLists) {
+            // Update user list entry status to WATCHING
+            await prisma.tvList
+              .update({
+                where: { id: userList.id },
+                data: {
+                  status: "WATCHING",
+                  ...(userList.status === "COMPLETED"
+                    ? { completedAt: null }
+                    : {}),
+                },
+              })
+              .catch((err) => {
+                logger.error(
+                  `[MediaDbSyncer] Failed to set tvList ${userList.id} to WATCHING on new season:`,
+                  err
+                )
+              })
+
+            // Upsert TvSeasonProgress for new seasons
+            for (const newSNum of newSeasonNumbers) {
+              const localSeasonId = seasonMap.get(newSNum)
+              if (localSeasonId) {
+                await prisma.tvSeasonProgress
+                  .upsert({
+                    where: {
+                      tvListId_seasonNumber: {
+                        tvListId: userList.id,
+                        seasonNumber: newSNum,
+                      },
+                    },
+                    create: {
+                      tvListId: userList.id,
+                      seasonId: localSeasonId,
+                      seasonNumber: newSNum,
+                      status: "PLANNING",
+                      progress: 0,
+                    },
+                    update: {},
+                  })
+                  .catch(() => {})
+              }
+            }
+
+            // Send notification to user
+            await sendNotification({
+              userId: userList.userId,
+              app: "IRIS-list",
+              category: "MEDIA_UPDATE",
+              type: "INFO",
+              priority: "NORMAL",
+              content: {
+                title: `New Season: ${titlePrimary}`,
+                body: `${newSeasonsFormatted} has been added to ${titlePrimary}. Your list status was updated to Watching.`,
+                icon:
+                  (series.image
+                    ? normalizeTvdbImageUrl(series.image)
+                    : undefined) || undefined,
+                link: `/IRIS-list/tv/${localTvId}`,
+              },
+            }).catch((err) => {
+              logger.error(
+                `[MediaDbSyncer] Failed to send TV season notification to user ${userList.userId}:`,
+                err
+              )
+            })
+          }
+        }
+      }
     }
 
     // 2. Cast & Characters + Staff extraction -> Person, Character, MediaCharacter, MediaStaff
