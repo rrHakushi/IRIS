@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { hasPermission } from "@IRIS/permissions"
@@ -23,8 +23,19 @@ import {
   SidebarMenuSubItem,
   useSidebar,
 } from "@workspace/ui/components/sidebar"
+import {
+  DropdownMenu,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+} from "@workspace/ui/components/dropdown-menu"
+import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
-import { IconChevronDown, IconChevronRight } from "@tabler/icons-react"
+import { IconChevronDown } from "@tabler/icons-react"
 import type {
   SidebarConfig,
   SidebarItem,
@@ -49,6 +60,14 @@ function isRouteActive(currentPath: string, href?: string): boolean {
   const target = normalizePath(href)
 
   if (path === target) return true
+
+  // Handle query parameter based routes like ?tab=xxx
+  if (href.startsWith("?") || target.startsWith("?")) {
+    if (typeof window !== "undefined") {
+      const search = window.location.search
+      return search === href || search === target
+    }
+  }
 
   // App roots and single-segment roots (e.g. "/", "/IRIS-list") must be exact match
   const segments = target.split("/").filter(Boolean)
@@ -87,6 +106,7 @@ export function IrisSidebar({
   const t = useTranslations("navigation.sidebar")
   const { data: session } = useSession()
   const pathname = usePathname() || "/"
+  const router = useRouter()
   const { isMobile, setOpenMobile, state } = useSidebar()
   const { sidebarConfig, position } = useIrisSidebar(initialConfig)
   const activeConfig =
@@ -179,9 +199,12 @@ export function IrisSidebar({
           items: indexed.map((x) => x.item),
         }
       })
-  }, [sidebarConfig, userPermissions])
+  }, [activeConfig, userPermissions])
 
   const isRight = position === "right"
+  const isTop = position === "top"
+  const isBottom = position === "bottom"
+  const isHorizontal = isTop || isBottom
 
   // Ensure parent items of active children are opened on route change
   useEffect(() => {
@@ -203,6 +226,506 @@ export function IrisSidebar({
     })
   }, [pathname, resolvedConfig])
 
+  // --- TOP / BOTTOM HORIZONTAL BAR MODE ---
+  if (isHorizontal && !isMobile) {
+    return (
+      <header
+        className={cn(
+          "sticky z-40 flex h-14 w-full shrink-0 items-center justify-between border-b border-border/60 bg-background/80 backdrop-blur-xl px-4 sm:px-6 lg:px-8 select-none transition-colors",
+          isTop
+            ? "top-0 md:rounded-t-2xl"
+            : "bottom-0 mt-auto md:rounded-b-2xl border-t border-b-0",
+          className
+        )}
+      >
+        {/* Left: App Branding Switcher */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="w-[240px] shrink-0">
+            <IrisAppMenu />
+          </div>
+        </div>
+
+        {/* Center: Horizontally Scrollable Segmented Navigation with Section Dropdowns */}
+        <nav
+          onWheel={(e) => {
+            if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+              e.currentTarget.scrollLeft += e.deltaY
+            }
+          }}
+          className="flex min-w-0 flex-1 items-center justify-center overflow-x-auto no-scrollbar scrollbar-none px-2 py-1 mx-2"
+        >
+          <div className="flex items-center gap-1 rounded-2xl border border-border/60 bg-muted/30 p-1 shadow-2xs backdrop-blur-md shrink-0">
+            {resolvedConfig.map((section: SidebarSection, sectionIdx: number) => {
+              const visibleItems = section.items.filter(
+                (item: SidebarItem) => (item.position ?? 0) >= 0
+              )
+              if (visibleItems.length === 0) return null
+
+              const hasSectionTitle = Boolean(
+                section.section && section.section.trim() !== ""
+              )
+
+              // CASE 1: Dropdown by section (if label not empty)
+              if (hasSectionTitle) {
+                const isSectionActive = visibleItems.some((item) => {
+                  if (item.isActive) return true
+                  if (isRouteActive(pathname, item.href)) return true
+                  if (
+                    item.children?.some((c) => isRouteActive(pathname, c.href))
+                  )
+                    return true
+                  return false
+                })
+
+                const sectionHref = (section as any).href as string | undefined
+                const hasValidSectionHref = Boolean(
+                  sectionHref && sectionHref !== "#"
+                )
+
+                const menuContent = (
+                  <DropdownMenu
+                    placement={isBottom ? "top start" : "bottom start"}
+                    offset={8}
+                    className="min-w-48 rounded-2xl p-1.5 shadow-xl"
+                  >
+                    <DropdownMenuLabel className="px-2.5 py-1 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                      {section.section}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+
+                    {visibleItems.map((item, itemIdx) => {
+                      const isDirectActive =
+                        item.isActive !== undefined
+                          ? item.isActive
+                          : isRouteActive(pathname, item.href)
+                      const hasChildren = Boolean(
+                        item.children && item.children.length > 0
+                      )
+                      const isChildActive =
+                        hasChildren &&
+                        item.children!.some((c) =>
+                          isRouteActive(pathname, c.href)
+                        )
+                      const isActive = isDirectActive || isChildActive
+
+                      if (item.component) {
+                        return (
+                          <div key={itemIdx} className="p-1">
+                            {item.component}
+                          </div>
+                        )
+                      }
+
+                      if (hasChildren) {
+                        return (
+                          <DropdownMenuSub key={itemIdx}>
+                            <DropdownMenuSubTrigger
+                              textValue={item.label}
+                              className={cn(
+                                "flex cursor-pointer items-center justify-between rounded-xl px-2.5 py-1.5 text-xs",
+                                isChildActive &&
+                                  "bg-primary/10 font-bold text-primary"
+                              )}
+                            >
+                              <span className="flex items-center gap-2">
+                                {item.icon && (
+                                  <span className="size-3.5 shrink-0">
+                                    {item.icon}
+                                  </span>
+                                )}
+                                <span>{item.label}</span>
+                              </span>
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent
+                              placement="end top"
+                              offset={6}
+                              className="min-w-44 rounded-2xl p-1.5 shadow-xl"
+                            >
+                              {item.children!.map((child, cIdx) => {
+                                const isSubActive = isRouteActive(
+                                  pathname,
+                                  child.href
+                                )
+                                return (
+                                  <DropdownMenuItem
+                                    key={cIdx}
+                                    textValue={child.label}
+                                    className={cn(
+                                      "flex cursor-pointer items-center justify-between rounded-xl px-2.5 py-1.5 text-xs",
+                                      isSubActive &&
+                                        "bg-primary/10 font-bold text-primary"
+                                    )}
+                                    onAction={() => {
+                                      if (child.href) router.push(child.href)
+                                      else child.onClick?.()
+                                    }}
+                                  >
+                                    <span className="flex items-center gap-2">
+                                      {child.icon && (
+                                        <span className="size-3.5 shrink-0">
+                                          {child.icon}
+                                        </span>
+                                      )}
+                                      <span>{child.label}</span>
+                                    </span>
+                                    {child.badge && (
+                                      <Badge
+                                        variant="secondary"
+                                        className="h-4 px-1.5 text-[9px]"
+                                      >
+                                        {formatBadge(child.badge)}
+                                      </Badge>
+                                    )}
+                                  </DropdownMenuItem>
+                                )
+                              })}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+                        )
+                      }
+
+                      return (
+                        <DropdownMenuItem
+                          key={itemIdx}
+                          textValue={item.label}
+                          className={cn(
+                            "flex cursor-pointer items-center justify-between rounded-xl px-2.5 py-1.5 text-xs",
+                            isActive && "bg-primary/10 font-bold text-primary"
+                          )}
+                          onAction={() => {
+                            if (item.href) router.push(item.href)
+                            else item.onClick?.()
+                          }}
+                        >
+                          <span className="flex items-center gap-2">
+                            {item.icon && (
+                              <span className="size-3.5 shrink-0">
+                                {item.icon}
+                              </span>
+                            )}
+                            <span>{item.label}</span>
+                          </span>
+                          {item.badge && (
+                            <Badge
+                              variant="secondary"
+                              className="h-4 px-1.5 text-[9px]"
+                            >
+                              {formatBadge(item.badge)}
+                            </Badge>
+                          )}
+                        </DropdownMenuItem>
+                      )
+                    })}
+                  </DropdownMenu>
+                )
+
+                if (hasValidSectionHref) {
+                  return (
+                    <div
+                      key={sectionIdx}
+                      className={cn(
+                        "group flex shrink-0 items-center rounded-xl transition-all duration-200 border",
+                        isSectionActive
+                          ? "border-primary/40 bg-primary/15 text-primary shadow-xs ring-1 ring-primary/20"
+                          : "border-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                      )}
+                    >
+                      <Link
+                        href={sectionHref!}
+                        className={cn(
+                          "flex cursor-pointer items-center gap-1.5 rounded-s-xl px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors",
+                          isRouteActive(pathname, sectionHref)
+                            ? "font-bold text-primary"
+                            : "text-inherit hover:text-foreground"
+                        )}
+                      >
+                        <span>{section.section}</span>
+                      </Link>
+                      <span
+                        className={cn(
+                          "h-3.5 w-px shrink-0 transition-colors",
+                          isSectionActive ? "bg-primary/30" : "bg-border/60"
+                        )}
+                      />
+                      <DropdownMenuTrigger>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "flex h-7 w-6 cursor-pointer items-center justify-center rounded-none rounded-e-xl p-0 transition-colors",
+                            isSectionActive
+                              ? "hover:bg-primary/20 text-primary"
+                              : "hover:bg-muted/80 text-muted-foreground hover:text-foreground"
+                          )}
+                          aria-label={`${section.section} options`}
+                        >
+                          <IconChevronDown className="size-3.5 opacity-70" />
+                        </Button>
+                        {menuContent}
+                      </DropdownMenuTrigger>
+                    </div>
+                  )
+                }
+
+                return (
+                  <DropdownMenuTrigger key={sectionIdx}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        "flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200",
+                        isSectionActive
+                          ? "border border-primary/40 bg-primary/15 font-bold text-primary shadow-xs ring-1 ring-primary/20"
+                          : "text-muted-foreground hover:bg-muted/60 hover:text-foreground border border-transparent"
+                      )}
+                    >
+                      <span>{section.section}</span>
+                      <IconChevronDown className="size-3.5 opacity-60" />
+                    </Button>
+                    {menuContent}
+                  </DropdownMenuTrigger>
+                )
+              }
+
+              // CASE 2: Section label is empty -> Render items directly as pills in the segmented bar!
+              return visibleItems.map((item, itemIdx) => {
+                const hasChildren = Boolean(
+                  item.children && item.children.length > 0
+                )
+                const isChildActive =
+                  hasChildren &&
+                  item.children!.some((c) => isRouteActive(pathname, c.href))
+                const isDirectActive =
+                  item.isActive !== undefined
+                    ? item.isActive
+                    : isRouteActive(pathname, item.href)
+                const isActive = isDirectActive || isChildActive
+                const hasValidHref = Boolean(item.href && item.href !== "#")
+
+                if (item.component) {
+                  return (
+                    <div key={itemIdx} className="shrink-0">
+                      {item.component}
+                    </div>
+                  )
+                }
+
+                if (hasChildren) {
+                  const childrenMenu = (
+                    <DropdownMenu
+                      placement={isBottom ? "top start" : "bottom start"}
+                      offset={8}
+                      className="min-w-44 rounded-2xl p-1.5 shadow-xl"
+                    >
+                      {item.children!.map((child, cIdx) => {
+                        const isSubActive = isRouteActive(
+                          pathname,
+                          child.href
+                        )
+                        return (
+                          <DropdownMenuItem
+                            key={cIdx}
+                            textValue={child.label}
+                            className={cn(
+                              "flex cursor-pointer items-center justify-between rounded-xl px-2.5 py-1.5 text-xs",
+                              isSubActive &&
+                                "bg-primary/10 font-bold text-primary"
+                            )}
+                            onAction={() => {
+                              if (child.href) router.push(child.href)
+                              else child.onClick?.()
+                            }}
+                          >
+                            <span className="flex items-center gap-2">
+                              {child.icon && (
+                                <span className="size-3.5 shrink-0">
+                                  {child.icon}
+                                </span>
+                              )}
+                              <span>{child.label}</span>
+                            </span>
+                            {child.badge && (
+                              <Badge
+                                variant="secondary"
+                                className="h-4 px-1.5 text-[9px]"
+                              >
+                                {formatBadge(child.badge)}
+                              </Badge>
+                            )}
+                          </DropdownMenuItem>
+                        )
+                      })}
+                    </DropdownMenu>
+                  )
+
+                  if (hasValidHref) {
+                    return (
+                      <div
+                        key={itemIdx}
+                        className={cn(
+                          "group flex shrink-0 items-center rounded-xl transition-all duration-200 border",
+                          isActive
+                            ? "border-primary/40 bg-primary/15 text-primary shadow-xs ring-1 ring-primary/20"
+                            : "border-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                        )}
+                      >
+                        <Link
+                          href={item.href!}
+                          onClick={item.onClick}
+                          className={cn(
+                            "flex cursor-pointer items-center gap-1.5 rounded-s-xl px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors",
+                            isDirectActive
+                              ? "font-bold text-primary"
+                              : "text-inherit hover:text-foreground"
+                          )}
+                        >
+                          {item.icon && (
+                            <span className="size-3.5 shrink-0">{item.icon}</span>
+                          )}
+                          <span>{item.label}</span>
+                          {item.badge && (
+                            <Badge
+                              variant="secondary"
+                              className="h-4 px-1.5 text-[9px]"
+                            >
+                              {formatBadge(item.badge)}
+                            </Badge>
+                          )}
+                        </Link>
+
+                        <span
+                          className={cn(
+                            "h-3.5 w-px shrink-0 transition-colors",
+                            isActive ? "bg-primary/30" : "bg-border/60"
+                          )}
+                        />
+
+                        <DropdownMenuTrigger>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className={cn(
+                              "flex h-7 w-6 cursor-pointer items-center justify-center rounded-none rounded-e-xl p-0 transition-colors",
+                              isActive
+                                ? "hover:bg-primary/20 text-primary"
+                                : "hover:bg-muted/80 text-muted-foreground hover:text-foreground"
+                            )}
+                            aria-label={`${item.label} options`}
+                          >
+                            <IconChevronDown className="size-3.5 opacity-70" />
+                          </Button>
+                          {childrenMenu}
+                        </DropdownMenuTrigger>
+                      </div>
+                    )
+                  }
+
+                  return (
+                    <DropdownMenuTrigger key={itemIdx}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          "flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200",
+                          isActive
+                            ? "border border-primary/40 bg-primary/15 font-bold text-primary shadow-xs ring-1 ring-primary/20"
+                            : "text-muted-foreground hover:bg-muted/60 hover:text-foreground border border-transparent"
+                        )}
+                      >
+                        {item.icon && (
+                          <span className="size-3.5 shrink-0">{item.icon}</span>
+                        )}
+                        <span>{item.label}</span>
+                        {item.badge && (
+                          <Badge
+                            variant="secondary"
+                            className="h-4 px-1.5 text-[9px]"
+                          >
+                            {formatBadge(item.badge)}
+                          </Badge>
+                        )}
+                        <IconChevronDown className="size-3.5 opacity-60" />
+                      </Button>
+                      {childrenMenu}
+                    </DropdownMenuTrigger>
+                  )
+                }
+
+                // Standard Pill Button / Link
+                if (hasValidHref) {
+                  return (
+                    <Link
+                      key={itemIdx}
+                      href={item.href!}
+                      className={cn(
+                        "flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200",
+                        isDirectActive
+                          ? "border border-primary/40 bg-primary/15 font-bold text-primary shadow-xs ring-1 ring-primary/20"
+                          : "text-muted-foreground hover:bg-muted/60 hover:text-foreground border border-transparent"
+                      )}
+                      onClick={item.onClick}
+                    >
+                      {item.icon && (
+                        <span className="size-3.5 shrink-0">{item.icon}</span>
+                      )}
+                      <span>{item.label}</span>
+                      {item.badge && (
+                        <Badge
+                          variant="secondary"
+                          className="h-4 px-1.5 text-[9px]"
+                        >
+                          {formatBadge(item.badge)}
+                        </Badge>
+                      )}
+                    </Link>
+                  )
+                }
+
+                return (
+                  <button
+                    key={itemIdx}
+                    type="button"
+                    onClick={item.onClick}
+                    className={cn(
+                      "flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200",
+                      isActive
+                        ? "border border-primary/40 bg-primary/15 font-bold text-primary shadow-xs ring-1 ring-primary/20"
+                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground border border-transparent"
+                    )}
+                  >
+                    {item.icon && (
+                      <span className="size-3.5 shrink-0">{item.icon}</span>
+                    )}
+                    <span>{item.label}</span>
+                    {item.badge && (
+                      <Badge
+                        variant="secondary"
+                        className="h-4 px-1.5 text-[9px]"
+                      >
+                        {formatBadge(item.badge)}
+                      </Badge>
+                    )}
+                  </button>
+                )
+              })
+            })}
+          </div>
+        </nav>
+
+        {/* Right: Merged User Menu Trigger */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="w-[240px] shrink-0 flex justify-end">
+            <IrisUserMenu
+              onOpenSettings={onOpenSettings}
+              placement={isBottom ? "top end" : "bottom end"}
+            />
+          </div>
+        </div>
+      </header>
+    )
+  }
+
+  // --- VERTICAL SIDEBAR MODE (LEFT / RIGHT) ---
   return (
     <>
       <Sidebar
@@ -259,7 +782,10 @@ export function IrisSidebar({
                         item.children!.some((child: SidebarItemChild) =>
                           isRouteActive(pathname, child.href)
                         )
-                      const isDirectActive = isRouteActive(pathname, item.href)
+                      const isDirectActive =
+                        item.isActive !== undefined
+                          ? item.isActive
+                          : isRouteActive(pathname, item.href)
                       const isActive = isDirectActive || isChildActive
 
                       const isOpen =
@@ -442,7 +968,7 @@ export function IrisSidebar({
           })}
         </SidebarContent>
 
-        {/* Footer: Custom widgets (negative position items) & User profile */}
+        {/* Footer: Custom widgets (negative position items) & Merged User profile menu */}
         <SidebarFooter className="border-t border-sidebar-border/60 p-2">
           {resolvedConfig
             .flatMap((s) => s.items)
@@ -469,3 +995,5 @@ export function IrisSidebar({
     </>
   )
 }
+
+export default IrisSidebar

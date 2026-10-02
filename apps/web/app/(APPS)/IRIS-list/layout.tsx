@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import React from "react"
-import { SidebarInset } from "@workspace/ui/components/sidebar"
 import IrisListNavProvider from "@/components/navigation/providers/iris-list-nav-provider"
 
 export const metadata: Metadata = {
@@ -16,9 +15,7 @@ export default function ListLayout({
   return (
     <div className="flex h-svh w-full overflow-hidden">
       <IrisListNavProvider>
-        <SidebarInset className="no-scrollbar flex flex-1 flex-col overflow-y-auto bg-background pt-0">
-          {children}
-        </SidebarInset>
+        {children}
       </IrisListNavProvider>
     </div>
   )

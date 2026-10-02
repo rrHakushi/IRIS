@@ -461,8 +461,8 @@ export function UserProfileHeader({
                   <Button
                     size="sm"
                     variant="outline"
-                    disabled={isFriendActionLoading}
-                    onClick={handleCancelRequest}
+                    isDisabled={isFriendActionLoading}
+                    onPress={handleCancelRequest}
                     className="cursor-pointer gap-1.5 rounded-xl border-amber-500/30 bg-amber-500/10 font-semibold text-amber-500 shadow-2xs hover:bg-amber-500/20"
                   >
                     <IconClock className="size-4" />
@@ -472,8 +472,8 @@ export function UserProfileHeader({
                   <div className="flex items-center gap-1.5">
                     <Button
                       size="sm"
-                      disabled={isFriendActionLoading}
-                      onClick={handleAcceptRequest}
+                      isDisabled={isFriendActionLoading}
+                      onPress={handleAcceptRequest}
                       className="cursor-pointer gap-1.5 rounded-xl font-bold shadow-xs"
                     >
                       <IconCheck className="size-4" />
@@ -617,6 +617,7 @@ export function UserProfileHeader({
                     <TooltipTrigger key={badge.id} delay={150}>
                       <button
                         type="button"
+                        tabIndex={0}
                         aria-label={badge.name}
                         className="group relative flex size-7.5 shrink-0 items-center justify-center rounded-xl border bg-card/80 shadow-2xs backdrop-blur-xs transition-all duration-200 hover:scale-110 cursor-help focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                         style={{
@@ -758,7 +759,7 @@ export function UserProfileHeader({
             <Button
               type="submit"
               size="sm"
-              disabled={isSendingRequest}
+              isDisabled={isSendingRequest}
               className="cursor-pointer rounded-xl text-xs font-bold"
             >
               <IconSend className="mr-1.5 size-3.5" />
@@ -806,8 +807,8 @@ export function UserProfileHeader({
             </Button>
             <Button
               size="sm"
-              disabled={isSavingNickname}
-              onClick={handleSaveNickname}
+              isDisabled={isSavingNickname}
+              onPress={handleSaveNickname}
               className="cursor-pointer rounded-xl text-xs font-bold"
             >
               Save Nickname

@@ -272,6 +272,7 @@ export function ProfilePreviewCard({
                       <TooltipTrigger key={badge.id} delay={150}>
                         <button
                           type="button"
+                          tabIndex={0}
                           aria-label={badge.name}
                           className="group relative flex size-6.5 shrink-0 cursor-help items-center justify-center rounded-lg border bg-card/80 shadow-2xs backdrop-blur-xs transition-all hover:scale-110 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
                           style={{

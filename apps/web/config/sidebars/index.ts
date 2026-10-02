@@ -61,3 +61,4 @@ export function getAllAppSidebarConfigs(
 
 export * from "./listSidebarConfig"
 export * from "./passSidebarConfig"
+export * from "./accountUserSidebarConfig"

@@ -10,6 +10,8 @@ import React, {
   type ReactNode,
 } from "react"
 import { SidebarProvider as BaseSidebarProvider } from "@workspace/ui/components/sidebar"
+import { useUser } from "@/context/user-context"
+import { getSidebarCustomization } from "@IRIS/shared"
 import type {
   SidebarConfig,
   SidebarItem,
@@ -90,9 +92,25 @@ export function IrisSidebarProvider({
   const [position, setPositionState] =
     useState<SidebarPosition>(defaultPosition)
 
-  // Initialize position from localStorage if available
+  const { user } = useUser()
+
+  // Initialize position from user customization or localStorage if available
   useEffect(() => {
     try {
+      if (user?.customization) {
+        const userSidebar = getSidebarCustomization(user.customization)
+        if (
+          userSidebar.position &&
+          ["left", "right", "top", "bottom"].includes(userSidebar.position)
+        ) {
+          setPositionState(userSidebar.position)
+          try {
+            localStorage.setItem(POSITION_STORAGE_KEY, userSidebar.position)
+          } catch {}
+          return
+        }
+      }
+
       const stored = localStorage.getItem(
         POSITION_STORAGE_KEY
       ) as SidebarPosition | null
@@ -102,7 +120,7 @@ export function IrisSidebarProvider({
     } catch {
       // ignore storage access errors
     }
-  }, [])
+  }, [user?.customization])
 
   const setPosition = useCallback((newPos: SidebarPosition) => {
     setPositionState(newPos)
@@ -353,6 +371,31 @@ export function IrisSidebarProvider({
   )
 }
 
+function areConfigsEqual(a?: SidebarConfig, b?: SidebarConfig): boolean {
+  if (a === b) return true
+  if (!a || !b) return false
+  if (a.length !== b.length) return false
+  for (let s = 0; s < a.length; s++) {
+    const secA = a[s]!
+    const secB = b[s]!
+    if (secA.section !== secB.section || secA.dataKey !== secB.dataKey) return false
+    if (secA.items.length !== secB.items.length) return false
+    for (let i = 0; i < secA.items.length; i++) {
+      const itA = secA.items[i]!
+      const itB = secB.items[i]!
+      if (
+        itA.label !== itB.label ||
+        itA.dataKey !== itB.dataKey ||
+        itA.href !== itB.href ||
+        itA.isActive !== itB.isActive
+      ) {
+        return false
+      }
+    }
+  }
+  return true
+}
+
 export function useIrisSidebar(config?: SidebarConfig) {
   const context = useContext(SidebarNavigationContext)
 
@@ -365,7 +408,7 @@ export function useIrisSidebar(config?: SidebarConfig) {
   useEffect(() => {
     if (config && config.length > 0) {
       setSidebarConfig((prev) => {
-        if (prev === config) return prev
+        if (areConfigsEqual(prev, config)) return prev
         return config
       })
     }

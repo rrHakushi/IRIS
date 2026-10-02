@@ -147,13 +147,18 @@
       "done": "完了",
       "edit": "編集",
       "save": "保存",
+      "menuSaved": "メニューレイアウトを保存しました",
       "bookmarks": "ブックマーク",
+      "allBookmarks": "すべてのブックマーク",
+      "failedDeleteBookmark": "ブックマークの削除に失敗しました",
       "addBookmark": "ブックマークを追加",
       "editBookmark": "ブックマークを編集",
       "newBookmark": "新規ブックマーク",
       "loginToUseBookmarks": "ブックマークを利用するにはログインしてください",
       "noSavedBookmarks": "保存されたブックマークはありません",
       "deleteBookmark": "ブックマークを削除",
+      "delete": "削除",
+      "options": "オプション",
       "bookmarkTitle": "タイトル",
       "bookmarkTitlePlaceholder": "ブックマークのタイトルを入力",
       "bookmarkUrl": "URL",
@@ -164,8 +169,6 @@
       "pinned": "固定済み",
       "unpin": "固定解除",
       "pin": "固定",
-      "moveLeft": "左へ移動",
-      "moveRight": "右へ移動",
       "bookmarkCreated": "ブックマークを作成しました",
       "bookmarkUpdated": "ブックマークを更新しました",
       "bookmarkDeleted": "ブックマークを削除しました",
@@ -181,6 +184,33 @@
       "noMatchingBookmarks": "条件に一致するブックマークはありません",
       "clearFilters": "フィルターをクリア",
       "associatedApp": "関連アプリ"
+    },
+
+    "sidebarSettings": {
+      "title": "サイドバーレイアウト",
+      "description": "デスクトップ表示におけるサイドバーの位置と向きを設定します。",
+      "position": "サイドバーの位置",
+      "positionDescription": "ナビゲーションを画面の左、右、上、下のどこに表示するかを選択します。",
+      "left": "左（デフォルト）",
+      "leftDesc": "画面左側に配置されるクラシックな垂直サイドバー",
+      "right": "右（ミラー）",
+      "rightDesc": "画面右側に配置されるミラー垂直レイアウト",
+      "top": "上部バー",
+      "topDesc": "画面上部に配置される横スクロール対応の水平ナビゲーションヘッダー",
+      "bottom": "下部バー",
+      "bottomDesc": "画面下部にドッキングされる水平ナビゲーションバー",
+      "preview": "レイアウトプレビュー",
+      "previewDescription": "選択したナビゲーション配置のインタラクティブなプレビュー。",
+      "features": "モード機能",
+      "horizontalFeatures": "上下モードでは、セクションヘッダーがドロップダウンになり、必要に応じてアイテムが横スクロールします。",
+      "resetToDefault": "デフォルトに戻す",
+      "resetSuccess": "サイドバーの位置をデフォルトに戻しました",
+      "updateSuccess": "サイドバー設定を保存しました！",
+      "updateFailed": "サイドバー設定の保存に失敗しました。",
+      "unsavedChanges": "未保存の変更",
+      "reset": "リセット",
+      "saveChanges": "変更を保存",
+      "saving": "保存中..."
     },
 
     "dockSettings": {
@@ -695,6 +725,8 @@
       "expand": "展開"
     },
     "userMenu": {
+      "title": "ナビゲーション＆ユーザーメニュー",
+      "viewProfile": "プロフィールを表示",
       "logIn": "ログイン",
       "logOut": "ログアウト",
       "notifications": "通知",
@@ -706,6 +738,14 @@
       "encryption": "暗号化",
       "locked": "ロック中",
       "active": "アクティブ"
+    },
+    "userProfileTabs": {
+      "overview": "概要",
+      "activity": "アクティビティ",
+      "lists": "リスト",
+      "favorites": "お気に入り",
+      "friends": "フレンド",
+      "stats": "統計"
     },
     "notifications": {
       "title": "通知",

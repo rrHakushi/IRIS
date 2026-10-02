@@ -147,13 +147,18 @@
       "done": "Done",
       "edit": "Edit",
       "save": "Save",
+      "menuSaved": "Menu layout saved",
       "bookmarks": "Bookmarks",
+      "allBookmarks": "All Bookmarks",
+      "failedDeleteBookmark": "Failed to delete bookmark",
       "addBookmark": "Add bookmark",
       "editBookmark": "Edit bookmark",
       "newBookmark": "New bookmark",
       "loginToUseBookmarks": "Log in to use bookmarks",
       "noSavedBookmarks": "No saved bookmarks",
       "deleteBookmark": "Delete bookmark",
+      "delete": "Delete",
+      "options": "Options",
       "bookmarkTitle": "Title",
       "bookmarkTitlePlaceholder": "Enter bookmark title",
       "bookmarkUrl": "URL",
@@ -164,8 +169,6 @@
       "pinned": "Pinned",
       "unpin": "Unpin",
       "pin": "Pin",
-      "moveLeft": "Move left",
-      "moveRight": "Move right",
       "bookmarkCreated": "Bookmark created",
       "bookmarkUpdated": "Bookmark updated",
       "bookmarkDeleted": "Bookmark deleted",
@@ -181,6 +184,33 @@
       "noMatchingBookmarks": "No bookmarks match your search or filter",
       "clearFilters": "Clear filters",
       "associatedApp": "Associated App"
+    },
+
+    "sidebarSettings": {
+      "title": "Sidebar layout",
+      "description": "Configure sidebar position and orientation across desktop views.",
+      "position": "Sidebar Position",
+      "positionDescription": "Choose whether your navigation appears on the left, right, top, or bottom of the window.",
+      "left": "Left (Default)",
+      "leftDesc": "Classic vertical sidebar on the left side of the screen",
+      "right": "Right (Mirrored)",
+      "rightDesc": "Mirrored vertical layout on the right side of the screen",
+      "top": "Top",
+      "topDesc": "Horizontal navigation header along the top with horizontally scrollable items",
+      "bottom": "Bottom",
+      "bottomDesc": "Docked horizontal navigation bar along the bottom of the window",
+      "preview": "Layout Preview",
+      "previewDescription": "Interactive visual preview of your chosen navigation alignment.",
+      "features": "Mode Features",
+      "horizontalFeatures": "In top & bottom modes, section headers collapse into dropdowns and items scroll horizontally when needed.",
+      "resetToDefault": "Reset to default",
+      "resetSuccess": "Sidebar position reset to default",
+      "updateSuccess": "Sidebar layout saved successfully!",
+      "updateFailed": "Failed to save sidebar layout.",
+      "unsavedChanges": "Unsaved Changes",
+      "reset": "Reset",
+      "saveChanges": "Save Changes",
+      "saving": "Saving..."
     },
 
     "dockSettings": {
@@ -695,6 +725,8 @@
       "expand": "Expand"
     },
     "userMenu": {
+      "title": "Navigation & User Menu",
+      "viewProfile": "View Profile",
       "logIn": "Log In",
       "logOut": "Log Out",
       "notifications": "Notifications",
@@ -706,6 +738,14 @@
       "encryption": "Encryption",
       "locked": "Locked",
       "active": "Active"
+    },
+    "userProfileTabs": {
+      "overview": "Overview",
+      "activity": "Activity",
+      "lists": "Lists",
+      "favorites": "Favorites",
+      "friends": "Friends",
+      "stats": "Stats"
     },
     "notifications": {
       "title": "Notifications",

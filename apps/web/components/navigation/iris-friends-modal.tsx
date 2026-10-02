@@ -613,9 +613,9 @@ export function IrisFriendsModal({
                         const accentColor = profile.accentColor
                         const cardAccentStyles = accentColor
                           ? ({
-                              "--primary": accentColor,
-                              "--ring": accentColor,
-                            } as React.CSSProperties)
+                            "--primary": accentColor,
+                            "--ring": accentColor,
+                          } as React.CSSProperties)
                           : undefined
 
                         return (
@@ -835,8 +835,11 @@ export function IrisFriendsModal({
                                     if (!badge) return null
                                     return (
                                       <TooltipTrigger key={badge.id} delay={150}>
-                                        <div
-                                          className="flex size-5.5 items-center justify-center rounded-lg border bg-card/80 p-0.5"
+                                        <button
+                                          type="button"
+                                          tabIndex={0}
+                                          aria-label={badge.name}
+                                          className="flex size-5.5 items-center justify-center rounded-lg border bg-card/80 p-0.5 cursor-help"
                                           style={{
                                             borderColor: `${badge.color}50`,
                                             backgroundColor: `${badge.color}15`,
@@ -844,7 +847,7 @@ export function IrisFriendsModal({
                                           }}
                                         >
                                           {renderBadgeIcon(badge.icon, "size-3")}
-                                        </div>
+                                        </button>
                                         <Tooltip className="rounded-lg border border-border/60 bg-popover px-2 py-1 text-[10px] shadow-md">
                                           {badge.name}
                                         </Tooltip>
@@ -932,7 +935,7 @@ export function IrisFriendsModal({
                               <div className="flex items-center gap-2 pt-1">
                                 <Button
                                   size="sm"
-                                  disabled={isActing}
+                                  isDisabled={isActing}
                                   onClick={() => handleRespondRequest(req.id, "ACCEPT")}
                                   className="h-7.5 flex-1 cursor-pointer rounded-xl text-xs font-semibold"
                                 >
@@ -942,7 +945,7 @@ export function IrisFriendsModal({
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  disabled={isActing}
+                                  isDisabled={isActing}
                                   onClick={() => handleRespondRequest(req.id, "DECLINE")}
                                   className="h-7.5 flex-1 cursor-pointer rounded-xl text-xs font-semibold"
                                 >
@@ -952,7 +955,7 @@ export function IrisFriendsModal({
                                 <Button
                                   size="sm"
                                   variant="destructive"
-                                  disabled={isActing}
+                                  isDisabled={isActing}
                                   onClick={() => handleRespondRequest(req.id, "BLOCK")}
                                   className="h-7.5 cursor-pointer rounded-xl px-2.5 text-xs font-semibold"
                                   aria-label="Block User"
@@ -1031,7 +1034,7 @@ export function IrisFriendsModal({
                               <Button
                                 size="sm"
                                 variant="outline"
-                                disabled={isActing}
+                                isDisabled={isActing}
                                 onClick={() => handleCancelOutgoing(req.id)}
                                 className="h-7 cursor-pointer rounded-xl px-2.5 text-[11px] font-semibold text-muted-foreground hover:text-destructive"
                               >
@@ -1152,7 +1155,7 @@ export function IrisFriendsModal({
 
                     <Button
                       type="submit"
-                      disabled={isSendingRequest || !addUsername.trim()}
+                      isDisabled={isSendingRequest || !addUsername.trim()}
                       className="h-9.5 w-full cursor-pointer rounded-xl font-bold shadow-xs text-xs"
                     >
                       <IconSend className="mr-1.5 size-4" />
@@ -1207,7 +1210,7 @@ export function IrisFriendsModal({
                           <Button
                             size="sm"
                             variant="outline"
-                            disabled={actionLoadingIds[b.id]}
+                            isDisabled={actionLoadingIds[b.id]}
                             onClick={() => handleUnblockUser(b.id, b.blocked.username)}
                             className="h-7 cursor-pointer rounded-xl px-3 text-xs font-semibold"
                           >
@@ -1292,7 +1295,7 @@ export function IrisFriendsModal({
               </Button>
               <Button
                 size="sm"
-                disabled={nicknameModal.isSaving}
+                isDisabled={nicknameModal.isSaving}
                 onClick={handleSaveNickname}
                 className="cursor-pointer rounded-xl text-xs font-bold"
               >

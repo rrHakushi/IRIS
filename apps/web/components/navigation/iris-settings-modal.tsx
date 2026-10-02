@@ -509,29 +509,32 @@ export function IrisSettingsModal({
           </div>
 
           {/* Desktop Pinned Footer */}
-          {footerContent ? (
-            <footer className="flex w-full shrink-0 items-center justify-between gap-3 border-t border-border bg-card px-6 py-3">
-              {footerContent}
-            </footer>
-          ) : (
-            <footer className="flex w-full shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-card/40 px-6 py-3">
-              <div className="flex items-center gap-2">
-                <Badge
-                  variant="outline"
-                  className="h-4 px-1.5 py-0 text-[10px]"
-                >
-                  IRIS
-                </Badge>
-              </div>
+          <footer className="flex w-full shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-card/40 px-6 py-3">
+            <div className="flex flex-1 items-center justify-between min-w-0">
+              {footerContent ? (
+                footerContent
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className="h-4 px-1.5 py-0 text-[10px]"
+                  >
+                    IRIS
+                  </Badge>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
               <Button
                 variant="outline"
                 size="sm"
+                className="cursor-pointer rounded-xl text-xs"
                 onPress={() => onOpenChange(false)}
               >
                 {t("close")}
               </Button>
-            </footer>
-          )}
+            </div>
+          </footer>
         </main>
       </div>
 
@@ -608,26 +611,39 @@ export function IrisSettingsModal({
         </main>
 
         {/* Mobile Pinned Footer */}
-        {isMobile && mobileCategory && footerContent ? (
-          <footer className="flex w-full shrink-0 items-center justify-between gap-3 border-t border-border bg-card px-4 py-3">
-            {footerContent}
+        {isMobile && (
+          <footer className="flex w-full shrink-0 items-center justify-between gap-2 border-t border-border/60 bg-card/40 px-4 py-3">
+            <div className="flex flex-1 items-center justify-between min-w-0">
+              {footerContent ? (
+                footerContent
+              ) : (
+                <Badge variant="outline" className="h-4 px-1.5 py-0 text-[10px]">
+                  IRIS
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {mobileCategory && !footerContent && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="cursor-pointer rounded-xl text-xs"
+                  onPress={() => setMobileCategory(null)}
+                >
+                  {t("back")}
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="cursor-pointer rounded-xl text-xs"
+                onPress={() => onOpenChange(false)}
+              >
+                {t("close")}
+              </Button>
+            </div>
           </footer>
-        ) : isMobile ? (
-          <footer className="flex w-full shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-card/40 px-4 py-3">
-            <Badge variant="outline" className="h-4 px-1.5 py-0 text-[10px]">
-              IRIS
-            </Badge>
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={() =>
-                mobileCategory ? setMobileCategory(null) : onOpenChange(false)
-              }
-            >
-              {mobileCategory ? t("back") : t("close")}
-            </Button>
-          </footer>
-        ) : null}
+        )}
       </div>
     </Dialog>
   )

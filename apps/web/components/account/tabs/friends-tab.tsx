@@ -319,8 +319,11 @@ export function ProfileFriendsTab({
                         if (!badge) return null
                         return (
                           <TooltipTrigger key={badge.id} delay={150}>
-                            <div
-                              className="flex size-5.5 items-center justify-center rounded-lg border bg-card/80 p-0.5"
+                            <button
+                              type="button"
+                              tabIndex={0}
+                              aria-label={badge.name}
+                              className="flex size-5.5 items-center justify-center rounded-lg border bg-card/80 p-0.5 cursor-help"
                               style={{
                                 borderColor: `${badge.color}50`,
                                 backgroundColor: `${badge.color}15`,
@@ -328,7 +331,7 @@ export function ProfileFriendsTab({
                               }}
                             >
                               {renderBadgeIcon(badge.icon, "size-3")}
-                            </div>
+                            </button>
                             <Tooltip className="rounded-lg border border-border/60 bg-popover px-2 py-1 text-[10px] shadow-md">
                               {badge.name}
                             </Tooltip>

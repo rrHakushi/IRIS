@@ -109,7 +109,7 @@ export interface UserBookmark {
 export interface UserCustomization {
   profile?: UserProfileCustomization;
   appearance?: Record<string, unknown>;
-  sidebar?: Record<string, unknown>;
+  sidebar?: UserSidebarCustomization;
   dock?: UserDockCustomization;
   preferences?: UserPreferencesCustomization;
   bookmarks?: UserBookmark[];
@@ -152,6 +152,50 @@ export function setBookmarksCustomization(
   return {
     ...current,
     bookmarks,
+  };
+}
+
+export type SidebarPosition = "left" | "right" | "top" | "bottom";
+
+export interface UserSidebarCustomization {
+  position?: SidebarPosition;
+  [key: string]: unknown;
+}
+
+export function getSidebarCustomization(customization?: unknown): UserSidebarCustomization {
+  if (!customization || typeof customization !== "object") {
+    return { position: "left" };
+  }
+  const sidebar = (customization as any)?.sidebar;
+  if (!sidebar || typeof sidebar !== "object") {
+    return { position: "left" };
+  }
+  const pos = sidebar.position;
+  return {
+    ...sidebar,
+    position: ["left", "right", "top", "bottom"].includes(pos) ? pos : "left",
+  };
+}
+
+export function setSidebarCustomization(
+  existingCustomization: unknown,
+  patch: Partial<UserSidebarCustomization>
+): Record<string, unknown> {
+  const current =
+    existingCustomization && typeof existingCustomization === "object"
+      ? { ...(existingCustomization as Record<string, unknown>) }
+      : {};
+
+  const currentSidebar = getSidebarCustomization(current);
+
+  const updatedSidebar: UserSidebarCustomization = {
+    ...currentSidebar,
+    ...patch,
+  };
+
+  return {
+    ...current,
+    sidebar: updatedSidebar,
   };
 }
 
