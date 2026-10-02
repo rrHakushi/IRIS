@@ -420,6 +420,7 @@ function MediaListCardInner({
         {/* Cover Image Link */}
         <Link
           href={mediaHref}
+          prefetch={false}
           onClick={(e) => {
             if (isLongPressRef.current) {
               e.preventDefault()
@@ -579,6 +580,7 @@ function MediaListCardInner({
       <div className="flex flex-1 flex-col p-2">
         <Link
           href={mediaHref}
+          prefetch={false}
           title={title}
           onClick={(e) => {
             if (isLongPressRef.current) {
