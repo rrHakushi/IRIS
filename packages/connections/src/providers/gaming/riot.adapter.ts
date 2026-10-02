@@ -18,7 +18,7 @@ import type {
 export class RiotGamesAdapter extends BaseConnectionAdapter {
   readonly provider: ConnectionProvider = "RIOT_GAMES";
   readonly category: ConnectionCategory = "GAMING";
-  readonly iconUrl = "https://cdn.simpleicons.org/riotgames/D13639";
+  readonly iconUrl = "/icons/connections/riotgames.svg";
   readonly requiredEnvVars = [] as const;
   readonly optionalEnvVars = ["RIOT_API_KEY", "RIOT_CLIENT_ID", "RIOT_CLIENT_SECRET"] as const;
 

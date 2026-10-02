@@ -213,8 +213,8 @@ export function SecuritySettingsTab({
             type="button"
             variant="ghost"
             size="sm"
-            disabled={!isDirty || isSavingAll}
-            onClick={handleDiscard}
+            isDisabled={!isDirty || isSavingAll}
+            onPress={handleDiscard}
             className="h-8 px-3 text-xs"
           >
             {t("discard")}
@@ -222,8 +222,8 @@ export function SecuritySettingsTab({
           <Button
             type="button"
             size="sm"
-            disabled={!isDirty || isSavingAll}
-            onClick={handleSaveAll}
+            isDisabled={!isDirty || isSavingAll}
+            onPress={handleSaveAll}
             className="h-8 px-4 text-xs font-semibold"
           >
             {isSavingAll ? <Spinner className="mr-1.5 size-3.5" /> : null}
@@ -247,10 +247,6 @@ export function SecuritySettingsTab({
 
   return (
     <div className="w-full flex-1 animate-in space-y-6 pb-6 duration-200 fade-in-50">
-      <div>
-        <h3 className="text-base font-bold text-foreground">{t("title")}</h3>
-      </div>
-
       {/* 1. Change Password */}
       <PasswordCard
         currentPassword={currentPassword}

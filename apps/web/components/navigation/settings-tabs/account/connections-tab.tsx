@@ -6,7 +6,6 @@ import { Input } from "@workspace/ui/components/input"
 import { Spinner } from "@workspace/ui/components/spinner"
 import {
   IconSearch,
-  IconRefresh,
   IconLink,
   IconCheck,
   IconDeviceGamepad,
@@ -28,7 +27,6 @@ export function ConnectionsSettingsTab({}: SettingsTabProps): React.JSX.Element 
   const [providers, setProviders] = useState<ProviderMetadata[]>([])
   const [connections, setConnections] = useState<UserConnectionItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isRefreshing, setIsRefreshing] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("ALL")
 
@@ -45,12 +43,10 @@ export function ConnectionsSettingsTab({}: SettingsTabProps): React.JSX.Element 
 
   const inFlightRef = React.useRef(false)
 
-  const fetchData = useCallback(async (manual = false) => {
-    if (inFlightRef.current && !manual) return
+  const fetchData = useCallback(async () => {
+    if (inFlightRef.current) return
     inFlightRef.current = true
-
-    if (manual) setIsRefreshing(true)
-    else setIsLoading(true)
+    setIsLoading(true)
 
     try {
       const [provRes, connRes] = await Promise.all([
@@ -71,7 +67,6 @@ export function ConnectionsSettingsTab({}: SettingsTabProps): React.JSX.Element 
       console.error("Failed to load connections:", err)
     } finally {
       setIsLoading(false)
-      setIsRefreshing(false)
       inFlightRef.current = false
     }
   }, [])
@@ -139,48 +134,8 @@ export function ConnectionsSettingsTab({}: SettingsTabProps): React.JSX.Element 
     return matchesSearch && matchesCategory
   })
 
-  const [refreshCooldown, setRefreshCooldown] = useState(0)
-
-  React.useEffect(() => {
-    if (refreshCooldown <= 0) return
-    const timer = setInterval(() => {
-      setRefreshCooldown((prev) => (prev > 0 ? prev - 1 : 0))
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [refreshCooldown])
-
-  const handleManualRefresh = () => {
-    if (isRefreshing || isLoading || refreshCooldown > 0) return
-    setRefreshCooldown(5)
-    fetchData(true)
-  }
-
   return (
     <div className="w-full flex-1 animate-in space-y-6 pb-6 duration-200 fade-in-50">
-      {/* Header section */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h3 className="text-base font-bold text-foreground">Connections</h3>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleManualRefresh}
-            disabled={isRefreshing || isLoading || refreshCooldown > 0}
-            className="h-8 gap-1.5 text-xs"
-          >
-            {isRefreshing ? (
-              <Spinner className="h-3.5 w-3.5" />
-            ) : (
-              <IconRefresh className="h-3.5 w-3.5" />
-            )}
-            {refreshCooldown > 0 ? `Refresh (${refreshCooldown}s)` : "Refresh"}
-          </Button>
-        </div>
-      </div>
-
       {/* Filters and search bar */}
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
@@ -261,7 +216,7 @@ export function ConnectionsSettingsTab({}: SettingsTabProps): React.JSX.Element 
                 connection={matchingConnection}
                 onOpenConnect={handleOpenConnect}
                 onOpenSettings={handleOpenSettings}
-                onRefresh={() => fetchData(true)}
+                onRefresh={() => fetchData()}
               />
             )
           })}
@@ -273,7 +228,7 @@ export function ConnectionsSettingsTab({}: SettingsTabProps): React.JSX.Element 
         provider={selectedConnectProvider}
         open={connectDialogOpen}
         onOpenChange={setConnectDialogOpen}
-        onConnected={() => fetchData(true)}
+        onConnected={() => fetchData()}
       />
 
       {/* Connection Settings Modal */}
@@ -282,8 +237,8 @@ export function ConnectionsSettingsTab({}: SettingsTabProps): React.JSX.Element 
         provider={selectedSettingsProvider}
         open={settingsDialogOpen}
         onOpenChange={setSettingsDialogOpen}
-        onUpdated={() => fetchData(true)}
-        onDisconnected={() => fetchData(true)}
+        onUpdated={() => fetchData()}
+        onDisconnected={() => fetchData()}
       />
     </div>
   )

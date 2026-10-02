@@ -13,7 +13,9 @@ import { Switch } from "@workspace/ui/components/switch"
 import { Label } from "@workspace/ui/components/label"
 import { Spinner } from "@workspace/ui/components/spinner"
 import { IconTrash, IconCheck } from "@tabler/icons-react"
+import { cn } from "@workspace/ui/lib/utils"
 import type { ProviderMetadata, UserConnectionItem } from "./types"
+import { ProviderIcon } from "./icons"
 import { toast } from "sonner"
 import { elysia } from "@/lib/elysia"
 
@@ -50,6 +52,11 @@ export function ConnectionSettingsDialog({
 
   if (!connection || !provider) return null
 
+  const isRadarrOrSonarr =
+    provider.provider === "RADARR" ||
+    provider.provider === "SONARR" ||
+    provider.category === "SERVARR"
+
   const handleSaveSettings = async () => {
     setIsSaving(true)
     try {
@@ -59,7 +66,7 @@ export function ConnectionSettingsDialog({
             ...(connection.settings?.hostUrl
               ? { hostUrl: connection.settings.hostUrl }
               : {}),
-            librarySync,
+            ...(isRadarrOrSonarr ? {} : { librarySync }),
             isPrivate,
           },
         },
@@ -124,11 +131,10 @@ export function ConnectionSettingsDialog({
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-border/40 bg-muted/40 p-2">
-              <img
-                src={provider.iconUrl}
-                alt={provider.name}
-                className="h-6 w-6 object-contain"
-                loading="lazy"
+              <ProviderIcon
+                provider={provider.provider}
+                iconUrl={provider.iconUrl}
+                className="h-6 w-6"
               />
             </div>
             <div>
@@ -146,17 +152,24 @@ export function ConnectionSettingsDialog({
         <div className="space-y-4 py-3">
           {/* Settings toggles */}
           <div className="space-y-3 rounded-xl border border-border/50 bg-muted/20 p-3.5">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5 pr-4">
-                <Label className="text-xs font-medium">Library Sync</Label>
-                <p className="text-[11px] text-muted-foreground">
-                  Synchronize watchlists, ratings, and media library status.
-                </p>
+            {!isRadarrOrSonarr && (
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5 pr-4">
+                  <Label className="text-xs font-medium">Library Sync</Label>
+                  <p className="text-[11px] text-muted-foreground">
+                    Synchronize watchlists, ratings, and media library status.
+                  </p>
+                </div>
+                <Switch isSelected={librarySync} onChange={setLibrarySync} />
               </div>
-              <Switch isSelected={librarySync} onChange={setLibrarySync} />
-            </div>
+            )}
 
-            <div className="flex items-center justify-between border-t border-border/40 pt-3">
+            <div
+              className={cn(
+                "flex items-center justify-between",
+                !isRadarrOrSonarr && "border-t border-border/40 pt-3"
+              )}
+            >
               <div className="space-y-0.5 pr-4">
                 <Label className="text-xs font-medium">
                   Private Connection
@@ -172,11 +185,10 @@ export function ConnectionSettingsDialog({
 
         <DialogFooter className="flex w-full flex-row items-center justify-between sm:justify-between">
           <Button
-            type="button"
             variant="destructive"
             size="sm"
-            onClick={handleDisconnect}
-            disabled={isDeleting}
+            onPress={handleDisconnect}
+            isDisabled={isDeleting}
             className="h-8 gap-1.5 text-xs"
           >
             {isDeleting ? (
@@ -189,19 +201,17 @@ export function ConnectionSettingsDialog({
 
           <div className="flex items-center gap-2">
             <Button
-              type="button"
               variant="outline"
               size="sm"
-              onClick={() => onOpenChange(false)}
+              onPress={() => onOpenChange(false)}
               className="h-8 text-xs"
             >
               Cancel
             </Button>
             <Button
-              type="button"
               size="sm"
-              onClick={handleSaveSettings}
-              disabled={isSaving}
+              onPress={handleSaveSettings}
+              isDisabled={isSaving}
               className="h-8 gap-1.5 text-xs"
             >
               {isSaving ? (
@@ -217,3 +227,4 @@ export function ConnectionSettingsDialog({
     </Dialog>
   )
 }
+

@@ -38,7 +38,7 @@ export class IrisAdapter extends BaseConnectionAdapter {
   readonly provider: ConnectionProvider = "IRIS";
   readonly category: ConnectionCategory = "TRACKING";
   readonly authType: ConnectionAuthType = "OAUTH2";
-  readonly iconUrl = "/icons/iris.svg";
+  readonly iconUrl = "/iris512left-ring.png";
 
   // IRIS instances can be configured dynamically per host or via environment variables
   readonly requiredEnvVars = [] as const;

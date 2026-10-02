@@ -13,6 +13,7 @@ import {
   IconPlus,
 } from "@tabler/icons-react"
 import type { ProviderMetadata, UserConnectionItem } from "./types"
+import { ProviderIcon } from "./icons"
 import { toast } from "sonner"
 import { elysia } from "@/lib/elysia"
 
@@ -122,12 +123,11 @@ export function ConnectionCard({
         {/* Header with Official Logo and Status Badge */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-border/40 bg-muted/40 p-2 transition-transform duration-200 group-hover:scale-105">
-              <img
-                src={provider.iconUrl}
-                alt={provider.name}
-                className="h-6 w-6 object-contain"
-                loading="lazy"
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-border/40 bg-muted/40 p-2">
+              <ProviderIcon
+                provider={provider.provider}
+                iconUrl={provider.iconUrl}
+                className="h-6 w-6"
               />
             </div>
             <div>
@@ -223,11 +223,10 @@ export function ConnectionCard({
         {isConnected && connection ? (
           <>
             <Button
-              type="button"
               variant="outline"
               size="sm"
-              onClick={handleTestHealth}
-              disabled={isTesting || testCooldown > 0}
+              onPress={handleTestHealth}
+              isDisabled={isTesting || testCooldown > 0}
               className="h-8 gap-1.5 text-xs"
             >
               {isTesting ? (
@@ -238,10 +237,9 @@ export function ConnectionCard({
               {testCooldown > 0 ? `Test (${testCooldown}s)` : "Test"}
             </Button>
             <Button
-              type="button"
               variant="secondary"
               size="sm"
-              onClick={() => onOpenSettings(provider, connection)}
+              onPress={() => onOpenSettings(provider, connection)}
               className="h-8 gap-1.5 text-xs"
             >
               <IconSettings className="h-3.5 w-3.5" />
@@ -250,10 +248,9 @@ export function ConnectionCard({
           </>
         ) : (
           <Button
-            type="button"
             variant="default"
             size="sm"
-            onClick={handleConnectClick}
+            onPress={handleConnectClick}
             className="h-8 w-full gap-1.5 text-xs"
           >
             <IconPlus className="h-3.5 w-3.5" />

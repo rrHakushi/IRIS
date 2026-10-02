@@ -41,7 +41,7 @@ export class DeezerAdapter extends BaseConnectionAdapter {
   readonly provider: ConnectionProvider = "DEEZER";
   readonly category: ConnectionCategory = "MUSIC";
   readonly authType: ConnectionAuthType = "OAUTH2";
-  readonly iconUrl = "https://e-cdns-files.dzcdn.net/img/common/favicon/favicon.ico";
+  readonly iconUrl = "/icons/connections/deezer.svg";
 
   readonly requiredEnvVars = ["DEEZER_APP_ID", "DEEZER_APP_SECRET"] as const;
 

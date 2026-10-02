@@ -24,7 +24,7 @@ export interface RadarrMovie {
 
 export class RadarrAdapter extends ServarrBaseAdapter {
   readonly provider: ConnectionProvider = "RADARR";
-  readonly iconUrl = "https://cdn.simpleicons.org/radarr/FFC230";
+  readonly iconUrl = "/icons/connections/radarr.svg";
   readonly defaultHostUrl = "http://localhost:7878";
 
   async searchMedia(

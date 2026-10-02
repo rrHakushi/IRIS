@@ -23,7 +23,7 @@ export class SimklAdapter extends BaseConnectionAdapter {
   readonly provider: ConnectionProvider = "SIMKL"
   readonly category: ConnectionCategory = "TRACKING"
   readonly authType: ConnectionAuthType = "OAUTH2"
-  readonly iconUrl = "https://cdn.simpleicons.org/simkl/00ADEF"
+  readonly iconUrl = "/icons/connections/simkl.svg"
 
   readonly requiredEnvVars = ["SIMKL_CLIENT_ID", "SIMKL_CLIENT_SECRET"] as const
 

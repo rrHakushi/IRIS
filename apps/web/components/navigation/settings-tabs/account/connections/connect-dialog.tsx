@@ -21,6 +21,7 @@ import {
   IconUser,
 } from "@tabler/icons-react"
 import type { ProviderMetadata } from "./types"
+import { ProviderIcon } from "./icons"
 import { toast } from "sonner"
 import { elysia } from "@/lib/elysia"
 
@@ -154,11 +155,10 @@ export function ConnectDialog({
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-border/40 bg-muted/40 p-2">
-              <img
-                src={provider.iconUrl}
-                alt={provider.name}
-                className="h-6 w-6 object-contain"
-                loading="lazy"
+              <ProviderIcon
+                provider={provider.provider}
+                iconUrl={provider.iconUrl}
+                className="h-6 w-6"
               />
             </div>
             <div>
@@ -338,20 +338,18 @@ export function ConnectDialog({
 
         <DialogFooter className="gap-2 sm:gap-0">
           <Button
-            type="button"
             variant="outline"
             size="sm"
-            onClick={() => onOpenChange(false)}
-            disabled={isSubmitting}
+            onPress={() => onOpenChange(false)}
+            isDisabled={isSubmitting}
           >
             Cancel
           </Button>
           {isIris && !useApiKeyForIris ? (
             <Button
-              type="button"
               size="sm"
-              onClick={handleIrisOAuthConnect}
-              disabled={isSubmitting || !hostUrl.trim()}
+              onPress={handleIrisOAuthConnect}
+              isDisabled={isSubmitting || !hostUrl.trim()}
               className="gap-2"
             >
               {isSubmitting ? (
@@ -370,7 +368,7 @@ export function ConnectDialog({
             <Button
               type="submit"
               size="sm"
-              disabled={isSubmitting}
+              isDisabled={isSubmitting}
               className="gap-2"
             >
               {isSubmitting ? (

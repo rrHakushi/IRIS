@@ -23,7 +23,7 @@ export class AniListAdapter extends BaseConnectionAdapter {
   readonly provider: ConnectionProvider = "ANILIST";
   readonly category: ConnectionCategory = "TRACKING";
   readonly authType: ConnectionAuthType = "OAUTH2";
-  readonly iconUrl = "https://cdn.simpleicons.org/anilist/02A9FF";
+  readonly iconUrl = "/icons/connections/anilist.svg";
 
   readonly requiredEnvVars = ["ANILIST_CLIENT_ID", "ANILIST_CLIENT_SECRET"] as const;
 

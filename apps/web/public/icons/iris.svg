@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <defs>
+    <linearGradient id="iris-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f43f5e" />
+      <stop offset="50%" stop-color="#fb7185" />
+      <stop offset="100%" stop-color="#fda4af" />
+    </linearGradient>
+  </defs>
+  <circle cx="12" cy="12" r="9" stroke="url(#iris-grad)" stroke-width="2" />
+  <circle cx="12" cy="12" r="5" stroke="url(#iris-grad)" stroke-width="2" />
+  <circle cx="12" cy="12" r="2" fill="url(#iris-grad)" />
+</svg>

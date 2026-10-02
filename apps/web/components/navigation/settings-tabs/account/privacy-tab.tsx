@@ -9,9 +9,6 @@ export function PrivacySettingsTab({}: SettingsTabProps): React.JSX.Element {
 
   return (
     <div className="w-full flex-1 animate-in space-y-6 pb-6 duration-200 fade-in-50">
-      <div>
-        <h3 className="text-base font-bold text-foreground">{t("title")}</h3>
-      </div>
     </div>
   )
 }

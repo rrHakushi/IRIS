@@ -27,7 +27,6 @@ import {
   IconMovie,
   IconBook,
   IconMail,
-  IconX,
   IconChevronLeft,
   IconChevronRight,
   IconWorld,
@@ -451,17 +450,6 @@ export function IrisSettingsModal({
       {/* 1. DESKTOP VIEW (md:flex) -> Left Sidebar + Right Tab Content            */}
       {/* ========================================================================= */}
       <div className="relative hidden h-full min-h-0 w-full flex-row overflow-hidden rounded-3xl border border-border bg-background md:flex">
-        {/* Floating Close Button */}
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onPress={() => onOpenChange(false)}
-          className="absolute top-3.5 right-3.5 z-20 size-8 cursor-pointer rounded-xl text-muted-foreground hover:text-foreground"
-          aria-label={t("closeSettings")}
-        >
-          <IconX className="size-4" />
-        </Button>
-
         {/* Left Sidebar */}
         <aside className="flex h-full min-h-0 w-60 min-w-56 shrink-0 flex-col border-r border-border/60 bg-card/60">
           <div className="no-scrollbar flex-1 space-y-3 overflow-y-auto p-3">
@@ -575,16 +563,6 @@ export function IrisSettingsModal({
               {t("title")}
             </h2>
           )}
-
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onPress={() => onOpenChange(false)}
-            className="size-8 shrink-0 cursor-pointer rounded-xl text-muted-foreground hover:text-foreground"
-            aria-label={t("closeSettings")}
-          >
-            <IconX className="size-4" />
-          </Button>
         </header>
 
         {/* Mobile Content Area */}
