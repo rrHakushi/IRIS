@@ -9,7 +9,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const decodedUsername = decodeURIComponent(username)
   return {
     title: `IRIS List | Lists > ${decodedUsername}'s Other Lists`,
-    description: `Other lists for ${decodedUsername}`,
+    description: `View ${decodedUsername}'s other list.`,
   }
 }
 

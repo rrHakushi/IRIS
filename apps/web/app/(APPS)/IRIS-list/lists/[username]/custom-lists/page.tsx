@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const decodedUsername = decodeURIComponent(username)
   return {
     title: `IRIS List | ${decodedUsername}'s Custom Lists`,
-    description: `Browse custom lists and curated collections for ${decodedUsername} on IRIS List.`,
+    description: `View ${decodedUsername}'s custom lists.`,
   }
 }
 
