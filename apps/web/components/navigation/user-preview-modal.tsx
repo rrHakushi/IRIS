@@ -29,7 +29,7 @@ import {
   getBadgeById,
   type UserProfileCustomization,
 } from "@IRIS/shared"
-import { renderBioMarkdown } from "./settings-tabs/account/profile/markdown-bio-editor"
+import { MarkdownRenderer } from "@/components/markdown"
 import { renderBadgeIcon } from "./settings-tabs/account/profile/badge-showcase-card"
 import { cn } from "@workspace/ui/lib/utils"
 
@@ -49,10 +49,14 @@ export function UserPreviewModal({
   const displayName = profile?.displayName || username
   const initial = (displayName || "?").charAt(0).toUpperCase()
   const nameStyle = getDisplayNameStyleCss(profile?.displayNameStyle)
-  const nameEffect = getDisplayNameEffectClasses(profile?.displayNameStyle?.effect)
+  const nameEffect = getDisplayNameEffectClasses(
+    profile?.displayNameStyle?.effect
+  )
 
   const spotlight = profile?.pinnedSpotlight
-  const hasSpotlight = Boolean(spotlight && (spotlight.title || spotlight.customNote))
+  const hasSpotlight = Boolean(
+    spotlight && (spotlight.title || spotlight.customNote)
+  )
 
   const customAccentColor = profile?.accentColor
   const accentStyles = customAccentColor
@@ -67,12 +71,12 @@ export function UserPreviewModal({
     <Dialog
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      className="z-[100] max-w-md overflow-hidden rounded-3xl border border-border/80 bg-background/95 p-0 backdrop-blur-2xl sm:max-w-lg transition-colors duration-300"
+      className="z-[100] max-w-md overflow-hidden rounded-3xl border border-border/80 bg-background/95 p-0 backdrop-blur-2xl transition-colors duration-300 sm:max-w-lg"
       style={accentStyles}
     >
       {/* Banner */}
       <div
-        className="relative w-full overflow-hidden min-h-[120px]"
+        className="relative min-h-[120px] w-full overflow-hidden"
         style={{
           aspectRatio: "16 / 6",
           ...(customAccentColor
@@ -113,7 +117,9 @@ export function UserPreviewModal({
           >
             <span
               className="text-5xl font-black tracking-tighter opacity-20"
-              style={customAccentColor ? { color: customAccentColor } : undefined}
+              style={
+                customAccentColor ? { color: customAccentColor } : undefined
+              }
             >
               IRIS
             </span>
@@ -122,7 +128,7 @@ export function UserPreviewModal({
         <div className="absolute inset-0 z-2 bg-gradient-to-t from-background via-background/20 to-transparent" />
       </div>
 
-      <div className="relative px-6 pb-6 pt-0">
+      <div className="relative px-6 pt-0 pb-6">
         {/* Avatar & Action Button Header */}
         <div className="-mt-12 mb-4 flex items-end justify-between gap-4">
           <div className="relative size-20 shrink-0">
@@ -189,7 +195,10 @@ export function UserPreviewModal({
               {displayName}
             </h3>
             {profile?.pronouns && (
-              <Badge variant="secondary" className="px-1.5 py-0 text-[10px] font-medium text-muted-foreground">
+              <Badge
+                variant="secondary"
+                className="px-1.5 py-0 text-[10px] font-medium text-muted-foreground"
+              >
                 {profile.pronouns}
               </Badge>
             )}
@@ -198,7 +207,7 @@ export function UserPreviewModal({
             @{username}
           </p>
           {profile?.statusText && (
-            <p className="mt-1 text-xs italic text-foreground/80">
+            <p className="mt-1 text-xs text-foreground/80 italic">
               &ldquo;{profile.statusText}&rdquo;
             </p>
           )}
@@ -214,7 +223,7 @@ export function UserPreviewModal({
                     <button
                       type="button"
                       aria-label={badge.name}
-                      className="group relative flex size-6.5 shrink-0 items-center justify-center rounded-lg border bg-card/80 shadow-2xs backdrop-blur-xs transition-all hover:scale-110 cursor-help focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                      className="group relative flex size-6.5 shrink-0 cursor-help items-center justify-center rounded-lg border bg-card/80 shadow-2xs backdrop-blur-xs transition-all hover:scale-110 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
                       style={{
                         borderColor: `${badge.color}60`,
                         backgroundColor: `${badge.color}15`,
@@ -247,7 +256,7 @@ export function UserPreviewModal({
         {/* Bio */}
         {profile?.bio && (
           <div className="mt-4 rounded-xl border border-border/40 bg-muted/20 p-3 text-xs leading-relaxed text-foreground/90">
-            {renderBioMarkdown(profile.bio, "")}
+            <MarkdownRenderer content={profile.bio} size="xs" />
           </div>
         )}
 
@@ -272,17 +281,17 @@ export function UserPreviewModal({
               )}
               <div className="min-w-0 flex-1">
                 {spotlight.title && (
-                  <p className="text-xs font-bold text-foreground truncate">
+                  <p className="truncate text-xs font-bold text-foreground">
                     {spotlight.title}
                   </p>
                 )}
                 {spotlight.subtitle && (
-                  <p className="text-[11px] text-muted-foreground truncate">
+                  <p className="truncate text-[11px] text-muted-foreground">
                     {spotlight.subtitle}
                   </p>
                 )}
                 {spotlight.customNote && (
-                  <p className="mt-1 text-[10px] italic text-muted-foreground truncate">
+                  <p className="mt-1 truncate text-[10px] text-muted-foreground italic">
                     &ldquo;{spotlight.customNote}&rdquo;
                   </p>
                 )}
@@ -294,4 +303,3 @@ export function UserPreviewModal({
     </Dialog>
   )
 }
-

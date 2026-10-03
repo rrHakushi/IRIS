@@ -244,19 +244,8 @@ export function OAuthAppsSettingsTab({
 
   return (
     <div className="space-y-6">
-      {/* Top Header Card */}
-      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-border bg-card/60 p-5 sm:flex-row sm:items-center">
-        <div className="flex items-center gap-3.5">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
-            <IconWorld className="size-6" />
-          </div>
-          <div>
-            <h2 className="font-heading text-lg font-semibold tracking-tight text-foreground">
-              OAuth Applications
-            </h2>
-          </div>
-        </div>
-
+      {/* Top Action Bar */}
+      <div className="flex items-center justify-end">
         <Button
           type="button"
           onClick={() => setCreateDialogOpen(true)}

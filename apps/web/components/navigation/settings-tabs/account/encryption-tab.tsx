@@ -128,10 +128,6 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
 
   return (
     <div className="w-full flex-1 animate-in space-y-6 pb-6 duration-200 fade-in-50">
-      <div>
-        <h3 className="text-base font-bold text-foreground">{t("title")}</h3>
-      </div>
-
       {/* Section 1: Enter Password to Decrypt */}
       <div className="space-y-4 rounded-2xl border border-border/60 bg-muted/20 p-5">
         <div className="flex items-center justify-between">
@@ -192,7 +188,7 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
               </div>
               <Button
                 type="submit"
-                disabled={isLoading || !unlockPassword}
+                isDisabled={isLoading || !unlockPassword}
                 className="h-10 shrink-0 rounded-xl px-5 text-xs font-semibold"
               >
                 {isLoading ? (
@@ -341,7 +337,7 @@ export function EncryptionSettingsTab({}: SettingsTabProps): React.JSX.Element {
             </button>
             <Button
               type="submit"
-              disabled={
+              isDisabled={
                 isLoading ||
                 !isPasswordValid ||
                 !currentPassword ||

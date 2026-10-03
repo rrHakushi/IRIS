@@ -1,7 +1,13 @@
 "use client"
 
 import React from "react"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@workspace/ui/components/card"
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@workspace/ui/components/card"
 import { Badge } from "@workspace/ui/components/badge"
 import Image from "next/image"
 import {
@@ -20,7 +26,7 @@ import {
 } from "@tabler/icons-react"
 import { UserProfileComments } from "../user-profile-comments"
 import { ProviderIcon } from "../../navigation/settings-tabs/account/connections/icons"
-import { renderBioMarkdown } from "../../navigation/settings-tabs/account/profile/markdown-bio-editor"
+import { MarkdownRenderer } from "@/components/markdown"
 import type { UserProfileCustomization } from "@IRIS/shared"
 
 export interface OverviewTabProps {
@@ -54,7 +60,9 @@ export function OverviewTab({
   isOwner,
 }: OverviewTabProps): React.JSX.Element {
   const spotlight = profile.pinnedSpotlight
-  const hasSpotlight = Boolean(spotlight && (spotlight.title || spotlight.customNote))
+  const hasSpotlight = Boolean(
+    spotlight && (spotlight.title || spotlight.customNote)
+  )
   const categoryConfig = spotlight?.mediaType
     ? SPOTLIGHT_CATEGORIES[spotlight.mediaType.toUpperCase()]
     : null
@@ -75,9 +83,11 @@ export function OverviewTab({
 
           <CardContent>
             {profile.bio ? (
-              <div className="text-xs leading-relaxed text-foreground">
-                {renderBioMarkdown(profile.bio, "")}
-              </div>
+              <MarkdownRenderer
+                content={profile.bio}
+                size="xs"
+                className="text-foreground"
+              />
             ) : (
               <div className="rounded-xl border border-dashed border-border/60 py-8 text-center text-xs text-muted-foreground">
                 @{username} has not written a bio yet.
@@ -92,7 +102,7 @@ export function OverviewTab({
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-sm font-bold text-foreground">
-                  <IconSparkles className="size-4 text-primary animate-pulse" />
+                  <IconSparkles className="size-4 animate-pulse text-primary" />
                   Spotlight
                 </CardTitle>
               </div>
@@ -113,15 +123,15 @@ export function OverviewTab({
                   </div>
                 )}
 
-                <div className="flex flex-1 flex-col justify-between space-y-2.5 min-w-0">
+                <div className="flex min-w-0 flex-1 flex-col justify-between space-y-2.5">
                   <div className="space-y-1">
                     {spotlight.title && (
-                      <h4 className="text-base font-bold text-foreground sm:text-lg truncate">
+                      <h4 className="truncate text-base font-bold text-foreground sm:text-lg">
                         {spotlight.title}
                       </h4>
                     )}
                     {spotlight.subtitle && (
-                      <p className="text-xs font-medium text-muted-foreground truncate">
+                      <p className="truncate text-xs font-medium text-muted-foreground">
                         {spotlight.subtitle}
                       </p>
                     )}
@@ -138,8 +148,16 @@ export function OverviewTab({
                     <div className="pt-1">
                       <a
                         href={spotlight.link}
-                        target={spotlight.link.startsWith("http") ? "_blank" : undefined}
-                        rel={spotlight.link.startsWith("http") ? "noopener noreferrer" : undefined}
+                        target={
+                          spotlight.link.startsWith("http")
+                            ? "_blank"
+                            : undefined
+                        }
+                        rel={
+                          spotlight.link.startsWith("http")
+                            ? "noopener noreferrer"
+                            : undefined
+                        }
                         className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-muted/40 px-3 py-1.5 text-xs font-semibold text-foreground transition-all hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
                       >
                         <IconExternalLink className="size-3.5" />
@@ -182,20 +200,24 @@ export function OverviewTab({
                   key={conn.id}
                   className="flex items-center justify-between rounded-xl border border-border/50 bg-muted/30 p-2.5 shadow-2xs"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex min-w-0 items-center gap-2.5">
                     <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/50 bg-card p-1 shadow-2xs">
-                      <ProviderIcon provider={conn.provider} iconUrl={conn.iconUrl} className="size-5" />
+                      <ProviderIcon
+                        provider={conn.provider}
+                        iconUrl={conn.iconUrl}
+                        className="size-5"
+                      />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-foreground capitalize truncate">
+                        <span className="truncate text-xs font-bold text-foreground capitalize">
                           {conn.provider.toLowerCase()}
                         </span>
                         <Badge className="h-3.5 border-emerald-500/30 bg-emerald-500/10 px-1 text-[8px] font-bold text-emerald-400">
                           Linked
                         </Badge>
                       </div>
-                      <span className="block text-[10px] text-muted-foreground truncate">
+                      <span className="block truncate text-[10px] text-muted-foreground">
                         {conn.displayName || "Account"}
                       </span>
                     </div>

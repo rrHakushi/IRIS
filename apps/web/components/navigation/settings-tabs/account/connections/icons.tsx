@@ -2,24 +2,39 @@
 
 import React, { useState } from "react"
 
-const PROVIDER_CDN_MAP: Record<string, string> = {
-  ANILIST: "https://cdn.simpleicons.org/anilist/02A9FF",
-  MAL: "https://cdn.simpleicons.org/myanimelist/2E51A2",
-  MYANIMELIST: "https://cdn.simpleicons.org/myanimelist/2E51A2",
-  SIMKL: "https://cdn.simpleicons.org/simkl/white",
-  BANGUMI: "https://cdn.simpleicons.org/bangumi/F09199",
-  BGM: "https://cdn.simpleicons.org/bangumi/F09199",
-  STEAM: "https://cdn.simpleicons.org/steam/white",
-  RIOT_GAMES: "https://cdn.simpleicons.org/riotgames/D13639",
-  RIOTGAMES: "https://cdn.simpleicons.org/riotgames/D13639",
-  RIOT: "https://cdn.simpleicons.org/riotgames/D13639",
-  RADARR: "https://cdn.simpleicons.org/radarr/FFC230",
-  SONARR: "https://cdn.simpleicons.org/sonarr/00CDF0",
-  DEEZER: "https://cdn.simpleicons.org/deezer/A238FF",
-  LASTFM: "https://cdn.simpleicons.org/lastdotfm/D51007",
-  SPOTIFY: "https://cdn.simpleicons.org/spotify/1ED760",
-  DISCORD: "https://cdn.simpleicons.org/discord/5865F2",
-  GITHUB: "https://cdn.simpleicons.org/github/white",
+const LOCAL_PROVIDER_MAP: Record<string, string> = {
+  ANILIST: "/icons/connections/anilist.svg",
+  MAL: "/icons/connections/myanimelist.svg",
+  MYANIMELIST: "/icons/connections/myanimelist.svg",
+  SIMKL: "/icons/connections/simkl.svg",
+  BANGUMI: "/icons/connections/bangumi.svg",
+  BGM: "/icons/connections/bangumi.svg",
+  STEAM: "/icons/connections/steam.svg",
+  RIOT_GAMES: "/icons/connections/riotgames.svg",
+  RIOTGAMES: "/icons/connections/riotgames.svg",
+  RIOT: "/icons/connections/riotgames.svg",
+  RADARR: "/icons/connections/radarr.svg",
+  SONARR: "/icons/connections/sonarr.svg",
+  DEEZER: "/icons/connections/deezer.svg",
+  LASTFM: "/icons/connections/lastfm.svg",
+  SPOTIFY: "/icons/connections/spotify.svg",
+  DISCORD: "/icons/connections/discord.svg",
+  GITHUB: "/icons/connections/github.svg",
+  IRIS: "/iris512left-ring.png",
+}
+
+export function getProviderIcon(
+  provider?: string | null,
+  fallbackIconUrl?: string | null
+): string | null {
+  if (!provider) return fallbackIconUrl || null
+  const norm = provider.toUpperCase().replace(/[-_\s]/g, "")
+  return (
+    LOCAL_PROVIDER_MAP[norm] ||
+    LOCAL_PROVIDER_MAP[provider.toUpperCase()] ||
+    fallbackIconUrl ||
+    null
+  )
 }
 
 export interface ProviderIconProps {
@@ -34,11 +49,7 @@ export function ProviderIcon({
   className = "size-5",
 }: ProviderIconProps): React.JSX.Element {
   const [error, setError] = useState(false)
-  const norm = (provider || "").toUpperCase().replace(/[-_\s]/g, "")
-  const resolvedUrl =
-    iconUrl ||
-    PROVIDER_CDN_MAP[norm] ||
-    PROVIDER_CDN_MAP[provider?.toUpperCase()]
+  const resolvedUrl = getProviderIcon(provider, iconUrl)
 
   if (resolvedUrl && !error) {
     return (
@@ -56,8 +67,9 @@ export function ProviderIcon({
     <div
       className={`flex items-center justify-center rounded-md bg-muted text-[10px] font-bold text-foreground select-none ${className}`}
     >
-      {provider.slice(0, 2).toUpperCase()}
+      {(provider || "").slice(0, 2).toUpperCase()}
     </div>
   )
 }
+
 

@@ -28,7 +28,7 @@ import {
   Button as AriaButton,
   Dialog as AriaDialog,
 } from "react-aria-components"
-import { renderBioMarkdown } from "./markdown-bio-editor"
+import { MarkdownRenderer } from "@/components/markdown"
 import { IrisSidebarUserCard } from "../../../iris-sidebar-user-card"
 import { UserPreviewModal } from "../../../user-preview-modal"
 import { SocialFaviconIcon, getDomainFromUrl } from "./social-links-card"
@@ -133,7 +133,7 @@ export function ProfilePreviewCard({
         >
           {/* Banner Header: Fixed aspect 16:5.5 matching cropper modal */}
           <div
-            className="relative w-full overflow-hidden bg-linear-to-r from-primary/30 via-primary/10 to-muted/50 min-h-[90px]"
+            className="relative min-h-[90px] w-full overflow-hidden bg-linear-to-r from-primary/30 via-primary/10 to-muted/50"
             style={{ aspectRatio: "16 / 5.5" }}
           >
             {profile.bannerUrl ? (
@@ -168,7 +168,7 @@ export function ProfilePreviewCard({
             )}
 
             {/* Dark subtle gradient overlay */}
-            <div className="absolute inset-0 bg-linear-to-t from-card via-card/20 to-transparent pointer-events-none" />
+            <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-card via-card/20 to-transparent" />
           </div>
 
           {/* Profile Avatar & Info section */}
@@ -272,8 +272,9 @@ export function ProfilePreviewCard({
                       <TooltipTrigger key={badge.id} delay={150}>
                         <button
                           type="button"
+                          tabIndex={0}
                           aria-label={badge.name}
-                          className="group relative flex size-6.5 shrink-0 items-center justify-center rounded-lg border bg-card/80 shadow-2xs backdrop-blur-xs transition-all hover:scale-110 cursor-help focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                          className="group relative flex size-6.5 shrink-0 cursor-help items-center justify-center rounded-lg border bg-card/80 shadow-2xs backdrop-blur-xs transition-all hover:scale-110 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
                           style={{
                             borderColor: `${badge.color}60`,
                             backgroundColor: `${badge.color}15`,
@@ -339,7 +340,7 @@ export function ProfilePreviewCard({
             {/* Spotlight Showcase Preview */}
             {spotlight && (spotlight.title || spotlight.customNote) && (
               <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 p-2.5">
-                <div className="flex items-center justify-between gap-1 pb-1 text-[10px] font-bold uppercase text-primary">
+                <div className="flex items-center justify-between gap-1 pb-1 text-[10px] font-bold text-primary uppercase">
                   <span className="flex items-center gap-1">
                     <IconSparkles className="size-3 text-primary" />
                     Spotlight
@@ -370,17 +371,17 @@ export function ProfilePreviewCard({
 
                   <div className="min-w-0 flex-1">
                     {spotlight.title && (
-                      <h6 className="font-heading text-xs font-bold text-foreground truncate">
+                      <h6 className="truncate font-heading text-xs font-bold text-foreground">
                         {spotlight.title}
                       </h6>
                     )}
                     {spotlight.subtitle && (
-                      <p className="text-[10px] text-muted-foreground truncate">
+                      <p className="truncate text-[10px] text-muted-foreground">
                         {spotlight.subtitle}
                       </p>
                     )}
                     {spotlight.customNote && (
-                      <p className="mt-0.5 text-[10px] italic text-primary/80 line-clamp-1">
+                      <p className="mt-0.5 line-clamp-1 text-[10px] text-primary/80 italic">
                         &ldquo;{spotlight.customNote}&rdquo;
                       </p>
                     )}
@@ -395,7 +396,10 @@ export function ProfilePreviewCard({
                 {t("aboutMe")}
               </div>
               <div className="max-h-36 min-h-[80px] flex-1 overflow-y-auto rounded-xl border border-border/30 bg-muted/20 p-2.5 text-xs leading-relaxed">
-                {renderBioMarkdown(profile.bio || "", t("noBio"))}
+                <MarkdownRenderer
+                  content={profile.bio}
+                  emptyText={t("noBio")}
+                />
               </div>
             </div>
           </div>

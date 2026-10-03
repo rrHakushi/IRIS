@@ -671,6 +671,7 @@ export function ListActivityTab({
                     {/* Media Poster Thumbnail */}
                     <Link
                       href={mediaLink}
+                      prefetch={false}
                       className="group/poster relative size-12 shrink-0 overflow-hidden rounded-lg bg-muted shadow-xs sm:size-14"
                     >
                       {coverUrl ? (
@@ -694,6 +695,7 @@ export function ListActivityTab({
                       <div className="flex items-center gap-2">
                         <Link
                           href={mediaLink}
+                          prefetch={false}
                           className="truncate text-xs font-bold text-foreground transition-colors hover:text-primary hover:underline sm:text-sm"
                         >
                           {activity.title || "Untitled Media"}
@@ -747,6 +749,7 @@ export function ListActivityTab({
                     {/* Quick Visit Arrow */}
                     <Link
                       href={mediaLink}
+                      prefetch={false}
                       className="me-1 hidden shrink-0 text-muted-foreground transition-colors hover:text-foreground sm:block"
                       aria-label="View media page"
                     >
@@ -765,7 +768,7 @@ export function ListActivityTab({
                 variant="outline"
                 size="sm"
                 onPress={handleLoadMore}
-                disabled={isLoadingMore}
+                isDisabled={isLoadingMore}
                 className="rounded-full px-5 text-xs font-semibold shadow-xs"
               >
                 {isLoadingMore ? (
@@ -808,7 +811,7 @@ export function ListActivityTab({
             variant="outline"
             size="sm"
             onPress={() => setDeleteTarget(null)}
-            disabled={isDeleting}
+            isDisabled={isDeleting}
             className="rounded-2xl text-xs"
           >
             Cancel
@@ -817,7 +820,7 @@ export function ListActivityTab({
             variant="destructive"
             size="sm"
             onPress={handleConfirmDelete}
-            disabled={isDeleting}
+            isDisabled={isDeleting}
             className="rounded-2xl text-xs shadow-xs"
           >
             {isDeleting ? (

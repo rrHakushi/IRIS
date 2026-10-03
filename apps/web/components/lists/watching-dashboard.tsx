@@ -217,24 +217,24 @@ function VirtualRow({
   const rowRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (priority) return
+    if (priority || isVisible) return
     const el = rowRef.current
     if (!el) return
 
-    // 350px rootMargin gives approximately 1 row buffer above and below the viewport
+    // 500px rootMargin eagerly loads rows before they enter view; once loaded they stay mounted
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0]
-        if (entry) {
-          setIsVisible(entry.isIntersecting)
+        if (entry?.isIntersecting) {
+          setIsVisible(true)
         }
       },
-      { rootMargin: "350px 0px" }
+      { rootMargin: "500px 0px" }
     )
 
     observer.observe(el)
     return () => observer.disconnect()
-  }, [priority])
+  }, [priority, isVisible])
 
   return (
     <div

@@ -20,7 +20,7 @@ export class SteamAdapter extends BaseConnectionAdapter {
   readonly provider: ConnectionProvider = "STEAM";
   readonly category: ConnectionCategory = "GAMING";
   readonly authType: ConnectionAuthType = "OPENID";
-  readonly iconUrl = "https://cdn.simpleicons.org/steam/ffffff";
+  readonly iconUrl = "/icons/connections/steam.svg";
   readonly requiredEnvVars = ["STEAM_API_KEY"] as const;
 
   readonly capabilities: ProviderCapability = {

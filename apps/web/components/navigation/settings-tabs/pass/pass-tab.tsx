@@ -249,13 +249,6 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="font-heading text-base font-semibold text-foreground">
-          IRIS Pass Settings
-        </h2>
-      </div>
-
       {/* If locked, render unlock prompt */}
       {!encryption.isActive && (
         <form
@@ -307,7 +300,7 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
 
           <Button
             type="submit"
-            disabled={isUnlocking || !unlockPassword.trim()}
+            isDisabled={isUnlocking || !unlockPassword.trim()}
             className="h-9 w-full cursor-pointer rounded-xl bg-rose-500 text-xs font-semibold text-white hover:bg-rose-600"
           >
             <IconLockOpen className="me-1.5 size-3.5" />
@@ -347,8 +340,8 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
             <Button
               variant="outline"
               size="sm"
-              disabled={!encryption.isActive || isImporting}
-              onClick={() => fileInputRef.current?.click()}
+              isDisabled={!encryption.isActive || isImporting}
+              onPress={() => fileInputRef.current?.click()}
               className="h-9 w-full cursor-pointer gap-1.5 rounded-xl text-xs"
             >
               <IconUpload className="size-3.5" />
@@ -375,8 +368,8 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
           <Button
             variant="outline"
             size="sm"
-            disabled={!encryption.isActive || isExporting}
-            onClick={handleExport}
+            isDisabled={!encryption.isActive || isExporting}
+            onPress={handleExport}
             className="h-9 w-full cursor-pointer gap-1.5 rounded-xl text-xs"
           >
             <IconDownload className="size-3.5" />

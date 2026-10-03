@@ -14,11 +14,40 @@ import { NotificationProvider } from "@/context/notification-context"
 import { Toaster } from "@/components/ui/sonner"
 import { LastAppTracker } from "@/components/navigation/last-app-tracker"
 
+import dynamic from "next/dynamic"
+
+const MetadataDevTool =
+  process.env.NODE_ENV === "development"
+    ? dynamic(
+        () =>
+          import("@/components/dev/metadata-dev-tool").then(
+            (m) => m.MetadataDevTool
+          ),
+        { ssr: false }
+      )
+    : () => null
+
 declare module "react-aria-components" {
   interface RouterConfig {
     routerOptions: NonNullable<
       Parameters<ReturnType<typeof useRouter>["push"]>[1]
     >
+  }
+}
+
+// Suppress false-positive React 19 / Next.js 16 script tag warning emitted by next-themes SSR inline script
+if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+  const origError = console.error
+  console.error = (...args: unknown[]) => {
+    if (
+      typeof args[0] === "string" &&
+      args[0].includes(
+        "Encountered a script tag while rendering React component"
+      )
+    ) {
+      return
+    }
+    origError.apply(console, args)
   }
 }
 
@@ -46,6 +75,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
                   >
                     <IrisSidebarProvider>{children}</IrisSidebarProvider>
                     <Toaster closeButton position="top-center" />
+                    {process.env.NODE_ENV === "development" && (
+                      <MetadataDevTool />
+                    )}
                   </ThemeProvider>
                 </DirectionProvider>
               </NotificationProvider>

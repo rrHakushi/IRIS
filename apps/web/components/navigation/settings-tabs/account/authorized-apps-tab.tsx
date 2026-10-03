@@ -128,18 +128,6 @@ export function AuthorizedAppsSettingsTab({
 
   return (
     <div className="space-y-6">
-      {/* Header Card */}
-      <div className="flex items-center gap-3.5 rounded-2xl border border-border bg-card/60 p-5">
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
-          <IconShieldCheck className="size-6" />
-        </div>
-        <div>
-          <h2 className="font-heading text-lg font-semibold tracking-tight text-foreground">
-            Authorized Applications
-          </h2>
-        </div>
-      </div>
-
       {/* Content Area */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -242,11 +230,10 @@ export function AuthorizedAppsSettingsTab({
                   </div>
 
                   <Button
-                    type="button"
                     variant="outline"
                     size="sm"
-                    disabled={revokingId === item.id}
-                    onClick={() => handleRevoke(item)}
+                    isDisabled={revokingId === item.id}
+                    onPress={() => handleRevoke(item)}
                     className="h-8 shrink-0 px-3 text-xs text-destructive hover:border-destructive/40 hover:bg-destructive/10"
                   >
                     {revokingId === item.id ? (

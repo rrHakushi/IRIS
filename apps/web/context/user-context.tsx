@@ -15,8 +15,10 @@ import {
   setProfileCustomization,
   setDockCustomization,
   setBookmarksCustomization,
+  setSidebarCustomization,
   type UserProfileCustomization,
   type UserDockCustomization,
+  type UserSidebarCustomization,
   type UserBookmark,
   type DisplayNameStyle,
 } from "@IRIS/shared"
@@ -62,6 +64,9 @@ interface UserContextValue {
   updateDock: (
     patch: Partial<UserDockCustomization>
   ) => Promise<FullUser | null>
+  updateSidebar: (
+    patch: Partial<UserSidebarCustomization>
+  ) => Promise<FullUser | null>
   updateBookmarks: (bookmarks: UserBookmark[]) => Promise<FullUser | null>
 }
 
@@ -73,6 +78,7 @@ const UserContext = createContext<UserContextValue>({
   updateUser: async () => null,
   updateProfile: async () => null,
   updateDock: async () => null,
+  updateSidebar: async () => null,
   updateBookmarks: async () => null,
 })
 
@@ -231,6 +237,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return updateUser({ customization: updatedCustomization })
   }
 
+  const updateSidebar = async (
+    patch: Partial<UserSidebarCustomization>
+  ): Promise<FullUser | null> => {
+    const updatedCustomization = setSidebarCustomization(
+      user?.customization,
+      patch
+    )
+    return updateUser({ customization: updatedCustomization })
+  }
+
   const updateBookmarks = async (
     bookmarks: UserBookmark[]
   ): Promise<FullUser | null> => {
@@ -251,6 +267,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         updateUser,
         updateProfile,
         updateDock,
+        updateSidebar,
         updateBookmarks,
       }}
     >

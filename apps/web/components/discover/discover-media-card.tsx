@@ -95,6 +95,7 @@ export function DiscoverMediaCard({
   return (
     <Link
       href={href}
+      prefetch={false}
       className={cn(
         "group relative flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card/60 transition-all duration-200 select-none hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5",
         className

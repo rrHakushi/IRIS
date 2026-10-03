@@ -23,7 +23,7 @@ export class BangumiAdapter extends BaseConnectionAdapter {
   readonly provider: ConnectionProvider = "BANGUMI";
   readonly category: ConnectionCategory = "TRACKING";
   readonly authType: ConnectionAuthType = "OAUTH2";
-  readonly iconUrl = "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/svg/bangumi.svg";
+  readonly iconUrl = "/icons/connections/bangumi.svg";
   readonly requiredEnvVars = ["BANGUMI_CLIENT_ID", "BANGUMI_CLIENT_SECRET"] as const;
 
   private static readonly USER_AGENT = "IRIS/1.0 (https://github.com/rrHakushi/IRIS)";

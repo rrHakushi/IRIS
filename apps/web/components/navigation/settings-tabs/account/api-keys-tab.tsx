@@ -253,11 +253,7 @@ export function ApiKeysSettingsTab({
 
   return (
     <div className="w-full flex-1 animate-in space-y-6 pb-6 duration-200 fade-in-50">
-      <div className="flex flex-wrap items-center justify-between gap-3 pr-10 sm:pr-12">
-        <div>
-          <h3 className="text-base font-bold text-foreground">{t("title")}</h3>
-        </div>
-
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <div className="flex items-center gap-2">
           {/* Search filter if there are multiple keys */}
           {apiKeys.length > 3 && (
@@ -274,11 +270,10 @@ export function ApiKeysSettingsTab({
           )}
 
           <Button
-            type="button"
             variant="outline"
             size="icon-sm"
-            onClick={() => fetchApiKeys(true)}
-            disabled={isLoading || isRefreshing}
+            onPress={() => fetchApiKeys(true)}
+            isDisabled={isLoading || isRefreshing}
             aria-label={t("refreshAria")}
             className="size-8 shrink-0 rounded-xl"
           >

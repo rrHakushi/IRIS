@@ -85,7 +85,7 @@ export function ListsImportSettingsTab({}: SettingsTabProps): React.JSX.Element 
       name: "AniList",
       iconUrl:
         providers.find((p) => p.provider === "ANILIST")?.iconUrl ||
-        "https://cdn.simpleicons.org/anilist/02A9FF",
+        "/icons/connections/anilist.svg",
       websiteUrl: "https://anilist.co",
       supportsOAuth: true,
       availableMediaTypes: [
@@ -104,7 +104,7 @@ export function ListsImportSettingsTab({}: SettingsTabProps): React.JSX.Element 
       name: "MyAnimeList",
       iconUrl:
         providers.find((p) => p.provider === "MAL")?.iconUrl ||
-        "https://cdn.simpleicons.org/myanimelist/2E51A2",
+        "/icons/connections/myanimelist.svg",
       websiteUrl: "https://myanimelist.net",
       supportsOAuth: true,
       availableMediaTypes: [
@@ -118,7 +118,7 @@ export function ListsImportSettingsTab({}: SettingsTabProps): React.JSX.Element 
       name: "Simkl",
       iconUrl:
         providers.find((p) => p.provider === "SIMKL")?.iconUrl ||
-        "https://cdn.simpleicons.org/simkl/00ADEF",
+        "/icons/connections/simkl.svg",
       websiteUrl: "https://simkl.com",
       supportsOAuth: true,
       availableMediaTypes: [
@@ -162,11 +162,6 @@ export function ListsImportSettingsTab({}: SettingsTabProps): React.JSX.Element 
 
   return (
     <div className="w-full flex-1 animate-in space-y-6 pb-6 duration-200 fade-in-50">
-      {/* Header section with Title */}
-      <div>
-        <h3 className="text-base font-bold text-foreground">{t("title")}</h3>
-      </div>
-
       {isLoading ? (
         <div className="flex h-48 items-center justify-center">
           <Spinner className="h-6 w-6 text-muted-foreground" />

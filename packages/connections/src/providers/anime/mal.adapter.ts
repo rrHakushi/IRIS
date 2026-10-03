@@ -24,7 +24,7 @@ export class MyAnimeListAdapter extends BaseConnectionAdapter {
   readonly provider: ConnectionProvider = "MAL";
   readonly category: ConnectionCategory = "TRACKING";
   readonly authType: ConnectionAuthType = "OAUTH2";
-  readonly iconUrl = "https://cdn.simpleicons.org/myanimelist/2E51A2";
+  readonly iconUrl = "/icons/connections/myanimelist.svg";
 
   readonly requiredEnvVars = ["MAL_CLIENT_ID"] as const;
   readonly optionalEnvVars = ["MAL_CLIENT_SECRET"] as const;

@@ -464,7 +464,7 @@ export function CustomListsView({
                       onClick={() =>
                         handleDeleteList(selectedList.id, selectedList.name)
                       }
-                      disabled={deletingId === selectedList.id}
+                      isDisabled={deletingId === selectedList.id}
                       className="h-8.5 gap-1.5 rounded-xl text-xs"
                     >
                       <IconTrash className="size-3.5" />
@@ -513,6 +513,7 @@ export function CustomListsView({
                       {/* Thumbnail */}
                       <Link
                         href={href}
+                        prefetch={false}
                         className={cn(
                           "relative w-full overflow-hidden bg-muted/40",
                           item.entry.mediaType.includes("MUSIC")
@@ -550,6 +551,7 @@ export function CustomListsView({
                         <div>
                           <Link
                             href={href}
+                            prefetch={false}
                             className="line-clamp-2 text-xs font-semibold text-foreground hover:text-rose-500"
                           >
                             {title}
@@ -743,7 +745,7 @@ export function CustomListsView({
             </Button>
             <Button
               type="submit"
-              disabled={!newListName.trim() || creating}
+              isDisabled={!newListName.trim() || creating}
               className="rounded-xl bg-rose-500 font-semibold text-white hover:bg-rose-600"
             >
               {creating ? (
@@ -795,7 +797,7 @@ export function CustomListsView({
             </Button>
             <Button
               type="submit"
-              disabled={!deezerPlaylistInput.trim() || deezerImporting}
+              isDisabled={!deezerPlaylistInput.trim() || deezerImporting}
               className="rounded-xl bg-rose-500 font-semibold text-white hover:bg-rose-600"
             >
               {deezerImporting ? (

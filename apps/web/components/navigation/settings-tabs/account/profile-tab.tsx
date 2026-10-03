@@ -239,7 +239,7 @@ export function ProfileTab({
             type="button"
             variant="ghost"
             size="sm"
-            disabled={!isDirty || isSaving}
+            isDisabled={!isDirty || isSaving}
             onPress={handleReset}
             className="cursor-pointer rounded-xl text-xs"
           >
@@ -251,7 +251,7 @@ export function ProfileTab({
             type="button"
             variant="default"
             size="sm"
-            disabled={!isDirty || isSaving}
+            isDisabled={!isDirty || isSaving}
             onPress={handleSave}
             className="cursor-pointer gap-1.5 rounded-xl bg-primary text-xs font-bold text-primary-foreground shadow-xs"
           >
@@ -286,10 +286,6 @@ export function ProfileTab({
 
   return (
     <div className="relative w-full animate-in space-y-6 pb-10 duration-200 fade-in-50">
-      <div>
-        <h3 className="text-base font-bold text-foreground">{t("title")}</h3>
-      </div>
-
       {/* 2-Column Responsive Layout */}
       <div className="grid w-full grid-cols-1 items-start gap-8 xl:grid-cols-12">
         {/* Left Column: Configuration Cards */}

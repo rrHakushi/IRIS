@@ -22,7 +22,7 @@ export class LastFmAdapter extends BaseConnectionAdapter {
   readonly provider: ConnectionProvider = "LASTFM";
   readonly category: ConnectionCategory = "MUSIC";
   readonly authType: ConnectionAuthType = "API_KEY";
-  readonly iconUrl = "https://www.last.fm/static/images/favicon.702b239b6107.ico";
+  readonly iconUrl = "/icons/connections/lastfm.svg";
 
   readonly requiredEnvVars = ["LASTFM_API_KEY", "LASTFM_API_SECRET"] as const;
 

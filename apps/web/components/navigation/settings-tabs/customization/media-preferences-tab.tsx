@@ -114,7 +114,7 @@ export function MediaPreferencesSettingsTab({
             type="button"
             variant="ghost"
             size="sm"
-            disabled={!isDirty || isSaving}
+            isDisabled={!isDirty || isSaving}
             onPress={handleReset}
             className="cursor-pointer rounded-xl text-xs"
           >
@@ -126,7 +126,7 @@ export function MediaPreferencesSettingsTab({
             type="button"
             variant="default"
             size="sm"
-            disabled={!isDirty || isSaving}
+            isDisabled={!isDirty || isSaving}
             onPress={handleSave}
             className="cursor-pointer gap-1.5 rounded-xl bg-primary text-xs font-bold text-primary-foreground shadow-xs"
           >
@@ -175,10 +175,6 @@ export function MediaPreferencesSettingsTab({
 
   return (
     <div className="w-full flex-1 animate-in space-y-6 pb-6 duration-200 fade-in-50">
-      <div>
-        <h3 className="text-base font-bold text-foreground">{t("title")}</h3>
-      </div>
-
       {/* Title Language Selection Card */}
       <Card className="border border-border/70 bg-card/60 shadow-xs">
         <CardHeader className="pb-3">

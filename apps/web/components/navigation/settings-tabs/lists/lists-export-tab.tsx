@@ -307,11 +307,6 @@ export function ListsExportSettingsTab({}: SettingsTabProps): React.JSX.Element 
 
   return (
     <div className="w-full flex-1 animate-in space-y-6 pb-6 duration-200 fade-in-50">
-      {/* Header */}
-      <div>
-        <h3 className="text-base font-bold text-foreground">Media Export</h3>
-      </div>
-
       {/* Section 1: Export Configuration (Format & Media Types) */}
       <div className="rounded-2xl border border-border/60 bg-card p-4 transition-all duration-200 hover:border-border hover:shadow-sm">
         <div className="space-y-4">
@@ -472,8 +467,8 @@ export function ListsExportSettingsTab({}: SettingsTabProps): React.JSX.Element 
             <Button
               variant="default"
               size="sm"
-              onClick={handleDownload}
-              disabled={isExporting || selectedTypes.length === 0}
+              onPress={handleDownload}
+              isDisabled={isExporting || selectedTypes.length === 0}
               className="h-8 gap-1.5 text-xs"
             >
               {isExporting ? (
@@ -586,8 +581,8 @@ export function ListsExportSettingsTab({}: SettingsTabProps): React.JSX.Element 
               <Button
                 variant="default"
                 size="sm"
-                onClick={handleCreateShare}
-                disabled={
+                onPress={handleCreateShare}
+                isDisabled={
                   isCreatingShare ||
                   !sharePassword ||
                   selectedTypes.length === 0
@@ -687,7 +682,7 @@ export function ListsExportSettingsTab({}: SettingsTabProps): React.JSX.Element 
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => copyShareUrl(share.id)}
+                          onPress={() => copyShareUrl(share.id)}
                           className="h-7 gap-1 text-xs"
                         >
                           {isCopied ? (
@@ -706,7 +701,7 @@ export function ListsExportSettingsTab({}: SettingsTabProps): React.JSX.Element 
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleRevokeShare(share.id)}
+                          onPress={() => handleRevokeShare(share.id)}
                           className="h-7 px-2 text-rose-500 hover:bg-rose-500/10 hover:text-rose-600"
                         >
                           <IconTrash className="h-3.5 w-3.5" />

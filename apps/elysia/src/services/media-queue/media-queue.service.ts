@@ -1897,6 +1897,18 @@ export class MediaQueueService {
 
     return { namePrimary: clean, musicBrainzId: mbid }
   }
+
+  private cronJobRegistered = false
+
+  /**
+   * Initializes the weekly active media synchronization cron job.
+   */
+  public async initCron(): Promise<void> {
+    if (this.cronJobRegistered) return
+    this.cronJobRegistered = true
+    const { initActiveMediaCron } = await import("./media-update.cron.js")
+    initActiveMediaCron()
+  }
 }
 
 export const mediaQueueService = new MediaQueueService()

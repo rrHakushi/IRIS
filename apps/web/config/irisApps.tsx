@@ -86,7 +86,7 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
     },
     {
       id: "iris-pass",
-      name: "IRIS Pass",
+      name: t ? t("irisPass.name") : "IRIS Pass",
       href: "/IRIS-pass",
       color: "#d800a6",
       colorClass: "text-[#d800a6]",
@@ -97,9 +97,12 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
         "linear-gradient(135deg, #e11d48 0%, #c026d3 34%, #6366f1 72%, #4338ca 100%)",
       icon: "/iris-icons/iris-pass-ring-left.png",
       iconLeftRing: "/iris-icons/iris-pass-ring-left.png",
-      description:
-        "Zero-knowledge encrypted password, credential, and SSH key manager.",
-      descriptionShort: "Vault & Generator",
+      description: t
+        ? t("irisPass.description")
+        : "Zero-knowledge encrypted password, credential, and SSH key manager.",
+      descriptionShort: t
+        ? t("irisPass.descriptionShort")
+        : "Vault & Generator",
     },
     // {
     //   id: "iris-cloud",

@@ -26,7 +26,7 @@ export interface SonarrSeries {
 
 export class SonarrAdapter extends ServarrBaseAdapter {
   readonly provider: ConnectionProvider = "SONARR";
-  readonly iconUrl = "https://cdn.simpleicons.org/sonarr/00CDF0";
+  readonly iconUrl = "/icons/connections/sonarr.svg";
   readonly defaultHostUrl = "http://localhost:8989";
 
   async searchMedia(
