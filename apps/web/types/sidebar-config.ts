@@ -95,3 +95,10 @@ export interface DockItemData {
   component?: ReactNode
   children?: SidebarItemChild[]
 }
+
+export type {
+  AppSidebarCustomization,
+  CustomSidebarGroup,
+  CustomSidebarItem,
+  UserSidebarCustomization,
+} from "@IRIS/shared"

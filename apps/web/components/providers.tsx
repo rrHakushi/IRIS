@@ -22,6 +22,20 @@ declare module "react-aria-components" {
   }
 }
 
+// Suppress false-positive React 19 / Next.js 16 script tag warning emitted by next-themes SSR inline script
+if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+  const origError = console.error
+  console.error = (...args: unknown[]) => {
+    if (
+      typeof args[0] === "string" &&
+      args[0].includes("Encountered a script tag while rendering React component")
+    ) {
+      return
+    }
+    origError.apply(console, args)
+  }
+}
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const router = useRouter()
 

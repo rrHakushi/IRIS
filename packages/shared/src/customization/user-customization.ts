@@ -157,24 +157,114 @@ export function setBookmarksCustomization(
 
 export type SidebarPosition = "left" | "right" | "top" | "bottom";
 
+export interface CustomSidebarItem {
+  id: string;
+  label: string;
+  href: string;
+  icon?: string;
+  isExternal?: boolean;
+}
+
+export interface CustomSidebarGroup {
+  id: string;
+  label: string;
+  icon: string;
+  type: "section" | "folder"; // "section" = top-level category header; "folder" = nested menu item with subitems
+  targetSectionKey?: string; // which section this folder belongs to if type === "folder"
+  itemKeys: string[];
+  customLinks?: CustomSidebarItem[];
+}
+
+export interface AppSidebarCustomization {
+  sectionOrder?: string[];
+  hiddenSections?: string[];
+  itemOrder?: Record<string, string[]>; // sectionKey -> itemKeys
+  hiddenItems?: string[];
+  itemOverrides?: Record<string, {
+    sectionKey?: string; // relocated to this section
+  }>;
+  childrenOrder?: Record<string, string[]>; // parentItemKey -> childKeys
+  hiddenChildren?: string[];
+  customGroups?: CustomSidebarGroup[];
+  customLinks?: CustomSidebarItem[];
+}
+
 export interface UserSidebarCustomization {
   position?: SidebarPosition;
+  apps?: Record<string, AppSidebarCustomization>;
   [key: string]: unknown;
 }
 
 export function getSidebarCustomization(customization?: unknown): UserSidebarCustomization {
   if (!customization || typeof customization !== "object") {
-    return { position: "left" };
+    return { position: "left", apps: {} };
   }
   const sidebar = (customization as any)?.sidebar;
   if (!sidebar || typeof sidebar !== "object") {
-    return { position: "left" };
+    return { position: "left", apps: {} };
   }
   const pos = sidebar.position;
   return {
     ...sidebar,
     position: ["left", "right", "top", "bottom"].includes(pos) ? pos : "left",
+    apps: sidebar.apps && typeof sidebar.apps === "object" ? sidebar.apps : {},
   };
+}
+
+export function getAppSidebarCustomization(
+  customization: unknown,
+  appId: string
+): AppSidebarCustomization {
+  const sidebar = getSidebarCustomization(customization);
+  const appCust = sidebar.apps?.[appId];
+  if (!appCust || typeof appCust !== "object") {
+    return {
+      sectionOrder: [],
+      hiddenSections: [],
+      itemOrder: {},
+      hiddenItems: [],
+      itemOverrides: {},
+      childrenOrder: {},
+      hiddenChildren: [],
+      customGroups: [],
+      customLinks: [],
+    };
+  }
+  return {
+    sectionOrder: Array.isArray(appCust.sectionOrder) ? appCust.sectionOrder : [],
+    hiddenSections: Array.isArray(appCust.hiddenSections) ? appCust.hiddenSections : [],
+    itemOrder: appCust.itemOrder && typeof appCust.itemOrder === "object" ? appCust.itemOrder : {},
+    hiddenItems: Array.isArray(appCust.hiddenItems) ? appCust.hiddenItems : [],
+    itemOverrides: appCust.itemOverrides && typeof appCust.itemOverrides === "object" ? appCust.itemOverrides : {},
+    childrenOrder: appCust.childrenOrder && typeof appCust.childrenOrder === "object" ? appCust.childrenOrder : {},
+    hiddenChildren: Array.isArray(appCust.hiddenChildren) ? appCust.hiddenChildren : [],
+    customGroups: Array.isArray(appCust.customGroups) ? appCust.customGroups : [],
+    customLinks: Array.isArray(appCust.customLinks) ? appCust.customLinks : [],
+  };
+}
+
+export function setAppSidebarCustomization(
+  existingCustomization: unknown,
+  appId: string,
+  patch: Partial<AppSidebarCustomization>
+): Record<string, unknown> {
+  const current =
+    existingCustomization && typeof existingCustomization === "object"
+      ? { ...(existingCustomization as Record<string, unknown>) }
+      : {};
+
+  const currentSidebar = getSidebarCustomization(current);
+  const currentApp = getAppSidebarCustomization(current, appId);
+
+  const updatedApps: Record<string, AppSidebarCustomization> = {
+    ...(currentSidebar.apps || {}),
+    [appId]: {
+      ...currentApp,
+      ...patch,
+    },
+  };
+
+  return setSidebarCustomization(current, { apps: updatedApps });
 }
 
 export function setSidebarCustomization(

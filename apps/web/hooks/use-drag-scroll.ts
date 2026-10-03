@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useEffect } from "react"
+import React, { useRef, useCallback, useEffect, useState } from "react"
 
 export interface UseDragScrollOptions {
   enableWheel?: boolean
@@ -12,12 +12,13 @@ export interface UseDragScrollOptions {
 export function useDragScroll<T extends HTMLElement = HTMLDivElement>(
   options: UseDragScrollOptions = {}
 ) {
-  const { enableWheel = true, speed = 1 } = options
+  const { enableWheel = true, speed = 1.2 } = options
   const ref = useRef<T | null>(null)
   const isDraggingRef = useRef(false)
   const startXRef = useRef(0)
   const scrollLeftRef = useRef(0)
   const hasMovedRef = useRef(false)
+  const [isDragging, setIsDragging] = useState(false)
 
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     // Only handle primary (left) mouse button click
@@ -32,8 +33,11 @@ export function useDragScroll<T extends HTMLElement = HTMLDivElement>(
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDraggingRef.current || !ref.current) return
       const deltaX = e.pageX - startXRef.current
-      if (Math.abs(deltaX) > 4) {
+      if (Math.abs(deltaX) > 3) {
         hasMovedRef.current = true
+        setIsDragging(true)
+        document.body.style.userSelect = "none"
+        document.body.style.cursor = "grabbing"
       }
       ref.current.scrollLeft = scrollLeftRef.current - deltaX * speed
     }
@@ -41,9 +45,12 @@ export function useDragScroll<T extends HTMLElement = HTMLDivElement>(
     const handleMouseUp = () => {
       if (isDraggingRef.current) {
         isDraggingRef.current = false
+        setIsDragging(false)
+        document.body.style.userSelect = ""
+        document.body.style.cursor = ""
         setTimeout(() => {
           hasMovedRef.current = false
-        }, 60)
+        }, 80)
       }
     }
 
@@ -52,6 +59,8 @@ export function useDragScroll<T extends HTMLElement = HTMLDivElement>(
     return () => {
       window.removeEventListener("mousemove", handleMouseMove)
       window.removeEventListener("mouseup", handleMouseUp)
+      document.body.style.userSelect = ""
+      document.body.style.cursor = ""
     }
   }, [speed])
 
@@ -78,6 +87,7 @@ export function useDragScroll<T extends HTMLElement = HTMLDivElement>(
 
   return {
     ref,
+    isDragging,
     events: {
       onMouseDown,
       onWheel,

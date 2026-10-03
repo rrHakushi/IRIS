@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useEffect, useMemo, useState, useCallback } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
@@ -35,7 +35,20 @@ import {
 } from "@workspace/ui/components/dropdown-menu"
 import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
-import { IconChevronDown } from "@tabler/icons-react"
+import {
+  IconChevronDown,
+  IconDotsVertical,
+  IconEyeOff,
+  IconAdjustmentsHorizontal,
+} from "@tabler/icons-react"
+import { useUser } from "@/context/user-context"
+import { useAllAppSidebarConfigs } from "@/config/sidebars"
+import { applySidebarCustomization } from "@/lib/navigation"
+import {
+  getAppSidebarCustomization,
+  type AppSidebarCustomization,
+} from "@IRIS/shared"
+import { toast } from "sonner"
 import type {
   SidebarConfig,
   SidebarItem,
@@ -46,7 +59,8 @@ import { formatBadgeNumber } from "@/lib/numbers"
 import { useIrisSidebar } from "./sidebar-provider"
 import { IrisBottomDock } from "./iris-bottom-dock"
 import { IrisAppMenu } from "./iris-app-menu"
-import { IrisUserMenu } from "./iris-user-menu"
+import { IrisUserMenu, openSettingsModal } from "./iris-user-menu"
+import { useDragScroll } from "@/hooks/use-drag-scroll"
 
 function normalizePath(path: string): string {
   if (!path) return "/"
@@ -94,6 +108,7 @@ export interface IrisSidebarProps extends Omit<
 > {
   initialConfig?: SidebarConfig
   onOpenSettings?: () => void
+  appId?: string
 }
 
 export function IrisSidebar({
@@ -104,7 +119,10 @@ export function IrisSidebar({
   ...props
 }: IrisSidebarProps): React.JSX.Element {
   const t = useTranslations("navigation.sidebar")
+  const tSettings = useTranslations("navigation.sidebarSettings")
   const { data: session } = useSession()
+  const { user, updateSidebar } = useUser()
+  const allAppConfigs = useAllAppSidebarConfigs(session)
   const pathname = usePathname() || "/"
   const router = useRouter()
   const { isMobile, setOpenMobile, state } = useSidebar()
@@ -206,9 +224,114 @@ export function IrisSidebar({
   const isBottom = position === "bottom"
   const isHorizontal = isTop || isBottom
 
+  const horizontalNavDragScroll = useDragScroll<HTMLElement>({
+    enableWheel: true,
+    speed: 1.2,
+  })
+
+  const currentAppId =
+    props.appId || (pathname.startsWith("/IRIS-pass") ? "iris-pass" : "iris-list")
+
+  // Real-time synchronization of per-app sidebar layout customization
+  const [appCustomization, setAppCustomization] = useState<
+    AppSidebarCustomization | undefined
+  >(() => {
+    if (user?.customization) {
+      return getAppSidebarCustomization(user.customization, currentAppId)
+    }
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("iris-sidebar-customization")
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          if (parsed?.[currentAppId]) return parsed[currentAppId]
+        }
+      } catch {}
+    }
+    return undefined
+  })
+
+  useEffect(() => {
+    if (user?.customization) {
+      setAppCustomization(
+        getAppSidebarCustomization(user.customization, currentAppId)
+      )
+    }
+  }, [user?.customization, currentAppId])
+
+  useEffect(() => {
+    const handleCustChange = (e: Event) => {
+      const customEvent = e as CustomEvent<
+        Record<string, AppSidebarCustomization>
+      >
+      if (customEvent.detail?.[currentAppId]) {
+        setAppCustomization(customEvent.detail[currentAppId])
+      }
+    }
+    window.addEventListener("iris-sidebar-customization-changed", handleCustChange)
+    return () => {
+      window.removeEventListener(
+        "iris-sidebar-customization-changed",
+        handleCustChange
+      )
+    }
+  }, [currentAppId])
+
+  // Resolved hierarchy with user customizations applied
+  const customizedConfig = useMemo(() => {
+    return applySidebarCustomization(
+      resolvedConfig,
+      appCustomization,
+      allAppConfigs
+    )
+  }, [resolvedConfig, appCustomization, allAppConfigs])
+
+  // In-place quick action: Hide item from sidebar
+  const handleHideItem = useCallback(
+    async (itemKey: string) => {
+      const current = appCustomization || {
+        sectionOrder: [],
+        hiddenSections: [],
+        itemOrder: {},
+        hiddenItems: [],
+        itemOverrides: {},
+        childrenOrder: {},
+        hiddenChildren: [],
+        customGroups: [],
+        customLinks: [],
+      }
+      const hidden = current.hiddenItems || []
+      if (!hidden.includes(itemKey)) {
+        const updated = [...hidden, itemKey]
+        const newCust: AppSidebarCustomization = {
+          ...current,
+          hiddenItems: updated,
+        }
+        setAppCustomization(newCust)
+        try {
+          const stored = localStorage.getItem("iris-sidebar-customization")
+          const parsed = stored ? JSON.parse(stored) : {}
+          parsed[currentAppId] = newCust
+          localStorage.setItem(
+            "iris-sidebar-customization",
+            JSON.stringify(parsed)
+          )
+          window.dispatchEvent(
+            new CustomEvent("iris-sidebar-customization-changed", {
+              detail: parsed,
+            })
+          )
+        } catch {}
+        await updateSidebar({ apps: { [currentAppId]: newCust } })
+        toast.info(tSettings("hideItem"))
+      }
+    },
+    [appCustomization, currentAppId, updateSidebar, tSettings]
+  )
+
   // Ensure parent items of active children are opened on route change
   useEffect(() => {
-    resolvedConfig.forEach((section) => {
+    customizedConfig.forEach((section) => {
       section.items.forEach((item) => {
         if (item.children && item.children.length > 0) {
           const hasActiveChild = item.children.some((child) =>
@@ -224,7 +347,7 @@ export function IrisSidebar({
         }
       })
     })
-  }, [pathname, resolvedConfig])
+  }, [pathname, customizedConfig])
 
   // --- TOP / BOTTOM HORIZONTAL BAR MODE ---
   if (isHorizontal && !isMobile) {
@@ -245,17 +368,20 @@ export function IrisSidebar({
           </div>
         </div>
 
-        {/* Center: Horizontally Scrollable Segmented Navigation with Section Dropdowns */}
-        <nav
-          onWheel={(e) => {
-            if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-              e.currentTarget.scrollLeft += e.deltaY
-            }
-          }}
-          className="flex min-w-0 flex-1 items-center justify-center overflow-x-auto no-scrollbar scrollbar-none px-2 py-1 mx-2"
-        >
-          <div className="flex items-center gap-1 rounded-2xl border border-border/60 bg-muted/30 p-1 shadow-2xs backdrop-blur-md shrink-0">
-            {resolvedConfig.map((section: SidebarSection, sectionIdx: number) => {
+        {/* Center: Horizontally Scrollable Segmented Navigation with Section Dropdowns (mouse drag-to-scroll) */}
+        <div className="relative flex min-w-0 flex-1 items-center overflow-hidden">
+          <nav
+            ref={horizontalNavDragScroll.ref}
+            {...horizontalNavDragScroll.events}
+            className={cn(
+              "flex min-w-0 flex-1 items-center justify-start overflow-x-auto no-scrollbar scrollbar-none px-2 py-1 select-none",
+              horizontalNavDragScroll.isDragging
+                ? "cursor-grabbing"
+                : "cursor-grab"
+            )}
+          >
+            <div className="flex items-center gap-1 rounded-2xl border border-border/60 bg-muted/30 p-1 shadow-2xs backdrop-blur-md shrink-0 mx-auto">
+            {customizedConfig.map((section: SidebarSection, sectionIdx: number) => {
               const visibleItems = section.items.filter(
                 (item: SidebarItem) => (item.position ?? 0) >= 0
               )
@@ -432,8 +558,9 @@ export function IrisSidebar({
                     >
                       <Link
                         href={sectionHref!}
+                        draggable={false}
                         className={cn(
-                          "flex cursor-pointer items-center gap-1.5 rounded-s-xl px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors",
+                          "flex cursor-pointer items-center gap-1.5 rounded-s-xl px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors select-none",
                           isRouteActive(pathname, sectionHref)
                             ? "font-bold text-primary"
                             : "text-inherit hover:text-foreground"
@@ -571,9 +698,10 @@ export function IrisSidebar({
                       >
                         <Link
                           href={item.href!}
+                          draggable={false}
                           onClick={item.onClick}
                           className={cn(
-                            "flex cursor-pointer items-center gap-1.5 rounded-s-xl px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors",
+                            "flex cursor-pointer items-center gap-1.5 rounded-s-xl px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors select-none",
                             isDirectActive
                               ? "font-bold text-primary"
                               : "text-inherit hover:text-foreground"
@@ -657,8 +785,9 @@ export function IrisSidebar({
                     <Link
                       key={itemIdx}
                       href={item.href!}
+                      draggable={false}
                       className={cn(
-                        "flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200",
+                        "flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 select-none",
                         isDirectActive
                           ? "border border-primary/40 bg-primary/15 font-bold text-primary shadow-xs ring-1 ring-primary/20"
                           : "text-muted-foreground hover:bg-muted/60 hover:text-foreground border border-transparent"
@@ -685,16 +814,17 @@ export function IrisSidebar({
                   <button
                     key={itemIdx}
                     type="button"
+                    draggable={false}
                     onClick={item.onClick}
                     className={cn(
-                      "flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200",
+                      "flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 select-none",
                       isActive
                         ? "border border-primary/40 bg-primary/15 font-bold text-primary shadow-xs ring-1 ring-primary/20"
                         : "text-muted-foreground hover:bg-muted/60 hover:text-foreground border border-transparent"
                     )}
                   >
                     {item.icon && (
-                      <span className="size-3.5 shrink-0">{item.icon}</span>
+                      <span className="size-3.5 shrink-0 pointer-events-none">{item.icon}</span>
                     )}
                     <span>{item.label}</span>
                     {item.badge && (
@@ -711,6 +841,7 @@ export function IrisSidebar({
             })}
           </div>
         </nav>
+      </div>
 
         {/* Right: Merged User Menu Trigger */}
         <div className="flex items-center gap-3 shrink-0">
@@ -741,7 +872,7 @@ export function IrisSidebar({
 
         {/* Content: Categorized Menu Sections */}
         <SidebarContent className="no-scrollbar">
-          {resolvedConfig.map((section: SidebarSection, sectionIdx: number) => {
+          {customizedConfig.map((section: SidebarSection, sectionIdx: number) => {
             const visibleItems = section.items.filter(
               (item: SidebarItem) => (item.position ?? 0) >= 0
             )
@@ -751,22 +882,55 @@ export function IrisSidebar({
               section.dataKey || section.section || `sec-${sectionIdx}`
             const isExpanded =
               state === "collapsed" ? true : (expandedSections[secKey] ?? true)
+            const isCustomSec = secKey.startsWith("group-sec:")
 
             return (
               <SidebarGroup key={sectionIdx} className="space-y-1 px-2 py-1">
                 {section.section && (
                   <SidebarGroupLabel
-                    elementType="button"
+                    elementType="div"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault()
+                        toggleSection(secKey)
+                      }
+                    }}
                     onClick={() => toggleSection(secKey)}
-                    className="flex w-full cursor-pointer items-center justify-between px-2 py-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase transition-colors select-none group-data-[collapsible=icon]:hidden hover:text-foreground"
+                    className="group/section flex w-full cursor-pointer items-center justify-between px-2 py-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase transition-colors select-none group-data-[collapsible=icon]:hidden hover:text-foreground"
                   >
-                    <span>{section.section}</span>
-                    <IconChevronDown
-                      className={cn(
-                        "size-3.5 transition-transform duration-200",
-                        !isExpanded && "-rotate-90"
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className="truncate">{section.section}</span>
+                      {isCustomSec && (
+                        <Badge
+                          variant="secondary"
+                          className="h-3.5 px-1 text-[8px] uppercase tracking-normal"
+                        >
+                          {tSettings("customBadge")}
+                        </Badge>
                       )}
-                    />
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          openSettingsModal("sidebar")
+                        }}
+                        className="opacity-0 group-hover/section:opacity-100 p-0.5 rounded text-muted-foreground hover:text-foreground transition-opacity"
+                        title={tSettings("customizeSidebar")}
+                        aria-label={tSettings("customizeSidebar")}
+                      >
+                        <IconAdjustmentsHorizontal className="size-3" />
+                      </button>
+                      <IconChevronDown
+                        className={cn(
+                          "size-3.5 transition-transform duration-200",
+                          !isExpanded && "-rotate-90"
+                        )}
+                      />
+                    </div>
                   </SidebarGroupLabel>
                 )}
 
@@ -929,34 +1093,73 @@ export function IrisSidebar({
                               )}
                             </div>
                           ) : (
-                            <SidebarMenuButton
-                              href={item.href || "#"}
-                              isActive={isDirectActive}
-                              tooltip={
-                                state === "collapsed" ? item.label : undefined
-                              }
-                              className={cn(
-                                "w-full justify-between gap-2",
-                                isDirectActive &&
-                                  "bg-primary/10 font-semibold text-primary hover:bg-primary/15 hover:text-primary"
-                              )}
-                              onClick={item.onClick}
-                            >
-                              <span className="flex min-w-0 flex-1 items-center gap-2.5">
-                                {item.icon && (
-                                  <span className="shrink-0">{item.icon}</span>
+                            <div className="relative flex w-full items-center">
+                              <SidebarMenuButton
+                                href={item.href || "#"}
+                                isActive={isDirectActive}
+                                tooltip={
+                                  state === "collapsed" ? item.label : undefined
+                                }
+                                className={cn(
+                                  "w-full justify-between gap-2 pe-7",
+                                  isDirectActive &&
+                                    "bg-primary/10 font-semibold text-primary hover:bg-primary/15 hover:text-primary"
                                 )}
-                                <span className="truncate">{item.label}</span>
-                              </span>
-                              {item.badge && (
-                                <Badge
-                                  variant="secondary"
-                                  className="ml-auto h-4 shrink-0 px-1.5 text-[10px]"
+                                onClick={item.onClick}
+                                {...(item.dataKey?.startsWith("link:") &&
+                                item.href?.startsWith("http")
+                                  ? {
+                                      target: "_blank",
+                                      rel: "noopener noreferrer",
+                                    }
+                                  : {})}
+                              >
+                                <span className="flex min-w-0 flex-1 items-center gap-2.5">
+                                  {item.icon && (
+                                    <span className="shrink-0">{item.icon}</span>
+                                  )}
+                                  <span className="truncate">{item.label}</span>
+                                </span>
+                                {item.badge && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="ml-auto h-4 shrink-0 px-1.5 text-[10px]"
+                                  >
+                                    {formatBadge(item.badge)}
+                                  </Badge>
+                                )}
+                              </SidebarMenuButton>
+
+                              <DropdownMenuTrigger>
+                                <SidebarMenuAction
+                                  showOnHover
+                                  aria-label="Item options"
+                                  className="size-5 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
                                 >
-                                  {formatBadge(item.badge)}
-                                </Badge>
-                              )}
-                            </SidebarMenuButton>
+                                  <IconDotsVertical className="size-3" />
+                                </SidebarMenuAction>
+                                <DropdownMenu
+                                  placement={isRight ? "start top" : "end top"}
+                                  className="min-w-44 p-1"
+                                >
+                                  <DropdownMenuItem
+                                    onAction={() => handleHideItem(itemKey)}
+                                    className="gap-2 text-xs cursor-pointer text-muted-foreground hover:text-foreground"
+                                  >
+                                    <IconEyeOff className="size-3.5 text-amber-500" />
+                                    <span>{tSettings("hideFromSidebar")}</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onAction={() => openSettingsModal("sidebar")}
+                                    className="gap-2 text-xs cursor-pointer"
+                                  >
+                                    <IconAdjustmentsHorizontal className="size-3.5 text-primary" />
+                                    <span>{tSettings("customizeSidebar")}</span>
+                                  </DropdownMenuItem>
+                                </DropdownMenu>
+                              </DropdownMenuTrigger>
+                            </div>
                           )}
                         </SidebarMenuItem>
                       )
@@ -970,7 +1173,7 @@ export function IrisSidebar({
 
         {/* Footer: Custom widgets (negative position items) & Merged User profile menu */}
         <SidebarFooter className="border-t border-sidebar-border/60 p-2">
-          {resolvedConfig
+          {customizedConfig
             .flatMap((s) => s.items)
             .filter((item) => (item.position ?? 0) < 0)
             .map((item, idx) => (

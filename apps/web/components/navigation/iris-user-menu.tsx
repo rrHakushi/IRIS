@@ -146,6 +146,21 @@ export function IrisUserMenu({
   const [settingsDefaultCategory, setSettingsDefaultCategory] =
     useState<IrisSettingsCategory>("profile")
 
+  // Global listener allowing any UI component to open Settings to a specific tab
+  useEffect(() => {
+    const handleOpenSettings = (e: Event) => {
+      const customEvent = e as CustomEvent<{ category?: IrisSettingsCategory }>
+      if (customEvent.detail?.category) {
+        setSettingsDefaultCategory(customEvent.detail.category)
+      }
+      setSettingsOpen(true)
+    }
+    window.addEventListener("iris-open-settings", handleOpenSettings)
+    return () => {
+      window.removeEventListener("iris-open-settings", handleOpenSettings)
+    }
+  }, [])
+
   // Apps & Bookmarks State
   const pathname = usePathname() || "/"
   const irisApps = useIrisApps()
@@ -1385,4 +1400,15 @@ export function IrisUserMenu({
       />
     </>
   )
+}
+
+/**
+ * Programmatically opens the IRIS Settings modal focused on a designated category.
+ */
+export function openSettingsModal(category: IrisSettingsCategory = "profile") {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("iris-open-settings", { detail: { category } })
+    )
+  }
 }
