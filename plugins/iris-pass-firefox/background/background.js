@@ -132,8 +132,7 @@ async function updateBadge() {
     }
 
     if (!inMemoryVaultKey) {
-      ext.action.setBadgeText({ text: "🔒" })
-      ext.action.setBadgeBackgroundColor({ color: "#e11d48" })
+      ext.action.setBadgeText({ text: "" })
       return
     }
 

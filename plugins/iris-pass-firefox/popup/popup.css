@@ -1,4 +1,27 @@
-/* IRIS Pass — Popup Stylesheet (Mauve + Rose Theme) */
+/* IRIS Pass — Popup Stylesheet (IRIS Design System) */
+
+:root {
+  --background: oklch(0.141 0.005 285.823);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.21 0.006 285.885);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.92 0.004 286.32);
+  --primary-foreground: oklch(0.21 0.006 285.885);
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.274 0.006 286.033);
+  --muted-foreground: oklch(0.705 0.015 286.067);
+  --accent: oklch(0.274 0.006 286.033);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.552 0.016 285.938);
+  --radius: 0.45rem;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
 
 *,
 *::before,
@@ -6,9 +29,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
-    Cantarell, sans-serif;
+  font-family: var(--font-mono);
   user-select: none;
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
@@ -30,9 +51,10 @@ body {
   height: 540px;
   min-height: 540px;
   max-height: 540px;
-  background-color: #16141a;
-  color: #ffffff;
+  background-color: var(--background);
+  color: var(--foreground);
   overflow: hidden;
+  font-family: var(--font-mono);
 }
 
 .popup-container {
@@ -47,8 +69,8 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background-color: #1c1a20;
-  border-bottom: 1px solid #2d2a32;
+  background-color: var(--background);
+  border-bottom: 1px solid var(--border);
 }
 
 .brand {
@@ -60,8 +82,9 @@ body {
 .brand-icon {
   width: 28px;
   height: 28px;
-  border-radius: 8px;
-  background: rgba(244, 63, 94, 0.15);
+  border-radius: var(--radius);
+  background: var(--secondary);
+  border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -72,7 +95,7 @@ body {
   width: 22px;
   height: 22px;
   object-fit: contain;
-  border-radius: 6px;
+  border-radius: calc(var(--radius) * 0.7);
   display: block;
 }
 
@@ -80,15 +103,16 @@ body {
   width: 16px;
   height: 16px;
   fill: none;
-  stroke: #f43f5e;
+  stroke: var(--foreground);
   stroke-width: 2.2;
 }
 
 .brand-title {
   font-size: 14px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--foreground);
   letter-spacing: -0.2px;
+  font-family: var(--font-mono);
 }
 
 .header-actions {
@@ -100,30 +124,30 @@ body {
 .icon-btn {
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radius);
   width: 28px;
   height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #a19da8;
+  color: var(--muted-foreground);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .icon-btn:hover {
-  background: #28252e;
-  color: #ffffff;
-  border-color: #3b3740;
+  background: var(--secondary);
+  color: var(--foreground);
+  border-color: var(--border);
 }
 
 .icon-btn.primary {
-  background: #f43f5e;
-  color: #ffffff;
+  background: var(--primary);
+  color: var(--primary-foreground);
 }
 
 .icon-btn.primary:hover {
-  background: #fb7185;
+  opacity: 0.9;
 }
 
 .icon-btn svg {
@@ -149,8 +173,8 @@ body {
 /* Tab Navigation */
 .tab-nav {
   display: flex;
-  background: #1c1a20;
-  border-bottom: 1px solid #2d2a32;
+  background: var(--background);
+  border-bottom: 1px solid var(--border);
   padding: 0 8px;
 }
 
@@ -159,7 +183,7 @@ body {
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
-  color: #a19da8;
+  color: var(--muted-foreground);
   font-size: 12px;
   font-weight: 600;
   padding: 10px 4px;
@@ -169,24 +193,26 @@ body {
   align-items: center;
   justify-content: center;
   gap: 5px;
+  font-family: var(--font-mono);
 }
 
 .tab-btn:hover {
-  color: #ffffff;
+  color: var(--foreground);
 }
 
 .tab-btn.active {
-  color: #f43f5e;
-  border-bottom-color: #f43f5e;
+  color: var(--foreground);
+  border-bottom-color: var(--primary);
 }
 
 .badge {
-  background: rgba(244, 63, 94, 0.2);
-  color: #fb7185;
+  background: var(--secondary);
+  color: var(--foreground);
   font-size: 10px;
   font-weight: 700;
   padding: 1px 6px;
-  border-radius: 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
 }
 
 /* View Panels & Content */
@@ -408,24 +434,25 @@ body {
 .btn-danger {
   width: 100%;
   height: 36px;
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: 8px;
+  background: var(--destructive);
+  color: #ffffff;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
+  font-family: var(--font-mono);
 }
 
 .btn-danger:hover {
-  background: #ef4444;
-  color: #ffffff;
+  opacity: 0.9;
 }
 
 .setting-hint {
   font-size: 10px;
-  color: #a19da8;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
 }
 
 .input-wrap {
@@ -436,18 +463,20 @@ body {
 .input-wrap input {
   width: 100%;
   height: 38px;
-  background: #211f26;
-  border: 1px solid #3b3740;
-  border-radius: 10px;
+  background: var(--input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 0 38px 0 12px;
-  color: #ffffff;
+  color: var(--foreground);
   font-size: 13px;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: var(--font-mono);
 }
 
 .input-wrap input:focus {
-  border-color: #f43f5e;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 1px var(--ring);
 }
 
 .eye-btn {
@@ -457,7 +486,7 @@ body {
   transform: translateY(-50%);
   background: transparent;
   border: none;
-  color: #a19da8;
+  color: var(--muted-foreground);
   cursor: pointer;
   padding: 6px;
   display: flex;
@@ -474,10 +503,10 @@ body {
 .btn-primary {
   width: 100%;
   height: 38px;
-  background: #f43f5e;
-  color: #ffffff;
+  background: var(--primary);
+  color: var(--primary-foreground);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -486,10 +515,11 @@ body {
   align-items: center;
   justify-content: center;
   gap: 6px;
+  font-family: var(--font-mono);
 }
 
 .btn-primary:hover {
-  background: #fb7185;
+  opacity: 0.9;
 }
 
 .btn-primary:active {
@@ -497,18 +527,19 @@ body {
 }
 
 .btn-primary:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .error-badge {
-  background: rgba(244, 63, 94, 0.15);
-  border: 1px solid rgba(244, 63, 94, 0.3);
-  color: #fb7185;
+  background: oklch(0.704 0.191 22.216 / 15%);
+  border: 1px solid oklch(0.704 0.191 22.216 / 30%);
+  color: oklch(0.85 0.15 22.216);
   font-size: 11px;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   text-align: left;
+  font-family: var(--font-mono);
 }
 
 /* Matching & Vault List */
@@ -522,18 +553,20 @@ body {
 .domain-label {
   font-size: 11px;
   font-weight: 700;
-  color: #fb7185;
+  color: var(--muted-foreground);
   letter-spacing: 0.3px;
   text-transform: uppercase;
+  font-family: var(--font-mono);
 }
 
 .text-btn {
   background: transparent;
   border: none;
-  color: #f43f5e;
+  color: var(--foreground);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  font-family: var(--font-mono);
 }
 
 .text-btn:hover {
@@ -544,9 +577,9 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #201d26;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 0 12px;
   height: 38px;
   margin-bottom: 10px;
@@ -556,14 +589,14 @@ body {
 }
 
 .search-bar:focus-within {
-  border-color: #f43f5e;
-  box-shadow: 0 0 0 1px rgba(244, 63, 94, 0.25);
+  border-color: var(--ring);
+  box-shadow: 0 0 0 1px var(--ring);
 }
 
 .search-bar svg {
   width: 15px;
   height: 15px;
-  stroke: #a19da8;
+  stroke: var(--muted-foreground);
   stroke-width: 2;
   fill: none;
   flex-shrink: 0;
@@ -574,12 +607,13 @@ body {
   background: transparent;
   border: none;
   outline: none;
-  color: #ffffff;
+  color: var(--foreground);
   font-size: 13px;
+  font-family: var(--font-mono);
 }
 
 .search-bar input::placeholder {
-  color: #716d78;
+  color: var(--muted-foreground);
 }
 
 .cipher-list {
@@ -592,9 +626,9 @@ body {
 
 .cipher-card {
   position: relative;
-  background: #201d26;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
@@ -604,8 +638,8 @@ body {
 }
 
 .cipher-card:hover {
-  background: #25222c;
-  border-color: rgba(255, 255, 255, 0.15);
+  background: var(--secondary);
+  border-color: var(--ring);
 }
 
 .cipher-card-top {
@@ -629,25 +663,27 @@ body {
   gap: 6px;
   font-size: 13px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--foreground);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-family: var(--font-mono);
 }
 
 .cipher-favicon {
   width: 16px;
   height: 16px;
-  border-radius: 4px;
+  border-radius: calc(var(--radius) * 0.6);
   flex-shrink: 0;
 }
 
 .cipher-user {
   font-size: 11px;
-  color: #a19da8;
+  color: var(--muted-foreground);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-family: var(--font-mono);
 }
 
 /* 3-Dot Card Menu */
@@ -659,8 +695,8 @@ body {
 .card-menu-btn {
   width: 26px;
   height: 26px;
-  border-radius: 6px;
-  color: #a19da8;
+  border-radius: calc(var(--radius) * 0.7);
+  color: var(--muted-foreground);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -671,8 +707,8 @@ body {
 }
 
 .card-menu-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  background: var(--accent);
+  color: var(--foreground);
 }
 
 .card-menu-btn svg {
@@ -689,9 +725,9 @@ body {
   right: 0;
   z-index: 50;
   min-width: 145px;
-  background: #1c1a22;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
+  background: var(--popover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 4px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3);
   display: flex;
@@ -707,19 +743,20 @@ body {
   padding: 6px 10px;
   background: transparent;
   border: none;
-  border-radius: 6px;
-  color: #e4e2e7;
+  border-radius: calc(var(--radius) * 0.7);
+  color: var(--foreground);
   font-size: 12px;
   font-weight: 500;
   text-align: left;
   cursor: pointer;
   transition: all 0.12s ease;
+  font-family: var(--font-mono);
 }
 
 .card-menu-item svg {
   width: 14px;
   height: 14px;
-  stroke: #a19da8;
+  stroke: var(--muted-foreground);
   stroke-width: 2;
   fill: none;
   flex-shrink: 0;
@@ -727,17 +764,17 @@ body {
 }
 
 .card-menu-item:hover {
-  background: rgba(244, 63, 94, 0.12);
-  color: #ffffff;
+  background: var(--accent);
+  color: var(--accent-foreground);
 }
 
 .card-menu-item:hover svg {
-  stroke: #fb7185;
+  stroke: var(--foreground);
 }
 
 .card-menu-divider {
   height: 1px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--border);
   margin: 3px 2px;
 }
 
@@ -1169,13 +1206,14 @@ body {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #fb7185;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
 }
 
 .settings-card {
-  background: #1c1a20;
-  border: 1px solid #2d2a32;
-  border-radius: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -1191,24 +1229,28 @@ body {
 .setting-item label {
   font-size: 11px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--foreground);
+  font-family: var(--font-mono);
 }
 
 .setting-item input,
 .setting-item select {
-  background: #211f26;
-  border: 1px solid #3b3740;
-  border-radius: 8px;
+  background: var(--input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   height: 36px;
   padding: 0 10px;
-  color: #ffffff;
+  color: var(--foreground);
   font-size: 12px;
   outline: none;
+  font-family: var(--font-mono);
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .setting-item input:focus,
 .setting-item select:focus {
-  border-color: #f43f5e;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 1px var(--ring);
 }
 
 /* Account Profile Card */
@@ -1217,9 +1259,9 @@ body {
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  background: #211f26;
-  border: 1px solid #3b3740;
-  border-radius: 10px;
+  background: var(--secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
 
 .account-avatar-wrap {
@@ -1232,8 +1274,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #2a2730;
-  border: 1px solid #3b3740;
+  background: var(--card);
+  border: 1px solid var(--border);
 }
 
 .account-avatar-img {
@@ -1248,14 +1290,15 @@ body {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: linear-gradient(135deg, #f43f5e, #ec4899);
-  color: #ffffff;
+  background: var(--primary);
+  color: var(--primary-foreground);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 14px;
   flex-shrink: 0;
+  font-family: var(--font-mono);
 }
 
 .account-details {
@@ -1268,24 +1311,27 @@ body {
 .account-name {
   font-size: 12px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--foreground);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-family: var(--font-mono);
 }
 
 .account-sub {
   font-size: 10px;
-  color: #fb7185;
+  color: var(--muted-foreground);
   font-weight: 500;
+  font-family: var(--font-mono);
 }
 
 .account-email {
   font-size: 10px;
-  color: #a19da8;
+  color: var(--muted-foreground);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-family: var(--font-mono);
 }
 
 .account-status-badge {
@@ -1295,24 +1341,26 @@ body {
   background: rgba(16, 185, 129, 0.15);
   border: 1px solid rgba(16, 185, 129, 0.3);
   padding: 2px 6px;
-  border-radius: 6px;
+  border-radius: calc(var(--radius) * 0.7);
   flex-shrink: 0;
+  font-family: var(--font-mono);
 }
 
 .setting-label-muted {
   font-size: 10px;
-  color: #a19da8;
+  color: var(--muted-foreground);
   font-weight: 600;
+  font-family: var(--font-mono);
 }
 
 .setting-val-mono {
-  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
-  color: #ffffff;
-  background: #211f26;
-  border: 1px solid #3b3740;
+  color: var(--foreground);
+  background: var(--input);
+  border: 1px solid var(--border);
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: calc(var(--radius) * 0.8);
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1329,13 +1377,15 @@ body {
 .setting-toggle-title {
   font-size: 11px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--foreground);
+  font-family: var(--font-mono);
 }
 
 .setting-toggle-desc {
   font-size: 10px;
-  color: #a19da8;
+  color: var(--muted-foreground);
   line-height: 1.3;
+  font-family: var(--font-mono);
 }
 
 .toggle-switch {
@@ -1356,8 +1406,8 @@ body {
   position: absolute;
   cursor: pointer;
   inset: 0;
-  background-color: #2d2a32;
-  border: 1px solid #3b3740;
+  background-color: var(--secondary);
+  border: 1px solid var(--border);
   transition: 0.2s;
   border-radius: 20px;
 }
@@ -1369,18 +1419,19 @@ body {
   width: 14px;
   left: 2px;
   bottom: 2px;
-  background-color: #ffffff;
+  background-color: var(--foreground);
   transition: 0.2s;
   border-radius: 50%;
 }
 
 .toggle-switch input:checked + .toggle-slider {
-  background-color: #f43f5e;
-  border-color: #f43f5e;
+  background-color: var(--primary);
+  border-color: var(--primary);
 }
 
 .toggle-switch input:checked + .toggle-slider:before {
   transform: translateX(16px);
+  background-color: var(--primary-foreground);
 }
 
 /* Sync Card */

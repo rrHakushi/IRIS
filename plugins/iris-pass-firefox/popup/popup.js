@@ -1154,14 +1154,29 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeAllCardMenus()
 })
 
+function parseSvgElement(svgHtml) {
+  if (!svgHtml) return null
+  try {
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(svgHtml.trim(), "image/svg+xml")
+    const svg = doc.querySelector("svg")
+    return svg ? document.importNode(svg, true) : null
+  } catch {
+    return null
+  }
+}
+
 function createCardMenuItem(label, svgHtml, onClick) {
   const btn = document.createElement("button")
   btn.type = "button"
   btn.className = "card-menu-item"
-  btn.innerHTML = `
-    ${svgHtml}
-    <span>${label}</span>
-  `
+  const svgEl = parseSvgElement(svgHtml)
+  if (svgEl) {
+    btn.appendChild(svgEl)
+  }
+  const span = document.createElement("span")
+  span.textContent = label
+  btn.appendChild(span)
   btn.addEventListener("click", (e) => {
     e.stopPropagation()
     onClick(btn)
@@ -1215,13 +1230,16 @@ function createCipherCard(cipher) {
   menuBtn.className = "card-menu-btn"
   menuBtn.title = "Options"
   menuBtn.setAttribute("aria-label", "Item options")
-  menuBtn.innerHTML = `
+  const menuSvg = parseSvgElement(`
     <svg viewBox="0 0 24 24">
       <circle cx="12" cy="12" r="1.5"></circle>
       <circle cx="12" cy="5" r="1.5"></circle>
       <circle cx="12" cy="19" r="1.5"></circle>
     </svg>
-  `
+  `)
+  if (menuSvg) {
+    menuBtn.appendChild(menuSvg)
+  }
 
   const dropdown = document.createElement("div")
   dropdown.className = "card-dropdown-menu"

@@ -5,17 +5,17 @@ All notable changes to **IRIS Pass** are documented in this file.
 ## [1.6.0] - 2026-10-08
 
 ### Added
-- **Firefox for Android Support**: Added `gecko_android` manifest configuration with min-version 121.0, scoped mobile responsive styles, and Android tab query fallbacks.
+- **Firefox for Android Support**: Added `gecko_android` manifest configuration, scoped mobile viewport styles, and Android tab query fallbacks.
 - **Header Item Creation**: Added quick-add `+` button in the main header for rapid credential entry.
 - **Card Action Menu**: Replaced horizontal action bar with a compact 3-dot dropdown menu (`⋮`) for copying username, password, TOTP, and editing items. Direct card click performs credential autofill.
 - **Vault Search Persistence**: Vault search input now remembers the last filter query across popup closures.
 - **Draft State Persistence**: Unsaved new item drafts automatically persist to storage during creation and resume seamlessly if the popup is closed.
-- **Lock Badge Indicator**: Added dynamic `🔒` badge indicator on the extension action icon when vault is locked.
 
 ### Changed
-- **Design Alignment**: Upgraded theme palette to Mauve dark base (`#16141a`) with Rose accents (`#f43f5e`), custom scrollbar suppression, and streamlined edge-to-edge list presentation.
+- **New Theme Alignment**: Adopted the core IRIS UI system theme from `@workspace/ui` (`oklch` dark palette tokens and global monospace typography).
+- **AMO Validation Compliance**: Raised `strict_min_version` to `142.0` in `manifest.json` and eliminated unsafe `innerHTML` assignments via DOMParser for clean validation (0 errors, 0 warnings).
 - **Simplified Settings & Headers**: Relocated sync button to Settings tab and purged redundant helper descriptions.
-- **Removed Lock Avatar**: Cleaned up the locked view panel to remove the redundant center lock avatar.
+- **Clean Lock Screen & Icon**: Removed the lock avatar from the locked screen and cleared the toolbar icon badge when locked.
 
 ---
 
