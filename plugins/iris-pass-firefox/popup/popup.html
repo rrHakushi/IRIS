@@ -20,9 +20,10 @@
       </div>
 
       <div class="header-actions">
-        <button id="btn-sync" class="icon-btn" title="Sync Vault" style="display: none">
+        <button id="btn-header-add" class="icon-btn" title="Add New Item" style="display: none">
           <svg viewBox="0 0 24 24">
-            <path d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4m-4 4a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"></path>
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
         </button>
         <button id="btn-lock" class="icon-btn" title="Lock Vault" style="display: none">
@@ -162,18 +163,6 @@
     <!-- State 2: Locked Screen (Logged in, but vault locked) -->
     <div id="view-locked" class="view-panel" style="display: none">
       <div class="auth-card">
-        <div class="locked-avatar-wrap" style="margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;">
-          <div class="account-avatar-wrap" style="width: 52px; height: 52px; border-radius: 50%; box-shadow: 0 0 16px rgba(244, 63, 94, 0.2);">
-            <img id="locked-avatar-img" class="account-avatar-img" alt="Avatar" style="display: none;" />
-            <div id="locked-avatar" class="account-avatar" style="font-size: 20px;">
-              <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2">
-                <rect x="5" y="11" width="14" height="10" rx="2"></rect>
-                <circle cx="12" cy="16" r="1"></circle>
-                <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
-              </svg>
-            </div>
-          </div>
-        </div>
         <h2>Vault is Locked</h2>
         <p id="locked-user-label" class="subtitle">Logged in as user</p>
 
@@ -241,10 +230,6 @@
 
       <!-- Tab 1: Matching Logins -->
       <section id="tab-matching" class="tab-content active">
-        <div class="tab-header-info">
-          <span id="current-domain-label" class="domain-label">current-site.com</span>
-          <button id="btn-quick-add" class="text-btn">+ New Item</button>
-        </div>
         <div id="matching-list" class="cipher-list">
           <!-- Populated dynamically -->
         </div>
@@ -252,10 +237,6 @@
 
       <!-- Tab 2: Vault (All Ciphers) -->
       <section id="tab-vault" class="tab-content">
-        <div class="tab-header-info">
-          <span style="font-size: 11px; font-weight: 600; color: #a19da8">All Vault Credentials</span>
-          <button id="btn-vault-add" class="text-btn">+ New Item</button>
-        </div>
         <div class="search-bar">
           <svg viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="8"></circle>
@@ -410,7 +391,6 @@
               <div class="setting-row-toggle">
                 <div>
                   <div class="setting-toggle-title">Unlock with PIN</div>
-                  <div class="setting-toggle-desc">Quick unlock using a 4+ digit PIN</div>
                 </div>
                 <label class="toggle-switch">
                   <input type="checkbox" id="toggle-pin-unlock" />
@@ -431,7 +411,6 @@
                   <option value="120">2 minutes</option>
                   <option value="300">5 minutes</option>
                 </select>
-                <span class="setting-hint">Automatically purge sensitive passwords and TOTP codes from clipboard</span>
               </div>
             </div>
           </div>
@@ -445,7 +424,6 @@
               <div class="sync-status-row">
                 <div class="sync-status-info">
                   <div id="label-last-sync" class="sync-status-time">Last synced: Just now</div>
-                  <div class="sync-status-hint">Auto-syncs hourly • 0 network lag on popup</div>
                 </div>
                 <button type="button" id="btn-settings-sync-now" class="btn-secondary mini">
                   <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px; vertical-align: -1px;">
@@ -470,7 +448,6 @@
               <div class="setting-row-toggle">
                 <div>
                   <div class="setting-toggle-title">Make Default Password Manager</div>
-                  <div class="setting-toggle-desc">Prioritizes IRIS Pass and suppresses native browser prompts</div>
                 </div>
                 <label class="toggle-switch">
                   <input type="checkbox" id="toggle-default-pm" />
@@ -485,7 +462,6 @@
                   <input type="text" id="setting-server-url" value="http://localhost:4000" placeholder="http://localhost:4000" style="flex: 1;" />
                   <button type="button" id="btn-save-server-url" class="btn-primary mini">Save</button>
                 </div>
-                <span class="setting-hint">Elysia API backend endpoint</span>
               </div>
             </div>
           </div>
