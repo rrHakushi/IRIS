@@ -111,6 +111,9 @@ public class GameMediaInfo
     [JsonPropertyName("coverImage")]
     public string? CoverImage { get; set; }
 
+    [JsonPropertyName("bannerImage")]
+    public string? BannerImage { get; set; }
+
     [JsonPropertyName("releaseDateYear")]
     public int? ReleaseDateYear { get; set; }
 
@@ -129,10 +132,25 @@ public class GameListEntryInfo
     public int GameId { get; set; }
 
     [JsonPropertyName("status")]
-    public string Status { get; set; } = string.Empty;
+    public string Status { get; set; } = "PLAYING";
 
     [JsonPropertyName("progress")]
     public int Progress { get; set; }
+
+    [JsonPropertyName("score")]
+    public double? Score { get; set; }
+
+    [JsonPropertyName("notes")]
+    public string? Notes { get; set; }
+
+    [JsonPropertyName("replayed")]
+    public int Replayed { get; set; }
+
+    [JsonPropertyName("startedAt")]
+    public string? StartedAt { get; set; }
+
+    [JsonPropertyName("completedAt")]
+    public string? CompletedAt { get; set; }
 }
 
 public class UserGameListItem
@@ -153,13 +171,34 @@ public class UserGameListItem
     public string? CoverImage => Media.CoverImage;
 
     [JsonIgnore]
+    public string? BannerImage => Media.BannerImage;
+
+    [JsonIgnore]
     public int? ReleaseDateYear => Media.ReleaseDateYear;
 
     [JsonIgnore]
     public int ProgressHours => Entry.Progress;
 
     [JsonIgnore]
-    public string ProgressDisplay => $"{Entry.Progress} hrs in IRIS";
+    public double? Score => Entry.Score;
+
+    [JsonIgnore]
+    public string Status => Entry.Status;
+
+    [JsonIgnore]
+    public string? Notes => Entry.Notes;
+
+    [JsonIgnore]
+    public int Replayed => Entry.Replayed;
+
+    [JsonIgnore]
+    public string? StartedAt => Entry.StartedAt;
+
+    [JsonIgnore]
+    public string? CompletedAt => Entry.CompletedAt;
+
+    [JsonIgnore]
+    public string ProgressDisplay => $"{Entry.Progress} hrs";
 }
 
 public class UserGameListResponse
@@ -196,4 +235,49 @@ public class IncrementResponse
 
     [JsonPropertyName("entry")]
     public GameListEntryInfo? Entry { get; set; }
+}
+
+public class GameListEntryMutationRequest
+{
+    [JsonPropertyName("status")]
+    public string? Status { get; set; }
+
+    [JsonPropertyName("progress")]
+    public int? Progress { get; set; }
+
+    [JsonPropertyName("score")]
+    public double? Score { get; set; }
+
+    [JsonPropertyName("notes")]
+    public string? Notes { get; set; }
+
+    [JsonPropertyName("replayed")]
+    public int? Replayed { get; set; }
+
+    [JsonPropertyName("startedAt")]
+    public string? StartedAt { get; set; }
+
+    [JsonPropertyName("completedAt")]
+    public string? CompletedAt { get; set; }
+}
+
+public class GameMutationResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
+
+    [JsonPropertyName("entry")]
+    public GameListEntryInfo? Entry { get; set; }
+}
+
+public class SimpleApiResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("message")]
+    public string Message { get; set; } = string.Empty;
 }

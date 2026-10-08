@@ -4,8 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="IRIS Tracker Settings"
-        Height="400" Width="480"
+        Title="Iris extra Settings"
+        Height="420" Width="480"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="{StaticResource BgCanvasBrush}">
@@ -16,15 +16,11 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
             <TextBlock Text="Settings"
                        FontSize="18"
                        FontWeight="Bold"
                        Foreground="{StaticResource TextPrimaryBrush}" />
-            <TextBlock Text="Configure server endpoints and application behavior."
-                       FontSize="12"
-                       Foreground="{StaticResource TextMutedBrush}"
-                       Margin="0,2,0,0" />
         </StackPanel>
 
         <StackPanel Grid.Row="1">
@@ -36,6 +32,13 @@
                        Margin="0,0,0,6" />
             <TextBox x:Name="TxtApiUrl" Margin="0,0,0,16" />
 
+            <!-- Checkbox: Start in System Tray (minimized) -->
+            <CheckBox x:Name="ChkStartInTray"
+                      Content="Start minimized in System Tray"
+                      Foreground="{StaticResource TextPrimaryBrush}"
+                      FontSize="13"
+                      Margin="0,0,0,12" />
+
             <!-- Checkbox: Minimize to Tray on close -->
             <CheckBox x:Name="ChkMinimizeToTray"
                       Content="Minimize to System Tray when closing the window"
@@ -43,16 +46,9 @@
                       FontSize="13"
                       Margin="0,0,0,12" />
 
-            <!-- Checkbox: Notify on hour increment -->
-            <CheckBox x:Name="ChkNotify"
-                      Content="Show Windows notification when +1 hour is recorded"
-                      Foreground="{StaticResource TextPrimaryBrush}"
-                      FontSize="13"
-                      Margin="0,0,0,12" />
-
             <!-- Checkbox: Start with Windows -->
             <CheckBox x:Name="ChkStartWithWindows"
-                      Content="Start IRIS Tracker automatically on Windows login"
+                      Content="Start Iris extra automatically on Windows login"
                       Foreground="{StaticResource TextPrimaryBrush}"
                       FontSize="13"
                       Margin="0,0,0,20" />

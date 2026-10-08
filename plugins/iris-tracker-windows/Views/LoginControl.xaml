@@ -16,32 +16,34 @@
                 HorizontalAlignment="Center"
                 Padding="32,28">
             <StackPanel>
-                <!-- Header with optional Cancel button -->
-                <Grid Margin="0,0,0,24">
-                    <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="IRIS"
-                                   FontSize="26"
+                <!-- Header with Iris extra brand and icon -->
+                <StackPanel HorizontalAlignment="Center" Margin="0,0,0,24">
+                    <Border Width="48" Height="48"
+                            CornerRadius="24"
+                            ClipToBounds="True"
+                            Background="#221C26"
+                            HorizontalAlignment="Center"
+                            Margin="0,0,0,10">
+                        <Image Source="pack://application:,,,/Assets/iris.png" Stretch="UniformToFill" />
+                    </Border>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="Iris"
+                                   FontSize="24"
                                    FontWeight="Bold"
-                                   Foreground="{StaticResource RosePrimaryBrush}"
-                                   HorizontalAlignment="Center" />
-                        <TextBlock x:Name="TxtLoginSubtitle"
-                                   Text="Windows Time Tracker"
-                                   FontSize="13"
-                                   Foreground="{StaticResource TextMutedBrush}"
-                                   HorizontalAlignment="Center"
-                                   Margin="0,2,0,0" />
+                                   Foreground="{StaticResource RosePrimaryBrush}" />
+                        <TextBlock Text="extra"
+                                   FontSize="24"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   Margin="6,0,0,0" />
                     </StackPanel>
-
-                    <Button x:Name="BtnCancelAddAccount"
-                            Content="✕ Cancel"
-                            Style="{StaticResource SubtleButton}"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Top"
-                            FontSize="11"
-                            Padding="8,4"
-                            Visibility="Collapsed"
-                            Click="BtnCancelAddAccount_Click" />
-                </Grid>
+                    <TextBlock x:Name="TxtLoginSubtitle"
+                               Text="Sign in to track your games"
+                               FontSize="13"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,3,0,0" />
+                </StackPanel>
 
                 <!-- Mode Switcher Tabs -->
                 <Border Background="#161418"

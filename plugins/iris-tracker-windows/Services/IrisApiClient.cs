@@ -212,4 +212,57 @@ public class IrisApiClient
         return JsonSerializer.Deserialize<IncrementResponse>(json, JsonOptions)
             ?? throw new Exception("Invalid response from increment endpoint");
     }
+
+    public async Task<GameMutationResponse> UpdateGameListEntryAsync(string username, int gameId, GameListEntryMutationRequest payload)
+    {
+        var url = $"{BaseUrl}/user/{Uri.EscapeDataString(username)}/lists/game/{gameId}";
+        var jsonPayload = JsonSerializer.Serialize(payload, JsonOptions);
+
+        using var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+        var response = await _http.PutAsync(url, content);
+        var json = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            try
+            {
+                var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("message", out var msg))
+                {
+                    throw new Exception(msg.GetString());
+                }
+            }
+            catch when (!json.Contains("message")) { }
+
+            throw new HttpRequestException($"Updating game failed with status {response.StatusCode}: {json}");
+        }
+
+        return JsonSerializer.Deserialize<GameMutationResponse>(json, JsonOptions)
+            ?? throw new Exception("Invalid response from update endpoint");
+    }
+
+    public async Task<SimpleApiResponse> DeleteGameFromListAsync(string username, int gameId)
+    {
+        var url = $"{BaseUrl}/user/{Uri.EscapeDataString(username)}/lists/game/{gameId}";
+        var response = await _http.DeleteAsync(url);
+        var json = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            try
+            {
+                var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("message", out var msg))
+                {
+                    throw new Exception(msg.GetString());
+                }
+            }
+            catch when (!json.Contains("message")) { }
+
+            throw new HttpRequestException($"Delete failed with status {response.StatusCode}: {json}");
+        }
+
+        return JsonSerializer.Deserialize<SimpleApiResponse>(json, JsonOptions)
+            ?? new SimpleApiResponse { Success = true };
+    }
 }

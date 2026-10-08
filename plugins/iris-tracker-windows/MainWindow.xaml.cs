@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using Hardcodet.Wpf.TaskbarNotification;
@@ -18,7 +19,7 @@ public partial class MainWindow : Window
     private readonly TaskbarIcon _notifyIcon;
     private bool _isExplicitExit;
 
-    public MainWindow()
+    public MainWindow(bool startInTray = false)
     {
         InitializeComponent();
 
@@ -32,7 +33,15 @@ public partial class MainWindow : Window
         _notifyIcon = SetupNotifyIcon();
         DarkTitleBarHelper.EnableDarkTitleBar(this);
 
-        Loaded += (s, e) => NavigateToInitialView();
+        Loaded += (s, e) =>
+        {
+            NavigateToInitialView();
+            if (startInTray)
+            {
+                Hide();
+            }
+        };
+
         Closing += OnWindowClosing;
     }
 
@@ -51,16 +60,10 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ShowLoginView(bool isAddingAccount = false)
+    private void ShowLoginView()
     {
-        var login = new LoginControl(_api, _storage, isAddingAccount);
+        var login = new LoginControl(_api, _storage);
         login.LoggedIn += (user, token) =>
-        {
-            login.Cleanup();
-            ShowTrackerView();
-        };
-
-        login.Cancelled += () =>
         {
             login.Cleanup();
             ShowTrackerView();
@@ -75,26 +78,12 @@ public partial class MainWindow : Window
         var settings = _storage.LoadSettings();
         _api.BaseUrl = settings.ApiBaseUrl;
         _api.AuthToken = StorageService.UnprotectString(settings.EncryptedToken);
-        _tracker.ReloadEntries(settings.ActiveUserId);
+        _tracker.ReloadEntries();
 
         var tracker = new TrackerControl(_tracker, _api, _storage);
         tracker.LoggedOut += () =>
         {
-            ShowLoginView(false);
-        };
-
-        tracker.RequestAddAccount += () =>
-        {
-            ShowLoginView(true);
-        };
-
-        tracker.ShowNotification += (title, message) =>
-        {
-            var currentSettings = _storage.LoadSettings();
-            if (currentSettings.NotifyOnHourIncrement)
-            {
-                _notifyIcon.ShowBalloonTip(title, message, BalloonIcon.Info);
-            }
+            ShowLoginView();
         };
 
         RootContainer.Children.Clear();
@@ -105,13 +94,13 @@ public partial class MainWindow : Window
     {
         var icon = new TaskbarIcon
         {
-            ToolTipText = "IRIS Time Tracker",
+            ToolTipText = "Iris extra",
             Icon = CreateAppIcon()
         };
 
         var menu = new ContextMenu();
 
-        var openItem = new MenuItem { Header = "Open IRIS Tracker" };
+        var openItem = new MenuItem { Header = "Open Iris extra" };
         openItem.Click += (s, e) => RestoreWindow();
         menu.Items.Add(openItem);
 
@@ -142,30 +131,26 @@ public partial class MainWindow : Window
     {
         try
         {
-            using var bmp = new Bitmap(32, 32);
-            using var g = Graphics.FromImage(bmp);
-            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-
-            // Mauve dark background circle
-            using var bgBrush = new SolidBrush(Color.FromArgb(30, 27, 32));
-            g.FillEllipse(bgBrush, 1, 1, 30, 30);
-
-            // Rose accent ring
-            using var ringPen = new Pen(Color.FromArgb(244, 63, 94), 2.5f);
-            g.DrawEllipse(ringPen, 3, 3, 26, 26);
-
-            // Clock hands
-            using var handPen = new Pen(Color.White, 2f);
-            g.DrawLine(handPen, 16, 16, 16, 9);
-            g.DrawLine(handPen, 16, 16, 22, 16);
-
-            var hIcon = bmp.GetHicon();
-            return System.Drawing.Icon.FromHandle(hIcon);
+            var uri = new Uri("pack://application:,,,/Assets/iris.ico", UriKind.Absolute);
+            var streamInfo = System.Windows.Application.GetResourceStream(uri);
+            if (streamInfo != null)
+            {
+                return new Icon(streamInfo.Stream);
+            }
         }
-        catch
+        catch { }
+
+        try
         {
-            return SystemIcons.Application;
+            string localPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "iris.ico");
+            if (File.Exists(localPath))
+            {
+                return new Icon(localPath);
+            }
         }
+        catch { }
+
+        return SystemIcons.Application;
     }
 
     private void RestoreWindow()
@@ -184,11 +169,6 @@ public partial class MainWindow : Window
         {
             e.Cancel = true;
             Hide();
-            _notifyIcon.ShowBalloonTip(
-                "IRIS Time Tracker",
-                "Tracker is running in the background. Double-click tray icon to restore.",
-                BalloonIcon.Info
-            );
         }
         else
         {

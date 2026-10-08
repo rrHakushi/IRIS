@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using IrisTracker.Models;
 using IrisTracker.Services;
 using Microsoft.Win32;
@@ -34,6 +35,14 @@ public partial class LinkGameWindow : Window
             RefreshRunningWindows();
             await LoadUserGamesAsync();
         };
+    }
+
+    private void Tab_Checked(object sender, RoutedEventArgs e)
+    {
+        if (ViewSelectGame == null || ViewProcess == null) return;
+
+        ViewSelectGame.Visibility = TabSelectGame.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        ViewProcess.Visibility = TabProcess.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void RefreshRunningWindows()
@@ -92,7 +101,6 @@ public partial class LinkGameWindow : Window
             return;
         }
 
-        // Only show and search games that are in user's list
         var matches = _allUserGames.Where(g =>
             g.DisplayTitle.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
 
@@ -103,6 +111,16 @@ public partial class LinkGameWindow : Window
     {
         _selectedGame = ListGames.SelectedItem as UserGameListItem;
         UpdateValidation();
+    }
+
+    private void ListGames_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (ListGames.SelectedItem is UserGameListItem game)
+        {
+            _selectedGame = game;
+            UpdateValidation();
+            TabProcess.IsChecked = true;
+        }
     }
 
     private void CmbRunningWindows_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -118,6 +136,16 @@ public partial class LinkGameWindow : Window
     private void BtnRefreshWindows_Click(object sender, RoutedEventArgs e)
     {
         RefreshRunningWindows();
+    }
+
+    private void TxtExecutableName_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        UpdateValidation();
+    }
+
+    private void TxtWindowTitlePattern_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        UpdateValidation();
     }
 
     private void BtnBrowseExe_Click(object sender, RoutedEventArgs e)
@@ -151,23 +179,21 @@ public partial class LinkGameWindow : Window
 
     private void UpdateValidation()
     {
-        if (BtnLink == null || TxtSummary == null || TxtExecutableName == null) return;
+        if (BtnLink == null || TxtExecutableName == null) return;
 
         var exe = TxtExecutableName.Text.Trim();
         bool valid = _selectedGame != null && !string.IsNullOrWhiteSpace(exe);
         BtnLink.IsEnabled = valid;
 
-        if (valid)
+        if (_selectedGame != null)
         {
-            var pattern = string.IsNullOrWhiteSpace(TxtWindowTitlePattern.Text)
-                ? "(Any window)"
-                : $"Title: \"{TxtWindowTitlePattern.Text.Trim()}\"";
-
-            TxtSummary.Text = $"Ready to link '{_selectedGame!.DisplayTitle}' ({_selectedGame.ProgressHours}h in IRIS) to '{exe}' [{pattern}].";
+            PillSelectedGame.Visibility = Visibility.Visible;
+            TxtSelectedGameName.Text = _selectedGame.DisplayTitle;
         }
         else
         {
-            TxtSummary.Text = "Please select an IRIS game entry and executable name above.";
+            PillSelectedGame.Visibility = Visibility.Collapsed;
+            TxtSelectedGameName.Text = string.Empty;
         }
     }
 
@@ -196,6 +222,13 @@ public partial class LinkGameWindow : Window
             GameId = _selectedGame.GameId,
             GameTitle = _selectedGame.DisplayTitle,
             CoverImage = _selectedGame.CoverImage,
+            BannerImage = _selectedGame.BannerImage,
+            Score = _selectedGame.Score,
+            Status = _selectedGame.Status,
+            Notes = _selectedGame.Notes,
+            Replayed = _selectedGame.Replayed,
+            StartedAt = _selectedGame.StartedAt,
+            CompletedAt = _selectedGame.CompletedAt,
             ExecutableNames = exes,
             ExecutableName = exes[0],
             WindowTitlePattern = string.IsNullOrWhiteSpace(TxtWindowTitlePattern.Text)

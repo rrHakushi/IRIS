@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using IrisTracker.Models;
 using IrisTracker.Services;
 
@@ -15,10 +16,9 @@ public partial class TrackerControl : System.Windows.Controls.UserControl
     private readonly IrisApiClient _api;
     private readonly StorageService _storage;
     private readonly AppSettings _settings;
+    private bool _isSectionCollapsed = false;
 
     public event Action? LoggedOut;
-    public event Action? RequestAddAccount;
-    public event Action<string, string>? ShowNotification;
 
     public TrackerControl(ProcessTrackerService tracker, IrisApiClient api, StorageService storage)
     {
@@ -29,7 +29,6 @@ public partial class TrackerControl : System.Windows.Controls.UserControl
         _settings = _storage.LoadSettings();
 
         TxtUsername.Text = _settings.Username ?? "User";
-        TxtServerUrl.Text = _api.BaseUrl;
 
         ItemsGamesList.ItemsSource = _tracker.Entries;
         _tracker.Entries.CollectionChanged += OnEntriesCollectionChanged;
@@ -46,157 +45,58 @@ public partial class TrackerControl : System.Windows.Controls.UserControl
         };
     }
 
-    private void BtnAccountMenu_Click(object sender, RoutedEventArgs e)
+    private void BtnToggleSection_Click(object sender, RoutedEventArgs e)
     {
-        var settings = _storage.LoadSettings();
-        var menu = new ContextMenu();
-
-        var header = new MenuItem
-        {
-            Header = "ACCOUNTS",
-            IsEnabled = false,
-            Foreground = (System.Windows.Media.Brush)FindResource("TextMutedBrush"),
-            FontWeight = FontWeights.Bold,
-            FontSize = 10
-        };
-        menu.Items.Add(header);
-
-        foreach (var account in settings.Accounts)
-        {
-            bool isActive = account.UserId == settings.ActiveUserId;
-            var item = new MenuItem
-            {
-                Header = isActive ? $"✓  {account.Username} (Active)" : $"    Switch to {account.Username}",
-                FontWeight = isActive ? FontWeights.Bold : FontWeights.Normal
-            };
-            if (!isActive)
-            {
-                var targetId = account.UserId;
-                item.Click += (s, args) => SwitchToAccount(targetId);
-            }
-            menu.Items.Add(item);
-        }
-
-        menu.Items.Add(new Separator());
-
-        var addItem = new MenuItem
-        {
-            Header = "+ Add Another Account..."
-        };
-        addItem.Click += (s, args) => RequestAddAccount?.Invoke();
-        menu.Items.Add(addItem);
-
-        menu.Items.Add(new Separator());
-
-        var logoutCurrentItem = new MenuItem
-        {
-            Header = $"Log Out of '{settings.Username}'"
-        };
-        logoutCurrentItem.Click += (s, args) => LogoutActiveAccount();
-        menu.Items.Add(logoutCurrentItem);
-
-        if (settings.Accounts.Count > 1)
-        {
-            var logoutAllItem = new MenuItem
-            {
-                Header = "Log Out of All Accounts"
-            };
-            logoutAllItem.Click += (s, args) => LogoutAllAccounts();
-            menu.Items.Add(logoutAllItem);
-        }
-
-        menu.PlacementTarget = BtnAccountMenu;
-        menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
-        menu.IsOpen = true;
+        _isSectionCollapsed = !_isSectionCollapsed;
+        ItemsGamesList.Visibility = _isSectionCollapsed ? Visibility.Collapsed : Visibility.Visible;
+        TxtChevronIcon.Text = _isSectionCollapsed ? "›" : "⌵";
     }
 
-    private void SwitchToAccount(string userId)
+    private void GameCard_Click(object sender, MouseButtonEventArgs e)
     {
-        _storage.SwitchAccount(_settings, userId);
-        var settings = _storage.LoadSettings();
-
-        _api.BaseUrl = settings.ApiBaseUrl;
-        _api.AuthToken = StorageService.UnprotectString(settings.EncryptedToken);
-
-        TxtUsername.Text = settings.Username ?? "User";
-        TxtServerUrl.Text = _api.BaseUrl;
-
-        _tracker.ReloadEntries(settings.ActiveUserId);
-        UpdateEmptyState();
-        _ = RefreshProgressFromIrisAsync();
-
-        TxtFooterStatus.Text = $"Switched account to '{settings.Username}'.";
-    }
-
-    private void LogoutActiveAccount()
-    {
-        var settings = _storage.LoadSettings();
-        var result = MessageBox.Show(
-            Window.GetWindow(this),
-            $"Are you sure you want to log out of '{settings.Username}'?",
-            "Confirm Logout",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question
-        );
-
-        if (result == MessageBoxResult.Yes)
+        // Don't trigger if the click originated on a button inside the card
+        if (e.OriginalSource is DependencyObject dep)
         {
-            var currentUid = settings.ActiveUserId ?? string.Empty;
-            _storage.RemoveAccount(settings, currentUid);
-
-            var updated = _storage.LoadSettings();
-            if (updated.Accounts.Count > 0 && !string.IsNullOrEmpty(updated.ActiveUserId))
-            {
-                SwitchToAccount(updated.ActiveUserId);
-            }
-            else
-            {
-                _tracker.Stop();
-                _api.AuthToken = null;
-                LoggedOut?.Invoke();
-            }
+            var btn = FindVisualParent<Button>(dep);
+            if (btn != null) return;
         }
-    }
 
-    private void LogoutAllAccounts()
-    {
-        var result = MessageBox.Show(
-            Window.GetWindow(this),
-            "Are you sure you want to log out of all accounts?",
-            "Confirm Logout All",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question
-        );
-
-        if (result == MessageBoxResult.Yes)
-        {
-            var settings = _storage.LoadSettings();
-            settings.Accounts.Clear();
-            settings.ActiveUserId = null;
-            settings.UserId = null;
-            settings.Username = null;
-            settings.UserEmail = null;
-            settings.EncryptedToken = null;
-            _storage.SaveSettings(settings);
-
-            _tracker.Stop();
-            _api.AuthToken = null;
-            LoggedOut?.Invoke();
-        }
-    }
-
-    private void BtnManageExes_Click(object sender, RoutedEventArgs e)
-    {
         if (sender is FrameworkElement el && el.Tag is LinkedProcessEntry entry)
         {
-            var win = new ManageExecutablesWindow(entry, () =>
+            OpenEditModal(entry);
+        }
+    }
+
+    private void OpenEditModal(LinkedProcessEntry entry)
+    {
+        var win = new GameEditModalWindow(
+            entry,
+            _api,
+            _settings.Username ?? string.Empty,
+            onEntryUpdated: () =>
             {
                 _tracker.SaveNow();
-            })
+                UpdateEmptyState();
+            },
+            onUnlinkRequested: (toUnlink) =>
             {
-                Owner = Window.GetWindow(this)
-            };
-            win.ShowDialog();
+                _tracker.RemoveEntry(toUnlink);
+                UpdateEmptyState();
+            }
+        )
+        {
+            Owner = Window.GetWindow(this)
+        };
+        win.ShowDialog();
+    }
+
+    private void BtnCardPauseToggle_Click(object sender, RoutedEventArgs e)
+    {
+        e.Handled = true;
+        if (sender is Button btn && btn.Tag is LinkedProcessEntry entry)
+        {
+            entry.IsPaused = !entry.IsPaused;
+            _tracker.SaveNow();
         }
     }
 
@@ -208,17 +108,21 @@ public partial class TrackerControl : System.Windows.Controls.UserControl
         try
         {
             var res = await _api.GetUserGameListAsync(settings.Username);
-            var lookup = new System.Collections.Generic.Dictionary<int, int>();
-            foreach (var item in res.Items)
-            {
-                lookup[item.GameId] = item.ProgressHours;
-            }
+            var lookup = res.Items.Where(i => i?.Entry != null).ToDictionary(i => i.GameId, i => i);
 
             foreach (var entry in _tracker.Entries)
             {
-                if (lookup.TryGetValue(entry.GameId, out var currentHours))
+                if (lookup.TryGetValue(entry.GameId, out var item))
                 {
-                    entry.IrisProgressHours = currentHours;
+                    entry.IrisProgressHours = item.ProgressHours;
+                    entry.Score = item.Score;
+                    entry.Status = item.Status;
+                    entry.Notes = item.Notes;
+                    entry.Replayed = item.Replayed;
+                    entry.StartedAt = item.StartedAt;
+                    entry.CompletedAt = item.CompletedAt;
+                    if (!string.IsNullOrEmpty(item.CoverImage)) entry.CoverImage = item.CoverImage;
+                    if (!string.IsNullOrEmpty(item.BannerImage)) entry.BannerImage = item.BannerImage;
                 }
             }
             _tracker.SaveNow();
@@ -237,7 +141,10 @@ public partial class TrackerControl : System.Windows.Controls.UserControl
 
     private void UpdateEmptyState()
     {
-        bool hasGames = _tracker.Entries.Count > 0;
+        int count = _tracker.Entries.Count;
+        TxtGamesCountBadge.Text = count.ToString();
+
+        bool hasGames = count > 0;
         CardEmptyState.Visibility = hasGames ? Visibility.Collapsed : Visibility.Visible;
         ScrollGamesList.Visibility = hasGames ? Visibility.Visible : Visibility.Collapsed;
         UpdateOfflineBanner();
@@ -261,12 +168,7 @@ public partial class TrackerControl : System.Windows.Controls.UserControl
     {
         Dispatcher.Invoke(() =>
         {
-            TxtFooterStatus.Text = $"Recorded +1 hour for '{entry.GameTitle}' (Total: {totalHours}h).";
             UpdateOfflineBanner();
-            ShowNotification?.Invoke(
-                "IRIS Playtime Updated",
-                $"Recorded +1 hour for {entry.GameTitle}! Total: {totalHours}h"
-            );
         });
     }
 
@@ -274,7 +176,6 @@ public partial class TrackerControl : System.Windows.Controls.UserControl
     {
         Dispatcher.Invoke(() =>
         {
-            TxtFooterStatus.Text = $"{message} for '{entry.GameTitle}'.";
             UpdateOfflineBanner();
         });
     }
@@ -283,7 +184,6 @@ public partial class TrackerControl : System.Windows.Controls.UserControl
     {
         Dispatcher.Invoke(() =>
         {
-            TxtFooterStatus.Text = $"Sync deferred for '{entry.GameTitle}': {ex.Message}";
             UpdateOfflineBanner();
         });
     }
@@ -291,7 +191,7 @@ public partial class TrackerControl : System.Windows.Controls.UserControl
     private void BtnLinkGame_Click(object sender, RoutedEventArgs e)
     {
         var settings = _storage.LoadSettings();
-        var win = new LinkGameWindow(_api, settings.Username ?? string.Empty, settings.ActiveUserId)
+        var win = new LinkGameWindow(_api, settings.Username ?? string.Empty, settings.UserId)
         {
             Owner = Window.GetWindow(this)
         };
@@ -305,11 +205,9 @@ public partial class TrackerControl : System.Windows.Controls.UserControl
 
     private async void BtnSyncAll_Click(object sender, RoutedEventArgs e)
     {
-        TxtFooterStatus.Text = "Syncing with IRIS...";
         await _tracker.SyncPendingIncrementsAsync();
         await RefreshProgressFromIrisAsync();
         UpdateOfflineBanner();
-        TxtFooterStatus.Text = "Sync completed.";
     }
 
     private void BtnSettings_Click(object sender, RoutedEventArgs e)
@@ -319,65 +217,40 @@ public partial class TrackerControl : System.Windows.Controls.UserControl
             Owner = Window.GetWindow(this)
         };
         win.ShowDialog();
-        TxtServerUrl.Text = _api.BaseUrl;
     }
 
     private void BtnLogout_Click(object sender, RoutedEventArgs e)
     {
-        LogoutActiveAccount();
-    }
+        var result = MessageBox.Show(
+            Window.GetWindow(this),
+            $"Are you sure you want to log out of '{_settings.Username}'?",
+            "Confirm Logout",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question
+        );
 
-    private void BtnTogglePause_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is Button btn && btn.Tag is LinkedProcessEntry entry)
+        if (result == MessageBoxResult.Yes)
         {
-            entry.IsPaused = !entry.IsPaused;
-            _storage.SaveEntries(_tracker.Entries);
-            TxtFooterStatus.Text = entry.IsPaused
-                ? $"Paused tracking for '{entry.GameTitle}'."
-                : $"Resumed tracking for '{entry.GameTitle}'.";
+            var settings = _storage.LoadSettings();
+            settings.EncryptedToken = null;
+            settings.UserId = null;
+            settings.Username = null;
+            settings.UserEmail = null;
+            _storage.SaveSettings(settings);
+
+            _tracker.Stop();
+            _api.AuthToken = null;
+            LoggedOut?.Invoke();
         }
     }
 
-    private async void BtnForceHour_Click(object sender, RoutedEventArgs e)
+    private static T? FindVisualParent<T>(DependencyObject? child) where T : DependencyObject
     {
-        if (sender is Button btn && btn.Tag is LinkedProcessEntry entry)
+        while (child != null)
         {
-            entry.IrisProgressHours++;
-            entry.PendingSyncHours++;
-            _storage.SaveEntries(_tracker.Entries);
-            UpdateOfflineBanner();
-
-            await _tracker.SyncEntryAsync(entry);
+            if (child is T parent) return parent;
+            child = System.Windows.Media.VisualTreeHelper.GetParent(child);
         }
-    }
-
-    private void BtnResetTimer_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is Button btn && btn.Tag is LinkedProcessEntry entry)
-        {
-            entry.AccumulatedSeconds = 0;
-            _storage.SaveEntries(_tracker.Entries);
-        }
-    }
-
-    private void BtnUnlink_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is Button btn && btn.Tag is LinkedProcessEntry entry)
-        {
-            var res = MessageBox.Show(
-                Window.GetWindow(this),
-                $"Unlink '{entry.GameTitle}' ({entry.ExecutableName})? Playtime will no longer be tracked for this executable.",
-                "Confirm Unlink",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question
-            );
-
-            if (res == MessageBoxResult.Yes)
-            {
-                _tracker.RemoveEntry(entry);
-                UpdateEmptyState();
-            }
-        }
+        return null;
     }
 }

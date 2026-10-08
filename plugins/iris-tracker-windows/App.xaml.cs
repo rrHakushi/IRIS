@@ -1,14 +1,13 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
+using IrisTracker.Services;
 
 namespace IrisTracker;
 
-/// <summary>
-/// Interaction logic for App.xaml
-/// </summary>
 public partial class App : System.Windows.Application
 {
     protected override void OnStartup(StartupEventArgs e)
@@ -23,6 +22,22 @@ public partial class App : System.Windows.Application
 
         // Catch unobserved background task exceptions
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+
+        var storage = new StorageService();
+        var settings = storage.LoadSettings();
+
+        bool startInTray = settings.StartInTray ||
+            e.Args.Any(a => a.Equals("--tray", StringComparison.OrdinalIgnoreCase) ||
+                            a.Equals("-tray", StringComparison.OrdinalIgnoreCase) ||
+                            a.Equals("/tray", StringComparison.OrdinalIgnoreCase));
+
+        var mainWindow = new MainWindow(startInTray);
+        MainWindow = mainWindow;
+
+        if (!startInTray)
+        {
+            mainWindow.Show();
+        }
     }
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
@@ -31,8 +46,8 @@ public partial class App : System.Windows.Application
         e.Handled = true;
 
         MessageBox.Show(
-            $"An unexpected error occurred in IRIS Tracker:\n\n{e.Exception.Message}\n\nDetails have been logged to the app data folder.",
-            "IRIS Tracker Error",
+            $"An unexpected error occurred in Iris extra:\n\n{e.Exception.Message}\n\nDetails have been logged to the app data folder.",
+            "Iris extra Error",
             MessageBoxButton.OK,
             MessageBoxImage.Warning
         );
@@ -59,7 +74,7 @@ public partial class App : System.Windows.Application
             var dir = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 "IRIS",
-                "IrisTracker"
+                "IrisExtra"
             );
             Directory.CreateDirectory(dir);
 
@@ -73,4 +88,3 @@ public partial class App : System.Windows.Application
         }
     }
 }
-

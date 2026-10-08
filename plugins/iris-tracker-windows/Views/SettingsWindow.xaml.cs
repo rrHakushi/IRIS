@@ -14,7 +14,7 @@ public partial class SettingsWindow : Window
     private readonly AppSettings _settings;
 
     private const string RunRegistryKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string AppName = "IrisTracker";
+    private const string AppName = "IrisExtra";
 
     public SettingsWindow(StorageService storage, IrisApiClient api)
     {
@@ -25,8 +25,8 @@ public partial class SettingsWindow : Window
         DarkTitleBarHelper.EnableDarkTitleBar(this);
 
         TxtApiUrl.Text = _settings.ApiBaseUrl;
+        ChkStartInTray.IsChecked = _settings.StartInTray;
         ChkMinimizeToTray.IsChecked = _settings.MinimizeToTrayOnClose;
-        ChkNotify.IsChecked = _settings.NotifyOnHourIncrement;
         ChkStartWithWindows.IsChecked = _settings.StartWithWindows;
     }
 
@@ -89,29 +89,33 @@ public partial class SettingsWindow : Window
             _api.BaseUrl = newUrl;
         }
 
+        _settings.StartInTray = ChkStartInTray.IsChecked ?? false;
         _settings.MinimizeToTrayOnClose = ChkMinimizeToTray.IsChecked ?? true;
-        _settings.NotifyOnHourIncrement = ChkNotify.IsChecked ?? true;
         _settings.StartWithWindows = ChkStartWithWindows.IsChecked ?? false;
 
-        ApplyStartupRegistry(_settings.StartWithWindows);
+        ApplyStartupRegistry(_settings.StartWithWindows, _settings.StartInTray);
 
         _storage.SaveSettings(_settings);
         Close();
     }
 
-    private void ApplyStartupRegistry(bool startWithWindows)
+    private void ApplyStartupRegistry(bool startWithWindows, bool startInTray)
     {
         try
         {
             using var key = Registry.CurrentUser.OpenSubKey(RunRegistryKey, true);
             if (key == null) return;
 
+            // Also clean up legacy key name if it exists
+            try { key.DeleteValue("IrisTracker", false); } catch { }
+
             if (startWithWindows)
             {
                 var exePath = Environment.ProcessPath;
                 if (!string.IsNullOrEmpty(exePath))
                 {
-                    key.SetValue(AppName, $"\"{exePath}\"");
+                    string cmd = startInTray ? $"\"{exePath}\" --tray" : $"\"{exePath}\"";
+                    key.SetValue(AppName, cmd);
                 }
             }
             else

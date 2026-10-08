@@ -27,9 +27,8 @@ public class ProcessTrackerService
         _storage = storage;
         _api = api;
 
-        // Load existing saved entries for active user
-        var settings = _storage.LoadSettings();
-        var loaded = _storage.LoadEntries(settings.ActiveUserId);
+        // Load existing saved entries
+        var loaded = _storage.LoadEntries();
         foreach (var entry in loaded)
         {
             entry.IsRunning = false;
@@ -51,7 +50,7 @@ public class ProcessTrackerService
         _syncRetryTimer.Tick += async (s, e) => await SyncPendingIncrementsAsync();
     }
 
-    public void ReloadEntries(string? activeUserId = null)
+    public void ReloadEntries()
     {
         bool wasRunning = _trackerTimer.IsEnabled;
         if (wasRunning)
@@ -67,7 +66,7 @@ public class ProcessTrackerService
         SaveNow();
 
         Entries.Clear();
-        var loaded = _storage.LoadEntries(activeUserId);
+        var loaded = _storage.LoadEntries();
         foreach (var entry in loaded)
         {
             entry.IsRunning = false;

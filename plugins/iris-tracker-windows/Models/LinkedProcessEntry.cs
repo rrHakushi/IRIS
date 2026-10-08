@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
@@ -12,6 +13,14 @@ public class LinkedProcessEntry : INotifyPropertyChanged
     private int _gameId;
     private string _gameTitle = string.Empty;
     private string? _coverImage;
+    private string? _bannerImage;
+    private double? _score;
+    private string _status = "PLAYING";
+    private string? _notes;
+    private int _replayed;
+    private string? _startedAt;
+    private string? _completedAt;
+    private bool _isFavorite;
     private string _executableName = string.Empty;
     private List<string> _executableNames = new();
     private string? _windowTitlePattern;
@@ -21,20 +30,6 @@ public class LinkedProcessEntry : INotifyPropertyChanged
     private bool _isRunning;
     private bool _isPaused;
     private DateTime? _lastActiveAt;
-
-    public bool IsPaused
-    {
-        get => _isPaused;
-        set
-        {
-            if (SetField(ref _isPaused, value))
-            {
-                OnPropertyChanged(nameof(StatusBadgeText));
-                OnPropertyChanged(nameof(StatusColor));
-                OnPropertyChanged(nameof(PauseResumeButtonText));
-            }
-        }
-    }
 
     public string Id
     {
@@ -64,6 +59,77 @@ public class LinkedProcessEntry : INotifyPropertyChanged
     {
         get => _coverImage;
         set => SetField(ref _coverImage, value);
+    }
+
+    public string? BannerImage
+    {
+        get => _bannerImage;
+        set => SetField(ref _bannerImage, value);
+    }
+
+    public double? Score
+    {
+        get => _score;
+        set
+        {
+            if (SetField(ref _score, value))
+            {
+                OnPropertyChanged(nameof(HasScore));
+                OnPropertyChanged(nameof(ScoreBadgeText));
+            }
+        }
+    }
+
+    public string Status
+    {
+        get => _status;
+        set => SetField(ref _status, value);
+    }
+
+    public string? Notes
+    {
+        get => _notes;
+        set => SetField(ref _notes, value);
+    }
+
+    public int Replayed
+    {
+        get => _replayed;
+        set => SetField(ref _replayed, value);
+    }
+
+    public string? StartedAt
+    {
+        get => _startedAt;
+        set => SetField(ref _startedAt, value);
+    }
+
+    public string? CompletedAt
+    {
+        get => _completedAt;
+        set => SetField(ref _completedAt, value);
+    }
+
+    public bool IsFavorite
+    {
+        get => _isFavorite;
+        set => SetField(ref _isFavorite, value);
+    }
+
+    public bool IsPaused
+    {
+        get => _isPaused;
+        set
+        {
+            if (SetField(ref _isPaused, value))
+            {
+                OnPropertyChanged(nameof(StatusBadgeText));
+                OnPropertyChanged(nameof(StatusColor));
+                OnPropertyChanged(nameof(PauseResumeButtonText));
+                OnPropertyChanged(nameof(PauseResumeIcon));
+                OnPropertyChanged(nameof(RunningStatusDotColor));
+            }
+        }
     }
 
     public string ExecutableName
@@ -119,6 +185,8 @@ public class LinkedProcessEntry : INotifyPropertyChanged
                 OnPropertyChanged(nameof(ProgressPercentage));
                 OnPropertyChanged(nameof(ProgressText));
                 OnPropertyChanged(nameof(RemainingTimeText));
+                OnPropertyChanged(nameof(CurrentTimeProgressText));
+                OnPropertyChanged(nameof(CurrentTimeHoverTooltip));
             }
         }
     }
@@ -131,6 +199,8 @@ public class LinkedProcessEntry : INotifyPropertyChanged
             if (SetField(ref _irisProgressHours, value))
             {
                 OnPropertyChanged(nameof(TotalLoggedHoursText));
+                OnPropertyChanged(nameof(HoursBadgeText));
+                OnPropertyChanged(nameof(CurrentTimeHoverTooltip));
             }
         }
     }
@@ -158,6 +228,7 @@ public class LinkedProcessEntry : INotifyPropertyChanged
             {
                 OnPropertyChanged(nameof(StatusBadgeText));
                 OnPropertyChanged(nameof(StatusColor));
+                OnPropertyChanged(nameof(RunningStatusDotColor));
             }
         }
     }
@@ -169,6 +240,23 @@ public class LinkedProcessEntry : INotifyPropertyChanged
     }
 
     // --- Computed UI Properties ---
+
+    [JsonIgnore]
+    public string HoursBadgeText => $"{IrisProgressHours} Hrs";
+
+    [JsonIgnore]
+    public bool HasScore => Score.HasValue && Score.Value > 0;
+
+    [JsonIgnore]
+    public string ScoreBadgeText
+    {
+        get
+        {
+            if (!Score.HasValue || Score.Value <= 0) return string.Empty;
+            double sc = Score.Value > 10 ? Score.Value / 10.0 : Score.Value;
+            return $"★ {sc:0.#}/10";
+        }
+    }
 
     [JsonIgnore]
     public double ProgressPercentage
@@ -208,6 +296,31 @@ public class LinkedProcessEntry : INotifyPropertyChanged
     }
 
     [JsonIgnore]
+    public string CurrentTimeProgressText
+    {
+        get
+        {
+            int mins = AccumulatedSeconds / 60;
+            int secs = AccumulatedSeconds % 60;
+            return $"{mins:D2}m {secs:D2}s";
+        }
+    }
+
+    [JsonIgnore]
+    public string CurrentTimeHoverTooltip
+    {
+        get
+        {
+            int mins = AccumulatedSeconds / 60;
+            int secs = AccumulatedSeconds % 60;
+            int remainingSecs = Math.Max(0, 3600 - AccumulatedSeconds);
+            int remMins = remainingSecs / 60;
+            int remSecs = remainingSecs % 60;
+            return $"Current Progress: {mins:D2}m {secs:D2}s / 60m ({ProgressPercentage:0.#}%)\n{remMins}m {remSecs}s until +1 hour\nTotal Logged: {IrisProgressHours} hrs";
+        }
+    }
+
+    [JsonIgnore]
     public string TotalLoggedHoursText => $"{IrisProgressHours} hrs in IRIS";
 
     [JsonIgnore]
@@ -231,7 +344,20 @@ public class LinkedProcessEntry : INotifyPropertyChanged
     }
 
     [JsonIgnore]
+    public string RunningStatusDotColor
+    {
+        get
+        {
+            if (IsPaused) return "#F59E0B"; // Amber
+            return IsRunning ? "#10B981" : "#4A4552"; // Emerald if running, dark muted if stopped
+        }
+    }
+
+    [JsonIgnore]
     public string PauseResumeButtonText => IsPaused ? "Resume" : "Pause";
+
+    [JsonIgnore]
+    public string PauseResumeIcon => IsPaused ? "▶" : "⏸";
 
     [JsonIgnore]
     public bool HasPendingSync => PendingSyncHours > 0;
@@ -270,6 +396,7 @@ public class LinkedProcessEntry : INotifyPropertyChanged
         if (!_executableNames.Contains(clean, StringComparer.OrdinalIgnoreCase))
         {
             _executableNames.Add(clean);
+            if (string.IsNullOrWhiteSpace(_executableName)) _executableName = clean;
             OnPropertyChanged(nameof(ExecutableNames));
             OnPropertyChanged(nameof(ExecutableName));
             OnPropertyChanged(nameof(ExecutablesDisplay));

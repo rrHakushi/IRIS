@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -25,12 +26,46 @@ public class StorageService
         _baseDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "IRIS",
-            "IrisTracker"
+            "IrisExtra"
         );
 
         Directory.CreateDirectory(_baseDir);
         _settingsPath = Path.Combine(_baseDir, "settings.json");
         _entriesPath = Path.Combine(_baseDir, "entries.json");
+
+        MigrateLegacyDataIfNeeded();
+    }
+
+    private void MigrateLegacyDataIfNeeded()
+    {
+        try
+        {
+            var legacyDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "IRIS",
+                "IrisTracker"
+            );
+
+            if (Directory.Exists(legacyDir))
+            {
+                var legacySettings = Path.Combine(legacyDir, "settings.json");
+                var legacyEntries = Path.Combine(legacyDir, "entries.json");
+
+                if (!File.Exists(_settingsPath) && File.Exists(legacySettings))
+                {
+                    File.Copy(legacySettings, _settingsPath, true);
+                }
+
+                if (!File.Exists(_entriesPath) && File.Exists(legacyEntries))
+                {
+                    File.Copy(legacyEntries, _entriesPath, true);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[StorageService] Migration failed: {ex.Message}");
+        }
     }
 
     public string BaseDirectory => _baseDir;
@@ -55,12 +90,34 @@ public class StorageService
             if (File.Exists(_settingsPath))
             {
                 var json = File.ReadAllText(_settingsPath);
-                var settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions);
-                if (settings != null)
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                var settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
+
+                // If loaded from older multi-account config without direct Username/Token, migrate from Accounts list
+                if (string.IsNullOrEmpty(settings.Username) && root.TryGetProperty("Accounts", out var accElem) && accElem.ValueKind == JsonValueKind.Array && accElem.GetArrayLength() > 0)
                 {
-                    settings.EnsureAccountsMigrated();
-                    return settings;
+                    string? activeUid = root.TryGetProperty("ActiveUserId", out var uidElem) ? uidElem.GetString() : null;
+                    JsonElement chosenAcc = accElem[0];
+
+                    foreach (var acc in accElem.EnumerateArray())
+                    {
+                        if (acc.TryGetProperty("UserId", out var u) && u.GetString() == activeUid)
+                        {
+                            chosenAcc = acc;
+                            break;
+                        }
+                    }
+
+                    if (chosenAcc.TryGetProperty("UserId", out var uVal)) settings.UserId = uVal.GetString();
+                    if (chosenAcc.TryGetProperty("Username", out var nameVal)) settings.Username = nameVal.GetString();
+                    if (chosenAcc.TryGetProperty("UserEmail", out var emailVal)) settings.UserEmail = emailVal.GetString();
+                    if (chosenAcc.TryGetProperty("EncryptedToken", out var tokenVal)) settings.EncryptedToken = tokenVal.GetString();
+                    if (chosenAcc.TryGetProperty("ApiBaseUrl", out var apiVal)) settings.ApiBaseUrl = apiVal.GetString() ?? settings.ApiBaseUrl;
                 }
+
+                return settings;
             }
         }
         catch (Exception ex)
@@ -68,16 +125,13 @@ public class StorageService
             Console.WriteLine($"[StorageService] Failed to load settings: {ex.Message}");
         }
 
-        var fallback = new AppSettings();
-        fallback.EnsureAccountsMigrated();
-        return fallback;
+        return new AppSettings();
     }
 
     public void SaveSettings(AppSettings settings)
     {
         try
         {
-            settings.EnsureAccountsMigrated();
             var json = JsonSerializer.Serialize(settings, JsonOptions);
             File.WriteAllText(_settingsPath, json);
         }
@@ -87,55 +141,7 @@ public class StorageService
         }
     }
 
-    public void AddOrUpdateAccount(AppSettings settings, UserAccount account)
-    {
-        var existing = settings.Accounts.Find(a =>
-            (!string.IsNullOrEmpty(a.UserId) && a.UserId == account.UserId) ||
-            a.Username.Equals(account.Username, StringComparison.OrdinalIgnoreCase));
-
-        if (existing != null)
-        {
-            existing.UserId = account.UserId;
-            existing.Username = account.Username;
-            existing.UserEmail = account.UserEmail;
-            existing.EncryptedToken = account.EncryptedToken;
-            existing.ApiBaseUrl = account.ApiBaseUrl;
-            existing.LastActiveAt = DateTime.UtcNow;
-        }
-        else
-        {
-            settings.Accounts.Add(account);
-        }
-
-        settings.ActiveUserId = account.UserId;
-        settings.EnsureAccountsMigrated();
-        SaveSettings(settings);
-    }
-
-    public void RemoveAccount(AppSettings settings, string userId)
-    {
-        settings.Accounts.RemoveAll(a => a.UserId == userId);
-        if (settings.ActiveUserId == userId)
-        {
-            settings.ActiveUserId = settings.Accounts.Count > 0 ? settings.Accounts[0].UserId : null;
-        }
-        settings.EnsureAccountsMigrated();
-        SaveSettings(settings);
-    }
-
-    public void SwitchAccount(AppSettings settings, string userId)
-    {
-        var acc = settings.Accounts.Find(a => a.UserId == userId);
-        if (acc != null)
-        {
-            acc.LastActiveAt = DateTime.UtcNow;
-            settings.ActiveUserId = userId;
-            settings.EnsureAccountsMigrated();
-            SaveSettings(settings);
-        }
-    }
-
-    public List<LinkedProcessEntry> LoadEntries(string? userId = null)
+    public List<LinkedProcessEntry> LoadEntries()
     {
         try
         {
@@ -145,11 +151,7 @@ public class StorageService
                 var entries = JsonSerializer.Deserialize<List<LinkedProcessEntry>>(json, JsonOptions);
                 if (entries != null)
                 {
-                    if (string.IsNullOrEmpty(userId))
-                    {
-                        return entries;
-                    }
-                    return entries.Where(e => string.IsNullOrEmpty(e.UserId) || e.UserId == userId).ToList();
+                    return entries;
                 }
             }
         }
@@ -161,33 +163,12 @@ public class StorageService
         return new List<LinkedProcessEntry>();
     }
 
-    public void SaveEntries(IEnumerable<LinkedProcessEntry> entries, string? activeUserId = null)
+    public void SaveEntries(IEnumerable<LinkedProcessEntry> entries)
     {
         try
         {
-            var existing = LoadEntries(null);
-            var currentList = entries.ToList();
-            var currentIds = new HashSet<string>(currentList.Select(e => e.Id));
-
-            // Merge: Keep entries belonging to other accounts
-            var merged = new List<LinkedProcessEntry>(currentList);
-            foreach (var item in existing)
-            {
-                if (!currentIds.Contains(item.Id))
-                {
-                    if (!string.IsNullOrEmpty(activeUserId) && item.UserId != activeUserId)
-                    {
-                        merged.Add(item);
-                    }
-                    else if (string.IsNullOrEmpty(activeUserId))
-                    {
-                        // No active user filter; keep all
-                        merged.Add(item);
-                    }
-                }
-            }
-
-            var json = JsonSerializer.Serialize(merged, JsonOptions);
+            var list = entries.ToList();
+            var json = JsonSerializer.Serialize(list, JsonOptions);
             File.WriteAllText(_entriesPath, json);
         }
         catch (Exception ex)
