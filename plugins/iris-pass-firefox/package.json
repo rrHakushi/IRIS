@@ -4,7 +4,7 @@
   "description": "Password manager extension for IRIS.",
   "scripts": {
     "lint": "npx web-ext lint",
-    "build": "npx web-ext build --artifacts-dir dist --overwrite-dest"
+    "build": "npx web-ext build --artifacts-dir ../../releases/iris-pass --overwrite-dest"
   },
   "keywords": [
     "iris",
