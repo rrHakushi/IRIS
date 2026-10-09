@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl"
 import { usePathname } from "next/navigation"
 import { useRouter } from "next/navigation"
 import { Popover, PopoverTrigger } from "@workspace/ui/components/popover"
+import { Sheet, SheetHeader, SheetTitle } from "@workspace/ui/components/sheet"
 import { Dialog as AriaDialog } from "react-aria-components"
 import { Button, LinkButton } from "@workspace/ui/components/button"
 import { Tooltip, TooltipTrigger } from "@workspace/ui/components/tooltip"
@@ -64,6 +65,7 @@ import { elysia } from "@/lib/elysia"
 import { hasPermission } from "@IRIS/permissions"
 import { type UserBookmark } from "@IRIS/shared"
 import { useDragScroll } from "@/hooks/use-drag-scroll"
+import { useIsMobile } from "@workspace/ui/hooks/use-mobile"
 import { cn } from "@workspace/ui/lib/utils"
 import { toast } from "sonner"
 
@@ -318,12 +320,15 @@ export function IrisUserMenu({
   const userEmail = user?.email
   const username = user?.username
 
+  const isMobile = useIsMobile()
+
   const resolvedPlacement = useMemo(() => {
     if (placement) return placement
+    if (isMobile) return "top"
     if (isTop) return "bottom end"
     if (isBottom) return "top end"
     return isRight ? "left bottom" : "right bottom"
-  }, [placement, isTop, isBottom, isRight])
+  }, [placement, isMobile, isTop, isBottom, isRight])
 
   const handleSelectLanguage = (nextLocale: Locale) => {
     if (!nextLocale || nextLocale === currentLocale) return
@@ -663,7 +668,7 @@ export function IrisUserMenu({
       <Button
         variant="ghost"
         className={cn(
-          "h-10 w-full max-w-[240px] cursor-pointer justify-start gap-2.5 rounded-2xl px-3 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0",
+          "h-10 w-full cursor-pointer justify-start gap-2.5 rounded-2xl px-3 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0",
           className
         )}
         onClick={() => {
@@ -739,7 +744,7 @@ export function IrisUserMenu({
             <DropdownMenu
               placement="bottom end"
               offset={4}
-              className="min-w-32 rounded-xl p-1 shadow-xl z-50"
+              className="min-w-32 rounded-xl p-1 shadow-xl z-[80]!"
             >
               <DropdownMenuItem
                 onAction={() => handleTogglePin(bm)}
@@ -779,598 +784,627 @@ export function IrisUserMenu({
     )
   }
 
-  return (
-    <>
-      <PopoverTrigger isOpen={menuOpen} onOpenChange={setMenuOpen}>
-        {/* Closed Menu Button Trigger - Same as User Menu */}
+  // User Card section
+  const renderUserCard = (isCompact = false) => (
+    <Link
+      href={`/IRIS-account/users/${username}`}
+      onClick={() => setMenuOpen(false)}
+      className={cn(
+        "group transition-all",
+        isCompact
+          ? "flex min-w-0 flex-1 items-center rounded-xl"
+          : "block w-full rounded-2xl"
+      )}
+      title={t("viewProfile") || "View Profile"}
+    >
+      <IrisSidebarUserCard
+        nameplateUrl={user?.nameplateUrl || user?.sidebarCardBackgroundUrl}
+        avatarUrl={user?.avatarUrl}
+        avatarFrame={user?.avatarFrame}
+        displayName={displayName}
+        displayNameStyle={user?.displayNameStyle}
+        statusText={user?.statusText}
+        username={username}
+        email={userEmail}
+        unreadCount={unreadCount}
+        showChevrons={!isCompact}
+        className={cn(
+          "w-full transition-colors",
+          isCompact
+            ? "border-0 bg-transparent px-2 py-1 shadow-none backdrop-blur-none hover:bg-muted/40"
+            : "border-border/50 bg-card/60 px-3.5 py-2.5 hover:bg-muted/40 shadow-xs"
+        )}
+      />
+    </Link>
+  )
+
+  // Quick Action Toolbar
+  const renderToolbar = (isCompact = false) => (
+    <div
+      className={cn(
+        "flex items-center",
+        isCompact
+          ? "gap-1 shrink-0"
+          : "w-full justify-around gap-1 rounded-2xl border border-border/50 bg-card/60 p-2 shadow-xs shrink-0"
+      )}
+    >
+      {/* Notifications with Badge */}
+      <TooltipTrigger delay={150}>
         <Button
           variant="ghost"
+          size="icon-xs"
           className={cn(
-            "h-12 w-full max-w-[240px] cursor-pointer overflow-hidden border-0 bg-transparent p-0 hover:bg-transparent focus-visible:ring-0",
-            className
+            "relative cursor-pointer rounded-xl border border-border/40 bg-background/50 hover:bg-background hover:text-primary transition-all shadow-2xs",
+            isCompact ? "size-8" : "size-9"
           )}
-        >
-          <IrisSidebarUserCard
-            nameplateUrl={user?.nameplateUrl || user?.sidebarCardBackgroundUrl}
-            avatarUrl={user?.avatarUrl}
-            avatarFrame={user?.avatarFrame}
-            displayName={displayName}
-            displayNameStyle={user?.displayNameStyle}
-            statusText={user?.statusText}
-            username={username}
-            email={userEmail}
-            unreadCount={unreadCount}
-            showChevrons
-            className="h-full w-full border-border/40 hover:border-border/80 hover:bg-muted/50 data-[state=open]:border-border data-[state=open]:bg-muted/80"
-          />
-        </Button>
-
-        {/* Large Flyout Popover containing Quick Actions, Applications, and Bookmarks */}
-        <Popover
-          placement={resolvedPlacement}
-          offset={8}
-          style={{
-            width: "min(540px, calc(100vw - 32px))",
-            maxWidth: "calc(100vw - 32px)",
-            height: "min(475px, calc(100vh - 32px))",
-            maxHeight: "calc(100vh - 32px)",
+          onPress={() => {
+            setMenuOpen(false)
+            setNotificationsOpen(true)
           }}
-          className="z-40! w-[540px]! max-w-[calc(100vw-32px)]! h-[475px]! max-h-[calc(100vh-32px)]! rounded-3xl border border-border/50 bg-popover/80 p-3 shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden"
+          aria-label={t("notifications")}
         >
-          <AriaDialog
-            aria-label={t("title") || "Navigation & Profile Menu"}
-            className="flex flex-col gap-2.5 h-full min-h-0 outline-none overflow-hidden"
-          >
-            {/* 1. Quick User Toolbar (Appearance, Notification, Settings, Logout etc) */}
-            <div className="flex items-center justify-between gap-2 rounded-2xl border border-border/50 bg-card/60 px-3 py-2 shadow-xs shrink-0">
-              {/* Left: Quick User Identity Card */}
-              <Link
-                href={`/IRIS-account/users/${username}`}
-                onClick={() => setMenuOpen(false)}
-                className="group flex min-w-0 flex-1 items-center rounded-xl transition-all"
-                title={t("viewProfile") || "View Profile"}
+          <IconBell className="size-4" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -end-1 flex size-4 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground shadow-xs">
+              {formatBadgeNumber(unreadCount, 2)}
+            </span>
+          )}
+        </Button>
+        <Tooltip>{t("notifications")}</Tooltip>
+      </TooltipTrigger>
+
+      {/* Friends */}
+      <TooltipTrigger delay={150}>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          className={cn(
+            "cursor-pointer rounded-xl border border-border/40 bg-background/50 hover:bg-background hover:text-primary transition-all shadow-2xs",
+            isCompact ? "size-8" : "size-9"
+          )}
+          onPress={() => {
+            setMenuOpen(false)
+            setFriendsOpen(true)
+          }}
+          aria-label={t("friends")}
+        >
+          <IconUsers className="size-4" />
+        </Button>
+        <Tooltip>{t("friends")}</Tooltip>
+      </TooltipTrigger>
+
+      {/* Appearance / Theme Switcher */}
+      <TooltipTrigger delay={150}>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          className={cn(
+            "cursor-pointer rounded-xl border border-border/40 bg-background/50 hover:bg-background hover:text-primary transition-all shadow-2xs",
+            isCompact ? "size-8" : "size-9"
+          )}
+          onPress={() => {
+            const nextTheme = resolvedTheme === "dark" ? "light" : "dark"
+            setTheme(nextTheme)
+          }}
+          aria-label={t("appearance")}
+        >
+          {resolvedTheme === "dark" ? (
+            <IconSun className="size-4 text-amber-400" />
+          ) : (
+            <IconMoon className="size-4 text-indigo-400" />
+          )}
+        </Button>
+        <Tooltip>{t("appearance")}</Tooltip>
+      </TooltipTrigger>
+
+      {/* Language Switcher Dropdown */}
+      <DropdownMenuTrigger>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          className={cn(
+            "cursor-pointer rounded-xl border border-border/40 bg-background/50 hover:bg-background hover:text-primary transition-all shadow-2xs",
+            isCompact ? "size-8" : "size-9"
+          )}
+          aria-label={t("language")}
+        >
+          <IconLanguage className="size-4" />
+        </Button>
+        <DropdownMenu
+          placement={isCompact ? "bottom end" : "top"}
+          offset={6}
+          className="min-w-40 rounded-2xl p-1.5 z-[80]!"
+        >
+          <DropdownMenuLabel className="px-2 py-1 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+            {t("selectLanguage")}
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {locales.map((loc) => {
+            const meta = localeNames[loc]
+            const isCurrent = loc === currentLocale
+            return (
+              <DropdownMenuItem
+                key={loc}
+                onAction={() => handleSelectLanguage(loc)}
+                className={cn(
+                  "flex cursor-pointer items-center justify-between rounded-xl px-2.5 py-1.5 text-xs",
+                  isCurrent && "font-semibold text-primary"
+                )}
               >
-                <IrisSidebarUserCard
-                  nameplateUrl={user?.nameplateUrl || user?.sidebarCardBackgroundUrl}
-                  avatarUrl={user?.avatarUrl}
-                  avatarFrame={user?.avatarFrame}
-                  displayName={displayName}
-                  displayNameStyle={user?.displayNameStyle}
-                  statusText={user?.statusText}
-                  username={username}
-                  email={userEmail}
-                  showChevrons={false}
-                  className="w-full border-0 bg-transparent px-2 py-1 shadow-none backdrop-blur-none hover:bg-muted/40 transition-colors"
-                />
+                <span className="flex items-center gap-2">
+                  <span>{meta.flag}</span>
+                  <span>{meta.nativeName}</span>
+                </span>
+                {isCurrent && <IconCheck className="size-3.5" />}
+              </DropdownMenuItem>
+            )
+          })}
+        </DropdownMenu>
+      </DropdownMenuTrigger>
+
+      {/* Settings */}
+      <TooltipTrigger delay={150}>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          className={cn(
+            "cursor-pointer rounded-xl border border-border/40 bg-background/50 hover:bg-background hover:text-primary transition-all shadow-2xs",
+            isCompact ? "size-8" : "size-9"
+          )}
+          onPress={() => {
+            setMenuOpen(false)
+            if (onOpenSettings) {
+              onOpenSettings()
+            } else {
+              setSettingsDefaultCategory("profile")
+              setSettingsOpen(true)
+            }
+          }}
+          aria-label={t("settings")}
+        >
+          <IconSettings className="size-4" />
+        </Button>
+        <Tooltip>{t("settings")}</Tooltip>
+      </TooltipTrigger>
+
+      {/* Logout */}
+      <TooltipTrigger delay={150}>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          className={cn(
+            "cursor-pointer rounded-xl border border-rose-500/30 bg-background/50 text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 transition-all shadow-2xs",
+            isCompact ? "size-8" : "size-9"
+          )}
+          onPress={() => {
+            setMenuOpen(false)
+            signOut()
+          }}
+          aria-label={t("logOut")}
+        >
+          <IconLogout className="size-4" />
+        </Button>
+        <Tooltip>{t("logOut")}</Tooltip>
+      </TooltipTrigger>
+    </div>
+  )
+
+  // Applications Section
+  const renderApps = (isMobileSheet = false) => (
+    <div
+      className={cn(
+        "flex flex-col gap-1.5 rounded-2xl border border-border/50 bg-card/60 px-3 pt-2.5 pb-2 shadow-xs shrink-0",
+        isMobileSheet ? "h-auto" : "h-[112px]"
+      )}
+    >
+      {/* Apps Section Header */}
+      <div className="flex items-center justify-between px-1 shrink-0">
+        <div className="flex items-center gap-1.5">
+          <IconApps className="size-3.5 text-muted-foreground" />
+          <span className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+            {isEditing ? tApp("reorganizeMenu") : tApp("applications")}
+          </span>
+        </div>
+
+        {isEditing ? (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={cancelEditing}
+              className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-0.5 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <IconX className="size-3" />
+              <span>{tApp("cancel")}</span>
+            </button>
+            <button
+              type="button"
+              onClick={finishEditing}
+              className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/10 hover:text-primary"
+            >
+              <IconCheck className="size-3.5" />
+              <span>{tApp("done")}</span>
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              startEditing()
+            }}
+            className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-0.5 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <IconPencil className="size-3" />
+            <span>{tApp("edit")}</span>
+          </button>
+        )}
+      </div>
+
+      {/* Horizontal Scrollable Apps Row */}
+      <div
+        ref={appsDragScroll.ref}
+        {...(isEditing ? {} : appsDragScroll.events)}
+        className={cn(
+          "no-scrollbar flex gap-2 overflow-x-auto px-0.5 py-0.5 select-none",
+          isEditing ? "cursor-default" : "cursor-grab active:cursor-grabbing"
+        )}
+      >
+        {sortedApps.map((app, index) => {
+          const isCurrent = activeApp?.name === app.name
+          const isDragging = draggedAppIndex === index
+          const isDragOver =
+            dragOverAppIndex === index &&
+            draggedAppIndex !== null &&
+            draggedAppIndex !== index
+
+          return (
+            <div
+              key={app.name}
+              draggable={isEditing}
+              onDragStart={(e) => handleAppDragStart(e, index)}
+              onDragOver={(e) => handleAppDragOver(e, index)}
+              onDragLeave={() => {
+                if (dragOverAppIndex === index) setDragOverAppIndex(null)
+              }}
+              onDrop={(e) => handleAppDrop(e, index)}
+              onDragEnd={handleAppDragEnd}
+              className={cn(
+                "group flex w-[105px] shrink-0 flex-col items-center gap-1 select-none transition-all duration-150",
+                isEditing &&
+                  "cursor-grab active:cursor-grabbing hover:scale-105",
+                isDragging && "opacity-30 scale-90",
+                isDragOver &&
+                  "scale-105 rounded-xl ring-2 ring-primary ring-dashed bg-primary/10"
+              )}
+            >
+              <Link
+                draggable={false}
+                href={isEditing ? "#" : app.href}
+                onClick={(e) => {
+                  if (isEditing) e.preventDefault()
+                  else setMenuOpen(false)
+                }}
+                className={cn(
+                  "relative flex size-11 items-center justify-center transition-transform duration-200 select-none",
+                  isEditing
+                    ? "cursor-grab active:cursor-grabbing pointer-events-none"
+                    : "cursor-pointer hover:scale-110"
+                )}
+              >
+                {renderIrisAppIcon(app, "size-10")}
               </Link>
 
-              {/* Right: Quick Action Icons Toolbar (Appearance, Notification, Settings, Logout etc) */}
-              <div className="flex items-center gap-1 shrink-0">
-                {/* Notifications with Badge */}
-                <TooltipTrigger delay={150}>
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    className="relative size-8 cursor-pointer rounded-xl border border-border/40 bg-background/50 hover:bg-background hover:text-primary transition-all shadow-2xs"
-                    onPress={() => {
-                      setMenuOpen(false)
-                      setNotificationsOpen(true)
-                    }}
-                    aria-label={t("notifications")}
-                  >
-                    <IconBell className="size-4" />
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-1 -end-1 flex size-4 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground shadow-xs">
-                        {formatBadgeNumber(unreadCount, 2)}
-                      </span>
-                    )}
-                  </Button>
-                  <Tooltip>{t("notifications")}</Tooltip>
-                </TooltipTrigger>
-
-                {/* Friends */}
-                <TooltipTrigger delay={150}>
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    className="size-8 cursor-pointer rounded-xl border border-border/40 bg-background/50 hover:bg-background hover:text-primary transition-all shadow-2xs"
-                    onPress={() => {
-                      setMenuOpen(false)
-                      setFriendsOpen(true)
-                    }}
-                    aria-label={t("friends")}
-                  >
-                    <IconUsers className="size-4" />
-                  </Button>
-                  <Tooltip>{t("friends")}</Tooltip>
-                </TooltipTrigger>
-
-                {/* Appearance / Theme Switcher */}
-                <TooltipTrigger delay={150}>
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    className="size-8 cursor-pointer rounded-xl border border-border/40 bg-background/50 hover:bg-background hover:text-primary transition-all shadow-2xs"
-                    onPress={() => {
-                      const nextTheme =
-                        resolvedTheme === "dark" ? "light" : "dark"
-                      setTheme(nextTheme)
-                    }}
-                    aria-label={t("appearance")}
-                  >
-                    {resolvedTheme === "dark" ? (
-                      <IconSun className="size-4 text-amber-400" />
-                    ) : (
-                      <IconMoon className="size-4 text-indigo-400" />
-                    )}
-                  </Button>
-                  <Tooltip>{t("appearance")}</Tooltip>
-                </TooltipTrigger>
-
-                {/* Language Switcher Dropdown */}
-                <DropdownMenuTrigger>
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    className="size-8 cursor-pointer rounded-xl border border-border/40 bg-background/50 hover:bg-background hover:text-primary transition-all shadow-2xs"
-                    aria-label={t("language")}
-                  >
-                    <IconLanguage className="size-4" />
-                  </Button>
-                  <DropdownMenu
-                    placement="bottom end"
-                    offset={6}
-                    className="min-w-40 rounded-2xl p-1.5"
-                  >
-                    <DropdownMenuLabel className="px-2 py-1 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
-                      {t("selectLanguage")}
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {locales.map((loc) => {
-                      const meta = localeNames[loc]
-                      const isCurrent = loc === currentLocale
-                      return (
-                        <DropdownMenuItem
-                          key={loc}
-                          onAction={() => handleSelectLanguage(loc)}
-                          className={cn(
-                            "flex cursor-pointer items-center justify-between rounded-xl px-2.5 py-1.5 text-xs",
-                            isCurrent && "font-semibold text-primary"
-                          )}
-                        >
-                          <span className="flex items-center gap-2">
-                            <span>{meta.flag}</span>
-                            <span>{meta.nativeName}</span>
-                          </span>
-                          {isCurrent && <IconCheck className="size-3.5" />}
-                        </DropdownMenuItem>
-                      )
-                    })}
-                  </DropdownMenu>
-                </DropdownMenuTrigger>
-
-                {/* Settings */}
-                <TooltipTrigger delay={150}>
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    className="size-8 cursor-pointer rounded-xl border border-border/40 bg-background/50 hover:bg-background hover:text-primary transition-all shadow-2xs"
-                    onPress={() => {
-                      setMenuOpen(false)
-                      if (onOpenSettings) {
-                        onOpenSettings()
-                      } else {
-                        setSettingsDefaultCategory("profile")
-                        setSettingsOpen(true)
-                      }
-                    }}
-                    aria-label={t("settings")}
-                  >
-                    <IconSettings className="size-4" />
-                  </Button>
-                  <Tooltip>{t("settings")}</Tooltip>
-                </TooltipTrigger>
-
-                {/* Logout */}
-                <TooltipTrigger delay={150}>
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    className="size-8 cursor-pointer rounded-xl border border-rose-500/30 bg-background/50 text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 transition-all shadow-2xs"
-                    onPress={() => {
-                      setMenuOpen(false)
-                      signOut()
-                    }}
-                    aria-label={t("logOut")}
-                  >
-                    <IconLogout className="size-4" />
-                  </Button>
-                  <Tooltip>{t("logOut")}</Tooltip>
-                </TooltipTrigger>
-              </div>
-            </div>
-
-            {/* 2. Applications Section */}
-            <div className="flex flex-col gap-1.5 rounded-2xl border border-border/50 bg-card/60 px-3 pt-2.5 pb-2 shadow-xs shrink-0 h-[112px]">
-              {/* Apps Section Header */}
-              <div className="flex items-center justify-between px-1 shrink-0">
-                <div className="flex items-center gap-1.5">
-                  <IconApps className="size-3.5 text-muted-foreground" />
-                  <span className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
-                    {isEditing ? tApp("reorganizeMenu") : tApp("applications")}
-                  </span>
-                </div>
-
-                {isEditing ? (
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={cancelEditing}
-                      className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-0.5 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                    >
-                      <IconX className="size-3" />
-                      <span>{tApp("cancel")}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={finishEditing}
-                      className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/10 hover:text-primary"
-                    >
-                      <IconCheck className="size-3.5" />
-                      <span>{tApp("done")}</span>
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      startEditing()
-                    }}
-                    className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-0.5 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  >
-                    <IconPencil className="size-3" />
-                    <span>{tApp("edit")}</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Horizontal Scrollable Apps Row (drag-to-scroll when browsing, drag-and-drop when editing) */}
-              <div
-                ref={appsDragScroll.ref}
-                {...(isEditing ? {} : appsDragScroll.events)}
+              {/* App Name Under Icon */}
+              <span
+                suppressHydrationWarning
                 className={cn(
-                  "no-scrollbar flex gap-2 overflow-x-auto px-0.5 py-0.5 select-none",
-                  isEditing ? "cursor-default" : "cursor-grab active:cursor-grabbing"
+                  "inline-block max-w-full truncate text-center text-xs leading-normal py-0.5 transition-colors",
+                  isCurrent
+                    ? app.gradient
+                      ? "bg-clip-text font-bold text-transparent"
+                      : "font-bold text-primary"
+                    : "font-medium text-muted-foreground group-hover:text-foreground"
+                )}
+                style={
+                  isCurrent && app.gradient
+                    ? { backgroundImage: app.gradient }
+                    : undefined
+                }
+                title={app.name}
+              >
+                {app.name}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+
+  // Bookmarks Section
+  const renderBookmarks = (isMobileSheet = false) => (
+    <div
+      className={cn(
+        "flex flex-col gap-2 rounded-2xl border border-border/50 bg-card/60 p-3 shadow-xs",
+        isMobileSheet ? "min-h-0" : "flex-1 min-h-0 overflow-hidden"
+      )}
+    >
+      {/* Bookmarks Section Header */}
+      <div className="flex items-center justify-between gap-3 px-1 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
+          <IconBookmark className="size-3.5 text-muted-foreground" />
+          <span className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+            {tApp("bookmarks")}
+          </span>
+        </div>
+
+        {/* Search Input in Bookmarks Header */}
+        {isAuthenticated && (bookmarks.length > 0 || searchQuery) && (
+          <div className="relative flex max-w-[220px] flex-1 items-center">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={tApp("searchBookmarks")}
+              className="h-7 w-full rounded-lg border border-border/50 bg-background/60 px-2.5 pe-6 text-[11px] font-normal text-foreground transition-all placeholder:text-muted-foreground/60 focus:border-border focus:bg-background focus:ring-1 focus:ring-ring focus:outline-hidden"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute end-1.5 flex size-4 cursor-pointer items-center justify-center text-muted-foreground hover:text-foreground"
+                title={tApp("cancel")}
+              >
+                <IconX className="size-3" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {isAuthenticated && (
+          <button
+            type="button"
+            onClick={handleOpenAddDialog}
+            className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border/50 bg-background/50 text-muted-foreground transition-all hover:bg-background hover:text-foreground hover:scale-105"
+            aria-label={tApp("addBookmark")}
+            title={tApp("addBookmark")}
+          >
+            <IconPlus className="size-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Filter Chips Bar (All Apps + Groups) */}
+      {isAuthenticated && (bookmarks.length > 0 || searchQuery) && (
+        <div className="flex items-center gap-2 overflow-hidden px-1 pb-0.5 text-xs shrink-0">
+          {/* Apps Filter Chips */}
+          <div
+            ref={appFilterDragScroll.ref}
+            {...appFilterDragScroll.events}
+            className="no-scrollbar flex max-w-[48%] shrink-0 items-center gap-1.5 overflow-x-auto py-0.5 cursor-grab active:cursor-grabbing select-none"
+          >
+            <button
+              type="button"
+              onClick={() => setFilterAppId("all")}
+              className={cn(
+                "flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-medium whitespace-nowrap transition-colors",
+                filterAppId === "all"
+                  ? "border border-border/80 bg-background font-semibold text-foreground shadow-2xs"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              )}
+            >
+              <span>{tApp("allApps")}</span>
+            </button>
+
+            {visibleApps.map((app) => (
+              <button
+                key={app.id}
+                type="button"
+                onClick={() =>
+                  setFilterAppId(filterAppId === app.id ? "all" : app.id)
+                }
+                className={cn(
+                  "flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-medium whitespace-nowrap transition-colors",
+                  filterAppId === app.id
+                    ? "border border-primary bg-primary/15 font-semibold text-primary"
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 )}
               >
-                {sortedApps.map((app, index) => {
-                  const isCurrent = activeApp?.name === app.name
-                  const isDragging = draggedAppIndex === index
-                  const isDragOver =
-                    dragOverAppIndex === index &&
-                    draggedAppIndex !== null &&
-                    draggedAppIndex !== index
+                <div className="size-3 shrink-0">
+                  {renderIrisAppIcon(app, "size-3")}
+                </div>
+                <span>{app.name}</span>
+              </button>
+            ))}
+          </div>
 
-                  return (
-                    <div
-                      key={app.name}
-                      draggable={isEditing}
-                      onDragStart={(e) => handleAppDragStart(e, index)}
-                      onDragOver={(e) => handleAppDragOver(e, index)}
-                      onDragLeave={() => {
-                        if (dragOverAppIndex === index) setDragOverAppIndex(null)
-                      }}
-                      onDrop={(e) => handleAppDrop(e, index)}
-                      onDragEnd={handleAppDragEnd}
-                      className={cn(
-                        "group flex w-[105px] shrink-0 flex-col items-center gap-1 select-none transition-all duration-150",
-                        isEditing &&
-                          "cursor-grab active:cursor-grabbing hover:scale-105",
-                        isDragging && "opacity-30 scale-90",
-                        isDragOver &&
-                          "scale-105 rounded-xl ring-2 ring-primary ring-dashed bg-primary/10"
-                      )}
-                    >
-                      <Link
-                        draggable={false}
-                        href={isEditing ? "#" : app.href}
-                        onClick={(e) => {
-                          if (isEditing) e.preventDefault()
-                          else setMenuOpen(false)
-                        }}
-                        className={cn(
-                          "relative flex size-11 items-center justify-center transition-transform duration-200 select-none",
-                          isEditing
-                            ? "cursor-grab active:cursor-grabbing pointer-events-none"
-                            : "cursor-pointer hover:scale-110"
-                        )}
-                      >
-                        {renderIrisAppIcon(app, "size-10")}
-                      </Link>
+          {/* Vertical Divider */}
+          <div className="h-4 w-px shrink-0 bg-border/60" />
 
-                      {/* App Name Under Icon */}
-                      <span
-                        suppressHydrationWarning
-                        className={cn(
-                          "inline-block max-w-full truncate text-center text-xs leading-normal py-0.5 transition-colors",
-                          isCurrent
-                            ? app.gradient
-                              ? "bg-clip-text font-bold text-transparent"
-                              : "font-bold text-primary"
-                            : "font-medium text-muted-foreground group-hover:text-foreground"
-                        )}
-                        style={
-                          isCurrent && app.gradient
-                            ? { backgroundImage: app.gradient }
-                            : undefined
-                        }
-                        title={app.name}
-                      >
-                        {app.name}
+          {/* Groups Filter Chips */}
+          <div
+            ref={groupFilterDragScroll.ref}
+            {...groupFilterDragScroll.events}
+            className="no-scrollbar flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto py-0.5 cursor-grab active:cursor-grabbing select-none"
+          >
+            <button
+              type="button"
+              onClick={() => setFilterGroup("all")}
+              className={cn(
+                "flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-medium whitespace-nowrap transition-colors",
+                filterGroup === "all"
+                  ? "border border-border/80 bg-background font-semibold text-foreground shadow-2xs"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              )}
+            >
+              <span>{tApp("allGroups")}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setFilterGroup(
+                  filterGroup === "ungrouped" ? "all" : "ungrouped"
+                )
+              }
+              className={cn(
+                "flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-medium whitespace-nowrap transition-colors",
+                filterGroup === "ungrouped"
+                  ? "border border-primary bg-primary/15 font-semibold text-primary"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              )}
+            >
+              <span>{tApp("ungrouped")}</span>
+            </button>
+
+            {existingGroups.map((grp) => (
+              <button
+                key={grp}
+                type="button"
+                onClick={() =>
+                  setFilterGroup(
+                    filterGroup.toLowerCase() === grp.toLowerCase()
+                      ? "all"
+                      : grp
+                  )
+                }
+                className={cn(
+                  "flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-medium whitespace-nowrap transition-colors",
+                  filterGroup.toLowerCase() === grp.toLowerCase()
+                    ? "border border-primary bg-primary/15 font-semibold text-primary"
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                )}
+              >
+                <IconFolder className="size-3" />
+                <span>{grp}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Bookmarks Display: Unauthenticated or Empty States */}
+      {!isAuthenticated ? (
+        <LinkButton
+          href="/auth/login"
+          variant="ghost"
+          className="h-auto w-full cursor-pointer justify-center gap-2 rounded-2xl border border-dashed border-border/70 py-3 text-xs font-medium text-muted-foreground hover:text-foreground"
+        >
+          <IconLogin className="size-4 shrink-0" />
+          <span>{tApp("loginToUseBookmarks")}</span>
+        </LinkButton>
+      ) : sortedBookmarks.length === 0 ? (
+        <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 py-6 text-center bg-background/40">
+          <IconBookmark className="mb-1.5 size-7 text-muted-foreground/40" />
+          <p className="text-xs font-medium text-muted-foreground/70">
+            {tApp("noSavedBookmarks")}
+          </p>
+          <button
+            type="button"
+            onClick={handleOpenAddDialog}
+            className="mt-2.5 flex cursor-pointer items-center gap-1.5 rounded-xl border border-border/60 bg-muted/40 px-3.5 py-1.5 text-xs font-medium text-foreground transition-all hover:bg-muted"
+          >
+            <IconPlus className="size-3.5" />
+            <span>{tApp("addBookmark")}</span>
+          </button>
+        </div>
+      ) : filteredBookmarks.length === 0 ? (
+        <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 py-5 text-center bg-background/40">
+          <IconBookmark className="mb-1.5 size-6 text-muted-foreground/40" />
+          <p className="text-xs font-medium text-muted-foreground/70">
+            {tApp("noMatchingBookmarks")}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery("")
+              setFilterAppId("all")
+              setFilterGroup("all")
+            }}
+            className="mt-2 flex cursor-pointer items-center gap-1.5 rounded-xl border border-border/60 bg-muted/40 px-3 py-1 text-xs font-medium text-foreground transition-all hover:bg-muted"
+          >
+            <IconX className="size-3.5" />
+            <span>{tApp("clearFilters")}</span>
+          </button>
+        </div>
+      ) : (
+        /* Bookmarks Scrollable Card Box */
+        <div
+          className={cn(
+            "rounded-xl border border-border/40 bg-muted/20 p-2 shadow-2xs",
+            isMobileSheet ? "min-h-0" : "flex-1 min-h-0 flex flex-col"
+          )}
+        >
+          <div
+            className={cn(
+              "no-scrollbar space-y-2.5 pr-0.5",
+              isMobileSheet ? "" : "overflow-y-auto flex-1 min-h-0"
+            )}
+          >
+            {pinnedFilteredBookmarks.length > 0 ? (
+              <>
+                {/* Pinned Bookmarks Section */}
+                <div>
+                  <div className="mb-1 flex items-center gap-1 px-1">
+                    <IconPinFilled className="size-3 text-primary" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      {tApp("pinned") || "Pinned"}
+                    </span>
+                  </div>
+                  <div
+                    className={cn(
+                      "grid gap-2 content-start auto-rows-max",
+                      isMobileSheet ? "grid-cols-2" : "grid-cols-3"
+                    )}
+                  >
+                    {pinnedFilteredBookmarks.map((bm) =>
+                      renderBookmarkCard(bm)
+                    )}
+                  </div>
+                </div>
+
+                {/* Other Bookmarks Section */}
+                {otherFilteredBookmarks.length > 0 && (
+                  <div>
+                    <div className="mb-1 flex items-center gap-1 px-1">
+                      <IconBookmark className="size-3 text-muted-foreground" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        {tApp("allBookmarks") || "Bookmarks"}
                       </span>
                     </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* 3. Bookmarks Section */}
-            <div className="flex flex-col gap-2 rounded-2xl border border-border/50 bg-card/60 p-3 shadow-xs flex-1 min-h-0">
-              {/* Bookmarks Section Header */}
-              <div className="flex items-center justify-between gap-3 px-1 shrink-0">
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <IconBookmark className="size-3.5 text-muted-foreground" />
-                  <span className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
-                    {tApp("bookmarks")}
-                  </span>
-                </div>
-
-                {/* Search Input in Bookmarks Header */}
-                {isAuthenticated && (bookmarks.length > 0 || searchQuery) && (
-                  <div className="relative flex max-w-[220px] flex-1 items-center">
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={tApp("searchBookmarks")}
-                      className="h-7 w-full rounded-lg border border-border/50 bg-background/60 px-2.5 pe-6 text-[11px] font-normal text-foreground transition-all placeholder:text-muted-foreground/60 focus:border-border focus:bg-background focus:ring-1 focus:ring-ring focus:outline-hidden"
-                    />
-                    {searchQuery && (
-                      <button
-                        type="button"
-                        onClick={() => setSearchQuery("")}
-                        className="absolute end-1.5 flex size-4 cursor-pointer items-center justify-center text-muted-foreground hover:text-foreground"
-                        title={tApp("cancel")}
-                      >
-                        <IconX className="size-3" />
-                      </button>
-                    )}
+                    <div
+                      className={cn(
+                        "grid gap-2 content-start auto-rows-max",
+                        isMobileSheet ? "grid-cols-2" : "grid-cols-3"
+                      )}
+                    >
+                      {otherFilteredBookmarks.map((bm) =>
+                        renderBookmarkCard(bm)
+                      )}
+                    </div>
                   </div>
                 )}
-
-                {isAuthenticated && (
-                  <button
-                    type="button"
-                    onClick={handleOpenAddDialog}
-                    className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border/50 bg-background/50 text-muted-foreground transition-all hover:bg-background hover:text-foreground hover:scale-105"
-                    aria-label={tApp("addBookmark")}
-                    title={tApp("addBookmark")}
-                  >
-                    <IconPlus className="size-4" />
-                  </button>
+              </>
+            ) : (
+              /* All Bookmarks Grid */
+              <div
+                className={cn(
+                  "grid gap-2 content-start auto-rows-max",
+                  isMobileSheet ? "grid-cols-2" : "grid-cols-3"
                 )}
+              >
+                {filteredBookmarks.map((bm) => renderBookmarkCard(bm))}
               </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
 
-              {/* Filter Chips Bar (All Apps + Groups) */}
-              {isAuthenticated && (bookmarks.length > 0 || searchQuery) && (
-                <div className="flex items-center gap-2 overflow-hidden px-1 pb-0.5 text-xs shrink-0">
-                  {/* Apps Filter Chips (supports mouse drag and wheel slide) */}
-                  <div
-                    ref={appFilterDragScroll.ref}
-                    {...appFilterDragScroll.events}
-                    className="no-scrollbar flex max-w-[48%] shrink-0 items-center gap-1.5 overflow-x-auto py-0.5 cursor-grab active:cursor-grabbing select-none"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setFilterAppId("all")}
-                      className={cn(
-                        "flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-medium whitespace-nowrap transition-colors",
-                        filterAppId === "all"
-                          ? "border border-border/80 bg-background font-semibold text-foreground shadow-2xs"
-                          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                      )}
-                    >
-                      <span>{tApp("allApps")}</span>
-                    </button>
-
-                    {visibleApps.map((app) => (
-                      <button
-                        key={app.id}
-                        type="button"
-                        onClick={() =>
-                          setFilterAppId(filterAppId === app.id ? "all" : app.id)
-                        }
-                        className={cn(
-                          "flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-medium whitespace-nowrap transition-colors",
-                          filterAppId === app.id
-                            ? "border border-primary bg-primary/15 font-semibold text-primary"
-                            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                        )}
-                      >
-                        <div className="size-3 shrink-0">
-                          {renderIrisAppIcon(app, "size-3")}
-                        </div>
-                        <span>{app.name}</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Vertical Divider */}
-                  <div className="h-4 w-px shrink-0 bg-border/60" />
-
-                  {/* Groups Filter Chips (supports mouse drag and wheel slide) */}
-                  <div
-                    ref={groupFilterDragScroll.ref}
-                    {...groupFilterDragScroll.events}
-                    className="no-scrollbar flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto py-0.5 cursor-grab active:cursor-grabbing select-none"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setFilterGroup("all")}
-                      className={cn(
-                        "flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-medium whitespace-nowrap transition-colors",
-                        filterGroup === "all"
-                          ? "border border-border/80 bg-background font-semibold text-foreground shadow-2xs"
-                          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                      )}
-                    >
-                      <span>{tApp("allGroups")}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setFilterGroup(
-                          filterGroup === "ungrouped" ? "all" : "ungrouped"
-                        )
-                      }
-                      className={cn(
-                        "flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-medium whitespace-nowrap transition-colors",
-                        filterGroup === "ungrouped"
-                          ? "border border-primary bg-primary/15 font-semibold text-primary"
-                          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                      )}
-                    >
-                      <span>{tApp("ungrouped")}</span>
-                    </button>
-
-                    {existingGroups.map((grp) => (
-                      <button
-                        key={grp}
-                        type="button"
-                        onClick={() =>
-                          setFilterGroup(
-                            filterGroup.toLowerCase() === grp.toLowerCase()
-                              ? "all"
-                              : grp
-                          )
-                        }
-                        className={cn(
-                          "flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-medium whitespace-nowrap transition-colors",
-                          filterGroup.toLowerCase() === grp.toLowerCase()
-                            ? "border border-primary bg-primary/15 font-semibold text-primary"
-                            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                        )}
-                      >
-                        <IconFolder className="size-3" />
-                        <span>{grp}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Bookmarks Display: Unauthenticated or Empty States */}
-              {!isAuthenticated ? (
-                <LinkButton
-                  href="/auth/login"
-                  variant="ghost"
-                  className="h-auto w-full cursor-pointer justify-center gap-2 rounded-2xl border border-dashed border-border/70 py-3 text-xs font-medium text-muted-foreground hover:text-foreground"
-                >
-                  <IconLogin className="size-4 shrink-0" />
-                  <span>{tApp("loginToUseBookmarks")}</span>
-                </LinkButton>
-              ) : sortedBookmarks.length === 0 ? (
-                <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 py-6 text-center bg-background/40">
-                  <IconBookmark className="mb-1.5 size-7 text-muted-foreground/40" />
-                  <p className="text-xs font-medium text-muted-foreground/70">
-                    {tApp("noSavedBookmarks")}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleOpenAddDialog}
-                    className="mt-2.5 flex cursor-pointer items-center gap-1.5 rounded-xl border border-border/60 bg-muted/40 px-3.5 py-1.5 text-xs font-medium text-foreground transition-all hover:bg-muted"
-                  >
-                    <IconPlus className="size-3.5" />
-                    <span>{tApp("addBookmark")}</span>
-                  </button>
-                </div>
-              ) : filteredBookmarks.length === 0 ? (
-                <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 py-5 text-center bg-background/40">
-                  <IconBookmark className="mb-1.5 size-6 text-muted-foreground/40" />
-                  <p className="text-xs font-medium text-muted-foreground/70">
-                    {tApp("noMatchingBookmarks")}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery("")
-                      setFilterAppId("all")
-                      setFilterGroup("all")
-                    }}
-                    className="mt-2 flex cursor-pointer items-center gap-1.5 rounded-xl border border-border/60 bg-muted/40 px-3 py-1 text-xs font-medium text-foreground transition-all hover:bg-muted"
-                  >
-                    <IconX className="size-3.5" />
-                    <span>{tApp("clearFilters")}</span>
-                  </button>
-                </div>
-              ) : (
-                /* Bookmarks Scrollable Card Box */
-                <div className="rounded-xl border border-border/40 bg-muted/20 p-2 flex-1 min-h-0 flex flex-col shadow-2xs">
-                  <div className="no-scrollbar overflow-y-auto flex-1 min-h-0 space-y-2.5 pr-0.5">
-                    {pinnedFilteredBookmarks.length > 0 ? (
-                      <>
-                        {/* Pinned Bookmarks Section */}
-                        <div>
-                          <div className="mb-1 flex items-center gap-1 px-1">
-                            <IconPinFilled className="size-3 text-primary" />
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                              {tApp("pinned") || "Pinned"}
-                            </span>
-                          </div>
-                          <div className="grid grid-cols-3 gap-2 content-start auto-rows-max">
-                            {pinnedFilteredBookmarks.map((bm) =>
-                              renderBookmarkCard(bm)
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Other Bookmarks Section */}
-                        {otherFilteredBookmarks.length > 0 && (
-                          <div>
-                            <div className="mb-1 flex items-center gap-1 px-1">
-                              <IconBookmark className="size-3 text-muted-foreground" />
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                {tApp("allBookmarks") || "Bookmarks"}
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-3 gap-2 content-start auto-rows-max">
-                              {otherFilteredBookmarks.map((bm) =>
-                                renderBookmarkCard(bm)
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      /* All Bookmarks Grid (3 per row, 2 rows at once) */
-                      <div className="grid grid-cols-3 gap-2 content-start auto-rows-max">
-                        {filteredBookmarks.map((bm) =>
-                          renderBookmarkCard(bm)
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </AriaDialog>
-        </Popover>
-      </PopoverTrigger>
-
-      {/* Modals triggered from User Menu */}
+  const renderModals = () => (
+    <>
       <IrisNotificationsModal
         open={notificationsOpen}
         onOpenChange={setNotificationsOpen}
@@ -1398,6 +1432,134 @@ export function IrisUserMenu({
             : undefined
         }
       />
+    </>
+  )
+
+  if (isMobile) {
+    return (
+      <>
+        {/* Closed Menu Button Trigger on Mobile */}
+        <Button
+          variant="ghost"
+          onPress={() => setMenuOpen(true)}
+          className={cn(
+            "h-12 w-full cursor-pointer overflow-hidden border-0 bg-transparent p-0 hover:bg-transparent focus-visible:ring-0",
+            className
+          )}
+        >
+          <IrisSidebarUserCard
+            nameplateUrl={user?.nameplateUrl || user?.sidebarCardBackgroundUrl}
+            avatarUrl={user?.avatarUrl}
+            avatarFrame={user?.avatarFrame}
+            displayName={displayName}
+            displayNameStyle={user?.displayNameStyle}
+            statusText={user?.statusText}
+            username={username}
+            email={userEmail}
+            unreadCount={unreadCount}
+            showChevrons
+            className="h-full w-full border-border/40 hover:border-border/80 hover:bg-muted/50 data-[state=open]:border-border data-[state=open]:bg-muted/80"
+          />
+        </Button>
+
+        {/* Mobile Sheet: 1. Apps on top, 2. Bookmarks under it, 3. Toolbar, 4. User card */}
+        <Sheet
+          isOpen={menuOpen}
+          onOpenChange={setMenuOpen}
+          side="bottom"
+          showCloseButton={false}
+          className="z-[70] flex max-h-[65vh] flex-col overflow-hidden rounded-t-[2rem] border-t border-border/80 bg-background/95 p-0 shadow-2xl backdrop-blur-2xl md:hidden"
+        >
+          {/* Top Grab Handle */}
+          <div className="flex shrink-0 justify-center pt-3 pb-2">
+            <div className="h-1.5 w-10 rounded-full bg-muted-foreground/30" />
+          </div>
+
+          <SheetHeader className="sr-only">
+            <SheetTitle>{t("title") || "Navigation & Profile Menu"}</SheetTitle>
+          </SheetHeader>
+
+          {/* Scrollable Content */}
+          <div className="no-scrollbar flex-1 space-y-3 overflow-y-auto px-4 py-2 min-h-0">
+            {/* 1. Apps on top */}
+            {renderApps(true)}
+
+            {/* 2. Bookmarks under it */}
+            {renderBookmarks(true)}
+
+            {/* 3. Toolbar */}
+            {renderToolbar(false)}
+
+            {/* 4. User card */}
+            {renderUserCard(false)}
+          </div>
+        </Sheet>
+
+        {/* Modals triggered from User Menu */}
+        {renderModals()}
+      </>
+    )
+  }
+
+  return (
+    <>
+      <PopoverTrigger isOpen={menuOpen} onOpenChange={setMenuOpen}>
+        {/* Closed Menu Button Trigger on Desktop */}
+        <Button
+          variant="ghost"
+          className={cn(
+            "h-12 w-full cursor-pointer overflow-hidden border-0 bg-transparent p-0 hover:bg-transparent focus-visible:ring-0",
+            className
+          )}
+        >
+          <IrisSidebarUserCard
+            nameplateUrl={user?.nameplateUrl || user?.sidebarCardBackgroundUrl}
+            avatarUrl={user?.avatarUrl}
+            avatarFrame={user?.avatarFrame}
+            displayName={displayName}
+            displayNameStyle={user?.displayNameStyle}
+            statusText={user?.statusText}
+            username={username}
+            email={userEmail}
+            unreadCount={unreadCount}
+            showChevrons
+            className="h-full w-full border-border/40 hover:border-border/80 hover:bg-muted/50 data-[state=open]:border-border data-[state=open]:bg-muted/80"
+          />
+        </Button>
+
+        {/* Large Flyout Popover containing Quick Actions, Applications, and Bookmarks on Desktop */}
+        <Popover
+          placement={resolvedPlacement}
+          offset={8}
+          style={{
+            width: "min(540px, calc(100vw - 32px))",
+            maxWidth: "calc(100vw - 32px)",
+            height: "min(475px, calc(100vh - 32px))",
+            maxHeight: "calc(100vh - 32px)",
+          }}
+          className="z-[70]! w-[540px]! max-w-[calc(100vw-32px)]! h-[475px]! max-h-[calc(100vh-32px)]! rounded-3xl border border-border/50 bg-popover/80 p-3 shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden hidden md:flex"
+        >
+          <AriaDialog
+            aria-label={t("title") || "Navigation & Profile Menu"}
+            className="flex flex-col gap-2.5 h-full min-h-0 outline-none overflow-hidden"
+          >
+            {/* Desktop Top Bar: User Card on Left + Toolbar on Right */}
+            <div className="flex items-center justify-between gap-2 rounded-2xl border border-border/50 bg-card/60 px-3 py-2 shadow-xs shrink-0">
+              {renderUserCard(true)}
+              {renderToolbar(true)}
+            </div>
+
+            {/* Applications Section */}
+            {renderApps(false)}
+
+            {/* Bookmarks Section */}
+            {renderBookmarks(false)}
+          </AriaDialog>
+        </Popover>
+      </PopoverTrigger>
+
+      {/* Modals triggered from User Menu */}
+      {renderModals()}
     </>
   )
 }

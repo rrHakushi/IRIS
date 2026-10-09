@@ -37,8 +37,6 @@ import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
 import {
   IconChevronDown,
-  IconDotsVertical,
-  IconEyeOff,
   IconAdjustmentsHorizontal,
 } from "@tabler/icons-react"
 import { useUser } from "@/context/user-context"
@@ -48,7 +46,6 @@ import {
   getAppSidebarCustomization,
   type AppSidebarCustomization,
 } from "@IRIS/shared"
-import { toast } from "sonner"
 import type {
   SidebarConfig,
   SidebarItem,
@@ -286,48 +283,6 @@ export function IrisSidebar({
     )
   }, [resolvedConfig, appCustomization, allAppConfigs])
 
-  // In-place quick action: Hide item from sidebar
-  const handleHideItem = useCallback(
-    async (itemKey: string) => {
-      const current = appCustomization || {
-        sectionOrder: [],
-        hiddenSections: [],
-        itemOrder: {},
-        hiddenItems: [],
-        itemOverrides: {},
-        childrenOrder: {},
-        hiddenChildren: [],
-        customGroups: [],
-        customLinks: [],
-      }
-      const hidden = current.hiddenItems || []
-      if (!hidden.includes(itemKey)) {
-        const updated = [...hidden, itemKey]
-        const newCust: AppSidebarCustomization = {
-          ...current,
-          hiddenItems: updated,
-        }
-        setAppCustomization(newCust)
-        try {
-          const stored = localStorage.getItem("iris-sidebar-customization")
-          const parsed = stored ? JSON.parse(stored) : {}
-          parsed[currentAppId] = newCust
-          localStorage.setItem(
-            "iris-sidebar-customization",
-            JSON.stringify(parsed)
-          )
-          window.dispatchEvent(
-            new CustomEvent("iris-sidebar-customization-changed", {
-              detail: parsed,
-            })
-          )
-        } catch {}
-        await updateSidebar({ apps: { [currentAppId]: newCust } })
-        toast.info(tSettings("hideItem"))
-      }
-    },
-    [appCustomization, currentAppId, updateSidebar, tSettings]
-  )
 
   // Ensure parent items of active children are opened on route change
   useEffect(() => {
@@ -468,10 +423,10 @@ export function IrisSidebar({
                               className="min-w-44 rounded-2xl p-1.5 shadow-xl"
                             >
                               {item.children!.map((child, cIdx) => {
-                                const isSubActive = isRouteActive(
-                                  pathname,
-                                  child.href
-                                )
+                                const isSubActive =
+                                  child.isActive !== undefined
+                                    ? child.isActive
+                                    : isRouteActive(pathname, child.href)
                                 return (
                                   <DropdownMenuItem
                                     key={cIdx}
@@ -645,10 +600,10 @@ export function IrisSidebar({
                       className="min-w-44 rounded-2xl p-1.5 shadow-xl"
                     >
                       {item.children!.map((child, cIdx) => {
-                        const isSubActive = isRouteActive(
-                          pathname,
-                          child.href
-                        )
+                        const isSubActive =
+                          child.isActive !== undefined
+                            ? child.isActive
+                            : isRouteActive(pathname, child.href)
                         return (
                           <DropdownMenuItem
                             key={cIdx}
@@ -944,7 +899,9 @@ export function IrisSidebar({
                       const isChildActive =
                         hasChildren &&
                         item.children!.some((child: SidebarItemChild) =>
-                          isRouteActive(pathname, child.href)
+                          child.isActive !== undefined
+                            ? child.isActive
+                            : isRouteActive(pathname, child.href)
                         )
                       const isDirectActive =
                         item.isActive !== undefined
@@ -1042,10 +999,10 @@ export function IrisSidebar({
                                       child: SidebarItemChild,
                                       childIdx: number
                                     ) => {
-                                      const isSubActive = isRouteActive(
-                                        pathname,
-                                        child.href
-                                      )
+                                      const isSubActive =
+                                        child.isActive !== undefined
+                                          ? child.isActive
+                                          : isRouteActive(pathname, child.href)
 
                                       if (child.component) {
                                         return (
@@ -1093,73 +1050,41 @@ export function IrisSidebar({
                               )}
                             </div>
                           ) : (
-                            <div className="relative flex w-full items-center">
-                              <SidebarMenuButton
-                                href={item.href || "#"}
-                                isActive={isDirectActive}
-                                tooltip={
-                                  state === "collapsed" ? item.label : undefined
-                                }
-                                className={cn(
-                                  "w-full justify-between gap-2 pe-7",
-                                  isDirectActive &&
-                                    "bg-primary/10 font-semibold text-primary hover:bg-primary/15 hover:text-primary"
+                            <SidebarMenuButton
+                              href={item.href || "#"}
+                              isActive={isDirectActive}
+                              tooltip={
+                                state === "collapsed" ? item.label : undefined
+                              }
+                              className={cn(
+                                "w-full justify-between gap-2",
+                                isDirectActive &&
+                                  "bg-primary/10 font-semibold text-primary hover:bg-primary/15 hover:text-primary"
+                              )}
+                              onClick={item.onClick}
+                              {...(item.dataKey?.startsWith("link:") &&
+                              item.href?.startsWith("http")
+                                ? {
+                                    target: "_blank",
+                                    rel: "noopener noreferrer",
+                                  }
+                                : {})}
+                            >
+                              <span className="flex min-w-0 flex-1 items-center gap-2.5">
+                                {item.icon && (
+                                  <span className="shrink-0">{item.icon}</span>
                                 )}
-                                onClick={item.onClick}
-                                {...(item.dataKey?.startsWith("link:") &&
-                                item.href?.startsWith("http")
-                                  ? {
-                                      target: "_blank",
-                                      rel: "noopener noreferrer",
-                                    }
-                                  : {})}
-                              >
-                                <span className="flex min-w-0 flex-1 items-center gap-2.5">
-                                  {item.icon && (
-                                    <span className="shrink-0">{item.icon}</span>
-                                  )}
-                                  <span className="truncate">{item.label}</span>
-                                </span>
-                                {item.badge && (
-                                  <Badge
-                                    variant="secondary"
-                                    className="ml-auto h-4 shrink-0 px-1.5 text-[10px]"
-                                  >
-                                    {formatBadge(item.badge)}
-                                  </Badge>
-                                )}
-                              </SidebarMenuButton>
-
-                              <DropdownMenuTrigger>
-                                <SidebarMenuAction
-                                  showOnHover
-                                  aria-label="Item options"
-                                  className="size-5 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
+                                <span className="truncate">{item.label}</span>
+                              </span>
+                              {item.badge && (
+                                <Badge
+                                  variant="secondary"
+                                  className="ml-auto h-4 shrink-0 px-1.5 text-[10px]"
                                 >
-                                  <IconDotsVertical className="size-3" />
-                                </SidebarMenuAction>
-                                <DropdownMenu
-                                  placement={isRight ? "start top" : "end top"}
-                                  className="min-w-44 p-1"
-                                >
-                                  <DropdownMenuItem
-                                    onAction={() => handleHideItem(itemKey)}
-                                    className="gap-2 text-xs cursor-pointer text-muted-foreground hover:text-foreground"
-                                  >
-                                    <IconEyeOff className="size-3.5 text-amber-500" />
-                                    <span>{tSettings("hideFromSidebar")}</span>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    onAction={() => openSettingsModal("sidebar")}
-                                    className="gap-2 text-xs cursor-pointer"
-                                  >
-                                    <IconAdjustmentsHorizontal className="size-3.5 text-primary" />
-                                    <span>{tSettings("customizeSidebar")}</span>
-                                  </DropdownMenuItem>
-                                </DropdownMenu>
-                              </DropdownMenuTrigger>
-                            </div>
+                                  {formatBadge(item.badge)}
+                                </Badge>
+                              )}
+                            </SidebarMenuButton>
                           )}
                         </SidebarMenuItem>
                       )
@@ -1182,7 +1107,10 @@ export function IrisSidebar({
               </div>
             ))}
 
-          <IrisUserMenu onOpenSettings={onOpenSettings} />
+          <IrisUserMenu
+            onOpenSettings={onOpenSettings}
+            placement={isMobile ? "top" : undefined}
+          />
         </SidebarFooter>
       </Sidebar>
 
