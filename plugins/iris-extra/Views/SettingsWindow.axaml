@@ -1,0 +1,54 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="IrisTracker.Views.SettingsWindow"
+        Title="Settings"
+        Width="500" Height="480"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="{StaticResource BgDarkBrush}">
+
+  <Grid RowDefinitions="Auto,*,Auto" Margin="20">
+
+    <StackPanel Grid.Row="0" Spacing="4" Margin="0,0,0,16">
+      <TextBlock Text="Settings" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+      <TextBlock Text="Configure tracking preferences and API connection." FontSize="12" Foreground="{StaticResource TextMutedBrush}" />
+    </StackPanel>
+
+    <Border Grid.Row="1" Classes="card" Padding="16">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="16">
+
+          <!-- API URL -->
+          <StackPanel Spacing="4">
+            <TextBlock Text="IRIS API URL" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+            <TextBox x:Name="TxtApiUrl" Text="http://localhost:4000" Watermark="http://localhost:4000" />
+          </StackPanel>
+
+          <!-- Toggles -->
+          <StackPanel Spacing="10">
+            <CheckBox x:Name="ChkStartOnStartup" Content="Launch on system startup" Foreground="{StaticResource TextPrimaryBrush}" />
+            <CheckBox x:Name="ChkNotify" Content="Send desktop notification on +1 hour logged" Foreground="{StaticResource TextPrimaryBrush}" IsChecked="True" />
+          </StackPanel>
+
+          <!-- Data Actions -->
+          <StackPanel Spacing="10" Margin="0,8,0,0">
+            <TextBlock Text="LOCAL STORAGE" FontSize="11" FontWeight="Bold" LetterSpacing="1" Foreground="{StaticResource TextMutedBrush}" />
+            
+            <Button Content="📂 Open Data Folder" Classes="btn-secondary" HorizontalAlignment="Stretch" Click="BtnOpenDataFolder_Click" />
+            
+            <Button Content="⚠️ Reset All Local Data" Classes="btn-danger" HorizontalAlignment="Stretch" Click="BtnResetData_Click" />
+          </StackPanel>
+
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+
+    <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,16,0,0">
+      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+        <Button Content="Cancel" Classes="btn-ghost" Click="BtnCancel_Click" />
+        <Button Content="Save" Classes="btn-primary" Click="BtnSave_Click" />
+      </StackPanel>
+    </Grid>
+
+  </Grid>
+</Window>

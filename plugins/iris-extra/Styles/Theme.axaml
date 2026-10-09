@@ -1,0 +1,121 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Styles.Resources>
+    <!-- Mauve Neutral & Rose Palette -->
+    <Color x:Key="BgDarkColor">#0E0C0F</Color>
+    <Color x:Key="CardBgColor">#161318</Color>
+    <Color x:Key="SurfaceBgColor">#1E1B22</Color>
+    <Color x:Key="BorderDarkColor">#2D2833</Color>
+    <Color x:Key="BorderSubtleColor">#25212B</Color>
+    <Color x:Key="TextPrimaryColor">#EDEDEF</Color>
+    <Color x:Key="TextMutedColor">#9E97A6</Color>
+    <Color x:Key="RosePrimaryColor">#F43F5E</Color>
+    <Color x:Key="RoseHoverColor">#E11D48</Color>
+    <Color x:Key="RoseSubtleColor">#2A151C</Color>
+    <Color x:Key="RoseBorderColor">#4C1D28</Color>
+    <Color x:Key="StatusTrackingColor">#10B981</Color>
+    <Color x:Key="StatusPausedColor">#F59E0B</Color>
+    <Color x:Key="StatusStoppedColor">#71717A</Color>
+
+    <SolidColorBrush x:Key="BgDarkBrush" Color="{StaticResource BgDarkColor}" />
+    <SolidColorBrush x:Key="CardBgBrush" Color="{StaticResource CardBgColor}" />
+    <SolidColorBrush x:Key="SurfaceBgBrush" Color="{StaticResource SurfaceBgColor}" />
+    <SolidColorBrush x:Key="BorderDarkBrush" Color="{StaticResource BorderDarkColor}" />
+    <SolidColorBrush x:Key="BorderSubtleBrush" Color="{StaticResource BorderSubtleColor}" />
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
+    <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}" />
+    <SolidColorBrush x:Key="RosePrimaryBrush" Color="{StaticResource RosePrimaryColor}" />
+    <SolidColorBrush x:Key="RoseHoverBrush" Color="{StaticResource RoseHoverColor}" />
+    <SolidColorBrush x:Key="RoseSubtleBrush" Color="{StaticResource RoseSubtleColor}" />
+    <SolidColorBrush x:Key="RoseBorderBrush" Color="{StaticResource RoseBorderColor}" />
+    <SolidColorBrush x:Key="StatusTrackingBrush" Color="{StaticResource StatusTrackingColor}" />
+    <SolidColorBrush x:Key="StatusPausedBrush" Color="{StaticResource StatusPausedColor}" />
+    <SolidColorBrush x:Key="StatusStoppedBrush" Color="{StaticResource StatusStoppedColor}" />
+  </Styles.Resources>
+
+  <!-- Button Styles -->
+  <Style Selector="Button.btn-primary">
+    <Setter Property="Background" Value="{StaticResource RosePrimaryBrush}" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="14,8" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button.btn-primary:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource RoseHoverBrush}" />
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+
+  <Style Selector="Button.btn-secondary">
+    <Setter Property="Background" Value="{StaticResource SurfaceBgBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource BorderDarkBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="12,7" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button.btn-secondary:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource BorderDarkBrush}" />
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+
+  <Style Selector="Button.btn-ghost">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="8,6" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button.btn-ghost:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource SurfaceBgBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+  </Style>
+
+  <Style Selector="Button.btn-danger">
+    <Setter Property="Background" Value="#2A1418" />
+    <Setter Property="Foreground" Value="#FB7185" />
+    <Setter Property="BorderBrush" Value="#4C1D24" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="12,7" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button.btn-danger:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#E11D48" />
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+
+  <!-- TextBox Styles -->
+  <Style Selector="TextBox">
+    <Setter Property="Background" Value="{StaticResource SurfaceBgBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource BorderDarkBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="10,8" />
+  </Style>
+  <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+    <Setter Property="BorderBrush" Value="{StaticResource RosePrimaryBrush}" />
+  </Style>
+
+  <!-- Card Styles -->
+  <Style Selector="Border.card">
+    <Setter Property="Background" Value="{StaticResource CardBgBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource BorderDarkBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="10" />
+  </Style>
+
+  <!-- ProgressBar Styles -->
+  <Style Selector="ProgressBar">
+    <Setter Property="Background" Value="#201D25" />
+    <Setter Property="Foreground" Value="{StaticResource RosePrimaryBrush}" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Height" Value="6" />
+  </Style>
+
+</Styles>

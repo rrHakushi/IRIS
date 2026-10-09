@@ -1,0 +1,94 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="IrisTracker.Views.LoginView">
+
+  <Border Background="{StaticResource BgDarkBrush}" Padding="24">
+    <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="440">
+      <Border Classes="card" Padding="28">
+        <StackPanel Spacing="16">
+
+          <!-- Header -->
+          <StackPanel Spacing="6" HorizontalAlignment="Center">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+              <Border Background="{StaticResource RosePrimaryBrush}" Width="10" Height="10" CornerRadius="5" VerticalAlignment="Center" />
+              <TextBlock Text="IRIS Time Tracker" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+            </StackPanel>
+            <TextBlock x:Name="TxtLoginSubtitle" Text="Sign in to sync your playtime" FontSize="13" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" />
+          </StackPanel>
+
+          <!-- Error Banner -->
+          <Border x:Name="BorderError" Background="#2A1418" BorderBrush="#4C1D24" BorderThickness="1" CornerRadius="6" Padding="12,8" IsVisible="False">
+            <TextBlock x:Name="TxtError" Text="Error message" Foreground="#FB7185" FontSize="12" TextWrapping="Wrap" />
+          </Border>
+
+          <!-- Tabs -->
+          <Grid ColumnDefinitions="*,*">
+            <Button x:Name="BtnTabQuickConnect" Grid.Column="0" Content="Quick Connect" Classes="btn-primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,0,4,0" Click="BtnTabQuickConnect_Click" />
+            <Button x:Name="BtnTabPassword" Grid.Column="1" Content="Password &amp; MFA" Classes="btn-ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="4,0,0,0" Click="BtnTabPassword_Click" />
+          </Grid>
+
+          <!-- Quick Connect Panel -->
+          <StackPanel x:Name="PanelQuickConnect" Spacing="14" IsVisible="True">
+            <Border Background="{StaticResource SurfaceBgBrush}" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1" CornerRadius="8" Padding="16" HorizontalAlignment="Center">
+              <Image x:Name="ImgQrCode" Width="180" Height="180" />
+            </Border>
+
+            <StackPanel Spacing="4" HorizontalAlignment="Center">
+              <TextBlock Text="Pairing Code" FontSize="11" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" />
+              <TextBlock x:Name="TxtPairingCode" Text="••••••••" FontSize="24" FontWeight="Bold" LetterSpacing="4" Foreground="{StaticResource RosePrimaryBrush}" HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <TextBlock x:Name="TxtQuickStatus" Text="Generating session..." FontSize="12" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" />
+
+            <Button x:Name="BtnRefreshCode" Content="Regenerate Code" Classes="btn-secondary" HorizontalAlignment="Center" Click="BtnRefreshCode_Click" />
+          </StackPanel>
+
+          <!-- Password Panel -->
+          <StackPanel x:Name="PanelPassword" Spacing="12" IsVisible="False">
+            <StackPanel Spacing="4">
+              <TextBlock Text="API Endpoint URL" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+              <TextBox x:Name="TxtApiUrl" Text="http://localhost:4000" Watermark="http://localhost:4000" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+              <TextBlock Text="Username or Email" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+              <TextBox x:Name="TxtIdentifier" Watermark="you@example.com" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+              <TextBlock Text="Password" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+              <TextBox x:Name="TxtPassword" PasswordChar="•" Watermark="••••••••" />
+            </StackPanel>
+
+            <Button x:Name="BtnSignIn" Content="Sign In" Classes="btn-primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="BtnSignIn_Click" Margin="0,6,0,0" />
+          </StackPanel>
+
+          <!-- MFA Panel -->
+          <StackPanel x:Name="PanelMfa" Spacing="12" IsVisible="False">
+            <TextBlock Text="Two-Factor Verification Required" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+
+            <StackPanel Spacing="4">
+              <TextBlock Text="Verification Method" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+              <ComboBox x:Name="CmbMfaType" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="CmbMfaType_SelectionChanged">
+                <ComboBoxItem Tag="totp">Authenticator App (TOTP)</ComboBoxItem>
+                <ComboBoxItem Tag="email">Email Verification Code</ComboBoxItem>
+                <ComboBoxItem Tag="backup_code">Backup Code</ComboBoxItem>
+              </ComboBox>
+            </StackPanel>
+
+            <Button x:Name="BtnSendMfaEmail" Content="Send Code to Email" Classes="btn-secondary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="BtnSendMfaEmail_Click" IsVisible="False" />
+
+            <StackPanel Spacing="4">
+              <TextBlock Text="Verification Code" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+              <TextBox x:Name="TxtMfaCode" Watermark="123456" />
+            </StackPanel>
+
+            <Button x:Name="BtnVerifyMfa" Content="Verify &amp; Sign In" Classes="btn-primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="BtnVerifyMfa_Click" />
+            <Button x:Name="BtnBackFromMfa" Content="Back to Login" Classes="btn-ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="BtnBackFromMfa_Click" />
+          </StackPanel>
+
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Border>
+</UserControl>
