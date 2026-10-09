@@ -44,6 +44,7 @@ export interface IrisSidebarUserCardProps extends React.HTMLAttributes<HTMLDivEl
   showChevrons?: boolean
   className?: string
   avatarClassName?: string
+  avatarOnly?: boolean
 }
 
 export const IrisSidebarUserCard = React.forwardRef<
@@ -66,6 +67,7 @@ export const IrisSidebarUserCard = React.forwardRef<
       showChevrons = true,
       className,
       avatarClassName,
+      avatarOnly = false,
       ...props
     },
     ref
@@ -75,6 +77,52 @@ export const IrisSidebarUserCard = React.forwardRef<
     const activeNameplate = nameplateUrl || sidebarCardBackgroundUrl
     const effectClasses = getDisplayNameEffectClasses(displayNameStyle?.effect)
     const customStyle = getDisplayNameStyleCss(displayNameStyle || undefined)
+
+    if (avatarOnly) {
+      return (
+        <div
+          ref={ref}
+          {...props}
+          className={cn(
+            "relative isolate flex size-9 shrink-0 items-center justify-center rounded-full select-none",
+            className
+          )}
+        >
+          <Avatar
+            className={cn(
+              "size-9 border border-border/60 shadow-xs",
+              avatarClassName
+            )}
+          >
+            {avatarUrl ? (
+              <AvatarImage src={avatarUrl} alt={nameToShow} />
+            ) : null}
+            <AvatarFallback className="bg-primary/10 text-xs font-bold text-primary uppercase">
+              {initial}
+            </AvatarFallback>
+          </Avatar>
+          {isValidFrameUrl(avatarFrame) && (
+            <div className="pointer-events-none absolute -inset-1.5 z-10 size-12 max-w-none select-none">
+              <Image
+                src={avatarFrame}
+                alt="Avatar Frame"
+                fill
+                sizes="48px"
+                unoptimized
+                loading="eager"
+                priority
+                className="object-contain"
+              />
+            </div>
+          )}
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 z-20 flex h-4 min-w-4 items-center justify-center rounded-full border border-background bg-primary px-1 text-[8px] font-bold text-primary-foreground">
+              {formatBadgeNumber(unreadCount, 2)}
+            </span>
+          )}
+        </div>
+      )
+    }
 
     return (
       <div

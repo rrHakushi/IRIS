@@ -1,0 +1,128 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="using:IrisTracker.Models"
+             xmlns:controls="using:IrisTracker.Controls"
+             x:Class="IrisTracker.Views.TrackerView">
+
+  <Grid RowDefinitions="Auto,Auto,*" Background="{StaticResource BgDarkBrush}">
+
+    <!-- Top App Header -->
+    <Border Grid.Row="0" Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="0,0,0,1" Padding="16,12">
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        
+        <!-- Branding -->
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+          <Border Background="{StaticResource RosePrimaryBrush}" Width="10" Height="10" CornerRadius="5" VerticalAlignment="Center" />
+          <TextBlock Text="IRIS Time Tracker" FontWeight="Bold" FontSize="15" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+        </StackPanel>
+
+        <!-- User Info & Actions -->
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <Border Background="{StaticResource SurfaceBgBrush}" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1" CornerRadius="6" Padding="10,4" VerticalAlignment="Center">
+            <TextBlock x:Name="TxtLoggedInUser" Text="@user" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+          </Border>
+          
+          <Button x:Name="BtnSyncAll" Content="Sync" Classes="btn-secondary" ToolTip.Tip="Sync pending hours and refresh game list" Click="BtnSyncAll_Click" />
+          <Button x:Name="BtnSettings" Content="Settings" Classes="btn-secondary" Click="BtnSettings_Click" />
+          <Button x:Name="BtnLogout" Content="Log Out" Classes="btn-ghost" Click="BtnLogout_Click" />
+        </StackPanel>
+
+      </Grid>
+    </Border>
+
+    <!-- Offline Sync Banner -->
+    <Border x:Name="BannerOffline" Grid.Row="1" Background="#261E14" BorderBrush="#5C4217" BorderThickness="0,0,0,1" Padding="16,8" IsVisible="False">
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <TextBlock Text="⏳" VerticalAlignment="Center" />
+        <TextBlock x:Name="TxtOfflineStatus" Text="Offline progress queued." FontSize="12" Foreground="#F59E0B" VerticalAlignment="Center" />
+      </StackPanel>
+    </Border>
+
+    <!-- Main Body Area -->
+    <Grid Grid.Row="2" RowDefinitions="Auto,*" Margin="20,16,20,20">
+
+      <!-- Section Title & Link Game Action -->
+      <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,14">
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+          <TextBlock Text="TRACKED GAMES" FontWeight="Bold" FontSize="13" LetterSpacing="1" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+          <Border Background="{StaticResource SurfaceBgBrush}" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1" CornerRadius="10" Padding="8,2" VerticalAlignment="Center">
+            <TextBlock x:Name="TxtGamesCountBadge" Text="0" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+          </Border>
+        </StackPanel>
+
+        <Button x:Name="BtnLinkGame" Grid.Column="2" Content="+ Link Game" Classes="btn-primary" Click="BtnLinkGame_Click" />
+      </Grid>
+
+      <!-- Empty State -->
+      <Border x:Name="CardEmptyState" Grid.Row="1" Classes="card" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="40" MaxWidth="500" IsVisible="False">
+        <StackPanel Spacing="16" HorizontalAlignment="Center">
+          <TextBlock Text="🎮" FontSize="36" HorizontalAlignment="Center" />
+          <TextBlock Text="No Games Linked" FontSize="17" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+          <TextBlock Text="Link an IRIS game from your library to automatically track playtime while playing on this machine." FontSize="13" Foreground="{StaticResource TextMutedBrush}" TextAlignment="Center" TextWrapping="Wrap" />
+          <Button Content="+ Link Your First Game" Classes="btn-primary" HorizontalAlignment="Center" Click="BtnLinkGame_Click" Margin="0,8,0,0" />
+        </StackPanel>
+      </Border>
+
+      <!-- Games List -->
+      <ScrollViewer x:Name="ScrollGamesList" Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <ItemsControl x:Name="ItemsGamesList">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="models:LinkedProcessEntry">
+              <Border Classes="card" Margin="0,0,0,12" Padding="14" Cursor="Hand" PointerPressed="GameCard_PointerPressed">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+
+                  <!-- Cover Art -->
+                  <Border Grid.Column="0" Width="64" Height="90" CornerRadius="6" ClipToBounds="True" Background="{StaticResource SurfaceBgBrush}" Margin="0,0,16,0">
+                    <controls:AsyncImage Url="{Binding CoverImage}" Stretch="UniformToFill" />
+                  </Border>
+
+                  <!-- Game Details & Progress -->
+                  <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto" VerticalAlignment="Center">
+                    
+                    <!-- Title & Hours Logged -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
+                      <TextBlock Text="{Binding GameTitle}" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" MaxWidth="400" TextTrimming="CharacterEllipsis" />
+                      <Border Background="{StaticResource SurfaceBgBrush}" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1" CornerRadius="4" Padding="6,1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding TotalLoggedHoursText}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
+                      </Border>
+                    </StackPanel>
+
+                    <!-- Tracked Executables Display -->
+                    <TextBlock Grid.Row="1" Text="{Binding ExecutablesDisplay}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" MaxWidth="450" TextTrimming="CharacterEllipsis" Margin="0,0,0,8" />
+
+                    <!-- Progress Bar -->
+                    <ProgressBar Grid.Row="2" Minimum="0" Maximum="3600" Value="{Binding AccumulatedSeconds}" Margin="0,0,0,4" />
+
+                    <!-- Progress Text & Remaining -->
+                    <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
+                      <TextBlock Grid.Column="0" Text="{Binding ProgressText}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+                      <TextBlock Grid.Column="1" Text="{Binding RemainingTimeText}" FontSize="11" Foreground="{StaticResource RosePrimaryBrush}" FontWeight="SemiBold" />
+                    </Grid>
+
+                  </Grid>
+
+                  <!-- Right Actions: Status & Pause/Resume -->
+                  <StackPanel Grid.Column="2" Spacing="10" VerticalAlignment="Center" Margin="16,0,0,0">
+                    <!-- Status Badge -->
+                    <Border CornerRadius="4" Padding="8,4" HorizontalAlignment="Right" Background="{StaticResource SurfaceBgBrush}">
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Border Width="6" Height="6" CornerRadius="3" Background="{Binding StatusColor}" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding StatusBadgeText}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                      </StackPanel>
+                    </Border>
+
+                    <!-- Pause / Resume Button -->
+                    <Button Content="{Binding PauseResumeButtonText}" Classes="btn-secondary" FontSize="11" Padding="10,4" HorizontalAlignment="Right" Click="BtnCardPauseToggle_Click" Tag="{Binding}" />
+                  </StackPanel>
+
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+
+    </Grid>
+
+  </Grid>
+</UserControl>

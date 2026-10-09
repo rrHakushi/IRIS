@@ -2,6 +2,36 @@
 
 All notable changes to **IRIS Pass** are documented in this file.
 
+## [1.6.1] - 2026-10-09
+
+### Added
+- **TOTP & Passkey Item Badges**: Item cards now display prominent visual indicator badges and icon glyphs when credentials contain a TOTP authenticator key or WebAuthn Passkey.
+- **Smart Dropup Positioning**: Options dropdown menu automatically opens upward when an item is near the bottom of the viewport, eliminating clipping without scrolling.
+
+### Fixed
+- **3-Dot Card Menu Icon Rendering**: Fixed SVG namespace parsing in `parseSvgElement` so the 3-dot options button and menu action icons render correctly as `SVGSVGElement` nodes.
+- **Menu Clipping & Stacking**: Set `.cipher-list` to `overflow: visible` and elevated z-index on active cards so dropdown menus never get cut off by list containers or sibling cards.
+- **Action Button Icon Preservation**: Retained menu button SVG icons during clipboard copy feedback states.
+
+---
+
+## [1.6.0] - 2026-10-08
+
+### Added
+- **Firefox for Android Support**: Added `gecko_android` manifest configuration, scoped mobile viewport styles, and Android tab query fallbacks.
+- **Header Item Creation**: Added quick-add `+` button in the main header for rapid credential entry.
+- **Card Action Menu**: Replaced horizontal action bar with a compact 3-dot dropdown menu (`⋮`) for copying username, password, TOTP, and editing items. Direct card click performs credential autofill.
+- **Vault Search Persistence**: Vault search input now remembers the last filter query across popup closures.
+- **Draft State Persistence**: Unsaved new item drafts automatically persist to storage during creation and resume seamlessly if the popup is closed.
+
+### Changed
+- **New Theme Alignment**: Adopted the core IRIS UI system theme from `@workspace/ui` (`oklch` dark palette tokens and global monospace typography).
+- **AMO Validation Compliance**: Raised `strict_min_version` to `142.0` in `manifest.json` and eliminated unsafe `innerHTML` assignments via DOMParser for clean validation (0 errors, 0 warnings).
+- **Simplified Settings & Headers**: Relocated sync button to Settings tab and purged redundant helper descriptions.
+- **Clean Lock Screen & Icon**: Removed the lock avatar from the locked screen and cleared the toolbar icon badge when locked.
+
+---
+
 ## [1.5.1] - 2026-09-21
 
 ### Added

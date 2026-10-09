@@ -1,10 +1,10 @@
 {
   "name": "iris-pass-firefox",
-  "version": "1.5.2",
+  "version": "1.6.1",
   "description": "Password manager extension for IRIS.",
   "scripts": {
     "lint": "npx web-ext lint",
-    "build": "npx web-ext build --artifacts-dir dist --overwrite-dest"
+    "build": "npx web-ext build --artifacts-dir ../../releases/iris-pass --overwrite-dest"
   },
   "keywords": [
     "iris",

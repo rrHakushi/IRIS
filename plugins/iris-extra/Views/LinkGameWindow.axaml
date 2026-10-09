@@ -1,0 +1,104 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:models="using:IrisTracker.Models"
+        xmlns:controls="using:IrisTracker.Controls"
+        x:Class="IrisTracker.Views.LinkGameWindow"
+        Title="Link Game to IRIS"
+        Width="780" Height="560"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="{StaticResource BgDarkBrush}">
+
+  <Grid RowDefinitions="Auto,*,Auto" Margin="20">
+
+    <!-- Header -->
+    <StackPanel Grid.Row="0" Spacing="4" Margin="0,0,0,16">
+      <TextBlock Text="Link Game to IRIS" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+      <TextBlock Text="Connect a game from your IRIS game list to running processes or executables on this machine." FontSize="12" Foreground="{StaticResource TextMutedBrush}" />
+    </StackPanel>
+
+    <!-- Main 2-Column Area -->
+    <Grid Grid.Row="1" ColumnDefinitions="*,16,*">
+
+      <!-- Left Column: Select Game from IRIS -->
+      <Border Grid.Column="0" Classes="card" Padding="14">
+        <Grid RowDefinitions="Auto,Auto,*">
+          <TextBlock Grid.Row="0" Text="1. Select IRIS Game Entry" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8" />
+          
+          <TextBox x:Name="TxtSearchGame" Grid.Row="1" Watermark="Search your games..." Margin="0,0,0,10" />
+
+          <Grid Grid.Row="2">
+            <ListBox x:Name="ListGames" SelectionChanged="ListGames_SelectionChanged" Background="Transparent">
+              <ListBox.ItemTemplate>
+                <DataTemplate DataType="models:UserGameListItem">
+                  <Grid ColumnDefinitions="Auto,*" Margin="4">
+                    <Border Grid.Column="0" Width="36" Height="48" CornerRadius="4" ClipToBounds="True" Background="{StaticResource SurfaceBgBrush}" Margin="0,0,10,0">
+                      <controls:AsyncImage Url="{Binding CoverImage}" Stretch="UniformToFill" />
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                      <TextBlock Text="{Binding DisplayTitle}" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="{Binding ProgressDisplay}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+                    </StackPanel>
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+
+            <TextBlock x:Name="TxtNoGamesFound" Text="No games found in your list." Foreground="{StaticResource TextMutedBrush}" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="False" />
+          </Grid>
+        </Grid>
+      </Border>
+
+      <!-- Right Column: Select / Configure Executable -->
+      <Border Grid.Column="2" Classes="card" Padding="14">
+        <StackPanel Spacing="12">
+          <TextBlock Text="2. Match Executable(s)" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource TextPrimaryBrush}" />
+
+          <!-- Pick from running processes -->
+          <StackPanel Spacing="4">
+            <TextBlock Text="Detect from Running Processes" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+            <Grid ColumnDefinitions="*,Auto">
+              <ComboBox x:Name="CmbRunningProcesses" Grid.Column="0" HorizontalAlignment="Stretch" SelectionChanged="CmbRunningProcesses_SelectionChanged" />
+              <Button Grid.Column="1" Content="↻" Classes="btn-secondary" Margin="6,0,0,0" ToolTip.Tip="Refresh running processes" Click="BtnRefreshProcesses_Click" />
+            </Grid>
+          </StackPanel>
+
+          <!-- Browse File -->
+          <StackPanel Spacing="4">
+            <TextBlock Text="Or Browse Binary / Executable" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+            <Button Content="📁 Browse File..." Classes="btn-secondary" HorizontalAlignment="Stretch" Click="BtnBrowseExe_Click" />
+          </StackPanel>
+
+          <!-- Executable Name(s) -->
+          <StackPanel Spacing="4">
+            <TextBlock Text="Target Executable Name(s)" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+            <TextBox x:Name="TxtExecutableName" Watermark="e.g. game, game.exe, hl2_linux" />
+            <TextBlock Text="Separate multiple executables with commas" FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
+          </StackPanel>
+
+          <!-- Title Pattern (Optional) -->
+          <StackPanel Spacing="4">
+            <TextBlock Text="Window Title Pattern (Optional)" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+            <TextBox x:Name="TxtWindowTitlePattern" Watermark="Leave blank to match any window" />
+          </StackPanel>
+
+          <!-- Summary -->
+          <Border Background="{StaticResource SurfaceBgBrush}" CornerRadius="6" Padding="10" Margin="0,4,0,0">
+            <TextBlock x:Name="TxtSummary" Text="Select an IRIS game and executable." FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" />
+          </Border>
+
+        </StackPanel>
+      </Border>
+
+    </Grid>
+
+    <!-- Footer Actions -->
+    <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,16,0,0">
+      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+        <Button Content="Cancel" Classes="btn-ghost" Click="BtnCancel_Click" />
+        <Button x:Name="BtnLink" Content="Link Game" Classes="btn-primary" Click="BtnLink_Click" IsEnabled="False" />
+      </StackPanel>
+    </Grid>
+
+  </Grid>
+</Window>

@@ -80,6 +80,7 @@ export type SidebarItemChild = {
   component?: ReactNode
   href?: string
   preventRedirect?: boolean
+  isActive?: boolean
 }
 
 export type SidebarConfig = SidebarSection[]

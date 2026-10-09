@@ -98,6 +98,11 @@
         "name": "IRIS Pass",
         "description": "ゼロ知識暗号化パスワード、認証情報、SSHキー管理。",
         "descriptionShort": "保管庫・生成"
+      },
+      "irisSearch": {
+        "name": "IRIS Search",
+        "description": "SearXNGを活用したプライバシー重視のメタ検索エンジン。",
+        "descriptionShort": "ウェブ・メタ検索"
       }
     },
     "listSidebar": {

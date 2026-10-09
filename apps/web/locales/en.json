@@ -98,6 +98,11 @@
         "name": "IRIS Pass",
         "description": "Zero-knowledge encrypted password, credential, and SSH key manager.",
         "descriptionShort": "Vault & Generator"
+      },
+      "irisSearch": {
+        "name": "IRIS Search",
+        "description": "Privacy-focused meta-search powered by SearXNG.",
+        "descriptionShort": "Web & Meta Search"
       }
     },
     "listSidebar": {

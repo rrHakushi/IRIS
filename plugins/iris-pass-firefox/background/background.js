@@ -119,14 +119,30 @@ function lockVault() {
 }
 
 /**
- * Updates extension action badge based on match count for active tab
+ * Updates extension action badge based on match count or lock state
  */
 async function updateBadge() {
   try {
-    const tabs = await ext.tabs.query({ active: true, currentWindow: true })
-    const activeTab = tabs[0]
+    const { authToken, apiKey } = await IrisApi.getToken().catch(() => ({}))
+    const isAuthenticated = Boolean(authToken || apiKey)
 
-    if (!activeTab || !activeTab.url || !inMemoryVaultKey) {
+    if (!isAuthenticated) {
+      ext.action.setBadgeText({ text: "" })
+      return
+    }
+
+    if (!inMemoryVaultKey) {
+      ext.action.setBadgeText({ text: "" })
+      return
+    }
+
+    let tabs = await ext.tabs.query({ active: true, currentWindow: true }).catch(() => [])
+    if (!tabs || tabs.length === 0) {
+      tabs = await ext.tabs.query({ active: true }).catch(() => [])
+    }
+    const activeTab = tabs?.[0]
+
+    if (!activeTab || !activeTab.url) {
       ext.action.setBadgeText({ text: "" })
       return
     }
@@ -134,7 +150,7 @@ async function updateBadge() {
     const matches = getMatchingLogins(activeTab.url)
     if (matches.length > 0) {
       ext.action.setBadgeText({ text: String(matches.length) })
-      ext.action.setBadgeBackgroundColor({ color: "#d800a6" }) // IRIS Pass accent
+      ext.action.setBadgeBackgroundColor({ color: "#f43f5e" })
     } else {
       ext.action.setBadgeText({ text: "" })
     }
@@ -700,6 +716,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         await decryptCachedVault(inMemoryVaultKey)
         await resetAutoLock()
         checkHourlySyncDue()
+        updateBadge()
 
         sendResponse({ success: true, user: sData.user })
       } catch (err) {
@@ -1767,6 +1784,7 @@ ext.tabs.onUpdated.addListener((tabId, changeInfo) => {
     updateBadge()
   }
 })
+updateBadge()
 
 // Auto re-inject content scripts into already-open tabs when the extension is updated or reloaded
 ext.runtime.onInstalled?.addListener(async () => {

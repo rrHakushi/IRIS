@@ -1,0 +1,14 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="IrisTracker.MainWindow"
+        Title="IRIS Extra"
+        Icon="/Assets/iris.ico"
+        Width="880" Height="650"
+        MinWidth="720" MinHeight="500"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BgDarkBrush}">
+
+  <Panel>
+    <ContentControl x:Name="RootContainer" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+  </Panel>
+</Window>

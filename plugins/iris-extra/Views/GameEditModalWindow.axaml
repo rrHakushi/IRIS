@@ -1,0 +1,86 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="IrisTracker.Views.GameEditModalWindow"
+        Title="Edit Game Link"
+        Width="640" Height="580"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="{StaticResource BgDarkBrush}">
+
+  <Grid RowDefinitions="Auto,*,Auto" Margin="20">
+
+    <!-- Header & Cover Image -->
+    <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="0,0,0,16">
+      <Border Grid.Column="0" Width="60" Height="80" CornerRadius="6" ClipToBounds="True" Background="{StaticResource SurfaceBgBrush}" Margin="0,0,14,0">
+        <Image x:Name="ImgCover" Stretch="UniformToFill" />
+      </Border>
+      <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+        <TextBlock x:Name="TxtTitle" Text="Game Title" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+        <TextBlock x:Name="TxtIrisProgress" Text="35 hrs logged in IRIS" FontSize="12" Foreground="{StaticResource TextMutedBrush}" />
+      </StackPanel>
+    </Grid>
+
+    <!-- Main Settings / Executables -->
+    <Border Grid.Row="1" Classes="card" Padding="16">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="16">
+
+          <!-- Tracked Executables Section -->
+          <StackPanel Spacing="8">
+            <TextBlock Text="TRACKED EXECUTABLES" FontSize="11" FontWeight="Bold" LetterSpacing="1" Foreground="{StaticResource TextMutedBrush}" />
+            
+            <ItemsControl x:Name="ListTrackedExes">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Background="{StaticResource SurfaceBgBrush}" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,6">
+                    <Grid ColumnDefinitions="*,Auto">
+                      <TextBlock Grid.Column="0" Text="{Binding}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                      <Button Grid.Column="1" Content="✕" Classes="btn-ghost" Foreground="#FB7185" Padding="6,2" Click="BtnRemoveExe_Click" Tag="{Binding}" />
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock x:Name="TxtNoDetections" Text="No executables configured." FontSize="12" Foreground="{StaticResource TextMutedBrush}" IsVisible="False" />
+          </StackPanel>
+
+          <!-- Add Executable Form -->
+          <StackPanel Spacing="10">
+            <TextBlock Text="ADD EXECUTABLE" FontSize="11" FontWeight="Bold" LetterSpacing="1" Foreground="{StaticResource TextMutedBrush}" />
+
+            <!-- From running processes -->
+            <Grid ColumnDefinitions="*,Auto">
+              <ComboBox x:Name="CmbRunningProcesses" Grid.Column="0" HorizontalAlignment="Stretch" />
+              <Button Grid.Column="1" Content="Add Running" Classes="btn-secondary" Margin="8,0,0,0" Click="BtnAddFromRunning_Click" />
+            </Grid>
+
+            <!-- Browse & Manual Add -->
+            <Grid ColumnDefinitions="*,Auto,Auto">
+              <TextBox x:Name="TxtNewExe" Grid.Column="0" Watermark="e.g. game, game.exe" />
+              <Button Grid.Column="1" Content="Add" Classes="btn-secondary" Margin="8,0,0,0" Click="BtnAddManual_Click" />
+              <Button Grid.Column="2" Content="Browse..." Classes="btn-secondary" Margin="8,0,0,0" Click="BtnBrowse_Click" />
+            </Grid>
+          </StackPanel>
+
+          <!-- Window Title Pattern -->
+          <StackPanel Spacing="4">
+            <TextBlock Text="Window Title Pattern (Optional)" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+            <TextBox x:Name="TxtWindowTitlePattern" Watermark="Leave blank to match any window of this process" />
+          </StackPanel>
+
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+
+    <!-- Footer Actions -->
+    <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" Margin="0,16,0,0">
+      <Button Grid.Column="0" Content="Unlink Game" Classes="btn-danger" Click="BtnUnlinkGame_Click" />
+      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+        <Button Content="Close" Classes="btn-ghost" Click="BtnClose_Click" />
+        <Button Content="Save Changes" Classes="btn-primary" Click="BtnSave_Click" />
+      </StackPanel>
+    </Grid>
+
+  </Grid>
+</Window>
