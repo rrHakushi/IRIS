@@ -31,6 +31,7 @@ import {
   IconChevronRight,
   IconWorld,
   IconApps,
+  IconSearch,
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 
@@ -64,6 +65,9 @@ import { ReadarrSettingsTab } from "./settings-tabs/servarr/readarr-tab"
 // Email Tabs
 import { EmailAccountsSettingsTab } from "./settings-tabs/email/email-accounts-tab"
 
+// Search Tabs
+import { SearchSettingsTab } from "./settings-tabs/search/search-tab"
+
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile"
 
 export type IrisSettingsCategory =
@@ -87,6 +91,7 @@ export type IrisSettingsCategory =
   | "radarr"
   | "readarr"
   | "accounts"
+  | "search"
 
 export interface SettingItemMeta {
   id: IrisSettingsCategory
@@ -241,6 +246,13 @@ function renderTabContent(
           setFooterContent={setFooterContent}
         />
       )
+    case "search":
+      return (
+        <SearchSettingsTab
+          onOpenChange={onOpenChange}
+          setFooterContent={setFooterContent}
+        />
+      )
     default:
       return null
   }
@@ -390,6 +402,14 @@ export function IrisSettingsModal({
         name: t("tabs.accounts"),
         icon: IconMail,
         group: t("groups.email"),
+      },
+
+      // Search
+      {
+        id: "search",
+        name: "Search",
+        icon: IconSearch,
+        group: "Search",
       },
     ],
     [t]

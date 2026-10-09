@@ -31,3 +31,21 @@ Stops:
 - Stop 2 (34%):  #c026d3 (Fuchsia Magenta)
 - Stop 3 (72%):  #6366f1 (IRIS List Indigo)
 - Stop 4 (100%): #4338ca (Deep Midnight Indigo)
+
+
+# ------------------------------------------------------------------------------
+# 3. IRIS Search
+# ------------------------------------------------------------------------------
+App ID: iris-search
+Icon: /iris-icons/iris-search-ring-left.png
+Base Color: #06b6d4 (Cyan 500)
+
+Gradient (5-Stop Cyberpunk Abyssal):
+linear-gradient(135deg, #10b981 0%, #06b6d4 25%, #2563eb 50%, #7c3aed 75%, #1e1b4b 100%)
+
+Stops:
+- Stop 1 (0%):   #10b981 (Emerald Green)
+- Stop 2 (25%):  #06b6d4 (Luminescent Cyan)
+- Stop 3 (50%):  #2563eb (Royal Blue)
+- Stop 4 (75%):  #7c3aed (Violet)
+- Stop 5 (100%): #1e1b4b (Deep Midnight Abyss)

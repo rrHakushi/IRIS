@@ -55,3 +55,5 @@ Total Unique Variables: 46
 - TVDB_KEY
 - USE_MAIL_IN_DEV
 
+
+SEARXNG_URL

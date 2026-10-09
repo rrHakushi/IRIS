@@ -81,6 +81,20 @@ export const BOOKMARK_ICON_OPTIONS: BookmarkIconOption[] = [
     ),
   },
   {
+    id: "app:iris-search",
+    label: "IRIS Search",
+    type: "app",
+    customRender: (className = "size-4") => (
+      <Image
+        src="/iris-icons/iris-search-ring-left.png"
+        alt="IRIS Search"
+        width={24}
+        height={24}
+        className={`${className} rounded-full object-contain`}
+      />
+    ),
+  },
+  {
     id: "app:iris-cloud",
     label: "IRIS Cloud",
     type: "app",
@@ -210,6 +224,18 @@ export function renderBookmarkIcon(
       <Image
         src="/iris-icons/iris-pass-ring-left.png"
         alt="IRIS Pass"
+        width={96}
+        height={96}
+        className={`${className} rounded-full object-contain`}
+      />
+    )
+  }
+
+  if (iconId === "app:iris-search" || iconId === "iris-search") {
+    return (
+      <Image
+        src="/iris-icons/iris-search-ring-left.png"
+        alt="IRIS Search"
         width={96}
         height={96}
         className={`${className} rounded-full object-contain`}

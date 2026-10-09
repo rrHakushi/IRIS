@@ -1,0 +1,13 @@
+model SearchHistory {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation("UserSearchHistory", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Encrypted query text using user AES-256-GCM envelope
+  encryptedQuery String @db.Text
+  category       String @default("general")
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}

@@ -104,6 +104,26 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
         ? t("irisPass.descriptionShort")
         : "Vault & Generator",
     },
+    {
+      id: "iris-search",
+      name: t ? t("irisSearch.name") : "IRIS Search",
+      href: "/IRIS-search",
+      color: "#06b6d4",
+      colorClass: "text-cyan-500",
+      bgClass: "bg-cyan-500",
+      gradient:
+        "linear-gradient(135deg, #10b981 0%, #06b6d4 25%, #2563eb 50%, #7c3aed 75%, #1e1b4b 100%)",
+      gradientStyle:
+        "linear-gradient(135deg, #10b981 0%, #06b6d4 25%, #2563eb 50%, #7c3aed 75%, #1e1b4b 100%)",
+      icon: "/iris-icons/iris-search-ring-left.png",
+      iconLeftRing: "/iris-icons/iris-search-ring-left.png",
+      description: t
+        ? t("irisSearch.description")
+        : "Privacy-focused meta-search powered by SearXNG.",
+      descriptionShort: t
+        ? t("irisSearch.descriptionShort")
+        : "Web & Meta Search",
+    },
     // {
     //   id: "iris-cloud",
     //   name: "IRIS Cloud",

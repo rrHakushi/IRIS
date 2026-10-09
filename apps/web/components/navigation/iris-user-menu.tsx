@@ -119,12 +119,14 @@ export interface IrisUserMenuProps {
   onOpenSettings?: () => void
   placement?: any
   className?: string
+  triggerVariant?: "card" | "avatar" | "responsive"
 }
 
 export function IrisUserMenu({
   onOpenSettings,
   placement,
   className,
+  triggerVariant = "card",
 }: IrisUserMenuProps): React.JSX.Element {
   const t = useTranslations("navigation.userMenu")
   const tApp = useTranslations("navigation.appMenu")
@@ -1443,7 +1445,9 @@ export function IrisUserMenu({
           variant="ghost"
           onPress={() => setMenuOpen(true)}
           className={cn(
-            "h-12 w-full cursor-pointer overflow-hidden border-0 bg-transparent p-0 hover:bg-transparent focus-visible:ring-0",
+            triggerVariant === "avatar" || triggerVariant === "responsive"
+              ? "size-9 cursor-pointer overflow-hidden rounded-full border-0 bg-transparent p-0 hover:bg-transparent focus-visible:ring-0"
+              : "h-12 w-full cursor-pointer overflow-hidden border-0 bg-transparent p-0 hover:bg-transparent focus-visible:ring-0",
             className
           )}
         >
@@ -1457,8 +1461,13 @@ export function IrisUserMenu({
             username={username}
             email={userEmail}
             unreadCount={unreadCount}
-            showChevrons
-            className="h-full w-full border-border/40 hover:border-border/80 hover:bg-muted/50 data-[state=open]:border-border data-[state=open]:bg-muted/80"
+            showChevrons={!(triggerVariant === "avatar" || triggerVariant === "responsive")}
+            avatarOnly={triggerVariant === "avatar" || triggerVariant === "responsive"}
+            className={
+              triggerVariant === "avatar" || triggerVariant === "responsive"
+                ? "size-9 p-0"
+                : "h-full w-full border-border/40 hover:border-border/80 hover:bg-muted/50 data-[state=open]:border-border data-[state=open]:bg-muted/80"
+            }
           />
         </Button>
 
@@ -1508,7 +1517,9 @@ export function IrisUserMenu({
         <Button
           variant="ghost"
           className={cn(
-            "h-12 w-full cursor-pointer overflow-hidden border-0 bg-transparent p-0 hover:bg-transparent focus-visible:ring-0",
+            triggerVariant === "avatar"
+              ? "size-9 sm:size-10 cursor-pointer overflow-hidden rounded-full border-0 bg-transparent p-0 hover:bg-transparent focus-visible:ring-0"
+              : "h-12 w-full cursor-pointer overflow-hidden border-0 bg-transparent p-0 hover:bg-transparent focus-visible:ring-0",
             className
           )}
         >
@@ -1522,8 +1533,13 @@ export function IrisUserMenu({
             username={username}
             email={userEmail}
             unreadCount={unreadCount}
-            showChevrons
-            className="h-full w-full border-border/40 hover:border-border/80 hover:bg-muted/50 data-[state=open]:border-border data-[state=open]:bg-muted/80"
+            showChevrons={triggerVariant !== "avatar"}
+            avatarOnly={triggerVariant === "avatar"}
+            className={
+              triggerVariant === "avatar"
+                ? "size-9 sm:size-10 p-0"
+                : "h-full w-full border-border/40 hover:border-border/80 hover:bg-muted/50 data-[state=open]:border-border data-[state=open]:bg-muted/80"
+            }
           />
         </Button>
 
