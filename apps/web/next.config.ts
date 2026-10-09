@@ -35,6 +35,14 @@ const nextConfig: NextConfig = {
         source: "/public/:path*",
         destination: `${apiUrl}/public/:path*`,
       },
+      {
+        source: "/elysia",
+        destination: `${apiUrl}`,
+      },
+      {
+        source: "/elysia/:path*",
+        destination: `${apiUrl}/:path*`,
+      },
     ]
   },
 }
