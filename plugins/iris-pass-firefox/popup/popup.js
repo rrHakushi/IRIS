@@ -1144,8 +1144,12 @@ function getCipherFavicon(cipher) {
  * Close any open 3-dot card menus
  */
 function closeAllCardMenus() {
+  document.querySelectorAll(".cipher-card.menu-open").forEach((c) => {
+    c.classList.remove("menu-open")
+  })
   document.querySelectorAll(".card-dropdown-menu").forEach((m) => {
     m.style.display = "none"
+    m.classList.remove("dropup")
   })
 }
 
@@ -1157,8 +1161,12 @@ document.addEventListener("keydown", (e) => {
 function parseSvgElement(svgHtml) {
   if (!svgHtml) return null
   try {
+    let str = svgHtml.trim()
+    if (!str.includes("xmlns=")) {
+      str = str.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"')
+    }
     const parser = new DOMParser()
-    const doc = parser.parseFromString(svgHtml.trim(), "image/svg+xml")
+    const doc = parser.parseFromString(str, "image/svg+xml")
     const svg = doc.querySelector("svg")
     return svg ? document.importNode(svg, true) : null
   } catch {
@@ -1213,12 +1221,58 @@ function createCipherCard(cipher) {
   const titleText = document.createTextNode(cipher.title || "")
   titleDiv.appendChild(titleText)
 
+  const userRow = document.createElement("div")
+  userRow.className = "cipher-user-row"
+
   const userDiv = document.createElement("div")
   userDiv.className = "cipher-user"
   userDiv.textContent = username
+  userRow.appendChild(userDiv)
+
+  const hasTotp = !isSsh && Boolean(cipher.data?.totpSecret)
+  const hasPasskey = !isSsh && Boolean(cipher.data?.passkey)
+
+  if (hasTotp || hasPasskey) {
+    const badgesWrap = document.createElement("div")
+    badgesWrap.className = "cipher-badges"
+
+    if (hasTotp) {
+      const totpBadge = document.createElement("span")
+      totpBadge.className = "cipher-badge badge-totp"
+      totpBadge.title = "Includes TOTP Authenticator"
+      const totpSvg = parseSvgElement(`
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9"></circle>
+          <polyline points="12 7 12 12 15 14"></polyline>
+        </svg>
+      `)
+      if (totpSvg) totpBadge.appendChild(totpSvg)
+      totpBadge.appendChild(document.createTextNode("TOTP"))
+      badgesWrap.appendChild(totpBadge)
+    }
+
+    if (hasPasskey) {
+      const passkeyBadge = document.createElement("span")
+      passkeyBadge.className = "cipher-badge badge-passkey"
+      passkeyBadge.title = "Includes WebAuthn Passkey"
+      const keySvg = parseSvgElement(`
+        <svg viewBox="0 0 24 24">
+          <circle cx="8" cy="15" r="4"></circle>
+          <line x1="10.85" y1="12.15" x2="19" y2="4"></line>
+          <line x1="18" y1="5" x2="20" y2="7"></line>
+          <line x1="15" y1="8" x2="17" y2="10"></line>
+        </svg>
+      `)
+      if (keySvg) passkeyBadge.appendChild(keySvg)
+      passkeyBadge.appendChild(document.createTextNode("Passkey"))
+      badgesWrap.appendChild(passkeyBadge)
+    }
+
+    userRow.appendChild(badgesWrap)
+  }
 
   infoWrap.appendChild(titleDiv)
-  infoWrap.appendChild(userDiv)
+  infoWrap.appendChild(userRow)
   cardTop.appendChild(infoWrap)
 
   // 3-Dot Options Menu
@@ -1295,7 +1349,14 @@ function createCipherCard(cipher) {
     const isOpen = dropdown.style.display !== "none"
     closeAllCardMenus()
     if (!isOpen) {
+      card.classList.add("menu-open")
       dropdown.style.display = "flex"
+      const rect = menuBtn.getBoundingClientRect()
+      if (rect.bottom + 160 > window.innerHeight) {
+        dropdown.classList.add("dropup")
+      } else {
+        dropdown.classList.remove("dropup")
+      }
     }
   })
 
@@ -1347,11 +1408,12 @@ function renderMatchingList(ciphers) {
 function copySensitiveValue(btn, text, label, isSensitive = false) {
   if (!text) return
   navigator.clipboard.writeText(text)
-  const original = btn.textContent
-  btn.textContent = "Copied!"
+  const span = btn.querySelector("span") || btn
+  const original = span.textContent
+  span.textContent = "Copied!"
   btn.style.color = "#10b981"
   setTimeout(() => {
-    btn.textContent = original
+    span.textContent = original
     btn.style.color = ""
   }, 1200)
 
@@ -1411,13 +1473,15 @@ async function copyTotpValueWithCountdown(btn, rawSecret, originalText = "TOTP")
       clearInterval(activeTotpCountdownInterval)
       activeTotpCountdownInterval = null
       if (activeTotpCountdownBtn && activeTotpOriginalText) {
-        activeTotpCountdownBtn.textContent = activeTotpOriginalText
+        const prevSpan = activeTotpCountdownBtn.querySelector("span") || activeTotpCountdownBtn
+        prevSpan.textContent = activeTotpOriginalText
         activeTotpCountdownBtn.style.color = ""
       }
     }
 
     activeTotpCountdownBtn = btn
     activeTotpOriginalText = originalText
+    const targetSpan = btn.querySelector("span") || btn
 
     function updateTicker() {
       const rem = IrisTotp.getRemainingSeconds(period)
@@ -1427,12 +1491,12 @@ async function copyTotpValueWithCountdown(btn, rawSecret, originalText = "TOTP")
           clearInterval(activeTotpCountdownInterval)
           activeTotpCountdownInterval = null
         }
-        btn.textContent = originalText
+        targetSpan.textContent = originalText
         btn.style.color = ""
         activeTotpCountdownBtn = null
         activeTotpOriginalText = null
       } else {
-        btn.textContent = `Copied! (${rem}s)`
+        targetSpan.textContent = `Copied! (${rem}s)`
         btn.style.color = "#10b981"
       }
     }

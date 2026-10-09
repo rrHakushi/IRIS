@@ -620,8 +620,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  overflow-y: auto;
-  padding-bottom: 4px;
+  overflow: visible;
+  padding-bottom: 24px;
 }
 
 .cipher-card {
@@ -639,6 +639,11 @@ body {
 
 .cipher-card:hover {
   background: var(--secondary);
+  border-color: var(--ring);
+}
+
+.cipher-card.menu-open {
+  z-index: 60;
   border-color: var(--ring);
 }
 
@@ -677,6 +682,13 @@ body {
   flex-shrink: 0;
 }
 
+.cipher-user-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
 .cipher-user {
   font-size: 11px;
   color: var(--muted-foreground);
@@ -684,6 +696,49 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   font-family: var(--font-mono);
+  min-width: 0;
+}
+
+.cipher-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.cipher-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 1.5px 5px;
+  border-radius: calc(var(--radius) * 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-family: var(--font-mono);
+}
+
+.cipher-badge svg {
+  width: 10px;
+  height: 10px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  flex-shrink: 0;
+}
+
+.cipher-badge.badge-totp {
+  background: oklch(0.65 0.24 350 / 15%);
+  color: oklch(0.75 0.18 350);
+  border: 1px solid oklch(0.65 0.24 350 / 30%);
+}
+
+.cipher-badge.badge-passkey {
+  background: oklch(0.6 0.18 250 / 15%);
+  color: oklch(0.75 0.14 250);
+  border: 1px solid oklch(0.6 0.18 250 / 30%);
 }
 
 /* 3-Dot Card Menu */
@@ -719,11 +774,16 @@ body {
   stroke-width: 2;
 }
 
+.card-menu-btn svg circle {
+  fill: currentColor;
+  stroke: none;
+}
+
 .card-dropdown-menu {
   position: absolute;
   top: calc(100% + 4px);
   right: 0;
-  z-index: 50;
+  z-index: 100;
   min-width: 145px;
   background: var(--popover);
   border: 1px solid var(--border);
@@ -733,6 +793,11 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.card-dropdown-menu.dropup {
+  top: auto;
+  bottom: calc(100% + 4px);
 }
 
 .card-menu-item {

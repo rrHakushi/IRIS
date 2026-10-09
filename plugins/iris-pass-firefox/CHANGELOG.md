@@ -2,6 +2,19 @@
 
 All notable changes to **IRIS Pass** are documented in this file.
 
+## [1.6.1] - 2026-10-09
+
+### Added
+- **TOTP & Passkey Item Badges**: Item cards now display prominent visual indicator badges and icon glyphs when credentials contain a TOTP authenticator key or WebAuthn Passkey.
+- **Smart Dropup Positioning**: Options dropdown menu automatically opens upward when an item is near the bottom of the viewport, eliminating clipping without scrolling.
+
+### Fixed
+- **3-Dot Card Menu Icon Rendering**: Fixed SVG namespace parsing in `parseSvgElement` so the 3-dot options button and menu action icons render correctly as `SVGSVGElement` nodes.
+- **Menu Clipping & Stacking**: Set `.cipher-list` to `overflow: visible` and elevated z-index on active cards so dropdown menus never get cut off by list containers or sibling cards.
+- **Action Button Icon Preservation**: Retained menu button SVG icons during clipboard copy feedback states.
+
+---
+
 ## [1.6.0] - 2026-10-08
 
 ### Added
