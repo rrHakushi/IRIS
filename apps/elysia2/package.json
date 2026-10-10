@@ -1,0 +1,19 @@
+{
+  "name": "@IRIS/elysia",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "dev": "dotenvx run -f ../../.env -- bun --watch src/index.ts",
+    "build": "dotenv run -f ../../.env -- bun build --compile --minify-whitespace --minify-syntax --target bun-linux-x64 --outfile server src/index.ts",
+    "start": "./server"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@elysia/openapi": "^2.0.0-beta.4",
+    "elysia": "^2.0.0-beta.29"
+  }
+}
