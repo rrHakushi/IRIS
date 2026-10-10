@@ -190,5 +190,5 @@ export default async function AnimePage({ params }: Props) {
 ## 5. Companion Skills
 
 - [design.md](file:///c:/Users/yki/Documents/GitHub/IRIS/design.md): Authoritative design system, tokens, colors, and styling rules.
-- [IRIS-elysia](file:///c:/Users/yki/Documents/GitHub/IRIS/.agents/skills/IRIS-elysia/SKILL.md): Backend architecture, routing, TypeBox schemas, and Eden Treaty manifest generator.
+- [elysia](file:///home/hakushi/Documents/IRIS/.agents/skills/elysia/SKILL.md): Backend architecture, routing, TypeBox schemas, and Eden Treaty manifest generator.
 - [shadcn](file:///c:/Users/yki/Documents/GitHub/IRIS/.agents/skills/shadcn/SKILL.md): Managing, adding, and configuring shadcn UI primitives.
