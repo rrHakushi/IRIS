@@ -1,7 +1,7 @@
 // Service handles business logic, decoupled from Elysia controller
 import { status } from 'elysia'
 
-import type { AuthModel } from './auth.model'
+import type { AuthModel } from '../api/models/auth.model'
 
 // If a class doesn't need to store a property,
 // you can use an `abstract class` to avoid class allocation

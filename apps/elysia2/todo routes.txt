@@ -1,0 +1,404 @@
+ [IRIS-account]
+   GET     /.well-known/oauth-authorization-server
+   GET     /.well-known/openid-configuration
+
+
+/auth/apikeys       GET             get all keys (10 per page)
+/auth/apikeys       POST            create key
+/auth/apikeys/:passkeyId   DELETE          delete key 
+/auth/apikeys/:passkeyId   PATCH           update key
+/auth/apikeys/:passkeyId/regenerate  POST    regenerate key
+
+/auth/twofactor/passkeys  GET             get all passkeys (10 per page)
+/auth/twofactor/passkeys  POST            create new passkey
+/auth/twofactor/passkeys/verify   POST        verify passkey
+/auth/twofactor/passkeys/:passkeyId  DELETE          delete passkey 
+
+/auth/twofactor/email/send        POST        send email
+/auth/twofactor/email/verify      POST        verify email
+/auth/twofactor/email/setup       POST        setup email
+/auth/twofactor/email             DELETE      remove email
+
+/auth/twofactor/totp/setup        POST        setup totp
+/auth/twofactor/totp/verify       POST        verify totp
+/auth/twofactor/totp              DELETE      remove totp
+
+/auth/twofactor/backupcodes/generate POST generate backupcodes
+/auth/twofactor/backupcodes/regenerate POST regenerate backupcodes
+/auth/twofactor/backupcodes/verify POST verify backupcodes
+
+/auth/password/change       POST        change password
+/auth/password/forgot       POST        forgot password
+/auth/password/reset        POST        reset password
+
+/auth/qc/approve            POST        approve qc
+/auth/qc/generate           POST        generate qc
+/auth/qc/status             GET         status qc
+
+/auth/login                 POST        login (jwt)
+/auth/register              POST        register
+
+
+/friends                         GET  get friends (10 per page)
+/friends/:friendId               DELETE  remove friend
+/friends/requests                GET    get friend requests (10 per page)
+/friends/requests                POST   send friend request
+/friends/requests/:requestId/accept     POST   accept friend request
+/friends/requests/:requestId/decline    POST   decline friend request
+
+
+/notifications                    GET     get notifications (10 per page)
+/notifications                    DELETE  delete all notications 
+/notifications/:notificationId                  GET     get notification
+/notifications/:notificationId                  DELETE  delete notification 
+/notifications/:notificationId/action         POST    action notification
+/notifications/:notificationId/read           POST  mark as read 
+/notifications/read               POST    mark all as read
+
+/public/*                          GET     get public files
+
+/users                            GET     get users (10 per page)
+/users/:userId                    GET     get basic info of user
+/users/:userId                    POST    update user info
+
+/users/:userId/block              POST   block user
+/users/:userId/unblock            POST   unblock user
+
+/users/:userId/friendship         GET     get friendship status
+
+/users/:userId/assets             GET     get user's assets (avatar, banner, etc...)
+/users/:userId/assets             POST    edit user's assets
+
+/users/:userId/badges             GET     get user's badges
+/users/:userId/badges/evaluate    POST    evaluate user's badges
+
+/users/:userId/comments               GET     get comments on users profile (10 per page)
+/users/:userId/comments               POST    post comment on users profile
+
+/comments/:commentId           DELETE  delete comment on users profile
+/comments/:commentId/reply     POST    reply to comment on users profile
+/comments/:commentId/reply     DELETE  delete reply to comment on users profile
+
+/users/:userId/activity        GET     get activity on users profile (10 per page)
+/activity/:id                  DELETE  delete activity
+
+
+/bookmarks   GET   get bookmarks (10 per page)
+/bookmarks   POST  create bookmark
+/bookmarks/:bookmarkId  DELETE        delete bookmark
+/bookmarks/:bookmarkId  PATCH      edit bookmark
+
+/encryption   GET   get encryption keys
+/encryption/password  POST  create separate encryption passwork
+
+
+/connections   GET  get connected accounts (10 per page)
+/connections/:connectionId/auth             GET     get authentication status
+/connections/:connectionId/callback         GET     callback for authentication
+/connections/:connectionId                  DELETE  remove connection
+/connections/:connectionId                  GET     get connection info
+/connections/:connectionId                  PATCH   edit connection
+/connections/:connectionId/sync             POST    sync connection
+/connections/:connectionId/test             POST    test connection
+
+/connections/providers                  GET     get available providers
+/connections/search                     GET     search on connection's api 
+
+
+/users/:userId/favorites          GET     get user's favorites (10 per page)
+/favorites                        POST    add favorite
+/favorites/:category/:targetId              DELETE  remove favorite
+/favorites/:category/:targetId              GET     check if favorite
+
+
+/lists/anime                          GET  get anime list (40 per page)
+/lists/anime/:animeID                      POST add/update anime in list
+/lists/anime/:animeID                      DELETE remove anime from list
+/lists/anime/:animeID                      GET   check if is in list
+/lists/anime/:animeID/increment            POST  increment progress
+/lists/anime/stats                    GET   get anime stats in list
+/lists/anime/filters                  GET   get available anime filters in list
+
+/lists/manga                          GET  get manga list (40 per page)
+/lists/manga/:mangaID                      POST add/update manga in list
+/lists/manga/:mangaID                      DELETE remove manga from list
+/lists/manga/:mangaID                      GET   check if is in list
+/lists/manga/:mangaID/increment            POST  increment progress
+/lists/manga/stats                    GET   get manga stats in list
+/lists/manga/filters                  GET   get available manga filters in list
+
+/lists/movies                          GET  get movies list (40 per page)
+/lists/movies/:movieID                      POST add/update movie in list
+/lists/movies/:movieID                      DELETE remove movie from list
+/lists/movies/:movieID                      GET   check if is in list
+/lists/movies/:movieID/increment            POST  increment progress
+/lists/movies/stats                    GET   get movie stats in list
+/lists/movies/filters                  GET   get available movie filters in list
+
+/lists/tv                          GET  get tv list (40 per page)
+/lists/tv/:tvID                      POST add/update tv in list
+/lists/tv/:tvID                      DELETE remove tv from list
+/lists/tv/:tvID                      GET   check if is in list
+/lists/tv/:tvID/increment            POST  increment progress
+/lists/tv/stats                    GET   get tv stats in list
+/lists/tv/filters                  GET   get available tv filters in list
+
+/lists/games                          GET  get games list (40 per page)
+/lists/games/:gameID                      POST add/update games in list
+/lists/games/:gameID                      DELETE remove games from list
+/lists/games/:gameID                      GET   check if is in list
+/lists/games/:gameID/increment            POST  increment progress
+/lists/games/stats                    GET   get games stats in list
+/lists/games/filters                  GET   get available games filters in list
+
+/lists/books                          GET  get books list (40 per page)
+/lists/books/:bookID                      POST add/update books in list
+/lists/books/:bookID                      DELETE remove books from list
+/lists/books/:bookID                      GET   check if is in list
+/lists/books/:bookID/increment            POST  increment progress
+/lists/books/stats                    GET   get books stats in list
+/lists/books/filters                  GET   get available books filters in list
+
+/lists/music                          GET  get music list (40 per page)
+/lists/music/:musicID                      POST add/update music in list
+/lists/music/:musicID                      DELETE remove music from list
+/lists/music/:musicID                      GET   check if is in list
+/lists/music/:musicID/increment            POST  increment progress
+/lists/music/stats                    GET   get music stats in list
+/lists/music/filters                  GET   get available music filters in list
+
+
+// for now empty
+/lists/other                          GET  get other list (40 per page)
+/lists/other/:otherID                 POST add/update other in list
+/lists/other/:otherID                 DELETE remove other from list
+/lists/other/:otherID                 GET   check if is in list
+/lists/other/:otherID/increment            POST  increment progress
+/lists/other/stats                    GET   get other stats in list
+/lists/other/filters                  GET   get available other filters in list
+
+
+/lists/playlists                     GET  get user's playlists
+/lists/playlists                     POST create playlist
+
+/lists/playlists/:playlistId         PATCH  update playlist
+/lists/playlists/:playlistId         DELETE  delete playlist
+
+/lists/playlists/:playlistId/entries GET   get playlist entries
+/lists/playlists/:playlistId/entries POST  add entry to playlist
+/lists/playlists/:playlistId/entries DELETE  remove entry from playlist
+/lists/playlists/:playlistId/entries PATCH   update entry in playlist
+
+
+
+/media/anime               GET   get all anime (40 per page)
+/media/anime/filters       GET   get available filters for anime
+/media/anime/:id           GET   get anime by id
+/media/anime/:id/refresh   POST  refresh anime from external api
+/media/anime/:id/similar   GET   get  similar anime
+
+/media/manga               GET   get all manga (40 per page)
+/media/manga/filters       GET   get available filters for manga
+/media/manga/:id           GET   get manga by id
+/media/manga/:id/refresh   POST  refresh manga from external api
+/media/manga/:id/similar   GET   get  similar manga
+
+/media/movies               GET   get all movies (40 per page)
+/media/movies/filters       GET   get available filters for movies
+/media/movies/:id           GET   get movies by id
+/media/movies/:id/refresh   POST  refresh movies from external api
+/media/movies/:id/similar   GET   get  similar movies
+
+/media/tv               GET   get all tv (40 per page)
+/media/tv/filters       GET   get available filters for tv
+/media/tv/:id           GET   get tv by id
+/media/tv/:id/refresh   POST  refresh tv from external api
+/media/tv/:id/similar   GET   get  similar tv
+
+/media/books               GET   get all books (40 per page)
+/media/books/filters       GET   get available filters for books
+/media/books/:id           GET   get books by id
+/media/books/:id/refresh   POST  refresh books from external api
+/media/books/:id/similar   GET   get  similar books
+
+/media/games               GET   get all games (40 per page)
+/media/games/filters       GET   get available filters for games
+/media/games/:id           GET   get games by id
+/media/games/:id/refresh   POST  refresh games from external api
+/media/games/:id/similar   GET   get  similar games
+
+/media/music               GET   get all music (40 per page)
+/media/music/filters       GET   get available filters for music
+/media/music/:id           GET   get music by id
+/media/music/:id/refresh   POST  refresh music from external api
+/media/music/:id/similar   GET   get  similar music
+
+/media/chracters          GET   get all characters (40 per page)
+/media/chracters/filters  GET   get available filters for characters
+/media/characters/:id     GET   get character by id
+
+/media/people             GET   get all people (40 per page)
+/media/people/filters       GET   get available filters for people
+/media/people/:id         GET   get people by id
+
+/media/studios            GET   get all studios (40 per page)
+/media/studios/filters       GET   get available filters for studios
+/media/studios/:id        GET   get studios by id
+
+/media/calendar            GET   media release calendar
+
+
+
+/search/:type             POST  search media, web
+/search/suggestions   GET   get web search suggestions
+
+/search/history           GET   get search history
+/search/history           DELETE clear search history
+/search/history/:id       DELETE  delete search history item
+
+/search/settings          GET   get search settings
+/search/settings          PATCH   update search settings
+
+
+
+   GET     /friends/media/:mediaType/:id
+   POST    /friends/recommend
+   POST    /lists/export/share/:id
+   GET     /user/:username/lists/combined/stats
+   GET     /user/:username/lists/export
+   POST    /user/:username/lists/export
+   DELETE  /user/:username/lists/export
+   GET     /user/:username/lists/export/shares
+   POST    /user/:username/lists/import/fetch-remote
+   POST    /user/:username/lists/import
+
+
+ [IRIS-pass]
+   PATCH   /pass/vault/ciphers/:id/favorite
+   POST    /pass/vault/ciphers/:id/restore
+   GET     /pass/vault/ciphers/:id
+   PUT     /pass/vault/ciphers/:id
+   DELETE  /pass/vault/ciphers/:id
+   GET     /pass/vault/ciphers
+   POST    /pass/vault/ciphers
+   DELETE  /pass/vault/ciphers/trash/empty
+   GET     /pass/vault/export
+   PUT     /pass/vault/folders/:id
+   DELETE  /pass/vault/folders/:id
+   GET     /pass/vault/folders
+   POST    /pass/vault/folders
+   POST    /pass/vault/import
+   GET     /pass/vault/sync
+ [IRIS-servarr]
+   GET     /servarr/radarr/blocklist
+   DELETE  /servarr/radarr/blocklist
+   POST    /servarr/radarr/command
+   GET     /servarr/radarr/files
+   DELETE  /servarr/radarr/files
+   GET     /servarr/radarr/history
+   GET     /servarr/radarr/indexer
+   GET     /servarr/radarr/library
+   GET     /servarr/radarr/lookup
+   POST    /servarr/radarr/lookup
+   PUT     /servarr/radarr/manage
+   DELETE  /servarr/radarr/manage
+   GET     /servarr/radarr/manualimport
+   POST    /servarr/radarr/manualimport
+   GET     /servarr/radarr/movies/:id
+   PUT     /servarr/radarr/movies/:id
+   DELETE  /servarr/radarr/movies/:id
+   GET     /servarr/radarr/movies/anime/api/v3/movie
+   GET     /servarr/radarr/movies/anime/api/v3/qualityprofile
+   GET     /servarr/radarr/movies/anime/api/v3/system/status
+   GET     /servarr/radarr/movies/anime
+   GET     /servarr/radarr/movies/api/v3/movie
+   GET     /servarr/radarr/movies/api/v3/qualityprofile
+   GET     /servarr/radarr/movies/api/v3/system/status
+   GET     /servarr/radarr/movies
+   GET     /servarr/radarr/queue
+   DELETE  /servarr/radarr/queue
+   GET     /servarr/radarr/release
+   POST    /servarr/radarr/release
+   GET     /servarr/radarr/rename
+   POST    /servarr/radarr/rename
+   GET     /servarr/radarr/wanted/cutoff
+   GET     /servarr/radarr/wanted/missing
+   GET     /servarr/sonarr/anime/api/v3/qualityprofile
+   GET     /servarr/sonarr/anime/api/v3/series
+   GET     /servarr/sonarr/anime/api/v3/system/status
+   GET     /servarr/sonarr/anime
+   GET     /servarr/sonarr/blocklist
+   DELETE  /servarr/sonarr/blocklist
+   POST    /servarr/sonarr/command
+   PUT     /servarr/sonarr/episode/:id
+   PUT     /servarr/sonarr/episode/monitor
+   GET     /servarr/sonarr/files
+   DELETE  /servarr/sonarr/files
+   GET     /servarr/sonarr/history
+   GET     /servarr/sonarr/indexer
+   GET     /servarr/sonarr/library
+   GET     /servarr/sonarr/lookup
+   POST    /servarr/sonarr/lookup
+   PUT     /servarr/sonarr/manage
+   DELETE  /servarr/sonarr/manage
+   GET     /servarr/sonarr/manualimport
+   POST    /servarr/sonarr/manualimport
+   GET     /servarr/sonarr/queue
+   DELETE  /servarr/sonarr/queue
+   GET     /servarr/sonarr/release
+   POST    /servarr/sonarr/release
+   GET     /servarr/sonarr/rename
+   POST    /servarr/sonarr/rename
+   GET     /servarr/sonarr/series/:id
+   PUT     /servarr/sonarr/series/:id
+   DELETE  /servarr/sonarr/series/:id
+   GET     /servarr/sonarr/tv/api/v3/qualityprofile
+   GET     /servarr/sonarr/tv/api/v3/series
+   GET     /servarr/sonarr/tv/api/v3/system/status
+   GET     /servarr/sonarr/tv
+   GET     /servarr/sonarr/wanted/cutoff
+   GET     /servarr/sonarr/wanted/missing
+ [IRIS-social]
+   DELETE  /lists/:username/:mediaType/activity/:id
+   GET     /lists/:username/:mediaType/activity
+   POST    /lists/:username/:mediaType/comments/:id/reply
+   PUT     /lists/:username/:mediaType/comments/:id/reply
+   DELETE  /lists/:username/:mediaType/comments/:id/reply
+   DELETE  /lists/:username/:mediaType/comments/:id
+   GET     /lists/:username/:mediaType/comments
+   POST    /lists/:username/:mediaType/comments
+   DELETE  /recommendations/:id
+   POST    /recommendations/:id/vote
+   GET     /recommendations/:type/:id
+   POST    /recommendations
+   GET     /reviews/:type/:id
+   POST    /reviews/:type/:id
+   DELETE  /reviews/:type/:id
+   PATCH   /reviews/:type/:id
+   POST    /reviews/:type/:id/vote
+   GET     /user/:username/reviews
+
+
+
+
+
+
+   POST    /oauth/apps/:id/regenerate-secret
+   GET     /oauth/apps/:id
+   PUT     /oauth/apps/:id
+   DELETE  /oauth/apps/:id
+   GET     /oauth/apps
+   POST    /oauth/apps
+   DELETE  /oauth/authorizations/:id
+   GET     /oauth/authorizations
+   GET     /oauth/authorize
+   POST    /oauth/authorize
+   POST    /oauth/introspect
+   POST    /oauth/register
+   POST    /oauth/revoke
+   POST    /oauth/token
+   GET     /oauth/userinfo
+
+
+REMOVED routes  (features need to be removed too)
+   PATCH   /friends/:id
