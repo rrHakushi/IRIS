@@ -3,9 +3,9 @@ import { Elysia, t } from 'elysia'
 import { openapi } from '@elysia/openapi'
 import fs from 'node:fs'
 import path from 'node:path'
-import { controllers, isElysiaInstance, scanFiles } from '../src/plugins/controllers'
+import { controllers, isElysiaInstance, scanFiles } from '../../src/plugins/controllers'
 
-const FIXTURES_DIR = path.resolve(import.meta.dirname, './fixtures/controllers')
+const FIXTURES_DIR = path.resolve(import.meta.dirname, '../fixtures/controllers')
 
 describe('Controllers Autoload Plugin', () => {
   beforeEach(() => {
@@ -57,21 +57,25 @@ describe('Controllers Autoload Plugin', () => {
     expect(files.some((f) => f.includes('admin.ctrl.ts'))).toBe(true)
   })
 
-  it('auto-registers existing project controllers (auth.ctrl.ts)', async () => {
+  it('auto-registers existing project controllers (carina/auth.ctrl.ts)', async () => {
     const app = new Elysia({ strictPath: true }).use(
       controllers({
-        dir: path.resolve(import.meta.dirname, '../src/api/controllers'),
+        dir: path.resolve(import.meta.dirname, '../../src/api/controllers'),
         verbose: false,
       })
     )
 
-    // Route /auth/sign-in should be mounted
+    // Route /carina/auth/login should be mounted
     const paths = app.routes.map((r) => `${r.method} ${r.path}`)
-    expect(paths).toContain('POST /auth/sign-in')
+    expect(paths).toContain('POST /carina/auth/login')
+    expect(paths).toContain('POST /carina/auth/register')
+    expect(paths).toContain('POST /carina/auth/password/change')
+    expect(paths).toContain('POST /carina/auth/password/forgot')
+    expect(paths).toContain('POST /carina/auth/password/reset')
 
     // Calling the endpoint validates body
     const res = await app.handle(
-      new Request('http://localhost/auth/sign-in', {
+      new Request('http://localhost/carina/auth/login', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ email: 'bad' }),

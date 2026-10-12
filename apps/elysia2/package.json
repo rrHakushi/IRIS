@@ -5,7 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "dev": "dotenvx run -f ../../.env -- bun --watch src/index.ts",
-    "build": "dotenv run -f ../../.env -- bun build --compile --minify-whitespace --minify-syntax --target bun-linux-x64 --outfile server src/index.ts",
+    "build": "dotenvx run -f ../../.env -- bun build --compile --minify-whitespace --minify-syntax --target bun-linux-x64 --outfile server src/index.ts",
     "start": "./server"
   },
   "keywords": [],
@@ -13,8 +13,20 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@IRIS/cache": "workspace:*",
+    "@IRIS/connections": "workspace:*",
+    "@IRIS/database": "workspace:*",
+    "@IRIS/permissions": "workspace:*",
+    "@IRIS/shared": "workspace:*",
     "@Iris/logger": "workspace:*",
+    "@aws-sdk/client-s3": "^3.1149.0",
     "@elysia/openapi": "^2.0.0-beta.4",
-    "elysia": "^2.0.0-beta.29"
+    "@noble/post-quantum": "^0.7.1",
+    "@simplewebauthn/server": "^14.0.1",
+    "@types/qrcode": "^1.5.5",
+    "elysia": "^2.0.0-beta.29",
+    "next-auth": "^4.24.15",
+    "otplib": "^13.5.0",
+    "qrcode": "^1.5.4"
   }
 }

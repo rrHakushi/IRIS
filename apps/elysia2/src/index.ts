@@ -51,7 +51,7 @@ export const app = new Elysia({
             title: 'Internal Server Error',
             status: 500,
             code: 'internal-server-error',
-            detail: error.message,
+            detail: error instanceof Error ? error.message : String(error),
         }
     })
 

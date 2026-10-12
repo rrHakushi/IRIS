@@ -26,8 +26,8 @@ export interface HttpErrorOptions {
 export class HttpError<Status extends number = number> extends ElysiaError<Status> {
     override status: Status
     override response: string
-    override problemType: string
-    override problemTitle: string
+    problemType: string
+    problemTitle: string
     readonly code: string
     readonly title: string
     readonly instance?: string
