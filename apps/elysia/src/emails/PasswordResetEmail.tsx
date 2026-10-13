@@ -1,4 +1,4 @@
-import React from "react";
+import React from "react"
 import {
   Html,
   Head,
@@ -10,12 +10,12 @@ import {
   Button,
   Hr,
   Preview,
-} from "@react-email/components";
+} from "@react-email/components"
 
 export interface PasswordResetEmailProps {
-  resetUrl: string;
-  validityMinutes?: number;
-  appName?: string;
+  resetUrl: string
+  validityMinutes?: number
+  appName?: string
 }
 
 export const PasswordResetEmail: React.FC<PasswordResetEmailProps> = ({
@@ -80,10 +80,10 @@ export const PasswordResetEmail: React.FC<PasswordResetEmailProps> = ({
         </Container>
       </Body>
     </Html>
-  );
-};
+  )
+}
 
-export default PasswordResetEmail;
+export default PasswordResetEmail
 
 // --- Modern Dark-Themed Styles ---
 const main: React.CSSProperties = {
@@ -91,18 +91,18 @@ const main: React.CSSProperties = {
   fontFamily:
     "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
   padding: "40px 16px",
-};
+}
 
 const container: React.CSSProperties = {
   maxWidth: "520px",
   margin: "0 auto",
   backgroundColor: "#09090b",
-};
+}
 
 const headerSection: React.CSSProperties = {
   textAlign: "center",
   marginBottom: "28px",
-};
+}
 
 const brandHeading: React.CSSProperties = {
   color: "#ffffff",
@@ -111,7 +111,7 @@ const brandHeading: React.CSSProperties = {
   letterSpacing: "0.15em",
   textTransform: "uppercase",
   margin: "0 0 4px 0",
-};
+}
 
 const brandSubheading: React.CSSProperties = {
   color: "#a1a1aa",
@@ -120,7 +120,7 @@ const brandSubheading: React.CSSProperties = {
   letterSpacing: "0.2em",
   textTransform: "uppercase",
   margin: 0,
-};
+}
 
 const cardSection: React.CSSProperties = {
   backgroundColor: "#18181b",
@@ -129,26 +129,26 @@ const cardSection: React.CSSProperties = {
   padding: "32px 28px",
   textAlign: "center",
   marginBottom: "20px",
-};
+}
 
 const cardHeading: React.CSSProperties = {
   color: "#ffffff",
   fontSize: "18px",
   fontWeight: 700,
   margin: "0 0 12px 0",
-};
+}
 
 const cardText: React.CSSProperties = {
   color: "#a1a1aa",
   fontSize: "14px",
   lineHeight: "1.6",
   margin: "0 0 24px 0",
-};
+}
 
 const buttonWrapper: React.CSSProperties = {
   margin: "0 auto 20px auto",
   textAlign: "center",
-};
+}
 
 const resetButton: React.CSSProperties = {
   backgroundColor: "#38bdf8",
@@ -159,13 +159,13 @@ const resetButton: React.CSSProperties = {
   padding: "14px 28px",
   textDecoration: "none",
   display: "inline-block",
-};
+}
 
 const expiryText: React.CSSProperties = {
   color: "#71717a",
   fontSize: "12px",
   margin: 0,
-};
+}
 
 const fallbackSection: React.CSSProperties = {
   backgroundColor: "#111113",
@@ -173,13 +173,13 @@ const fallbackSection: React.CSSProperties = {
   borderRadius: "8px",
   padding: "14px 16px",
   marginBottom: "24px",
-};
+}
 
 const fallbackText: React.CSSProperties = {
   color: "#71717a",
   fontSize: "11px",
   margin: "0 0 6px 0",
-};
+}
 
 const urlText: React.CSSProperties = {
   color: "#38bdf8",
@@ -188,27 +188,27 @@ const urlText: React.CSSProperties = {
   margin: 0,
   fontFamily:
     "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-};
+}
 
 const footerSection: React.CSSProperties = {
   padding: "0 8px",
-};
+}
 
 const noticeText: React.CSSProperties = {
   color: "#71717a",
   fontSize: "12px",
   lineHeight: "1.6",
   margin: "0 0 16px 0",
-};
+}
 
 const divider: React.CSSProperties = {
   borderColor: "#27272a",
   margin: "16px 0",
-};
+}
 
 const copyrightText: React.CSSProperties = {
   color: "#52525b",
   fontSize: "11px",
   textAlign: "center",
   margin: 0,
-};
+}

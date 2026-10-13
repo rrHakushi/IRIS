@@ -1,52 +1,32 @@
-# ==========================================
-# Base Stage
-# ==========================================
-FROM oven/bun:1-alpine AS base
+FROM oven/bun AS build
+
 WORKDIR /app
 
-# ==========================================
-# Prune Stage (Turborepo)
-# ==========================================
-FROM base AS pruner
-RUN apk add --no-cache libc6-compat nodejs npm
-WORKDIR /app
-RUN npm install -g turbo@^2
-COPY . .
-RUN turbo prune @IRIS/elysia --docker --use-gitignore=false
+# Cache packages installation
+COPY package.json package.json
+COPY bun.lock bun.lock
 
-# ==========================================
-# Builder Stage
-# ==========================================
-FROM base AS builder
-RUN apk add --no-cache libc6-compat openssl
-WORKDIR /app
-
-# Install dependencies from lockfile
-COPY --from=pruner /app/out/json/ .
 RUN bun install
 
-# Copy full source and build
-COPY --from=pruner /app/out/full/ .
-RUN bun --filter @IRIS/elysia run build || true
-
-# ==========================================
-# Production Runner Stage
-# ==========================================
-FROM base AS runner
-RUN apk add --no-cache libc6-compat curl
-WORKDIR /app
+COPY ./src ./src
 
 ENV NODE_ENV=production
-ENV PORT=4000
 
-# Run as non-root unprivileged bun user
-USER bun
+RUN bun build \
+	--compile \
+	--minify-whitespace \
+	--minify-syntax \
+	--outfile server \
+	src/index.ts
 
-COPY --from=builder --chown=bun:bun /app ./
+FROM gcr.io/distroless/base
+
+WORKDIR /app
+
+COPY --from=build /app/server server
+
+ENV NODE_ENV=production
+
+CMD ["./server"]
 
 EXPOSE 4000
-
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:${PORT:-4000}/health || exit 1
-
-CMD ["bun", "run", "apps/elysia/src/index.ts"]

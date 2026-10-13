@@ -1,12 +1,22 @@
 import { createHash } from "node:crypto"
-import { Elysia } from "elysia"
-import type { Context } from "../router/types"
+import { Elysia, type Context } from "elysia"
+import type { Session } from "./session"
 
 const DEFAULT_CAPACITY = 100
 const DEFAULT_DURATION = 60_000
 const DEFAULT_COST = 1
 const DEFAULT_IP = "127.0.0.1"
 const CLEANUP_INTERVAL_MS = 60_000
+
+export interface RateLimitContext {
+  request?: Request
+  session?: Session | { getUser?: () => { id: string } | null; user?: { id: string } | null; apiKeyId?: string | null }
+  set?: {
+    status?: number | string
+    headers?: Record<string, string>
+  }
+  [key: string]: unknown
+}
 
 /**
  * Extracts the real client IP address from incoming request headers,
@@ -43,9 +53,9 @@ export function getClientIp(request?: Request): string {
  * @param ctx - Request route execution context
  * @returns Unique string identifying the client quota bucket
  */
-export function resolveRateLimitKey(ctx?: Context): string {
+export function resolveRateLimitKey(ctx?: RateLimitContext): string {
   const request = ctx?.request
-  const session = ctx?.session
+  const session = ctx?.session as any
 
   // Priority 1: Authenticated User ID
   const userId = session?.getUser?.()?.id ?? session?.user?.id
@@ -134,17 +144,17 @@ export function createRateLimiter(config: RateLimitConfig = {}) {
   }
 
   return (
-    ctx: Context
-  ): { error: string; message: string; status: number } | null => {
+    ctx: RateLimitContext | Context
+  ): RateLimitErrorResponse | null => {
     const set = ctx?.set
 
-    if (config.skip && config.skip(ctx)) {
+    if (config.skip && config.skip(ctx as any)) {
       return null
     }
 
     const key = config.keyGenerator
-      ? config.keyGenerator(ctx)
-      : resolveRateLimitKey(ctx)
+      ? config.keyGenerator(ctx as any)
+      : resolveRateLimitKey(ctx as any)
 
     const now = Date.now()
     let record = store.get(key)
@@ -228,12 +238,18 @@ export function rateLimiter(options: RateLimitConfig = {}) {
   return new Elysia({ name: "iris-rate-limiter" }).beforeHandle(
     "global",
     (ctx) => {
-      const errorResponse = limiter(ctx as unknown as Context)
+      const errorResponse = limiter(ctx as unknown as RateLimitContext)
       if (errorResponse) {
         return errorResponse
       }
     }
   )
+}
+
+export interface RateLimitErrorResponse {
+  error: string
+  message: string
+  status: number
 }
 
 export interface RateLimitConfig {
@@ -276,12 +292,12 @@ export interface RateLimitConfig {
   /**
    * Optional custom key generator to derive a unique rate-limit key.
    */
-  keyGenerator?: (ctx: Context) => string
+  keyGenerator?: (ctx: RateLimitContext) => string
 
   /**
    * Optional predicate function to skip rate limiting for specific requests.
    */
-  skip?: (ctx: Context) => boolean
+  skip?: (ctx: RateLimitContext) => boolean
 
   [key: string]: unknown
 }

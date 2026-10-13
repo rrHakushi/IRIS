@@ -19,7 +19,7 @@ export const cache = new CacheManager({
     ? Number(process.env.CACHE_DEFAULT_TTL)
     : 300,
   fallbackToMemory: true,
-  logger: true,
+  logger: false,
 })
 
 export type CacheInstance = typeof cache

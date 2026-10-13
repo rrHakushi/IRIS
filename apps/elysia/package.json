@@ -1,71 +1,51 @@
 {
-  "name": "@IRIS/elysia-old",
+  "name": "@IRIS/elysia",
   "version": "0.0.1",
-  "private": true,
-  "type": "module",
-  "main": "src/index.ts",
-  "module": "src/index.ts",
-  "types": "src/index.ts",
+  "description": "",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "exports": {
     ".": {
       "types": "./src/index.ts",
       "import": "./src/index.ts",
       "default": "./src/index.ts"
-    },
-    "./router": {
-      "types": "./src/router/index.ts",
-      "import": "./src/router/index.ts",
-      "default": "./src/router/index.ts"
     }
   },
   "scripts": {
-    "dev": "dotenvx run -f ../../.env -- bun scripts/dev.ts",
-    "start": "bun run scripts/generate-manifests.ts && dotenvx run -f ../../.env -- bun --no-warnings run src/index.ts",
-    "build": "bun run scripts/generate-manifests.ts && echo \"@IRIS/elysia build completed\"",
-    "lint": "eslint",
-    "typecheck": "tsc --noEmit",
-    "format": "prettier --write \"src/**/*.{ts,js,json}\"",
-    "route:create": "bun run scripts/create-route.ts",
-    "route:delete": "bun run scripts/delete-route.ts",
-    "route:sync": "bun run scripts/generate-manifests.ts",
-    "generate": "bun run scripts/generate-manifests.ts",
-    "character:dedup": "dotenvx run -f ../../.env -- bun scripts/deduplicate-characters.ts",
-    "test": "dotenvx run -f ../../.env -- bun test",
-    "test:oauth": "dotenvx run -f ../../.env -- bun test --preload ./test/preload.ts test/oauth.test.ts"
+    "dev": "dotenvx run -f ../../.env -- bun --watch src/index.ts",
+    "build": "dotenvx run -f ../../.env -- bun build --compile --minify-whitespace --minify-syntax --target bun-linux-x64 --outfile server src/index.ts",
+    "start": "./server"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
   "dependencies": {
     "@IRIS/cache": "workspace:*",
     "@IRIS/connections": "workspace:*",
     "@IRIS/database": "workspace:*",
     "@IRIS/permissions": "workspace:*",
     "@IRIS/shared": "workspace:*",
-    "@aws-sdk/client-s3": "^3.1127.0",
-    "@elysiajs/bearer": "^1.4.4",
-    "@noble/ciphers": "^2.4.0",
-    "@noble/hashes": "^2.4.0",
+    "@Iris/logger": "workspace:*",
+    "@aws-sdk/client-s3": "^3.1149.0",
+    "@elysia/openapi": "^2.0.0-beta.4",
     "@noble/post-quantum": "^0.7.1",
     "@react-email/components": "^1.0.12",
     "@react-email/render": "^2.1.0",
     "@simplewebauthn/server": "^14.0.1",
-    "elysia": "2.0.0-beta.6",
+    "@types/qrcode": "^1.5.5",
+    "bullmq": "^6.3.13",
+    "elysia": "^2.0.0-beta.29",
+    "ioredis": "^6.0.0",
     "next-auth": "^4.24.15",
-    "nodemailer": "^10.0.0",
+    "nodemailer": "^10.1.0",
     "otplib": "^13.5.0",
     "qrcode": "^1.5.4",
-    "react": "^19.2.8",
-    "rxjs": "^7.8.2"
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
   },
   "devDependencies": {
-    "@dotenvx/dotenvx": "^2.23.0",
-    "@types/bun": "latest",
-    "@types/node": "^26.4.1",
-    "@types/nodemailer": "^8.0.1",
-    "@types/qrcode": "^1.5.6",
-    "@types/react": "^19.2.18",
-    "@workspace/eslint-config": "workspace:*",
-    "@workspace/typescript-config": "workspace:*",
-    "eslint": "^10.10.0",
-    "prettier": "^3.9.6",
-    "typescript": "^7.0.2"
+    "@types/nodemailer": "^8.0.2",
+    "@types/react": "^19.3.0"
   }
 }
