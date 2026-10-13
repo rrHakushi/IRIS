@@ -1,0 +1,118 @@
+import {
+  generateAuthenticationOptions,
+  type AuthenticatorTransport,
+} from "@simplewebauthn/server"
+import { defineRoute, t } from "../../../../../router"
+
+export default defineRoute({
+  schema: {
+    body: t.Optional(
+      t.Object({
+        identifier: t.Optional(t.String()),
+      })
+    ),
+    response: {
+      200: t.Object({
+        challenge: t.String(),
+        rpId: t.Optional(t.String()),
+        allowCredentials: t.Optional(
+          t.Array(
+            t.Object({
+              id: t.String(),
+              type: t.Literal("public-key"),
+              transports: t.Optional(t.Array(t.String())),
+            })
+          )
+        ),
+        timeout: t.Optional(t.Number()),
+        userVerification: t.Optional(
+          t.Union([
+            t.Literal("required"),
+            t.Literal("preferred"),
+            t.Literal("discouraged"),
+          ])
+        ),
+      }),
+    },
+  },
+
+  async POST({ body, prisma, cache, request }) {
+    const originHeader =
+      request?.headers.get("origin") || request?.headers.get("referer")
+    let origin = process.env.NEXTAUTH_URL!
+    if (originHeader) {
+      try {
+        const u = new URL(originHeader)
+        origin = `${u.protocol}//${u.host}`
+      } catch {}
+    }
+
+    let rpID = "localhost"
+    try {
+      const hostname = new URL(origin).hostname
+      if (hostname === "localhost" || hostname === "127.0.0.1") {
+        rpID = "localhost"
+      } else if (process.env.RP_ID && process.env.RP_ID.trim()) {
+        rpID = process.env.RP_ID.trim()
+      } else {
+        rpID = hostname
+      }
+    } catch {
+      rpID = "localhost"
+    }
+
+    let allowCredentials:
+      | {
+          id: string
+          type: "public-key"
+          transports?: AuthenticatorTransport[]
+        }[]
+      | undefined = undefined
+
+    const bodyObj = body as { identifier?: string } | undefined
+    if (bodyObj?.identifier) {
+      const rawIdentifier = bodyObj.identifier.trim()
+      const lowerIdentifier = rawIdentifier.toLowerCase()
+
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [{ email: lowerIdentifier }, { username: rawIdentifier }],
+        },
+        include: { passkeys: true },
+      })
+
+      if (user && user.passkeys.length > 0) {
+        allowCredentials = user.passkeys.map((pk) => ({
+          id: pk.id,
+          type: "public-key" as const,
+          transports: pk.transports as AuthenticatorTransport[],
+        }))
+      }
+    }
+
+    const options = await generateAuthenticationOptions({
+      rpID,
+      allowCredentials,
+      userVerification: "preferred",
+    })
+
+    // Cache challenge for 5 minutes
+    await cache.set(
+      `auth:passkey-auth:${options.challenge}`,
+      options.challenge,
+      300
+    )
+
+    return {
+      challenge: options.challenge,
+      rpId: options.rpId ?? rpID,
+      allowCredentials: options.allowCredentials?.map((cred) => ({
+        id: cred.id,
+        type: "public-key" as const,
+        transports: cred.transports,
+      })),
+      timeout: options.timeout ?? 60000,
+      userVerification: options.userVerification,
+    }
+  },
+})
