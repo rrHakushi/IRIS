@@ -14,6 +14,7 @@ export const BorealisSearchModel = {
           t.Literal('manga'),
           t.Literal('movies'),
           t.Literal('tv'),
+          t.Literal('games'),
           t.Literal('music'),
           t.Literal('books'),
           t.Literal('characters'),
@@ -25,6 +26,9 @@ export const BorealisSearchModel = {
     ),
     page: t.Optional(t.Numeric({ default: 1, minimum: 1, description: 'Page number' })),
     limit: t.Optional(t.Numeric({ default: 20, minimum: 1, maximum: 50, description: 'Results per page' })),
+    external: t.Optional(
+      t.Boolean({ default: false, description: 'Whether to query external providers and enqueue fetch jobs' })
+    ),
   }),
 
   searchResponse: t.Object({

@@ -1,4 +1,6 @@
 import { prisma } from '@IRIS/database'
+import { BorealisExternalSearchServ } from './external-search.serv'
+import type { PreviewResult } from './syncer/media-preview.syncer'
 
 export interface SearchQuery {
   q: string
@@ -8,6 +10,7 @@ export interface SearchQuery {
     | 'manga'
     | 'movies'
     | 'tv'
+    | 'games'
     | 'music'
     | 'books'
     | 'characters'
@@ -15,6 +18,33 @@ export interface SearchQuery {
     | 'studios'
   page?: number
   limit?: number
+  external?: boolean | string
+}
+
+function mergeWithExternal<T extends { id: number }>(
+  items: T[],
+  externalStubs: PreviewResult[],
+  mediaType: string,
+  total: number
+) {
+  const externalIds = new Set(externalStubs.map((s) => s.id))
+  const results = items.map((x) => ({
+    ...x,
+    mediaType,
+    queuedForFetch:
+      externalIds.has(x.id) ||
+      (x as any).alUpdatedAt === null ||
+      (x as any).tvdbUpdatedAt === null,
+  }))
+  const existingIds = new Set(results.map((r) => r.id))
+  let addedCount = 0
+  for (const stub of externalStubs) {
+    if (!existingIds.has(stub.id)) {
+      results.push({ ...stub, mediaType, queuedForFetch: true } as any)
+      addedCount++
+    }
+  }
+  return { results, total: total + addedCount }
 }
 
 export class BorealisSearchServ {
@@ -26,6 +56,7 @@ export class BorealisSearchServ {
     const page = Math.max(1, Number(query.page ?? 1))
     const limit = Math.max(1, Math.min(50, Number(query.limit ?? 20)))
     const skip = (page - 1) * limit
+    const isExternal = query.external === true || query.external === 'true'
 
     if (!cleanQuery) {
       return {
@@ -40,6 +71,18 @@ export class BorealisSearchServ {
           hasMore: false,
         },
       }
+    }
+
+    let externalStubs: PreviewResult[] = []
+    if (
+      isExternal &&
+      ['anime', 'manga', 'movies', 'tv', 'games', 'books', 'music'].includes(category)
+    ) {
+      externalStubs = await BorealisExternalSearchServ.enqueueSearchFetch(
+        category,
+        cleanQuery,
+        limit
+      )
     }
 
     switch (category) {
@@ -70,11 +113,12 @@ export class BorealisSearchServ {
               seasonSeason: true,
               episodeCount: true,
               averageScore: true,
+              alUpdatedAt: true,
               genres: { select: { id: true, name: true } },
             },
           }),
         ])
-        const results = items.map((x) => ({ ...x, mediaType: 'anime' }))
+        const { results, total: combinedTotal } = mergeWithExternal(items, externalStubs, 'anime', total)
         return {
           success: true,
           category,
@@ -83,8 +127,8 @@ export class BorealisSearchServ {
           pagination: {
             page,
             limit,
-            total,
-            hasMore: skip + results.length < total,
+            total: combinedTotal,
+            hasMore: skip + results.length < combinedTotal,
           },
         }
       }
@@ -116,11 +160,12 @@ export class BorealisSearchServ {
               chapterCount: true,
               volumeCount: true,
               averageScore: true,
+              alUpdatedAt: true,
               genres: { select: { id: true, name: true } },
             },
           }),
         ])
-        const results = items.map((x) => ({ ...x, mediaType: 'manga' }))
+        const { results, total: combinedTotal } = mergeWithExternal(items, externalStubs, 'manga', total)
         return {
           success: true,
           category,
@@ -129,8 +174,8 @@ export class BorealisSearchServ {
           pagination: {
             page,
             limit,
-            total,
-            hasMore: skip + results.length < total,
+            total: combinedTotal,
+            hasMore: skip + results.length < combinedTotal,
           },
         }
       }
@@ -159,11 +204,13 @@ export class BorealisSearchServ {
               runtime: true,
               releaseDateYear: true,
               averageScore: true,
+              tvdbUpdatedAt: true,
               genres: { select: { id: true, name: true } },
             },
           }),
         ])
-        const results = items.map((x) => ({ ...x, duration: x.runtime, mediaType: 'movie' }))
+        const mappedItems = items.map((x) => ({ ...x, duration: x.runtime }))
+        const { results, total: combinedTotal } = mergeWithExternal(mappedItems, externalStubs, 'movie', total)
         return {
           success: true,
           category,
@@ -172,8 +219,8 @@ export class BorealisSearchServ {
           pagination: {
             page,
             limit,
-            total,
-            hasMore: skip + results.length < total,
+            total: combinedTotal,
+            hasMore: skip + results.length < combinedTotal,
           },
         }
       }
@@ -202,11 +249,13 @@ export class BorealisSearchServ {
               episodeCount: true,
               firstAiredYear: true,
               averageScore: true,
+              tvdbUpdatedAt: true,
               genres: { select: { id: true, name: true } },
             },
           }),
         ])
-        const results = items.map((x) => ({ ...x, releaseDateYear: x.firstAiredYear, mediaType: 'tv' }))
+        const mappedItems = items.map((x) => ({ ...x, releaseDateYear: x.firstAiredYear }))
+        const { results, total: combinedTotal } = mergeWithExternal(mappedItems, externalStubs, 'tv', total)
         return {
           success: true,
           category,
@@ -215,8 +264,50 @@ export class BorealisSearchServ {
           pagination: {
             page,
             limit,
-            total,
-            hasMore: skip + results.length < total,
+            total: combinedTotal,
+            hasMore: skip + results.length < combinedTotal,
+          },
+        }
+      }
+
+      case 'games': {
+        const where = {
+          OR: [
+            { titlePrimary: { contains: cleanQuery, mode: 'insensitive' as const } },
+            { titleSecondary: { contains: cleanQuery, mode: 'insensitive' as const } },
+          ],
+        }
+        const [total, items] = await Promise.all([
+          prisma.game.count({ where }),
+          prisma.game.findMany({
+            where,
+            skip,
+            take: limit,
+            select: {
+              id: true,
+              titlePrimary: true,
+              titleSecondary: true,
+              coverImage: true,
+              bannerImage: true,
+              platforms: true,
+              releaseDateYear: true,
+              averageScore: true,
+              igdbUpdatedAt: true,
+              genres: { select: { id: true, name: true } },
+            },
+          }),
+        ])
+        const { results, total: combinedTotal } = mergeWithExternal(items, externalStubs, 'game', total)
+        return {
+          success: true,
+          category,
+          query: cleanQuery,
+          results,
+          pagination: {
+            page,
+            limit,
+            total: combinedTotal,
+            hasMore: skip + results.length < combinedTotal,
           },
         }
       }
@@ -249,12 +340,13 @@ export class BorealisSearchServ {
             },
           }),
         ])
-        const results = items.map((x) => ({
+        const mappedItems = items.map((x) => ({
           ...x,
+          artist: x.artistName,
           albumTitle: x.album?.titlePrimary ?? null,
           durationMs: x.duration ? x.duration * 1000 : null,
-          mediaType: 'music',
         }))
+        const { results, total: combinedTotal } = mergeWithExternal(mappedItems, externalStubs, 'music', total)
         return {
           success: true,
           category,
@@ -263,8 +355,8 @@ export class BorealisSearchServ {
           pagination: {
             page,
             limit,
-            total,
-            hasMore: skip + results.length < total,
+            total: combinedTotal,
+            hasMore: skip + results.length < combinedTotal,
           },
         }
       }
@@ -295,7 +387,7 @@ export class BorealisSearchServ {
             },
           }),
         ])
-        const results = items.map((x) => ({ ...x, mediaType: 'book' }))
+        const { results, total: combinedTotal } = mergeWithExternal(items, externalStubs, 'book', total)
         return {
           success: true,
           category,
@@ -304,8 +396,8 @@ export class BorealisSearchServ {
           pagination: {
             page,
             limit,
-            total,
-            hasMore: skip + results.length < total,
+            total: combinedTotal,
+            hasMore: skip + results.length < combinedTotal,
           },
         }
       }

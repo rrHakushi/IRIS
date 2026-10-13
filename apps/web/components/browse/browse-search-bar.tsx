@@ -2,7 +2,14 @@
 
 import React, { useRef, useEffect, useState, useMemo } from "react"
 import { useTranslations } from "next-intl"
-import { IconSearch, IconX, IconLoader2, IconTag } from "@tabler/icons-react"
+import {
+  IconSearch,
+  IconX,
+  IconLoader2,
+  IconTag,
+  IconWorldDownload,
+  IconCheck,
+} from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { Input } from "@workspace/ui/components/input"
 import { Button } from "@workspace/ui/components/button"
@@ -23,6 +30,10 @@ interface BrowseSearchBarProps {
   onSwitchCategory?: (category: BrowseCategory) => void
   onSubmit?: (e: React.FormEvent) => void
   isLoading?: boolean
+  showExternalButton?: boolean
+  isSearchingExternal?: boolean
+  isExternalDisabled?: boolean
+  onSearchExternal?: () => void
   className?: string
 }
 
@@ -34,6 +45,10 @@ export function BrowseSearchBar({
   onSwitchCategory,
   onSubmit,
   isLoading = false,
+  showExternalButton = false,
+  isSearchingExternal = false,
+  isExternalDisabled = false,
+  onSearchExternal,
   className,
 }: BrowseSearchBarProps) {
   const t = useTranslations("browse")
@@ -193,11 +208,47 @@ export function BrowseSearchBar({
           placeholder={placeholderText}
           autoComplete="off"
           spellCheck={false}
-          className="h-11 w-full rounded-2xl border border-input/60 bg-muted/40 ps-10 pe-10 text-sm text-foreground transition-all duration-200 placeholder:text-muted-foreground focus-visible:border-primary focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/20"
+          className={cn(
+            "h-11 w-full rounded-2xl border border-input/60 bg-muted/40 ps-10 text-sm text-foreground transition-all duration-200 placeholder:text-muted-foreground focus-visible:border-primary focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/20",
+            showExternalButton && value
+              ? "pe-18"
+              : showExternalButton || value
+                ? "pe-10"
+                : "pe-4"
+          )}
         />
 
-        {/* Clear Button (Shadcn Button) */}
-        <div className="absolute inset-y-0 end-0 z-10 flex items-center pe-2">
+        {/* Right Action Container: External Search Button & Clear Button */}
+        <div className="absolute inset-y-0 end-0 z-10 flex items-center gap-1 pe-2">
+          {showExternalButton && (
+            <Button
+              type="button"
+              variant={isExternalDisabled ? "outline" : "ghost"}
+              size="icon-xs"
+              isDisabled={isSearchingExternal || isExternalDisabled}
+              onPress={() => onSearchExternal?.()}
+              aria-label={
+                isExternalDisabled
+                  ? "External sources already fetched"
+                  : "Search external sources"
+              }
+              className={cn(
+                "size-7 rounded-lg transition-all",
+                isExternalDisabled
+                  ? "border-primary/40 text-primary opacity-80"
+                  : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+              )}
+            >
+              {isSearchingExternal ? (
+                <IconLoader2 className="size-4 animate-spin text-primary" aria-hidden="true" />
+              ) : isExternalDisabled ? (
+                <IconCheck className="size-4 text-primary" aria-hidden="true" />
+              ) : (
+                <IconWorldDownload className="size-4" aria-hidden="true" />
+              )}
+            </Button>
+          )}
+
           {value && (
             <Button
               type="button"

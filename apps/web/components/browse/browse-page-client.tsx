@@ -61,6 +61,8 @@ export function BrowsePageClient() {
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery.trim())
   const [searchResults, setSearchResults] = useState<SearchResultItem[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [isSearchingExternal, setIsSearchingExternal] = useState(false)
+  const [hasSearchedExternal, setHasSearchedExternal] = useState(false)
   const [, startTransition] = useTransition()
 
   // Browse history hook
@@ -113,6 +115,12 @@ export function BrowsePageClient() {
     },
     [pathname, router, searchParams]
   )
+
+  // Reset external search state when debounced query changes
+  useEffect(() => {
+    setHasSearchedExternal(false)
+    setIsSearchingExternal(false)
+  }, [debouncedQuery])
 
   // Debounce search query changes (500ms)
   useEffect(() => {
@@ -219,6 +227,48 @@ export function BrowsePageClient() {
     musicType,
   ])
 
+  const handleSearchExternal = useCallback(async () => {
+    if (
+      !debouncedQuery ||
+      debouncedQuery.length < 2 ||
+      isSearchingExternal ||
+      hasSearchedExternal
+    ) {
+      return
+    }
+
+    setIsSearchingExternal(true)
+    try {
+      const items = await searchCategoryMedia(
+        activeCategory,
+        debouncedQuery,
+        undefined,
+        mediaTitlePreference,
+        activeCategory === "music" ? musicType : undefined,
+        true
+      )
+
+      startTransition(() => {
+        setSearchResults((prev) => {
+          const existingIds = new Set(prev.map((r) => r.id))
+          const newItems = items.filter((item) => !existingIds.has(item.id))
+          return [...prev, ...newItems]
+        })
+        setHasSearchedExternal(true)
+        setIsSearchingExternal(false)
+      })
+    } catch {
+      setIsSearchingExternal(false)
+    }
+  }, [
+    activeCategory,
+    debouncedQuery,
+    isSearchingExternal,
+    hasSearchedExternal,
+    mediaTitlePreference,
+    musicType,
+  ])
+
   const handleQuerySelect = (query: string) => {
     setSearchQuery(query)
   }
@@ -227,6 +277,8 @@ export function BrowsePageClient() {
     setSearchQuery("")
     setDebouncedQuery("")
     setSearchResults([])
+    setHasSearchedExternal(false)
+    setIsSearchingExternal(false)
     const params = new URLSearchParams(searchParams.toString())
     params.delete("q")
     router.replace(`${pathname}?${params.toString()}`, { scroll: false })
@@ -260,6 +312,22 @@ export function BrowsePageClient() {
             onClear={handleClear}
             onSwitchCategory={handleSelectCategory}
             isLoading={isSearching}
+            showExternalButton={
+              !isSearching &&
+              debouncedQuery.length >= 2 &&
+              [
+                "anime",
+                "manga",
+                "movies",
+                "tv",
+                "games",
+                "books",
+                "music",
+              ].includes(activeCategory)
+            }
+            isSearchingExternal={isSearchingExternal}
+            isExternalDisabled={hasSearchedExternal}
+            onSearchExternal={handleSearchExternal}
           />
 
           {/* Music-specific sub-type selector: All, Tracks, Albums */}

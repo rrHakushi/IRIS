@@ -1,6 +1,6 @@
 import { Queue, type Job, type JobsOptions } from 'bullmq'
 import { prisma } from '@IRIS/database'
-import { LogFactory } from '@Iris/logger'
+import { LogFactory, c } from '@Iris/logger'
 import { getRedisConnectionOptions } from '../email/queue'
 import {
   getMediaWorker,
@@ -70,8 +70,12 @@ export function getMediaQueue(): Queue<MediaJobData> {
       },
     })
 
+    logger.info(
+      `${c.cyan('🚀 [MediaQueue Initialized]')}: Connected to Redis queue "${c.bold(MEDIA_QUEUE_NAME)}"`
+    )
+
     mediaQueueInstance.on('error', (err) => {
-      logger.warn(`Media Queue error: ${err.message}`)
+      logger.warn(`${c.red('⚠️ [Media Queue Error]')}: ${err.message}`)
     })
   }
 
@@ -108,7 +112,9 @@ export async function syncActiveMedia(): Promise<ActiveMediaSyncResult> {
     total: 0,
   }
 
-  logger.info('Starting weekly active media synchronization scan (depth: 0)...')
+  logger.info(
+    `${c.blue('🔄 [SyncScan]')} Starting weekly active media synchronization scan (depth: 0)...`
+  )
   const weekKey = getWeekIdentifier()
 
   // 1. Anime (RELEASING, HIATUS, NOT_YET_RELEASED, or nextAiringAt has arrived)
@@ -140,6 +146,7 @@ export async function syncActiveMedia(): Promise<ActiveMediaSyncResult> {
       }).catch(() => { })
       result.anime++
     }
+    logger.info(`${c.cyan('Anime Scan')}: enqueued ${c.bold(String(result.anime))} active items`)
   } catch (err: any) {
     logger.error(`Error scanning active anime: ${err?.message || err}`)
   }
@@ -167,6 +174,7 @@ export async function syncActiveMedia(): Promise<ActiveMediaSyncResult> {
       }).catch(() => { })
       result.manga++
     }
+    logger.info(`${c.cyan('Manga Scan')}: enqueued ${c.bold(String(result.manga))} active items`)
   } catch (err: any) {
     logger.error(`Error scanning active manga: ${err?.message || err}`)
   }
@@ -194,6 +202,7 @@ export async function syncActiveMedia(): Promise<ActiveMediaSyncResult> {
       }).catch(() => { })
       result.tv++
     }
+    logger.info(`${c.cyan('TV Scan')}: enqueued ${c.bold(String(result.tv))} active items`)
   } catch (err: any) {
     logger.error(`Error scanning active TV series: ${err?.message || err}`)
   }
@@ -221,6 +230,7 @@ export async function syncActiveMedia(): Promise<ActiveMediaSyncResult> {
       }).catch(() => { })
       result.movie++
     }
+    logger.info(`${c.cyan('Movies Scan')}: enqueued ${c.bold(String(result.movie))} active items`)
   } catch (err: any) {
     logger.error(`Error scanning active movies: ${err?.message || err}`)
   }
@@ -248,6 +258,7 @@ export async function syncActiveMedia(): Promise<ActiveMediaSyncResult> {
       }).catch(() => { })
       result.book++
     }
+    logger.info(`${c.cyan('Books Scan')}: enqueued ${c.bold(String(result.book))} active items`)
   } catch (err: any) {
     logger.error(`Error scanning active books: ${err?.message || err}`)
   }
@@ -277,6 +288,7 @@ export async function syncActiveMedia(): Promise<ActiveMediaSyncResult> {
       }).catch(() => { })
       result.game++
     }
+    logger.info(`${c.cyan('Games Scan')}: enqueued ${c.bold(String(result.game))} active items`)
   } catch (err: any) {
     logger.error(`Error scanning active games: ${err?.message || err}`)
   }
@@ -290,8 +302,8 @@ export async function syncActiveMedia(): Promise<ActiveMediaSyncResult> {
     result.game
 
   logger.info(
-    `Completed weekly active media scan: enqueued ${result.total} items (depth: 0) ` +
-    `(Anime: ${result.anime}, Manga: ${result.manga}, TV: ${result.tv}, Movies: ${result.movie}, Books: ${result.book}, Games: ${result.game})`
+    `${c.green(c.bold('✅ [SyncScan Complete]'))}: Enqueued ${c.bold(String(result.total))} active items ` +
+    `(${c.cyan(`Anime: ${result.anime}`)}, ${c.cyan(`Manga: ${result.manga}`)}, ${c.cyan(`TV: ${result.tv}`)}, ${c.cyan(`Movies: ${result.movie}`)}, ${c.cyan(`Books: ${result.book}`)}, ${c.cyan(`Games: ${result.game}`)})`
   )
 
   return result
@@ -327,6 +339,9 @@ export const MediaQueueManager = {
     }
   ): Promise<Job<MediaJobData> | null> {
     if (isShuttingDown) {
+      logger.warn(
+        `${c.yellow('⚠️ [Queue Shutdown]')}: Skipping enqueue for ${mediaType} #${mediaId} because queue is shutting down`
+      )
       return null
     }
 
@@ -342,16 +357,23 @@ export const MediaQueueManager = {
       timestamp: Date.now(),
     }
 
+    const deterministicJobId = options?.jobId ?? `${jobName}-${Date.now()}`
     const opts: JobsOptions = {
       priority: jobData.priority,
-      jobId: options?.jobId ?? `${jobName}-${Date.now()}`,
+      jobId: deterministicJobId,
     }
 
     try {
       const queue = this.getQueue()
-      return await queue.add(jobName, jobData, opts)
+      const job = await queue.add(jobName, jobData, opts)
+      logger.info(
+        `${c.yellow('📥 [Enqueued]')}: ${c.cyan(c.bold(deterministicJobId))} | ${c.bold(mediaType)} #${mediaId} | Priority: ${jobData.priority} | Depth: ${jobData.depth} | External ID: ${jobData.externalId ?? 'none'} | Trigger: ${c.dim(jobData.triggeredBy || 'manual')}`
+      )
+      return job
     } catch (err: any) {
-      logger.warn(`Failed to enqueue media update for ${mediaType} ${mediaId}: ${err?.message || err}`)
+      logger.warn(
+        `${c.red('❌ [Queue Error]')}: Failed to enqueue media update for ${mediaType} #${mediaId} (${deterministicJobId}): ${err?.message || err}`
+      )
       return null
     }
   },
@@ -367,8 +389,9 @@ export const MediaQueueManager = {
 
     try {
       const queue = this.getQueue()
+      let res: any
       if (typeof (queue as any).upsertJobScheduler === 'function') {
-        return await (queue as any).upsertJobScheduler(
+        res = await (queue as any).upsertJobScheduler(
           'weekly-active-media-sync-cron',
           { pattern: '0 0 * * 0' },
           {
@@ -380,7 +403,7 @@ export const MediaQueueManager = {
           }
         )
       } else {
-        return await queue.add(
+        res = await queue.add(
           'weekly-active-media-sync',
           {
             type: 'weekly-active-sync',
@@ -391,8 +414,14 @@ export const MediaQueueManager = {
           }
         )
       }
+      logger.info(
+        `${c.green('📅 [Schedule Cron]')}: Weekly active media sync scheduled (pattern: "0 0 * * 0")`
+      )
+      return res
     } catch (err: any) {
-      logger.warn(`Failed to register weekly active media sync cron: ${err?.message || err}`)
+      logger.warn(
+        `${c.red('⚠️ [Schedule Error]')}: Failed to register weekly active media sync cron: ${err?.message || err}`
+      )
       return null
     }
   },
@@ -416,7 +445,7 @@ export const MediaQueueManager = {
         queue.getDelayedCount(),
       ])
 
-      return {
+      const status = {
         queue: MEDIA_QUEUE_NAME,
         waiting,
         active,
@@ -425,7 +454,12 @@ export const MediaQueueManager = {
         delayed,
         total: waiting + active + delayed,
       }
+      logger.info(
+        `${c.cyan('📊 [Queue Status]')}: ${c.bold(MEDIA_QUEUE_NAME)} -> Waiting: ${waiting}, Active: ${active}, Delayed: ${delayed}, Completed: ${completed}, Failed: ${failed}`
+      )
+      return status
     } catch (err: any) {
+      logger.warn(`${c.red('⚠️ [Queue Status Error]')}: ${err?.message || String(err)}`)
       return {
         queue: MEDIA_QUEUE_NAME,
         error: err?.message || String(err),
@@ -440,9 +474,9 @@ export const MediaQueueManager = {
     try {
       getMediaWorker()
       await this.scheduleWeeklyActiveMediaSync()
-      logger.info('Media worker initialized and weekly Sunday midnight cron registered')
+      logger.info(`${c.green('✨ [Worker & Cron Ready]')}: Media worker initialized and weekly Sunday midnight cron registered`)
     } catch (err: any) {
-      logger.warn(`Media worker/cron startup notice: ${err?.message || err}`)
+      logger.warn(`${c.yellow('⚠️ [Startup Notice]')}: Media worker/cron startup notice: ${err?.message || err}`)
     }
   },
 
@@ -451,6 +485,7 @@ export const MediaQueueManager = {
    */
   async shutdown() {
     isShuttingDown = true
+    logger.info(`${c.yellow('🛑 [Queue Shutdown]')}: Closing Media worker and BullMQ queue...`)
     try {
       await closeMediaWorker()
     } catch { }
@@ -459,5 +494,6 @@ export const MediaQueueManager = {
       mediaQueueInstance = null
     }
     isShuttingDown = false
+    logger.info(`${c.green('✅ [Queue Shutdown]')}: Media queue shut down cleanly`)
   },
 }

@@ -1,6 +1,6 @@
 import { Worker, type Job } from 'bullmq'
 import { prisma } from '@IRIS/database'
-import { LogFactory } from '@Iris/logger'
+import { LogFactory, c } from '@Iris/logger'
 import { getRedisConnectionOptions } from '../services/email/queue'
 import {
   MEDIA_QUEUE_NAME,
@@ -8,6 +8,7 @@ import {
   type MediaJobData,
   type MediaType,
 } from '../services/borealis/queue'
+import { MediaEntitySyncer } from '../services/borealis/syncer/media-entity.syncer'
 
 const logger = new LogFactory('Worker:Media')
 
@@ -21,14 +22,24 @@ export async function executeMediaUpdate(
   externalId?: number | string | null,
   depth: number = 0
 ): Promise<boolean> {
-  const now = new Date()
-  const nowUnixSeconds = Math.floor(now.getTime() / 1000)
-
+  const syncStart = performance.now()
   logger.info(
-    `Updating ${mediaType} (ID: ${mediaId}, External ID: ${externalId ?? 'none'}, depth: ${depth})...`
+    `${c.blue('🔄 [Syncing Entity]')} ${c.bold(mediaType)} #${mediaId} | External ID: ${c.cyan(String(externalId ?? 'none'))} | Depth: ${depth}`
   )
 
   try {
+    const synced = await MediaEntitySyncer.syncEntity(mediaType, mediaId, externalId)
+    const elapsed = Math.round(performance.now() - syncStart)
+    if (synced) {
+      logger.info(
+        `${c.green('✅ [Sync Success]')} Synchronized ${c.bold(mediaType)} #${mediaId} in ${c.bold(`${elapsed}ms`)}`
+      )
+      return true
+    }
+
+    // Fallback: update timestamp if external provider had no details or was unconfigured
+    const now = new Date()
+    const nowUnixSeconds = Math.floor(now.getTime() / 1000)
     switch (mediaType) {
       case 'ANIME': {
         await prisma.anime.update({
@@ -110,11 +121,13 @@ export async function executeMediaUpdate(
         throw new Error(`Unsupported media type: ${mediaType}`)
     }
 
-    logger.info(`Successfully updated ${mediaType} (ID: ${mediaId})`)
+    logger.info(
+      `${c.yellow('⏩ [Fallback Touch]')} External provider had no fresh payload for ${c.bold(mediaType)} #${mediaId}; touched updatedAt in ${elapsed}ms`
+    )
     return true
   } catch (err: any) {
     logger.error(
-      `Failed to execute update for ${mediaType} ${mediaId}: ${err?.message || err}`
+      `${c.red('❌ [Sync Failed]')} Failed to execute update for ${mediaType} #${mediaId}: ${err?.message || err}`
     )
     throw err
   }
@@ -125,24 +138,35 @@ export async function executeMediaUpdate(
  */
 export async function processMediaJob(job: Job<MediaJobData>): Promise<boolean> {
   const data = job.data
+  const jobStart = performance.now()
 
-  logger.info(`Processing media job ${job.id} (type: ${data.type})`)
+  logger.info(
+    `${c.magenta(c.bold('⚡ [Processing Job]'))} ${c.cyan(job.id ?? 'unknown')} | Type: ${c.bold(data.type)} | Priority: ${job.opts.priority ?? 1}`
+  )
 
   if (data.type === 'weekly-active-sync') {
-    logger.info('Triggering weekly active media sync from cron trigger...')
+    logger.info(`${c.blue('🔄 [Cron Trigger]')} Triggering weekly active media sync...`)
     const stats = await syncActiveMedia()
-    logger.info(`Weekly active media sync completed: enqueued ${stats.total} items.`)
+    const elapsed = Math.round(performance.now() - jobStart)
+    logger.info(
+      `${c.green('✅ [Cron Complete]')} Weekly active media sync finished in ${elapsed}ms: enqueued ${stats.total} items`
+    )
     return true
   }
 
   if (data.type === 'media-update') {
     const depth = data.depth ?? 0
-    return await executeMediaUpdate(
+    const result = await executeMediaUpdate(
       data.mediaType,
       data.mediaId,
       data.externalId,
       depth
     )
+    const elapsed = Math.round(performance.now() - jobStart)
+    logger.info(
+      `${c.green('✨ [Job Processed]')} ${c.cyan(job.id ?? 'unknown')} (${data.mediaType} #${data.mediaId}) finished in ${c.bold(`${elapsed}ms`)}`
+    )
+    return result
   }
 
   throw new Error(`Unknown job data type: ${(data as any).type}`)
@@ -166,6 +190,8 @@ export interface CreateMediaWorkerOptions {
 export function createMediaWorker(opts?: CreateMediaWorkerOptions): Worker<MediaJobData> {
   const connection = opts?.connection ?? getRedisConnectionOptions()
 
+  logger.info(`${c.cyan('🚀 [Worker Spawn]')} Initializing BullMQ Worker for queue "${c.bold(MEDIA_QUEUE_NAME)}"...`)
+
   const worker = new Worker<MediaJobData>(
     MEDIA_QUEUE_NAME,
     async (job) => {
@@ -181,25 +207,44 @@ export function createMediaWorker(opts?: CreateMediaWorkerOptions): Worker<Media
     }
   )
 
-  worker.on('completed', (job) => {
+  worker.on('active', (job) => {
+    const targetDesc =
+      job.data.type === 'media-update'
+        ? `${job.data.mediaType} #${job.data.mediaId}`
+        : job.data.type
     logger.info(
-      `Job ${job.id} completed (${job.data.type === 'media-update' ? `${job.data.mediaType} ${job.data.mediaId}` : job.data.type})`
+      `${c.blue(c.bold('🚀 [Job Active]'))} ${c.cyan(job.id)} (${targetDesc}) | Priority: ${job.opts.priority ?? 1} | Attempt: ${job.attemptsMade + 1}/${job.opts.attempts ?? 3}`
+    )
+  })
+
+  worker.on('completed', (job) => {
+    const targetDesc =
+      job.data.type === 'media-update'
+        ? `${job.data.mediaType} #${job.data.mediaId}`
+        : job.data.type
+    logger.info(
+      `${c.green(c.bold('✅ [Job Completed]'))} ${c.cyan(job.id)} (${targetDesc})`
     )
   })
 
   worker.on('failed', (job, err) => {
     logger.error(
-      `Job ${job?.id} failed on attempt ${job?.attemptsMade}/${job?.opts?.attempts}:`,
-      err?.message || err
+      `${c.red(c.bold('❌ [Job Failed]'))} ${c.cyan(job?.id ?? 'unknown')} on attempt ${c.yellow(`${job?.attemptsMade}/${job?.opts?.attempts}`)}: ${c.red(err?.message || err)}`
     )
   })
 
   worker.on('stalled', (jobId) => {
-    logger.warn(`Media job ${jobId} was detected as stalled and will be re-assigned`)
+    logger.warn(
+      `${c.yellow(c.bold('⏳ [Job Stalled]'))} Media job ${c.cyan(jobId)} was detected as stalled and will be re-assigned`
+    )
+  })
+
+  worker.on('drained', () => {
+    logger.info(`${c.dim('💤 [Queue Drained]')} All jobs in media-updates queue have been processed`)
   })
 
   worker.on('error', (err) => {
-    logger.warn(`Media worker connection error: ${err.message}`)
+    logger.warn(`${c.red('⚠️ [Worker Error]')}: ${err.message}`)
   })
 
   return worker
@@ -222,15 +267,15 @@ export async function closeMediaWorker(): Promise<void> {
   if (isShuttingDown || !workerInstance) return
   isShuttingDown = true
 
-  logger.info('Shutting down media worker gracefully...')
+  logger.info(`${c.yellow('🛑 [Worker Shutdown]')} Shutting down media worker gracefully...`)
 
   try {
     await workerInstance.pause()
     await workerInstance.close()
     workerInstance = null
-    logger.info('Media worker closed successfully')
+    logger.info(`${c.green('✅ [Worker Shutdown]')} Media worker closed successfully`)
   } catch (err: any) {
-    logger.error('Error during media worker shutdown:', err?.message || err)
+    logger.error(`${c.red('❌ [Worker Shutdown Error]')}:`, err?.message || err)
   }
 }
 
@@ -246,7 +291,7 @@ if (typeof process !== 'undefined') {
 
 // Standalone CLI execution entrypoint
 if (import.meta.main) {
-  logger.info('Starting standalone Media Worker process...')
+  logger.info(`${c.cyan('🚀 [Standalone]')} Starting standalone Media Worker process...`)
   getMediaWorker()
 }
 
