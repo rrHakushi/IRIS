@@ -61,6 +61,7 @@ export function UserProfileView({
   // Account custom sidebar config generated from @/config/sidebars
   const accountSidebarConfig = useAccountUserSidebarConfig({
     username: user.username,
+    userId: user.id,
     activeTab,
     onSelectTab: handleSelectTab,
     t,
@@ -122,6 +123,7 @@ export function UserProfileView({
         {/* Full-Width Profile Hero Header */}
         <UserProfileHeader
           username={user.username}
+          userId={user.id}
           profile={profile}
           createdAt={user.createdAt}
           isOwner={isOwner}
@@ -141,15 +143,15 @@ export function UserProfileView({
           )}
 
           {activeTab === "activity" && (
-            <ActivityTab username={user.username} isOwner={isOwner} />
+            <ActivityTab username={user.username} userId={user.id} isOwner={isOwner} />
           )}
 
           {activeTab === "lists" && (
-            <ListsTab username={user.username} isOwner={isOwner} />
+            <ListsTab username={user.username} userId={user.id} isOwner={isOwner} />
           )}
 
           {activeTab === "favorites" && (
-            <FavoritesTab username={user.username} isOwner={isOwner} />
+            <FavoritesTab username={user.username} userId={user.id} isOwner={isOwner} />
           )}
 
           {activeTab === "friends" && (
@@ -157,7 +159,7 @@ export function UserProfileView({
           )}
 
           {activeTab === "stats" && (
-            <StatsTab username={user.username} isOwner={isOwner} />
+            <StatsTab username={user.username} userId={user.id} isOwner={isOwner} />
           )}
         </main>
 

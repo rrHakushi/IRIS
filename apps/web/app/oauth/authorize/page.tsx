@@ -83,7 +83,7 @@ function OAuthAuthorizeContent(): React.JSX.Element {
     if (authStatus === "unauthenticated") {
       const fullUrl = window.location.href
       router.push(
-        `/IRIS-account/auth/login?callbackUrl=${encodeURIComponent(fullUrl)}`
+        `/carina/auth/login?callbackUrl=${encodeURIComponent(fullUrl)}`
       )
     }
   }, [authStatus, router])
@@ -97,7 +97,7 @@ function OAuthAuthorizeContent(): React.JSX.Element {
     }
 
     try {
-      const res = await elysia.oauth.authorize.get({
+      const res = await elysia.carina.oauth.authorize.get({
         query: {
           client_id: clientId,
           redirect_uri: redirectUri,
@@ -120,15 +120,15 @@ function OAuthAuthorizeContent(): React.JSX.Element {
         return
       }
 
-      const data = res.data as {
-        success: boolean
-        client: ClientData
-        scopeDetails: ScopeItem[]
-      } | null
-
-      if (data?.success) {
+      const data = res.data
+      if (data?.success && data.client) {
         setClientData(data.client)
-        setScopeDetails(data.scopeDetails || [])
+        const mappedScopes: ScopeItem[] = (data.requestedScopes || []).map((s: string) => ({
+          scope: s,
+          name: s,
+          description: `Access to ${s}`,
+        }))
+        setScopeDetails(mappedScopes)
       }
     } catch (err: any) {
       setErrorMessage(
@@ -149,7 +149,7 @@ function OAuthAuthorizeContent(): React.JSX.Element {
   const handleAuthorize = async () => {
     setIsSubmitting(true)
     try {
-      const res = await elysia.oauth.authorize.post(
+      const res = await elysia.carina.oauth.authorize.post(
         {
           client_id: clientId,
           redirect_uri: redirectUri,
@@ -330,7 +330,7 @@ function OAuthAuthorizeContent(): React.JSX.Element {
           <Button
             type="button"
             variant="outline"
-            disabled={isSubmitting}
+            isDisabled={isSubmitting}
             onClick={handleCancel}
             className="h-9 px-4"
           >
@@ -339,7 +339,7 @@ function OAuthAuthorizeContent(): React.JSX.Element {
           </Button>
           <Button
             type="button"
-            disabled={isSubmitting}
+            isDisabled={isSubmitting}
             onClick={handleAuthorize}
             className="h-9 bg-primary px-5 text-primary-foreground hover:bg-primary/90"
           >

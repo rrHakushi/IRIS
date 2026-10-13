@@ -9,7 +9,6 @@ export type MediaTabKey =
   | "trailers"
   | "stats"
   | "friends"
-  | "reviews"
   | "recommendations"
 
 export interface MusicTrackItem {
@@ -103,6 +102,7 @@ export interface RelationItem {
     id: number
     titlePrimary: string
     titleSecondary?: string | null
+    titleNative?: string | null
     coverImage?: string | null
     format?: string | null
     seasonYear?: number | null

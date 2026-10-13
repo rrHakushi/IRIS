@@ -127,9 +127,9 @@ export function CharacterDetailView({ character }: CharacterDetailViewProps) {
           actorMap.set(mc.actor.id, {
             id: mc.actor.id,
             namePrimary: mc.actor.namePrimary,
-            nameNative: mc.actor.nameNative,
+            nameNative: mc.actor.nameNative ?? null,
             image: mc.actor.image,
-            language: mc.actor.language,
+            language: mc.actor.language ?? null,
             rolesCount: 1,
           })
         }
@@ -230,9 +230,9 @@ export function CharacterDetailView({ character }: CharacterDetailViewProps) {
         existing.actors.push({
           id: mc.actor.id,
           namePrimary: mc.actor.namePrimary,
-          nameNative: mc.actor.nameNative,
+          nameNative: mc.actor.nameNative ?? null,
           image: mc.actor.image,
-          language: mc.actor.language,
+          language: mc.actor.language ?? null,
         })
       }
     })
@@ -697,7 +697,7 @@ export function CharacterDetailView({ character }: CharacterDetailViewProps) {
                 {uniqueActors.map((actor) => (
                   <Link
                     key={actor.id}
-                    href={`/IRIS-list/people/${actor.id}`}
+                    href={`/borealis/people/${actor.id}`}
                     className="group flex items-center gap-3 rounded-2xl border border-border/40 bg-card/60 p-2.5 transition-colors outline-none hover:border-border/60 hover:bg-card focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <div className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-muted">

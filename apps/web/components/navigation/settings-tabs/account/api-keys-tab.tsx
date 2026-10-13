@@ -58,8 +58,8 @@ export function ApiKeysSettingsTab({
       setError(null)
 
       try {
-        const res = await elysia.auth["api-keys"].get({
-          fetch: { credentials: "include" },
+        const res = await elysia.carina.auth.apikeys.get({
+          query: { limit: 100 },
         })
 
         if (res.error) {
@@ -68,7 +68,7 @@ export function ApiKeysSettingsTab({
         }
 
         if (res.data?.apiKeys) {
-          setApiKeys(res.data.apiKeys)
+          setApiKeys(res.data.apiKeys as unknown as ApiKeyItem[])
         }
       } catch (err: any) {
         console.error("[ApiKeysTab] Fetch error:", err)
@@ -99,15 +99,10 @@ export function ApiKeysSettingsTab({
     setError(null)
 
     try {
-      const res = await elysia.auth["api-keys"].post(
-        {
-          name,
-          expirationDays: expirationDays ?? undefined,
-        },
-        {
-          fetch: { credentials: "include" },
-        }
-      )
+      const res = await elysia.carina.auth.apikeys.post({
+        name,
+        expirationDays: expirationDays ?? undefined,
+      })
 
       if (res.error || !res.data) {
         const errorData = res.error?.value as { message?: string } | undefined
@@ -117,9 +112,9 @@ export function ApiKeysSettingsTab({
       const { rawKey, apiKey } = res.data
 
       // Update state
-      setApiKeys((prev) => [apiKey, ...prev])
+      setApiKeys((prev) => [apiKey as unknown as ApiKeyItem, ...prev])
       setRevealedRawKey(rawKey)
-      setRevealedApiKey(apiKey)
+      setRevealedApiKey(apiKey as unknown as ApiKeyItem)
       setIsRevealedRegenerated(false)
       setCreateDialogOpen(false)
       setRevealDialogOpen(true)
@@ -144,21 +139,16 @@ export function ApiKeysSettingsTab({
     setRenamingId(id)
 
     try {
-      const res = await elysia.auth["api-keys"]({ id }).patch(
-        {
-          name: newName,
-        },
-        {
-          fetch: { credentials: "include" },
-        }
-      )
+      const res = await elysia.carina.auth.apikeys({ keyId: id }).patch({
+        name: newName,
+      })
 
       if (res.error || !res.data) {
         const errorData = res.error?.value as { message?: string } | undefined
         throw new Error(errorData?.message || t("failedRename"))
       }
 
-      const updatedKey = res.data.apiKey
+      const updatedKey = res.data.apiKey as unknown as ApiKeyItem
       setApiKeys((prev) =>
         prev.map((k) => (k.id === id ? { ...k, ...updatedKey } : k))
       )
@@ -179,12 +169,7 @@ export function ApiKeysSettingsTab({
     setRegeneratingId(id)
 
     try {
-      const res = await elysia.auth["api-keys"]({ id }).regenerate.post(
-        {},
-        {
-          fetch: { credentials: "include" },
-        }
-      )
+      const res = await elysia.carina.auth.apikeys({ keyId: id }).regenerate.post()
 
       if (res.error || !res.data) {
         const errorData = res.error?.value as { message?: string } | undefined
@@ -195,10 +180,10 @@ export function ApiKeysSettingsTab({
 
       // Update state
       setApiKeys((prev) =>
-        prev.map((k) => (k.id === id ? { ...k, ...apiKey } : k))
+        prev.map((k) => (k.id === id ? { ...k, ...(apiKey as unknown as ApiKeyItem) } : k))
       )
       setRevealedRawKey(rawKey)
-      setRevealedApiKey(apiKey)
+      setRevealedApiKey(apiKey as unknown as ApiKeyItem)
       setIsRevealedRegenerated(true)
       setRevealDialogOpen(true)
 
@@ -218,12 +203,7 @@ export function ApiKeysSettingsTab({
     setDeletingId(id)
 
     try {
-      const res = await elysia.auth["api-keys"]({ id }).delete(
-        {},
-        {
-          fetch: { credentials: "include" },
-        }
-      )
+      const res = await elysia.carina.auth.apikeys({ keyId: id }).delete()
 
       if (res.error) {
         const errorData = res.error?.value as { message?: string } | undefined
@@ -286,7 +266,7 @@ export function ApiKeysSettingsTab({
             type="button"
             variant="default"
             size="sm"
-            onClick={() => setCreateDialogOpen(true)}
+            onPress={() => setCreateDialogOpen(true)}
             className="h-8 shrink-0 gap-1.5 rounded-xl px-3.5 text-xs"
           >
             <IconPlus className="size-4" />
@@ -314,7 +294,7 @@ export function ApiKeysSettingsTab({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => fetchApiKeys()}
+              onPress={() => fetchApiKeys()}
               className="mt-1 h-7 rounded-lg text-xs"
             >
               {t("retry")}
@@ -338,7 +318,7 @@ export function ApiKeysSettingsTab({
               type="button"
               variant="default"
               size="sm"
-              onClick={() => setCreateDialogOpen(true)}
+              onPress={() => setCreateDialogOpen(true)}
               className="mt-1 h-8 gap-1.5 rounded-xl px-4 text-xs"
             >
               <IconPlus className="size-3.5" />
@@ -355,7 +335,7 @@ export function ApiKeysSettingsTab({
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => setSearchQuery("")}
+              onPress={() => setSearchQuery("")}
               className="h-7 rounded-lg text-xs"
             >
               {t("clearSearch")}

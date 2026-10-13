@@ -16,6 +16,7 @@ import { cn } from "@workspace/ui/lib/utils"
 
 export interface StatsTabProps {
   username: string
+  userId?: string
   isOwner: boolean
 }
 
@@ -36,7 +37,7 @@ const STATS_CATEGORIES: Array<{
   { id: "music", name: "Music", icon: IconHeadphones },
 ]
 
-export function StatsTab({ username }: StatsTabProps): React.JSX.Element {
+export function StatsTab({ username, userId }: StatsTabProps): React.JSX.Element {
   const [selectedType, setSelectedType] = useState<StatsCategoryType>("all")
 
   return (
@@ -67,11 +68,12 @@ export function StatsTab({ username }: StatsTabProps): React.JSX.Element {
 
       {/* Overarching Combined Stats vs Media-Specific Stats */}
       {selectedType === "all" ? (
-        <CombinedStatsView key={`${username}-combined`} username={username} />
+        <CombinedStatsView key={`${username}-combined`} username={username} userId={userId} />
       ) : (
         <MediaStatsTab
           key={`${username}-${selectedType}`}
           username={username}
+          userId={userId}
           mediaType={selectedType}
         />
       )}

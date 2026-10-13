@@ -59,8 +59,8 @@ export function getMediaDetailHref(
       options?.itemType?.toUpperCase() === "TRACK" ||
       Boolean(options?.trackId && !options?.albumId)
     const subpath = isTrack ? "tracks" : "albums"
-    return `/IRIS-list/music/${subpath}/${mediaId}${query}`
+    return `/borealis/music/${subpath}/${mediaId}${query}`
   }
 
-  return `/IRIS-list/${category}/${mediaId}${query}`
+  return `/borealis/${category}/${mediaId}${query}`
 }

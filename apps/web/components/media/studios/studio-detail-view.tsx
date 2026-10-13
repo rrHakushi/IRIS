@@ -117,53 +117,8 @@ export function StudioDetailView({
 
   // Infinite Scroll fetch function
   const loadMoreCreations = useCallback(async () => {
-    if (!hasMore || !nextCursor || isFetchingRef.current || isLoadingMore)
-      return
-
-    isFetchingRef.current = true
-    setIsLoadingMore(true)
-
-    try {
-      const { data, error } = await elysia.media
-        .studios({ id: studio.id })
-        .creations.get({
-          query: {
-            cursor: nextCursor,
-            limit: 36,
-            mediaType:
-              selectedMediaType !== "ALL" ? selectedMediaType : undefined,
-            sortBy,
-            order: sortOrder,
-          },
-        })
-
-      if (!error && data && data.success) {
-        setCreations((prev) => {
-          const existingIds = new Set(prev.map((p) => p.id))
-          const fresh = data.items.filter((item) => !existingIds.has(item.id))
-          return [...prev, ...fresh]
-        })
-        setNextCursor(data.pagination?.nextCursor ?? null)
-        setHasMore(Boolean(data.pagination?.hasMore))
-      } else {
-        setHasMore(false)
-      }
-    } catch (err) {
-      console.error("[StudioDetailView] Failed to load more creations:", err)
-      setHasMore(false)
-    } finally {
-      setIsLoadingMore(false)
-      isFetchingRef.current = false
-    }
-  }, [
-    studio.id,
-    nextCursor,
-    hasMore,
-    isLoadingMore,
-    selectedMediaType,
-    sortBy,
-    sortOrder,
-  ])
+    setHasMore(false)
+  }, [])
 
   // Reset creations when changing sort/filter options
   useEffect(() => {
@@ -171,22 +126,13 @@ export function StudioDetailView({
 
     const reloadFiltered = async () => {
       try {
-        const { data, error } = await elysia.media
+        const { data, error } = await elysia.borealis
           .studios({ id: studio.id })
-          .creations.get({
-            query: {
-              limit: 36,
-              mediaType:
-                selectedMediaType !== "ALL" ? selectedMediaType : undefined,
-              sortBy,
-              order: sortOrder,
-            },
-          })
+          .get()
 
-        if (!isCancelled && !error && data && data.success) {
-          setCreations(data.items)
-          setNextCursor(data.pagination?.nextCursor ?? null)
-          setHasMore(Boolean(data.pagination?.hasMore))
+        if (!isCancelled && !error && data && data.success && data.studio?.creations) {
+          setCreations(data.studio.creations)
+          setHasMore(false)
         }
       } catch (err) {
         console.error("[StudioDetailView] Reload error:", err)
@@ -197,7 +143,7 @@ export function StudioDetailView({
     return () => {
       isCancelled = true
     }
-  }, [studio.id, selectedMediaType, sortBy, sortOrder])
+  }, [studio.id])
 
   // Sentinel IntersectionObserver for infinite scroll
   const sentinelRef = useRef<HTMLDivElement | null>(null)

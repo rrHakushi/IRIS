@@ -30,6 +30,13 @@ export const CarinaFriendsModel = {
     }),
   }),
 
+  blockParam: t.Object({
+    blockId: t.String({
+      minLength: 1,
+      description: 'Block entry ID or blocked user ID',
+    }),
+  }),
+
   mediaTrackingParam: t.Object({
     mediaType: t.String({
       minLength: 1,
@@ -91,7 +98,21 @@ export const CarinaFriendsModel = {
         }),
       })
     ),
+    incomingRequests: t.Optional(t.Array(t.Any())),
+    outgoingRequests: t.Optional(t.Array(t.Any())),
+    blockedUsers: t.Optional(t.Array(t.Any())),
     pagination: PaginationMetaSchema,
+  }),
+
+  // --- PATCH /carina/friends/:friendId (Update friendship settings) ---
+  updateFriendBody: t.Object({
+    isPrivate: t.Optional(t.Boolean()),
+    nickname: t.Optional(t.Nullable(t.String())),
+  }),
+
+  updateFriendResponse: t.Object({
+    success: t.Boolean(),
+    friend: t.Any(),
   }),
 
   // --- DELETE /carina/friends/:friendId (Remove friend) ---
@@ -174,16 +195,56 @@ export const CarinaFriendsModel = {
 
   // --- POST /carina/friends/requests (Send friend request) ---
   sendRequestBody: t.Object({
-    targetUserId: t.String({
-      minLength: 1,
-      description: 'Recipient user ID (UUID) - strictly user ID, never username',
-    }),
-    message: t.Optional(
+    targetUserId: t.Optional(
       t.String({
-        maxLength: 50,
-        description: 'Optional introductory note (max 50 chars)',
+        description: 'Recipient user ID (UUID)',
       })
     ),
+    targetUsername: t.Optional(
+      t.String({
+        description: 'Recipient username',
+      })
+    ),
+    message: t.Optional(
+      t.Nullable(
+        t.String({
+          maxLength: 50,
+          description: 'Optional introductory note (max 50 chars)',
+        })
+      )
+    ),
+  }),
+
+  // --- POST /carina/friends/requests/:requestId/respond ---
+  respondRequestBody: t.Object({
+    action: t.Union([t.Literal('ACCEPT'), t.Literal('DECLINE'), t.Literal('BLOCK')]),
+  }),
+
+  respondRequestResponse: t.Object({
+    success: t.Boolean(),
+    message: t.Optional(t.String()),
+  }),
+
+  // --- DELETE /carina/friends/requests/:requestId (Cancel request) ---
+  cancelRequestResponse: t.Object({
+    success: t.Boolean(),
+    message: t.String(),
+  }),
+
+  // --- POST /carina/friends/block & DELETE /carina/friends/block/:blockId ---
+  blockUserBody: t.Object({
+    targetUserId: t.Optional(t.String()),
+    targetUsername: t.Optional(t.String()),
+  }),
+
+  blockUserResponse: t.Object({
+    success: t.Boolean(),
+    block: t.Optional(t.Any()),
+  }),
+
+  unblockUserResponse: t.Object({
+    success: t.Boolean(),
+    message: t.String(),
   }),
 
   sendRequestResponse: t.Object({

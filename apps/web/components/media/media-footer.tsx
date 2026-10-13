@@ -59,27 +59,27 @@ export function MediaFooter({ media }: MediaFooterProps) {
 
       switch (media.category) {
         case "anime":
-          res = await elysia.media.anime({ id: media.id }).refresh.post(payload)
+          res = await elysia.borealis.media.anime({ id: media.id }).refresh.post()
           break
         case "manga":
-          res = await elysia.media.manga({ id: media.id }).refresh.post(payload)
+          res = await elysia.borealis.media.manga({ id: media.id }).refresh.post()
           break
         case "tv":
-          res = await elysia.media.tv({ id: media.id }).refresh.post(payload)
+          res = await elysia.borealis.media.tv({ id: media.id }).refresh.post()
           break
         case "movies":
-          res = await elysia.media
+          res = await elysia.borealis.media
             .movies({ id: media.id })
-            .refresh.post(payload)
+            .refresh.post()
           break
         case "games":
-          res = await elysia.media.games({ id: media.id }).refresh.post(payload)
+          res = await elysia.borealis.media.games({ id: media.id }).refresh.post()
           break
         case "books":
-          res = await elysia.media.books({ id: media.id }).refresh.post(payload)
+          res = await elysia.borealis.media.books({ id: media.id }).refresh.post()
           break
         case "music":
-          res = await elysia.media.music({ id: media.id }).refresh.post(payload)
+          res = await elysia.borealis.media.music({ id: media.id }).refresh.post()
           break
       }
 
@@ -172,7 +172,7 @@ export function MediaFooter({ media }: MediaFooterProps) {
               type="button"
               variant="outline"
               size="sm"
-              disabled={isRefreshing}
+              isDisabled={isRefreshing}
               onPress={handleRefresh}
               className="cursor-pointer gap-1.5 rounded-xl border-border/70 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
             >

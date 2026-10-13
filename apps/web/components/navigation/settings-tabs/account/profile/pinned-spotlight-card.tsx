@@ -194,49 +194,31 @@ export function PinnedSpotlightCard({
     setIsSearching(true)
     searchTimeoutRef.current = setTimeout(async () => {
       try {
-        let res: any = null
-        switch (modalSearchCategory) {
-          case "ANIME":
-            res = await elysia.search.anime.get({ query: { q: trimmed } })
-            break
-          case "MANGA":
-            res = await elysia.search.manga.get({ query: { q: trimmed } })
-            break
-          case "MOVIE":
-            res = await elysia.search.movies.get({ query: { q: trimmed } })
-            break
-          case "TV":
-            res = await elysia.search.tv.get({ query: { q: trimmed } })
-            break
-          case "GAME":
-            res = await elysia.search.games.get({ query: { q: trimmed } })
-            break
-          case "BOOK":
-            res = await elysia.search.books.get({ query: { q: trimmed } })
-            break
-          case "MUSIC":
-            res = await elysia.search.music.get({ query: { q: trimmed } })
-            break
-          case "CHARACTER":
-            res = await elysia.search.characters.get({ query: { q: trimmed } })
-            break
-          case "PERSON":
-            res = await elysia.search.people.get({ query: { q: trimmed } })
-            break
-          case "STUDIO":
-            res = await elysia.search.studios.get({ query: { q: trimmed } })
-            break
-        }
+        const catConfig = SPOTLIGHT_CATEGORIES.find(
+          (c) => c.id === modalSearchCategory
+        )
+        const targetCategory = (catConfig?.path || "media") as
+          | "media"
+          | "anime"
+          | "manga"
+          | "movies"
+          | "tv"
+          | "games"
+          | "music"
+          | "books"
+          | "characters"
+          | "people"
+          | "studios"
 
-        const rawItems = res?.data
-        const items = Array.isArray(rawItems)
-          ? rawItems
-          : Array.isArray(rawItems?.data)
-            ? rawItems.data
-            : Array.isArray(rawItems?.items)
-              ? rawItems.items
-              : []
+        const { data, error } = await elysia.borealis.search.get({
+          query: {
+            q: trimmed,
+            category: targetCategory,
+            limit: 20,
+          },
+        })
 
+        const items = !error && data?.results ? data.results : []
         setSearchResults(items.slice(0, 16))
       } catch (err) {
         console.error("[PinnedSpotlightCard] Search error:", err)
@@ -308,7 +290,7 @@ export function PinnedSpotlightCard({
       ""
     const cover = item.coverImage || item.image || item.cover || null
     const link = catConfig?.path
-      ? `/IRIS-list/${catConfig.path}/${item.id}`
+      ? `/borealis/${catConfig.path}/${item.id}`
       : ""
 
     onChange({
@@ -352,8 +334,8 @@ export function PinnedSpotlightCard({
           type="button"
           variant={isEnabled ? "default" : "outline"}
           size="sm"
-          onClick={handleToggle}
-          disabled={disabled}
+          onPress={handleToggle}
+          isDisabled={disabled}
           className="cursor-pointer gap-1.5 rounded-xl font-semibold shadow-2xs"
         >
           {isEnabled ? "Enabled" : "Enable"}
@@ -381,7 +363,7 @@ export function PinnedSpotlightCard({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={handleOpenSearchModal}
+                onPress={handleOpenSearchModal}
                 className="cursor-pointer gap-2 rounded-xl border-primary/40 bg-primary/5 text-xs font-semibold text-primary shadow-2xs transition-all hover:border-primary hover:bg-primary/10"
               >
                 <IconSearch className="size-3.5" />
@@ -395,7 +377,7 @@ export function PinnedSpotlightCard({
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={handleClearDetails}
+                onPress={handleClearDetails}
                 className="cursor-pointer gap-1.5 rounded-xl text-xs text-muted-foreground hover:text-destructive"
               >
                 <IconTrash className="size-3.5" />
@@ -459,7 +441,7 @@ export function PinnedSpotlightCard({
                 <Input
                   value={spotlight.link || ""}
                   onChange={(e) => handleFieldChange("link", e.target.value)}
-                  placeholder="/IRIS-list/anime/123 or https://..."
+                  placeholder="/borealis/anime/123 or https://..."
                   disabled={disabled}
                   className="h-9 text-xs"
                 />

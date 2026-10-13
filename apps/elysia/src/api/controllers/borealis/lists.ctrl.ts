@@ -27,8 +27,8 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
       },
     },
     async ({ query, session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getAnimeList(user.id, query)
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getAnimeList(targetUserId, query)
     }
   )
 
@@ -36,6 +36,7 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   .get(
     '/anime/stats',
     {
+      query: BorealisListsModel.statsQuery,
       detail: {
         summary: 'Get anime list statistics',
         description: 'Aggregates statistics for the user anime list.',
@@ -46,9 +47,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
         401: BorealisListsModel.unauthorizedError,
       },
     },
-    async ({ session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getAnimeStats(user.id)
+    async ({ query, session: userSession }) => {
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getAnimeStats(targetUserId)
     }
   )
 
@@ -56,6 +57,7 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   .get(
     '/anime/filters',
     {
+      query: BorealisListsModel.statsQuery,
       detail: {
         summary: 'Get available anime list filters',
         description: 'Returns available filter facets from the user anime list.',
@@ -66,9 +68,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
         401: BorealisListsModel.unauthorizedError,
       },
     },
-    async ({ session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getAnimeFilters(user.id)
+    async ({ query, session: userSession }) => {
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getAnimeFilters(targetUserId)
     }
   )
 
@@ -186,8 +188,8 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
       },
     },
     async ({ query, session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getMangaList(user.id, query)
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getMangaList(targetUserId, query)
     }
   )
 
@@ -195,6 +197,7 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   .get(
     '/manga/stats',
     {
+      query: BorealisListsModel.statsQuery,
       detail: {
         summary: 'Get manga list statistics',
         description: 'Aggregates statistics for the user manga list.',
@@ -205,9 +208,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
         401: BorealisListsModel.unauthorizedError,
       },
     },
-    async ({ session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getMangaStats(user.id)
+    async ({ query, session: userSession }) => {
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getMangaStats(targetUserId)
     }
   )
 
@@ -215,6 +218,7 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   .get(
     '/manga/filters',
     {
+      query: BorealisListsModel.statsQuery,
       detail: {
         summary: 'Get available manga list filters',
         description: 'Returns available filter facets from the user manga list.',
@@ -225,9 +229,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
         401: BorealisListsModel.unauthorizedError,
       },
     },
-    async ({ session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getMangaFilters(user.id)
+    async ({ query, session: userSession }) => {
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getMangaFilters(targetUserId)
     }
   )
 
@@ -345,8 +349,8 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
       },
     },
     async ({ query, session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getMovieList(user.id, query)
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getMovieList(targetUserId, query)
     }
   )
 
@@ -354,6 +358,7 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   .get(
     '/movies/stats',
     {
+      query: BorealisListsModel.statsQuery,
       detail: {
         summary: 'Get movies list statistics',
         description: 'Aggregates statistics for the user movie list.',
@@ -364,9 +369,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
         401: BorealisListsModel.unauthorizedError,
       },
     },
-    async ({ session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getMovieStats(user.id)
+    async ({ query, session: userSession }) => {
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getMovieStats(targetUserId)
     }
   )
 
@@ -374,6 +379,7 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   .get(
     '/movies/filters',
     {
+      query: BorealisListsModel.statsQuery,
       detail: {
         summary: 'Get available movies list filters',
         description: 'Returns available filter facets from the user movie list.',
@@ -384,9 +390,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
         401: BorealisListsModel.unauthorizedError,
       },
     },
-    async ({ session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getMovieFilters(user.id)
+    async ({ query, session: userSession }) => {
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getMovieFilters(targetUserId)
     }
   )
 
@@ -504,8 +510,8 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
       },
     },
     async ({ query, session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getTvList(user.id, query)
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getTvList(targetUserId, query)
     }
   )
 
@@ -513,6 +519,7 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   .get(
     '/tv/stats',
     {
+      query: BorealisListsModel.statsQuery,
       detail: {
         summary: 'Get TV list statistics',
         description: 'Aggregates statistics for the user TV list.',
@@ -523,9 +530,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
         401: BorealisListsModel.unauthorizedError,
       },
     },
-    async ({ session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getTvStats(user.id)
+    async ({ query, session: userSession }) => {
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getTvStats(targetUserId)
     }
   )
 
@@ -533,6 +540,7 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   .get(
     '/tv/filters',
     {
+      query: BorealisListsModel.statsQuery,
       detail: {
         summary: 'Get available TV list filters',
         description: 'Returns available filter facets from the user TV list.',
@@ -543,9 +551,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
         401: BorealisListsModel.unauthorizedError,
       },
     },
-    async ({ session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getTvFilters(user.id)
+    async ({ query, session: userSession }) => {
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getTvFilters(targetUserId)
     }
   )
 
@@ -663,8 +671,8 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
       },
     },
     async ({ query, session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getGameList(user.id, query)
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getGameList(targetUserId, query)
     }
   )
 
@@ -672,6 +680,7 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   .get(
     '/games/stats',
     {
+      query: BorealisListsModel.statsQuery,
       detail: {
         summary: 'Get games list statistics',
         description: 'Aggregates statistics for the user game list.',
@@ -682,9 +691,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
         401: BorealisListsModel.unauthorizedError,
       },
     },
-    async ({ session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getGameStats(user.id)
+    async ({ query, session: userSession }) => {
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getGameStats(targetUserId)
     }
   )
 
@@ -692,6 +701,7 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   .get(
     '/games/filters',
     {
+      query: BorealisListsModel.statsQuery,
       detail: {
         summary: 'Get available games list filters',
         description: 'Returns available filter facets from the user game list.',
@@ -702,9 +712,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
         401: BorealisListsModel.unauthorizedError,
       },
     },
-    async ({ session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getGameFilters(user.id)
+    async ({ query, session: userSession }) => {
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getGameFilters(targetUserId)
     }
   )
 
@@ -822,8 +832,8 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
       },
     },
     async ({ query, session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getBookList(user.id, query)
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getBookList(targetUserId, query)
     }
   )
 
@@ -831,6 +841,7 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   .get(
     '/books/stats',
     {
+      query: BorealisListsModel.statsQuery,
       detail: {
         summary: 'Get books list statistics',
         description: 'Aggregates statistics for the user book list.',
@@ -841,9 +852,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
         401: BorealisListsModel.unauthorizedError,
       },
     },
-    async ({ session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getBookStats(user.id)
+    async ({ query, session: userSession }) => {
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getBookStats(targetUserId)
     }
   )
 
@@ -851,6 +862,7 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   .get(
     '/books/filters',
     {
+      query: BorealisListsModel.statsQuery,
       detail: {
         summary: 'Get available books list filters',
         description: 'Returns available filter facets from the user book list.',
@@ -861,9 +873,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
         401: BorealisListsModel.unauthorizedError,
       },
     },
-    async ({ session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getBookFilters(user.id)
+    async ({ query, session: userSession }) => {
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getBookFilters(targetUserId)
     }
   )
 
@@ -981,8 +993,8 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
       },
     },
     async ({ query, session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getMusicList(user.id, query)
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getMusicList(targetUserId, query)
     }
   )
 
@@ -990,6 +1002,7 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   .get(
     '/music/stats',
     {
+      query: BorealisListsModel.statsQuery,
       detail: {
         summary: 'Get music list statistics',
         description: 'Aggregates statistics for the user music list.',
@@ -1000,9 +1013,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
         401: BorealisListsModel.unauthorizedError,
       },
     },
-    async ({ session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getMusicStats(user.id)
+    async ({ query, session: userSession }) => {
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getMusicStats(targetUserId)
     }
   )
 
@@ -1010,6 +1023,7 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   .get(
     '/music/filters',
     {
+      query: BorealisListsModel.statsQuery,
       detail: {
         summary: 'Get available music list filters',
         description: 'Returns available filter facets from the user music list.',
@@ -1020,9 +1034,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
         401: BorealisListsModel.unauthorizedError,
       },
     },
-    async ({ session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getMusicFilters(user.id)
+    async ({ query, session: userSession }) => {
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getMusicFilters(targetUserId)
     }
   )
 
@@ -1139,8 +1153,8 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
       },
     },
     async ({ query, session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getOtherList(user.id, query)
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getOtherList(targetUserId, query)
     }
   )
 
@@ -1148,6 +1162,7 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   .get(
     '/other/stats',
     {
+      query: BorealisListsModel.statsQuery,
       detail: {
         summary: 'Get other list statistics',
         description: 'Aggregates statistics for the user other list.',
@@ -1158,9 +1173,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
         401: BorealisListsModel.unauthorizedError,
       },
     },
-    async ({ session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getOtherStats(user.id)
+    async ({ query, session: userSession }) => {
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getOtherStats(targetUserId)
     }
   )
 
@@ -1168,6 +1183,7 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
   .get(
     '/other/filters',
     {
+      query: BorealisListsModel.statsQuery,
       detail: {
         summary: 'Get available other list filters',
         description: 'Returns available filter facets from the user other list.',
@@ -1178,9 +1194,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
         401: BorealisListsModel.unauthorizedError,
       },
     },
-    async ({ session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getOtherFilters(user.id)
+    async ({ query, session: userSession }) => {
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getOtherFilters(targetUserId)
     }
   )
 
@@ -1302,6 +1318,69 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
     }
   )
 
+  // GET /borealis/lists/export/shares (List active export shares)
+  .get(
+    '/export/shares',
+    {
+      detail: {
+        summary: 'List active export shares',
+        tags: ['Borealis Lists - Global'],
+      },
+      response: {
+        200: BorealisListsModel.listSharesResponse,
+        401: BorealisListsModel.unauthorizedError,
+      },
+    },
+    async ({ session: userSession }) => {
+      const user = userSession.requireUser()
+      return await BorealisListsServ.listExportShares(user.id)
+    }
+  )
+
+  // POST /borealis/lists/export/shares (Create password-protected export share)
+  .post(
+    '/export/shares',
+    {
+      body: BorealisListsModel.createShareBody,
+      detail: {
+        summary: 'Create password-protected export share link',
+        tags: ['Borealis Lists - Global'],
+      },
+      response: {
+        200: BorealisListsModel.createShareResponse,
+        400: BorealisListsModel.badRequestError,
+        401: BorealisListsModel.unauthorizedError,
+        422: BorealisListsModel.validationError,
+      },
+    },
+    async ({ body, session: userSession }) => {
+      const user = userSession.requireUser()
+      return await BorealisListsServ.createExportShare(user.id, body)
+    }
+  )
+
+  // DELETE /borealis/lists/export/shares/:shareId (Revoke export share)
+  .delete(
+    '/export/shares/:shareId',
+    {
+      params: BorealisListsModel.revokeShareParam,
+      detail: {
+        summary: 'Revoke export share link',
+        tags: ['Borealis Lists - Global'],
+      },
+      response: {
+        200: BorealisListsModel.revokeShareResponse,
+        401: BorealisListsModel.unauthorizedError,
+        404: BorealisListsModel.notFoundError,
+        422: BorealisListsModel.validationError,
+      },
+    },
+    async ({ params: { shareId }, session: userSession }) => {
+      const user = userSession.requireUser()
+      return await BorealisListsServ.revokeExportShare(user.id, shareId)
+    }
+  )
+
   // POST /borealis/lists/import (Import lists from JSON / external backups)
   .post(
     '/import',
@@ -1324,6 +1403,28 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
     }
   )
 
+  // POST /borealis/lists/import/fetch-remote (Fetch remote IRIS export URL)
+  .post(
+    '/import/fetch-remote',
+    {
+      body: BorealisListsModel.fetchRemoteBody,
+      detail: {
+        summary: 'Fetch and preview remote IRIS export URL with password',
+        tags: ['Borealis Lists - Global'],
+      },
+      response: {
+        200: BorealisListsModel.fetchRemoteResponse,
+        400: BorealisListsModel.badRequestError,
+        401: BorealisListsModel.unauthorizedError,
+        422: BorealisListsModel.validationError,
+      },
+    },
+    async ({ body, session: userSession }) => {
+      userSession.requireUser()
+      return await BorealisListsServ.fetchRemoteExport(body.url, body.password)
+    }
+  )
+
   // GET /borealis/lists/stats (Get aggregated multi-media list statistics)
   .get(
     '/stats',
@@ -1340,8 +1441,8 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
       },
     },
     async ({ query, session: userSession }) => {
-      const user = userSession.requireUser()
-      return await BorealisListsServ.getGlobalListStats(user.id, query)
+      const targetUserId = query?.userId || userSession.requireUser().id
+      return await BorealisListsServ.getGlobalListStats(targetUserId, query)
     }
   )
 

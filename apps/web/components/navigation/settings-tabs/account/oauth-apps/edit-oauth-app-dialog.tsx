@@ -22,41 +22,6 @@ export interface EditOAuthAppDialogProps {
   isLoading?: boolean
 }
 
-const AVAILABLE_SCOPES = [
-  { id: "identify", label: "Identify", desc: "User ID, username, avatar" },
-  {
-    id: "profile",
-    label: "Profile",
-    desc: "Full profile details & preferences",
-  },
-  { id: "email", label: "Email", desc: "User primary email address" },
-  {
-    id: "lists:read",
-    label: "Lists: Read",
-    desc: "View anime, manga, movie, TV, and game lists",
-  },
-  {
-    id: "lists:write",
-    label: "Lists: Write",
-    desc: "Add, update, or remove list items",
-  },
-  {
-    id: "activity:read",
-    label: "Activity: Read",
-    desc: "Read activity logs and reviews",
-  },
-  {
-    id: "activity:write",
-    label: "Activity: Write",
-    desc: "Post reviews and ratings",
-  },
-  {
-    id: "offline_access",
-    label: "Offline Access",
-    desc: "Maintain connection with refresh tokens",
-  },
-]
-
 export function EditOAuthAppDialog({
   isOpen,
   onOpenChange,
@@ -70,7 +35,6 @@ export function EditOAuthAppDialog({
   const [logoUrl, setLogoUrl] = useState("")
   const [redirectUrisText, setRedirectUrisText] = useState("")
   const [isPublic, setIsPublic] = useState(false)
-  const [selectedScopes, setSelectedScopes] = useState<string[]>([])
 
   useEffect(() => {
     if (app) {
@@ -80,17 +44,8 @@ export function EditOAuthAppDialog({
       setLogoUrl(app.logoUrl || "")
       setRedirectUrisText((app.redirectUris || []).join("\n"))
       setIsPublic(app.isPublic)
-      setSelectedScopes(app.allowedScopes || [])
     }
   }, [app])
-
-  const toggleScope = (scopeId: string) => {
-    setSelectedScopes((prev) =>
-      prev.includes(scopeId)
-        ? prev.filter((s) => s !== scopeId)
-        : [...prev, scopeId]
-    )
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -118,7 +73,6 @@ export function EditOAuthAppDialog({
       websiteUrl: websiteUrl.trim() || null,
       logoUrl: logoUrl.trim() || null,
       redirectUris,
-      allowedScopes: selectedScopes,
       isPublic,
     })
 
@@ -236,42 +190,7 @@ export function EditOAuthAppDialog({
           </label>
         </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-foreground">
-            Allowed Scopes
-          </label>
-          <div className="grid max-h-48 grid-cols-1 gap-2 overflow-y-auto rounded-xl border border-border/70 bg-muted/10 p-3 sm:grid-cols-2">
-            {AVAILABLE_SCOPES.map((scope) => {
-              const isChecked = selectedScopes.includes(scope.id)
-              return (
-                <label
-                  key={scope.id}
-                  className={`flex cursor-pointer items-start gap-2.5 rounded-lg border p-2 text-xs transition-colors ${
-                    isChecked
-                      ? "border-primary/40 bg-primary/5 text-foreground"
-                      : "border-transparent text-muted-foreground hover:bg-muted/40"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isChecked}
-                    onChange={() => toggleScope(scope.id)}
-                    disabled={isLoading}
-                    className="mt-0.5 rounded border-border text-primary focus:ring-primary/30"
-                  />
-                  <div className="min-w-0">
-                    <span className="block font-medium text-foreground">
-                      {scope.label}
-                    </span>
-                    <span className="line-clamp-1 text-[10px] text-muted-foreground">
-                      {scope.desc}
-                    </span>
-                  </div>
-                </label>
-              )
-            })}
-          </div>
-        </div>
+
 
         <DialogFooter className="mt-6 flex items-center justify-end gap-2">
           <Button

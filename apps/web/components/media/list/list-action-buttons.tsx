@@ -71,45 +71,29 @@ export function ListActionButtons({
     try {
       let res: { data?: any; error?: any }
 
+      const numericId = Number(media.id)
+
       switch (category) {
         case "anime":
-          res = await elysia
-            .user({ username })
-            .lists.anime({ id: media.id })
-            .get()
+          res = await elysia.borealis.lists.anime({ animeId: numericId }).get()
           break
         case "manga":
-          res = await elysia
-            .user({ username })
-            .lists.manga({ id: media.id })
-            .get()
+          res = await elysia.borealis.lists.manga({ mangaId: numericId }).get()
           break
         case "movie":
-          res = await elysia
-            .user({ username })
-            .lists.movie({ id: media.id })
-            .get()
+          res = await elysia.borealis.lists.movies({ movieId: numericId }).get()
           break
         case "tv":
-          res = await elysia.user({ username }).lists.tv({ id: media.id }).get()
+          res = await elysia.borealis.lists.tv({ tvId: numericId }).get()
           break
         case "game":
-          res = await elysia
-            .user({ username })
-            .lists.game({ id: media.id })
-            .get()
+          res = await elysia.borealis.lists.games({ gameId: numericId }).get()
           break
         case "book":
-          res = await elysia
-            .user({ username })
-            .lists.book({ id: media.id })
-            .get()
+          res = await elysia.borealis.lists.books({ bookId: numericId }).get()
           break
         case "music":
-          res = await elysia
-            .user({ username })
-            .lists.music({ id: media.id })
-            .get()
+          res = await elysia.borealis.lists.music({ musicId: numericId }).get()
           break
       }
 
@@ -171,54 +155,43 @@ export function ListActionButtons({
 
     try {
       let res: { data?: any; error?: any }
+      const numericId = Number(media.id)
 
       switch (category) {
         case "anime":
-          res = await elysia
-            .user({ username })
-            .lists.anime({ id: media.id })
-            ["quick-add"].post()
+          res = await elysia.borealis.lists
+            .anime({ animeId: numericId })
+            .post({ status: "PLANNING" })
           break
         case "manga":
-          res = await elysia
-            .user({ username })
-            .lists.manga({ id: media.id })
-            ["quick-add"].post()
+          res = await elysia.borealis.lists
+            .manga({ mangaId: numericId })
+            .post({ status: "PLANNING" })
           break
         case "movie":
-          res = await elysia
-            .user({ username })
-            .lists.movie({ id: media.id })
-            ["quick-add"].post()
+          res = await elysia.borealis.lists
+            .movies({ movieId: numericId })
+            .post({ status: "PLANNING" })
           break
         case "tv":
-          res = await elysia
-            .user({ username })
-            .lists.tv({ id: media.id })
-            ["quick-add"].post()
+          res = await elysia.borealis.lists
+            .tv({ tvId: numericId })
+            .post({ status: "PLANNING" })
           break
         case "game":
-          res = await elysia
-            .user({ username })
-            .lists.game({ id: media.id })
-            ["quick-add"].post()
+          res = await elysia.borealis.lists
+            .games({ gameId: numericId })
+            .post({ status: "PLANNING" })
           break
         case "book":
-          res = await elysia
-            .user({ username })
-            .lists.book({ id: media.id })
-            ["quick-add"].post()
+          res = await elysia.borealis.lists
+            .books({ bookId: numericId })
+            .post({ status: "PLANNING" })
           break
         case "music":
-          res = await (
-            elysia.user({ username }).lists.music({ id: media.id })[
-              "quick-add"
-            ] as any
-          ).post(undefined, {
-            query: {
-              type: media.format === "TRACK" ? "TRACK" : "ALBUM",
-            },
-          })
+          res = await elysia.borealis.lists
+            .music({ musicId: numericId })
+            .post({ status: "PLANNING" })
           break
       }
 
@@ -335,7 +308,7 @@ export function ListActionButtons({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setIsModalOpen(true)}
+            onPress={() => setIsModalOpen(true)}
             className={`h-8 gap-1.5 rounded-xl border px-3 text-xs font-semibold shadow-2xs transition-all ${statusMeta.btnClass}`}
           >
             <StatusIcon className="size-3.5" aria-hidden="true" />
@@ -347,7 +320,7 @@ export function ListActionButtons({
           <Button
             variant="default"
             size="sm"
-            onClick={() => {
+            onPress={() => {
               if (!isAuthenticated) {
                 toast.info("Please sign in to add this item to your list")
                 return
@@ -366,8 +339,8 @@ export function ListActionButtons({
           <Button
             variant="secondary"
             size="sm"
-            disabled={isQuickAdding}
-            onClick={handleQuickAdd}
+            isDisabled={isQuickAdding}
+            onPress={handleQuickAdd}
             className="h-8 gap-1.5 rounded-xl px-3 text-xs font-medium"
           >
             {isQuickAdding ? (

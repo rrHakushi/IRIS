@@ -68,7 +68,7 @@ export function MediaPreferencesSettingsTab({
         },
       }
 
-      const { data, error } = await elysia.users.me.patch(
+      const { data, error } = await elysia.carina.users.me.patch(
         {
           customization: updatedCustomization,
         },
@@ -78,9 +78,11 @@ export function MediaPreferencesSettingsTab({
       )
 
       if (error || !data?.user) {
-        throw new Error(
-          (error as any)?.value?.message || "Failed to update media preferences"
-        )
+        const errorMsg =
+          error && typeof error.value === "object" && error.value && "message" in error.value
+            ? String((error.value as { message?: unknown }).message)
+            : "Failed to update media preferences"
+        throw new Error(errorMsg)
       }
 
       await refetchUser()

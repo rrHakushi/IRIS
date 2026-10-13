@@ -109,7 +109,7 @@ export function BadgeShowcaseCard({
   onShowcaseBadgeIdsChange,
   disabled = false,
 }: BadgeShowcaseCardProps): React.JSX.Element {
-  const { refetchUser } = useUser()
+  const { user, refetchUser } = useUser()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -183,10 +183,10 @@ export function BadgeShowcaseCard({
     } else {
       if (showcaseBadgeIds.length >= 10) {
         toast.error("Showcase limit reached (10/10). Remove a pinned badge first.")
-        return
+      } else {
+        onShowcaseBadgeIdsChange([...showcaseBadgeIds, badgeId])
+        toast.success("Pinned to showcase")
       }
-      onShowcaseBadgeIdsChange([...showcaseBadgeIds, badgeId])
-      toast.success("Pinned to showcase")
     }
   }
 
@@ -197,16 +197,18 @@ export function BadgeShowcaseCard({
   }
 
   const handleSyncBadges = async () => {
-    if (disabled || isSyncing) return
+    if (disabled || isSyncing || !user?.id) return
     setIsSyncing(true)
     try {
-      const { data, error } = await elysia.users.me.badges.evaluate.post(
-        {},
-        { fetch: { credentials: "include" } }
-      )
+      const { data, error } = await elysia.carina
+        .users({ userId: user.id })
+        .badges.evaluate.post()
       if (error) {
-        const errorData = error.value as { message?: string } | undefined
-        toast.error(errorData?.message || "Failed to sync achievements")
+        const errorMsg =
+          error && typeof error.value === "object" && error.value && "message" in error.value
+            ? String((error.value as { message?: unknown }).message)
+            : "Failed to sync achievements"
+        toast.error(errorMsg)
         return
       }
       await refetchUser()
@@ -264,8 +266,8 @@ export function BadgeShowcaseCard({
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsModalOpen(true)}
-                    disabled={disabled}
+                    onPress={() => setIsModalOpen(true)}
+                    isDisabled={disabled}
                     className="h-6 gap-1 rounded-lg px-2 text-xs font-medium cursor-pointer"
                   >
                     <IconAward className="size-3" />
@@ -309,8 +311,8 @@ export function BadgeShowcaseCard({
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsModalOpen(true)}
-                    disabled={disabled}
+                    onPress={() => setIsModalOpen(true)}
+                    isDisabled={disabled}
                     className="h-7 gap-1.5 rounded-xl px-2.5 text-xs font-medium cursor-pointer"
                   >
                     <IconAward className="size-3.5" />
@@ -554,8 +556,8 @@ export function BadgeShowcaseCard({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={handleSyncBadges}
-                disabled={disabled || isSyncing}
+                onPress={handleSyncBadges}
+                isDisabled={disabled || isSyncing}
                 className="h-8 gap-1.5 rounded-xl px-3 text-xs font-medium cursor-pointer"
               >
                 <IconRefresh className={cn("size-3.5", isSyncing && "animate-spin")} />
@@ -566,7 +568,7 @@ export function BadgeShowcaseCard({
                 type="button"
                 variant="default"
                 size="sm"
-                onClick={() => setIsModalOpen(false)}
+                onPress={() => setIsModalOpen(false)}
                 className="h-8 rounded-xl px-4 text-xs font-medium cursor-pointer"
               >
                 Done

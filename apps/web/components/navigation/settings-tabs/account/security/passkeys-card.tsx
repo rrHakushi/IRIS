@@ -39,8 +39,8 @@ export function PasskeysCard(): React.JSX.Element {
   const fetchPasskeys = useCallback(async () => {
     try {
       setError(null)
-      const res = await elysia.auth.passkeys.get({
-        fetch: { credentials: "include" },
+      const res = await elysia.carina.auth.twofactor.passkeys.get({
+        query: { limit: 50 },
       })
       if (res.data?.passkeys) {
         setPasskeys(res.data.passkeys)
@@ -68,10 +68,7 @@ export function PasskeysCard(): React.JSX.Element {
 
     try {
       // 1. Get registration options from server
-      const optionsRes = await elysia.auth.passkeys.register.post(
-        {},
-        { fetch: { credentials: "include" } }
-      )
+      const optionsRes = await elysia.carina.auth.twofactor.passkeys.post()
       if (optionsRes.error || !optionsRes.data) {
         const errorData = optionsRes.error?.value as
           { message?: string } | undefined
@@ -85,13 +82,10 @@ export function PasskeysCard(): React.JSX.Element {
       })
 
       // 3. Verify registration response on server
-      const verifyRes = await elysia.auth.passkeys.register.verify.post(
-        {
-          passkeyResponse: attResp as any,
-          name: passkeyName.trim() || undefined,
-        },
-        { fetch: { credentials: "include" } }
-      )
+      const verifyRes = await elysia.carina.auth.twofactor.passkeys.verify.post({
+        passkeyResponse: attResp as any,
+        name: passkeyName.trim() || undefined,
+      })
 
       if (verifyRes.error) {
         const errorData = verifyRes.error?.value as
@@ -127,9 +121,9 @@ export function PasskeysCard(): React.JSX.Element {
     setError(null)
 
     try {
-      const res = await elysia.auth
-        .passkeys({ id })
-        .delete({}, { fetch: { credentials: "include" } })
+      const res = await elysia.carina.auth.twofactor
+        .passkeys({ passkeyId: id })
+        .delete()
       if (res.error) {
         const errorData = res.error?.value as { message?: string } | undefined
         const msg = errorData?.message || t("failedDeletePasskey")
@@ -175,7 +169,7 @@ export function PasskeysCard(): React.JSX.Element {
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => setShowAddInput(true)}
+            onPress={() => setShowAddInput(true)}
             className="h-8 shrink-0 gap-1.5 rounded-xl text-xs font-semibold"
           >
             <IconPlus className="size-3.5" />
@@ -225,7 +219,7 @@ export function PasskeysCard(): React.JSX.Element {
             <Button
               type="submit"
               size="sm"
-              disabled={isRegistering}
+              isDisabled={isRegistering}
               className="h-9 shrink-0 gap-1.5 rounded-xl px-4 text-xs font-semibold"
             >
               {isRegistering ? (
@@ -296,8 +290,8 @@ export function PasskeysCard(): React.JSX.Element {
                     type="button"
                     variant="ghost"
                     size="icon-xs"
-                    disabled={isDeleting}
-                    onClick={() => handleDeletePasskey(pk.id, pk.name)}
+                    isDisabled={isDeleting}
+                    onPress={() => handleDeletePasskey(pk.id, pk.name)}
                     className="size-7 shrink-0 cursor-pointer rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                     aria-label={t("deletePasskeyAria", { name: displayName })}
                   >

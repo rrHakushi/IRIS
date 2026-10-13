@@ -578,4 +578,57 @@ export class CarinaCommentsServ {
       message: 'Reply deleted successfully',
     }
   }
+
+  /**
+   * Update a reply to a comment strictly by reply ID.
+   * Allowed for reply author or administrator.
+   */
+  public static async updateReply(
+    user: { id: string; permissions: number[] },
+    commentId: string,
+    replyId: string,
+    body: { content: string }
+  ) {
+    const trimmed = body.content.trim()
+    if (!trimmed) {
+      throw new BadRequest('Reply content cannot be empty.')
+    }
+
+    const reply = await prisma.listCommentReply.findUnique({
+      where: { id: replyId.trim() },
+    })
+
+    if (!reply || reply.commentId !== commentId.trim()) {
+      throw new NotFound('Reply not found')
+    }
+
+    const isAuthor = reply.authorId === user.id
+    const isAdmin = new IRISBitField(user.permissions).has(IRISFlags.ADMINISTRATOR)
+
+    if (!isAuthor && !isAdmin) {
+      throw new Forbidden('You do not have permission to update this reply')
+    }
+
+    const updated = await prisma.listCommentReply.update({
+      where: { id: reply.id },
+      data: { content: trimmed },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+            avatarUrl: true,
+            avatarFrame: true,
+            badges: true,
+          },
+        },
+      },
+    })
+
+    return {
+      success: true,
+      reply: this.formatReply(updated),
+    }
+  }
 }

@@ -47,6 +47,24 @@ export const carinaPasskeys = new Elysia({ prefix: '/carina/auth/twofactor/passk
     }
   )
 
+  // POST /carina/auth/twofactor/passkeys/login (challenge)
+  .post(
+    '/login',
+    {
+      body: CarinaPasskeysModel.loginBody,
+      detail: {
+        summary: 'Generate passkey authentication/login challenge',
+        tags: ['Carina Passkeys'],
+      },
+      response: {
+        200: CarinaPasskeysModel.loginResponse,
+      },
+    },
+    async ({ body, request }) => {
+      return await CarinaPasskeysServ.createLoginChallenge(body ?? undefined, request)
+    }
+  )
+
   // POST /carina/auth/twofactor/passkeys/verify
   .post(
     '/verify',

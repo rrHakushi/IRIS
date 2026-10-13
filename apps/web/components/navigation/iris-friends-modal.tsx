@@ -161,12 +161,12 @@ export function IrisFriendsModal({
     if (!isAuthenticated) return
     setIsLoading(true)
     try {
-      const res = await elysia.friends.get()
+      const res = await elysia.carina.friends.get({ query: { limit: 50 } })
       if (!res.error && res.data?.success) {
-        setFriends(res.data.friends || [])
-        setIncomingRequests(res.data.incomingRequests || [])
-        setOutgoingRequests(res.data.outgoingRequests || [])
-        setBlockedUsers(res.data.blockedUsers || [])
+        setFriends((res.data.friends as any[]) || [])
+        setIncomingRequests((res.data.incomingRequests as any[]) || [])
+        setOutgoingRequests((res.data.outgoingRequests as any[]) || [])
+        setBlockedUsers((res.data.blockedUsers as any[]) || [])
       }
     } catch (err) {
       console.error("[IrisFriendsModal] Failed to fetch friends:", err)
@@ -202,7 +202,7 @@ export function IrisFriendsModal({
       prev.map((f) => (f.id === friend.id ? { ...f, isPrivate: nextPrivate } : f))
     )
     try {
-      const res = await elysia.friends({ id: friend.id }).patch({
+      const res = await elysia.carina.friends({ friendId: friend.id }).patch({
         isPrivate: nextPrivate,
       })
       if (res.error) {
@@ -238,7 +238,7 @@ export function IrisFriendsModal({
     setNicknameModal((prev) => ({ ...prev, isSaving: true }))
 
     try {
-      const res = await elysia.friends({ id: target.id }).patch({
+      const res = await elysia.carina.friends({ friendId: target.id }).patch({
         nickname: newNick,
       })
       if (!res.error) {
@@ -260,7 +260,7 @@ export function IrisFriendsModal({
   // Handle remove friend
   const handleRemoveFriend = async (friend: FriendItem) => {
     try {
-      const res = await elysia.friends({ id: friend.id }).delete()
+      const res = await elysia.carina.friends({ friendId: friend.id }).delete()
       if (!res.error) {
         setFriends((prev) => prev.filter((f) => f.id !== friend.id))
         toast.success(`Removed @${friend.user.username} from friends.`)
@@ -279,8 +279,8 @@ export function IrisFriendsModal({
   ) => {
     setActionLoadingIds((prev) => ({ ...prev, [requestId]: true }))
     try {
-      const res = await elysia.friends
-        .requests({ id: requestId })
+      const res = await elysia.carina.friends
+        .requests({ requestId })
         .respond.post({ action })
 
       if (!res.error) {
@@ -301,7 +301,7 @@ export function IrisFriendsModal({
   const handleCancelOutgoing = async (requestId: string) => {
     setActionLoadingIds((prev) => ({ ...prev, [requestId]: true }))
     try {
-      const res = await elysia.friends.requests({ id: requestId }).delete()
+      const res = await elysia.carina.friends.requests({ requestId }).delete()
       if (!res.error) {
         setOutgoingRequests((prev) => prev.filter((r) => r.id !== requestId))
         toast.success("Friend request cancelled.")
@@ -318,7 +318,7 @@ export function IrisFriendsModal({
   // Handle block user
   const handleBlockUser = async (username: string) => {
     try {
-      const res = await elysia.friends.block.post({ targetUsername: username })
+      const res = await elysia.carina.friends.block.post({ targetUsername: username })
       if (!res.error) {
         toast.success(`Blocked @${username}.`)
         fetchFriendsData()
@@ -334,7 +334,7 @@ export function IrisFriendsModal({
   const handleUnblockUser = async (blockId: string, username: string) => {
     setActionLoadingIds((prev) => ({ ...prev, [blockId]: true }))
     try {
-      const res = await elysia.friends.block({ id: blockId }).delete()
+      const res = await elysia.carina.friends.block({ blockId }).delete()
       if (!res.error) {
         setBlockedUsers((prev) => prev.filter((b) => b.id !== blockId))
         toast.success(`Unblocked @${username}.`)
@@ -359,9 +359,14 @@ export function IrisFriendsModal({
     setIsSearchingUser(true)
     setSearchUserError(null)
     try {
-      const res = await elysia.users({ username: trimmed }).get()
-      if (!res.error && res.data?.success && res.data.user) {
-        setSearchedUser(res.data.user)
+      const res = await elysia.carina.users.get({
+        query: { q: trimmed, limit: 1 },
+      })
+      const found = res.data?.users?.find(
+        (u) => u.username.toLowerCase() === trimmed.toLowerCase()
+      )
+      if (!res.error && found) {
+        setSearchedUser(found)
       } else {
         setSearchedUser(null)
         setSearchUserError(`User @${trimmed} not found.`)
@@ -386,7 +391,7 @@ export function IrisFriendsModal({
 
     setIsSendingRequest(true)
     try {
-      const res = await elysia.friends.request.post({
+      const res = await elysia.carina.friends.requests.post({
         targetUsername: target,
         message: addMessage.trim() || undefined,
       })
@@ -591,7 +596,7 @@ export function IrisFriendsModal({
                       {!searchQuery && (
                         <Button
                           size="sm"
-                          onClick={() => setActiveTab("add")}
+                          onPress={() => setActiveTab("add")}
                           className="mt-2 cursor-pointer gap-1.5 rounded-xl text-xs font-bold"
                         >
                           <IconUserPlus className="size-4" />
@@ -671,7 +676,7 @@ export function IrisFriendsModal({
                                   </Button>
                                   <DropdownMenu placement="bottom end" className="w-48 rounded-xl p-1">
                                     <DropdownMenuItem
-                                      href={`/IRIS-account/users/${f.user.username}`}
+                                      href={`/carina/users/${f.user.id}`}
                                       onClick={() => onOpenChange(false)}
                                     >
                                       <IconArrowRight className="size-3.5" />
@@ -773,7 +778,7 @@ export function IrisFriendsModal({
                                 </div>
 
                                 <Link
-                                  href={`/IRIS-account/users/${f.user.username}`}
+                                  href={`/carina/users/${f.user.id}`}
                                   onClick={() => onOpenChange(false)}
                                   className="mb-1 text-xs font-semibold text-primary hover:underline flex items-center gap-1"
                                 >
@@ -936,7 +941,7 @@ export function IrisFriendsModal({
                                 <Button
                                   size="sm"
                                   isDisabled={isActing}
-                                  onClick={() => handleRespondRequest(req.id, "ACCEPT")}
+                                  onPress={() => handleRespondRequest(req.id, "ACCEPT")}
                                   className="h-7.5 flex-1 cursor-pointer rounded-xl text-xs font-semibold"
                                 >
                                   <IconCheck className="mr-1 size-3.5" />
@@ -946,7 +951,7 @@ export function IrisFriendsModal({
                                   size="sm"
                                   variant="outline"
                                   isDisabled={isActing}
-                                  onClick={() => handleRespondRequest(req.id, "DECLINE")}
+                                  onPress={() => handleRespondRequest(req.id, "DECLINE")}
                                   className="h-7.5 flex-1 cursor-pointer rounded-xl text-xs font-semibold"
                                 >
                                   <IconX className="mr-1 size-3.5" />
@@ -956,7 +961,7 @@ export function IrisFriendsModal({
                                   size="sm"
                                   variant="destructive"
                                   isDisabled={isActing}
-                                  onClick={() => handleRespondRequest(req.id, "BLOCK")}
+                                  onPress={() => handleRespondRequest(req.id, "BLOCK")}
                                   className="h-7.5 cursor-pointer rounded-xl px-2.5 text-xs font-semibold"
                                   aria-label="Block User"
                                 >
@@ -1035,7 +1040,7 @@ export function IrisFriendsModal({
                                 size="sm"
                                 variant="outline"
                                 isDisabled={isActing}
-                                onClick={() => handleCancelOutgoing(req.id)}
+                                onPress={() => handleCancelOutgoing(req.id)}
                                 className="h-7 cursor-pointer rounded-xl px-2.5 text-[11px] font-semibold text-muted-foreground hover:text-destructive"
                               >
                                 <span>Cancel</span>
@@ -1211,7 +1216,7 @@ export function IrisFriendsModal({
                             size="sm"
                             variant="outline"
                             isDisabled={actionLoadingIds[b.id]}
-                            onClick={() => handleUnblockUser(b.id, b.blocked.username)}
+                            onPress={() => handleUnblockUser(b.id, b.blocked.username)}
                             className="h-7 cursor-pointer rounded-xl px-3 text-xs font-semibold"
                           >
                             <span>Unblock</span>
@@ -1238,7 +1243,7 @@ export function IrisFriendsModal({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onOpenChange(false)}
+            onPress={() => onOpenChange(false)}
             className="cursor-pointer rounded-xl text-xs"
           >
             Close
@@ -1281,7 +1286,7 @@ export function IrisFriendsModal({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() =>
+                onPress={() =>
                   setNicknameModal({
                     open: false,
                     friend: null,
@@ -1296,7 +1301,7 @@ export function IrisFriendsModal({
               <Button
                 size="sm"
                 isDisabled={nicknameModal.isSaving}
-                onClick={handleSaveNickname}
+                onPress={handleSaveNickname}
                 className="cursor-pointer rounded-xl text-xs font-bold"
               >
                 Save Nickname

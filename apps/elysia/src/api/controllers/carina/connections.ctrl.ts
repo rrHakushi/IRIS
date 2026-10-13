@@ -27,6 +27,28 @@ export const carinaConnections = new Elysia({ prefix: '/carina/connections' })
     }
   )
 
+  // --- 1b. POST /carina/connections (Create connection with API Key / credentials) ---
+  .post(
+    '/',
+    {
+      body: CarinaConnectionsModel.createConnectionBody,
+      detail: {
+        summary: 'Create or update connected account with manual credentials or API Key',
+        tags: ['Carina Connections'],
+      },
+      response: {
+        200: CarinaConnectionsModel.createConnectionResponse,
+        400: CarinaConnectionsModel.badRequestError,
+        401: CarinaConnectionsModel.unauthorizedError,
+        422: CarinaConnectionsModel.validationError,
+      },
+    },
+    async ({ body, session: userSession }) => {
+      const user = userSession.requireUser()
+      return await CarinaConnectionsServ.createManualConnection(user.id, body)
+    }
+  )
+
   // --- 2. GET /carina/connections/providers (Get available third-party providers) ---
   .get(
     '/providers',
@@ -41,6 +63,28 @@ export const carinaConnections = new Elysia({ prefix: '/carina/connections' })
     },
     async () => {
       return CarinaConnectionsServ.listProviders()
+    }
+  )
+
+  // --- 2b. GET /carina/connections/search (Search media via provider proxy) ---
+  .get(
+    '/search',
+    {
+      query: CarinaConnectionsModel.searchQuery,
+      detail: {
+        summary: 'Search media or lookup external item ID via third-party provider proxy',
+        tags: ['Carina Connections'],
+      },
+      response: {
+        200: CarinaConnectionsModel.searchResponse,
+        400: CarinaConnectionsModel.badRequestError,
+        401: CarinaConnectionsModel.unauthorizedError,
+        422: CarinaConnectionsModel.validationError,
+      },
+    },
+    async ({ query, session: userSession }) => {
+      const user = userSession.requireUser()
+      return await CarinaConnectionsServ.searchProxy(user.id, query)
     }
   )
 

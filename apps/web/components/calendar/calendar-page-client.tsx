@@ -107,7 +107,7 @@ export function CalendarPageClient() {
 
     async function loadReleases() {
       try {
-        const { data, error } = await elysia.media.calendar.get({
+        const { data, error } = await elysia.borealis.calendar.get({
           query: {
             start: dateRange.start,
             end: dateRange.end,

@@ -144,7 +144,7 @@ export function LoginCredentials({
         <Field>
           <Button
             type="submit"
-            disabled={loading}
+            isDisabled={loading}
             className="h-10 w-full text-sm font-semibold sm:h-11 sm:text-base md:h-12"
           >
             {loading ? <Spinner className="mr-2 size-4" /> : null}
@@ -161,7 +161,7 @@ export function LoginCredentials({
           <Button
             variant="outline"
             type="button"
-            disabled={loading}
+            isDisabled={loading}
             onClick={onPasskeyLogin}
             className="h-10 w-full gap-1.5 px-2.5 text-xs font-medium sm:h-11 sm:gap-2 sm:px-4 sm:text-sm"
           >
@@ -171,7 +171,7 @@ export function LoginCredentials({
           <Button
             variant="outline"
             type="button"
-            disabled={loading}
+            isDisabled={loading}
             onClick={onGenerateQuickConnect}
             className="h-10 w-full gap-1.5 px-2.5 text-xs font-medium sm:h-11 sm:gap-2 sm:px-4 sm:text-sm"
           >

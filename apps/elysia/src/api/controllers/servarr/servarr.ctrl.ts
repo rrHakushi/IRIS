@@ -3,8 +3,368 @@ import { session } from '../../../plugins/session'
 import { ServarrModel } from '../../models/servarr/servarr.model'
 import { ServarrServ } from '../../../services/servarr/servarr.serv'
 
+function createServarrAppRouter<const T extends 'sonarr' | 'radarr'>(app: T) {
+  return new Elysia({ prefix: `/${app}` })
+    .use(session())
+    .get(
+      '/blocklist',
+      {
+        query: ServarrModel.blocklistQuery,
+        detail: { summary: `Get ${app} blocklist entries`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.blocklistResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ query, session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.getBlocklist(app, user.id, query)
+      }
+    )
+    .delete(
+      '/blocklist',
+      {
+        query: ServarrModel.deleteBlocklistQuery,
+        body: ServarrModel.deleteBlocklistBody,
+        detail: { summary: `Clear ${app} blocklist entries`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.deleteBlocklistResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ query, body, session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.deleteBlocklist(app, user.id, query, body)
+      }
+    )
+    .post(
+      '/command',
+      {
+        body: ServarrModel.commandBody,
+        detail: { summary: `Run ${app} command`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.commandResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ body, session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.executeCommand(app, user.id, body)
+      }
+    )
+    .get(
+      '/files',
+      {
+        query: ServarrModel.filesQuery,
+        detail: { summary: `List ${app} downloaded media files`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.filesResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ query, session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.getFiles(app, user.id, query)
+      }
+    )
+    .delete(
+      '/files',
+      {
+        query: ServarrModel.deleteFileQuery,
+        body: ServarrModel.deleteFileBody,
+        detail: { summary: `Delete ${app} downloaded file`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.deleteFileResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ query, body, session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.deleteFile(app, user.id, query, body)
+      }
+    )
+    .get(
+      '/history',
+      {
+        query: ServarrModel.historyQuery,
+        detail: { summary: `Get ${app} activity history`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.historyResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ query, session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.getHistory(app, user.id, query)
+      }
+    )
+    .get(
+      '/indexer',
+      {
+        detail: { summary: `List ${app} indexers`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.indexerResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.getIndexers(app, user.id)
+      }
+    )
+    .get(
+      '/library',
+      {
+        detail: { summary: `Get ${app} full media library`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.libraryResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.getLibrary(app, user.id)
+      }
+    )
+    .get(
+      '/lookup',
+      {
+        query: ServarrModel.lookupQuery,
+        detail: { summary: `Lookup ${app} media`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.lookupResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ query, session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.lookup(app, user.id, query)
+      }
+    )
+    .post(
+      '/lookup',
+      {
+        body: ServarrModel.addLookupBody,
+        detail: { summary: `Add ${app} media to library from lookup`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.addLookupResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ body, session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.addMedia(app, user.id, body)
+      }
+    )
+    .put(
+      '/manage',
+      {
+        body: ServarrModel.managePutBody,
+        detail: { summary: `Batch update ${app} media settings`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.managePutResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ body, session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.bulkUpdate(app, user.id, body)
+      }
+    )
+    .delete(
+      '/manage',
+      {
+        body: ServarrModel.manageDeleteBody,
+        detail: { summary: `Batch delete ${app} media`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.manageDeleteResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ body, session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.bulkDelete(app, user.id, body)
+      }
+    )
+    .get(
+      '/manualimport',
+      {
+        query: ServarrModel.manualImportQuery,
+        detail: { summary: `Get ${app} manual import release files`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.manualImportResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ query, session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.getManualImport(app, user.id, query)
+      }
+    )
+    .post(
+      '/manualimport',
+      {
+        body: ServarrModel.manualImportBody,
+        detail: { summary: `Execute ${app} manual import processing`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.executeManualImportResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ body, session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.executeManualImport(app, user.id, body)
+      }
+    )
+    .get(
+      '/queue',
+      {
+        query: ServarrModel.queueQuery,
+        detail: { summary: `Get ${app} active download queue`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.queueResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ query, session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.getQueue(app, user.id, query)
+      }
+    )
+    .delete(
+      '/queue',
+      {
+        query: ServarrModel.deleteQueueQuery,
+        body: ServarrModel.deleteQueueBody,
+        detail: { summary: `Delete or remove ${app} item from queue`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.deleteQueueResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ query, body, session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.deleteQueue(app, user.id, query, body)
+      }
+    )
+    .get(
+      '/release',
+      {
+        query: ServarrModel.releaseQuery,
+        detail: { summary: `Search ${app} indexer releases`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.releaseResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ query, session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.getReleases(app, user.id, query)
+      }
+    )
+    .post(
+      '/release',
+      {
+        body: ServarrModel.grabReleaseBody,
+        detail: { summary: `Push ${app} release to download client`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.grabReleaseResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ body, session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.grabRelease(app, user.id, body)
+      }
+    )
+    .get(
+      '/rename',
+      {
+        query: ServarrModel.renameQuery,
+        detail: { summary: `Preview ${app} renaming proposals`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.renameResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ query, session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.getRenamePreview(app, user.id, query)
+      }
+    )
+    .post(
+      '/rename',
+      {
+        body: ServarrModel.renameBody,
+        detail: { summary: `Execute ${app} file renaming on disk`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.executeRenameResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ body, session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.executeRename(app, user.id, body)
+      }
+    )
+    .get(
+      '/wanted/cutoff',
+      {
+        query: ServarrModel.wantedQuery,
+        detail: { summary: `Get ${app} cutoff unmet items`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.wantedResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ query, session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.getWantedCutoff(app, user.id, query)
+      }
+    )
+    .get(
+      '/wanted/missing',
+      {
+        query: ServarrModel.wantedQuery,
+        detail: { summary: `Get ${app} missing monitored media`, tags: [`Servarr - ${app}`] },
+        response: {
+          200: ServarrModel.wantedResponse,
+          401: ServarrModel.unauthorizedError,
+          422: ServarrModel.validationError,
+        },
+      },
+      async ({ query, session: userSession }) => {
+        const user = userSession.requireUser()
+        return await ServarrServ.getWantedMissing(app, user.id, query)
+      }
+    )
+}
+
 export const servarrController = new Elysia({ prefix: '/servarr' })
   .use(session())
+  .use(createServarrAppRouter('sonarr'))
+  .use(createServarrAppRouter('radarr'))
 
   // ===========================================================================
   // 1. Blocklist

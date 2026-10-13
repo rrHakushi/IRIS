@@ -49,17 +49,17 @@ export function RemoteUrlImportCard(): React.JSX.Element {
 
     setIsFetching(true)
     try {
-      const { data, error } = await elysia
-        .user({ username })
-        .lists.import["fetch-remote"].post(
-          {
-            url: url.trim(),
-            password,
-          },
-          {
-            fetch: { credentials: "include" },
-          }
-        )
+      const { data, error } = await elysia.borealis.lists.import[
+        "fetch-remote"
+      ].post(
+        {
+          url: url.trim(),
+          password,
+        },
+        {
+          fetch: { credentials: "include" },
+        }
+      )
 
       if (error || !data?.success || !data.data) {
         throw new Error(
@@ -151,7 +151,7 @@ export function RemoteUrlImportCard(): React.JSX.Element {
     setIsImporting(true)
 
     try {
-      const { data, error } = await elysia.user({ username }).lists.import.post(
+      const { data, error } = await elysia.borealis.lists.import.post(
         {
           items: selectedItems as any,
           skipExisting,

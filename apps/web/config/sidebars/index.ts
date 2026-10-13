@@ -23,13 +23,13 @@ export function useAllAppSidebarConfigs(
   return useMemo(
     () => [
       {
-        appId: "iris-list",
-        appName: "IRIS List",
+        appId: "borealis",
+        appName: "Borealis",
         config: listConfig,
       },
       {
-        appId: "iris-pass",
-        appName: "IRIS Pass",
+        appId: "akaromi",
+        appName: "Akaromi",
         config: passConfig,
       },
     ],
@@ -47,13 +47,13 @@ export function getAllAppSidebarConfigs(
 ): AppSidebarRegistryEntry[] {
   return [
     {
-      appId: "iris-list",
-      appName: "IRIS List",
+      appId: "borealis",
+      appName: "Borealis",
       config: getListSidebarConfig(session, tList, connectedServarr),
     },
     {
-      appId: "iris-pass",
-      appName: "IRIS Pass",
+      appId: "akaromi",
+      appName: "Akaromi",
       config: getPassSidebarConfig(session),
     },
   ]

@@ -76,7 +76,7 @@ export function FriendsMediaTab({
 
     let requestPromise = inFlightRequests.get(key)
     if (!requestPromise) {
-      requestPromise = elysia.friends
+      requestPromise = elysia.carina.friends
         .media({ mediaType: mediaCategory })({ id: Number(mediaId) })
         .get()
         .finally(() => {
@@ -283,7 +283,7 @@ export function FriendsMediaTab({
                 <div className="min-w-0 flex-1 space-y-0.5">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <Link
-                      href={`/IRIS-account/users/${f.user.username}`}
+                      href={`/carina/users/${f.user.id}`}
                       className={cn(
                         "max-w-[150px] truncate font-heading text-xs font-bold text-foreground hover:underline",
                         nameEffect

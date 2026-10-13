@@ -6,6 +6,8 @@ import { MediaQueueManager } from './services/borealis/queue'
 import { app, type App, startServer } from './server'
 
 export { app, type App, startServer }
+export { wsHub, WsServ, type IrisWebSocket } from './services/ws.serv'
+export * from './types/media-details'
 
 const logger = new LogFactory('Elysia:Cluster')
 

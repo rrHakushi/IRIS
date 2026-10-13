@@ -59,7 +59,7 @@ export function OAuthAppsSettingsTab({
     setError(null)
 
     try {
-      const res = await elysia.oauth.apps.get({
+      const res = await elysia.carina.oauth.apps.get({
         fetch: { credentials: "include" },
       })
 
@@ -70,8 +70,8 @@ export function OAuthAppsSettingsTab({
         )
       }
 
-      if (res.data?.apps) {
-        setApps(res.data.apps as unknown as OAuthAppItem[])
+      if (res.data?.clients) {
+        setApps(res.data.clients as unknown as OAuthAppItem[])
       }
     } catch (err: any) {
       console.error("[OAuthAppsTab] Fetch error:", err)
@@ -97,7 +97,7 @@ export function OAuthAppsSettingsTab({
   ): Promise<boolean> => {
     setIsCreating(true)
     try {
-      const res = await elysia.oauth.apps.post(payload, {
+      const res = await elysia.carina.oauth.apps.post(payload, {
         fetch: { credentials: "include" },
       })
 
@@ -107,9 +107,9 @@ export function OAuthAppsSettingsTab({
         return false
       }
 
-      if (res.data?.app) {
-        const newApp = res.data.app as unknown as OAuthAppItem
-        const secret = (res.data.app as any).clientSecret || null
+      if (res.data?.client) {
+        const newApp = res.data.client as unknown as OAuthAppItem
+        const secret = res.data.client.clientSecret || null
         setApps((prev) => [newApp, ...prev])
         toast.success("Application registered successfully!")
 
@@ -137,7 +137,13 @@ export function OAuthAppsSettingsTab({
   ): Promise<boolean> => {
     setIsEditing(true)
     try {
-      const res = await elysia.oauth.apps({ id }).put(payload, {
+      const cleanPayload = {
+        ...payload,
+        description: payload.description ?? undefined,
+        logoUrl: payload.logoUrl ?? undefined,
+        websiteUrl: payload.websiteUrl ?? undefined,
+      }
+      const res = await elysia.carina.oauth.apps({ id }).put(cleanPayload, {
         fetch: { credentials: "include" },
       })
 
@@ -147,8 +153,8 @@ export function OAuthAppsSettingsTab({
         return false
       }
 
-      if (res.data?.app) {
-        const updatedApp = res.data.app as unknown as OAuthAppItem
+      if (res.data?.client) {
+        const updatedApp = res.data.client as unknown as OAuthAppItem
         setApps((prev) =>
           prev.map((a) => (a.id === id ? { ...a, ...updatedApp } : a))
         )
@@ -177,7 +183,7 @@ export function OAuthAppsSettingsTab({
 
     setRegeneratingId(app.id)
     try {
-      const res = await elysia.oauth
+      const res = await elysia.carina.oauth
         .apps({ id: app.id })
         ["regenerate-secret"].post({}, { fetch: { credentials: "include" } })
 
@@ -213,9 +219,9 @@ export function OAuthAppsSettingsTab({
 
     setDeletingId(app.id)
     try {
-      const res = await elysia.oauth
+      const res = await elysia.carina.oauth
         .apps({ id: app.id })
-        .delete({}, { fetch: { credentials: "include" } })
+        .delete()
 
       if (res.error) {
         const errData = res.error.value as { message?: string } | undefined
@@ -248,7 +254,7 @@ export function OAuthAppsSettingsTab({
       <div className="flex items-center justify-end">
         <Button
           type="button"
-          onClick={() => setCreateDialogOpen(true)}
+          onPress={() => setCreateDialogOpen(true)}
           className="h-9 shrink-0 gap-1.5 bg-primary px-4 text-xs text-primary-foreground hover:bg-primary/90"
         >
           <IconPlus className="size-4" />
@@ -283,7 +289,7 @@ export function OAuthAppsSettingsTab({
           <Button
             type="button"
             variant="outline"
-            onClick={() => fetchApps(true)}
+            onPress={() => fetchApps(true)}
             className="mt-4 h-8 text-xs"
           >
             Retry
@@ -307,7 +313,7 @@ export function OAuthAppsSettingsTab({
           {!searchQuery && (
             <Button
               type="button"
-              onClick={() => setCreateDialogOpen(true)}
+              onPress={() => setCreateDialogOpen(true)}
               className="mt-4 h-8 gap-1.5 bg-primary px-4 text-xs text-primary-foreground hover:bg-primary/90"
             >
               <IconPlus className="size-3.5" />

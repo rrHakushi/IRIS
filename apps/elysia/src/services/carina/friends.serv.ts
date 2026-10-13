@@ -28,7 +28,7 @@ export class CarinaFriendsServ {
 
     const where = { userId: currentUserId }
 
-    const [total, rawFriends] = await Promise.all([
+    const [total, rawFriends, rawIncoming, rawOutgoing, rawBlocked] = await Promise.all([
       prisma.friend.count({ where }),
       prisma.friend.findMany({
         where,
@@ -45,6 +45,48 @@ export class CarinaFriendsServ {
             },
           },
         },
+      }),
+      prisma.friendRequest.findMany({
+        where: { receiverId: currentUserId, status: 'PENDING' },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              username: true,
+              customization: true,
+              badges: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.friendRequest.findMany({
+        where: { senderId: currentUserId, status: 'PENDING' },
+        include: {
+          receiver: {
+            select: {
+              id: true,
+              username: true,
+              customization: true,
+              badges: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.userBlock.findMany({
+        where: { blockerId: currentUserId },
+        include: {
+          blocked: {
+            select: {
+              id: true,
+              username: true,
+              customization: true,
+              badges: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
       }),
     ])
 
@@ -66,6 +108,90 @@ export class CarinaFriendsServ {
           avatarUrl: profile.avatarUrl || null,
           avatarFrame: profile.avatarFrame || null,
           badges: f.friend.badges,
+          customization: f.friend.customization,
+        },
+      }
+    })
+
+    const incomingRequests = rawIncoming.map((r) => {
+      const senderProfile = getProfileCustomization(r.sender.customization)
+      return {
+        id: r.id,
+        senderId: r.senderId,
+        message: r.message,
+        createdAt: r.createdAt.toISOString(),
+        sender: {
+          id: r.sender.id,
+          username: r.sender.username,
+          displayName: senderProfile.displayName || null,
+          avatarUrl: senderProfile.avatarUrl || null,
+          avatarFrame: senderProfile.avatarFrame || null,
+          badges: r.sender.badges,
+          customization: r.sender.customization,
+        },
+        user: {
+          id: r.sender.id,
+          username: r.sender.username,
+          displayName: senderProfile.displayName || null,
+          avatarUrl: senderProfile.avatarUrl || null,
+          avatarFrame: senderProfile.avatarFrame || null,
+          badges: r.sender.badges,
+          customization: r.sender.customization,
+        },
+      }
+    })
+
+    const outgoingRequests = rawOutgoing.map((r) => {
+      const receiverProfile = getProfileCustomization(r.receiver.customization)
+      return {
+        id: r.id,
+        receiverId: r.receiverId,
+        message: r.message,
+        createdAt: r.createdAt.toISOString(),
+        receiver: {
+          id: r.receiver.id,
+          username: r.receiver.username,
+          displayName: receiverProfile.displayName || null,
+          avatarUrl: receiverProfile.avatarUrl || null,
+          avatarFrame: receiverProfile.avatarFrame || null,
+          badges: r.receiver.badges,
+          customization: r.receiver.customization,
+        },
+        user: {
+          id: r.receiver.id,
+          username: r.receiver.username,
+          displayName: receiverProfile.displayName || null,
+          avatarUrl: receiverProfile.avatarUrl || null,
+          avatarFrame: receiverProfile.avatarFrame || null,
+          badges: r.receiver.badges,
+          customization: r.receiver.customization,
+        },
+      }
+    })
+
+    const blockedUsers = rawBlocked.map((b) => {
+      const blockedProfile = getProfileCustomization(b.blocked.customization)
+      return {
+        id: b.id,
+        blockedId: b.blockedId,
+        createdAt: b.createdAt.toISOString(),
+        blocked: {
+          id: b.blocked.id,
+          username: b.blocked.username,
+          displayName: blockedProfile.displayName || null,
+          avatarUrl: blockedProfile.avatarUrl || null,
+          avatarFrame: blockedProfile.avatarFrame || null,
+          badges: b.blocked.badges,
+          customization: b.blocked.customization,
+        },
+        user: {
+          id: b.blocked.id,
+          username: b.blocked.username,
+          displayName: blockedProfile.displayName || null,
+          avatarUrl: blockedProfile.avatarUrl || null,
+          avatarFrame: blockedProfile.avatarFrame || null,
+          badges: b.blocked.badges,
+          customization: b.blocked.customization,
         },
       }
     })
@@ -73,6 +199,9 @@ export class CarinaFriendsServ {
     return {
       success: true,
       friends,
+      incomingRequests,
+      outgoingRequests,
+      blockedUsers,
       pagination: {
         page,
         limit,
@@ -84,16 +213,51 @@ export class CarinaFriendsServ {
   }
 
   /**
-   * Remove friend strictly by target friend user ID (UUID).
+   * Update friend relationship (privacy, nickname).
+   */
+  public static async updateFriend(
+    currentUserId: string,
+    friendId: string,
+    body: { isPrivate?: boolean; nickname?: string | null }
+  ) {
+    const trimmedId = friendId.trim()
+    const existing = await prisma.friend.findFirst({
+      where: {
+        userId: currentUserId,
+        OR: [{ id: trimmedId }, { friendId: trimmedId }],
+      },
+    })
+
+    if (!existing) {
+      throw new NotFound('Friend not found')
+    }
+
+    const data: any = {}
+    if (body.isPrivate !== undefined) data.isPrivate = Boolean(body.isPrivate)
+    if (body.nickname !== undefined) data.nickname = body.nickname?.trim() || null
+
+    const updated = await prisma.friend.update({
+      where: { id: existing.id },
+      data,
+    })
+
+    return {
+      success: true,
+      friend: updated,
+    }
+  }
+
+  /**
+   * Remove friend strictly by target friend user ID or friendship record ID.
    */
   public static async removeFriend(currentUserId: string, friendId: string) {
     const trimmedFriendId = friendId.trim()
 
-    // Verify friendship exists
+    // Verify friendship exists by friendship ID or friend user ID
     const existing = await prisma.friend.findFirst({
       where: {
         userId: currentUserId,
-        friendId: trimmedFriendId,
+        OR: [{ friendId: trimmedFriendId }, { id: trimmedFriendId }],
       },
     })
 
@@ -101,12 +265,14 @@ export class CarinaFriendsServ {
       throw new NotFound('Friendship not found')
     }
 
+    const targetFriendId = existing.friendId
+
     // Bilateral deletion
     await prisma.friend.deleteMany({
       where: {
         OR: [
-          { userId: currentUserId, friendId: trimmedFriendId },
-          { userId: trimmedFriendId, friendId: currentUserId },
+          { userId: currentUserId, friendId: targetFriendId },
+          { userId: targetFriendId, friendId: currentUserId },
         ],
       },
     })
@@ -214,19 +380,34 @@ export class CarinaFriendsServ {
   }
 
   /**
-   * Send a friend request strictly by target user ID (UUID).
+   * Send a friend request by target user ID (UUID) or username.
    */
   public static async sendFriendRequest(
     currentUserId: string,
-    body: { targetUserId: string; message?: string }
+    body: { targetUserId?: string; targetUsername?: string; message?: string | null }
   ) {
-    const targetUserId = body.targetUserId.trim()
+    let targetUserId = body.targetUserId?.trim()
+
+    if (!targetUserId && body.targetUsername) {
+      const user = await prisma.user.findFirst({
+        where: { username: { equals: body.targetUsername.trim(), mode: 'insensitive' } },
+        select: { id: true },
+      })
+      if (!user) {
+        throw new NotFound(`User @${body.targetUsername.trim()} not found`)
+      }
+      targetUserId = user.id
+    }
+
+    if (!targetUserId) {
+      throw new BadRequest('Either targetUserId or targetUsername is required')
+    }
 
     if (targetUserId === currentUserId) {
       throw new BadRequest('You cannot send a friend request to yourself')
     }
 
-    // Verify target user exists strictly by ID
+    // Verify target user exists
     const targetUser = await prisma.user.findUnique({
       where: { id: targetUserId },
     })
@@ -424,6 +605,174 @@ export class CarinaFriendsServ {
     return {
       success: true,
       message: 'Friend request declined successfully',
+    }
+  }
+
+  /**
+   * Respond to a friend request (ACCEPT, DECLINE, or BLOCK).
+   */
+  public static async respondFriendRequest(
+    currentUserId: string,
+    requestId: string,
+    action: 'ACCEPT' | 'DECLINE' | 'BLOCK'
+  ) {
+    if (action === 'ACCEPT') {
+      return await this.acceptFriendRequest(currentUserId, requestId)
+    }
+
+    if (action === 'DECLINE') {
+      return await this.declineFriendRequest(currentUserId, requestId)
+    }
+
+    if (action === 'BLOCK') {
+      const request = await prisma.friendRequest.findUnique({
+        where: { id: requestId.trim() },
+      })
+      if (!request || request.receiverId !== currentUserId) {
+        throw new NotFound('Friend request not found')
+      }
+      const senderId = request.senderId
+      await prisma.friendRequest.delete({
+        where: { id: request.id },
+      })
+      await this.blockUser(currentUserId, { targetUserId: senderId })
+      return {
+        success: true,
+        message: 'Friend request rejected and user blocked',
+      }
+    }
+
+    throw new BadRequest(`Invalid action "${action}"`)
+  }
+
+  /**
+   * Cancel an outgoing friend request by request ID.
+   */
+  public static async cancelFriendRequest(
+    currentUserId: string,
+    requestId: string
+  ) {
+    const friendRequest = await prisma.friendRequest.findFirst({
+      where: {
+        id: requestId.trim(),
+        senderId: currentUserId,
+      },
+    })
+
+    if (!friendRequest) {
+      throw new NotFound('Friend request not found')
+    }
+
+    await prisma.friendRequest.delete({
+      where: { id: friendRequest.id },
+    })
+
+    return {
+      success: true,
+      message: 'Friend request cancelled successfully',
+    }
+  }
+
+  /**
+   * Block a user by target user ID or username.
+   */
+  public static async blockUser(
+    currentUserId: string,
+    body: { targetUserId?: string; targetUsername?: string }
+  ) {
+    let targetUserId = body.targetUserId?.trim()
+
+    if (!targetUserId && body.targetUsername) {
+      const user = await prisma.user.findFirst({
+        where: { username: { equals: body.targetUsername.trim(), mode: 'insensitive' } },
+        select: { id: true },
+      })
+      if (!user) {
+        throw new NotFound(`User @${body.targetUsername.trim()} not found`)
+      }
+      targetUserId = user.id
+    }
+
+    if (!targetUserId) {
+      throw new BadRequest('Either targetUserId or targetUsername is required')
+    }
+
+    if (targetUserId === currentUserId) {
+      throw new BadRequest('You cannot block yourself')
+    }
+
+    const targetUser = await prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { id: true },
+    })
+    if (!targetUser) {
+      throw new NotFound('User not found')
+    }
+
+    await prisma.$transaction([
+      prisma.friend.deleteMany({
+        where: {
+          OR: [
+            { userId: currentUserId, friendId: targetUserId },
+            { userId: targetUserId, friendId: currentUserId },
+          ],
+        },
+      }),
+      prisma.friendRequest.deleteMany({
+        where: {
+          OR: [
+            { senderId: currentUserId, receiverId: targetUserId },
+            { senderId: targetUserId, receiverId: currentUserId },
+          ],
+        },
+      }),
+      prisma.userBlock.upsert({
+        where: {
+          blockerId_blockedId: {
+            blockerId: currentUserId,
+            blockedId: targetUserId,
+          },
+        },
+        create: {
+          blockerId: currentUserId,
+          blockedId: targetUserId,
+        },
+        update: {},
+      }),
+    ])
+
+    return {
+      success: true,
+      message: 'User blocked successfully',
+    }
+  }
+
+  /**
+   * Unblock a user by block record ID or blocked user ID.
+   */
+  public static async unblockUser(
+    currentUserId: string,
+    blockId: string
+  ) {
+    const trimmed = blockId.trim()
+    const block = await prisma.userBlock.findFirst({
+      where: {
+        blockerId: currentUserId,
+        OR: [{ id: trimmed }, { blockedId: trimmed }],
+      },
+    })
+
+    if (!block) {
+      throw new NotFound('Blocked user record not found')
+    }
+
+    await prisma.userBlock.delete({
+      where: { id: block.id },
+    })
+
+    return {
+      success: true,
+      message: 'User unblocked successfully',
     }
   }
 

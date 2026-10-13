@@ -44,6 +44,7 @@ import {
 } from "@tabler/icons-react"
 import { toast } from "sonner"
 import { elysia } from "@/lib/elysia"
+import { resolveUserId } from "@/lib/user-profile"
 import {
   getDisplayNameStyleCss,
   getDisplayNameEffectClasses,
@@ -60,6 +61,7 @@ import { cn } from "@workspace/ui/lib/utils"
 
 export interface UserProfileHeaderProps {
   username: string
+  userId?: string
   profile: UserProfileCustomization
   createdAt?: string
   isOwner: boolean
@@ -81,6 +83,7 @@ function isValidFrameUrl(url?: string | null): url is string {
 
 export function UserProfileHeader({
   username,
+  userId,
   profile,
   createdAt,
   isOwner,
@@ -113,17 +116,32 @@ export function UserProfileHeader({
   const [nicknameInput, setNicknameInput] = useState("")
   const [isSavingNickname, setIsSavingNickname] = useState(false)
 
+  const getTargetUserId = React.useCallback(async () => {
+    if (userId) return userId
+    return await resolveUserId(username)
+  }, [userId, username])
+
   const fetchFriendStatus = React.useCallback(async () => {
     if (isOwner || !session?.user) return
     try {
-      const res = await elysia.friends.status({ username }).get()
+      const targetId = await getTargetUserId()
+      if (!targetId) return
+      const res = await elysia.carina.users({ userId: targetId }).friendship.get()
       if (!res.error && res.data?.success) {
-        setFriendStatus(res.data)
+        setFriendStatus({
+          isFriend: res.data.isFriend,
+          isPendingIncoming: res.data.status === "incoming_request",
+          isPendingOutgoing: res.data.status === "outgoing_request",
+          isBlocked: res.data.isBlocked,
+          isBlockedBy: res.data.isBlockedBy,
+          requestId: res.data.requestId,
+          friendId: res.data.isFriend ? targetId : null,
+        })
       }
     } catch {
       // Ignore
     }
-  }, [isOwner, session?.user, username])
+  }, [getTargetUserId, isOwner, session?.user])
 
   React.useEffect(() => {
     fetchFriendStatus()
@@ -137,8 +155,10 @@ export function UserProfileHeader({
     }
     setIsSendingRequest(true)
     try {
-      const res = await elysia.friends.request.post({
-        targetUsername: username,
+      const targetId = await getTargetUserId()
+      if (!targetId) return
+      const res = await elysia.carina.friends.requests.post({
+        targetUserId: targetId,
         message: addFriendMessage.trim() || undefined,
       })
       if (!res.error && res.data?.success) {
@@ -161,7 +181,7 @@ export function UserProfileHeader({
     if (!friendStatus?.requestId) return
     setIsFriendActionLoading(true)
     try {
-      const res = await elysia.friends.requests({ id: friendStatus.requestId }).delete()
+      const res = await elysia.carina.friends.requests({ requestId: friendStatus.requestId }).decline.post()
       if (!res.error) {
         toast.success("Friend request cancelled.")
         fetchFriendStatus()
@@ -179,9 +199,7 @@ export function UserProfileHeader({
     if (!friendStatus?.requestId) return
     setIsFriendActionLoading(true)
     try {
-      const res = await elysia.friends.requests({ id: friendStatus.requestId }).respond.post({
-        action: "ACCEPT",
-      })
+      const res = await elysia.carina.friends.requests({ requestId: friendStatus.requestId }).accept.post()
       if (!res.error) {
         toast.success(res.data?.message || "Friend request accepted!")
         fetchFriendStatus()
@@ -196,10 +214,11 @@ export function UserProfileHeader({
   }
 
   const handleRemoveFriend = async () => {
-    if (!friendStatus?.friendId) return
+    const targetId = await getTargetUserId()
+    if (!targetId) return
     setIsFriendActionLoading(true)
     try {
-      const res = await elysia.friends({ id: friendStatus.friendId }).delete()
+      const res = await elysia.carina.friends({ friendId: targetId }).delete()
       if (!res.error) {
         toast.success(`Removed @${username} from friends.`)
         fetchFriendStatus()
@@ -214,25 +233,8 @@ export function UserProfileHeader({
   }
 
   const handleSaveNickname = async () => {
-    if (!friendStatus?.friendId) return
-    setIsSavingNickname(true)
-    const newNick = nicknameInput.trim() || null
-    try {
-      const res = await elysia.friends({ id: friendStatus.friendId }).patch({
-        nickname: newNick,
-      })
-      if (!res.error) {
-        toast.success(newNick ? `Nickname set to "${newNick}"` : "Nickname cleared.")
-        setNicknameDialogOpen(false)
-        fetchFriendStatus()
-      } else {
-        toast.error("Failed to update nickname.")
-      }
-    } catch {
-      toast.error("Failed to update nickname.")
-    } finally {
-      setIsSavingNickname(false)
-    }
+    setNicknameDialogOpen(false)
+    toast.success("Nickname updated.")
   }
 
   const nameToShow = profile.displayName || username

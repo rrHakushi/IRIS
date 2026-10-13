@@ -2,6 +2,7 @@ import { prisma, type ActivityType, type FavoriteType, type Prisma } from '@IRIS
 import { getBadgeById, getProfileCustomization, setProfileCustomization } from '@IRIS/shared'
 import { IRISBitField, IRISFlags } from '@IRIS/permissions'
 import { BadRequest, Forbidden, NotFound } from '../../lib/errors'
+import { uploadPublicAsset, deletePublicAsset, extractS3Key } from '../../utils/s3'
 
 /**
  * Milestone thresholds for media consumption badges (11 tiers).
@@ -90,8 +91,8 @@ export class CarinaUsersServ {
   /**
    * Resolves a user strictly by database user ID.
    */
-  public static async resolveUser(id: string) {
-    const trimmed = id.trim()
+  public static async resolveUser(identifier: string) {
+    const trimmed = identifier.trim()
     if (!trimmed) {
       throw new NotFound('User not found')
     }
@@ -101,10 +102,32 @@ export class CarinaUsersServ {
     })
 
     if (!user) {
-      throw new NotFound(`User with ID "${trimmed}" not found`)
+      throw new NotFound(`User "${trimmed}" not found`)
     }
 
     return user
+  }
+
+  /**
+   * Resolves a user profile by case-insensitive username.
+   */
+  public static async getUserProfileByUsername(username: string) {
+    const trimmed = username.trim()
+    if (!trimmed) {
+      throw new NotFound('User not found')
+    }
+
+    const user = await prisma.user.findFirst({
+      where: {
+        username: { equals: trimmed, mode: 'insensitive' },
+      },
+    })
+
+    if (!user) {
+      throw new NotFound(`User "${trimmed}" not found`)
+    }
+
+    return await this.getUserProfile(user.id)
   }
 
   /**
@@ -1097,5 +1120,101 @@ export class CarinaUsersServ {
         updatedAt: updatedUser.updatedAt.toISOString(),
       },
     }
+  }
+
+  /**
+   * Upload user asset (avatar, banner, etc.) to RustFS S3 storage.
+   */
+  public static async uploadAsset(
+    userId: string,
+    body: {
+      file: File
+      assetType: 'avatar' | 'banner' | 'bannerOverlay' | 'nameplate' | 'sidebarBanner' | 'avatarFrame'
+    }
+  ) {
+    const { file, assetType } = body
+
+    const allowedTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'image/gif',
+      'image/svg+xml',
+    ]
+
+    if (!allowedTypes.includes(file.type)) {
+      throw new BadRequest('Unsupported file format. Please upload JPEG, PNG, WebP, GIF, or SVG.')
+    }
+
+    // Max size: 10MB
+    const maxSizeBytes = 10 * 1024 * 1024
+    if (file.size > maxSizeBytes) {
+      throw new BadRequest('File size exceeds 10MB limit.')
+    }
+
+    // Clean up previous asset of this type
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { customization: true },
+      })
+
+      if (user) {
+        const profile = getProfileCustomization(user.customization)
+        let oldUrl: string | null | undefined = null
+
+        if (assetType === 'avatar') oldUrl = profile.avatarUrl
+        else if (assetType === 'banner') oldUrl = profile.bannerUrl
+        else if (assetType === 'bannerOverlay') oldUrl = profile.bannerOverlayUrl
+        else if (assetType === 'nameplate' || assetType === 'sidebarBanner') {
+          oldUrl = profile.nameplateUrl || profile.sidebarBannerUrl
+        } else if (assetType === 'avatarFrame') oldUrl = profile.avatarFrame
+
+        if (oldUrl) {
+          const oldKey = extractS3Key(oldUrl)
+          if (oldKey && oldKey.startsWith(`users/${userId}/`)) {
+            await deletePublicAsset(oldKey)
+          }
+        }
+      }
+    } catch (cleanupErr) {
+      console.warn('[Assets] Warning during old asset cleanup:', cleanupErr)
+    }
+
+    let ext = 'png'
+    if (file.type === 'image/jpeg') ext = 'jpg'
+    else if (file.type === 'image/webp') ext = 'webp'
+    else if (file.type === 'image/gif') ext = 'gif'
+    else if (file.type === 'image/svg+xml') ext = 'svg'
+
+    const key = `users/${userId}/${assetType}-${Date.now()}.${ext}`
+    const buffer = Buffer.from(await file.arrayBuffer())
+
+    const { publicUrl } = await uploadPublicAsset({
+      key,
+      body: buffer,
+      contentType: file.type,
+    })
+
+    return {
+      success: true,
+      url: publicUrl,
+      key,
+      assetType,
+    }
+  }
+
+  /**
+   * Delete user asset from RustFS S3 storage.
+   */
+  public static async deleteAsset(userId: string, key: string) {
+    const targetKey = extractS3Key(key) || key
+
+    if (!targetKey.startsWith(`users/${userId}/`)) {
+      throw new Forbidden("Cannot delete another user's asset")
+    }
+
+    const success = await deletePublicAsset(targetKey)
+    return { success }
   }
 }

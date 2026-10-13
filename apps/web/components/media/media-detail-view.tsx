@@ -15,7 +15,6 @@ import { TrailersTab } from "./tabs/trailers-tab"
 import { StatsTab } from "./tabs/stats-tab"
 import { FriendsMediaTab } from "./tabs/friends-tab"
 import { RecommendationsMediaTab } from "./tabs/recommendations-tab"
-import { EmptyTab } from "./tabs/empty-tab"
 import { MediaFooter } from "./media-footer"
 import type {
   MediaTabItem,
@@ -134,11 +133,10 @@ export function MediaDetailView({
       }
     }
 
-    // Stats, Friends, Reviews, Recommendations
+    // Stats, Friends, Recommendations
     tabs.push(
       { key: "stats", label: "Stats" },
       { key: "friends", label: "Friends" },
-      { key: "reviews", label: "Reviews" },
       { key: "recommendations", label: "Recommendations" }
     )
 
@@ -225,8 +223,6 @@ export function MediaDetailView({
         {validActiveTab === "friends" && (
           <FriendsMediaTab mediaCategory={media.category} mediaId={media.id} />
         )}
-
-        {validActiveTab === "reviews" && <EmptyTab type="reviews" />}
 
         {validActiveTab === "recommendations" && (
           <RecommendationsMediaTab media={media} />

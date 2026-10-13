@@ -77,9 +77,18 @@ export class CarinaBookmarksServ {
     const totalPages = Math.max(1, Math.ceil(total / limit))
     const hasMore = page < totalPages
 
+    const groups = Array.from(
+      new Set(
+        rawBookmarks
+          .map((b) => b.group?.trim())
+          .filter((g): g is string => Boolean(g && g.length > 0))
+      )
+    )
+
     return {
       success: true,
       bookmarks: rawBookmarks.map((b) => this.formatBookmark(b)),
+      groups,
       pagination: {
         page,
         limit,
@@ -87,6 +96,54 @@ export class CarinaBookmarksServ {
         totalPages,
         hasMore,
       },
+    }
+  }
+
+  /**
+   * Reorder and batch update bookmarks for the current user.
+   */
+  public static async putBookmarks(
+    userId: string,
+    body: {
+      bookmarks: Array<{
+        id: string
+        title: string
+        url: string
+        icon?: string | null
+        color?: string | null
+        pinned?: boolean
+        appId?: string | null
+        group?: string | null
+        order?: number
+      }>
+    }
+  ) {
+    await prisma.$transaction(
+      body.bookmarks.map((bm, index) =>
+        prisma.bookmark.updateMany({
+          where: { id: bm.id, userId },
+          data: {
+            order: bm.order ?? index,
+            pinned: Boolean(bm.pinned),
+            title: bm.title,
+            url: bm.url,
+            icon: bm.icon?.trim() || null,
+            color: bm.color?.trim() || null,
+            appId: bm.appId?.trim() || null,
+            group: bm.group?.trim() || null,
+          },
+        })
+      )
+    )
+
+    const dbBookmarks = await prisma.bookmark.findMany({
+      where: { userId },
+      orderBy: [{ pinned: 'desc' }, { order: 'asc' }, { createdAt: 'desc' }],
+    })
+
+    return {
+      success: true,
+      bookmarks: dbBookmarks.map((b) => this.formatBookmark(b)),
     }
   }
 

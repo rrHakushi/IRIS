@@ -559,7 +559,7 @@ export function ServarrMediaView({
                 className="group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-border/40 bg-card text-card-foreground shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-md"
               >
                 <Link
-                  href={`/IRIS-list/servarr/${providerLower}/${item.id}`}
+                  href={`/borealis/servarr/${providerLower}/${item.id}`}
                   className="flex flex-1 flex-col rounded-2xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
                   {/* Cover Image Container */}
@@ -671,7 +671,7 @@ export function ServarrMediaView({
                 >
                   <td className="p-3.5 font-medium text-foreground">
                     <Link
-                      href={`/IRIS-list/servarr/${providerLower}/${item.id}`}
+                      href={`/borealis/servarr/${providerLower}/${item.id}`}
                       className="flex items-center gap-3 transition-colors hover:text-primary"
                     >
                       {item.posterUrl ? (

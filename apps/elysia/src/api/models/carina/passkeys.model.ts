@@ -67,6 +67,21 @@ export const CarinaPasskeysModel = {
     hints: t.Optional(t.Array(t.String())),
   }),
 
+  // --- POST /carina/auth/twofactor/passkeys/login (challenge) ---
+  loginBody: t.Optional(
+    t.Object({
+      identifier: t.Optional(t.String({ description: 'Optional username or email' })),
+    })
+  ),
+
+  loginResponse: t.Object({
+    challenge: t.String({ description: 'Authentication challenge' }),
+    rpId: t.Optional(t.String({ description: 'Relying party ID' })),
+    allowCredentials: t.Optional(t.Array(t.Any())),
+    timeout: t.Optional(t.Number()),
+    userVerification: t.Optional(t.String()),
+  }),
+
   // --- POST /carina/auth/twofactor/passkeys/verify ---
   verifyBody: t.Object({
     passkeyResponse: t.Object({

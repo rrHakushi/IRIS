@@ -23,6 +23,13 @@ export const CarinaUsersModel = {
     }),
   }),
 
+  usernameParam: t.Object({
+    username: t.String({
+      minLength: 1,
+      description: 'Target user username',
+    }),
+  }),
+
   activityCategoryParam: t.Object({
     userId: t.String({
       minLength: 1,
@@ -159,6 +166,35 @@ export const CarinaUsersModel = {
       sidebarBannerUrl: t.Nullable(t.String()),
       accentColor: t.Nullable(t.String()),
     }),
+  }),
+
+  // --- POST /carina/users/me/assets (Upload user asset to storage) ---
+  uploadAssetBody: t.Object({
+    file: t.File({ description: 'Asset file buffer' }),
+    assetType: t.Union([
+      t.Literal('avatar'),
+      t.Literal('banner'),
+      t.Literal('bannerOverlay'),
+      t.Literal('nameplate'),
+      t.Literal('sidebarBanner'),
+      t.Literal('avatarFrame'),
+    ]),
+  }),
+
+  uploadAssetResponse: t.Object({
+    success: t.Boolean(),
+    url: t.String(),
+    key: t.String(),
+    assetType: t.String(),
+  }),
+
+  // --- DELETE /carina/users/me/assets (Delete user asset from storage) ---
+  deleteAssetBody: t.Object({
+    key: t.String({ description: 'S3 storage asset key to remove' }),
+  }),
+
+  deleteAssetResponse: t.Object({
+    success: t.Boolean(),
   }),
 
   // --- GET /carina/users/:userId/badges ---

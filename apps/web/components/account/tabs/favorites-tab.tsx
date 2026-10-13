@@ -18,6 +18,7 @@ import {
   IconStar,
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
+import { resolveUserId } from "@/lib/user-profile"
 
 export interface FavoritesTabProps {
   username: string
@@ -50,7 +51,13 @@ export function invalidateClientFavorites(username?: string, category?: string) 
   }
 }
 
-export function FavoritesTab({ username, isOwner }: FavoritesTabProps): React.JSX.Element {
+export interface FavoritesTabProps {
+  username: string
+  userId?: string
+  isOwner: boolean
+}
+
+export function FavoritesTab({ username, userId, isOwner }: FavoritesTabProps): React.JSX.Element {
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL")
   const cacheKey = `${username}:${selectedCategory}`
   const cached = favoritesClientCache.get(cacheKey)
@@ -77,10 +84,18 @@ export function FavoritesTab({ username, isOwner }: FavoritesTabProps): React.JS
       let promise = inFlightRequests.get(cacheKey)
       if (!promise) {
         promise = (async () => {
-          const queryType = selectedCategory !== "ALL" ? (selectedCategory as any) : undefined
-          return await elysia.user({ username }).favorites.get({
-            query: { type: queryType },
-          })
+          let targetId = userId
+          if (!targetId) {
+            targetId = (await resolveUserId(username)) || undefined
+          }
+          if (!targetId) return null
+
+          if (selectedCategory !== "ALL") {
+            const cat = selectedCategory.toLowerCase().replace("_track", "")
+            return await elysia.carina.users({ userId: targetId }).favorites({ category: cat }).get()
+          } else {
+            return await elysia.carina.users({ userId: targetId }).favorites.get()
+          }
         })().finally(() => {
           inFlightRequests.delete(cacheKey)
         })
@@ -200,8 +215,8 @@ export function FavoritesTab({ username, isOwner }: FavoritesTabProps): React.JS
                                   ? "studios"
                                   : typeLower
             const link = (
-              entity.link || `/IRIS-list/${linkPath}/${fav.targetId}`
-            ).replace("/IRIS-media/media/", "/IRIS-list/")
+              entity.link || `/borealis/${linkPath}/${fav.targetId}`
+            ).replace("/IRIS-media/media/", "/borealis/").replace("/IRIS-list/", "/borealis/")
             const formatBadge = entity.format || fav.type
 
             return (

@@ -6,11 +6,11 @@ export async function GET(request: Request) {
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
-  <ShortName>IRIS Search</ShortName>
+  <ShortName>Kiroshi</ShortName>
   <Description>Privacy-respecting meta-search engine</Description>
   <InputEncoding>UTF-8</InputEncoding>
   <Image width="32" height="32" type="image/x-icon">${origin}/favicon.ico</Image>
-  <Url type="text/html" method="get" template="${origin}/IRIS-search?q={searchTerms}" />
+  <Url type="text/html" method="get" template="${origin}/kiroshi?q={searchTerms}" />
 </OpenSearchDescription>`
 
   return new NextResponse(xml, {

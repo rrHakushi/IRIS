@@ -199,7 +199,7 @@ export function NotificationProvider({
     setError(null)
 
     try {
-      const { data, error: apiError } = await elysia.notifications.get({
+      const { data, error: apiError } = await elysia.carina.notifications.get({
         fetch: { credentials: "include" },
       })
 
@@ -265,10 +265,10 @@ export function NotificationProvider({
       payload?: Record<string, unknown>
     ): Promise<boolean> => {
       try {
-        const { data, error: apiError } = await elysia
-          .notifications({ id })
+        const { data, error: apiError } = await elysia.carina
+          .notifications({ notificationId: id })
           .action.post(
-            { action, payload },
+            { action, payload: payload as any },
             { fetch: { credentials: "include" } }
           )
 
@@ -460,9 +460,9 @@ export function NotificationProvider({
       )
       setUnreadCount((prev) => Math.max(0, prev - 1))
 
-      const { data, error: apiError } = await elysia
-        .notifications({ id })
-        .read.patch({ isRead: true }, { fetch: { credentials: "include" } })
+      const { data, error: apiError } = await elysia.carina
+        .notifications({ notificationId: id })
+        .read.post({}, { fetch: { credentials: "include" } })
 
       return !apiError && Boolean(data?.success)
     } catch {
@@ -481,9 +481,10 @@ export function NotificationProvider({
       )
       setUnreadCount(0)
 
-      const { data, error: apiError } = await elysia.notifications[
-        "mark-all-read"
-      ].post({}, { fetch: { credentials: "include" } })
+      const { data, error: apiError } = await elysia.carina.notifications.read.post(
+        {},
+        { fetch: { credentials: "include" } }
+      )
 
       return !apiError && Boolean(data?.success)
     } catch {
@@ -499,8 +500,8 @@ export function NotificationProvider({
         setUnreadCount((prev) => Math.max(0, prev - 1))
       }
 
-      const { data, error: apiError } = await elysia
-        .notifications({ id })
+      const { data, error: apiError } = await elysia.carina
+        .notifications({ notificationId: id })
         .delete({}, { fetch: { credentials: "include" } })
 
       return !apiError && Boolean(data?.success)
@@ -518,8 +519,8 @@ export function NotificationProvider({
         setUnreadCount(0)
       }
 
-      const { data, error: apiError } = await elysia.notifications.delete(
-        { query: { onlyRead: onlyRead ? "true" : undefined } },
+      const { data, error: apiError } = await elysia.carina.notifications.delete(
+        { query: { onlyRead } },
         { fetch: { credentials: "include" } }
       )
 

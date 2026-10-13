@@ -9,6 +9,7 @@ import {
 } from '@IRIS/database'
 import { LogFactory } from '@Iris/logger'
 import { NotFound } from '../../lib/errors'
+import { wsHub } from '../ws.serv'
 
 const logger = new LogFactory('CarinaNotifications')
 
@@ -223,6 +224,12 @@ export class CarinaNotificationsServ {
       }
     }
 
+    try {
+      wsHub.sendToUser(params.userId, 'notification:new', { notification })
+    } catch (err) {
+      logger.warn(`Failed to dispatch real-time notification over WebSocket: ${err}`)
+    }
+
     return notification
   }
 
@@ -321,6 +328,10 @@ export class CarinaNotificationsServ {
       where: { userId, isRead: false },
     })
 
+    try {
+      wsHub.sendToUser(userId, 'notification:bulk-delete', { deletedCount: result.count })
+    } catch {}
+
     return {
       success: true,
       deletedCount: result.count,
@@ -403,6 +414,10 @@ export class CarinaNotificationsServ {
       where: { userId, isRead: false },
     })
 
+    try {
+      wsHub.sendToUser(userId, 'notification:delete', { id: notification.id })
+    } catch {}
+
     return {
       success: true,
       id: notification.id,
@@ -449,6 +464,14 @@ export class CarinaNotificationsServ {
       where: { userId, isRead: false },
     })
 
+    try {
+      wsHub.sendToUser(userId, 'notification:action-resolved', {
+        id: updated.id,
+        actionStatus: updated.actionStatus || actionStatus,
+        actionPayload: updated.actionPayload,
+      })
+    } catch {}
+
     return {
       success: true,
       id: updated.id,
@@ -490,6 +513,14 @@ export class CarinaNotificationsServ {
       where: { userId, isRead: false },
     })
 
+    try {
+      wsHub.sendToUser(userId, 'notification:update', {
+        id: notification.id,
+        isRead: true,
+        readAt: readAtDate.toISOString(),
+      })
+    } catch {}
+
     return {
       success: true,
       id: notification.id,
@@ -514,6 +545,12 @@ export class CarinaNotificationsServ {
         readAt: new Date(),
       },
     })
+
+    try {
+      wsHub.sendToUser(userId, 'notification:mark-all-read', {
+        markedCount: result.count,
+      })
+    } catch {}
 
     return {
       success: true,

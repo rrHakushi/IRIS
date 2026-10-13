@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { elysia } from "@/lib/elysia"
+import { resolveUserId } from "@/lib/user-profile"
 import { useUser } from "@/context/user-context"
 import dynamic from "next/dynamic"
 import {
@@ -39,6 +40,7 @@ import type {
 
 export interface UserListViewProps {
   username: string
+  userId?: string
   mediaType: MediaListType
   initialProfile?: UserProfileCustomization | null
 }
@@ -96,23 +98,22 @@ function matchesMediaSearch(
  * Type-safe dispatcher for Elysia list routes.
  * Golden Rule: Never cast with (elysia as any).
  */
-function getListResource(username: string, mediaType: MediaListType) {
-  const client = elysia.user({ username }).lists
+function getListResource(mediaType: MediaListType) {
   switch (mediaType) {
     case "anime":
-      return client.anime
+      return elysia.borealis.lists.anime
     case "manga":
-      return client.manga
+      return elysia.borealis.lists.manga
     case "movie":
-      return client.movie
+      return elysia.borealis.lists.movies
     case "tv":
-      return client.tv
+      return elysia.borealis.lists.tv
     case "game":
-      return client.game
+      return elysia.borealis.lists.games
     case "book":
-      return client.book
+      return elysia.borealis.lists.books
     case "music":
-      return client.music
+      return elysia.borealis.lists.music
   }
 }
 
@@ -226,6 +227,7 @@ function sortListItems(
 
 export function UserListView({
   username,
+  userId,
   mediaType,
   initialProfile,
 }: UserListViewProps): React.JSX.Element {
@@ -236,6 +238,30 @@ export function UserListView({
     session?.user?.username &&
     session.user.username.toLowerCase() === username.toLowerCase()
   )
+
+  const resolvedUserId =
+    userId ||
+    (isOwner
+      ? currentUser?.id || (session?.user as any)?.id
+      : undefined)
+
+  const [targetUserId, setTargetUserId] = useState<string | undefined>(resolvedUserId)
+
+  useEffect(() => {
+    if (resolvedUserId) {
+      setTargetUserId(resolvedUserId)
+      return
+    }
+    let ignore = false
+    resolveUserId(username).then((id) => {
+      if (!ignore && id) {
+        setTargetUserId(id)
+      }
+    })
+    return () => {
+      ignore = true
+    }
+  }, [resolvedUserId, username])
 
   // Use current user's profile if owner for reactive live updates, else SSR profile
   const profileToDisplay =
@@ -350,7 +376,7 @@ export function UserListView({
   const [items, setItems] = useState<ListEntryData[]>([])
   const [facets, setFacets] = useState<ListFilterFacets>(DEFAULT_FACETS)
   const [totalCount, setTotalCount] = useState<number>(0)
-  const [nextCursor, setNextCursor] = useState<string | number | null>(null)
+  const [page, setPage] = useState<number>(1)
   const [hasMore, setHasMore] = useState<boolean>(false)
 
   const [isLoading, setIsLoading] = useState<boolean>(true)
@@ -370,7 +396,7 @@ export function UserListView({
     async (force = false) => {
       if (!username || !mediaType) return
 
-      const facetsKey = `${username}:${mediaType}`
+      const facetsKey = `${username}:${targetUserId || ""}:${mediaType}`
       if (
         !force &&
         (lastFetchedFacetsKeyRef.current === facetsKey ||
@@ -383,17 +409,18 @@ export function UserListView({
       isFetchingFacetsRef.current = true
 
       try {
-        const resource = getListResource(username, mediaType)
-        const { data, error } = await resource.filters.get()
+        const resource = getListResource(mediaType)
+        const query = targetUserId ? { userId: targetUserId } : undefined
+        const { data, error } = await resource.filters.get({ query })
         if (!error && data && data.success) {
           setFacets({
             statuses: data.statuses || [],
             formats: data.formats || [],
             genres: data.genres || [],
             years: data.years || [],
-            mediaStatuses: data.mediaStatuses || [],
-            months: data.months || [],
-            artists: data.artists || [],
+            mediaStatuses: [],
+            months: [],
+            artists: [],
           })
         }
       } catch {
@@ -402,7 +429,7 @@ export function UserListView({
         isFetchingFacetsRef.current = false
       }
     },
-    [username, mediaType]
+    [username, targetUserId, mediaType]
   )
 
   useEffect(() => {
@@ -419,34 +446,13 @@ export function UserListView({
       // Format query parameters
       const isMusic = mediaType === "music"
       let statusParam: string | undefined = undefined
-      let formatsParam: string | undefined =
-        selectedFormats.length > 0 ? selectedFormats.join(",") : undefined
 
-      if (isMusic) {
-        if (activeStatus === "ALBUMS") {
-          formatsParam = "ALBUM"
-        } else if (activeStatus === "TRACKS") {
-          formatsParam = "TRACK"
-        }
-      } else {
+      if (!isMusic) {
         statusParam = activeStatus === "ALL" ? undefined : activeStatus
       }
 
-      const mediaStatusParam =
-        selectedMediaStatuses.length > 0
-          ? selectedMediaStatuses.join(",")
-          : undefined
-      const genresParam =
-        selectedGenres.length > 0 ? selectedGenres.join(",") : undefined
-      const yearsParam =
-        selectedYears.length > 0 ? selectedYears.join(",") : undefined
-      const monthsParam =
-        selectedMonths.length > 0 ? selectedMonths.join(",") : undefined
-      const artistsParam =
-        selectedArtists.length > 0 ? selectedArtists.join(",") : undefined
-
       const cleanSearch = debouncedSearch.trim()
-      const queryKey = `${username}:${mediaType}:${activeStatus}:${statusParam}:${formatsParam}:${mediaStatusParam}:${genresParam}:${yearsParam}:${monthsParam}:${artistsParam}:${sortBy}:${sortOrder}:${cleanSearch}`
+      const queryKey = `${username}:${targetUserId || ""}:${mediaType}:${activeStatus}:${statusParam}:${sortBy}:${sortOrder}:${cleanSearch}`
 
       if (
         !force &&
@@ -460,32 +466,27 @@ export function UserListView({
       setIsLoading(true)
 
       try {
-        const resource = getListResource(username, mediaType)
+        const resource = getListResource(mediaType)
 
         const { data, error } = await resource.get({
           query: {
-            limit: 30,
+            page: 1,
+            limit: 40,
             status: statusParam,
-            mediaFormat: formatsParam,
-            mediaStatus: mediaStatusParam,
-            genres: genresParam,
-            year: yearsParam,
-            month: monthsParam,
-            artist: artistsParam,
             sortBy,
             order: sortOrder,
             q: cleanSearch || undefined,
+            userId: targetUserId,
           },
         })
 
         if (!error && data && data.success) {
           setItems((data.items as ListEntryData[]) || [])
-          setNextCursor(data.pagination?.nextCursor ?? null)
+          setPage(1)
           setHasMore(Boolean(data.pagination?.hasMore))
           setTotalCount(data.pagination?.total ?? 0)
         } else {
           setItems([])
-          setNextCursor(null)
           setHasMore(false)
         }
       } catch (err) {
@@ -498,14 +499,9 @@ export function UserListView({
     },
     [
       username,
+      targetUserId,
       mediaType,
       activeStatus,
-      selectedFormats,
-      selectedMediaStatuses,
-      selectedGenres,
-      selectedYears,
-      selectedMonths,
-      selectedArtists,
       sortBy,
       sortOrder,
       debouncedSearch,
@@ -520,64 +516,39 @@ export function UserListView({
   // 3. Infinite Scrolling (Fetch Next Page)
   // ---------------------------------------------------------------------------
   const handleLoadMore = useCallback(async () => {
-    if (!hasMore || !nextCursor || isFetchingMoreRef.current || isLoading)
+    if (!hasMore || isFetchingMoreRef.current || isLoading)
       return
     isFetchingMoreRef.current = true
     setIsLoadingMore(true)
 
     try {
-      const resource = getListResource(username, mediaType)
+      const resource = getListResource(mediaType)
 
       const isMusic = mediaType === "music"
       let statusParam: string | undefined = undefined
-      let formatsParam: string | undefined =
-        selectedFormats.length > 0 ? selectedFormats.join(",") : undefined
 
-      if (isMusic) {
-        if (activeStatus === "ALBUMS") {
-          formatsParam = "ALBUM"
-        } else if (activeStatus === "TRACKS") {
-          formatsParam = "TRACK"
-        }
-      } else {
+      if (!isMusic) {
         statusParam = activeStatus === "ALL" ? undefined : activeStatus
       }
 
-      const mediaStatusParam =
-        selectedMediaStatuses.length > 0
-          ? selectedMediaStatuses.join(",")
-          : undefined
-      const genresParam =
-        selectedGenres.length > 0 ? selectedGenres.join(",") : undefined
-      const yearsParam =
-        selectedYears.length > 0 ? selectedYears.join(",") : undefined
-      const monthsParam =
-        selectedMonths.length > 0 ? selectedMonths.join(",") : undefined
-      const artistsParam =
-        selectedArtists.length > 0 ? selectedArtists.join(",") : undefined
-
       const cleanSearch = debouncedSearch.trim()
+      const nextPage = page + 1
       const { data, error } = await resource.get({
         query: {
-          limit: 30,
-          cursor: nextCursor ?? undefined,
+          page: nextPage,
+          limit: 40,
           status: statusParam,
-          mediaFormat: formatsParam,
-          mediaStatus: mediaStatusParam,
-          genres: genresParam,
-          year: yearsParam,
-          month: monthsParam,
-          artist: artistsParam,
           sortBy,
           order: sortOrder,
           q: cleanSearch || undefined,
+          userId: targetUserId,
         },
       })
 
       if (!error && data && data.success) {
         const newItems = (data.items as ListEntryData[]) || []
         setItems((prev) => [...prev, ...newItems])
-        setNextCursor(data.pagination?.nextCursor ?? null)
+        setPage(nextPage)
         setHasMore(Boolean(data.pagination?.hasMore))
       } else {
         setHasMore(false)
@@ -589,21 +560,15 @@ export function UserListView({
       isFetchingMoreRef.current = false
     }
   }, [
-    username,
-    mediaType,
     hasMore,
-    nextCursor,
     isLoading,
+    mediaType,
     activeStatus,
-    selectedFormats,
-    selectedMediaStatuses,
-    selectedGenres,
-    selectedYears,
-    selectedMonths,
-    selectedArtists,
+    debouncedSearch,
+    page,
     sortBy,
     sortOrder,
-    debouncedSearch,
+    targetUserId,
   ])
 
   // ---------------------------------------------------------------------------
@@ -735,34 +700,43 @@ export function UserListView({
       })
 
       try {
-        if (mediaType === "tv") {
-          for (let i = 0; i < count; i++) {
-            const { error } = await elysia
-              .user({ username })
-              .lists.tv({ id: mediaId })
-              .increment.post()
-            if (error) throw new Error("Failed to update TV progress")
+        const numMediaId = Number(mediaId)
+        switch (mediaType) {
+          case "anime": {
+            const { error } = await elysia.borealis.lists.anime({ animeId: numMediaId }).increment.post({ count })
+            if (error) throw new Error("Failed to update anime progress")
+            break
           }
-        } else if (mediaType === "music") {
-          const isTrack =
-            item.entry.itemType === "TRACK" ||
-            Boolean(item.entry.trackId && !item.entry.albumId)
-          const { error } = await elysia
-            .user({ username })
-            .lists.music({ id: mediaId })
-            .increment.post(
-              { count },
-              { query: { type: isTrack ? "TRACK" : "ALBUM" } }
-            )
-          if (error) throw new Error("Failed to update music progress")
-        } else {
-          const resource = getListResource(username, mediaType)
-          const { error } = await (resource as any)({
-            id: mediaId,
-          }).increment.post({
-            count,
-          })
-          if (error) throw new Error("Failed to update progress")
+          case "manga": {
+            const { error } = await elysia.borealis.lists.manga({ mangaId: numMediaId }).increment.post({ count, type: "chapter" })
+            if (error) throw new Error("Failed to update manga progress")
+            break
+          }
+          case "movie": {
+            const { error } = await elysia.borealis.lists.movies({ movieId: numMediaId }).increment.post({ count })
+            if (error) throw new Error("Failed to update movie progress")
+            break
+          }
+          case "tv": {
+            const { error } = await elysia.borealis.lists.tv({ tvId: numMediaId }).increment.post({ count })
+            if (error) throw new Error("Failed to update TV progress")
+            break
+          }
+          case "game": {
+            const { error } = await elysia.borealis.lists.games({ gameId: numMediaId }).increment.post({ count })
+            if (error) throw new Error("Failed to update game progress")
+            break
+          }
+          case "book": {
+            const { error } = await elysia.borealis.lists.books({ bookId: numMediaId }).increment.post({ count, type: "chapter" })
+            if (error) throw new Error("Failed to update book progress")
+            break
+          }
+          case "music": {
+            const { error } = await elysia.borealis.lists.music({ musicId: numMediaId }).increment.post({ count })
+            if (error) throw new Error("Failed to update music progress")
+            break
+          }
         }
 
         toast.success(`Progress updated (+${count})`)
@@ -949,6 +923,7 @@ export function UserListView({
         {activeTab === "comments" && (
           <ListCommentsTab
             username={username}
+            userId={targetUserId}
             mediaType={mediaType}
             isOwner={isOwner}
           />
@@ -958,6 +933,7 @@ export function UserListView({
         {activeTab === "activity" && (
           <ListActivityTab
             username={username}
+            userId={targetUserId}
             mediaType={mediaType}
             isOwner={isOwner}
           />
@@ -965,7 +941,11 @@ export function UserListView({
 
         {/* Detailed Media Stats Tab */}
         {activeTab === "stats" && (
-          <MediaStatsTab username={username} mediaType={mediaType} />
+          <MediaStatsTab
+            username={username}
+            userId={targetUserId}
+            mediaType={mediaType}
+          />
         )}
       </main>
     </div>

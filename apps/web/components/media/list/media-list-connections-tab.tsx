@@ -155,7 +155,7 @@ async function fetchRemoteMediaDetails(
               ? "MOVIE"
               : "ANIME"
 
-      const res = await (elysia.connections.search as any).get({
+      const res = await elysia.carina.connections.search.get({
         query: {
           provider: "SIMKL",
           id: strId,
@@ -204,7 +204,7 @@ async function fetchRemoteMediaDetails(
   // 1b. Last.fm: Query via server proxy
   if (providerKey === "lastfm") {
     try {
-      const res = await (elysia.connections.search as any).get({
+      const res = await elysia.carina.connections.search.get({
         query: {
           provider: "LASTFM",
           id: strId,
@@ -309,7 +309,7 @@ async function fetchRemoteMediaDetails(
   if (providerKey === "mal") {
     try {
       const searchType = category === "manga" ? "MANGA" : "ANIME"
-      const res = await (elysia.connections.search as any).get({
+      const res = await elysia.carina.connections.search.get({
         query: {
           provider: "MAL",
           id: strId,
@@ -738,7 +738,7 @@ export function MediaListConnectionsTab({
           idPrefixMatch?.[1] || malUrlMatch?.[1] || (isNumeric ? q : undefined)
 
         try {
-          const res = await (elysia.connections.search as any).get({
+          const res = await elysia.carina.connections.search.get({
             query: {
               provider: provider.key.toUpperCase(),
               q,
@@ -1399,7 +1399,7 @@ export function MediaListConnectionsTab({
                           type="button"
                           size="sm"
                           variant="outline"
-                          onClick={() => openSearchModal(provider)}
+                          onPress={() => openSearchModal(provider)}
                           className="h-7.5 shrink-0 gap-1.5 border-border bg-card px-2.5 text-xs text-foreground hover:bg-muted"
                         >
                           <IconSearch className="size-3.5 text-muted-foreground" />
@@ -1450,7 +1450,7 @@ export function MediaListConnectionsTab({
                         type="button"
                         size="sm"
                         variant="outline"
-                        onClick={() => openSearchModal(provider)}
+                        onPress={() => openSearchModal(provider)}
                         className="h-7 gap-1 border-border px-2 text-[11px]"
                         aria-label={`Search ${provider.name}`}
                       >
@@ -1459,7 +1459,7 @@ export function MediaListConnectionsTab({
                       <Button
                         type="button"
                         size="sm"
-                        onClick={() => handleConnect(provider)}
+                        onPress={() => handleConnect(provider)}
                         className="h-7 bg-primary px-2.5 text-[11px] font-medium text-primary-foreground hover:bg-primary/90"
                       >
                         Connect
@@ -1470,7 +1470,7 @@ export function MediaListConnectionsTab({
                       type="button"
                       size="sm"
                       variant="outline"
-                      onClick={() => openSearchModal(provider)}
+                      onPress={() => openSearchModal(provider)}
                       className="h-7 gap-1.5 border-border px-2.5 text-[11px] font-medium text-foreground hover:bg-muted"
                     >
                       <IconSearch className="size-3 text-muted-foreground" />
@@ -1546,7 +1546,7 @@ export function MediaListConnectionsTab({
                     <Button
                       type="submit"
                       size="sm"
-                      disabled={isSearching || !searchQuery.trim()}
+                      isDisabled={isSearching || !searchQuery.trim()}
                       className="h-8 shrink-0 bg-primary px-3 text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                     >
                       {isSearching ? (
@@ -1691,7 +1691,7 @@ export function MediaListConnectionsTab({
                                 <Button
                                   type="button"
                                   size="sm"
-                                  onClick={() =>
+                                  onPress={() =>
                                     handleSelectSeries(
                                       searchModalProvider,
                                       result

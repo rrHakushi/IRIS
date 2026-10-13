@@ -65,7 +65,46 @@ export const CarinaBookmarksModel = {
         updatedAt: t.String(),
       })
     ),
+    groups: t.Optional(t.Array(t.String({ description: 'Unique group/folder names' }))),
     pagination: PaginationMetaSchema,
+  }),
+
+  // --- PUT /carina/bookmarks (Reorder and batch-update bookmarks) ---
+  putBookmarksBody: t.Object({
+    bookmarks: t.Array(
+      t.Object({
+        id: t.String(),
+        title: t.String(),
+        url: t.String(),
+        icon: t.Optional(t.Nullable(t.String())),
+        color: t.Optional(t.Nullable(t.String())),
+        pinned: t.Optional(t.Boolean()),
+        appId: t.Optional(t.Nullable(t.String())),
+        group: t.Optional(t.Nullable(t.String())),
+        order: t.Optional(t.Number()),
+        createdAt: t.Optional(t.String()),
+      })
+    ),
+  }),
+
+  putBookmarksResponse: t.Object({
+    success: t.Boolean(),
+    bookmarks: t.Array(
+      t.Object({
+        id: t.String(),
+        userId: t.String(),
+        title: t.String(),
+        url: t.String(),
+        icon: t.Nullable(t.String()),
+        color: t.Nullable(t.String()),
+        pinned: t.Boolean(),
+        appId: t.Nullable(t.String()),
+        group: t.Nullable(t.String()),
+        order: t.Number(),
+        createdAt: t.String(),
+        updatedAt: t.String(),
+      })
+    ),
   }),
 
   // --- POST /carina/bookmarks (Create bookmark) ---

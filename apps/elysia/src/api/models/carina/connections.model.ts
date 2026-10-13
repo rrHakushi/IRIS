@@ -113,6 +113,27 @@ export const CarinaConnectionsModel = {
     pagination: PaginationMetaSchema,
   }),
 
+  // --- POST /carina/connections (Create manual connection with credentials) ---
+  createConnectionBody: t.Object({
+    provider: t.String({ minLength: 1, description: 'Provider identifier' }),
+    authType: t.Optional(t.String()),
+    apiKey: t.Optional(t.String()),
+    hostUrl: t.Optional(t.String()),
+    username: t.Optional(t.String()),
+    password: t.Optional(t.String()),
+    settings: t.Optional(t.Any()),
+  }),
+
+  createConnectionResponse: t.Object({
+    success: t.Boolean(),
+    connection: t.Object({
+      id: t.String(),
+      provider: t.String(),
+      displayName: t.Nullable(t.String()),
+      status: t.String(),
+    }),
+  }),
+
   // --- GET /carina/connections/providers (Get available third-party providers) ---
   listProvidersResponse: t.Object({
     success: t.Boolean(),
@@ -263,6 +284,22 @@ export const CarinaConnectionsModel = {
     status: t.String({ description: 'Resulting connection status' }),
     message: t.String({ description: 'Test result description' }),
     profile: t.Optional(t.Nullable(t.Any({ description: 'Provider profile summary if authenticated' }))),
+  }),
+
+  // --- GET /carina/connections/search (Search media via provider) ---
+  searchQuery: t.Object({
+    provider: t.String({ description: 'Provider identifier (e.g. SIMKL, MAL, STEAM)' }),
+    q: t.Optional(t.String({ description: 'Search keywords' })),
+    id: t.Optional(t.String({ description: 'Specific media or external item ID' })),
+    type: t.Optional(t.String({ description: 'Media category / domain filter' })),
+    page: t.Optional(t.Numeric({ default: 1 })),
+    perPage: t.Optional(t.Numeric({ default: 20 })),
+  }),
+
+  searchResponse: t.Object({
+    success: t.Boolean(),
+    provider: t.String(),
+    results: t.Array(t.Any()),
   }),
 
   // --- Detailed Error Responses (RFC 9457) ---

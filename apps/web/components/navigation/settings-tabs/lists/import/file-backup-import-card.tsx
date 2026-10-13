@@ -368,15 +368,10 @@ export function FileBackupImportCard(): React.JSX.Element {
     setIsImporting(true)
 
     try {
-      const { data, error } = await elysia.user({ username }).lists.import.post(
-        {
-          items: selectedItems as any,
-          skipExisting,
-        },
-        {
-          fetch: { credentials: "include" },
-        }
-      )
+      const { data, error } = await elysia.borealis.lists.import.post({
+        items: selectedItems as any,
+        skipExisting,
+      })
 
       if (error || !data?.success) {
         throw new Error(
@@ -495,8 +490,8 @@ export function FileBackupImportCard(): React.JSX.Element {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handleClear}
-                  disabled={isImporting}
+                  onPress={handleClear}
+                  isDisabled={isImporting}
                   className="h-8 gap-1 text-xs text-muted-foreground hover:text-foreground"
                 >
                   <IconX className="h-3.5 w-3.5" />
@@ -505,8 +500,8 @@ export function FileBackupImportCard(): React.JSX.Element {
                 <Button
                   variant="default"
                   size="sm"
-                  onClick={() => setSelectionDialogOpen(true)}
-                  disabled={isImporting}
+                  onPress={() => setSelectionDialogOpen(true)}
+                  isDisabled={isImporting}
                   className="h-8 gap-1.5 text-xs"
                 >
                   <IconCheck className="h-3.5 w-3.5" />

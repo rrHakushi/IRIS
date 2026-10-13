@@ -46,7 +46,11 @@ interface FriendItem {
   user: {
     id: string
     username: string
-    customization: any
+    displayName?: string | null
+    avatarUrl?: string | null
+    avatarFrame?: string | null
+    badges?: number[]
+    customization?: any
   }
 }
 
@@ -69,9 +73,9 @@ export function RecommendationsMediaTab({
     if (!isAuthenticated) return
     setIsLoadingFriends(true)
     try {
-      const res = await elysia.friends.get()
+      const res = await elysia.carina.friends.get()
       if (!res.error && res.data?.success) {
-        setFriends(res.data.friends || [])
+        setFriends((res.data.friends as unknown as FriendItem[]) || [])
       }
     } catch {
       // Ignore
@@ -123,7 +127,7 @@ export function RecommendationsMediaTab({
 
     setIsSending(true)
     try {
-      const res = await elysia.friends.recommend.post({
+      const res = await elysia.carina.friends.recommend.post({
         friendIds: selectedFriendIds,
         mediaType: media.category,
         mediaId: media.id,
@@ -368,7 +372,7 @@ export function RecommendationsMediaTab({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => setModalOpen(false)}
+                onPress={() => setModalOpen(false)}
                 className="cursor-pointer rounded-xl text-xs"
               >
                 Cancel
@@ -376,7 +380,7 @@ export function RecommendationsMediaTab({
               <Button
                 type="submit"
                 size="sm"
-                disabled={isSending || selectedFriendIds.length === 0}
+                isDisabled={isSending || selectedFriendIds.length === 0}
                 className="cursor-pointer rounded-xl font-bold text-xs"
               >
                 <IconSend className="mr-1.5 size-3.5" />

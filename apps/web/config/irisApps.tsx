@@ -49,9 +49,9 @@ export function renderIrisAppIcon(
 export function getIrisApps(t: (key: string) => string): IrisApp[] {
   return [
     {
-      id: "iris-account",
-      name: t ? t("irisAccount.name") : "IRIS Account",
-      href: "/IRIS-account",
+      id: "carina",
+      name: t ? t("irisAccount.name") : "Carina",
+      href: "/carina",
       color: "#f59e0b",
       colorClass: "text-amber-500",
       bgClass: "bg-amber-500",
@@ -69,9 +69,9 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
         : "Identity & Security",
     },
     {
-      id: "iris-list",
-      name: t("irisList.name"),
-      href: "/IRIS-list",
+      id: "borealis",
+      name: t ? t("irisList.name") : "Borealis",
+      href: "/borealis",
       color: "#6366f1",
       colorClass: "text-indigo-500",
       bgClass: "bg-indigo-500",
@@ -85,9 +85,9 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
       descriptionShort: t("irisList.descriptionShort"),
     },
     {
-      id: "iris-pass",
-      name: t ? t("irisPass.name") : "IRIS Pass",
-      href: "/IRIS-pass",
+      id: "akaromi",
+      name: t ? t("irisPass.name") : "Akaromi",
+      href: "/akaromi",
       color: "#d800a6",
       colorClass: "text-[#d800a6]",
       bgClass: "bg-[#d800a6]",
@@ -105,9 +105,9 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
         : "Vault & Generator",
     },
     {
-      id: "iris-search",
-      name: t ? t("irisSearch.name") : "IRIS Search",
-      href: "/IRIS-search",
+      id: "kiroshi",
+      name: t ? t("irisSearch.name") : "Kiroshi",
+      href: "/kiroshi",
       color: "#06b6d4",
       colorClass: "text-cyan-500",
       bgClass: "bg-cyan-500",

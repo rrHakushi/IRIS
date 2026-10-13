@@ -174,7 +174,8 @@ export function scanFiles(
       name.startsWith('_') ||
       name.endsWith('.d.ts') ||
       name.includes('.test.') ||
-      name.includes('.spec.')
+      name.includes('.spec.') ||
+      name.includes('.generated.')
     ) {
       continue
     }
@@ -403,7 +404,7 @@ function controllersSync<Prefix extends string = ''>(
     const outFile =
       typeof options.generateTypes === 'object' && options.generateTypes.outputFile
         ? path.resolve(process.cwd(), options.generateTypes.outputFile)
-        : path.join(targetDir, 'controllers.generated.ts')
+        : path.join(path.dirname(targetDir), 'controllers.generated.ts')
     generateStaticManifest(loadedItems, outFile)
   }
 
@@ -493,7 +494,7 @@ async function controllersAsync<Prefix extends string = ''>(
     const outFile =
       typeof options.generateTypes === 'object' && options.generateTypes.outputFile
         ? path.resolve(process.cwd(), options.generateTypes.outputFile)
-        : path.join(targetDir, 'controllers.generated.ts')
+        : path.join(path.dirname(targetDir), 'controllers.generated.ts')
     generateStaticManifest(loadedItems, outFile)
   }
 

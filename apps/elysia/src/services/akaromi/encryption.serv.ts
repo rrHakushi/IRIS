@@ -1,5 +1,12 @@
 import { prisma } from '@IRIS/database'
-import { NotFound } from '../../lib/errors'
+import { NotFound, BadRequest } from '../../lib/errors'
+import {
+  decryptPrivateKey,
+  encryptPrivateKey,
+  generateUserKeypair,
+  verifyPassword,
+  hashPassword,
+} from '../../utils/auth-crypto'
 
 export class AkaromiEncryptionServ {
   /**
@@ -13,6 +20,7 @@ export class AkaromiEncryptionServ {
         publicKey: true,
         encryptedPrivateKey: true,
         passwordHash: true,
+        encryptionPasswordHash: true,
       },
     })
 
@@ -36,6 +44,114 @@ export class AkaromiEncryptionServ {
       encryptedPrivateKey: user.encryptedPrivateKey ?? null,
       salt,
       hasEncryptionKeys: Boolean(user.publicKey && user.encryptedPrivateKey),
+      hasSeparateEncryptionPassword: false,
+    }
+  }
+
+  /**
+   * Changes the dedicated post-quantum encryption password or initializes it.
+   */
+  public static async changeEncryptionPassword(
+    userId: string,
+    body: { currentPassword: string; newEncryptionPassword: string }
+  ) {
+    const hasLength = body.newEncryptionPassword.length >= 16
+    const hasTwoNumbers =
+      (body.newEncryptionPassword.match(/\d/g) || []).length >= 2
+    const hasTwoSpecials =
+      (
+        body.newEncryptionPassword.match(
+          /[!@#$%^&*(),.?":{}|<>~'_\-+=/\\\[\]\x60]/g
+        ) || []
+      ).length >= 2
+    const hasUpper = /[A-Z]/.test(body.newEncryptionPassword)
+
+    if (!hasLength || !hasTwoNumbers || !hasTwoSpecials || !hasUpper) {
+      throw new BadRequest(
+        'Encryption password must be at least 16 characters with at least 2 numbers, 2 special characters, and 1 uppercase letter.'
+      )
+    }
+
+    if (body.currentPassword === body.newEncryptionPassword) {
+      throw new BadRequest(
+        'New encryption password cannot be identical to current password.'
+      )
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        passwordHash: true,
+        encryptionPasswordHash: true,
+        publicKey: true,
+        encryptedPrivateKey: true,
+      },
+    })
+
+    if (!user) {
+      throw new NotFound('User not found.')
+    }
+
+    // If a separate encryption password is set, verify against it; otherwise check account password
+    if (user.encryptionPasswordHash) {
+      const isCurrentValid = await verifyPassword(
+        body.currentPassword,
+        user.encryptionPasswordHash
+      )
+      if (!isCurrentValid) {
+        throw new BadRequest('Incorrect current encryption password.')
+      }
+    } else {
+      const isCurrentValid = await verifyPassword(
+        body.currentPassword,
+        user.passwordHash
+      )
+      if (!isCurrentValid) {
+        throw new BadRequest('Incorrect current account password.')
+      }
+    }
+
+    let updatedEncryptedPrivateKey: string
+    let updatedPublicKey = user.publicKey
+
+    if (user.encryptedPrivateKey) {
+      try {
+        const decryptedSecret = await decryptPrivateKey(
+          user.encryptedPrivateKey,
+          body.currentPassword
+        )
+        updatedEncryptedPrivateKey = await encryptPrivateKey(
+          decryptedSecret,
+          body.newEncryptionPassword
+        )
+      } catch {
+        throw new BadRequest('Could not decrypt private key with the provided password.')
+      }
+    } else {
+      const keypair = await generateUserKeypair(body.newEncryptionPassword)
+      updatedPublicKey = keypair.publicKey
+      updatedEncryptedPrivateKey = keypair.encryptedPrivateKey
+    }
+
+    const newEncryptionPasswordHash = await hashPassword(
+      body.newEncryptionPassword
+    )
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        publicKey: updatedPublicKey,
+        encryptedPrivateKey: updatedEncryptedPrivateKey,
+        encryptionPasswordHash: newEncryptionPasswordHash,
+      },
+    })
+
+    return {
+      success: true,
+      message: 'Encryption password updated successfully.',
+      publicKey: updatedPublicKey ?? null,
+      hasSeparateEncryptionPassword: true,
     }
   }
 }

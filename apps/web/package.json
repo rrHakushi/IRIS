@@ -21,7 +21,7 @@
     "@IRIS/permissions": "workspace:*",
     "@IRIS/shared": "workspace:*",
     "@base-ui/react": "^1.8.0",
-    "@elysiajs/eden": "^1.4.9",
+    "@elysia/eden": "^2.0.0-beta.6",
     "@internationalized/date": "^3.12.3",
     "@noble/ciphers": "^2.4.0",
     "@noble/hashes": "^2.4.0",

@@ -380,8 +380,9 @@ function setupPrismaMock() {
 
   // Anime
   ;(prisma.anime.count as any) = async () => mockAnime.length
-  ;(prisma.anime.findMany as any) = async ({ where, skip = 0, take = 40 }: any) => {
+  ;(prisma.anime.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
     let items = mockAnime
+    if (where?.id?.in) items = items.filter((a) => where.id.in.includes(a.id))
     if (where?.id?.not) items = items.filter((a) => a.id !== where.id.not)
     return items.slice(skip, skip + take)
   }
@@ -397,8 +398,9 @@ function setupPrismaMock() {
 
   // Manga
   ;(prisma.manga.count as any) = async () => mockManga.length
-  ;(prisma.manga.findMany as any) = async ({ where, skip = 0, take = 40 }: any) => {
+  ;(prisma.manga.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
     let items = mockManga
+    if (where?.id?.in) items = items.filter((m) => where.id.in.includes(m.id))
     if (where?.id?.not) items = items.filter((m) => m.id !== where.id.not)
     return items.slice(skip, skip + take)
   }
@@ -414,8 +416,9 @@ function setupPrismaMock() {
 
   // Movies
   ;(prisma.movie.count as any) = async () => mockMovies.length
-  ;(prisma.movie.findMany as any) = async ({ where, skip = 0, take = 40 }: any) => {
+  ;(prisma.movie.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
     let items = mockMovies
+    if (where?.id?.in) items = items.filter((m) => where.id.in.includes(m.id))
     if (where?.id?.not) items = items.filter((m) => m.id !== where.id.not)
     return items.slice(skip, skip + take)
   }
@@ -431,8 +434,9 @@ function setupPrismaMock() {
 
   // TV
   ;(prisma.tv.count as any) = async () => mockTv.length
-  ;(prisma.tv.findMany as any) = async ({ where, skip = 0, take = 40 }: any) => {
+  ;(prisma.tv.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
     let items = mockTv
+    if (where?.id?.in) items = items.filter((t) => where.id.in.includes(t.id))
     if (where?.id?.not) items = items.filter((t) => t.id !== where.id.not)
     return items.slice(skip, skip + take)
   }
@@ -448,8 +452,9 @@ function setupPrismaMock() {
 
   // Books
   ;(prisma.book.count as any) = async () => mockBooks.length
-  ;(prisma.book.findMany as any) = async ({ where, skip = 0, take = 40 }: any) => {
+  ;(prisma.book.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
     let items = mockBooks
+    if (where?.id?.in) items = items.filter((b) => where.id.in.includes(b.id))
     if (where?.id?.not) items = items.filter((b) => b.id !== where.id.not)
     return items.slice(skip, skip + take)
   }
@@ -465,8 +470,9 @@ function setupPrismaMock() {
 
   // Games
   ;(prisma.game.count as any) = async () => mockGames.length
-  ;(prisma.game.findMany as any) = async ({ where, skip = 0, take = 40 }: any) => {
+  ;(prisma.game.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
     let items = mockGames
+    if (where?.id?.in) items = items.filter((g) => where.id.in.includes(g.id))
     if (where?.id?.not) items = items.filter((g) => g.id !== where.id.not)
     return items.slice(skip, skip + take)
   }
@@ -482,8 +488,9 @@ function setupPrismaMock() {
 
   // Music
   ;(prisma.music.count as any) = async () => mockMusic.length
-  ;(prisma.music.findMany as any) = async ({ where, skip = 0, take = 40 }: any) => {
+  ;(prisma.music.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
     let items = mockMusic
+    if (where?.id?.in) items = items.filter((m) => where.id.in.includes(m.id))
     if (where?.id?.not) items = items.filter((m) => m.id !== where.id.not)
     return items.slice(skip, skip + take)
   }
@@ -498,8 +505,19 @@ function setupPrismaMock() {
   }
 
   // MediaRelation
-  ;(prisma.mediaRelation.findMany as any) = async ({ where }: any) => {
-    return mockRelations.filter((r) => r.sourceType === where.sourceType && r.sourceId === where.sourceId)
+  ;(prisma.mediaRelation.findMany as any) = async ({ where }: any = {}) => {
+    if (where?.OR) {
+      return mockRelations.filter((r) =>
+        where.OR.some(
+          (cond: any) =>
+            (cond.sourceType === undefined || r.sourceType === cond.sourceType) &&
+            (cond.sourceId === undefined || r.sourceId === cond.sourceId) &&
+            (cond.targetType === undefined || r.targetType === cond.targetType) &&
+            (cond.targetId === undefined || r.targetId === cond.targetId)
+        )
+      )
+    }
+    return mockRelations.filter((r) => r.sourceType === where?.sourceType && r.sourceId === where?.sourceId)
   }
 }
 

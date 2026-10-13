@@ -258,6 +258,9 @@ importers:
         specifier: 19.2.8
         version: 19.2.8(react@19.2.8)
     devDependencies:
+      '@elysia/eden':
+        specifier: 2.0.0-beta.6
+        version: 2.0.0-beta.6(elysia@2.0.0-exp.64(@types/bun@1.4.2)(exact-mirror@1.2.4)(typescript@7.0.2))
       '@types/nodemailer':
         specifier: ^8.0.2
         version: 8.0.2
@@ -397,11 +400,14 @@ importers:
 
   packages/auth:
     dependencies:
-      '@elysiajs/eden':
-        specifier: ^1.4.9
-        version: 1.4.9(elysia@2.0.0-beta.6(@types/bun@1.4.0)(exact-mirror@1.2.4(typebox@1.3.19))(typebox@1.3.19)(typescript@7.0.2))
+      '@IRIS/elysia':
+        specifier: workspace:*
+        version: link:../../apps/elysia
+      '@elysia/eden':
+        specifier: ^2.0.0-beta.6
+        version: 2.0.0-beta.6(elysia@2.0.0-beta.6(@types/bun@1.4.0)(exact-mirror@1.2.4(typebox@1.3.19))(typebox@1.3.19)(typescript@7.0.2))
       elysia:
-        specifier: 2.0.0-beta.6
+        specifier: ^2.0.0-beta.29
         version: 2.0.0-beta.6(@types/bun@1.4.0)(exact-mirror@1.2.4(typebox@1.3.19))(typebox@1.3.19)(typescript@7.0.2)
       next-auth:
         specifier: ^4.24.15
@@ -973,6 +979,11 @@ packages:
 
   '@electric-sql/pglite@0.4.3':
     resolution: {integrity: sha512-ichuWTgtd4mOM1G4SpyGJa5trT03lWbMypDV0fUXUCXg5hiHqVAz/bZyV68NqmkLB7WcYmj1RMJVSp8HV/v/ZQ==}
+
+  '@elysia/eden@2.0.0-beta.6':
+    resolution: {integrity: sha512-UYtYUiJ/OPwlkFZCe8QJ4Xc4VwXz7BykYruBDc4VQRMItWWGypsjMqwJUhQPG3D7A82GAU7q1goVwMcLyC6pYg==}
+    peerDependencies:
+      elysia: '>= 2.0.0-beta.2'
 
   '@elysia/openapi@2.0.0-exp.1':
     resolution: {integrity: sha512-qfSp4OIodrSE7j3ABAQv2eAN0Ls5hucb/W1M7s6sgTOi0ixSotF3cVvOfUmjmt5wm5KREIKhoJMRLA69jxfz9w==}
@@ -6826,13 +6837,17 @@ snapshots:
 
   '@electric-sql/pglite@0.4.3': {}
 
-  '@elysia/openapi@2.0.0-exp.1(elysia@2.0.0-exp.64(@types/bun@1.4.2)(exact-mirror@1.2.4)(typescript@7.0.2))':
+  '@elysia/eden@2.0.0-beta.6(elysia@2.0.0-beta.6(@types/bun@1.4.0)(exact-mirror@1.2.4(typebox@1.3.19))(typebox@1.3.19)(typescript@7.0.2))':
+    dependencies:
+      elysia: 2.0.0-beta.6(@types/bun@1.4.0)(exact-mirror@1.2.4(typebox@1.3.19))(typebox@1.3.19)(typescript@7.0.2)
+
+  '@elysia/eden@2.0.0-beta.6(elysia@2.0.0-exp.64(@types/bun@1.4.2)(exact-mirror@1.2.4)(typescript@7.0.2))':
     dependencies:
       elysia: 2.0.0-exp.64(@types/bun@1.4.2)(exact-mirror@1.2.4)(typescript@7.0.2)
 
-  '@elysiajs/eden@1.4.9(elysia@2.0.0-beta.6(@types/bun@1.4.0)(exact-mirror@1.2.4(typebox@1.3.19))(typebox@1.3.19)(typescript@7.0.2))':
+  '@elysia/openapi@2.0.0-exp.1(elysia@2.0.0-exp.64(@types/bun@1.4.2)(exact-mirror@1.2.4)(typescript@7.0.2))':
     dependencies:
-      elysia: 2.0.0-beta.6(@types/bun@1.4.0)(exact-mirror@1.2.4(typebox@1.3.19))(typebox@1.3.19)(typescript@7.0.2)
+      elysia: 2.0.0-exp.64(@types/bun@1.4.2)(exact-mirror@1.2.4)(typescript@7.0.2)
 
   '@elysiajs/eden@1.4.9(elysia@2.0.0-exp.64(@types/bun@1.4.0)(exact-mirror@1.2.4(typebox@1.3.19))(typebox@1.3.19)(typescript@7.0.2))':
     dependencies:

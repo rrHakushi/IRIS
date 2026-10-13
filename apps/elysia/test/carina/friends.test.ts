@@ -169,10 +169,16 @@ function setupPrismaMock() {
       mockFriends.find((f) => {
         if (where.userId && f.userId !== where.userId) return false
         if (where.friendId && f.friendId !== where.friendId) return false
+        if (where.id && f.id !== where.id) return false
         if (where.OR) {
-          const match = where.OR.some(
-            (cond: any) => cond.userId === f.userId && cond.friendId === f.friendId
-          )
+          const match = where.OR.some((cond: any) => {
+            if (cond.userId && cond.friendId) {
+              return cond.userId === f.userId && cond.friendId === f.friendId
+            }
+            if (cond.friendId) return cond.friendId === f.friendId
+            if (cond.id) return cond.id === f.id
+            return false
+          })
           if (!match) return false
         }
         return true
@@ -257,11 +263,13 @@ function setupPrismaMock() {
           id: sender.id,
           username: sender.username,
           customization: sender.customization,
+          badges: sender.badges,
         },
         receiver: {
           id: receiver.id,
           username: receiver.username,
           customization: receiver.customization,
+          badges: receiver.badges,
         },
       }
     })
@@ -316,6 +324,30 @@ function setupPrismaMock() {
       )
     }
     return null
+  }
+
+  ;(prisma.userBlock.findMany as any) = async ({ where }: any) => {
+    return mockUserBlocks
+      .filter((b) => !where?.blockerId || b.blockerId === where.blockerId)
+      .map((b) => {
+        const blockedUser = mockUsers.find((u) => u.id === b.blockedId)
+        return {
+          ...b,
+          blocked: blockedUser
+            ? {
+                id: blockedUser.id,
+                username: blockedUser.username,
+                customization: blockedUser.customization,
+                badges: blockedUser.badges,
+              }
+            : {
+                id: b.blockedId,
+                username: 'unknown',
+                customization: null,
+                badges: [],
+              },
+        }
+      })
   }
 
   // Mock Media List Queries

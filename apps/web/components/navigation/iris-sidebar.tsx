@@ -227,7 +227,14 @@ export function IrisSidebar({
   })
 
   const currentAppId =
-    props.appId || (pathname.startsWith("/IRIS-pass") ? "iris-pass" : "iris-list")
+    props.appId ||
+    (pathname.startsWith("/akaromi") || pathname.startsWith("/IRIS-pass")
+      ? "akaromi"
+      : pathname.startsWith("/carina") || pathname.startsWith("/IRIS-account")
+      ? "carina"
+      : pathname.startsWith("/kiroshi") || pathname.startsWith("/IRIS-search")
+      ? "kiroshi"
+      : "borealis")
 
   // Real-time synchronization of per-app sidebar layout customization
   const [appCustomization, setAppCustomization] = useState<

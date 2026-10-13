@@ -1,5 +1,6 @@
 import { prisma } from '@IRIS/database'
 import { NotFound, BadRequest } from '../../lib/errors'
+import { hashPassword } from '../../utils/auth-crypto'
 
 export interface ListQuery {
   page?: number
@@ -2873,6 +2874,43 @@ export class BorealisListsServ {
     }
   }
 
+  public static async fetchRemoteExport(rawUrl: string, password?: string) {
+    let targetUrl = rawUrl.trim()
+    if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+      targetUrl = `https://${targetUrl}`
+    }
+
+    try {
+      const res = await fetch(targetUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({ password: password || '' }),
+      })
+
+      if (!res.ok) {
+        const text = await res.text()
+        let errMessage = 'Failed to fetch from remote URL'
+        try {
+          const json = JSON.parse(text)
+          if (json.message) errMessage = json.message
+        } catch {}
+        throw new BadRequest(errMessage)
+      }
+
+      const json = await res.json()
+      return {
+        success: true,
+        data: json.data || json,
+      }
+    } catch (err: any) {
+      if (err instanceof BadRequest) throw err
+      throw new BadRequest(err.message || 'Network error fetching remote export')
+    }
+  }
+
   public static async getGlobalListStats(
     userId: string,
     query?: { year?: number; quarter?: number; month?: number }
@@ -3155,6 +3193,86 @@ export class BorealisListsServ {
         topGenres,
         monthlyActivity,
       },
+    }
+  }
+
+  public static async listExportShares(userId: string) {
+    const shares = await prisma.listExportShare.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    return {
+      success: true,
+      shares: shares.map((s) => ({
+        id: s.id,
+        description: s.description,
+        mediaTypes: s.mediaTypes,
+        createdAt: s.createdAt.toISOString(),
+        expiresAt: s.expiresAt?.toISOString() ?? null,
+        lastUsedAt: s.lastUsedAt?.toISOString() ?? null,
+        isExpired: s.expiresAt ? s.expiresAt.getTime() < Date.now() : false,
+      })),
+    }
+  }
+
+  public static async createExportShare(
+    userId: string,
+    params: {
+      password: string
+      mediaTypes: string[]
+      description?: string
+      expiresInHours?: number | null
+    }
+  ) {
+    if (!params.password || params.password.length < 4) {
+      throw new BadRequest('Export password must be at least 4 characters')
+    }
+
+    if (!params.mediaTypes || params.mediaTypes.length === 0) {
+      throw new BadRequest('Please select at least one media type to export')
+    }
+
+    const passwordHash = await hashPassword(params.password)
+
+    let expiresAt: Date | null = null
+    if (params.expiresInHours && params.expiresInHours > 0) {
+      expiresAt = new Date(Date.now() + params.expiresInHours * 3600 * 1000)
+    }
+
+    const share = await prisma.listExportShare.create({
+      data: {
+        userId,
+        passwordHash,
+        mediaTypes: params.mediaTypes,
+        description: params.description || null,
+        expiresAt,
+      },
+    })
+
+    return {
+      success: true,
+      shareId: share.id,
+      expiresAt: share.expiresAt?.toISOString() ?? null,
+    }
+  }
+
+  public static async revokeExportShare(userId: string, shareId: string) {
+    const share = await prisma.listExportShare.findFirst({
+      where: { id: shareId, userId },
+    })
+
+    if (!share) {
+      throw new NotFound('Export share link not found')
+    }
+
+    await prisma.listExportShare.delete({
+      where: { id: share.id },
+    })
+
+    return {
+      success: true,
+      message: 'Export share link revoked successfully',
     }
   }
 }

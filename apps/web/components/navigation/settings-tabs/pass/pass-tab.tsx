@@ -74,7 +74,7 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
     setIsExporting(true)
     try {
       const vaultKey = deriveVaultKey(encryption.secretKey)
-      const res = await (elysia.pass.vault.export as any).get()
+      const res = await elysia.akaromi.export.get()
 
       if (!res?.data) {
         throw new Error("Failed to fetch vault backup")
@@ -225,7 +225,7 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
       }
 
       // Send to Elysia batch import endpoint
-      const res = await (elysia.pass.vault.import as any).post({
+      const res = await elysia.akaromi.import.post({
         folders: foldersToImport,
         ciphers: ciphersToImport,
       })
@@ -235,7 +235,14 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
         setImportSummary(msg)
         toast.success(msg)
       } else {
-        throw new Error(res?.error?.value || "Import failed")
+        const errorVal = res?.error?.value
+        const errorMsg =
+          typeof errorVal === "string"
+            ? errorVal
+            : (errorVal as any)?.detail ||
+              (errorVal as any)?.message ||
+              "Import failed"
+        throw new Error(errorMsg)
       }
     } catch (err: any) {
       toast.error("Import failed: " + (err?.message || "Invalid file format"))

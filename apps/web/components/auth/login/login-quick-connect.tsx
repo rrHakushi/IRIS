@@ -110,7 +110,7 @@ export function LoginQuickConnect({
               <Button
                 type="submit"
                 size="sm"
-                disabled={isSendingPrompt || !userIdentifier.trim()}
+                isDisabled={isSendingPrompt || !userIdentifier.trim()}
                 className="h-8 shrink-0 gap-1 rounded-xl px-2.5 text-xs"
               >
                 {isSendingPrompt ? (

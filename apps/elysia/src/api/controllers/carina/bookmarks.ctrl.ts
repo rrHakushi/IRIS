@@ -27,7 +27,28 @@ export const carinaBookmarks = new Elysia({ prefix: '/carina/bookmarks' })
     }
   )
 
-  // --- 2. POST /carina/bookmarks (Create bookmark) ---
+  // --- 2. PUT /carina/bookmarks (Reorder and batch-update bookmarks) ---
+  .put(
+    '/',
+    {
+      body: CarinaBookmarksModel.putBookmarksBody,
+      detail: {
+        summary: 'Reorder and batch-update bookmarks for current user',
+        tags: ['Carina Bookmarks'],
+      },
+      response: {
+        200: CarinaBookmarksModel.putBookmarksResponse,
+        401: CarinaBookmarksModel.unauthorizedError,
+        422: CarinaBookmarksModel.validationError,
+      },
+    },
+    async ({ body, session: userSession }) => {
+      const user = userSession.requireUser()
+      return await CarinaBookmarksServ.putBookmarks(user.id, body)
+    }
+  )
+
+  // --- 3. POST /carina/bookmarks (Create bookmark) ---
   .post(
     '/',
     {

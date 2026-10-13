@@ -56,16 +56,31 @@ export function ProfileFriendsTab({
   const fetchUserFriends = useCallback(async () => {
     setIsLoading(true)
     try {
-      const res = await elysia.users({ username }).friends.get()
+      const res = await elysia.carina.friends.get({ query: { limit: 50 } })
       if (!res.error && res.data?.success) {
-        setFriends(res.data.friends || [])
+        const list: FriendCardItem[] = ((res.data as any).data || []).map((f: any) => ({
+          id: f.friendId || f.id,
+          friendId: f.friendId || f.id,
+          nickname: f.nickname ?? null,
+          isPrivate: Boolean(f.isPrivate),
+          createdAt: f.createdAt,
+          user: {
+            id: f.user?.id || f.friendId,
+            username: f.user?.username || "",
+            customization: f.user?.customization || {},
+            createdAt: f.createdAt,
+            displayName: f.user?.displayName,
+            avatarUrl: f.user?.avatarUrl,
+          },
+        }))
+        setFriends(list)
       }
     } catch (err) {
       console.error("[ProfileFriendsTab] Error fetching friends:", err)
     } finally {
       setIsLoading(false)
     }
-  }, [username])
+  }, [])
 
   useEffect(() => {
     fetchUserFriends()
@@ -258,7 +273,7 @@ export function ProfileFriendsTab({
                     </div>
 
                     <Link
-                      href={`/IRIS-account/users/${f.user.username}`}
+                      href={`/carina/users/${f.user.id}`}
                       className="mb-1 text-xs font-semibold text-primary hover:underline flex items-center gap-1"
                     >
                       <span>Profile</span>

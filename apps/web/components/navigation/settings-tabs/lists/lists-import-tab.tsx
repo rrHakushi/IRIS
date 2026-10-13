@@ -44,8 +44,8 @@ export function ListsImportSettingsTab({}: SettingsTabProps): React.JSX.Element 
 
     try {
       const [provRes, connRes] = await Promise.all([
-        elysia.connections.providers.get(),
-        elysia.connections.get({ fetch: { credentials: "include" } }),
+        elysia.carina.connections.providers.get(),
+        elysia.carina.connections.get({ query: { limit: 50 } }),
       ])
 
       if (!provRes.error && provRes.data?.success) {

@@ -612,7 +612,7 @@ interface CategoryState {
 export function WatchingDashboard(): React.JSX.Element {
   const { data: session, status: authStatus } = useSession()
   const { user: currentUser, updateUser } = useUser()
-  const username = session?.user?.username || currentUser?.username
+  const userId = session?.user?.id || currentUser?.id
   const cols = useGridColumns()
 
   const mediaTitlePreference =
@@ -743,11 +743,11 @@ export function WatchingDashboard(): React.JSX.Element {
   useEffect(() => {
     loadedCategoriesRef.current.clear()
     inFlightCategoriesRef.current.clear()
-  }, [username])
+  }, [userId])
 
   const fetchCategory = useCallback(
     async (type: WatchingMediaListType) => {
-      if (!username) return
+      if (!userId) return
       if (
         loadedCategoriesRef.current.has(type) ||
         inFlightCategoriesRef.current.has(type)
@@ -762,16 +762,36 @@ export function WatchingDashboard(): React.JSX.Element {
       }))
 
       try {
-        const userLists = elysia.user({ username }).lists
         const meta = CATEGORY_META[type]
-        const res = await userLists[type].get({
-          query: {
-            status: meta.statusParam,
-            limit: 100,
-            sortBy: "updatedAt",
-            order: "desc",
-          },
-        })
+        const query = {
+          status: meta.statusParam,
+          limit: 100,
+          sortBy: "updatedAt",
+          order: "desc" as const,
+          userId,
+        }
+
+        let res: any = null
+        switch (type) {
+          case "anime":
+            res = await elysia.borealis.lists.anime.get({ query })
+            break
+          case "tv":
+            res = await elysia.borealis.lists.tv.get({ query })
+            break
+          case "movie":
+            res = await elysia.borealis.lists.movies.get({ query })
+            break
+          case "manga":
+            res = await elysia.borealis.lists.manga.get({ query })
+            break
+          case "game":
+            res = await elysia.borealis.lists.games.get({ query })
+            break
+          case "book":
+            res = await elysia.borealis.lists.books.get({ query })
+            break
+        }
 
         const items =
           res?.data?.success && Array.isArray(res.data.items)
@@ -794,34 +814,34 @@ export function WatchingDashboard(): React.JSX.Element {
         inFlightCategoriesRef.current.delete(type)
       }
     },
-    [username]
+    [userId]
   )
 
   // Fetch the first category in order immediately when authenticated
   useEffect(() => {
     const first = categoryOrder[0]
-    if (authStatus === "authenticated" && username && first) {
+    if (authStatus === "authenticated" && userId && first) {
       fetchCategory(first)
     }
-  }, [authStatus, username, categoryOrder, fetchCategory])
+  }, [authStatus, userId, categoryOrder, fetchCategory])
 
   // Pre-fetch remaining categories when reorder dialog is opened so counts are accurate
   useEffect(() => {
-    if (isReorderOpen && authStatus === "authenticated" && username) {
+    if (isReorderOpen && authStatus === "authenticated" && userId) {
       for (const type of DEFAULT_CATEGORY_ORDER) {
         if (!categoryData[type].isLoaded && !categoryData[type].isLoading) {
           fetchCategory(type)
         }
       }
     }
-  }, [isReorderOpen, authStatus, username, categoryData, fetchCategory])
+  }, [isReorderOpen, authStatus, userId, categoryData, fetchCategory])
 
   // ---------------------------------------------------------------------------
   // Debounced Increment Handler (Optimistic Update)
   // ---------------------------------------------------------------------------
   const handleIncrementProgress = useCallback(
     async (item: ListEntryData, count: number, mediaType?: MediaListType) => {
-      if (!username || !mediaType) return
+      if (!userId || !mediaType) return
 
       const type = mediaType as WatchingMediaListType
       const entryId = item.entry.id
@@ -974,11 +994,11 @@ export function WatchingDashboard(): React.JSX.Element {
       })
 
       try {
-        const client = elysia.user({ username }).lists
+        const numMediaId = Number(mediaId)
 
         if (type === "anime") {
-          const { error } = await client
-            .anime({ id: mediaId })
+          const { error } = await elysia.borealis.lists
+            .anime({ animeId: numMediaId })
             .increment.post({ count })
           if (error) throw new Error("Failed to increment anime progress")
           const nextProg = (item.entry.progress ?? 0) + count
@@ -989,8 +1009,8 @@ export function WatchingDashboard(): React.JSX.Element {
               : `Episode ${nextProg} marked as watched`
           )
         } else if (type === "tv") {
-          const { error } = await client
-            .tv({ id: mediaId })
+          const { error } = await elysia.borealis.lists
+            .tv({ tvId: numMediaId })
             .increment.post({ count })
           if (error) throw new Error("Failed to increment TV progress")
           const nextProg = (item.entry.progress ?? 0) + count
@@ -1001,10 +1021,12 @@ export function WatchingDashboard(): React.JSX.Element {
               : `Episode ${nextProg} marked as watched`
           )
         } else if (type === "manga") {
-          const { error } = await client.manga({ id: mediaId }).increment.post({
-            count,
-            type: "CHAPTER",
-          })
+          const { error } = await elysia.borealis.lists
+            .manga({ mangaId: numMediaId })
+            .increment.post({
+              count,
+              type: "chapter",
+            })
           if (error) throw new Error("Failed to increment manga progress")
           const nextProg = (item.entry.chaptersProgress ?? 0) + count
           const isCompleted = maxCount && maxCount > 0 && nextProg >= maxCount
@@ -1014,19 +1036,21 @@ export function WatchingDashboard(): React.JSX.Element {
               : `Chapter ${nextProg} marked as read`
           )
         } else if (type === "movie") {
-          const { error } = await client.movie({ id: mediaId }).increment.post()
+          const { error } = await elysia.borealis.lists
+            .movies({ movieId: numMediaId })
+            .increment.post({ count: 1 })
           if (error) throw new Error("Failed to mark movie as completed")
           toast.success("Movie marked as watched!")
         } else if (type === "game") {
-          const { error } = await client
-            .game({ id: mediaId })
+          const { error } = await elysia.borealis.lists
+            .games({ gameId: numMediaId })
             .increment.post({ count })
           if (error) throw new Error("Failed to increment playtime")
           toast.success(`Logged +${count} hrs`)
         } else if (type === "book") {
-          const { error } = await client
-            .book({ id: mediaId })
-            .increment.post({ count })
+          const { error } = await elysia.borealis.lists
+            .books({ bookId: numMediaId })
+            .increment.post({ count, type: "chapter" })
           if (error) throw new Error("Failed to increment book progress")
           const nextProg = (item.entry.progress ?? 0) + count
           const isCompleted = maxCount && maxCount > 0 && nextProg >= maxCount
@@ -1040,7 +1064,7 @@ export function WatchingDashboard(): React.JSX.Element {
         fetchCategory(type)
       }
     },
-    [username]
+    [userId]
   )
 
   const handleEntryUpdated = useCallback((entryId: number, updated: any) => {
@@ -1155,7 +1179,7 @@ export function WatchingDashboard(): React.JSX.Element {
             library and add titles to your watching, reading, or playing lists.
           </p>
           <Link
-            href="/IRIS-list/browse"
+            href="/borealis/browse"
             className={buttonVariants({
               className:
                 "mt-6 gap-2 rounded-2xl px-5 text-sm font-medium shadow-xs",

@@ -28,30 +28,30 @@ function getMediaDetailHref(
 ): string {
   switch (category) {
     case "anime":
-      return `/IRIS-list/anime/${item.id}`
+      return `/borealis/anime/${item.id}`
     case "manga":
-      return `/IRIS-list/manga/${item.id}`
+      return `/borealis/manga/${item.id}`
     case "movies":
-      return `/IRIS-list/movies/${item.id}`
+      return `/borealis/movies/${item.id}`
     case "tv":
-      return `/IRIS-list/tv/${item.id}`
+      return `/borealis/tv/${item.id}`
     case "games":
-      return `/IRIS-list/games/${item.id}`
+      return `/borealis/games/${item.id}`
     case "books":
-      return `/IRIS-list/books/${item.id}`
+      return `/borealis/books/${item.id}`
     case "music":
       if (item.itemType === "ALBUM" || !item.duration) {
-        return `/IRIS-list/music/album/${item.id}`
+        return `/borealis/music/albums/${item.id}`
       }
-      return `/IRIS-list/music/track/${item.id}`
+      return `/borealis/music/tracks/${item.id}`
     case "characters":
-      return `/IRIS-list/characters/${item.id}`
+      return `/borealis/characters/${item.id}`
     case "staff":
-      return `/IRIS-list/people/${item.id}`
+      return `/borealis/people/${item.id}`
     case "studios":
-      return `/IRIS-list/studios/${item.id}`
+      return `/borealis/studios/${item.id}`
     default:
-      return `/IRIS-list/anime/${item.id}`
+      return `/borealis/anime/${item.id}`
   }
 }
 

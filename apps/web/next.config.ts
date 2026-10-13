@@ -29,6 +29,30 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**" },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/IRIS-search/:path*",
+        destination: "/kiroshi/:path*",
+        permanent: true,
+      },
+      {
+        source: "/IRIS-account/:path*",
+        destination: "/carina/:path*",
+        permanent: true,
+      },
+      {
+        source: "/IRIS-list/:path*",
+        destination: "/borealis/:path*",
+        permanent: true,
+      },
+      {
+        source: "/IRIS-pass/:path*",
+        destination: "/akaromi/:path*",
+        permanent: true,
+      },
+    ]
+  },
   async rewrites() {
     return [
       {

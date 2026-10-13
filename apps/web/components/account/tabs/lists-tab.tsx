@@ -16,9 +16,11 @@ import {
   IconStar,
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
+import { resolveUserId } from "@/lib/user-profile"
 
 export interface ListsTabProps {
   username: string
+  userId?: string
   isOwner: boolean
 }
 
@@ -44,8 +46,9 @@ export function invalidateClientLists(username?: string, activeType?: string) {
   }
 }
 
-export function ListsTab({ username, isOwner }: ListsTabProps): React.JSX.Element {
+export function ListsTab({ username, userId, isOwner }: ListsTabProps): React.JSX.Element {
   const [activeType, setActiveType] = useState<string>("anime")
+  const [resolvedId, setResolvedId] = useState<string | undefined>(userId)
   const cacheKey = `${username}:${activeType}`
   const cached = listClientCache.get(cacheKey)
   const isFresh = Boolean(cached && Date.now() - cached.timestamp < CLIENT_CACHE_TTL_MS)
@@ -76,40 +79,37 @@ export function ListsTab({ username, isOwner }: ListsTabProps): React.JSX.Elemen
       let promise = inFlightRequests.get(cacheKey)
       if (!promise) {
         promise = (async () => {
+          let targetId = userId
+          if (!targetId) {
+            targetId = (await resolveUserId(username)) || undefined
+          }
+          if (targetId && isMounted) {
+            setResolvedId(targetId)
+          }
+
           let statusFilter = "WATCHING"
           if (activeType === "manga" || activeType === "book") statusFilter = "READING"
           else if (activeType === "game") statusFilter = "PLAYING"
           else if (activeType === "music") statusFilter = "LISTENING"
 
+          const query: any = { status: statusFilter, limit: 12 }
+          if (targetId) query.userId = targetId
+
           let res: any
           if (activeType === "anime") {
-            res = await elysia.user({ username }).lists.anime.get({
-              query: { status: statusFilter, limit: 12 },
-            })
+            res = await elysia.borealis.lists.anime.get({ query })
           } else if (activeType === "manga") {
-            res = await elysia.user({ username }).lists.manga.get({
-              query: { status: statusFilter, limit: 12 },
-            })
+            res = await elysia.borealis.lists.manga.get({ query })
           } else if (activeType === "movie") {
-            res = await elysia.user({ username }).lists.movie.get({
-              query: { status: statusFilter, limit: 12 },
-            })
+            res = await elysia.borealis.lists.movies.get({ query })
           } else if (activeType === "tv") {
-            res = await elysia.user({ username }).lists.tv.get({
-              query: { status: statusFilter, limit: 12 },
-            })
+            res = await elysia.borealis.lists.tv.get({ query })
           } else if (activeType === "game") {
-            res = await elysia.user({ username }).lists.game.get({
-              query: { status: statusFilter, limit: 12 },
-            })
+            res = await elysia.borealis.lists.games.get({ query })
           } else if (activeType === "book") {
-            res = await elysia.user({ username }).lists.book.get({
-              query: { status: statusFilter, limit: 12 },
-            })
+            res = await elysia.borealis.lists.books.get({ query })
           } else if (activeType === "music") {
-            res = await elysia.user({ username }).lists.music.get({
-              query: { status: statusFilter, limit: 12 },
-            })
+            res = await elysia.borealis.lists.music.get({ query })
           }
           return res
         })().finally(() => {
@@ -175,7 +175,7 @@ export function ListsTab({ username, isOwner }: ListsTabProps): React.JSX.Elemen
 
         {/* See All Button */}
         <LinkButton
-          href={`/IRIS-list/lists/${username}/${activeType}`}
+          href={`/borealis/lists/${resolvedId || userId}/${activeType}`}
           variant="outline"
           size="sm"
           className="h-8 gap-1.5 rounded-xl border-primary/30 bg-primary/10 text-xs font-bold text-primary shadow-xs hover:bg-primary/20"
@@ -218,7 +218,7 @@ export function ListsTab({ username, isOwner }: ListsTabProps): React.JSX.Elemen
               </p>
             </div>
             <LinkButton
-              href={`/IRIS-list/lists/${username}/${activeType}`}
+              href={`/borealis/lists/${resolvedId || userId}/${activeType}`}
               variant="outline"
               size="sm"
               className="rounded-xl text-xs"
@@ -237,7 +237,7 @@ export function ListsTab({ username, isOwner }: ListsTabProps): React.JSX.Elemen
               const progress = entry.progress ?? entry.chaptersProgress ?? entry.episodesProgress ?? 0
               const totalUnits = media.episodeCount ?? media.chapterCount ?? media.pageCount ?? media.episodes ?? media.chapters ?? null
               const score = entry.score
-              const detailUrl = `/IRIS-list/${currentMediaConfig.path}/${mediaId}`
+              const detailUrl = `/borealis/${currentMediaConfig.path}/${mediaId}`
 
               return (
                 <Link

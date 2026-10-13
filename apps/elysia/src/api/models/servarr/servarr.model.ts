@@ -68,6 +68,8 @@ export const ServarrModel = {
     movieIds: t.Optional(t.Array(t.Number())),
     seriesId: t.Optional(t.Number()),
     seriesIds: t.Optional(t.Array(t.Number())),
+    episodeId: t.Optional(t.Number()),
+    episodeIds: t.Optional(t.Array(t.Number())),
     files: t.Optional(t.Array(t.Number())),
     body: t.Optional(t.Record(t.String(), t.Any())),
   }),

@@ -137,6 +137,36 @@ export const carinaComments = new Elysia({ prefix: '/carina/comments' })
     }
   )
 
+  // --- 5b. PATCH /carina/comments/:commentId/reply/:replyId (Update reply to comment) ---
+  .patch(
+    '/:commentId/reply/:replyId',
+    {
+      params: CarinaCommentsModel.replyParam,
+      body: CarinaCommentsModel.createReplyBody,
+      detail: {
+        summary: 'Update reply to comment strictly by reply ID',
+        tags: ['Carina Comments'],
+      },
+      response: {
+        200: CarinaCommentsModel.createReplyResponse,
+        400: CarinaCommentsModel.badRequestError,
+        401: CarinaCommentsModel.unauthorizedError,
+        403: CarinaCommentsModel.forbiddenError,
+        404: CarinaCommentsModel.notFoundError,
+        422: CarinaCommentsModel.validationError,
+      },
+    },
+    async ({ params, body, session: userSession }) => {
+      const user = userSession.requireUser()
+      return await CarinaCommentsServ.updateReply(
+        user,
+        params.commentId,
+        params.replyId,
+        body
+      )
+    }
+  )
+
   // --- 6. POST /carina/comments/:commentId/reply (Reply to comment) ---
   .post(
     '/:commentId/reply',

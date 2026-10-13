@@ -3,16 +3,69 @@ import { openapi } from '@elysia/openapi'
 import { controllers, cors, rateLimiter } from './plugins'
 import { isHttpError } from './lib/errors'
 import { LogFactory } from '@Iris/logger'
+import { wsHub } from './services/ws.serv'
+import type { ControllersApp } from './api/controllers.generated'
+import { websocket } from 'elysia/websocket'
 
 const logger = new LogFactory('Elysia:Server')
+const authTimeouts = new WeakMap<object, ReturnType<typeof setTimeout>>()
 
-export const app = new Elysia({
-  strictPath: true,
-})
+export const app = new Elysia()
   .use(cors())
   .use(rateLimiter())
-  .use(controllers({ logger }))
+  .use(controllers({ logger, generateTypes: true }))
   .use(openapi())
+  .use(websocket())
+  .ws('/ws', {
+    async open(ws) {
+      const request = ws.request
+      let userId: string | null = (ws.query as Record<string, string> | undefined)?.userId ?? null
+
+      if (!userId && request) {
+        try {
+          const rawUrl = typeof request.url === 'string' ? request.url : ''
+          if (rawUrl) {
+            const parsedUrl = new URL(rawUrl, 'http://localhost:4000')
+            const queryUserId = parsedUrl.searchParams.get('userId')
+            if (queryUserId && queryUserId.trim()) {
+              userId = queryUserId.trim()
+            }
+          }
+        } catch { }
+      }
+
+      if (userId) {
+        wsHub.register(ws as any, userId)
+        logger.info(`WebSocket connected: user ${userId}`)
+        wsHub.send(ws as any, 'auth:success', { userId })
+      } else {
+        // Allow a 5-second grace period for client to authenticate via auth message frame
+        const authTimeout = setTimeout(() => {
+          if (!wsHub.hasConnection(ws as any)) {
+            try {
+              ws.close?.(4401, 'Unauthorized')
+            } catch { }
+          }
+        }, 5000)
+        authTimeouts.set(ws, authTimeout)
+      }
+    },
+    message(ws, message) {
+      wsHub.handleMessage(ws as any, message)
+    },
+    close(ws) {
+      const authTimeout = authTimeouts.get(ws)
+      if (authTimeout) {
+        clearTimeout(authTimeout)
+        authTimeouts.delete(ws)
+      }
+      const hadUser = wsHub.hasConnection(ws as any)
+      wsHub.unregister(ws as any)
+      if (hadUser) {
+        logger.info('WebSocket disconnected')
+      }
+    },
+  })
   .error(({ error, request, set }) => {
     const { method, url } = request
 
@@ -59,11 +112,8 @@ export const app = new Elysia({
       detail: error instanceof Error ? error.message : String(error),
     }
   })
-  .get('/', () => {
-    throw new NotFound()
-  })
 
-export type App = typeof app
+export type App = ControllersApp
 
 /**
  * Starts listening for incoming HTTP connections.
@@ -86,7 +136,7 @@ export function startServer(port = Number(process.env.ELYSIA_PORT || 4000)) {
     logger.info(`Worker ${process.pid} received ${signal}, shutting down...`)
     try {
       await app.stop()
-    } catch {}
+    } catch { }
     process.exit(0)
   }
 

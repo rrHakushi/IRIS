@@ -262,6 +262,33 @@ export const carinaOAuth = new Elysia({ prefix: '/carina/oauth' })
     }
   )
 
+  // PUT /carina/oauth/apps/:id
+  .put(
+    '/apps/:id',
+    {
+      params: t.Object({
+        id: t.String({ description: 'Application database ID or Client ID' }),
+      }),
+      body: CarinaOAuthModel.updateAppBody,
+      detail: {
+        summary: 'Update OAuth application',
+        description: 'Modifies application configuration, redirect URIs, or display information.',
+        tags: ['Carina OAuth Apps'],
+      },
+      response: {
+        200: CarinaOAuthModel.appDetailsResponse,
+        400: CarinaOAuthModel.badRequestError,
+        401: CarinaOAuthModel.unauthorizedError,
+        404: CarinaOAuthModel.notFoundError,
+        422: CarinaOAuthModel.validationError,
+      },
+    },
+    async ({ params: { id }, body, session: userSession }) => {
+      const user = userSession.requireUser()
+      return await CarinaOAuthServ.updateApp(user.id, id, body)
+    }
+  )
+
   // DELETE /carina/oauth/apps/:id
   .delete(
     '/apps/:id',

@@ -49,6 +49,12 @@ export const BorealisListsModel = {
     sortBy: t.Optional(t.String({ description: 'Sort field (updatedAt, createdAt, score, progress, title)' })),
     order: t.Optional(t.Union([t.Literal('asc'), t.Literal('desc')], { default: 'desc' })),
     q: t.Optional(t.String({ description: 'Search title within list' })),
+    userId: t.Optional(t.String({ description: 'Target user ID (for public profile lists)' })),
+  }),
+
+  // --- Stats / Filters Query Schema ---
+  statsQuery: t.Object({
+    userId: t.Optional(t.String({ description: 'Target user ID' })),
   }),
 
   // --- Mutation Body Schemas ---
@@ -289,6 +295,44 @@ export const BorealisListsModel = {
     }),
   }),
 
+  // --- Export Shares Schemas ---
+  listSharesResponse: t.Object({
+    success: t.Boolean(),
+    shares: t.Array(
+      t.Object({
+        id: t.String(),
+        description: t.Nullable(t.String()),
+        mediaTypes: t.Array(t.String()),
+        createdAt: t.String(),
+        expiresAt: t.Nullable(t.String()),
+        lastUsedAt: t.Nullable(t.String()),
+        isExpired: t.Boolean(),
+      })
+    ),
+  }),
+
+  createShareBody: t.Object({
+    password: t.String({ minLength: 4 }),
+    mediaTypes: t.Array(t.String(), { minItems: 1 }),
+    description: t.Optional(t.String()),
+    expiresInHours: t.Optional(t.Nullable(t.Number())),
+  }),
+
+  createShareResponse: t.Object({
+    success: t.Boolean(),
+    shareId: t.String(),
+    expiresAt: t.Nullable(t.String()),
+  }),
+
+  revokeShareParam: t.Object({
+    shareId: t.String({ minLength: 1 }),
+  }),
+
+  revokeShareResponse: t.Object({
+    success: t.Boolean(),
+    message: t.String(),
+  }),
+
   importBody: t.Object({
     items: t.Optional(
       t.Array(
@@ -339,11 +383,22 @@ export const BorealisListsModel = {
     total: t.Number(),
   }),
 
+  fetchRemoteBody: t.Object({
+    url: t.String({ description: 'Remote IRIS export URL' }),
+    password: t.Optional(t.String({ description: 'Password for the remote export share' })),
+  }),
+
+  fetchRemoteResponse: t.Object({
+    success: t.Boolean(),
+    data: t.Any(),
+  }),
+
   globalStatsQuery: t.Optional(
     t.Object({
       year: t.Optional(t.Numeric({ description: 'Filter year e.g. 2026' })),
       quarter: t.Optional(t.Numeric({ minimum: 1, maximum: 4, description: 'Filter quarter 1-4' })),
       month: t.Optional(t.Numeric({ minimum: 1, maximum: 12, description: 'Filter month 1-12' })),
+      userId: t.Optional(t.String({ description: 'Target user ID' })),
     })
   ),
 

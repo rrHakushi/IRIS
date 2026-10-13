@@ -214,6 +214,17 @@ export function DiscoverPageClient({ category }: DiscoverPageClientProps) {
   // ---------------------------------------------------------------------------
   // 1. Fetch Filter Facets & Counts
   // ---------------------------------------------------------------------------
+const getMediaCategory = (cat: string): "anime" | "manga" | "movies" | "tv" | "games" | "books" | "music" => {
+  const c = cat.toLowerCase()
+  if (c === "movie" || c === "movies") return "movies"
+  if (c === "game" || c === "games") return "games"
+  if (c === "book" || c === "books") return "books"
+  if (c === "manga") return "manga"
+  if (c === "tv") return "tv"
+  if (c === "music") return "music"
+  return "anime"
+}
+
   const fetchFacets = useCallback(
     async (force = false) => {
       if (!category) return
@@ -231,9 +242,8 @@ export function DiscoverPageClient({ category }: DiscoverPageClientProps) {
       isFetchingFacetsRef.current = true
 
       try {
-        const { data, error } = await elysia
-          .discover({ media: category })
-          .filters.get()
+        const targetCat = getMediaCategory(category)
+        const { data, error } = await elysia.borealis.media[targetCat].filters.get()
 
         if (!error && data && data.success) {
           setFacets({
@@ -241,8 +251,8 @@ export function DiscoverPageClient({ category }: DiscoverPageClientProps) {
             formats: data.formats || [],
             genres: data.genres || [],
             years: data.years || [],
-            seasons: data.seasons || [],
-            artists: data.artists || [],
+            seasons: (data as any).seasons || [],
+            artists: [],
           })
         }
       } catch (err) {
@@ -293,24 +303,25 @@ export function DiscoverPageClient({ category }: DiscoverPageClientProps) {
       setIsLoading(true)
 
       try {
-        const { data, error } = await elysia.discover({ media: category }).get({
+        const targetCat = getMediaCategory(category)
+        const { data, error } = await elysia.borealis.media[targetCat].get({
           query: {
+            page: 1,
             limit: 32,
-            status: statusParam,
-            mediaFormat: formatsParam,
+            statuses: statusParam,
+            formats: formatsParam,
             genres: genresParam,
-            year: yearsParam,
-            seasonSeason: seasonsParam,
-            artist: artistsParam,
-            sortBy,
-            order: sortOrder,
-            q: cleanSearch || undefined,
+            years: yearsParam,
+            season: seasonsParam,
+            sortBy: sortBy as any,
+            sortOrder: sortOrder as any,
+            search: cleanSearch || undefined,
           },
         })
 
         if (!error && data && data.success) {
-          setItems(data.items as DiscoverItem[])
-          setNextCursor(data.pagination?.nextCursor ?? null)
+          setItems(data.items as unknown as DiscoverItem[])
+          setNextCursor(data.pagination?.hasMore ? 2 : null)
           setHasMore(Boolean(data.pagination?.hasMore))
           setTotalCount(data.pagination?.total ?? 0)
         } else {
@@ -365,30 +376,29 @@ export function DiscoverPageClient({ category }: DiscoverPageClientProps) {
         selectedYears.length > 0 ? selectedYears.join(",") : undefined
       const seasonsParam =
         selectedSeasons.length > 0 ? selectedSeasons.join(",") : undefined
-      const artistsParam =
-        selectedArtists.length > 0 ? selectedArtists.join(",") : undefined
 
       const cleanSearch = debouncedSearch.trim()
-      const { data, error } = await elysia.discover({ media: category }).get({
+      const targetCat = getMediaCategory(category)
+      const pageToFetch = typeof nextCursor === "number" ? nextCursor : 2
+      const { data, error } = await elysia.borealis.media[targetCat].get({
         query: {
+          page: pageToFetch,
           limit: 32,
-          cursor: nextCursor ?? undefined,
-          status: statusParam,
-          mediaFormat: formatsParam,
+          statuses: statusParam,
+          formats: formatsParam,
           genres: genresParam,
-          year: yearsParam,
-          seasonSeason: seasonsParam,
-          artist: artistsParam,
-          sortBy,
-          order: sortOrder,
-          q: cleanSearch || undefined,
+          years: yearsParam,
+          season: seasonsParam,
+          sortBy: sortBy as any,
+          sortOrder: sortOrder as any,
+          search: cleanSearch || undefined,
         },
       })
 
       if (!error && data && data.success) {
-        const newItems = (data.items as DiscoverItem[]) || []
+        const newItems = (data.items as unknown as DiscoverItem[]) || []
         setItems((prev) => [...prev, ...newItems])
-        setNextCursor(data.pagination?.nextCursor ?? null)
+        setNextCursor(data.pagination?.hasMore ? pageToFetch + 1 : null)
         setHasMore(Boolean(data.pagination?.hasMore))
       } else {
         setHasMore(false)
@@ -410,7 +420,6 @@ export function DiscoverPageClient({ category }: DiscoverPageClientProps) {
     selectedGenres,
     selectedYears,
     selectedSeasons,
-    selectedArtists,
     sortBy,
     sortOrder,
     debouncedSearch,

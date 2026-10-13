@@ -11,6 +11,20 @@ export const AkaromiEncryptionModel = {
     ),
     salt: t.Nullable(t.String({ description: 'Cryptographic salt extracted from key or password hash' })),
     hasEncryptionKeys: t.Boolean({ description: 'Whether the user has initialized encryption keys' }),
+    hasSeparateEncryptionPassword: t.Boolean({ description: 'Whether the user has a distinct encryption password' }),
+  }),
+
+  // --- POST /akaromi/encryption/password ---
+  changePasswordBody: t.Object({
+    currentPassword: t.String({ minLength: 1, description: 'Current password' }),
+    newEncryptionPassword: t.String({ minLength: 16, maxLength: 64, description: 'New encryption vault password' }),
+  }),
+
+  changePasswordResponse: t.Object({
+    success: t.Boolean(),
+    message: t.String(),
+    publicKey: t.Nullable(t.String()),
+    hasSeparateEncryptionPassword: t.Boolean(),
   }),
 
   // Detailed RFC 9457 Error Schemas

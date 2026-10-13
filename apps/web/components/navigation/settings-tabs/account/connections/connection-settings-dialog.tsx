@@ -100,18 +100,16 @@ export function ConnectionSettingsDialog({
     setIsResyncing(true)
 
     try {
-      const { data, error } = await elysia
-        .connections({ id: connection.id })
-        .sync.post(undefined, {
-          fetch: { credentials: "include" },
-        })
+      const { data, error } = await elysia.carina
+        .connections({ connectionId: connection.id })
+        .sync.post()
 
       if (error || !data?.success) {
-        throw new Error(
-          (error as any)?.value?.message ||
-            (data as any)?.message ||
-            "Failed to resync profile data"
-        )
+        const errorMsg =
+          error && typeof error.value === "object" && error.value && "message" in error.value
+            ? String((error.value as { message?: unknown }).message)
+            : "Failed to resync profile data"
+        throw new Error(errorMsg)
       }
 
       toast.success(
@@ -134,8 +132,9 @@ export function ConnectionSettingsDialog({
   const handleSaveSettings = async () => {
     setIsSaving(true)
     try {
-      const { error } = await elysia.connections({ id: connection.id }).patch(
-        {
+      const { error } = await elysia.carina
+        .connections({ connectionId: connection.id })
+        .patch({
           settings: {
             ...(connection.settings?.hostUrl
               ? { hostUrl: connection.settings.hostUrl }
@@ -143,16 +142,14 @@ export function ConnectionSettingsDialog({
             ...(isRadarrOrSonarr ? {} : { librarySync }),
             isPrivate,
           },
-        },
-        {
-          fetch: { credentials: "include" },
-        }
-      )
+        })
 
       if (error) {
-        throw new Error(
-          (error as any)?.value?.message || "Failed to save settings"
-        )
+        const errorMsg =
+          error && typeof error.value === "object" && error.value && "message" in error.value
+            ? String((error.value as { message?: unknown }).message)
+            : "Failed to save settings"
+        throw new Error(errorMsg)
       }
 
       toast.success("Connection settings updated!")
@@ -174,16 +171,16 @@ export function ConnectionSettingsDialog({
 
     setIsDeleting(true)
     try {
-      const { error } = await elysia
-        .connections({ id: connection.id })
-        .delete(undefined, {
-          fetch: { credentials: "include" },
-        })
+      const { error } = await elysia.carina
+        .connections({ connectionId: connection.id })
+        .delete()
 
       if (error) {
-        throw new Error(
-          (error as any)?.value?.message || "Failed to disconnect"
-        )
+        const errorMsg =
+          error && typeof error.value === "object" && error.value && "message" in error.value
+            ? String((error.value as { message?: unknown }).message)
+            : "Failed to disconnect"
+        throw new Error(errorMsg)
       }
 
       toast.success(`Disconnected ${provider.name}`)

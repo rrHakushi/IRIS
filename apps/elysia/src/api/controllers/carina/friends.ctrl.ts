@@ -186,4 +186,118 @@ export const carinaFriends = new Elysia({ prefix: '/carina/friends' })
     }
   )
 
+  // --- 9. PATCH /carina/friends/:friendId (Update friendship settings) ---
+  .patch(
+    '/:friendId',
+    {
+      params: CarinaFriendsModel.friendParam,
+      body: CarinaFriendsModel.updateFriendBody,
+      detail: {
+        summary: 'Update friendship settings (privacy, nickname)',
+        tags: ['Carina Friends'],
+      },
+      response: {
+        200: CarinaFriendsModel.updateFriendResponse,
+        401: CarinaFriendsModel.unauthorizedError,
+        404: CarinaFriendsModel.notFoundError,
+        422: CarinaFriendsModel.validationError,
+      },
+    },
+    async ({ params, body, session: userSession }) => {
+      const user = userSession.requireUser()
+      return await CarinaFriendsServ.updateFriend(user.id, params.friendId, body)
+    }
+  )
+
+  // --- 10. POST /carina/friends/requests/:requestId/respond (Respond to friend request) ---
+  .post(
+    '/requests/:requestId/respond',
+    {
+      params: CarinaFriendsModel.requestParam,
+      body: CarinaFriendsModel.respondRequestBody,
+      detail: {
+        summary: 'Respond to friend request (ACCEPT, DECLINE, or BLOCK)',
+        tags: ['Carina Friends'],
+      },
+      response: {
+        200: CarinaFriendsModel.respondRequestResponse,
+        400: CarinaFriendsModel.badRequestError,
+        401: CarinaFriendsModel.unauthorizedError,
+        404: CarinaFriendsModel.notFoundError,
+        422: CarinaFriendsModel.validationError,
+      },
+    },
+    async ({ params, body, session: userSession }) => {
+      const user = userSession.requireUser()
+      return await CarinaFriendsServ.respondFriendRequest(user.id, params.requestId, body.action)
+    }
+  )
+
+  // --- 11. DELETE /carina/friends/requests/:requestId (Cancel outgoing friend request) ---
+  .delete(
+    '/requests/:requestId',
+    {
+      params: CarinaFriendsModel.requestParam,
+      detail: {
+        summary: 'Cancel outgoing pending friend request',
+        tags: ['Carina Friends'],
+      },
+      response: {
+        200: CarinaFriendsModel.cancelRequestResponse,
+        401: CarinaFriendsModel.unauthorizedError,
+        404: CarinaFriendsModel.notFoundError,
+        422: CarinaFriendsModel.validationError,
+      },
+    },
+    async ({ params, session: userSession }) => {
+      const user = userSession.requireUser()
+      return await CarinaFriendsServ.cancelFriendRequest(user.id, params.requestId)
+    }
+  )
+
+  // --- 12. POST /carina/friends/block (Block user) ---
+  .post(
+    '/block',
+    {
+      body: CarinaFriendsModel.blockUserBody,
+      detail: {
+        summary: 'Block a user by target user ID or username',
+        tags: ['Carina Friends'],
+      },
+      response: {
+        200: CarinaFriendsModel.blockUserResponse,
+        400: CarinaFriendsModel.badRequestError,
+        401: CarinaFriendsModel.unauthorizedError,
+        404: CarinaFriendsModel.notFoundError,
+        422: CarinaFriendsModel.validationError,
+      },
+    },
+    async ({ body, session: userSession }) => {
+      const user = userSession.requireUser()
+      return await CarinaFriendsServ.blockUser(user.id, body)
+    }
+  )
+
+  // --- 13. DELETE /carina/friends/block/:blockId (Unblock user) ---
+  .delete(
+    '/block/:blockId',
+    {
+      params: CarinaFriendsModel.blockParam,
+      detail: {
+        summary: 'Unblock user by block ID or blocked user ID',
+        tags: ['Carina Friends'],
+      },
+      response: {
+        200: CarinaFriendsModel.unblockUserResponse,
+        401: CarinaFriendsModel.unauthorizedError,
+        404: CarinaFriendsModel.notFoundError,
+        422: CarinaFriendsModel.validationError,
+      },
+    },
+    async ({ params, session: userSession }) => {
+      const user = userSession.requireUser()
+      return await CarinaFriendsServ.unblockUser(user.id, params.blockId)
+    }
+  )
+
 export default carinaFriends

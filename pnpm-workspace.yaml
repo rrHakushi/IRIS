@@ -15,3 +15,8 @@ allowBuilds:
 
 minimumReleaseAgeExclude:
   - bullmq@6.3.13
+
+update:
+  ignoreDeps:
+    - prisma
+    - "@prisma/*"

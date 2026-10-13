@@ -41,7 +41,7 @@ export async function handlePasswordLogin(
   if (!identifier || !password) {
     return null;
   }
-  const { data, error } = await client.auth.login.post({
+  const { data, error } = await client.carina.auth.login.post({
     identifier,
     password,
   });
@@ -106,9 +106,10 @@ export async function handleMfaVerification(
         ? JSON.parse(payload.passkeyResponse)
         : payload.passkeyResponse;
 
-    const { data, error } = await client.auth.passkeys.login.verify.post({
-      passkeyResponse: passkeyJson,
-    });
+    const { data, error } =
+      await client.carina.auth.twofactor.passkeys.verify.post({
+        passkeyResponse: passkeyJson,
+      });
 
     if (error || !data) {
       throw new Error("Passkey verification failed.");
@@ -116,7 +117,7 @@ export async function handleMfaVerification(
 
     const response = data as {
       success: boolean;
-      user: {
+      user?: {
         id: string;
         username: string;
         email: string;
@@ -134,15 +135,26 @@ export async function handleMfaVerification(
     }
   }
 
-  if (!payload.mfaTicket || !payload.mfaCode || !payload.mfaType) {
+  if (!payload.mfaCode || !payload.mfaType) {
     throw new Error("Missing required MFA verification parameters.");
   }
 
-  const { data, error } = await client.auth.email.verify.post({
-    mfaTicket: payload.mfaTicket,
-    mfaType: payload.mfaType as "totp" | "email" | "backup_code",
-    code: payload.mfaCode,
-  });
+  let mfaRes: any;
+  if (payload.mfaType === "totp") {
+    mfaRes = await client.carina.auth.twofactor.totp.verify.post({
+      code: payload.mfaCode,
+    });
+  } else if (payload.mfaType === "backup_code") {
+    mfaRes = await client.carina.auth.twofactor.backupcodes.verify.post({
+      code: payload.mfaCode,
+    });
+  } else {
+    mfaRes = await client.carina.auth.twofactor.email.verify.post({
+      code: payload.mfaCode,
+      ...(payload.mfaTicket ? { mfaTicket: payload.mfaTicket } : {}),
+    });
+  }
+  const { data, error } = mfaRes;
 
   if (error || !data) {
     throw new Error("MFA verification failed.");
@@ -190,17 +202,18 @@ export async function handlePasskeyOnlyLogin(
       ? JSON.parse(passkeyResponse)
       : passkeyResponse;
 
-  const { data, error } = await client.auth.passkeys.login.verify.post({
-    passkeyResponse: parsed,
-  });
+  const { data, error } =
+    await client.carina.auth.twofactor.passkeys.verify.post({
+      passkeyResponse: parsed,
+    });
 
   if (error || !data) {
     throw new Error("Passkey login failed.");
   }
 
-  const response = data as {
+  const response = data as unknown as {
     success: boolean;
-    user: {
+    user?: {
       id: string;
       username: string;
       email: string;
@@ -235,7 +248,7 @@ export async function handleLoginCodeVerification(
     throw new Error("Invalid login code.");
   }
 
-  const { data, error } = await client.auth.quickconnect.status.get({
+  const { data, error } = await client.carina.auth.qc.status.get({
     query: {
       sessionToken: loginCode,
     },

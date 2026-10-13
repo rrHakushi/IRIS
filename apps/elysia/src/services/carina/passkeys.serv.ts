@@ -1,5 +1,6 @@
 import {
   generateRegistrationOptions,
+  generateAuthenticationOptions,
   verifyRegistrationResponse,
 } from '@simplewebauthn/server'
 import { prisma } from '@IRIS/database'
@@ -127,6 +128,62 @@ export abstract class CarinaPasskeysServ {
     await cache.set(`auth:passkey-reg:${user.id}`, options.challenge, 300)
 
     return options
+  }
+
+  /**
+   * Generate WebAuthn passkey authentication/login options challenge.
+   */
+  static async createLoginChallenge(
+    body?: { identifier?: string },
+    request?: Request
+  ) {
+    const { rpID } = getOriginAndRpId(request || new Request('http://localhost'))
+
+    let allowCredentials: any[] | undefined = undefined
+
+    if (body?.identifier) {
+      const rawIdentifier = body.identifier.trim()
+      const lowerIdentifier = rawIdentifier.toLowerCase()
+
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [{ email: lowerIdentifier }, { username: rawIdentifier }],
+        },
+        include: { passkeys: true },
+      })
+
+      if (user && user.passkeys.length > 0) {
+        allowCredentials = user.passkeys.map((pk) => ({
+          id: pk.id,
+          type: 'public-key' as const,
+          transports: pk.transports as any,
+        }))
+      }
+    }
+
+    const options = await generateAuthenticationOptions({
+      rpID,
+      allowCredentials,
+      userVerification: 'preferred',
+    })
+
+    await cache.set(
+      `auth:passkey-auth:${options.challenge}`,
+      options.challenge,
+      300
+    )
+
+    return {
+      challenge: options.challenge,
+      rpId: options.rpId ?? rpID,
+      allowCredentials: options.allowCredentials?.map((cred) => ({
+        id: cred.id,
+        type: 'public-key' as const,
+        transports: cred.transports,
+      })),
+      timeout: options.timeout ?? 60000,
+      userVerification: options.userVerification,
+    }
   }
 
   /**

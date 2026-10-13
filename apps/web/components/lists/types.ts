@@ -25,7 +25,7 @@ export const MEDIA_CATEGORIES: MediaCategoryConfig[] = [
   {
     key: "anime",
     label: "Anime",
-    href: (u) => `/IRIS-list/lists/${u}/anime`,
+    href: (u) => `/borealis/lists/${u}/anime`,
     icon: IconDeviceTv,
     activeVerb: "Watching",
     progressLabel: "Ep",
@@ -33,7 +33,7 @@ export const MEDIA_CATEGORIES: MediaCategoryConfig[] = [
   {
     key: "manga",
     label: "Manga",
-    href: (u) => `/IRIS-list/lists/${u}/manga`,
+    href: (u) => `/borealis/lists/${u}/manga`,
     icon: IconBook2,
     activeVerb: "Reading",
     progressLabel: "Ch",
@@ -41,7 +41,7 @@ export const MEDIA_CATEGORIES: MediaCategoryConfig[] = [
   {
     key: "movie",
     label: "Movies",
-    href: (u) => `/IRIS-list/lists/${u}/movie`,
+    href: (u) => `/borealis/lists/${u}/movie`,
     icon: IconMovie,
     activeVerb: "Watching",
     progressLabel: "Watched",
@@ -49,7 +49,7 @@ export const MEDIA_CATEGORIES: MediaCategoryConfig[] = [
   {
     key: "tv",
     label: "TV Shows",
-    href: (u) => `/IRIS-list/lists/${u}/tv`,
+    href: (u) => `/borealis/lists/${u}/tv`,
     icon: IconDeviceTv,
     activeVerb: "Watching",
     progressLabel: "Ep",
@@ -57,7 +57,7 @@ export const MEDIA_CATEGORIES: MediaCategoryConfig[] = [
   {
     key: "game",
     label: "Games",
-    href: (u) => `/IRIS-list/lists/${u}/game`,
+    href: (u) => `/borealis/lists/${u}/game`,
     icon: IconDeviceGamepad,
     activeVerb: "Playing",
     progressLabel: "Hrs",
@@ -65,7 +65,7 @@ export const MEDIA_CATEGORIES: MediaCategoryConfig[] = [
   {
     key: "book",
     label: "Books",
-    href: (u) => `/IRIS-list/lists/${u}/book`,
+    href: (u) => `/borealis/lists/${u}/book`,
     icon: IconBook,
     activeVerb: "Reading",
     progressLabel: "Pages",
@@ -73,7 +73,7 @@ export const MEDIA_CATEGORIES: MediaCategoryConfig[] = [
   {
     key: "music",
     label: "Music",
-    href: (u) => `/IRIS-list/lists/${u}/music`,
+    href: (u) => `/borealis/lists/${u}/music`,
     icon: IconMusic,
     activeVerb: "Listening",
     progressLabel: "Plays",

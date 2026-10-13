@@ -7,12 +7,12 @@ export default async function RootPage() {
   const session = await getServerSession(authOptions)
 
   if (!session) {
-    redirect("/IRIS-account/auth/login")
+    redirect("/carina/auth/login")
   }
 
   const cookieStore = await cookies()
   const rawLastApp = cookieStore.get("iris_last_app")?.value
-  let targetPath = "/IRIS-list"
+  let targetPath = "/borealis"
 
   if (rawLastApp) {
     try {
@@ -26,7 +26,7 @@ export default async function RootPage() {
         targetPath = decoded
       }
     } catch {
-      targetPath = "/IRIS-list"
+      targetPath = "/borealis"
     }
   }
 

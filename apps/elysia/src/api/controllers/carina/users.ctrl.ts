@@ -68,6 +68,50 @@ export const carinaUsers = new Elysia({ prefix: '/carina/users' })
     }
   )
 
+  // --- 3a. POST /carina/users/me/assets (Upload asset to S3) ---
+  .post(
+    '/me/assets',
+    {
+      body: CarinaUsersModel.uploadAssetBody,
+      detail: {
+        summary: 'Upload user profile asset (avatar, banner, frame, nameplate) to storage',
+        tags: ['Carina Users'],
+      },
+      response: {
+        200: CarinaUsersModel.uploadAssetResponse,
+        400: CarinaUsersModel.badRequestError,
+        401: CarinaUsersModel.unauthorizedError,
+        422: CarinaUsersModel.validationError,
+      },
+    },
+    async ({ body, session: userSession }) => {
+      const user = userSession.requireUser()
+      return await CarinaUsersServ.uploadAsset(user.id, body)
+    }
+  )
+
+  // --- 3b. DELETE /carina/users/me/assets (Delete asset from S3) ---
+  .delete(
+    '/me/assets',
+    {
+      body: CarinaUsersModel.deleteAssetBody,
+      detail: {
+        summary: 'Delete user profile asset from storage',
+        tags: ['Carina Users'],
+      },
+      response: {
+        200: CarinaUsersModel.deleteAssetResponse,
+        401: CarinaUsersModel.unauthorizedError,
+        403: CarinaUsersModel.forbiddenError,
+        422: CarinaUsersModel.validationError,
+      },
+    },
+    async ({ body, session: userSession }) => {
+      const user = userSession.requireUser()
+      return await CarinaUsersServ.deleteAsset(user.id, body.key)
+    }
+  )
+
   // --- 4. DELETE /carina/users/activity/:id (Delete activity item) ---
   .delete(
     '/activity/:id',

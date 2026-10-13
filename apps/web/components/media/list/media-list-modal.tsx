@@ -170,7 +170,7 @@ export function MediaListModal({
         setFetchedTvEpisodes(null)
         return
       }
-      elysia.media
+      elysia.borealis.media
         .tv({ id: Number(media.id) })
         .get()
         .then((res: any) => {
@@ -205,7 +205,7 @@ export function MediaListModal({
         setFetchedAnimeEpisodes(null)
         return
       }
-      elysia.media
+      elysia.borealis.media
         .anime({ id: Number(media.id) })
         .get()
         .then((res: any) => {
@@ -780,31 +780,38 @@ export function MediaListModal({
     setIsFavorited(!prev)
 
     try {
-      const { data, error } = await elysia
-        .user({ username })
-        .favorites({ targetId: media.id })
-        .post({
-          type: backendMediaType as any,
-          title: media.titlePrimary,
-        })
+      const numericTargetId = Number(media.id)
+      const favCategory =
+        backendMediaType.toLowerCase() === "music"
+          ? "music_album"
+          : backendMediaType.toLowerCase()
+
+      const { data, error } = isFavorited
+        ? await elysia.carina
+            .favorites({ category: favCategory })({ targetId: numericTargetId })
+            .delete()
+        : await elysia.carina.favorites.post({
+            category: favCategory,
+            targetId: numericTargetId,
+          })
 
       if (error || !data) {
         setIsFavorited(prev)
         toast.error("Failed to update favorite")
         return
       }
-      const newStatus = Boolean(data.isFavorited)
+      const newStatus = !prev
       setIsFavorited(newStatus)
       updateFavoriteCache(
         username,
         backendMediaType,
-        Number(media.id),
+        numericTargetId,
         newStatus
       )
       window.dispatchEvent(
         new CustomEvent("iris:favorite-updated", {
           detail: {
-            targetId: Number(media.id),
+            targetId: numericTargetId,
             type: backendMediaType,
             isFavorited: newStatus,
           },
@@ -862,108 +869,79 @@ export function MediaListModal({
     try {
       let res: { data?: any; error?: any }
 
+      const numericId = Number(media.id)
+
       switch (category) {
         case "anime":
-          res = await elysia
-            .user({ username })
-            .lists.anime({ id: media.id })
-            .put({
+          res = await elysia.borealis.lists
+            .anime({ animeId: numericId })
+            .post({
               ...commonPayload,
               progress,
               rewatched,
               rewatchHistory: rewatchHistory.length > 0 ? rewatchHistory : null,
-              watchedEpisodes,
-            } as any)
+            })
           break
         case "manga":
-          res = await elysia
-            .user({ username })
-            .lists.manga({ id: media.id })
-            .put({
+          res = await elysia.borealis.lists
+            .manga({ mangaId: numericId })
+            .post({
               ...commonPayload,
               chaptersProgress,
               volumesProgress,
               reread: rewatched,
               rereadHistory: rewatchHistory.length > 0 ? rewatchHistory : null,
-            } as any)
+            })
           break
         case "movie":
-          res = await elysia
-            .user({ username })
-            .lists.movie({ id: media.id })
-            .put({
+          res = await elysia.borealis.lists
+            .movies({ movieId: numericId })
+            .post({
               ...commonPayload,
-              progress: 0,
               rewatched,
               rewatchHistory: rewatchHistory.length > 0 ? rewatchHistory : null,
-            } as any)
+            })
           break
         case "tv": {
-          const seasonsPayload = effectiveTvSeasons.map((s) => {
-            const epCount = s.episodes?.length || s.episodeCount || 0
-            const watchedCount = watchedEpisodes.filter(
-              (we) => we.seasonNumber === (s.seasonNumber ?? 1)
-            ).length
-            const isSeasonCompleted =
-              status === "COMPLETED" || (epCount > 0 && watchedCount >= epCount)
-            return {
-              seasonNumber: s.seasonNumber ?? 1,
-              status: isSeasonCompleted
-                ? "COMPLETED"
-                : watchedCount > 0
-                  ? "WATCHING"
-                  : "PLANNING",
-              progress: isSeasonCompleted ? epCount : watchedCount,
-              score: null,
-            }
-          })
-
-          res = await elysia
-            .user({ username })
-            .lists.tv({ id: media.id })
-            .put({
+          res = await elysia.borealis.lists
+            .tv({ tvId: numericId })
+            .post({
               ...commonPayload,
               progress,
               rewatched,
               rewatchHistory: rewatchHistory.length > 0 ? rewatchHistory : null,
-              watchedEpisodes,
-              seasons: seasonsPayload.length > 0 ? seasonsPayload : undefined,
-            } as any)
+            })
           break
         }
         case "game":
-          res = await elysia
-            .user({ username })
-            .lists.game({ id: media.id })
-            .put({
+          res = await elysia.borealis.lists
+            .games({ gameId: numericId })
+            .post({
               ...commonPayload,
               progress,
               replayed: rewatched,
               replayHistory: rewatchHistory.length > 0 ? rewatchHistory : null,
-            } as any)
+            })
           break
         case "book":
-          res = await elysia
-            .user({ username })
-            .lists.book({ id: media.id })
-            .put({
+          res = await elysia.borealis.lists
+            .books({ bookId: numericId })
+            .post({
               ...commonPayload,
               progressChapters: chaptersProgress,
               progressVolumes: volumesProgress,
               reread: rewatched,
               rereadHistory: rewatchHistory.length > 0 ? rewatchHistory : null,
-            } as any)
+            })
           break
         case "music":
-          res = await elysia
-            .user({ username })
-            .lists.music({ id: media.id })
-            .put({
+          res = await elysia.borealis.lists
+            .music({ musicId: numericId })
+            .post({
               ...commonPayload,
               status: "LISTENING",
               playCount: rewatched,
-              rewatched,
-            } as any)
+            })
           break
       }
 
@@ -1017,47 +995,42 @@ export function MediaListModal({
     try {
       let res: { data?: any; error?: any }
 
+      const numericId = Number(media.id)
+
       switch (category) {
         case "anime":
-          res = await elysia
-            .user({ username })
-            .lists.anime({ id: media.id })
+          res = await elysia.borealis.lists
+            .anime({ animeId: numericId })
             .delete()
           break
         case "manga":
-          res = await elysia
-            .user({ username })
-            .lists.manga({ id: media.id })
+          res = await elysia.borealis.lists
+            .manga({ mangaId: numericId })
             .delete()
           break
         case "movie":
-          res = await elysia
-            .user({ username })
-            .lists.movie({ id: media.id })
+          res = await elysia.borealis.lists
+            .movies({ movieId: numericId })
             .delete()
           break
         case "tv":
-          res = await elysia
-            .user({ username })
-            .lists.tv({ id: media.id })
+          res = await elysia.borealis.lists
+            .tv({ tvId: numericId })
             .delete()
           break
         case "game":
-          res = await elysia
-            .user({ username })
-            .lists.game({ id: media.id })
+          res = await elysia.borealis.lists
+            .games({ gameId: numericId })
             .delete()
           break
         case "book":
-          res = await elysia
-            .user({ username })
-            .lists.book({ id: media.id })
+          res = await elysia.borealis.lists
+            .books({ bookId: numericId })
             .delete()
           break
         case "music":
-          res = await elysia
-            .user({ username })
-            .lists.music({ id: media.id })
+          res = await elysia.borealis.lists
+            .music({ musicId: numericId })
             .delete()
           break
       }
@@ -1194,8 +1167,8 @@ export function MediaListModal({
               type="button"
               variant="default"
               size="sm"
-              disabled={isSaveDisabled}
-              onClick={handleSave}
+              isDisabled={isSaveDisabled}
+              onPress={handleSave}
               className="h-9 cursor-pointer rounded-2xl bg-primary px-5 text-xs font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90"
             >
               {isSaving ? (
@@ -1840,7 +1813,7 @@ export function MediaListModal({
                 NOTES
               </label>
               <textarea
-                placeholder="Your thoughts, reviews, or private notes..."
+                placeholder="Your thoughts or private notes..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}

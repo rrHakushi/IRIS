@@ -79,7 +79,7 @@ export const DISCOVER_MEDIA_METAS: DiscoverMediaMeta[] = [
     singularLabel: "Anime",
     description:
       "Explore trending seasonal anime, critically acclaimed classics, and upcoming series.",
-    href: "/IRIS-list/discover/anime",
+    href: "/borealis/discover/anime",
     icon: IconDeviceTv,
   },
   {
@@ -88,7 +88,7 @@ export const DISCOVER_MEDIA_METAS: DiscoverMediaMeta[] = [
     singularLabel: "Manga",
     description:
       "Discover ongoing serializations, acclaimed graphic novels, and light novels.",
-    href: "/IRIS-list/discover/manga",
+    href: "/borealis/discover/manga",
     icon: IconBook2,
   },
   {
@@ -97,7 +97,7 @@ export const DISCOVER_MEDIA_METAS: DiscoverMediaMeta[] = [
     singularLabel: "Movie",
     description:
       "Browse blockbusters, fresh releases, and cinematic hall-of-famers.",
-    href: "/IRIS-list/discover/movies",
+    href: "/borealis/discover/movies",
     icon: IconMovie,
   },
   {
@@ -106,7 +106,7 @@ export const DISCOVER_MEDIA_METAS: DiscoverMediaMeta[] = [
     singularLabel: "TV Show",
     description:
       "Find binge-worthy television series, returning drama, and trending sitcoms.",
-    href: "/IRIS-list/discover/tv",
+    href: "/borealis/discover/tv",
     icon: IconDeviceTv,
   },
   {
@@ -115,7 +115,7 @@ export const DISCOVER_MEDIA_METAS: DiscoverMediaMeta[] = [
     singularLabel: "Game",
     description:
       "Uncover top video games across PC, consoles, and indie frontiers.",
-    href: "/IRIS-list/discover/games",
+    href: "/borealis/discover/games",
     icon: IconDeviceGamepad,
   },
   {
@@ -124,7 +124,7 @@ export const DISCOVER_MEDIA_METAS: DiscoverMediaMeta[] = [
     singularLabel: "Book",
     description:
       "Explore bestsellers, literary classics, and upcoming author publications.",
-    href: "/IRIS-list/discover/books",
+    href: "/borealis/discover/books",
     icon: IconBook,
   },
   {
@@ -133,7 +133,7 @@ export const DISCOVER_MEDIA_METAS: DiscoverMediaMeta[] = [
     singularLabel: "Music",
     description:
       "Listen to trending audio tracks, acclaimed studio albums, and chart hits.",
-    href: "/IRIS-list/discover/music",
+    href: "/borealis/discover/music",
     icon: IconMusic,
   },
   {
@@ -142,7 +142,7 @@ export const DISCOVER_MEDIA_METAS: DiscoverMediaMeta[] = [
     singularLabel: "Character",
     description:
       "Discover popular and beloved fictional characters across anime, manga, and media.",
-    href: "/IRIS-list/discover/characters",
+    href: "/borealis/discover/characters",
     icon: IconUserHeart,
   },
   {
@@ -151,7 +151,7 @@ export const DISCOVER_MEDIA_METAS: DiscoverMediaMeta[] = [
     singularLabel: "Person",
     description:
       "Explore voice actors, directors, authors, composers, and creative staff.",
-    href: "/IRIS-list/discover/staff",
+    href: "/borealis/discover/staff",
     icon: IconUserCheck,
   },
   {
@@ -160,7 +160,7 @@ export const DISCOVER_MEDIA_METAS: DiscoverMediaMeta[] = [
     singularLabel: "Studio",
     description:
       "Discover leading animation studios, production houses, and game developers.",
-    href: "/IRIS-list/discover/studios",
+    href: "/borealis/discover/studios",
     icon: IconBuildingSkyscraper,
   },
 ]

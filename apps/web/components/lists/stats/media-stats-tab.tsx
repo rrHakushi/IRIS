@@ -15,6 +15,7 @@ import { ActivityHeatmap } from "./activity-heatmap"
 
 interface MediaStatsTabProps {
   username: string
+  userId?: string
   mediaType: MediaListType
 }
 
@@ -32,6 +33,7 @@ export function invalidateClientStats(username?: string, mediaType?: string) {
 
 export function MediaStatsTab({
   username,
+  userId,
   mediaType,
 }: MediaStatsTabProps): React.JSX.Element {
   const cacheKey = `${username}:${mediaType}`
@@ -67,30 +69,30 @@ export function MediaStatsTab({
 
       if (!promise) {
         promise = (async () => {
-          const client = elysia.user({ username }).lists
           let res: any = null
+          const query = userId ? { userId } : undefined
 
           switch (mediaType) {
             case "anime":
-              res = await client.anime.stats.get()
+              res = await elysia.borealis.lists.anime.stats.get({ query })
               break
             case "manga":
-              res = await client.manga.stats.get()
+              res = await elysia.borealis.lists.manga.stats.get({ query })
               break
             case "movie":
-              res = await client.movie.stats.get()
+              res = await elysia.borealis.lists.movies.stats.get({ query })
               break
             case "tv":
-              res = await client.tv.stats.get()
+              res = await elysia.borealis.lists.tv.stats.get({ query })
               break
             case "game":
-              res = await client.game.stats.get()
+              res = await elysia.borealis.lists.games.stats.get({ query })
               break
             case "book":
-              res = await client.book.stats.get()
+              res = await elysia.borealis.lists.books.stats.get({ query })
               break
             case "music":
-              res = await client.music.stats.get()
+              res = await elysia.borealis.lists.music.stats.get({ query })
               break
           }
           return res
@@ -130,7 +132,7 @@ export function MediaStatsTab({
     return () => {
       ignore = true
     }
-  }, [cacheKey, username, mediaType])
+  }, [cacheKey, username, userId, mediaType])
 
   if (isLoading) {
     return (

@@ -130,8 +130,8 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
 
     try {
       // 1. Fetch encrypted folders
-      const foldersRes = await (elysia.pass.vault.folders as any).get()
-      const rawFolders = foldersRes?.data?.folders || []
+      const foldersRes = await elysia.akaromi.folders.get()
+      const rawFolders = (foldersRes?.data as any)?.folders || []
 
       const decryptedFolders: DecryptedFolder[] = []
       for (const f of rawFolders) {
@@ -159,8 +159,8 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
       setFolders(decryptedFolders)
 
       // 2. Fetch all ciphers in a single request (active and trash)
-      const ciphersRes = await (elysia.pass.vault.ciphers as any).get()
-      const rawCiphers = ciphersRes?.data?.ciphers || []
+      const ciphersRes = await elysia.akaromi.ciphers.get()
+      const rawCiphers = (ciphersRes?.data as any)?.ciphers || []
 
       const decryptedCiphers: DecryptedCipher[] = []
       for (const c of rawCiphers) {
@@ -257,7 +257,7 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
       const encryptedTitle = encryptVaultData(data.title, vaultKey)
       const encryptedData = encryptVaultObject(data.payload, vaultKey)
 
-      const res = await (elysia.pass.vault.ciphers as any).post({
+      const res = await elysia.akaromi.ciphers.post({
         type: data.type,
         encryptedTitle,
         encryptedData,
@@ -266,8 +266,8 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
         reprompt: data.reprompt ?? "NONE",
       })
 
-      if (res?.data?.success && res.data.cipher) {
-        const c = res.data.cipher
+      if (res?.data?.success && (res.data as any).cipher) {
+        const c = (res.data as any).cipher
         const createdItem: DecryptedCipher = {
           id: c.id,
           type: c.type,
@@ -323,10 +323,10 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
         body.reprompt = data.reprompt
       }
 
-      const res = await (elysia.pass.vault.ciphers as any)({ id }).put(body)
+      const res = await elysia.akaromi.ciphers({ cipherId: id }).put(body)
 
-      if (res?.data?.success && res.data.cipher) {
-        const updatedCipher = res.data.cipher
+      if (res?.data?.success && (res.data as any).cipher) {
+        const updatedCipher = (res.data as any).cipher
         setCiphers((prev) =>
           prev.map((item) => {
             if (item.id === id) {
@@ -362,7 +362,7 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
     permanent = false
   ): Promise<boolean> => {
     try {
-      const res = await (elysia.pass.vault.ciphers as any)({ id }).delete({
+      const res = await elysia.akaromi.ciphers({ cipherId: id }).delete({
         query: { permanent },
       })
 
@@ -397,9 +397,7 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
     const newFav = !item.favorite
 
     try {
-      const res = await (elysia.pass.vault.ciphers as any)({
-        id,
-      }).favorite.patch({
+      const res = await elysia.akaromi.ciphers({ cipherId: id }).patch({
         favorite: newFav,
       })
 
@@ -419,8 +417,8 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
   // Restore Cipher
   const restoreCipher = async (id: string): Promise<boolean> => {
     try {
-      const res = await (elysia.pass.vault.ciphers as any)({
-        id,
+      const res = await elysia.akaromi.ciphers({
+        cipherId: id,
       }).restore.post()
       if (res?.data?.success) {
         setCiphers((prev) =>
@@ -439,7 +437,7 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
   // Empty Trash
   const emptyTrash = async (): Promise<boolean> => {
     try {
-      const res = await (elysia.pass.vault.ciphers as any).trash.empty.delete()
+      const res = await elysia.akaromi.ciphers.trash.delete()
       if (res?.data?.success) {
         setCiphers((prev) => prev.filter((c) => c.deletedAt === null))
         toast.success("Trash emptied")
@@ -461,13 +459,13 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const encryptedName = encryptVaultData(name, vaultKey)
-      const res = await (elysia.pass.vault.folders as any).post({
+      const res = await elysia.akaromi.folders.post({
         encryptedName,
         parentId: parentId ?? null,
       })
 
-      if (res?.data?.success && res.data.folder) {
-        const f = res.data.folder
+      if (res?.data?.success && (res.data as any).folder) {
+        const f = (res.data as any).folder
         const newFolder: DecryptedFolder = {
           id: f.id,
           name,
@@ -493,7 +491,7 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const encryptedName = encryptVaultData(name, vaultKey)
-      const res = await (elysia.pass.vault.folders as any)({ id }).put({
+      const res = await elysia.akaromi.folders({ folderId: id }).put({
         encryptedName,
       })
 
@@ -514,7 +512,7 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
   // Delete Folder
   const deleteFolder = async (id: string): Promise<boolean> => {
     try {
-      const res = await (elysia.pass.vault.folders as any)({ id }).delete()
+      const res = await elysia.akaromi.folders({ folderId: id }).delete()
       if (res?.data?.success) {
         setFolders((prev) => prev.filter((f) => f.id !== id))
         // Unassign from local ciphers

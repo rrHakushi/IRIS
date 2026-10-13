@@ -1,6 +1,7 @@
 import { prisma, type MediaType } from '@IRIS/database'
 import { NotFound } from '../../lib/errors'
 import { MediaQueueManager } from './queue'
+import { fetchMediaRelations } from './media-relations.helper'
 
 export interface CatalogQuery {
   page?: number
@@ -215,12 +216,7 @@ export class BorealisMediaServ {
     }
 
     // Fetch relations
-    const relations = await prisma.mediaRelation.findMany({
-      where: {
-        sourceType: 'ANIME' as MediaType,
-        sourceId: id,
-      },
-    })
+    const relations = await fetchMediaRelations('ANIME' as MediaType, id)
 
     return {
       success: true,
@@ -587,12 +583,7 @@ export class BorealisMediaServ {
       throw new NotFound(`Manga with ID ${id} not found`)
     }
 
-    const relations = await prisma.mediaRelation.findMany({
-      where: {
-        sourceType: 'MANGA' as MediaType,
-        sourceId: id,
-      },
-    })
+    const relations = await fetchMediaRelations('MANGA' as MediaType, id)
 
     return {
       success: true,
@@ -953,12 +944,7 @@ export class BorealisMediaServ {
       throw new NotFound(`Movie with ID ${id} not found`)
     }
 
-    const relations = await prisma.mediaRelation.findMany({
-      where: {
-        sourceType: 'MOVIE' as MediaType,
-        sourceId: id,
-      },
-    })
+    const relations = await fetchMediaRelations('MOVIE' as MediaType, id)
 
     return {
       success: true,
@@ -1342,12 +1328,7 @@ export class BorealisMediaServ {
       throw new NotFound(`TV series with ID ${id} not found`)
     }
 
-    const relations = await prisma.mediaRelation.findMany({
-      where: {
-        sourceType: 'TV' as MediaType,
-        sourceId: id,
-      },
-    })
+    const relations = await fetchMediaRelations('TV' as MediaType, id)
 
     return {
       success: true,
@@ -1732,12 +1713,7 @@ export class BorealisMediaServ {
       throw new NotFound(`Book with ID ${id} not found`)
     }
 
-    const relations = await prisma.mediaRelation.findMany({
-      where: {
-        sourceType: 'BOOK' as MediaType,
-        sourceId: id,
-      },
-    })
+    const relations = await fetchMediaRelations('BOOK' as MediaType, id)
 
     return {
       success: true,
@@ -2095,12 +2071,7 @@ export class BorealisMediaServ {
       throw new NotFound(`Game with ID ${id} not found`)
     }
 
-    const relations = await prisma.mediaRelation.findMany({
-      where: {
-        sourceType: 'GAME' as MediaType,
-        sourceId: id,
-      },
-    })
+    const relations = await fetchMediaRelations('GAME' as MediaType, id)
 
     return {
       success: true,
@@ -2470,12 +2441,7 @@ export class BorealisMediaServ {
       throw new NotFound(`Music with ID ${id} not found`)
     }
 
-    const relations = await prisma.mediaRelation.findMany({
-      where: {
-        sourceType: 'MUSIC' as MediaType,
-        sourceId: id,
-      },
-    })
+    const relations = await fetchMediaRelations('MUSIC' as MediaType, id)
 
     return {
       success: true,
