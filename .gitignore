@@ -51,7 +51,6 @@ packages/database/generated-client
 dev-account.json
 
 apps/elysia/insomnium.json
-apps/elysia-old/
 bin/
 obj/
 releases/
