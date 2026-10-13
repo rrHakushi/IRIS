@@ -20,15 +20,15 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@IRIS/database": "workspace:*",
     "@IRIS/cache": "workspace:*",
-    "@noble/ciphers": "^2.0.0",
-    "@noble/hashes": "^2.0.1"
+    "@IRIS/database": "workspace:*",
+    "@noble/ciphers": "^2.4.0",
+    "@noble/hashes": "^2.4.0"
   },
   "devDependencies": {
-    "@types/node": "^26.2.0",
+    "@types/node": "^26.6.5",
     "@workspace/typescript-config": "workspace:*",
-    "tsx": "^4.23.12",
+    "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   },
   "license": "ISC"

@@ -26,12 +26,12 @@
   },
   "dependencies": {
     "@IRIS/elysia": "workspace:*",
-    "@elysia/eden": "^2.0.0-beta.6",
-    "elysia": "^2.0.0-beta.29",
+    "@elysia/eden": "^2.0.0-exp.1",
+    "elysia": "^2.0.0-exp.64",
     "next-auth": "^4.24.15"
   },
   "devDependencies": {
-    "@types/node": "^26.2.0",
+    "@types/node": "^26.6.5",
     "@workspace/typescript-config": "workspace:*",
     "typescript": "^7.0.2"
   },

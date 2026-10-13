@@ -19,7 +19,7 @@
     "test": "bun test test/logger.test.ts"
   },
   "devDependencies": {
-    "@types/node": "^26.2.0",
+    "@types/node": "^26.6.5",
     "@workspace/typescript-config": "workspace:*",
     "typescript": "^7.0.2"
   },
