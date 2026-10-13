@@ -1,0 +1,569 @@
+import { prisma } from '@IRIS/database'
+
+export interface SearchQuery {
+  q: string
+  category?:
+    | 'media'
+    | 'anime'
+    | 'manga'
+    | 'movies'
+    | 'tv'
+    | 'music'
+    | 'books'
+    | 'characters'
+    | 'people'
+    | 'studios'
+  page?: number
+  limit?: number
+}
+
+export class BorealisSearchServ {
+  public static async search(query: SearchQuery) {
+    const cleanQuery = decodeURIComponent(String(query.q || ''))
+      .replace(/\+/g, ' ')
+      .trim()
+    const category = query.category || 'media'
+    const page = Math.max(1, Number(query.page ?? 1))
+    const limit = Math.max(1, Math.min(50, Number(query.limit ?? 20)))
+    const skip = (page - 1) * limit
+
+    if (!cleanQuery) {
+      return {
+        success: true,
+        category,
+        query: cleanQuery,
+        results: [],
+        pagination: {
+          page,
+          limit,
+          total: 0,
+          hasMore: false,
+        },
+      }
+    }
+
+    switch (category) {
+      case 'anime': {
+        const where = {
+          OR: [
+            { titlePrimary: { contains: cleanQuery, mode: 'insensitive' as const } },
+            { titleSecondary: { contains: cleanQuery, mode: 'insensitive' as const } },
+            { titleNative: { contains: cleanQuery, mode: 'insensitive' as const } },
+          ],
+        }
+        const [total, items] = await Promise.all([
+          prisma.anime.count({ where }),
+          prisma.anime.findMany({
+            where,
+            skip,
+            take: limit,
+            select: {
+              id: true,
+              titlePrimary: true,
+              titleSecondary: true,
+              titleNative: true,
+              coverImage: true,
+              bannerImage: true,
+              format: true,
+              status: true,
+              seasonYear: true,
+              seasonSeason: true,
+              episodeCount: true,
+              averageScore: true,
+              genres: { select: { id: true, name: true } },
+            },
+          }),
+        ])
+        const results = items.map((x) => ({ ...x, mediaType: 'anime' }))
+        return {
+          success: true,
+          category,
+          query: cleanQuery,
+          results,
+          pagination: {
+            page,
+            limit,
+            total,
+            hasMore: skip + results.length < total,
+          },
+        }
+      }
+
+      case 'manga': {
+        const where = {
+          OR: [
+            { titlePrimary: { contains: cleanQuery, mode: 'insensitive' as const } },
+            { titleSecondary: { contains: cleanQuery, mode: 'insensitive' as const } },
+            { titleNative: { contains: cleanQuery, mode: 'insensitive' as const } },
+          ],
+        }
+        const [total, items] = await Promise.all([
+          prisma.manga.count({ where }),
+          prisma.manga.findMany({
+            where,
+            skip,
+            take: limit,
+            select: {
+              id: true,
+              titlePrimary: true,
+              titleSecondary: true,
+              titleNative: true,
+              coverImage: true,
+              bannerImage: true,
+              format: true,
+              status: true,
+              startDateYear: true,
+              chapterCount: true,
+              volumeCount: true,
+              averageScore: true,
+              genres: { select: { id: true, name: true } },
+            },
+          }),
+        ])
+        const results = items.map((x) => ({ ...x, mediaType: 'manga' }))
+        return {
+          success: true,
+          category,
+          query: cleanQuery,
+          results,
+          pagination: {
+            page,
+            limit,
+            total,
+            hasMore: skip + results.length < total,
+          },
+        }
+      }
+
+      case 'movies': {
+        const where = {
+          OR: [
+            { titlePrimary: { contains: cleanQuery, mode: 'insensitive' as const } },
+            { titleSecondary: { contains: cleanQuery, mode: 'insensitive' as const } },
+            { titleNative: { contains: cleanQuery, mode: 'insensitive' as const } },
+          ],
+        }
+        const [total, items] = await Promise.all([
+          prisma.movie.count({ where }),
+          prisma.movie.findMany({
+            where,
+            skip,
+            take: limit,
+            select: {
+              id: true,
+              titlePrimary: true,
+              titleSecondary: true,
+              titleNative: true,
+              coverImage: true,
+              bannerImage: true,
+              runtime: true,
+              releaseDateYear: true,
+              averageScore: true,
+              genres: { select: { id: true, name: true } },
+            },
+          }),
+        ])
+        const results = items.map((x) => ({ ...x, duration: x.runtime, mediaType: 'movie' }))
+        return {
+          success: true,
+          category,
+          query: cleanQuery,
+          results,
+          pagination: {
+            page,
+            limit,
+            total,
+            hasMore: skip + results.length < total,
+          },
+        }
+      }
+
+      case 'tv': {
+        const where = {
+          OR: [
+            { titlePrimary: { contains: cleanQuery, mode: 'insensitive' as const } },
+            { titleSecondary: { contains: cleanQuery, mode: 'insensitive' as const } },
+            { titleNative: { contains: cleanQuery, mode: 'insensitive' as const } },
+          ],
+        }
+        const [total, items] = await Promise.all([
+          prisma.tv.count({ where }),
+          prisma.tv.findMany({
+            where,
+            skip,
+            take: limit,
+            select: {
+              id: true,
+              titlePrimary: true,
+              titleSecondary: true,
+              titleNative: true,
+              coverImage: true,
+              bannerImage: true,
+              episodeCount: true,
+              firstAiredYear: true,
+              averageScore: true,
+              genres: { select: { id: true, name: true } },
+            },
+          }),
+        ])
+        const results = items.map((x) => ({ ...x, releaseDateYear: x.firstAiredYear, mediaType: 'tv' }))
+        return {
+          success: true,
+          category,
+          query: cleanQuery,
+          results,
+          pagination: {
+            page,
+            limit,
+            total,
+            hasMore: skip + results.length < total,
+          },
+        }
+      }
+
+      case 'music': {
+        const where = {
+          OR: [
+            { titlePrimary: { contains: cleanQuery, mode: 'insensitive' as const } },
+            { titleSecondary: { contains: cleanQuery, mode: 'insensitive' as const } },
+            { artistName: { contains: cleanQuery, mode: 'insensitive' as const } },
+          ],
+        }
+        const [total, items] = await Promise.all([
+          prisma.music.count({ where }),
+          prisma.music.findMany({
+            where,
+            skip,
+            take: limit,
+            select: {
+              id: true,
+              titlePrimary: true,
+              titleSecondary: true,
+              artistName: true,
+              coverImage: true,
+              type: true,
+              duration: true,
+              releaseDateYear: true,
+              album: { select: { titlePrimary: true } },
+              genres: { select: { id: true, name: true } },
+            },
+          }),
+        ])
+        const results = items.map((x) => ({
+          ...x,
+          albumTitle: x.album?.titlePrimary ?? null,
+          durationMs: x.duration ? x.duration * 1000 : null,
+          mediaType: 'music',
+        }))
+        return {
+          success: true,
+          category,
+          query: cleanQuery,
+          results,
+          pagination: {
+            page,
+            limit,
+            total,
+            hasMore: skip + results.length < total,
+          },
+        }
+      }
+
+      case 'books': {
+        const where = {
+          OR: [
+            { titlePrimary: { contains: cleanQuery, mode: 'insensitive' as const } },
+            { titleSecondary: { contains: cleanQuery, mode: 'insensitive' as const } },
+          ],
+        }
+        const [total, items] = await Promise.all([
+          prisma.book.count({ where }),
+          prisma.book.findMany({
+            where,
+            skip,
+            take: limit,
+            select: {
+              id: true,
+              titlePrimary: true,
+              titleSecondary: true,
+              authors: true,
+              coverImage: true,
+              pageCount: true,
+              releaseDateYear: true,
+              averageScore: true,
+              genres: { select: { id: true, name: true } },
+            },
+          }),
+        ])
+        const results = items.map((x) => ({ ...x, mediaType: 'book' }))
+        return {
+          success: true,
+          category,
+          query: cleanQuery,
+          results,
+          pagination: {
+            page,
+            limit,
+            total,
+            hasMore: skip + results.length < total,
+          },
+        }
+      }
+
+      case 'characters': {
+        const where = {
+          OR: [
+            { namePrimary: { contains: cleanQuery, mode: 'insensitive' as const } },
+            { nameNative: { contains: cleanQuery, mode: 'insensitive' as const } },
+          ],
+        }
+        const [total, items] = await Promise.all([
+          prisma.character.count({ where }),
+          prisma.character.findMany({
+            where,
+            skip,
+            take: limit,
+            select: {
+              id: true,
+              namePrimary: true,
+              nameNative: true,
+              image: true,
+              gender: true,
+              age: true,
+              description: true,
+            },
+          }),
+        ])
+        return {
+          success: true,
+          category,
+          query: cleanQuery,
+          results: items,
+          pagination: {
+            page,
+            limit,
+            total,
+            hasMore: skip + items.length < total,
+          },
+        }
+      }
+
+      case 'people': {
+        const where = {
+          OR: [
+            { namePrimary: { contains: cleanQuery, mode: 'insensitive' as const } },
+            { nameNative: { contains: cleanQuery, mode: 'insensitive' as const } },
+          ],
+        }
+        const [total, items] = await Promise.all([
+          prisma.person.count({ where }),
+          prisma.person.findMany({
+            where,
+            skip,
+            take: limit,
+            select: {
+              id: true,
+              namePrimary: true,
+              nameNative: true,
+              image: true,
+              language: true,
+              primaryOccupations: true,
+              description: true,
+            },
+          }),
+        ])
+        return {
+          success: true,
+          category,
+          query: cleanQuery,
+          results: items,
+          pagination: {
+            page,
+            limit,
+            total,
+            hasMore: skip + items.length < total,
+          },
+        }
+      }
+
+      case 'studios': {
+        const where = {
+          name: { contains: cleanQuery, mode: 'insensitive' as const },
+        }
+        const [total, items] = await Promise.all([
+          prisma.studio.count({ where }),
+          prisma.studio.findMany({
+            where,
+            skip,
+            take: limit,
+            select: {
+              id: true,
+              name: true,
+              isAnimationStudio: true,
+              siteUrl: true,
+              favorites: true,
+            },
+          }),
+        ])
+        return {
+          success: true,
+          category,
+          query: cleanQuery,
+          results: items,
+          pagination: {
+            page,
+            limit,
+            total,
+            hasMore: skip + items.length < total,
+          },
+        }
+      }
+
+      case 'media':
+      default: {
+        // Multi-media search across anime, manga, tv, movie, game, book, music
+        const [anime, manga, tv, movie, game, book, music] = await Promise.all([
+          prisma.anime.findMany({
+            where: {
+              OR: [
+                { titlePrimary: { contains: cleanQuery, mode: 'insensitive' } },
+                { titleSecondary: { contains: cleanQuery, mode: 'insensitive' } },
+              ],
+            },
+            take: limit,
+            select: {
+              id: true,
+              titlePrimary: true,
+              titleSecondary: true,
+              coverImage: true,
+              format: true,
+              averageScore: true,
+            },
+          }),
+          prisma.manga.findMany({
+            where: {
+              OR: [
+                { titlePrimary: { contains: cleanQuery, mode: 'insensitive' } },
+                { titleSecondary: { contains: cleanQuery, mode: 'insensitive' } },
+              ],
+            },
+            take: limit,
+            select: {
+              id: true,
+              titlePrimary: true,
+              titleSecondary: true,
+              coverImage: true,
+              format: true,
+              averageScore: true,
+            },
+          }),
+          prisma.tv.findMany({
+            where: {
+              OR: [
+                { titlePrimary: { contains: cleanQuery, mode: 'insensitive' } },
+                { titleSecondary: { contains: cleanQuery, mode: 'insensitive' } },
+              ],
+            },
+            take: limit,
+            select: {
+              id: true,
+              titlePrimary: true,
+              titleSecondary: true,
+              coverImage: true,
+              averageScore: true,
+            },
+          }),
+          prisma.movie.findMany({
+            where: {
+              OR: [
+                { titlePrimary: { contains: cleanQuery, mode: 'insensitive' } },
+                { titleSecondary: { contains: cleanQuery, mode: 'insensitive' } },
+              ],
+            },
+            take: limit,
+            select: {
+              id: true,
+              titlePrimary: true,
+              titleSecondary: true,
+              coverImage: true,
+              averageScore: true,
+            },
+          }),
+          prisma.game.findMany({
+            where: {
+              OR: [
+                { titlePrimary: { contains: cleanQuery, mode: 'insensitive' } },
+                { titleSecondary: { contains: cleanQuery, mode: 'insensitive' } },
+              ],
+            },
+            take: limit,
+            select: {
+              id: true,
+              titlePrimary: true,
+              titleSecondary: true,
+              coverImage: true,
+              averageScore: true,
+            },
+          }),
+          prisma.book.findMany({
+            where: {
+              OR: [
+                { titlePrimary: { contains: cleanQuery, mode: 'insensitive' } },
+                { titleSecondary: { contains: cleanQuery, mode: 'insensitive' } },
+              ],
+            },
+            take: limit,
+            select: {
+              id: true,
+              titlePrimary: true,
+              titleSecondary: true,
+              coverImage: true,
+              averageScore: true,
+            },
+          }),
+          prisma.music.findMany({
+            where: {
+              OR: [
+                { titlePrimary: { contains: cleanQuery, mode: 'insensitive' } },
+                { artistName: { contains: cleanQuery, mode: 'insensitive' } },
+              ],
+            },
+            take: limit,
+            select: {
+              id: true,
+              titlePrimary: true,
+              artistName: true,
+              coverImage: true,
+            },
+          }),
+        ])
+
+        const combined = [
+          ...anime.map((x) => ({ ...x, mediaType: 'anime' })),
+          ...manga.map((x) => ({ ...x, mediaType: 'manga' })),
+          ...tv.map((x) => ({ ...x, mediaType: 'tv' })),
+          ...movie.map((x) => ({ ...x, mediaType: 'movie' })),
+          ...game.map((x) => ({ ...x, mediaType: 'game' })),
+          ...book.map((x) => ({ ...x, mediaType: 'book' })),
+          ...music.map((x) => ({ ...x, mediaType: 'music' })),
+        ]
+
+        const total = combined.length
+        const results = combined.slice(skip, skip + limit)
+
+        return {
+          success: true,
+          category: 'media',
+          query: cleanQuery,
+          results,
+          pagination: {
+            page,
+            limit,
+            total,
+            hasMore: skip + results.length < total,
+          },
+        }
+      }
+    }
+  }
+}

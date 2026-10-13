@@ -12,6 +12,7 @@ import {
   decryptPrivateKey,
 } from '../../utils/auth-crypto'
 import { BadRequest, Conflict, NotFound, Unauthorized } from '../../lib/errors'
+import { EmailService } from '../email/email.serv'
 import type { CarinaAuthModel } from '../../api/models/carina/auth.model'
 
 /** In-memory cache tracking whether an administrator account already exists. */
@@ -304,14 +305,15 @@ export abstract class CarinaAuthServ {
   }
 
   /**
-   * Email delivery service for password resets.
-   * Left empty as instructed to skip external email sending.
+   * Email delivery service for password resets via BullMQ queue.
    */
   static async sendPasswordResetEmail(
-    _email: string,
-    _resetToken: string
+    email: string,
+    resetToken: string
   ): Promise<void> {
-    // Intentionally empty: email dispatch service skipped
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken}`
+    await EmailService.sendPasswordResetEmail(email, resetUrl, 15)
   }
 
   /**

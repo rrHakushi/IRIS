@@ -117,8 +117,43 @@ export async function resolveSessionFromRequest(
       token: rawToken,
     }
   } catch {
-    return { user: null, token: null }
+    // JWT decoding failed, proceed to OAuth token resolution
   }
+
+  // 2. Try OAuth 2.0 Bearer Token
+  try {
+    const oauthToken = await prisma.oAuthAccessToken.findUnique({
+      where: { token: rawToken },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            permissions: true,
+          },
+        },
+      },
+    })
+
+    if (
+      oauthToken &&
+      !oauthToken.revokedAt &&
+      oauthToken.expiresAt.getTime() > Date.now()
+    ) {
+      return {
+        user: {
+          id: oauthToken.user.id,
+          username: oauthToken.user.username.trim(),
+          email: oauthToken.user.email,
+          permissions: oauthToken.user.permissions,
+        },
+        token: rawToken,
+      }
+    }
+  } catch {}
+
+  return { user: null, token: null }
 }
 
 export interface SessionPluginOptions {
