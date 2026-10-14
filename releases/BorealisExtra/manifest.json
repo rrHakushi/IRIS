@@ -1,0 +1,38 @@
+{
+  "id": "BorealisExtra",
+  "name": "Borealis Extra",
+  "version": "1.0.0",
+  "description": "Borealis desktop game playtime tracker, process detector, and cumulative sync companion.",
+  "releaseDate": "2026-10-14 13:14:41",
+  "releaseTag": "borealisextra-v1.0.0",
+  "files": [
+    {
+      "name": "BorealisExtra-linux-x64",
+      "size": 23477739,
+      "md5": "53e04f8d0e1ac11754354dd0222fd2e2",
+      "sha256": "9f01e8adbdad4823f677e8364e980d8e2be8f66a39d8bc34472aa7100971cad7",
+      "downloadUrl": "https://github.com/rrHakushi/IRIS/releases/download/borealisextra-v1.0.0/BorealisExtra-linux-x64"
+    },
+    {
+      "name": "BorealisExtra-x86_64.AppImage",
+      "size": 17033720,
+      "md5": "084db06f837ca630449d2bcf02456a33",
+      "sha256": "dce7ae8046915ba84f3cbca39791c0257114b4639fba8fc9753859965b0f7138",
+      "downloadUrl": "https://github.com/rrHakushi/IRIS/releases/download/borealisextra-v1.0.0/BorealisExtra-x86_64.AppImage"
+    },
+    {
+      "name": "BorealisExtra-win-x64.exe",
+      "size": 22837752,
+      "md5": "52c016ec62a93a7a5e72b8f5e5260556",
+      "sha256": "c13faf54c413639e5df805e2d5634571a66299fb583c71aba06bcdef03d4f699",
+      "downloadUrl": "https://github.com/rrHakushi/IRIS/releases/download/borealisextra-v1.0.0/BorealisExtra-win-x64.exe"
+    },
+    {
+      "name": "BorealisExtra-osx-arm64.zip",
+      "size": 25377080,
+      "md5": "1170976ab31cd299f8789d57c845a9ca",
+      "sha256": "3dde1c721697b76cdffa6661d189559ae24102848420f1371574a3686747ffa0",
+      "downloadUrl": "https://github.com/rrHakushi/IRIS/releases/download/borealisextra-v1.0.0/BorealisExtra-osx-arm64.zip"
+    }
+  ]
+}
