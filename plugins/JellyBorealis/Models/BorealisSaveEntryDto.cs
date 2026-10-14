@@ -1,12 +1,12 @@
 using System;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.Plugin.Iris.Models;
+namespace Jellyfin.Plugin.Borealis.Models;
 
 /// <summary>
-/// DTO payload for saving/upserting list entries in Iris (PUT /user/{username}/lists/{mediaType}/{id}).
+/// DTO payload for saving/upserting list entries in Borealis (POST /borealis/lists/{category}/{id}).
 /// </summary>
-public class IrisSaveEntryDto
+public class BorealisSaveEntryDto
 {
     /// <summary>
     /// Gets or sets the Anime ID (for anime).
@@ -30,7 +30,7 @@ public class IrisSaveEntryDto
     public int? MovieId { get; set; }
 
     /// <summary>
-    /// Gets or sets the List Status (WATCHING, COMPLETED, ON_HOLD, DROPPED, PLANNING).
+    /// Gets or sets the List Status (PLANNING, WATCHING, COMPLETED, ON_HOLD, DROPPED).
     /// </summary>
     [JsonPropertyName("status")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

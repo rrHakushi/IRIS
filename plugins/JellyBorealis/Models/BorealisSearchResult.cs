@@ -1,14 +1,14 @@
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.Plugin.Iris.Models;
+namespace Jellyfin.Plugin.Borealis.Models;
 
 /// <summary>
-/// Media search result model from Iris API (/search/{type}?q=...).
+/// Media search result model from Borealis API (/borealis/search?q=...&category=...).
 /// </summary>
-public class IrisSearchResult
+public class BorealisSearchResult
 {
     /// <summary>
-    /// Gets or sets the internal Iris Media ID.
+    /// Gets or sets the internal Borealis Media ID.
     /// </summary>
     [JsonPropertyName("id")]
     public int Id { get; set; }
@@ -90,7 +90,7 @@ public class IrisSearchResult
     public int? SeasonYear { get; set; }
 
     /// <summary>
-    /// Gets or sets the resolved media type ("anime" | "tv" | "movie").
+    /// Gets or sets the resolved media type ("anime" | "tv" | "movies" | "movie").
     /// </summary>
     [JsonPropertyName("resolvedType")]
     public string? ResolvedType { get; set; }

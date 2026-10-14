@@ -1,0 +1,21 @@
+[
+  {
+    "guid": "f9a4c810-7213-4d43-9821-2e65d8a9b12d",
+    "name": "JellyBorealis",
+    "description": "Integrates Jellyfin with the Borealis media tracker platform.",
+    "overview": "Borealis integration plugin for Jellyfin",
+    "owner": "Borealis",
+    "category": "General",
+    "imageUrl": "https://raw.githubusercontent.com/rrHakushi/IRIS/main/plugins/JellyBorealis/thumb.png",
+    "versions": [
+      {
+        "version": "2.0.0.0",
+        "changelog": "Release v2.0.0.0 for modern IRIS/Borealis API.",
+        "targetAbi": "10.11.11.0",
+        "sourceUrl": "https://github.com/rrHakushi/IRIS/releases/download/jellyborealis-v2.0.0.0/JellyBorealis_v2.0.0.0.zip",
+        "checksum": "157c09dc03b3d1547bc4f15737c3aa65",
+        "timestamp": "2026-10-14 11:52:37"
+      }
+    ]
+  }
+]

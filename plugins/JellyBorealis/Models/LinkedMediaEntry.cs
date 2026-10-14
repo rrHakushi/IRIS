@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.Plugin.Iris.Models;
+namespace Jellyfin.Plugin.Borealis.Models;
 
 /// <summary>
 /// Represents a single linked media entry in an ordered sequence for a user and Jellyfin item.
@@ -8,23 +8,33 @@ namespace Jellyfin.Plugin.Iris.Models;
 public class LinkedMediaEntry
 {
     /// <summary>
-    /// Gets or sets the internal Iris Media ID.
+    /// Gets or sets the internal Borealis Media ID.
     /// </summary>
-    [JsonPropertyName("irisMediaId")]
-    public int IrisMediaId { get; set; }
+    [JsonPropertyName("borealisMediaId")]
+    public int BorealisMediaId { get; set; }
 
     /// <summary>
-    /// Backward-compatible alias for IrisMediaId.
+    /// Backward-compatible alias for BorealisMediaId.
+    /// </summary>
+    [JsonPropertyName("irisMediaId")]
+    public int IrisMediaId
+    {
+        get => BorealisMediaId;
+        set { if (value > 0 && BorealisMediaId == 0) BorealisMediaId = value; }
+    }
+
+    /// <summary>
+    /// Backward-compatible alias for BorealisMediaId.
     /// </summary>
     [JsonPropertyName("aquilaMediaId")]
     public int AquilaMediaId
     {
-        get => IrisMediaId;
-        set { if (value > 0 && IrisMediaId == 0) IrisMediaId = value; }
+        get => BorealisMediaId;
+        set { if (value > 0 && BorealisMediaId == 0) BorealisMediaId = value; }
     }
 
     /// <summary>
-    /// Gets or sets the mapped Media Type ("anime" | "tv" | "movie").
+    /// Gets or sets the mapped Media Type ("anime" | "tv" | "movies" | "movie").
     /// </summary>
     [JsonPropertyName("mediaType")]
     public string MediaType { get; set; } = string.Empty;

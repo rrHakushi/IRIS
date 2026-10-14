@@ -1,7 +1,7 @@
-namespace Jellyfin.Plugin.Iris.Configuration;
+namespace Jellyfin.Plugin.Borealis.Configuration;
 
 /// <summary>
-/// Mapping configuration for Jellyfin Library to Iris Media Type with independent scrobble threshold.
+/// Mapping configuration for Jellyfin Library to Borealis Media Type with independent scrobble threshold.
 /// </summary>
 public class LibraryMappingConfig
 {
@@ -16,7 +16,7 @@ public class LibraryMappingConfig
     public string LibraryName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the Iris Media Type ("anime", "tv", "movie").
+    /// Gets or sets the Borealis Media Type ("anime", "tv", "movies").
     /// </summary>
     public string MediaType { get; set; } = "tv";
 

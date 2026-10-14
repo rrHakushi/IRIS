@@ -2,6 +2,7 @@ import { Elysia } from 'elysia'
 import { decode } from 'next-auth/jwt'
 import { prisma as defaultPrisma, type PrismaClient } from '@IRIS/database'
 import { Unauthorized } from '../lib/errors'
+import { hashApiKey } from '../utils/auth-crypto'
 
 export type DatabaseClient = PrismaClient
 
@@ -152,6 +153,54 @@ export async function resolveSessionFromRequest(
       }
     }
   } catch {}
+
+  // 3. Try API Key from headers (x-api-key, apikey, x-api, Authorization: ApiKey)
+  const xApiKey =
+    request.headers.get('x-api-key') ||
+    request.headers.get('apikey') ||
+    request.headers.get('x-api') ||
+    (authHeader?.startsWith('ApiKey ') ? authHeader.slice(7).trim() : null)
+
+  if (xApiKey && xApiKey.trim().length > 0) {
+    try {
+      const keyHash = hashApiKey(xApiKey.trim())
+      const keyRecord = await prisma.apiKey.findFirst({
+        where: { hash: keyHash },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              email: true,
+              permissions: true,
+            },
+          },
+        },
+      })
+
+      if (
+        keyRecord &&
+        (!keyRecord.expiresAt || keyRecord.expiresAt.getTime() > Date.now())
+      ) {
+        prisma.apiKey
+          .update({
+            where: { id: keyRecord.id },
+            data: { lastUsedAt: new Date() },
+          })
+          .catch(() => {})
+
+        return {
+          user: {
+            id: keyRecord.user.id,
+            username: keyRecord.user.username.trim(),
+            email: keyRecord.user.email,
+            permissions: keyRecord.user.permissions,
+          },
+          token: null,
+        }
+      }
+    } catch {}
+  }
 
   return { user: null, token: null }
 }

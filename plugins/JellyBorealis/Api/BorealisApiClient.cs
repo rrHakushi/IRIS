@@ -5,18 +5,18 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Jellyfin.Plugin.Iris.Models;
+using Jellyfin.Plugin.Borealis.Models;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.Iris.Api;
+namespace Jellyfin.Plugin.Borealis.Api;
 
 /// <summary>
-/// REST API client communicating exclusively with the modern Iris (Elysia) API backend via x-api-key.
+/// REST API client communicating exclusively with modern Borealis and Carina (Elysia) backend via x-api-key.
 /// </summary>
-public class IrisApiClient
+public class BorealisApiClient
 {
     private readonly HttpClient _httpClient;
-    private readonly ILogger<IrisApiClient> _logger;
+    private readonly ILogger<BorealisApiClient> _logger;
     private static readonly ConcurrentDictionary<string, string> UsernameCache = new();
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -25,28 +25,37 @@ public class IrisApiClient
     };
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="IrisApiClient"/> class.
+    /// Initializes a new instance of the <see cref="BorealisApiClient"/> class.
     /// </summary>
-    public IrisApiClient(HttpClient httpClient, ILogger<IrisApiClient> logger)
+    public BorealisApiClient(HttpClient httpClient, ILogger<BorealisApiClient> logger)
     {
         _httpClient = httpClient;
         _logger = logger;
     }
 
     /// <summary>
-    /// Normalizes media type string to canonical API format ("anime" | "tv" | "movie").
+    /// Normalizes media type string to canonical API format ("anime" | "tv" | "movies").
     /// </summary>
     public static string NormalizeMediaType(string? mediaType)
     {
         if (string.IsNullOrWhiteSpace(mediaType)) return "tv";
         var lower = mediaType.Trim().ToLowerInvariant();
-        if (lower.Contains("movie")) return "movie";
+        if (lower.Contains("movie")) return "movies";
         if (lower.Contains("anime")) return "anime";
         return "tv";
     }
 
     /// <summary>
-    /// Cleans base URL, removing trailing slashes.
+    /// Maps normalized media type to Carina favorite category string ("anime" | "tv" | "movie").
+    /// </summary>
+    public static string ToFavoriteCategory(string? mediaType)
+    {
+        var norm = NormalizeMediaType(mediaType);
+        return norm == "movies" ? "movie" : norm;
+    }
+
+    /// <summary>
+    /// Cleans base URL, removing trailing slashes and redundant /api path.
     /// </summary>
     public static string CleanBaseUrl(string? baseUrl)
     {
@@ -64,12 +73,12 @@ public class IrisApiClient
     /// </summary>
     private async Task<HttpResponseMessage> SendWithTimeoutAsync(HttpRequestMessage request, TimeSpan? timeout = null)
     {
-        using var cts = new System.Threading.CancellationTokenSource(timeout ?? System.TimeSpan.FromSeconds(8));
+        using var cts = new System.Threading.CancellationTokenSource(timeout ?? TimeSpan.FromSeconds(8));
         return await _httpClient.SendAsync(request, cts.Token).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Resolves and caches the authenticated username via GET /users/me using the provided API key.
+    /// Resolves and caches the authenticated username via GET /carina/users/me using the provided API key.
     /// </summary>
     public virtual async Task<string?> GetUsernameAsync(string apiKey, string baseUrl)
     {
@@ -83,14 +92,14 @@ public class IrisApiClient
         try
         {
             var cleanBase = CleanBaseUrl(baseUrl);
-            var url = $"{cleanBase}/users/me";
+            var url = $"{cleanBase}/carina/users/me";
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.Add("x-api-key", apiKey);
 
             var response = await SendWithTimeoutAsync(request).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("[Iris ApiClient] /users/me returned status {StatusCode} from '{Url}'", response.StatusCode, url);
+                _logger.LogWarning("[Borealis ApiClient] /carina/users/me returned status {StatusCode} from '{Url}'", response.StatusCode, url);
                 return null;
             }
 
@@ -104,7 +113,7 @@ public class IrisApiClient
                     if (!string.IsNullOrWhiteSpace(uname))
                     {
                         UsernameCache[apiKey] = uname;
-                        _logger.LogInformation("[Iris ApiClient] Resolved username '{Username}' for API key", uname);
+                        _logger.LogInformation("[Borealis ApiClient] Resolved username '{Username}' for API key", uname);
                         return uname;
                     }
                 }
@@ -112,25 +121,24 @@ public class IrisApiClient
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[Iris ApiClient] Failed to resolve username from /users/me");
+            _logger.LogError(ex, "[Borealis ApiClient] Failed to resolve username from /carina/users/me");
         }
 
         return null;
     }
 
     /// <summary>
-    /// Searches media by title via GET /search/{anime|tv|movies}?q={query}.
+    /// Searches media by title via GET /borealis/search?q={query}&category={anime|tv|movies}.
     /// </summary>
-    public virtual async Task<List<IrisSearchResult>> SearchMediaAsync(string mediaType, string title, string apiKey, string baseUrl)
+    public virtual async Task<List<BorealisSearchResult>> SearchMediaAsync(string mediaType, string title, string apiKey, string baseUrl)
     {
-        var logPrefix = "[Iris ApiClient] [SEARCH]";
+        var logPrefix = "[Borealis ApiClient] [SEARCH]";
         try
         {
             var normType = NormalizeMediaType(mediaType);
-            var endpointType = normType == "movie" ? "movies" : normType;
             var cleanBase = CleanBaseUrl(baseUrl);
             var escapedQuery = Uri.EscapeDataString(title ?? string.Empty);
-            var url = $"{cleanBase}/search/{endpointType}?q={escapedQuery}";
+            var url = $"{cleanBase}/borealis/search?q={escapedQuery}&category={normType}";
 
             _logger.LogInformation("{LogPrefix} Request URL: '{Url}'", logPrefix, url);
 
@@ -145,41 +153,46 @@ public class IrisApiClient
             {
                 var errBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 _logger.LogWarning("{LogPrefix} HTTP Error {StatusCode}: {Error}", logPrefix, response.StatusCode, errBody);
-                return new List<IrisSearchResult>();
+                return new List<BorealisSearchResult>();
             }
 
             var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            var results = JsonSerializer.Deserialize<List<IrisSearchResult>>(json, JsonOptions);
-            if (results != null)
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            if (root.TryGetProperty("results", out var resultsEl) && resultsEl.ValueKind == JsonValueKind.Array)
             {
-                foreach (var item in results)
+                var results = JsonSerializer.Deserialize<List<BorealisSearchResult>>(resultsEl.GetRawText(), JsonOptions);
+                if (results != null)
                 {
-                    item.ResolvedType = normType;
+                    foreach (var item in results)
+                    {
+                        item.ResolvedType = normType;
+                    }
+                    return results;
                 }
-                return results;
             }
 
-            return new List<IrisSearchResult>();
+            return new List<BorealisSearchResult>();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{LogPrefix} Failed searching Iris media: Type={MediaType}, Title={Title}", logPrefix, mediaType, title);
-            return new List<IrisSearchResult>();
+            _logger.LogError(ex, "{LogPrefix} Failed searching Borealis media: Type={MediaType}, Title={Title}", logPrefix, mediaType, title);
+            return new List<BorealisSearchResult>();
         }
     }
 
     /// <summary>
-    /// Fetches media metadata details via GET /media/{anime|tv|movies}/{id}.
+    /// Fetches media metadata details via GET /borealis/media/{anime|tv|movies}/{id}.
     /// </summary>
     public virtual async Task<JsonElement?> GetMediaDetailsAsync(string mediaType, int id, string apiKey, string baseUrl)
     {
-        var logPrefix = "[Iris ApiClient] [GET DETAILS]";
+        var logPrefix = "[Borealis ApiClient] [GET DETAILS]";
         try
         {
             var normType = NormalizeMediaType(mediaType);
-            var endpointType = normType == "movie" ? "movies" : normType;
             var cleanBase = CleanBaseUrl(baseUrl);
-            var url = $"{cleanBase}/media/{endpointType}/{id}";
+            var url = $"{cleanBase}/borealis/media/{normType}/{id}";
 
             _logger.LogInformation("{LogPrefix} Request URL: '{Url}'", logPrefix, url);
 
@@ -207,23 +220,16 @@ public class IrisApiClient
     }
 
     /// <summary>
-    /// Fetches user list entry details via GET /user/{username}/lists/{mediaType}/{id}.
+    /// Fetches user list entry details via GET /borealis/lists/{anime|tv|movies}/{id}.
     /// </summary>
     public virtual async Task<JsonElement?> GetListEntryAsync(string mediaType, int mediaId, string apiKey, string baseUrl, string? explicitUsername = null)
     {
-        var logPrefix = "[Iris ApiClient] [GET ENTRY]";
+        var logPrefix = "[Borealis ApiClient] [GET ENTRY]";
         try
         {
-            var username = explicitUsername ?? await GetUsernameAsync(apiKey, baseUrl).ConfigureAwait(false);
-            if (string.IsNullOrWhiteSpace(username))
-            {
-                _logger.LogWarning("{LogPrefix} Cannot get list entry: Username could not be resolved from API key.", logPrefix);
-                return null;
-            }
-
             var normType = NormalizeMediaType(mediaType);
             var cleanBase = CleanBaseUrl(baseUrl);
-            var url = $"{cleanBase}/user/{Uri.EscapeDataString(username)}/lists/{normType}/{mediaId}";
+            var url = $"{cleanBase}/borealis/lists/{normType}/{mediaId}";
 
             _logger.LogInformation("{LogPrefix} Request URL: '{Url}'", logPrefix, url);
 
@@ -259,28 +265,21 @@ public class IrisApiClient
     }
 
     /// <summary>
-    /// Upserts list entry via PUT /user/{username}/lists/{mediaType}/{id}.
+    /// Upserts list entry via POST /borealis/lists/{anime|tv|movies}/{id}.
     /// </summary>
-    public virtual async Task<bool> SaveListEntryAsync(string mediaType, int mediaId, IrisSaveEntryDto dto, string apiKey, string baseUrl, string? explicitUsername = null)
+    public virtual async Task<bool> SaveListEntryAsync(string mediaType, int mediaId, BorealisSaveEntryDto dto, string apiKey, string baseUrl, string? explicitUsername = null)
     {
-        var logPrefix = "[Iris ApiClient] [SAVE ENTRY]";
+        var logPrefix = "[Borealis ApiClient] [SAVE ENTRY]";
         try
         {
-            var username = explicitUsername ?? await GetUsernameAsync(apiKey, baseUrl).ConfigureAwait(false);
-            if (string.IsNullOrWhiteSpace(username))
-            {
-                _logger.LogWarning("{LogPrefix} Cannot save list entry: Username could not be resolved from API key.", logPrefix);
-                return false;
-            }
-
             var normType = NormalizeMediaType(mediaType);
             var cleanBase = CleanBaseUrl(baseUrl);
-            var url = $"{cleanBase}/user/{Uri.EscapeDataString(username)}/lists/{normType}/{mediaId}";
+            var url = $"{cleanBase}/borealis/lists/{normType}/{mediaId}";
 
             _logger.LogInformation("{LogPrefix} Upserting entry to '{Url}' (Status: {Status}, Progress: {Progress}, Score: {Score})",
                 logPrefix, url, dto.Status, dto.Progress, dto.Score);
 
-            using var request = new HttpRequestMessage(HttpMethod.Put, url);
+            using var request = new HttpRequestMessage(HttpMethod.Post, url);
             if (!string.IsNullOrWhiteSpace(apiKey))
             {
                 request.Headers.Add("x-api-key", apiKey);
@@ -293,7 +292,7 @@ public class IrisApiClient
             if (!response.IsSuccessStatusCode)
             {
                 var err = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                _logger.LogWarning("{LogPrefix} PUT returned HTTP {StatusCode}: {Error}", logPrefix, response.StatusCode, err);
+                _logger.LogWarning("{LogPrefix} POST returned HTTP {StatusCode}: {Error}", logPrefix, response.StatusCode, err);
                 return false;
             }
 
@@ -307,19 +306,16 @@ public class IrisApiClient
     }
 
     /// <summary>
-    /// Deletes user list entry via DELETE /user/{username}/lists/{mediaType}/{id}.
+    /// Deletes user list entry via DELETE /borealis/lists/{anime|tv|movies}/{id}.
     /// </summary>
     public virtual async Task<bool> DeleteListEntryAsync(string mediaType, int mediaId, string apiKey, string baseUrl, string? explicitUsername = null)
     {
-        var logPrefix = "[Iris ApiClient] [DELETE ENTRY]";
+        var logPrefix = "[Borealis ApiClient] [DELETE ENTRY]";
         try
         {
-            var username = explicitUsername ?? await GetUsernameAsync(apiKey, baseUrl).ConfigureAwait(false);
-            if (string.IsNullOrWhiteSpace(username)) return false;
-
             var normType = NormalizeMediaType(mediaType);
             var cleanBase = CleanBaseUrl(baseUrl);
-            var url = $"{cleanBase}/user/{Uri.EscapeDataString(username)}/lists/{normType}/{mediaId}";
+            var url = $"{cleanBase}/borealis/lists/{normType}/{mediaId}";
 
             using var request = new HttpRequestMessage(HttpMethod.Delete, url);
             if (!string.IsNullOrWhiteSpace(apiKey))
@@ -338,19 +334,16 @@ public class IrisApiClient
     }
 
     /// <summary>
-    /// Increments user list progress via POST /user/{username}/lists/{mediaType}/{id}/increment.
+    /// Increments user list progress via POST /borealis/lists/{anime|tv|movies}/{id}/increment.
     /// </summary>
     public virtual async Task<bool> IncrementProgressAsync(string mediaType, int mediaId, int count, string apiKey, string baseUrl, string? type = null, string? explicitUsername = null)
     {
-        var logPrefix = "[Iris ApiClient] [INCREMENT]";
+        var logPrefix = "[Borealis ApiClient] [INCREMENT]";
         try
         {
-            var username = explicitUsername ?? await GetUsernameAsync(apiKey, baseUrl).ConfigureAwait(false);
-            if (string.IsNullOrWhiteSpace(username)) return false;
-
             var normType = NormalizeMediaType(mediaType);
             var cleanBase = CleanBaseUrl(baseUrl);
-            var url = $"{cleanBase}/user/{Uri.EscapeDataString(username)}/lists/{normType}/{mediaId}/increment";
+            var url = $"{cleanBase}/borealis/lists/{normType}/{mediaId}/increment";
 
             _logger.LogInformation("{LogPrefix} Request URL: '{Url}', Count={Count}, Type={Type}", logPrefix, url, count, type);
 
@@ -360,13 +353,7 @@ public class IrisApiClient
                 request.Headers.Add("x-api-key", apiKey);
             }
 
-            object payload = normType switch
-            {
-                "tv" => new { count, type = type ?? "EPISODE" },
-                "movie" => new { },
-                _ => new { count }
-            };
-
+            var payload = new { count = Math.Max(1, count) };
             var jsonBody = JsonSerializer.Serialize(payload, JsonOptions);
             request.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
@@ -381,19 +368,16 @@ public class IrisApiClient
     }
 
     /// <summary>
-    /// Fetches favorite status via GET /user/{username}/favorites/{targetId}?type={TYPE}.
+    /// Fetches favorite status via GET /carina/favorites/{category}/{targetId}.
     /// </summary>
     public virtual async Task<JsonElement?> GetFavoriteStatusAsync(string mediaType, int targetId, string apiKey, string baseUrl, string? explicitUsername = null)
     {
-        var logPrefix = "[Iris ApiClient] [FAVORITE STATUS]";
+        var logPrefix = "[Borealis ApiClient] [FAVORITE STATUS]";
         try
         {
-            var username = explicitUsername ?? await GetUsernameAsync(apiKey, baseUrl).ConfigureAwait(false);
-            if (string.IsNullOrWhiteSpace(username)) return null;
-
-            var normType = NormalizeMediaType(mediaType).ToUpperInvariant();
+            var category = ToFavoriteCategory(mediaType);
             var cleanBase = CleanBaseUrl(baseUrl);
-            var url = $"{cleanBase}/user/{Uri.EscapeDataString(username)}/favorites/{targetId}?type={normType}";
+            var url = $"{cleanBase}/carina/favorites/{category}/{targetId}";
 
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             if (!string.IsNullOrWhiteSpace(apiKey))
@@ -416,19 +400,16 @@ public class IrisApiClient
     }
 
     /// <summary>
-    /// Toggles or adds a favorite via POST /user/{username}/favorites/{targetId}.
+    /// Adds a favorite via POST /carina/favorites.
     /// </summary>
     public virtual async Task<bool> AddFavoriteAsync(string mediaType, int targetId, string title, string apiKey, string baseUrl, string? explicitUsername = null)
     {
-        var logPrefix = "[Iris ApiClient] [ADD FAVORITE]";
+        var logPrefix = "[Borealis ApiClient] [ADD FAVORITE]";
         try
         {
-            var username = explicitUsername ?? await GetUsernameAsync(apiKey, baseUrl).ConfigureAwait(false);
-            if (string.IsNullOrWhiteSpace(username)) return false;
-
-            var normType = NormalizeMediaType(mediaType).ToUpperInvariant();
+            var category = ToFavoriteCategory(mediaType);
             var cleanBase = CleanBaseUrl(baseUrl);
-            var url = $"{cleanBase}/user/{Uri.EscapeDataString(username)}/favorites/{targetId}";
+            var url = $"{cleanBase}/carina/favorites";
 
             using var request = new HttpRequestMessage(HttpMethod.Post, url);
             if (!string.IsNullOrWhiteSpace(apiKey))
@@ -436,7 +417,7 @@ public class IrisApiClient
                 request.Headers.Add("x-api-key", apiKey);
             }
 
-            var jsonBody = JsonSerializer.Serialize(new { type = normType, title }, JsonOptions);
+            var jsonBody = JsonSerializer.Serialize(new { category, targetId }, JsonOptions);
             request.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
             var response = await SendWithTimeoutAsync(request).ConfigureAwait(false);
@@ -444,25 +425,22 @@ public class IrisApiClient
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{LogPrefix} Failed toggling favorite for TargetId={TargetId}", logPrefix, targetId);
+            _logger.LogError(ex, "{LogPrefix} Failed adding favorite for TargetId={TargetId}", logPrefix, targetId);
             return false;
         }
     }
 
     /// <summary>
-    /// Deletes a favorite via DELETE /user/{username}/favorites/{targetId}?type={TYPE}.
+    /// Deletes a favorite via DELETE /carina/favorites/{category}/{targetId}.
     /// </summary>
     public virtual async Task<bool> DeleteFavoriteAsync(string mediaType, int targetId, string apiKey, string baseUrl, string? explicitUsername = null)
     {
-        var logPrefix = "[Iris ApiClient] [DELETE FAVORITE]";
+        var logPrefix = "[Borealis ApiClient] [DELETE FAVORITE]";
         try
         {
-            var username = explicitUsername ?? await GetUsernameAsync(apiKey, baseUrl).ConfigureAwait(false);
-            if (string.IsNullOrWhiteSpace(username)) return false;
-
-            var normType = NormalizeMediaType(mediaType).ToUpperInvariant();
+            var category = ToFavoriteCategory(mediaType);
             var cleanBase = CleanBaseUrl(baseUrl);
-            var url = $"{cleanBase}/user/{Uri.EscapeDataString(username)}/favorites/{targetId}?type={normType}";
+            var url = $"{cleanBase}/carina/favorites/{category}/{targetId}";
 
             using var request = new HttpRequestMessage(HttpMethod.Delete, url);
             if (!string.IsNullOrWhiteSpace(apiKey))

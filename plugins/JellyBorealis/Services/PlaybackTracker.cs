@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Plugin.Iris.Configuration;
+using Jellyfin.Plugin.Borealis.Configuration;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
@@ -12,7 +12,7 @@ using MediaBrowser.Controller.Session;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.Iris.Services;
+namespace Jellyfin.Plugin.Borealis.Services;
 
 /// <summary>
 /// SessionManager event listener for tracking playback progress and triggering completion scrobbles
@@ -24,7 +24,7 @@ public class PlaybackTracker : IHostedService, IDisposable
     private readonly ILibraryManager _libraryManager;
     private readonly IUserDataManager _userDataManager;
     private readonly IUserManager _userManager;
-    private readonly IrisSyncManager _syncManager;
+    private readonly BorealisSyncManager _syncManager;
     private readonly ILogger<PlaybackTracker> _logger;
 
     private readonly ConcurrentDictionary<string, DateTime> _scrobbledSessions = new();
@@ -37,7 +37,7 @@ public class PlaybackTracker : IHostedService, IDisposable
         ILibraryManager libraryManager,
         IUserDataManager userDataManager,
         IUserManager userManager,
-        IrisSyncManager syncManager,
+        BorealisSyncManager syncManager,
         ILogger<PlaybackTracker> logger)
     {
         _sessionManager = sessionManager;
@@ -51,7 +51,7 @@ public class PlaybackTracker : IHostedService, IDisposable
     /// <inheritdoc />
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("[Iris PlaybackTracker] Service starting... Registering PlaybackProgress, PlaybackStopped, and UserDataSaved listeners.");
+        _logger.LogInformation("[Borealis PlaybackTracker] Service starting... Registering PlaybackProgress, PlaybackStopped, and UserDataSaved listeners.");
         _sessionManager.PlaybackProgress += OnPlaybackProgress;
         _sessionManager.PlaybackStopped += OnPlaybackStopped;
         _userDataManager.UserDataSaved += OnUserDataSaved;
@@ -61,7 +61,7 @@ public class PlaybackTracker : IHostedService, IDisposable
     /// <inheritdoc />
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("[Iris PlaybackTracker] Service stopping... Unregistering listeners.");
+        _logger.LogInformation("[Borealis PlaybackTracker] Service stopping... Unregistering listeners.");
         _sessionManager.PlaybackProgress -= OnPlaybackProgress;
         _sessionManager.PlaybackStopped -= OnPlaybackStopped;
         _userDataManager.UserDataSaved -= OnUserDataSaved;
@@ -78,7 +78,7 @@ public class PlaybackTracker : IHostedService, IDisposable
         {
             if (DateTime.UtcNow - lastScrobbledTime < TimeSpan.FromHours(12))
             {
-                _logger.LogDebug("[Iris PlaybackTracker] Scrobble skipped (already scrobbled in active session) for key {Key}", key);
+                _logger.LogDebug("[Borealis PlaybackTracker] Scrobble skipped (already scrobbled in active session) for key {Key}", key);
                 return false;
             }
         }
@@ -120,7 +120,7 @@ public class PlaybackTracker : IHostedService, IDisposable
         return config.LibraryMappings.FirstOrDefault(m => ancestorIds.Contains(m.LibraryId, StringComparer.OrdinalIgnoreCase));
     }
 
-    private static double ResolveScrobbleThreshold(BaseItem item, UserIrisConfig userConfig, PluginConfiguration config)
+    private static double ResolveScrobbleThreshold(BaseItem item, UserBorealisConfig userConfig, PluginConfiguration config)
     {
         var libMapping = ResolveLibraryMapping(item, config);
         if (libMapping != null && libMapping.ScrobbleThreshold > 0)
@@ -168,7 +168,7 @@ public class PlaybackTracker : IHostedService, IDisposable
                 return;
             }
 
-            _logger.LogInformation("[Iris PlaybackTracker] Library Scrobble Threshold {Threshold}% met for item '{ItemName}' (ID: {ItemId}, Watched: {Percent:F1}%). Triggering scrobble...",
+            _logger.LogInformation("[Borealis PlaybackTracker] Library Scrobble Threshold {Threshold}% met for item '{ItemName}' (ID: {ItemId}, Watched: {Percent:F1}%). Triggering scrobble...",
                 threshold, e.Item.Name, e.Item.Id, percentWatched);
             await TriggerScrobbleAsync(e.Item, user, userConfig, config).ConfigureAwait(false);
         }
@@ -215,14 +215,14 @@ public class PlaybackTracker : IHostedService, IDisposable
         {
             if (TryMarkItemScrobbled(userId, itemId))
             {
-                _logger.LogInformation("[Iris PlaybackTracker] Playback stopped/completed for item '{ItemName}' (ID: {ItemId}, Threshold: {Threshold}%). Triggering scrobble...",
+                _logger.LogInformation("[Borealis PlaybackTracker] Playback stopped/completed for item '{ItemName}' (ID: {ItemId}, Threshold: {Threshold}%). Triggering scrobble...",
                     e.Item.Name, e.Item.Id, threshold);
                 await TriggerScrobbleAsync(e.Item, user, userConfig, config).ConfigureAwait(false);
             }
         }
     }
 
-    private async Task TriggerScrobbleAsync(BaseItem item, object user, UserIrisConfig userConfig, PluginConfiguration config)
+    private async Task TriggerScrobbleAsync(BaseItem item, object user, UserBorealisConfig userConfig, PluginConfiguration config)
     {
         try
         {
@@ -252,7 +252,6 @@ public class PlaybackTracker : IHostedService, IDisposable
                     candidateIds.Add(episode.SeriesId.ToString());
                 if (episode.Series != null && episode.Series.Id != Guid.Empty && !candidateIds.Contains(episode.Series.Id.ToString(), StringComparer.OrdinalIgnoreCase))
                     candidateIds.Add(episode.Series.Id.ToString());
-
             }
             else
             {
@@ -275,7 +274,7 @@ public class PlaybackTracker : IHostedService, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[Iris PlaybackTracker] Error during scrobble trigger for item ID: {ItemId}", item.Id);
+            _logger.LogError(ex, "[Borealis PlaybackTracker] Error during scrobble trigger for item ID: {ItemId}", item.Id);
         }
     }
 
@@ -309,7 +308,7 @@ public class PlaybackTracker : IHostedService, IDisposable
 
         if (TryMarkItemScrobbled(userId, item.Id.ToString()))
         {
-            _logger.LogInformation("[Iris PlaybackTracker] UserDataSaved manual marked-as-played for item '{ItemName}' (ID: {ItemId}). Triggering scrobble...", item.Name, item.Id);
+            _logger.LogInformation("[Borealis PlaybackTracker] UserDataSaved manual marked-as-played for item '{ItemName}' (ID: {ItemId}). Triggering scrobble...", item.Name, item.Id);
             _ = TriggerScrobbleAsync(item, new { Id = e.UserId }, userConfig, config);
         }
     }

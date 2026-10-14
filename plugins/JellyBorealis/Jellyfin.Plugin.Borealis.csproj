@@ -2,15 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <RootNamespace>Jellyfin.Plugin.Iris</RootNamespace>
-    <AssemblyName>Jellyfin.Plugin.Iris</AssemblyName>
+    <RootNamespace>Jellyfin.Plugin.Borealis</RootNamespace>
+    <AssemblyName>Jellyfin.Plugin.Borealis</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-    <AssemblyVersion>10.11.11.0</AssemblyVersion>
-    <FileVersion>10.11.11.0</FileVersion>
-    <Version>10.11.11.0</Version>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <FileVersion>2.0.0.0</FileVersion>
+    <Version>2.0.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,8 +31,8 @@
     </None>
     <EmbeddedResource Include="thumb.png" />
     <EmbeddedResource Include="Configuration\configPage.html" />
-    <EmbeddedResource Include="Web\iris-web-injection.js" />
-    <EmbeddedResource Include="Web\iris-modal.css" />
+    <EmbeddedResource Include="Web\borealis-web-injection.js" />
+    <EmbeddedResource Include="Web\borealis-modal.css" />
   </ItemGroup>
 
 </Project>

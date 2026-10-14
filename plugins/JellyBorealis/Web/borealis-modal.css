@@ -1,6 +1,6 @@
-/* Tailwind & Shadcn Mauve/Rose Theme Variables for Iris Modal */
+/* Tailwind & Shadcn Mauve/Rose Theme Variables for Borealis Modal */
 
-:root, .dark, #iris-modal-backdrop, #aquila-modal-backdrop {
+:root, .dark, #borealis-modal-backdrop {
     --background: #121113;
     --foreground: #f2eff3;
     --card: #18171a;
@@ -23,8 +23,7 @@
     --radius: 0.75rem;
 }
 
-#iris-modal-backdrop,
-#aquila-modal-backdrop {
+#borealis-modal-backdrop {
     position: fixed !important;
     inset: 0 !important;
     width: 100vw !important;
@@ -40,18 +39,15 @@
     transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-#iris-modal-backdrop.iris-show,
-#aquila-modal-backdrop.aquila-show {
+#borealis-modal-backdrop.borealis-show {
     opacity: 1 !important;
 }
 
-#iris-modal-backdrop img,
-#aquila-modal-backdrop img {
+#borealis-modal-backdrop img {
     max-width: 100%;
 }
 
-.btnIrisEditModal,
-.btnAquilaEditModal {
+.btnBorealisEditModal {
     background: transparent !important;
     border: none !important;
     color: #fff !important;
@@ -65,67 +61,56 @@
     vertical-align: middle !important;
 }
 
-.btnIrisEditModal:hover,
-.btnAquilaEditModal:hover {
+.btnBorealisEditModal:hover {
     background: rgba(244, 63, 94, 0.15) !important;
     transform: scale(1.1) !important;
 }
 
 /* Explicit Dark Theme Input & Control Overrides for Jellyfin Web */
-#iris-modal-card input,
-#iris-modal-card select,
-#iris-modal-card textarea,
-#aquila-modal-card input,
-#aquila-modal-card select,
-#aquila-modal-card textarea {
+#borealis-modal-card input,
+#borealis-modal-card select,
+#borealis-modal-card textarea {
     background-color: #18171a !important;
     color: #f2eff3 !important;
     border: 1px solid #2b282f !important;
     outline: none !important;
 }
 
-#iris-modal-card select option,
-#aquila-modal-card select option {
+#borealis-modal-card select option {
     background-color: #18171a !important;
     color: #f2eff3 !important;
 }
 
-#iris-modal-card input:focus,
-#iris-modal-card select:focus,
-#iris-modal-card textarea:focus,
-#aquila-modal-card input:focus,
-#aquila-modal-card select:focus,
-#aquila-modal-card textarea:focus {
+#borealis-modal-card input:focus,
+#borealis-modal-card select:focus,
+#borealis-modal-card textarea:focus {
     border-color: #f43f5e !important;
     box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.25) !important;
 }
 
-#iris-modal-card input::placeholder,
-#iris-modal-card textarea::placeholder,
-#aquila-modal-card input::placeholder,
-#aquila-modal-card textarea::placeholder {
+#borealis-modal-card input::placeholder,
+#borealis-modal-card textarea::placeholder {
     color: #9a94a0 !important;
     opacity: 0.6 !important;
 }
 
-#iris-modal-card input[type="date"]::-webkit-calendar-picker-indicator,
-#aquila-modal-card input[type="date"]::-webkit-calendar-picker-indicator {
+#borealis-modal-card input[type="date"]::-webkit-calendar-picker-indicator {
     filter: invert(1) !important;
     cursor: pointer !important;
 }
 
 /* Custom scrollbars */
-.iris-custom-scrollbar::-webkit-scrollbar {
+.borealis-custom-scrollbar::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
-.iris-custom-scrollbar::-webkit-scrollbar-track {
+.borealis-custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
 }
-.iris-custom-scrollbar::-webkit-scrollbar-thumb {
+.borealis-custom-scrollbar::-webkit-scrollbar-thumb {
     background: #2b282f;
     border-radius: 9999px;
 }
-.iris-custom-scrollbar::-webkit-scrollbar-thumb:hover {
+.borealis-custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #36333c;
 }

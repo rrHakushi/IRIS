@@ -1,20 +1,20 @@
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.Plugin.Iris.Models;
+namespace Jellyfin.Plugin.Borealis.Models;
 
 /// <summary>
 /// DTO payload for scrobbling progress increments.
 /// </summary>
-public class IrisIncrementDto
+public class BorealisIncrementDto
 {
     /// <summary>
-    /// Gets or sets the media type ("anime" | "tv" | "movie").
+    /// Gets or sets the media type ("anime" | "tv" | "movies" | "movie").
     /// </summary>
     [JsonPropertyName("mediaType")]
     public string MediaType { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the Iris internal media ID.
+    /// Gets or sets the Borealis internal media ID.
     /// </summary>
     [JsonPropertyName("id")]
     public int Id { get; set; }

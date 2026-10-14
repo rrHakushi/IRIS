@@ -22,7 +22,9 @@
     "sdk": "echo \"nestia sdk disabled\"",
     "swagger": "echo \"nestia swagger disabled\"",
     "test:oauth": "pnpm --filter @IRIS/elysia test:oauth",
-    "nestia": "echo \"nestia disabled\""
+    "nestia": "echo \"nestia disabled\"",
+    "plugin:borealis:build": "python3 plugins/JellyBorealis/package.py",
+    "plugin:borealis:release": "python3 plugins/JellyBorealis/package.py --ci"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",

@@ -2,22 +2,22 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>Iris Plugin Configuration</title>
+    <title>JellyBorealis Plugin Configuration</title>
 </head>
 <body>
-    <div id="IrisConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-select">
+    <div id="JellyBorealisConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-select">
         <div data-role="content">
             <div class="content-primary">
-                <form id="IrisConfigForm">
+                <form id="JellyBorealisConfigForm">
                     <div class="sectionTitleContainer flex align-items-center">
-                        <h2 class="sectionTitle">Iris Server Plugin Configuration</h2>
+                        <h2 class="sectionTitle">JellyBorealis Server Plugin Configuration</h2>
                     </div>
-                    <p class="fieldDescription">Configure library media type mappings, per-library scrobble thresholds, and user Iris server API access.</p>
+                    <p class="fieldDescription">Configure library media type mappings, per-library scrobble thresholds, and user Borealis server API access.</p>
 
                     <!-- Admin Library Mappings -->
                     <div class="verticalSection">
                         <h3 class="sectionTitle">Library Media Type & Scrobble Assignments</h3>
-                        <p class="fieldDescription">Assign default Iris Media Types (Anime, TV Series, Movie) and independent scrobble thresholds (%) for each Jellyfin Library.</p>
+                        <p class="fieldDescription">Assign default Borealis Media Types (Anime, TV Series, Movie) and independent scrobble thresholds (%) for each Jellyfin Library.</p>
                         <div id="libraryMappingsContainer" class="paperList">
                             <!-- Dynamically populated library mappings -->
                         </div>
@@ -27,14 +27,14 @@
                     <div class="verticalSection">
                         <h3 class="sectionTitle">User API Connection</h3>
                         <div class="inputContainer">
-                            <label class="inputLabel" for="IrisServerUrl">Iris Server URL:</label>
-                            <input is="emby-input" id="IrisServerUrl" type="url" required placeholder="http://localhost:4000" />
-                            <div class="fieldDescription">Base URL of your Iris API server instance (e.g. http://localhost:4000).</div>
+                            <label class="inputLabel" for="BorealisServerUrl">Borealis Server URL:</label>
+                            <input is="emby-input" id="BorealisServerUrl" type="url" required placeholder="http://localhost:4000" />
+                            <div class="fieldDescription">Base URL of your Borealis API server instance (e.g. http://localhost:4000).</div>
                         </div>
 
                         <div class="inputContainer">
-                            <label class="inputLabel" for="IrisApiKey">Iris API Key:</label>
-                            <input is="emby-input" id="IrisApiKey" type="password" required placeholder="Enter your Iris x-api-key" />
+                            <label class="inputLabel" for="BorealisApiKey">Borealis API Key:</label>
+                            <input is="emby-input" id="BorealisApiKey" type="password" required placeholder="Enter your Borealis x-api-key" />
                             <div class="fieldDescription">API Key passed via x-api-key header for authentication.</div>
                         </div>
 
@@ -53,7 +53,7 @@
                                 <span>Remove All Mappings</span>
                             </button>
                         </div>
-                        <p class="fieldDescription">View and remove persisted links between Jellyfin media items and Iris internal IDs stored on the server.</p>
+                        <p class="fieldDescription">View and remove persisted links between Jellyfin media items and Borealis internal IDs stored on the server.</p>
                         <div id="serverMappingsContainer" class="paperList" style="margin-top:1em; max-height:280px; overflow-y:auto;">
                             <!-- Dynamically populated server item mappings -->
                         </div>
@@ -63,7 +63,7 @@
                     <div class="verticalSection">
                         <h3 class="sectionTitle">Client JavaScript Injection Code</h3>
                         <p class="fieldDescription">Paste this 1-line code into <strong>Jellyfin Dashboard &gt; General &gt; Custom JavaScript code</strong> (or into your <strong>JavaScript Injector</strong> plugin):</p>
-                        <textarea is="emby-input" style="width:100%; font-family:monospace; background:rgba(0,0,0,0.5); color:#f43f5e; padding:10px; border-radius:6px; height:60px;" readonly onclick="this.select();">(function(){var s=document.createElement('script');s.src='/Iris/WebInjection.js?v=2.0.0';document.head.appendChild(s);})();</textarea>
+                        <textarea is="emby-input" style="width:100%; font-family:monospace; background:rgba(0,0,0,0.5); color:#f43f5e; padding:10px; border-radius:6px; height:60px;" readonly onclick="this.select();">(function(){var s=document.createElement('script');s.src='/Borealis/WebInjection.js?v=2.0.0';document.head.appendChild(s);})();</textarea>
                     </div>
 
                     <div style="margin-top:2em;">
@@ -82,20 +82,20 @@
                 function ensureTopWebScript() {
                     try {
                         var doc = window.top ? window.top.document : document;
-                        if (!doc.getElementById('iris-web-script')) {
+                        if (!doc.getElementById('borealis-web-script')) {
                             var script = doc.createElement('script');
-                            script.id = 'iris-web-script';
-                            script.src = '/Iris/WebInjection.js?v=2.0.0';
+                            script.id = 'borealis-web-script';
+                            script.src = '/Borealis/WebInjection.js?v=2.0.0';
                             script.defer = true;
                             doc.head.appendChild(script);
-                            console.log('[Iris Plugin] Injected /Iris/WebInjection.js into top document head from config page.');
+                            console.log('[Borealis Plugin] Injected /Borealis/WebInjection.js into top document head from config page.');
                         }
                     } catch (e) {
-                        console.warn('[Iris Plugin] Could not inject script into top document head:', e);
+                        console.warn('[Borealis Plugin] Could not inject script into top document head:', e);
                     }
                 }
 
-                document.getElementById('IrisConfigPage').addEventListener('pageshow', function () {
+                document.getElementById('JellyBorealisConfigPage').addEventListener('pageshow', function () {
                     ensureTopWebScript();
                     Dashboard.showLoadingMsg();
                     var page = this;
@@ -108,12 +108,12 @@
                         var libraries = results[1] || [];
                         var currentUserId = Dashboard.getCurrentUserId();
 
-                        console.log('[Iris Plugin] Loaded plugin configuration:', config);
+                        console.log('[Borealis Plugin] Loaded plugin configuration:', config);
 
                         // Map user settings
                         var userConfig = (config.UserConfigs || []).find(function (u) { return u.JellyfinUserId === currentUserId; }) || {};
-                        page.querySelector('#IrisServerUrl').value = userConfig.IrisServerUrl || userConfig.AquilaServerUrl || "";
-                        page.querySelector('#IrisApiKey').value = userConfig.ApiKey || "";
+                        page.querySelector('#BorealisServerUrl').value = userConfig.BorealisServerUrl || "http://localhost:4000";
+                        page.querySelector('#BorealisApiKey').value = userConfig.ApiKey || "";
                         page.querySelector('#CompletionThreshold').value = userConfig.CompletionThreshold || 90;
 
                         // Render Admin Library Mappings
@@ -160,14 +160,14 @@
                             var options = [
                                 { val: 'anime', text: 'Anime' },
                                 { val: 'tv', text: 'TV Series' },
-                                { val: 'movie', text: 'Movie' }
+                                { val: 'movies', text: 'Movie' }
                             ];
 
                             options.forEach(function (opt) {
                                 var optEl = document.createElement('option');
                                 optEl.value = opt.val;
                                 optEl.textContent = opt.text;
-                                if (opt.val === currentType) {
+                                if (opt.val === currentType || (opt.val === 'movies' && currentType === 'movie')) {
                                     optEl.selected = true;
                                 }
                                 selectEl.appendChild(optEl);
@@ -216,7 +216,7 @@
                         function loadServerMappings() {
                             var mapContainer = page.querySelector('#serverMappingsContainer');
                             mapContainer.innerHTML = '<div style="padding:1em; text-align:center; color:#94a3b8;">Loading mappings from server...</div>';
-                            var url = ApiClient.getUrl ? ApiClient.getUrl('Iris/Api/Mappings') : '/Iris/Api/Mappings';
+                            var url = ApiClient.getUrl ? ApiClient.getUrl('Borealis/Api/Mappings') : '/Borealis/Api/Mappings';
 
                             fetch(url).then(function (res) {
                                 return res.json();
@@ -238,8 +238,8 @@
                                     var info = document.createElement('div');
                                     var title = document.createElement('strong');
                                     title.style.color = '#f8fafc';
-                                    var irisId = m.irisMediaId || m.aquilaMediaId || 0;
-                                    title.textContent = (m.mediaType || 'media').toUpperCase() + ' - Iris ID #' + irisId;
+                                    var borealisId = m.borealisMediaId || m.irisMediaId || m.aquilaMediaId || 0;
+                                    title.textContent = (m.mediaType || 'media').toUpperCase() + ' - Borealis ID #' + borealisId;
 
                                     var sub = document.createElement('div');
                                     sub.className = 'fieldDescription';
@@ -260,8 +260,8 @@
                                     removeBtn.onclick = function () {
                                         var userParam = m.userId ? encodeURIComponent(m.userId) : '';
                                         var deleteUrl = ApiClient.getUrl
-                                            ? ApiClient.getUrl('Iris/Api/Mapping?userId=' + userParam + '&itemId=' + encodeURIComponent(m.jellyfinItemId))
-                                            : '/Iris/Api/Mapping?userId=' + userParam + '&itemId=' + encodeURIComponent(m.jellyfinItemId);
+                                            ? ApiClient.getUrl('Borealis/Api/Mapping?userId=' + userParam + '&itemId=' + encodeURIComponent(m.jellyfinItemId))
+                                            : '/Borealis/Api/Mapping?userId=' + userParam + '&itemId=' + encodeURIComponent(m.jellyfinItemId);
 
                                         fetch(deleteUrl, { method: 'DELETE' }).then(function () {
                                             loadServerMappings();
@@ -280,7 +280,7 @@
                         loadServerMappings();
 
                         page.querySelector('#btnClearAllMappings').onclick = function () {
-                            var clearUrl = ApiClient.getUrl ? ApiClient.getUrl('Iris/Api/Mappings') : '/Iris/Api/Mappings';
+                            var clearUrl = ApiClient.getUrl ? ApiClient.getUrl('Borealis/Api/Mappings') : '/Borealis/Api/Mappings';
                             fetch(clearUrl, { method: 'DELETE' }).then(function () {
                                 loadServerMappings();
                             });
@@ -288,15 +288,15 @@
 
                         Dashboard.hideLoadingMsg();
                     }).catch(function (err) {
-                        console.error("[Iris Plugin] Config page load error:", err);
+                        console.error("[Borealis Plugin] Config page load error:", err);
                         Dashboard.hideLoadingMsg();
                     });
                 });
 
-                document.getElementById('IrisConfigForm').addEventListener('submit', function (e) {
+                document.getElementById('JellyBorealisConfigForm').addEventListener('submit', function (e) {
                     e.preventDefault();
                     Dashboard.showLoadingMsg();
-                    var page = document.getElementById('IrisConfigPage');
+                    var page = document.getElementById('JellyBorealisConfigPage');
                     var currentUserId = Dashboard.getCurrentUserId();
 
                     ApiClient.getPluginConfiguration(pluginId).then(function (config) {
@@ -330,12 +330,11 @@
                             userConfig = { JellyfinUserId: currentUserId };
                             config.UserConfigs.push(userConfig);
                         }
-                        userConfig.IrisServerUrl = page.querySelector('#IrisServerUrl').value.trim();
-                        userConfig.AquilaServerUrl = userConfig.IrisServerUrl;
-                        userConfig.ApiKey = page.querySelector('#IrisApiKey').value.trim();
+                        userConfig.BorealisServerUrl = page.querySelector('#BorealisServerUrl').value.trim();
+                        userConfig.ApiKey = page.querySelector('#BorealisApiKey').value.trim();
                         userConfig.CompletionThreshold = parseFloat(page.querySelector('#CompletionThreshold').value) || 90.0;
 
-                        console.log('[Iris Plugin] Saving configuration:', config);
+                        console.log('[Borealis Plugin] Saving configuration:', config);
 
                         ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {
                             Dashboard.hideLoadingMsg();

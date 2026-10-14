@@ -5,14 +5,14 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Jellyfin.Plugin.Iris.Models;
+using Jellyfin.Plugin.Borealis.Models;
 using MediaBrowser.Common.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.Iris.Services;
+namespace Jellyfin.Plugin.Borealis.Services;
 
 /// <summary>
-/// Thread-safe local storage manager for Jellyfin Item ID -> Iris Media ID mappings.
+/// Thread-safe local storage manager for Jellyfin Item ID -> Borealis Media ID mappings.
 /// </summary>
 public class MediaMappingStore
 {
@@ -26,10 +26,10 @@ public class MediaMappingStore
     public MediaMappingStore(IApplicationPaths applicationPaths, ILogger<MediaMappingStore> logger)
     {
         _logger = logger;
-        var dataFolder = Path.Combine(applicationPaths.PluginConfigurationsPath, "Iris");
+        var dataFolder = Path.Combine(applicationPaths.PluginConfigurationsPath, "Borealis");
         Directory.CreateDirectory(dataFolder);
         _filePath = Path.Combine(dataFolder, "item-mappings.json");
-        _logger.LogInformation("[Iris MappingStore] Storage path: {FilePath}", _filePath);
+        _logger.LogInformation("[Borealis MappingStore] Storage path: {FilePath}", _filePath);
         Load(applicationPaths);
     }
 
@@ -40,12 +40,18 @@ public class MediaMappingStore
             string fileToRead = _filePath;
             if (!File.Exists(fileToRead))
             {
-                // Check legacy Aquila folder for migration
+                // Check legacy Iris and Aquila folders for automatic migration
+                var irisPath = Path.Combine(applicationPaths.PluginConfigurationsPath, "Iris", "item-mappings.json");
                 var legacyPath = Path.Combine(applicationPaths.PluginConfigurationsPath, "Aquila", "item-mappings.json");
-                if (File.Exists(legacyPath))
+                if (File.Exists(irisPath))
+                {
+                    fileToRead = irisPath;
+                    _logger.LogInformation("[Borealis MappingStore] Migrating existing mappings from legacy Iris folder: {IrisPath}", irisPath);
+                }
+                else if (File.Exists(legacyPath))
                 {
                     fileToRead = legacyPath;
-                    _logger.LogInformation("[Iris MappingStore] Migrating existing mappings from legacy Aquila folder: {LegacyPath}", legacyPath);
+                    _logger.LogInformation("[Borealis MappingStore] Migrating existing mappings from legacy Aquila folder: {LegacyPath}", legacyPath);
                 }
             }
 
@@ -61,9 +67,9 @@ public class MediaMappingStore
                         _mappings[key] = item;
                     }
                 }
-                _logger.LogInformation("[Iris MappingStore] Loaded {Count} mappings from storage.", _mappings.Count);
+                _logger.LogInformation("[Borealis MappingStore] Loaded {Count} mappings from storage.", _mappings.Count);
 
-                // If read from legacy path, persist immediately to Iris path
+                // If read from legacy path, persist immediately to Borealis path
                 if (fileToRead != _filePath)
                 {
                     _ = SaveAsync();
@@ -71,12 +77,12 @@ public class MediaMappingStore
             }
             else
             {
-                _logger.LogInformation("[Iris MappingStore] No existing mappings file found at {FilePath}. Starting empty.", _filePath);
+                _logger.LogInformation("[Borealis MappingStore] No existing mappings file found at {FilePath}. Starting empty.", _filePath);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[Iris MappingStore] Failed to load Iris item mappings from {FilePath}", _filePath);
+            _logger.LogError(ex, "[Borealis MappingStore] Failed to load item mappings from {FilePath}", _filePath);
         }
     }
 
@@ -87,11 +93,11 @@ public class MediaMappingStore
             var list = _mappings.Values.ToList();
             var json = JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = true });
             await File.WriteAllTextAsync(_filePath, json).ConfigureAwait(false);
-            _logger.LogInformation("[Iris MappingStore] Saved {Count} item mappings to disk.", list.Count);
+            _logger.LogInformation("[Borealis MappingStore] Saved {Count} item mappings to disk.", list.Count);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[Iris MappingStore] Failed to save Iris item mappings to {FilePath}", _filePath);
+            _logger.LogError(ex, "[Borealis MappingStore] Failed to save item mappings to {FilePath}", _filePath);
         }
     }
 
@@ -114,16 +120,16 @@ public class MediaMappingStore
         var key = GetKey(userId, itemId);
         if (_mappings.TryGetValue(key, out var mapping) && mapping != null)
         {
-            _logger.LogInformation("[Iris MappingStore] FOUND mapping for User={UserId}, Item={ItemId} -> IrisId={IrisId}",
-                userId, itemId, mapping.IrisMediaId);
+            _logger.LogInformation("[Borealis MappingStore] FOUND mapping for User={UserId}, Item={ItemId} -> BorealisId={BorealisId}",
+                userId, itemId, mapping.BorealisMediaId);
             return mapping;
         }
 
         var globalKey = GetKey(null, itemId);
         if (_mappings.TryGetValue(globalKey, out var globalMapping) && globalMapping != null)
         {
-            _logger.LogInformation("[Iris MappingStore] FOUND global fallback mapping for Item={ItemId} -> IrisId={IrisId}",
-                itemId, globalMapping.IrisMediaId);
+            _logger.LogInformation("[Borealis MappingStore] FOUND global fallback mapping for Item={ItemId} -> BorealisId={BorealisId}",
+                itemId, globalMapping.BorealisMediaId);
             return globalMapping;
         }
 
@@ -143,7 +149,7 @@ public class MediaMappingStore
             var mapping = GetMapping(userId, id);
             if (mapping != null)
             {
-                _logger.LogInformation("[Iris MappingStore] Resolved candidate ID '{CandidateId}' -> IrisId {IrisId}", id, mapping.IrisMediaId);
+                _logger.LogInformation("[Borealis MappingStore] Resolved candidate ID '{CandidateId}' -> BorealisId {BorealisId}", id, mapping.BorealisMediaId);
                 return mapping;
             }
         }
@@ -152,23 +158,23 @@ public class MediaMappingStore
     }
 
     /// <summary>
-    /// Persists or updates a mapping for a user and Jellyfin item to a single Iris Media ID.
+    /// Persists or updates a mapping for a user and Jellyfin item to a single Borealis Media ID.
     /// </summary>
-    public async Task SetMappingAsync(string userId, string itemId, int irisMediaId, string mediaType)
+    public async Task SetMappingAsync(string userId, string itemId, int borealisMediaId, string mediaType)
     {
         var key = GetKey(userId, itemId);
         var mapping = new JellyfinItemMapping
         {
             UserId = userId ?? string.Empty,
             JellyfinItemId = itemId,
-            IrisMediaId = irisMediaId,
+            BorealisMediaId = borealisMediaId,
             MediaType = mediaType,
             LinkedAt = DateTime.UtcNow,
             Entries = new List<LinkedMediaEntry>
             {
                 new LinkedMediaEntry
                 {
-                    IrisMediaId = irisMediaId,
+                    BorealisMediaId = borealisMediaId,
                     MediaType = mediaType,
                     Order = 1
                 }
@@ -190,7 +196,7 @@ public class MediaMappingStore
         {
             UserId = userId ?? string.Empty,
             JellyfinItemId = itemId,
-            IrisMediaId = first?.IrisMediaId ?? 0,
+            BorealisMediaId = first?.BorealisMediaId ?? 0,
             MediaType = first?.MediaType ?? "tv",
             LinkedAt = DateTime.UtcNow,
             Entries = entries.OrderBy(e => e.Order).ToList()
@@ -209,12 +215,12 @@ public class MediaMappingStore
         {
             UserId = userId ?? string.Empty,
             JellyfinItemId = itemId,
-            IrisMediaId = entry.IrisMediaId,
+            BorealisMediaId = entry.BorealisMediaId,
             MediaType = entry.MediaType,
             LinkedAt = DateTime.UtcNow
         };
 
-        var existing = mapping.Entries.FirstOrDefault(e => e.IrisMediaId == entry.IrisMediaId);
+        var existing = mapping.Entries.FirstOrDefault(e => e.BorealisMediaId == entry.BorealisMediaId);
         if (existing != null)
         {
             existing.DisplayTitle = entry.DisplayTitle;
@@ -239,7 +245,7 @@ public class MediaMappingStore
 
         if (mapping.Entries.Count > 0)
         {
-            mapping.IrisMediaId = mapping.Entries[0].IrisMediaId;
+            mapping.BorealisMediaId = mapping.Entries[0].BorealisMediaId;
             mapping.MediaType = mapping.Entries[0].MediaType;
         }
 
@@ -249,14 +255,14 @@ public class MediaMappingStore
     }
 
     /// <summary>
-    /// Removes a specific entry by Iris Media ID from a user's item mapping.
+    /// Removes a specific entry by Borealis Media ID from a user's item mapping.
     /// </summary>
-    public async Task<bool> RemoveEntryAsync(string userId, string itemId, int irisMediaId)
+    public async Task<bool> RemoveEntryAsync(string userId, string itemId, int borealisMediaId)
     {
         var mapping = GetMapping(userId, itemId);
         if (mapping == null) return false;
 
-        var removed = mapping.Entries.RemoveAll(e => e.IrisMediaId == irisMediaId) > 0;
+        var removed = mapping.Entries.RemoveAll(e => e.BorealisMediaId == borealisMediaId) > 0;
         if (removed)
         {
             for (int i = 0; i < mapping.Entries.Count; i++)
@@ -266,12 +272,12 @@ public class MediaMappingStore
 
             if (mapping.Entries.Count > 0)
             {
-                mapping.IrisMediaId = mapping.Entries[0].IrisMediaId;
+                mapping.BorealisMediaId = mapping.Entries[0].BorealisMediaId;
                 mapping.MediaType = mapping.Entries[0].MediaType;
             }
             else
             {
-                mapping.IrisMediaId = 0;
+                mapping.BorealisMediaId = 0;
             }
 
             var key = GetKey(userId, itemId);
@@ -283,9 +289,9 @@ public class MediaMappingStore
     }
 
     /// <summary>
-    /// Reorders the entries list for a user and Jellyfin item based on an array of Iris Media IDs in desired order.
+    /// Reorders the entries list for a user and Jellyfin item based on an array of Borealis Media IDs in desired order.
     /// </summary>
-    public async Task<bool> ReorderEntriesAsync(string userId, string itemId, List<int> irisMediaIdsInOrder)
+    public async Task<bool> ReorderEntriesAsync(string userId, string itemId, List<int> borealisMediaIdsInOrder)
     {
         var mapping = GetMapping(userId, itemId);
         if (mapping == null || mapping.Entries.Count == 0) return false;
@@ -293,9 +299,9 @@ public class MediaMappingStore
         var newEntries = new List<LinkedMediaEntry>();
         int order = 1;
 
-        foreach (var id in irisMediaIdsInOrder)
+        foreach (var id in borealisMediaIdsInOrder)
         {
-            var match = mapping.Entries.FirstOrDefault(e => e.IrisMediaId == id);
+            var match = mapping.Entries.FirstOrDefault(e => e.BorealisMediaId == id);
             if (match != null)
             {
                 match.Order = order++;
@@ -303,7 +309,7 @@ public class MediaMappingStore
             }
         }
 
-        foreach (var remaining in mapping.Entries.Where(e => !irisMediaIdsInOrder.Contains(e.IrisMediaId)))
+        foreach (var remaining in mapping.Entries.Where(e => !borealisMediaIdsInOrder.Contains(e.BorealisMediaId)))
         {
             remaining.Order = order++;
             newEntries.Add(remaining);
@@ -312,7 +318,7 @@ public class MediaMappingStore
         mapping.Entries = newEntries;
         if (mapping.Entries.Count > 0)
         {
-            mapping.IrisMediaId = mapping.Entries[0].IrisMediaId;
+            mapping.BorealisMediaId = mapping.Entries[0].BorealisMediaId;
             mapping.MediaType = mapping.Entries[0].MediaType;
         }
 
@@ -351,7 +357,7 @@ public class MediaMappingStore
             if (_mappings.TryRemove(key, out _))
             {
                 anyRemoved = true;
-                _logger.LogInformation("[Iris MappingStore] Removed mapping for key: {Key}", key);
+                _logger.LogInformation("[Borealis MappingStore] Removed mapping for key: {Key}", key);
             }
         }
 
@@ -403,7 +409,7 @@ public class MediaMappingStore
         }
 
         await SaveAsync().ConfigureAwait(false);
-        _logger.LogInformation("[Iris MappingStore] Cleared {Count} item mappings (UserId: {UserId}).", count, userId ?? "ALL");
+        _logger.LogInformation("[Borealis MappingStore] Cleared {Count} item mappings (UserId: {UserId}).", count, userId ?? "ALL");
         return count;
     }
 }
