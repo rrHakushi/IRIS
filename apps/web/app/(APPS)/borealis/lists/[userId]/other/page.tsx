@@ -10,8 +10,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const userData = await getUserProfile(userId)
   const displayName = userData?.username ?? userId
   return {
-    title: `Borealis | Lists > ${displayName}'s Other Lists`,
-    description: `View ${displayName}'s other list on Borealis.`,
+    title: `Borealis | Lists > ${displayName} > Other Lists`,
+    description: `View ${displayName}'s other lists on Borealis.`,
   }
 }
 

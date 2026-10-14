@@ -32,7 +32,7 @@ export async function generateMetadata({
   const { media } = await params
   if (!VALID_CATEGORIES.has(media)) {
     return {
-      title: "Discover Media | IRIS List",
+      title: "Borealis | Discover",
     }
   }
 
@@ -40,10 +40,10 @@ export async function generateMetadata({
   const label = meta ? meta.label : media
 
   return {
-    title: `Discover ${label} | IRIS List`,
+    title: `Borealis | Discover > ${label}`,
     description:
       meta?.description ||
-      `Discover trending and top-rated ${label} on IRIS List`,
+      `Discover trending and top-rated ${label} on Borealis`,
   }
 }
 

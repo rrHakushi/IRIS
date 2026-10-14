@@ -130,7 +130,7 @@ function PassMainContent() {
           <div className="flex size-10 animate-pulse items-center justify-center rounded-2xl bg-[#d800a6]/10">
             <Image
               src="/iris-pass512left-ring.png"
-              alt="IRIS Pass"
+              alt="Akaromi"
               width={24}
               height={24}
               className="object-contain"
@@ -153,7 +153,7 @@ function PassMainContent() {
             <div className="flex size-16 items-center justify-center rounded-2xl bg-[#d800a6]/10 shadow-inner ring-1 ring-[#d800a6]/20">
               <Image
                 src="/iris-pass512left-ring.png"
-                alt="IRIS Pass"
+                alt="Akaromi"
                 width={36}
                 height={36}
                 className="object-contain"
@@ -161,7 +161,7 @@ function PassMainContent() {
             </div>
             <div className="space-y-1">
               <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-                IRIS Pass Vault Locked
+                Akaromi Vault Locked
               </h1>
               <p className="max-w-sm text-xs text-muted-foreground">
                 {encryption.hasSeparateEncryptionPassword
@@ -416,12 +416,12 @@ export default function PassPage() {
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Image
               src="/iris-pass512left-ring.png"
-              alt="IRIS Pass"
+              alt="Akaromi"
               width={16}
               height={16}
               className="animate-pulse object-contain"
             />
-            <span>Loading IRIS Pass...</span>
+            <span>Loading Akaromi...</span>
           </div>
         </div>
       }

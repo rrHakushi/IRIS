@@ -161,7 +161,7 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
         parsed = JSON.parse(text)
       } catch {
         toast.error(
-          "Please provide a valid JSON export (Bitwarden or IRIS Pass format)"
+          "Please provide a valid JSON export (Bitwarden or Akaromi format)"
         )
         setIsImporting(false)
         return
@@ -330,7 +330,7 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
               </h3>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Import credentials from Bitwarden JSON or IRIS Pass backup.
+              Import credentials from Bitwarden JSON or Akaromi backup.
               Credentials are encrypted client-side before syncing.
             </p>
           </div>

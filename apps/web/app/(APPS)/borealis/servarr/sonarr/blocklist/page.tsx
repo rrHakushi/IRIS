@@ -2,7 +2,7 @@ import { Metadata } from "next"
 import { ServarrBlocklistView } from "@/components/servarr/servarr-blocklist-view"
 
 export const metadata: Metadata = {
-  title: "Blocklist | Sonarr | IRIS",
+  title: "Borealis | Servarr > Sonarr > Blocklist",
   description: "Manage blacklisted and rejected releases in Sonarr.",
 }
 

@@ -4,7 +4,7 @@ import { CalendarPageClient } from "@/components/calendar/calendar-page-client"
 import { CalendarLoadingFallback } from "@/components/calendar/calendar-loading-fallback"
 
 export const metadata: Metadata = {
-  title: "Media Release Calendar | IRIS List",
+  title: "Borealis | Calendar",
   description:
     "Track upcoming and recent media releases across anime airing schedules, manga publications, TV series episodes, movie premieres, video games, books, and music.",
 }

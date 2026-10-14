@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const numericId = parseInt(id, 10)
   if (isNaN(numericId) || numericId <= 0) {
     return {
-      title: "Track Not Found | IRIS List",
+      title: "Borealis | Music > Tracks > Not Found",
     }
   }
 
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const trackData = (data as any)?.media ?? (data as any)
     if (!trackData) {
       return {
-        title: `Track #${numericId} | IRIS List`,
+        title: `Borealis | Music > Tracks > #${numericId}`,
       }
     }
 
@@ -35,10 +35,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       trackData.titlePrimary || trackData.titleSecondary || `Track #${numericId}`
     const artist = trackData.artist ? ` by ${trackData.artist}` : ""
     return {
-      title: `${title}${artist} | IRIS List`,
+      title: `Borealis | Music > Tracks > ${title}${artist}`,
       description: trackData.description
         ? trackData.description.slice(0, 160).replace(/<[^>]*>/g, "")
-        : `${title}${artist} track details on IRIS List`,
+        : `${title}${artist} track details on Borealis`,
       openGraph: trackData.coverImage
         ? {
             images: [{ url: trackData.coverImage }],
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
   } catch {
     return {
-      title: `Track #${numericId} | IRIS List`,
+      title: `Borealis | Music > Tracks > #${numericId}`,
     }
   }
 }

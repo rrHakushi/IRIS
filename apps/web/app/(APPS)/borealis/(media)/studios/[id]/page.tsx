@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const numericId = parseInt(id, 10)
   if (isNaN(numericId) || numericId <= 0) {
     return {
-      title: "Studio Not Found | IRIS List",
+      title: "Borealis | Studios > Not Found",
     }
   }
 
@@ -22,18 +22,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const studio = ((data as any)?.studio ?? data) as StudioDetails
     if (!studio) {
       return {
-        title: `Studio #${numericId} | IRIS List`,
+        title: `Borealis | Studios > #${numericId}`,
       }
     }
 
     const name = studio.name || `Studio #${numericId}`
     return {
-      title: `${name} | Studios | IRIS List`,
-      description: `Explore all anime, movies, and creations produced by ${name} on IRIS List.`,
+      title: `Borealis | Studios > ${name}`,
+      description: `Explore all anime, movies, and creations produced by ${name} on Borealis.`,
     }
   } catch {
     return {
-      title: `Studio #${numericId} | IRIS List`,
+      title: `Borealis | Studios > #${numericId}`,
     }
   }
 }

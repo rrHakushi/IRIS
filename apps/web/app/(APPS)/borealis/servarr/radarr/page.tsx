@@ -3,7 +3,7 @@ import React from "react"
 import { ServarrMediaView } from "@/components/servarr/servarr-media-view"
 
 export const metadata: Metadata = {
-  title: "IRIS List | Radarr Movies",
+  title: "Borealis | Servarr > Radarr > Movies",
   description:
     "Browse and manage added movies from your connected Radarr instance.",
 }

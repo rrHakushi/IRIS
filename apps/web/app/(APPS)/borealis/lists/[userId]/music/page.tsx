@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const userData = await getUserProfile(userId)
   const displayName = userData?.username ?? userId
   return {
-    title: `Borealis | ${displayName}'s Music List`,
+    title: `Borealis | Lists > ${displayName} > Music`,
     description: `View ${displayName}'s music list on Borealis.`,
   }
 }

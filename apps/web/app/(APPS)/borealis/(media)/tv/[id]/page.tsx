@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const numericId = parseInt(id, 10)
   if (isNaN(numericId) || numericId <= 0) {
     return {
-      title: "TV Show Not Found | IRIS List",
+      title: "Borealis | TV > Not Found",
     }
   }
 
@@ -27,17 +27,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const tvData = (data as any)?.media ?? data
     if (!tvData) {
       return {
-        title: `TV Show #${numericId} | IRIS List`,
+        title: `Borealis | TV > #${numericId}`,
       }
     }
 
     const title =
       tvData.titlePrimary || tvData.titleSecondary || `TV Show #${numericId}`
     return {
-      title: `${title} | IRIS List`,
+      title: `Borealis | TV > ${title}`,
       description: tvData.description
         ? tvData.description.slice(0, 160).replace(/<[^>]*>/g, "")
-        : `${title} details on IRIS List`,
+        : `${title} details on Borealis`,
       openGraph: tvData.coverImage
         ? {
             images: [{ url: tvData.coverImage }],
@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
   } catch {
     return {
-      title: `TV Show #${numericId} | IRIS List`,
+      title: `Borealis | TV > #${numericId}`,
     }
   }
 }

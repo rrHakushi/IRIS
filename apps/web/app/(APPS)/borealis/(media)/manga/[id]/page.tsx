@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const numericId = parseInt(id, 10)
   if (isNaN(numericId) || numericId <= 0) {
     return {
-      title: "Manga Not Found | IRIS List",
+      title: "Borealis | Manga > Not Found",
     }
   }
 
@@ -27,17 +27,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const mangaData = (data as any)?.media ?? data
     if (!mangaData) {
       return {
-        title: `Manga #${numericId} | IRIS List`,
+        title: `Borealis | Manga > #${numericId}`,
       }
     }
 
     const title =
       mangaData.titlePrimary || mangaData.titleSecondary || `Manga #${numericId}`
     return {
-      title: `${title} | IRIS List`,
+      title: `Borealis | Manga > ${title}`,
       description: mangaData.description
         ? mangaData.description.slice(0, 160).replace(/<[^>]*>/g, "")
-        : `${title} details on IRIS List`,
+        : `${title} details on Borealis`,
       openGraph: mangaData.coverImage
         ? {
             images: [{ url: mangaData.coverImage }],
@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
   } catch {
     return {
-      title: `Manga #${numericId} | IRIS List`,
+      title: `Borealis | Manga > #${numericId}`,
     }
   }
 }

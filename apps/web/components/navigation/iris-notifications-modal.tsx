@@ -143,7 +143,12 @@ export function IrisNotificationsModal({
   }
 
   const getAppLabel = (appVal: string) => {
-    if (appVal.toLowerCase() === "system") return t("appSystem")
+    const lower = appVal.toLowerCase()
+    if (lower === "system") return t("appSystem")
+    if (lower === "iris account") return "Carina"
+    if (lower === "iris list") return "Borealis"
+    if (lower === "iris pass") return "Akaromi"
+    if (lower === "iris search") return "Kiroshi"
     return appVal
   }
 
@@ -343,7 +348,7 @@ export function IrisNotificationsModal({
                         <IconCheck className="size-3.5 text-primary" />
                       )}
                     </DropdownMenuItem>
-                    {["IRIS Account", "IRIS List", "System"].map((appVal) => {
+                    {["Carina", "Borealis", "Akaromi", "Kiroshi", "System"].map((appVal) => {
                       const isSelected = filters.apps.includes(appVal)
                       return (
                         <DropdownMenuItem

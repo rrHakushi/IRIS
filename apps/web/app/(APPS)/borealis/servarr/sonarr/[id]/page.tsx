@@ -2,7 +2,7 @@ import { Metadata } from "next"
 import { ServarrSeriesDetailView } from "@/components/servarr/servarr-series-detail-view"
 
 export const metadata: Metadata = {
-  title: "Series Details | Sonarr | IRIS",
+  title: "Borealis | Servarr > Sonarr > Series Details",
   description:
     "View series seasons, episodes, files, codec specs, and run interactive release searches.",
 }

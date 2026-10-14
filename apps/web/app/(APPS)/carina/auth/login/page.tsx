@@ -8,7 +8,7 @@ import { LanguageSelector } from "@/components/auth/language-selector"
 import { AuthIllustrationProvider } from "@/components/auth/auth-illustration-context"
 
 export const metadata: Metadata = {
-  title: "Carina | Login",
+  title: "Carina | Auth > Login",
   description: "Carina Account Login",
 }
 

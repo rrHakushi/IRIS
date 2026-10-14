@@ -565,7 +565,16 @@ export function NotificationProvider({
       // 1. App multi-filter
       if (
         filters.apps.length > 0 &&
-        !filters.apps.some((a) => a.toLowerCase() === item.app.toLowerCase())
+        !filters.apps.some((a) => {
+          const appFilter = a.toLowerCase()
+          const itemApp = item.app.toLowerCase()
+          if (appFilter === itemApp) return true
+          if (appFilter === "carina" && itemApp === "iris account") return true
+          if (appFilter === "borealis" && itemApp === "iris list") return true
+          if (appFilter === "akaromi" && itemApp === "iris pass") return true
+          if (appFilter === "kiroshi" && itemApp === "iris search") return true
+          return false
+        })
       ) {
         return false
       }

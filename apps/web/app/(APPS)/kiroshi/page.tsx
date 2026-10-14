@@ -599,7 +599,7 @@ export default function IrisSearchPage(): React.JSX.Element {
                   >
                     <Image
                       src="/iris-icons/iris-search-ring-left.png"
-                      alt="IRIS Search"
+                      alt="Kiroshi"
                       width={36}
                       height={36}
                       className="size-8 sm:size-9 rounded-full object-contain"

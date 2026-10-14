@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const numericId = parseInt(id, 10)
   if (isNaN(numericId) || numericId <= 0) {
     return {
-      title: "Music Not Found | IRIS List",
+      title: "Borealis | Music > Not Found",
     }
   }
 
@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const musicData = (data as any)?.media ?? data
     if (!musicData) {
       return {
-        title: `Music #${numericId} | Borealis`,
+        title: `Borealis | Music > #${numericId}`,
       }
     }
 
@@ -28,11 +28,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       musicData.titlePrimary || musicData.titleSecondary || `Music #${numericId}`
     const artist = musicData.artist ? ` by ${musicData.artist}` : ""
     return {
-      title: `${title}${artist} | Borealis`,
+      title: `Borealis | Music > ${title}${artist}`,
     }
   } catch {
     return {
-      title: `Music #${numericId} | Borealis`,
+      title: `Borealis | Music > #${numericId}`,
     }
   }
 }

@@ -2,7 +2,7 @@ import { Metadata } from "next"
 import { ServarrMovieDetailView } from "@/components/servarr/servarr-movie-detail-view"
 
 export const metadata: Metadata = {
-  title: "Movie Details | Radarr | IRIS",
+  title: "Borealis | Servarr > Radarr > Movie Details",
   description:
     "View movie media specifications, files, and perform interactive release searches.",
 }

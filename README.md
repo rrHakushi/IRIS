@@ -1,7 +1,9 @@
 inspired by Chinese mega apps.
 
-IRIS account  | Account related stuff
-IRIS list     | Media tracking/discovery with servarr integrations
+Carina    | Account and identity management
+Borealis  | Media tracking/discovery with servarr integrations
+Akaromi   | Zero-knowledge password & credential vault
+Kiroshi   | Privacy-focused meta-search engine
 
 Planned:
   IRIS Chat | On top of matrix

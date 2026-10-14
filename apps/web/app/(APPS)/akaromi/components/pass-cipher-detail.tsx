@@ -79,7 +79,7 @@ export function PassCipherDetail({
         <div className="mb-4 flex size-16 items-center justify-center rounded-3xl bg-muted/40 text-muted-foreground/50">
           <Image
             src="/iris-pass512left-ring.png"
-            alt="IRIS Pass"
+            alt="Akaromi"
             width={36}
             height={36}
             className="opacity-40"

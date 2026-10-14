@@ -4,7 +4,7 @@ import IrisPassNavProvider from "@/components/navigation/providers/iris-pass-nav
 import { PassProvider } from "@/context/pass-context"
 
 export const metadata: Metadata = {
-  title: "IRIS Pass | Vault",
+  title: "Akaromi | Vault",
   description: "Encrypted password manager and more.",
 }
 

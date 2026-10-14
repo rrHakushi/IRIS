@@ -11,7 +11,7 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { userId } = await params
   return {
-    title: `Carina Profile`,
+    title: `Carina | Profile > ${userId}`,
     description: `View user profile, media library, stats, and activity on IRIS.`,
   }
 }

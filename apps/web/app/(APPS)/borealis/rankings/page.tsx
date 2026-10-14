@@ -1,8 +1,8 @@
 import { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "IRIS List | Rankings",
-  description: "IRIS List Rankings",
+  title: "Borealis | Rankings",
+  description: "Borealis Rankings",
 }
 
 export default function Page() {

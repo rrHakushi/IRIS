@@ -4,7 +4,7 @@ import { BrowsePageClient } from "@/components/browse/browse-page-client"
 import { Skeleton } from "@workspace/ui/components/skeleton"
 
 export const metadata: Metadata = {
-  title: "Browse Media | IRIS List",
+  title: "Borealis | Browse",
   description:
     "Browse and discover media across Anime, Manga, Movies, TV, Games, Books, Music, Characters, People, and Studios.",
 }

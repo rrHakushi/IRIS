@@ -53,13 +53,27 @@ export interface BookmarkIconOption {
 
 export const BOOKMARK_ICON_OPTIONS: BookmarkIconOption[] = [
   {
-    id: "app:iris-list",
-    label: "IRIS List",
+    id: "app:carina",
+    label: "Carina",
+    type: "app",
+    customRender: (className = "size-4") => (
+      <Image
+        src="/iris-icons/iris-account-ring-left.png"
+        alt="Carina"
+        width={24}
+        height={24}
+        className={`${className} rounded-full object-contain`}
+      />
+    ),
+  },
+  {
+    id: "app:borealis",
+    label: "Borealis",
     type: "app",
     customRender: (className = "size-4") => (
       <Image
         src="/iris-icons/iris-list-ring-left.png"
-        alt="IRIS List"
+        alt="Borealis"
         width={24}
         height={24}
         className={`${className} rounded-full object-contain`}
@@ -67,13 +81,13 @@ export const BOOKMARK_ICON_OPTIONS: BookmarkIconOption[] = [
     ),
   },
   {
-    id: "app:iris-pass",
-    label: "IRIS Pass",
+    id: "app:akaromi",
+    label: "Akaromi",
     type: "app",
     customRender: (className = "size-4") => (
       <Image
         src="/iris-icons/iris-pass-ring-left.png"
-        alt="IRIS Pass"
+        alt="Akaromi"
         width={24}
         height={24}
         className={`${className} rounded-full object-contain`}
@@ -81,13 +95,13 @@ export const BOOKMARK_ICON_OPTIONS: BookmarkIconOption[] = [
     ),
   },
   {
-    id: "app:iris-search",
-    label: "IRIS Search",
+    id: "app:kiroshi",
+    label: "Kiroshi",
     type: "app",
     customRender: (className = "size-4") => (
       <Image
         src="/iris-icons/iris-search-ring-left.png"
-        alt="IRIS Search"
+        alt="Kiroshi"
         width={24}
         height={24}
         className={`${className} rounded-full object-contain`}
@@ -207,11 +221,23 @@ export function renderBookmarkIcon(
     return <IconBookmark className={className} style={style} />
   }
 
-  if (iconId === "app:iris-list" || iconId === "iris-list") {
+  if (iconId === "app:carina" || iconId === "carina" || iconId === "app:iris-account" || iconId === "iris-account") {
+    return (
+      <Image
+        src="/iris-icons/iris-account-ring-left.png"
+        alt="Carina"
+        width={96}
+        height={96}
+        className={`${className} rounded-full object-contain`}
+      />
+    )
+  }
+
+  if (iconId === "app:borealis" || iconId === "borealis" || iconId === "app:iris-list" || iconId === "iris-list") {
     return (
       <Image
         src="/iris-icons/iris-list-ring-left.png"
-        alt="IRIS List"
+        alt="Borealis"
         width={96}
         height={96}
         className={`${className} rounded-full object-contain`}
@@ -219,11 +245,11 @@ export function renderBookmarkIcon(
     )
   }
 
-  if (iconId === "app:iris-pass" || iconId === "iris-pass") {
+  if (iconId === "app:akaromi" || iconId === "akaromi" || iconId === "app:iris-pass" || iconId === "iris-pass") {
     return (
       <Image
         src="/iris-icons/iris-pass-ring-left.png"
-        alt="IRIS Pass"
+        alt="Akaromi"
         width={96}
         height={96}
         className={`${className} rounded-full object-contain`}
@@ -231,11 +257,11 @@ export function renderBookmarkIcon(
     )
   }
 
-  if (iconId === "app:iris-search" || iconId === "iris-search") {
+  if (iconId === "app:kiroshi" || iconId === "kiroshi" || iconId === "app:iris-search" || iconId === "iris-search") {
     return (
       <Image
         src="/iris-icons/iris-search-ring-left.png"
-        alt="IRIS Search"
+        alt="Kiroshi"
         width={96}
         height={96}
         className={`${className} rounded-full object-contain`}

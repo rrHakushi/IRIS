@@ -2,7 +2,7 @@ import { Metadata } from "next"
 import { ServarrSeriesManageView } from "@/components/servarr/servarr-series-manage-view"
 
 export const metadata: Metadata = {
-  title: "Manage Series | Sonarr | IRIS",
+  title: "Borealis | Servarr > Sonarr > Manage Series",
   description:
     "Mass manage series, edit monitored status, inspect files, and interactive release search.",
 }

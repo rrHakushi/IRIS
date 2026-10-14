@@ -1,8 +1,8 @@
 import { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "IRIS List | Music",
-  description: "Music on IRIS List",
+  title: "Borealis | Media > Music",
+  description: "Music on Borealis",
 }
 
 export default function Page() {

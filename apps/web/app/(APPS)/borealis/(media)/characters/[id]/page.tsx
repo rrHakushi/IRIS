@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const numericId = parseInt(id, 10)
   if (isNaN(numericId) || numericId <= 0) {
     return {
-      title: "Character Not Found | IRIS List",
+      title: "Borealis | Characters > Not Found",
     }
   }
 
@@ -22,20 +22,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const charData = (data as any)?.character ?? data
     if (!charData) {
       return {
-        title: `Character #${numericId} | IRIS List`,
+        title: `Borealis | Characters > #${numericId}`,
       }
     }
 
     const name =
       charData.namePrimary || charData.nameNative || `Character #${numericId}`
     return {
-      title: `${name} | Characters | IRIS List`,
+      title: `Borealis | Characters > ${name}`,
       description: charData.description
         ? charData.description
             .slice(0, 160)
             .replace(/<[^>]*>/g, "")
             .trim()
-        : `${name} character information and appearances on IRIS List`,
+        : `${name} character information and appearances on Borealis`,
       openGraph: charData.image
         ? {
             images: [{ url: charData.image }],
@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
   } catch {
     return {
-      title: `Character #${numericId} | IRIS List`,
+      title: `Borealis | Characters > #${numericId}`,
     }
   }
 }

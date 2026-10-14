@@ -3,7 +3,7 @@ import React from "react"
 import IrisListNavProvider from "@/components/navigation/providers/iris-list-nav-provider"
 
 export const metadata: Metadata = {
-  title: "IRIS List",
+  title: "Borealis",
   description: "Media tracker",
 }
 

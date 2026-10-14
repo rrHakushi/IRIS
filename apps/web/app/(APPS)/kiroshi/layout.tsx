@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import React from "react"
 
 export const metadata: Metadata = {
-  title: "IRIS Search",
+  title: "Kiroshi | Search",
   description: "Privacy-focused meta-search powered by SearXNG.",
   other: {
     "search-opensearch": "/opensearch.xml",
@@ -19,7 +19,7 @@ export default function SearchLayout({
       <link
         rel="search"
         type="application/opensearchdescription+xml"
-        title="IRIS Search"
+        title="Kiroshi"
         href="/opensearch.xml"
       />
       {children}
