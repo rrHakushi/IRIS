@@ -214,7 +214,7 @@ importers:
         version: 3.1150.0
       '@elysia/openapi':
         specifier: ^2.0.0-exp.1
-        version: 2.0.0-exp.1(elysia@2.0.0-exp.64(exact-mirror@1.2.6)(typescript@7.0.2))
+        version: 2.0.0-exp.1(elysia@2.0.0-exp.64(@types/bun@1.4.3)(exact-mirror@1.2.6)(typescript@7.0.2))
       '@noble/post-quantum':
         specifier: ^0.7.1
         version: 0.7.1
@@ -235,7 +235,7 @@ importers:
         version: 6.3.13(ioredis@6.0.0)(pg@8.23.1)
       elysia:
         specifier: ^2.0.0-exp.64
-        version: 2.0.0-exp.64(exact-mirror@1.2.6(typebox@1.3.37))(typebox@1.3.37)(typescript@7.0.2)
+        version: 2.0.0-exp.64(@types/bun@1.4.3)(exact-mirror@1.2.6(typebox@1.3.37))(typebox@1.3.37)(typescript@7.0.2)
       ioredis:
         specifier: ^6.0.0
         version: 6.0.0
@@ -260,7 +260,10 @@ importers:
     devDependencies:
       '@elysia/eden':
         specifier: 2.0.0-beta.6
-        version: 2.0.0-beta.6(elysia@2.0.0-exp.64(exact-mirror@1.2.6)(typescript@7.0.2))
+        version: 2.0.0-beta.6(elysia@2.0.0-exp.64(@types/bun@1.4.3)(exact-mirror@1.2.6)(typescript@7.0.2))
+      '@types/bun':
+        specifier: ^1.4.3
+        version: 1.4.3
       '@types/nodemailer':
         specifier: ^8.0.2
         version: 8.0.2
@@ -2862,6 +2865,9 @@ packages:
     cpu: [arm64]
     os: [win32]
 
+  '@types/bun@1.4.3':
+    resolution: {integrity: sha512-N67Pqy8JXbAY/j0tNraS3V5mubGvc6rrrNDmDCtZLlFzccbUJPDb0tvgUBC5q4m8ybkP93Jcn1QB+RYQ6PvBhw==}
+
   '@types/d3-array@3.0.3':
     resolution: {integrity: sha512-Reoy+pKnvsksN0lQUlcH6dOGjRZ/3WRwXR//m+/8lt1BXeI4xyaUZoqULNjyXXRuh0Mj4LNpkCvhUpQlY3X5xQ==}
 
@@ -3364,6 +3370,9 @@ packages:
         optional: true
       redis:
         optional: true
+
+  bun-types@1.4.3:
+    resolution: {integrity: sha512-tinRJNGOmUN+tEAsn2y2e942n9JHRHR42iUYzDH75NmhJqVBokGSQkkfSFdNWwsANIdrK6ACH9t01M452YyTwg==}
 
   bundle-name@4.1.1:
     resolution: {integrity: sha512-DdH81/zPLVS11EUgWq3tEu/xn+EzljlMYooDNdzWEnFha3R3NBMpMV1UqYIpjYHV/SgpFKMIX1Oh7o06SjM/oA==}
@@ -6758,17 +6767,17 @@ snapshots:
       '@eloqnt/config': 0.1.1
       po-parser: 2.2.0
 
-  '@elysia/eden@2.0.0-beta.6(elysia@2.0.0-exp.64(exact-mirror@1.2.6)(typescript@7.0.2))':
+  '@elysia/eden@2.0.0-beta.6(elysia@2.0.0-exp.64(@types/bun@1.4.3)(exact-mirror@1.2.6)(typescript@7.0.2))':
     dependencies:
-      elysia: 2.0.0-exp.64(exact-mirror@1.2.6(typebox@1.3.37))(typebox@1.3.37)(typescript@7.0.2)
+      elysia: 2.0.0-exp.64(@types/bun@1.4.3)(exact-mirror@1.2.6(typebox@1.3.37))(typebox@1.3.37)(typescript@7.0.2)
 
   '@elysia/eden@2.0.0-exp.1(elysia@2.0.0-exp.64(exact-mirror@1.2.6(typebox@1.3.37))(typebox@1.3.37)(typescript@7.0.2))':
     dependencies:
-      elysia: 2.0.0-exp.64(exact-mirror@1.2.6(typebox@1.3.37))(typebox@1.3.37)(typescript@7.0.2)
+      elysia: 2.0.0-exp.64(@types/bun@1.4.3)(exact-mirror@1.2.6(typebox@1.3.37))(typebox@1.3.37)(typescript@7.0.2)
 
-  '@elysia/openapi@2.0.0-exp.1(elysia@2.0.0-exp.64(exact-mirror@1.2.6)(typescript@7.0.2))':
+  '@elysia/openapi@2.0.0-exp.1(elysia@2.0.0-exp.64(@types/bun@1.4.3)(exact-mirror@1.2.6)(typescript@7.0.2))':
     dependencies:
-      elysia: 2.0.0-exp.64(exact-mirror@1.2.6(typebox@1.3.37))(typebox@1.3.37)(typescript@7.0.2)
+      elysia: 2.0.0-exp.64(@types/bun@1.4.3)(exact-mirror@1.2.6(typebox@1.3.37))(typebox@1.3.37)(typescript@7.0.2)
 
   '@emnapi/runtime@1.11.3':
     dependencies:
@@ -8397,6 +8406,10 @@ snapshots:
   '@turbo/windows-arm64@2.11.7':
     optional: true
 
+  '@types/bun@1.4.3':
+    dependencies:
+      bun-types: 1.4.3
+
   '@types/d3-array@3.0.3': {}
 
   '@types/d3-array@3.2.2': {}
@@ -8923,6 +8936,11 @@ snapshots:
       ioredis: 6.0.0
       pg: 8.23.1
 
+  bun-types@1.4.3:
+    dependencies:
+      '@types/node': 26.6.5
+      undici-types: 8.9.0
+
   bundle-name@4.1.1:
     dependencies:
       run-applescript: 7.1.0
@@ -9278,6 +9296,16 @@ snapshots:
   electron-to-chromium@1.5.452: {}
 
   elkjs@0.11.1: {}
+
+  elysia@2.0.0-exp.64(@types/bun@1.4.3)(exact-mirror@1.2.6(typebox@1.3.37))(typebox@1.3.37)(typescript@7.0.2):
+    dependencies:
+      deuri: 3.0.0
+      exact-mirror: 1.2.6(typebox@1.3.37)
+      memoirist: 1.2.2
+      typebox: 1.3.37
+    optionalDependencies:
+      '@types/bun': 1.4.3
+      typescript: 7.0.2
 
   elysia@2.0.0-exp.64(exact-mirror@1.2.6(typebox@1.3.37))(typebox@1.3.37)(typescript@7.0.2):
     dependencies:

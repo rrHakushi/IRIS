@@ -1,4 +1,4 @@
-import { prisma } from '@IRIS/database'
+import { prisma, type RelationType } from '@IRIS/database'
 import { LogFactory, c } from '@Iris/logger'
 import {
   anilistProvider,
@@ -7,8 +7,60 @@ import {
   googleBooksProvider,
   deezerProvider,
 } from '../providers'
+import {
+  MediaPreviewSyncer,
+  mapAnimeFormat,
+  mapMangaFormat,
+  type PreviewResult,
+} from './media-preview.syncer'
+import { MediaQueueManager, type MediaType } from '../queue'
 
 const logger = new LogFactory('Borealis:EntitySyncer')
+
+export interface DiscoveredRelation {
+  sourceType: MediaType
+  sourceId: number
+  sourceExternalId?: number | string | null
+  targetType: MediaType
+  targetExternalId: number | string
+  targetLocalId: number
+  type: string
+}
+
+export interface EntitySyncResult {
+  synced: boolean
+  discoveredRelations: DiscoveredRelation[]
+}
+
+export function mapRelationType(rawType: string): RelationType {
+  const norm = rawType.toUpperCase().replace(/\s+/g, '_')
+  switch (norm) {
+    case 'PREQUEL':
+      return 'PREQUEL'
+    case 'SEQUEL':
+      return 'SEQUEL'
+    case 'ADAPTATION':
+      return 'ADAPTATION'
+    case 'SIDE_STORY':
+      return 'SIDE_STORY'
+    case 'SPIN_OFF':
+      return 'SPIN_OFF'
+    case 'SUMMARY':
+      return 'SUMMARY'
+    case 'ALTERNATIVE':
+      return 'ALTERNATIVE'
+    case 'CHARACTER':
+      return 'CHARACTER'
+    case 'PARENT':
+    case 'SOURCE':
+    case 'COMPILATION':
+    case 'CONTAINS':
+    case 'OTHER':
+      return 'OTHER'
+    default:
+      return 'UNKNOWN'
+  }
+}
 
 export class MediaEntitySyncer {
   private static async upsertGenres(genreNames?: string[]): Promise<Array<{ id: number }>> {
@@ -31,10 +83,85 @@ export class MediaEntitySyncer {
     return results
   }
 
+  private static async handleMusicRelation(
+    sourceType: MediaType,
+    sourceId: number,
+    edge: any
+  ): Promise<void> {
+    const rawTitle =
+      edge.node?.title?.userPreferred ||
+      edge.node?.title?.english ||
+      edge.node?.title?.romaji ||
+      ''
+    const musicTitle = rawTitle.trim()
+    if (!musicTitle) return
+
+    try {
+      logger.info(
+        `${c.cyan('🎵 [Music Relation]')}: Discovered music relation "${c.yellow(musicTitle)}" for ${sourceType} #${sourceId}; querying Deezer...`
+      )
+
+      const tracks = await deezerProvider.searchTracks(musicTitle, 3).catch(() => [])
+      let musicStub: PreviewResult | null = null
+
+      if (tracks && tracks.length > 0 && tracks[0]) {
+        musicStub = await MediaPreviewSyncer.upsertMusicTrackSearchPreview(tracks[0])
+      } else {
+        const albums = await deezerProvider.searchAlbums(musicTitle, 3).catch(() => [])
+        if (albums && albums.length > 0 && albums[0]) {
+          musicStub = await MediaPreviewSyncer.upsertMusicAlbumSearchPreview(albums[0])
+        }
+      }
+
+      if (musicStub) {
+        await prisma.mediaRelation.upsert({
+          where: {
+            sourceType_sourceId_targetType_targetId_type: {
+              sourceType,
+              sourceId,
+              targetType: 'MUSIC' as MediaType,
+              targetId: musicStub.id,
+              type: 'OTHER' as RelationType,
+            },
+          },
+          update: {},
+          create: {
+            sourceType,
+            sourceId,
+            targetType: 'MUSIC' as MediaType,
+            targetId: musicStub.id,
+            type: 'OTHER' as RelationType,
+          },
+        }).catch(() => {})
+
+        await MediaQueueManager.enqueueMediaUpdate('MUSIC', musicStub.id, {
+          externalId: musicStub.externalId,
+          priority: 3,
+          depth: 0,
+          maxDepth: 0,
+          jobId: `media-update-MUSIC-${musicStub.id}`,
+        }).catch(() => {})
+
+        logger.info(
+          `${c.green('✅ [Music Relation Synced]')}: Linked Deezer Music #${musicStub.id} ("${musicStub.titlePrimary}") to ${sourceType} #${sourceId}`
+        )
+      } else {
+        logger.info(
+          `${c.dim('⏩ [Music Relation Skipped]')}: No matching Deezer track/album found for "${musicTitle}"`
+        )
+      }
+    } catch (err: any) {
+      logger.warn(
+        `${c.red('⚠️ [Music Relation Error]')}: Failed to resolve music relation "${musicTitle}": ${err?.message || err}`
+      )
+    }
+  }
+
   /**
-   * Fully synchronizes an Anime entity from AniList.
+   * Fully synchronizes an Anime entity from AniList, discovers connected relations,
+   * creates local preview stubs, and establishes MediaRelation edges.
    */
-  static async syncAnime(animeId: number, externalId?: number | string | null): Promise<boolean> {
+  static async syncAnime(animeId: number, externalId?: number | string | null): Promise<EntitySyncResult> {
     try {
       let anilistId: number | null = externalId ? Number(externalId) : null
       if (!anilistId) {
@@ -47,7 +174,7 @@ export class MediaEntitySyncer {
 
       if (!anilistId) {
         logger.warn(`${c.yellow('⚠️ [Missing ID]')}: Cannot sync Anime #${animeId}: missing AniList ID`)
-        return false
+        return { synced: false, discoveredRelations: [] }
       }
 
       logger.info(
@@ -58,7 +185,7 @@ export class MediaEntitySyncer {
         logger.warn(
           `${c.yellow('⚠️ [AniList Empty]')}: No anime data returned for AniList #${anilistId}`
         )
-        return false
+        return { synced: false, discoveredRelations: [] }
       }
 
       const displayTitle = alData.title.userPreferred || alData.title.english || alData.title.romaji || 'Unknown'
@@ -101,20 +228,128 @@ export class MediaEntitySyncer {
         },
       })
 
+      const discoveredRelations: DiscoveredRelation[] = []
+      if (alData.relations?.edges && Array.isArray(alData.relations.edges)) {
+        for (const edge of alData.relations.edges) {
+          if (!edge?.node) continue
+
+          const isMusic =
+            edge.node.format === 'MUSIC' ||
+            (edge.node.type as string) === 'MUSIC'
+
+          if (isMusic) {
+            await this.handleMusicRelation('ANIME', animeId, edge)
+            continue
+          }
+
+          const rawRelType = edge.relationType
+          if (!rawRelType) continue
+          const relType = mapRelationType(rawRelType)
+          if (relType === 'UNKNOWN') continue
+
+          const targetType: MediaType = edge.node.type === 'MANGA' ? 'MANGA' : 'ANIME'
+          const targetExternalId = edge.node.id
+          if (!targetExternalId) continue
+
+          let localTargetId: number
+          if (targetType === 'ANIME') {
+            let targetAnime = await prisma.anime.findUnique({
+              where: { anilistId: targetExternalId },
+              select: { id: true },
+            })
+            if (!targetAnime) {
+              const targetTitle =
+                edge.node.title?.english ||
+                edge.node.title?.userPreferred ||
+                edge.node.title?.romaji ||
+                `Anime #${targetExternalId}`
+              targetAnime = await prisma.anime.create({
+                data: {
+                  anilistId: targetExternalId,
+                  titlePrimary: targetTitle,
+                  titleSecondary: edge.node.title?.romaji || edge.node.title?.english || null,
+                  titleNative: edge.node.title?.native || null,
+                  coverImage: edge.node.coverImage?.large || edge.node.coverImage?.extraLarge || null,
+                  format: mapAnimeFormat(edge.node.format),
+                },
+                select: { id: true },
+              })
+            }
+            localTargetId = targetAnime.id
+          } else {
+            let targetManga = await prisma.manga.findUnique({
+              where: { anilistId: targetExternalId },
+              select: { id: true },
+            })
+            if (!targetManga) {
+              const targetTitle =
+                edge.node.title?.english ||
+                edge.node.title?.userPreferred ||
+                edge.node.title?.romaji ||
+                `Manga #${targetExternalId}`
+              targetManga = await prisma.manga.create({
+                data: {
+                  anilistId: targetExternalId,
+                  titlePrimary: targetTitle,
+                  titleSecondary: edge.node.title?.romaji || edge.node.title?.english || null,
+                  titleNative: edge.node.title?.native || null,
+                  coverImage: edge.node.coverImage?.large || edge.node.coverImage?.extraLarge || null,
+                  format: mapMangaFormat(edge.node.format),
+                },
+                select: { id: true },
+              })
+            }
+            localTargetId = targetManga.id
+          }
+
+          // Upsert relation edge using local IDs
+          await prisma.mediaRelation.upsert({
+            where: {
+              sourceType_sourceId_targetType_targetId_type: {
+                sourceType: 'ANIME',
+                sourceId: animeId,
+                targetType,
+                targetId: localTargetId,
+                type: relType,
+              },
+            },
+            update: {},
+            create: {
+              sourceType: 'ANIME',
+              sourceId: animeId,
+              targetType,
+              targetId: localTargetId,
+              type: relType,
+            },
+          }).catch(() => {})
+
+          discoveredRelations.push({
+            sourceType: 'ANIME',
+            sourceId: animeId,
+            sourceExternalId: anilistId,
+            targetType,
+            targetExternalId,
+            targetLocalId: localTargetId,
+            type: relType,
+          })
+        }
+      }
+
       logger.info(
-        `${c.green('✅ [Sync Complete]')} Successfully synced Anime #${animeId} ("${displayTitle}")`
+        `${c.green('✅ [Sync Complete]')} Successfully synced Anime #${animeId} ("${displayTitle}") with ${discoveredRelations.length} relations`
       )
-      return true
+      return { synced: true, discoveredRelations }
     } catch (err: any) {
       logger.error(`${c.red('❌ [Sync Error]')}: Failed to sync Anime #${animeId}: ${err?.message || err}`)
-      return false
+      return { synced: false, discoveredRelations: [] }
     }
   }
 
   /**
-   * Fully synchronizes a Manga entity from AniList.
+   * Fully synchronizes a Manga entity from AniList, discovers connected relations,
+   * creates local preview stubs, and establishes MediaRelation edges.
    */
-  static async syncManga(mangaId: number, externalId?: number | string | null): Promise<boolean> {
+  static async syncManga(mangaId: number, externalId?: number | string | null): Promise<EntitySyncResult> {
     try {
       let anilistId: number | null = externalId ? Number(externalId) : null
       if (!anilistId) {
@@ -127,7 +362,7 @@ export class MediaEntitySyncer {
 
       if (!anilistId) {
         logger.warn(`${c.yellow('⚠️ [Missing ID]')}: Cannot sync Manga #${mangaId}: missing AniList ID`)
-        return false
+        return { synced: false, discoveredRelations: [] }
       }
 
       logger.info(
@@ -138,7 +373,7 @@ export class MediaEntitySyncer {
         logger.warn(
           `${c.yellow('⚠️ [AniList Empty]')}: No manga data returned for AniList #${anilistId}`
         )
-        return false
+        return { synced: false, discoveredRelations: [] }
       }
 
       const displayTitle = alData.title.userPreferred || alData.title.english || alData.title.romaji || 'Unknown'
@@ -180,13 +415,120 @@ export class MediaEntitySyncer {
         },
       })
 
+      const discoveredRelations: DiscoveredRelation[] = []
+      if (alData.relations?.edges && Array.isArray(alData.relations.edges)) {
+        for (const edge of alData.relations.edges) {
+          if (!edge?.node) continue
+
+          const isMusic =
+            edge.node.format === 'MUSIC' ||
+            (edge.node.type as string) === 'MUSIC'
+
+          if (isMusic) {
+            await this.handleMusicRelation('MANGA', mangaId, edge)
+            continue
+          }
+
+          const rawRelType = edge.relationType
+          if (!rawRelType) continue
+          const relType = mapRelationType(rawRelType)
+          if (relType === 'UNKNOWN') continue
+
+          const targetType: MediaType = edge.node.type === 'MANGA' ? 'MANGA' : 'ANIME'
+          const targetExternalId = edge.node.id
+          if (!targetExternalId) continue
+
+          let localTargetId: number
+          if (targetType === 'ANIME') {
+            let targetAnime = await prisma.anime.findUnique({
+              where: { anilistId: targetExternalId },
+              select: { id: true },
+            })
+            if (!targetAnime) {
+              const targetTitle =
+                edge.node.title?.english ||
+                edge.node.title?.userPreferred ||
+                edge.node.title?.romaji ||
+                `Anime #${targetExternalId}`
+              targetAnime = await prisma.anime.create({
+                data: {
+                  anilistId: targetExternalId,
+                  titlePrimary: targetTitle,
+                  titleSecondary: edge.node.title?.romaji || edge.node.title?.english || null,
+                  titleNative: edge.node.title?.native || null,
+                  coverImage: edge.node.coverImage?.large || edge.node.coverImage?.extraLarge || null,
+                  format: mapAnimeFormat(edge.node.format),
+                },
+                select: { id: true },
+              })
+            }
+            localTargetId = targetAnime.id
+          } else {
+            let targetManga = await prisma.manga.findUnique({
+              where: { anilistId: targetExternalId },
+              select: { id: true },
+            })
+            if (!targetManga) {
+              const targetTitle =
+                edge.node.title?.english ||
+                edge.node.title?.userPreferred ||
+                edge.node.title?.romaji ||
+                `Manga #${targetExternalId}`
+              targetManga = await prisma.manga.create({
+                data: {
+                  anilistId: targetExternalId,
+                  titlePrimary: targetTitle,
+                  titleSecondary: edge.node.title?.romaji || edge.node.title?.english || null,
+                  titleNative: edge.node.title?.native || null,
+                  coverImage: edge.node.coverImage?.large || edge.node.coverImage?.extraLarge || null,
+                  format: mapMangaFormat(edge.node.format),
+                },
+                select: { id: true },
+              })
+            }
+            localTargetId = targetManga.id
+          }
+
+          // Upsert relation edge using local IDs
+          await prisma.mediaRelation.upsert({
+            where: {
+              sourceType_sourceId_targetType_targetId_type: {
+                sourceType: 'MANGA',
+                sourceId: mangaId,
+                targetType,
+                targetId: localTargetId,
+                type: relType,
+              },
+            },
+            update: {},
+            create: {
+              sourceType: 'MANGA',
+              sourceId: mangaId,
+              targetType,
+              targetId: localTargetId,
+              type: relType,
+            },
+          }).catch(() => {})
+
+          discoveredRelations.push({
+            sourceType: 'MANGA',
+            sourceId: mangaId,
+            sourceExternalId: anilistId,
+            targetType,
+            targetExternalId,
+            targetLocalId: localTargetId,
+            type: relType,
+          })
+        }
+      }
+
       logger.info(
-        `${c.green('✅ [Sync Complete]')} Successfully synced Manga #${mangaId} ("${displayTitle}")`
+        `${c.green('✅ [Sync Complete]')} Successfully synced Manga #${mangaId} ("${displayTitle}") with ${discoveredRelations.length} relations`
       )
-      return true
+      return { synced: true, discoveredRelations }
     } catch (err: any) {
       logger.error(`${c.red('❌ [Sync Error]')}: Failed to sync Manga #${mangaId}: ${err?.message || err}`)
-      return false
+      return { synced: false, discoveredRelations: [] }
     }
   }
 
@@ -555,32 +897,42 @@ export class MediaEntitySyncer {
   }
 
   /**
-   * Routes entity sync based on media type.
+   * Routes entity sync based on media type and returns EntitySyncResult.
    */
   static async syncEntity(
     mediaType: string,
     mediaId: number,
     externalId?: number | string | null
-  ): Promise<boolean> {
+  ): Promise<EntitySyncResult> {
     const norm = mediaType.toUpperCase()
     switch (norm) {
       case 'ANIME':
         return await this.syncAnime(mediaId, externalId)
       case 'MANGA':
         return await this.syncManga(mediaId, externalId)
-      case 'TV':
-        return await this.syncTv(mediaId, externalId)
-      case 'MOVIE':
-        return await this.syncMovie(mediaId, externalId)
-      case 'GAME':
-        return await this.syncGame(mediaId, externalId)
-      case 'BOOK':
-        return await this.syncBook(mediaId, externalId)
-      case 'MUSIC':
-        return await this.syncMusic(mediaId, externalId)
+      case 'TV': {
+        const synced = await this.syncTv(mediaId, externalId)
+        return { synced, discoveredRelations: [] }
+      }
+      case 'MOVIE': {
+        const synced = await this.syncMovie(mediaId, externalId)
+        return { synced, discoveredRelations: [] }
+      }
+      case 'GAME': {
+        const synced = await this.syncGame(mediaId, externalId)
+        return { synced, discoveredRelations: [] }
+      }
+      case 'BOOK': {
+        const synced = await this.syncBook(mediaId, externalId)
+        return { synced, discoveredRelations: [] }
+      }
+      case 'MUSIC': {
+        const synced = await this.syncMusic(mediaId, externalId)
+        return { synced, discoveredRelations: [] }
+      }
       default:
         logger.warn(`${c.yellow('⚠️ [Unknown Type]')}: Unsupported media type for sync: ${mediaType}`)
-        return false
+        return { synced: false, discoveredRelations: [] }
     }
   }
 }

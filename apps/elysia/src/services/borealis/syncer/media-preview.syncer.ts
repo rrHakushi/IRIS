@@ -5,6 +5,7 @@ import type { AniListAnimeSearchPreview, AniListMangaSearchPreview } from '../pr
 import type { GoogleBookPayload } from '../providers/google-books.provider'
 import type { IgdbSearchPreview } from '../providers/igdb.provider'
 import type { DeezerTrackPayload, DeezerAlbumPayload } from '../providers/deezer.provider'
+import { evaluateRecordFreshness } from '../freshness'
 
 const logger = new LogFactory('Borealis:PreviewSyncer')
 
@@ -26,7 +27,7 @@ export interface PreviewResult {
   [key: string]: any
 }
 
-function mapAnimeFormat(fmt?: string): any {
+export function mapAnimeFormat(fmt?: string): any {
   const map: Record<string, string> = {
     TV: 'TV',
     TV_SHORT: 'TV_SHORT',
@@ -39,7 +40,7 @@ function mapAnimeFormat(fmt?: string): any {
   return (fmt && map[fmt.toUpperCase()]) || 'UNKNOWN'
 }
 
-function mapMangaFormat(fmt?: string): any {
+export function mapMangaFormat(fmt?: string): any {
   const map: Record<string, string> = {
     MANGA: 'MANGA',
     NOVEL: 'NOVEL',
@@ -112,18 +113,22 @@ export class MediaPreviewSyncer {
         format: true,
         seasonYear: true,
         seasonSeason: true,
+        updatedAt: true,
+        status: true,
+        alUpdatedAt: true,
       },
     })
 
     if (existing) {
+      const freshness = evaluateRecordFreshness('ANIME', existing)
       logger.info(
-        `${c.dim('⏩ [Existing Stub]')}: Found Anime #${existing.id} ("${existing.titlePrimary}") in local DB`
+        `${c.dim('⏩ [Existing Stub]')}: Found Anime #${existing.id} ("${existing.titlePrimary}") in local DB${freshness.isFresh ? ' (already fresh)' : ''}`
       )
       return {
         ...existing,
         mediaType: 'anime',
         externalId: item.id,
-        queuedForFetch: true,
+        queuedForFetch: !freshness.isFresh,
       }
     }
 
@@ -189,18 +194,22 @@ export class MediaPreviewSyncer {
         isAdult: true,
         format: true,
         startDateYear: true,
+        updatedAt: true,
+        status: true,
+        alUpdatedAt: true,
       },
     })
 
     if (existing) {
+      const freshness = evaluateRecordFreshness('MANGA', existing)
       logger.info(
-        `${c.dim('⏩ [Existing Stub]')}: Found Manga #${existing.id} ("${existing.titlePrimary}") in local DB`
+        `${c.dim('⏩ [Existing Stub]')}: Found Manga #${existing.id} ("${existing.titlePrimary}") in local DB${freshness.isFresh ? ' (already fresh)' : ''}`
       )
       return {
         ...existing,
         mediaType: 'manga',
         externalId: item.id,
-        queuedForFetch: true,
+        queuedForFetch: !freshness.isFresh,
       }
     }
 
@@ -276,19 +285,22 @@ export class MediaPreviewSyncer {
           coverImage: true,
           firstAiredYear: true,
           status: true,
+          updatedAt: true,
+          tvdbUpdatedAt: true,
         },
       })
 
       if (existing) {
+        const freshness = evaluateRecordFreshness('TV', existing)
         logger.info(
-          `${c.dim('⏩ [Existing Stub]')}: Found TV Series #${existing.id} ("${existing.titlePrimary}") in local DB`
+          `${c.dim('⏩ [Existing Stub]')}: Found TV Series #${existing.id} ("${existing.titlePrimary}") in local DB${freshness.isFresh ? ' (already fresh)' : ''}`
         )
         return {
           ...existing,
           mediaType: 'tv',
           releaseDateYear: existing.firstAiredYear,
           externalId: tvdbId,
-          queuedForFetch: true,
+          queuedForFetch: !freshness.isFresh,
         }
       }
     }
@@ -366,18 +378,21 @@ export class MediaPreviewSyncer {
           bannerImage: true,
           releaseDateYear: true,
           status: true,
+          updatedAt: true,
+          tvdbUpdatedAt: true,
         },
       })
 
       if (existing) {
+        const freshness = evaluateRecordFreshness('MOVIE', existing)
         logger.info(
-          `${c.dim('⏩ [Existing Stub]')}: Found Movie #${existing.id} ("${existing.titlePrimary}") in local DB`
+          `${c.dim('⏩ [Existing Stub]')}: Found Movie #${existing.id} ("${existing.titlePrimary}") in local DB${freshness.isFresh ? ' (already fresh)' : ''}`
         )
         return {
           ...existing,
           mediaType: 'movie',
           externalId: tvdbId,
-          queuedForFetch: true,
+          queuedForFetch: !freshness.isFresh,
         }
       }
     }
@@ -445,18 +460,22 @@ export class MediaPreviewSyncer {
         coverImage: true,
         authors: true,
         releaseDateYear: true,
+        status: true,
+        updatedAt: true,
+        googleBooksUpdatedAt: true,
       },
     })
 
     if (existing) {
+      const freshness = evaluateRecordFreshness('BOOK', existing)
       logger.info(
-        `${c.dim('⏩ [Existing Stub]')}: Found Book #${existing.id} ("${existing.titlePrimary}") in local DB`
+        `${c.dim('⏩ [Existing Stub]')}: Found Book #${existing.id} ("${existing.titlePrimary}") in local DB${freshness.isFresh ? ' (already fresh)' : ''}`
       )
       return {
         ...existing,
         mediaType: 'book',
         externalId: item.id,
-        queuedForFetch: true,
+        queuedForFetch: !freshness.isFresh,
       }
     }
 
@@ -516,18 +535,22 @@ export class MediaPreviewSyncer {
         titleSecondary: true,
         coverImage: true,
         releaseDateYear: true,
+        status: true,
+        updatedAt: true,
+        igdbUpdatedAt: true,
       },
     })
 
     if (existing) {
+      const freshness = evaluateRecordFreshness('GAME', existing)
       logger.info(
-        `${c.dim('⏩ [Existing Stub]')}: Found Game #${existing.id} ("${existing.titlePrimary}") in local DB`
+        `${c.dim('⏩ [Existing Stub]')}: Found Game #${existing.id} ("${existing.titlePrimary}") in local DB${freshness.isFresh ? ' (already fresh)' : ''}`
       )
       return {
         ...existing,
         mediaType: 'game',
         externalId: item.id,
-        queuedForFetch: true,
+        queuedForFetch: !freshness.isFresh,
       }
     }
 
@@ -578,12 +601,16 @@ export class MediaPreviewSyncer {
         coverImage: true,
         duration: true,
         audioPreviewUrl: true,
+        status: true,
+        updatedAt: true,
+        deezerUpdatedAt: true,
       },
     })
 
     if (existing) {
+      const freshness = evaluateRecordFreshness('MUSIC', existing)
       logger.info(
-        `${c.dim('⏩ [Existing Stub]')}: Found Music Track #${existing.id} ("${existing.titlePrimary}") in local DB`
+        `${c.dim('⏩ [Existing Stub]')}: Found Music Track #${existing.id} ("${existing.titlePrimary}") in local DB${freshness.isFresh ? ' (already fresh)' : ''}`
       )
       return {
         ...existing,
@@ -592,7 +619,7 @@ export class MediaPreviewSyncer {
         type: 'TRACK',
         artist: existing.artistName,
         externalId: item.id,
-        queuedForFetch: true,
+        queuedForFetch: !freshness.isFresh,
       }
     }
 
@@ -663,12 +690,16 @@ export class MediaPreviewSyncer {
         artistName: true,
         coverImage: true,
         duration: true,
+        status: true,
+        updatedAt: true,
+        deezerUpdatedAt: true,
       },
     })
 
     if (existing) {
+      const freshness = evaluateRecordFreshness('MUSIC', existing)
       logger.info(
-        `${c.dim('⏩ [Existing Stub]')}: Found Music Album #${existing.id} ("${existing.titlePrimary}") in local DB`
+        `${c.dim('⏩ [Existing Stub]')}: Found Music Album #${existing.id} ("${existing.titlePrimary}") in local DB${freshness.isFresh ? ' (already fresh)' : ''}`
       )
       return {
         ...existing,
@@ -678,7 +709,7 @@ export class MediaPreviewSyncer {
         artist: existing.artistName,
         releaseDateYear,
         externalId: item.id,
-        queuedForFetch: true,
+        queuedForFetch: !freshness.isFresh,
       }
     }
 

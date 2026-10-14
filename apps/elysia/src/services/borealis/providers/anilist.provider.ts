@@ -260,8 +260,8 @@ export interface AniListMangaSearchPreview {
 export class AniListProvider {
   private readonly endpoint = 'https://graphql.anilist.co'
   private lastRequestTime = 0
-  private readonly minDelayMs = 700 // ~85 requests/min safe pacing
-  private rateLimitRemaining = 90
+  private readonly minDelayMs = 2000 // ~30 requests/min safe pacing (AniList degraded rate limit)
+  private rateLimitRemaining = 30
   private rateLimitResetTimestamp = 0
   private pauseUntil = 0
   private last429LogTime = 0

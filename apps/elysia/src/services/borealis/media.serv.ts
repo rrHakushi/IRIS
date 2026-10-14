@@ -247,7 +247,9 @@ export class BorealisMediaServ {
       externalId: anime.anilistId,
       priority: 1,
       depth: 0,
+      maxDepth: 0,
       triggeredBy: 'manual',
+      forceRefresh: true,
     }).catch(() => {})
 
     return {
@@ -613,7 +615,9 @@ export class BorealisMediaServ {
       externalId: manga.anilistId,
       priority: 1,
       depth: 0,
+      maxDepth: 0,
       triggeredBy: 'manual',
+      forceRefresh: true,
     }).catch(() => {})
 
     return {
@@ -974,7 +978,9 @@ export class BorealisMediaServ {
       externalId: (movie as any).tvDBId,
       priority: 1,
       depth: 0,
+      maxDepth: 0,
       triggeredBy: 'manual',
+      forceRefresh: true,
     }).catch(() => {})
 
     return {
@@ -1358,7 +1364,9 @@ export class BorealisMediaServ {
       externalId: (tv as any).tvDBId,
       priority: 1,
       depth: 0,
+      maxDepth: 0,
       triggeredBy: 'manual',
+      forceRefresh: true,
     }).catch(() => {})
 
     return {
@@ -1743,7 +1751,9 @@ export class BorealisMediaServ {
       externalId: (book as any).googleBookId,
       priority: 1,
       depth: 0,
+      maxDepth: 0,
       triggeredBy: 'manual',
+      forceRefresh: true,
     }).catch(() => {})
 
     return {
@@ -2101,7 +2111,9 @@ export class BorealisMediaServ {
       externalId: (game as any).igdbId,
       priority: 1,
       depth: 0,
+      maxDepth: 0,
       triggeredBy: 'manual',
+      forceRefresh: true,
     }).catch(() => {})
 
     return {
@@ -2470,7 +2482,9 @@ export class BorealisMediaServ {
     await MediaQueueManager.enqueueMediaUpdate('MUSIC', id, {
       priority: 1,
       depth: 0,
+      maxDepth: 0,
       triggeredBy: 'manual',
+      forceRefresh: true,
     }).catch(() => {})
 
     return {

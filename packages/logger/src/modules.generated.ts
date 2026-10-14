@@ -2,6 +2,7 @@
 export interface KnownModules {
   "Borealis:EntitySyncer": true
   "Borealis:ExternalSearch": true
+  "Borealis:Freshness": true
   "Borealis:PreviewSyncer": true
   "Borealis:Provider:AniList": true
   "Borealis:Provider:Deezer": true

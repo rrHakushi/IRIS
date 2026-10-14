@@ -7,6 +7,7 @@ import {
   closeMediaWorker,
   executeMediaUpdate,
 } from '../../workers/media.wrk'
+import { getEntityFreshness } from './freshness'
 
 export { getMediaWorker, closeMediaWorker, executeMediaUpdate }
 
@@ -31,6 +32,8 @@ export interface MediaUpdateJobData {
   triggeredBy?: 'cron' | 'manual' | 'sync'
   priority?: number
   depth?: number
+  maxDepth?: number
+  lineage?: string[]
   timestamp?: number
 }
 
@@ -142,6 +145,7 @@ export async function syncActiveMedia(): Promise<ActiveMediaSyncResult> {
         priority: 10,
         triggeredBy: 'cron',
         depth: 0,
+        maxDepth: 0,
         jobId: `media-update-ANIME-${anime.id}-${weekKey}`,
       }).catch(() => { })
       result.anime++
@@ -170,6 +174,7 @@ export async function syncActiveMedia(): Promise<ActiveMediaSyncResult> {
         priority: 10,
         triggeredBy: 'cron',
         depth: 0,
+        maxDepth: 0,
         jobId: `media-update-MANGA-${manga.id}-${weekKey}`,
       }).catch(() => { })
       result.manga++
@@ -334,8 +339,11 @@ export const MediaQueueManager = {
       externalId?: number | string | null
       priority?: number
       depth?: number
+      maxDepth?: number
+      lineage?: string[]
       triggeredBy?: 'cron' | 'manual' | 'sync'
       jobId?: string
+      forceRefresh?: boolean
     }
   ): Promise<Job<MediaJobData> | null> {
     if (isShuttingDown) {
@@ -346,6 +354,19 @@ export const MediaQueueManager = {
     }
 
     const jobName = `update-${mediaType.toLowerCase()}-${mediaId}`
+    const deterministicJobId = options?.jobId ?? `${jobName}-${Date.now()}`
+
+    // Smart Freshness check: if not forceRefresh, verify if local record is already fresh
+    if (!options?.forceRefresh) {
+      const freshness = await getEntityFreshness(mediaType, mediaId)
+      if (freshness.isFresh) {
+        logger.info(
+          `${c.magenta('⏩ [Skipped (Fresh in DB)]')}: ${c.cyan(deterministicJobId)} | ${c.bold(mediaType)} #${mediaId} is already fresh (${freshness.reason})`
+        )
+        return null
+      }
+    }
+
     const jobData: MediaUpdateJobData = {
       type: 'media-update',
       mediaType,
@@ -354,10 +375,11 @@ export const MediaQueueManager = {
       triggeredBy: options?.triggeredBy ?? 'manual',
       priority: options?.priority ?? (options?.triggeredBy === 'cron' ? 10 : 1),
       depth: options?.depth ?? 0,
+      maxDepth: options?.maxDepth,
+      lineage: options?.lineage,
       timestamp: Date.now(),
     }
 
-    const deterministicJobId = options?.jobId ?? `${jobName}-${Date.now()}`
     const opts: JobsOptions = {
       priority: jobData.priority,
       jobId: deterministicJobId,
@@ -366,8 +388,9 @@ export const MediaQueueManager = {
     try {
       const queue = this.getQueue()
       const job = await queue.add(jobName, jobData, opts)
+      const depthStr = `Depth: ${jobData.depth}${jobData.maxDepth !== undefined ? ` (max: ${jobData.maxDepth})` : ''}`
       logger.info(
-        `${c.yellow('📥 [Enqueued]')}: ${c.cyan(c.bold(deterministicJobId))} | ${c.bold(mediaType)} #${mediaId} | Priority: ${jobData.priority} | Depth: ${jobData.depth} | External ID: ${jobData.externalId ?? 'none'} | Trigger: ${c.dim(jobData.triggeredBy || 'manual')}`
+        `${c.yellow('📥 [Enqueued]')}: ${c.cyan(c.bold(deterministicJobId))} | ${c.bold(mediaType)} #${mediaId} | Priority: ${jobData.priority} | ${depthStr} | External ID: ${jobData.externalId ?? 'none'} | Trigger: ${c.dim(jobData.triggeredBy || 'manual')}`
       )
       return job
     } catch (err: any) {

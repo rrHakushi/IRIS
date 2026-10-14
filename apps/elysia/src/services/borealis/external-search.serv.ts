@@ -60,12 +60,14 @@ export class BorealisExternalSearchServ {
           try {
             const stub = await MediaPreviewSyncer.upsertAnimeSearchPreview(item)
             results.push(stub)
-            await MediaQueueManager.enqueueMediaUpdate('ANIME', stub.id, {
-              externalId: stub.externalId,
-              priority: 2,
-              depth: 1,
-              jobId: `media-update-ANIME-${stub.id}`,
-            })
+            if (stub.queuedForFetch !== false) {
+              await MediaQueueManager.enqueueMediaUpdate('ANIME', stub.id, {
+                externalId: stub.externalId,
+                priority: 2,
+                depth: 0,
+                jobId: `media-update-ANIME-${stub.id}`,
+              })
+            }
           } catch (err: any) {
             logger.warn(
               `${c.red('⚠️ [Anime Preview Error]')}: Failed for AniList #${item.id}: ${err?.message || err}`
@@ -84,12 +86,14 @@ export class BorealisExternalSearchServ {
           try {
             const stub = await MediaPreviewSyncer.upsertMangaSearchPreview(item)
             results.push(stub)
-            await MediaQueueManager.enqueueMediaUpdate('MANGA', stub.id, {
-              externalId: stub.externalId,
-              priority: 2,
-              depth: 1,
-              jobId: `media-update-MANGA-${stub.id}`,
-            })
+            if (stub.queuedForFetch !== false) {
+              await MediaQueueManager.enqueueMediaUpdate('MANGA', stub.id, {
+                externalId: stub.externalId,
+                priority: 2,
+                depth: 0,
+                jobId: `media-update-MANGA-${stub.id}`,
+              })
+            }
           } catch (err: any) {
             logger.warn(
               `${c.red('⚠️ [Manga Preview Error]')}: Failed for AniList #${item.id}: ${err?.message || err}`
@@ -108,12 +112,14 @@ export class BorealisExternalSearchServ {
           try {
             const stub = await MediaPreviewSyncer.upsertTvSearchPreview(item)
             results.push(stub)
-            await MediaQueueManager.enqueueMediaUpdate('TV', stub.id, {
-              externalId: stub.externalId,
-              priority: 2,
-              depth: 1,
-              jobId: `media-update-TV-${stub.id}`,
-            })
+            if (stub.queuedForFetch !== false) {
+              await MediaQueueManager.enqueueMediaUpdate('TV', stub.id, {
+                externalId: stub.externalId,
+                priority: 2,
+                depth: 0,
+                jobId: `media-update-TV-${stub.id}`,
+              })
+            }
           } catch (err: any) {
             logger.warn(
               `${c.red('⚠️ [TV Preview Error]')}: Failed to upsert TV preview: ${err?.message || err}`
@@ -132,12 +138,14 @@ export class BorealisExternalSearchServ {
           try {
             const stub = await MediaPreviewSyncer.upsertMovieSearchPreview(item)
             results.push(stub)
-            await MediaQueueManager.enqueueMediaUpdate('MOVIE', stub.id, {
-              externalId: stub.externalId,
-              priority: 2,
-              depth: 1,
-              jobId: `media-update-MOVIE-${stub.id}`,
-            })
+            if (stub.queuedForFetch !== false) {
+              await MediaQueueManager.enqueueMediaUpdate('MOVIE', stub.id, {
+                externalId: stub.externalId,
+                priority: 2,
+                depth: 0,
+                jobId: `media-update-MOVIE-${stub.id}`,
+              })
+            }
           } catch (err: any) {
             logger.warn(
               `${c.red('⚠️ [Movie Preview Error]')}: Failed to upsert Movie preview: ${err?.message || err}`
@@ -156,12 +164,14 @@ export class BorealisExternalSearchServ {
           try {
             const stub = await MediaPreviewSyncer.upsertGameSearchPreview(item)
             results.push(stub)
-            await MediaQueueManager.enqueueMediaUpdate('GAME', stub.id, {
-              externalId: stub.externalId,
-              priority: 2,
-              depth: 1,
-              jobId: `media-update-GAME-${stub.id}`,
-            })
+            if (stub.queuedForFetch !== false) {
+              await MediaQueueManager.enqueueMediaUpdate('GAME', stub.id, {
+                externalId: stub.externalId,
+                priority: 2,
+                depth: 0,
+                jobId: `media-update-GAME-${stub.id}`,
+              })
+            }
           } catch (err: any) {
             logger.warn(
               `${c.red('⚠️ [Game Preview Error]')}: Failed to upsert Game preview: ${err?.message || err}`
@@ -180,12 +190,14 @@ export class BorealisExternalSearchServ {
           try {
             const stub = await MediaPreviewSyncer.upsertBookSearchPreview(item)
             results.push(stub)
-            await MediaQueueManager.enqueueMediaUpdate('BOOK', stub.id, {
-              externalId: stub.externalId,
-              priority: 2,
-              depth: 1,
-              jobId: `media-update-BOOK-${stub.id}`,
-            })
+            if (stub.queuedForFetch !== false) {
+              await MediaQueueManager.enqueueMediaUpdate('BOOK', stub.id, {
+                externalId: stub.externalId,
+                priority: 2,
+                depth: 0,
+                jobId: `media-update-BOOK-${stub.id}`,
+              })
+            }
           } catch (err: any) {
             logger.warn(
               `${c.red('⚠️ [Book Preview Error]')}: Failed to upsert Book preview: ${err?.message || err}`
@@ -209,12 +221,14 @@ export class BorealisExternalSearchServ {
           try {
             const stub = await MediaPreviewSyncer.upsertMusicTrackSearchPreview(track)
             results.push(stub)
-            await MediaQueueManager.enqueueMediaUpdate('MUSIC', stub.id, {
-              externalId: stub.externalId,
-              priority: 2,
-              depth: 1,
-              jobId: `media-update-MUSIC-${stub.id}`,
-            })
+            if (stub.queuedForFetch !== false) {
+              await MediaQueueManager.enqueueMediaUpdate('MUSIC', stub.id, {
+                externalId: stub.externalId,
+                priority: 2,
+                depth: 0,
+                jobId: `media-update-MUSIC-${stub.id}`,
+              })
+            }
           } catch (err: any) {
             logger.warn(
               `${c.red('⚠️ [Music Track Error]')}: Failed to upsert track preview: ${err?.message || err}`
@@ -226,12 +240,14 @@ export class BorealisExternalSearchServ {
           try {
             const stub = await MediaPreviewSyncer.upsertMusicAlbumSearchPreview(album)
             results.push(stub)
-            await MediaQueueManager.enqueueMediaUpdate('MUSIC', stub.id, {
-              externalId: stub.externalId,
-              priority: 2,
-              depth: 1,
-              jobId: `media-update-MUSIC-${stub.id}`,
-            })
+            if (stub.queuedForFetch !== false) {
+              await MediaQueueManager.enqueueMediaUpdate('MUSIC', stub.id, {
+                externalId: stub.externalId,
+                priority: 2,
+                depth: 0,
+                jobId: `media-update-MUSIC-${stub.id}`,
+              })
+            }
           } catch (err: any) {
             logger.warn(
               `${c.red('⚠️ [Music Album Error]')}: Failed to upsert album preview: ${err?.message || err}`

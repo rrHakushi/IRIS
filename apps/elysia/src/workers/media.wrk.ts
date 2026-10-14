@@ -5,6 +5,7 @@ import { getRedisConnectionOptions } from '../services/email/queue'
 import {
   MEDIA_QUEUE_NAME,
   syncActiveMedia,
+  MediaQueueManager,
   type MediaJobData,
   type MediaType,
 } from '../services/borealis/queue'
@@ -20,20 +21,64 @@ export async function executeMediaUpdate(
   mediaType: MediaType,
   mediaId: number,
   externalId?: number | string | null,
-  depth: number = 0
+  depth: number = 0,
+  maxDepth?: number,
+  lineage: string[] = []
 ): Promise<boolean> {
   const syncStart = performance.now()
+  const depthStr = `Depth: ${depth}${maxDepth !== undefined ? ` (max: ${maxDepth})` : ''}`
   logger.info(
-    `${c.blue('🔄 [Syncing Entity]')} ${c.bold(mediaType)} #${mediaId} | External ID: ${c.cyan(String(externalId ?? 'none'))} | Depth: ${depth}`
+    `${c.blue('🔄 [Syncing Entity]')} ${c.bold(mediaType)} #${mediaId} | External ID: ${c.cyan(String(externalId ?? 'none'))} | ${depthStr}`
   )
 
   try {
-    const synced = await MediaEntitySyncer.syncEntity(mediaType, mediaId, externalId)
+    const syncResult = await MediaEntitySyncer.syncEntity(mediaType, mediaId, externalId)
     const elapsed = Math.round(performance.now() - syncStart)
-    if (synced) {
+    if (syncResult.synced) {
       logger.info(
         `${c.green('✅ [Sync Success]')} Synchronized ${c.bold(mediaType)} #${mediaId} in ${c.bold(`${elapsed}ms`)}`
       )
+
+      // Recursive relation crawling with deduplication and cycle prevention
+      const currentDepth = depth
+      const effectiveMaxDepth = maxDepth ?? Infinity
+      const currentJobId = `media-update-${mediaType}-${mediaId}`
+      const updatedLineage = [...lineage, currentJobId]
+
+      if (syncResult.discoveredRelations.length > 0 && currentDepth < effectiveMaxDepth) {
+        logger.info(
+          `${c.magenta(c.bold('[Worker:Media]'))} ${c.yellow(`⚡ Discovered ${syncResult.discoveredRelations.length} relations for ${mediaType} #${mediaId}:`)} queueing connected nodes (depth=${currentDepth + 1})...`
+        )
+
+        for (const rel of syncResult.discoveredRelations) {
+          const targetJobId = `media-update-${rel.targetType}-${rel.targetLocalId}`
+          if (updatedLineage.includes(targetJobId)) {
+            logger.info(
+              `  ↳ ${c.cyan(`[${rel.type}]`)} ${c.yellow(`${rel.targetType} #${rel.targetLocalId}`)} (Ext ID: ${rel.targetExternalId}) ${c.dim('⏩ Skipped (Cycle detected in lineage)')}`
+            )
+            continue
+          }
+
+          logger.info(
+            `  ↳ ${c.cyan(`[${rel.type}]`)} ${c.yellow(`${rel.targetType} #${rel.targetLocalId}`)} (Ext ID: ${rel.targetExternalId}) ${c.dim(`(depth=${currentDepth + 1})`)}`
+          )
+
+          await MediaQueueManager.enqueueMediaUpdate(rel.targetType, rel.targetLocalId, {
+            externalId: rel.targetExternalId,
+            priority: 3,
+            depth: currentDepth + 1,
+            maxDepth,
+            lineage: updatedLineage,
+            triggeredBy: 'sync',
+            jobId: targetJobId,
+          }).catch((err) => {
+            logger.warn(
+              `${c.red('⚠️ [Relation Enqueue Error]')}: Failed to enqueue relation ${rel.targetType} #${rel.targetLocalId}: ${err?.message || err}`
+            )
+          })
+        }
+      }
+
       return true
     }
 
@@ -156,11 +201,15 @@ export async function processMediaJob(job: Job<MediaJobData>): Promise<boolean> 
 
   if (data.type === 'media-update') {
     const depth = data.depth ?? 0
+    const maxDepth = data.maxDepth
+    const lineage = data.lineage ?? []
     const result = await executeMediaUpdate(
       data.mediaType,
       data.mediaId,
       data.externalId,
-      depth
+      depth,
+      maxDepth,
+      lineage
     )
     const elapsed = Math.round(performance.now() - jobStart)
     logger.info(
