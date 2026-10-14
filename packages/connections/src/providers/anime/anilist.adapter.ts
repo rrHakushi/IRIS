@@ -401,14 +401,30 @@ export class AniListAdapter extends BaseConnectionAdapter {
       );
     }
 
-    let status = payload.status;
-    if (status) {
-      const s = status.toUpperCase();
-      if (s === "WATCHING" || s === "REPEATING") {
+    let status: "CURRENT" | "PLANNING" | "COMPLETED" | "DROPPED" | "PAUSED" | "REPEATING" | undefined;
+    if (payload.status) {
+      const s = payload.status.toUpperCase();
+      if (
+        s === "WATCHING" ||
+        s === "READING" ||
+        s === "CURRENT" ||
+        s === "PLAYING" ||
+        s === "LISTENING"
+      ) {
         status = "CURRENT";
-      } else if (s === "ON_HOLD" || s === "HOLD") {
+      } else if (
+        s === "REPEATING" ||
+        s === "REWATCHING" ||
+        s === "REREADING"
+      ) {
+        status = "REPEATING";
+      } else if (s === "ON_HOLD" || s === "HOLD" || s === "PAUSED") {
         status = "PAUSED";
-      } else if (s === "PLANNING" || s === "PLAN_TO_WATCH" || s === "PLAN_TO_READ") {
+      } else if (
+        s === "PLANNING" ||
+        s === "PLAN_TO_WATCH" ||
+        s === "PLAN_TO_READ"
+      ) {
         status = "PLANNING";
       } else if (s === "COMPLETED") {
         status = "COMPLETED";

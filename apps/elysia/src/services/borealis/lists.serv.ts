@@ -1,6 +1,7 @@
 import { prisma } from '@IRIS/database'
 import { NotFound, BadRequest } from '../../lib/errors'
 import { hashPassword } from '../../utils/auth-crypto'
+import { ConnectionSyncQueueManager } from '../carina/connection-sync.queue'
 
 export interface ListQuery {
   page?: number
@@ -229,7 +230,7 @@ export class BorealisListsServ {
   public static async upsertAnimeEntry(userId: string, animeId: number, body: any) {
     const anime = await prisma.anime.findUnique({
       where: { id: animeId },
-      select: { id: true, episodeCount: true, status: true },
+      select: { id: true, episodeCount: true, status: true, titlePrimary: true, titleSecondary: true },
     })
     if (!anime) {
       throw new NotFound(`Anime with ID ${animeId} does not exist`)
@@ -275,6 +276,26 @@ export class BorealisListsServ {
       update: updateData,
     })
 
+    const connectionsToSync = body.connections ?? entry.connections
+    if (connectionsToSync) {
+      ConnectionSyncQueueManager.enqueueSyncJobs({
+        userId,
+        mediaType: 'ANIME',
+        mediaId: animeId,
+        mediaTitle: anime.titlePrimary || anime.titleSecondary || 'Anime',
+        entry: {
+          status: entry.status,
+          progress: entry.progress,
+          score: entry.score,
+          notes: entry.notes,
+          rewatched: entry.rewatched,
+          startedAt: entry.startedAt,
+          completedAt: entry.completedAt,
+        },
+        connections: connectionsToSync,
+      }).catch(() => {})
+    }
+
     return {
       success: true,
       message: 'Anime list entry updated successfully',
@@ -300,10 +321,10 @@ export class BorealisListsServ {
     }
   }
 
-  public static async incrementAnime(userId: string, animeId: number, body?: { count?: number; status?: string } | null) {
+  public static async incrementAnime(userId: string, animeId: number, body?: { count?: number; status?: string; connections?: any } | null) {
     const anime = await prisma.anime.findUnique({
       where: { id: animeId },
-      select: { id: true, episodeCount: true, status: true },
+      select: { id: true, episodeCount: true, status: true, titlePrimary: true, titleSecondary: true },
     })
     if (!anime) {
       throw new NotFound(`Anime with ID ${animeId} does not exist`)
@@ -340,14 +361,36 @@ export class BorealisListsServ {
         progress: newProgress,
         startedAt: new Date(),
         completedAt,
+        connections: (body as any)?.connections ?? null,
       },
       update: {
         status: newStatus as any,
         progress: newProgress,
         completedAt,
         ...(existing?.status === 'PLANNING' ? { startedAt: new Date() } : {}),
+        ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
       },
     })
+
+    const connectionsToSync = (body as any)?.connections ?? entry.connections ?? existing?.connections
+    if (connectionsToSync) {
+      ConnectionSyncQueueManager.enqueueSyncJobs({
+        userId,
+        mediaType: 'ANIME',
+        mediaId: animeId,
+        mediaTitle: anime.titlePrimary || anime.titleSecondary || 'Anime',
+        entry: {
+          status: entry.status,
+          progress: entry.progress,
+          score: existing?.score ?? null,
+          notes: existing?.notes ?? null,
+          rewatched: existing?.rewatched ?? 0,
+          startedAt: entry.startedAt,
+          completedAt: entry.completedAt,
+        },
+        connections: connectionsToSync,
+      }).catch(() => {})
+    }
 
     return {
       success: true,
@@ -519,7 +562,7 @@ export class BorealisListsServ {
   public static async upsertMangaEntry(userId: string, mangaId: number, body: any) {
     const manga = await prisma.manga.findUnique({
       where: { id: mangaId },
-      select: { id: true, chapterCount: true, volumeCount: true },
+      select: { id: true, chapterCount: true, volumeCount: true, titlePrimary: true, titleSecondary: true },
     })
     if (!manga) {
       throw new NotFound(`Manga with ID ${mangaId} does not exist`)
@@ -568,6 +611,26 @@ export class BorealisListsServ {
       update: updateData,
     })
 
+    const connectionsToSync = body.connections ?? entry.connections
+    if (connectionsToSync) {
+      ConnectionSyncQueueManager.enqueueSyncJobs({
+        userId,
+        mediaType: 'MANGA',
+        mediaId: mangaId,
+        mediaTitle: manga.titlePrimary || manga.titleSecondary || 'Manga',
+        entry: {
+          status: entry.status,
+          progress: entry.chaptersProgress,
+          score: entry.score,
+          notes: entry.notes,
+          rewatched: entry.reread,
+          startedAt: entry.startedAt,
+          completedAt: entry.completedAt,
+        },
+        connections: connectionsToSync,
+      }).catch(() => {})
+    }
+
     return {
       success: true,
       message: 'Manga list entry updated successfully',
@@ -596,11 +659,11 @@ export class BorealisListsServ {
   public static async incrementManga(
     userId: string,
     mangaId: number,
-    body?: { count?: number; type?: 'chapter' | 'volume'; status?: string } | null
+    body?: { count?: number; type?: 'chapter' | 'volume'; status?: string; connections?: any } | null
   ) {
     const manga = await prisma.manga.findUnique({
       where: { id: mangaId },
-      select: { id: true, chapterCount: true, volumeCount: true },
+      select: { id: true, chapterCount: true, volumeCount: true, titlePrimary: true, titleSecondary: true },
     })
     if (!manga) {
       throw new NotFound(`Manga with ID ${mangaId} does not exist`)
@@ -644,6 +707,7 @@ export class BorealisListsServ {
         volumesProgress,
         startedAt: new Date(),
         completedAt,
+        connections: (body as any)?.connections ?? null,
       },
       update: {
         status: newStatus as any,
@@ -651,8 +715,29 @@ export class BorealisListsServ {
         volumesProgress,
         completedAt,
         ...(existing?.status === 'PLANNING' ? { startedAt: new Date() } : {}),
+        ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
       },
     })
+
+    const connectionsToSync = (body as any)?.connections ?? entry.connections ?? existing?.connections
+    if (connectionsToSync) {
+      ConnectionSyncQueueManager.enqueueSyncJobs({
+        userId,
+        mediaType: 'MANGA',
+        mediaId: mangaId,
+        mediaTitle: manga.titlePrimary || manga.titleSecondary || 'Manga',
+        entry: {
+          status: entry.status,
+          progress: entry.chaptersProgress,
+          score: existing?.score ?? null,
+          notes: existing?.notes ?? null,
+          rewatched: existing?.reread ?? 0,
+          startedAt: entry.startedAt,
+          completedAt: entry.completedAt,
+        },
+        connections: connectionsToSync,
+      }).catch(() => {})
+    }
 
     return {
       success: true,
@@ -819,7 +904,7 @@ export class BorealisListsServ {
   public static async upsertMovieEntry(userId: string, movieId: number, body: any) {
     const movie = await prisma.movie.findUnique({
       where: { id: movieId },
-      select: { id: true, titlePrimary: true },
+      select: { id: true, titlePrimary: true, titleSecondary: true },
     })
     if (!movie) {
       throw new NotFound(`Movie with ID ${movieId} does not exist`)
@@ -858,6 +943,26 @@ export class BorealisListsServ {
       update: updateData,
     })
 
+    const connectionsToSync = body.connections ?? entry.connections
+    if (connectionsToSync) {
+      ConnectionSyncQueueManager.enqueueSyncJobs({
+        userId,
+        mediaType: 'MOVIE',
+        mediaId: movieId,
+        mediaTitle: movie.titlePrimary || movie.titleSecondary || 'Movie',
+        entry: {
+          status: entry.status,
+          progress: entry.status === 'COMPLETED' ? 1 : 0,
+          score: entry.score,
+          notes: entry.notes,
+          rewatched: entry.rewatched,
+          startedAt: entry.startedAt,
+          completedAt: entry.completedAt,
+        },
+        connections: connectionsToSync,
+      }).catch(() => {})
+    }
+
     return {
       success: true,
       message: 'Movie list entry updated successfully',
@@ -883,10 +988,10 @@ export class BorealisListsServ {
     }
   }
 
-  public static async incrementMovie(userId: string, movieId: number, body?: { count?: number } | null) {
+  public static async incrementMovie(userId: string, movieId: number, body?: { count?: number; connections?: any } | null) {
     const movie = await prisma.movie.findUnique({
       where: { id: movieId },
-      select: { id: true },
+      select: { id: true, titlePrimary: true, titleSecondary: true },
     })
     if (!movie) {
       throw new NotFound(`Movie with ID ${movieId} does not exist`)
@@ -907,13 +1012,35 @@ export class BorealisListsServ {
         status: 'COMPLETED',
         rewatched: newRewatched,
         completedAt: new Date(),
+        connections: (body as any)?.connections ?? null,
       },
       update: {
         status: 'COMPLETED',
         rewatched: newRewatched,
         completedAt: existing?.completedAt ?? new Date(),
+        ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
       },
     })
+
+    const connectionsToSync = (body as any)?.connections ?? entry.connections ?? existing?.connections
+    if (connectionsToSync) {
+      ConnectionSyncQueueManager.enqueueSyncJobs({
+        userId,
+        mediaType: 'MOVIE',
+        mediaId: movieId,
+        mediaTitle: movie.titlePrimary || movie.titleSecondary || 'Movie',
+        entry: {
+          status: entry.status,
+          progress: 1,
+          score: existing?.score ?? null,
+          notes: existing?.notes ?? null,
+          rewatched: entry.rewatched,
+          startedAt: entry.startedAt,
+          completedAt: entry.completedAt,
+        },
+        connections: connectionsToSync,
+      }).catch(() => {})
+    }
 
     return {
       success: true,
@@ -1081,7 +1208,7 @@ export class BorealisListsServ {
   public static async upsertTvEntry(userId: string, tvId: number, body: any) {
     const tv = await prisma.tv.findUnique({
       where: { id: tvId },
-      select: { id: true, episodeCount: true },
+      select: { id: true, episodeCount: true, titlePrimary: true, titleSecondary: true },
     })
     if (!tv) {
       throw new NotFound(`TV series with ID ${tvId} does not exist`)
@@ -1127,6 +1254,26 @@ export class BorealisListsServ {
       update: updateData,
     })
 
+    const connectionsToSync = body.connections ?? entry.connections
+    if (connectionsToSync) {
+      ConnectionSyncQueueManager.enqueueSyncJobs({
+        userId,
+        mediaType: 'TV',
+        mediaId: tvId,
+        mediaTitle: tv.titlePrimary || (tv as any).titleSecondary || 'TV',
+        entry: {
+          status: entry.status,
+          progress: entry.progress,
+          score: entry.score,
+          notes: entry.notes,
+          rewatched: entry.rewatched,
+          startedAt: entry.startedAt,
+          completedAt: entry.completedAt,
+        },
+        connections: connectionsToSync,
+      }).catch(() => {})
+    }
+
     return {
       success: true,
       message: 'TV list entry updated successfully',
@@ -1152,10 +1299,10 @@ export class BorealisListsServ {
     }
   }
 
-  public static async incrementTv(userId: string, tvId: number, body?: { count?: number; status?: string } | null) {
+  public static async incrementTv(userId: string, tvId: number, body?: { count?: number; status?: string; connections?: any } | null) {
     const tv = await prisma.tv.findUnique({
       where: { id: tvId },
-      select: { id: true, episodeCount: true },
+      select: { id: true, episodeCount: true, titlePrimary: true, titleSecondary: true },
     })
     if (!tv) {
       throw new NotFound(`TV series with ID ${tvId} does not exist`)
@@ -1192,14 +1339,36 @@ export class BorealisListsServ {
         progress: newProgress,
         startedAt: new Date(),
         completedAt,
+        connections: (body as any)?.connections ?? null,
       },
       update: {
         status: newStatus as any,
         progress: newProgress,
         completedAt,
         ...(existing?.status === 'PLANNING' ? { startedAt: new Date() } : {}),
+        ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
       },
     })
+
+    const connectionsToSync = (body as any)?.connections ?? entry.connections ?? existing?.connections
+    if (connectionsToSync) {
+      ConnectionSyncQueueManager.enqueueSyncJobs({
+        userId,
+        mediaType: 'TV',
+        mediaId: tvId,
+        mediaTitle: tv.titlePrimary || (tv as any).titleSecondary || 'TV',
+        entry: {
+          status: entry.status,
+          progress: entry.progress,
+          score: existing?.score ?? null,
+          notes: existing?.notes ?? null,
+          rewatched: existing?.rewatched ?? 0,
+          startedAt: entry.startedAt,
+          completedAt: entry.completedAt,
+        },
+        connections: connectionsToSync,
+      }).catch(() => {})
+    }
 
     return {
       success: true,
@@ -1370,7 +1539,7 @@ export class BorealisListsServ {
   public static async upsertGameEntry(userId: string, gameId: number, body: any) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
-      select: { id: true },
+      select: { id: true, titlePrimary: true, titleSecondary: true },
     })
     if (!game) {
       throw new NotFound(`Game with ID ${gameId} does not exist`)
@@ -1412,6 +1581,26 @@ export class BorealisListsServ {
       update: updateData,
     })
 
+    const connectionsToSync = body.connections ?? entry.connections
+    if (connectionsToSync) {
+      ConnectionSyncQueueManager.enqueueSyncJobs({
+        userId,
+        mediaType: 'GAME',
+        mediaId: gameId,
+        mediaTitle: game.titlePrimary || game.titleSecondary || 'Game',
+        entry: {
+          status: entry.status,
+          progress: entry.progress,
+          score: entry.score,
+          notes: entry.notes,
+          rewatched: entry.replayed,
+          startedAt: entry.startedAt,
+          completedAt: entry.completedAt,
+        },
+        connections: connectionsToSync,
+      }).catch(() => {})
+    }
+
     return {
       success: true,
       message: 'Game list entry updated successfully',
@@ -1437,10 +1626,10 @@ export class BorealisListsServ {
     }
   }
 
-  public static async incrementGame(userId: string, gameId: number, body?: { count?: number; status?: string } | null) {
+  public static async incrementGame(userId: string, gameId: number, body?: { count?: number; status?: string; connections?: any } | null) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
-      select: { id: true },
+      select: { id: true, titlePrimary: true, titleSecondary: true },
     })
     if (!game) {
       throw new NotFound(`Game with ID ${gameId} does not exist`)
@@ -1467,13 +1656,35 @@ export class BorealisListsServ {
         status: newStatus as any,
         progress: newProgress,
         startedAt: new Date(),
+        connections: (body as any)?.connections ?? null,
       },
       update: {
         status: newStatus as any,
         progress: newProgress,
         ...(existing?.status === 'PLANNING' ? { startedAt: new Date() } : {}),
+        ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
       },
     })
+
+    const connectionsToSync = (body as any)?.connections ?? entry.connections ?? existing?.connections
+    if (connectionsToSync) {
+      ConnectionSyncQueueManager.enqueueSyncJobs({
+        userId,
+        mediaType: 'GAME',
+        mediaId: gameId,
+        mediaTitle: game.titlePrimary || game.titleSecondary || 'Game',
+        entry: {
+          status: entry.status,
+          progress: entry.progress,
+          score: existing?.score ?? null,
+          notes: existing?.notes ?? null,
+          rewatched: existing?.replayed ?? 0,
+          startedAt: entry.startedAt,
+          completedAt: entry.completedAt,
+        },
+        connections: connectionsToSync,
+      }).catch(() => {})
+    }
 
     return {
       success: true,
@@ -1646,7 +1857,7 @@ export class BorealisListsServ {
   public static async upsertBookEntry(userId: string, bookId: number, body: any) {
     const book = await prisma.book.findUnique({
       where: { id: bookId },
-      select: { id: true, pageCount: true, chapterCount: true, volumeCount: true },
+      select: { id: true, pageCount: true, chapterCount: true, volumeCount: true, titlePrimary: true, titleSecondary: true },
     })
     if (!book) {
       throw new NotFound(`Book with ID ${bookId} does not exist`)
@@ -1698,6 +1909,26 @@ export class BorealisListsServ {
       update: updateData,
     })
 
+    const connectionsToSync = body.connections ?? entry.connections
+    if (connectionsToSync) {
+      ConnectionSyncQueueManager.enqueueSyncJobs({
+        userId,
+        mediaType: 'BOOK',
+        mediaId: bookId,
+        mediaTitle: book.titlePrimary || book.titleSecondary || 'Book',
+        entry: {
+          status: entry.status,
+          progress: entry.progressChapters || entry.progressPages || entry.progressVolumes || 0,
+          score: entry.score,
+          notes: entry.notes,
+          rewatched: entry.reread,
+          startedAt: entry.startedAt,
+          completedAt: entry.completedAt,
+        },
+        connections: connectionsToSync,
+      }).catch(() => {})
+    }
+
     return {
       success: true,
       message: 'Book list entry updated successfully',
@@ -1726,11 +1957,11 @@ export class BorealisListsServ {
   public static async incrementBook(
     userId: string,
     bookId: number,
-    body?: { count?: number; type?: 'page' | 'chapter' | 'volume'; status?: string } | null
+    body?: { count?: number; type?: 'page' | 'chapter' | 'volume'; status?: string; connections?: any } | null
   ) {
     const book = await prisma.book.findUnique({
       where: { id: bookId },
-      select: { id: true, pageCount: true, chapterCount: true, volumeCount: true },
+      select: { id: true, pageCount: true, chapterCount: true, volumeCount: true, titlePrimary: true, titleSecondary: true },
     })
     if (!book) {
       throw new NotFound(`Book with ID ${bookId} does not exist`)
@@ -1778,6 +2009,7 @@ export class BorealisListsServ {
         progressVolumes,
         startedAt: new Date(),
         completedAt,
+        connections: (body as any)?.connections ?? null,
       },
       update: {
         status: newStatus as any,
@@ -1786,8 +2018,29 @@ export class BorealisListsServ {
         progressVolumes,
         completedAt,
         ...(existing?.status === 'PLANNING' ? { startedAt: new Date() } : {}),
+        ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
       },
     })
+
+    const connectionsToSync = (body as any)?.connections ?? entry.connections ?? existing?.connections
+    if (connectionsToSync) {
+      ConnectionSyncQueueManager.enqueueSyncJobs({
+        userId,
+        mediaType: 'BOOK',
+        mediaId: bookId,
+        mediaTitle: book.titlePrimary || book.titleSecondary || 'Book',
+        entry: {
+          status: entry.status,
+          progress: entry.progressChapters || entry.progressPages || entry.progressVolumes || 0,
+          score: existing?.score ?? null,
+          notes: existing?.notes ?? null,
+          rewatched: existing?.reread ?? 0,
+          startedAt: entry.startedAt,
+          completedAt: entry.completedAt,
+        },
+        connections: connectionsToSync,
+      }).catch(() => {})
+    }
 
     return {
       success: true,
@@ -1959,7 +2212,7 @@ export class BorealisListsServ {
   public static async upsertMusicEntry(userId: string, musicId: number, body: any) {
     const music = await prisma.music.findUnique({
       where: { id: musicId },
-      select: { id: true, titlePrimary: true },
+      select: { id: true, titlePrimary: true, titleSecondary: true },
     })
     if (!music) {
       throw new NotFound(`Music with ID ${musicId} does not exist`)
@@ -1996,6 +2249,25 @@ export class BorealisListsServ {
       update: updateData,
     })
 
+    const connectionsToSync = body.connections ?? entry.connections
+    if (connectionsToSync) {
+      ConnectionSyncQueueManager.enqueueSyncJobs({
+        userId,
+        mediaType: 'MUSIC',
+        mediaId: musicId,
+        mediaTitle: music.titlePrimary || music.titleSecondary || 'Music',
+        entry: {
+          status: entry.status,
+          progress: entry.playCount,
+          score: entry.score,
+          notes: entry.notes,
+          startedAt: entry.startedAt,
+          completedAt: entry.completedAt,
+        },
+        connections: connectionsToSync,
+      }).catch(() => {})
+    }
+
     return {
       success: true,
       message: 'Music list entry updated successfully',
@@ -2021,10 +2293,10 @@ export class BorealisListsServ {
     }
   }
 
-  public static async incrementMusic(userId: string, musicId: number, body?: { count?: number } | null) {
+  public static async incrementMusic(userId: string, musicId: number, body?: { count?: number; connections?: any } | null) {
     const music = await prisma.music.findUnique({
       where: { id: musicId },
-      select: { id: true },
+      select: { id: true, titlePrimary: true, titleSecondary: true },
     })
     if (!music) {
       throw new NotFound(`Music with ID ${musicId} does not exist`)
@@ -2049,13 +2321,34 @@ export class BorealisListsServ {
         status: newStatus as any,
         playCount: newPlayCount,
         startedAt: new Date(),
+        connections: (body as any)?.connections ?? null,
       },
       update: {
         status: newStatus as any,
         playCount: newPlayCount,
         ...(existing?.status === 'PLANNING' ? { startedAt: new Date() } : {}),
+        ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
       },
     })
+
+    const connectionsToSync = (body as any)?.connections ?? entry.connections ?? existing?.connections
+    if (connectionsToSync) {
+      ConnectionSyncQueueManager.enqueueSyncJobs({
+        userId,
+        mediaType: 'MUSIC',
+        mediaId: musicId,
+        mediaTitle: music.titlePrimary || music.titleSecondary || 'Music',
+        entry: {
+          status: entry.status,
+          progress: entry.playCount,
+          score: existing?.score ?? null,
+          notes: existing?.notes ?? null,
+          startedAt: entry.startedAt,
+          completedAt: entry.completedAt,
+        },
+        connections: connectionsToSync,
+      }).catch(() => {})
+    }
 
     return {
       success: true,

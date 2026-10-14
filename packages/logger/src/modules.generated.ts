@@ -9,6 +9,7 @@ export interface KnownModules {
   "Borealis:Provider:GoogleBooks": true
   "Borealis:Provider:IGDB": true
   "Borealis:Provider:TheTVDB": true
+  "BullMQ:ConnectionSync": true
   "BullMQ:Emails": true
   "BullMQ:MediaQueue": true
   "CarinaNotifications": true
@@ -19,6 +20,7 @@ export interface KnownModules {
   "EmailService": true
   "Mailer": true
   "NotificationService": true
+  "Worker:ConnectionSync": true
   "Worker:Email": true
   "Worker:Media": true
 }

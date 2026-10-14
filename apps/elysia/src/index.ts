@@ -3,6 +3,7 @@ import os from 'node:os'
 import process from 'node:process'
 import { LogFactory } from '@Iris/logger'
 import { MediaQueueManager } from './services/borealis/queue'
+import { ConnectionSyncQueueManager } from './services/carina/connection-sync.queue'
 import { app, type App, startServer } from './server'
 
 export { app, type App, startServer }
@@ -30,6 +31,13 @@ if (isClusteringEnabled && cluster.isPrimary) {
     logger.warn(`MediaQueue initialization notice: ${err?.message || err}`)
   })
 
+  // Initialize background connection sync workers in the primary process only
+  try {
+    ConnectionSyncQueueManager.initWorkers()
+  } catch (err: any) {
+    logger.warn(`ConnectionSyncQueue initialization notice: ${err?.message || err}`)
+  }
+
   // Spawn cluster workers
   for (let i = 0; i < numWorkers; i++) {
     cluster.fork()
@@ -53,7 +61,10 @@ if (isClusteringEnabled && cluster.isPrimary) {
     logger.info(`Primary ${process.pid} received ${signal}. Stopping all workers gracefully...`)
 
     try {
-      await MediaQueueManager.shutdown()
+      await Promise.all([
+        MediaQueueManager.shutdown(),
+        ConnectionSyncQueueManager.shutdown(),
+      ])
     } catch {}
 
     for (const id in cluster.workers) {
@@ -75,6 +86,11 @@ if (isClusteringEnabled && cluster.isPrimary) {
     MediaQueueManager.initWorkerAndSchedule().catch((err) => {
       logger.warn(`MediaQueue initialization notice: ${err?.message || err}`)
     })
+    try {
+      ConnectionSyncQueueManager.initWorkers()
+    } catch (err: any) {
+      logger.warn(`ConnectionSyncQueue initialization notice: ${err?.message || err}`)
+    }
   }
 
   startServer()

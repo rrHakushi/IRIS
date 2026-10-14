@@ -75,6 +75,7 @@ export const BorealisListsModel = {
     t.Object({
       count: t.Optional(t.Number({ default: 1, minimum: 1, description: 'Number of episodes to increment by' })),
       status: t.Optional(t.String({ description: 'Optional status override' })),
+      connections: t.Optional(t.Any({ description: 'Optional connection overrides' })),
     })
   ),
 
@@ -97,6 +98,7 @@ export const BorealisListsModel = {
       count: t.Optional(t.Number({ default: 1, minimum: 1, description: 'Number of chapters/volumes to increment by' })),
       type: t.Optional(t.Union([t.Literal('chapter'), t.Literal('volume')], { default: 'chapter', description: 'Progress type' })),
       status: t.Optional(t.String({ description: 'Optional status override' })),
+      connections: t.Optional(t.Any({ description: 'Optional connection overrides' })),
     })
   ),
 
@@ -115,6 +117,7 @@ export const BorealisListsModel = {
   movieIncrementBody: t.Optional(
     t.Object({
       count: t.Optional(t.Number({ default: 1, minimum: 1, description: 'Number of rewatches to increment by' })),
+      connections: t.Optional(t.Any({ description: 'Optional connection overrides' })),
     })
   ),
 
@@ -135,6 +138,7 @@ export const BorealisListsModel = {
     t.Object({
       count: t.Optional(t.Number({ default: 1, minimum: 1, description: 'Number of episodes to increment by' })),
       status: t.Optional(t.String({ description: 'Optional status override' })),
+      connections: t.Optional(t.Any({ description: 'Optional connection overrides' })),
     })
   ),
 
@@ -155,6 +159,7 @@ export const BorealisListsModel = {
     t.Object({
       count: t.Optional(t.Number({ default: 1, minimum: 1, description: 'Number of hours to increment by' })),
       status: t.Optional(t.String({ description: 'Optional status override' })),
+      connections: t.Optional(t.Any({ description: 'Optional connection overrides' })),
     })
   ),
 
@@ -178,6 +183,7 @@ export const BorealisListsModel = {
       count: t.Optional(t.Number({ default: 1, minimum: 1, description: 'Number of pages/chapters to increment by' })),
       type: t.Optional(t.Union([t.Literal('page'), t.Literal('chapter'), t.Literal('volume')], { default: 'page', description: 'Progress type' })),
       status: t.Optional(t.String({ description: 'Optional status override' })),
+      connections: t.Optional(t.Any({ description: 'Optional connection overrides' })),
     })
   ),
 
@@ -195,6 +201,7 @@ export const BorealisListsModel = {
   musicIncrementBody: t.Optional(
     t.Object({
       count: t.Optional(t.Number({ default: 1, minimum: 1, description: 'Number of listens to increment by' })),
+      connections: t.Optional(t.Any({ description: 'Optional connection overrides' })),
     })
   ),
 
@@ -210,6 +217,7 @@ export const BorealisListsModel = {
     t.Object({
       count: t.Optional(t.Number({ default: 1, minimum: 1, description: 'Increment count' })),
       status: t.Optional(t.String({ description: 'Optional status override' })),
+      connections: t.Optional(t.Any({ description: 'Optional connection overrides' })),
     })
   ),
 

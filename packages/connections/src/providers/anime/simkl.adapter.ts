@@ -450,6 +450,7 @@ export class SimklAdapter extends BaseConnectionAdapter {
       const s = payload.status.toUpperCase()
       switch (s) {
         case "WATCHING":
+        case "CURRENT":
         case "REPEATING":
           simklStatus = "watching"
           break
