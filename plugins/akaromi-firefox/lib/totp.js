@@ -31,15 +31,16 @@
 
   /**
    * Generates a 6-digit TOTP token from base32 secret
+   * Supports optional timeOffsetSeconds to compute future/next codes (e.g. +30s)
    */
-  IrisTotp.generateTotp = async function (secret, timeStepSeconds = 30) {
+  IrisTotp.generateTotp = async function (secret, timeStepSeconds = 30, timeOffsetSeconds = 0) {
     if (!secret) return ""
 
     try {
       const keyBytes = base32Decode(secret)
       if (keyBytes.length === 0) return ""
 
-      const epoch = Math.floor(Date.now() / 1000)
+      const epoch = Math.floor(Date.now() / 1000) + timeOffsetSeconds
       const counter = Math.floor(epoch / timeStepSeconds)
 
       const counterBuffer = new ArrayBuffer(8)
@@ -96,7 +97,7 @@
       const trimmed = uri.trim()
       if (!trimmed.toLowerCase().startsWith("otpauth://")) {
         // If user provided raw secret key instead of URI
-        const cleanSecret = trimmed.replace(/[\s\-_=]/g, "").toUpperCase()
+        const cleanSecret = trimmed.replace(/^secret:\s*/i, "").replace(/[\s\-_=]/g, "").toUpperCase()
         if (/^[A-Z2-7]+=*$/.test(cleanSecret)) {
           return { secret: cleanSecret, digits: 6, period: 30 }
         }

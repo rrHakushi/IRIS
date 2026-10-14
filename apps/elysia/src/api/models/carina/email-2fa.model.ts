@@ -30,9 +30,8 @@ export const CarinaEmail2faModel = {
   verifyBody: t.Object({
     code: t.String({
       minLength: 6,
-      maxLength: 6,
-      pattern: '^[0-9]{6}$',
-      description: '6-digit numeric verification code',
+      maxLength: 32,
+      description: '6-digit verification code, TOTP token, or backup recovery code',
     }),
     mfaTicket: t.Optional(
       t.String({

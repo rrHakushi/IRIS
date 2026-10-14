@@ -67,7 +67,7 @@
    * Log into IRIS account (returns mfaRequired/mfaTicket if 2FA active)
    */
   IrisApi.login = async function (identifier, password) {
-    const data = await request("/auth/login", {
+    const data = await request("/carina/auth/login", {
       method: "POST",
       body: JSON.stringify({ identifier, password }),
     })
@@ -93,15 +93,14 @@
   }
 
   /**
-   * Complete MFA verification challenge (TOTP or backup code)
+   * Complete MFA verification challenge (email OTP or totp)
    */
-  IrisApi.verifyMfa = async function (mfaTicket, code, mfaType = "totp") {
-    const data = await request("/auth/email/verify", {
+  IrisApi.verifyMfa = async function (mfaTicket, code, mfaType = "email") {
+    const data = await request("/carina/auth/twofactor/email/verify", {
       method: "POST",
       body: JSON.stringify({
         mfaTicket,
         code: String(code).trim(),
-        mfaType,
       }),
     })
 
@@ -125,6 +124,16 @@
   }
 
   /**
+   * Dispatch / resend MFA verification email
+   */
+  IrisApi.sendMfaEmail = async function (mfaTicket) {
+    return request("/carina/auth/twofactor/email/send", {
+      method: "POST",
+      body: JSON.stringify({ mfaTicket }),
+    })
+  }
+
+  /**
    * Authenticate directly via API Key
    */
   IrisApi.loginWithApiKey = async function (apiKey) {
@@ -132,7 +141,7 @@
     if (!cleanKey) throw new Error("API Key cannot be empty")
 
     const serverUrl = await IrisApi.getServerUrl()
-    const res = await fetch(`${serverUrl}/users/me`, {
+    const res = await fetch(`${serverUrl}/carina/users/me`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -180,7 +189,7 @@
    */
   IrisApi.checkAuth = async function () {
     try {
-      const data = await request("/users/me")
+      const data = await request("/carina/users/me")
       return { authenticated: true, user: data?.user || data }
     } catch (err) {
       return { authenticated: false, error: err.message }
@@ -188,31 +197,66 @@
   }
 
   /**
-   * Fetch encryption keys (publicKey, encryptedPrivateKey)
+   * Fetch encryption keys (publicKey, encryptedPrivateKey, salt)
    */
   IrisApi.fetchEncryptionKeys = async function () {
-    return request("/users/me/encryption")
+    return request("/akaromi/encryption/keys")
   }
 
   /**
    * Fetch all vault ciphers
    */
-  IrisApi.fetchCiphers = async function () {
-    return request("/pass/vault/ciphers")
+  IrisApi.fetchCiphers = async function (query = {}) {
+    const params = new URLSearchParams()
+    if (query.folderId) params.append("folderId", query.folderId)
+    if (query.type) params.append("type", query.type)
+    if (typeof query.favorite === "boolean") params.append("favorite", String(query.favorite))
+    if (typeof query.trash === "boolean") params.append("trash", String(query.trash))
+    const qStr = params.toString() ? `?${params.toString()}` : ""
+    return request(`/akaromi/ciphers${qStr}`)
   }
 
   /**
    * Fetch all folders
    */
   IrisApi.fetchFolders = async function () {
-    return request("/pass/vault/folders")
+    return request("/akaromi/folders")
+  }
+
+  /**
+   * Create folder in vault
+   */
+  IrisApi.createFolder = async function (payload) {
+    return request("/akaromi/folders", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    })
+  }
+
+  /**
+   * Update folder in vault
+   */
+  IrisApi.updateFolder = async function (id, payload) {
+    return request(`/akaromi/folders/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    })
+  }
+
+  /**
+   * Delete folder in vault
+   */
+  IrisApi.deleteFolder = async function (id) {
+    return request(`/akaromi/folders/${id}`, {
+      method: "DELETE",
+    })
   }
 
   /**
    * Create cipher in vault
    */
   IrisApi.createCipher = async function (payload) {
-    return request("/pass/vault/ciphers", {
+    return request("/akaromi/ciphers", {
       method: "POST",
       body: JSON.stringify(payload),
     })
@@ -222,8 +266,8 @@
    * Update cipher in vault
    */
   IrisApi.updateCipher = async function (id, payload) {
-    return request(`/pass/vault/ciphers/${id}`, {
-      method: "PUT",
+    return request(`/akaromi/ciphers/${id}`, {
+      method: "PATCH",
       body: JSON.stringify(payload),
     })
   }
@@ -231,8 +275,27 @@
   /**
    * Delete / trash cipher in vault
    */
-  IrisApi.deleteCipher = async function (id) {
-    return request(`/pass/vault/ciphers/${id}`, {
+  IrisApi.deleteCipher = async function (id, permanent = false) {
+    const q = permanent ? "?permanent=true" : ""
+    return request(`/akaromi/ciphers/${id}${q}`, {
+      method: "DELETE",
+    })
+  }
+
+  /**
+   * Restore cipher from trash
+   */
+  IrisApi.restoreCipher = async function (id) {
+    return request(`/akaromi/ciphers/${id}/restore`, {
+      method: "POST",
+    })
+  }
+
+  /**
+   * Permanently empty trash bin
+   */
+  IrisApi.emptyTrash = async function () {
+    return request("/akaromi/ciphers/trash", {
       method: "DELETE",
     })
   }
@@ -242,7 +305,7 @@
    */
   IrisApi.syncVault = async function (sinceTimestamp) {
     const query = sinceTimestamp ? `?since=${sinceTimestamp}` : ""
-    return request(`/pass/vault/sync${query}`)
+    return request(`/akaromi/sync${query}`)
   }
 
   root.IrisApi = IrisApi

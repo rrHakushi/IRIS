@@ -1,10 +1,13 @@
 import { randomInt } from 'node:crypto'
+import { verify as verifyTotpCode } from 'otplib'
 import { prisma } from '@IRIS/database'
 import { cache } from '../../utils/cache'
 import {
   verifyPassword,
   generateBackupCodes,
   signUserJwt,
+  decryptSecret,
+  verifyBackupCode,
 } from '../../utils/auth-crypto'
 import {
   BadRequest,
@@ -221,22 +224,61 @@ export abstract class CarinaEmail2faServ {
         where: { id: ticketData.userId },
       })
 
-      if (!user || !user.email) {
+      if (!user) {
         throw new NotFound('User account not found.')
       }
 
-      if (!user.emailMfaEnabled) {
-        throw new BadRequest('Email MFA is not enabled on this account.')
+      const hasMfaActive =
+        user.emailMfaEnabled || user.TOTPEnabled || user.backupCodes.length > 0
+      if (!hasMfaActive) {
+        throw new BadRequest('Multi-factor authentication is not active on this account.')
       }
 
-      const cachedCode = await cache.get<string>(`auth:mfa-email-code:${user.id}`)
+      let isVerified = false
 
-      if (!cachedCode || cachedCode !== cleanCode) {
+      // Option A: Check TOTP Authenticator code if user has TOTP enabled
+      if (user.TOTPEnabled && user.TOTPSecret) {
+        try {
+          const secret = decryptSecret(user.TOTPSecret)
+          const totpResult = await verifyTotpCode({
+            token: cleanCode,
+            secret,
+            epochTolerance: 30,
+          })
+          if (totpResult?.valid) {
+            isVerified = true
+          }
+        } catch {}
+      }
+
+      // Option B: Check cached Email OTP if not yet verified and email MFA is active
+      if (!isVerified && user.emailMfaEnabled) {
+        const cachedCode = await cache.get<string>(`auth:mfa-email-code:${user.id}`)
+        if (cachedCode && cachedCode === cleanCode) {
+          isVerified = true
+          await cache.del(`auth:mfa-email-code:${user.id}`)
+        }
+      }
+
+      // Option C: Check Recovery Backup Code if not yet verified
+      if (!isVerified && user.backupCodes && user.backupCodes.length > 0) {
+        const matchedIndex = await verifyBackupCode(cleanCode, user.backupCodes)
+        if (matchedIndex !== -1) {
+          isVerified = true
+          const updatedCodes = [...user.backupCodes]
+          updatedCodes.splice(matchedIndex, 1)
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { backupCodes: updatedCodes },
+          })
+        }
+      }
+
+      if (!isVerified) {
         throw new Unauthorized('Invalid verification code.')
       }
 
-      // Cleanup single-use codes and ticket
-      await cache.del(`auth:mfa-email-code:${user.id}`)
+      // Cleanup single-use ticket
       await cache.del(`auth:mfa-ticket:${body.mfaTicket}`)
 
       // Issue authenticated JWT session token

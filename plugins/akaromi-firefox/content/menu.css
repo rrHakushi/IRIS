@@ -1,0 +1,351 @@
+/* Akaromi for Firefox — Floating Dropdown & In-Page Overlay Styles */
+
+/* In-Page Dropdown */
+.akaromi-dropdown,
+.iris-pass-dropdown {
+  position: fixed !important;
+  z-index: 2147483645 !important;
+  width: 280px !important;
+  min-width: 240px !important;
+  max-width: 320px !important;
+  background: #101014 !important;
+  border: 1px solid #27272a !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  color: #fafafa !important;
+  font-size: 13px !important;
+  overflow: hidden !important;
+  user-select: none !important;
+  animation: akaromiFadeIn 0.15s ease-out !important;
+}
+
+@keyframes akaromiFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.iris-pass-dropdown-header {
+  padding: 8px 12px !important;
+  border-bottom: 1px solid #27272a !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: #141418 !important;
+}
+
+.iris-pass-dropdown-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.iris-pass-dropdown-title {
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  color: #fafafa !important;
+}
+
+.iris-pass-dropdown-count {
+  font-size: 10px !important;
+  background: #27272a !important;
+  color: #a1a1aa !important;
+  padding: 1px 6px !important;
+  border-radius: 9999px !important;
+}
+
+.iris-pass-dropdown-loading,
+.iris-pass-dropdown-empty {
+  padding: 16px 12px !important;
+  text-align: center !important;
+  color: #a1a1aa !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+}
+
+.iris-pass-btn-unlock {
+  margin-top: 10px !important;
+  width: 100% !important;
+  padding: 6px 12px !important;
+  background: #fafafa !important;
+  color: #09090b !important;
+  border: none !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+}
+
+.iris-pass-btn-unlock:hover {
+  opacity: 0.9 !important;
+}
+
+.iris-pass-dropdown-list {
+  max-height: 240px !important;
+  overflow-y: auto !important;
+  padding: 4px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+.iris-pass-dropdown-item {
+  border-radius: 8px !important;
+  background: transparent !important;
+  transition: background 0.12s ease !important;
+  overflow: hidden !important;
+}
+
+.iris-pass-item-main {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 8px 10px !important;
+  cursor: pointer !important;
+  border-radius: 8px !important;
+}
+
+.iris-pass-item-main:hover {
+  background: #27272a !important;
+}
+
+.iris-pass-item-icon {
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 6px !important;
+  background: #27272a !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  color: #fafafa !important;
+}
+
+.iris-pass-item-meta {
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+.iris-pass-item-title {
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  color: #fafafa !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.iris-pass-item-user {
+  font-size: 11px !important;
+  color: #a1a1aa !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Sub-passwords for Additional Passwords */
+.iris-pass-sub-passwords-wrapper {
+  padding: 2px 8px 6px 36px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+}
+
+.iris-pass-sub-divider {
+  font-size: 9.5px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  color: #71717a !important;
+  margin-top: 2px !important;
+}
+
+.iris-pass-sub-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+.iris-pass-sub-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+  background: #18181b !important;
+  border: 1px solid #27272a !important;
+  color: #fafafa !important;
+  font-size: 11px !important;
+  cursor: pointer !important;
+  transition: all 0.12s ease !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.iris-pass-sub-btn:hover {
+  background: #27272a !important;
+  border-color: #3f3f46 !important;
+}
+
+.iris-pass-sub-btn .sub-label {
+  font-weight: 500 !important;
+  color: #e4e4e7 !important;
+}
+
+.iris-pass-sub-btn .sub-masked {
+  font-family: ui-monospace, monospace !important;
+  color: #71717a !important;
+  letter-spacing: 0.1em !important;
+}
+
+/* Floating Toast */
+.iris-pass-toast {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  z-index: 2147483647 !important;
+  background: #18181b !important;
+  color: #fafafa !important;
+  border: 1px solid #27272a !important;
+  border-radius: 8px !important;
+  padding: 10px 16px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+  opacity: 0 !important;
+  transform: translateY(8px) !important;
+  transition: all 0.2s ease !important;
+  pointer-events: none !important;
+}
+
+.iris-pass-toast.visible {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+
+/* QR Capture Overlay */
+.iris-qr-capture-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483647 !important;
+  background: rgba(0, 0, 0, 0.45) !important;
+  cursor: crosshair !important;
+}
+
+.iris-qr-capture-banner {
+  position: fixed !important;
+  top: 20px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  background: #18181b !important;
+  border: 1px solid #27272a !important;
+  border-radius: 9999px !important;
+  padding: 8px 18px !important;
+  color: #fafafa !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.iris-qr-key-badge {
+  background: #27272a !important;
+  color: #a1a1aa !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  font-size: 11px !important;
+}
+
+.iris-qr-selection-box {
+  position: fixed !important;
+  border: 2px dashed #fafafa !important;
+  background: rgba(250, 250, 250, 0.15) !important;
+  pointer-events: none !important;
+}
+
+/* Floating TOTP Widget */
+.iris-totp-floating-widget {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  z-index: 2147483647 !important;
+  width: 260px !important;
+  background: #101014 !important;
+  border: 1px solid #27272a !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7) !important;
+  padding: 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  color: #fafafa !important;
+}
+
+.iris-totp-widget-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.iris-totp-widget-title {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+.iris-totp-widget-logo {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.iris-totp-widget-close {
+  background: transparent !important;
+  border: none !important;
+  color: #a1a1aa !important;
+  cursor: pointer !important;
+  font-size: 12px !important;
+  padding: 2px !important;
+}
+
+.iris-totp-widget-body {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: #18181b !important;
+  border: 1px solid #27272a !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+}
+
+.iris-totp-widget-code {
+  font-family: ui-monospace, monospace !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  color: #fafafa !important;
+}
+
+.iris-totp-widget-timer-badge {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #fafafa !important;
+}
+
+.iris-totp-widget-footer {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  font-size: 11px !important;
+  color: #a1a1aa !important;
+}

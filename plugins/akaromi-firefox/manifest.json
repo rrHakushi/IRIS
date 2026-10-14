@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "IRIS Pass",
-  "version": "1.6.1",
+  "name": "Akaromi for Firefox",
+  "version": "2.0.0",
   "description": "Password manager extension for IRIS.",
   "browser_specific_settings": {
     "gecko": {
-      "id": "rrIrisPass-info@runerra.org",
+      "id": "info@runerra.org",
       "strict_min_version": "142.0",
       "data_collection_permissions": {
         "required": [
@@ -39,6 +39,10 @@
       "lib/qr-decoder.js",
       "lib/storage.js",
       "lib/api.js",
+      "background/state.js",
+      "background/vault.js",
+      "background/autofill.js",
+      "background/passkey.js",
       "background/background.js"
     ]
   },
@@ -49,7 +53,7 @@
       "48": "icons/icon-48.png",
       "128": "icons/icon-128.png"
     },
-    "default_title": "IRIS Pass"
+    "default_title": "Akaromi for Firefox"
   },
   "icons": {
     "16": "icons/icon-16.png",
@@ -74,12 +78,19 @@
         "<all_urls>"
       ],
       "js": [
+        "lib/icons.js",
+        "content/detection.js",
+        "content/badge.js",
+        "content/fill.js",
+        "content/menu.js",
         "content/content.js"
       ],
       "css": [
+        "content/badge.css",
+        "content/menu.css",
         "content/content.css"
       ],
-      "run_at": "document_start",
+      "run_at": "document_idle",
       "all_frames": true
     }
   ],
@@ -87,7 +98,8 @@
     {
       "resources": [
         "icons/icon-16.png",
-        "icons/icon-48.png"
+        "icons/icon-48.png",
+        "icons/icons.svg"
       ],
       "matches": [
         "<all_urls>"

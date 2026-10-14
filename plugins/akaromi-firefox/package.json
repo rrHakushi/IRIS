@@ -1,12 +1,13 @@
 {
-  "name": "iris-pass-firefox",
-  "version": "1.6.1",
-  "description": "Password manager extension for IRIS.",
+  "name": "akaromi-firefox",
+  "version": "2.0.0",
+  "description": "Akaromi password manager extension for IRIS.",
   "scripts": {
     "lint": "npx web-ext lint",
-    "build": "npx web-ext build --artifacts-dir ../../releases/iris-pass --overwrite-dest"
+    "build": "npx web-ext build --artifacts-dir ../../releases/akaromi --overwrite-dest"
   },
   "keywords": [
+    "akaromi",
     "iris",
     "password-manager",
     "firefox-extension",

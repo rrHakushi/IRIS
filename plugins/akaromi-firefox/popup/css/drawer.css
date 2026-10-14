@@ -1,0 +1,143 @@
+/* Akaromi for Firefox — Left Navigation Drawer & User Profile */
+
+.drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(2px);
+  z-index: 50;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.app-drawer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 260px;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+  animation: drawerSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes drawerSlideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.drawer-header {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.drawer-user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.drawer-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--secondary);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: var(--foreground);
+  flex-shrink: 0;
+  font-size: 13px;
+}
+
+.drawer-user-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.drawer-user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drawer-user-server {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drawer-menu {
+  flex: 1;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.drawer-menu-item {
+  width: 100%;
+  height: 34px;
+  padding-inline: 10px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--foreground);
+  transition: background 0.12s ease;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.drawer-menu-item:hover {
+  background: var(--secondary);
+}
+
+.drawer-menu-item.text-danger {
+  color: #f87171;
+}
+
+.drawer-menu-item.text-danger:hover {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.drawer-menu-item .tabler-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.drawer-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 4px;
+}
+
+.drawer-footer {
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: #71717a;
+  text-align: center;
+}

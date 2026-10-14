@@ -1,0 +1,8 @@
+/* Akaromi for Firefox — Popup Main Stylesheet */
+@import "css/base.css";
+@import "css/auth.css";
+@import "css/header.css";
+@import "css/items.css";
+@import "css/detail.css";
+@import "css/drawer.css";
+@import "css/modals.css";
