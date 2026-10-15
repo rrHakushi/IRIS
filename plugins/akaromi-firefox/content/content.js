@@ -61,9 +61,16 @@
   // or capturing clicks outside their own modals when interacting with Akaromi
   function isAkaromiTarget(target) {
     if (!target || !(target instanceof Element)) return false
+    if (
+      target.closest(
+        ".iris-qr-capture-overlay, .iris-qr-selection-box, .iris-qr-capture-banner, .iris-qr-size-badge"
+      )
+    ) {
+      return false
+    }
     return Boolean(
       target.closest(
-        "#akaromi-portal, #iris-pass-portal, .akaromi-portal-root, .iris-pass-portal-root, .iris-passkey-dialog-overlay, .iris-passkey-dialog, .akaromi-dropdown, .iris-pass-dropdown, .akaromi-field-icon, .iris-pass-field-icon, .iris-totp-floating-widget, .iris-qr-capture-overlay, .iris-pass-toast"
+        "#akaromi-portal, #iris-pass-portal, .akaromi-portal-root, .iris-pass-portal-root, .iris-passkey-dialog-overlay, .iris-passkey-dialog, .akaromi-dropdown, .iris-pass-dropdown, .akaromi-field-icon, .iris-pass-field-icon, .iris-totp-floating-widget, .iris-pass-toast"
       )
     )
   }
@@ -803,9 +810,12 @@
       return true
     }
 
-    if (message.action === "FILL_INPUTS") {
-      const { username, password } = message.payload || {}
-      globalThis.AkaromiFill?.fillCredential({ data: { username, password } })
+    if (message.action === "FILL_INPUTS" || message.action === "FILL_CREDENTIALS") {
+      const { username, password, totpSecret, title } = message.payload || {}
+      globalThis.AkaromiFill?.fillCredential({
+        title,
+        data: { username, password, totpSecret },
+      })
       showToast("Credentials autofilled by Akaromi")
       sendResponse({ success: true })
       return true
@@ -818,7 +828,7 @@
       return true
     }
 
-    if (message.action === "SHOW_TOTP_TIMER") {
+    if (message.action === "SHOW_TOTP_TIMER" || message.action === "SHOW_FLOATING_TOTP_WIDGET") {
       const { secret, label, initialCode } = message.payload || {}
       showFloatingTotpWidget(secret, label, initialCode)
       sendResponse({ success: true })
@@ -837,7 +847,20 @@
 
     if (message.action === "CLEAR_CLIPBOARD_IF_MATCHES") {
       try {
-        if (navigator.clipboard?.writeText) {
+        const expected = message.payload?.text
+        if (navigator.clipboard?.readText) {
+          navigator.clipboard.readText().then((current) => {
+            if (!expected || current === expected) {
+              navigator.clipboard.writeText("").then(() => {
+                showToast("Clipboard cleared for security")
+              }).catch(() => {})
+            }
+          }).catch(() => {
+            navigator.clipboard.writeText("").then(() => {
+              showToast("Clipboard cleared for security")
+            }).catch(() => {})
+          })
+        } else if (navigator.clipboard?.writeText) {
           navigator.clipboard.writeText("").then(() => {
             showToast("Clipboard cleared for security")
           }).catch(() => {})
@@ -857,12 +880,54 @@
     }
   }
 
+  function escapeHtml(str) {
+    if (!str) return ""
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+  }
+
+  function copyToClipboard(text) {
+    if (!text) return
+    try {
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(text).catch(() => copyToClipboardFallback(text))
+      } else {
+        copyToClipboardFallback(text)
+      }
+    } catch {
+      copyToClipboardFallback(text)
+    }
+    ext.runtime.sendMessage({ action: "COPY_TO_CLIPBOARD", payload: { text } }).catch(() => {})
+  }
+
+  function copyToClipboardFallback(text) {
+    try {
+      const el = document.createElement("textarea")
+      el.value = text
+      el.style.position = "fixed"
+      el.style.opacity = "0"
+      ;(document.body || document.documentElement).appendChild(el)
+      el.focus()
+      el.select()
+      document.execCommand("copy")
+      el.remove()
+    } catch {}
+  }
+
   // ----------------------------------------------------
   // Screen QR Code Area Capture Overlay
   // ----------------------------------------------------
   let activeQrOverlay = null
   function startScreenQrCapture() {
-    if (activeQrOverlay) activeQrOverlay.remove()
+    if (activeQrOverlay) {
+      try {
+        activeQrOverlay.remove()
+      } catch {}
+      activeQrOverlay = null
+    }
 
     const overlay = document.createElement("div")
     overlay.className = "iris-qr-capture-overlay"
@@ -871,7 +936,15 @@
     banner.className = "iris-qr-capture-banner"
     safeSetTemplate(
       banner,
-      `<span>Click and drag to select the QR code on your screen</span>
+      `<span style="display:inline-flex;align-items:center;gap:8px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="5" height="5" x="3" y="3" rx="1"/>
+          <rect width="5" height="5" x="16" y="3" rx="1"/>
+          <rect width="5" height="5" x="3" y="16" rx="1"/>
+          <path d="M21 16v3a2 2 0 0 1-2 2h-3M21 12h-4M12 21v-4M12 12v3M12 7h4M7 12H3"/>
+        </svg>
+        <span>Click and drag to select the QR code on your screen</span>
+      </span>
       <span class="iris-qr-key-badge">ESC to cancel</span>`
     )
     overlay.appendChild(banner)
@@ -879,28 +952,52 @@
     const selectionBox = document.createElement("div")
     selectionBox.className = "iris-qr-selection-box"
     selectionBox.style.display = "none"
+
+    const sizeBadge = document.createElement("div")
+    sizeBadge.className = "iris-qr-size-badge"
+    sizeBadge.style.display = "none"
+    selectionBox.appendChild(sizeBadge)
+
     overlay.appendChild(selectionBox)
 
     let startX = 0
     let startY = 0
     let isDragging = false
+    let currentPointerId = null
 
-    function onMouseDown(e) {
+    function onPointerDown(e) {
       if (e.button !== 0) return
+      e.preventDefault()
+      e.stopPropagation()
+
       isDragging = true
+      currentPointerId = e.pointerId !== undefined ? e.pointerId : null
       startX = e.clientX
       startY = e.clientY
+
+      if (currentPointerId !== null && typeof overlay.setPointerCapture === "function") {
+        try {
+          overlay.setPointerCapture(currentPointerId)
+        } catch {}
+      }
+
+      overlay.style.background = "transparent"
       selectionBox.style.left = `${startX}px`
       selectionBox.style.top = `${startY}px`
       selectionBox.style.width = "0px"
       selectionBox.style.height = "0px"
       selectionBox.style.display = "block"
+      sizeBadge.textContent = "0 × 0"
+      sizeBadge.style.display = "block"
     }
 
-    function onMouseMove(e) {
+    function onPointerMove(e) {
       if (!isDragging) return
-      const curX = e.clientX
-      const curY = e.clientY
+      e.preventDefault()
+      e.stopPropagation()
+
+      const curX = Math.max(0, Math.min(window.innerWidth, e.clientX))
+      const curY = Math.max(0, Math.min(window.innerHeight, e.clientY))
       const left = Math.min(startX, curX)
       const top = Math.min(startY, curY)
       const width = Math.abs(curX - startX)
@@ -910,13 +1007,23 @@
       selectionBox.style.top = `${top}px`
       selectionBox.style.width = `${width}px`
       selectionBox.style.height = `${height}px`
+      sizeBadge.textContent = `${width} × ${height}`
     }
 
-    function onMouseUp(e) {
+    function onPointerUp(e) {
       if (!isDragging) return
       isDragging = false
-      const curX = e.clientX
-      const curY = e.clientY
+      e.preventDefault()
+      e.stopPropagation()
+
+      if (currentPointerId !== null && typeof overlay.releasePointerCapture === "function") {
+        try {
+          overlay.releasePointerCapture(currentPointerId)
+        } catch {}
+      }
+
+      const curX = Math.max(0, Math.min(window.innerWidth, e.clientX))
+      const curY = Math.max(0, Math.min(window.innerHeight, e.clientY))
       const x = Math.min(startX, curX)
       const y = Math.min(startY, curY)
       const width = Math.abs(curX - startX)
@@ -924,54 +1031,49 @@
 
       cleanUp()
 
-      if (width < 15 || height < 15) {
+      if (width < 20 || height < 20) {
         showToast("Selection was too small. Scan cancelled.")
         return
       }
 
       showToast("Analyzing QR code from selected area...")
-      ext.runtime.sendMessage(
-        {
-          action: "PROCESS_QR_SCREENSHOT",
-          payload: {
-            bounds: { x, y, width, height, dpr: window.devicePixelRatio || 1 },
-          },
-        },
-        (res) => {
-          if (res?.success && res.result?.secret) {
-            copyToClipboard(res.result.secret)
-            showToast(`QR Code decoded! 2FA Secret copied to clipboard.`)
-          } else {
-            showToast(res?.error || "Could not decode QR code. Please try again.")
-          }
-        }
-      )
+
+      // Double requestAnimationFrame ensures overlay removal is repainted before taking screenshot
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          ext.runtime.sendMessage(
+            {
+              action: "PROCESS_QR_SCREENSHOT",
+              payload: {
+                bounds: {
+                  x,
+                  y,
+                  width,
+                  height,
+                  dpr: window.devicePixelRatio || 1,
+                  innerWidth: window.innerWidth,
+                  innerHeight: window.innerHeight,
+                },
+              },
+            },
+            (res) => {
+              if (res?.success && res.result?.secret) {
+                copyToClipboard(res.result.secret)
+                showToast("QR code decoded! 2FA Secret imported. Open Akaromi to save.")
+              } else {
+                showToast(res?.error || "Could not decode QR code. Please try selecting the QR code again.")
+              }
+            }
+          )
+        })
+      })
     }
 
-    function copyToClipboard(text) {
-      try {
-        if (navigator.clipboard?.writeText) {
-          navigator.clipboard.writeText(text).catch(() => copyToClipboardFallback(text))
-        } else {
-          copyToClipboardFallback(text)
-        }
-      } catch {
-        copyToClipboardFallback(text)
+    function onPointerCancel() {
+      if (isDragging) {
+        isDragging = false
+        cleanUp()
       }
-    }
-
-    function copyToClipboardFallback(text) {
-      try {
-        const el = document.createElement("textarea")
-        el.value = text
-        el.style.position = "fixed"
-        el.style.opacity = "0"
-        ;(document.body || document.documentElement).appendChild(el)
-        el.focus()
-        el.select()
-        document.execCommand("copy")
-        el.remove()
-      } catch {}
     }
 
     function onKeyDown(e) {
@@ -982,91 +1084,347 @@
     }
 
     function cleanUp() {
-      overlay.remove()
-      document.removeEventListener("mousemove", onMouseMove)
-      document.removeEventListener("mouseup", onMouseUp)
-      document.removeEventListener("keydown", onKeyDown)
+      if (currentPointerId !== null && typeof overlay.releasePointerCapture === "function") {
+        try {
+          overlay.releasePointerCapture(currentPointerId)
+        } catch {}
+      }
+      try {
+        overlay.remove()
+      } catch {}
+      window.removeEventListener("pointermove", onPointerMove, true)
+      window.removeEventListener("pointerup", onPointerUp, true)
+      window.removeEventListener("pointercancel", onPointerCancel, true)
+      window.removeEventListener("mousemove", onPointerMove, true)
+      window.removeEventListener("mouseup", onPointerUp, true)
+      document.removeEventListener("keydown", onKeyDown, true)
       activeQrOverlay = null
     }
 
-    overlay.addEventListener("mousedown", onMouseDown)
-    document.addEventListener("mousemove", onMouseMove)
-    document.addEventListener("mouseup", onMouseUp)
-    document.addEventListener("keydown", onKeyDown)
+    overlay.addEventListener("pointerdown", onPointerDown, true)
+    window.addEventListener("pointermove", onPointerMove, true)
+    window.addEventListener("pointerup", onPointerUp, true)
+    window.addEventListener("pointercancel", onPointerCancel, true)
 
-    getOrCreatePortal().appendChild(overlay)
+    // Fallback mouse listeners in case pointer events aren't fully routed
+    overlay.addEventListener("mousedown", onPointerDown, true)
+    window.addEventListener("mousemove", onPointerMove, true)
+    window.addEventListener("mouseup", onPointerUp, true)
+
+    document.addEventListener("keydown", onKeyDown, true)
+
+    const mountRoot = document.documentElement || document.body
+    mountRoot.appendChild(overlay)
     activeQrOverlay = overlay
   }
 
   // ----------------------------------------------------
-  // Expiring Floating TOTP Countdown Widget
+  // Expiring Floating TOTP Countdown Widget & Auto-Copier
   // ----------------------------------------------------
   let activeTotpWidget = null
   let totpCountdownInterval = null
 
-  function showFloatingTotpWidget(secret, label = "2FA Code", initialCode = "") {
-    if (totpCountdownInterval) clearInterval(totpCountdownInterval)
-    if (activeTotpWidget) activeTotpWidget.remove()
+  async function showFloatingTotpWidget(secret, label = "2FA Code", initialCode = "") {
+    if (totpCountdownInterval) {
+      clearInterval(totpCountdownInterval)
+      totpCountdownInterval = null
+    }
+    if (activeTotpWidget) {
+      try {
+        activeTotpWidget.remove()
+      } catch {}
+      activeTotpWidget = null
+    }
     if (!secret) return
 
-    const widget = document.createElement("div")
-    widget.className = "iris-totp-floating-widget"
+    const cleanSecret = String(secret).trim()
 
-    function getRemaining() {
+    // Normalized URL (domain + path, ignoring query string & hash fragments)
+    function getNormalizedUrl() {
+      try {
+        const u = new URL(window.location.href)
+        const path = u.pathname.replace(/\/+$/, "") || "/"
+        return `${u.origin.toLowerCase()}${path}`
+      } catch {
+        const path = (window.location.pathname || "/").replace(/\/+$/, "") || "/"
+        return `${(window.location.origin || "").toLowerCase()}${path}`
+      }
+    }
+
+    const initialNormalizedUrl = getNormalizedUrl()
+
+    // Helper to generate TOTP code
+    function getCode() {
+      if (typeof IrisTotp !== "undefined" && typeof IrisTotp.generateTotpSync === "function") {
+        try {
+          const c = IrisTotp.generateTotpSync(cleanSecret)
+          if (c) return c
+        } catch {}
+      }
+      return new Promise((resolve) => {
+        ext.runtime.sendMessage(
+          { action: "GENERATE_TOTP", payload: { secret: cleanSecret } },
+          (res) => resolve(res?.code || "")
+        )
+      })
+    }
+
+    // Helper to get remaining seconds in current 30s window
+    function getRemainingSeconds() {
+      if (typeof IrisTotp !== "undefined" && typeof IrisTotp.getRemainingSeconds === "function") {
+        return IrisTotp.getRemainingSeconds(30)
+      }
       const epoch = Math.floor(Date.now() / 1000)
       return 30 - (epoch % 30)
     }
 
+    function formatCode(c) {
+      if (!c) return "••••••"
+      const str = String(c).trim()
+      if (str.length === 6) {
+        return `${str.slice(0, 3)} ${str.slice(3)}`
+      }
+      return str
+    }
+
+    // Copy to clipboard + show corner toast
+    function copyTotpCode(codeToCopy, isAutoRefresh = false) {
+      if (!codeToCopy) return
+      copyToClipboard(codeToCopy)
+
+      showToast(isAutoRefresh ? `New 2FA Code ${formatCode(codeToCopy)} copied to clipboard` : `2FA Code ${formatCode(codeToCopy)} copied to clipboard`)
+    }
+
+    let currentCode = initialCode || (await getCode())
+    if (currentCode) {
+      copyTotpCode(currentCode, false)
+    }
+
+    const widget = document.createElement("div")
+    widget.className = "iris-totp-floating-widget"
+    widget.setAttribute("role", "alert")
+    widget.setAttribute("aria-live", "polite")
+
     const iconUrl = ext.runtime.getURL("icons/icon-48.png")
+    const initialRem = getRemainingSeconds()
+
     safeSetTemplate(
       widget,
       `<div class="iris-totp-widget-header">
         <div class="iris-totp-widget-title">
           <img src="${iconUrl}" class="iris-totp-widget-logo" alt="Akaromi" />
-          <span>${label}</span>
+          <span class="iris-totp-widget-account-name">${escapeHtml(label)}</span>
         </div>
-        <button type="button" class="iris-totp-widget-close" title="Dismiss">✕</button>
+        <button type="button" class="iris-totp-widget-close" aria-label="Dismiss" title="Dismiss">✕</button>
       </div>
-      <div class="iris-totp-widget-body">
-        <span class="iris-totp-widget-code" id="totp-code-display">${initialCode || "••••••"}</span>
-        <span class="iris-totp-widget-timer-badge" id="totp-seconds-display">${getRemaining()}s</span>
+
+      <div class="iris-totp-widget-body" id="totp-body-card">
+        <div class="iris-totp-widget-code-wrap">
+          <span class="iris-totp-widget-code" id="totp-code-display">${formatCode(currentCode)}</span>
+        </div>
+        <div class="iris-totp-widget-actions">
+          <button type="button" class="iris-totp-widget-copy-btn" id="totp-copy-btn" title="Copy code">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+              <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+            </svg>
+            <span id="totp-copy-btn-text">Copy</span>
+          </button>
+          <span class="iris-totp-widget-timer-badge" id="totp-seconds-display">${initialRem}s</span>
+        </div>
       </div>
+
+      <div class="iris-totp-progress-track">
+        <div class="iris-totp-progress-bar" id="totp-progress-bar" style="width: ${(initialRem / 30) * 100}%;"></div>
+      </div>
+
       <div class="iris-totp-widget-footer">
-        <span id="totp-status-hint">Code in clipboard</span>
-        <span>Auto-refreshes</span>
+        <span class="iris-totp-status-hint" id="totp-status-hint">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <span id="totp-hint-text">Code in clipboard</span>
+        </span>
+        <button type="button" class="iris-totp-quick-fill-btn" id="totp-quick-fill-btn" style="display:none;">Autofill 2FA</button>
       </div>`
     )
 
-    getOrCreatePortal().appendChild(widget)
+    const mountRoot = document.documentElement || document.body
+    mountRoot.appendChild(widget)
     activeTotpWidget = widget
+    requestAnimationFrame(() => widget.classList.add("visible"))
 
-    widget.querySelector(".iris-totp-widget-close")?.addEventListener("click", () => {
-      clearInterval(totpCountdownInterval)
-      widget.remove()
-    })
+    // Element references
+    const codeDisplay = widget.querySelector("#totp-code-display")
+    const secDisplay = widget.querySelector("#totp-seconds-display")
+    const progressBar = widget.querySelector("#totp-progress-bar")
+    const copyBtn = widget.querySelector("#totp-copy-btn")
+    const copyBtnText = widget.querySelector("#totp-copy-btn-text")
+    const hintText = widget.querySelector("#totp-hint-text")
+    const bodyCard = widget.querySelector("#totp-body-card")
+    const quickFillBtn = widget.querySelector("#totp-quick-fill-btn")
+    const closeBtn = widget.querySelector(".iris-totp-widget-close")
 
-    if (!initialCode && typeof IrisTotp !== "undefined") {
-      IrisTotp.generateTotp(secret).then((code) => {
-        if (code) {
-          const display = widget.querySelector("#totp-code-display")
-          if (display) display.textContent = code
-          navigator.clipboard.writeText(code).catch(() => {})
-        }
+    // Check if an OTP/2FA input is visible on page for quick fill
+    function checkOtpInput() {
+      const inputs = Array.from(document.querySelectorAll('input:not([type="hidden"]):not([disabled])'))
+      const otpInput = inputs.find((el) => {
+        const auto = (el.getAttribute("autocomplete") || "").toLowerCase()
+        if (auto === "one-time-code") return true
+        const id = (el.name + " " + el.id + " " + el.placeholder).toLowerCase()
+        return /(otp|2fa|totp|auth[-_]?code|verification[-_]?code|security[-_]?code)/i.test(id)
       })
-    } else if (initialCode) {
-      navigator.clipboard.writeText(initialCode).catch(() => {})
+      if (otpInput && quickFillBtn) {
+        quickFillBtn.style.display = "inline-flex"
+        quickFillBtn.onclick = (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          if (currentCode) {
+            globalThis.AkaromiFill?.setNativeValue(otpInput, currentCode)
+            globalThis.AkaromiFill?.dispatchInputEvents(otpInput)
+            if (hintText) hintText.textContent = "2FA Code filled into field"
+            setTimeout(() => dismissWidget(), 1500)
+          }
+        }
+      }
+    }
+    checkOtpInput()
+
+    function dismissWidget() {
+      if (totpCountdownInterval) {
+        clearInterval(totpCountdownInterval)
+        totpCountdownInterval = null
+      }
+      document.removeEventListener("submit", onFormSubmit, true)
+      if (activeTotpWidget) {
+        activeTotpWidget.classList.remove("visible")
+        setTimeout(() => {
+          try {
+            activeTotpWidget?.remove()
+          } catch {}
+          activeTotpWidget = null
+        }, 250)
+      }
     }
 
-    totpCountdownInterval = setInterval(() => {
-      const rem = getRemaining()
-      const secDisplay = widget.querySelector("#totp-seconds-display")
-      if (secDisplay) secDisplay.textContent = `${rem}s`
-      if (rem <= 1) {
+    closeBtn?.addEventListener("click", (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      dismissWidget()
+    })
+
+    copyBtn?.addEventListener("click", (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      if (currentCode) {
+        copyTotpCode(currentCode, false)
+        if (copyBtnText) copyBtnText.textContent = "Copied!"
+        if (hintText) hintText.textContent = "Code copied to clipboard"
         setTimeout(() => {
-          clearInterval(totpCountdownInterval)
-          widget.remove()
-        }, 800)
+          if (copyBtnText) copyBtnText.textContent = "Copy"
+        }, 1500)
+      }
+    })
+
+    // Track user login completion
+    let isUserLoggedIn = false
+    function onFormSubmit() {
+      isUserLoggedIn = true
+      if (hintText) hintText.textContent = "Login submitted"
+      setTimeout(() => dismissWidget(), 1200)
+    }
+    document.addEventListener("submit", onFormSubmit, true)
+
+    // Countdown and Auto-Refresh on Expiry
+    let lastStep = Math.floor(Date.now() / 1000 / 30)
+    let cycleCount = 0
+    const MAX_CYCLES = 6 // Up to 3 minutes of auto-refreshes
+
+    totpCountdownInterval = setInterval(async () => {
+      if (isUserLoggedIn) return
+
+      // Dismiss widget if URL domain or path changed (ignoring query & hash)
+      if (getNormalizedUrl() !== initialNormalizedUrl) {
+        dismissWidget()
+        return
+      }
+
+      const currentStep = Math.floor(Date.now() / 1000 / 30)
+      const rem = getRemainingSeconds()
+
+      // Update timer UI
+      if (secDisplay) {
+        secDisplay.textContent = `${rem}s`
+        if (rem <= 5) {
+          secDisplay.className = "iris-totp-widget-timer-badge danger"
+        } else if (rem <= 10) {
+          secDisplay.className = "iris-totp-widget-timer-badge warning"
+        } else {
+          secDisplay.className = "iris-totp-widget-timer-badge"
+        }
+      }
+
+      if (progressBar) {
+        progressBar.style.width = `${(rem / 30) * 100}%`
+        if (rem <= 5) {
+          progressBar.style.backgroundColor = "#fb7185"
+        } else if (rem <= 10) {
+          progressBar.style.backgroundColor = "#facc15"
+        } else {
+          progressBar.style.backgroundColor = "#38bdf8"
+        }
+      }
+
+      // Check OTP input again in case page dynamically showed 2FA step
+      checkOtpInput()
+
+      // EXPIRED? If the 30-second epoch stepped forward and user didn't login yet:
+      if (currentStep !== lastStep) {
+        lastStep = currentStep
+        cycleCount++
+
+        if (cycleCount > MAX_CYCLES) {
+          if (hintText) hintText.textContent = "Auto-refresh paused. Click to renew."
+          if (bodyCard) {
+            bodyCard.style.cursor = "pointer"
+            bodyCard.onclick = async () => {
+              cycleCount = 0
+              bodyCard.style.cursor = ""
+              bodyCard.onclick = null
+              const newCode = await getCode()
+              if (newCode) {
+                currentCode = newCode
+                copyTotpCode(newCode, true)
+                if (codeDisplay) codeDisplay.textContent = formatCode(newCode)
+                if (hintText) hintText.textContent = "Renewed & copied to clipboard"
+              }
+            }
+          }
+          return
+        }
+
+        // GENERATE & COPY NEXT CODE!
+        const nextCode = await getCode()
+        if (nextCode) {
+          currentCode = nextCode
+          // Copy next code to clipboard immediately
+          copyTotpCode(nextCode, true)
+
+          // Update display & flash animation
+          if (codeDisplay) codeDisplay.textContent = formatCode(nextCode)
+          if (hintText) hintText.textContent = "Code expired — new code copied!"
+
+          if (bodyCard) {
+            bodyCard.classList.remove("flashing")
+            void bodyCard.offsetWidth // Force reflow
+            bodyCard.classList.add("flashing")
+          }
+        }
       }
     }, 1000)
+  }
+
+  globalThis.AkaromiTotp = {
+    showFloatingTotpWidget,
   }
 })()

@@ -6,3 +6,10 @@ Akaromi   | Zero-knowledge password & credential vault
 Kiroshi   | Privacy-focused meta-search engine
 
 
+Apertune  | Music client
+          | Mail client
+          | Cloud Storage
+          | Chat
+          | 
+          |
+          |

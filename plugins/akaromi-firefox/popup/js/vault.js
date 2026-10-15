@@ -13,16 +13,12 @@
   const sectionMatching = document.getElementById("section-matching")
   const sectionAll = document.getElementById("section-all")
   const matchingTabLabel = document.getElementById("matching-tab-label")
-  const allCountBadge = document.getElementById("all-count-badge")
   const vaultEmptyState = document.getElementById("vault-empty-state")
-  const filterPillAll = document.getElementById("filter-pill-all")
-  const filterPillRecent = document.getElementById("filter-pill-recent")
 
   // Detail Pane Elements
   const detailActiveView = document.getElementById("detail-active-view")
   const detailEmptyPlaceholder = document.getElementById("detail-empty-placeholder")
   const detailTitle = document.getElementById("detail-title")
-  const detailFolderName = document.getElementById("detail-folder-name")
   const btnDetailEdit = document.getElementById("btn-detail-edit")
   const btnDetailShare = document.getElementById("btn-detail-share")
   const btnDetailMore = document.getElementById("btn-detail-more")
@@ -69,9 +65,7 @@
   const detailMetaModified = document.getElementById("detail-meta-modified")
   const detailMetaCreated = document.getElementById("detail-meta-created")
 
-  // Vault Folders
-  const vaultFoldersList = document.getElementById("vault-folders-list")
-  const currentVaultLabel = document.getElementById("current-vault-label")
+
 
   let liveTotpTimer = null
 
@@ -83,35 +77,48 @@
       const res = await ext.runtime.sendMessage({ action: "GET_ALL_CIPHERS" })
       if (!res || res.error) {
         state.allCiphers = []
-        state.allFolders = []
         renderCiphersList()
         showDetailEmpty()
         return
       }
 
       state.allCiphers = res.ciphers || []
-      state.allFolders = res.folders || []
 
-      // Restore previously saved folder selection
-      try {
-        const savedFolder = await storage.get(["akaromi_current_folder_id"])
-        if (savedFolder?.akaromi_current_folder_id) {
-          state.currentVaultId = savedFolder.akaromi_current_folder_id
+      // Ensure activeTab is queried if not already set
+      if (!state.currentTab?.url || state.currentTab.url.startsWith("moz-extension:")) {
+        try {
+          let tabs = await ext.tabs.query({ active: true, lastFocusedWindow: true }).catch(() => [])
+          if (!tabs || tabs.length === 0) {
+            tabs = await ext.tabs.query({ active: true, currentWindow: true }).catch(() => [])
+          }
+          if (!tabs || tabs.length === 0) {
+            tabs = await ext.tabs.query({ active: true }).catch(() => [])
+          }
+          state.currentTab = tabs?.find((t) => t.url && !t.url.startsWith("about:") && !t.url.startsWith("moz-extension:")) || tabs?.[0] || null
+        } catch (e) {
+          console.warn("[Akaromi] Tab query error:", e)
         }
-      } catch {}
+      }
 
       // Matching ciphers for active tab
-      if (state.currentTab?.url && !state.currentTab.url.startsWith("about:") && !state.currentTab.url.startsWith("moz-extension:")) {
+      const tabUrl = state.currentTab?.url
+      if (tabUrl && !tabUrl.startsWith("about:") && !tabUrl.startsWith("moz-extension:")) {
         const matchRes = await ext.runtime.sendMessage({
           action: "GET_MATCHING_LOGINS",
-          payload: { url: state.currentTab.url },
+          payload: { url: tabUrl },
         })
         state.matchingCiphers = matchRes?.matches || []
       } else {
-        state.matchingCiphers = []
+        const matchRes = await ext.runtime.sendMessage({
+          action: "GET_MATCHING_LOGINS",
+          payload: { url: "" },
+        })
+        state.matchingCiphers = matchRes?.matches || []
+        if (matchRes?.url && !state.currentTab?.url) {
+          state.currentTab = { url: matchRes.url }
+        }
       }
 
-      populateFolderDropdown()
       renderCiphersList()
 
       // Restore previously selected cipher or first item
@@ -136,69 +143,6 @@
     } catch (err) {
       console.warn("[Akaromi] Failed to load vault data:", err)
     }
-  }
-
-  function populateFolderDropdown() {
-    if (!vaultFoldersList) return
-    vaultFoldersList.replaceChildren()
-
-    const allBtn = document.querySelector("#vault-dropdown-menu .dropdown-item[data-folder-id='all']")
-    if (allBtn) {
-      allBtn.classList.toggle("active", !state.currentVaultId || state.currentVaultId === "all")
-    }
-
-    state.allFolders.forEach((f) => {
-      const btn = document.createElement("button")
-      btn.type = "button"
-      btn.className = `dropdown-item ${state.currentVaultId === f.id ? "active" : ""}`
-      btn.dataset.folderId = f.id
-      safeSetTemplate(
-        btn,
-        `
-        <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2" />
-        </svg>
-        <span>${escapeHtml(f.name || "Untitled")}</span>
-      `
-      )
-      btn.addEventListener("click", () => {
-        selectFolder(f.id, f.name)
-      })
-      vaultFoldersList.appendChild(btn)
-    })
-
-    updateFolderLabels()
-  }
-
-  function selectFolder(folderId, folderName) {
-    state.currentVaultId = folderId || "all"
-    storage.set({ akaromi_current_folder_id: state.currentVaultId }).catch(() => {})
-
-    const menu = document.getElementById("vault-dropdown-menu")
-    if (menu) {
-      menu.querySelectorAll(".dropdown-item").forEach((b) => {
-        b.classList.toggle("active", (b.dataset.folderId || "all") === state.currentVaultId)
-      })
-      menu.style.display = "none"
-    }
-
-    updateFolderLabels(folderName)
-    renderCiphersList()
-  }
-
-  function updateFolderLabels(explicitName) {
-    let name = explicitName
-    if (!name) {
-      if (state.currentVaultId === "all" || !state.currentVaultId) {
-        name = "All items"
-      } else {
-        const found = state.allFolders.find((f) => f.id === state.currentVaultId)
-        name = found?.name || "Folder"
-      }
-    }
-    if (currentVaultLabel) currentVaultLabel.textContent = name
-    const allHeader = document.querySelector("#all-items-section-header span")
-    if (allHeader) allHeader.textContent = name
   }
 
   // ----------------------------------------------------
@@ -250,11 +194,6 @@
   function renderCiphersList() {
     let filtered = state.allCiphers.filter((c) => !c.deletedAt)
 
-    // Folder filter
-    if (state.currentVaultId && state.currentVaultId !== "all") {
-      filtered = filtered.filter((c) => c.folderId === state.currentVaultId)
-    }
-
     // Search query filter
     const query = state.currentSearchQuery.trim().toLowerCase()
     if (query) {
@@ -267,27 +206,23 @@
       })
     }
 
-    // Recent filter pill
-    if (state.activeListFilter === "recent") {
-      filtered = sortCiphersList(filtered, "updated")
-    } else {
-      filtered = sortCiphersList(filtered, state.activeSortOption)
-    }
+    filtered = sortCiphersList(filtered, state.activeSortOption)
 
-    if (allCountBadge) allCountBadge.textContent = String(filtered.length)
-
-    // Matching section
-    const showMatching =
-      state.matchingCiphers.length > 0 && !query && state.currentVaultId === "all"
+    // Matching section for current tab
+    const showMatching = state.matchingCiphers.length > 0 && !query
 
     if (showMatching) {
       if (sectionMatching) sectionMatching.style.display = "block"
-      if (matchingTabLabel && state.currentTab?.url) {
-        try {
-          const u = new URL(state.currentTab.url)
-          matchingTabLabel.textContent = `Matching ${u.hostname}`
-        } catch {
-          matchingTabLabel.textContent = "Matching current website"
+      if (matchingTabLabel) {
+        if (state.currentTab?.url) {
+          try {
+            const u = new URL(state.currentTab.url)
+            matchingTabLabel.textContent = u.hostname ? `Matching ${u.hostname}` : "Matching current site"
+          } catch {
+            matchingTabLabel.textContent = "Matching current site"
+          }
+        } else {
+          matchingTabLabel.textContent = "Matching current site"
         }
       }
 
@@ -347,8 +282,48 @@
     const data = cipher.data || {}
     const subType = data.itemType || (cipher.type === "SSH_KEY" ? "ssh" : "login")
     const username = data.username || data.email || ""
-
     const iconSvg = getItemIconSvg(subType)
+
+    const hasPasskey = Boolean(data.passkey || data.itemType === "passkey" || cipher.type === "PASSKEY")
+    const rawTotp =
+      data.totpSecret ||
+      data.totp ||
+      data.totpUri ||
+      data.otpauth ||
+      cipher.totpSecret ||
+      cipher.totp ||
+      cipher.login?.totp ||
+      ""
+    const hasTotp = Boolean(rawTotp && String(rawTotp).trim())
+
+    let badgesHtml = ""
+    if (hasTotp || hasPasskey) {
+      badgesHtml = '<div class="card-badges">'
+      if (hasTotp) {
+        badgesHtml += `
+          <span class="card-badge-icon badge-totp" title="2FA Authenticator">
+            <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"/>
+              <polyline points="12 7 12 12 15 15"/>
+            </svg>
+          </span>
+        `
+      }
+      if (hasPasskey) {
+        badgesHtml += `
+          <span class="card-badge-icon badge-passkey" title="Passkey">
+            <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18.9 7a8 8 0 0 0-13.8 0"/>
+              <path d="M3.3 15A13 13 0 0 1 2 12 10 10 0 0 1 21.3 8"/>
+              <path d="M2 16c.5 2.3 2 4.1 4 5"/>
+              <path d="M8 15a4 4 0 0 1 8 0c0 4-2 6-4 7"/>
+              <path d="M12 11v4"/>
+            </svg>
+          </span>
+        `
+      }
+      badgesHtml += "</div>"
+    }
 
     safeSetTemplate(
       card,
@@ -360,6 +335,7 @@
         <div class="card-title">${escapeHtml(cipher.title || "Untitled")}</div>
         <div class="card-subtitle">${escapeHtml(username || subType.toUpperCase())}</div>
       </div>
+      ${badgesHtml}
     `
     )
 
@@ -431,12 +407,8 @@
 
     const data = cipher.data || {}
 
-    // Title & Folder
+    // Title
     if (detailTitle) detailTitle.textContent = cipher.title || "Untitled"
-    if (detailFolderName) {
-      const folder = state.allFolders.find((f) => f.id === cipher.folderId)
-      detailFolderName.textContent = folder ? folder.name : "Personal"
-    }
 
     // Favorite status
     if (labelMenuFavorite) {
@@ -540,6 +512,7 @@
             if (rowVal) {
               navigator.clipboard.writeText(rowVal).then(() => {
                 showToast(`${rowName} copied`)
+                ext.runtime.sendMessage({ action: "SCHEDULE_CLIPBOARD_CLEAR", payload: { text: rowVal } }).catch(() => {})
               })
             }
           })
@@ -553,13 +526,24 @@
 
     // TOTP Authenticator
     if (liveTotpTimer) clearInterval(liveTotpTimer)
+    const rawTotpSecret =
+      data.totpSecret ||
+      data.totp ||
+      data.totpUri ||
+      data.otpauth ||
+      cipher.totpSecret ||
+      cipher.totp ||
+      cipher.login?.totp ||
+      ""
+    const totpSecret = typeof rawTotpSecret === "string" ? rawTotpSecret.trim() : ""
+
     if (rowDetailTotp) {
-      if (data.totpSecret) {
+      if (totpSecret) {
         rowDetailTotp.style.display = "flex"
         const updateTotp = async () => {
           try {
-            const currentCode = await IrisTotp.generateTotp(data.totpSecret, 30, 0)
-            const nextCode = await IrisTotp.generateTotp(data.totpSecret, 30, 30)
+            const currentCode = await IrisTotp.generateTotp(totpSecret, 30, 0)
+            const nextCode = await IrisTotp.generateTotp(totpSecret, 30, 30)
 
             if (detailValTotp) {
               detailValTotp.textContent = currentCode ? `${currentCode.slice(0, 3)} ${currentCode.slice(3)}` : "--- ---"
@@ -661,7 +645,10 @@
   rowDetailPassword?.addEventListener("click", () => {
     const secret = detailValPassword?.dataset.secret || ""
     if (secret) {
-      navigator.clipboard.writeText(secret).then(() => showToast("Password copied"))
+      navigator.clipboard.writeText(secret).then(() => {
+        showToast("Password copied")
+        ext.runtime.sendMessage({ action: "SCHEDULE_CLIPBOARD_CLEAR", payload: { text: secret } }).catch(() => {})
+      })
     }
   })
 
@@ -679,11 +666,54 @@
     }
   })
 
-  rowDetailTotp?.addEventListener("click", () => {
-    const code = detailValTotp?.dataset.code || detailValTotp?.textContent?.replace(/\s/g, "") || ""
-    if (code && code !== "------" && code !== "--- ---") {
-      navigator.clipboard.writeText(code).then(() => showToast("2FA code copied"))
+  const handleCopyTotp = () => {
+    const cipher = state.allCiphers.find((c) => c.id === state.selectedCipherId)
+    const data = cipher?.data || {}
+    const rawTotpSecret =
+      data.totpSecret ||
+      data.totp ||
+      data.totpUri ||
+      data.otpauth ||
+      cipher?.totpSecret ||
+      cipher?.totp ||
+      ""
+    const totpSecret = typeof rawTotpSecret === "string" ? rawTotpSecret.trim() : ""
+
+    let code = detailValTotp?.dataset.code || detailValTotp?.textContent?.replace(/\s/g, "") || ""
+    if ((!code || code === "------" || code === "--- ---") && totpSecret && typeof IrisTotp !== "undefined") {
+      code = IrisTotp.generateTotpSync(totpSecret)
     }
+
+    if (code && code !== "------" && code !== "--- ---") {
+      navigator.clipboard.writeText(code).then(() => {
+        showToast("2FA code copied to clipboard")
+        ext.runtime.sendMessage({ action: "SCHEDULE_CLIPBOARD_CLEAR", payload: { text: code } }).catch(() => {})
+      }).catch(() => {})
+
+      const label = cipher?.title || "2FA Code"
+
+      // Show floating countdown widget and auto-copy next code on active tab
+      if (totpSecret) {
+        ext.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+          if (tabs[0]?.id) {
+            ext.tabs.sendMessage(tabs[0].id, {
+              action: "SHOW_FLOATING_TOTP_WIDGET",
+              payload: {
+                secret: totpSecret,
+                label,
+                initialCode: code,
+              },
+            }).catch(() => {})
+          }
+        }).catch(() => {})
+      }
+    }
+  }
+
+  rowDetailTotp?.addEventListener("click", handleCopyTotp)
+  btnCopyTotp?.addEventListener("click", (e) => {
+    e.stopPropagation()
+    handleCopyTotp()
   })
 
   btnDetailShare?.addEventListener("click", () => {
@@ -749,6 +779,16 @@
 
   async function autofillCipher(cipher) {
     const data = cipher.data || {}
+    const rawTotpSecret =
+      data.totpSecret ||
+      data.totp ||
+      data.totpUri ||
+      data.otpauth ||
+      cipher.totpSecret ||
+      cipher.totp ||
+      ""
+    const totpSecret = typeof rawTotpSecret === "string" ? rawTotpSecret.trim() : ""
+
     try {
       const tabs = await ext.tabs.query({ active: true, currentWindow: true })
       if (tabs[0]?.id) {
@@ -756,9 +796,10 @@
           .sendMessage(tabs[0].id, {
             action: "FILL_CREDENTIALS",
             payload: {
+              title: cipher.title || data.username || "2FA",
               username: data.username || data.email || "",
               password: data.password || "",
-              totpSecret: data.totpSecret || "",
+              totpSecret,
             },
           })
           .catch(() => {
@@ -771,27 +812,13 @@
     }
   }
 
-  // Filter Pills (All / Recent)
-  filterPillAll?.addEventListener("click", () => {
-    state.activeListFilter = "all"
-    filterPillAll.classList.add("active")
-    filterPillRecent?.classList.remove("active")
-    renderCiphersList()
-  })
 
-  filterPillRecent?.addEventListener("click", () => {
-    state.activeListFilter = "recent"
-    filterPillRecent.classList.add("active")
-    filterPillAll?.classList.remove("active")
-    renderCiphersList()
-  })
 
   global.AkaromiVault = {
     loadVaultData,
     renderCiphersList,
     renderCipherDetail,
     selectCipher,
-    selectFolder,
     showDetailEmpty,
     sortCiphers,
   }

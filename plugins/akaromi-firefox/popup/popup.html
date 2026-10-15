@@ -6,6 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Akaromi for Firefox</title>
   <link rel="stylesheet" href="popup.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Dancing+Script:wght@700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Orbitron:wght@600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Press+Start+2P&family=UnifrakturMaguntia&display=swap" rel="stylesheet" />
 </head>
 
 <body style="width: 650px; min-width: 650px; height: 446px; min-height: 446px;">
@@ -14,39 +17,11 @@
     <!-- Top Navigation Header -->
     <header class="app-header" id="app-header" style="display: none;">
       <div class="header-left">
-        <!-- Hamburger Menu -->
-        <button type="button" id="btn-menu-drawer" class="icon-btn-round" title="Menu" aria-label="Open menu">
-          <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
+        <!-- Akaromi Drawer Trigger -->
+        <button type="button" id="btn-menu-drawer" class="header-brand-trigger" title="Open menu" aria-label="Open menu">
+          <img src="../icons/icon-128.png" alt="Akaromi" class="header-brand-icon" />
         </button>
-
-        <!-- Vault Selector Pill -->
-        <div class="vault-select-wrapper">
-          <button type="button" id="btn-vault-select" class="vault-pill-btn" aria-haspopup="true" aria-expanded="false">
-            <svg class="tabler-icon diamond-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m6 3 12 0 4 6-10 12L2 9z" />
-            </svg>
-            <span id="current-vault-label" class="vault-label">All items</span>
-            <svg class="tabler-icon chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m6 9 6 6 6-6" />
-            </svg>
-          </button>
-
-          <!-- Vault Dropdown Menu -->
-          <div id="vault-dropdown-menu" class="dropdown-popover" style="display: none;">
-            <div class="dropdown-header">Vaults & Folders</div>
-            <button type="button" class="dropdown-item active" data-folder-id="all">
-              <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m6 3 12 0 4 6-10 12L2 9z" />
-              </svg>
-              <span>All items</span>
-            </button>
-            <div id="vault-folders-list" class="dropdown-folder-list">
-              <!-- Populated dynamically -->
-            </div>
-          </div>
-        </div>
+        <span class="header-brand-title" id="header-brand-title">Akaromi</span>
       </div>
 
       <!-- Center: Search in all items -->
@@ -145,18 +120,31 @@
     <div id="drawer-backdrop" class="drawer-backdrop" style="display: none;"></div>
     <aside id="app-drawer" class="app-drawer" style="display: none;">
       <div class="drawer-header">
-        <div class="drawer-user-info">
-          <div class="drawer-avatar" id="drawer-avatar">A</div>
-          <div class="drawer-user-meta">
-            <span class="drawer-user-name" id="drawer-user-name">User</span>
-            <span class="drawer-user-server" id="drawer-user-server">localhost:4000</span>
+        <div class="iris-sidebar-user-card" id="drawer-user-card">
+          <!-- Background nameplate image & gradient overlay -->
+          <div class="user-card-nameplate" id="user-card-nameplate" style="display: none;"></div>
+          <div class="user-card-nameplate-overlay" id="user-card-nameplate-overlay" style="display: none;"></div>
+
+          <!-- Avatar & avatar frame -->
+          <div class="user-card-avatar-container">
+            <div class="user-card-avatar" id="drawer-avatar">
+              <img id="drawer-avatar-img" class="user-card-avatar-img" style="display: none;" alt="" />
+              <span id="drawer-avatar-fallback" class="user-card-avatar-fallback">D</span>
+            </div>
+            <img id="drawer-avatar-frame" class="user-card-avatar-frame" style="display: none;" alt="Avatar Frame" />
+          </div>
+
+          <!-- User Info -->
+          <div class="user-card-meta">
+            <div class="user-card-name-row">
+              <span class="user-card-name" id="drawer-user-name">User</span>
+            </div>
+            <span class="user-card-subtitle" id="drawer-user-subtitle">
+              <span id="drawer-user-status" class="user-card-status" style="display: none;"></span>
+              <span id="drawer-user-server" class="user-card-server">localhost:4000</span>
+            </span>
           </div>
         </div>
-        <button type="button" id="btn-drawer-close" class="icon-btn-round mini" title="Close">
-          <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 6 6 18M6 6l12 12" />
-          </svg>
-        </button>
       </div>
 
       <nav class="drawer-menu">
@@ -286,7 +274,6 @@
       </div>
     </div>
 
-    <!-- State 2: Two-Factor Authentication (MFA) Screen -->
     <!-- State 2: Two-Factor Authentication (TOTP / Email / Backup Code) -->
     <div id="view-mfa" class="view-panel" style="display: none">
       <div class="auth-card">
@@ -410,17 +397,8 @@
 
         <!-- Left Column: Items List -->
         <section class="items-list-pane" id="items-list-pane">
-          <!-- Filter Tabs Row -->
+          <!-- Filter / Sort Bar -->
           <div class="list-filters-bar">
-            <div class="filter-pills-group">
-              <button type="button" id="filter-pill-all" class="filter-pill active">
-                <span>All</span>
-                <span id="all-count-badge" class="pill-badge">0</span>
-              </button>
-              <button type="button" id="filter-pill-recent" class="filter-pill">
-                <span>Recent</span>
-              </button>
-            </div>
             <div class="sort-wrapper">
               <button type="button" id="btn-sort-toggle" class="icon-btn-round mini" title="Sort items" aria-haspopup="true" aria-expanded="false">
                 <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -462,7 +440,7 @@
             <!-- Section: Matching current tab (if applicable) -->
             <div id="section-matching" class="list-section" style="display: none;">
               <div class="section-header">
-                <span id="matching-tab-label">Matching current website</span>
+                <span id="matching-tab-label">Matching current site</span>
               </div>
               <div id="matching-cards-list" class="cards-list"></div>
             </div>
@@ -636,8 +614,7 @@
                   </svg>
                 </div>
                 <div class="field-data-cell">
-                  <div class="field-label">Passkey</div>
-                  <div class="field-value">WebAuthn passkey saved on device</div>
+                  <div class="field-value">Passkey</div>
                 </div>
               </div>
 
@@ -761,18 +738,11 @@
 
         <!-- Scrollable Form Body -->
         <form id="form-edit-cipher" class="modal-sheet-form">
-          <!-- Card 1: Title & Folder -->
+          <!-- Card 1: Title -->
           <div class="proton-form-card">
             <div class="form-field-group">
               <label for="edit-title" class="form-field-label">Title</label>
               <input type="text" id="edit-title" class="form-input large-title" placeholder="Title (e.g. EA, Google, Netflix)" required autofocus />
-            </div>
-
-            <div class="form-field-group">
-              <label for="edit-folder-select" class="form-field-label">Vault / Folder</label>
-              <select id="edit-folder-select" class="form-select">
-                <option value="">Personal</option>
-              </select>
             </div>
           </div>
 
@@ -833,7 +803,7 @@
               </div>
 
               <!-- Password Field -->
-              <div class="form-row-stacked">
+              <div class="form-row-stacked" id="wrap-edit-password">
                 <div class="field-icon-prefix">
                   <svg class="tabler-icon shield-icon text-success" id="edit-pass-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 3a12 12 0 0 0 8.5 3A12 12 0 0 1 12 21 12 12 0 0 1 3.5 6 12 12 0 0 0 12 3" />
@@ -903,6 +873,30 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Passkey Field (Placed dynamically under TOTP if it exists, otherwise under Password) -->
+              <div class="form-row-stacked" id="card-edit-passkey" style="display: none;">
+                <div class="field-icon-prefix">
+                  <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18.9 7a8 8 0 0 0-13.8 0" />
+                    <path d="M3.3 15A13 13 0 0 1 2 12 10 10 0 0 1 21.3 8" />
+                    <path d="M2 16c.5 2.3 2 4.1 4 5" />
+                    <path d="M8 15a4 4 0 0 1 8 0c0 4-2 6-4 7" />
+                    <path d="M12 11v4" />
+                  </svg>
+                </div>
+                <div class="field-input-flex">
+                  <span class="form-field-label">Passkey</span>
+                  <div style="font-size: 11px; color: var(--muted-foreground);" id="edit-passkey-rp-info">WebAuthn passkey registered</div>
+                </div>
+                <div class="field-row-actions">
+                  <button type="button" id="btn-remove-passkey" class="icon-btn-round mini" title="Remove Passkey">
+                    <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
 
             <!-- Card 3: Websites -->
@@ -942,6 +936,7 @@
                 + Add Password / Code
               </button>
             </div>
+
           </div>
 
           <!-- Section: Note Fields -->
@@ -1351,6 +1346,7 @@
   <script src="../lib/storage.js"></script>
   <script src="../lib/api.js"></script>
   <script src="js/state.js"></script>
+  <script src="js/customization.js"></script>
   <script src="js/vault.js"></script>
   <script src="js/editor.js"></script>
   <script src="js/generator.js"></script>

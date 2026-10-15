@@ -136,6 +136,14 @@
             ? IrisIcons.get("key", "tabler-icon", 'style="width:16px;height:16px;"')
             : ""
 
+          const chevronHtml = additional.length > 0
+            ? `<button type="button" class="iris-pass-sub-toggle-btn" title="Additional Passwords (${additional.length})" aria-label="Toggle additional passwords" aria-expanded="false" style="all: unset !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; width: 24px !important; height: 24px !important; min-width: 24px !important; min-height: 24px !important; max-width: 24px !important; max-height: 24px !important; border-radius: 6px !important; cursor: pointer !important; color: #71717a !important; margin-inline-start: auto !important; flex-shrink: 0 !important; transition: all 0.15s ease !important; box-sizing: border-box !important;">
+                <svg class="tabler-icon iris-pass-sub-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px !important; height: 14px !important; min-width: 14px !important; max-width: 14px !important; flex-shrink: 0 !important; transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.12s ease !important; display: block !important;">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>`
+            : ""
+
           safeSetTemplate(
             item,
             `<div class="iris-pass-item-main">
@@ -144,51 +152,133 @@
                 <div class="iris-pass-item-title">${escapeHtml(title)}</div>
                 <div class="iris-pass-item-user">${escapeHtml(username)}</div>
               </div>
+              ${chevronHtml}
             </div>`
           )
 
+          const handleCredentialSelect = (subPasswordId = null) => {
+            removeDropdown()
+            ext.runtime.sendMessage(
+              {
+                action: "GET_CREDENTIAL_FOR_AUTOFILL",
+                payload: {
+                  cipherId: m.id,
+                  subPasswordId,
+                  url: window.location.href,
+                },
+              },
+              (res) => {
+                if (!res || !res.success) return
+                const password = res.password || ""
+                const generatedCode = res.totpCode || ""
+                const totpSecret = res.totpSecret || ""
+
+                if (generatedCode) {
+                  try {
+                    if (navigator.clipboard?.writeText) {
+                      navigator.clipboard.writeText(generatedCode).catch(() => {})
+                    }
+                  } catch {}
+                  ext.runtime.sendMessage({
+                    action: "COPY_TO_CLIPBOARD",
+                    payload: { text: generatedCode },
+                  }).catch(() => {})
+                }
+
+                global.AkaromiFill?.fillCredential(
+                  {
+                    title: m.title,
+                    data: {
+                      username: res.username || m.data?.username || "",
+                      password,
+                      totpSecret,
+                    },
+                  },
+                  password,
+                  generatedCode
+                )
+              }
+            )
+          }
+
           const mainItem = item.querySelector(".iris-pass-item-main")
-          mainItem.addEventListener("mousedown", (e) => e.preventDefault())
+          mainItem.addEventListener("mousedown", (e) => {
+            if (e.target.closest(".iris-pass-sub-toggle-btn")) return
+            e.preventDefault()
+          })
           mainItem.addEventListener("click", (e) => {
+            if (e.target.closest(".iris-pass-sub-toggle-btn")) return
             e.preventDefault()
             e.stopPropagation()
-            global.AkaromiFill?.fillCredential(m)
-            removeDropdown()
+            handleCredentialSelect(null)
           })
 
-          // Additional Passwords Submenu
+          // Additional Passwords Dropdown (Opened via chevron on item card, closed by default)
           if (additional.length > 0) {
-            const subToggle = document.createElement("div")
-            subToggle.className = "iris-pass-sub-passwords-wrapper"
-            const subDivider = document.createElement("div")
-            subDivider.className = "iris-pass-sub-divider"
-            subDivider.textContent = "Additional Passwords"
-            subToggle.appendChild(subDivider)
+            const toggleBtn = mainItem.querySelector(".iris-pass-sub-toggle-btn")
+            const subWrapper = document.createElement("div")
+            subWrapper.className = "iris-pass-sub-passwords-wrapper"
+            subWrapper.style.cssText = "display: none !important; padding: 4px 10px 8px 36px !important; flex-direction: column !important; gap: 4px !important; box-sizing: border-box !important; width: 100% !important;"
 
-            const subList = document.createElement("div")
-            subList.className = "iris-pass-sub-list"
+            let isOpen = false
 
-            additional.forEach((ap) => {
+            if (toggleBtn) {
+              toggleBtn.addEventListener("mousedown", (e) => {
+                e.preventDefault()
+                e.stopPropagation()
+              })
+              toggleBtn.addEventListener("click", (e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                isOpen = !isOpen
+                item.classList.toggle("open", isOpen)
+                toggleBtn.setAttribute("aria-expanded", String(isOpen))
+                subWrapper.style.display = isOpen ? "flex" : "none"
+                const chevron = toggleBtn.querySelector(".iris-pass-sub-chevron")
+                if (chevron) {
+                  chevron.style.transform = isOpen ? "rotate(180deg)" : "rotate(0deg)"
+                  chevron.style.color = isOpen ? "#fafafa" : "#71717a"
+                  chevron.style.stroke = isOpen ? "#fafafa" : "#71717a"
+                }
+              })
+              toggleBtn.addEventListener("mouseenter", () => {
+                toggleBtn.style.background = "rgba(255, 255, 255, 0.08)"
+                const chevron = toggleBtn.querySelector(".iris-pass-sub-chevron")
+                if (chevron && !isOpen) {
+                  chevron.style.color = "#d4d4d8"
+                  chevron.style.stroke = "#d4d4d8"
+                }
+              })
+              toggleBtn.addEventListener("mouseleave", () => {
+                toggleBtn.style.background = "transparent"
+                const chevron = toggleBtn.querySelector(".iris-pass-sub-chevron")
+                if (chevron && !isOpen) {
+                  chevron.style.color = "#71717a"
+                  chevron.style.stroke = "#71717a"
+                }
+              })
+            }
+
+            additional.forEach((ap, idx) => {
               const subItem = document.createElement("button")
               subItem.type = "button"
               subItem.className = "iris-pass-sub-btn"
+              subItem.style.cssText = "all: unset !important; display: flex !important; align-items: center !important; justify-content: space-between !important; padding: 5px 8px !important; border-radius: 6px !important; background: #18181b !important; border: 1px solid #27272a !important; color: #fafafa !important; font-size: 11px !important; cursor: pointer !important; transition: all 0.12s ease !important; width: 100% !important; box-sizing: border-box !important; margin: 0 !important;"
               safeSetTemplate(
                 subItem,
-                `<span class="sub-label">${escapeHtml(ap.name || "Code")}</span>
-                <span class="sub-masked">••••••••</span>`
+                `<span class="sub-label" style="font-weight: 500 !important; color: #e4e4e7 !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">${escapeHtml(ap.name || "Code")}</span>
+                <span class="sub-masked" style="font-family: ui-monospace, monospace !important; color: #71717a !important; letter-spacing: 0.1em !important;">••••••••</span>`
               )
               subItem.addEventListener("mousedown", (e) => e.preventDefault())
               subItem.addEventListener("click", (e) => {
                 e.preventDefault()
                 e.stopPropagation()
-                global.AkaromiFill?.fillCredential(m, ap.value || "")
-                removeDropdown()
+                handleCredentialSelect(ap.id || String(idx))
               })
-              subList.appendChild(subItem)
+              subWrapper.appendChild(subItem)
             })
 
-            subToggle.appendChild(subList)
-            item.appendChild(subToggle)
+            item.appendChild(subWrapper)
           }
 
           list.appendChild(item)

@@ -41,12 +41,11 @@
   // Global Popup State
   // ----------------------------------------------------
   const AppState = {
+    currentUser: null,
     currentTab: null,
     allCiphers: [],
-    allFolders: [],
     matchingCiphers: [],
     selectedCipherId: null,
-    currentVaultId: "all",
     currentSearchQuery: "",
     activeListFilter: "all", // "all" | "recent"
     activeSortOption: "title_asc", // "title_asc" | "title_desc" | "updated" | "created_desc" | "created_asc" | "recent_used"

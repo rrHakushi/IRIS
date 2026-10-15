@@ -3,25 +3,11 @@
     - Fix rating not being updated when importing from connections
     - Fix local rating not saving at all to media
 
-# Borealis Extra
-    - 
-
-# JellyBorealis 
-    - use borealis for media metadata
-    - Update design
-    - use borealis icon
-
 # Akaromi
     - 
     
-# Akaromi For Firefox
-    - notifications outside extension window
-    - autocopy totp code if autofilled
-    - Copy next totp code if expired and didnt login in time
-
-
 # Kiroshi
-    - Improve search results rendering
+    - Remake the ui
 
 # Carina
     - Web extension for managing and using bookmarks
@@ -30,3 +16,22 @@
 # Lynx
     - Copy from Runa and update
     - Borealis integration
+
+
+### Plugins
+
+# JellyCarina
+    - OIDC plugin for jellyfin
+    - https://github.com/jellyfin/jellyfin-plugin-template
+
+# JellyBorealis 
+    - use borealis for media metadata
+    - Update design
+    - use borealis icon
+    - Auto link option?? if metadata used from borealis
+
+# Akaromi For Firefox
+    - 
+
+# Borealis Extra
+    - 

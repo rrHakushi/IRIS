@@ -2,10 +2,10 @@
   "manifest_version": 3,
   "name": "Akaromi for Firefox",
   "version": "2.0.0",
-  "description": "Password manager extension for IRIS.",
+  "description": "Self hosted password manager to keep your login credentials safe.",
   "browser_specific_settings": {
     "gecko": {
-      "id": "info@runerra.orgd",
+      "id": "info@runerra.org",
       "strict_min_version": "142.0",
       "data_collection_permissions": {
         "required": [
@@ -23,8 +23,7 @@
     "storage",
     "privacy",
     "scripting",
-    "clipboardWrite",
-    "notifications"
+    "clipboardWrite"
   ],
   "incognito": "spanning",
   "host_permissions": [
@@ -79,6 +78,7 @@
       ],
       "js": [
         "lib/icons.js",
+        "lib/totp.js",
         "content/detection.js",
         "content/badge.js",
         "content/fill.js",

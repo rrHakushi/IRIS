@@ -30,7 +30,7 @@
     }
   }
 
-  function fillCredential(cipher, specificPassword = null) {
+  function fillCredential(cipher, specificPassword = null, initialCode = "") {
     if (!cipher) return
     const data = cipher.data || {}
     const username = data.username || data.email || ""
@@ -77,6 +77,41 @@
 
     // Ping background activity
     ext.runtime.sendMessage({ action: "PING_ACTIVITY" }).catch(() => {})
+
+    // Trigger TOTP Auto-Copy & Live Countdown Widget if account has 2FA
+    const rawSecret =
+      data.totpSecret ||
+      data.totp ||
+      data.totpUri ||
+      data.otpauth ||
+      cipher.totpSecret ||
+      cipher.totp ||
+      cipher.login?.totp ||
+      ""
+    const totpSecret = typeof rawSecret === "string" ? rawSecret.trim() : ""
+
+    if (totpSecret) {
+      const accountLabel = cipher.title || username || "2FA"
+      let codeToUse = initialCode
+      if (!codeToUse && typeof IrisTotp !== "undefined" && typeof IrisTotp.generateTotpSync === "function") {
+        codeToUse = IrisTotp.generateTotpSync(totpSecret)
+      }
+
+      let launched = false
+      const invokeWidget = () => {
+        if (launched) return
+        const fn = global.AkaromiTotp?.showFloatingTotpWidget || globalThis.AkaromiTotp?.showFloatingTotpWidget
+        if (typeof fn === "function") {
+          launched = true
+          fn(totpSecret, accountLabel, codeToUse)
+        }
+      }
+
+      invokeWidget()
+      if (!launched) {
+        setTimeout(invokeWidget, 100)
+      }
+    }
   }
 
   global.AkaromiFill = {

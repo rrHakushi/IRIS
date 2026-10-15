@@ -171,8 +171,15 @@
     if (viewLocked) viewLocked.style.display = "none"
     if (viewUnlocked) viewUnlocked.style.display = "block"
 
-    IrisApi.getServerUrl().then((serverUrl) => {
-      global.AkaromiSettings?.updateDrawerUserInfo(user, serverUrl)
+    IrisApi.getServerUrl().then(async (serverUrl) => {
+      let activeUser = user
+      if (!activeUser || !activeUser.customization) {
+        try {
+          const s = await storage.get(["user"])
+          if (s?.user) activeUser = s.user
+        } catch {}
+      }
+      global.AkaromiSettings?.updateDrawerUserInfo(activeUser, serverUrl)
     })
 
     global.AkaromiVault?.loadVaultData()

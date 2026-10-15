@@ -13,7 +13,36 @@ let inMemoryFolders = []
 let autoLockTimer = null
 let clipboardClearTimer = null
 
+// Ephemeral 256-bit runtime encryption key for protecting session storage at rest
+const ephemeralSessionKey = IrisCrypto.generateEphemeralKey()
+
 const ONE_HOUR_MS = 60 * 60 * 1000
+
+/**
+ * Saves current in-memory vault key to session storage encrypted with ephemeral key
+ */
+async function saveVaultKeyToSession() {
+  if (!ext.storage?.session || !inMemoryVaultKey) return
+  try {
+    const rawHex = IrisCrypto.bytesToHex(inMemoryVaultKey)
+    const encryptedVaultKey = IrisCrypto.encryptVaultData(rawHex, ephemeralSessionKey)
+    await ext.storage.session.set({
+      encryptedVaultKey,
+      lastActive: Date.now(),
+    })
+  } catch (err) {
+    console.warn("[Akaromi] Failed to encrypt session vault key:", err)
+  }
+}
+
+/**
+ * Removes session vault key
+ */
+async function clearVaultKeyFromSession() {
+  if (ext.storage?.session) {
+    await ext.storage.session.remove(["encryptedVaultKey", "vaultKeyHex", "lastActive"]).catch(() => {})
+  }
+}
 
 /**
  * Helper: ensure vault is active and unlocked
@@ -32,10 +61,11 @@ async function ensureVaultActive() {
   if (ext.storage?.session) {
     try {
       const sessionData = await ext.storage.session.get([
+        "encryptedVaultKey",
         "vaultKeyHex",
         "lastActive",
       ])
-      if (sessionData?.vaultKeyHex) {
+      if (sessionData?.encryptedVaultKey || sessionData?.vaultKeyHex) {
         const settings = await storage.get(["autoLockMinutes"])
         const minutes = settings.autoLockMinutes ?? 15
 
@@ -50,12 +80,25 @@ async function ensureVaultActive() {
           }
         }
 
-        // Restore vault key from session
-        inMemoryVaultKey = IrisCrypto.hexToBytes(sessionData.vaultKeyHex)
-        await decryptCachedVault(inMemoryVaultKey)
-        await resetAutoLock()
-        checkHourlySyncDue()
-        return true
+        // Restore vault key from session (decrypting with ephemeral in-memory key)
+        let keyHex = ""
+        if (sessionData.encryptedVaultKey) {
+          try {
+            keyHex = IrisCrypto.decryptVaultData(sessionData.encryptedVaultKey, ephemeralSessionKey)
+          } catch (e) {
+            console.warn("[Akaromi] Ephemeral session key invalid (browser was restarted)")
+          }
+        } else if (sessionData.vaultKeyHex) {
+          keyHex = sessionData.vaultKeyHex
+        }
+
+        if (keyHex) {
+          inMemoryVaultKey = IrisCrypto.hexToBytes(keyHex)
+          await decryptCachedVault(inMemoryVaultKey)
+          await resetAutoLock()
+          checkHourlySyncDue()
+          return true
+        }
       }
     } catch (err) {
       console.warn("[Akaromi] Session restore error:", err)
@@ -108,13 +151,14 @@ async function resetAutoLock() {
  * Locks vault and purges all decrypted data from memory and session storage
  */
 function lockVault() {
-  inMemoryVaultKey = null
+  if (inMemoryVaultKey) {
+    IrisCrypto.zeroize(inMemoryVaultKey)
+    inMemoryVaultKey = null
+  }
   inMemoryCiphers = []
   inMemoryFolders = []
   if (autoLockTimer) clearTimeout(autoLockTimer)
-  if (ext.storage?.session) {
-    ext.storage.session.remove(["vaultKeyHex", "lastActive"]).catch(() => {})
-  }
+  clearVaultKeyFromSession()
   updateBadge()
 }
 

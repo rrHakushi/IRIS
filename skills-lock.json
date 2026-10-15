@@ -7,6 +7,12 @@
       "skillPath": "skills/bullmq-specialist/SKILL.md",
       "computedHash": "1012ef335f73d4469d0a00dd9189923c9fa666c3a21e032b5f84733c360aa94a"
     },
+    "data-encryption": {
+      "source": "aj-geddes/useful-ai-prompts",
+      "sourceType": "github",
+      "skillPath": "skills/data-encryption/SKILL.md",
+      "computedHash": "78f45efcae4037f3ec9760dc6c2690bd774560dc587fa88ac46a9ccb6a817b08"
+    },
     "elysiajs": {
       "source": "elysiajs/skills",
       "sourceType": "github",

@@ -15,10 +15,6 @@
   const addDropdownMenu = document.getElementById("add-dropdown-menu")
   const btnDropdownGenerator = document.getElementById("btn-dropdown-generator")
 
-  const btnVaultSelect = document.getElementById("btn-vault-select")
-  const vaultDropdownMenu = document.getElementById("vault-dropdown-menu")
-  const currentVaultLabel = document.getElementById("current-vault-label")
-
   // Sort Elements
   const btnSortToggle = document.getElementById("btn-sort-toggle")
   const sortDropdownMenu = document.getElementById("sort-dropdown-menu")
@@ -50,26 +46,6 @@
     storage.remove("akaromi_search_query").catch(() => {})
   })
 
-  // ----------------------------------------------------
-  // Vault / Folder Dropdown Selector
-  // ----------------------------------------------------
-  btnVaultSelect?.addEventListener("click", (e) => {
-    e.stopPropagation()
-    if (!vaultDropdownMenu) return
-    const isVisible = vaultDropdownMenu.style.display === "block"
-    closeAllPopovers()
-    if (!isVisible) {
-      vaultDropdownMenu.style.display = "block"
-    }
-  })
-
-  vaultDropdownMenu?.addEventListener("click", (e) => {
-    const item = e.target.closest(".dropdown-item")
-    if (!item) return
-    const folderId = item.dataset.folderId || "all"
-    const name = item.querySelector("span")?.textContent || "All items"
-    global.AkaromiVault?.selectFolder(folderId, name)
-  })
 
   // ----------------------------------------------------
   // Header Add (+) Menu
@@ -154,13 +130,12 @@
 
   // Close all popovers on outside click
   function closeAllPopovers() {
-    if (vaultDropdownMenu) vaultDropdownMenu.style.display = "none"
     if (addDropdownMenu) addDropdownMenu.style.display = "none"
     if (sortDropdownMenu) sortDropdownMenu.style.display = "none"
   }
 
   document.addEventListener("click", (e) => {
-    if (!e.target.closest(".vault-select-wrapper") && !e.target.closest(".add-menu-wrapper") && !e.target.closest(".sort-wrapper")) {
+    if (!e.target.closest(".add-menu-wrapper") && !e.target.closest(".sort-wrapper")) {
       closeAllPopovers()
     }
   })
@@ -187,11 +162,14 @@
   // ----------------------------------------------------
   async function init() {
     try {
-      let tabs = await ext.tabs.query({ active: true, currentWindow: true }).catch(() => [])
+      let tabs = await ext.tabs.query({ active: true, lastFocusedWindow: true }).catch(() => [])
+      if (!tabs || tabs.length === 0) {
+        tabs = await ext.tabs.query({ active: true, currentWindow: true }).catch(() => [])
+      }
       if (!tabs || tabs.length === 0) {
         tabs = await ext.tabs.query({ active: true }).catch(() => [])
       }
-      state.currentTab = tabs?.[0] || null
+      state.currentTab = tabs?.find((t) => t.url && !t.url.startsWith("about:") && !t.url.startsWith("moz-extension:")) || tabs?.[0] || null
     } catch (e) {
       console.warn("[Akaromi] Tab query error:", e)
     }

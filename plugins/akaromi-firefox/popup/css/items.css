@@ -34,64 +34,16 @@
 /* Filter & Sort Bar */
 .list-filters-bar,
 .items-filter-bar {
-  height: 38px;
-  min-height: 38px;
+  height: 32px;
+  min-height: 32px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding-inline: 10px;
   border-bottom: 1px solid var(--border);
   gap: 8px;
   flex-shrink: 0;
   box-sizing: border-box;
-}
-
-.filter-pills-group,
-.filter-pills {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.filter-pill {
-  padding: 3px 9px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--muted-foreground);
-  background: transparent;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  transition: all 0.15s ease;
-  border: none;
-  cursor: pointer;
-}
-
-.filter-pill:hover {
-  color: var(--foreground);
-  background: var(--secondary);
-}
-
-.filter-pill.active {
-  background: var(--secondary);
-  color: var(--foreground);
-  font-weight: 600;
-}
-
-.pill-badge {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--muted-foreground);
-  background: var(--card);
-  padding: 1px 5px;
-  border-radius: 9999px;
-  line-height: 1.2;
-}
-
-.filter-pill.active .pill-badge {
-  background: #3f3f46;
-  color: var(--foreground);
 }
 
 /* Sort Controls & Dropdown */
@@ -180,6 +132,8 @@
   flex-direction: column;
   gap: 4px;
 }
+
+
 
 .section-header {
   font-size: 10.5px;
@@ -304,3 +258,58 @@
   font-size: 11px;
   color: #71717a;
 }
+
+/* Card Badges (Passkey & TOTP 2FA Indicator Icons - Pure Monochrome Icons) */
+.card-badges {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-inline-start: auto;
+  flex-shrink: 0;
+}
+
+.card-badge-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  color: #71717a !important;
+  transition: color 0.12s ease;
+  line-height: 1;
+}
+
+.card-badge-icon .tabler-icon {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+.card-badge-icon.badge-totp,
+.card-badge-icon.badge-passkey {
+  color: #71717a !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.cipher-item-card:hover .card-badge-icon,
+.cipher-item-card:hover .card-badge-icon.badge-totp,
+.cipher-item-card:hover .card-badge-icon.badge-passkey {
+  color: #a1a1aa !important;
+}
+
+.cipher-item-card.active .card-badge-icon,
+.cipher-item-card.active .card-badge-icon.badge-totp,
+.cipher-item-card.active .card-badge-icon.badge-passkey {
+  color: #f4f4f5 !important;
+}
+
+
+

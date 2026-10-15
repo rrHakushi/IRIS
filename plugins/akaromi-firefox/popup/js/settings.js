@@ -5,6 +5,7 @@
   "use strict"
 
   const { showToast, ext, storage } = global.AkaromiUtils
+  const state = global.AkaromiState
 
   // Settings Modal Elements
   const modalSettings = document.getElementById("modal-settings")
@@ -33,7 +34,6 @@
   const drawerBackdrop = document.getElementById("drawer-backdrop")
   const appDrawer = document.getElementById("app-drawer")
   const btnMenuDrawer = document.getElementById("btn-menu-drawer")
-  const btnDrawerClose = document.getElementById("btn-drawer-close")
   const drawerUserName = document.getElementById("drawer-user-name")
   const drawerUserServer = document.getElementById("drawer-user-server")
   const drawerAvatar = document.getElementById("drawer-avatar")
@@ -45,9 +45,16 @@
   // ----------------------------------------------------
   // Drawer Interactions
   // ----------------------------------------------------
-  function openDrawer() {
+  async function openDrawer() {
     if (drawerBackdrop) drawerBackdrop.style.display = "block"
     if (appDrawer) appDrawer.style.display = "flex"
+
+    try {
+      const sData = await storage.get(["user", "serverUrl"])
+      if (sData?.user) {
+        updateDrawerUserInfo(sData.user, sData.serverUrl)
+      }
+    } catch {}
   }
 
   function closeDrawer() {
@@ -55,8 +62,10 @@
     if (appDrawer) appDrawer.style.display = "none"
   }
 
+  const headerBrandTitle = document.getElementById("header-brand-title")
+
   btnMenuDrawer?.addEventListener("click", openDrawer)
-  btnDrawerClose?.addEventListener("click", closeDrawer)
+  headerBrandTitle?.addEventListener("click", openDrawer)
   drawerBackdrop?.addEventListener("click", closeDrawer)
 
   // ----------------------------------------------------
@@ -276,13 +285,129 @@
   })
 
   function updateDrawerUserInfo(user, serverUrl) {
-    if (drawerUserName) drawerUserName.textContent = user?.name || user?.username || "Akaromi User"
-    if (drawerUserServer && serverUrl) {
-      drawerUserServer.textContent = serverUrl.replace(/^https?:\/\//, "")
+    if (!user) return
+    if (state) state.currentUser = user
+
+    const customization = global.AkaromiCustomization
+    const profile = customization ? customization.getProfileCustomization(user.customization) : {}
+
+    const nameToShow = profile.displayName || user.displayName || user.name || user.username || "Akaromi User"
+    const initials = nameToShow.trim().charAt(0).toUpperCase() || "A"
+    const statusText = profile.statusText || user.statusText || ""
+    const username = user.username ? `@${user.username}` : (user.email || "")
+
+    const activeNameplate = profile.nameplateUrl || user.sidebarCardBackgroundUrl || user.nameplateUrl
+    const avatarUrl = profile.avatarUrl || user.avatarUrl
+    const avatarFrame = profile.avatarFrame || user.avatarFrame
+
+    const cleanServer = (serverUrl || "localhost:4000").replace(/^https?:\/\//, "").replace(/\/$/, "")
+
+    // 1. Nameplate Background & Overlay
+    const nameplateEl = document.getElementById("user-card-nameplate")
+    const overlayEl = document.getElementById("user-card-nameplate-overlay")
+    const drawerCard = document.getElementById("drawer-user-card")
+
+    if (activeNameplate && customization) {
+      const fullUrl = customization.resolveMediaUrl(activeNameplate, serverUrl)
+      if (nameplateEl) {
+        nameplateEl.style.backgroundImage = `url("${fullUrl}")`
+        nameplateEl.style.display = "block"
+      }
+      if (overlayEl) overlayEl.style.display = "block"
+      if (drawerCard) drawerCard.classList.add("has-nameplate")
+    } else {
+      if (nameplateEl) nameplateEl.style.display = "none"
+      if (overlayEl) overlayEl.style.display = "none"
+      if (drawerCard) drawerCard.classList.remove("has-nameplate")
     }
-    if (drawerAvatar) {
-      const initials = (user?.name || user?.username || "A").slice(0, 1).toUpperCase()
-      drawerAvatar.textContent = initials
+
+    // 2. Avatar & Avatar Frame
+    const avatarFallback = document.getElementById("drawer-avatar-fallback")
+    const avatarImg = document.getElementById("drawer-avatar-img")
+    const avatarFrameEl = document.getElementById("drawer-avatar-frame")
+
+    if (avatarFallback) avatarFallback.textContent = initials
+
+    if (avatarUrl && customization) {
+      const fullAvatar = customization.resolveMediaUrl(avatarUrl, serverUrl)
+      if (avatarImg) {
+        avatarImg.src = fullAvatar
+        avatarImg.style.display = "block"
+        if (avatarFallback) avatarFallback.style.display = "none"
+        avatarImg.onerror = () => {
+          avatarImg.style.display = "none"
+          if (avatarFallback) avatarFallback.style.display = "flex"
+        }
+      }
+    } else {
+      if (avatarImg) avatarImg.style.display = "none"
+      if (avatarFallback) avatarFallback.style.display = "flex"
+    }
+
+    if (avatarFrame && customization && customization.isValidImageUrl(avatarFrame)) {
+      const fullFrame = customization.resolveMediaUrl(avatarFrame, serverUrl)
+      if (avatarFrameEl) {
+        avatarFrameEl.src = fullFrame
+        avatarFrameEl.style.display = "block"
+      }
+    } else {
+      if (avatarFrameEl) avatarFrameEl.style.display = "none"
+    }
+
+    // 3. Display Name & Display Name Style
+    const nameEl = document.getElementById("drawer-user-name")
+    if (nameEl) {
+      nameEl.textContent = nameToShow
+      nameEl.title = nameToShow
+
+      // Reset inline styles
+      nameEl.removeAttribute("style")
+
+      const styleConfig = profile.displayNameStyle || user.displayNameStyle
+      if (styleConfig && customization) {
+        const cssStyles = customization.getDisplayNameStyleCss(styleConfig)
+        for (const [prop, val] of Object.entries(cssStyles)) {
+          nameEl.style[prop] = val
+        }
+        const effectClass = customization.getDisplayNameEffectClasses(styleConfig.effect)
+        nameEl.className = `user-card-name ${activeNameplate ? "has-nameplate" : ""} ${effectClass}`.trim()
+      } else {
+        nameEl.className = `user-card-name ${activeNameplate ? "has-nameplate" : ""}`.trim()
+      }
+    }
+
+    // 4. Subtitle (statusText / username / server)
+    const statusEl = document.getElementById("drawer-user-status")
+    const serverEl = document.getElementById("drawer-user-server")
+
+    if (statusEl) {
+      if (statusText) {
+        statusEl.textContent = statusText
+        statusEl.title = statusText
+        statusEl.style.display = "block"
+        if (activeNameplate) statusEl.classList.add("has-nameplate")
+        else statusEl.classList.remove("has-nameplate")
+      } else if (username) {
+        statusEl.textContent = username
+        statusEl.title = username
+        statusEl.style.display = "block"
+        if (activeNameplate) statusEl.classList.add("has-nameplate")
+        else statusEl.classList.remove("has-nameplate")
+      } else {
+        statusEl.style.display = "none"
+      }
+    }
+
+    if (serverEl) {
+      serverEl.textContent = cleanServer
+      if (activeNameplate) serverEl.classList.add("has-nameplate")
+      else serverEl.classList.remove("has-nameplate")
+    }
+
+    // 5. Card click action -> User card does not redirect anywhere
+    if (drawerCard) {
+      drawerCard.onclick = null
+      drawerCard.removeAttribute("title")
     }
   }
 

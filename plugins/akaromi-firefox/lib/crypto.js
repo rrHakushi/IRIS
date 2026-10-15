@@ -30,6 +30,22 @@
   IrisCrypto.bytesToHex = bytesToHex
   IrisCrypto.hexToBytes = hexToBytes
 
+  /**
+   * Securely overwrites Uint8Array buffers in memory with zeroes
+   */
+  IrisCrypto.zeroize = function (buf) {
+    if (buf && (buf instanceof Uint8Array || ArrayBuffer.isView(buf))) {
+      buf.fill(0)
+    }
+  }
+
+  /**
+   * Generates a 256-bit cryptographically secure ephemeral key for session isolation
+   */
+  IrisCrypto.generateEphemeralKey = function () {
+    return crypto.getRandomValues(new Uint8Array(32))
+  }
+
   const VAULT_SALT = encoder.encode("iris-pass-salt-v1")
   const VAULT_INFO = encoder.encode("iris-pass-vault-v1")
 
@@ -71,7 +87,9 @@
     ciphertextWithTag.set(authTag, cipher.length)
 
     const aes = noble.gcm(key, iv)
-    return aes.decrypt(ciphertextWithTag)
+    const decrypted = aes.decrypt(ciphertextWithTag)
+    IrisCrypto.zeroize(key)
+    return decrypted
   }
 
   /**
@@ -652,6 +670,7 @@
 
     const aes = noble.gcm(pinKey, iv)
     const ciphertextWithTag = aes.encrypt(vaultKey)
+    IrisCrypto.zeroize(pinKey)
     const cipher = ciphertextWithTag.slice(0, -16)
     const authTag = ciphertextWithTag.slice(-16)
 
@@ -690,8 +709,11 @@
 
     const aes = noble.gcm(pinKey, iv)
     try {
-      return aes.decrypt(ciphertextWithTag)
+      const decrypted = aes.decrypt(ciphertextWithTag)
+      IrisCrypto.zeroize(pinKey)
+      return decrypted
     } catch (err) {
+      IrisCrypto.zeroize(pinKey)
       throw new Error("Incorrect PIN")
     }
   }

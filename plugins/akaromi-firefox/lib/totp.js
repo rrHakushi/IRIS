@@ -30,40 +30,141 @@
   }
 
   /**
-   * Generates a 6-digit TOTP token from base32 secret
+   * Extracts clean Base32 secret from raw string or otpauth:// URI
+   */
+  IrisTotp.extractSecret = function (secretOrUri) {
+    if (!secretOrUri || typeof secretOrUri !== "string") return ""
+    const trimmed = secretOrUri.trim()
+    if (trimmed.toLowerCase().startsWith("otpauth://")) {
+      const parsed = IrisTotp.parseOtpAuthUri(trimmed)
+      return parsed?.secret || ""
+    }
+    return trimmed.replace(/^secret:\s*/i, "").replace(/[\s\-_=]/g, "").toUpperCase()
+  }
+
+  // Pure JS SHA-1 implementation (RFC 3174) for synchronous TOTP computation
+  function sha1(bytes) {
+    const K = [0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6]
+    let H0 = 0x67452301
+    let H1 = 0xefcdab89
+    let H2 = 0x98badcfe
+    let H3 = 0x10325476
+    let H4 = 0xc3d2e1f0
+
+    const len = bytes.length
+    const bitLen = len * 8
+    const padLen = len % 64 < 56 ? 56 - (len % 64) : 120 - (len % 64)
+    const totalLen = len + padLen + 8
+    const padded = new Uint8Array(totalLen)
+    padded.set(bytes)
+    padded[len] = 0x80
+
+    const view = new DataView(padded.buffer)
+    view.setUint32(totalLen - 4, bitLen, false)
+    view.setUint32(totalLen - 8, Math.floor(bitLen / 0x100000000), false)
+
+    const W = new Uint32Array(80)
+    for (let i = 0; i < totalLen; i += 64) {
+      for (let t = 0; t < 16; t++) {
+        W[t] = view.getUint32(i + t * 4, false)
+      }
+      for (let t = 16; t < 80; t++) {
+        const x = W[t - 3] ^ W[t - 8] ^ W[t - 14] ^ W[t - 16]
+        W[t] = (x << 1) | (x >>> 31)
+      }
+
+      let a = H0
+      let b = H1
+      let c = H2
+      let d = H3
+      let e = H4
+
+      for (let t = 0; t < 80; t++) {
+        let f, k
+        if (t < 20) {
+          f = (b & c) | (~b & d)
+          k = K[0]
+        } else if (t < 40) {
+          f = b ^ c ^ d
+          k = K[1]
+        } else if (t < 60) {
+          f = (b & c) | (b & d) | (c & d)
+          k = K[2]
+        } else {
+          f = b ^ c ^ d
+          k = K[3]
+        }
+        const temp = (((a << 5) | (a >>> 27)) + f + e + k + W[t]) >>> 0
+        e = d
+        d = c
+        c = (b << 30) | (b >>> 2)
+        b = a
+        a = temp
+      }
+
+      H0 = (H0 + a) >>> 0
+      H1 = (H1 + b) >>> 0
+      H2 = (H2 + c) >>> 0
+      H3 = (H3 + d) >>> 0
+      H4 = (H4 + e) >>> 0
+    }
+
+    const out = new Uint8Array(20)
+    const outView = new DataView(out.buffer)
+    outView.setUint32(0, H0, false)
+    outView.setUint32(4, H1, false)
+    outView.setUint32(8, H2, false)
+    outView.setUint32(12, H3, false)
+    outView.setUint32(16, H4, false)
+    return out
+  }
+
+  function hmacSha1(key, message) {
+    let k = key
+    if (k.length > 64) {
+      k = sha1(k)
+    }
+    const ipad = new Uint8Array(64)
+    const opad = new Uint8Array(64)
+    for (let i = 0; i < 64; i++) {
+      const b = i < k.length ? k[i] : 0
+      ipad[i] = b ^ 0x36
+      opad[i] = b ^ 0x5c
+    }
+
+    const inner = new Uint8Array(64 + message.length)
+    inner.set(ipad, 0)
+    inner.set(message, 64)
+    const innerHash = sha1(inner)
+
+    const outer = new Uint8Array(64 + 20)
+    outer.set(opad, 0)
+    outer.set(innerHash, 64)
+    return sha1(outer)
+  }
+
+  /**
+   * Synchronously generates a 6-digit TOTP token from base32 secret or otpauth:// URI
    * Supports optional timeOffsetSeconds to compute future/next codes (e.g. +30s)
    */
-  IrisTotp.generateTotp = async function (secret, timeStepSeconds = 30, timeOffsetSeconds = 0) {
-    if (!secret) return ""
-
+  IrisTotp.generateTotpSync = function (secretOrUri, timeStepSeconds = 30, timeOffsetSeconds = 0) {
+    if (!secretOrUri) return ""
     try {
-      const keyBytes = base32Decode(secret)
+      const cleanSecret = IrisTotp.extractSecret(secretOrUri)
+      if (!cleanSecret) return ""
+
+      const keyBytes = base32Decode(cleanSecret)
       if (keyBytes.length === 0) return ""
 
       const epoch = Math.floor(Date.now() / 1000) + timeOffsetSeconds
       const counter = Math.floor(epoch / timeStepSeconds)
 
-      const counterBuffer = new ArrayBuffer(8)
-      const counterView = new DataView(counterBuffer)
-      // In JS, numbers over 32-bit are handled via BigInt or split
-      counterView.setUint32(0, Math.floor(counter / 0x100000000))
-      counterView.setUint32(4, counter & 0xffffffff)
+      const counterBuffer = new Uint8Array(8)
+      const counterView = new DataView(counterBuffer.buffer)
+      counterView.setUint32(0, Math.floor(counter / 0x100000000), false)
+      counterView.setUint32(4, counter & 0xffffffff, false)
 
-      const cryptoKey = await crypto.subtle.importKey(
-        "raw",
-        keyBytes,
-        { name: "HMAC", hash: "SHA-1" },
-        false,
-        ["sign"]
-      )
-
-      const signature = await crypto.subtle.sign(
-        "HMAC",
-        cryptoKey,
-        counterBuffer
-      )
-      const hashBytes = new Uint8Array(signature)
-
+      const hashBytes = hmacSha1(keyBytes, counterBuffer)
       const offset = hashBytes[hashBytes.length - 1] & 0xf
       const binary =
         ((hashBytes[offset] & 0x7f) << 24) |
@@ -74,9 +175,19 @@
       const otp = binary % 1000000
       return otp.toString().padStart(6, "0")
     } catch (err) {
-      console.error("[IrisTotp] Failed to generate TOTP:", err)
+      console.error("[IrisTotp] Sync generate failed:", err)
       return ""
     }
+  }
+
+  /**
+   * Generates a 6-digit TOTP token from base32 secret
+   * Supports optional timeOffsetSeconds to compute future/next codes (e.g. +30s)
+   */
+  IrisTotp.generateTotp = async function (secret, timeStepSeconds = 30, timeOffsetSeconds = 0) {
+    const syncCode = IrisTotp.generateTotpSync(secret, timeStepSeconds, timeOffsetSeconds)
+    if (syncCode) return syncCode
+    return ""
   }
 
   /**

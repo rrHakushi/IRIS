@@ -16,7 +16,6 @@
   const editModalError = document.getElementById("edit-modal-error")
 
   const editTitle = document.getElementById("edit-title")
-  const editFolderSelect = document.getElementById("edit-folder-select")
 
   // Login field wrappers
   const groupFieldsLogin = document.getElementById("group-fields-login")
@@ -43,10 +42,30 @@
   const wrapEditTotpActive = document.getElementById("wrap-edit-totp-active")
   const btnEnableTotp = document.getElementById("btn-enable-totp")
   const btnRemoveTotpSecret = document.getElementById("btn-remove-totp-secret")
+  const cardEditPasskey = document.getElementById("card-edit-passkey")
+  const editPasskeyRpInfo = document.getElementById("edit-passkey-rp-info")
+  const btnRemovePasskey = document.getElementById("btn-remove-passkey")
+  const wrapEditPassword = document.getElementById("wrap-edit-password")
+  const wrapEditTotpSection = document.getElementById("wrap-edit-totp-section")
+  let pendingRemovePasskey = false
+
+  function updatePasskeyPosition(hasTotpParam = null) {
+    if (!cardEditPasskey) return
+    const isTotpActive = wrapEditTotpActive && wrapEditTotpActive.style.display !== "none"
+    const hasTotpVal = Boolean(editTotpSecret && editTotpSecret.value.trim())
+    const hasTotp = hasTotpParam !== null ? Boolean(hasTotpParam) : (isTotpActive || hasTotpVal)
+
+    if (hasTotp) {
+      wrapEditTotpSection?.after(cardEditPasskey)
+    } else {
+      wrapEditPassword?.after(cardEditPasskey)
+    }
+  }
 
   function setTotpActiveState(active) {
     if (wrapEditTotpInactive) wrapEditTotpInactive.style.display = active ? "none" : "flex"
     if (wrapEditTotpActive) wrapEditTotpActive.style.display = active ? "flex" : "none"
+    updatePasskeyPosition(active)
   }
 
   async function getCurrentTabUrl() {
@@ -120,15 +139,8 @@
       editWebsitesList.replaceChildren()
     }
 
-    if (editAdditionalPasswordsList) {
-      editAdditionalPasswordsList.replaceChildren()
-    }
-
-    // Populate current folders in dropdown
-    populateFolderSelect()
-    if (editFolderSelect && state.currentVaultId && state.currentVaultId !== "all") {
-      editFolderSelect.value = state.currentVaultId
-    }
+    pendingRemovePasskey = false
+    if (cardEditPasskey) cardEditPasskey.style.display = "none"
 
     setEditItemType(type)
 
@@ -163,9 +175,6 @@
     if (editModalHeading) editModalHeading.textContent = "Edit Item"
     if (formEditCipher) formEditCipher.reset()
     if (editModalError) editModalError.style.display = "none"
-
-    populateFolderSelect()
-    if (editFolderSelect) editFolderSelect.value = cipher.folderId || ""
 
     const data = cipher.data || {}
     if (editTitle) editTitle.value = cipher.title || ""
@@ -224,6 +233,21 @@
         })
       }
 
+      // Passkey management in edit modal
+      pendingRemovePasskey = false
+      const passkeyData = data.passkey
+      if (passkeyData && cardEditPasskey) {
+        cardEditPasskey.style.display = "flex"
+        if (editPasskeyRpInfo) {
+          editPasskeyRpInfo.textContent = passkeyData.rpId
+            ? `Passkey for ${passkeyData.rpId}`
+            : "WebAuthn passkey registered"
+        }
+        updatePasskeyPosition(hasTotp)
+      } else if (cardEditPasskey) {
+        cardEditPasskey.style.display = "none"
+      }
+
       if (editGeneralNotes) editGeneralNotes.value = data.notes || ""
     } else if (subType === "note") {
       if (editNoteBody) editNoteBody.value = data.notes || ""
@@ -259,22 +283,6 @@
     saveEditDraftNow()
   }
 
-  function populateFolderSelect() {
-    if (!editFolderSelect) return
-    editFolderSelect.replaceChildren()
-
-    const defaultOpt = document.createElement("option")
-    defaultOpt.value = ""
-    defaultOpt.textContent = "Personal"
-    editFolderSelect.appendChild(defaultOpt)
-
-    state.allFolders.forEach((f) => {
-      const opt = document.createElement("option")
-      opt.value = f.id
-      opt.textContent = f.name
-      editFolderSelect.appendChild(opt)
-    })
-  }
 
   function setEditItemType(type) {
     state.currentEditType = type
@@ -517,6 +525,7 @@
               target: { tabId },
               files: [
                 "lib/icons.js",
+                "lib/totp.js",
                 "content/detection.js",
                 "content/badge.js",
                 "content/fill.js",
@@ -528,8 +537,11 @@
         }
 
         await ext.tabs.sendMessage(tabId, { action: "START_QR_CAPTURE" })
-        if (modalEditCipher) modalEditCipher.style.display = "none"
-        showToast("Click and drag to select the QR code on the page")
+        setTimeout(() => {
+          try {
+            window.close()
+          } catch {}
+        }, 60)
       }
     } catch (err) {
       console.warn("[Akaromi] QR scan start failed:", err)
@@ -550,6 +562,12 @@
     }
     setTotpActiveState(false)
     queueSaveEditDraft()
+  })
+
+  btnRemovePasskey?.addEventListener("click", () => {
+    pendingRemovePasskey = true
+    if (cardEditPasskey) cardEditPasskey.style.display = "none"
+    showToast("Passkey removed. Save item to apply changes.")
   })
 
   // Only show 2FA secret when input field is active (focused); hide when inactive (blurred)
@@ -580,7 +598,7 @@
     }
 
     try {
-      const folderId = editFolderSelect?.value || null
+      const folderId = null
       let dataPayload = { itemType: state.currentEditType }
 
       if (state.currentEditType === "login") {
@@ -628,6 +646,11 @@
         const isTotpActive = wrapEditTotpActive && wrapEditTotpActive.style.display !== "none"
         const totpSecret = isTotpActive ? (editTotpSecret?.value.trim().replace(/\s+/g, "") || "") : ""
 
+        const existingCipher = state.editingCipherId
+          ? state.allCiphers.find((c) => c.id === state.editingCipherId)
+          : null
+        const existingPasskey = existingCipher?.data?.passkey
+
         dataPayload = {
           ...dataPayload,
           email,
@@ -637,6 +660,10 @@
           uris,
           additionalPasswords,
           notes: editGeneralNotes?.value.trim() || "",
+        }
+
+        if (!pendingRemovePasskey && existingPasskey) {
+          dataPayload.passkey = existingPasskey
         }
       } else if (state.currentEditType === "note") {
         dataPayload = {
@@ -748,7 +775,7 @@
     return {
       type: state.currentEditType || "login",
       title: editTitle?.value || "",
-      folderId: editFolderSelect?.value || "",
+      folderId: null,
       splitUsername: wrapSplitFields?.style.display === "block",
       emailOrUsername: editEmailOrUsername?.value || "",
       email: editEmail?.value || "",
@@ -814,11 +841,9 @@
         if (formEditCipher) formEditCipher.reset()
         if (editModalError) editModalError.style.display = "none"
 
-        populateFolderSelect()
         setEditItemType(d.type || "login")
 
         if (editTitle) editTitle.value = d.title || ""
-        if (editFolderSelect) editFolderSelect.value = d.folderId || ""
 
         if (d.splitUsername) {
           if (wrapEmailOrUsername) wrapEmailOrUsername.style.display = "none"

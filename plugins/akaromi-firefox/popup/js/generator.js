@@ -124,6 +124,7 @@
     if (!text) return
     navigator.clipboard.writeText(text).then(() => {
       showToast("Generated password copied")
+      ext.runtime.sendMessage({ action: "SCHEDULE_CLIPBOARD_CLEAR", payload: { text } }).catch(() => {})
     })
   })
 

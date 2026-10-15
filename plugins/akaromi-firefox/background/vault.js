@@ -104,6 +104,13 @@ async function syncVault(options = {}) {
       console.warn("[Akaromi] Failed to fetch folders:", e)
     }
 
+    try {
+      const auth = await IrisApi.checkAuth()
+      if (auth?.authenticated && auth?.user) {
+        await storage.set({ user: auth.user })
+      }
+    } catch {}
+
     const now = Date.now()
     await storage.set({
       cachedEncryptedCiphers: rawCiphers,
@@ -211,13 +218,9 @@ async function unlockWithPassword(password) {
 
   // 2. Derive vault key from master secret key (HKDF-SHA256)
   inMemoryVaultKey = IrisCrypto.deriveVaultKey(secretKeyBytes)
+  IrisCrypto.zeroize(secretKeyBytes)
 
-  if (ext.storage?.session) {
-    await ext.storage.session.set({
-      vaultKeyHex: IrisCrypto.bytesToHex(inMemoryVaultKey),
-      lastActive: Date.now(),
-    })
-  }
+  await saveVaultKeyToSession()
 
   // 3. Sync or decrypt vault items
   await syncVault({ force: false })

@@ -2,6 +2,53 @@
  * Akaromi for Firefox — Background Message Dispatcher & Lifecycle Coordinator
  */
 
+// PIN brute-force defense state
+let pinFailedAttempts = 0
+let pinLockoutUntil = 0
+
+/**
+ * Schedules wiping sensitive text from system clipboard after specified seconds
+ */
+function scheduleClipboardWipe(text, seconds = 30) {
+  if (!text || !seconds || seconds <= 0) return
+  if (clipboardClearTimer) clearTimeout(clipboardClearTimer)
+  clipboardClearTimer = setTimeout(async () => {
+    try {
+      let cleared = false
+      try {
+        if (typeof document !== "undefined" && document.createElement) {
+          const ta = document.createElement("textarea")
+          ta.value = ""
+          ta.style.position = "fixed"
+          ta.style.opacity = "0"
+          document.body.appendChild(ta)
+          ta.focus()
+          ta.select()
+          cleared = document.execCommand("copy")
+          ta.remove()
+        }
+      } catch (e) {}
+
+      if (!cleared && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText("").catch(() => {})
+      }
+
+      try {
+        const tabs = await ext.tabs.query({ active: true, lastFocusedWindow: true })
+        const activeTab = tabs[0] || (await ext.tabs.query({ active: true }))[0]
+        if (activeTab?.id) {
+          ext.tabs.sendMessage(activeTab.id, {
+            action: "CLEAR_CLIPBOARD_IF_MATCHES",
+            payload: { text },
+          }).catch(() => {})
+        }
+      } catch (e) {}
+    } catch (e) {
+      console.warn("[Akaromi] Clipboard clear timer error:", e)
+    }
+  }, seconds * 1000)
+}
+
 /**
  * Message Handler
  */
@@ -41,7 +88,8 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
 
       // If token exists, verify with server if user not cached or missing customization
-      if (!user || !user.customization) {
+      const profile = user?.customization?.profile
+      if (!user || !user.customization || !profile || !profile.displayNameStyle) {
         try {
           const auth = await IrisApi.checkAuth()
           if (auth.authenticated && auth.user) {
@@ -126,6 +174,8 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // 2. Automatically attempt vault key decryption with the same password
         try {
           await unlockWithPassword(password)
+          pinFailedAttempts = 0
+          pinLockoutUntil = 0
         } catch (vaultErr) {
           console.warn("[Akaromi] Account logged in, but vault requires setup or unlock:", vaultErr)
         }
@@ -260,6 +310,8 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (!password) throw new Error("Password required")
 
         await unlockWithPassword(password)
+        pinFailedAttempts = 0
+        pinLockoutUntil = 0
         sendResponse({ success: true })
       } catch (err) {
         console.error("[Akaromi] Unlock error:", err)
@@ -312,21 +364,42 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const { pin } = payload || {}
         if (!pin) throw new Error("PIN is required")
 
+        if (pinLockoutUntil > Date.now()) {
+          const remainingSec = Math.ceil((pinLockoutUntil - Date.now()) / 1000)
+          throw new Error(`PIN unlock temporarily locked. Please wait ${remainingSec}s.`)
+        }
+
         const sData = await storage.get(["pinUnlockData", "pinUnlockEnabled", "user"])
         if (!sData.pinUnlockEnabled || !sData.pinUnlockData) {
           throw new Error("PIN unlock is not enabled on this device")
         }
 
-        // Decrypt vault key using PIN
-        const vaultKey = IrisCrypto.unlockWithPin(pin, sData.pinUnlockData)
+        // Decrypt vault key using PIN with rate-limiting & brute-force lockout
+        let vaultKey
+        try {
+          vaultKey = IrisCrypto.unlockWithPin(pin, sData.pinUnlockData)
+        } catch (pinErr) {
+          pinFailedAttempts++
+          if (pinFailedAttempts >= 5) {
+            await storage.set({ pinUnlockEnabled: false })
+            await storage.remove(["pinUnlockData"])
+            pinFailedAttempts = 0
+            pinLockoutUntil = 0
+            throw new Error("Too many incorrect attempts (5). PIN unlock disabled for security. Please unlock with your account password.")
+          } else if (pinFailedAttempts >= 3) {
+            pinLockoutUntil = Date.now() + 5000
+            throw new Error(`Incorrect PIN (${pinFailedAttempts}/5 attempts). Please wait 5 seconds.`)
+          } else {
+            throw new Error(`Incorrect PIN (${pinFailedAttempts}/5 attempts)`)
+          }
+        }
+
+        // Success: reset attempt counters and save to session
+        pinFailedAttempts = 0
+        pinLockoutUntil = 0
         inMemoryVaultKey = vaultKey
 
-        if (ext.storage?.session) {
-          await ext.storage.session.set({
-            vaultKeyHex: IrisCrypto.bytesToHex(inMemoryVaultKey),
-            lastActive: Date.now(),
-          })
-        }
+        await saveVaultKeyToSession()
 
         // Decrypt cached vault ciphers without hitting network
         await decryptCachedVault(inMemoryVaultKey)
@@ -384,50 +457,16 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (action === "SCHEDULE_CLIPBOARD_CLEAR") {
     ;(async () => {
       try {
-        const { text, seconds = 30 } = payload || {}
-        if (!seconds || seconds <= 0) {
-          sendResponse({ success: true, scheduled: false })
-          return
+        const { text, seconds } = payload || {}
+        let sec = seconds
+        if (!sec) {
+          const s = await storage.get(["clipboardClearSeconds"])
+          sec = s.clipboardClearSeconds !== undefined ? Number(s.clipboardClearSeconds) : 30
         }
-
-        if (clipboardClearTimer) clearTimeout(clipboardClearTimer)
-        clipboardClearTimer = setTimeout(async () => {
-          try {
-            let cleared = false
-            try {
-              if (typeof document !== "undefined" && document.createElement) {
-                const ta = document.createElement("textarea")
-                ta.value = ""
-                ta.style.position = "fixed"
-                ta.style.opacity = "0"
-                document.body.appendChild(ta)
-                ta.focus()
-                ta.select()
-                cleared = document.execCommand("copy")
-                ta.remove()
-              }
-            } catch (e) {}
-
-            if (!cleared && navigator.clipboard?.writeText) {
-              await navigator.clipboard.writeText("").catch(() => {})
-            }
-
-            try {
-              const tabs = await ext.tabs.query({ active: true, lastFocusedWindow: true })
-              const activeTab = tabs[0] || (await ext.tabs.query({ active: true }))[0]
-              if (activeTab?.id) {
-                ext.tabs.sendMessage(activeTab.id, {
-                  action: "CLEAR_CLIPBOARD_IF_MATCHES",
-                  payload: { text },
-                }).catch(() => {})
-              }
-            } catch (e) {}
-          } catch (e) {
-            console.warn("[Akaromi] Clipboard clear timer error:", e)
-          }
-        }, seconds * 1000)
-
-        sendResponse({ success: true, scheduled: true, seconds })
+        if (sec > 0 && text) {
+          scheduleClipboardWipe(text, sec)
+        }
+        sendResponse({ success: true, scheduled: sec > 0, seconds: sec })
       } catch (err) {
         sendResponse({ success: false, error: err.message })
       }
@@ -561,9 +600,105 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
       await ensureVaultActive()
       resetAutoLock()
       const isPrivileged = isPrivilegedSender(sender)
-      const targetUrl = isPrivileged && payload?.url ? payload.url : (sender.url || sender.tab?.url || "")
+      let targetUrl = isPrivileged && payload?.url ? payload.url : (sender.url || sender.tab?.url || "")
+      if (!targetUrl || targetUrl.startsWith("moz-extension:")) {
+        try {
+          let tabs = await ext.tabs.query({ active: true, lastFocusedWindow: true }).catch(() => [])
+          if (!tabs || tabs.length === 0) {
+            tabs = await ext.tabs.query({ active: true, currentWindow: true }).catch(() => [])
+          }
+          if (!tabs || tabs.length === 0) {
+            tabs = await ext.tabs.query({ active: true }).catch(() => [])
+          }
+          const tab = tabs?.find((t) => t.url && !t.url.startsWith("about:") && !t.url.startsWith("moz-extension:")) || tabs?.[0]
+          if (tab?.url) {
+            targetUrl = tab.url
+          }
+        } catch {}
+      }
       const matches = getMatchingLogins(targetUrl)
-      sendResponse({ matches, isUnlocked: Boolean(inMemoryVaultKey) })
+
+      // Least-Privilege Sanitization for unprivileged webpage content scripts:
+      // Expose only safe UI metadata; keep plaintext passwords and TOTP secrets protected in background memory!
+      let responseMatches = matches
+      if (!isPrivileged) {
+        responseMatches = matches.map((c) => ({
+          id: c.id,
+          title: c.title,
+          data: {
+            username: c.login?.username || c.data?.username || c.data?.email || "",
+            additionalPasswords: (c.data?.additionalPasswords || []).map((ap, idx) => ({
+              id: ap.id || String(idx),
+              name: ap.name || ap.title || `Password ${idx + 1}`,
+            })),
+          },
+          hasPassword: Boolean(c.login?.password || c.data?.password),
+          hasTotp: Boolean(c.login?.totp || c.data?.totp || c.data?.totpSecret),
+          hasPasskey: Boolean(c.data?.passkey || c.passkey),
+        }))
+      }
+
+      sendResponse({ matches: responseMatches, url: targetUrl, isUnlocked: Boolean(inMemoryVaultKey) })
+    })()
+    return true
+  }
+
+  // 6b. Get Decrypted Credential on-demand for Autofill
+  if (action === "GET_CREDENTIAL_FOR_AUTOFILL") {
+    ;(async () => {
+      try {
+        await ensureVaultActive()
+        resetAutoLock()
+        if (!inMemoryVaultKey) throw new Error("Vault is locked")
+
+        const { cipherId, subPasswordId } = payload || {}
+        if (!cipherId) throw new Error("cipherId is required")
+
+        // Security check: Verify sender tab matches the cipher's authorized domain
+        const isPrivileged = isPrivilegedSender(sender)
+        const targetUrl = isPrivileged && payload?.url ? payload.url : (sender.url || sender.tab?.url || "")
+        const matching = getMatchingLogins(targetUrl)
+        const cipher = matching.find((c) => c.id === cipherId)
+        if (!cipher) {
+          throw new Error("Cipher does not match current domain or unauthorized")
+        }
+
+        let passwordToFill = cipher.login?.password || cipher.data?.password || ""
+        if (subPasswordId !== undefined && subPasswordId !== null) {
+          const subList = cipher.data?.additionalPasswords || []
+          const found = subList.find((p, idx) => (p.id ? p.id === subPasswordId : String(idx) === String(subPasswordId)))
+          if (found?.value || found?.password) {
+            passwordToFill = found.value || found.password
+          }
+        }
+
+        const rawTotp =
+          cipher.data?.totpSecret ||
+          cipher.data?.totp ||
+          cipher.data?.totpUri ||
+          cipher.data?.otpauth ||
+          cipher.totpSecret ||
+          cipher.totp ||
+          cipher.login?.totp ||
+          ""
+        const totpSecret = typeof rawTotp === "string" ? rawTotp.trim() : ""
+
+        let generatedTotpCode = ""
+        if (totpSecret && typeof IrisTotp !== "undefined" && typeof IrisTotp.generateTotpSync === "function") {
+          generatedTotpCode = IrisTotp.generateTotpSync(totpSecret)
+        }
+
+        sendResponse({
+          success: true,
+          username: cipher.login?.username || cipher.data?.username || cipher.data?.email || "",
+          password: passwordToFill,
+          totpSecret,
+          totpCode: generatedTotpCode,
+        })
+      } catch (err) {
+        console.warn("[Akaromi] Credential autofill retrieval error:", err)
+        sendResponse({ success: false, error: err.message })
+      }
     })()
     return true
   }
@@ -604,26 +739,76 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         await ext.tabs.sendMessage(targetTabId, {
           action: "FILL_INPUTS",
           payload: {
+            title: cipher.title || cipher.data?.username || "Account",
             username: cipher.data?.username || "",
             password: cipher.data?.password || "",
+            totpSecret: cipher.data?.totpSecret || "",
           },
         })
 
-        if (cipher.data?.totpSecret) {
-          const otp = await IrisTotp.generateTotp(cipher.data.totpSecret)
-          if (otp) {
-            ext.tabs.sendMessage(targetTabId, {
-              action: "SHOW_TOTP_TIMER",
-              payload: {
-                secret: cipher.data.totpSecret,
-                label: cipher.title || cipher.data?.username || "2FA",
-                initialCode: otp,
-              },
-            }).catch(() => {})
+        sendResponse({ success: true })
+      } catch (err) {
+        sendResponse({ success: false, error: err.message })
+      }
+    })()
+    return true
+  }
+
+  // 8a1. Copy Text to Clipboard (with clipboardWrite permission)
+  if (action === "COPY_TO_CLIPBOARD") {
+    ;(async () => {
+      try {
+        const { text } = payload || {}
+        if (text) {
+          let written = false
+          try {
+            if (typeof document !== "undefined" && document.createElement) {
+              const ta = document.createElement("textarea")
+              ta.value = text
+              ta.style.position = "fixed"
+              ta.style.opacity = "0"
+              ;(document.body || document.documentElement).appendChild(ta)
+              ta.focus()
+              ta.select()
+              written = document.execCommand("copy")
+              ta.remove()
+            }
+          } catch {}
+
+          if (!written && navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text).catch(() => {})
+          }
+
+          // Automatically schedule clipboard wiping using user's setting (default 30s)
+          const s = await storage.get(["clipboardClearSeconds"])
+          const sec = s.clipboardClearSeconds !== undefined ? Number(s.clipboardClearSeconds) : 30
+          if (sec > 0) {
+            scheduleClipboardWipe(text, sec)
           }
         }
-
         sendResponse({ success: true })
+      } catch (err) {
+        sendResponse({ success: false, error: err.message })
+      }
+    })()
+    return true
+  }
+
+  // 8a2. Desktop / Browser Notification disabled (in-page corner notifications only)
+  if (action === "SHOW_NOTIFICATION") {
+    sendResponse({ success: true })
+    return true
+  }
+
+  // 8a3. Generate TOTP code on demand
+  if (action === "GENERATE_TOTP") {
+    ;(async () => {
+      try {
+        const { secret } = payload || {}
+        if (!secret) throw new Error("No secret provided")
+        const code = await IrisTotp.generateTotp(secret)
+        const remaining = IrisTotp.getRemainingSeconds()
+        sendResponse({ success: true, code, remaining })
       } catch (err) {
         sendResponse({ success: false, error: err.message })
       }
@@ -672,21 +857,41 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         const res = await fetch(screenshotUrl)
         const blob = await res.blob()
+        const fullBitmap = await createImageBitmap(blob)
 
-        let bitmap
-        const dpr = bounds?.dpr || 1
-        const sx = Math.max(0, Math.round((bounds?.x || 0) * dpr))
-        const sy = Math.max(0, Math.round((bounds?.y || 0) * dpr))
-        const sw = Math.max(10, Math.round((bounds?.width || 100) * dpr))
-        const sh = Math.max(10, Math.round((bounds?.height || 100) * dpr))
+        const viewportW = bounds?.innerWidth || (bounds?.x + bounds?.width) || (fullBitmap.width / (bounds?.dpr || 1))
+        const viewportH = bounds?.innerHeight || (bounds?.y + bounds?.height) || (fullBitmap.height / (bounds?.dpr || 1))
 
-        if (typeof createImageBitmap !== "undefined") {
-          bitmap = await createImageBitmap(blob, sx, sy, sw, sh)
-        } else {
-          bitmap = await createImageBitmap(blob)
+        const scaleX = fullBitmap.width / viewportW
+        const scaleY = fullBitmap.height / viewportH
+
+        // Expand crop area slightly (by 15px CSS) to guarantee quiet zone around QR code
+        const paddingX = 15
+        const paddingY = 15
+
+        const paddedX = Math.max(0, (bounds?.x || 0) - paddingX)
+        const paddedY = Math.max(0, (bounds?.y || 0) - paddingY)
+        const paddedW = (bounds?.width || 100) + paddingX * 2
+        const paddedH = (bounds?.height || 100) + paddingY * 2
+
+        const sx = Math.max(0, Math.min(fullBitmap.width - 10, Math.round(paddedX * scaleX)))
+        const sy = Math.max(0, Math.min(fullBitmap.height - 10, Math.round(paddedY * scaleY)))
+        const sw = Math.max(10, Math.min(fullBitmap.width - sx, Math.round(paddedW * scaleX)))
+        const sh = Math.max(10, Math.min(fullBitmap.height - sy, Math.round(paddedH * scaleY)))
+
+        const croppedBitmap = await createImageBitmap(fullBitmap, sx, sy, sw, sh)
+
+        let decodedText = await IrisQrDecoder.scanImage(croppedBitmap)
+        if (!decodedText) {
+          // If padded scan didn't find it, try exact tight crop without padding
+          const tightSx = Math.max(0, Math.min(fullBitmap.width - 10, Math.round((bounds?.x || 0) * scaleX)))
+          const tightSy = Math.max(0, Math.min(fullBitmap.height - 10, Math.round((bounds?.y || 0) * scaleY)))
+          const tightSw = Math.max(10, Math.min(fullBitmap.width - tightSx, Math.round((bounds?.width || 100) * scaleX)))
+          const tightSh = Math.max(10, Math.min(fullBitmap.height - tightSy, Math.round((bounds?.height || 100) * scaleY)))
+          const tightBitmap = await createImageBitmap(fullBitmap, tightSx, tightSy, tightSw, tightSh)
+          decodedText = await IrisQrDecoder.scanImage(tightBitmap)
         }
 
-        const decodedText = await IrisQrDecoder.scanImage(bitmap)
         if (!decodedText) {
           throw new Error("No QR code detected in the selected area. Please try selecting closer to the QR code.")
         }
