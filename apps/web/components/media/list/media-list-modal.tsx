@@ -43,6 +43,8 @@ import { Badge } from "@workspace/ui/components/badge"
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile"
 import { toast } from "sonner"
 import { elysia } from "@/lib/elysia"
+import { useEncryption } from "@/context/encryption-context"
+import { deriveVaultKey, safeDecryptText, safeEncryptText } from "@/lib/client-encryption"
 import type { NormalizedMediaData } from "../media-types"
 import type {
   CanonicalMediaCategory,
@@ -117,6 +119,11 @@ export function MediaListModal({
   initialEntry,
   onEntryUpdated,
 }: MediaListModalProps) {
+  const { secretKey, isActive } = useEncryption()
+  const vaultKey = useMemo(
+    () => (isActive && secretKey ? deriveVaultKey(secretKey) : null),
+    [isActive, secretKey]
+  )
   const isMobile = useIsMobile()
   const { data: session } = useSession()
   const { user } = useUser()
@@ -303,7 +310,9 @@ export function MediaListModal({
   const [score, setScore] = useState<number | null>(() =>
     normalizeModalScore(initialEntry?.score)
   )
-  const [notes, setNotes] = useState<string>(initialEntry?.notes || "")
+  const [notes, setNotes] = useState<string>(() =>
+    safeDecryptText(initialEntry?.notes, vaultKey)
+  )
   const [isPrivate, setIsPrivate] = useState<boolean>(
     initialEntry?.private ?? false
   )
@@ -467,7 +476,7 @@ export function MediaListModal({
             : rawVolumes
         )
         setScore(normalizeModalScore(initialEntry.score))
-        setNotes(initialEntry.notes || "")
+        setNotes(safeDecryptText(initialEntry.notes, vaultKey))
         setIsPrivate(initialEntry.private ?? false)
         const rawStart = formatDateToYmd(initialEntry.startedAt)
         const rawEnd = formatDateToYmd(initialEntry.completedAt)
@@ -857,7 +866,7 @@ export function MediaListModal({
         score !== null && score > 0
           ? Math.round(Number(score) * 10) / 10
           : null,
-      notes: notes.trim() || null,
+      notes: safeEncryptText(notes, vaultKey) || null,
       private: isPrivate,
       startedAt: finalStartedAt ? new Date(finalStartedAt).toISOString() : null,
       completedAt: finalCompletedAt

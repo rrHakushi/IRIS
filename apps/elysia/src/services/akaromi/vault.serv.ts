@@ -1,21 +1,14 @@
 import { prisma, type PassCipherType } from '@IRIS/database'
 import { AkaromiCiphersServ } from './ciphers.serv'
 
-export interface ImportFolderItem {
-  tempId: string
-  encryptedName: string
-}
-
 export interface ImportCipherItem {
   type: PassCipherType
   encryptedTitle: string
   encryptedData: string
-  folderTempId?: string | null
   favorite?: boolean
 }
 
 export interface ImportVaultBody {
-  folders: ImportFolderItem[]
   ciphers: ImportCipherItem[]
 }
 
@@ -39,18 +32,7 @@ export class AkaromiVaultServ {
       orderBy: { updatedAt: 'desc' },
     })
 
-    // 2. Fetch folders (modified or created since timestamp)
-    const folderWhere: { userId: string; updatedAt?: { gte: Date } } = { userId }
-    if (hasValidSince) {
-      folderWhere.updatedAt = { gte: sinceDate }
-    }
-
-    const rawFolders = await prisma.passFolder.findMany({
-      where: folderWhere,
-      orderBy: { updatedAt: 'desc' },
-    })
-
-    // 3. Extract IDs of ciphers currently in trash or soft deleted
+    // 2. Extract IDs of ciphers currently in trash or soft deleted
     const deletedCipherIds = rawCiphers
       .filter((c) => c.deletedAt !== null)
       .map((c) => c.id)
@@ -60,13 +42,6 @@ export class AkaromiVaultServ {
       serverTime: now.toISOString(),
       ciphers: rawCiphers.map((c) => AkaromiCiphersServ.formatCipher(c)),
       deletedCipherIds,
-      folders: rawFolders.map((f) => ({
-        id: f.id,
-        encryptedName: f.encryptedName,
-        parentId: f.parentId,
-        createdAt: f.createdAt.toISOString(),
-        updatedAt: f.updatedAt.toISOString(),
-      })),
     }
   }
 
@@ -74,15 +49,6 @@ export class AkaromiVaultServ {
    * Exports full non-deleted vault data for backup or client migration.
    */
   public static async exportVault(userId: string) {
-    const folders = await prisma.passFolder.findMany({
-      where: { userId },
-      select: {
-        id: true,
-        encryptedName: true,
-      },
-      orderBy: { createdAt: 'asc' },
-    })
-
     const ciphers = await prisma.passCipher.findMany({
       where: {
         userId,
@@ -92,7 +58,6 @@ export class AkaromiVaultServ {
         id: true,
         type: true,
         favorite: true,
-        folderId: true,
         encryptedTitle: true,
         encryptedData: true,
         createdAt: true,
@@ -104,12 +69,10 @@ export class AkaromiVaultServ {
     return {
       success: true,
       exportedAt: new Date().toISOString(),
-      folders,
       ciphers: ciphers.map((c) => ({
         id: c.id,
         type: c.type as 'LOGIN' | 'SSH_KEY',
         favorite: c.favorite,
-        folderId: c.folderId,
         encryptedTitle: c.encryptedTitle,
         encryptedData: c.encryptedData,
         createdAt: c.createdAt.toISOString(),
@@ -119,39 +82,18 @@ export class AkaromiVaultServ {
   }
 
   /**
-   * Imports folders and ciphers into the vault, mapping client temp IDs to persisted database IDs.
+   * Imports ciphers into the vault.
    */
   public static async importVault(userId: string, body: ImportVaultBody) {
-    const folderMap = new Map<string, string>()
-
-    // 1. Create folders and map client temp IDs to database IDs
-    for (const folderItem of body.folders) {
-      if (folderItem.encryptedName?.trim()) {
-        const created = await prisma.passFolder.create({
-          data: {
-            userId,
-            encryptedName: folderItem.encryptedName.trim(),
-          },
-        })
-        folderMap.set(folderItem.tempId, created.id)
-      }
-    }
-
-    // 2. Create ciphers with remapped folder IDs
     let importedCiphersCount = 0
     for (const cipherItem of body.ciphers) {
       if (cipherItem.encryptedTitle?.trim() && cipherItem.encryptedData?.trim()) {
-        const mappedFolderId = cipherItem.folderTempId
-          ? (folderMap.get(cipherItem.folderTempId) ?? null)
-          : null
-
         await prisma.passCipher.create({
           data: {
             userId,
             type: cipherItem.type,
             encryptedTitle: cipherItem.encryptedTitle,
             encryptedData: cipherItem.encryptedData,
-            folderId: mappedFolderId,
             favorite: cipherItem.favorite ?? false,
           },
         })
@@ -161,9 +103,8 @@ export class AkaromiVaultServ {
 
     return {
       success: true,
-      importedFoldersCount: folderMap.size,
       importedCiphersCount,
-      message: `Successfully imported ${folderMap.size} folders and ${importedCiphersCount} ciphers`,
+      message: `Successfully imported ${importedCiphersCount} ciphers`,
     }
   }
 }

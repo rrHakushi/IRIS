@@ -138,7 +138,7 @@ export function EncryptionProvider({
               userId: resolvedUserId,
               publicKey: data.publicKey,
               encryptedPrivateKey: data.encryptedPrivateKey || "",
-              algorithm: "ML-KEM-768",
+              algorithm: "RSA-2048",
               lastUnlockedAt: inMemorySecretKey ? Date.now() : null,
               updatedAt: Date.now(),
             })
@@ -247,7 +247,7 @@ export function EncryptionProvider({
           userId: targetUserId,
           publicKey: pubKey,
           encryptedPrivateKey: payload,
-          algorithm: "ML-KEM-768",
+          algorithm: "RSA-2048",
           lastUnlockedAt: Date.now(),
           updatedAt: Date.now(),
         })

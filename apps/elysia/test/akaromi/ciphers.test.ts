@@ -6,7 +6,7 @@ import { signUserJwt } from '../../src/utils/auth-crypto'
 import { prisma, type PassCipherType, type PassRepromptType } from '@IRIS/database'
 
 // -----------------------------------------------------------------------------
-// In-Memory Database Mock for PassCipher, PassFolder, and User
+// In-Memory Database Mock for PassCipher and User
 // -----------------------------------------------------------------------------
 
 interface MockUser {
@@ -18,22 +18,12 @@ interface MockUser {
   passwordChangedAt: Date | null
 }
 
-interface MockFolder {
-  id: string
-  userId: string
-  encryptedName: string
-  parentId: string | null
-  createdAt: Date
-  updatedAt: Date
-}
-
 interface MockCipher {
   id: string
   userId: string
   type: PassCipherType
   favorite: boolean
   reprompt: PassRepromptType
-  folderId: string | null
   encryptedTitle: string
   encryptedData: string
   deletedAt: Date | null
@@ -42,29 +32,10 @@ interface MockCipher {
 }
 
 let mockUsers: MockUser[] = []
-let mockFolders: MockFolder[] = []
 let mockCiphers: MockCipher[] = []
 
 function setupPrismaMock() {
   mockCiphers = []
-  mockFolders = [
-    {
-      id: 'folder-1',
-      userId: '00000000-0000-0000-0000-000000000001',
-      encryptedName: 'enc_work_folder',
-      parentId: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: 'folder-bob',
-      userId: '00000000-0000-0000-0000-000000000002',
-      encryptedName: 'enc_bob_folder',
-      parentId: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  ]
   mockUsers = [
     {
       id: '00000000-0000-0000-0000-000000000001',
@@ -89,17 +60,6 @@ function setupPrismaMock() {
     return mockUsers.find((u) => u.id === where.id) ?? null
   }
 
-  // Mock PassFolder findFirst
-  ;(prisma.passFolder.findFirst as any) = async ({ where }: any) => {
-    return (
-      mockFolders.find(
-        (f) =>
-          f.id === where.id &&
-          (where.userId ? f.userId === where.userId : true)
-      ) ?? null
-    )
-  }
-
   // Mock PassCipher findFirst
   ;(prisma.passCipher.findFirst as any) = async ({ where }: any) => {
     return (
@@ -115,7 +75,6 @@ function setupPrismaMock() {
   ;(prisma.passCipher.findMany as any) = async ({ where, orderBy }: any) => {
     let result = mockCiphers.filter((c) => {
       if (where.userId && c.userId !== where.userId) return false
-      if (where.folderId && c.folderId !== where.folderId) return false
       if (where.type && c.type !== where.type) return false
       if (typeof where.favorite === 'boolean' && c.favorite !== where.favorite)
         return false
@@ -148,7 +107,6 @@ function setupPrismaMock() {
       type: data.type,
       favorite: data.favorite ?? false,
       reprompt: data.reprompt ?? 'NONE',
-      folderId: data.folderId ?? null,
       encryptedTitle: data.encryptedTitle,
       encryptedData: data.encryptedData,
       deletedAt: null,
@@ -167,7 +125,6 @@ function setupPrismaMock() {
     if (data.type !== undefined) cipher.type = data.type
     if (data.encryptedTitle !== undefined) cipher.encryptedTitle = data.encryptedTitle
     if (data.encryptedData !== undefined) cipher.encryptedData = data.encryptedData
-    if (data.folderId !== undefined) cipher.folderId = data.folderId
     if (data.favorite !== undefined) cipher.favorite = data.favorite
     if (data.reprompt !== undefined) cipher.reprompt = data.reprompt
     if (data.deletedAt !== undefined) cipher.deletedAt = data.deletedAt
@@ -178,21 +135,23 @@ function setupPrismaMock() {
 
   // Mock PassCipher delete
   ;(prisma.passCipher.delete as any) = async ({ where }: any) => {
-    const idx = mockCiphers.findIndex((c) => c.id === where.id)
-    if (idx === -1) throw new Error('Cipher not found')
-    const [deleted] = mockCiphers.splice(idx, 1)
+    const index = mockCiphers.findIndex((c) => c.id === where.id)
+    if (index === -1) throw new Error('Cipher not found')
+    const deleted = mockCiphers.splice(index, 1)[0]
     return deleted
   }
 
   // Mock PassCipher deleteMany
   ;(prisma.passCipher.deleteMany as any) = async ({ where }: any) => {
-    const initialLen = mockCiphers.length
+    const initialCount = mockCiphers.length
     mockCiphers = mockCiphers.filter((c) => {
       if (where.userId && c.userId !== where.userId) return true
-      if (where.deletedAt?.not !== undefined && c.deletedAt === null) return true
+      if (where.deletedAt && where.deletedAt.not !== undefined && c.deletedAt === null) {
+        return true
+      }
       return false
     })
-    return { count: initialLen - mockCiphers.length }
+    return { count: initialCount - mockCiphers.length }
   }
 }
 
@@ -252,7 +211,7 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
   // ===========================================================================
 
   describe('GET /akaromi/ciphers', () => {
-    it('fails (401) when unauthenticated', async () => {
+    it('fails (401) when Authorization header is missing', async () => {
       const res = await app.handle(
         new Request('http://localhost/akaromi/ciphers', { method: 'GET' })
       )
@@ -273,7 +232,7 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
       expect(data.ciphers.length).toBe(0)
     })
 
-    it('lists user ciphers and filters by folderId, type, favorite, and trash', async () => {
+    it('lists user ciphers and filters by type, favorite, and trash', async () => {
       // Create test ciphers
       mockCiphers.push(
         {
@@ -282,7 +241,6 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
           type: 'LOGIN',
           favorite: true,
           reprompt: 'NONE',
-          folderId: 'folder-1',
           encryptedTitle: 'enc_google',
           encryptedData: 'enc_data_1',
           deletedAt: null,
@@ -295,7 +253,6 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
           type: 'SSH_KEY',
           favorite: false,
           reprompt: 'REQUIRE_MASTER_PASSWORD',
-          folderId: null,
           encryptedTitle: 'enc_github_ssh',
           encryptedData: 'enc_data_2',
           deletedAt: null,
@@ -308,7 +265,6 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
           type: 'LOGIN',
           favorite: false,
           reprompt: 'NONE',
-          folderId: null,
           encryptedTitle: 'enc_trashed_login',
           encryptedData: 'enc_data_3',
           deletedAt: new Date(),
@@ -321,7 +277,6 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
           type: 'LOGIN',
           favorite: true,
           reprompt: 'NONE',
-          folderId: null,
           encryptedTitle: 'enc_bob_secret',
           encryptedData: 'enc_bob_data',
           deletedAt: null,
@@ -344,19 +299,7 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
       // Bob's cipher is never returned
       expect(dataActive.ciphers.find((c: any) => c.id === 'c_bob')).toBeUndefined()
 
-      // 2. Filter by folderId
-      const resFolder = await app.handle(
-        new Request('http://localhost/akaromi/ciphers?folderId=folder-1', {
-          method: 'GET',
-          headers: { Authorization: `Bearer ${aliceToken}` },
-        })
-      )
-      expect(resFolder.status).toBe(200)
-      const dataFolder = await resFolder.json()
-      expect(dataFolder.ciphers.length).toBe(1)
-      expect(dataFolder.ciphers[0].id).toBe('c1')
-
-      // 3. Filter by type
+      // 2. Filter by type
       const resType = await app.handle(
         new Request('http://localhost/akaromi/ciphers?type=SSH_KEY', {
           method: 'GET',
@@ -368,7 +311,7 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
       expect(dataType.ciphers.length).toBe(1)
       expect(dataType.ciphers[0].id).toBe('c2')
 
-      // 4. Filter by favorite
+      // 3. Filter by favorite
       const resFav = await app.handle(
         new Request('http://localhost/akaromi/ciphers?favorite=true', {
           method: 'GET',
@@ -380,7 +323,7 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
       expect(dataFav.ciphers.length).toBe(1)
       expect(dataFav.ciphers[0].id).toBe('c1')
 
-      // 5. Filter by trash (trash=true)
+      // 4. List trash only
       const resTrash = await app.handle(
         new Request('http://localhost/akaromi/ciphers?trash=true', {
           method: 'GET',
@@ -399,7 +342,7 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
   // ===========================================================================
 
   describe('POST /akaromi/ciphers', () => {
-    it('fails (401) when unauthenticated', async () => {
+    it('fails (401) when Authorization header is missing', async () => {
       const res = await app.handle(
         new Request('http://localhost/akaromi/ciphers', {
           method: 'POST',
@@ -422,7 +365,10 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
             Authorization: `Bearer ${aliceToken}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({}),
+          body: JSON.stringify({
+            // Missing encryptedTitle and encryptedData
+            type: 'LOGIN',
+          }),
         })
       )
       expect(res.status).toBe(422)
@@ -446,26 +392,7 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
       expect(res.status).toBe(400)
     })
 
-    it('fails (404) when folder does not exist or belongs to another user', async () => {
-      const res = await app.handle(
-        new Request('http://localhost/akaromi/ciphers', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${aliceToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            type: 'LOGIN',
-            encryptedTitle: 'title',
-            encryptedData: 'data',
-            folderId: 'folder-bob', // Belongs to Bob
-          }),
-        })
-      )
-      expect(res.status).toBe(404)
-    })
-
-    it('successfully creates a LOGIN cipher with folder and favorite flags', async () => {
+    it('successfully creates a LOGIN cipher with favorite flags', async () => {
       const res = await app.handle(
         new Request('http://localhost/akaromi/ciphers', {
           method: 'POST',
@@ -477,7 +404,6 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
             type: 'LOGIN',
             encryptedTitle: 'enc_proton_login',
             encryptedData: 'enc_proton_payload',
-            folderId: 'folder-1',
             favorite: true,
             reprompt: 'REQUIRE_MASTER_PASSWORD',
           }),
@@ -489,7 +415,6 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
       expect(data.cipher.type).toBe('LOGIN')
       expect(data.cipher.encryptedTitle).toBe('enc_proton_login')
       expect(data.cipher.encryptedData).toBe('enc_proton_payload')
-      expect(data.cipher.folderId).toBe('folder-1')
       expect(data.cipher.favorite).toBe(true)
       expect(data.cipher.reprompt).toBe('REQUIRE_MASTER_PASSWORD')
       expect(data.cipher.deletedAt).toBeNull()
@@ -503,7 +428,7 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
   describe('GET /akaromi/ciphers/:cipherId', () => {
     it('fails (404) when cipher does not exist', async () => {
       const res = await app.handle(
-        new Request('http://localhost/akaromi/ciphers/nonexistent-id', {
+        new Request('http://localhost/akaromi/ciphers/nonexistent', {
           method: 'GET',
           headers: { Authorization: `Bearer ${aliceToken}` },
         })
@@ -518,7 +443,6 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
         type: 'LOGIN',
         favorite: false,
         reprompt: 'NONE',
-        folderId: null,
         encryptedTitle: 'bob_title',
         encryptedData: 'bob_data',
         deletedAt: null,
@@ -542,7 +466,6 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
         type: 'SSH_KEY',
         favorite: true,
         reprompt: 'NONE',
-        folderId: null,
         encryptedTitle: 'enc_id_ed25519',
         encryptedData: 'enc_key_payload',
         deletedAt: null,
@@ -577,7 +500,6 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
         type: 'LOGIN',
         favorite: false,
         reprompt: 'NONE',
-        folderId: null,
         encryptedTitle: 'old_title',
         encryptedData: 'old_data',
         deletedAt: null,
@@ -612,7 +534,6 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
             encryptedTitle: 'new_title',
             encryptedData: 'new_overwritten_ciphertext',
             favorite: true,
-            folderId: 'folder-1',
           }),
         })
       )
@@ -622,7 +543,6 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
       expect(data.cipher.encryptedTitle).toBe('new_title')
       expect(data.cipher.encryptedData).toBe('new_overwritten_ciphertext')
       expect(data.cipher.favorite).toBe(true)
-      expect(data.cipher.folderId).toBe('folder-1')
     })
 
     it('supports PUT alias for updating cipher', async () => {
@@ -640,34 +560,34 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
       )
       expect(res.status).toBe(200)
       const data = await res.json()
+      expect(data.success).toBe(true)
       expect(data.cipher.encryptedTitle).toBe('put_updated_title')
     })
   })
 
   // ===========================================================================
-  // 5. DELETE /akaromi/ciphers/:cipherId (Soft delete & Permanent delete)
+  // 5. POST /akaromi/ciphers/:cipherId/trash & restore
   // ===========================================================================
 
-  describe('DELETE /akaromi/ciphers/:cipherId', () => {
+  describe('Trash and Restore Ciphers', () => {
     beforeEach(() => {
       mockCiphers.push({
-        id: 'c_to_delete',
+        id: 'c_trash_target',
         userId: ALICE_ID,
         type: 'LOGIN',
         favorite: false,
         reprompt: 'NONE',
-        folderId: null,
-        encryptedTitle: 'trash_me',
-        encryptedData: 'data',
+        encryptedTitle: 'enc_note',
+        encryptedData: 'enc_note_data',
         deletedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
     })
 
-    it('soft deletes cipher (moves to trash) by default', async () => {
+    it('soft deletes a cipher via DELETE /:cipherId', async () => {
       const res = await app.handle(
-        new Request('http://localhost/akaromi/ciphers/c_to_delete', {
+        new Request('http://localhost/akaromi/ciphers/c_trash_target', {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${aliceToken}` },
         })
@@ -677,14 +597,50 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
       expect(data.success).toBe(true)
       expect(data.permanent).toBe(false)
 
-      const stored = mockCiphers.find((c) => c.id === 'c_to_delete')
-      expect(stored).toBeDefined()
-      expect(stored?.deletedAt).not.toBeNull()
+      const inDb = mockCiphers.find((c) => c.id === 'c_trash_target')
+      expect(inDb?.deletedAt).not.toBeNull()
     })
 
-    it('hard deletes cipher when permanent=true', async () => {
+    it('restores a soft-deleted cipher via /restore', async () => {
+      // First soft delete
+      mockCiphers.find((c) => c.id === 'c_trash_target')!.deletedAt = new Date()
+
       const res = await app.handle(
-        new Request('http://localhost/akaromi/ciphers/c_to_delete?permanent=true', {
+        new Request('http://localhost/akaromi/ciphers/c_trash_target/restore', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${aliceToken}` },
+        })
+      )
+      expect(res.status).toBe(200)
+      const data = await res.json()
+      expect(data.success).toBe(true)
+
+      const inDb = mockCiphers.find((c) => c.id === 'c_trash_target')
+      expect(inDb?.deletedAt).toBeNull()
+    })
+  })
+
+  // ===========================================================================
+  // 6. DELETE /akaromi/ciphers/:cipherId (Permanent Delete)
+  // ===========================================================================
+
+  describe('DELETE /akaromi/ciphers/:cipherId', () => {
+    it('permanently deletes a single cipher with permanent=true', async () => {
+      mockCiphers.push({
+        id: 'c_perm_delete',
+        userId: ALICE_ID,
+        type: 'LOGIN',
+        favorite: false,
+        reprompt: 'NONE',
+        encryptedTitle: 'card_title',
+        encryptedData: 'card_data',
+        deletedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+
+      const res = await app.handle(
+        new Request('http://localhost/akaromi/ciphers/c_perm_delete?permanent=true', {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${aliceToken}` },
         })
@@ -694,49 +650,12 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
       expect(data.success).toBe(true)
       expect(data.permanent).toBe(true)
 
-      const stored = mockCiphers.find((c) => c.id === 'c_to_delete')
-      expect(stored).toBeUndefined()
+      expect(mockCiphers.find((c) => c.id === 'c_perm_delete')).toBeUndefined()
     })
   })
 
   // ===========================================================================
-  // 6. POST /akaromi/ciphers/:cipherId/restore
-  // ===========================================================================
-
-  describe('POST /akaromi/ciphers/:cipherId/restore', () => {
-    it('restores cipher from trash bin', async () => {
-      mockCiphers.push({
-        id: 'c_trashed',
-        userId: ALICE_ID,
-        type: 'LOGIN',
-        favorite: false,
-        reprompt: 'NONE',
-        folderId: null,
-        encryptedTitle: 'trashed',
-        encryptedData: 'data',
-        deletedAt: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-
-      const res = await app.handle(
-        new Request('http://localhost/akaromi/ciphers/c_trashed/restore', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${aliceToken}` },
-        })
-      )
-      expect(res.status).toBe(200)
-      const data = await res.json()
-      expect(data.success).toBe(true)
-      expect(data.id).toBe('c_trashed')
-
-      const stored = mockCiphers.find((c) => c.id === 'c_trashed')
-      expect(stored?.deletedAt).toBeNull()
-    })
-  })
-
-  // ===========================================================================
-  // 7. DELETE /akaromi/ciphers/trash (Empty Trash)
+  // 7. DELETE /akaromi/ciphers/trash (Purge All Trash)
   // ===========================================================================
 
   describe('DELETE /akaromi/ciphers/trash', () => {
@@ -748,7 +667,6 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
           type: 'LOGIN',
           favorite: false,
           reprompt: 'NONE',
-          folderId: null,
           encryptedTitle: 'active',
           encryptedData: 'data',
           deletedAt: null,
@@ -761,7 +679,6 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
           type: 'LOGIN',
           favorite: false,
           reprompt: 'NONE',
-          folderId: null,
           encryptedTitle: 'trashed1',
           encryptedData: 'data',
           deletedAt: new Date(),
@@ -774,7 +691,6 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
           type: 'SSH_KEY',
           favorite: false,
           reprompt: 'NONE',
-          folderId: null,
           encryptedTitle: 'trashed2',
           encryptedData: 'data',
           deletedAt: new Date(),
@@ -787,7 +703,6 @@ describe('Comprehensive Akaromi Ciphers Test Suite', () => {
           type: 'LOGIN',
           favorite: false,
           reprompt: 'NONE',
-          folderId: null,
           encryptedTitle: 'bob_trashed',
           encryptedData: 'data',
           deletedAt: new Date(),

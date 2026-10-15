@@ -22,7 +22,6 @@ export const AkaromiVaultModel = {
           t.Literal('NONE'),
           t.Literal('REQUIRE_MASTER_PASSWORD'),
         ]),
-        folderId: t.Nullable(t.String()),
         encryptedTitle: t.String(),
         encryptedData: t.String(),
         deletedAt: t.Nullable(t.String()),
@@ -31,33 +30,17 @@ export const AkaromiVaultModel = {
       })
     ),
     deletedCipherIds: t.Array(t.String({ description: 'IDs of deleted/trashed ciphers' })),
-    folders: t.Array(
-      t.Object({
-        id: t.String(),
-        encryptedName: t.String(),
-        parentId: t.Nullable(t.String()),
-        createdAt: t.String(),
-        updatedAt: t.String(),
-      })
-    ),
   }),
 
   // --- GET /akaromi/export ---
   exportResponse: t.Object({
     success: t.Boolean(),
     exportedAt: t.String({ description: 'Export generation ISO timestamp' }),
-    folders: t.Array(
-      t.Object({
-        id: t.String(),
-        encryptedName: t.String(),
-      })
-    ),
     ciphers: t.Array(
       t.Object({
         id: t.String(),
         type: t.Union([t.Literal('LOGIN'), t.Literal('SSH_KEY')]),
         favorite: t.Boolean(),
-        folderId: t.Nullable(t.String()),
         encryptedTitle: t.String(),
         encryptedData: t.String(),
         createdAt: t.String(),
@@ -68,19 +51,11 @@ export const AkaromiVaultModel = {
 
   // --- POST /akaromi/import ---
   importBody: t.Object({
-    folders: t.Array(
-      t.Object({
-        tempId: t.String({ description: 'Client temporary folder ID for mapping ciphers' }),
-        encryptedName: t.String({ minLength: 1 }),
-      }),
-      { default: [] }
-    ),
     ciphers: t.Array(
       t.Object({
         type: t.Union([t.Literal('LOGIN'), t.Literal('SSH_KEY')], { default: 'LOGIN' }),
         encryptedTitle: t.String({ minLength: 1 }),
         encryptedData: t.String({ minLength: 1 }),
-        folderTempId: t.Optional(t.Nullable(t.String())),
         favorite: t.Optional(t.Boolean({ default: false })),
       }),
       { default: [] }
@@ -89,7 +64,6 @@ export const AkaromiVaultModel = {
 
   importResponse: t.Object({
     success: t.Boolean(),
-    importedFoldersCount: t.Number(),
     importedCiphersCount: t.Number(),
     message: t.String(),
   }),

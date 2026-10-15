@@ -38,8 +38,8 @@ model Notification {
     actionPayload Json?                     @db.Json
     actionHandler String?
 
-    // POST-QUANTUM ENCRYPTED PAYLOAD
-    kemCiphertext String @db.Text
+    // ENCRYPTED PAYLOAD (RSA-OAEP + AES-256-GCM)
+    encryptedKey  String @db.Text
     encryptedData String @db.Text
 
     expiresAt DateTime?

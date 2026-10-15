@@ -139,7 +139,6 @@ export interface DecryptedCipher {
   title: string
   favorite: boolean
   reprompt: PassRepromptType
-  folderId: string | null
   data: DecryptedCipherData
   deletedAt: string | null
   createdAt: string

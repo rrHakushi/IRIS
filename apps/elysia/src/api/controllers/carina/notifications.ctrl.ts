@@ -12,7 +12,7 @@ export const carinaNotifications = new Elysia({ prefix: '/carina/notifications' 
     {
       query: CarinaNotificationsModel.listNotificationsQuery,
       detail: {
-        summary: 'Get paginated post-quantum encrypted notifications for authenticated user (10 per page default)',
+        summary: 'Get paginated encrypted notifications for authenticated user (10 per page default)',
         tags: ['Carina Notifications'],
       },
       response: {
@@ -126,7 +126,7 @@ export const carinaNotifications = new Elysia({ prefix: '/carina/notifications' 
     {
       params: CarinaNotificationsModel.notificationParam,
       detail: {
-        summary: 'Get single post-quantum encrypted notification details strictly by notification ID (UUID)',
+        summary: 'Get single encrypted notification details strictly by notification ID (UUID)',
         tags: ['Carina Notifications'],
       },
       response: {

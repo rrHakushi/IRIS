@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useMemo } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useSession } from "next-auth/react"
@@ -37,6 +37,8 @@ import { getMediaDetailHref } from "@/lib/media-routes"
 import { UserListBanner } from "./user-list-banner"
 import type { UserProfileCustomization } from "@IRIS/shared"
 import { cn } from "@workspace/ui/lib/utils"
+import { useEncryption } from "@/context/encryption-context"
+import { deriveVaultKey, safeDecryptText } from "@/lib/client-encryption"
 
 export interface CustomListsViewProps {
   username: string
@@ -107,6 +109,12 @@ export function CustomListsView({
     session?.user?.username === username
   )
 
+  const { secretKey, isActive } = useEncryption()
+  const vaultKey = useMemo(
+    () => (isActive && secretKey ? deriveVaultKey(secretKey) : null),
+    [isActive, secretKey]
+  )
+
   const [lists, setLists] = useState<CustomListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -158,7 +166,15 @@ export function CustomListsView({
           .playlists({ playlistId: watchlistId })
           .entries.get()
         if (!error && (data as any)?.items) {
-          setEntries((data as any).items)
+          const rawItems = (data as any).items
+          const decryptedItems = rawItems.map((item: any) => ({
+            ...item,
+            entry: {
+              ...item.entry,
+              customNotes: safeDecryptText(item.entry.customNotes, vaultKey),
+            },
+          }))
+          setEntries(decryptedItems)
         }
       } catch {
         toast.error("Failed to load custom list entries")
@@ -166,8 +182,22 @@ export function CustomListsView({
         setEntriesLoading(false)
       }
     },
-    []
+    [vaultKey]
   )
+
+  useEffect(() => {
+    if (vaultKey) {
+      setEntries((prev) =>
+        prev.map((item) => ({
+          ...item,
+          entry: {
+            ...item.entry,
+            customNotes: safeDecryptText(item.entry.customNotes, vaultKey),
+          },
+        }))
+      )
+    }
+  }, [vaultKey])
 
   const handleSelectList = (list: CustomListItem) => {
     setSelectedList(list)

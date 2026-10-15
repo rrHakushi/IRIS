@@ -26,7 +26,6 @@ import {
   IconDownload,
   IconCheck,
   IconAlertCircle,
-  IconLockOpen,
   IconEye,
   IconEyeOff,
   IconKey,
@@ -45,11 +44,6 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
   const userId = session?.user?.id || "default_user"
   const encryption = useEncryption()
 
-  // Unlock form state
-  const [unlockPassword, setUnlockPassword] = useState("")
-  const [showUnlockPassword, setShowUnlockPassword] = useState(false)
-  const [isUnlocking, setIsUnlocking] = useState(false)
-  const [unlockError, setUnlockError] = useState<string | null>(null)
 
   // Inactivity & Clipboard Settings
   const [autoLockTimeout, setAutoLockTimeout] = useState<number>(15)
@@ -114,23 +108,6 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
     } catch {}
   }
 
-  const handleUnlock = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!unlockPassword.trim()) return
-
-    setIsUnlocking(true)
-    setUnlockError(null)
-
-    const res = await encryption.unlockVault(unlockPassword)
-    setIsUnlocking(false)
-
-    if (res.success) {
-      setUnlockPassword("")
-      toast.success("Vault unlocked successfully")
-    } else {
-      setUnlockError(res.error || "Incorrect account password. Please try again.")
-    }
-  }
 
   const handleSavePin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -192,7 +169,6 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
         throw new Error("Failed to fetch vault backup")
       }
 
-      const rawFolders = res.data.folders || []
       const rawCiphers = res.data.ciphers || []
 
       const decryptedItems = rawCiphers
@@ -317,7 +293,6 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
 
       // Send to Elysia batch import endpoint
       const res = await elysia.akaromi.import.post({
-        folders: [],
         ciphers: ciphersToImport,
       })
 
@@ -347,65 +322,6 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
 
   return (
     <div className="space-y-6">
-      {/* If locked, render unlock prompt */}
-      {!encryption.isActive && (
-        <form
-          onSubmit={handleUnlock}
-          className="space-y-3 rounded-2xl border border-border bg-card p-5 shadow-xs"
-        >
-          {unlockError && (
-            <div className="flex items-center gap-2 rounded-xl border border-destructive/20 bg-destructive/10 p-2.5 text-xs text-destructive">
-              <IconAlertCircle className="size-4 shrink-0" />
-              <span>{unlockError}</span>
-            </div>
-          )}
-
-          <div className="space-y-1.5">
-            <Label
-              htmlFor="settings-pass-unlock"
-              className="text-xs font-medium text-foreground"
-            >
-              Account Password
-            </Label>
-            <div className="relative">
-              <Input
-                id="settings-pass-unlock"
-                type={showUnlockPassword ? "text" : "password"}
-                placeholder="Enter password to unlock..."
-                value={unlockPassword}
-                onChange={(e) => setUnlockPassword(e.target.value)}
-                className="h-9 rounded-xl pe-10 text-xs"
-              />
-              <button
-                type="button"
-                onClick={() => setShowUnlockPassword(!showUnlockPassword)}
-                className="absolute inset-y-0 end-0 flex cursor-pointer items-center pe-3 text-muted-foreground transition-colors hover:text-foreground"
-                tabIndex={-1}
-                aria-label={
-                  showUnlockPassword ? "Hide password" : "Show password"
-                }
-              >
-                {showUnlockPassword ? (
-                  <IconEyeOff className="size-4" />
-                ) : (
-                  <IconEye className="size-4" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          <Button
-            type="submit"
-            isDisabled={isUnlocking || !unlockPassword.trim()}
-            className="h-9 w-full cursor-pointer rounded-xl text-xs font-semibold shadow-xs"
-          >
-            <IconLockOpen className="me-1.5 size-3.5" />
-            {isUnlocking
-              ? "Unlocking Vault..."
-              : "Unlock Vault to Manage Settings"}
-          </Button>
-        </form>
-      )}
 
       {/* Security & Vault Preferences */}
       <div className="space-y-4 rounded-2xl border border-border bg-card p-5 shadow-xs">

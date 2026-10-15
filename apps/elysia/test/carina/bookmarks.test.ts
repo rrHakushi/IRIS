@@ -505,6 +505,8 @@ describe('Comprehensive Carina Bookmarks Test Suite', () => {
       expect(json.bookmark.group).toBe('knowledge')
       expect(json.bookmark.order).toBe(5)
       expect(mockBookmarks.length).toBe(1)
+      expect(mockBookmarks[0]!.title).toBe('Iris Docs')
+      expect(mockBookmarks[0]!.url).toBe('https://docs.iris.app')
     })
   })
 

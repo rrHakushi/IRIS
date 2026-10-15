@@ -18,22 +18,12 @@ interface MockUser {
   passwordChangedAt: Date | null
 }
 
-interface MockFolder {
-  id: string
-  userId: string
-  encryptedName: string
-  parentId: string | null
-  createdAt: Date
-  updatedAt: Date
-}
-
 interface MockCipher {
   id: string
   userId: string
   type: PassCipherType
   favorite: boolean
   reprompt: PassRepromptType
-  folderId: string | null
   encryptedTitle: string
   encryptedData: string
   deletedAt: Date | null
@@ -42,11 +32,9 @@ interface MockCipher {
 }
 
 let mockUsers: MockUser[] = []
-let mockFolders: MockFolder[] = []
 let mockCiphers: MockCipher[] = []
 
 function setupPrismaMock() {
-  mockFolders = []
   mockCiphers = []
   mockUsers = [
     {
@@ -67,102 +55,60 @@ function setupPrismaMock() {
     },
   ]
 
-    // Mock User findUnique
-    ; (prisma.user.findUnique as any) = async ({ where }: any) => {
-      return mockUsers.find((u) => u.id === where.id) ?? null
+  // Mock User findUnique
+  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+    return mockUsers.find((u) => u.id === where.id) ?? null
+  }
+
+  // Mock PassCipher findMany
+  ;(prisma.passCipher.findMany as any) = async ({ where, select, orderBy }: any) => {
+    let result = mockCiphers.filter((c) => {
+      if (where.userId && c.userId !== where.userId) return false
+      if (where.deletedAt === null && c.deletedAt !== null) return false
+      if (where.updatedAt?.gte && c.updatedAt.getTime() < where.updatedAt.gte.getTime()) {
+        return false
+      }
+      return true
+    })
+
+    if (orderBy?.updatedAt === 'desc') {
+      result.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
     }
 
-    // Mock PassFolder findMany
-    ; (prisma.passFolder.findMany as any) = async ({ where, select, orderBy }: any) => {
-      let result = mockFolders.filter((f) => {
-        if (where.userId && f.userId !== where.userId) return false
-        if (where.updatedAt?.gte && f.updatedAt.getTime() < where.updatedAt.gte.getTime()) {
-          return false
-        }
-        return true
+    if (select) {
+      return result.map((c) => {
+        const sel: any = {}
+        if (select.id) sel.id = c.id
+        if (select.type) sel.type = c.type
+        if (select.favorite !== undefined) sel.favorite = c.favorite
+        if (select.encryptedTitle) sel.encryptedTitle = c.encryptedTitle
+        if (select.encryptedData) sel.encryptedData = c.encryptedData
+        if (select.createdAt) sel.createdAt = c.createdAt
+        if (select.updatedAt) sel.updatedAt = c.updatedAt
+        return sel
       })
-
-      if (orderBy?.updatedAt === 'desc') {
-        result.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
-      }
-
-      if (select) {
-        return result.map((f) => {
-          const sel: any = {}
-          if (select.id) sel.id = f.id
-          if (select.encryptedName) sel.encryptedName = f.encryptedName
-          return sel
-        })
-      }
-
-      return result
     }
 
-    // Mock PassCipher findMany
-    ; (prisma.passCipher.findMany as any) = async ({ where, select, orderBy }: any) => {
-      let result = mockCiphers.filter((c) => {
-        if (where.userId && c.userId !== where.userId) return false
-        if (where.deletedAt === null && c.deletedAt !== null) return false
-        if (where.updatedAt?.gte && c.updatedAt.getTime() < where.updatedAt.gte.getTime()) {
-          return false
-        }
-        return true
-      })
+    return result
+  }
 
-      if (orderBy?.updatedAt === 'desc') {
-        result.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
-      }
-
-      if (select) {
-        return result.map((c) => {
-          const sel: any = {}
-          if (select.id) sel.id = c.id
-          if (select.type) sel.type = c.type
-          if (select.favorite !== undefined) sel.favorite = c.favorite
-          if (select.folderId !== undefined) sel.folderId = c.folderId
-          if (select.encryptedTitle) sel.encryptedTitle = c.encryptedTitle
-          if (select.encryptedData) sel.encryptedData = c.encryptedData
-          if (select.createdAt) sel.createdAt = c.createdAt
-          if (select.updatedAt) sel.updatedAt = c.updatedAt
-          return sel
-        })
-      }
-
-      return result
+  // Mock PassCipher create
+  ;(prisma.passCipher.create as any) = async ({ data }: any) => {
+    const created: MockCipher = {
+      id: `cipher-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
+      userId: data.userId,
+      type: data.type,
+      favorite: data.favorite ?? false,
+      reprompt: data.reprompt ?? 'NONE',
+      encryptedTitle: data.encryptedTitle,
+      encryptedData: data.encryptedData,
+      deletedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     }
-
-    // Mock PassFolder create
-    ; (prisma.passFolder.create as any) = async ({ data }: any) => {
-      const created: MockFolder = {
-        id: `folder-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
-        userId: data.userId,
-        encryptedName: data.encryptedName,
-        parentId: data.parentId ?? null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-      mockFolders.push(created)
-      return created
-    }
-
-    // Mock PassCipher create
-    ; (prisma.passCipher.create as any) = async ({ data }: any) => {
-      const created: MockCipher = {
-        id: `cipher-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
-        userId: data.userId,
-        type: data.type,
-        favorite: data.favorite ?? false,
-        reprompt: data.reprompt ?? 'NONE',
-        folderId: data.folderId ?? null,
-        encryptedTitle: data.encryptedTitle,
-        encryptedData: data.encryptedData,
-        deletedAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-      mockCiphers.push(created)
-      return created
-    }
+    mockCiphers.push(created)
+    return created
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -221,14 +167,6 @@ describe('Comprehensive Akaromi Vault Test Suite', () => {
 
     it('returns full synchronization payload including deletedCipherIds and serverTime', async () => {
       const past = new Date(Date.now() - 60000)
-      mockFolders.push({
-        id: 'f_sync_1',
-        userId: ALICE_ID,
-        encryptedName: 'folder_sync',
-        parentId: null,
-        createdAt: past,
-        updatedAt: past,
-      })
 
       mockCiphers.push(
         {
@@ -237,7 +175,6 @@ describe('Comprehensive Akaromi Vault Test Suite', () => {
           type: 'LOGIN',
           favorite: true,
           reprompt: 'NONE',
-          folderId: 'f_sync_1',
           encryptedTitle: 'title_1',
           encryptedData: 'data_1',
           deletedAt: null,
@@ -250,7 +187,6 @@ describe('Comprehensive Akaromi Vault Test Suite', () => {
           type: 'SSH_KEY',
           favorite: false,
           reprompt: 'NONE',
-          folderId: null,
           encryptedTitle: 'title_2',
           encryptedData: 'data_2',
           deletedAt: past,
@@ -270,7 +206,6 @@ describe('Comprehensive Akaromi Vault Test Suite', () => {
       expect(data.success).toBe(true)
       expect(data.serverTime).toBeDefined()
       expect(data.ciphers.length).toBe(2)
-      expect(data.folders.length).toBe(1)
       expect(data.deletedCipherIds).toEqual(['c_trashed_1'])
     })
 
@@ -286,7 +221,6 @@ describe('Comprehensive Akaromi Vault Test Suite', () => {
           type: 'LOGIN',
           favorite: false,
           reprompt: 'NONE',
-          folderId: null,
           encryptedTitle: 'old',
           encryptedData: 'old',
           deletedAt: null,
@@ -299,7 +233,6 @@ describe('Comprehensive Akaromi Vault Test Suite', () => {
           type: 'LOGIN',
           favorite: false,
           reprompt: 'NONE',
-          folderId: null,
           encryptedTitle: 'new',
           encryptedData: 'new',
           deletedAt: null,
@@ -334,16 +267,7 @@ describe('Comprehensive Akaromi Vault Test Suite', () => {
       expect(res.status).toBe(401)
     })
 
-    it('exports all non-deleted vault folders and ciphers', async () => {
-      mockFolders.push({
-        id: 'f_exp',
-        userId: ALICE_ID,
-        encryptedName: 'enc_export_folder',
-        parentId: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-
+    it('exports all non-deleted vault ciphers', async () => {
       mockCiphers.push(
         {
           id: 'c_exp_active',
@@ -351,7 +275,6 @@ describe('Comprehensive Akaromi Vault Test Suite', () => {
           type: 'LOGIN',
           favorite: true,
           reprompt: 'NONE',
-          folderId: 'f_exp',
           encryptedTitle: 'active_login',
           encryptedData: 'payload',
           deletedAt: null,
@@ -364,7 +287,6 @@ describe('Comprehensive Akaromi Vault Test Suite', () => {
           type: 'LOGIN',
           favorite: false,
           reprompt: 'NONE',
-          folderId: 'f_exp',
           encryptedTitle: 'deleted_login',
           encryptedData: 'payload',
           deletedAt: new Date(),
@@ -383,8 +305,6 @@ describe('Comprehensive Akaromi Vault Test Suite', () => {
       const data = await res.json()
       expect(data.success).toBe(true)
       expect(data.exportedAt).toBeDefined()
-      expect(data.folders.length).toBe(1)
-      expect(data.folders[0].encryptedName).toBe('enc_export_folder')
 
       // Only active ciphers included
       expect(data.ciphers.length).toBe(1)
@@ -402,33 +322,25 @@ describe('Comprehensive Akaromi Vault Test Suite', () => {
         new Request('http://localhost/akaromi/import', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ folders: [], ciphers: [] }),
+          body: JSON.stringify({ ciphers: [] }),
         })
       )
       expect(res.status).toBe(401)
     })
 
-    it('imports folders and ciphers with tempId remapping to database IDs', async () => {
+    it('imports ciphers to database', async () => {
       const importPayload = {
-        folders: [
-          {
-            tempId: 'temp_f_1',
-            encryptedName: 'enc_imported_folder',
-          },
-        ],
         ciphers: [
           {
             type: 'LOGIN',
             encryptedTitle: 'enc_imported_login',
             encryptedData: 'enc_imported_payload',
-            folderTempId: 'temp_f_1',
             favorite: true,
           },
           {
             type: 'SSH_KEY',
             encryptedTitle: 'enc_imported_ssh',
             encryptedData: 'enc_ssh_key_payload',
-            folderTempId: null,
             favorite: false,
           },
         ],
@@ -447,22 +359,15 @@ describe('Comprehensive Akaromi Vault Test Suite', () => {
       expect(res.status).toBe(200)
       const data = await res.json()
       expect(data.success).toBe(true)
-      expect(data.importedFoldersCount).toBe(1)
       expect(data.importedCiphersCount).toBe(2)
-
-      // Verify that database records were created and linked correctly
-      expect(mockFolders.length).toBe(1)
-      const dbFolderId = mockFolders[0]!.id
-      expect(mockFolders[0]!.encryptedName).toBe('enc_imported_folder')
 
       const loginCipher = mockCiphers.find((c) => c.encryptedTitle === 'enc_imported_login')
       expect(loginCipher).toBeDefined()
-      expect(loginCipher?.folderId).toBe(dbFolderId) // Remapped from temp_f_1
       expect(loginCipher?.favorite).toBe(true)
 
       const sshCipher = mockCiphers.find((c) => c.encryptedTitle === 'enc_imported_ssh')
       expect(sshCipher).toBeDefined()
-      expect(sshCipher?.folderId).toBeNull()
+      expect(sshCipher?.favorite).toBe(false)
     })
   })
 })

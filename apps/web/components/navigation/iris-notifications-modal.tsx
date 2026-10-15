@@ -18,8 +18,6 @@ import { Badge } from "@workspace/ui/components/badge"
 import { Input } from "@workspace/ui/components/input"
 import {
   IconBell,
-  IconLock,
-  IconLockOpen,
   IconCheck,
   IconChecks,
   IconTrash,
@@ -38,7 +36,6 @@ import {
   type NotificationType,
   type NotificationPriority,
 } from "@/context/notification-context"
-import { useEncryption } from "@/context/encryption-context"
 
 export interface IrisNotificationsModalProps {
   open: boolean
@@ -65,12 +62,7 @@ export function IrisNotificationsModal({
     submitAction,
   } = useNotifications()
 
-  const { isActive, unlockVault } = useEncryption()
 
-  // Local state
-  const [unlockPassword, setUnlockPassword] = useState("")
-  const [isUnlocking, setIsUnlocking] = useState(false)
-  const [unlockError, setUnlockError] = useState<string | null>(null)
 
   // Action form state per notification item
   const [actionFormState, setActionFormState] = useState<
@@ -96,21 +88,7 @@ export function IrisNotificationsModal({
     )
   }, [filters])
 
-  const handleUnlockInline = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!unlockPassword) return
 
-    setIsUnlocking(true)
-    setUnlockError(null)
-    const result = await unlockVault(unlockPassword)
-    setIsUnlocking(false)
-
-    if (result.success) {
-      setUnlockPassword("")
-    } else {
-      setUnlockError(result.error || "Incorrect password")
-    }
-  }
 
   const formatTimeAgo = (dateStr: string) => {
     try {
@@ -637,53 +615,7 @@ export function IrisNotificationsModal({
           </div>
         </div>
 
-        {/* ========================================================================= */}
-        {/* 3. LOCKED VAULT INLINE DECRYPTION BANNER                                  */}
-        {/* ========================================================================= */}
-        {!isActive && (
-          <div className="mx-4 mt-4 flex shrink-0 flex-col items-start justify-between gap-3 rounded-2xl border border-border bg-card p-4 sm:mx-6 sm:flex-row sm:items-center">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-                <IconLock className="size-4.5" />
-              </div>
-              <div className="space-y-0.5">
-                <h4 className="text-xs font-semibold text-foreground">
-                  {t("lockedBannerTitle")}
-                </h4>
-                <p className="max-w-xl text-[11px] text-muted-foreground">
-                  {t("lockedBannerDesc")}
-                </p>
-                {unlockError && (
-                  <p className="text-[11px] font-medium text-destructive">
-                    {unlockError}
-                  </p>
-                )}
-              </div>
-            </div>
 
-            <form
-              onSubmit={handleUnlockInline}
-              className="flex w-full items-center gap-2 sm:w-auto"
-            >
-              <Input
-                type="password"
-                placeholder={t("unlockPlaceholder")}
-                value={unlockPassword}
-                onChange={(e) => setUnlockPassword(e.target.value)}
-                className="h-8 min-w-48 rounded-xl border-border bg-background text-xs"
-              />
-              <Button
-                type="submit"
-                size="sm"
-                disabled={isUnlocking || !unlockPassword}
-                className="h-8 shrink-0 cursor-pointer gap-1.5 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground"
-              >
-                <IconLockOpen className="size-3.5" />
-                {isUnlocking ? "..." : t("unlockButton")}
-              </Button>
-            </form>
-          </div>
-        )}
 
         {/* ========================================================================= */}
         {/* 4. NOTIFICATIONS LIST VIEW                                                */}

@@ -427,6 +427,8 @@ describe('Comprehensive Borealis Media Lists Test Suite', () => {
       expect(data.entry.progress).toBe(5)
       expect(data.entry.score).toBe(9.5)
       expect(data.entry.status).toBe('WATCHING')
+      expect(data.entry.notes).toBe('Masterpiece anime')
+      expect(mockAnimeLists[0]!.notes).toBe('Masterpiece anime')
     })
 
     it('GET /borealis/lists/anime/:animeId checks and returns existing entry with media details', async () => {

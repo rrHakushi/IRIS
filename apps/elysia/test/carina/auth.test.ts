@@ -24,7 +24,6 @@ interface MockUser {
   permissions: number[]
   publicKey: string | null
   encryptedPrivateKey: string | null
-  encryptionPasswordHash: string | null
   passwordChangedAt: Date | null
   TOTPEnabled: boolean
   TOTPSecret: string | null
@@ -99,7 +98,6 @@ function setupPrismaMock() {
       permissions: data.permissions ?? [],
       publicKey: data.publicKey ?? null,
       encryptedPrivateKey: data.encryptedPrivateKey ?? null,
-      encryptionPasswordHash: data.encryptionPasswordHash ?? null,
       passwordChangedAt: null,
       TOTPEnabled: false,
       TOTPSecret: null,

@@ -2,7 +2,6 @@ import { prisma, type PassCipherType, type PassRepromptType } from '@IRIS/databa
 import { NotFound, BadRequest } from '../../lib/errors'
 
 export interface ListCiphersFilter {
-  folderId?: string
   type?: PassCipherType
   favorite?: boolean
   trash?: boolean
@@ -12,7 +11,6 @@ export interface CreateCipherDto {
   type: PassCipherType
   encryptedTitle: string
   encryptedData: string
-  folderId?: string | null
   favorite?: boolean
   reprompt?: PassRepromptType
 }
@@ -21,7 +19,6 @@ export interface UpdateCipherDto {
   type?: PassCipherType
   encryptedTitle?: string
   encryptedData?: string
-  folderId?: string | null
   favorite?: boolean
   reprompt?: PassRepromptType
 }
@@ -35,7 +32,6 @@ export class AkaromiCiphersServ {
     type: string
     favorite: boolean
     reprompt: string
-    folderId: string | null
     encryptedTitle: string
     encryptedData: string
     deletedAt: Date | null
@@ -47,7 +43,6 @@ export class AkaromiCiphersServ {
       type: cipher.type as 'LOGIN' | 'SSH_KEY',
       favorite: cipher.favorite,
       reprompt: cipher.reprompt as 'NONE' | 'REQUIRE_MASTER_PASSWORD',
-      folderId: cipher.folderId,
       encryptedTitle: cipher.encryptedTitle,
       encryptedData: cipher.encryptedData,
       deletedAt: cipher.deletedAt ? cipher.deletedAt.toISOString() : null,
@@ -57,13 +52,12 @@ export class AkaromiCiphersServ {
   }
 
   /**
-   * List vault ciphers with optional filtering by folder, type, favorite, and trash status.
+   * List vault ciphers with optional filtering by type, favorite, and trash status.
    */
   public static async listCiphers(userId: string, filter?: ListCiphersFilter) {
     const where: {
       userId: string
       deletedAt?: { not: null } | null
-      folderId?: string
       type?: PassCipherType
       favorite?: boolean
     } = { userId }
@@ -74,10 +68,6 @@ export class AkaromiCiphersServ {
       } else {
         where.deletedAt = null
       }
-    }
-
-    if (filter?.folderId) {
-      where.folderId = filter.folderId
     }
 
     if (filter?.type) {
@@ -110,22 +100,12 @@ export class AkaromiCiphersServ {
       throw new BadRequest('Encrypted data payload is required and cannot be empty.')
     }
 
-    if (data.folderId) {
-      const folder = await prisma.passFolder.findFirst({
-        where: { id: data.folderId, userId },
-      })
-      if (!folder) {
-        throw new NotFound('Target folder not found.')
-      }
-    }
-
     const cipher = await prisma.passCipher.create({
       data: {
         userId,
         type: data.type,
         encryptedTitle: data.encryptedTitle,
         encryptedData: data.encryptedData,
-        folderId: data.folderId ?? null,
         favorite: data.favorite ?? false,
         reprompt: data.reprompt ?? 'NONE',
       },
@@ -173,15 +153,6 @@ export class AkaromiCiphersServ {
       throw new NotFound('Cipher not found.')
     }
 
-    if (data.folderId !== undefined && data.folderId !== null) {
-      const folder = await prisma.passFolder.findFirst({
-        where: { id: data.folderId, userId },
-      })
-      if (!folder) {
-        throw new NotFound('Target folder not found.')
-      }
-    }
-
     if (data.encryptedTitle !== undefined && !data.encryptedTitle.trim()) {
       throw new BadRequest('Encrypted title cannot be empty.')
     }
@@ -195,7 +166,6 @@ export class AkaromiCiphersServ {
         type: data.type ?? existing.type,
         encryptedTitle: data.encryptedTitle ?? existing.encryptedTitle,
         encryptedData: data.encryptedData ?? existing.encryptedData,
-        folderId: data.folderId !== undefined ? data.folderId : existing.folderId,
         favorite: data.favorite !== undefined ? data.favorite : existing.favorite,
         reprompt: data.reprompt !== undefined ? data.reprompt : existing.reprompt,
       },

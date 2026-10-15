@@ -180,7 +180,6 @@ export abstract class CarinaAuthServ {
         permissions,
         publicKey,
         encryptedPrivateKey,
-        encryptionPasswordHash: null,
       },
     })
 
@@ -263,7 +262,6 @@ export abstract class CarinaAuthServ {
         publicKey: updatedPublicKey,
         encryptedPrivateKey: updatedEncryptedPrivateKey,
         passwordChangedAt: now,
-        encryptionPasswordHash: null,
       },
     })
 

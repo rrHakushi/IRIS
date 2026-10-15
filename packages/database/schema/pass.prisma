@@ -14,27 +14,6 @@ enum SshKeyType {
   RSA_4096
 }
 
-model PassFolder {
-  id            String       @id @default(uuid())
-  userId        String
-  user          User         @relation("UserToPassFolders", fields: [userId], references: [id], onDelete: Cascade)
-
-  // Folder name encrypted client-side with VaultKey
-  encryptedName String       @db.Text
-
-  // Hierarchical nesting
-  parentId      String?
-  parent        PassFolder?  @relation("FolderToFolder", fields: [parentId], references: [id], onDelete: Cascade)
-  children      PassFolder[] @relation("FolderToFolder")
-
-  ciphers       PassCipher[]
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-
-  @@index([userId])
-  @@index([parentId])
-}
-
 model PassCipher {
   id             String           @id @default(uuid())
   userId         String
@@ -43,10 +22,6 @@ model PassCipher {
   type           PassCipherType   @default(LOGIN)
   favorite       Boolean          @default(false)
   reprompt       PassRepromptType @default(NONE)
-
-  // Folder relation
-  folderId       String?
-  folder         PassFolder?      @relation(fields: [folderId], references: [id], onDelete: SetNull)
 
   // Encrypted item display name / title (encrypted client-side with VaultKey)
   encryptedTitle String           @db.Text
@@ -66,6 +41,5 @@ model PassCipher {
   @@index([userId, type])
   @@index([userId, deletedAt])
   @@index([userId, favorite])
-  @@index([folderId])
   @@index([userId, updatedAt])
 }

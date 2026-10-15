@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from 'bun:test'
+import crypto from 'node:crypto'
 import { Elysia, ValidationError } from 'elysia'
-import { ml_kem768 } from '@noble/post-quantum/ml-kem.js'
 import { carinaNotifications } from '../../src/api/controllers/carina/notifications.ctrl'
 import { CarinaNotificationsServ } from '../../src/services/carina/notifications.serv'
 import { isHttpError } from '../../src/lib/errors'
@@ -31,7 +31,7 @@ interface MockNotification {
   actionStatus: 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'SUBMITTED' | 'EXPIRED' | null
   actionPayload: any | null
   actionHandler: string | null
-  kemCiphertext: string
+  encryptedKey: string
   encryptedData: string
   expiresAt: Date | null
   createdAt: Date
@@ -131,7 +131,7 @@ function setupPrismaMock() {
       actionStatus: null,
       actionPayload: data.actionPayload ?? null,
       actionHandler: data.actionHandler ?? null,
-      kemCiphertext: data.kemCiphertext,
+      encryptedKey: data.encryptedKey,
       encryptedData: data.encryptedData,
       expiresAt: data.expiresAt ?? null,
       createdAt: new Date(),
@@ -227,14 +227,18 @@ describe('Comprehensive Carina Encrypted Notifications Test Suite', () => {
   const BOB_ID = '00000000-0000-0000-0000-000000000002'
   const CHARLIE_ID = '00000000-0000-0000-0000-000000000003'
 
-  let aliceKeyPair: { publicKey: Uint8Array; secretKey: Uint8Array }
+  let aliceKeyPair: { publicKey: string; privateKey: string }
 
   beforeEach(async () => {
     setupPrismaMock()
 
-    // Generate ML-KEM-768 keys for Alice
-    aliceKeyPair = ml_kem768.keygen()
-    mockUsers[0]!.publicKey = Buffer.from(aliceKeyPair.publicKey).toString('base64')
+    // Generate RSA-OAEP keys for Alice
+    aliceKeyPair = crypto.generateKeyPairSync('rsa', {
+      modulusLength: 2048,
+      publicKeyEncoding: { type: 'spki', format: 'pem' },
+      privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+    })
+    mockUsers[0]!.publicKey = aliceKeyPair.publicKey
 
     aliceToken = await signUserJwt({
       id: ALICE_ID,
@@ -257,7 +261,7 @@ describe('Comprehensive Carina Encrypted Notifications Test Suite', () => {
   // 1. Post-Quantum Cryptography & Encryption / Decryption Pipeline
   // ===========================================================================
 
-  describe('Post-Quantum ML-KEM-768 + AES-256-GCM Cryptographic Engine', () => {
+  describe('Standard RSA-OAEP + AES-256-GCM Cryptographic Engine', () => {
     it('encrypts payload with recipient public key and decrypts successfully with secret key', () => {
       const payload = {
         title: 'Security Alert: New Sign-in',
@@ -272,8 +276,8 @@ describe('Comprehensive Carina Encrypted Notifications Test Suite', () => {
         mockUsers[0]!.publicKey
       )
 
-      expect(typeof encrypted.kemCiphertext).toBe('string')
-      expect(encrypted.kemCiphertext.length).toBeGreaterThan(0)
+      expect(typeof encrypted.encryptedKey).toBe('string')
+      expect(encrypted.encryptedKey.length).toBeGreaterThan(0)
       expect(typeof encrypted.encryptedData).toBe('string')
       // Format iv:authTag:cipher
       const parts = encrypted.encryptedData.split(':')
@@ -281,11 +285,11 @@ describe('Comprehensive Carina Encrypted Notifications Test Suite', () => {
       expect(parts[0]!.length).toBe(24) // 12-byte IV in hex = 24 chars
       expect(parts[1]!.length).toBe(32) // 16-byte AuthTag in hex = 32 chars
 
-      // Decrypt using Alice's ML-KEM-768 secret key
+      // Decrypt using Alice's RSA private key
       const decrypted = CarinaNotificationsServ.decryptNotificationPayload(
-        encrypted.kemCiphertext,
+        encrypted.encryptedKey,
         encrypted.encryptedData,
-        aliceKeyPair.secretKey
+        aliceKeyPair.privateKey
       )
 
       expect(decrypted).toEqual(payload)
@@ -296,13 +300,13 @@ describe('Comprehensive Carina Encrypted Notifications Test Suite', () => {
     it('encrypts payload using ephemeral key pair when recipient has no public key configured', () => {
       const payload = {
         title: 'Welcome to IRIS',
-        body: 'Enjoy your post-quantum secure workspace.',
+        body: 'Enjoy your secure workspace.',
       }
 
       // No recipient public key provided
       const encrypted = CarinaNotificationsServ.encryptNotificationPayload(payload, null)
 
-      expect(typeof encrypted.kemCiphertext).toBe('string')
+      expect(typeof encrypted.encryptedKey).toBe('string')
       expect(typeof encrypted.encryptedData).toBe('string')
       const parts = encrypted.encryptedData.split(':')
       expect(parts.length).toBe(3)
@@ -316,13 +320,17 @@ describe('Comprehensive Carina Encrypted Notifications Test Suite', () => {
       )
 
       // Generate a different keypair (Bob's keys)
-      const bobKeyPair = ml_kem768.keygen()
+      const bobKeyPair = crypto.generateKeyPairSync('rsa', {
+        modulusLength: 2048,
+        publicKeyEncoding: { type: 'spki', format: 'pem' },
+        privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+      })
 
       expect(() => {
         CarinaNotificationsServ.decryptNotificationPayload(
-          encrypted.kemCiphertext,
+          encrypted.encryptedKey,
           encrypted.encryptedData,
-          bobKeyPair.secretKey
+          bobKeyPair.privateKey
         )
       }).toThrow()
     })
@@ -330,9 +338,9 @@ describe('Comprehensive Carina Encrypted Notifications Test Suite', () => {
     it('fails to decrypt if encryptedData is corrupted or has invalid format', () => {
       expect(() => {
         CarinaNotificationsServ.decryptNotificationPayload(
-          'bad-kem',
+          'bad-key',
           'invalid-encrypted-data',
-          aliceKeyPair.secretKey
+          aliceKeyPair.privateKey
         )
       }).toThrow('Invalid encrypted notification format (expected iv:authTag:cipher)')
     })
@@ -356,14 +364,14 @@ describe('Comprehensive Carina Encrypted Notifications Test Suite', () => {
       expect(created.app).toBe('carina')
       expect(created.priority).toBe('HIGH')
       expect(created.type).toBe('ACTION_CONFIRM')
-      expect(created.kemCiphertext).toBeDefined()
+      expect(created.encryptedKey).toBeDefined()
       expect(created.encryptedData).toBeDefined()
 
       // Verify that Alice can decrypt it
       const decrypted = CarinaNotificationsServ.decryptNotificationPayload(
-        created.kemCiphertext,
+        created.encryptedKey,
         created.encryptedData,
-        aliceKeyPair.secretKey
+        aliceKeyPair.privateKey
       )
       expect(decrypted.title).toBe('Friend Request')
       expect(decrypted.body).toBe('Bob sent you a friend request')
@@ -756,7 +764,7 @@ describe('Comprehensive Carina Encrypted Notifications Test Suite', () => {
       expect(json.notification.id).toBe(notif.id)
       expect(json.notification.userId).toBe(ALICE_ID)
       expect(json.notification.priority).toBe('HIGH')
-      expect(json.notification.kemCiphertext).toBeDefined()
+      expect(json.notification.encryptedKey).toBeDefined()
       expect(json.notification.encryptedData).toBeDefined()
     })
   })

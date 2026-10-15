@@ -17,6 +17,16 @@ export interface GetEntriesQuery {
   order?: 'asc' | 'desc'
 }
 
+function encryptNotes(notes: string | null | undefined, _userId?: string): string | null {
+  if (!notes) return null
+  return notes
+}
+
+function decryptNotes(notes: string | null | undefined, _userId?: string): string | null {
+  if (!notes) return null
+  return notes
+}
+
 function formatPlaylist(p: any, entriesCount?: number) {
   return {
     id: p.id,
@@ -33,14 +43,14 @@ function formatPlaylist(p: any, entriesCount?: number) {
   }
 }
 
-function formatEntry(e: any) {
+function formatEntry(e: any, userId?: string) {
   return {
     id: e.id,
     listId: e.listId,
     mediaType: e.mediaType,
     mediaId: e.mediaId,
     order: e.order,
-    customNotes: e.customNotes ?? null,
+    customNotes: userId ? decryptNotes(e.customNotes, userId) : (e.customNotes ?? null),
     addedAt: e.addedAt instanceof Date ? e.addedAt.toISOString() : String(e.addedAt),
   }
 }
@@ -347,7 +357,7 @@ export class BorealisPlaylistsServ {
           null
 
         return {
-          entry: formatEntry(item),
+          entry: formatEntry(item, playlist.userId),
           media,
         }
       }),
@@ -413,7 +423,7 @@ export class BorealisPlaylistsServ {
         mediaType,
         mediaId,
         order,
-        customNotes: body.customNotes ?? null,
+        customNotes: body.customNotes ? encryptNotes(body.customNotes, userId) : null,
         animeId: mediaType === 'ANIME' ? mediaId : null,
         mangaId: mediaType === 'MANGA' ? mediaId : null,
         movieId: mediaType === 'MOVIE' ? mediaId : null,
@@ -424,14 +434,14 @@ export class BorealisPlaylistsServ {
       },
       update: {
         order,
-        ...(body.customNotes !== undefined ? { customNotes: body.customNotes } : {}),
+        ...(body.customNotes !== undefined ? { customNotes: encryptNotes(body.customNotes, userId) } : {}),
       },
     })
 
     return {
       success: true,
       message: 'Entry added to playlist successfully',
-      entry: formatEntry(entry),
+      entry: formatEntry(entry, userId),
     }
   }
 
@@ -496,7 +506,7 @@ export class BorealisPlaylistsServ {
 
     const updateData: any = {}
     if (body.order !== undefined) updateData.order = Number(body.order)
-    if (body.customNotes !== undefined) updateData.customNotes = body.customNotes
+    if (body.customNotes !== undefined) updateData.customNotes = encryptNotes(body.customNotes, userId)
 
     const updated = await prisma.customListEntry.update({
       where: { id: entry.id },
@@ -506,7 +516,7 @@ export class BorealisPlaylistsServ {
     return {
       success: true,
       message: 'Playlist entry updated successfully',
-      entry: formatEntry(updated),
+      entry: formatEntry(updated, userId),
     }
   }
 

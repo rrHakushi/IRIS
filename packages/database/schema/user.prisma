@@ -72,12 +72,10 @@ model User {
     activityReplies ActivityReply[]
 
     // ENCRYPTION KEYS
-    publicKey              String?
-    encryptedPrivateKey    String?
-    encryptionPasswordHash String? @db.Text
+    publicKey           String?
+    encryptedPrivateKey String?
 
     // IRIS PASS RELATIONS
-    passFolders PassFolder[] @relation("UserToPassFolders")
     passCiphers PassCipher[] @relation("UserToPassCiphers")
 
     // IRIS SEARCH RELATIONS

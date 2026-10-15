@@ -4,7 +4,6 @@ import { scrypt } from "@noble/hashes/scrypt.js"
 import { gcm } from "@noble/ciphers/aes.js"
 import { sha256 } from "@noble/hashes/sha2.js"
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js"
-import { ml_kem768 } from "@noble/post-quantum/ml-kem.js"
 import type { PinUnlockData } from "./pass-types"
 
 const DB_NAME = "iris_vault_db"
@@ -17,7 +16,7 @@ export interface VaultRecord {
   userId: string
   publicKey: string // Base64
   encryptedPrivateKey: string // salt:iv:authTag:cipher
-  algorithm: "ML-KEM-768"
+  algorithm: "RSA-2048"
   lastUnlockedAt?: number | null
   updatedAt: number
 }
@@ -166,27 +165,6 @@ export async function encryptPrivateKeyClient(
   return `${bytesToHex(salt)}:${bytesToHex(iv)}:${bytesToHex(authTag)}:${bytesToHex(cipher)}`
 }
 
-/**
- * Generates an ML-KEM-768 post-quantum keypair in the browser.
- */
-export async function generateKeypairClient(password: string): Promise<{
-  publicKey: string
-  encryptedPrivateKey: string
-  rawSecretKey: Uint8Array
-}> {
-  const kp = ml_kem768.keygen()
-  const publicKey = btoa(String.fromCharCode(...kp.publicKey))
-  const encryptedPrivateKey = await encryptPrivateKeyClient(
-    kp.secretKey,
-    password
-  )
-
-  return {
-    publicKey,
-    encryptedPrivateKey,
-    rawSecretKey: kp.secretKey,
-  }
-}
 
 /**
  * Generates a SHA-256 fingerprint string from a base64 public key.

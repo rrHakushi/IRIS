@@ -168,12 +168,18 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [])
 
+  const [isAkaromiLocked, setIsAkaromiLocked] = useState<boolean>(false)
+
   // Check if PIN unlock is available in IndexedDB
   const checkPinAvailability = useCallback(async () => {
     if (!userId) return
     try {
       const record = await getPinUnlockRecord(userId)
-      setIsPinUnlockAvailable(Boolean(record))
+      const hasPin = Boolean(record)
+      setIsPinUnlockAvailable(hasPin)
+      if (hasPin) {
+        setIsAkaromiLocked(true)
+      }
     } catch {
       setIsPinUnlockAvailable(false)
     }
@@ -187,7 +193,7 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
   const [vaultKey, setVaultKey] = useState<Uint8Array | null>(null)
 
   useEffect(() => {
-    if (encryption.isActive && encryption.secretKey) {
+    if (encryption.isActive && encryption.secretKey && !isAkaromiLocked) {
       try {
         const key = deriveVaultKey(encryption.secretKey)
         setVaultKey(key)
@@ -195,12 +201,12 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
         console.error("[PassContext] Failed to derive vault key:", err)
         setVaultKey(null)
       }
-    } else {
+    } else if (isAkaromiLocked) {
       setVaultKey(null)
     }
-  }, [encryption.isActive, encryption.secretKey])
+  }, [encryption.isActive, encryption.secretKey, isAkaromiLocked])
 
-  const isUnlocked = Boolean(vaultKey && encryption.isActive)
+  const isUnlocked = Boolean(vaultKey && !isAkaromiLocked)
 
   const isFetchingRef = useRef(false)
   const hasLoadedForVaultKeyRef = useRef<boolean>(false)
@@ -233,7 +239,6 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
             title,
             favorite: c.favorite,
             reprompt: c.reprompt,
-            folderId: c.folderId,
             data,
             deletedAt: c.deletedAt,
             createdAt: c.createdAt,
@@ -292,20 +297,22 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
       try {
         sessionStorage.removeItem(PIN_ATTEMPTS_KEY)
       } catch {}
+      setIsAkaromiLocked(false)
       await checkPinAvailability()
     }
     return result
   }
 
   const lockVault = useCallback(() => {
-    encryption.lockVault()
+    setIsAkaromiLocked(true)
+    setVaultKey(null)
     setCiphers([])
     setSelectedCipherId(null)
     if (clipboardTimerRef.current) {
       clearTimeout(clipboardTimerRef.current)
       clipboardTimerRef.current = null
     }
-  }, [encryption])
+  }, [])
 
   // Inactivity Auto-Lock
   useEffect(() => {
@@ -364,6 +371,9 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: unlockRes.error || "Failed to initialize vault" }
       }
 
+      setIsAkaromiLocked(false)
+      const derived = deriveVaultKey(secretKey)
+      setVaultKey(derived)
       return { success: true }
     } catch (err: any) {
       const currentFailed = Number(sessionStorage.getItem(PIN_ATTEMPTS_KEY) || "0") + 1
@@ -479,7 +489,6 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
         type: backendType,
         encryptedTitle,
         encryptedData,
-        folderId: null,
         favorite: data.favorite ?? false,
         reprompt: data.reprompt ?? "NONE",
       })
@@ -492,7 +501,6 @@ export function PassProvider({ children }: { children: React.ReactNode }) {
           title: data.title,
           favorite: c.favorite,
           reprompt: c.reprompt,
-          folderId: c.folderId,
           data: data.payload,
           deletedAt: null,
           createdAt: c.createdAt,

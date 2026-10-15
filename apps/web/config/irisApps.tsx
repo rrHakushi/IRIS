@@ -66,7 +66,7 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
         : "Unified identity, user profile, security, and sessions.",
       descriptionShort: t
         ? t("irisAccount.descriptionShort")
-        : "Identity & Security",
+        : "Identity & Personal stuff",
     },
     {
       id: "borealis",
@@ -102,7 +102,7 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
         : "Zero-knowledge encrypted password, credential, and SSH key manager.",
       descriptionShort: t
         ? t("irisPass.descriptionShort")
-        : "Vault & Generator",
+        : "Password management",
     },
     {
       id: "kiroshi",

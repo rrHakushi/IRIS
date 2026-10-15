@@ -11,7 +11,6 @@ export const AkaromiCiphersModel = {
 
   // Cipher query
   listCiphersQuery: t.Object({
-    folderId: t.Optional(t.String({ description: 'Filter by folder ID' })),
     type: t.Optional(
       t.Union([t.Literal('LOGIN'), t.Literal('SSH_KEY')], {
         description: 'Filter by cipher type',
@@ -36,7 +35,6 @@ export const AkaromiCiphersModel = {
       t.Literal('NONE'),
       t.Literal('REQUIRE_MASTER_PASSWORD'),
     ]),
-    folderId: t.Nullable(t.String()),
     encryptedTitle: t.String({ description: 'Client-encrypted item title' }),
     encryptedData: t.String({ description: 'Client-encrypted item payload' }),
     deletedAt: t.Nullable(t.String({ description: 'Trash timestamp or null' })),
@@ -56,7 +54,6 @@ export const AkaromiCiphersModel = {
           t.Literal('NONE'),
           t.Literal('REQUIRE_MASTER_PASSWORD'),
         ]),
-        folderId: t.Nullable(t.String()),
         encryptedTitle: t.String(),
         encryptedData: t.String(),
         deletedAt: t.Nullable(t.String()),
@@ -79,7 +76,6 @@ export const AkaromiCiphersModel = {
       minLength: 1,
       description: 'Client-encrypted payload JSON',
     }),
-    folderId: t.Optional(t.Nullable(t.String())),
     favorite: t.Optional(t.Boolean({ default: false })),
     reprompt: t.Optional(
       t.Union([t.Literal('NONE'), t.Literal('REQUIRE_MASTER_PASSWORD')], {
@@ -98,7 +94,6 @@ export const AkaromiCiphersModel = {
         t.Literal('NONE'),
         t.Literal('REQUIRE_MASTER_PASSWORD'),
       ]),
-      folderId: t.Nullable(t.String()),
       encryptedTitle: t.String(),
       encryptedData: t.String(),
       deletedAt: t.Nullable(t.String()),
@@ -118,7 +113,6 @@ export const AkaromiCiphersModel = {
         t.Literal('NONE'),
         t.Literal('REQUIRE_MASTER_PASSWORD'),
       ]),
-      folderId: t.Nullable(t.String()),
       encryptedTitle: t.String(),
       encryptedData: t.String(),
       deletedAt: t.Nullable(t.String()),
@@ -131,7 +125,6 @@ export const AkaromiCiphersModel = {
     type: t.Optional(t.Union([t.Literal('LOGIN'), t.Literal('SSH_KEY')])),
     encryptedTitle: t.Optional(t.String({ minLength: 1 })),
     encryptedData: t.Optional(t.String({ minLength: 1 })),
-    folderId: t.Optional(t.Nullable(t.String())),
     favorite: t.Optional(t.Boolean()),
     reprompt: t.Optional(
       t.Union([t.Literal('NONE'), t.Literal('REQUIRE_MASTER_PASSWORD')])
@@ -148,7 +141,6 @@ export const AkaromiCiphersModel = {
         t.Literal('NONE'),
         t.Literal('REQUIRE_MASTER_PASSWORD'),
       ]),
-      folderId: t.Nullable(t.String()),
       encryptedTitle: t.String(),
       encryptedData: t.String(),
       deletedAt: t.Nullable(t.String()),

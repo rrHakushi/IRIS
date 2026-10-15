@@ -15,9 +15,10 @@ import { elysia } from "@/lib/elysia"
 import { useWebSocket } from "./websocket-context"
 import { useEncryption } from "./encryption-context"
 import {
-  decryptPqeNotification,
+  decryptNotification,
+  type NotificationContent,
   type PqeNotificationContent,
-} from "@/lib/encryption-pqe"
+} from "@/lib/notification-crypto"
 import { IrisNotificationToast } from "@/components/navigation/iris-notification-toast"
 
 export type NotificationType =
@@ -38,7 +39,8 @@ export interface NotificationItem {
   actionStatus: NotificationActionStatus | null
   actionPayload: any
   actionHandler: string | null
-  kemCiphertext: string
+  encryptedKey: string
+  kemCiphertext?: string
   encryptedData: string
   expiresAt: string | null
   createdAt: string
@@ -46,7 +48,7 @@ export interface NotificationItem {
 
   // Decrypted client state
   isDecrypted: boolean
-  content: PqeNotificationContent | null
+  content: NotificationContent | null
   decryptionError?: string | null
 }
 
@@ -142,7 +144,10 @@ export function NotificationProvider({
 
   // Helper to attempt decrypting a single notification item
   const tryDecryptNotification = useCallback(
-    (item: NotificationItem, key: Uint8Array | null): NotificationItem => {
+    async (
+      item: NotificationItem,
+      key: Uint8Array | null
+    ): Promise<NotificationItem> => {
       if (item.isDecrypted && item.content) return item
       if (!key) {
         return {
@@ -154,8 +159,9 @@ export function NotificationProvider({
       }
 
       try {
-        const content = decryptPqeNotification(
-          item.kemCiphertext,
+        const cipherKey = item.encryptedKey || item.kemCiphertext || ""
+        const content = await decryptNotification(
+          cipherKey,
           item.encryptedData,
           key
         )
@@ -179,10 +185,13 @@ export function NotificationProvider({
 
   // Decrypt all notifications currently held in state
   const decryptAllWithKey = useCallback(
-    (key: Uint8Array | null) => {
-      setRawNotifications((prev) =>
-        prev.map((item) => tryDecryptNotification(item, key))
+    async (key: Uint8Array | null) => {
+      const items = notificationsRef.current
+      if (items.length === 0) return
+      const decrypted = await Promise.all(
+        items.map((item) => tryDecryptNotification(item, key))
       )
+      setRawNotifications(decrypted)
     },
     [tryDecryptNotification]
   )
@@ -205,30 +214,32 @@ export function NotificationProvider({
 
       if (!apiError && data?.success) {
         const currentKey = secretKeyRef.current
-        const mapped: NotificationItem[] = (data.notifications || []).map(
-          (n: any) => {
-            const baseItem: NotificationItem = {
-              id: n.id,
-              userId: n.userId,
-              app: n.app,
-              category: n.category,
-              type: n.type,
-              priority: n.priority,
-              isRead: Boolean(n.isRead),
-              readAt: n.readAt ? String(n.readAt) : null,
-              actionStatus: n.actionStatus ?? null,
-              actionPayload: n.actionPayload ?? null,
-              actionHandler: n.actionHandler ?? null,
-              kemCiphertext: n.kemCiphertext,
-              encryptedData: n.encryptedData,
-              expiresAt: n.expiresAt ? String(n.expiresAt) : null,
-              createdAt: String(n.createdAt),
-              updatedAt: String(n.updatedAt),
-              isDecrypted: false,
-              content: null,
-            }
-            return tryDecryptNotification(baseItem, currentKey)
-          }
+        const baseItems: NotificationItem[] = (data.notifications || []).map(
+          (n: any) => ({
+            id: n.id,
+            userId: n.userId,
+            app: n.app,
+            category: n.category,
+            type: n.type,
+            priority: n.priority,
+            isRead: Boolean(n.isRead),
+            readAt: n.readAt ? String(n.readAt) : null,
+            actionStatus: n.actionStatus ?? null,
+            actionPayload: n.actionPayload ?? null,
+            actionHandler: n.actionHandler ?? null,
+            encryptedKey: n.encryptedKey || n.kemCiphertext || "",
+            kemCiphertext: n.encryptedKey || n.kemCiphertext || "",
+            encryptedData: n.encryptedData,
+            expiresAt: n.expiresAt ? String(n.expiresAt) : null,
+            createdAt: String(n.createdAt),
+            updatedAt: String(n.updatedAt),
+            isDecrypted: false,
+            content: null,
+          })
+        )
+
+        const mapped = await Promise.all(
+          baseItems.map((item) => tryDecryptNotification(item, currentKey))
         )
 
         setRawNotifications(mapped)
@@ -324,7 +335,8 @@ export function NotificationProvider({
         actionStatus: raw.actionStatus ?? null,
         actionPayload: raw.actionPayload ?? null,
         actionHandler: raw.actionHandler ?? null,
-        kemCiphertext: raw.kemCiphertext,
+        encryptedKey: raw.encryptedKey || raw.kemCiphertext || "",
+        kemCiphertext: raw.encryptedKey || raw.kemCiphertext || "",
         encryptedData: raw.encryptedData,
         expiresAt: raw.expiresAt ? String(raw.expiresAt) : null,
         createdAt: raw.createdAt,
@@ -333,30 +345,30 @@ export function NotificationProvider({
         content: null,
       }
 
-      const decrypted = tryDecryptNotification(baseItem, currentKey)
+      tryDecryptNotification(baseItem, currentKey).then((decrypted) => {
+        setRawNotifications((prev) => {
+          if (prev.some((n) => n.id === decrypted.id)) return prev
+          setUnreadCount((c) => c + 1)
+          return [decrypted, ...prev]
+        })
 
-      setRawNotifications((prev) => {
-        if (prev.some((n) => n.id === decrypted.id)) return prev
-        setUnreadCount((c) => c + 1)
-        return [decrypted, ...prev]
+        // Trigger custom interactive popup with unique ID so Sonner never duplicates it
+        toast.custom(
+          (t) => (
+            <IrisNotificationToast
+              toastId={t}
+              item={decrypted}
+              onSubmitAction={submitAction}
+              onOpenModal={() => setIsModalOpen(true)}
+              onDismiss={() => toast.dismiss(t)}
+            />
+          ),
+          {
+            id: `iris-notification-${decrypted.id}`,
+            duration: decrypted.priority === "URGENT" ? 15000 : 8000,
+          }
+        )
       })
-
-      // Trigger custom interactive popup with unique ID so Sonner never duplicates it
-      toast.custom(
-        (t) => (
-          <IrisNotificationToast
-            toastId={t}
-            item={decrypted}
-            onSubmitAction={submitAction}
-            onOpenModal={() => setIsModalOpen(true)}
-            onDismiss={() => toast.dismiss(t)}
-          />
-        ),
-        {
-          id: `iris-notification-${decrypted.id}`,
-          duration: decrypted.priority === "URGENT" ? 15000 : 8000,
-        }
-      )
     })
 
     // 2. Notification update (e.g. read status)

@@ -57,6 +57,7 @@ import { formatBadgeNumber } from "@/lib/numbers"
 import { useNotifications } from "@/context/notification-context"
 import { useUser } from "@/context/user-context"
 import { useEncryption } from "@/context/encryption-context"
+import { deriveVaultKey, safeDecryptText, safeEncryptText } from "@/lib/client-encryption"
 import { useLocale } from "next-intl"
 import { locales, localeNames, type Locale } from "@/i18n/routing"
 import { useIrisApps, renderIrisAppIcon, type IrisApp } from "@/config/irisApps"
@@ -185,6 +186,12 @@ export function IrisUserMenu({
     return current || visibleApps[0] || irisApps[0]
   }, [pathname, visibleApps, irisApps])
 
+  const { secretKey, isActive } = useEncryption()
+  const vaultKey = useMemo(
+    () => (isActive && secretKey ? deriveVaultKey(secretKey) : null),
+    [isActive, secretKey]
+  )
+
   const [isEditing, setIsEditing] = useState(false)
   const [appOrder, setAppOrder] = useState<string[]>([])
   const [bookmarks, setBookmarks] = useState<UserBookmark[]>(
@@ -254,7 +261,12 @@ export function IrisUserMenu({
           })
           if (error || !data) return null
 
-          const list = (data.bookmarks as unknown as UserBookmark[]) || []
+          const rawList = (data.bookmarks as unknown as UserBookmark[]) || []
+          const list = rawList.map((b) => ({
+            ...b,
+            title: safeDecryptText(b.title, vaultKey),
+            url: safeDecryptText(b.url, vaultKey),
+          }))
           const groups = (data.groups as string[]) || []
 
           cachedBookmarks = list
@@ -280,6 +292,19 @@ export function IrisUserMenu({
   useEffect(() => {
     fetchBookmarks()
   }, [fetchBookmarks])
+
+  // Re-decrypt bookmarks if vaultKey activates after initial fetch
+  useEffect(() => {
+    if (vaultKey) {
+      setBookmarks((prev) =>
+        prev.map((b) => ({
+          ...b,
+          title: safeDecryptText(b.title, vaultKey),
+          url: safeDecryptText(b.url, vaultKey),
+        }))
+      )
+    }
+  }, [vaultKey])
 
   // Automatically open settings on connections tab and alert on OAuth return
   useEffect(() => {
@@ -504,8 +529,8 @@ export function IrisUserMenu({
         await elysia.carina.bookmarks.put({
           bookmarks: bookmarks.map((b, idx) => ({
             id: b.id,
-            title: b.title,
-            url: b.url,
+            title: safeEncryptText(b.title, vaultKey),
+            url: safeEncryptText(b.url, vaultKey),
             icon: b.icon,
             color: b.color,
             pinned: b.pinned,
@@ -602,8 +627,8 @@ export function IrisUserMenu({
         const { data: resData, error } = await elysia.carina
           .bookmarks({ bookmarkId: data.id })
           .patch({
-            title: data.title,
-            url: data.url,
+            title: safeEncryptText(data.title, vaultKey),
+            url: safeEncryptText(data.url, vaultKey),
             icon: data.icon,
             color: data.color,
             pinned: data.pinned,
@@ -613,8 +638,13 @@ export function IrisUserMenu({
         if (error || !resData?.bookmark) {
           throw new Error("Failed to update bookmark")
         }
+        const savedBookmark: UserBookmark = {
+          ...(resData.bookmark as unknown as UserBookmark),
+          title: data.title.trim(),
+          url: data.url.trim(),
+        }
         const updatedList = bookmarks.map((b) =>
-          b.id === data.id ? (resData.bookmark as unknown as UserBookmark) : b
+          b.id === data.id ? savedBookmark : b
         )
         setBookmarks(updatedList)
         cachedBookmarks = updatedList
@@ -630,8 +660,8 @@ export function IrisUserMenu({
     } else {
       if (isAuthenticated) {
         const { data: resData, error } = await elysia.carina.bookmarks.post({
-          title: data.title,
-          url: data.url,
+          title: safeEncryptText(data.title, vaultKey),
+          url: safeEncryptText(data.url, vaultKey),
           icon: data.icon,
           color: data.color,
           pinned: data.pinned,
@@ -641,9 +671,14 @@ export function IrisUserMenu({
         if (error || !resData?.bookmark) {
           throw new Error("Failed to create bookmark")
         }
+        const createdBookmark: UserBookmark = {
+          ...(resData.bookmark as unknown as UserBookmark),
+          title: data.title.trim(),
+          url: data.url.trim(),
+        }
         const updatedList = [
           ...bookmarks,
-          resData.bookmark as unknown as UserBookmark,
+          createdBookmark,
         ]
         setBookmarks(updatedList)
         cachedBookmarks = updatedList

@@ -125,8 +125,8 @@ export class CarinaBookmarksServ {
           data: {
             order: bm.order ?? index,
             pinned: Boolean(bm.pinned),
-            title: bm.title,
-            url: bm.url,
+            title: bm.title.trim(),
+            url: bm.url.trim(),
             icon: bm.icon?.trim() || null,
             color: bm.color?.trim() || null,
             appId: bm.appId?.trim() || null,

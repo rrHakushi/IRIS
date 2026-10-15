@@ -1,5 +1,4 @@
 import crypto from 'node:crypto'
-import { ml_kem768 } from '@noble/post-quantum/ml-kem.js'
 import {
   prisma,
   Prisma,
@@ -59,7 +58,7 @@ export interface NotificationContent {
 }
 
 export interface EncryptedNotificationPayload {
-  kemCiphertext: string
+  encryptedKey: string
   encryptedData: string
 }
 
@@ -91,50 +90,55 @@ const sendListeners = new Set<NotificationSendListener>()
 
 export class CarinaNotificationsServ {
   /**
-   * Encrypts arbitrary notification content using Post-Quantum ML-KEM-768 and AES-256-GCM.
-   * If recipientPublicKeyBase64 is provided, encapsulates against the recipient public key.
-   * Otherwise, generates an ephemeral ML-KEM-768 key pair to ensure payload is always post-quantum encrypted.
+   * Encrypts arbitrary notification content using standard RSA-OAEP (2048-bit) and AES-256-GCM.
    */
   public static encryptNotificationPayload(
     content: NotificationContent | Record<string, unknown>,
-    recipientPublicKeyBase64?: string | null
+    recipientPublicKeyPem?: string | null
   ): EncryptedNotificationPayload {
-    let targetPublicKey: Uint8Array
-    if (recipientPublicKeyBase64?.trim()) {
-      targetPublicKey = new Uint8Array(
-        Buffer.from(recipientPublicKeyBase64.trim(), 'base64')
-      )
-    } else {
-      const ephemeral = ml_kem768.keygen()
-      targetPublicKey = ephemeral.publicKey
+    let targetPublicKey = recipientPublicKeyPem?.trim()
+    if (!targetPublicKey) {
+      const { publicKey } = crypto.generateKeyPairSync('rsa', {
+        modulusLength: 2048,
+        publicKeyEncoding: { type: 'spki', format: 'pem' },
+      })
+      targetPublicKey = publicKey
     }
 
-    // 1. Post-Quantum KEM Encapsulation
-    const { cipherText, sharedSecret } = ml_kem768.encapsulate(targetPublicKey)
-
-    // 2. Symmetric AES-256-GCM Encryption with 12-byte IV
+    // 1. Generate random 256-bit AES key and 12-byte IV for payload
+    const aesKey = crypto.randomBytes(32)
     const iv = crypto.randomBytes(12)
-    const cipher = crypto.createCipheriv('aes-256-gcm', sharedSecret, iv)
+    const cipher = crypto.createCipheriv('aes-256-gcm', aesKey, iv)
     const plaintext = JSON.stringify(content)
     const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()])
     const authTag = cipher.getAuthTag()
 
     const encryptedData = `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted.toString('hex')}`
-    const kemCiphertext = Buffer.from(cipherText).toString('base64')
+
+    // 2. Encrypt symmetric AES key with recipient's RSA-OAEP public key
+    const encryptedKeyBuffer = crypto.publicEncrypt(
+      {
+        key: targetPublicKey,
+        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+        oaepHash: 'sha256',
+      },
+      aesKey
+    )
+    const encryptedKey = encryptedKeyBuffer.toString('base64')
 
     return {
-      kemCiphertext,
+      encryptedKey,
       encryptedData,
     }
   }
 
   /**
-   * Decrypts a post-quantum encrypted notification payload using an ML-KEM-768 secret key.
+   * Decrypts an encrypted notification payload using an RSA-OAEP private key.
    */
   public static decryptNotificationPayload(
-    kemCiphertextBase64: string,
+    encryptedKeyBase64: string,
     encryptedData: string,
-    secretKey: Uint8Array
+    privateKeyPem: string
   ): NotificationContent {
     const parts = encryptedData.split(':')
     if (parts.length !== 3) {
@@ -146,13 +150,18 @@ export class CarinaNotificationsServ {
     const authTag = Buffer.from(authTagHex!, 'hex')
     const cipherBytes = Buffer.from(cipherHex!, 'hex')
 
-    const rawKemCiphertext = new Uint8Array(Buffer.from(kemCiphertextBase64, 'base64'))
-
-    // 1. Post-Quantum KEM Decapsulation
-    const sharedSecret = ml_kem768.decapsulate(rawKemCiphertext, secretKey)
+    // 1. Decrypt symmetric AES key with RSA-OAEP private key
+    const aesKey = crypto.privateDecrypt(
+      {
+        key: privateKeyPem,
+        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+        oaepHash: 'sha256',
+      },
+      Buffer.from(encryptedKeyBase64, 'base64')
+    )
 
     // 2. Symmetric AES-256-GCM Decryption
-    const decipher = crypto.createDecipheriv('aes-256-gcm', sharedSecret, iv)
+    const decipher = crypto.createDecipheriv('aes-256-gcm', aesKey, iv)
     decipher.setAuthTag(authTag)
     const decrypted = Buffer.concat([decipher.update(cipherBytes), decipher.final()])
 
@@ -160,7 +169,7 @@ export class CarinaNotificationsServ {
   }
 
   /**
-   * Helper to create, encrypt, persist, and send a new post-quantum encrypted notification.
+   * Helper to create, encrypt, persist, and send a new encrypted notification.
    */
   public static async createNotification(params: {
     userId: string
@@ -180,8 +189,11 @@ export class CarinaNotificationsServ {
 
     let userPublicKey = user?.publicKey
     if (user && !userPublicKey) {
-      const { publicKey } = ml_kem768.keygen()
-      userPublicKey = Buffer.from(publicKey).toString('base64')
+      const { publicKey } = crypto.generateKeyPairSync('rsa', {
+        modulusLength: 2048,
+        publicKeyEncoding: { type: 'spki', format: 'pem' },
+      })
+      userPublicKey = publicKey
       try {
         if (typeof (prisma.user as any)?.update === 'function') {
           await prisma.user.update({
@@ -194,7 +206,7 @@ export class CarinaNotificationsServ {
       }
     }
 
-    const { kemCiphertext, encryptedData } = this.encryptNotificationPayload(
+    const { encryptedKey, encryptedData } = this.encryptNotificationPayload(
       params.content,
       userPublicKey
     )
@@ -209,7 +221,7 @@ export class CarinaNotificationsServ {
         actionStatus: params.type && params.type !== 'INFO' ? 'PENDING' : null,
         actionHandler: params.actionHandler ?? null,
         actionPayload: params.actionPayload === null ? Prisma.JsonNull : (params.actionPayload ?? undefined),
-        kemCiphertext,
+        encryptedKey,
         encryptedData,
         expiresAt: params.expiresAt ?? null,
       },
@@ -288,7 +300,7 @@ export class CarinaNotificationsServ {
       actionStatus: n.actionStatus,
       actionPayload: n.actionPayload,
       actionHandler: n.actionHandler,
-      kemCiphertext: n.kemCiphertext,
+      encryptedKey: n.encryptedKey,
       encryptedData: n.encryptedData,
       expiresAt: n.expiresAt ? n.expiresAt.toISOString() : null,
       createdAt: n.createdAt.toISOString(),
@@ -361,9 +373,9 @@ export class CarinaNotificationsServ {
     if (secretKey) {
       try {
         decryptedContent = this.decryptNotificationPayload(
-          notification.kemCiphertext,
+          notification.encryptedKey,
           notification.encryptedData,
-          secretKey
+          typeof secretKey === 'string' ? secretKey : Buffer.from(secretKey).toString('utf8')
         )
       } catch (err) {
         logger.warn(`Failed to decrypt notification ${notification.id}: ${err}`)
@@ -384,7 +396,7 @@ export class CarinaNotificationsServ {
         actionStatus: notification.actionStatus,
         actionPayload: notification.actionPayload,
         actionHandler: notification.actionHandler,
-        kemCiphertext: notification.kemCiphertext,
+        encryptedKey: notification.encryptedKey,
         encryptedData: notification.encryptedData,
         expiresAt: notification.expiresAt ? notification.expiresAt.toISOString() : null,
         createdAt: notification.createdAt.toISOString(),
