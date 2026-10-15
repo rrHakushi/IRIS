@@ -81,7 +81,7 @@ export function PassGeneratorDialog({
     <Dialog isOpen={isOpen} onOpenChange={onOpenChange} className="sm:max-w-lg">
       <DialogHeader className="text-start">
         <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500">
+          <div className="flex size-8 items-center justify-center rounded-xl border border-border bg-muted/60 text-foreground">
             <IconSparkles className="size-4" />
           </div>
           <DialogTitle className="font-heading text-base font-bold text-foreground">
@@ -115,7 +115,7 @@ export function PassGeneratorDialog({
                 className="cursor-pointer rounded-xl"
               >
                 {copied ? (
-                  <IconCheck className="size-3.5 text-emerald-500" />
+                  <IconCheck className="size-3.5 text-foreground" />
                 ) : (
                   <IconCopy className="size-3.5" />
                 )}
@@ -129,17 +129,7 @@ export function PassGeneratorDialog({
               <span className="text-muted-foreground">
                 Entropy: {entropyInfo.entropyBits} bits
               </span>
-              <span
-                className={`font-semibold ${
-                  entropyInfo.score === 4
-                    ? "text-emerald-500"
-                    : entropyInfo.score === 3
-                      ? "text-blue-500"
-                      : entropyInfo.score === 2
-                        ? "text-amber-500"
-                        : "text-rose-500"
-                }`}
-              >
+              <span className="font-mono font-semibold text-foreground">
                 {entropyInfo.label}
               </span>
             </div>
@@ -147,12 +137,12 @@ export function PassGeneratorDialog({
               <div
                 className={`h-full transition-all duration-300 ${
                   entropyInfo.score === 4
-                    ? "w-full bg-emerald-500"
+                    ? "w-full bg-primary"
                     : entropyInfo.score === 3
-                      ? "w-3/4 bg-blue-500"
+                      ? "w-3/4 bg-primary/80"
                       : entropyInfo.score === 2
-                        ? "w-1/2 bg-amber-500"
-                        : "w-1/4 bg-rose-500"
+                        ? "w-1/2 bg-primary/60"
+                        : "w-1/4 bg-primary/40"
                 }`}
               />
             </div>
@@ -181,7 +171,7 @@ export function PassGeneratorDialog({
             onChange={(e) =>
               setOptions({ ...options, length: Number(e.target.value) })
             }
-            className="w-full cursor-pointer accent-rose-500"
+            className="w-full cursor-pointer accent-primary"
           />
           <div className="flex justify-between text-[10px] text-muted-foreground">
             <span>8</span>
@@ -201,7 +191,7 @@ export function PassGeneratorDialog({
               onChange={(e) =>
                 setOptions({ ...options, uppercase: e.target.checked })
               }
-              className="size-3.5 rounded accent-rose-500"
+              className="size-3.5 rounded accent-primary"
             />
             <span className="text-[11px] font-medium text-foreground">
               A-Z (Uppercase)
@@ -215,7 +205,7 @@ export function PassGeneratorDialog({
               onChange={(e) =>
                 setOptions({ ...options, lowercase: e.target.checked })
               }
-              className="size-3.5 rounded accent-rose-500"
+              className="size-3.5 rounded accent-primary"
             />
             <span className="text-[11px] font-medium text-foreground">
               a-z (Lowercase)
@@ -229,7 +219,7 @@ export function PassGeneratorDialog({
               onChange={(e) =>
                 setOptions({ ...options, numbers: e.target.checked })
               }
-              className="size-3.5 rounded accent-rose-500"
+              className="size-3.5 rounded accent-primary"
             />
             <span className="text-[11px] font-medium text-foreground">
               0-9 (Numbers)
@@ -243,7 +233,7 @@ export function PassGeneratorDialog({
               onChange={(e) =>
                 setOptions({ ...options, symbols: e.target.checked })
               }
-              className="size-3.5 rounded accent-rose-500"
+              className="size-3.5 rounded accent-primary"
             />
             <span className="text-[11px] font-medium text-foreground">
               !@#$ (Symbols)
@@ -259,7 +249,7 @@ export function PassGeneratorDialog({
             onChange={(e) =>
               setOptions({ ...options, avoidAmbiguous: e.target.checked })
             }
-            className="size-3.5 rounded accent-rose-500"
+            className="size-3.5 rounded accent-primary"
           />
           <span className="text-[11px] text-foreground">
             Avoid ambiguous characters (0, O, 1, l, I)
@@ -279,7 +269,7 @@ export function PassGeneratorDialog({
         <Button
           type="button"
           onClick={handleApply}
-          className="rounded-xl bg-rose-500 text-xs font-semibold text-white hover:bg-rose-600"
+          className="rounded-xl text-xs font-semibold shadow-xs"
         >
           <IconKey className="me-1.5 size-3.5" />
           Use Password

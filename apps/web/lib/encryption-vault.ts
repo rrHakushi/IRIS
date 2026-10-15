@@ -5,18 +5,19 @@ import { gcm } from "@noble/ciphers/aes.js"
 import { sha256 } from "@noble/hashes/sha2.js"
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js"
 import { ml_kem768 } from "@noble/post-quantum/ml-kem.js"
+import type { PinUnlockData } from "./pass-types"
 
 const DB_NAME = "iris_vault_db"
-const DB_VERSION = 2
+const DB_VERSION = 3
 const STORE_NAME = "vault_entries"
 const SESSION_STORE_NAME = "session_keys"
+const PIN_STORE_NAME = "pin_unlock"
 
 export interface VaultRecord {
   userId: string
   publicKey: string // Base64
   encryptedPrivateKey: string // salt:iv:authTag:cipher
   algorithm: "ML-KEM-768"
-  hasSeparateEncryptionPassword?: boolean
   lastUnlockedAt?: number | null
   updatedAt: number
 }
@@ -40,6 +41,9 @@ export function openVaultDB(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(SESSION_STORE_NAME)) {
         db.createObjectStore(SESSION_STORE_NAME, { keyPath: "id" })
+      }
+      if (!db.objectStoreNames.contains(PIN_STORE_NAME)) {
+        db.createObjectStore(PIN_STORE_NAME, { keyPath: "userId" })
       }
     }
 
@@ -381,3 +385,59 @@ export async function clearSessionSecretKey(userId?: string): Promise<void> {
     // Ignore cleanup errors
   }
 }
+
+/**
+ * Persists encrypted PIN unlock data for fast client-side unlocking.
+ */
+export async function savePinUnlockRecord(
+  userId: string,
+  pinData: PinUnlockData
+): Promise<void> {
+  const db = await openVaultDB()
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(PIN_STORE_NAME, "readwrite")
+    const store = tx.objectStore(PIN_STORE_NAME)
+    const req = store.put({ userId, ...pinData, updatedAt: Date.now() })
+    req.onsuccess = () => resolve()
+    req.onerror = () => reject(req.error)
+  })
+}
+
+/**
+ * Retrieves encrypted PIN unlock data for a user.
+ */
+export async function getPinUnlockRecord(
+  userId: string
+): Promise<PinUnlockData | null> {
+  const db = await openVaultDB()
+  return new Promise((resolve, reject) => {
+    if (!db.objectStoreNames.contains(PIN_STORE_NAME)) {
+      resolve(null)
+      return
+    }
+    const tx = db.transaction(PIN_STORE_NAME, "readonly")
+    const store = tx.objectStore(PIN_STORE_NAME)
+    const req = store.get(userId)
+    req.onsuccess = () => resolve(req.result || null)
+    req.onerror = () => reject(req.error)
+  })
+}
+
+/**
+ * Removes PIN unlock data when PIN is disabled or on excessive failed attempts.
+ */
+export async function deletePinUnlockRecord(userId: string): Promise<void> {
+  const db = await openVaultDB()
+  return new Promise((resolve, reject) => {
+    if (!db.objectStoreNames.contains(PIN_STORE_NAME)) {
+      resolve()
+      return
+    }
+    const tx = db.transaction(PIN_STORE_NAME, "readwrite")
+    const store = tx.objectStore(PIN_STORE_NAME)
+    const req = store.delete(userId)
+    req.onsuccess = () => resolve()
+    req.onerror = () => reject(req.error)
+  })
+}
+

@@ -28,27 +28,4 @@ export const akaromiEncryption = new Elysia({ prefix: '/akaromi/encryption' })
     }
   )
 
-  // --- 2. POST /akaromi/encryption/password (Update encryption vault password) ---
-  .post(
-    '/password',
-    {
-      body: AkaromiEncryptionModel.changePasswordBody,
-      detail: {
-        summary: 'Change or initialize user post-quantum encryption vault password',
-        tags: ['Akaromi Encryption'],
-      },
-      response: {
-        200: AkaromiEncryptionModel.changePasswordResponse,
-        400: AkaromiEncryptionModel.badRequestError,
-        401: AkaromiEncryptionModel.unauthorizedError,
-        404: AkaromiEncryptionModel.notFoundError,
-        422: AkaromiEncryptionModel.validationError,
-      },
-    },
-    async ({ body, session: userSession }) => {
-      const user = userSession.requireUser()
-      return await AkaromiEncryptionServ.changeEncryptionPassword(user.id, body)
-    }
-  )
-
 export default akaromiEncryption

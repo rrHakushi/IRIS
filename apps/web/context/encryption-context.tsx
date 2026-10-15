@@ -24,8 +24,6 @@ import {
 export interface EncryptionContextValue {
   /** Whether the post-quantum encryption vault is active / unlocked in memory for this session. */
   isActive: boolean
-  /** Whether the user has configured an independent encryption password differing from the account password */
-  hasSeparateEncryptionPassword: boolean
   /** ML-KEM-768 public key (Base64) */
   publicKey: string | null
   /** Encrypted private key payload (salt:iv:authTag:cipher) */
@@ -38,24 +36,22 @@ export interface EncryptionContextValue {
   isLoading: boolean
   /** Error message if an unlock or fetch operation failed */
   error: string | null
-  /** Unlocks the post-quantum encryption vault using the account or separate encryption password */
+  /** Unlocks the post-quantum encryption vault using the account password */
   unlockVault: (
     password: string
   ) => Promise<{ success: boolean; error?: string }>
+  /** Unlocks the vault directly with a decrypted raw secret key (e.g. from PIN unlock) */
+  unlockWithSecretKey: (
+    secretKey: Uint8Array
+  ) => Promise<{ success: boolean; error?: string }>
   /** Locks the vault, wiping the decrypted key from memory */
   lockVault: () => void
-  /** Changes or separates the encryption password */
-  changeEncryptionPassword: (
-    currentPassword: string,
-    newPassword: string
-  ) => Promise<{ success: boolean; error?: string }>
   /** Refreshes encryption keys from the server */
   refreshVault: () => Promise<void>
 }
 
 const EncryptionContext = createContext<EncryptionContextValue>({
   isActive: false,
-  hasSeparateEncryptionPassword: false,
   publicKey: null,
   encryptedPrivateKey: null,
   secretKey: null,
@@ -63,8 +59,8 @@ const EncryptionContext = createContext<EncryptionContextValue>({
   isLoading: false,
   error: null,
   unlockVault: async () => ({ success: false }),
+  unlockWithSecretKey: async () => ({ success: false }),
   lockVault: () => {},
-  changeEncryptionPassword: async () => ({ success: false }),
   refreshVault: async () => {},
 })
 
@@ -81,8 +77,6 @@ export function EncryptionProvider({
 
   const [secretKey, setSecretKey] = useState<Uint8Array | null>(null)
   const [isActive, setIsActive] = useState<boolean>(false)
-  const [hasSeparateEncryptionPassword, setHasSeparateEncryptionPassword] =
-    useState<boolean>(false)
   const [publicKey, setPublicKey] = useState<string | null>(null)
   const [encryptedPrivateKey, setEncryptedPrivateKey] = useState<string | null>(
     null
@@ -101,7 +95,6 @@ export function EncryptionProvider({
       userId: string | null
       publicKey: string | null
       encryptedPrivateKey: string | null
-      hasSeparateEncryptionPassword: boolean
     } | null> => {
       setIsLoading(true)
       setError(null)
@@ -122,11 +115,6 @@ export function EncryptionProvider({
             setPublicKey(cached.publicKey)
             setEncryptedPrivateKey(cached.encryptedPrivateKey)
             setFingerprint(calculateKeyFingerprint(cached.publicKey))
-            if (cached.hasSeparateEncryptionPassword !== undefined) {
-              setHasSeparateEncryptionPassword(
-                Boolean(cached.hasSeparateEncryptionPassword)
-              )
-            }
             if (inMemorySecretKey) {
               setIsActive(true)
             }
@@ -140,11 +128,9 @@ export function EncryptionProvider({
 
         if (!apiError && data?.success && data.publicKey) {
           const resolvedUserId = data.userId || userId || null
-          const hasSep = Boolean(data.hasSeparateEncryptionPassword)
           setPublicKey(data.publicKey)
           setEncryptedPrivateKey(data.encryptedPrivateKey)
           setFingerprint(calculateKeyFingerprint(data.publicKey))
-          setHasSeparateEncryptionPassword(hasSep)
 
           // Save to IndexedDB if userId is known
           if (resolvedUserId) {
@@ -153,7 +139,6 @@ export function EncryptionProvider({
               publicKey: data.publicKey,
               encryptedPrivateKey: data.encryptedPrivateKey || "",
               algorithm: "ML-KEM-768",
-              hasSeparateEncryptionPassword: hasSep,
               lastUnlockedAt: inMemorySecretKey ? Date.now() : null,
               updatedAt: Date.now(),
             })
@@ -167,7 +152,6 @@ export function EncryptionProvider({
             userId: resolvedUserId,
             publicKey: data.publicKey,
             encryptedPrivateKey: data.encryptedPrivateKey ?? null,
-            hasSeparateEncryptionPassword: hasSep,
           }
         }
         return null
@@ -181,7 +165,7 @@ export function EncryptionProvider({
         setIsLoading(false)
       }
     },
-    [userId, hasSeparateEncryptionPassword]
+    [userId]
   )
 
   useEffect(() => {
@@ -207,6 +191,13 @@ export function EncryptionProvider({
         setPublicKey(null)
         setEncryptedPrivateKey(null)
         setFingerprint(null)
+        if (inMemorySecretKey) {
+          try {
+            crypto.getRandomValues(inMemorySecretKey)
+          } catch {
+            inMemorySecretKey.fill(0)
+          }
+        }
         inMemorySecretKey = null
       }
     }
@@ -220,7 +211,6 @@ export function EncryptionProvider({
   ): Promise<{ success: boolean; error?: string }> => {
     let payload = encryptedPrivateKey
     let pubKey = publicKey
-    let separate = hasSeparateEncryptionPassword
     let targetUserId = userId
 
     if (!payload || !targetUserId) {
@@ -229,7 +219,6 @@ export function EncryptionProvider({
       if (fetched) {
         payload = fetched.encryptedPrivateKey
         pubKey = fetched.publicKey
-        separate = fetched.hasSeparateEncryptionPassword
         if (fetched.userId) {
           targetUserId = fetched.userId
         }
@@ -269,11 +258,38 @@ export function EncryptionProvider({
       const msg = "Incorrect account password. Please verify and try again."
       setError(msg)
       setIsActive(false)
+      if (inMemorySecretKey) {
+        try {
+          crypto.getRandomValues(inMemorySecretKey)
+        } catch {
+          inMemorySecretKey.fill(0)
+        }
+      }
       inMemorySecretKey = null
       await clearSessionSecretKey(targetUserId || undefined)
       return { success: false, error: msg }
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  /**
+   * Unlocks the vault directly using an in-memory decrypted secret key (e.g. from local PIN unlock).
+   */
+  const unlockWithSecretKey = async (
+    unlockedKey: Uint8Array
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      inMemorySecretKey = unlockedKey
+      setSecretKey(unlockedKey)
+      setIsActive(true)
+      await saveSessionSecretKey(userId || "active", unlockedKey)
+      return { success: true }
+    } catch (err: any) {
+      return {
+        success: false,
+        error: err?.message || "Failed to activate vault with secret key",
+      }
     }
   }
 
@@ -286,69 +302,23 @@ export function EncryptionProvider({
     } else {
       clearSessionSecretKey()
     }
+    if (inMemorySecretKey) {
+      try {
+        crypto.getRandomValues(inMemorySecretKey)
+      } catch {
+        inMemorySecretKey.fill(0)
+      }
+    }
     inMemorySecretKey = null
     setSecretKey(null)
     setIsActive(false)
     setError(null)
   }, [userId])
 
-  /**
-   * Changes or separates the encryption password on the server and updates local vault.
-   */
-  const changeEncryptionPassword = async (
-    currentPassword: string,
-    newPassword: string
-  ): Promise<{ success: boolean; error?: string }> => {
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const { data, error: apiError } =
-        await elysia.akaromi.encryption.password.post(
-          {
-            currentPassword,
-            newEncryptionPassword: newPassword,
-          },
-          {
-            fetch: { credentials: "include" },
-          }
-        )
-
-      if (apiError || !data?.success) {
-        const msg =
-          typeof apiError?.value === "object" &&
-          apiError.value &&
-          "message" in apiError.value
-            ? String((apiError.value as { message: unknown }).message)
-            : "Failed to update encryption password."
-        setError(msg)
-        return { success: false, error: msg }
-      }
-
-      // Re-fetch updated encrypted private key from server
-      await fetchKeys(true)
-
-      // Auto-unlock with the new password
-      await unlockVault(newPassword)
-
-      return { success: true }
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : "Error updating encryption password"
-      setError(msg)
-      return { success: false, error: msg }
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   return (
     <EncryptionContext.Provider
       value={{
         isActive,
-        hasSeparateEncryptionPassword,
         publicKey,
         encryptedPrivateKey,
         secretKey: secretKey || inMemorySecretKey,
@@ -356,8 +326,8 @@ export function EncryptionProvider({
         isLoading,
         error,
         unlockVault,
+        unlockWithSecretKey,
         lockVault,
-        changeEncryptionPassword,
         refreshVault: async () => {
           await fetchKeys(true)
         },

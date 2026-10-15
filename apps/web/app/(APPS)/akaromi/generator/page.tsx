@@ -81,7 +81,7 @@ export default function GeneratorPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500">
+          <div className="flex size-8 items-center justify-center rounded-xl border border-border bg-muted/60 text-foreground">
             <IconSparkles className="size-4" />
           </div>
           <h1 className="font-heading text-xl font-bold tracking-tight text-foreground">
@@ -125,7 +125,7 @@ export default function GeneratorPage() {
             <span className="mb-1 block text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
               Generated {mode === "password" ? "Password" : "Passphrase"}
             </span>
-            <div className="font-mono text-lg font-semibold tracking-wide break-all text-foreground select-all selection:bg-rose-500/20 sm:text-2xl">
+            <div className="font-mono text-lg font-semibold tracking-wide break-all text-foreground select-all selection:bg-muted sm:text-2xl">
               {generatedValue || "..."}
             </div>
           </div>
@@ -142,7 +142,7 @@ export default function GeneratorPage() {
             </Button>
             <Button
               onClick={handleCopy}
-              className="h-10 cursor-pointer gap-1.5 rounded-2xl bg-rose-500 px-4 text-xs font-semibold text-white shadow-xs hover:bg-rose-600"
+              className="h-10 cursor-pointer gap-1.5 rounded-2xl px-4 text-xs font-semibold shadow-xs"
             >
               {copied ? (
                 <>
@@ -168,17 +168,7 @@ export default function GeneratorPage() {
                 {entropyInfo.entropyBits} bits
               </span>
             </div>
-            <span
-              className={`text-[11px] font-semibold tracking-wider uppercase ${
-                entropyInfo.score === 4
-                  ? "text-emerald-500"
-                  : entropyInfo.score === 3
-                    ? "text-blue-500"
-                    : entropyInfo.score === 2
-                      ? "text-amber-500"
-                      : "text-rose-500"
-              }`}
-            >
+            <span className="text-[11px] font-mono font-semibold tracking-wider uppercase text-foreground">
               {entropyInfo.label}
             </span>
           </div>
@@ -188,12 +178,12 @@ export default function GeneratorPage() {
             <div
               className={`h-full transition-all duration-300 ${
                 entropyInfo.score === 4
-                  ? "w-full bg-emerald-500"
+                  ? "w-full bg-primary"
                   : entropyInfo.score === 3
-                    ? "w-3/4 bg-blue-500"
+                    ? "w-3/4 bg-primary/80"
                     : entropyInfo.score === 2
-                      ? "w-1/2 bg-amber-500"
-                      : "w-1/4 bg-rose-500"
+                      ? "w-1/2 bg-primary/60"
+                      : "w-1/4 bg-primary/40"
               }`}
             />
           </div>
@@ -233,7 +223,7 @@ export default function GeneratorPage() {
                     length: Number(e.target.value),
                   })
                 }
-                className="w-full cursor-pointer accent-rose-500"
+                className="w-full cursor-pointer accent-primary"
               />
               <div className="flex justify-between text-[10px] text-muted-foreground">
                 <span>8</span>
@@ -256,7 +246,7 @@ export default function GeneratorPage() {
                       uppercase: e.target.checked,
                     })
                   }
-                  className="size-4 rounded accent-rose-500"
+                  className="size-4 rounded accent-primary"
                 />
                 <div>
                   <span className="block text-xs font-semibold text-foreground">
@@ -278,7 +268,7 @@ export default function GeneratorPage() {
                       lowercase: e.target.checked,
                     })
                   }
-                  className="size-4 rounded accent-rose-500"
+                  className="size-4 rounded accent-primary"
                 />
                 <div>
                   <span className="block text-xs font-semibold text-foreground">
@@ -297,7 +287,7 @@ export default function GeneratorPage() {
                   onChange={(e) =>
                     setPwdOptions({ ...pwdOptions, numbers: e.target.checked })
                   }
-                  className="size-4 rounded accent-rose-500"
+                  className="size-4 rounded accent-primary"
                 />
                 <div>
                   <span className="block text-xs font-semibold text-foreground">
@@ -316,7 +306,7 @@ export default function GeneratorPage() {
                   onChange={(e) =>
                     setPwdOptions({ ...pwdOptions, symbols: e.target.checked })
                   }
-                  className="size-4 rounded accent-rose-500"
+                  className="size-4 rounded accent-primary"
                 />
                 <div>
                   <span className="block text-xs font-semibold text-foreground">
@@ -340,7 +330,7 @@ export default function GeneratorPage() {
                     avoidAmbiguous: e.target.checked,
                   })
                 }
-                className="size-4 rounded accent-rose-500"
+                className="size-4 rounded accent-primary"
               />
               <div>
                 <span className="block text-xs font-semibold text-foreground">
@@ -381,7 +371,7 @@ export default function GeneratorPage() {
                     wordCount: Number(e.target.value),
                   })
                 }
-                className="w-full cursor-pointer accent-rose-500"
+                className="w-full cursor-pointer accent-primary"
               />
               <div className="flex justify-between text-[10px] text-muted-foreground">
                 <span>3 words</span>
@@ -407,7 +397,7 @@ export default function GeneratorPage() {
                     }
                     className={`size-9 cursor-pointer rounded-xl border font-mono text-xs font-bold transition-colors ${
                       phraseOptions.separator === sep
-                        ? "border-rose-500 bg-rose-500/10 text-rose-500"
+                        ? "border-primary bg-primary/10 text-primary"
                         : "border-border bg-background text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -429,7 +419,7 @@ export default function GeneratorPage() {
                       capitalize: e.target.checked,
                     })
                   }
-                  className="size-4 rounded accent-rose-500"
+                  className="size-4 rounded accent-primary"
                 />
                 <div>
                   <span className="block text-xs font-semibold text-foreground">
@@ -451,7 +441,7 @@ export default function GeneratorPage() {
                       includeNumber: e.target.checked,
                     })
                   }
-                  className="size-4 rounded accent-rose-500"
+                  className="size-4 rounded accent-primary"
                 />
                 <div>
                   <span className="block text-xs font-semibold text-foreground">

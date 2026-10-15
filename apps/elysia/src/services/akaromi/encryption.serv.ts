@@ -1,13 +1,5 @@
 import { prisma } from '@IRIS/database'
-import { NotFound, BadRequest } from '../../lib/errors'
-import type { AkaromiEncryptionModel } from '../../api/models/akaromi/encryption.model'
-import {
-  decryptPrivateKey,
-  encryptPrivateKey,
-  generateUserKeypair,
-  verifyPassword,
-  hashPassword,
-} from '../../utils/auth-crypto'
+import { NotFound } from '../../lib/errors'
 
 export class AkaromiEncryptionServ {
   /**
@@ -44,20 +36,7 @@ export class AkaromiEncryptionServ {
       encryptedPrivateKey: user.encryptedPrivateKey ?? null,
       salt,
       hasEncryptionKeys: Boolean(user.publicKey && user.encryptedPrivateKey),
-      hasSeparateEncryptionPassword: false,
     }
   }
-
-  /**
-   * Deprecated: Dedicated encryption passwords have been removed.
-   * Vault encryption derives exclusively from the user's account password.
-   */
-  public static async changeEncryptionPassword(
-    _userId: string,
-    _body: { currentPassword: string; newEncryptionPassword: string }
-  ): Promise<AkaromiEncryptionModel['changePasswordResponse']> {
-    throw new BadRequest(
-      'Dedicated encryption passwords have been removed. Vault encryption uses your account password exclusively.'
-    )
-  }
 }
+

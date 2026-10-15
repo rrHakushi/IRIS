@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useState, useRef } from "react"
+import React, { useState, useRef, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import { useEncryption } from "@/context/encryption-context"
 import { elysia } from "@/lib/elysia"
 import {
@@ -9,10 +10,17 @@ import {
   encryptVaultObject,
   decryptVaultData,
   decryptVaultObject,
+  setupPinUnlock,
 } from "@/lib/pass-crypto"
+import {
+  getPinUnlockRecord,
+  savePinUnlockRecord,
+  deletePinUnlockRecord,
+} from "@/lib/encryption-vault"
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
 import { Label } from "@workspace/ui/components/label"
+import { Badge } from "@workspace/ui/components/badge"
 import {
   IconUpload,
   IconDownload,
@@ -21,11 +29,20 @@ import {
   IconLockOpen,
   IconEye,
   IconEyeOff,
+  IconKey,
+  IconShieldLock,
+  IconClock,
+  IconTrash,
 } from "@tabler/icons-react"
 import { toast } from "sonner"
 import type { SettingsTabProps } from "../types"
 
+const AUTO_LOCK_KEY = "iris:akaromi:autoLockTimeout"
+const CLIPBOARD_TIMEOUT_KEY = "iris:akaromi:clipboardTimeout"
+
 export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
+  const { data: session } = useSession()
+  const userId = session?.user?.id || "default_user"
   const encryption = useEncryption()
 
   // Unlock form state
@@ -34,12 +51,68 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
   const [isUnlocking, setIsUnlocking] = useState(false)
   const [unlockError, setUnlockError] = useState<string | null>(null)
 
+  // Inactivity & Clipboard Settings
+  const [autoLockTimeout, setAutoLockTimeout] = useState<number>(15)
+  const [clipboardTimeout, setClipboardTimeout] = useState<number>(30)
+
+  // PIN Unlock state
+  const [isPinActive, setIsPinActive] = useState<boolean>(false)
+  const [showPinSetup, setShowPinSetup] = useState<boolean>(false)
+  const [newPin, setNewPin] = useState<string>("")
+  const [confirmPin, setConfirmPin] = useState<string>("")
+  const [showPinValue, setShowPinValue] = useState<boolean>(false)
+  const [isSavingPin, setIsSavingPin] = useState<boolean>(false)
+
   // Import / Export state
   const [isImporting, setIsImporting] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [importSummary, setImportSummary] = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Load preferences from localStorage and check PIN availability
+  useEffect(() => {
+    try {
+      const savedAutoLock = localStorage.getItem(AUTO_LOCK_KEY)
+      if (savedAutoLock !== null) {
+        setAutoLockTimeout(Number(savedAutoLock))
+      }
+      const savedClip = localStorage.getItem(CLIPBOARD_TIMEOUT_KEY)
+      if (savedClip !== null) {
+        setClipboardTimeout(Number(savedClip))
+      }
+    } catch {}
+
+    if (userId) {
+      getPinUnlockRecord(userId)
+        .then((record) => setIsPinActive(Boolean(record)))
+        .catch(() => setIsPinActive(false))
+    }
+  }, [userId])
+
+  const handleAutoLockChange = (minutes: number) => {
+    setAutoLockTimeout(minutes)
+    try {
+      localStorage.setItem(AUTO_LOCK_KEY, String(minutes))
+      toast.success(
+        minutes === 0
+          ? "Auto-lock disabled"
+          : `Auto-lock set to ${minutes} ${minutes === 1 ? "minute" : "minutes"}`
+      )
+    } catch {}
+  }
+
+  const handleClipboardTimeoutChange = (seconds: number) => {
+    setClipboardTimeout(seconds)
+    try {
+      localStorage.setItem(CLIPBOARD_TIMEOUT_KEY, String(seconds))
+      toast.success(
+        seconds === 0
+          ? "Clipboard auto-clear disabled"
+          : `Clipboard will clear after ${seconds} seconds`
+      )
+    } catch {}
+  }
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -56,6 +129,50 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
       toast.success("Vault unlocked successfully")
     } else {
       setUnlockError(res.error || "Incorrect account password. Please try again.")
+    }
+  }
+
+  const handleSavePin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newPin || newPin.length < 4) {
+      toast.error("PIN must be at least 4 digits")
+      return
+    }
+    if (newPin !== confirmPin) {
+      toast.error("PINs do not match")
+      return
+    }
+    if (!encryption.isActive || !encryption.secretKey) {
+      toast.error("Vault must be unlocked with account password first")
+      return
+    }
+
+    setIsSavingPin(true)
+    try {
+      const pinData = setupPinUnlock(newPin, encryption.secretKey)
+      await savePinUnlockRecord(userId, pinData)
+      setIsPinActive(true)
+      setShowPinSetup(false)
+      setNewPin("")
+      setConfirmPin("")
+      toast.success("PIN unlock configured successfully")
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to configure PIN")
+    } finally {
+      setIsSavingPin(false)
+    }
+  }
+
+  const handleDisablePin = async () => {
+    if (!confirm("Are you sure you want to disable PIN unlock on this device?")) {
+      return
+    }
+    try {
+      await deletePinUnlockRecord(userId)
+      setIsPinActive(false)
+      toast.success("PIN unlock disabled")
+    } catch {
+      toast.error("Failed to disable PIN unlock")
     }
   }
 
@@ -78,15 +195,6 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
       const rawFolders = res.data.folders || []
       const rawCiphers = res.data.ciphers || []
 
-      // Decrypt items locally in memory
-      const decryptedFolders = rawFolders.map((f: any) => {
-        try {
-          return { id: f.id, name: decryptVaultData(f.encryptedName, vaultKey) }
-        } catch {
-          return { id: f.id, name: "[Decryption Error]" }
-        }
-      })
-
       const decryptedItems = rawCiphers
         .map((c: any) => {
           try {
@@ -96,7 +204,6 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
               id: c.id,
               type: c.type,
               title,
-              folderId: c.folderId,
               favorite: c.favorite,
               data,
               createdAt: c.createdAt,
@@ -111,7 +218,7 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
         encrypted: false,
         version: "1.0",
         exportDate: new Date().toISOString(),
-        folders: decryptedFolders,
+        folders: [],
         items: decryptedItems,
       }
 
@@ -163,10 +270,8 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
       }
 
       const rawItems: any[] = parsed.items || []
-      const rawFolders: any[] = parsed.folders || []
 
       // Batch payloads to encrypt locally
-      const foldersToImport: { tempId: string; encryptedName: string }[] = []
       const ciphersToImport: {
         tempFolderId?: string | null
         type: "LOGIN" | "SSH_KEY"
@@ -175,15 +280,6 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
         favorite?: boolean
         reprompt?: "NONE" | "REQUIRE_MASTER_PASSWORD"
       }[] = []
-
-      for (const f of rawFolders) {
-        if (f.name) {
-          foldersToImport.push({
-            tempId: f.id || String(Math.random()),
-            encryptedName: encryptVaultData(f.name, vaultKey),
-          })
-        }
-      }
 
       for (const item of rawItems) {
         const title = item.name || item.title || "Untitled"
@@ -201,7 +297,7 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
             uris: item.login?.uris
               ? item.login.uris.map((u: any) => ({
                   uri: u.uri,
-                  match: u.match ?? 0,
+                  match: u.match ?? "BASE_DOMAIN",
                 }))
               : item.data?.uris || [],
             totpSecret: item.login?.totp || item.data?.totpSecret || "",
@@ -210,7 +306,7 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
 
           ciphersToImport.push({
             type: "LOGIN",
-            tempFolderId: item.folderId ?? null,
+            tempFolderId: null,
             encryptedTitle: encryptVaultData(title, vaultKey),
             encryptedData: encryptVaultObject(loginPayload, vaultKey),
             favorite,
@@ -221,12 +317,12 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
 
       // Send to Elysia batch import endpoint
       const res = await elysia.akaromi.import.post({
-        folders: foldersToImport,
+        folders: [],
         ciphers: ciphersToImport,
       })
 
       if (res?.data?.success) {
-        const msg = `Successfully imported ${res.data.importedCiphersCount} items and ${res.data.importedFoldersCount} folders.`
+        const msg = `Successfully imported ${res.data.importedCiphersCount} items.`
         setImportSummary(msg)
         toast.success(msg)
       } else {
@@ -301,15 +397,220 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
           <Button
             type="submit"
             isDisabled={isUnlocking || !unlockPassword.trim()}
-            className="h-9 w-full cursor-pointer rounded-xl bg-rose-500 text-xs font-semibold text-white hover:bg-rose-600"
+            className="h-9 w-full cursor-pointer rounded-xl text-xs font-semibold shadow-xs"
           >
             <IconLockOpen className="me-1.5 size-3.5" />
             {isUnlocking
               ? "Unlocking Vault..."
-              : "Unlock Vault to Manage Passwords"}
+              : "Unlock Vault to Manage Settings"}
           </Button>
         </form>
       )}
+
+      {/* Security & Vault Preferences */}
+      <div className="space-y-4 rounded-2xl border border-border bg-card p-5 shadow-xs">
+        <div className="flex items-center gap-2 border-b border-border/60 pb-3">
+          <IconShieldLock className="size-5 text-foreground" />
+          <div>
+            <h3 className="text-sm font-bold text-foreground">
+              Security & Vault Preferences
+            </h3>
+            <p className="text-[11px] text-muted-foreground">
+              Configure auto-lock timers, clipboard protection, and device PIN unlock.
+            </p>
+          </div>
+        </div>
+
+        {/* Inactivity Auto-Lock */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between py-1 border-b border-border/40">
+          <div>
+            <Label className="text-xs font-semibold text-foreground">
+              Inactivity Auto-Lock
+            </Label>
+            <p className="text-[11px] text-muted-foreground">
+              Automatically locks your vault when no activity is detected.
+            </p>
+          </div>
+          <select
+            value={autoLockTimeout}
+            onChange={(e) => handleAutoLockChange(Number(e.target.value))}
+            className="h-8 rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden"
+          >
+            <option value={1}>1 minute</option>
+            <option value={5}>5 minutes</option>
+            <option value={15}>15 minutes (Default)</option>
+            <option value={30}>30 minutes</option>
+            <option value={60}>1 hour</option>
+            <option value={0}>Never (Disabled)</option>
+          </select>
+        </div>
+
+        {/* Clipboard Auto-Clear */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between py-1 border-b border-border/40">
+          <div>
+            <Label className="text-xs font-semibold text-foreground">
+              Clipboard Auto-Clear
+            </Label>
+            <p className="text-[11px] text-muted-foreground">
+              Wipes copied passwords and 2FA codes from your clipboard for privacy.
+            </p>
+          </div>
+          <select
+            value={clipboardTimeout}
+            onChange={(e) => handleClipboardTimeoutChange(Number(e.target.value))}
+            className="h-8 rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden"
+          >
+            <option value={10}>10 seconds</option>
+            <option value={20}>20 seconds</option>
+            <option value={30}>30 seconds (Default)</option>
+            <option value={60}>60 seconds</option>
+            <option value={0}>Never (Disabled)</option>
+          </select>
+        </div>
+
+        {/* PIN Unlock Setup */}
+        <div className="space-y-3 pt-1">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <Label className="text-xs font-semibold text-foreground">
+                  PIN Unlock
+                </Label>
+                <Badge
+                  variant="outline"
+                  className={
+                    isPinActive
+                      ? "text-[10px] text-foreground"
+                      : "text-[10px] text-muted-foreground"
+                  }
+                >
+                  {isPinActive ? "Active on this device" : "Not configured"}
+                </Badge>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Unlock your vault with a quick 4-12 digit PIN on this browser.
+                Rate-limited with automatic lockout after 5 failed attempts.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {isPinActive ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    isDisabled={!encryption.isActive}
+                    onClick={() => setShowPinSetup(!showPinSetup)}
+                    className="h-8 rounded-xl text-xs"
+                  >
+                    Change PIN
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDisablePin}
+                    className="h-8 text-xs text-destructive hover:bg-destructive/10"
+                  >
+                    Disable PIN
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  isDisabled={!encryption.isActive}
+                  onClick={() => setShowPinSetup(!showPinSetup)}
+                  className="h-8 gap-1.5 rounded-xl text-xs"
+                >
+                  <IconKey className="size-3.5 text-foreground" />
+                  <span>Configure PIN</span>
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {!encryption.isActive && (
+            <p className="text-[11px] text-muted-foreground">
+              * Unlock your vault above using your account password to configure or update your PIN.
+            </p>
+          )}
+
+          {/* Inline PIN Setup Form */}
+          {showPinSetup && encryption.isActive && (
+            <form
+              onSubmit={handleSavePin}
+              className="space-y-3 rounded-xl border border-border/80 bg-muted/20 p-4"
+            >
+              <span className="text-xs font-bold text-foreground">
+                {isPinActive ? "Change Vault PIN" : "Set New Vault PIN"}
+              </span>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">
+                    New PIN (4-12 digits)
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      type={showPinValue ? "text" : "password"}
+                      value={newPin}
+                      onChange={(e) => setNewPin(e.target.value)}
+                      placeholder="••••"
+                      maxLength={12}
+                      className="h-8 rounded-xl pe-8 font-mono text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPinValue(!showPinValue)}
+                      className="absolute inset-y-0 end-0 flex items-center pe-2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPinValue ? (
+                        <IconEyeOff className="size-3.5" />
+                      ) : (
+                        <IconEye className="size-3.5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">
+                    Confirm PIN
+                  </Label>
+                  <Input
+                    type={showPinValue ? "text" : "password"}
+                    value={confirmPin}
+                    onChange={(e) => setConfirmPin(e.target.value)}
+                    placeholder="••••"
+                    maxLength={12}
+                    className="h-8 rounded-xl font-mono text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowPinSetup(false)}
+                  className="h-7 rounded-lg text-xs"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  isDisabled={isSavingPin || !newPin || newPin.length < 4}
+                  className="h-7 rounded-lg text-xs font-semibold shadow-xs"
+                >
+                  {isSavingPin ? "Saving..." : "Save PIN"}
+                </Button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
 
       {/* Import / Export Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -317,7 +618,7 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
         <div className="flex flex-col justify-between space-y-3 rounded-2xl border border-border bg-card p-5 shadow-xs">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <IconUpload className="size-4 text-rose-500" />
+              <IconUpload className="size-4 text-foreground" />
               <h3 className="text-xs font-bold text-foreground">
                 Import Passwords
               </h3>
@@ -341,7 +642,7 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
               variant="outline"
               size="sm"
               isDisabled={!encryption.isActive || isImporting}
-              onPress={() => fileInputRef.current?.click()}
+              onClick={() => fileInputRef.current?.click()}
               className="h-9 w-full cursor-pointer gap-1.5 rounded-xl text-xs"
             >
               <IconUpload className="size-3.5" />
@@ -354,14 +655,14 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
         <div className="flex flex-col justify-between space-y-3 rounded-2xl border border-border bg-card p-5 shadow-xs">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <IconDownload className="size-4 text-rose-500" />
+              <IconDownload className="size-4 text-foreground" />
               <h3 className="text-xs font-bold text-foreground">
                 Export Passwords
               </h3>
             </div>
             <p className="text-[11px] text-muted-foreground">
               Export an unencrypted JSON backup of all logins and credentials.
-              Store this file in an encrypted volume.
+              Store this file in a secure encrypted volume.
             </p>
           </div>
 
@@ -369,7 +670,7 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
             variant="outline"
             size="sm"
             isDisabled={!encryption.isActive || isExporting}
-            onPress={handleExport}
+            onClick={handleExport}
             className="h-9 w-full cursor-pointer gap-1.5 rounded-xl text-xs"
           >
             <IconDownload className="size-3.5" />
@@ -379,7 +680,7 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
       </div>
 
       {importSummary && (
-        <div className="flex items-center gap-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-600 dark:text-emerald-400">
+        <div className="flex items-center gap-2 rounded-2xl border border-border bg-muted/60 p-3 text-xs text-foreground">
           <IconCheck className="size-4 shrink-0" />
           <span>{importSummary}</span>
         </div>
