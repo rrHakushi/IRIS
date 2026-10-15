@@ -664,7 +664,10 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
       try {
         const { bounds, tabId } = payload || {}
         const targetTabId = tabId || sender.tab?.id
-        const screenshotUrl = await ext.tabs.captureVisibleTab(null, { format: "png" })
+        const targetWindowId = sender.tab?.windowId
+        const screenshotUrl = targetWindowId !== undefined && targetWindowId !== null
+          ? await ext.tabs.captureVisibleTab(targetWindowId, { format: "png" })
+          : await ext.tabs.captureVisibleTab({ format: "png" })
         if (!screenshotUrl) throw new Error("Failed to capture screen")
 
         const res = await fetch(screenshotUrl)
@@ -693,8 +696,9 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           throw new Error(`Scanned QR code is not a valid 2FA authenticator key: ${decodedText.slice(0, 40)}`)
         }
 
+        await storage.set({ pendingScannedTotp: parsedOtp })
         if (ext.storage?.session) {
-          await ext.storage.session.set({ pendingScannedTotp: parsedOtp })
+          await ext.storage.session.set({ pendingScannedTotp: parsedOtp }).catch(() => {})
         }
 
         if (targetTabId) {
@@ -808,17 +812,24 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           return
         }
 
-        const callerUrl = sender.url || sender.tab?.url || ""
+        const callerUrl = sender.url || sender.tab?.url || payload?.url || ""
         const callerHost = IrisMatching.extractHost(callerUrl)
         if (!callerHost) {
           sendResponse({ success: false, credentials: [], passkeys: [] })
           return
         }
 
-        const allowedIds =
+        function normalizeB64(id) {
+          if (!id || typeof id !== "string") return ""
+          return id.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
+        }
+
+        const requestedRpId = (payload?.rpId || callerHost || "").toLowerCase()
+        const rawAllowed =
           Array.isArray(payload?.allowCredentials) && payload.allowCredentials.length > 0
             ? payload.allowCredentials.map((c) => (typeof c === "string" ? c : c.id))
             : null
+        const allowedIds = rawAllowed ? rawAllowed.map(normalizeB64) : null
 
         let matched = []
         for (const cipher of inMemoryCiphers) {
@@ -826,9 +837,23 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const passkey = cipher.data?.passkey
           if (!passkey) continue
 
-          const effectiveRpId = passkey.rpId
-          if (effectiveRpId && IrisMatching.isUriMatch(callerUrl, effectiveRpId, 0)) {
-            if (allowedIds && !allowedIds.includes(passkey.credentialId)) {
+          const effectiveRpId = (passkey.rpId || "").toLowerCase()
+          const hasMatchingUri =
+            Array.isArray(cipher.data?.uris) &&
+            cipher.data.uris.some((u) => {
+              const uStr = typeof u === "string" ? u : u?.uri
+              return uStr && IrisMatching.isUriMatch(callerUrl, uStr, u?.match ?? 0)
+            })
+
+          const isRpMatch =
+            effectiveRpId === requestedRpId ||
+            (callerHost && (effectiveRpId === callerHost || callerHost.endsWith("." + effectiveRpId))) ||
+            (callerUrl && IrisMatching.isUriMatch(callerUrl, effectiveRpId, 0)) ||
+            hasMatchingUri
+
+          if (isRpMatch) {
+            const normCredId = normalizeB64(passkey.credentialId)
+            if (allowedIds && !allowedIds.includes(normCredId)) {
               continue
             }
             matched.push({
@@ -846,14 +871,28 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
         }
 
+        // If allowCredentials was specified but strict ID match didn't find them, check if any RP passkeys exist
         if (matched.length === 0 && allowedIds) {
           for (const cipher of inMemoryCiphers) {
             if (cipher.deletedAt || cipher.type !== "LOGIN") continue
             const passkey = cipher.data?.passkey
             if (!passkey) continue
 
-            const effectiveRpId = passkey.rpId
-            if (effectiveRpId && IrisMatching.isUriMatch(callerUrl, effectiveRpId, 0)) {
+            const effectiveRpId = (passkey.rpId || "").toLowerCase()
+            const hasMatchingUri =
+              Array.isArray(cipher.data?.uris) &&
+              cipher.data.uris.some((u) => {
+                const uStr = typeof u === "string" ? u : u?.uri
+                return uStr && IrisMatching.isUriMatch(callerUrl, uStr, u?.match ?? 0)
+              })
+
+            const isRpMatch =
+              effectiveRpId === requestedRpId ||
+              (callerHost && (effectiveRpId === callerHost || callerHost.endsWith("." + effectiveRpId))) ||
+              (callerUrl && IrisMatching.isUriMatch(callerUrl, effectiveRpId, 0)) ||
+              hasMatchingUri
+
+            if (isRpMatch) {
               matched.push({
                 id: passkey.credentialId,
                 credentialId: passkey.credentialId,
@@ -897,7 +936,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           throw new Error("Vault is locked. Please unlock Akaromi first.")
         }
 
-        const callerUrl = sender.url || sender.tab?.url || ""
+        const callerUrl = sender.url || sender.tab?.url || payload?.url || ""
         const callerHost = IrisMatching.extractHost(callerUrl)
         if (!callerHost) throw new Error("Untrusted sender context")
 
@@ -908,10 +947,16 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           userName,
           userDisplayName,
           challenge,
+          targetCipherId,
         } = payload || {}
 
         const effectiveRpId = rpId || callerHost
-        if (!IrisMatching.isUriMatch(callerUrl, effectiveRpId, 0)) {
+        const isRpAllowed =
+          effectiveRpId.toLowerCase() === callerHost.toLowerCase() ||
+          callerHost.toLowerCase().endsWith("." + effectiveRpId.toLowerCase()) ||
+          IrisMatching.isUriMatch(callerUrl, effectiveRpId, 0)
+
+        if (!isRpAllowed) {
           throw new Error(
             `Cannot register passkey: Caller domain ${callerHost} is not authorized for RP ID ${effectiveRpId}`
           )
@@ -983,16 +1028,21 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           createdAt: new Date().toISOString(),
         }
 
-        let targetCipher = inMemoryCiphers.find(
-          (c) =>
-            !c.deletedAt &&
-            c.type === "LOGIN" &&
-            c.data?.username === userName &&
-            c.data?.uris?.some((u) => {
-              const uStr = typeof u === "string" ? u : u.uri
-              return IrisMatching.isUriMatch(callerUrl, uStr, 0)
-            })
-        )
+        let targetCipher = null
+        if (targetCipherId && targetCipherId !== "new") {
+          targetCipher = inMemoryCiphers.find((c) => !c.deletedAt && c.id === targetCipherId)
+        } else if (!targetCipherId) {
+          targetCipher = inMemoryCiphers.find(
+            (c) =>
+              !c.deletedAt &&
+              c.type === "LOGIN" &&
+              c.data?.username === userName &&
+              c.data?.uris?.some((u) => {
+                const uStr = typeof u === "string" ? u : u.uri
+                return IrisMatching.isUriMatch(callerUrl, uStr, 0)
+              })
+          )
+        }
 
         if (targetCipher) {
           const updatedData = { ...targetCipher.data, passkey: passkeyData }
@@ -1052,30 +1102,53 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         await ensureVaultActive()
         if (!inMemoryVaultKey) throw new Error("Vault is locked. Please unlock Akaromi.")
 
-        const callerUrl = sender.url || sender.tab?.url || ""
+        const callerUrl = sender.url || sender.tab?.url || payload?.url || ""
         const callerHost = IrisMatching.extractHost(callerUrl)
         if (!callerHost) throw new Error("Untrusted sender context")
 
         const { credentialId, challenge } = payload || {}
         if (!credentialId) throw new Error("Missing credential ID")
 
+        function normalizeB64(id) {
+          if (!id || typeof id !== "string") return ""
+          return id.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
+        }
+
+        const normTargetCredId = normalizeB64(credentialId)
+
         let matchedPasskey = null
+        let matchedCipher = null
         for (const c of inMemoryCiphers) {
           if (c.deletedAt || c.type !== "LOGIN") continue
-          if (c.data?.passkey?.credentialId === credentialId) {
+          if (normalizeB64(c.data?.passkey?.credentialId) === normTargetCredId) {
             matchedPasskey = c.data.passkey
+            matchedCipher = c
             break
           }
         }
 
         if (!matchedPasskey) throw new Error("Passkey not found in vault")
 
-        const effectiveRpId = matchedPasskey.rpId
-        if (!effectiveRpId || !IrisMatching.isUriMatch(callerUrl, effectiveRpId, 0)) {
+        const effectiveRpId = (matchedPasskey.rpId || "").toLowerCase()
+        const requestedRpId = (payload?.rpId || callerHost || "").toLowerCase()
+        const hasMatchingUri =
+          Array.isArray(matchedCipher?.data?.uris) &&
+          matchedCipher.data.uris.some((u) => {
+            const uStr = typeof u === "string" ? u : u?.uri
+            return uStr && IrisMatching.isUriMatch(callerUrl, uStr, u?.match ?? 0)
+          })
+
+        const isRpMatch =
+          effectiveRpId === requestedRpId ||
+          (callerHost && (effectiveRpId === callerHost || callerHost.endsWith("." + effectiveRpId))) ||
+          (callerUrl && IrisMatching.isUriMatch(callerUrl, effectiveRpId, 0)) ||
+          hasMatchingUri
+
+        if (!isRpMatch) {
           throw new Error(`Relying party mismatch: Passkey is registered to ${effectiveRpId}, but assertion was requested by ${callerHost}`)
         }
 
-        const effectiveOrigin = callerUrl ? new URL(callerUrl).origin : "https://" + effectiveRpId
+        const effectiveOrigin = payload?.origin || (callerUrl ? new URL(callerUrl).origin : "https://" + (requestedRpId || effectiveRpId))
         const enc = new TextEncoder()
 
         const clientDataObj = {
@@ -1089,7 +1162,8 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const clientDataHashBuf = await crypto.subtle.digest("SHA-256", clientDataJSON)
         const clientDataHash = new Uint8Array(clientDataHashBuf)
 
-        const rpIdHashBuf = await crypto.subtle.digest("SHA-256", enc.encode(effectiveRpId))
+        const rpIdToUse = requestedRpId || effectiveRpId || callerHost
+        const rpIdHashBuf = await crypto.subtle.digest("SHA-256", enc.encode(rpIdToUse))
         const rpIdHash = new Uint8Array(rpIdHashBuf)
         const flags = 0x1d
 

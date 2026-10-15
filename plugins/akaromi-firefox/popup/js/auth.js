@@ -335,6 +335,11 @@
     }
   })
 
+  IrisApi.getServerUrl().then((serverUrl) => {
+    if (loginServerUrl && serverUrl) loginServerUrl.value = serverUrl
+    if (loginServerLabel && serverUrl) loginServerLabel.textContent = serverUrl
+  }).catch(() => {})
+
   toggleServerConfig?.addEventListener("click", () => {
     if (!serverConfigBody) return
     const isVisible = serverConfigBody.style.display === "flex"
@@ -345,6 +350,7 @@
     const url = loginServerUrl?.value.trim()
     if (!url) return
     await IrisApi.setServerUrl(url)
+    await storage.set({ serverUrl: url })
     if (loginServerLabel) loginServerLabel.textContent = url
     showToast("Server URL updated")
     if (serverConfigBody) serverConfigBody.style.display = "none"
@@ -453,15 +459,14 @@
         box.classList.remove("filled")
       }
       syncOtpCode()
-
-      // Auto-submit if all 6 boxes are filled
-      const fullCode = otpBoxes.map((b) => b.value).join("")
-      if (fullCode.length === 6) {
-        formMfa?.requestSubmit()
-      }
     })
 
     box.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault()
+        formMfa?.requestSubmit()
+        return
+      }
       if (e.key === "Backspace") {
         if (!box.value && index > 0) {
           e.preventDefault()
@@ -499,10 +504,6 @@
 
       const nextFocus = Math.min(digits.length, otpBoxes.length - 1)
       otpBoxes[nextFocus]?.focus()
-
-      if (digits.length === 6) {
-        formMfa?.requestSubmit()
-      }
     })
   })
 

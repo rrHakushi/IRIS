@@ -2,6 +2,7 @@ import {
   generateRegistrationOptions,
   generateAuthenticationOptions,
   verifyRegistrationResponse,
+  verifyAuthenticationResponse,
 } from '@simplewebauthn/server'
 import { prisma } from '@IRIS/database'
 import { cache } from '../../utils/cache'
@@ -183,6 +184,108 @@ export abstract class CarinaPasskeysServ {
       })),
       timeout: options.timeout ?? 60000,
       userVerification: options.userVerification,
+    }
+  }
+
+  /**
+   * Verify WebAuthn passkey authentication/login assertion response.
+   */
+  static async verifyLogin(
+    body: { passkeyResponse: any },
+    request: Request
+  ) {
+    if (!body?.passkeyResponse) {
+      throw new BadRequest('Missing passkey response payload.')
+    }
+
+    const resp = body.passkeyResponse
+    const credentialId = resp.id || resp.rawId
+    if (!credentialId) {
+      throw new BadRequest('Missing passkey credential ID.')
+    }
+
+    const passkey = await prisma.passkey.findUnique({
+      where: { id: credentialId },
+      include: { user: true },
+    })
+
+    if (!passkey || !passkey.user) {
+      throw new NotFound('Passkey credential not recognized on this server.')
+    }
+
+    const clientDataJSONB64 = resp.response?.clientDataJSON
+    if (!clientDataJSONB64) {
+      throw new BadRequest('Missing clientDataJSON in passkey assertion.')
+    }
+
+    let clientDataJSONString = ''
+    try {
+      clientDataJSONString = Buffer.from(clientDataJSONB64, 'base64url').toString('utf8')
+    } catch {
+      clientDataJSONString = Buffer.from(clientDataJSONB64, 'base64').toString('utf8')
+    }
+
+    let clientDataObj: any
+    try {
+      clientDataObj = JSON.parse(clientDataJSONString)
+    } catch {
+      throw new BadRequest('Invalid clientDataJSON format.')
+    }
+
+    const challenge = clientDataObj.challenge
+    if (!challenge) {
+      throw new BadRequest('Missing challenge in clientDataJSON.')
+    }
+
+    const expectedChallenge = await cache.get<string>(`auth:passkey-auth:${challenge}`)
+    if (!expectedChallenge) {
+      throw new BadRequest('Passkey authentication challenge expired or not found. Please try again.')
+    }
+
+    const { expectedOrigin, rpID } = getOriginAndRpId(request)
+
+    let verification: any
+    try {
+      verification = await verifyAuthenticationResponse({
+        response: resp,
+        expectedChallenge,
+        expectedOrigin,
+        expectedRPID: rpID,
+        credential: {
+          id: passkey.id,
+          publicKey: Buffer.from(passkey.publicKey, 'base64url'),
+          counter: passkey.counter,
+          transports: passkey.transports as any,
+        },
+      })
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Passkey assertion verification failed'
+      throw new BadRequest(msg)
+    }
+
+    if (!verification.verified) {
+      throw new BadRequest('Passkey authentication verification failed.')
+    }
+
+    await prisma.passkey.update({
+      where: { id: passkey.id },
+      data: {
+        counter: verification.authenticationInfo.newCounter,
+      },
+    })
+
+    await cache.del(`auth:passkey-auth:${challenge}`)
+
+    return {
+      success: true,
+      user: {
+        id: passkey.user.id,
+        username: passkey.user.username,
+        email: passkey.user.email,
+        passwordChangedAt: passkey.user.passwordChangedAt
+          ? passkey.user.passwordChangedAt.getTime()
+          : null,
+      },
     }
   }
 

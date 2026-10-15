@@ -89,6 +89,7 @@
       el.name,
       el.placeholder,
       el.getAttribute("aria-label"),
+      el.className,
     ]
       .filter(Boolean)
       .join(" ")
@@ -98,11 +99,11 @@
 
     // 6. Explicit autocomplete attributes
     if (
-      auto === "username" ||
-      auto === "email" ||
-      auto === "webauthn" ||
-      auto === "current-password" ||
-      auto === "new-password"
+      auto.includes("username") ||
+      auto.includes("email") ||
+      auto.includes("webauthn") ||
+      auto.includes("current-password") ||
+      auto.includes("new-password")
     ) {
       return true
     }
@@ -110,31 +111,39 @@
     // 7. Email inputs
     if (type === "email") return true
 
-    // 8. Form-association: if in a form containing a password, identify the preceding username field
-    const form = el.closest("form")
-    if (form) {
-      const passwordInputs = Array.from(form.querySelectorAll('input[type="password"]:not([disabled])'))
+    // 8. Form/Container association: if in a form, card, or auth container containing a password
+    const container =
+      el.closest(
+        "form, [role='form'], [class*='auth' i], [class*='login' i], [class*='signin' i], [class*='card' i], [data-slot='card'], main"
+      ) || el.parentElement?.parentElement
+
+    if (container && container.querySelector('input[type="password"]')) {
+      const passwordInputs = Array.from(container.querySelectorAll('input[type="password"]:not([disabled])'))
       if (passwordInputs.length > 0) {
-        // Find text/email inputs in this form
         const textInputs = Array.from(
-          form.querySelectorAll('input:not([type="hidden"]):not([type="password"]):not([disabled]):not([readonly])')
+          container.querySelectorAll('input:not([type="hidden"]):not([type="password"]):not([disabled]):not([readonly])')
         ).filter((inp) => !isSearchInput(inp))
 
-        // Only the text input immediately preceding the first password input qualifies as the primary username input
-        const firstPass = passwordInputs[0]
-        const precedingInputs = textInputs.filter((inp) => {
-          return inp.compareDocumentPosition(firstPass) & Node.DOCUMENT_POSITION_FOLLOWING
-        })
-
-        if (precedingInputs.length > 0) {
-          const primaryUserInput = precedingInputs[precedingInputs.length - 1]
-          if (el === primaryUserInput) return true
+        if (textInputs.includes(el)) {
+          return true
         }
       }
     }
 
     // 9. Identifier matching login/username/account keywords
-    if (LOGIN_USER_REGEX.test(identifier)) {
+    const fullIdentifier = [
+      el.name,
+      el.id,
+      el.placeholder,
+      el.getAttribute("aria-label"),
+      el.getAttribute("data-testid"),
+      el.className,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+
+    if (/(user|login|email|identifier|account|member|signin|phone|auth|pass)/i.test(fullIdentifier)) {
       return true
     }
 

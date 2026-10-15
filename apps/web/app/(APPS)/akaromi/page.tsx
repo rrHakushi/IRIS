@@ -164,9 +164,7 @@ function PassMainContent() {
                 Akaromi Vault Locked
               </h1>
               <p className="max-w-sm text-xs text-muted-foreground">
-                {encryption.hasSeparateEncryptionPassword
-                  ? "Enter your dedicated IRIS decryption password to decrypt your zero-knowledge vault."
-                  : "Enter your IRIS account password to decrypt and unlock your zero-knowledge vault."}
+                Enter your IRIS account password to decrypt and unlock your zero-knowledge vault.
               </p>
             </div>
           </div>
@@ -184,9 +182,7 @@ function PassMainContent() {
                 htmlFor="pass-unlock-input"
                 className="text-xs font-medium text-foreground"
               >
-                {encryption.hasSeparateEncryptionPassword
-                  ? "Decryption Password"
-                  : "Account Password"}
+                Account Password
               </Label>
               <div className="relative">
                 <Input

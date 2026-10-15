@@ -14,9 +14,11 @@ async function decryptCachedVault(vaultKey) {
   const rawCiphers = sData.cachedEncryptedCiphers || []
   const rawFolders = sData.cachedEncryptedFolders || []
 
-  if (rawCiphers.length === 0 && rawFolders.length === 0) {
-    // No local cache yet — perform first-time sync
-    await syncVault({ force: true })
+  if (rawCiphers.length === 0) {
+    // Missing local cache — attempt sync if possible
+    try {
+      await syncVault({ force: true })
+    } catch {}
     return
   }
 
@@ -164,9 +166,21 @@ async function syncVault(options = {}) {
     }
   } catch (err) {
     console.error("[Akaromi] Sync error:", err)
-    // Fallback to local cache if network fails
-    if (inMemoryCiphers.length === 0) {
-      await decryptCachedVault(inMemoryVaultKey)
+    // Fallback to local cache if network fails: directly decrypt cached ciphers without calling syncVault again
+    if (inMemoryCiphers.length === 0 && inMemoryVaultKey) {
+      try {
+        const sData = await storage.get(["cachedEncryptedCiphers", "cachedEncryptedFolders"])
+        const rawCiphers = sData.cachedEncryptedCiphers || []
+        const decryptedList = []
+        for (const c of rawCiphers) {
+          try {
+            const title = await IrisCrypto.decryptVaultData(c.encryptedTitle, inMemoryVaultKey)
+            const data = await IrisCrypto.decryptVaultObject(c.encryptedData, inMemoryVaultKey)
+            decryptedList.push({ id: c.id, type: c.type, title, favorite: c.favorite, folderId: c.folderId, reprompt: c.reprompt, data, deletedAt: c.deletedAt, createdAt: c.createdAt, updatedAt: c.updatedAt })
+          } catch {}
+        }
+        inMemoryCiphers = decryptedList
+      } catch {}
     }
     throw err
   }

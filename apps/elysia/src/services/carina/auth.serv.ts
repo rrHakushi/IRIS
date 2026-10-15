@@ -263,6 +263,7 @@ export abstract class CarinaAuthServ {
         publicKey: updatedPublicKey,
         encryptedPrivateKey: updatedEncryptedPrivateKey,
         passwordChangedAt: now,
+        encryptionPasswordHash: null,
       },
     })
 

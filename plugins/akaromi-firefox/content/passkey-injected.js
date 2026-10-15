@@ -40,7 +40,7 @@
     } else if (buf instanceof ArrayBuffer) {
       bytes = new Uint8Array(buf)
     } else if (typeof buf === "string") {
-      return buf
+      return buf.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
     } else {
       try {
         bytes = new Uint8Array(buf)
@@ -105,7 +105,14 @@
 
           window.removeEventListener("message", onMessage)
 
-          if (event.data.fallback) {
+          const data = event.data
+          const isFallback = Boolean(data.fallback || data.result?.fallback)
+          const isCanceled = Boolean(data.canceled || data.result?.canceled)
+          const isSuccess = Boolean(data.success || data.result?.success)
+          const res = data.credential || data.result?.credential
+          const errMsg = data.error || data.result?.error
+
+          if (isFallback) {
             if (originalCreate) {
               originalCreate(options).then(resolve).catch(reject)
             } else {
@@ -119,10 +126,10 @@
             return
           }
 
-          if (event.data.canceled || !event.data.success) {
+          if (isCanceled || !isSuccess || !res) {
             reject(
               new DOMException(
-                event.data.error ||
+                errMsg ||
                 "The operation either timed out or was not allowed.",
                 "NotAllowedError"
               )
@@ -131,7 +138,6 @@
           }
 
           // Build authentic PublicKeyCredential in the page realm
-          const res = event.data.credential
           const rawIdBuf = base64UrlToBuffer(res.rawId)
           const clientDataBuf = base64UrlToBuffer(res.clientDataJSON)
           const attestationBuf = base64UrlToBuffer(res.attestationObject)
@@ -264,7 +270,14 @@
 
           window.removeEventListener("message", onMessage)
 
-          if (event.data.fallback) {
+          const data = event.data
+          const isFallback = Boolean(data.fallback || data.result?.fallback)
+          const isCanceled = Boolean(data.canceled || data.result?.canceled)
+          const isSuccess = Boolean(data.success || data.result?.success)
+          const res = data.credential || data.result?.credential
+          const errMsg = data.error || data.result?.error
+
+          if (isFallback) {
             if (originalGet) {
               originalGet(options).then(resolve).catch(reject)
             } else {
@@ -278,10 +291,10 @@
             return
           }
 
-          if (event.data.canceled || !event.data.success) {
+          if (isCanceled || !isSuccess || !res) {
             reject(
               new DOMException(
-                event.data.error ||
+                errMsg ||
                 "The operation either timed out or was not allowed.",
                 "NotAllowedError"
               )
@@ -289,7 +302,6 @@
             return
           }
 
-          const res = event.data.credential
           const rawIdBuf = base64UrlToBuffer(res.rawId)
           const clientDataBuf = base64UrlToBuffer(res.clientDataJSON)
           const authDataBuf = base64UrlToBuffer(res.authenticatorData)

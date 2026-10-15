@@ -11,6 +11,7 @@
   const vaultCardsList = document.getElementById("vault-cards-list")
   const matchingCardsList = document.getElementById("matching-cards-list")
   const sectionMatching = document.getElementById("section-matching")
+  const sectionAll = document.getElementById("section-all")
   const matchingTabLabel = document.getElementById("matching-tab-label")
   const allCountBadge = document.getElementById("all-count-badge")
   const vaultEmptyState = document.getElementById("vault-empty-state")
@@ -91,6 +92,14 @@
       state.allCiphers = res.ciphers || []
       state.allFolders = res.folders || []
 
+      // Restore previously saved folder selection
+      try {
+        const savedFolder = await storage.get(["akaromi_current_folder_id"])
+        if (savedFolder?.akaromi_current_folder_id) {
+          state.currentVaultId = savedFolder.akaromi_current_folder_id
+        }
+      } catch {}
+
       // Matching ciphers for active tab
       if (state.currentTab?.url && !state.currentTab.url.startsWith("about:") && !state.currentTab.url.startsWith("moz-extension:")) {
         const matchRes = await ext.runtime.sendMessage({
@@ -133,6 +142,11 @@
     if (!vaultFoldersList) return
     vaultFoldersList.replaceChildren()
 
+    const allBtn = document.querySelector("#vault-dropdown-menu .dropdown-item[data-folder-id='all']")
+    if (allBtn) {
+      allBtn.classList.toggle("active", !state.currentVaultId || state.currentVaultId === "all")
+    }
+
     state.allFolders.forEach((f) => {
       const btn = document.createElement("button")
       btn.type = "button"
@@ -148,14 +162,43 @@
       `
       )
       btn.addEventListener("click", () => {
-        state.currentVaultId = f.id
-        if (currentVaultLabel) currentVaultLabel.textContent = f.name || "Folder"
-        const menu = document.getElementById("vault-dropdown-menu")
-        if (menu) menu.style.display = "none"
-        renderCiphersList()
+        selectFolder(f.id, f.name)
       })
       vaultFoldersList.appendChild(btn)
     })
+
+    updateFolderLabels()
+  }
+
+  function selectFolder(folderId, folderName) {
+    state.currentVaultId = folderId || "all"
+    storage.set({ akaromi_current_folder_id: state.currentVaultId }).catch(() => {})
+
+    const menu = document.getElementById("vault-dropdown-menu")
+    if (menu) {
+      menu.querySelectorAll(".dropdown-item").forEach((b) => {
+        b.classList.toggle("active", (b.dataset.folderId || "all") === state.currentVaultId)
+      })
+      menu.style.display = "none"
+    }
+
+    updateFolderLabels(folderName)
+    renderCiphersList()
+  }
+
+  function updateFolderLabels(explicitName) {
+    let name = explicitName
+    if (!name) {
+      if (state.currentVaultId === "all" || !state.currentVaultId) {
+        name = "All items"
+      } else {
+        const found = state.allFolders.find((f) => f.id === state.currentVaultId)
+        name = found?.name || "Folder"
+      }
+    }
+    if (currentVaultLabel) currentVaultLabel.textContent = name
+    const allHeader = document.querySelector("#all-items-section-header span")
+    if (allHeader) allHeader.textContent = name
   }
 
   // ----------------------------------------------------
@@ -234,7 +277,10 @@
     if (allCountBadge) allCountBadge.textContent = String(filtered.length)
 
     // Matching section
-    if (state.matchingCiphers.length > 0 && !query && state.currentVaultId === "all") {
+    const showMatching =
+      state.matchingCiphers.length > 0 && !query && state.currentVaultId === "all"
+
+    if (showMatching) {
       if (sectionMatching) sectionMatching.style.display = "block"
       if (matchingTabLabel && state.currentTab?.url) {
         try {
@@ -255,17 +301,41 @@
       if (sectionMatching) sectionMatching.style.display = "none"
     }
 
-    // Vault cards list
+    // Vault cards list: remove items already shown under matching section
+    let allList = filtered
+    if (showMatching) {
+      const matchingIds = new Set(state.matchingCiphers.map((c) => c.id))
+      allList = filtered.filter((c) => !matchingIds.has(c.id))
+    }
+
     if (vaultCardsList) {
       vaultCardsList.replaceChildren()
-      if (filtered.length === 0) {
-        if (vaultEmptyState) vaultEmptyState.style.display = "flex"
+      if (allList.length === 0) {
+        if (showMatching) {
+          // All vault items match the current site: hide the "All items" section header completely
+          if (sectionAll) sectionAll.style.display = "none"
+          if (vaultEmptyState) vaultEmptyState.style.display = "none"
+        } else {
+          if (sectionAll) sectionAll.style.display = "block"
+          if (vaultEmptyState) vaultEmptyState.style.display = "flex"
+        }
       } else {
+        if (sectionAll) sectionAll.style.display = "block"
         if (vaultEmptyState) vaultEmptyState.style.display = "none"
-        filtered.forEach((c) => {
+        allList.forEach((c) => {
           vaultCardsList.appendChild(createItemCard(c))
         })
       }
+    }
+
+    // Keep active selection in sync with the current filtered list
+    if (filtered.length > 0) {
+      if (!state.selectedCipherId || !filtered.some((c) => c.id === state.selectedCipherId)) {
+        const firstId = (showMatching && state.matchingCiphers[0]?.id) || filtered[0].id
+        selectCipher(firstId)
+      }
+    } else {
+      showDetailEmpty()
     }
   }
 
@@ -335,6 +405,20 @@
   function showDetailEmpty() {
     if (detailActiveView) detailActiveView.style.display = "none"
     if (detailEmptyPlaceholder) detailEmptyPlaceholder.style.display = "flex"
+  }
+
+  function formatDisplayHost(rawUrl) {
+    if (!rawUrl) return ""
+    try {
+      let clean = String(rawUrl).trim()
+      if (!clean.includes("://")) {
+        clean = "http://" + clean
+      }
+      const parsed = new URL(clean)
+      return parsed.hostname.replace(/^www\./, "") || rawUrl
+    } catch {
+      return String(rawUrl).replace(/^https?:\/\//i, "").replace(/^www\./i, "").split(/[/?#:]/)[0]
+    }
   }
 
   // ----------------------------------------------------
@@ -504,7 +588,7 @@
       }
     }
 
-    // Websites
+    // Websites (in preview show domain and subdomain; full URL kept in href/title)
     if (rowDetailWebsites && detailWebsitesContainer) {
       const uris = data.uris || []
       if (uris.length > 0) {
@@ -514,10 +598,11 @@
           const urlStr = typeof u === "string" ? u : u.uri
           if (!urlStr) return
           const link = document.createElement("a")
-          link.href = urlStr
+          link.href = urlStr.includes("://") ? urlStr : `https://${urlStr}`
           link.target = "_blank"
+          link.title = urlStr
           link.className = "field-value font-mono"
-          link.textContent = urlStr
+          link.textContent = formatDisplayHost(urlStr)
           link.style.display = "block"
           link.style.textDecoration = "none"
           detailWebsitesContainer.appendChild(link)
@@ -706,6 +791,7 @@
     renderCiphersList,
     renderCipherDetail,
     selectCipher,
+    selectFolder,
     showDetailEmpty,
     sortCiphers,
   }

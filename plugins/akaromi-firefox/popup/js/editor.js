@@ -126,6 +126,9 @@
 
     // Populate current folders in dropdown
     populateFolderSelect()
+    if (editFolderSelect && state.currentVaultId && state.currentVaultId !== "all") {
+      editFolderSelect.value = state.currentVaultId
+    }
 
     setEditItemType(type)
 
@@ -496,12 +499,40 @@
   btnScanQr?.addEventListener("click", async () => {
     try {
       const tabs = await ext.tabs.query({ active: true, currentWindow: true })
-      if (tabs[0]?.id) {
-        ext.tabs.sendMessage(tabs[0].id, { action: "START_QR_CAPTURE" })
+      const activeTab = tabs[0]
+      if (activeTab?.id) {
+        saveEditDraftNow()
+        const tabId = activeTab.id
+
+        // Ensure content script is running even if host permissions weren't pre-granted
+        if (ext.scripting?.executeScript) {
+          try {
+            await ext.tabs.sendMessage(tabId, { action: "PING" })
+          } catch {
+            await ext.scripting.insertCSS({
+              target: { tabId },
+              files: ["content/badge.css", "content/menu.css", "content/content.css"],
+            }).catch(() => {})
+            await ext.scripting.executeScript({
+              target: { tabId },
+              files: [
+                "lib/icons.js",
+                "content/detection.js",
+                "content/badge.js",
+                "content/fill.js",
+                "content/menu.js",
+                "content/content.js",
+              ],
+            }).catch(() => {})
+          }
+        }
+
+        await ext.tabs.sendMessage(tabId, { action: "START_QR_CAPTURE" })
         if (modalEditCipher) modalEditCipher.style.display = "none"
-        showToast("Click on the QR code on the webpage to scan")
+        showToast("Click and drag to select the QR code on the page")
       }
-    } catch {
+    } catch (err) {
+      console.warn("[Akaromi] QR scan start failed:", err)
       showToast("QR scan is unavailable on this tab")
     }
   })
@@ -850,11 +881,39 @@
 
         if (modalEditCipher) modalEditCipher.style.display = "flex"
       }
+
+      // Check for pending scanned 2FA QR code
+      const pendingTotp = await storage.get(["pendingScannedTotp"])
+      if (pendingTotp?.pendingScannedTotp?.secret) {
+        const secret = pendingTotp.pendingScannedTotp.secret
+        await storage.remove("pendingScannedTotp").catch(() => {})
+        if (editTotpSecret) {
+          editTotpSecret.value = secret
+          editTotpSecret.type = "password"
+        }
+        setTotpActiveState(true)
+        if (modalEditCipher) modalEditCipher.style.display = "flex"
+        showToast("Scanned 2FA Secret inserted")
+        queueSaveEditDraft()
+      }
     } catch (err) {
       console.warn("[Akaromi] Failed to restore editor draft:", err)
     }
   }
 
+  // Live listener in case popup stayed open during QR scan
+  ext.runtime.onMessage.addListener((msg) => {
+    if (msg.action === "QR_SCAN_SUCCESS" && msg.payload?.secret) {
+      if (editTotpSecret) {
+        editTotpSecret.value = msg.payload.secret
+        editTotpSecret.type = "password"
+      }
+      setTotpActiveState(true)
+      if (modalEditCipher) modalEditCipher.style.display = "flex"
+      showToast("Scanned 2FA Secret inserted")
+      queueSaveEditDraft()
+    }
+  })
 
   formEditCipher?.addEventListener("input", queueSaveEditDraft)
   formEditCipher?.addEventListener("change", saveEditDraftNow)

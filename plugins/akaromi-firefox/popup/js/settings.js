@@ -60,10 +60,50 @@
   drawerBackdrop?.addEventListener("click", closeDrawer)
 
   // ----------------------------------------------------
-  // Settings Modal Interactions
+  // Settings Modal Interactions & Storage Persistence
   // ----------------------------------------------------
-  function openSettings() {
+  async function loadSettings() {
+    try {
+      const data = await storage.get([
+        "autoLockMinutes",
+        "clipboardClearSeconds",
+        "isDefaultPasswordManager",
+        "serverUrl",
+        "pinUnlockEnabled",
+      ])
+
+      if (selectAutoLock) {
+        const val = data.autoLockMinutes !== undefined ? String(data.autoLockMinutes) : "15"
+        selectAutoLock.value = val
+      }
+
+      if (selectClipboardTimer) {
+        const val = data.clipboardClearSeconds !== undefined ? String(data.clipboardClearSeconds) : "30"
+        selectClipboardTimer.value = val
+      }
+
+      if (toggleDefaultPm) {
+        toggleDefaultPm.checked = Boolean(data.isDefaultPasswordManager)
+      }
+
+      if (settingServerUrl) {
+        settingServerUrl.value = data.serverUrl || "http://localhost:4000"
+      }
+
+      if (togglePinUnlock) {
+        togglePinUnlock.checked = Boolean(data.pinUnlockEnabled)
+      }
+      if (pinActiveActions) {
+        pinActiveActions.style.display = data.pinUnlockEnabled ? "flex" : "none"
+      }
+    } catch (err) {
+      console.warn("[Akaromi] Failed to load settings:", err)
+    }
+  }
+
+  async function openSettings() {
     closeDrawer()
+    await loadSettings()
     if (modalSettings) modalSettings.style.display = "flex"
   }
 
@@ -75,26 +115,28 @@
   btnSettingsClose?.addEventListener("click", closeSettings)
 
   // Auto-lock option
-  selectAutoLock?.addEventListener("change", (e) => {
+  selectAutoLock?.addEventListener("change", async (e) => {
     const minutes = parseInt(e.target.value, 10)
-    storage.set({ autoLockMinutes: minutes })
+    await storage.set({ autoLockMinutes: minutes })
+    ext.runtime.sendMessage({ action: "SET_AUTO_LOCK", payload: { minutes } }).catch(() => {})
     showToast("Auto-lock timer updated")
   })
 
   // Clipboard clear timer option
-  selectClipboardTimer?.addEventListener("change", (e) => {
+  selectClipboardTimer?.addEventListener("change", async (e) => {
     const seconds = parseInt(e.target.value, 10)
-    storage.set({ clipboardClearSeconds: seconds })
+    await storage.set({ clipboardClearSeconds: seconds })
     showToast("Clipboard timer updated")
   })
 
   // Default Password Manager Toggle
-  toggleDefaultPm?.addEventListener("change", (e) => {
+  toggleDefaultPm?.addEventListener("change", async (e) => {
     const isDefault = e.target.checked
+    await storage.set({ isDefaultPasswordManager: isDefault })
     ext.runtime.sendMessage({
       action: "SET_DEFAULT_PM",
       payload: { isDefault },
-    })
+    }).catch(() => {})
     showToast(isDefault ? "Set as default manager" : "Disabled default manager")
   })
 
@@ -103,6 +145,7 @@
     const url = settingServerUrl?.value.trim()
     if (!url) return
     await IrisApi.setServerUrl(url)
+    await storage.set({ serverUrl: url })
     if (drawerUserServer) drawerUserServer.textContent = url.replace(/^https?:\/\//, "")
     showToast("Server URL saved")
   })
@@ -249,5 +292,6 @@
     openSettings,
     closeSettings,
     updateDrawerUserInfo,
+    loadSettings,
   }
 })(typeof window !== "undefined" ? window : globalThis)

@@ -55,12 +55,7 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
       setUnlockPassword("")
       toast.success("Vault unlocked successfully")
     } else {
-      setUnlockError(
-        res.error ||
-          (encryption.hasSeparateEncryptionPassword
-            ? "Incorrect decryption password. Please try again."
-            : "Incorrect account password. Please try again.")
-      )
+      setUnlockError(res.error || "Incorrect account password. Please try again.")
     }
   }
 
@@ -274,9 +269,7 @@ export function PassSettingsTab({}: SettingsTabProps): React.JSX.Element {
               htmlFor="settings-pass-unlock"
               className="text-xs font-medium text-foreground"
             >
-              {encryption.hasSeparateEncryptionPassword
-                ? "Decryption Password"
-                : "Account Password"}
+              Account Password
             </Label>
             <div className="relative">
               <Input

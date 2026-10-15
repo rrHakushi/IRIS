@@ -107,7 +107,7 @@ export async function handleMfaVerification(
         : payload.passkeyResponse;
 
     const { data, error } =
-      await client.carina.auth.twofactor.passkeys.verify.post({
+      await client.carina.auth.twofactor.passkeys.login.verify.post({
         passkeyResponse: passkeyJson,
       });
 
@@ -203,7 +203,7 @@ export async function handlePasskeyOnlyLogin(
       : passkeyResponse;
 
   const { data, error } =
-    await client.carina.auth.twofactor.passkeys.verify.post({
+    await client.carina.auth.twofactor.passkeys.login.verify.post({
       passkeyResponse: parsed,
     });
 

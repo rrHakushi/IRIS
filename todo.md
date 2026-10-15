@@ -15,14 +15,10 @@
     - 
     
 # Akaromi For Firefox
-    - add/Fix passkeys
     - notifications outside extension window
     - autocopy totp code if autofilled
     - Copy next totp code if expired and didnt login in time
-    - fix sort dropdown
-    - settings are not being saved
-    - filtering by folder doesnt work
-    - QR code scan doesnt work outside localhost
+
 
 # Kiroshi
     - Improve search results rendering

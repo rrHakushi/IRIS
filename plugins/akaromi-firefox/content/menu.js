@@ -4,6 +4,8 @@
 ;(function (global) {
   "use strict"
 
+  const ext = typeof browser !== "undefined" ? browser : (typeof chrome !== "undefined" ? chrome : global.AkaromiExt)
+
   let activeDropdown = null
   const domParser = new DOMParser()
 
@@ -145,7 +147,9 @@
             </div>`
           )
 
-          item.querySelector(".iris-pass-item-main").addEventListener("click", (e) => {
+          const mainItem = item.querySelector(".iris-pass-item-main")
+          mainItem.addEventListener("mousedown", (e) => e.preventDefault())
+          mainItem.addEventListener("click", (e) => {
             e.preventDefault()
             e.stopPropagation()
             global.AkaromiFill?.fillCredential(m)
@@ -173,6 +177,7 @@
                 `<span class="sub-label">${escapeHtml(ap.name || "Code")}</span>
                 <span class="sub-masked">••••••••</span>`
               )
+              subItem.addEventListener("mousedown", (e) => e.preventDefault())
               subItem.addEventListener("click", (e) => {
                 e.preventDefault()
                 e.stopPropagation()

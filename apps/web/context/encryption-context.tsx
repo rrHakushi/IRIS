@@ -266,9 +266,7 @@ export function EncryptionProvider({
 
       return { success: true }
     } catch (err: unknown) {
-      const msg = separate
-        ? "Incorrect encryption password. Note: a separate encryption password is configured for this account."
-        : "Incorrect password. Please verify and try again."
+      const msg = "Incorrect account password. Please verify and try again."
       setError(msg)
       setIsActive(false)
       inMemorySecretKey = null

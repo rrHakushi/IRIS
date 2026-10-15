@@ -4,6 +4,8 @@
 ;(function (global) {
   "use strict"
 
+  const ext = typeof browser !== "undefined" ? browser : (typeof chrome !== "undefined" ? chrome : global.AkaromiExt)
+
   function dispatchInputEvents(element) {
     if (!element) return
     try {

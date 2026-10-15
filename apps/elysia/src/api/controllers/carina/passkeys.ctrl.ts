@@ -65,6 +65,27 @@ export const carinaPasskeys = new Elysia({ prefix: '/carina/auth/twofactor/passk
     }
   )
 
+  // POST /carina/auth/twofactor/passkeys/login/verify
+  .post(
+    '/login/verify',
+    {
+      body: CarinaPasskeysModel.verifyLoginBody,
+      detail: {
+        summary: 'Verify passkey authentication assertion for passwordless login',
+        tags: ['Carina Passkeys'],
+      },
+      response: {
+        200: CarinaPasskeysModel.verifyLoginResponse,
+        400: CarinaPasskeysModel.badRequestError,
+        404: CarinaPasskeysModel.notFoundError,
+        422: CarinaPasskeysModel.validationError,
+      },
+    },
+    async ({ body, request }) => {
+      return await CarinaPasskeysServ.verifyLogin(body, request)
+    }
+  )
+
   // POST /carina/auth/twofactor/passkeys/verify
   .post(
     '/verify',

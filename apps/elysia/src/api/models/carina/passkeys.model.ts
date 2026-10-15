@@ -82,6 +82,21 @@ export const CarinaPasskeysModel = {
     userVerification: t.Optional(t.String()),
   }),
 
+  // --- POST /carina/auth/twofactor/passkeys/login/verify ---
+  verifyLoginBody: t.Object({
+    passkeyResponse: t.Any({ description: 'WebAuthn authentication assertion response payload' }),
+  }),
+
+  verifyLoginResponse: t.Object({
+    success: t.Boolean(),
+    user: t.Object({
+      id: t.String(),
+      username: t.String(),
+      email: t.String(),
+      passwordChangedAt: t.Nullable(t.Number()),
+    }),
+  }),
+
   // --- POST /carina/auth/twofactor/passkeys/verify ---
   verifyBody: t.Object({
     passkeyResponse: t.Object({

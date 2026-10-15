@@ -24,7 +24,8 @@
   position: relative;
 }
 
-.vault-pill-btn {
+.vault-pill-btn,
+.vault-dropdown-btn {
   height: 32px;
   padding-inline: 10px;
   border-radius: 9999px;
@@ -37,9 +38,11 @@
   align-items: center;
   gap: 6px;
   transition: all 0.15s ease;
+  cursor: pointer;
 }
 
-.vault-pill-btn:hover {
+.vault-pill-btn:hover,
+.vault-dropdown-btn:hover {
   background: #3f3f46;
 }
 

@@ -67,17 +67,8 @@
     const item = e.target.closest(".dropdown-item")
     if (!item) return
     const folderId = item.dataset.folderId || "all"
-    state.currentVaultId = folderId
-
-    vaultDropdownMenu.querySelectorAll(".dropdown-item").forEach((b) => b.classList.remove("active"))
-    item.classList.add("active")
-
-    if (currentVaultLabel) {
-      currentVaultLabel.textContent = item.querySelector("span")?.textContent || "All items"
-    }
-
-    vaultDropdownMenu.style.display = "none"
-    global.AkaromiVault?.renderCiphersList()
+    const name = item.querySelector("span")?.textContent || "All items"
+    global.AkaromiVault?.selectFolder(folderId, name)
   })
 
   // ----------------------------------------------------
@@ -233,6 +224,9 @@
       } else {
         global.AkaromiAuth?.showUnlockedView(response.user)
       }
+
+      // Load and apply persistent settings
+      await global.AkaromiSettings?.loadSettings()
 
       // Restore drafts
       await global.AkaromiEditor?.restoreDraftState()
