@@ -60,9 +60,23 @@ export function OverviewTab({
   const { user } = useUser()
   const titlePref = getMediaPreferences(user?.customization).title || "primary"
 
+  const artistDisplay =
+    typeof media.artist === "object" && media.artist !== null
+      ? (media.artist as any).namePrimary
+      : typeof media.artist === "string"
+        ? media.artist
+        : null
+
+  const albumDisplay =
+    typeof media.album === "object" && media.album !== null
+      ? (media.album as any).titlePrimary
+      : typeof media.album === "string"
+        ? media.album
+        : null
+
   const similarScrollRef = useRef<HTMLDivElement>(null)
-  const similarListMax12 = useMemo(
-    () => similarList.slice(0, 12),
+  const similarListItems = useMemo(
+    () => similarList.slice(0, 24),
     [similarList]
   )
 
@@ -151,7 +165,7 @@ export function OverviewTab({
       return (a.order ?? 999) - (b.order ?? 999)
     })
 
-    return uniqueList.slice(0, 10)
+    return uniqueList.slice(0, 12)
   }, [media.characters, media.category])
 
   // Parse description cleanly
@@ -753,10 +767,10 @@ export function OverviewTab({
 
                   <div className="flex min-w-0 flex-col gap-0.5">
                     <span className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
-                      {media.album}
+                      {albumDisplay}
                     </span>
                     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      {media.artist && <span>{media.artist}</span>}
+                      {artistDisplay && <span>{artistDisplay}</span>}
                       {typeof media.trackNumber === "number" && (
                         <>
                           <span>•</span>
@@ -839,7 +853,7 @@ export function OverviewTab({
           {/* 2. Featured Characters (MAX 2 next to each other) */}
           {featuredCharacters.length > 0 && (
             <section aria-labelledby="characters-preview-heading">
-              <div className="mb-3.5">
+              <div className="mb-3.5 flex items-center justify-between">
                 <h2
                   id="characters-preview-heading"
                   className="text-base font-semibold text-foreground"
@@ -850,10 +864,19 @@ export function OverviewTab({
                       ? "Characters & Cast"
                       : "Characters & Voice Actors"}
                 </h2>
+                {onViewAllCharacters && media.characters.length > 12 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onViewAllCharacters}
+                    className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    View All ({media.characters.length})
+                  </Button>
+                )}
               </div>
 
-              {/* Max 2 characters per row as requested */}
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[2200px]:grid-cols-6">
                 {featuredCharacters.map((item) => {
                   const charName =
                     titlePref === "native" && item.nameNative
@@ -867,13 +890,13 @@ export function OverviewTab({
                   return (
                     <div
                       key={item.characterId}
-                      className="flex items-center justify-between rounded-2xl border border-border/40 bg-card p-2.5"
+                      className="flex items-center justify-between rounded-xl border border-border/40 bg-card p-2"
                     >
                       {/* Character Side */}
-                      <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                      <div className="flex min-w-0 flex-1 items-center gap-2">
                         <Link
                           href={`/borealis/characters/${item.characterId}`}
-                          className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="relative size-10 shrink-0 overflow-hidden rounded-lg bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           {item.image ? (
                             <img
@@ -895,11 +918,11 @@ export function OverviewTab({
                         <div className="flex min-w-0 flex-col">
                           <Link
                             href={`/borealis/characters/${item.characterId}`}
-                            className="truncate text-xs font-medium text-foreground outline-none hover:underline focus-visible:underline"
+                            className="truncate text-[11px] font-medium text-foreground outline-none hover:underline focus-visible:underline"
                           >
                             {charName}
                           </Link>
-                          <span className="text-[10px] text-muted-foreground uppercase">
+                          <span className="text-[9px] text-muted-foreground uppercase">
                             {item.role}
                           </span>
                         </div>
@@ -907,16 +930,16 @@ export function OverviewTab({
 
                       {/* Voice Actor Side */}
                       {item.actor && (
-                        <div className="flex min-w-0 flex-1 items-center justify-end gap-2.5 pl-2 text-end">
+                        <div className="flex min-w-0 flex-1 items-center justify-end gap-2 ps-2 text-end">
                           <div className="flex min-w-0 flex-col">
                             <Link
                               href={`/borealis/people/${item.actor.id}`}
-                              className="truncate text-xs font-medium text-foreground outline-none hover:underline focus-visible:underline"
+                              className="truncate text-[11px] font-medium text-foreground outline-none hover:underline focus-visible:underline"
                             >
                               {actorName}
                             </Link>
                             {item.actor.language && (
-                              <span className="text-[10px] text-muted-foreground">
+                              <span className="text-[9px] text-muted-foreground">
                                 {item.actor.language}
                               </span>
                             )}
@@ -924,7 +947,7 @@ export function OverviewTab({
 
                           <Link
                             href={`/borealis/people/${item.actor.id}`}
-                            className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            className="relative size-10 shrink-0 overflow-hidden rounded-lg bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           >
                             {item.actor.image ? (
                               <img
@@ -1006,11 +1029,11 @@ export function OverviewTab({
             </section>
           )}
 
-          {/* 4. Relations split by targetType - side by side if <= 3 items to save space */}
+          {/* 4. Relations split by targetType - side by side if <= 4 items and multiple types to save space */}
           {relationsByType.length > 0 && (
             <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
               {relationsByType.map(({ rawType, heading, items }) => {
-                const isSmall = items.length <= 3
+                const isSmall = relationsByType.length > 1 && items.length <= 4
 
                 return (
                   <section
@@ -1031,14 +1054,8 @@ export function OverviewTab({
                       </h2>
                     </div>
 
-                    {/* Denser grid: 3-cols if side-by-side, 6-cols if full width */}
-                    <div
-                      className={
-                        isSmall
-                          ? "grid grid-cols-3 gap-2.5"
-                          : "grid grid-cols-3 gap-2.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6"
-                      }
-                    >
+                    {/* Denser grid with fixed 120px cards allowing more per row */}
+                    <div className="grid grid-cols-[repeat(auto-fill,120px)] gap-2.5">
                       {items.map((rel) => {
                         const targetTitle = rel.target
                           ? formatMediaTitle(rel.target, titlePref)
@@ -1062,7 +1079,7 @@ export function OverviewTab({
                                   src={targetCover}
                                   alt={targetTitle}
                                   loading="lazy"
-                                  className="h-full w-full object-cover"
+                                  className="h-full w-full object-cover transition-transform group-hover:scale-105"
                                 />
                               ) : (
                                 <div className="flex h-full w-full items-center justify-center text-muted-foreground/50">
@@ -1092,7 +1109,7 @@ export function OverviewTab({
                               </div>
                             </div>
 
-                            <div className="flex flex-col gap-0.5 p-2">
+                            <div className="flex flex-col gap-0.5 p-1.5">
                               <span className="line-clamp-2 text-[11px] leading-tight font-medium text-foreground group-hover:underline">
                                 {targetTitle}
                               </span>
@@ -1112,8 +1129,8 @@ export function OverviewTab({
             </div>
           )}
 
-          {/* 5. Similar Titles (Max 12 items, stretched to fill container, horizontally scrollable) */}
-          {similarListMax12.length > 0 && (
+          {/* 5. Similar Titles (horizontally scrollable row with compact 120px cards) */}
+          {similarListItems.length > 0 && (
             <section aria-labelledby="similar-heading">
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -1128,7 +1145,7 @@ export function OverviewTab({
                     Similar Titles
                   </h2>
                 </div>
-                {similarListMax12.length > 6 && (
+                {similarListItems.length > 4 && (
                   <div className="flex items-center gap-1">
                     <Button
                       variant="outline"
@@ -1158,12 +1175,12 @@ export function OverviewTab({
                 )}
               </div>
 
-              {/* Single horizontal scrollable row with all similar titles - stretched and scrollbar hidden */}
+              {/* Single horizontal scrollable row with compact 120px cards */}
               <div
                 ref={similarScrollRef}
-                className="no-scrollbar flex gap-3 overflow-x-auto scroll-smooth pt-1 pb-1"
+                className="no-scrollbar flex gap-2.5 overflow-x-auto scroll-smooth pt-1 pb-1"
               >
-                {similarListMax12.map((item) => {
+                {similarListItems.map((item) => {
                   const itemTitle = formatMediaTitle(
                     {
                       titlePrimary: item.titlePrimary,
@@ -1177,7 +1194,7 @@ export function OverviewTab({
                     <Link
                       key={item.id}
                       href={`/borealis/${media.category}/${item.id}`}
-                      className="group flex w-[calc((100%-0.75rem)/2)] shrink-0 flex-col overflow-hidden rounded-xl border border-border/40 bg-card outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-[calc((100%-1.5rem)/3)] md:w-[calc((100%-2.25rem)/4)] lg:w-[calc((100%-3.75rem)/6)]"
+                      className="group flex w-[120px] shrink-0 flex-col overflow-hidden rounded-xl border border-border/40 bg-card outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted">
                         {item.coverImage ? (
@@ -1185,7 +1202,7 @@ export function OverviewTab({
                             src={item.coverImage}
                             alt={itemTitle}
                             loading="lazy"
-                            className="h-full w-full object-cover"
+                            className="h-full w-full object-cover transition-transform group-hover:scale-105"
                           />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center text-muted-foreground/50">
@@ -1217,12 +1234,12 @@ export function OverviewTab({
                         </div>
                       </div>
 
-                      <div className="flex flex-col gap-0.5 p-2">
-                        <span className="line-clamp-2 text-xs font-medium text-foreground group-hover:underline">
+                      <div className="flex flex-col gap-0.5 p-1.5">
+                        <span className="line-clamp-2 text-[11px] leading-tight font-medium text-foreground group-hover:underline">
                           {itemTitle}
                         </span>
                         {item.year && (
-                          <span className="text-[10px] text-muted-foreground">
+                          <span className="text-[9px] text-muted-foreground">
                             {item.year}
                           </span>
                         )}
@@ -1563,7 +1580,7 @@ export function OverviewTab({
               )}
 
               {/* Music: Artist */}
-              {media.artist && (
+              {artistDisplay && (
                 <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
                   <span className="shrink-0 text-muted-foreground">Artist</span>
                   {media.artistPersonId ? (
@@ -1571,25 +1588,25 @@ export function OverviewTab({
                       href={`/borealis/people/${media.artistPersonId}`}
                       className="text-end font-medium text-primary transition-colors hover:underline"
                     >
-                      {media.artist}
+                      {artistDisplay}
                     </Link>
                   ) : (
                     <span className="text-end font-medium text-foreground">
-                      {media.artist}
+                      {artistDisplay}
                     </span>
                   )}
                 </div>
               )}
 
               {/* Music: Album (for Tracks) */}
-              {media.album && media.albumId && media.format === "TRACK" && (
+              {albumDisplay && media.albumId && media.format === "TRACK" && (
                 <div className="flex items-start justify-between gap-3 border-b border-border/20 py-1.5 text-xs">
                   <span className="shrink-0 text-muted-foreground">Album</span>
                   <Link
                     href={`/borealis/music/albums/${media.albumId}`}
                     className="text-end font-medium text-primary hover:underline"
                   >
-                    {media.album}
+                    {albumDisplay}
                   </Link>
                 </div>
               )}

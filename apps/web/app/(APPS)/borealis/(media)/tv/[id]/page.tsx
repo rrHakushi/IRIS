@@ -101,28 +101,30 @@ export default async function TvDetailPage({ params, searchParams }: Props) {
     scoredCount: tv.scoredCount,
     imdbRating: tv.imdbRating,
     imdbVotes: tv.imdbVotes,
-    genres: tv.genres,
-    tags: tv.tags,
-    studios: tv.studios,
-    characters: tv.characters.map((c: TvDetails["characters"][number]) => ({
-      id: c.id,
-      characterId: c.character.id,
-      namePrimary: c.character.namePrimary,
-      nameNative: c.character.nameNative,
-      image: c.character.image,
-      role: c.role,
-      order: c.order,
-      actor: c.actor
-        ? {
-            id: c.actor.id,
-            namePrimary: c.actor.namePrimary,
-            nameNative: c.actor.nameNative,
-            image: c.actor.image,
-            language: c.actor.language,
-          }
-        : null,
-    })),
-    staff: tv.staff.map((s: TvDetails["staff"][number]) => ({
+    genres: tv.genres ?? [],
+    tags: tv.tags ?? [],
+    studios: tv.studios ?? [],
+    characters: (tv.characters ?? []).map(
+      (c: TvDetails["characters"][number]) => ({
+        id: c.id,
+        characterId: c.character.id,
+        namePrimary: c.character.namePrimary,
+        nameNative: c.character.nameNative,
+        image: c.character.image,
+        role: c.role,
+        order: c.order,
+        actor: c.actor
+          ? {
+              id: c.actor.id,
+              namePrimary: c.actor.namePrimary,
+              nameNative: c.actor.nameNative,
+              image: c.actor.image,
+              language: c.actor.language,
+            }
+          : null,
+      })
+    ),
+    staff: (tv.staff ?? []).map((s: TvDetails["staff"][number]) => ({
       id: s.id,
       personId: s.person.id,
       role: s.role,
@@ -135,7 +137,7 @@ export default async function TvDetailPage({ params, searchParams }: Props) {
         language: s.person.language,
       },
     })),
-    seasons: tv.seasons.map((s: TvDetails["seasons"][number]) => ({
+    seasons: (tv.seasons ?? []).map((s: TvDetails["seasons"][number]) => ({
       id: s.id,
       seasonNumber: s.seasonNumber,
       titlePrimary: s.titlePrimary,
@@ -144,21 +146,23 @@ export default async function TvDetailPage({ params, searchParams }: Props) {
       posterImage: s.posterImage,
       episodeCount: s.episodeCount,
     })),
-    episodes: tv.episodes.map((ep: TvDetails["episodes"][number]) => ({
-      id: ep.id,
-      number: ep.episodeNumber,
-      seasonNumber: ep.seasonNumber,
-      titlePrimary: ep.titlePrimary,
-      titleSecondary: ep.titleSecondary,
-      titleNative: ep.titleNative,
-      description: ep.description,
-      duration: ep.duration,
-      airDate: ep.airDate,
-      thumbnail: ep.thumbnail,
-      isFiller: ep.isFiller,
-      isRecap: ep.isRecap,
-    })),
-    relations: tv.relations,
+    episodes: (tv.episodes ?? []).map(
+      (ep: TvDetails["episodes"][number]) => ({
+        id: ep.id,
+        number: ep.episodeNumber,
+        seasonNumber: ep.seasonNumber,
+        titlePrimary: ep.titlePrimary,
+        titleSecondary: ep.titleSecondary,
+        titleNative: ep.titleNative,
+        description: ep.description,
+        duration: ep.duration,
+        airDate: ep.airDate,
+        thumbnail: ep.thumbnail,
+        isFiller: ep.isFiller,
+        isRecap: ep.isRecap,
+      })
+    ),
+    relations: tv.relations ?? [],
     trailers: tv.trailers as NormalizedMediaData["trailers"],
     images: tv.images as Record<string, string[]> | null,
     sources: tv.sources as NormalizedMediaData["sources"],

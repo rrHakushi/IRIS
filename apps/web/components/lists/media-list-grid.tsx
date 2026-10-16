@@ -329,8 +329,8 @@ export function MediaListGrid({
                 </span>
               </div>
 
-              {/* 8-Card Responsive Grid */}
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2.5 md:grid-cols-5 md:gap-3 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-8">
+              {/* Fixed-Size Auto-Fill Grid */}
+              <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
                 {section.items.map((item, idx) => (
                   <MediaListCard
                     key={`${item.entry.id}-${item.media.id}`}
@@ -350,7 +350,7 @@ export function MediaListGrid({
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2.5 md:grid-cols-5 md:gap-3 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-8">
+        <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
           {items.map((item, idx) => (
             <MediaListCard
               key={`${item.entry.id}-${item.media.id}`}

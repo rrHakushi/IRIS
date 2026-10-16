@@ -348,7 +348,7 @@ export function CustomListsView({
     <div className="min-h-screen bg-background text-foreground">
       <UserListBanner username={username} profile={initialProfile} />
 
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="w-full px-4 py-6 sm:px-6 lg:px-8">
         {/* Navigation Breadcrumb / Header */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
@@ -497,7 +497,7 @@ export function CustomListsView({
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+              <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
                 {filteredEntries.map((item) => {
                   const media = item.media
                   const title =

@@ -15,6 +15,7 @@ export interface SearchQuery {
     | 'books'
     | 'characters'
     | 'people'
+    | 'staff'
     | 'studios'
   page?: number
   limit?: number
@@ -52,7 +53,8 @@ export class BorealisSearchServ {
     const cleanQuery = decodeURIComponent(String(query.q || ''))
       .replace(/\+/g, ' ')
       .trim()
-    const category = query.category || 'media'
+    const rawCategory = query.category || 'media'
+    const category = rawCategory === 'staff' ? 'people' : rawCategory
     const page = Math.max(1, Number(query.page ?? 1))
     const limit = Math.max(1, Math.min(50, Number(query.limit ?? 20)))
     const skip = (page - 1) * limit

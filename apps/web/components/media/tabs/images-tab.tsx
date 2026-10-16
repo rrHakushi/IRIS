@@ -219,22 +219,23 @@ export function ImagesTab({ coverImage, bannerImage, images }: ImagesTabProps) {
         </div>
       )}
 
-      {/* Grid: All artwork as is, no cutting, only downscaling */}
-      <div className="grid grid-cols-2 items-start gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+      {/* Masonry Layout: Natural aspect ratios without vertical gaps */}
+      <div className="columns-2 gap-3 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 min-[2000px]:columns-7">
         {displayedImages.map((url, idx) => (
-          <button
-            key={idx}
-            type="button"
-            onClick={() => setSelectedImage(url)}
-            className="group relative w-full cursor-pointer overflow-hidden rounded-2xl border border-border/40 bg-card/60 p-1 text-start transition-colors outline-none hover:border-border/80 focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <img
-              src={url}
-              alt={`Artwork ${idx + 1}`}
-              loading="lazy"
-              className="block h-auto w-full rounded-xl object-contain"
-            />
-          </button>
+          <div key={idx} className="mb-3 break-inside-avoid">
+            <button
+              type="button"
+              onClick={() => setSelectedImage(url)}
+              className="group relative block w-full cursor-pointer overflow-hidden rounded-2xl border border-border/40 bg-card/60 p-1 text-start transition-all duration-200 outline-none hover:-translate-y-0.5 hover:border-border/80 hover:bg-card focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <img
+                src={url}
+                alt={`Artwork ${idx + 1}`}
+                loading="lazy"
+                className="block h-auto w-full rounded-xl object-contain"
+              />
+            </button>
+          </div>
         ))}
       </div>
 

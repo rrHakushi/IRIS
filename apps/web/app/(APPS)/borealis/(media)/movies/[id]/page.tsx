@@ -109,10 +109,10 @@ export default async function MovieDetailPage({ params, searchParams }: Props) {
     scoredCount: movie.scoredCount,
     imdbRating: movie.imdbRating,
     imdbVotes: movie.imdbVotes,
-    genres: movie.genres,
-    tags: movie.tags,
-    studios: movie.studios,
-    characters: movie.characters.map(
+    genres: movie.genres ?? [],
+    tags: movie.tags ?? [],
+    studios: movie.studios ?? [],
+    characters: (movie.characters ?? []).map(
       (c: MovieDetails["characters"][number]) => ({
         id: c.id,
         characterId: c.character.id,
@@ -132,7 +132,7 @@ export default async function MovieDetailPage({ params, searchParams }: Props) {
           : null,
       })
     ),
-    staff: movie.staff.map((s: MovieDetails["staff"][number]) => ({
+    staff: (movie.staff ?? []).map((s: MovieDetails["staff"][number]) => ({
       id: s.id,
       personId: s.person.id,
       role: s.role,
@@ -145,7 +145,7 @@ export default async function MovieDetailPage({ params, searchParams }: Props) {
         language: s.person.language,
       },
     })),
-    relations: movie.relations,
+    relations: movie.relations ?? [],
     trailers: movie.trailers as NormalizedMediaData["trailers"],
     images: movie.images as Record<string, string[]> | null,
     sources: movie.sources as NormalizedMediaData["sources"],

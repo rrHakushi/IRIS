@@ -116,16 +116,23 @@ export default async function TrackDetailPage({ params, searchParams }: Props) {
     bpm: track.bpm,
     gain: track.gain,
     explicitLyrics: track.explicitLyrics,
-    artist: track.artist,
+    artist:
+      typeof track.artist === "object" && track.artist !== null
+        ? track.artist.namePrimary
+        : (track.artistName || (typeof track.artist === "string" ? track.artist : null)),
     artists: track.artists,
     artistPersonId:
+      track.artist?.id ||
       (track.staff || []).find(
         (s: any) => s.role === "ARTIST" || s.role === "VOCALIST"
       )?.person.id ||
       track.staff?.[0]?.person.id ||
       null,
-    album: track.album,
-    albumId: track.albumId,
+    album:
+      typeof track.album === "object" && track.album !== null
+        ? track.album.titlePrimary
+        : (typeof track.album === "string" ? track.album : null),
+    albumId: track.albumId ?? track.album?.id ?? null,
     trackNumber: track.trackNumber,
     discNumber: track.discNumber,
     duration: track.duration,
@@ -146,22 +153,22 @@ export default async function TrackDetailPage({ params, searchParams }: Props) {
     updatedAt: track.updatedAt,
   }
 
-  const similarItems: SimilarMediaItem[] =
-    !similarRes.error && (similarRes.data as any)?.items
-      ? (similarRes.data as any).items
-      : !similarRes.error && Array.isArray(similarRes.data)
-        ? (similarRes.data as any)
-        : []
-  const similarList: SimilarMediaCardItem[] = similarItems.map((item) => ({
+  const rawSimilar = !similarRes.error
+    ? Array.isArray(similarRes.data)
+      ? similarRes.data
+      : (similarRes.data as any)?.items ?? []
+    : []
+
+  const similarList: SimilarMediaCardItem[] = rawSimilar.map((item: any) => ({
     id: item.id,
-    type: item.type,
-    format: item.format,
-    coverImage: item.coverImage,
-    titlePrimary: item.titles.primary,
-    titleSecondary: item.titles.secondary,
-    titleNative: item.titles.native,
-    year: null,
-    score: null,
+    type: item.type ?? item.mediaType ?? "music",
+    format: item.format ?? null,
+    coverImage: item.coverImage ?? null,
+    titlePrimary: item.titles?.primary ?? item.titlePrimary ?? "",
+    titleSecondary: item.titles?.secondary ?? item.titleSecondary ?? null,
+    titleNative: item.titles?.native ?? item.titleNative ?? null,
+    year: item.year ?? null,
+    score: item.averageScore ?? null,
   }))
 
   return (

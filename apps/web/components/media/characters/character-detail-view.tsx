@@ -693,14 +693,14 @@ export function CharacterDetailView({ character }: CharacterDetailViewProps) {
                 </h2>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                 {uniqueActors.map((actor) => (
                   <Link
                     key={actor.id}
                     href={`/borealis/people/${actor.id}`}
-                    className="group flex items-center gap-3 rounded-2xl border border-border/40 bg-card/60 p-2.5 transition-colors outline-none hover:border-border/60 hover:bg-card focus-visible:ring-2 focus-visible:ring-ring"
+                    className="group flex items-center gap-2.5 rounded-xl border border-border/40 bg-card/60 p-2 transition-colors outline-none hover:border-border/60 hover:bg-card focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <div className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-muted">
+                    <div className="relative size-10 shrink-0 overflow-hidden rounded-lg bg-muted">
                       {actor.image ? (
                         <img
                           src={actor.image}
@@ -710,7 +710,7 @@ export function CharacterDetailView({ character }: CharacterDetailViewProps) {
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-muted-foreground/40">
-                          <IconUser className="size-5" aria-hidden="true" />
+                          <IconUser className="size-4" aria-hidden="true" />
                         </div>
                       )}
                     </div>
@@ -819,7 +819,7 @@ export function CharacterDetailView({ character }: CharacterDetailViewProps) {
                     </div>
 
                     {/* Cards Grid */}
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                       {group.items.map((item) => {
                         const mediaHref = getMediaDetailHref(
                           item.mediaType,
@@ -829,13 +829,13 @@ export function CharacterDetailView({ character }: CharacterDetailViewProps) {
                         return (
                           <div
                             key={item.key}
-                            className="flex items-center justify-between gap-3 rounded-2xl border border-border/40 bg-card/60 p-2.5 transition-colors hover:border-border/60"
+                            className="flex items-center justify-between gap-2.5 rounded-xl border border-border/40 bg-card/60 p-2 transition-colors hover:border-border/60"
                           >
                             {/* Media Link & Details */}
-                            <div className="flex min-w-0 flex-1 items-center gap-3">
+                            <div className="flex min-w-0 flex-1 items-center gap-2.5">
                               <Link
                                 href={mediaHref}
-                                className="relative aspect-[3/4] w-14 shrink-0 overflow-hidden rounded-xl bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                className="relative aspect-[3/4] w-12 shrink-0 overflow-hidden rounded-lg bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
                               >
                                 {item.coverImage ? (
                                   <img

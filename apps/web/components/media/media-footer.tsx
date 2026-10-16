@@ -104,7 +104,7 @@ export function MediaFooter({ media }: MediaFooterProps) {
 
   return (
     <footer className="mt-12 border-t border-border/40 bg-card/30 py-8 text-xs text-muted-foreground">
-      <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-4 px-4 sm:flex-row sm:items-center sm:px-6 lg:px-8">
+      <div className="flex w-full flex-col items-start justify-between gap-4 px-4 sm:flex-row sm:items-center sm:px-6 lg:px-8">
         {/* Sources Links */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">

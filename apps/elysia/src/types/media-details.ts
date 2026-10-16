@@ -78,11 +78,16 @@ export const movieInclude = {
   },
 } as const satisfies Prisma.MovieInclude
 
-export type MovieDetails = NonNullable<
-  Prisma.MovieGetPayload<{
-    include: typeof movieInclude
-  }>
+export type MovieDetails = Omit<
+  NonNullable<
+    Prisma.MovieGetPayload<{
+      include: typeof movieInclude
+    }>
+  >,
+  'budget' | 'revenue'
 > & {
+  budget: number | bigint | null
+  revenue: number | bigint | null
   relations: MediaRelationItem[]
 }
 

@@ -169,21 +169,45 @@ function getInitialCollapsedSections(): Record<string, boolean> {
   return {}
 }
 
-function useGridColumns(): number {
+const CARD_FIXED_WIDTH = 140
+const CARD_GAP = 10
+
+function useGridColumns(
+  containerRef: React.RefObject<HTMLDivElement | null>
+): number {
   const [cols, setCols] = useState(8)
   useEffect(() => {
+    const calculate = (width: number) => {
+      if (width <= 0) return
+      const count = Math.max(
+        1,
+        Math.floor((width + CARD_GAP) / (CARD_FIXED_WIDTH + CARD_GAP))
+      )
+      setCols(count)
+    }
+
+    const el = containerRef.current
+    if (el) {
+      calculate(el.clientWidth)
+      const ro = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          calculate(entry.contentRect.width)
+        }
+      })
+      ro.observe(el)
+      return () => ro.disconnect()
+    }
+
     const updateCols = () => {
       const w = window.innerWidth
-      if (w < 640) setCols(3)
-      else if (w < 768) setCols(4)
-      else if (w < 1024) setCols(5)
-      else if (w < 1280) setCols(6)
-      else setCols(8)
+      const sidebar = w >= 768 ? 256 : 0
+      const padding = w >= 640 ? 48 : 24
+      calculate(w - sidebar - padding)
     }
     updateCols()
     window.addEventListener("resize", updateCols, { passive: true })
     return () => window.removeEventListener("resize", updateCols)
-  }, [])
+  }, [containerRef])
   return cols
 }
 
@@ -239,7 +263,7 @@ function VirtualRow({
   return (
     <div
       ref={rowRef}
-      className="grid min-h-[220px] grid-cols-3 gap-2 sm:min-h-[260px] sm:grid-cols-4 sm:gap-2.5 md:min-h-[300px] md:grid-cols-5 md:gap-3 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-8"
+      className="grid min-h-[220px] grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:min-h-[260px] md:min-h-[280px]"
     >
       {isVisible
         ? items.map((item, idx) => (
@@ -341,11 +365,11 @@ function WatchingCategorySection({
               <div className="h-5 w-28 rounded bg-muted/40" />
             </div>
             {!isCollapsed && (
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2.5 md:grid-cols-5 md:gap-3 lg:grid-cols-6 xl:grid-cols-8">
+              <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5">
                 {Array.from({ length: cols }).map((_, i) => (
                   <div
                     key={i}
-                    className="aspect-2/3 rounded-2xl border border-border/20 bg-muted/20"
+                    className="aspect-2/3 w-[140px] rounded-2xl border border-border/20 bg-muted/20"
                   />
                 ))}
               </div>
@@ -610,10 +634,11 @@ interface CategoryState {
 }
 
 export function WatchingDashboard(): React.JSX.Element {
+  const containerRef = useRef<HTMLDivElement>(null)
   const { data: session, status: authStatus } = useSession()
   const { user: currentUser, updateUser } = useUser()
   const userId = session?.user?.id || currentUser?.id
-  const cols = useGridColumns()
+  const cols = useGridColumns(containerRef)
 
   const mediaTitlePreference =
     getMediaPreferences(currentUser?.customization).title || "primary"
@@ -1197,7 +1222,7 @@ export function WatchingDashboard(): React.JSX.Element {
   // Active In-Progress Dashboard
   // ---------------------------------------------------------------------------
   return (
-    <div className="flex flex-col gap-8 pb-12">
+    <div ref={containerRef} className="flex flex-col gap-8 pb-12">
       {/* Ordered Category Sections */}
       <div className="flex flex-col gap-8">
         {categoryOrder.map((type, idx) => (

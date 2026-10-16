@@ -59,7 +59,7 @@ export default async function DiscoverMediaPage({
   const category = media as DiscoverCategory
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 py-4 sm:px-6 lg:px-8">
+    <div className="flex w-full flex-1 flex-col px-4 py-4 sm:px-6 lg:px-8">
       <Suspense fallback={<DiscoverSkeleton />}>
         <DiscoverPageClient category={category} />
       </Suspense>

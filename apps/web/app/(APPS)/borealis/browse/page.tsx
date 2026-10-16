@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 function BrowseLoadingFallback() {
   return (
     <div className="flex w-full flex-1 flex-col bg-background">
-      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+      <div className="flex w-full flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-2.5 sm:gap-3">
           <div className="no-scrollbar flex gap-1.5 overflow-x-auto py-1">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -21,7 +21,7 @@ function BrowseLoadingFallback() {
           </div>
           <Skeleton className="h-11 w-full rounded-2xl" />
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+        <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
           {Array.from({ length: 18 }).map((_, i) => (
             <div
               key={i}

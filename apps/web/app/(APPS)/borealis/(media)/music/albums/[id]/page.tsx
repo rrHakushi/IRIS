@@ -113,9 +113,13 @@ export default async function AlbumDetailPage({ params, searchParams }: Props) {
     favorites: album.favorites,
     popularity: album.popularity,
     deezerId: album.deezerId,
-    artist: album.artist,
+    artist:
+      typeof album.artist === "object" && album.artist !== null
+        ? album.artist.namePrimary
+        : (album.artistName || (typeof album.artist === "string" ? album.artist : null)),
     artists: album.artists,
     artistPersonId:
+      album.artist?.id ||
       (album.staff || []).find(
         (s: any) => s.role === "ARTIST" || s.role === "VOCALIST"
       )?.person.id ||
@@ -153,22 +157,22 @@ export default async function AlbumDetailPage({ params, searchParams }: Props) {
     updatedAt: album.updatedAt,
   }
 
-  const similarItems: SimilarMediaItem[] =
-    !similarRes.error && (similarRes.data as any)?.items
-      ? (similarRes.data as any).items
-      : !similarRes.error && Array.isArray(similarRes.data)
-        ? (similarRes.data as any)
-        : []
-  const similarList: SimilarMediaCardItem[] = similarItems.map((item) => ({
+  const rawSimilar = !similarRes.error
+    ? Array.isArray(similarRes.data)
+      ? similarRes.data
+      : (similarRes.data as any)?.items ?? []
+    : []
+
+  const similarList: SimilarMediaCardItem[] = rawSimilar.map((item: any) => ({
     id: item.id,
-    type: item.type,
-    format: item.format,
-    coverImage: item.coverImage,
-    titlePrimary: item.titles.primary,
-    titleSecondary: item.titles.secondary,
-    titleNative: item.titles.native,
-    year: null,
-    score: null,
+    type: item.type ?? item.mediaType ?? "music",
+    format: item.format ?? null,
+    coverImage: item.coverImage ?? null,
+    titlePrimary: item.titles?.primary ?? item.titlePrimary ?? "",
+    titleSecondary: item.titles?.secondary ?? item.titleSecondary ?? null,
+    titleNative: item.titles?.native ?? item.titleNative ?? null,
+    year: item.year ?? null,
+    score: item.averageScore ?? null,
   }))
 
   return (

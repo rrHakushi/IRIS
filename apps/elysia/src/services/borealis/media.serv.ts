@@ -954,6 +954,8 @@ export class BorealisMediaServ {
       success: true,
       media: {
         ...movie,
+        budget: movie.budget != null ? Number(movie.budget) : null,
+        revenue: movie.revenue != null ? Number(movie.revenue) : null,
         relations,
       },
     }
@@ -1326,6 +1328,9 @@ export class BorealisMediaServ {
         seasons: {
           orderBy: { seasonNumber: 'asc' },
           take: 20,
+        },
+        episodes: {
+          orderBy: [{ seasonNumber: 'asc' }, { episodeNumber: 'asc' }],
         },
       },
     })

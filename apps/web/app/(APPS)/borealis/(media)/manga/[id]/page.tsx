@@ -95,10 +95,10 @@ export default async function MangaDetailPage({ params, searchParams }: Props) {
     favorites: manga.favorites,
     popularity: manga.popularity,
     scoredCount: manga.scoredCount,
-    genres: manga.genres,
-    tags: manga.tags,
+    genres: manga.genres ?? [],
+    tags: manga.tags ?? [],
     studios: [],
-    characters: manga.characters.map(
+    characters: (manga.characters ?? []).map(
       (c: MangaDetails["characters"][number]) => ({
         id: c.id,
         characterId: c.character.id,
@@ -110,7 +110,7 @@ export default async function MangaDetailPage({ params, searchParams }: Props) {
         actor: null,
       })
     ),
-    staff: manga.staff.map((s: MangaDetails["staff"][number]) => ({
+    staff: (manga.staff ?? []).map((s: MangaDetails["staff"][number]) => ({
       id: s.id,
       personId: s.person.id,
       role: s.role,
@@ -123,7 +123,7 @@ export default async function MangaDetailPage({ params, searchParams }: Props) {
         language: s.person.language,
       },
     })),
-    relations: manga.relations,
+    relations: manga.relations ?? [],
     trailers: null,
     images: manga.images as Record<string, string[]> | null,
     sources: manga.sources as NormalizedMediaData["sources"],

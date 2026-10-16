@@ -1034,7 +1034,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                         </div>
                       )}
 
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4">
+                    <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
                       {musicAlbums.map((album) => {
                         const albumHref = `/borealis/music/albums/${album.id}`
                         return (
@@ -1128,7 +1128,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                         </div>
                       )}
 
-                    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                       {musicTracks.map((track) => {
                         const trackHref = `/borealis/music/tracks/${track.id}`
                         return (
@@ -1306,7 +1306,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                       </div>
 
                       {/* Voiced Roles Grid: Left Character, Right Media */}
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                         {group.items.map((item) => {
                           const mediaHref = getMediaDetailHref(
                             item.mediaType,
@@ -1317,7 +1317,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                           return (
                             <div
                               key={item.key}
-                              className="flex items-center justify-between gap-3 rounded-2xl border border-border/40 bg-card/60 p-2.5 transition-colors hover:border-border/60"
+                              className="flex items-center justify-between gap-2.5 rounded-xl border border-border/40 bg-card/60 p-2 transition-colors hover:border-border/60"
                             >
                               {/* Left Side: Character Details */}
                               <div className="flex min-w-0 flex-1 items-center gap-2.5">
@@ -1500,7 +1500,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                       </div>
 
                       {/* Staff Cards Grid */}
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                         {group.items.map((item) => {
                           const mediaHref = getMediaDetailHref(
                             item.mediaType,
@@ -1510,7 +1510,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                           return (
                             <div
                               key={item.key}
-                              className="flex items-center gap-3 rounded-2xl border border-border/40 bg-card/60 p-2.5 transition-colors hover:border-border/60"
+                              className="flex items-center gap-2.5 rounded-xl border border-border/40 bg-card/60 p-2 transition-colors hover:border-border/60"
                             >
                               <Link
                                 href={mediaHref}

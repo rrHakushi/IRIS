@@ -30,7 +30,7 @@ export function DiscoverSkeleton() {
       </div>
 
       {/* Media Grid Skeleton */}
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2.5 md:grid-cols-5 md:gap-3 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-8">
+      <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
         {Array.from({ length: 24 }).map((_, i) => (
           <div
             key={i}

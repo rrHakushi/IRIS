@@ -870,7 +870,7 @@ export function UserListView({
       />
 
       {/* 2. Main Content Area */}
-      <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+      <main className="w-full flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         {/* Status Card Matching Reference Screenshot */}
         <ListStatusCard
           mediaType={mediaType}

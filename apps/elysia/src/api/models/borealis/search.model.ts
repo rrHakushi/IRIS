@@ -19,6 +19,7 @@ export const BorealisSearchModel = {
           t.Literal('books'),
           t.Literal('characters'),
           t.Literal('people'),
+          t.Literal('staff'),
           t.Literal('studios'),
         ],
         { default: 'media', description: 'Search catalog category' }

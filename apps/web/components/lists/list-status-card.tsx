@@ -356,50 +356,46 @@ export function ListStatusCard({
           })}
         </div>
 
-        {/* Vertical Divider (Orange line in reference) */}
-        <Separator
-          orientation="vertical"
-          className="mx-1 h-5 shrink-0 self-center bg-border/60"
-        />
-
-        {/* Tab Switcher: List | Comments | Stats (Green circle in reference) */}
-        <Tabs
-          selectedKey={currentTab}
-          onSelectionChange={(key) =>
-            handleTabChange(String(key) as ListViewTab)
-          }
-          className="shrink-0 gap-0"
-        >
-          <TabsList
-            aria-label="View Switcher"
-            className="h-7 gap-0.5 rounded-full border border-border/40 bg-muted/40 p-0.5"
+        {/* Right-aligned Tab Switcher: List | Comments | Stats | Activity */}
+        <div className="ms-auto flex shrink-0 items-center">
+          <Tabs
+            selectedKey={currentTab}
+            onSelectionChange={(key) =>
+              handleTabChange(String(key) as ListViewTab)
+            }
+            className="shrink-0 gap-0"
           >
-            <TabsTrigger
-              id="list"
-              className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
+            <TabsList
+              aria-label="View Switcher"
+              className="h-7 gap-0.5 rounded-full border border-border/40 bg-muted/40 p-0.5"
             >
-              List
-            </TabsTrigger>
-            <TabsTrigger
-              id="comments"
-              className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
-            >
-              Comments
-            </TabsTrigger>
-            <TabsTrigger
-              id="stats"
-              className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
-            >
-              Stats
-            </TabsTrigger>
-            <TabsTrigger
-              id="activity"
-              className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
-            >
-              Activity
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+              <TabsTrigger
+                id="list"
+                className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
+              >
+                List
+              </TabsTrigger>
+              <TabsTrigger
+                id="comments"
+                className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
+              >
+                Comments
+              </TabsTrigger>
+              <TabsTrigger
+                id="stats"
+                className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
+              >
+                Stats
+              </TabsTrigger>
+              <TabsTrigger
+                id="activity"
+                className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
+              >
+                Activity
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       {/* When List tab is active, show the search & filters bottom row */}

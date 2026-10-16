@@ -239,9 +239,9 @@ export function EpisodesTab({
               {hasMultipleSeasons && selectedSeason !== "all"
                 ? `${currentSeasonLabel} `
                 : ""}
-              Episodes ({filteredEpisodes.length})
+              Episodes
             </h2>
-            {filteredEpisodes.length > 6 && (
+            {filteredEpisodes.length > 12 && (
               <span className="text-[11px] text-muted-foreground">
                 Scroll for more
               </span>
@@ -253,8 +253,8 @@ export function EpisodesTab({
               No episode data available for this season.
             </div>
           ) : (
-            /* Exactly 6 cards visible at once: 6 * 52px card + 5 * 8px gap = 352px - scrollbars hidden */
-            <div className="no-scrollbar flex max-h-[352px] flex-col gap-2 overflow-y-auto">
+            /* Expands to use the full available viewport height; remainder is scrollable */
+            <div className="no-scrollbar flex max-h-[65vh] flex-col gap-2 overflow-y-auto pe-1 md:max-h-[calc(100vh-14rem)]">
               {filteredEpisodes.map((ep) => {
                 const formattedDate = formatDate(ep.airDate)
                 const isExpanded = expandedId === ep.id
@@ -271,14 +271,15 @@ export function EpisodesTab({
                       }
                     }}
                     className={cn(
-                      "flex shrink-0 flex-col rounded-xl border border-border/40 bg-card/70 px-2.5 py-1.5 transition-colors",
+                      "flex shrink-0 flex-col justify-center rounded-xl border border-border/40 bg-card/70 px-3 transition-colors",
+                      isExpanded ? "min-h-[52px] py-2" : "h-[52px]",
                       hasDescription &&
                         "cursor-pointer hover:border-border/60 hover:bg-card",
                       isExpanded && "border-primary/40 bg-card shadow-xs"
                     )}
                   >
                     {/* Main Card Row */}
-                    <div className="flex h-[40px] items-center justify-between gap-3">
+                    <div className="flex w-full items-center justify-between gap-3">
                       {/* Left: Thumbnail & Details */}
                       <div className="flex min-w-0 flex-1 items-center gap-2.5">
                         {/* Compact Episode Thumbnail */}
@@ -406,17 +407,24 @@ export function EpisodesTab({
           aria-labelledby="airing-schedule-heading"
           className="flex min-w-0 flex-col gap-3"
         >
-          <div className="flex items-center gap-2">
-            <IconCalendar className="size-4 text-primary" aria-hidden="true" />
-            <h2
-              id="airing-schedule-heading"
-              className="text-base font-semibold text-foreground"
-            >
-              {hasMultipleSeasons && selectedSeason !== "all"
-                ? `${currentSeasonLabel} `
-                : ""}
-              Schedule ({filteredSchedule.length})
-            </h2>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <IconCalendar className="size-4 text-primary" aria-hidden="true" />
+              <h2
+                id="airing-schedule-heading"
+                className="text-base font-semibold text-foreground"
+              >
+                {hasMultipleSeasons && selectedSeason !== "all"
+                  ? `${currentSeasonLabel} `
+                  : ""}
+                Schedule
+              </h2>
+            </div>
+            {filteredSchedule.length > 12 && (
+              <span className="text-[11px] text-muted-foreground">
+                Scroll for more
+              </span>
+            )}
           </div>
 
           {filteredSchedule.length === 0 ? (
@@ -424,8 +432,8 @@ export function EpisodesTab({
               No airing schedule available for this season.
             </div>
           ) : (
-            /* Exactly matching height with left column - scrollbars hidden */
-            <div className="no-scrollbar flex max-h-[352px] flex-col gap-2 overflow-y-auto">
+            /* Expands to use the full available viewport height; remainder is scrollable */
+            <div className="no-scrollbar flex max-h-[65vh] flex-col gap-2 overflow-y-auto pe-1 md:max-h-[calc(100vh-14rem)]">
               {/* List of Scheduled/Aired Episodes */}
               {filteredSchedule.map((item) => {
                 const airDate = new Date(item.airingAt)

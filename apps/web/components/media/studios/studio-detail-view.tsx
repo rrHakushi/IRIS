@@ -460,8 +460,8 @@ export function StudioDetailView({
                 <div className="h-px flex-1 bg-border/40" />
               </div>
 
-              {/* Creations Media Grid */}
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
+              {/* Creations Media Grid: fixed 140px cards auto-filling the row */}
+              <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
                 {items.map((item) => (
                   <StudioCreationCard
                     key={`${item.mediaType}-${item.mediaId}`}

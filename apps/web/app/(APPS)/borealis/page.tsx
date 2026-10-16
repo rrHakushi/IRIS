@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function BorealisPage() {
   return (
-    <div className="mx-auto w-full max-w-[1920px] px-3 py-4 sm:px-6 sm:py-6">
+    <div className="w-full px-3 py-4 sm:px-6 sm:py-6">
       <WatchingDashboard />
     </div>
   )

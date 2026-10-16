@@ -65,7 +65,7 @@ export default async function PersonDetailPage({ params }: Props) {
   const person: PersonDetails = ((data as any)?.person ?? data) as PersonDetails
 
   return (
-    <div className="container mx-auto max-w-6xl px-4 py-6">
+    <div className="w-full px-4 py-6 sm:px-6 lg:px-8">
       <PersonDetailView person={person} />
     </div>
   )

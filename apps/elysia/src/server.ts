@@ -7,6 +7,19 @@ import { wsHub } from './services/ws.serv'
 import type { ControllersApp } from './api/controllers.generated'
 import { websocket } from 'elysia/websocket'
 
+declare global {
+  interface BigInt {
+    toJSON(): number | string
+  }
+}
+
+if (!('toJSON' in BigInt.prototype)) {
+  ;(BigInt.prototype as any).toJSON = function () {
+    const num = Number(this)
+    return Number.isSafeInteger(num) ? num : this.toString()
+  }
+}
+
 const logger = new LogFactory('Elysia:Server')
 const authTimeouts = new WeakMap<object, ReturnType<typeof setTimeout>>()
 

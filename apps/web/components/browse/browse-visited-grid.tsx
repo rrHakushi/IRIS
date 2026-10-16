@@ -57,7 +57,7 @@ export function BrowseVisitedGrid({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:gap-4">
+          <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
             {visitedTracks.map((item) => (
               <BrowseMediaCard
                 key={`visited-track-${item.id}-${item.visitedAt}`}
@@ -92,7 +92,7 @@ export function BrowseVisitedGrid({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:gap-4">
+          <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
             {visitedAlbums.map((item) => (
               <BrowseMediaCard
                 key={`visited-album-${item.id}-${item.visitedAt}`}
@@ -128,7 +128,7 @@ export function BrowseVisitedGrid({
                 {visitedTracks.length}
               </Badge>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:gap-4">
+            <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
               {visitedTracks.map((item) => (
                 <BrowseMediaCard
                   key={`visited-track-${item.id}-${item.visitedAt}`}
@@ -157,7 +157,7 @@ export function BrowseVisitedGrid({
                 {visitedAlbums.length}
               </Badge>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:gap-4">
+            <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
               {visitedAlbums.map((item) => (
                 <BrowseMediaCard
                   key={`visited-album-${item.id}-${item.visitedAt}`}
@@ -189,7 +189,7 @@ export function BrowseVisitedGrid({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:gap-4">
+      <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
         {items.map((item) => (
           <BrowseMediaCard
             key={`${item.id}-${item.visitedAt}`}
