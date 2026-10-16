@@ -707,14 +707,13 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (action === "GET_ALL_CIPHERS") {
     ;(async () => {
       if (!isPrivilegedSender(sender)) {
-        sendResponse({ error: "Access denied", ciphers: [], folders: [], isUnlocked: false })
+        sendResponse({ error: "Access denied", ciphers: [], isUnlocked: false })
         return
       }
       await ensureVaultActive()
       resetAutoLock()
       sendResponse({
         ciphers: inMemoryCiphers.filter((c) => !c.deletedAt),
-        folders: inMemoryFolders,
         isUnlocked: Boolean(inMemoryVaultKey),
       })
     })()
@@ -932,7 +931,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         await ensureVaultActive()
         if (!inMemoryVaultKey) throw new Error("Vault is locked")
 
-        const { id, type, title, folderId, favorite, data } = payload
+        const { id, type, title, favorite, data } = payload
         const encryptedTitle = await IrisCrypto.encryptVaultData(title, inMemoryVaultKey)
         const encryptedData = await IrisCrypto.encryptVaultObject(data, inMemoryVaultKey)
 
@@ -942,7 +941,6 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
             type,
             encryptedTitle,
             encryptedData,
-            folderId: folderId || null,
             favorite: Boolean(favorite),
           })
         } else {
@@ -950,7 +948,6 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
             type,
             encryptedTitle,
             encryptedData,
-            folderId: folderId || null,
             favorite: Boolean(favorite),
           })
         }
@@ -1257,7 +1254,6 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
             type: targetCipher.type,
             encryptedTitle: encTitle,
             encryptedData: encData,
-            folderId: targetCipher.folderId || null,
             favorite: Boolean(targetCipher.favorite),
           })
         } else {

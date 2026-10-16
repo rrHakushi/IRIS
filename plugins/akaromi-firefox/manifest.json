@@ -23,7 +23,8 @@
     "storage",
     "privacy",
     "scripting",
-    "clipboardWrite"
+    "clipboardWrite",
+    "alarms"
   ],
   "incognito": "spanning",
   "host_permissions": [

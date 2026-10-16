@@ -208,48 +208,11 @@
    */
   IrisApi.fetchCiphers = async function (query = {}) {
     const params = new URLSearchParams()
-    if (query.folderId) params.append("folderId", query.folderId)
     if (query.type) params.append("type", query.type)
     if (typeof query.favorite === "boolean") params.append("favorite", String(query.favorite))
     if (typeof query.trash === "boolean") params.append("trash", String(query.trash))
     const qStr = params.toString() ? `?${params.toString()}` : ""
     return request(`/akaromi/ciphers${qStr}`)
-  }
-
-  /**
-   * Fetch all folders
-   */
-  IrisApi.fetchFolders = async function () {
-    return request("/akaromi/folders")
-  }
-
-  /**
-   * Create folder in vault
-   */
-  IrisApi.createFolder = async function (payload) {
-    return request("/akaromi/folders", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    })
-  }
-
-  /**
-   * Update folder in vault
-   */
-  IrisApi.updateFolder = async function (id, payload) {
-    return request(`/akaromi/folders/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify(payload),
-    })
-  }
-
-  /**
-   * Delete folder in vault
-   */
-  IrisApi.deleteFolder = async function (id) {
-    return request(`/akaromi/folders/${id}`, {
-      method: "DELETE",
-    })
   }
 
   /**

@@ -305,6 +305,106 @@
   background: rgba(239, 68, 68, 0.15);
 }
 
+/* Custom Fields Editor Rows */
+#custom-fields-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.custom-field-row-item {
+  background: #141418;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.custom-field-row-fields {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.custom-field-name {
+  width: 100%;
+  height: 28px;
+  font-size: 11.5px;
+  padding: 4px 8px;
+  background: #101014;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--foreground);
+  box-sizing: border-box;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.custom-field-name:focus {
+  border-color: #52525b;
+  box-shadow: 0 0 0 1px #52525b;
+}
+
+.custom-field-val-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.custom-field-value {
+  width: 100%;
+  height: 30px;
+  font-size: 12px;
+  padding: 4px 34px 4px 8px;
+  background: #101014;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--foreground);
+  box-sizing: border-box;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.custom-field-value:focus {
+  border-color: #52525b;
+  box-shadow: 0 0 0 1px #52525b;
+}
+
+.custom-field-val-actions {
+  position: absolute;
+  right: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.btn-remove-custom-field {
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  transition: all 0.15s ease;
+}
+
+.btn-remove-custom-field:hover {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.15);
+}
+
 /* Websites Editor Rows */
 .websites-header-row {
   display: flex;

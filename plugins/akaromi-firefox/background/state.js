@@ -7,31 +7,27 @@ const ext = typeof browser !== "undefined" ? browser : chrome
 const storage = typeof IrisStorage !== "undefined" ? IrisStorage : ext.storage.local
 
 // In-memory vault state (strictly zero-history, wiped on lock or restart)
+// In-memory vault state (strictly zero-history, wiped on lock or restart)
 let inMemoryVaultKey = null
 let inMemoryCiphers = []
-let inMemoryFolders = []
 let autoLockTimer = null
 let clipboardClearTimer = null
-
-// Ephemeral 256-bit runtime encryption key for protecting session storage at rest
-const ephemeralSessionKey = IrisCrypto.generateEphemeralKey()
 
 const ONE_HOUR_MS = 60 * 60 * 1000
 
 /**
- * Saves current in-memory vault key to session storage encrypted with ephemeral key
+ * Saves current in-memory vault key to session storage
  */
 async function saveVaultKeyToSession() {
   if (!ext.storage?.session || !inMemoryVaultKey) return
   try {
-    const rawHex = IrisCrypto.bytesToHex(inMemoryVaultKey)
-    const encryptedVaultKey = IrisCrypto.encryptVaultData(rawHex, ephemeralSessionKey)
+    const vaultKeyHex = IrisCrypto.bytesToHex(inMemoryVaultKey)
     await ext.storage.session.set({
-      encryptedVaultKey,
+      vaultKeyHex,
       lastActive: Date.now(),
     })
   } catch (err) {
-    console.warn("[Akaromi] Failed to encrypt session vault key:", err)
+    console.warn("[Akaromi] Failed to save session vault key:", err)
   }
 }
 
@@ -40,7 +36,7 @@ async function saveVaultKeyToSession() {
  */
 async function clearVaultKeyFromSession() {
   if (ext.storage?.session) {
-    await ext.storage.session.remove(["encryptedVaultKey", "vaultKeyHex", "lastActive"]).catch(() => {})
+    await ext.storage.session.remove(["vaultKeyHex", "encryptedVaultKey", "lastActive"]).catch(() => {})
   }
 }
 
@@ -61,17 +57,16 @@ async function ensureVaultActive() {
   if (ext.storage?.session) {
     try {
       const sessionData = await ext.storage.session.get([
-        "encryptedVaultKey",
         "vaultKeyHex",
         "lastActive",
       ])
-      if (sessionData?.encryptedVaultKey || sessionData?.vaultKeyHex) {
+      if (sessionData?.vaultKeyHex) {
         const settings = await storage.get(["autoLockMinutes"])
         const minutes = settings.autoLockMinutes ?? 15
 
         if (minutes > 0 && sessionData.lastActive) {
           const elapsed = Date.now() - sessionData.lastActive
-          if (elapsed > minutes * 60 * 1000) {
+          if (elapsed >= minutes * 60 * 1000) {
             console.log(
               "[Akaromi] Auto-lock expired while background worker was idle"
             )
@@ -80,25 +75,11 @@ async function ensureVaultActive() {
           }
         }
 
-        // Restore vault key from session (decrypting with ephemeral in-memory key)
-        let keyHex = ""
-        if (sessionData.encryptedVaultKey) {
-          try {
-            keyHex = IrisCrypto.decryptVaultData(sessionData.encryptedVaultKey, ephemeralSessionKey)
-          } catch (e) {
-            console.warn("[Akaromi] Ephemeral session key invalid (browser was restarted)")
-          }
-        } else if (sessionData.vaultKeyHex) {
-          keyHex = sessionData.vaultKeyHex
-        }
-
-        if (keyHex) {
-          inMemoryVaultKey = IrisCrypto.hexToBytes(keyHex)
-          await decryptCachedVault(inMemoryVaultKey)
-          await resetAutoLock()
-          checkHourlySyncDue()
-          return true
-        }
+        inMemoryVaultKey = IrisCrypto.hexToBytes(sessionData.vaultKeyHex)
+        await decryptCachedVault(inMemoryVaultKey)
+        await resetAutoLock({ preserveLastActive: true })
+        checkHourlySyncDue()
+        return true
       }
     } catch (err) {
       console.warn("[Akaromi] Session restore error:", err)
@@ -126,25 +107,56 @@ async function checkHourlySyncDue() {
 /**
  * Reset auto-lock timer based on settings
  */
-async function resetAutoLock() {
+async function resetAutoLock(options = {}) {
+  const { preserveLastActive = false } = options
   if (autoLockTimer) clearTimeout(autoLockTimer)
 
   const settings = await storage.get(["autoLockMinutes"])
   const minutes = settings.autoLockMinutes ?? 15 // 15 min default (0 = Never)
 
-  if (ext.storage?.session && inMemoryVaultKey) {
-    ext.storage.session.set({ lastActive: Date.now() }).catch(() => {})
+  let lastActive = Date.now()
+  if (preserveLastActive && ext.storage?.session) {
+    const s = await ext.storage.session.get(["lastActive"])
+    if (s.lastActive) lastActive = s.lastActive
+  }
+
+  if (ext.storage?.session && inMemoryVaultKey && !preserveLastActive) {
+    ext.storage.session.set({ lastActive }).catch(() => {})
   }
 
   if (minutes > 0 && inMemoryVaultKey) {
+    const elapsed = Date.now() - lastActive
+    const remainingMs = Math.max(5000, minutes * 60 * 1000 - elapsed)
+    const delayInMinutes = Math.max(0.1, remainingMs / 60000)
+
+    try {
+      ext.alarms?.create("autoLock", { delayInMinutes })
+    } catch (e) {
+      console.warn("[Akaromi] Could not create autoLock alarm:", e)
+    }
+
     autoLockTimer = setTimeout(
       () => {
         console.log("[Akaromi] Auto-locking vault due to inactivity")
         lockVault()
       },
-      minutes * 60 * 1000
+      remainingMs
     )
+  } else {
+    try {
+      ext.alarms?.clear("autoLock")
+    } catch {}
   }
+}
+
+// Register alarm listener for background auto-lock
+if (ext.alarms?.onAlarm) {
+  ext.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === "autoLock") {
+      console.log("[Akaromi] Auto-locking vault due to alarm")
+      lockVault()
+    }
+  })
 }
 
 /**
@@ -156,8 +168,10 @@ function lockVault() {
     inMemoryVaultKey = null
   }
   inMemoryCiphers = []
-  inMemoryFolders = []
   if (autoLockTimer) clearTimeout(autoLockTimer)
+  try {
+    ext.alarms?.clear("autoLock")
+  } catch {}
   clearVaultKeyFromSession()
   updateBadge()
 }

@@ -656,6 +656,12 @@
               <div id="detail-additional-passwords-list" class="additional-passwords-view-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
             </div>
 
+            <!-- Custom Fields Card -->
+            <div class="proton-card" id="detail-custom-fields-card" style="display: none; flex-direction: column; gap: 8px;">
+              <div class="card-subtitle-header" style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-muted-foreground); margin-bottom: 2px;">Custom Fields</div>
+              <div id="detail-custom-fields-list" class="custom-fields-view-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
+            </div>
+
             <!-- Metadata Box Card -->
             <div class="proton-card metadata-card">
               <div class="proton-field-row mini">
@@ -1287,11 +1293,6 @@
       <div class="modal-dialog-box">
         <div class="modal-dialog-header">
           <h3>Set Up PIN Unlock</h3>
-          <button type="button" id="btn-modal-pin-close" class="icon-btn-round mini">
-            <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
-          </button>
         </div>
 
         <form id="form-pin-setup">

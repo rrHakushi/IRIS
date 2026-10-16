@@ -31,10 +31,7 @@
     - Auto link option?? if metadata used from borealis
 
 # Akaromi For Firefox
-    - fix custom fields in other category
-    - Fix inline fill items not spaced properly
-    - Auto lock doesnt respect the timer and locks randomly
-    - X btn on Edit/create pin doesnt close it (remove it)
+    - 
 
 # Borealis Extra
     - 

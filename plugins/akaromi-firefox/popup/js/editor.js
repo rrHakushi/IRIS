@@ -89,6 +89,9 @@
   const editAdditionalPasswordsList = document.getElementById("edit-additional-passwords-list")
   const btnAddAdditionalPasswordRow = document.getElementById("btn-add-additional-password-row")
 
+  const customFieldsList = document.getElementById("custom-fields-list")
+  const btnAddCustomField = document.getElementById("btn-add-custom-field")
+
   const editGeneralNotes = document.getElementById("edit-general-notes")
   const editNoteBody = document.getElementById("edit-note-body")
   const editCardHolder = document.getElementById("edit-card-holder")
@@ -137,6 +140,13 @@
 
     if (editWebsitesList) {
       editWebsitesList.replaceChildren()
+    }
+
+    if (customFieldsList) {
+      customFieldsList.replaceChildren()
+      if (type === "other") {
+        addCustomFieldRow("", "", false)
+      }
     }
 
     pendingRemovePasskey = false
@@ -270,6 +280,19 @@
       if (editIdPhone) editIdPhone.value = data.phone || ""
       if (editIdAddress) editIdAddress.value = data.address || ""
       if (editIdCompany) editIdCompany.value = data.company || ""
+      if (editGeneralNotes) editGeneralNotes.value = data.notes || ""
+    } else if (subType === "other") {
+      if (customFieldsList) {
+        customFieldsList.replaceChildren()
+        const customFields = data.customFields || []
+        if (customFields.length > 0) {
+          customFields.forEach((cf) => {
+            addCustomFieldRow(cf.name || "", cf.value || "", Boolean(cf.isHidden))
+          })
+        } else {
+          addCustomFieldRow("", "", false)
+        }
+      }
       if (editGeneralNotes) editGeneralNotes.value = data.notes || ""
     }
 
@@ -453,6 +476,70 @@
   })
 
   // ----------------------------------------------------
+  // Custom Fields Rows (Other item type)
+  // ----------------------------------------------------
+  function addCustomFieldRow(name = "", value = "", isHidden = false) {
+    if (!customFieldsList) return
+    const row = document.createElement("div")
+    row.className = "custom-field-row-item"
+    safeSetTemplate(
+      row,
+      `
+      <div class="custom-field-row-fields">
+        <input type="text" class="form-input custom-field-name" placeholder="Field Name" value="${escapeHtml(name)}" />
+        <div class="custom-field-val-wrap">
+          <input type="${isHidden ? "password" : "text"}" class="form-input font-mono custom-field-value" placeholder="Field Value" value="${escapeHtml(value)}" />
+          <div class="custom-field-val-actions">
+            <button type="button" class="icon-btn-round mini btn-toggle-custom-field-eye" title="Toggle visibility">
+              <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="2" />
+                <path d="M22 12c-2.667 4.667-6 7-10 7s-7.333-2.333-10-7c2.667-4.667 6-7 10-7s7.333 2.333 10 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="icon-btn-round mini btn-remove-custom-field" title="Remove field">
+        <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    `
+    )
+
+    const valInput = row.querySelector(".custom-field-value")
+    const eyeBtn = row.querySelector(".btn-toggle-custom-field-eye")
+    const removeBtn = row.querySelector(".btn-remove-custom-field")
+
+    eyeBtn?.addEventListener("click", () => {
+      if (!valInput) return
+      if (valInput.type === "password") {
+        valInput.type = "text"
+        IrisIcons.swap(eyeBtn, "eye-off")
+      } else {
+        valInput.type = "password"
+        IrisIcons.swap(eyeBtn, "eye")
+      }
+    })
+
+    removeBtn?.addEventListener("click", () => {
+      row.remove()
+      queueSaveEditDraft()
+    })
+
+    row.querySelectorAll("input").forEach((inp) => {
+      inp.addEventListener("input", queueSaveEditDraft)
+    })
+
+    customFieldsList.appendChild(row)
+  }
+
+  btnAddCustomField?.addEventListener("click", () => {
+    addCustomFieldRow("", "", false)
+    queueSaveEditDraft()
+  })
+
+  // ----------------------------------------------------
   // Password Visibility & Generation Triggers
   // ----------------------------------------------------
   btnToggleEditPassEye?.addEventListener("click", () => {
@@ -598,7 +685,6 @@
     }
 
     try {
-      const folderId = null
       let dataPayload = { itemType: state.currentEditType }
 
       if (state.currentEditType === "login") {
@@ -699,11 +785,26 @@
           company: editIdCompany?.value.trim() || "",
           notes: editGeneralNotes?.value.trim() || "",
         }
+      } else if (state.currentEditType === "other") {
+        const customFields = []
+        document.querySelectorAll(".custom-field-row-item").forEach((row) => {
+          const n = row.querySelector(".custom-field-name")?.value.trim() || ""
+          const valInput = row.querySelector(".custom-field-value")
+          const v = valInput?.value || ""
+          const isHidden = valInput?.type === "password"
+          if (n) {
+            customFields.push({ name: n, value: v, isHidden })
+          }
+        })
+        dataPayload = {
+          ...dataPayload,
+          customFields,
+          notes: editGeneralNotes?.value.trim() || "",
+        }
       }
 
       const payload = {
         title,
-        folderId,
         type: state.currentEditType === "ssh" ? "SSH_KEY" : "LOGIN",
         data: dataPayload,
       }
@@ -772,10 +873,19 @@
       if (n || v) additionalPasswords.push({ name: n, value: v })
     })
 
+    const customFields = []
+    document.querySelectorAll(".custom-field-row-item").forEach((row) => {
+      const n = row.querySelector(".custom-field-name")?.value || ""
+      const valInput = row.querySelector(".custom-field-value")
+      const v = valInput?.value || ""
+      const isHidden = valInput?.type === "password"
+      if (n || v) customFields.push({ name: n, value: v, isHidden })
+    })
+
     return {
       type: state.currentEditType || "login",
       title: editTitle?.value || "",
-      folderId: null,
+      customFields,
       splitUsername: wrapSplitFields?.style.display === "block",
       emailOrUsername: editEmailOrUsername?.value || "",
       email: editEmail?.value || "",
@@ -885,6 +995,18 @@
           additional.forEach((entry) => {
             addAdditionalPasswordRow(entry.name || "", entry.value || "")
           })
+        }
+
+        if (customFieldsList) {
+          customFieldsList.replaceChildren()
+          const customFields = d.customFields || []
+          if (customFields.length > 0) {
+            customFields.forEach((cf) => {
+              addCustomFieldRow(cf.name || "", cf.value || "", Boolean(cf.isHidden))
+            })
+          } else if (d.type === "other") {
+            addCustomFieldRow("", "", false)
+          }
         }
 
         if (editGeneralNotes) editGeneralNotes.value = d.notes || ""

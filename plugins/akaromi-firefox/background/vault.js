@@ -3,16 +3,14 @@
  */
 
 /**
- * Decrypts raw encrypted ciphers and folders from local storage cache
+ * Decrypts raw encrypted ciphers from local storage cache
  * (Ultra fast, zero API network calls)
  */
 async function decryptCachedVault(vaultKey) {
   const sData = await storage.get([
     "cachedEncryptedCiphers",
-    "cachedEncryptedFolders",
   ])
   const rawCiphers = sData.cachedEncryptedCiphers || []
-  const rawFolders = sData.cachedEncryptedFolders || []
 
   if (rawCiphers.length === 0) {
     // Missing local cache — attempt sync if possible
@@ -38,7 +36,6 @@ async function decryptCachedVault(vaultKey) {
         type: c.type,
         title,
         favorite: c.favorite,
-        folderId: c.folderId,
         reprompt: c.reprompt,
         data,
         deletedAt: c.deletedAt,
@@ -50,20 +47,6 @@ async function decryptCachedVault(vaultKey) {
     }
   }
   inMemoryCiphers = decryptedList
-
-  const decryptedFolders = []
-  for (const f of rawFolders) {
-    try {
-      const name = await IrisCrypto.decryptVaultData(
-        f.encryptedName,
-        vaultKey
-      )
-      decryptedFolders.push({ id: f.id, name })
-    } catch {
-      decryptedFolders.push({ id: f.id, name: "[Folder]" })
-    }
-  }
-  inMemoryFolders = decryptedFolders
 
   updateBadge()
 }
@@ -88,21 +71,12 @@ async function syncVault(options = {}) {
       fromCache: true,
       lastSyncTimestamp: lastSync,
       cipherCount: inMemoryCiphers.length,
-      folderCount: inMemoryFolders.length,
     }
   }
 
   try {
     const ciphersRes = await IrisApi.fetchCiphers()
     const rawCiphers = ciphersRes?.ciphers || ciphersRes?.data?.ciphers || []
-
-    let rawFolders = []
-    try {
-      const foldersRes = await IrisApi.fetchFolders()
-      rawFolders = foldersRes?.folders || foldersRes?.data?.folders || []
-    } catch (e) {
-      console.warn("[Akaromi] Failed to fetch folders:", e)
-    }
 
     try {
       const auth = await IrisApi.checkAuth()
@@ -114,7 +88,6 @@ async function syncVault(options = {}) {
     const now = Date.now()
     await storage.set({
       cachedEncryptedCiphers: rawCiphers,
-      cachedEncryptedFolders: rawFolders,
       lastSyncTimestamp: now,
     })
 
@@ -135,7 +108,6 @@ async function syncVault(options = {}) {
           type: c.type,
           title,
           favorite: c.favorite,
-          folderId: c.folderId,
           reprompt: c.reprompt,
           data,
           deletedAt: c.deletedAt,
@@ -148,20 +120,6 @@ async function syncVault(options = {}) {
     }
     inMemoryCiphers = decryptedList
 
-    const decryptedFolders = []
-    for (const f of rawFolders) {
-      try {
-        const name = await IrisCrypto.decryptVaultData(
-          f.encryptedName,
-          inMemoryVaultKey
-        )
-        decryptedFolders.push({ id: f.id, name })
-      } catch {
-        decryptedFolders.push({ id: f.id, name: "[Folder]" })
-      }
-    }
-    inMemoryFolders = decryptedFolders
-
     updateBadge()
 
     return {
@@ -169,21 +127,20 @@ async function syncVault(options = {}) {
       fromCache: false,
       lastSyncTimestamp: now,
       cipherCount: inMemoryCiphers.length,
-      folderCount: inMemoryFolders.length,
     }
   } catch (err) {
     console.error("[Akaromi] Sync error:", err)
     // Fallback to local cache if network fails: directly decrypt cached ciphers without calling syncVault again
     if (inMemoryCiphers.length === 0 && inMemoryVaultKey) {
       try {
-        const sData = await storage.get(["cachedEncryptedCiphers", "cachedEncryptedFolders"])
+        const sData = await storage.get(["cachedEncryptedCiphers"])
         const rawCiphers = sData.cachedEncryptedCiphers || []
         const decryptedList = []
         for (const c of rawCiphers) {
           try {
             const title = await IrisCrypto.decryptVaultData(c.encryptedTitle, inMemoryVaultKey)
             const data = await IrisCrypto.decryptVaultObject(c.encryptedData, inMemoryVaultKey)
-            decryptedList.push({ id: c.id, type: c.type, title, favorite: c.favorite, folderId: c.folderId, reprompt: c.reprompt, data, deletedAt: c.deletedAt, createdAt: c.createdAt, updatedAt: c.updatedAt })
+            decryptedList.push({ id: c.id, type: c.type, title, favorite: c.favorite, reprompt: c.reprompt, data, deletedAt: c.deletedAt, createdAt: c.createdAt, updatedAt: c.updatedAt })
           } catch {}
         }
         inMemoryCiphers = decryptedList

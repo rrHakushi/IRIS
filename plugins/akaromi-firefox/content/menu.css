@@ -1,5 +1,12 @@
 /* Akaromi for Firefox — Floating Dropdown & In-Page Overlay Styles */
 
+.akaromi-dropdown,
+.akaromi-dropdown *,
+.iris-pass-dropdown,
+.iris-pass-dropdown * {
+  box-sizing: border-box !important;
+}
+
 /* In-Page Dropdown */
 .akaromi-dropdown,
 .iris-pass-dropdown {
@@ -87,12 +94,12 @@
 }
 
 .iris-pass-dropdown-list {
-  max-height: 240px !important;
+  max-height: 280px !important;
   overflow-y: auto !important;
   padding: 4px !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 2px !important;
+  gap: 4px !important;
 }
 
 .iris-pass-dropdown-item {
@@ -100,15 +107,19 @@
   background: transparent !important;
   transition: background 0.12s ease !important;
   overflow: hidden !important;
+  flex-shrink: 0 !important;
+  width: 100% !important;
 }
 
 .iris-pass-item-main {
   display: flex !important;
   align-items: center !important;
   gap: 10px !important;
-  padding: 8px 10px !important;
+  padding: 6px 10px !important;
+  min-height: 44px !important;
   cursor: pointer !important;
   border-radius: 8px !important;
+  box-sizing: border-box !important;
 }
 
 .iris-pass-item-main:hover {
@@ -130,11 +141,19 @@
 .iris-pass-item-meta {
   flex: 1 !important;
   min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  overflow: hidden !important;
 }
 
 .iris-pass-item-title {
   font-weight: 500 !important;
   font-size: 13px !important;
+  line-height: 1.25 !important;
+  margin: 0 !important;
+  padding: 0 !important;
   color: #fafafa !important;
   white-space: nowrap !important;
   overflow: hidden !important;
@@ -143,6 +162,9 @@
 
 .iris-pass-item-user {
   font-size: 11px !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+  padding: 0 !important;
   color: #a1a1aa !important;
   white-space: nowrap !important;
   overflow: hidden !important;

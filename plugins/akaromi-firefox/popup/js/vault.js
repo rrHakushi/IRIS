@@ -60,6 +60,10 @@
   const detailAdditionalPasswordsCard = document.getElementById("detail-additional-passwords-card")
   const detailAdditionalPasswordsList = document.getElementById("detail-additional-passwords-list")
 
+  // Custom Fields in Detail View
+  const detailCustomFieldsCard = document.getElementById("detail-custom-fields-card")
+  const detailCustomFieldsList = document.getElementById("detail-custom-fields-list")
+
   // Metadata
   const detailMetaAutofill = document.getElementById("detail-meta-autofill")
   const detailMetaModified = document.getElementById("detail-meta-modified")
@@ -524,6 +528,91 @@
       }
     }
 
+    // Custom Fields
+    const customFields = data.customFields || []
+    if (detailCustomFieldsCard && detailCustomFieldsList) {
+      if (customFields.length > 0) {
+        detailCustomFieldsCard.style.display = "flex"
+        detailCustomFieldsList.replaceChildren()
+
+        customFields.forEach((cf) => {
+          const row = document.createElement("div")
+          row.className = "proton-field-row clickable"
+          const cfName = cf.name || "Field"
+          const cfVal = cf.value || ""
+          const isHidden = Boolean(cf.isHidden)
+          row.title = `Click to copy ${cfName}`
+
+          safeSetTemplate(
+            row,
+            `
+            <div class="field-icon-cell">
+              <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" />
+                <line x1="9" y1="9" x2="10" y2="9" />
+                <line x1="9" y1="13" x2="15" y2="13" />
+                <line x1="9" y1="17" x2="15" y2="17" />
+              </svg>
+            </div>
+            <div class="field-data-cell">
+              <div class="field-label">${escapeHtml(cfName)}</div>
+              <div class="field-value font-mono ${isHidden ? "masked-dots" : ""} val-custom-field" data-revealed="${!isHidden}">${isHidden ? "••••••••••••" : escapeHtml(cfVal)}</div>
+            </div>
+            ${
+              isHidden
+                ? `
+            <div class="field-inline-actions">
+              <button type="button" class="icon-btn-round mini btn-toggle-custom-eye" title="Reveal value">
+                <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="2" />
+                  <path d="M22 12c-2.667 4.667-6 7-10 7s-7.333-2.333-10-7c2.667-4.667 6-7 10-7s7.333 2.333 10 7" />
+                </svg>
+              </button>
+            </div>`
+                : ""
+            }
+          `
+          )
+
+          const valEl = row.querySelector(".val-custom-field")
+          const eyeBtn = row.querySelector(".btn-toggle-custom-eye")
+
+          eyeBtn?.addEventListener("click", (e) => {
+            e.stopPropagation()
+            if (!valEl) return
+            const isRevealed = valEl.dataset.revealed === "true"
+            if (isRevealed) {
+              valEl.textContent = "••••••••••••"
+              valEl.dataset.revealed = "false"
+              valEl.classList.add("masked-dots")
+              IrisIcons.swap(eyeBtn, "eye")
+            } else {
+              valEl.textContent = cfVal
+              valEl.dataset.revealed = "true"
+              valEl.classList.remove("masked-dots")
+              IrisIcons.swap(eyeBtn, "eye-off")
+            }
+          })
+
+          row.addEventListener("click", () => {
+            if (cfVal) {
+              navigator.clipboard.writeText(cfVal).then(() => {
+                showToast(`${cfName} copied`)
+                if (isHidden) {
+                  ext.runtime.sendMessage({ action: "SCHEDULE_CLIPBOARD_CLEAR", payload: { text: cfVal } }).catch(() => {})
+                }
+              })
+            }
+          })
+
+          detailCustomFieldsList.appendChild(row)
+        })
+      } else {
+        detailCustomFieldsCard.style.display = "none"
+      }
+    }
+
     // TOTP Authenticator
     if (liveTotpTimer) clearInterval(liveTotpTimer)
     const rawTotpSecret =
@@ -746,7 +835,6 @@
           id: cipher.id,
           type: cipher.type,
           title: cipher.title,
-          folderId: cipher.folderId,
           favorite: newFav,
           data: cipher.data,
         },
