@@ -85,11 +85,34 @@ export function DiscoverMediaCard({
         ).toFixed(1)
       : null
 
+  const formatDisplay = (() => {
+    if (!item.format) return null
+    if (typeof item.format === "string") return item.format.replace(/_/g, " ")
+    if (typeof (item.format as any)?.name === "string")
+      return (item.format as any).name
+    return String(item.format)
+  })()
+
   const yearOrSeason = (() => {
-    if (item.seasonSeason && item.releaseYear) {
-      return `${item.seasonSeason.slice(0, 3)} ${item.releaseYear}`
+    const yearVal = item.releaseYear ?? (item as any).year
+    const seasonVal = item.seasonSeason ?? (item as any).season
+    if (seasonVal && yearVal) {
+      return `${String(seasonVal).slice(0, 3)} ${yearVal}`
     }
-    return item.releaseYear ? String(item.releaseYear) : null
+    return yearVal ? String(yearVal) : null
+  })()
+
+  const genresDisplay = (() => {
+    if (!item.genres || !Array.isArray(item.genres) || item.genres.length === 0) {
+      return null
+    }
+    const names = item.genres
+      .slice(0, 2)
+      .map((g: any) =>
+        typeof g === "string" ? g : g?.name || g?.genre?.name || ""
+      )
+      .filter(Boolean)
+    return names.length > 0 ? names.join(", ") : null
   })()
 
   return (
@@ -146,12 +169,12 @@ export function DiscoverMediaCard({
 
         {/* Top Badges: Score & Format */}
         <div className="absolute inset-x-1.5 top-1.5 flex items-center justify-between gap-1">
-          {item.format ? (
+          {formatDisplay ? (
             <Badge
               variant="secondary"
               className="h-5 rounded-md border-none bg-black/60 px-1.5 text-[10px] font-semibold text-white/90 backdrop-blur-md"
             >
-              {item.format.replace(/_/g, " ")}
+              {formatDisplay}
             </Badge>
           ) : (
             <span />
@@ -192,9 +215,9 @@ export function DiscoverMediaCard({
           <p className="line-clamp-1 text-[11px] text-muted-foreground">
             {item.artistName}
           </p>
-        ) : item.genres && item.genres.length > 0 ? (
+        ) : genresDisplay ? (
           <p className="line-clamp-1 text-[11px] text-muted-foreground">
-            {item.genres.slice(0, 2).join(", ")}
+            {genresDisplay}
           </p>
         ) : null}
       </div>

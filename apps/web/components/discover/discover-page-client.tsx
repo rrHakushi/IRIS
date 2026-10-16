@@ -276,6 +276,19 @@ const mapStudioItem = (s: any): DiscoverItem => ({
   isAdult: false,
 })
 
+const mapMediaItem = (x: any): DiscoverItem => ({
+  ...x,
+  genres: Array.isArray(x.genres)
+    ? x.genres
+        .map((g: any) =>
+          typeof g === "string" ? g : g?.name || g?.genre?.name || ""
+        )
+        .filter(Boolean)
+    : [],
+  releaseYear: x.year ?? x.releaseYear ?? x.seasonYear,
+  seasonSeason: x.season ?? x.seasonSeason,
+})
+
   const fetchFacets = useCallback(
     async (force = false) => {
       if (!category) return
@@ -492,7 +505,7 @@ const mapStudioItem = (s: any): DiscoverItem => ({
           })
 
           if (!error && data && data.success) {
-            setItems(data.items as unknown as DiscoverItem[])
+            setItems((data.items || []).map(mapMediaItem))
             setNextCursor(data.pagination?.hasMore ? 2 : null)
             setHasMore(Boolean(data.pagination?.hasMore))
             setTotalCount(data.pagination?.total ?? 0)
@@ -635,7 +648,7 @@ const mapStudioItem = (s: any): DiscoverItem => ({
         })
 
         if (!error && data && data.success) {
-          const newItems = (data.items as unknown as DiscoverItem[]) || []
+          const newItems = (data.items || []).map(mapMediaItem)
           setItems((prev) => [...prev, ...newItems])
           setNextCursor(data.pagination?.hasMore ? pageToFetch + 1 : null)
           setHasMore(Boolean(data.pagination?.hasMore))

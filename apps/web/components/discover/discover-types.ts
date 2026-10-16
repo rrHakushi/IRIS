@@ -52,7 +52,7 @@ export interface DiscoverItem {
   averageScore?: number | null
   popularity?: number | null
   favorites?: number | null
-  genres: string[]
+  genres: Array<string | { id?: number; name?: string }>
   releaseYear?: number | null
   seasonSeason?: string | null
   status?: string | null
