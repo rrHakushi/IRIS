@@ -1,0 +1,79 @@
+model Other {
+    id          Int     @id @default(autoincrement())
+    creatorId   String
+    creator     User    @relation("CreatedOtherItems", fields: [creatorId], references: [id], onDelete: Cascade)
+
+    titlePrimary   String  @db.Text
+    titleSecondary String? @db.Text
+    description    String? @db.Text
+
+    coverImage     String? @db.Text
+    bannerImage    String? @db.Text
+    format         String? @db.Text
+
+    startDate      DateTime?
+    endDate        DateTime?
+
+    isPublished    Boolean @default(false)
+
+    // [{ key: string, label: string, unit?: string, max?: number }]
+    progressFields Json    @default("[]") @db.JsonB
+    // The designated progress field key to increment in /increment route (max 1)
+    incrementFieldKey String?
+
+    // Custom status labels/options [{ key: string, label: string, isCompleted?: boolean }]
+    statuses       Json    @default("[]") @db.JsonB
+
+    // Stored pre-update snapshot for tracking users when published item is edited
+    preUpdateSnapshot Json? @db.JsonB
+
+    // Mandatory statistics fields
+    averageScore       Float?
+    favorites          Int    @default(0)
+    popularity         Int    @default(0)
+    totalScoreSum      Int?   @db.Integer
+    scoredCount        Int?   @db.Integer
+    statusDistribution Json   @default("{}") @db.JsonB
+    scoreDistribution  Json   @default("{}") @db.JsonB
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    userLists         OtherList[]
+    customListEntries CustomListEntry[]
+
+    @@index([creatorId])
+    @@index([titlePrimary])
+    @@index([isPublished])
+    @@index([popularity(sort: Desc)])
+    @@index([averageScore(sort: Desc)])
+}
+
+model OtherList {
+    id          Int       @id @default(autoincrement())
+    userId      String
+    user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    otherId     Int
+    other       Other     @relation(fields: [otherId], references: [id], onDelete: Cascade)
+
+    status      String    @default("PLANNING")
+    // Map of progress field keys to values: { [key: string]: number }
+    progressValues Json   @default("{}") @db.JsonB
+
+    score       Float?
+    notes       String?   @db.Text
+    private     Boolean   @default(false)
+
+    startedAt   DateTime?
+    completedAt DateTime?
+
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+
+    @@unique([userId, otherId])
+    @@index([userId])
+    @@index([otherId])
+    @@index([status])
+    @@index([userId, status])
+    @@index([userId, score(sort: Desc)])
+}

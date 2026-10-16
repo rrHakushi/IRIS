@@ -10,6 +10,11 @@ export interface ListQuery {
   page?: number
   limit?: number
   status?: string
+  format?: string
+  mediaFormat?: string
+  genre?: string
+  year?: string
+  mediaStatus?: string
   sortBy?: string
   order?: 'asc' | 'desc'
   q?: string
@@ -42,7 +47,7 @@ function formatEntry(entry: any) {
 
 function emitListActivity(params: {
   userId: string
-  mediaType: 'ANIME' | 'MANGA' | 'MOVIE' | 'TV' | 'GAME' | 'BOOK' | 'MUSIC'
+  mediaType: 'ANIME' | 'MANGA' | 'MOVIE' | 'TV' | 'GAME' | 'BOOK' | 'MUSIC' | 'OTHER'
   mediaId: number
   existing?: any | null
   incoming?: any | null
@@ -221,6 +226,7 @@ function computeStats(items: any[], progressField: string) {
 function computeFilters(items: any[], mediaKey: string, yearKey: string = 'startDateYear') {
   const statusCounts: Record<string, number> = {}
   const formatCounts: Record<string, number> = {}
+  const mediaStatusCounts: Record<string, number> = {}
   const genreCounts: Record<string, number> = {}
   const yearCounts: Record<number, number> = {}
 
@@ -230,11 +236,12 @@ function computeFilters(items: any[], mediaKey: string, yearKey: string = 'start
     }
     const media = item[mediaKey]
     if (media) {
-      if (media.format) {
-        formatCounts[media.format] = (formatCounts[media.format] || 0) + 1
+      const format = media.format || media.type
+      if (format) {
+        formatCounts[format] = (formatCounts[format] || 0) + 1
       }
       if (media.status) {
-        formatCounts[media.status] = (formatCounts[media.status] || 0) + 1
+        mediaStatusCounts[media.status] = (mediaStatusCounts[media.status] || 0) + 1
       }
       const yr = media[yearKey]
       if (yr) {
@@ -254,9 +261,68 @@ function computeFilters(items: any[], mediaKey: string, yearKey: string = 'start
   return {
     statuses: Object.entries(statusCounts).map(([value, count]) => ({ value, count })),
     formats: Object.entries(formatCounts).map(([value, count]) => ({ value, count })),
+    mediaStatuses: Object.entries(mediaStatusCounts).map(([value, count]) => ({ value, count })),
     genres: Object.entries(genreCounts).map(([value, count]) => ({ value, count })),
     years: Object.entries(yearCounts).map(([value, count]) => ({ value: Number(value), count })),
   }
+}
+
+function applyListMediaFilters(
+  whereMedia: any = {},
+  query?: ListQuery,
+  options: {
+    yearKey?: string
+    formatField?: string
+    isDateStringYear?: boolean
+    formatTransform?: (f: string) => string
+  } = {}
+) {
+  const result = { ...whereMedia }
+  const yearKey = options.yearKey ?? 'startDateYear'
+  const formatField = options.formatField ?? 'format'
+
+  const formatStr = query?.format || query?.mediaFormat
+  if (formatStr && formatField) {
+    const rawFormats = formatStr.split(',').map((f) => f.trim()).filter(Boolean)
+    const formats = options.formatTransform
+      ? rawFormats.map(options.formatTransform)
+      : rawFormats.map((f) => f.toUpperCase())
+    if (formats.length > 0) {
+      result[formatField] = { in: formats }
+    }
+  }
+
+  if (query?.mediaStatus) {
+    const statuses = query.mediaStatus.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean)
+    if (statuses.length > 0) {
+      result.status = { in: statuses }
+    }
+  }
+
+  if (query?.genre) {
+    const genres = query.genre.split(',').map((g) => g.trim()).filter(Boolean)
+    if (genres.length > 0) {
+      result.genres = { some: { name: { in: genres, mode: 'insensitive' } } }
+    }
+  }
+
+  if (query?.year) {
+    const years = query.year.split(',').map((y) => Number(y.trim())).filter((n) => !isNaN(n))
+    if (years.length > 0) {
+      if (options.isDateStringYear) {
+        result.OR = years.map((y) => ({
+          startDate: {
+            gte: new Date(y, 0, 1),
+            lte: new Date(y, 11, 31, 23, 59, 59, 999),
+          },
+        }))
+      } else {
+        result[yearKey] = { in: years }
+      }
+    }
+  }
+
+  return result
 }
 
 export class BorealisListsServ {
@@ -274,13 +340,21 @@ export class BorealisListsServ {
     if (query?.status) {
       where.status = query.status.trim().toUpperCase()
     }
-    if (query?.q) {
-      where.anime = {
-        OR: [
-          { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
-          { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
-        ],
-      }
+    const mediaWhere: any = query?.q
+      ? {
+          OR: [
+            { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
+            { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
+          ],
+        }
+      : {}
+    const animeWhere = applyListMediaFilters(mediaWhere, query, {
+      yearKey: 'startDateYear',
+      formatField: 'format',
+      formatTransform: (f) => f.toUpperCase(),
+    })
+    if (Object.keys(animeWhere).length > 0) {
+      where.anime = animeWhere
     }
 
     let orderBy: any = { updatedAt: order }
@@ -680,13 +754,21 @@ export class BorealisListsServ {
     if (query?.status) {
       where.status = query.status.trim().toUpperCase()
     }
-    if (query?.q) {
-      where.manga = {
-        OR: [
-          { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
-          { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
-        ],
-      }
+    const mediaWhere: any = query?.q
+      ? {
+          OR: [
+            { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
+            { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
+          ],
+        }
+      : {}
+    const mangaWhere = applyListMediaFilters(mediaWhere, query, {
+      yearKey: 'startDateYear',
+      formatField: 'format',
+      formatTransform: (f) => f.toUpperCase(),
+    })
+    if (Object.keys(mangaWhere).length > 0) {
+      where.manga = mangaWhere
     }
 
     let orderBy: any = { updatedAt: order }
@@ -1104,13 +1186,20 @@ export class BorealisListsServ {
     if (query?.status) {
       where.status = query.status.trim().toUpperCase()
     }
-    if (query?.q) {
-      where.movie = {
-        OR: [
-          { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
-          { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
-        ],
-      }
+    const mediaWhere: any = query?.q
+      ? {
+          OR: [
+            { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
+            { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
+          ],
+        }
+      : {}
+    const movieWhere = applyListMediaFilters(mediaWhere, query, {
+      yearKey: 'releaseDateYear',
+      formatField: '',
+    })
+    if (Object.keys(movieWhere).length > 0) {
+      where.movie = movieWhere
     }
 
     let orderBy: any = { updatedAt: order }
@@ -1473,13 +1562,20 @@ export class BorealisListsServ {
     if (query?.status) {
       where.status = query.status.trim().toUpperCase()
     }
-    if (query?.q) {
-      where.tv = {
-        OR: [
-          { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
-          { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
-        ],
-      }
+    const mediaWhere: any = query?.q
+      ? {
+          OR: [
+            { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
+            { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
+          ],
+        }
+      : {}
+    const tvWhere = applyListMediaFilters(mediaWhere, query, {
+      yearKey: 'firstAiredYear',
+      formatField: '',
+    })
+    if (Object.keys(tvWhere).length > 0) {
+      where.tv = tvWhere
     }
 
     let orderBy: any = { updatedAt: order }
@@ -1873,13 +1969,20 @@ export class BorealisListsServ {
     if (query?.status) {
       where.status = query.status.trim().toUpperCase()
     }
-    if (query?.q) {
-      where.game = {
-        OR: [
-          { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
-          { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
-        ],
-      }
+    const mediaWhere: any = query?.q
+      ? {
+          OR: [
+            { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
+            { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
+          ],
+        }
+      : {}
+    const gameWhere = applyListMediaFilters(mediaWhere, query, {
+      yearKey: 'releaseDateYear',
+      formatField: '',
+    })
+    if (Object.keys(gameWhere).length > 0) {
+      where.game = gameWhere
     }
 
     let orderBy: any = { updatedAt: order }
@@ -2258,13 +2361,21 @@ export class BorealisListsServ {
     if (query?.status) {
       where.status = query.status.trim().toUpperCase()
     }
-    if (query?.q) {
-      where.book = {
-        OR: [
-          { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
-          { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
-        ],
-      }
+    const mediaWhere: any = query?.q
+      ? {
+          OR: [
+            { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
+            { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
+          ],
+        }
+      : {}
+    const bookWhere = applyListMediaFilters(mediaWhere, query, {
+      yearKey: 'releaseDateYear',
+      formatField: 'format',
+      formatTransform: (f) => f,
+    })
+    if (Object.keys(bookWhere).length > 0) {
+      where.book = bookWhere
     }
 
     let orderBy: any = { updatedAt: order }
@@ -2294,6 +2405,7 @@ export class BorealisListsServ {
               subtitle: true,
               coverImage: true,
               bannerImage: true,
+              format: true,
               status: true,
               pageCount: true,
               chapterCount: true,
@@ -2651,6 +2763,7 @@ export class BorealisListsServ {
         status: true,
         book: {
           select: {
+            format: true,
             status: true,
             releaseDateYear: true,
             genres: { select: { name: true } },
@@ -2678,14 +2791,22 @@ export class BorealisListsServ {
     if (query?.status) {
       where.status = query.status.trim().toUpperCase()
     }
-    if (query?.q) {
-      where.music = {
-        OR: [
-          { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
-          { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
-          { artistName: { contains: query.q.trim(), mode: 'insensitive' } },
-        ],
-      }
+    const mediaWhere: any = query?.q
+      ? {
+          OR: [
+            { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
+            { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
+            { artistName: { contains: query.q.trim(), mode: 'insensitive' } },
+          ],
+        }
+      : {}
+    const musicWhere = applyListMediaFilters(mediaWhere, query, {
+      yearKey: 'releaseDateYear',
+      formatField: 'type',
+      formatTransform: (f) => f.toUpperCase(),
+    })
+    if (Object.keys(musicWhere).length > 0) {
+      where.music = musicWhere
     }
 
     let orderBy: any = { updatedAt: order }
@@ -3028,6 +3149,7 @@ export class BorealisListsServ {
         status: true,
         music: {
           select: {
+            type: true,
             status: true,
             releaseDateYear: true,
             genres: { select: { name: true } },
@@ -3042,54 +3164,272 @@ export class BorealisListsServ {
   }
 
   // ===========================================================================
-  // 8. Other Lists (Blank Shells)
+  // 8. Other Lists
   // ===========================================================================
 
   public static async getOtherList(userId: string, query?: ListQuery) {
     const page = Math.max(1, Number(query?.page ?? 1))
     const limit = Math.max(1, Math.min(100, Number(query?.limit ?? 40)))
+    const skip = (page - 1) * limit
+
+    const where: any = { userId }
+    if (query?.status && query.status !== 'ALL') {
+      if (
+        query.status === 'WATCHING' ||
+        query.status === 'CURRENT' ||
+        query.status === 'TRACKING'
+      ) {
+        where.status = { in: ['WATCHING', 'CURRENT', 'TRACKING'] }
+      } else {
+        where.status = query.status
+      }
+    }
+    const mediaWhere: any = query?.q
+      ? { titlePrimary: { contains: query.q, mode: 'insensitive' } }
+      : {}
+    const otherWhere = applyListMediaFilters(mediaWhere, query, {
+      isDateStringYear: true,
+      formatField: 'format',
+      formatTransform: (f) => f.toLowerCase(),
+    })
+    if (Object.keys(otherWhere).length > 0) {
+      where.other = otherWhere
+    }
+
+    let orderBy: any = { updatedAt: 'desc' }
+    const sortField = query?.sortBy ?? 'updatedAt'
+    const sortOrder = query?.order ?? 'desc'
+    if (sortField === 'score') {
+      orderBy = { score: sortOrder }
+    } else if (sortField === 'createdAt') {
+      orderBy = { createdAt: sortOrder }
+    } else if (sortField === 'title') {
+      orderBy = { other: { titlePrimary: sortOrder } }
+    } else {
+      orderBy = { [sortField]: sortOrder }
+    }
+
+    const [total, entries] = await Promise.all([
+      prisma.otherList.count({ where }),
+      prisma.otherList.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy,
+        include: {
+          other: true,
+        },
+      }),
+    ])
+
+    const totalPages = Math.ceil(total / limit) || 1
+    const items = entries.map((e) => {
+      const incKey = e.other?.incrementFieldKey
+      const prog =
+        incKey && (e.progressValues as any)?.[incKey] !== undefined
+          ? Number((e.progressValues as any)[incKey])
+          : 0
+      return {
+        entry: {
+          ...e,
+          progress: prog,
+        },
+        media: e.other,
+      }
+    })
+
     return {
       success: true,
-      items: [],
+      items,
       pagination: {
         page,
         limit,
-        total: 0,
-        totalPages: 1,
-        hasMore: false,
+        total,
+        totalPages,
+        hasMore: page < totalPages,
       },
     }
   }
 
   public static async getOtherEntry(userId: string, otherId: number) {
+    const existing = await prisma.otherList.findUnique({
+      where: { userId_otherId: { userId, otherId } },
+      include: { other: true },
+    })
+
+    if (existing) {
+      const incKey = existing.other?.incrementFieldKey
+      const prog =
+        incKey && (existing.progressValues as any)?.[incKey] !== undefined
+          ? Number((existing.progressValues as any)[incKey])
+          : 0
+      return {
+        success: true,
+        inList: true,
+        entry: {
+          ...existing,
+          progress: prog,
+        },
+        media: existing.other,
+      }
+    }
+
+    const item = await prisma.other.findUnique({
+      where: { id: otherId },
+    })
+
     return {
       success: true,
       inList: false,
       entry: null,
-      media: null,
+      media: item,
     }
   }
 
   public static async upsertOtherEntry(userId: string, otherId: number, body: any) {
-    const now = new Date().toISOString()
+    const item = await prisma.other.findUnique({
+      where: { id: otherId },
+    })
+    if (!item) {
+      throw new NotFound(`Custom item with ID ${otherId} does not exist`)
+    }
+
+    const existing = await prisma.otherList.findUnique({
+      where: { userId_otherId: { userId, otherId } },
+    })
+
+    const status = body?.status ?? existing?.status ?? 'PLANNING'
+    const incKey = item.incrementFieldKey || 'progress'
+
+    let progressValues: any =
+      body?.progressValues !== undefined
+        ? body.progressValues
+        : (existing?.progressValues as any) || {}
+
+    if (body?.progress !== undefined) {
+      progressValues = {
+        ...progressValues,
+        [incKey]: Number(body.progress),
+      }
+    }
+
+    const startedAt =
+      body?.startedAt !== undefined
+        ? body.startedAt
+          ? new Date(body.startedAt)
+          : null
+        : status === 'IN_PROGRESS' && !existing?.startedAt
+          ? new Date()
+          : existing?.startedAt ?? null
+
+    const completedAt =
+      body?.completedAt !== undefined
+        ? body.completedAt
+          ? new Date(body.completedAt)
+          : null
+        : status === 'COMPLETED' && !existing?.completedAt
+          ? new Date()
+          : existing?.completedAt ?? null
+
+    const entry = await prisma.otherList.upsert({
+      where: { userId_otherId: { userId, otherId } },
+      create: {
+        userId,
+        otherId,
+        status,
+        progressValues,
+        score: body?.score !== undefined ? body.score : null,
+        notes: body?.notes !== undefined ? body.notes : null,
+        private: body?.private !== undefined ? Boolean(body.private) : false,
+        startedAt,
+        completedAt,
+      },
+      update: {
+        status,
+        progressValues,
+        score: body?.score !== undefined ? body.score : undefined,
+        notes: body?.notes !== undefined ? body.notes : undefined,
+        private: body?.private !== undefined ? Boolean(body.private) : undefined,
+        startedAt,
+        completedAt,
+      },
+      include: {
+        other: true,
+      },
+    })
+
+    await MediaStatsServ.recalculateMediaStats('OTHER', otherId)
+
+    const prog = (entry.progressValues as any)?.[incKey] ?? 0
+
+    emitListActivity({
+      userId,
+      mediaType: 'OTHER',
+      mediaId: otherId,
+      existing: existing
+        ? {
+            ...existing,
+            progress: (existing.progressValues as any)?.[incKey] ?? 0,
+          }
+        : null,
+      incoming: {
+        status,
+        progress: prog,
+        score: body?.score !== undefined ? body.score : undefined,
+        private: body?.private !== undefined ? Boolean(body.private) : undefined,
+      },
+      media: {
+        titlePrimary: item.titlePrimary,
+        titleSecondary: item.titleSecondary,
+        coverImage: item.coverImage,
+        bannerImage: item.bannerImage,
+        format: item.format,
+      },
+    })
+
     return {
       success: true,
       message: 'Other list entry updated successfully',
       entry: {
-        id: 1,
-        otherId,
-        status: body?.status ?? 'PLANNING',
-        progress: body?.progress !== undefined ? Number(body.progress) : 0,
-        score: body?.score ?? null,
-        notes: body?.notes ?? null,
-        private: body?.private ?? false,
-        createdAt: now,
-        updatedAt: now,
+        ...entry,
+        progress: Number(prog),
       },
     }
   }
 
   public static async deleteOtherEntry(userId: string, otherId: number) {
+    const existing = await prisma.otherList.findUnique({
+      where: { userId_otherId: { userId, otherId } },
+      include: { other: true },
+    })
+
+    await prisma.otherList.deleteMany({
+      where: { userId, otherId },
+    })
+
+    await MediaStatsServ.recalculateMediaStats('OTHER', otherId)
+
+    if (existing) {
+      const incKey = existing.other?.incrementFieldKey || 'progress'
+      emitListActivity({
+        userId,
+        mediaType: 'OTHER',
+        mediaId: otherId,
+        existing: {
+          ...existing,
+          progress: (existing.progressValues as any)?.[incKey] ?? 0,
+        },
+        media: {
+          titlePrimary: existing.other?.titlePrimary,
+          titleSecondary: existing.other?.titleSecondary,
+          coverImage: existing.other?.coverImage,
+          bannerImage: existing.other?.bannerImage,
+          format: existing.other?.format,
+        },
+        isDeleted: true,
+      })
+    }
+
     return {
       success: true,
       message: 'Item removed from other list successfully',
@@ -3101,42 +3441,198 @@ export class BorealisListsServ {
     otherId: number,
     body?: { count?: number; status?: string } | null
   ) {
+    const item = await prisma.other.findUnique({
+      where: { id: otherId },
+    })
+    if (!item) {
+      throw new NotFound(`Custom item with ID ${otherId} does not exist`)
+    }
+
+    const existing = await prisma.otherList.findUnique({
+      where: { userId_otherId: { userId, otherId } },
+    })
+
+    const incKey =
+      item.incrementFieldKey || (item.progressFields as any[])?.[0]?.key || 'progress'
+    const fieldSpec = ((item.progressFields as any[]) || []).find(
+      (f: any) => f.key === incKey
+    )
+    const maxVal = fieldSpec?.max ?? null
+
     const count = Math.max(1, body?.count ?? 1)
-    const now = new Date().toISOString()
+    const currentProgValues = (existing?.progressValues as Record<string, number>) || {}
+    const currentVal = Number(currentProgValues[incKey] || 0)
+    let newVal = currentVal + count
+    let newStatus = body?.status ?? existing?.status ?? 'IN_PROGRESS'
+    let completedAt = existing?.completedAt ?? null
+
+    if (newStatus === 'PLANNING') {
+      newStatus = 'IN_PROGRESS'
+    }
+
+    if (maxVal && maxVal > 0 && newVal >= maxVal) {
+      newVal = maxVal
+      newStatus = 'COMPLETED'
+      if (!completedAt) {
+        completedAt = new Date()
+      }
+    }
+
+    const updatedProgValues = {
+      ...currentProgValues,
+      [incKey]: newVal,
+    }
+
+    const entry = await prisma.otherList.upsert({
+      where: { userId_otherId: { userId, otherId } },
+      create: {
+        userId,
+        otherId,
+        status: newStatus,
+        progressValues: updatedProgValues,
+        startedAt: new Date(),
+        completedAt,
+      },
+      update: {
+        status: newStatus,
+        progressValues: updatedProgValues,
+        completedAt,
+      },
+      include: {
+        other: true,
+      },
+    })
+
+    await MediaStatsServ.recalculateMediaStats('OTHER', otherId)
+
+    emitListActivity({
+      userId,
+      mediaType: 'OTHER',
+      mediaId: otherId,
+      existing: existing
+        ? {
+            ...existing,
+            progress: currentVal,
+          }
+        : null,
+      incoming: {
+        status: newStatus,
+        progress: newVal,
+      },
+      media: {
+        titlePrimary: item.titlePrimary,
+        titleSecondary: item.titleSecondary,
+        coverImage: item.coverImage,
+        bannerImage: item.bannerImage,
+        format: item.format,
+      },
+    })
+
     return {
       success: true,
       message: `Custom progress incremented by ${count}`,
       entry: {
-        id: 1,
-        otherId,
-        status: body?.status ?? 'WATCHING',
-        progress: count,
-        createdAt: now,
-        updatedAt: now,
+        ...entry,
+        progress: newVal,
       },
     }
   }
 
   public static async getOtherStats(userId: string) {
+    const entries = await prisma.otherList.findMany({
+      where: { userId },
+      include: { other: true },
+    })
+
+    const total = entries.length
+    const statusCounts: Record<string, number> = {}
+    let totalScore = 0
+    let scoredCount = 0
+    let totalProgress = 0
+    const scoreBuckets: Record<number, number> = {}
+
+    for (let i = 1; i <= 10; i++) {
+      scoreBuckets[i] = 0
+    }
+
+    for (const e of entries) {
+      if (e.status) {
+        statusCounts[e.status] = (statusCounts[e.status] || 0) + 1
+      }
+      if (e.score !== null && e.score !== undefined && e.score > 0) {
+        totalScore += e.score
+        scoredCount++
+        const rounded = Math.min(10, Math.max(1, Math.round(e.score)))
+        scoreBuckets[rounded] = (scoreBuckets[rounded] || 0) + 1
+      }
+      const incKey = e.other?.incrementFieldKey
+      const val =
+        incKey && (e.progressValues as any)?.[incKey]
+          ? Number((e.progressValues as any)[incKey])
+          : 0
+      totalProgress += val
+    }
+
+    const meanScore =
+      scoredCount > 0 ? Number((totalScore / scoredCount).toFixed(2)) : 0
+    const scoreDistribution = Object.entries(scoreBuckets).map(([score, count]) => ({
+      score: Number(score),
+      count,
+    }))
+
     return {
       success: true,
       stats: {
-        total: 0,
-        statusCounts: {},
-        meanScore: 0,
-        totalProgress: 0,
-        scoreDistribution: [],
+        total,
+        statusCounts,
+        meanScore,
+        totalProgress,
+        scoreDistribution,
       },
     }
   }
 
   public static async getOtherFilters(userId: string) {
+    const entries = await prisma.otherList.findMany({
+      where: { userId },
+      select: {
+        status: true,
+        other: {
+          select: {
+            startDate: true,
+            format: true,
+          },
+        },
+      },
+    })
+
+    const statusCounts: Record<string, number> = {}
+    const formatCounts: Record<string, number> = {}
+    const yearCounts: Record<number, number> = {}
+
+    for (const item of entries) {
+      if (item.status) {
+        statusCounts[item.status] = (statusCounts[item.status] || 0) + 1
+      }
+      if (item.other?.format) {
+        const fmt = item.other.format.trim().toLowerCase()
+        formatCounts[fmt] = (formatCounts[fmt] || 0) + 1
+      }
+      if (item.other?.startDate) {
+        const yr = new Date(item.other.startDate).getFullYear()
+        yearCounts[yr] = (yearCounts[yr] || 0) + 1
+      }
+    }
+
     return {
       success: true,
-      statuses: [],
-      formats: [],
+      statuses: Object.entries(statusCounts).map(([value, count]) => ({ value, count })),
+      formats: Object.entries(formatCounts).map(([value, count]) => ({ value, count })),
       genres: [],
-      years: [],
+      years: Object.entries(yearCounts).map(([value, count]) => ({
+        value: Number(value),
+        count,
+      })),
     }
   }
 

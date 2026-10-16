@@ -95,6 +95,9 @@ export function ListActionButtons({
         case "music":
           res = await elysia.borealis.lists.music({ musicId: numericId }).get()
           break
+        case "other":
+          res = await elysia.borealis.lists.other({ otherId: numericId }).get()
+          break
       }
 
       if (!res.error && res.data?.inList && res.data.entry) {
@@ -191,6 +194,11 @@ export function ListActionButtons({
         case "music":
           res = await elysia.borealis.lists
             .music({ musicId: numericId })
+            .post({ status: "PLANNING" })
+          break
+        case "other":
+          res = await elysia.borealis.lists
+            .other({ otherId: numericId })
             .post({ status: "PLANNING" })
           break
       }

@@ -105,6 +105,7 @@ model CustomListEntry {
     gameId  Int?
     bookId  Int?
     musicId Int?
+    otherId Int?
 
     anime Anime? @relation(fields: [animeId], references: [id], onDelete: Cascade)
     manga Manga? @relation(fields: [mangaId], references: [id], onDelete: Cascade)
@@ -113,6 +114,7 @@ model CustomListEntry {
     game  Game?  @relation(fields: [gameId], references: [id], onDelete: Cascade)
     book  Book?  @relation(fields: [bookId], references: [id], onDelete: Cascade)
     music Music? @relation(fields: [musicId], references: [id], onDelete: Cascade)
+    other Other? @relation(fields: [otherId], references: [id], onDelete: Cascade)
 
     @@unique([listId, mediaType, mediaId])
     @@index([listId])

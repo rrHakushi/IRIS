@@ -28,6 +28,7 @@ let mockTv: any[] = []
 let mockGames: any[] = []
 let mockBooks: any[] = []
 let mockMusic: any[] = []
+let mockOther: any[] = []
 
 // User list entries
 let mockAnimeLists: any[] = []
@@ -37,6 +38,7 @@ let mockTvLists: any[] = []
 let mockGameLists: any[] = []
 let mockBookLists: any[] = []
 let mockMusicLists: any[] = []
+let mockOtherLists: any[] = []
 
 function setupPrismaMock() {
   mockUsers = [
@@ -180,6 +182,29 @@ function setupPrismaMock() {
     },
   ]
 
+  mockOther = [
+    {
+      id: 42,
+      creatorId: '00000000-0000-0000-0000-000000000001',
+      titlePrimary: 'Learning Rust',
+      titleSecondary: null,
+      description: 'Personal learning goals',
+      coverImage: 'https://example.com/rust.jpg',
+      bannerImage: null,
+      startDate: new Date('2026-01-01'),
+      endDate: null,
+      isPublished: true,
+      progressFields: [{ key: 'chapters', label: 'Chapters', max: 50 }],
+      incrementFieldKey: 'chapters',
+      statuses: [
+        { key: 'PLANNING', label: 'Planning' },
+        { key: 'IN_PROGRESS', label: 'In Progress' },
+        { key: 'COMPLETED', label: 'Completed' },
+      ],
+      averageScore: null,
+    },
+  ]
+
   mockAnimeLists = []
   mockMangaLists = []
   mockMovieLists = []
@@ -187,6 +212,7 @@ function setupPrismaMock() {
   mockGameLists = []
   mockBookLists = []
   mockMusicLists = []
+  mockOtherLists = []
 
   // User queries
   ;(prisma.user.findUnique as any) = async ({ where }: any) => {
@@ -314,6 +340,7 @@ function setupPrismaMock() {
   bindListMock('gameList', mockGameLists, mockGames, 'game', 'gameId')
   bindListMock('bookList', mockBookLists, mockBooks, 'book', 'bookId')
   bindListMock('musicList', mockMusicLists, mockMusic, 'music', 'musicId')
+  bindListMock('otherList', mockOtherLists, mockOther, 'other', 'otherId')
 
   const mockCustomLists: any[] = []
   ;(prisma as any).customList = {
@@ -1033,7 +1060,7 @@ describe('Comprehensive Borealis Media Lists Test Suite', () => {
       expect(incRes.status).toBe(200)
       const incData = (await incRes.json()) as any
       expect(incData.success).toBe(true)
-      expect(incData.entry.progress).toBe(3)
+      expect(incData.entry.progress).toBe(13)
 
       // 7. DELETE /borealis/lists/other/:otherId
       const delRes = await app.handle(

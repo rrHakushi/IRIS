@@ -11,6 +11,7 @@ export const VALID_MEDIA_TYPES = [
   'game',
   'book',
   'music',
+  'other',
 ] as const
 
 export type ValidMediaType = (typeof VALID_MEDIA_TYPES)[number]
@@ -617,10 +618,7 @@ export class CarinaCommentsServ {
           select: {
             id: true,
             username: true,
-            displayName: true,
-            avatarUrl: true,
-            avatarFrame: true,
-            badges: true,
+            customization: true,
           },
         },
       },

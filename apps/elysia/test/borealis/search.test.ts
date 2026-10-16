@@ -144,6 +144,26 @@ const mockStudios = [
   },
 ]
 
+const mockOther = [
+  {
+    id: 1,
+    titlePrimary: 'Learn Rust Programming',
+    titleSecondary: null,
+    description: 'Systems programming guide',
+    coverImage: 'https://example.com/rust.jpg',
+    bannerImage: null,
+    isPublished: true,
+    averageScore: 9.1,
+    favorites: 120,
+    popularity: 500,
+    progressFields: [{ key: 'chapters', label: 'Chapters', max: 20 }],
+    incrementFieldKey: 'chapters',
+    statuses: [],
+    creatorId: 'user-1',
+    creator: { id: 'user-1', username: 'alice' },
+  },
+]
+
 function setupPrismaMock() {
   function bindSearchMock(modelName: string, items: any[]) {
     const model = (prisma as any)[modelName]
@@ -165,6 +185,7 @@ function setupPrismaMock() {
   bindSearchMock('character', mockCharacters)
   bindSearchMock('person', mockPeople)
   bindSearchMock('studio', mockStudios)
+  bindSearchMock('other', mockOther)
 }
 
 const app = new Elysia()
@@ -296,8 +317,16 @@ describe('Comprehensive Borealis Media Search Test Suite', () => {
     const res = await app.handle(new Request('http://localhost/borealis/search?q=ghibli&category=studios'))
     expect(res.status).toBe(200)
     const data = (await res.json()) as any
-    expect(data.success).toBe(true)
     expect(data.category).toBe('studios')
     expect(data.results[0].name).toBe('Studio Ghibli')
+  })
+
+  it('GET /borealis/search searches other category', async () => {
+    const res = await app.handle(new Request('http://localhost/borealis/search?q=rust&category=other'))
+    expect(res.status).toBe(200)
+    const data = (await res.json()) as any
+    expect(data.success).toBe(true)
+    expect(data.category).toBe('other')
+    expect(data.results[0].titlePrimary).toBe('Learn Rust Programming')
   })
 })

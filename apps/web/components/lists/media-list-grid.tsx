@@ -59,7 +59,9 @@ export function toNormalizedMedia(
           ? ("books" as const)
           : category === "music"
             ? ("music" as const)
-            : (category as "anime" | "manga" | "tv")
+            : category === "other"
+              ? ("other" as const)
+              : (category as "anime" | "manga" | "tv")
 
   return {
     id: media.id,
@@ -129,6 +131,8 @@ export function toNormalizedMedia(
           titleSecondary: ep.titleSecondary || null,
         }))
       : undefined,
+    progressFields: (media as any).progressFields || undefined,
+    incrementFieldKey: (media as any).incrementFieldKey || undefined,
     updatedAt: (media as any).updatedAt
       ? new Date((media as any).updatedAt)
       : new Date(),
@@ -139,12 +143,17 @@ export function toMediaListEntry(
   entry: ListEntryData["entry"]
 ): MediaListEntryData {
   const e = entry as any
+  let status = (entry.status?.toUpperCase() || "PLANNING") as MediaListStatus
+  if ((status as any) === "CURRENT" || (status as any) === "TRACKING") {
+    status = "WATCHING"
+  }
   return {
     id: entry.id,
-    status: (entry.status?.toUpperCase() || "PLANNING") as MediaListStatus,
+    status,
     progress: entry.progress ?? entry.playCount ?? entry.chaptersProgress ?? 0,
     chaptersProgress: entry.chaptersProgress,
     volumesProgress: entry.volumesProgress,
+    progressValues: e.progressValues || null,
     score: entry.score ?? null,
     notes: entry.notes || "",
     rewatched: entry.rewatched ?? entry.reread ?? (entry as any).relistens ?? 0,

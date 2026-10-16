@@ -150,6 +150,8 @@ function normalizeSearchResults(
         format = item.language || "Person"
       } else if (category === "books" && item.authors?.length) {
         format = item.authors[0] ?? null
+      } else if (category === "other") {
+        format = "Custom Item"
       }
     }
 
@@ -158,6 +160,7 @@ function normalizeSearchResults(
       item.startDateYear ??
       item.releaseDateYear ??
       item.firstAiredYear ??
+      (item.startDate ? new Date(item.startDate).getFullYear() : null) ??
       null
 
     return {

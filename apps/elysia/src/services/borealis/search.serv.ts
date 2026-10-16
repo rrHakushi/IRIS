@@ -17,6 +17,7 @@ export interface SearchQuery {
     | 'people'
     | 'staff'
     | 'studios'
+    | 'other'
   page?: number
   limit?: number
   external?: boolean | string
@@ -517,8 +518,8 @@ export class BorealisSearchServ {
 
       case 'media':
       default: {
-        // Multi-media search across anime, manga, tv, movie, game, book, music
-        const [anime, manga, tv, movie, game, book, music] = await Promise.all([
+        // Multi-media search across anime, manga, tv, movie, game, book, music, other
+        const [anime, manga, tv, movie, game, book, music, other] = await Promise.all([
           prisma.anime.findMany({
             where: {
               OR: [
@@ -632,6 +633,25 @@ export class BorealisSearchServ {
               coverImage: true,
             },
           }),
+          prisma.other.findMany({
+            where: {
+              isPublished: true,
+              OR: [
+                { titlePrimary: { contains: cleanQuery, mode: 'insensitive' } },
+                { titleSecondary: { contains: cleanQuery, mode: 'insensitive' } },
+                { description: { contains: cleanQuery, mode: 'insensitive' } },
+              ],
+            },
+            take: limit,
+            select: {
+              id: true,
+              titlePrimary: true,
+              titleSecondary: true,
+              coverImage: true,
+              averageScore: true,
+              format: true,
+            },
+          }),
         ])
 
         const combined = [
@@ -642,6 +662,7 @@ export class BorealisSearchServ {
           ...game.map((x) => ({ ...x, mediaType: 'game' })),
           ...book.map((x) => ({ ...x, mediaType: 'book' })),
           ...music.map((x) => ({ ...x, mediaType: 'music' })),
+          ...other.map((x) => ({ ...x, mediaType: 'other' })),
         ]
 
         const total = combined.length
@@ -650,6 +671,68 @@ export class BorealisSearchServ {
         return {
           success: true,
           category: 'media',
+          query: cleanQuery,
+          results,
+          pagination: {
+            page,
+            limit,
+            total,
+            hasMore: skip + results.length < total,
+          },
+        }
+      }
+
+      case 'other': {
+        const where = {
+          isPublished: true,
+          OR: [
+            { titlePrimary: { contains: cleanQuery, mode: 'insensitive' as const } },
+            { titleSecondary: { contains: cleanQuery, mode: 'insensitive' as const } },
+            { description: { contains: cleanQuery, mode: 'insensitive' as const } },
+          ],
+        }
+        const [total, items] = await Promise.all([
+          prisma.other.count({ where }),
+          prisma.other.findMany({
+            where,
+            skip,
+            take: limit,
+            orderBy: [{ popularity: 'desc' }, { averageScore: 'desc' }],
+            select: {
+              id: true,
+              titlePrimary: true,
+              titleSecondary: true,
+              description: true,
+              coverImage: true,
+              bannerImage: true,
+              format: true,
+              startDate: true,
+              endDate: true,
+              averageScore: true,
+              favorites: true,
+              popularity: true,
+              progressFields: true,
+              incrementFieldKey: true,
+              statuses: true,
+              creatorId: true,
+              creator: {
+                select: {
+                  id: true,
+                  username: true,
+                },
+              },
+            },
+          }),
+        ])
+
+        const results = items.map((x) => ({
+          ...x,
+          mediaType: 'other',
+        }))
+
+        return {
+          success: true,
+          category,
           query: cleanQuery,
           results,
           pagination: {

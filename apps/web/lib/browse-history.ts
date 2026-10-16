@@ -14,6 +14,7 @@ export type BrowseCategory =
   | "characters"
   | "people"
   | "studios"
+  | "other"
 
 export const BROWSE_CATEGORIES: {
   key: BrowseCategory
@@ -36,6 +37,7 @@ export const BROWSE_CATEGORIES: {
   },
   { key: "people", label: "People", singularLabel: "Person", tag: "@person" },
   { key: "studios", label: "Studios", singularLabel: "Studio", tag: "@studio" },
+  { key: "other", label: "Other", singularLabel: "Other", tag: "@other" },
 ]
 
 export const CATEGORY_TAG_MAP: Record<string, BrowseCategory> = {
@@ -59,6 +61,7 @@ export const CATEGORY_TAG_MAP: Record<string, BrowseCategory> = {
   people: "people",
   studio: "studios",
   studios: "studios",
+  other: "other",
 }
 
 /**
@@ -145,6 +148,7 @@ export function createInitialBrowseHistory(): BrowseHistoryStore {
     characters: createEmptyCategoryHistory(),
     people: createEmptyCategoryHistory(),
     studios: createEmptyCategoryHistory(),
+    other: createEmptyCategoryHistory(),
   }
 }
 

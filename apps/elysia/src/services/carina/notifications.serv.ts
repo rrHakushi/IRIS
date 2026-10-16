@@ -476,6 +476,24 @@ export class CarinaNotificationsServ {
       where: { userId, isRead: false },
     })
 
+    if (actionStatus === 'CONFIRMED' && notification.actionHandler === 'borealis.other.fork') {
+      const otherId = (notification.actionPayload as any)?.otherId
+      if (otherId) {
+        try {
+          const userRecord = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { permissions: true },
+          })
+          const { hasPermission, IRISFlags } = await import('@IRIS/permissions')
+          const isAdmin = hasPermission(userRecord?.permissions ?? null, IRISFlags.ADMINISTRATOR)
+          const { BorealisOtherServ } = await import('../borealis/other.serv')
+          await BorealisOtherServ.forkItem(userId, Number(otherId), isAdmin)
+        } catch (forkErr) {
+          logger.warn(`Failed to fork item on notification action: ${forkErr}`)
+        }
+      }
+    }
+
     try {
       wsHub.sendToUser(userId, 'notification:action-resolved', {
         id: updated.id,

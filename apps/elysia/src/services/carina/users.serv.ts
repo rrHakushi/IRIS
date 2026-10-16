@@ -77,6 +77,7 @@ const MEDIA_ACTIVITY_DOMAINS: Record<string, MediaType> = {
   game: 'GAME',
   book: 'BOOK',
   music: 'MUSIC',
+  other: 'OTHER',
 }
 
 /**
@@ -109,6 +110,7 @@ const FAVORITE_TYPE_MAP: Record<string, FavoriteType> = {
   music_track: 'MUSIC_TRACK',
   track: 'MUSIC_TRACK',
   character: 'CHARACTER',
+  other: 'OTHER',
   person: 'PERSON',
   studio: 'STUDIO',
   user: 'USER',
@@ -791,7 +793,7 @@ export class CarinaUsersServ {
         allowedTypes = [upper]
       } else {
         throw new BadRequest(
-          `Invalid activity category "${category}". Valid categories: anime, manga, movie, tv, game, book, music, media, lists, social, posts, status.`
+          `Invalid activity category "${category}". Valid categories: anime, manga, movie, tv, game, book, music, other, media, lists, social, posts, status.`
         )
       }
     }
@@ -955,6 +957,7 @@ export class CarinaUsersServ {
     const characterIds: number[] = []
     const personIds: number[] = []
     const studioIds: number[] = []
+    const otherIds: number[] = []
 
     for (const item of rawFavorites) {
       if (item.type === 'ANIME') animeIds.push(item.targetId)
@@ -965,6 +968,7 @@ export class CarinaUsersServ {
       else if (item.type === 'BOOK') bookIds.push(item.targetId)
       else if (item.type === 'MUSIC_ALBUM' || item.type === 'MUSIC_TRACK')
         musicIds.push(item.targetId)
+      else if (item.type === 'OTHER') otherIds.push(item.targetId)
       else if (item.type === 'CHARACTER') characterIds.push(item.targetId)
       else if (item.type === 'PERSON') personIds.push(item.targetId)
       else if (item.type === 'STUDIO') studioIds.push(item.targetId)
@@ -987,6 +991,8 @@ export class CarinaUsersServ {
       userTvEntries,
       userGameEntries,
       userBookEntries,
+      otherList,
+      userOtherEntries,
     ] = await Promise.all([
       animeIds.length
         ? prisma.anime.findMany({
@@ -1084,6 +1090,18 @@ export class CarinaUsersServ {
             select: { bookId: true, score: true },
           })
         : [],
+      otherIds.length
+        ? prisma.other.findMany({
+            where: { id: { in: otherIds } },
+            select: { id: true, titlePrimary: true, titleSecondary: true, coverImage: true },
+          })
+        : [],
+      otherIds.length
+        ? prisma.otherList.findMany({
+            where: { userId: targetUserId, otherId: { in: otherIds } },
+            select: { otherId: true, score: true },
+          })
+        : [],
     ])
 
     const animeMap = new Map<number, any>(animeList.map((i: any): [number, any] => [i.id, i]))
@@ -1096,6 +1114,7 @@ export class CarinaUsersServ {
     const characterMap = new Map<number, any>(characterList.map((i: any): [number, any] => [i.id, i]))
     const personMap = new Map<number, any>(personList.map((i: any): [number, any] => [i.id, i]))
     const studioMap = new Map<number, any>(studioList.map((i: any): [number, any] => [i.id, i]))
+    const otherMap = new Map<number, any>(otherList.map((i: any): [number, any] => [i.id, i]))
 
     const scoreMap = new Map<string, number>()
     userAnimeEntries.forEach((e: any) => e.score && scoreMap.set(`ANIME:${e.animeId}`, e.score))
@@ -1104,6 +1123,7 @@ export class CarinaUsersServ {
     userTvEntries.forEach((e: any) => e.score && scoreMap.set(`TV:${e.tvId}`, e.score))
     userGameEntries.forEach((e: any) => e.score && scoreMap.set(`GAME:${e.gameId}`, e.score))
     userBookEntries.forEach((e: any) => e.score && scoreMap.set(`BOOK:${e.bookId}`, e.score))
+    userOtherEntries.forEach((e: any) => e.score && scoreMap.set(`OTHER:${e.otherId}`, e.score))
 
     return rawFavorites.map((f) => {
       let title = ''
@@ -1182,10 +1202,18 @@ export class CarinaUsersServ {
         title = item?.name || `Studio #${f.targetId}`
         link = `/borealis/studios/${f.targetId}`
         format = 'STUDIO'
+      } else if (f.type === 'OTHER') {
+        const item = otherMap.get(f.targetId)
+        title = item?.titlePrimary || item?.titleSecondary || `Item #${f.targetId}`
+        subtitle = item?.titleSecondary || null
+        coverImage = item?.coverImage || null
+        link = `/borealis/other/${f.targetId}`
+        format = 'OTHER'
       } else {
         title = `${f.type} #${f.targetId}`
         format = f.type
       }
+
 
       return {
         id: f.id,
@@ -1264,7 +1292,7 @@ export class CarinaUsersServ {
 
     if (!targetType) {
       throw new BadRequest(
-        `Invalid favorite category "${category}". Valid categories: anime, manga, movie, tv, game, book, music, character, person, studio, user.`
+        `Invalid favorite category "${category}". Valid categories: anime, manga, movie, tv, game, book, music, other, character, person, studio, user.`
       )
     }
 

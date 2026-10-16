@@ -82,6 +82,8 @@ function getRepeatLabel(category: CanonicalMediaCategory): {
       return { singular: "Replay", plural: "Replays" }
     case "music":
       return { singular: "Relisten", plural: "Relistens" }
+    case "other":
+      return { singular: "Repeat", plural: "Repeats" }
     case "anime":
     case "tv":
     case "movie":
@@ -291,9 +293,17 @@ export function MediaListModal({
   const [activeTab, setActiveTab] = useState<TabType>("general")
 
   // Form State
-  const [status, setStatus] = useState<MediaListStatus>(
-    category === "music" ? "LISTENING" : initialEntry?.status || "PLANNING"
-  )
+  const [status, setStatus] = useState<MediaListStatus>(() => {
+    if (category === "music") return "LISTENING"
+    if (category === "other") {
+      const s = initialEntry?.status
+      if (s === "WATCHING" || (s as any) === "CURRENT" || (s as any) === "IN_PROGRESS" || s === "TRACKING") {
+        return "TRACKING"
+      }
+      return initialEntry?.status || "PLANNING"
+    }
+    return initialEntry?.status || "PLANNING"
+  })
   const [progress, setProgress] = useState<number>(() => {
     const raw = initialEntry?.progress ?? 0
     return maxUnits && maxUnits > 0 ? Math.min(maxUnits, raw) : raw
@@ -343,6 +353,19 @@ export function MediaListModal({
       initialEntry?.rewatchHistory) ||
       []
   )
+  const [progressValues, setProgressValues] = useState<Record<string, number>>(
+    () =>
+      ((initialEntry as any)?.progressValues as Record<string, number>) || {}
+  )
+
+  const customProgressFields = useMemo(() => {
+    if (category !== "other") return []
+    const fields = media.progressFields
+    if (Array.isArray(fields) && fields.length > 0) {
+      return fields
+    }
+    return []
+  }, [category, media.progressFields])
   const [watchedEpisodes, setWatchedEpisodes] = useState<WatchedEpisodeItem[]>(
     initialEntry?.watchedEpisodes || []
   )
@@ -455,7 +478,18 @@ export function MediaListModal({
       setStatusDropdownOpen(false)
       setActiveRewatchIdx(0)
       if (initialEntry) {
-        setStatus(category === "music" ? "LISTENING" : initialEntry.status)
+        if (category === "music") {
+          setStatus("LISTENING")
+        } else if (category === "other") {
+          const s = initialEntry.status
+          if (s === "WATCHING" || (s as any) === "CURRENT" || (s as any) === "IN_PROGRESS" || s === "TRACKING") {
+            setStatus("TRACKING")
+          } else {
+            setStatus(initialEntry.status)
+          }
+        } else {
+          setStatus(initialEntry.status)
+        }
         const rawProgress = initialEntry.progress ?? 0
         setProgress(
           maxUnits && maxUnits > 0
@@ -527,9 +561,13 @@ export function MediaListModal({
         setConnections(
           (initialEntry.connections as Record<string, ConnectionItem>) || {}
         )
+        setProgressValues(
+          ((initialEntry as any)?.progressValues as Record<string, number>) || {}
+        )
       } else {
         setStatus("PLANNING")
         setProgress(0)
+        setProgressValues({})
         setChaptersProgress(0)
         setVolumesProgress(0)
         setScore(null)
@@ -952,6 +990,18 @@ export function MediaListModal({
               playCount: rewatched,
             })
           break
+        case "other":
+          res = await elysia.borealis.lists
+            .other({ otherId: numericId })
+            .post({
+              ...commonPayload,
+              progress,
+              progressValues:
+                Object.keys(progressValues).length > 0
+                  ? progressValues
+                  : undefined,
+            })
+          break
       }
 
       if (res.error) {
@@ -1042,6 +1092,11 @@ export function MediaListModal({
             .music({ musicId: numericId })
             .delete()
           break
+        case "other":
+          res = await elysia.borealis.lists
+            .other({ otherId: numericId })
+            .delete()
+          break
       }
 
       if (res.error) {
@@ -1079,6 +1134,8 @@ export function MediaListModal({
         return IconPlayerPlay
       case "LISTENING":
         return IconHeadphones
+      case "TRACKING":
+        return IconActivity
       case "COMPLETED":
         return IconCheck
       case "ON_HOLD":
@@ -1219,17 +1276,19 @@ export function MediaListModal({
               {totalEpisodesCount ?? "?"})
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => setActiveTab("connections")}
-            className={`cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
-              activeTab === "connections"
-                ? "bg-background text-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Connections
-          </button>
+          {category !== "other" && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("connections")}
+              className={`cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
+                activeTab === "connections"
+                  ? "bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Connections
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setActiveTab("watchlists")}
@@ -1645,6 +1704,183 @@ export function MediaListModal({
                 </div>
               )}
 
+              {/* Progress: Other / Custom Items */}
+              {category === "other" && (
+                <div className="space-y-3">
+                  {customProgressFields.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {customProgressFields.map((f) => {
+                        const curVal =
+                          progressValues[f.key] ??
+                          (f.key ===
+                          (media.incrementFieldKey || "progress")
+                            ? progress
+                            : 0)
+                        const maxVal =
+                          typeof f.max === "number" && f.max > 0
+                            ? f.max
+                            : undefined
+                        return (
+                          <div key={f.key} className="space-y-1.5">
+                            <label className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
+                              <IconActivity className="size-3 text-muted-foreground" />
+                              {f.label.toUpperCase()}
+                            </label>
+                            <div className="flex items-center justify-between rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-border/80">
+                              <input
+                                type="number"
+                                min={0}
+                                max={maxVal}
+                                value={curVal}
+                                onChange={(e) => {
+                                  const val = Number(e.target.value)
+                                  if (isNaN(val)) return
+                                  const clamped = Math.max(
+                                    0,
+                                    maxVal ? Math.min(maxVal, val) : val
+                                  )
+                                  setProgressValues((prev) => ({
+                                    ...prev,
+                                    [f.key]: clamped,
+                                  }))
+                                  if (
+                                    f.key ===
+                                      (media.incrementFieldKey || "progress") ||
+                                    customProgressFields.length === 1
+                                  ) {
+                                    setProgress(clamped)
+                                  }
+                                }}
+                                className="w-full [appearance:textfield] bg-transparent text-xs font-semibold text-foreground focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                              />
+                              {(Boolean(maxVal) || Boolean(f.unit)) && (
+                                <span className="shrink-0 pe-1.5 text-[11px] font-medium text-muted-foreground">
+                                  {maxVal ? `/ ${maxVal}` : ""}{" "}
+                                  {f.unit || ""}
+                                </span>
+                              )}
+                              <div className="flex flex-col gap-0.5 ps-2 text-muted-foreground">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const next = curVal + 1
+                                    const clamped = maxVal
+                                      ? Math.min(maxVal, next)
+                                      : next
+                                    setProgressValues((prev) => ({
+                                      ...prev,
+                                      [f.key]: clamped,
+                                    }))
+                                    if (
+                                      f.key ===
+                                        (media.incrementFieldKey ||
+                                          "progress") ||
+                                      customProgressFields.length === 1
+                                    ) {
+                                      setProgress(clamped)
+                                    }
+                                  }}
+                                  className="cursor-pointer hover:text-foreground"
+                                  aria-label={`Increment ${f.label}`}
+                                >
+                                  <IconChevronUp className="size-2.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const clamped = Math.max(0, curVal - 1)
+                                    setProgressValues((prev) => ({
+                                      ...prev,
+                                      [f.key]: clamped,
+                                    }))
+                                    if (
+                                      f.key ===
+                                        (media.incrementFieldKey ||
+                                          "progress") ||
+                                      customProgressFields.length === 1
+                                    ) {
+                                      setProgress(clamped)
+                                    }
+                                  }}
+                                  className="cursor-pointer hover:text-foreground"
+                                  aria-label={`Decrement ${f.label}`}
+                                >
+                                  <IconChevronDown className="size-2.5" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <label className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
+                          <IconActivity className="size-3 text-muted-foreground" />
+                          PROGRESS
+                        </label>
+                        <div className="flex items-center justify-between rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-border/80">
+                          <input
+                            type="number"
+                            min={0}
+                            placeholder="0"
+                            value={progress}
+                            onChange={(e) => {
+                              const val = Math.max(
+                                0,
+                                Number(e.target.value) || 0
+                              )
+                              setProgress(val)
+                              setProgressValues((prev) => ({
+                                ...prev,
+                                [media.incrementFieldKey || "progress"]:
+                                  val,
+                              }))
+                            }}
+                            className="w-full [appearance:textfield] bg-transparent text-xs font-semibold text-foreground focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                          />
+                          <div className="flex flex-col gap-0.5 ps-2 text-muted-foreground">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const next = progress + 1
+                                setProgress(next)
+                                setProgressValues((prev) => ({
+                                  ...prev,
+                                  [media.incrementFieldKey || "progress"]:
+                                    next,
+                                }))
+                              }}
+                              className="cursor-pointer hover:text-foreground"
+                              aria-label="Increment progress"
+                            >
+                              <IconChevronUp className="size-2.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const next = Math.max(0, progress - 1)
+                                setProgress(next)
+                                setProgressValues((prev) => ({
+                                  ...prev,
+                                  [media.incrementFieldKey || "progress"]:
+                                    next,
+                                }))
+                              }}
+                              className="cursor-pointer hover:text-foreground"
+                              aria-label="Decrement progress"
+                            >
+                              <IconChevronDown className="size-2.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Row 2: START DATE, FINISH DATE */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {/* START DATE */}
@@ -1894,7 +2130,7 @@ export function MediaListModal({
         )}
 
         {/* Tab 4: Connections */}
-        {activeTab === "connections" && (
+        {category !== "other" && activeTab === "connections" && (
           <MediaListConnectionsTab
             media={media}
             category={category}

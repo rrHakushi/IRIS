@@ -129,6 +129,15 @@ export class MediaStatsServ {
           await prisma.music.update({ where: { id: mediaId }, data: { popularity: count } })
           break
         }
+        case 'OTHER': {
+          const entries = await prisma.otherList.findMany({
+            where: { otherId: mediaId },
+            select: { status: true, score: true },
+          })
+          const stats = computeMediaStats(entries)
+          await prisma.other.update({ where: { id: mediaId }, data: stats })
+          break
+        }
         default:
           logger.warn(`Unknown media type for stats recalculation: ${mediaType}`)
       }
@@ -184,6 +193,9 @@ export class MediaStatsServ {
           break
         case 'STUDIO':
           await prisma.studio.update({ where: { id: targetId }, data: { favorites: count } })
+          break
+        case 'OTHER':
+          await prisma.other.update({ where: { id: targetId }, data: { favorites: count } })
           break
         default:
           break

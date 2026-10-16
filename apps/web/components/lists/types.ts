@@ -6,10 +6,18 @@ import {
   IconDeviceGamepad,
   IconBook,
   IconMusic,
+  IconCategory,
 } from "@tabler/icons-react"
 
 export type MediaListType =
-  "anime" | "manga" | "movie" | "tv" | "game" | "book" | "music"
+  | "anime"
+  | "manga"
+  | "movie"
+  | "tv"
+  | "game"
+  | "book"
+  | "music"
+  | "other"
 
 export interface MediaCategoryConfig {
   key: MediaListType
@@ -77,6 +85,14 @@ export const MEDIA_CATEGORIES: MediaCategoryConfig[] = [
     icon: IconMusic,
     activeVerb: "Listening",
     progressLabel: "Plays",
+  },
+  {
+    key: "other",
+    label: "Other",
+    href: (u) => `/borealis/lists/${u}/other`,
+    icon: IconCategory,
+    activeVerb: "Tracking",
+    progressLabel: "Progress",
   },
 ]
 

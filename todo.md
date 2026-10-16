@@ -1,5 +1,7 @@
 # Borealis
     - Stremio plugin for borealis
+    - In media pages (anime, manga etc) add tab People in which it will list all users who have that media in list (that is public and media is not private)
+    - Media edit modal add Private toggle
 
 # Akaromi
     - 
@@ -23,11 +25,11 @@
     - https://github.com/jellyfin/jellyfin-plugin-template
 
 # JellyBorealis 
-    - use borealis for media metadata
-    - Auto link option?? if metadata used from borealis
+    - Add support for other list (idk we'll see)
 
 # Akaromi For Firefox
     - 
 
 # Borealis Extra
-    - 
+    - Add support for other list
+    - Monochrome UI

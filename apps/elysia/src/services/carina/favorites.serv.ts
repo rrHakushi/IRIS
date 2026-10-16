@@ -12,6 +12,7 @@ export const VALID_FAVORITE_TYPES = [
   'BOOK',
   'MUSIC_ALBUM',
   'MUSIC_TRACK',
+  'OTHER',
   'CHARACTER',
   'PERSON',
   'STUDIO',

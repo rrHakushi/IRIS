@@ -30,6 +30,7 @@ const categoryToFavoriteType: Record<string, FavoriteType> = {
   games: "GAME",
   books: "BOOK",
   music: "MUSIC",
+  other: "OTHER",
 }
 
 interface MediaHeroProps {

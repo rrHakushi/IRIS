@@ -1,5 +1,12 @@
 export type CanonicalMediaCategory =
-  "anime" | "manga" | "movie" | "tv" | "game" | "book" | "music"
+  | "anime"
+  | "manga"
+  | "movie"
+  | "tv"
+  | "game"
+  | "book"
+  | "music"
+  | "other"
 
 export type MediaListStatus =
   | "PLANNING"
@@ -7,6 +14,7 @@ export type MediaListStatus =
   | "READING"
   | "PLAYING"
   | "LISTENING"
+  | "TRACKING"
   | "COMPLETED"
   | "ON_HOLD"
   | "DROPPED"
@@ -25,6 +33,7 @@ export function toCanonicalCategory(
   if (normalized === "movies") return "movie"
   if (normalized === "games") return "game"
   if (normalized === "books") return "book"
+  if (normalized === "other") return "other"
   if (
     normalized === "music_album" ||
     normalized === "music_track" ||
@@ -40,7 +49,8 @@ export function toCanonicalCategory(
     normalized === "movie" ||
     normalized === "tv" ||
     normalized === "game" ||
-    normalized === "book"
+    normalized === "book" ||
+    normalized === "other"
   ) {
     return normalized
   }
@@ -63,6 +73,8 @@ export function toBackendMediaType(category: CanonicalMediaCategory): string {
       return "BOOK"
     case "music":
       return "MUSIC"
+    case "other":
+      return "OTHER"
   }
 }
 
@@ -74,6 +86,8 @@ export function getInProgressStatus(
     case "movie":
     case "tv":
       return "WATCHING"
+    case "other":
+      return "TRACKING"
     case "manga":
     case "book":
       return "READING"
@@ -106,6 +120,7 @@ export function getAvailableStatuses(
     READING: "Reading",
     PLAYING: "Playing",
     LISTENING: "Listening",
+    TRACKING: "Tracking",
     COMPLETED: "Completed",
     ON_HOLD: "On Hold",
     DROPPED: "Dropped",
@@ -160,6 +175,8 @@ export function getProgressUnitLabel(category: CanonicalMediaCategory): string {
       return "Pages"
     case "music":
       return "Plays"
+    case "other":
+      return "Progress"
   }
 }
 
@@ -207,6 +224,7 @@ export interface MediaListEntryData {
     completedAt?: string | Date | null
     notes?: string | null
   }> | null
+  progressValues?: Record<string, number> | null
   updatedAt?: string | Date | null
 }
 

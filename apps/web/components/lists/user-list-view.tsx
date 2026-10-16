@@ -27,6 +27,15 @@ const MediaStatsTab = dynamic(
   () => import("./stats/media-stats-tab").then((m) => m.MediaStatsTab),
   { ssr: false }
 )
+const CreateOtherItemDialog = dynamic(
+  () =>
+    import("./other/create-other-item-dialog").then(
+      (m) => m.CreateOtherItemDialog
+    ),
+  { ssr: false }
+)
+import { IconPlus } from "@tabler/icons-react"
+import { Button } from "@workspace/ui/components/button"
 import { invalidateClientStats } from "./stats/media-stats-tab"
 import type {
   MediaListType,
@@ -114,6 +123,8 @@ function getListResource(mediaType: MediaListType) {
       return elysia.borealis.lists.books
     case "music":
       return elysia.borealis.lists.music
+    case "other":
+      return elysia.borealis.lists.other
   }
 }
 
@@ -287,6 +298,7 @@ export function UserListView({
   const [sortBy, setSortBy] = useState<SortByOption>("updatedAt")
   const [sortOrder, setSortOrder] = useState<SortOrderOption>("desc")
   const [activeTab, setActiveTab] = useState<ListViewTab>("list")
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
 
   // Sync initial tab and search query from URL search parameters (?tab=list & ?q=...)
   useEffect(() => {
@@ -418,7 +430,7 @@ export function UserListView({
             formats: data.formats || [],
             genres: data.genres || [],
             years: data.years || [],
-            mediaStatuses: [],
+            mediaStatuses: (data as any).mediaStatuses || [],
             months: [],
             artists: [],
           })
@@ -451,8 +463,16 @@ export function UserListView({
         statusParam = activeStatus === "ALL" ? undefined : activeStatus
       }
 
+      const formatsParam =
+        selectedFormats.length > 0 ? selectedFormats.join(",") : undefined
+      const mediaStatusesParam =
+        selectedMediaStatuses.length > 0 ? selectedMediaStatuses.join(",") : undefined
+      const genresParam =
+        selectedGenres.length > 0 ? selectedGenres.join(",") : undefined
+      const yearsParam =
+        selectedYears.length > 0 ? selectedYears.join(",") : undefined
       const cleanSearch = debouncedSearch.trim()
-      const queryKey = `${username}:${targetUserId || ""}:${mediaType}:${activeStatus}:${statusParam}:${sortBy}:${sortOrder}:${cleanSearch}`
+      const queryKey = `${username}:${targetUserId || ""}:${mediaType}:${activeStatus}:${statusParam}:${formatsParam}:${mediaStatusesParam}:${genresParam}:${yearsParam}:${sortBy}:${sortOrder}:${cleanSearch}`
 
       if (
         !force &&
@@ -473,6 +493,10 @@ export function UserListView({
             page: 1,
             limit: 40,
             status: statusParam,
+            format: formatsParam,
+            mediaStatus: mediaStatusesParam,
+            genre: genresParam,
+            year: yearsParam,
             sortBy,
             order: sortOrder,
             q: cleanSearch || undefined,
@@ -492,6 +516,7 @@ export function UserListView({
       } catch (err) {
         console.error(`[UserListView] Error fetching items:`, err)
         setItems([])
+        setHasMore(false)
       } finally {
         setIsLoading(false)
         isFetchingRef.current = false
@@ -502,6 +527,10 @@ export function UserListView({
       targetUserId,
       mediaType,
       activeStatus,
+      selectedFormats,
+      selectedMediaStatuses,
+      selectedGenres,
+      selectedYears,
       sortBy,
       sortOrder,
       debouncedSearch,
@@ -531,6 +560,14 @@ export function UserListView({
         statusParam = activeStatus === "ALL" ? undefined : activeStatus
       }
 
+      const formatsParam =
+        selectedFormats.length > 0 ? selectedFormats.join(",") : undefined
+      const mediaStatusesParam =
+        selectedMediaStatuses.length > 0 ? selectedMediaStatuses.join(",") : undefined
+      const genresParam =
+        selectedGenres.length > 0 ? selectedGenres.join(",") : undefined
+      const yearsParam =
+        selectedYears.length > 0 ? selectedYears.join(",") : undefined
       const cleanSearch = debouncedSearch.trim()
       const nextPage = page + 1
       const { data, error } = await resource.get({
@@ -538,6 +575,10 @@ export function UserListView({
           page: nextPage,
           limit: 40,
           status: statusParam,
+          format: formatsParam,
+          mediaStatus: mediaStatusesParam,
+          genre: genresParam,
+          year: yearsParam,
           sortBy,
           order: sortOrder,
           q: cleanSearch || undefined,
@@ -564,6 +605,10 @@ export function UserListView({
     isLoading,
     mediaType,
     activeStatus,
+    selectedFormats,
+    selectedMediaStatuses,
+    selectedGenres,
+    selectedYears,
     debouncedSearch,
     page,
     sortBy,
@@ -639,6 +684,21 @@ export function UserListView({
           }
           return null
         }
+        if (mediaType === "other") {
+          const otherMedia = item.media as any
+          const incKey = otherMedia?.incrementFieldKey
+          if (!incKey) {
+            toast.error("No incrementable field configured for this item")
+            return null
+          }
+          const fieldDef = Array.isArray(otherMedia?.progressFields)
+            ? otherMedia.progressFields.find((f: any) => f.key === incKey)
+            : null
+          if (typeof fieldDef?.max === "number" && fieldDef.max > 0) {
+            return fieldDef.max
+          }
+          return null
+        }
         return null
       })()
 
@@ -673,6 +733,30 @@ export function UserListView({
                   completedAt: isCompleted
                     ? it.entry.completedAt || nowIso
                     : it.entry.completedAt,
+                  updatedAt: nowIso,
+                },
+              }
+            }
+            if (mediaType === "other") {
+              const otherMedia = it.media as any
+              const incKey = otherMedia?.incrementFieldKey || "progress"
+              const existingProgValues = (it.entry as any).progressValues || {}
+              const currentVal = Number(existingProgValues[incKey] ?? it.entry.progress ?? 0)
+              const rawNext = currentVal + count
+              const nextProg = maxCount && maxCount > 0 ? Math.min(rawNext, maxCount) : rawNext
+              const isCompleted = maxCount && maxCount > 0 && nextProg >= maxCount
+              const updatedProgValues = {
+                ...existingProgValues,
+                [incKey]: nextProg,
+              }
+              return {
+                ...it,
+                entry: {
+                  ...it.entry,
+                  progress: nextProg,
+                  progressValues: updatedProgValues,
+                  status: isCompleted ? "COMPLETED" : it.entry.status,
+                  completedAt: isCompleted ? it.entry.completedAt || nowIso : it.entry.completedAt,
                   updatedAt: nowIso,
                 },
               }
@@ -735,6 +819,11 @@ export function UserListView({
           case "music": {
             const { error } = await elysia.borealis.lists.music({ musicId: numMediaId }).increment.post({ count })
             if (error) throw new Error("Failed to update music progress")
+            break
+          }
+          case "other": {
+            const { error } = await elysia.borealis.lists.other({ otherId: numMediaId }).increment.post({ count })
+            if (error) throw new Error("Failed to update other progress")
             break
           }
         }
@@ -840,18 +929,76 @@ export function UserListView({
   const normalizedSearch = searchQuery.trim().toLowerCase()
 
   const filteredItems = React.useMemo(() => {
-    if (!normalizedSearch) return items
+    let result = items
+
+    // Filter by Formats
+    if (selectedFormats.length > 0) {
+      const lower = new Set(selectedFormats.map((f) => f.toLowerCase()))
+      result = result.filter(({ media }) => {
+        const fmt = ((media as any)?.format || (media as any)?.type)?.toLowerCase()
+        return fmt && lower.has(fmt)
+      })
+    }
+
+    // Filter by Media Statuses
+    if (selectedMediaStatuses.length > 0) {
+      const upper = new Set(selectedMediaStatuses.map((s) => s.toUpperCase()))
+      result = result.filter(({ media }) => {
+        const st = (media as any)?.status?.toUpperCase()
+        return st && upper.has(st)
+      })
+    }
+
+    // Filter by Genres
+    if (selectedGenres.length > 0) {
+      const lowerGenres = new Set(selectedGenres.map((g) => g.toLowerCase()))
+      result = result.filter(({ media }) => {
+        const rawGenres = (media as any)?.genres
+        if (!Array.isArray(rawGenres)) return false
+        return rawGenres.some((g: any) => {
+          const name = (typeof g === "string" ? g : g?.name)?.toLowerCase()
+          return name && lowerGenres.has(name)
+        })
+      })
+    }
+
+    // Filter by Years
+    if (selectedYears.length > 0) {
+      const yearSet = new Set(selectedYears.map(Number))
+      result = result.filter(({ media }) => {
+        let yr: number | null = null
+        if ((media as any)?.startDateYear) yr = Number((media as any).startDateYear)
+        else if ((media as any)?.releaseDateYear) yr = Number((media as any).releaseDateYear)
+        else if ((media as any)?.firstAiredYear) yr = Number((media as any).firstAiredYear)
+        else if ((media as any)?.year) yr = Number((media as any).year)
+        else if ((media as any)?.startDate) {
+          const parsed = new Date((media as any).startDate).getFullYear()
+          if (!isNaN(parsed)) yr = parsed
+        }
+        return yr !== null && yearSet.has(yr)
+      })
+    }
+
+    if (!normalizedSearch) return result
 
     // If server results have already settled for this search query, items are authoritative
     if (debouncedSearch.toLowerCase() === normalizedSearch) {
-      return items
+      return result
     }
 
     // While user is typing (prior to 300ms debounce response), optimistically filter loaded items
-    return items.filter(({ media }) =>
+    return result.filter(({ media }) =>
       matchesMediaSearch(media, normalizedSearch)
     )
-  }, [items, normalizedSearch, debouncedSearch])
+  }, [
+    items,
+    selectedFormats,
+    selectedMediaStatuses,
+    selectedGenres,
+    selectedYears,
+    normalizedSearch,
+    debouncedSearch,
+  ])
 
   const isSearching = Boolean(
     searchQuery.trim() &&
@@ -899,6 +1046,19 @@ export function UserListView({
           sortOrder={sortOrder}
           onSortOrderChange={setSortOrder}
           totalCount={totalCount}
+          action={
+            mediaType === "other" && isOwner ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onPress={() => setIsCreateDialogOpen(true)}
+                className="h-7 gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 text-xs font-semibold text-primary hover:bg-primary/20"
+              >
+                <IconPlus className="size-3.5" />
+                <span>Create Item</span>
+              </Button>
+            ) : undefined
+          }
         />
 
         {/* Media Grid when List is selected */}
@@ -945,6 +1105,18 @@ export function UserListView({
             username={username}
             userId={targetUserId}
             mediaType={mediaType}
+          />
+        )}
+
+        {/* Create Custom Item Modal */}
+        {mediaType === "other" && isOwner && (
+          <CreateOtherItemDialog
+            isOpen={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
+            onSuccess={() => {
+              fetchItems(true)
+              fetchFacets(true)
+            }}
           />
         )}
       </main>

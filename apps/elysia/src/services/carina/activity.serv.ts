@@ -155,7 +155,7 @@ export class ActivityServ {
       let coverImage = input.coverImage
       let mediaType: MediaType | null = null
 
-      if (['ANIME', 'MANGA', 'MOVIE', 'TV', 'GAME', 'BOOK'].includes(input.favoriteType)) {
+      if (['ANIME', 'MANGA', 'MOVIE', 'TV', 'GAME', 'BOOK', 'OTHER'].includes(input.favoriteType)) {
         mediaType = input.favoriteType as MediaType
       }
 
@@ -214,6 +214,15 @@ export class ActivityServ {
             if (m) {
               title = m.titlePrimary || m.titleSecondary
               coverImage = m.coverImage
+            }
+          } else if (input.favoriteType === 'OTHER') {
+            const o = await prisma.other.findUnique({
+              where: { id: input.targetId },
+              select: { titlePrimary: true, titleSecondary: true, coverImage: true },
+            })
+            if (o) {
+              title = o.titlePrimary || o.titleSecondary
+              coverImage = o.coverImage
             }
           } else if (input.favoriteType === 'CHARACTER') {
             const c = await prisma.character.findUnique({

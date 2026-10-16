@@ -81,8 +81,11 @@ export function MediaDetailView({
       })
     }
 
-    // Characters tab (only if characters exist or not music)
-    if (media.category !== "music" || uniqueCharCount > 0) {
+    // Characters tab (only if characters exist or not music/other)
+    if (
+      (media.category !== "music" && media.category !== "other") ||
+      uniqueCharCount > 0
+    ) {
       tabs.push({
         key: "characters",
         label: "Characters",
@@ -90,8 +93,11 @@ export function MediaDetailView({
       })
     }
 
-    // Staff tab
-    if (media.staff.length > 0 || media.category !== "music") {
+    // Staff tab (not for other media)
+    if (
+      media.category !== "other" &&
+      (media.staff.length > 0 || media.category !== "music")
+    ) {
       tabs.push({
         key: "staff",
         label: media.category === "music" ? "Credits" : "Staff",
@@ -108,18 +114,20 @@ export function MediaDetailView({
       })
     }
 
-    // Images tab
-    const imageCount = media.images
-      ? Object.values(media.images).reduce(
-          (acc, arr) => acc + (Array.isArray(arr) ? arr.length : 0),
-          0
-        )
-      : 0
-    tabs.push({
-      key: "images",
-      label: "Images",
-      count: imageCount > 0 ? imageCount : undefined,
-    })
+    // Images tab (not for other media)
+    if (media.category !== "other") {
+      const imageCount = media.images
+        ? Object.values(media.images).reduce(
+            (acc, arr) => acc + (Array.isArray(arr) ? arr.length : 0),
+            0
+          )
+        : 0
+      tabs.push({
+        key: "images",
+        label: "Images",
+        count: imageCount > 0 ? imageCount : undefined,
+      })
+    }
 
     // Trailers tab (only for non-music media with trailers)
     if (media.category !== "music") {

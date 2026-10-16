@@ -19,6 +19,7 @@ import {
   IconArrowsSort,
   IconRotateClockwise,
   IconChevronDown,
+  IconCategory,
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { Button, buttonVariants } from "@workspace/ui/components/button"
@@ -58,6 +59,7 @@ const DEFAULT_CATEGORY_ORDER: WatchingMediaListType[] = [
   "manga",
   "game",
   "book",
+  "other",
 ]
 
 const CATEGORY_META: Record<
@@ -111,6 +113,13 @@ const CATEGORY_META: Record<
     activeVerb: "Reading",
     progressUnit: "Pages",
     icon: IconBook,
+  },
+  other: {
+    statusParam: "WATCHING",
+    label: "Other",
+    activeVerb: "Tracking",
+    progressUnit: "Progress",
+    icon: IconCategory,
   },
 }
 
@@ -740,6 +749,7 @@ export function WatchingDashboard(): React.JSX.Element {
     manga: { items: [], isLoaded: false, isLoading: false },
     game: { items: [], isLoaded: false, isLoading: false },
     book: { items: [], isLoaded: false, isLoading: false },
+    other: { items: [], isLoaded: false, isLoading: false },
   })
 
   // Edit Modal State
@@ -815,6 +825,9 @@ export function WatchingDashboard(): React.JSX.Element {
             break
           case "book":
             res = await elysia.borealis.lists.books.get({ query })
+            break
+          case "other":
+            res = await elysia.borealis.lists.other.get({ query })
             break
         }
 
@@ -951,6 +964,18 @@ export function WatchingDashboard(): React.JSX.Element {
           }
           return null
         }
+        if (type === "other") {
+          const incKey = (item.media as any)?.incrementFieldKey
+          if (incKey && Array.isArray((item.media as any)?.progressFields)) {
+            const field = (item.media as any).progressFields.find(
+              (f: any) => f.key === incKey
+            )
+            if (field && typeof field.max === "number" && field.max > 0) {
+              return field.max
+            }
+          }
+          return null
+        }
         return null
       })()
 
@@ -1082,6 +1107,13 @@ export function WatchingDashboard(): React.JSX.Element {
           toast.success(
             isCompleted ? "Completed book!" : `Page ${nextProg} marked as read`
           )
+        } else if (type === "other") {
+          const { error } = await elysia.borealis.lists
+            .other({ otherId: numMediaId })
+            .increment.post({ count })
+          if (error) throw new Error("Failed to increment progress")
+          const nextProg = (item.entry.progress ?? 0) + count
+          toast.success(`Progress updated (+${count})`)
         }
       } catch (err) {
         console.error("[WatchingDashboard] Failed to increment progress:", err)
@@ -1103,7 +1135,14 @@ export function WatchingDashboard(): React.JSX.Element {
         if (idx !== -1) {
           changed = true
           const targetStatus = CATEGORY_META[type].statusParam
-          if (updated.status && updated.status !== targetStatus) {
+          const newStatus = updated?.status?.toUpperCase()
+          const isStillActive =
+            type === "other"
+              ? newStatus === "WATCHING" ||
+                newStatus === "CURRENT" ||
+                newStatus === "TRACKING"
+              : newStatus === targetStatus
+          if (updated?.status && !isStillActive) {
             next[type] = {
               ...cat,
               items: cat.items.filter((it) => it.entry.id !== entryId),

@@ -18,6 +18,7 @@ export type FavoriteType =
   | "GAME"
   | "BOOK"
   | "MUSIC"
+  | "OTHER"
   | "CHARACTER"
   | "PERSON"
   | "STUDIO"
