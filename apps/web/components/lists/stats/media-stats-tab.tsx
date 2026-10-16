@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react"
 import { elysia } from "@/lib/elysia"
+import { resolveUserId } from "@/lib/user-profile"
 import { Skeleton } from "@workspace/ui/components/skeleton"
 import { IconChartBarOff } from "@tabler/icons-react"
 import type { MediaListType } from "../types"
@@ -69,8 +70,13 @@ export function MediaStatsTab({
 
       if (!promise) {
         promise = (async () => {
+          let targetId = userId
+          if (!targetId && username) {
+            targetId = (await resolveUserId(username)) ?? undefined
+          }
+
           let res: any = null
-          const query = userId ? { userId } : undefined
+          const query = targetId ? { userId: targetId } : undefined
 
           switch (mediaType) {
             case "anime":
@@ -107,12 +113,13 @@ export function MediaStatsTab({
         const res = await promise
         if (ignore) return
 
-        if (res?.data?.success && res.data.data) {
+        const statsData = res?.data?.data || res?.data?.stats
+        if (res?.data?.success && statsData) {
           statsClientCache.set(cacheKey, {
-            data: res.data.data,
+            data: statsData,
             timestamp: Date.now(),
           })
-          setStats(res.data.data)
+          setStats(statsData)
         } else {
           setHasError(true)
         }
@@ -156,7 +163,7 @@ export function MediaStatsTab({
     )
   }
 
-  if (hasError || !stats || stats.overview.totalCount === 0) {
+  if (hasError || !stats || stats?.overview?.totalCount === 0) {
     return (
       <div className="flex min-h-[360px] flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/60 p-8 text-center backdrop-blur-md">
         <div className="mb-3 flex size-14 items-center justify-center rounded-2xl bg-muted/50 text-muted-foreground">
@@ -182,42 +189,42 @@ export function MediaStatsTab({
       {/* 2. Charts Row: Score Distribution & Year Timeline */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <ScoreDistributionChart
-          scores={stats.scoreDistribution.scores}
-          unratedCount={stats.scoreDistribution.unratedCount}
-          meanScore={stats.overview.meanScore}
+          scores={stats.scoreDistribution?.scores ?? []}
+          unratedCount={stats.scoreDistribution?.unratedCount ?? 0}
+          meanScore={stats.overview?.meanScore ?? 0}
         />
         <YearTimelineChart
-          releaseYears={stats.releaseYearGraph}
-          activityYears={stats.activityYearGraph}
+          releaseYears={stats.releaseYearGraph ?? []}
+          activityYears={stats.activityYearGraph ?? []}
           mediaType={mediaType}
         />
       </div>
 
       {/* 3. Length & Episode Distribution */}
       <LengthDistributionChart
-        buckets={stats.lengthDistribution}
+        buckets={stats.lengthDistribution ?? []}
         mediaType={mediaType}
       />
 
       {/* 4. Format, Country & Status Distribution */}
       <FormatCountryDistribution
-        formats={stats.formatDistribution}
-        countries={stats.countryDistribution}
-        statuses={stats.statusDistribution}
+        formats={stats.formatDistribution ?? []}
+        countries={stats.countryDistribution ?? []}
+        statuses={stats.statusDistribution ?? []}
       />
 
       {/* 5. Top Genres & Top Studios/Creators */}
       <GenreStudioBreakdown
-        genres={stats.topGenres}
-        creators={stats.topCreators}
+        genres={stats.topGenres ?? []}
+        creators={stats.topCreators ?? []}
         mediaType={mediaType}
       />
 
       {/* 6. Activity Breakdown Heatmap (Monthly, Weekly, Days of Week) */}
       <ActivityHeatmap
-        monthlyData={stats.monthlyActivity}
-        weeklyData={stats.weeklyActivity}
-        dayOfWeekData={stats.dayOfWeekActivity}
+        monthlyData={stats.monthlyActivity ?? []}
+        weeklyData={stats.weeklyActivity ?? []}
+        dayOfWeekData={stats.dayOfWeekActivity ?? []}
       />
     </div>
   )

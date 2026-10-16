@@ -1,6 +1,7 @@
 import { Elysia } from 'elysia'
 import { session } from '../../../plugins/session'
 import { CarinaUsersModel } from '../../models/carina/users.model'
+import { CarinaFriendsModel } from '../../models/carina/friends.model'
 import { CarinaUsersServ } from '../../../services/carina/users.serv'
 
 export const carinaUsers = new Elysia({ prefix: '/carina/users' })
@@ -382,8 +383,29 @@ export const carinaUsers = new Elysia({ prefix: '/carina/users' })
         422: CarinaUsersModel.validationError,
       },
     },
-    async ({ params }) => {
-      return await CarinaUsersServ.getUserProfile(params.userId)
+    async ({ params, session: userSession }) => {
+      return await CarinaUsersServ.getUserProfile(params.userId, userSession.user?.id)
+    }
+  )
+
+  // --- 16. GET /carina/users/:userId/friends (Get user public friends) ---
+  .get(
+    '/:userId/friends',
+    {
+      params: CarinaUsersModel.userParam,
+      query: CarinaFriendsModel.listFriendsQuery,
+      detail: {
+        summary: 'Get public friends list of target user strictly by user ID',
+        tags: ['Carina Users'],
+      },
+      response: {
+        200: CarinaFriendsModel.listFriendsResponse,
+        404: CarinaUsersModel.notFoundError,
+        422: CarinaUsersModel.validationError,
+      },
+    },
+    async ({ params, query, session: userSession }) => {
+      return await CarinaUsersServ.getUserFriends(params.userId, query, userSession.user?.id)
     }
   )
 

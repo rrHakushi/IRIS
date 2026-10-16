@@ -132,7 +132,7 @@ export function UserProfileView({
         />
 
         {/* Active Tab Main Content */}
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+        <main className="w-full flex-1 px-4 py-6 sm:px-6 lg:px-8">
           {activeTab === "overview" && (
             <OverviewTab
               username={user.username}
@@ -155,7 +155,7 @@ export function UserProfileView({
           )}
 
           {activeTab === "friends" && (
-            <ProfileFriendsTab username={user.username} isOwner={isOwner} />
+            <ProfileFriendsTab username={user.username} userId={user.id} isOwner={isOwner} />
           )}
 
           {activeTab === "stats" && (

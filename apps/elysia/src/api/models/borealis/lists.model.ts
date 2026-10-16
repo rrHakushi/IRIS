@@ -53,9 +53,14 @@ export const BorealisListsModel = {
   }),
 
   // --- Stats / Filters Query Schema ---
-  statsQuery: t.Object({
-    userId: t.Optional(t.String({ description: 'Target user ID' })),
-  }),
+  statsQuery: t.Optional(
+    t.Object({
+      userId: t.Optional(t.String({ description: 'Target user ID' })),
+      year: t.Optional(t.Numeric({ description: 'Filter year e.g. 2026' })),
+      quarter: t.Optional(t.Numeric({ minimum: 1, maximum: 4, description: 'Filter quarter 1-4' })),
+      month: t.Optional(t.Numeric({ minimum: 1, maximum: 12, description: 'Filter month 1-12' })),
+    })
+  ),
 
   // --- Mutation Body Schemas ---
   animeBody: t.Object({
@@ -253,20 +258,23 @@ export const BorealisListsModel = {
 
   statsResponse: t.Object({
     success: t.Boolean(),
-    stats: t.Object({
-      total: t.Number({ description: 'Total items in user list' }),
-      statusCounts: t.Record(t.String(), t.Number(), { description: 'Counts grouped by list status' }),
-      meanScore: t.Number({ description: 'Average score of scored entries' }),
-      totalProgress: t.Number({ description: 'Cumulative progress (episodes, chapters, hours, pages, or plays)' }),
-      scoreDistribution: t.Array(
-        t.Object({
-          score: t.Number(),
-          count: t.Number(),
-        }),
-        { description: 'Score distribution histogram' }
-      ),
-      formatCounts: t.Optional(t.Record(t.String(), t.Number())),
-    }),
+    stats: t.Optional(
+      t.Object({
+        total: t.Number({ description: 'Total items in user list' }),
+        statusCounts: t.Record(t.String(), t.Number(), { description: 'Counts grouped by list status' }),
+        meanScore: t.Number({ description: 'Average score of scored entries' }),
+        totalProgress: t.Number({ description: 'Cumulative progress (episodes, chapters, hours, pages, or plays)' }),
+        scoreDistribution: t.Array(
+          t.Object({
+            score: t.Number(),
+            count: t.Number(),
+          }),
+          { description: 'Score distribution histogram' }
+        ),
+        formatCounts: t.Optional(t.Record(t.String(), t.Number())),
+      })
+    ),
+    data: t.Optional(t.Any({ description: 'Detailed individual media stats' })),
   }),
 
   filtersResponse: t.Object({

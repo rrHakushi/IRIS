@@ -1,7 +1,5 @@
 # Borealis
     - Stremio plugin for borealis
-    - Fix rating not being updated when importing from connections
-    - Fix local rating not saving at all to media
 
 # Akaromi
     - 

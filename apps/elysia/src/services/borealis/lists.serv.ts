@@ -3,6 +3,7 @@ import { NotFound, BadRequest } from '../../lib/errors'
 import { hashPassword } from '../../utils/auth-crypto'
 import { ConnectionSyncQueueManager } from '../carina/connection-sync.queue'
 import { MediaStatsServ } from './media-stats.serv'
+import { mediaStatsService } from './user-stats.serv'
 
 export interface ListQuery {
   page?: number
@@ -420,9 +421,9 @@ export class BorealisListsServ {
     }
   }
 
-  public static async getAnimeStats(userId: string) {
+  public static async getAnimeStats(userId: string, query?: any, isOwner: boolean = true) {
     const items = await prisma.animeList.findMany({
-      where: { userId },
+      where: { userId, ...(isOwner ? {} : { private: false }) },
       select: {
         status: true,
         progress: true,
@@ -430,8 +431,14 @@ export class BorealisListsServ {
         rewatched: true,
       },
     })
+    const data = await mediaStatsService.getAnimeStats(userId, isOwner, {
+      year: query?.year ? Number(query.year) : undefined,
+      quarter: query?.quarter ? Number(query.quarter) : undefined,
+      month: query?.month ? Number(query.month) : undefined,
+    })
     return {
       success: true,
+      data,
       stats: computeStats(items, 'progress'),
     }
   }
@@ -773,9 +780,9 @@ export class BorealisListsServ {
     }
   }
 
-  public static async getMangaStats(userId: string) {
+  public static async getMangaStats(userId: string, query?: any, isOwner: boolean = true) {
     const items = await prisma.mangaList.findMany({
-      where: { userId },
+      where: { userId, ...(isOwner ? {} : { private: false }) },
       select: {
         status: true,
         chaptersProgress: true,
@@ -784,8 +791,14 @@ export class BorealisListsServ {
         reread: true,
       },
     })
+    const data = await mediaStatsService.getMangaStats(userId, isOwner, {
+      year: query?.year ? Number(query.year) : undefined,
+      quarter: query?.quarter ? Number(query.quarter) : undefined,
+      month: query?.month ? Number(query.month) : undefined,
+    })
     return {
       success: true,
+      data,
       stats: computeStats(items, 'chaptersProgress'),
     }
   }
@@ -1082,17 +1095,23 @@ export class BorealisListsServ {
     }
   }
 
-  public static async getMovieStats(userId: string) {
+  public static async getMovieStats(userId: string, query?: any, isOwner: boolean = true) {
     const items = await prisma.movieList.findMany({
-      where: { userId },
+      where: { userId, ...(isOwner ? {} : { private: false }) },
       select: {
         status: true,
         score: true,
         rewatched: true,
       },
     })
+    const data = await mediaStatsService.getMovieStats(userId, isOwner, {
+      year: query?.year ? Number(query.year) : undefined,
+      quarter: query?.quarter ? Number(query.quarter) : undefined,
+      month: query?.month ? Number(query.month) : undefined,
+    })
     return {
       success: true,
+      data,
       stats: computeStats(items, 'rewatched'),
     }
   }
@@ -1416,9 +1435,9 @@ export class BorealisListsServ {
     }
   }
 
-  public static async getTvStats(userId: string) {
+  public static async getTvStats(userId: string, query?: any, isOwner: boolean = true) {
     const items = await prisma.tvList.findMany({
-      where: { userId },
+      where: { userId, ...(isOwner ? {} : { private: false }) },
       select: {
         status: true,
         progress: true,
@@ -1426,8 +1445,14 @@ export class BorealisListsServ {
         rewatched: true,
       },
     })
+    const data = await mediaStatsService.getTvStats(userId, isOwner, {
+      year: query?.year ? Number(query.year) : undefined,
+      quarter: query?.quarter ? Number(query.quarter) : undefined,
+      month: query?.month ? Number(query.month) : undefined,
+    })
     return {
       success: true,
+      data,
       stats: computeStats(items, 'progress'),
     }
   }
@@ -1738,9 +1763,9 @@ export class BorealisListsServ {
     }
   }
 
-  public static async getGameStats(userId: string) {
+  public static async getGameStats(userId: string, query?: any, isOwner: boolean = true) {
     const items = await prisma.gameList.findMany({
-      where: { userId },
+      where: { userId, ...(isOwner ? {} : { private: false }) },
       select: {
         status: true,
         progress: true,
@@ -1748,8 +1773,14 @@ export class BorealisListsServ {
         replayed: true,
       },
     })
+    const data = await mediaStatsService.getGameStats(userId, isOwner, {
+      year: query?.year ? Number(query.year) : undefined,
+      quarter: query?.quarter ? Number(query.quarter) : undefined,
+      month: query?.month ? Number(query.month) : undefined,
+    })
     return {
       success: true,
+      data,
       stats: computeStats(items, 'progress'),
     }
   }
@@ -2100,9 +2131,9 @@ export class BorealisListsServ {
     }
   }
 
-  public static async getBookStats(userId: string) {
+  public static async getBookStats(userId: string, query?: any, isOwner: boolean = true) {
     const items = await prisma.bookList.findMany({
-      where: { userId },
+      where: { userId, ...(isOwner ? {} : { private: false }) },
       select: {
         status: true,
         progressPages: true,
@@ -2112,8 +2143,14 @@ export class BorealisListsServ {
         reread: true,
       },
     })
+    const data = await mediaStatsService.getBookStats(userId, isOwner, {
+      year: query?.year ? Number(query.year) : undefined,
+      quarter: query?.quarter ? Number(query.quarter) : undefined,
+      month: query?.month ? Number(query.month) : undefined,
+    })
     return {
       success: true,
+      data,
       stats: computeStats(items, 'progressPages'),
     }
   }
@@ -2414,17 +2451,23 @@ export class BorealisListsServ {
     }
   }
 
-  public static async getMusicStats(userId: string) {
+  public static async getMusicStats(userId: string, query?: any, isOwner: boolean = true) {
     const items = await prisma.musicList.findMany({
-      where: { userId },
+      where: { userId, ...(isOwner ? {} : { private: false }) },
       select: {
         status: true,
         playCount: true,
         score: true,
       },
     })
+    const data = await mediaStatsService.getMusicStats(userId, isOwner, {
+      year: query?.year ? Number(query.year) : undefined,
+      quarter: query?.quarter ? Number(query.quarter) : undefined,
+      month: query?.month ? Number(query.month) : undefined,
+    })
     return {
       success: true,
+      data,
       stats: computeStats(items, 'playCount'),
     }
   }

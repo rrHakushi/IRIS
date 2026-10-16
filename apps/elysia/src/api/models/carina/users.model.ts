@@ -96,6 +96,16 @@ export const CarinaUsersModel = {
     pagination: PaginationMetaSchema,
   }),
 
+  connectionSummaryItem: t.Object({
+    id: t.String({ description: 'Connection record UUID' }),
+    provider: t.String({ description: 'Integration provider name' }),
+    displayName: t.Nullable(t.String({ description: 'Connected account display name' })),
+    avatarUrl: t.Nullable(t.String({ description: 'Connected account avatar URL' })),
+    profileUrl: t.Nullable(t.String({ description: 'External profile page URL' })),
+    status: t.String({ description: 'Current connection status' }),
+    createdAt: t.String({ description: 'Connection establishment ISO timestamp' }),
+  }),
+
   // --- GET /carina/users/:userId ---
   userProfileResponse: t.Object({
     success: t.Boolean(),
@@ -119,6 +129,19 @@ export const CarinaUsersModel = {
         favoritesCount: t.Number(),
         badgesCount: t.Number(),
       }),
+      connections: t.Optional(
+        t.Array(
+          t.Object({
+            id: t.String(),
+            provider: t.String(),
+            displayName: t.Nullable(t.String()),
+            avatarUrl: t.Nullable(t.String()),
+            profileUrl: t.Nullable(t.String()),
+            status: t.String(),
+            createdAt: t.String(),
+          })
+        )
+      ),
     }),
   }),
 
@@ -316,12 +339,35 @@ export const CarinaUsersModel = {
   }),
 
   // --- GET /carina/users/:userId/favorites and /:category ---
+  enrichedFavoriteEntity: t.Object({
+    id: t.Number(),
+    title: t.String(),
+    subtitle: t.Nullable(t.String()),
+    coverImage: t.Nullable(t.String()),
+    link: t.String(),
+    format: t.Optional(t.Nullable(t.String())),
+    score: t.Optional(t.Nullable(t.Number())),
+  }),
+
   favoriteItem: t.Object({
     id: t.String(),
     userId: t.String(),
     type: t.String(),
     targetId: t.Number(),
     createdAt: t.String(),
+    entity: t.Optional(
+      t.Nullable(
+        t.Object({
+          id: t.Number(),
+          title: t.String(),
+          subtitle: t.Nullable(t.String()),
+          coverImage: t.Nullable(t.String()),
+          link: t.String(),
+          format: t.Optional(t.Nullable(t.String())),
+          score: t.Optional(t.Nullable(t.Number())),
+        })
+      )
+    ),
   }),
 
   favoritesResponse: t.Object({
@@ -333,6 +379,19 @@ export const CarinaUsersModel = {
         type: t.String(),
         targetId: t.Number(),
         createdAt: t.String(),
+        entity: t.Optional(
+          t.Nullable(
+            t.Object({
+              id: t.Number(),
+              title: t.String(),
+              subtitle: t.Nullable(t.String()),
+              coverImage: t.Nullable(t.String()),
+              link: t.String(),
+              format: t.Optional(t.Nullable(t.String())),
+              score: t.Optional(t.Nullable(t.Number())),
+            })
+          )
+        ),
       })
     ),
     pagination: PaginationMetaSchema,

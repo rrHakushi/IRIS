@@ -198,19 +198,49 @@ export class CarinaUsersServ {
   /**
    * Get user public profile info by ID or username.
    */
-  public static async getUserProfile(identifier: string) {
+  public static async getUserProfile(identifier: string, viewerUserId?: string) {
     const target = await this.resolveUser(identifier)
+    const isOwner = viewerUserId === target.id
 
-    const [friendsCount, favoritesCount] = await Promise.all([
+    const [friendsCount, favoritesCount, rawConnections] = await Promise.all([
       prisma.friend.count({
         where: {
-          OR: [{ userId: target.id }, { friendId: target.id }],
+          userId: target.id,
         },
       }),
       prisma.favorite.count({
         where: { userId: target.id },
       }),
+      prisma.connection.findMany({
+        where: {
+          userId: target.id,
+          status: 'CONNECTED',
+        },
+        select: {
+          id: true,
+          provider: true,
+          displayName: true,
+          avatarUrl: true,
+          profileUrl: true,
+          status: true,
+          settings: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
     ])
+
+    const connections = rawConnections
+      .filter((c) => isOwner || (c.settings as any)?.isPrivate !== true)
+      .map((c) => ({
+        id: c.id,
+        provider: c.provider,
+        displayName: c.displayName,
+        avatarUrl: c.avatarUrl,
+        profileUrl: c.profileUrl,
+        status: c.status,
+        createdAt: c.createdAt.toISOString(),
+      }))
 
     const profile = getProfileCustomization(target.customization)
 
@@ -236,6 +266,7 @@ export class CarinaUsersServ {
           favoritesCount,
           badgesCount: target.badges.length,
         },
+        connections,
       },
     }
   }
@@ -827,6 +858,282 @@ export class CarinaUsersServ {
   }
 
   /**
+   * Helper to enrich raw favorite records with entity metadata (title, cover, link, format, score).
+   */
+  private static async enrichFavoritesWithEntities(
+    rawFavorites: Array<{
+      id: string
+      userId: string
+      type: FavoriteType
+      targetId: number
+      createdAt: Date
+    }>,
+    targetUserId: string
+  ) {
+    if (!rawFavorites.length) return []
+
+    const animeIds: number[] = []
+    const mangaIds: number[] = []
+    const movieIds: number[] = []
+    const tvIds: number[] = []
+    const gameIds: number[] = []
+    const bookIds: number[] = []
+    const musicIds: number[] = []
+    const characterIds: number[] = []
+    const personIds: number[] = []
+    const studioIds: number[] = []
+
+    for (const item of rawFavorites) {
+      if (item.type === 'ANIME') animeIds.push(item.targetId)
+      else if (item.type === 'MANGA') mangaIds.push(item.targetId)
+      else if (item.type === 'MOVIE') movieIds.push(item.targetId)
+      else if (item.type === 'TV') tvIds.push(item.targetId)
+      else if (item.type === 'GAME') gameIds.push(item.targetId)
+      else if (item.type === 'BOOK') bookIds.push(item.targetId)
+      else if (item.type === 'MUSIC_ALBUM' || item.type === 'MUSIC_TRACK')
+        musicIds.push(item.targetId)
+      else if (item.type === 'CHARACTER') characterIds.push(item.targetId)
+      else if (item.type === 'PERSON') personIds.push(item.targetId)
+      else if (item.type === 'STUDIO') studioIds.push(item.targetId)
+    }
+
+    const [
+      animeList,
+      mangaList,
+      movieList,
+      tvList,
+      gameList,
+      bookList,
+      musicList,
+      characterList,
+      personList,
+      studioList,
+      userAnimeEntries,
+      userMangaEntries,
+      userMovieEntries,
+      userTvEntries,
+      userGameEntries,
+      userBookEntries,
+    ] = await Promise.all([
+      animeIds.length
+        ? prisma.anime.findMany({
+            where: { id: { in: animeIds } },
+            select: { id: true, titlePrimary: true, titleSecondary: true, titleNative: true, coverImage: true, format: true },
+          })
+        : [],
+      mangaIds.length
+        ? prisma.manga.findMany({
+            where: { id: { in: mangaIds } },
+            select: { id: true, titlePrimary: true, titleSecondary: true, titleNative: true, coverImage: true, format: true },
+          })
+        : [],
+      movieIds.length
+        ? prisma.movie.findMany({
+            where: { id: { in: movieIds } },
+            select: { id: true, titlePrimary: true, titleSecondary: true, titleNative: true, coverImage: true },
+          })
+        : [],
+      tvIds.length
+        ? prisma.tv.findMany({
+            where: { id: { in: tvIds } },
+            select: { id: true, titlePrimary: true, titleSecondary: true, titleNative: true, coverImage: true },
+          })
+        : [],
+      gameIds.length
+        ? prisma.game.findMany({
+            where: { id: { in: gameIds } },
+            select: { id: true, titlePrimary: true, titleSecondary: true, coverImage: true },
+          })
+        : [],
+      bookIds.length
+        ? prisma.book.findMany({
+            where: { id: { in: bookIds } },
+            select: { id: true, titlePrimary: true, titleSecondary: true, coverImage: true },
+          })
+        : [],
+      musicIds.length
+        ? prisma.music.findMany({
+            where: { id: { in: musicIds } },
+            select: { id: true, titlePrimary: true, titleSecondary: true, coverImage: true, type: true },
+          })
+        : [],
+      characterIds.length
+        ? prisma.character.findMany({
+            where: { id: { in: characterIds } },
+            select: { id: true, namePrimary: true, nameNative: true, image: true },
+          })
+        : [],
+      personIds.length
+        ? prisma.person.findMany({
+            where: { id: { in: personIds } },
+            select: { id: true, namePrimary: true, nameNative: true, image: true },
+          })
+        : [],
+      studioIds.length
+        ? prisma.studio.findMany({
+            where: { id: { in: studioIds } },
+            select: { id: true, name: true },
+          })
+        : [],
+      animeIds.length
+        ? prisma.animeList.findMany({
+            where: { userId: targetUserId, animeId: { in: animeIds } },
+            select: { animeId: true, score: true },
+          })
+        : [],
+      mangaIds.length
+        ? prisma.mangaList.findMany({
+            where: { userId: targetUserId, mangaId: { in: mangaIds } },
+            select: { mangaId: true, score: true },
+          })
+        : [],
+      movieIds.length
+        ? prisma.movieList.findMany({
+            where: { userId: targetUserId, movieId: { in: movieIds } },
+            select: { movieId: true, score: true },
+          })
+        : [],
+      tvIds.length
+        ? prisma.tvList.findMany({
+            where: { userId: targetUserId, tvId: { in: tvIds } },
+            select: { tvId: true, score: true },
+          })
+        : [],
+      gameIds.length
+        ? prisma.gameList.findMany({
+            where: { userId: targetUserId, gameId: { in: gameIds } },
+            select: { gameId: true, score: true },
+          })
+        : [],
+      bookIds.length
+        ? prisma.bookList.findMany({
+            where: { userId: targetUserId, bookId: { in: bookIds } },
+            select: { bookId: true, score: true },
+          })
+        : [],
+    ])
+
+    const animeMap = new Map<number, any>(animeList.map((i: any): [number, any] => [i.id, i]))
+    const mangaMap = new Map<number, any>(mangaList.map((i: any): [number, any] => [i.id, i]))
+    const movieMap = new Map<number, any>(movieList.map((i: any): [number, any] => [i.id, i]))
+    const tvMap = new Map<number, any>(tvList.map((i: any): [number, any] => [i.id, i]))
+    const gameMap = new Map<number, any>(gameList.map((i: any): [number, any] => [i.id, i]))
+    const bookMap = new Map<number, any>(bookList.map((i: any): [number, any] => [i.id, i]))
+    const musicMap = new Map<number, any>(musicList.map((i: any): [number, any] => [i.id, i]))
+    const characterMap = new Map<number, any>(characterList.map((i: any): [number, any] => [i.id, i]))
+    const personMap = new Map<number, any>(personList.map((i: any): [number, any] => [i.id, i]))
+    const studioMap = new Map<number, any>(studioList.map((i: any): [number, any] => [i.id, i]))
+
+    const scoreMap = new Map<string, number>()
+    userAnimeEntries.forEach((e: any) => e.score && scoreMap.set(`ANIME:${e.animeId}`, e.score))
+    userMangaEntries.forEach((e: any) => e.score && scoreMap.set(`MANGA:${e.mangaId}`, e.score))
+    userMovieEntries.forEach((e: any) => e.score && scoreMap.set(`MOVIE:${e.movieId}`, e.score))
+    userTvEntries.forEach((e: any) => e.score && scoreMap.set(`TV:${e.tvId}`, e.score))
+    userGameEntries.forEach((e: any) => e.score && scoreMap.set(`GAME:${e.gameId}`, e.score))
+    userBookEntries.forEach((e: any) => e.score && scoreMap.set(`BOOK:${e.bookId}`, e.score))
+
+    return rawFavorites.map((f) => {
+      let title = ''
+      let subtitle: string | null = null
+      let coverImage: string | null = null
+      let link = ''
+      let format: string | null = null
+      const userScore = scoreMap.get(`${f.type}:${f.targetId}`) || null
+
+      if (f.type === 'ANIME') {
+        const item = animeMap.get(f.targetId)
+        title = item?.titlePrimary || item?.titleSecondary || `Anime #${f.targetId}`
+        subtitle = item?.titleSecondary || item?.titleNative || null
+        coverImage = item?.coverImage || null
+        link = `/borealis/anime/${f.targetId}`
+        format = item?.format || 'ANIME'
+      } else if (f.type === 'MANGA') {
+        const item = mangaMap.get(f.targetId)
+        title = item?.titlePrimary || item?.titleSecondary || `Manga #${f.targetId}`
+        subtitle = item?.titleSecondary || item?.titleNative || null
+        coverImage = item?.coverImage || null
+        link = `/borealis/manga/${f.targetId}`
+        format = item?.format || 'MANGA'
+      } else if (f.type === 'MOVIE') {
+        const item = movieMap.get(f.targetId)
+        title = item?.titlePrimary || item?.titleSecondary || `Movie #${f.targetId}`
+        subtitle = item?.titleSecondary || item?.titleNative || null
+        coverImage = item?.coverImage || null
+        link = `/borealis/movies/${f.targetId}`
+        format = 'MOVIE'
+      } else if (f.type === 'TV') {
+        const item = tvMap.get(f.targetId)
+        title = item?.titlePrimary || item?.titleSecondary || `TV Series #${f.targetId}`
+        subtitle = item?.titleSecondary || item?.titleNative || null
+        coverImage = item?.coverImage || null
+        link = `/borealis/tv/${f.targetId}`
+        format = 'TV'
+      } else if (f.type === 'GAME') {
+        const item = gameMap.get(f.targetId)
+        title = item?.titlePrimary || item?.titleSecondary || `Game #${f.targetId}`
+        subtitle = item?.titleSecondary || null
+        coverImage = item?.coverImage || null
+        link = `/borealis/games/${f.targetId}`
+        format = 'GAME'
+      } else if (f.type === 'BOOK') {
+        const item = bookMap.get(f.targetId)
+        title = item?.titlePrimary || item?.titleSecondary || `Book #${f.targetId}`
+        subtitle = item?.titleSecondary || null
+        coverImage = item?.coverImage || null
+        link = `/borealis/books/${f.targetId}`
+        format = 'BOOK'
+      } else if (f.type === 'MUSIC_ALBUM' || f.type === 'MUSIC_TRACK') {
+        const item = musicMap.get(f.targetId)
+        title = item?.titlePrimary || item?.titleSecondary || `Music #${f.targetId}`
+        subtitle = item?.titleSecondary || null
+        coverImage = item?.coverImage || null
+        const subPath = item?.type === 'ALBUM' ? 'albums' : 'tracks'
+        link = `/borealis/music/${subPath}/${f.targetId}`
+        format = item?.type || 'MUSIC'
+      } else if (f.type === 'CHARACTER') {
+        const item = characterMap.get(f.targetId)
+        title = item?.namePrimary || `Character #${f.targetId}`
+        subtitle = item?.nameNative || null
+        coverImage = item?.image || null
+        link = `/borealis/characters/${f.targetId}`
+        format = 'CHARACTER'
+      } else if (f.type === 'PERSON') {
+        const item = personMap.get(f.targetId)
+        title = item?.namePrimary || `Person #${f.targetId}`
+        subtitle = item?.nameNative || null
+        coverImage = item?.image || null
+        link = `/borealis/people/${f.targetId}`
+        format = 'PERSON'
+      } else if (f.type === 'STUDIO') {
+        const item = studioMap.get(f.targetId)
+        title = item?.name || `Studio #${f.targetId}`
+        link = `/borealis/studios/${f.targetId}`
+        format = 'STUDIO'
+      } else {
+        title = `${f.type} #${f.targetId}`
+        format = f.type
+      }
+
+      return {
+        id: f.id,
+        userId: f.userId,
+        type: f.type,
+        targetId: f.targetId,
+        createdAt: f.createdAt.toISOString(),
+        entity: {
+          id: f.targetId,
+          title,
+          subtitle,
+          coverImage,
+          link,
+          format,
+          score: userScore,
+        },
+      }
+    })
+  }
+
+  /**
    * Get user favorites with pagination.
    */
   public static async getUserFavorites(
@@ -855,13 +1162,7 @@ export class CarinaUsersServ {
     const totalPages = Math.max(1, Math.ceil(total / limit))
     const hasMore = page < totalPages
 
-    const favorites = rawFavorites.map((f) => ({
-      id: f.id,
-      userId: f.userId,
-      type: f.type,
-      targetId: f.targetId,
-      createdAt: f.createdAt.toISOString(),
-    }))
+    const favorites = await this.enrichFavoritesWithEntities(rawFavorites, target.id)
 
     return {
       success: true,
@@ -916,17 +1217,85 @@ export class CarinaUsersServ {
     const totalPages = Math.max(1, Math.ceil(total / limit))
     const hasMore = page < totalPages
 
-    const favorites = rawFavorites.map((f) => ({
-      id: f.id,
-      userId: f.userId,
-      type: f.type,
-      targetId: f.targetId,
-      createdAt: f.createdAt.toISOString(),
-    }))
+    const favorites = await this.enrichFavoritesWithEntities(rawFavorites, target.id)
 
     return {
       success: true,
       favorites,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasMore,
+      },
+    }
+  }
+
+  /**
+   * Get user public friends with pagination.
+   */
+  public static async getUserFriends(
+    targetIdentifier: string,
+    query?: { page?: number; limit?: number },
+    viewerUserId?: string
+  ) {
+    const target = await this.resolveUser(targetIdentifier)
+    const isOwner = viewerUserId === target.id
+    const page = Math.max(1, query?.page ?? 1)
+    const limit = Math.max(1, Math.min(50, query?.limit ?? 10))
+    const skip = (page - 1) * limit
+
+    const where: Prisma.FriendWhereInput = {
+      userId: target.id,
+      ...(isOwner ? {} : { isPrivate: false }),
+    }
+
+    const [total, rawFriends] = await Promise.all([
+      prisma.friend.count({ where }),
+      prisma.friend.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          friend: {
+            select: {
+              id: true,
+              username: true,
+              customization: true,
+              badges: true,
+            },
+          },
+        },
+      }),
+    ])
+
+    const totalPages = Math.max(1, Math.ceil(total / limit))
+    const hasMore = page < totalPages
+
+    const friends = rawFriends.map((f) => {
+      const profile = getProfileCustomization(f.friend.customization)
+      return {
+        id: f.id,
+        friendId: f.friendId,
+        nickname: isOwner ? f.nickname : null,
+        isPrivate: f.isPrivate,
+        createdAt: f.createdAt.toISOString(),
+        user: {
+          id: f.friend.id,
+          username: f.friend.username,
+          displayName: profile.displayName || null,
+          avatarUrl: profile.avatarUrl || null,
+          avatarFrame: profile.avatarFrame || null,
+          badges: f.friend.badges,
+        },
+      }
+    })
+
+    return {
+      success: true,
+      friends,
       pagination: {
         page,
         limit,

@@ -288,7 +288,11 @@ export function CombinedStatsView({
                         {item.hours}h
                       </span>
                     </div>
-                    <Progress value={item.percentage} className="h-1" />
+                    <Progress
+                      value={item.percentage}
+                      aria-label={`${label}: ${item.count.toLocaleString()} titles (${item.percentage}%)`}
+                      className="h-1"
+                    />
                     <span className="block text-end text-[10px] text-muted-foreground">
                       {item.percentage}%
                     </span>

@@ -49,7 +49,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
     },
     async ({ query, session: userSession }) => {
       const targetUserId = query?.userId || userSession.requireUser().id
-      return await BorealisListsServ.getAnimeStats(targetUserId)
+      const callerId = userSession.user?.id
+      const isOwner = Boolean(callerId && callerId === targetUserId)
+      return await BorealisListsServ.getAnimeStats(targetUserId, query, isOwner)
     }
   )
 
@@ -210,7 +212,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
     },
     async ({ query, session: userSession }) => {
       const targetUserId = query?.userId || userSession.requireUser().id
-      return await BorealisListsServ.getMangaStats(targetUserId)
+      const callerId = userSession.user?.id
+      const isOwner = Boolean(callerId && callerId === targetUserId)
+      return await BorealisListsServ.getMangaStats(targetUserId, query, isOwner)
     }
   )
 
@@ -371,7 +375,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
     },
     async ({ query, session: userSession }) => {
       const targetUserId = query?.userId || userSession.requireUser().id
-      return await BorealisListsServ.getMovieStats(targetUserId)
+      const callerId = userSession.user?.id
+      const isOwner = Boolean(callerId && callerId === targetUserId)
+      return await BorealisListsServ.getMovieStats(targetUserId, query, isOwner)
     }
   )
 
@@ -532,7 +538,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
     },
     async ({ query, session: userSession }) => {
       const targetUserId = query?.userId || userSession.requireUser().id
-      return await BorealisListsServ.getTvStats(targetUserId)
+      const callerId = userSession.user?.id
+      const isOwner = Boolean(callerId && callerId === targetUserId)
+      return await BorealisListsServ.getTvStats(targetUserId, query, isOwner)
     }
   )
 
@@ -693,7 +701,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
     },
     async ({ query, session: userSession }) => {
       const targetUserId = query?.userId || userSession.requireUser().id
-      return await BorealisListsServ.getGameStats(targetUserId)
+      const callerId = userSession.user?.id
+      const isOwner = Boolean(callerId && callerId === targetUserId)
+      return await BorealisListsServ.getGameStats(targetUserId, query, isOwner)
     }
   )
 
@@ -854,7 +864,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
     },
     async ({ query, session: userSession }) => {
       const targetUserId = query?.userId || userSession.requireUser().id
-      return await BorealisListsServ.getBookStats(targetUserId)
+      const callerId = userSession.user?.id
+      const isOwner = Boolean(callerId && callerId === targetUserId)
+      return await BorealisListsServ.getBookStats(targetUserId, query, isOwner)
     }
   )
 
@@ -1015,7 +1027,9 @@ export const borealisLists = new Elysia({ prefix: '/borealis/lists' })
     },
     async ({ query, session: userSession }) => {
       const targetUserId = query?.userId || userSession.requireUser().id
-      return await BorealisListsServ.getMusicStats(targetUserId)
+      const callerId = userSession.user?.id
+      const isOwner = Boolean(callerId && callerId === targetUserId)
+      return await BorealisListsServ.getMusicStats(targetUserId, query, isOwner)
     }
   )
 

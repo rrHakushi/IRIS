@@ -30,12 +30,19 @@ import { IconSelector, IconSearch, IconCheck } from "@tabler/icons-react"
 
 function Select<T extends object, M extends "single" | "multiple" = "single">({
   className,
+  "aria-label": ariaLabel,
   ...props
 }: SelectProps<T, M>) {
   return (
     <SelectPrimitive
       data-slot="select"
       className={cn("w-fit", className)}
+      aria-label={
+        ariaLabel ??
+        (typeof (props as any).placeholder === "string"
+          ? (props as any).placeholder
+          : "Select")
+      }
       {...props}
     />
   )
@@ -175,6 +182,7 @@ function SelectList<T extends object>({
 function SelectInput({ className, ...props }: SearchFieldProps) {
   return (
     <SearchField
+      aria-label={props["aria-label"] || "Search"}
       {...props}
       autoFocus
       data-slot="select-input-wrapper"
@@ -182,6 +190,7 @@ function SelectInput({ className, ...props }: SearchFieldProps) {
     >
       <InputGroup>
         <InputGroupInput
+          aria-label={props["aria-label"] || "Search"}
           data-slot="select-input"
           className="[&::-webkit-search-cancel-button]:hidden"
         />

@@ -304,22 +304,19 @@ export function UserProfileHeader({
 
   return (
     <div className="relative w-full border-b border-border/60 bg-card/20">
-      {/* Centered Constrained Container keeping 16:5.5 Ratio Scaled Down */}
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
-        {/* 1. Hero Banner with exact 16:5.5 Aspect Ratio */}
-        <div
-          className="relative w-full overflow-hidden rounded-2xl sm:rounded-3xl border border-border/60 bg-linear-to-r from-primary/30 via-primary/10 to-muted/50 shadow-md min-h-[120px] sm:min-h-[220px]"
-          style={{ aspectRatio: "16 / 5.5" }}
-        >
+      {/* Full-width Container */}
+      <div className="w-full px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
+        {/* 1. Hero Banner */}
+        <div className="relative h-36 sm:h-48 md:h-56 lg:h-60 w-full overflow-hidden rounded-2xl sm:rounded-3xl border border-border/60 bg-linear-to-r from-primary/30 via-primary/10 to-muted/50 shadow-md">
           {profile.bannerUrl ? (
             <Image
               src={profile.bannerUrl}
               alt="Profile Banner"
               fill
-              sizes="(max-width: 1280px) 100vw, 1280px"
+              sizes="100vw"
               priority
               unoptimized
-              className="object-cover"
+              className="object-cover object-center"
             />
           ) : (
             <div className="flex size-full items-center justify-end bg-gradient-to-br from-card via-background to-muted/30 pr-8 select-none">
@@ -336,10 +333,10 @@ export function UserProfileHeader({
                 src={profile.bannerOverlayUrl}
                 alt="Banner Overlay"
                 fill
-                sizes="(max-width: 1280px) 100vw, 1280px"
+                sizes="100vw"
                 priority
                 unoptimized
-                className="object-cover"
+                className="object-cover object-center"
               />
             </div>
           )}
@@ -740,6 +737,7 @@ export function UserProfileHeader({
             </div>
             <Input
               type="text"
+              aria-label="Optional Message"
               maxLength={50}
               placeholder="Say hello (max 50 chars)..."
               value={addFriendMessage}
@@ -791,6 +789,7 @@ export function UserProfileHeader({
         <div className="space-y-4 py-2">
           <Input
             type="text"
+            aria-label="Friend Nickname"
             maxLength={30}
             placeholder="e.g. Bestie, Anime Buddy"
             value={nicknameInput}

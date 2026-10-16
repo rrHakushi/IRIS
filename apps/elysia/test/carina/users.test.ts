@@ -1285,4 +1285,26 @@ describe('Comprehensive Carina Users & Profiles Test Suite', () => {
       expect(data.code).toBe('bad-request')
     })
   })
+
+  // ===========================================================================
+  // 13. GET /carina/users/:userId/friends
+  // ===========================================================================
+  describe('GET /carina/users/:userId/friends', () => {
+    it('fails (404) when target user ID does not exist', async () => {
+      const res = await app.handle(
+        new Request('http://localhost/carina/users/00000000-0000-0000-0000-999999999999/friends')
+      )
+      expect(res.status).toBe(404)
+    })
+
+    it('returns public friends for target user', async () => {
+      const res = await app.handle(
+        new Request(`http://localhost/carina/users/${ALICE_ID}/friends`)
+      )
+      expect(res.status).toBe(200)
+      const data = await res.json()
+      expect(data.success).toBe(true)
+      expect(Array.isArray(data.friends)).toBe(true)
+    })
+  })
 })
