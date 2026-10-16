@@ -231,6 +231,7 @@ export interface AniListAnimeSearchPreview {
     native?: string
   }
   coverImage?: {
+    medium?: string
     large?: string
   }
   isAdult?: boolean
@@ -248,6 +249,7 @@ export interface AniListMangaSearchPreview {
     native?: string
   }
   coverImage?: {
+    medium?: string
     large?: string
   }
   isAdult?: boolean
@@ -255,6 +257,45 @@ export interface AniListMangaSearchPreview {
   startDate?: {
     year?: number
   }
+}
+
+export interface AniListCharacterPayload {
+  id: number
+  name: {
+    full: string
+    native?: string
+    alternative?: string[]
+    alternativeSpoiler?: string[]
+  }
+  image?: {
+    medium?: string
+    large?: string
+  }
+  description?: string
+  gender?: string
+  age?: string
+  bloodType?: string
+  dateOfBirth?: { year?: number; month?: number; day?: number }
+  favourites?: number
+}
+
+export interface AniListStaffPayload {
+  id: number
+  name: {
+    full: string
+    native?: string
+    alternative?: string[]
+  }
+  image?: {
+    medium?: string
+    large?: string
+  }
+  description?: string
+  gender?: string
+  age?: string
+  dateOfBirth?: { year?: number; month?: number; day?: number }
+  primaryOccupations?: string[]
+  favourites?: number
 }
 
 export class AniListProvider {
@@ -422,6 +463,7 @@ export class AniListProvider {
               native
             }
             coverImage {
+              medium
               large
             }
             isAdult
@@ -464,6 +506,7 @@ export class AniListProvider {
               native
             }
             coverImage {
+              medium
               large
             }
             isAdult
@@ -505,9 +548,8 @@ export class AniListProvider {
             native
           }
           coverImage {
-            extraLarge
-            large
             medium
+            large
             color
           }
           bannerImage
@@ -592,8 +634,8 @@ export class AniListProvider {
                   alternative
                 }
                 image {
-                  large
                   medium
+                  large
                 }
                 description
                 gender
@@ -613,8 +655,8 @@ export class AniListProvider {
                   native
                 }
                 image {
-                  large
                   medium
+                  large
                 }
                 languageV2
               }
@@ -631,8 +673,8 @@ export class AniListProvider {
                   alternative
                 }
                 image {
-                  large
                   medium
+                  large
                 }
                 description
                 primaryOccupations
@@ -653,6 +695,7 @@ export class AniListProvider {
                   native
                 }
                 coverImage {
+                  medium
                   large
                 }
               }
@@ -683,9 +726,8 @@ export class AniListProvider {
             native
           }
           coverImage {
-            extraLarge
-            large
             medium
+            large
             color
           }
           bannerImage
@@ -736,8 +778,8 @@ export class AniListProvider {
                   alternative
                 }
                 image {
-                  large
                   medium
+                  large
                 }
                 description
                 gender
@@ -755,8 +797,8 @@ export class AniListProvider {
                   native
                 }
                 image {
-                  large
                   medium
+                  large
                 }
                 description
               }
@@ -776,6 +818,7 @@ export class AniListProvider {
                   native
                 }
                 coverImage {
+                  medium
                   large
                 }
               }
@@ -788,4 +831,169 @@ export class AniListProvider {
     const data = await this.executeGraphQL<{ Media: AniListMangaPayload }>(query, { id: anilistId })
     return data.Media
   }
+
+  /**
+   * Fetches character details from AniList by ID with medium & large images.
+   */
+  async fetchCharacter(anilistId: number): Promise<AniListCharacterPayload | null> {
+    const query = `
+      query GetCharacterDetails($id: Int) {
+        Character(id: $id) {
+          id
+          name {
+            full
+            native
+            alternative
+            alternativeSpoiler
+          }
+          image {
+            medium
+            large
+          }
+          description(asHtml: false)
+          gender
+          age
+          bloodType
+          dateOfBirth {
+            year
+            month
+            day
+          }
+          favourites
+        }
+      }
+    `
+
+    try {
+      const data = await this.executeGraphQL<{ Character?: AniListCharacterPayload }>(query, { id: anilistId })
+      return data.Character || null
+    } catch (err: any) {
+      logger.error(`fetchCharacter failed for AniList #${anilistId}: ${err.message}`)
+      return null
+    }
+  }
+
+  /**
+   * Searches AniList for characters by name/query with medium & large images.
+   */
+  async searchCharacters(query: string, limit: number = 25): Promise<AniListCharacterPayload[]> {
+    const clean = query.trim()
+    if (!clean) return []
+
+    const gqlQuery = `
+      query SearchCharacters($search: String, $perPage: Int) {
+        Page(page: 1, perPage: $perPage) {
+          characters(search: $search, sort: SEARCH_MATCH) {
+            id
+            name {
+              full
+              native
+              alternative
+            }
+            image {
+              medium
+              large
+            }
+            gender
+            age
+            description(asHtml: false)
+            favourites
+          }
+        }
+      }
+    `
+
+    try {
+      const data = await this.executeGraphQL<{
+        Page?: { characters?: AniListCharacterPayload[] }
+      }>(gqlQuery, { search: clean, perPage: Math.min(limit, 50) })
+
+      return data.Page?.characters || []
+    } catch (err: any) {
+      logger.error(`searchCharacters failed: ${err.message}`)
+      return []
+    }
+  }
+
+  /**
+   * Fetches staff details from AniList by ID with medium & large images.
+   */
+  async fetchStaff(anilistId: number): Promise<AniListStaffPayload | null> {
+    const query = `
+      query GetStaffDetails($id: Int) {
+        Staff(id: $id) {
+          id
+          name {
+            full
+            native
+            alternative
+          }
+          image {
+            medium
+            large
+          }
+          description(asHtml: false)
+          gender
+          age
+          dateOfBirth {
+            year
+            month
+            day
+          }
+          primaryOccupations
+          favourites
+        }
+      }
+    `
+
+    try {
+      const data = await this.executeGraphQL<{ Staff?: AniListStaffPayload }>(query, { id: anilistId })
+      return data.Staff || null
+    } catch (err: any) {
+      logger.error(`fetchStaff failed for AniList #${anilistId}: ${err.message}`)
+      return null
+    }
+  }
+
+  /**
+   * Searches AniList for staff/people by name/query with medium & large images.
+   */
+  async searchStaff(query: string, limit: number = 25): Promise<AniListStaffPayload[]> {
+    const clean = query.trim()
+    if (!clean) return []
+
+    const gqlQuery = `
+      query SearchStaff($search: String, $perPage: Int) {
+        Page(page: 1, perPage: $perPage) {
+          staff(search: $search, sort: SEARCH_MATCH) {
+            id
+            name {
+              full
+              native
+              alternative
+            }
+            image {
+              medium
+              large
+            }
+            primaryOccupations
+            description(asHtml: false)
+            favourites
+          }
+        }
+      }
+    `
+
+    try {
+      const data = await this.executeGraphQL<{
+        Page?: { staff?: AniListStaffPayload[] }
+      }>(gqlQuery, { search: clean, perPage: Math.min(limit, 50) })
+
+      return data.Page?.staff || []
+    } catch (err: any) {
+      logger.error(`searchStaff failed: ${err.message}`)
+      return []
+    }
+  }
 }
+

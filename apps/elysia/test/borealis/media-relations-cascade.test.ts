@@ -308,4 +308,43 @@ describe('Borealis: Media Relations Cascade & Deezer Queueing', () => {
     // No child relation jobs should be enqueued when maxDepth is 0
     expect(enqueuedJobs.length).toBe(0)
   })
+
+  it('prefers medium coverImage over large when both are available from AniList relation', async () => {
+    createdMangaStubs = []
+    anilistProvider.fetchAnime = async () =>
+      ({
+        id: 206949,
+        title: { userPreferred: 'Nia Liston Medium Test' },
+        relations: {
+          edges: [
+            {
+              relationType: 'ADAPTATION',
+              node: {
+                id: 999999,
+                type: 'MANGA',
+                format: 'MANGA',
+                title: { userPreferred: 'Nia Liston Medium Manga' },
+                coverImage: {
+                  medium: 'https://example.com/nia-medium.jpg',
+                  large: 'https://example.com/nia-large.jpg',
+                },
+              },
+            },
+          ],
+        },
+      } as any)
+
+    const result = await MediaEntitySyncer.syncAnime(603, 206949)
+    expect(result.synced).toBe(true)
+    expect(createdMangaStubs.length).toBe(1)
+    expect(createdMangaStubs[0]!.coverImage).toBe('https://example.com/nia-medium.jpg')
+  })
+
+  it('exposes AniList character and staff fetching methods', () => {
+    expect(typeof anilistProvider.fetchCharacter).toBe('function')
+    expect(typeof anilistProvider.searchCharacters).toBe('function')
+    expect(typeof anilistProvider.fetchStaff).toBe('function')
+    expect(typeof anilistProvider.searchStaff).toBe('function')
+  })
 })
+

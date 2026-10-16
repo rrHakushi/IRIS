@@ -1,3 +1,4 @@
+import { prisma } from '@IRIS/database'
 import { LogFactory, c } from '@Iris/logger'
 import { cache } from '../../utils/cache'
 import { MediaQueueManager } from './queue'
@@ -252,6 +253,84 @@ export class BorealisExternalSearchServ {
             logger.warn(
               `${c.red('⚠️ [Music Album Error]')}: Failed to upsert album preview: ${err?.message || err}`
             )
+          }
+        }
+        break
+      }
+
+      case 'characters': {
+        const items = await anilistProvider.searchCharacters(cleanQuery, limit)
+        logger.info(
+          `${c.magenta('📡 [AniList]')} Received ${c.bold(String(items.length))} character search results for "${c.yellow(cleanQuery)}"`
+        )
+        for (const item of items) {
+          try {
+            const charImage = item.image?.medium || item.image?.large || null
+            let existing = await prisma.character.findUnique({
+              where: { anilistId: item.id },
+            })
+            if (!existing) {
+              existing = await prisma.character.create({
+                data: {
+                  anilistId: item.id,
+                  namePrimary: item.name.full,
+                  nameNative: item.name.native || null,
+                  nameAlternative: item.name.alternative || [],
+                  nameAlternativeSpoiler: item.name.alternativeSpoiler || [],
+                  image: charImage,
+                  description: item.description || null,
+                  gender: item.gender || null,
+                  age: item.age || null,
+                  favorites: item.favourites || 0,
+                },
+              })
+            }
+            results.push({
+              ...existing,
+              mediaType: 'characters' as any,
+              externalId: item.id,
+              queuedForFetch: false,
+            } as any)
+          } catch (err: any) {
+            logger.warn(`${c.red('⚠️ [Character Preview Error]')}: ${err?.message || err}`)
+          }
+        }
+        break
+      }
+
+      case 'people':
+      case 'staff': {
+        const items = await anilistProvider.searchStaff(cleanQuery, limit)
+        logger.info(
+          `${c.magenta('📡 [AniList]')} Received ${c.bold(String(items.length))} staff search results for "${c.yellow(cleanQuery)}"`
+        )
+        for (const item of items) {
+          try {
+            const staffImage = item.image?.medium || item.image?.large || null
+            let existing = await prisma.person.findUnique({
+              where: { anilistId: item.id },
+            })
+            if (!existing) {
+              existing = await prisma.person.create({
+                data: {
+                  anilistId: item.id,
+                  namePrimary: item.name.full,
+                  nameNative: item.name.native || null,
+                  nameAlternative: item.name.alternative || [],
+                  image: staffImage,
+                  description: item.description || null,
+                  primaryOccupations: item.primaryOccupations || [],
+                },
+              })
+            }
+            results.push({
+              ...existing,
+              mediaType: 'people' as any,
+              externalId: item.id,
+              queuedForFetch: false,
+            } as any)
+          } catch (err: any) {
+            logger.warn(`${c.red('⚠️ [Staff Preview Error]')}: ${err?.message || err}`)
           }
         }
         break

@@ -78,7 +78,7 @@ export class BorealisSearchServ {
     let externalStubs: PreviewResult[] = []
     if (
       isExternal &&
-      ['anime', 'manga', 'movies', 'tv', 'games', 'books', 'music'].includes(category)
+      ['anime', 'manga', 'movies', 'tv', 'games', 'books', 'music', 'characters', 'people', 'staff'].includes(category)
     ) {
       externalStubs = await BorealisExternalSearchServ.enqueueSearchFetch(
         category,
@@ -428,16 +428,17 @@ export class BorealisSearchServ {
             },
           }),
         ])
+        const merged = mergeWithExternal(items, externalStubs, 'characters', total)
         return {
           success: true,
           category,
           query: cleanQuery,
-          results: items,
+          results: merged.results,
           pagination: {
             page,
             limit,
-            total,
-            hasMore: skip + items.length < total,
+            total: merged.total,
+            hasMore: skip + merged.results.length < merged.total,
           },
         }
       }
@@ -466,16 +467,17 @@ export class BorealisSearchServ {
             },
           }),
         ])
+        const merged = mergeWithExternal(items, externalStubs, 'people', total)
         return {
           success: true,
           category,
           query: cleanQuery,
-          results: items,
+          results: merged.results,
           pagination: {
             page,
             limit,
-            total,
-            hasMore: skip + items.length < total,
+            total: merged.total,
+            hasMore: skip + merged.results.length < merged.total,
           },
         }
       }

@@ -170,8 +170,8 @@ async function fetchRemoteMediaDetails(
       ) {
         const item = res.data.results[0]
         const coverUrl =
-          item.coverImage?.large ||
           item.coverImage?.medium ||
+          item.coverImage?.large ||
           (typeof item.coverImage === "string" ? item.coverImage : null)
         const primaryTitle =
           item.title?.userPreferred ||
@@ -219,8 +219,8 @@ async function fetchRemoteMediaDetails(
       ) {
         const item = res.data.results[0]
         const coverUrl =
-          item.coverImage?.large ||
           item.coverImage?.medium ||
+          item.coverImage?.large ||
           (typeof item.coverImage === "string" ? item.coverImage : null)
         const primaryTitle =
           item.title?.userPreferred ||
@@ -277,8 +277,8 @@ async function fetchRemoteMediaDetails(
                   romaji
                 }
                 coverImage {
-                  large
                   medium
+                  large
                 }
               }
             }
@@ -289,7 +289,7 @@ async function fetchRemoteMediaDetails(
       const json = await resp.json()
       const m = json?.data?.Media
       if (!m) return null
-      const coverUrl = m.coverImage?.large || m.coverImage?.medium || null
+      const coverUrl = m.coverImage?.medium || m.coverImage?.large || null
       return {
         title: m.title?.userPreferred || m.title?.english || m.title?.romaji,
         cover: coverUrl,
@@ -324,8 +324,8 @@ async function fetchRemoteMediaDetails(
       ) {
         const item = res.data.results[0]
         const coverUrl =
-          item.coverImage?.large ||
           item.coverImage?.medium ||
+          item.coverImage?.large ||
           (typeof item.coverImage === "string" ? item.coverImage : null)
         const primaryTitle =
           item.title?.userPreferred ||
@@ -795,8 +795,8 @@ export function MediaListConnectionsTab({
                       ? r.title?.english
                       : r.title?.romaji || null,
                   coverImage:
-                    r.coverImage?.large ||
                     r.coverImage?.medium ||
+                    r.coverImage?.large ||
                     (typeof r.coverImage === "string" ? r.coverImage : null),
                   releaseYear: r.releaseYear ?? r.year ?? null,
                   format: r.format ?? null,
@@ -839,8 +839,8 @@ export function MediaListConnectionsTab({
                     romaji
                   }
                   coverImage {
-                    large
                     medium
+                    large
                   }
                 }
               }
@@ -871,7 +871,7 @@ export function MediaListConnectionsTab({
                 m.title?.english && m.title?.english !== m.title?.userPreferred
                   ? m.title?.english
                   : m.title?.romaji || null,
-              coverImage: m.coverImage?.large || m.coverImage?.medium || null,
+              coverImage: m.coverImage?.medium || m.coverImage?.large || null,
               releaseYear: m.seasonYear ?? null,
               format: m.format ?? null,
               episodes: m.episodes ?? m.chapters ?? null,
