@@ -103,8 +103,10 @@ public class BorealisWebController : ControllerBase
     [HttpGet("thumb.png")]
     [Produces("image/png")]
     [AllowAnonymous]
+    [ResponseCache(Duration = 86400, Location = ResponseCacheLocation.Any)]
     public IActionResult GetIcon()
     {
+        Response.Headers["Cache-Control"] = "public, max-age=86400";
         var assembly = Assembly.GetExecutingAssembly();
         var stream = assembly.GetManifestResourceStream("Jellyfin.Plugin.Borealis.thumb.png");
         if (stream == null)

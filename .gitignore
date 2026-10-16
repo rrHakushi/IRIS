@@ -56,3 +56,4 @@ obj/
 releases/**
 !releases/**/
 !releases/**/manifest.json
+.jellyfin/

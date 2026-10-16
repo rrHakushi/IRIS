@@ -92,15 +92,19 @@ public class BorealisSyncManager
             if (entryExists)
             {
                 var root = listEntryDoc.Value;
-                if (root.TryGetProperty("progress", out var pProp) && pProp.ValueKind == JsonValueKind.Number)
+                var target = (root.TryGetProperty("entry", out var eProp) && eProp.ValueKind == JsonValueKind.Object)
+                    ? eProp
+                    : root;
+
+                if (target.TryGetProperty("progress", out var pProp) && pProp.ValueKind == JsonValueKind.Number)
                 {
                     currentProgress = pProp.GetInt32();
                 }
-                if (root.TryGetProperty("status", out var sProp) && sProp.ValueKind == JsonValueKind.String)
+                if (target.TryGetProperty("status", out var sProp) && sProp.ValueKind == JsonValueKind.String)
                 {
                     status = sProp.GetString() ?? "WATCHING";
                 }
-                if (root.TryGetProperty("score", out var scProp) && scProp.ValueKind == JsonValueKind.Number)
+                if (target.TryGetProperty("score", out var scProp) && scProp.ValueKind == JsonValueKind.Number)
                 {
                     score = scProp.GetDouble();
                 }

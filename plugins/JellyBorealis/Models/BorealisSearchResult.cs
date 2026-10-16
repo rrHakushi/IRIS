@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace Jellyfin.Plugin.Borealis.Models;
 
 /// <summary>
-/// Media search result model from Borealis API (/borealis/search?q=...&category=...).
+/// Media search result model from Borealis API (/borealis/search?q=...&amp;category=...).
 /// </summary>
 public class BorealisSearchResult
 {

@@ -48,7 +48,9 @@ def build_plugin():
 def create_release_zip(version: str) -> Path:
     import zipfile
 
-    bin_dir = PLUGIN_DIR / "bin" / "Release" / "net9.0"
+    bin_dir = PLUGIN_DIR / "bin" / "Release" / "net10.0"
+    if not bin_dir.exists():
+        bin_dir = PLUGIN_DIR / "bin" / "Release" / "net9.0"
     dll_file = bin_dir / "Jellyfin.Plugin.Borealis.dll"
     if not dll_file.exists():
         raise FileNotFoundError(f"Compiled dll not found at {dll_file}")

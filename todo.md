@@ -24,8 +24,6 @@
 
 # JellyBorealis 
     - use borealis for media metadata
-    - Update design
-    - use borealis icon
     - Auto link option?? if metadata used from borealis
 
 # Akaromi For Firefox

@@ -9,8 +9,9 @@
         <div data-role="content">
             <div class="content-primary">
                 <form id="JellyBorealisConfigForm">
-                    <div class="sectionTitleContainer flex align-items-center">
-                        <h2 class="sectionTitle">JellyBorealis Server Plugin Configuration</h2>
+                    <div class="sectionTitleContainer flex align-items-center" style="display:flex; align-items:center; gap:12px;">
+                        <img src="/Borealis/Icon.png" style="width:36px; height:36px; border-radius:50%; object-fit:contain;" alt="Borealis" />
+                        <h2 class="sectionTitle" style="margin:0;">JellyBorealis Server Plugin Configuration</h2>
                     </div>
                     <p class="fieldDescription">Configure library media type mappings, per-library scrobble thresholds, and user Borealis server API access.</p>
 
@@ -49,7 +50,7 @@
                     <div class="verticalSection">
                         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                             <h3 class="sectionTitle" style="margin:0;">Server Item Mappings</h3>
-                            <button is="emby-button" type="button" id="btnClearAllMappings" class="raised" style="background:#dc2626; color:#ffffff; font-weight:bold;">
+                            <button is="emby-button" type="button" id="btnClearAllMappings" class="raised" style="background:#ef4444; color:#ffffff; font-weight:bold; border-radius:6px;">
                                 <span>Remove All Mappings</span>
                             </button>
                         </div>
@@ -63,7 +64,7 @@
                     <div class="verticalSection">
                         <h3 class="sectionTitle">Client JavaScript Injection Code</h3>
                         <p class="fieldDescription">Paste this 1-line code into <strong>Jellyfin Dashboard &gt; General &gt; Custom JavaScript code</strong> (or into your <strong>JavaScript Injector</strong> plugin):</p>
-                        <textarea is="emby-input" style="width:100%; font-family:monospace; background:rgba(0,0,0,0.5); color:#f43f5e; padding:10px; border-radius:6px; height:60px;" readonly onclick="this.select();">(function(){var s=document.createElement('script');s.src='/Borealis/WebInjection.js?v=2.0.0';document.head.appendChild(s);})();</textarea>
+                        <textarea is="emby-input" style="width:100%; font-family:monospace; background:#18181b; border:1px solid #27272a; color:#fafafa; padding:10px; border-radius:6px; height:60px;" readonly onclick="this.select();">(function(){var s=document.createElement('script');s.src='/Borealis/WebInjection.js?v=2.0.0';document.head.appendChild(s);})();</textarea>
                     </div>
 
                     <div style="margin-top:2em;">

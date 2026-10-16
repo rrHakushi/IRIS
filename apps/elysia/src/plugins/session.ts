@@ -75,84 +75,81 @@ export async function resolveSessionFromRequest(
     }
   }
 
-  if (!rawToken) {
-    return { user: null, token: null }
-  }
-
-  try {
-    const decoded = (await decode({ token: rawToken, secret })) as any
-    if (!decoded || !decoded.id) {
-      return { user: null, token: null }
-    }
-
-    const dbUser = await prisma.user.findUnique({
-      where: { id: decoded.id },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        permissions: true,
-        passwordChangedAt: true,
-      },
-    })
-
-    if (!dbUser) {
-      return { user: null, token: null }
-    }
-
-    // Verify token validity against passwordChangedAt
-    if (dbUser.passwordChangedAt && decoded.iat) {
-      const pwdChangedSeconds = Math.floor(dbUser.passwordChangedAt.getTime() / 1000)
-      if (decoded.iat < pwdChangedSeconds) {
-        return { user: null, token: null }
-      }
-    }
-
-    return {
-      user: {
-        id: dbUser.id,
-        username: dbUser.username,
-        email: dbUser.email,
-        permissions: dbUser.permissions,
-      },
-      token: rawToken,
-    }
-  } catch {
-    // JWT decoding failed, proceed to OAuth token resolution
-  }
-
-  // 2. Try OAuth 2.0 Bearer Token
-  try {
-    const oauthToken = await prisma.oAuthAccessToken.findUnique({
-      where: { token: rawToken },
-      include: {
-        user: {
+  if (rawToken) {
+    try {
+      const decoded = (await decode({ token: rawToken, secret })) as any
+      if (decoded && decoded.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: decoded.id },
           select: {
             id: true,
             username: true,
             email: true,
             permissions: true,
+            passwordChangedAt: true,
+          },
+        })
+
+        if (dbUser) {
+          // Verify token validity against passwordChangedAt
+          let isRevoked = false
+          if (dbUser.passwordChangedAt && decoded.iat) {
+            const pwdChangedSeconds = Math.floor(dbUser.passwordChangedAt.getTime() / 1000)
+            if (decoded.iat < pwdChangedSeconds) {
+              isRevoked = true
+            }
+          }
+
+          if (!isRevoked) {
+            return {
+              user: {
+                id: dbUser.id,
+                username: dbUser.username,
+                email: dbUser.email,
+                permissions: dbUser.permissions,
+              },
+              token: rawToken,
+            }
+          }
+        }
+      }
+    } catch {
+      // JWT decoding failed, proceed to OAuth token resolution
+    }
+
+    // 2. Try OAuth 2.0 Bearer Token
+    try {
+      const oauthToken = await prisma.oAuthAccessToken.findUnique({
+        where: { token: rawToken },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              email: true,
+              permissions: true,
+            },
           },
         },
-      },
-    })
+      })
 
-    if (
-      oauthToken &&
-      !oauthToken.revokedAt &&
-      oauthToken.expiresAt.getTime() > Date.now()
-    ) {
-      return {
-        user: {
-          id: oauthToken.user.id,
-          username: oauthToken.user.username.trim(),
-          email: oauthToken.user.email,
-          permissions: oauthToken.user.permissions,
-        },
-        token: rawToken,
+      if (
+        oauthToken &&
+        !oauthToken.revokedAt &&
+        oauthToken.expiresAt.getTime() > Date.now()
+      ) {
+        return {
+          user: {
+            id: oauthToken.user.id,
+            username: oauthToken.user.username.trim(),
+            email: oauthToken.user.email,
+            permissions: oauthToken.user.permissions,
+          },
+          token: rawToken,
+        }
       }
-    }
-  } catch {}
+    } catch {}
+  }
 
   // 3. Try API Key from headers (x-api-key, apikey, x-api, Authorization: ApiKey)
   const xApiKey =

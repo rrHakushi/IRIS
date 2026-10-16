@@ -1,0 +1,36 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "coreclr",
+            "name": "Launch Jellyfin Server (Dev Data with Borealis Plugin)",
+            "request": "launch",
+            "preLaunchTask": "build-and-copy-dev",
+            "program": "${workspaceFolder}/plugins/JellyBorealis/.jellyfin/server/jellyfin.dll",
+            "args": [
+                "--webdir", "${workspaceFolder}/plugins/JellyBorealis/.jellyfin/web",
+                "--datadir", "${workspaceFolder}/plugins/JellyBorealis/.jellyfin/data",
+                "--configdir", "${workspaceFolder}/plugins/JellyBorealis/.jellyfin/config",
+                "--logdir", "${workspaceFolder}/plugins/JellyBorealis/.jellyfin/log"
+            ],
+            "cwd": "${workspaceFolder}/plugins/JellyBorealis/.jellyfin/server"
+        },
+        {
+            "type": "coreclr",
+            "name": "Launch Jellyfin Server (System Data ~/.local/share)",
+            "request": "launch",
+            "preLaunchTask": "build-and-copy-system",
+            "program": "${workspaceFolder}/plugins/JellyBorealis/.jellyfin/server/jellyfin.dll",
+            "args": [
+                "--webdir", "${workspaceFolder}/plugins/JellyBorealis/.jellyfin/web"
+            ],
+            "cwd": "${workspaceFolder}/plugins/JellyBorealis/.jellyfin/server"
+        },
+        {
+            "name": ".NET Core Attach to Jellyfin",
+            "type": "coreclr",
+            "request": "attach",
+            "processName": "jellyfin"
+        }
+    ]
+}

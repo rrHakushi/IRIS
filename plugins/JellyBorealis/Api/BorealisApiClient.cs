@@ -128,7 +128,7 @@ public class BorealisApiClient
     }
 
     /// <summary>
-    /// Searches media by title via GET /borealis/search?q={query}&category={anime|tv|movies}.
+    /// Searches media by title via GET /borealis/search?q={query}&amp;category={anime|tv|movies}.
     /// </summary>
     public virtual async Task<List<BorealisSearchResult>> SearchMediaAsync(string mediaType, string title, string apiKey, string baseUrl)
     {
@@ -210,7 +210,16 @@ public class BorealisApiClient
 
             var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             using var doc = JsonDocument.Parse(json);
-            return doc.RootElement.Clone();
+            var root = doc.RootElement;
+            if (root.TryGetProperty("media", out var mediaProp) && mediaProp.ValueKind == JsonValueKind.Object)
+            {
+                return mediaProp.Clone();
+            }
+            if (root.TryGetProperty("data", out var dataProp) && dataProp.ValueKind == JsonValueKind.Object)
+            {
+                return dataProp.Clone();
+            }
+            return root.Clone();
         }
         catch (Exception ex)
         {
@@ -249,10 +258,13 @@ public class BorealisApiClient
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
-            if (root.TryGetProperty("inList", out var inListProp) && inListProp.GetBoolean() &&
-                root.TryGetProperty("entry", out var entryProp) && entryProp.ValueKind == JsonValueKind.Object)
+            if (root.TryGetProperty("inList", out var inListProp) && inListProp.GetBoolean())
             {
-                return entryProp.Clone();
+                return root.Clone();
+            }
+            if (root.TryGetProperty("entry", out var entryProp) && entryProp.ValueKind == JsonValueKind.Object)
+            {
+                return root.Clone();
             }
 
             return null;

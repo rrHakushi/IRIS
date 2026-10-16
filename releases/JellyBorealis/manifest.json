@@ -13,8 +13,8 @@
         "changelog": "Release v2.0.0.0 for modern IRIS/Borealis API.",
         "targetAbi": "10.11.11.0",
         "sourceUrl": "https://github.com/rrHakushi/IRIS/releases/download/jellyborealis-v2.0.0.0/JellyBorealis_v2.0.0.0.zip",
-        "checksum": "157c09dc03b3d1547bc4f15737c3aa65",
-        "timestamp": "2026-10-14 11:52:37"
+        "checksum": "0c984086fc9e3d796b105c21dac01a76",
+        "timestamp": "2026-10-16 15:27:05"
       }
     ]
   }
