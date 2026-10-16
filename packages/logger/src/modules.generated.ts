@@ -1,5 +1,6 @@
 // This file is auto-generated at runtime by @Iris/logger. Do not edit manually.
 export interface KnownModules {
+  "ActivityServ": true
   "Borealis:EntitySyncer": true
   "Borealis:ExternalSearch": true
   "Borealis:Freshness": true

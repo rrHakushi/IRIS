@@ -4,6 +4,7 @@ import process from 'node:process'
 import { LogFactory } from '@Iris/logger'
 import { MediaQueueManager } from './services/borealis/queue'
 import { ConnectionSyncQueueManager } from './services/carina/connection-sync.queue'
+import { activityServ } from './services/carina/activity.serv'
 import { app, type App, startServer } from './server'
 
 export { app, type App, startServer }
@@ -38,6 +39,13 @@ if (isClusteringEnabled && cluster.isPrimary) {
     logger.warn(`ConnectionSyncQueue initialization notice: ${err?.message || err}`)
   }
 
+  // Initialize background activity retention cleanup scheduler in the primary process only
+  try {
+    activityServ.initCron()
+  } catch (err: any) {
+    logger.warn(`Activity cleanup cron initialization notice: ${err?.message || err}`)
+  }
+
   // Spawn cluster workers
   for (let i = 0; i < numWorkers; i++) {
     cluster.fork()
@@ -64,6 +72,7 @@ if (isClusteringEnabled && cluster.isPrimary) {
       await Promise.all([
         MediaQueueManager.shutdown(),
         ConnectionSyncQueueManager.shutdown(),
+        activityServ.shutdown(),
       ])
     } catch {}
 
@@ -90,6 +99,11 @@ if (isClusteringEnabled && cluster.isPrimary) {
       ConnectionSyncQueueManager.initWorkers()
     } catch (err: any) {
       logger.warn(`ConnectionSyncQueue initialization notice: ${err?.message || err}`)
+    }
+    try {
+      activityServ.initCron()
+    } catch (err: any) {
+      logger.warn(`Activity cleanup cron initialization notice: ${err?.message || err}`)
     }
   }
 

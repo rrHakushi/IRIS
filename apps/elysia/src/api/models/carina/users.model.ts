@@ -37,7 +37,7 @@ export const CarinaUsersModel = {
     }),
     category: t.String({
       minLength: 1,
-      description: 'Activity category filter (media, lists, social, posts, status, or specific ActivityType enum)',
+      description: 'Activity category filter (anime, manga, movie, tv, game, book, music, media, lists, social, posts, status, or specific ActivityType enum)',
     }),
   }),
 
@@ -260,6 +260,11 @@ export const CarinaUsersModel = {
   activityPaginationQuery: t.Object({
     page: t.Optional(t.Number({ default: 1, minimum: 1, description: 'Page number' })),
     limit: t.Optional(t.Number({ default: 10, minimum: 1, maximum: 50, description: 'Activities per page' })),
+    action: t.Optional(
+      t.String({
+        description: 'Action filter (ALL, ADDED, PROGRESS, STATUS, COMPLETED, SCORE, REMOVED)',
+      })
+    ),
   }),
 
   activityAuthorPreview: t.Object({
@@ -268,6 +273,12 @@ export const CarinaUsersModel = {
     displayName: t.Nullable(t.String()),
     avatarUrl: t.Nullable(t.String()),
     avatarFrame: t.Nullable(t.String()),
+    bannerUrl: t.Optional(t.Nullable(t.String())),
+    nameplateUrl: t.Optional(t.Nullable(t.String())),
+    bio: t.Optional(t.Nullable(t.String())),
+    statusText: t.Optional(t.Nullable(t.String())),
+    pronouns: t.Optional(t.Nullable(t.String())),
+    displayNameStyle: t.Optional(t.Nullable(t.Any())),
   }),
 
   activityLogItem: t.Object({

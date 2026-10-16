@@ -1,4 +1,4 @@
-import { prisma, type ActivityType, type FavoriteType, type Prisma } from '@IRIS/database'
+import { prisma, type ActivityType, type FavoriteType, type MediaType, type Prisma } from '@IRIS/database'
 import { getBadgeById, getProfileCustomization, setProfileCustomization } from '@IRIS/shared'
 import { IRISBitField, IRISFlags } from '@IRIS/permissions'
 import { BadRequest, Forbidden, NotFound } from '../../lib/errors'
@@ -64,6 +64,33 @@ const ACTIVITY_CATEGORIES: Record<string, ActivityType[]> = {
   ],
   posts: ['STATUS_POST', 'USER_MILESTONE'],
   status: ['STATUS_POST', 'USER_MILESTONE'],
+}
+
+/**
+ * Supported media domains for list activity filtering
+ */
+const MEDIA_ACTIVITY_DOMAINS: Record<string, MediaType> = {
+  anime: 'ANIME',
+  manga: 'MANGA',
+  movie: 'MOVIE',
+  tv: 'TV',
+  game: 'GAME',
+  book: 'BOOK',
+  music: 'MUSIC',
+}
+
+/**
+ * Filter action mapping for UI pills (All, Added, Progress, Status, Completed, Scored, Removed)
+ */
+const ACTION_TYPE_MAP: Record<string, ActivityType[]> = {
+  added: ['LIST_ITEM_ADDED'],
+  progress: ['LIST_PROGRESS_UPDATED'],
+  status: ['LIST_STATUS_UPDATED'],
+  completed: ['LIST_COMPLETED'],
+  score: ['LIST_SCORE_UPDATED'],
+  scored: ['LIST_SCORE_UPDATED'],
+  removed: ['LIST_ITEM_REMOVED'],
+  rewatch: ['LIST_REWATCH_STARTED'],
 }
 
 /**
@@ -680,6 +707,12 @@ export class CarinaUsersServ {
           displayName: authorProfile.displayName || null,
           avatarUrl: authorProfile.avatarUrl || null,
           avatarFrame: authorProfile.avatarFrame || null,
+          bannerUrl: authorProfile.bannerUrl || null,
+          nameplateUrl: authorProfile.nameplateUrl || null,
+          bio: authorProfile.bio || null,
+          statusText: authorProfile.statusText || null,
+          pronouns: authorProfile.pronouns || null,
+          displayNameStyle: authorProfile.displayNameStyle || null,
         },
         canDelete: isOwner || isAdmin,
       }
@@ -699,19 +732,39 @@ export class CarinaUsersServ {
   }
 
   /**
-   * Get user activity feed filtered by category.
+   * Get user activity feed filtered by category or media domain.
    */
   public static async getUserActivityByCategory(
     targetIdentifier: string,
     category: string,
-    query?: { page?: number; limit?: number },
+    query?: { page?: number; limit?: number; action?: string },
     sessionUser?: { id: string; permissions: number[] } | null
   ) {
     const target = await this.resolveUser(targetIdentifier)
     const normCategory = category.toLowerCase().trim()
 
-    let allowedTypes: ActivityType[] | undefined = ACTIVITY_CATEGORIES[normCategory]
-    if (!allowedTypes) {
+    let mediaTypeFilter: MediaType | undefined
+    let allowedTypes: ActivityType[] | undefined
+
+    if (normCategory === 'all' || normCategory === 'overview') {
+      // Return unrestricted activity stream across all types
+      allowedTypes = undefined
+    } else if (MEDIA_ACTIVITY_DOMAINS[normCategory]) {
+      mediaTypeFilter = MEDIA_ACTIVITY_DOMAINS[normCategory]
+      allowedTypes = [
+        'LIST_ITEM_ADDED',
+        'LIST_STATUS_UPDATED',
+        'LIST_PROGRESS_UPDATED',
+        'LIST_SCORE_UPDATED',
+        'LIST_COMPLETED',
+        'LIST_REWATCH_STARTED',
+        'LIST_ITEM_REMOVED',
+        'FAVORITE_ADDED',
+        'FAVORITE_REMOVED',
+      ]
+    } else if (ACTIVITY_CATEGORIES[normCategory]) {
+      allowedTypes = ACTIVITY_CATEGORIES[normCategory]
+    } else {
       // Check if the category is an exact ActivityType enum member
       const upper = category.toUpperCase().trim() as ActivityType
       const allEnumKeys: ActivityType[] = [
@@ -738,8 +791,21 @@ export class CarinaUsersServ {
         allowedTypes = [upper]
       } else {
         throw new BadRequest(
-          `Invalid activity category "${category}". Valid categories: media, lists, social, posts, status.`
+          `Invalid activity category "${category}". Valid categories: anime, manga, movie, tv, game, book, music, media, lists, social, posts, status.`
         )
+      }
+    }
+
+    // Narrow down by action filter if specified (e.g. ADDED, PROGRESS, STATUS, COMPLETED, SCORE, REMOVED)
+    if (query?.action) {
+      const normAction = query.action.toLowerCase().trim()
+      if (ACTION_TYPE_MAP[normAction]) {
+        allowedTypes = ACTION_TYPE_MAP[normAction]
+      } else {
+        const upperAction = query.action.toUpperCase().trim() as ActivityType
+        if (allowedTypes && allowedTypes.includes(upperAction)) {
+          allowedTypes = [upperAction]
+        }
       }
     }
 
@@ -754,7 +820,8 @@ export class CarinaUsersServ {
 
     const where: Prisma.ActivityLogWhereInput = {
       userId: target.id,
-      type: { in: allowedTypes },
+      ...(mediaTypeFilter ? { mediaType: mediaTypeFilter } : {}),
+      ...(allowedTypes ? { type: { in: allowedTypes } } : {}),
       ...(!isOwner && !isAdmin ? { isPrivate: false } : {}),
     }
 
@@ -806,6 +873,12 @@ export class CarinaUsersServ {
           displayName: authorProfile.displayName || null,
           avatarUrl: authorProfile.avatarUrl || null,
           avatarFrame: authorProfile.avatarFrame || null,
+          bannerUrl: authorProfile.bannerUrl || null,
+          nameplateUrl: authorProfile.nameplateUrl || null,
+          bio: authorProfile.bio || null,
+          statusText: authorProfile.statusText || null,
+          pronouns: authorProfile.pronouns || null,
+          displayNameStyle: authorProfile.displayNameStyle || null,
         },
         canDelete: isOwner || isAdmin,
       }

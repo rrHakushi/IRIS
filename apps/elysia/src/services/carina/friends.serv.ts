@@ -1,6 +1,7 @@
 import { prisma, type MediaType } from '@IRIS/database'
 import { getProfileCustomization } from '@IRIS/shared'
 import { BadRequest, NotFound } from '../../lib/errors'
+import { ActivityServ } from './activity.serv'
 
 const VALID_MEDIA_TYPES = [
   'anime',
@@ -533,6 +534,22 @@ export class CarinaFriendsServ {
   ) {
     const friendRequest = await prisma.friendRequest.findUnique({
       where: { id: requestId.trim() },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            customization: true,
+          },
+        },
+        receiver: {
+          select: {
+            id: true,
+            username: true,
+            customization: true,
+          },
+        },
+      },
     })
 
     if (!friendRequest || friendRequest.receiverId !== currentUserId) {
@@ -575,6 +592,25 @@ export class CarinaFriendsServ {
         where: { id: friendRequest.id },
       }),
     ])
+
+    const senderProfile = friendRequest.sender ? getProfileCustomization(friendRequest.sender.customization) : null
+    const receiverProfile = friendRequest.receiver ? getProfileCustomization(friendRequest.receiver.customization) : null
+
+    ActivityServ.recordFriendActivity({
+      userId: currentUserId,
+      friendId: friendRequest.senderId,
+      friendUsername: friendRequest.sender?.username,
+      friendDisplayName: senderProfile?.displayName,
+      friendAvatarUrl: senderProfile?.avatarUrl,
+    })
+
+    ActivityServ.recordFriendActivity({
+      userId: friendRequest.senderId,
+      friendId: currentUserId,
+      friendUsername: friendRequest.receiver?.username,
+      friendDisplayName: receiverProfile?.displayName,
+      friendAvatarUrl: receiverProfile?.avatarUrl,
+    })
 
     return {
       success: true,

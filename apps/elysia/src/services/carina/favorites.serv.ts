@@ -1,6 +1,7 @@
 import { prisma, type FavoriteType } from '@IRIS/database'
 import { NotFound, BadRequest } from '../../lib/errors'
 import { MediaStatsServ } from '../borealis/media-stats.serv'
+import { ActivityServ } from './activity.serv'
 
 export const VALID_FAVORITE_TYPES = [
   'ANIME',
@@ -64,6 +65,13 @@ export class CarinaFavoritesServ {
     })
 
     await MediaStatsServ.recalculateFavoritesCount(normType, body.targetId)
+
+    ActivityServ.recordFavoriteActivity({
+      userId,
+      action: 'FAVORITE_ADDED',
+      favoriteType: normType,
+      targetId: body.targetId,
+    })
 
     return {
       success: true,
@@ -142,6 +150,13 @@ export class CarinaFavoritesServ {
     })
 
     await MediaStatsServ.recalculateFavoritesCount(normType, targetId)
+
+    ActivityServ.recordFavoriteActivity({
+      userId,
+      action: 'FAVORITE_REMOVED',
+      favoriteType: normType,
+      targetId,
+    })
 
     return {
       success: true,
