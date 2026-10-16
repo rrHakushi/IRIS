@@ -18,6 +18,7 @@ import {
   type ConnectionCredentials,
 } from '@IRIS/connections'
 import { NotFound, BadRequest } from '../../lib/errors'
+import { BorealisListsServ } from '../borealis/lists.serv'
 
 export class CarinaConnectionsServ {
   /**
@@ -534,13 +535,64 @@ export class CarinaConnectionsServ {
 
     const adapter = getConnectionAdapter(connection.provider)
     let syncedItemsCount = 0
+    const rawItems: any[] = []
 
     if (adapter.getLibrary) {
-      const items = await adapter.getLibrary(credentials)
-      syncedItemsCount = Array.isArray(items) ? items.length : 0
+      const items = await adapter.getLibrary(credentials).catch(() => [])
+      if (Array.isArray(items)) rawItems.push(...items)
     } else if (adapter.getGames) {
-      const games = await adapter.getGames(credentials)
-      syncedItemsCount = Array.isArray(games) ? games.length : 0
+      const games = await adapter.getGames(credentials).catch(() => [])
+      if (Array.isArray(games)) {
+        for (const game of games) {
+          rawItems.push({
+            mediaType: 'game',
+            title: game.name,
+            status: 'CURRENT',
+            progress: game.playtimeMinutes,
+            externalId: game.externalId,
+            provider: connection.provider,
+          })
+        }
+      }
+    }
+
+    syncedItemsCount = rawItems.length
+
+    if (rawItems.length > 0) {
+      try {
+        const mappedItems = rawItems.map((item: any) => {
+          const prov = (item.provider || connection.provider || '').toUpperCase()
+          const externalIds: Record<string, any> = {}
+          if (prov.includes('ANILIST')) externalIds.anilistId = item.externalId
+          else if (prov.includes('MAL')) externalIds.malId = item.externalId
+          else if (prov.includes('TMDB') || prov.includes('RADARR')) externalIds.tmdbId = item.externalId
+          else if (prov.includes('TVDB') || prov.includes('SONARR')) externalIds.tvDBId = item.externalId
+          else if (prov.includes('IGDB')) externalIds.igdbId = item.externalId
+          else if (prov.includes('STEAM')) externalIds.steamAppId = item.externalId
+          else if (prov.includes('GOOGLE')) externalIds.googleBookId = item.externalId
+          else if (prov.includes('DEEZER')) externalIds.deezerId = item.externalId
+
+          return {
+            mediaType: (item.mediaType || 'anime').toLowerCase(),
+            title: item.title,
+            status: item.status || 'PLANNING',
+            score: item.score,
+            progress: item.progress,
+            progressVolumes: item.progressVolumes,
+            notes: item.notes,
+            startedAt: item.startedAt,
+            completedAt: item.completedAt,
+            externalIds,
+          }
+        })
+
+        await BorealisListsServ.importUserLists(userId, {
+          items: mappedItems,
+          skipExisting: false,
+        })
+      } catch (err) {
+        console.error('Failed to import connection items to user lists:', err)
+      }
     }
 
     const updated = await prisma.connection.update({

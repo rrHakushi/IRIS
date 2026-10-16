@@ -2,6 +2,7 @@ import { prisma } from '@IRIS/database'
 import { NotFound, BadRequest } from '../../lib/errors'
 import { hashPassword } from '../../utils/auth-crypto'
 import { ConnectionSyncQueueManager } from '../carina/connection-sync.queue'
+import { MediaStatsServ } from './media-stats.serv'
 
 export interface ListQuery {
   page?: number
@@ -290,6 +291,8 @@ export class BorealisListsServ {
       update: updateData,
     })
 
+    await MediaStatsServ.recalculateMediaStats('ANIME', animeId)
+
     const connectionsToSync = body.connections ?? entry.connections
     if (connectionsToSync) {
       ConnectionSyncQueueManager.enqueueSyncJobs({
@@ -328,6 +331,8 @@ export class BorealisListsServ {
     await prisma.animeList.delete({
       where: { id: existing.id },
     })
+
+    await MediaStatsServ.recalculateMediaStats('ANIME', animeId)
 
     return {
       success: true,
@@ -385,6 +390,8 @@ export class BorealisListsServ {
         ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
       },
     })
+
+    await MediaStatsServ.recalculateMediaStats('ANIME', animeId)
 
     const connectionsToSync = (body as any)?.connections ?? entry.connections ?? existing?.connections
     if (connectionsToSync) {
@@ -625,6 +632,8 @@ export class BorealisListsServ {
       update: updateData,
     })
 
+    await MediaStatsServ.recalculateMediaStats('MANGA', mangaId)
+
     const connectionsToSync = body.connections ?? entry.connections
     if (connectionsToSync) {
       ConnectionSyncQueueManager.enqueueSyncJobs({
@@ -663,6 +672,8 @@ export class BorealisListsServ {
     await prisma.mangaList.delete({
       where: { id: existing.id },
     })
+
+    await MediaStatsServ.recalculateMediaStats('MANGA', mangaId)
 
     return {
       success: true,
@@ -732,6 +743,8 @@ export class BorealisListsServ {
         ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
       },
     })
+
+    await MediaStatsServ.recalculateMediaStats('MANGA', mangaId)
 
     const connectionsToSync = (body as any)?.connections ?? entry.connections ?? existing?.connections
     if (connectionsToSync) {
@@ -957,6 +970,8 @@ export class BorealisListsServ {
       update: updateData,
     })
 
+    await MediaStatsServ.recalculateMediaStats('MOVIE', movieId)
+
     const connectionsToSync = body.connections ?? entry.connections
     if (connectionsToSync) {
       ConnectionSyncQueueManager.enqueueSyncJobs({
@@ -995,6 +1010,8 @@ export class BorealisListsServ {
     await prisma.movieList.delete({
       where: { id: existing.id },
     })
+
+    await MediaStatsServ.recalculateMediaStats('MOVIE', movieId)
 
     return {
       success: true,
@@ -1035,6 +1052,8 @@ export class BorealisListsServ {
         ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
       },
     })
+
+    await MediaStatsServ.recalculateMediaStats('MOVIE', movieId)
 
     const connectionsToSync = (body as any)?.connections ?? entry.connections ?? existing?.connections
     if (connectionsToSync) {
@@ -1268,6 +1287,8 @@ export class BorealisListsServ {
       update: updateData,
     })
 
+    await MediaStatsServ.recalculateMediaStats('TV', tvId)
+
     const connectionsToSync = body.connections ?? entry.connections
     if (connectionsToSync) {
       ConnectionSyncQueueManager.enqueueSyncJobs({
@@ -1306,6 +1327,8 @@ export class BorealisListsServ {
     await prisma.tvList.delete({
       where: { id: existing.id },
     })
+
+    await MediaStatsServ.recalculateMediaStats('TV', tvId)
 
     return {
       success: true,
@@ -1363,6 +1386,8 @@ export class BorealisListsServ {
         ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
       },
     })
+
+    await MediaStatsServ.recalculateMediaStats('TV', tvId)
 
     const connectionsToSync = (body as any)?.connections ?? entry.connections ?? existing?.connections
     if (connectionsToSync) {
@@ -1595,6 +1620,8 @@ export class BorealisListsServ {
       update: updateData,
     })
 
+    await MediaStatsServ.recalculateMediaStats('GAME', gameId)
+
     const connectionsToSync = body.connections ?? entry.connections
     if (connectionsToSync) {
       ConnectionSyncQueueManager.enqueueSyncJobs({
@@ -1633,6 +1660,8 @@ export class BorealisListsServ {
     await prisma.gameList.delete({
       where: { id: existing.id },
     })
+
+    await MediaStatsServ.recalculateMediaStats('GAME', gameId)
 
     return {
       success: true,
@@ -1679,6 +1708,8 @@ export class BorealisListsServ {
         ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
       },
     })
+
+    await MediaStatsServ.recalculateMediaStats('GAME', gameId)
 
     const connectionsToSync = (body as any)?.connections ?? entry.connections ?? existing?.connections
     if (connectionsToSync) {
@@ -1923,6 +1954,8 @@ export class BorealisListsServ {
       update: updateData,
     })
 
+    await MediaStatsServ.recalculateMediaStats('BOOK', bookId)
+
     const connectionsToSync = body.connections ?? entry.connections
     if (connectionsToSync) {
       ConnectionSyncQueueManager.enqueueSyncJobs({
@@ -1961,6 +1994,8 @@ export class BorealisListsServ {
     await prisma.bookList.delete({
       where: { id: existing.id },
     })
+
+    await MediaStatsServ.recalculateMediaStats('BOOK', bookId)
 
     return {
       success: true,
@@ -2035,6 +2070,8 @@ export class BorealisListsServ {
         ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
       },
     })
+
+    await MediaStatsServ.recalculateMediaStats('BOOK', bookId)
 
     const connectionsToSync = (body as any)?.connections ?? entry.connections ?? existing?.connections
     if (connectionsToSync) {
@@ -2263,6 +2300,8 @@ export class BorealisListsServ {
       update: updateData,
     })
 
+    await MediaStatsServ.recalculateMediaStats('MUSIC', musicId)
+
     const connectionsToSync = body.connections ?? entry.connections
     if (connectionsToSync) {
       ConnectionSyncQueueManager.enqueueSyncJobs({
@@ -2300,6 +2339,8 @@ export class BorealisListsServ {
     await prisma.musicList.delete({
       where: { id: existing.id },
     })
+
+    await MediaStatsServ.recalculateMediaStats('MUSIC', musicId)
 
     return {
       success: true,
@@ -2344,6 +2385,8 @@ export class BorealisListsServ {
         ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
       },
     })
+
+    await MediaStatsServ.recalculateMediaStats('MUSIC', musicId)
 
     const connectionsToSync = (body as any)?.connections ?? entry.connections ?? existing?.connections
     if (connectionsToSync) {
@@ -2815,6 +2858,7 @@ export class BorealisListsServ {
     }
 
     const skipExisting = Boolean(body?.skipExisting)
+    const touchedMedia = new Map<string, { type: string; id: number }>()
     let imported = 0
     let updated = 0
     let skipped = 0
@@ -2824,7 +2868,15 @@ export class BorealisListsServ {
       const mediaType = (item.mediaType || '').toLowerCase()
       const title = item.title || 'Untitled'
       const status = item.status || 'PLANNING'
-      const score = item.score !== undefined ? Number(item.score) : null
+      const rawScore = item.score !== undefined && item.score !== null ? Number(item.score) : null
+      let score: number | null = null
+      if (rawScore !== null && !isNaN(rawScore)) {
+        let s = rawScore
+        if (s > 10) s = s / 10
+        if (s < 0) s = 0
+        if (s > 10) s = 10
+        score = Math.round(s * 10) / 10
+      }
       const notes = item.notes ? encryptNotes(item.notes, userId) : null
       const isPrivate = Boolean(item.private)
       const startedAt = item.startedAt ? new Date(item.startedAt) : null
@@ -2871,6 +2923,7 @@ export class BorealisListsServ {
                   },
                 })
                 updated++
+                touchedMedia.set(`anime:${anime.id}`, { type: 'ANIME', id: anime.id })
               }
             } else {
               await prisma.animeList.create({
@@ -2887,6 +2940,7 @@ export class BorealisListsServ {
                 },
               })
               imported++
+              touchedMedia.set(`anime:${anime.id}`, { type: 'ANIME', id: anime.id })
             }
             break
           }
@@ -2928,6 +2982,7 @@ export class BorealisListsServ {
                   },
                 })
                 updated++
+                touchedMedia.set(`manga:${manga.id}`, { type: 'MANGA', id: manga.id })
               }
             } else {
               await prisma.mangaList.create({
@@ -2945,6 +3000,7 @@ export class BorealisListsServ {
                 },
               })
               imported++
+              touchedMedia.set(`manga:${manga.id}`, { type: 'MANGA', id: manga.id })
             }
             break
           }
@@ -2979,12 +3035,14 @@ export class BorealisListsServ {
                   data: { status, score: score ?? existing.score, notes: notes ?? existing.notes },
                 })
                 updated++
+                touchedMedia.set(`movie:${movie.id}`, { type: 'MOVIE', id: movie.id })
               }
             } else {
               await prisma.movieList.create({
                 data: { userId, movieId: movie.id, status, score, notes, private: isPrivate, startedAt, completedAt },
               })
               imported++
+              touchedMedia.set(`movie:${movie.id}`, { type: 'MOVIE', id: movie.id })
             }
             break
           }
@@ -3019,12 +3077,14 @@ export class BorealisListsServ {
                   data: { status, progress: item.progress ?? existing.progress, score: score ?? existing.score },
                 })
                 updated++
+                touchedMedia.set(`tv:${tv.id}`, { type: 'TV', id: tv.id })
               }
             } else {
               await prisma.tvList.create({
                 data: { userId, tvId: tv.id, status, progress: item.progress ?? 0, score, notes, private: isPrivate, startedAt, completedAt },
               })
               imported++
+              touchedMedia.set(`tv:${tv.id}`, { type: 'TV', id: tv.id })
             }
             break
           }
@@ -3058,12 +3118,14 @@ export class BorealisListsServ {
                   data: { status, progress: item.progress ?? existing.progress, score: score ?? existing.score },
                 })
                 updated++
+                touchedMedia.set(`game:${game.id}`, { type: 'GAME', id: game.id })
               }
             } else {
               await prisma.gameList.create({
                 data: { userId, gameId: game.id, status, progress: item.progress ?? 0, score, notes, private: isPrivate, startedAt, completedAt },
               })
               imported++
+              touchedMedia.set(`game:${game.id}`, { type: 'GAME', id: game.id })
             }
             break
           }
@@ -3097,12 +3159,14 @@ export class BorealisListsServ {
                   data: { status, progressPages: item.progressPages ?? existing.progressPages, score: score ?? existing.score },
                 })
                 updated++
+                touchedMedia.set(`book:${book.id}`, { type: 'BOOK', id: book.id })
               }
             } else {
               await prisma.bookList.create({
                 data: { userId, bookId: book.id, status, progressPages: item.progressPages ?? 0, score, notes, private: isPrivate, startedAt, completedAt },
               })
               imported++
+              touchedMedia.set(`book:${book.id}`, { type: 'BOOK', id: book.id })
             }
             break
           }
@@ -3136,12 +3200,14 @@ export class BorealisListsServ {
                   data: { status, playCount: item.playCount ?? existing.playCount, score: score ?? existing.score },
                 })
                 updated++
+                touchedMedia.set(`music:${music.id}`, { type: 'MUSIC', id: music.id })
               }
             } else {
               await prisma.musicList.create({
                 data: { userId, musicId: music.id, status, playCount: item.playCount ?? 0, score, notes, private: isPrivate, startedAt, completedAt },
               })
               imported++
+              touchedMedia.set(`music:${music.id}`, { type: 'MUSIC', id: music.id })
             }
             break
           }
@@ -3169,6 +3235,10 @@ export class BorealisListsServ {
       } catch {
         skipped++
       }
+    }
+
+    for (const item of touchedMedia.values()) {
+      await MediaStatsServ.recalculateMediaStats(item.type, item.id)
     }
 
     return {

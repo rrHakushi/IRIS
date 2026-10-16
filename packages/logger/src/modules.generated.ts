@@ -19,6 +19,7 @@ export interface KnownModules {
   "Elysia:WebSocket": true
   "EmailService": true
   "Mailer": true
+  "MediaStatsServ": true
   "NotificationService": true
   "Worker:ConnectionSync": true
   "Worker:Email": true

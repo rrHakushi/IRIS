@@ -1,5 +1,6 @@
 import { prisma, type FavoriteType } from '@IRIS/database'
 import { NotFound, BadRequest } from '../../lib/errors'
+import { MediaStatsServ } from '../borealis/media-stats.serv'
 
 export const VALID_FAVORITE_TYPES = [
   'ANIME',
@@ -61,6 +62,8 @@ export class CarinaFavoritesServ {
       },
       update: {},
     })
+
+    await MediaStatsServ.recalculateFavoritesCount(normType, body.targetId)
 
     return {
       success: true,
@@ -137,6 +140,8 @@ export class CarinaFavoritesServ {
     await prisma.favorite.delete({
       where: { id: favorite.id },
     })
+
+    await MediaStatsServ.recalculateFavoritesCount(normType, targetId)
 
     return {
       success: true,
