@@ -22,5 +22,3 @@ export * from './types.js';
 // Utils
 export * from './utils/env.js';
 
-// NestJS integration
-export * from './nestjs/index.js';

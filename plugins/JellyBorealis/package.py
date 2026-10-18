@@ -82,7 +82,7 @@ def update_manifest(meta: dict, version: str, zip_path: Path, checksum: str) -> 
 
     tag_name = f"jellyborealis-v{version}"
     source_url = f"https://github.com/{GITHUB_REPO}/releases/download/{tag_name}/{zip_path.name}"
-    timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     version_entry = {
         "version": version,
