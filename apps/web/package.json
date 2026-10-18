@@ -10,9 +10,9 @@
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
-    "i18n:check": "bun scripts/manage-i18n.ts",
-    "i18n:sync": "bun scripts/manage-i18n.ts --sync",
-    "i18n:prune": "bun scripts/manage-i18n.ts --prune"
+    "i18n:check": "node scripts/manage-i18n.ts",
+    "i18n:sync": "node scripts/manage-i18n.ts --sync",
+    "i18n:prune": "node scripts/manage-i18n.ts --prune"
   },
   "dependencies": {
     "@IRIS/auth": "workspace:*",

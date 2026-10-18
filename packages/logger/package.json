@@ -16,7 +16,7 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "bun test test/logger.test.ts"
+    "test": "tsc && node --test test/logger.test.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

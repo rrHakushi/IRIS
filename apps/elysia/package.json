@@ -13,7 +13,8 @@
   },
   "scripts": {
     "dev": "dotenvx run -f ../../.env -- bun --watch src/index.ts",
-    "build": "dotenvx run -f ../../.env -- bun build --compile --minify-whitespace --minify-syntax --target bun-linux-x64 --outfile server src/index.ts",
+    "build": "tsc --noEmit",
+    "build:binary": "dotenvx run -f ../../.env -- bun build --compile --minify-whitespace --minify-syntax --target bun-linux-x64 --outfile server src/index.ts",
     "start": "./server"
   },
   "keywords": [],
