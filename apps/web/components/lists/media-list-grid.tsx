@@ -15,9 +15,10 @@ const MediaListModal = dynamic(
     ),
   { ssr: false }
 )
-import type {
-  MediaListEntryData,
-  MediaListStatus,
+import {
+  type MediaListEntryData,
+  type MediaListStatus,
+  parseRewatchHistory,
 } from "@/components/media/list/types"
 import {
   type ListEntryData,
@@ -126,8 +127,9 @@ export function toNormalizedMedia(
     episodes: Array.isArray((media as any).episodes)
       ? (media as any).episodes.map((ep: any) => ({
           id: ep.id,
-          number: ep.number,
-          titlePrimary: ep.titlePrimary || null,
+          number: ep.number ?? ep.episodeNumber,
+          seasonNumber: ep.seasonNumber ?? ep.season ?? null,
+          titlePrimary: ep.titlePrimary || ep.title || null,
           titleSecondary: ep.titleSecondary || null,
         }))
       : undefined,
@@ -147,6 +149,19 @@ export function toMediaListEntry(
   if ((status as any) === "CURRENT" || (status as any) === "TRACKING") {
     status = "WATCHING"
   }
+  const rewatchedCount =
+    entry.rewatched ??
+    entry.reread ??
+    e.replayed ??
+    entry.playCount ??
+    e.relistens ??
+    0
+  const history = parseRewatchHistory(
+    e.rewatchHistory ??
+      e.rereadHistory ??
+      e.replayHistory ??
+      e.listenHistory
+  )
   return {
     id: entry.id,
     status,
@@ -156,11 +171,15 @@ export function toMediaListEntry(
     progressValues: e.progressValues || null,
     score: entry.score ?? null,
     notes: entry.notes || "",
-    rewatched: entry.rewatched ?? entry.reread ?? (entry as any).relistens ?? 0,
+    rewatched: rewatchedCount,
+    reread: entry.reread ?? rewatchedCount,
+    replayed: e.replayed ?? rewatchedCount,
     private: Boolean(entry.private),
     startedAt: entry.startedAt || null,
     completedAt: entry.completedAt || null,
-    rewatchHistory: e.rewatchHistory || e.listenHistory || null,
+    rewatchHistory: history.length > 0 ? history : null,
+    rereadHistory: history.length > 0 ? history : null,
+    replayHistory: history.length > 0 ? history : null,
     connections: e.connections || null,
     watchedEpisodes: Array.isArray(e.watchedEpisodes) ? e.watchedEpisodes : [],
     seasons: Array.isArray(e.seasons) ? e.seasons : [],

@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from "react"
 import {
-  IconLink,
   IconCheck,
   IconExternalLink,
   IconSearch,
@@ -1004,17 +1003,6 @@ export function MediaListConnectionsTab({
 
   return (
     <div className="space-y-4">
-      {/* Tab Header */}
-      <div className="flex items-center justify-between">
-        <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-          <IconLink className="size-4 text-primary" />
-          <span>Connected Services</span>
-        </h3>
-        <span className="text-[11px] font-medium text-muted-foreground">
-          {connectedProviders.length} active
-        </span>
-      </div>
-
       {/* Connected Providers List */}
       {connectedProviders.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border p-6 text-center text-muted-foreground">

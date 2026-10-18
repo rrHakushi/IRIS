@@ -139,6 +139,7 @@ export interface ListEntryData {
     notes: string | null
     rewatched?: number
     reread?: number
+    replayed?: number
     private: boolean
     startedAt?: string | null
     completedAt?: string | null
@@ -146,6 +147,13 @@ export interface ListEntryData {
     trackId?: number | null
     itemType?: string
     connections?: Record<string, any> | null
+    rewatchHistory?: any
+    rereadHistory?: any
+    replayHistory?: any
+    listenHistory?: any
+    progressValues?: Record<string, number> | null
+    watchedEpisodes?: any[]
+    seasons?: any[]
     createdAt: string
     updatedAt: string
   }

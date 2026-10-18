@@ -29,6 +29,7 @@ import {
   toCanonicalCategory,
   toBackendMediaType,
   getInProgressStatus,
+  parseRewatchHistory,
 } from "./types"
 import { MediaListModal } from "./media-list-modal"
 import type { TvSeasonItem } from "./media-list-tv-tab"
@@ -101,18 +102,36 @@ export function ListActionButtons({
       }
 
       if (!res.error && res.data?.inList && res.data.entry) {
-        const e = res.data.entry
+        const e = res.data.entry as any
+        const rewatchedCount =
+          e.rewatched ??
+          e.reread ??
+          e.replayed ??
+          e.playCount ??
+          0
+        const history = parseRewatchHistory(
+          e.rewatchHistory ??
+            e.rereadHistory ??
+            e.replayHistory ??
+            e.listenHistory
+        )
         setEntry({
           id: e.id,
           status: e.status as MediaListStatus,
-          progress: e.progress ?? 0,
+          progress: e.progress ?? e.chaptersProgress ?? 0,
+          chaptersProgress: e.chaptersProgress,
+          volumesProgress: e.volumesProgress,
           score: e.score ?? null,
           notes: e.notes ?? null,
-          rewatched: e.rewatched ?? 0,
+          rewatched: rewatchedCount,
+          reread: e.reread ?? rewatchedCount,
+          replayed: e.replayed ?? rewatchedCount,
           private: e.private ?? false,
           startedAt: e.startedAt ?? null,
           completedAt: e.completedAt ?? null,
-          rewatchHistory: e.rewatchHistory ?? null,
+          rewatchHistory: history.length > 0 ? history : null,
+          rereadHistory: history.length > 0 ? history : null,
+          replayHistory: history.length > 0 ? history : null,
           connections: e.connections ?? null,
           seasons: e.seasons,
           watchedEpisodes: e.watchedEpisodes,
@@ -205,6 +224,36 @@ export function ListActionButtons({
 
       if (res.error) {
         throw new Error(res.error.value?.message || "Failed to quick add")
+      }
+
+      if (res.data?.entry) {
+        const e = res.data.entry as any
+        const rewatchedCount =
+          e.rewatched ?? e.reread ?? e.replayed ?? e.playCount ?? 0
+        const history = parseRewatchHistory(
+          e.rewatchHistory ?? e.rereadHistory ?? e.replayHistory
+        )
+        setEntry({
+          id: e.id,
+          status: (e.status as MediaListStatus) || initialStatus,
+          progress: e.progress ?? e.chaptersProgress ?? 0,
+          chaptersProgress: e.chaptersProgress,
+          volumesProgress: e.volumesProgress,
+          score: e.score ?? null,
+          notes: e.notes ?? null,
+          rewatched: rewatchedCount,
+          reread: e.reread ?? rewatchedCount,
+          replayed: e.replayed ?? rewatchedCount,
+          private: e.private ?? false,
+          startedAt: e.startedAt ?? null,
+          completedAt: e.completedAt ?? null,
+          rewatchHistory: history.length > 0 ? history : null,
+          rereadHistory: history.length > 0 ? history : null,
+          replayHistory: history.length > 0 ? history : null,
+          connections: e.connections ?? null,
+          seasons: e.seasons,
+          watchedEpisodes: e.watchedEpisodes,
+        })
       }
 
       toast.success(

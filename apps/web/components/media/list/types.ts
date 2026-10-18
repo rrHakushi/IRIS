@@ -251,3 +251,28 @@ export function formatDateToYmd(val: unknown): string {
   }
   return ""
 }
+
+export function parseRewatchHistory(raw: unknown): Array<{
+  startedAt?: string | Date | null
+  completedAt?: string | Date | null
+  notes?: string | null
+}> {
+  if (!raw) return []
+  if (Array.isArray(raw)) return raw
+  if (typeof raw === "string") {
+    try {
+      let parsed = JSON.parse(raw)
+      if (typeof parsed === "string") {
+        try {
+          parsed = JSON.parse(parsed)
+        } catch {
+          // ignore
+        }
+      }
+      if (Array.isArray(parsed)) return parsed
+    } catch {
+      return []
+    }
+  }
+  return []
+}

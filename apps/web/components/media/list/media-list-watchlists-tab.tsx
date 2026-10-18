@@ -207,10 +207,6 @@ export function MediaListWatchlistsTab({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-1">
-        <h3 className="text-sm font-semibold text-foreground">Custom Lists</h3>
-      </div>
-
       {/* New Custom List Inline Creator */}
       <form
         onSubmit={handleCreateWatchlist}

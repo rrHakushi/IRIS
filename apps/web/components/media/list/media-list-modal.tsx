@@ -10,8 +10,6 @@ import {
   IconLoader2,
   IconChevronDown,
   IconChevronUp,
-  IconChevronLeft,
-  IconChevronRight,
   IconCalendar,
   IconClock,
   IconEye,
@@ -27,6 +25,7 @@ import {
   IconFolder,
   IconDeviceTv,
   IconAlertCircle,
+  IconTrash,
 } from "@tabler/icons-react"
 import {
   ModalOverlay as AriaModalOverlay,
@@ -57,6 +56,7 @@ import {
   getAvailableStatuses,
   getInProgressStatus,
   formatDateToYmd,
+  parseRewatchHistory,
 } from "./types"
 import { MediaListWatchlistsTab } from "./media-list-watchlists-tab"
 import {
@@ -112,7 +112,12 @@ export interface MediaListModalProps {
   onEntryUpdated?: (entry: MediaListEntryData | null) => void
 }
 
-type TabType = "general" | "watchlists" | "episodes" | "connections"
+type TabType =
+  | "general"
+  | "repeats"
+  | "watchlists"
+  | "episodes"
+  | "connections"
 
 export function MediaListModal({
   isOpen,
@@ -172,18 +177,28 @@ export function MediaListModal({
     any[] | null
   >(null)
 
+  const [isFetchingTvSeasons, setIsFetchingTvSeasons] = useState<boolean>(false)
+
   useEffect(() => {
     if (isOpen && category === "tv" && media.id) {
-      if (media.seasons && media.seasons.length > 1) {
+      if (
+        media.seasons &&
+        media.seasons.length > 1 &&
+        media.episodes &&
+        media.episodes.length > 0
+      ) {
         setFetchedTvSeasons(null)
         setFetchedTvEpisodes(null)
+        setIsFetchingTvSeasons(false)
         return
       }
+      setIsFetchingTvSeasons(true)
       elysia.borealis.media
         .tv({ id: Number(media.id) })
         .get()
         .then((res: any) => {
-          const data = res?.data
+          const raw = res?.data
+          const data = raw?.media ?? raw
           if (data && data.seasons && data.seasons.length > 0) {
             setFetchedTvSeasons(
               data.seasons.map((s: any) => ({
@@ -191,7 +206,13 @@ export function MediaListModal({
                 seasonNumber: s.seasonNumber,
                 title: s.titlePrimary || s.title || null,
                 titlePrimary: s.titlePrimary || null,
-                episodeCount: s.episodeCount,
+                episodeCount:
+                  s.episodeCount ??
+                  (data.episodes?.filter(
+                    (ep: any) =>
+                      ep.seasonNumber === s.seasonNumber ||
+                      ep.season === s.seasonNumber
+                  )?.length || null),
               }))
             )
             if (data.episodes && data.episodes.length > 0) {
@@ -202,11 +223,15 @@ export function MediaListModal({
         .catch((err: unknown) => {
           console.error("Failed to fetch tv seasons for modal:", err)
         })
+        .finally(() => {
+          setIsFetchingTvSeasons(false)
+        })
     } else if (!isOpen) {
       setFetchedTvSeasons(null)
       setFetchedTvEpisodes(null)
+      setIsFetchingTvSeasons(false)
     }
-  }, [isOpen, category, media.id, media.seasons])
+  }, [isOpen, category, media.id, media.seasons, media.episodes])
 
   useEffect(() => {
     if (isOpen && category === "anime" && media.id) {
@@ -218,7 +243,8 @@ export function MediaListModal({
         .anime({ id: Number(media.id) })
         .get()
         .then((res: any) => {
-          const data = res?.data
+          const raw = res?.data
+          const data = raw?.media ?? raw
           if (data && data.episodes && data.episodes.length > 0) {
             setFetchedAnimeEpisodes(data.episodes)
           }
@@ -234,34 +260,62 @@ export function MediaListModal({
   const effectiveTvSeasons: TvSeasonItem[] = useMemo(() => {
     if (category !== "tv") return []
     const source =
-      media.seasons && media.seasons.length > 1
-        ? media.seasons
-        : fetchedTvSeasons && fetchedTvSeasons.length > 0
-          ? fetchedTvSeasons
+      fetchedTvSeasons && fetchedTvSeasons.length > 0
+        ? fetchedTvSeasons
+        : media.seasons && media.seasons.length > 1
+          ? media.seasons
           : media.seasons && media.seasons.length > 0
             ? media.seasons
             : []
 
     if (source.length > 0) {
       const allTvEpisodes =
-        (media.episodes && media.episodes.length > 0
-          ? media.episodes
-          : fetchedTvEpisodes) || []
-      return source.map((s: any) => ({
-        id: s.id,
-        seasonNumber: s.seasonNumber,
-        title: s.title || s.titlePrimary || null,
-        name: s.name || null,
-        episodeCount: s.episodeCount,
-        episodes:
+        fetchedTvEpisodes && fetchedTvEpisodes.length > 0
+          ? fetchedTvEpisodes
+          : media.episodes && media.episodes.length > 0
+            ? media.episodes
+            : []
+      return source.map((s: any) => {
+        const seasonEpisodes = (
           s.episodes && s.episodes.length > 0
             ? s.episodes
             : allTvEpisodes.filter(
-                (ep: any) => ep.seasonNumber === s.seasonNumber
-              ),
-      }))
+                (ep: any) =>
+                  ep.seasonNumber === s.seasonNumber ||
+                  ep.season === s.seasonNumber
+              )
+        ).map((ep: any) => ({
+          id: ep.id,
+          episodeNumber: ep.episodeNumber ?? ep.number,
+          title: ep.titlePrimary || ep.title || ep.name || null,
+          titlePrimary: ep.titlePrimary || null,
+          titleSecondary: ep.titleSecondary || null,
+          name: ep.name || null,
+        }))
+
+        return {
+          id: s.id,
+          seasonNumber: s.seasonNumber,
+          title: s.titlePrimary || s.title || null,
+          titlePrimary: s.titlePrimary || null,
+          name: s.name || null,
+          episodeCount:
+            s.episodeCount ||
+            (seasonEpisodes.length > 0 ? seasonEpisodes.length : null),
+          episodes: seasonEpisodes,
+        }
+      })
     }
-    if (media.episodeCount && media.episodeCount > 0) {
+
+    if (isFetchingTvSeasons) {
+      return []
+    }
+
+    if (
+      (!media.seasonCount || media.seasonCount <= 1) &&
+      media.episodeCount &&
+      media.episodeCount > 0
+    ) {
       return [
         {
           seasonNumber: 1,
@@ -278,6 +332,8 @@ export function MediaListModal({
     fetchedTvEpisodes,
     media.episodes,
     media.episodeCount,
+    media.seasonCount,
+    isFetchingTvSeasons,
   ])
 
   const effectiveAnimeEpisodes = useMemo(() => {
@@ -340,18 +396,36 @@ export function MediaListModal({
     }
     return raw
   })
-  const [rewatched, setRewatched] = useState<number>(
-    (initialEntry as any)?.playCount ??
-      (initialEntry as any)?.reread ??
-      (initialEntry as any)?.replayed ??
-      initialEntry?.rewatched ??
-      0
-  )
+  const [rewatched, setRewatched] = useState<number>(() => {
+    const raw =
+      category === "manga" || category === "book"
+        ? (initialEntry as any)?.reread ?? initialEntry?.rewatched
+        : category === "game"
+          ? (initialEntry as any)?.replayed ?? initialEntry?.rewatched
+          : category === "music"
+            ? (initialEntry as any)?.playCount ?? initialEntry?.rewatched
+            : initialEntry?.rewatched ??
+              (initialEntry as any)?.reread ??
+              (initialEntry as any)?.replayed
+    return Math.max(0, typeof raw === "number" ? raw : Number(raw) || 0)
+  })
   const [rewatchHistory, setRewatchHistory] = useState<RewatchHistoryItem[]>(
-    ((initialEntry as any)?.rereadHistory ??
-      (initialEntry as any)?.replayHistory ??
-      initialEntry?.rewatchHistory) ||
-      []
+    () => {
+      if (category === "music") return []
+      return parseRewatchHistory(
+        category === "manga" || category === "book"
+          ? (initialEntry as any)?.rereadHistory ??
+              initialEntry?.rewatchHistory ??
+              (initialEntry as any)?.replayHistory
+          : category === "game"
+            ? (initialEntry as any)?.replayHistory ??
+                initialEntry?.rewatchHistory ??
+                (initialEntry as any)?.rereadHistory
+            : initialEntry?.rewatchHistory ??
+                (initialEntry as any)?.rereadHistory ??
+                (initialEntry as any)?.replayHistory
+      ) as RewatchHistoryItem[]
+    }
   )
   const [progressValues, setProgressValues] = useState<Record<string, number>>(
     () =>
@@ -369,6 +443,38 @@ export function MediaListModal({
   const [watchedEpisodes, setWatchedEpisodes] = useState<WatchedEpisodeItem[]>(
     initialEntry?.watchedEpisodes || []
   )
+
+  // Auto-synthesize watchedEpisodes from overall progress when seasons are available and watchedEpisodes is empty
+  useEffect(() => {
+    if (
+      category === "tv" &&
+      effectiveTvSeasons.length > 0 &&
+      progress > 0 &&
+      watchedEpisodes.length === 0
+    ) {
+      const regularSeasons = effectiveTvSeasons.filter((s) => s.seasonNumber > 0)
+      const list = regularSeasons.length > 0 ? regularSeasons : effectiveTvSeasons
+      let remaining = progress
+      const synthesized: WatchedEpisodeItem[] = []
+      const now = new Date().toISOString()
+      for (const s of list) {
+        if (remaining <= 0) break
+        const count = s.episodes?.length || s.episodeCount || 0
+        const take = count > 0 ? Math.min(remaining, count) : remaining
+        for (let ep = 1; ep <= take; ep++) {
+          synthesized.push({
+            seasonNumber: s.seasonNumber,
+            episodeNumber: ep,
+            watchedAt: now,
+          })
+        }
+        remaining -= take
+      }
+      if (synthesized.length > 0) {
+        setWatchedEpisodes(synthesized)
+      }
+    }
+  }, [category, effectiveTvSeasons, progress, watchedEpisodes.length])
   const [connections, setConnections] = useState<
     Record<string, ConnectionItem>
   >((initialEntry?.connections as Record<string, ConnectionItem>) || {})
@@ -417,48 +523,57 @@ export function MediaListModal({
     return progress || 0
   }, [status, totalEpisodesCount, category, watchedEpisodes, progress])
 
-  // Rewatch carousel state (1 at once)
-  const [activeRewatchIdx, setActiveRewatchIdx] = useState(0)
-  const rewatchScrollRef = useRef<HTMLDivElement>(null)
-
-  const scrollToRewatch = (idx: number) => {
-    const target = Math.max(0, Math.min(rewatched - 1, idx))
-    setActiveRewatchIdx(target)
-    if (rewatchScrollRef.current) {
-      const width = rewatchScrollRef.current.clientWidth
-      rewatchScrollRef.current.scrollTo({
-        left: target * width,
-        behavior: "smooth",
-      })
-    }
-  }
-
-  const handleRewatchedChange = (newVal: number) => {
-    const clamped = Math.max(0, newVal)
-    setRewatched(clamped)
-    if (category === "music") {
-      setRewatchHistory([])
-      return
-    }
-    if (activeRewatchIdx >= clamped && clamped > 0) {
-      setActiveRewatchIdx(clamped - 1)
-    }
-    setRewatchHistory((prev) => {
-      if (clamped === prev.length) return prev
-      if (clamped > prev.length) {
-        const today = new Date().toISOString().slice(0, 10)
-        const additions: RewatchHistoryItem[] = Array.from(
-          { length: clamped - prev.length },
-          () => ({
-            startedAt: today,
-            completedAt: today,
-          })
-        )
-        return [...prev, ...additions]
+  const handleRewatchedChange = useCallback(
+    (newVal: number) => {
+      const clamped = Math.max(0, newVal)
+      setRewatched(clamped)
+      if (category === "music") {
+        setRewatchHistory([])
+        return
       }
-      return prev.slice(0, clamped)
-    })
-  }
+      setRewatchHistory((prev) => {
+        const safePrev = Array.isArray(prev) ? prev : []
+        if (clamped === 0) return []
+        if (clamped === safePrev.length) return safePrev
+        if (clamped > safePrev.length) {
+          const today = new Date().toISOString().slice(0, 10)
+          const additions: RewatchHistoryItem[] = Array.from(
+            { length: clamped - safePrev.length },
+            () => ({
+              startedAt: today,
+              completedAt: today,
+            })
+          )
+          return [...safePrev, ...additions]
+        }
+        return safePrev.slice(0, clamped)
+      })
+    },
+    [category]
+  )
+
+  const effectiveRepeatCount = useMemo(
+    () => Math.max(rewatched, rewatchHistory.length),
+    [rewatched, rewatchHistory.length]
+  )
+
+  const handleAddRewatch = useCallback(() => {
+    handleRewatchedChange(effectiveRepeatCount + 1)
+  }, [handleRewatchedChange, effectiveRepeatCount])
+
+  const handleRemoveRewatch = useCallback(
+    (targetIdx: number) => {
+      const curLen = Math.max(rewatched, rewatchHistory.length)
+      const fullList = Array.from(
+        { length: curLen },
+        (_, i) => rewatchHistory[i] || {}
+      )
+      const updated = fullList.filter((_, i) => i !== targetIdx)
+      setRewatchHistory(updated)
+      setRewatched(Math.max(0, updated.length))
+    },
+    [rewatched, rewatchHistory]
+  )
 
   // Status dropdown toggle
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false)
@@ -476,7 +591,6 @@ export function MediaListModal({
     if (isOpen) {
       setActiveTab("general")
       setStatusDropdownOpen(false)
-      setActiveRewatchIdx(0)
       if (initialEntry) {
         if (category === "music") {
           setStatus("LISTENING")
@@ -522,20 +636,40 @@ export function MediaListModal({
           setStartedAt(rawStart)
           setCompletedAt(rawEnd)
         }
+        const resolvedRewatched =
+          category === "manga" || category === "book"
+            ? (initialEntry as any)?.reread ?? initialEntry.rewatched
+            : category === "game"
+              ? (initialEntry as any)?.replayed ?? initialEntry.rewatched
+              : category === "music"
+                ? (initialEntry as any)?.playCount ?? initialEntry.rewatched
+                : initialEntry.rewatched ??
+                  (initialEntry as any)?.reread ??
+                  (initialEntry as any)?.replayed
         setRewatched(
-          (initialEntry as any)?.playCount ??
-            initialEntry.reread ??
-            initialEntry.replayed ??
-            initialEntry.rewatched ??
-            0
+          Math.max(
+            0,
+            typeof resolvedRewatched === "number"
+              ? resolvedRewatched
+              : Number(resolvedRewatched) || 0
+          )
         )
         setRewatchHistory(
           category === "music"
             ? []
-            : (initialEntry.rereadHistory as RewatchHistoryItem[]) ||
-                (initialEntry.replayHistory as RewatchHistoryItem[]) ||
-                (initialEntry.rewatchHistory as RewatchHistoryItem[]) ||
-                []
+            : (parseRewatchHistory(
+                category === "manga" || category === "book"
+                  ? (initialEntry as any)?.rereadHistory ??
+                      initialEntry.rewatchHistory ??
+                      (initialEntry as any)?.replayHistory
+                  : category === "game"
+                    ? (initialEntry as any)?.replayHistory ??
+                        initialEntry.rewatchHistory ??
+                        (initialEntry as any)?.rereadHistory
+                    : initialEntry.rewatchHistory ??
+                        (initialEntry as any)?.rereadHistory ??
+                        (initialEntry as any)?.replayHistory
+              ) as RewatchHistoryItem[])
         )
         let initialWatched: WatchedEpisodeItem[] =
           initialEntry.watchedEpisodes || []
@@ -788,14 +922,16 @@ export function MediaListModal({
       )
       setWatchedEpisodes(newWatched)
     } else if (category === "tv" && effectiveTvSeasons.length > 0) {
-      const list: WatchedEpisodeItem[] = []
+      const regularSeasons = effectiveTvSeasons.filter((s) => s.seasonNumber > 0)
+      const list = regularSeasons.length > 0 ? regularSeasons : effectiveTvSeasons
+      const watchedList: WatchedEpisodeItem[] = []
       let remaining = clamped
-      for (const s of effectiveTvSeasons) {
+      for (const s of list) {
         const sNum = s.seasonNumber ?? 1
         const count = s.episodes?.length || s.episodeCount || 0
         const take = Math.min(remaining, count)
         for (let i = 1; i <= take; i++) {
-          list.push({
+          watchedList.push({
             seasonNumber: sNum,
             episodeNumber: i,
             watchedAt: now,
@@ -804,7 +940,7 @@ export function MediaListModal({
         remaining -= take
         if (remaining <= 0) break
       }
-      setWatchedEpisodes(list)
+      setWatchedEpisodes(watchedList)
     }
 
     if (maxLimit !== undefined && clamped >= maxLimit) {
@@ -878,7 +1014,24 @@ export function MediaListModal({
     status === "COMPLETED" &&
     (score === null || score === undefined || score <= 0)
 
-  const isSaveDisabled = isSaving || isCompletedWithoutScore
+  const isInvalidDates =
+    Boolean(
+      startedAt &&
+        completedAt &&
+        category !== "movie" &&
+        formatDateToYmd(completedAt) < formatDateToYmd(startedAt)
+    ) ||
+    Boolean(
+      rewatched > 0 &&
+        category !== "music" &&
+        rewatchHistory.some((item) => {
+          const s = formatDateToYmd(item?.startedAt)
+          const e = formatDateToYmd(item?.completedAt)
+          return Boolean(s && e && e < s)
+        })
+    )
+
+  const isSaveDisabled = isSaving || isCompletedWithoutScore || isInvalidDates
 
   // Save handler
   const handleSave = async () => {
@@ -889,6 +1042,11 @@ export function MediaListModal({
 
     if (isCompletedWithoutScore) {
       toast.warning("Please provide a score to mark this as Completed")
+      return
+    }
+
+    if (isInvalidDates) {
+      toast.warning("Finish date cannot be earlier than start date")
       return
     }
 
@@ -1010,6 +1168,7 @@ export function MediaListModal({
         )
       }
 
+      const safeHistory = rewatchHistory.length > 0 ? rewatchHistory : null
       const updatedEntry: MediaListEntryData = {
         id: res.data?.entry?.id,
         status,
@@ -1024,9 +1183,9 @@ export function MediaListModal({
         replayed: rewatched,
         startedAt,
         completedAt,
-        rewatchHistory,
-        rereadHistory: rewatchHistory,
-        replayHistory: rewatchHistory,
+        rewatchHistory: safeHistory,
+        rereadHistory: safeHistory,
+        replayHistory: safeHistory,
         connections,
         watchedEpisodes,
         updatedAt: res.data?.entry?.updatedAt || new Date().toISOString(),
@@ -1274,6 +1433,24 @@ export function MediaListModal({
             >
               Episodes ({currentWatchedEpisodesCount}/
               {totalEpisodesCount ?? "?"})
+            </button>
+          )}
+          {category !== "music" && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("repeats")}
+              className={`cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
+                activeTab === "repeats"
+                  ? "bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {repeatLabel.plural}
+              {effectiveRepeatCount > 0 && (
+                <span className="ms-1.5 font-mono text-[11px] opacity-70">
+                  ({effectiveRepeatCount})
+                </span>
+              )}
             </button>
           )}
           {category !== "other" && (
@@ -1896,6 +2073,12 @@ export function MediaListModal({
                       setStartedAt(newDate)
                       if (category === "movie") {
                         setCompletedAt(newDate)
+                      } else if (
+                        newDate &&
+                        completedAt &&
+                        newDate > completedAt
+                      ) {
+                        setCompletedAt(newDate)
                       }
                     }}
                     placeholder="Pick date"
@@ -1911,8 +2094,19 @@ export function MediaListModal({
                   </label>
                   <DatePicker
                     value={completedAt}
+                    minValue={
+                      category === "movie" ? undefined : startedAt || undefined
+                    }
                     onChange={(val) => {
                       const newDate = val || ""
+                      if (
+                        category !== "movie" &&
+                        newDate &&
+                        startedAt &&
+                        newDate < startedAt
+                      ) {
+                        return
+                      }
                       setCompletedAt(newDate)
                       if (category === "movie") {
                         setStartedAt(newDate)
@@ -1926,130 +2120,6 @@ export function MediaListModal({
               </div>
             </div>
 
-            {/* Card: REPEAT DATES (scrollable, only show 1 at once; omitted for music) */}
-            {rewatched > 0 && category !== "music" && (
-              <div className="space-y-3 rounded-2xl border border-border bg-card p-4 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
-                    <IconRotate2 className="size-3 text-muted-foreground" />
-                    {repeatLabel.plural.toUpperCase()} DATES ({rewatched})
-                  </label>
-                  {rewatched > 1 && (
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        disabled={activeRewatchIdx === 0}
-                        onClick={() => scrollToRewatch(activeRewatchIdx - 1)}
-                        className="flex size-6 cursor-pointer items-center justify-center rounded-lg border border-border bg-muted/40 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
-                        aria-label={`Previous ${repeatLabel.singular.toLowerCase()}`}
-                      >
-                        <IconChevronLeft className="size-3.5" />
-                      </button>
-                      <span className="px-1 font-mono text-[11px] text-muted-foreground">
-                        {activeRewatchIdx + 1} / {rewatched}
-                      </span>
-                      <button
-                        type="button"
-                        disabled={activeRewatchIdx === rewatched - 1}
-                        onClick={() => scrollToRewatch(activeRewatchIdx + 1)}
-                        className="flex size-6 cursor-pointer items-center justify-center rounded-lg border border-border bg-muted/40 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
-                        aria-label={`Next ${repeatLabel.singular.toLowerCase()}`}
-                      >
-                        <IconChevronRight className="size-3.5" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <div
-                  ref={rewatchScrollRef}
-                  onScroll={(e) => {
-                    const el = e.currentTarget
-                    const width = el.clientWidth
-                    if (width > 0) {
-                      const idx = Math.round(el.scrollLeft / width)
-                      if (
-                        idx !== activeRewatchIdx &&
-                        idx >= 0 &&
-                        idx < rewatched
-                      ) {
-                        setActiveRewatchIdx(idx)
-                      }
-                    }
-                  }}
-                  className="no-scrollbar flex w-full snap-x snap-mandatory overflow-x-auto scroll-smooth"
-                >
-                  {Array.from({ length: rewatched }, (_, idx) => {
-                    const item = rewatchHistory[idx] || {}
-                    const itemStartedAt = formatDateToYmd(item.startedAt)
-                    const itemCompletedAt = formatDateToYmd(item.completedAt)
-
-                    return (
-                      <div
-                        key={idx}
-                        className="w-full shrink-0 snap-center space-y-2 rounded-xl border border-border bg-muted/20 p-3"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-semibold text-foreground">
-                            {repeatLabel.singular} #{idx + 1}
-                          </span>
-                          <span className="font-mono text-[10px] text-muted-foreground">
-                            {idx + 1} of {rewatched}
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                          {/* Repeat Start Date */}
-                          <div className="space-y-1">
-                            <span className="text-[10px] tracking-wider text-muted-foreground uppercase">
-                              Start Date
-                            </span>
-                            <DatePicker
-                              value={itemStartedAt}
-                              onChange={(val) => {
-                                const updated = [...rewatchHistory]
-                                updated[idx] = {
-                                  ...updated[idx],
-                                  startedAt: val
-                                    ? new Date(val).toISOString()
-                                    : null,
-                                }
-                                setRewatchHistory(updated)
-                              }}
-                              placeholder="Pick date"
-                              ariaLabel={`${repeatLabel.singular} ${idx + 1} start date`}
-                            />
-                          </div>
-
-                          {/* Repeat Finish Date */}
-                          <div className="space-y-1">
-                            <span className="text-[10px] tracking-wider text-muted-foreground uppercase">
-                              Finish Date
-                            </span>
-                            <DatePicker
-                              value={itemCompletedAt}
-                              onChange={(val) => {
-                                const updated = [...rewatchHistory]
-                                updated[idx] = {
-                                  ...updated[idx],
-                                  completedAt: val
-                                    ? new Date(val).toISOString()
-                                    : null,
-                                }
-                                setRewatchHistory(updated)
-                              }}
-                              placeholder="Pick date"
-                              ariaLabel={`${repeatLabel.singular} ${idx + 1} finish date`}
-                              align="end"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
 
             {/* Card 2: NOTES */}
             <div className="space-y-2 rounded-2xl border border-border bg-card p-4">
@@ -2069,12 +2139,17 @@ export function MediaListModal({
             {/* Bottom Row: Error Alongside Delete Button */}
             <div className="flex min-h-[32px] items-center justify-between gap-3 pt-1">
               <div className="flex items-center gap-1.5 text-xs font-medium text-destructive">
-                {isCompletedWithoutScore && (
+                {isCompletedWithoutScore ? (
                   <>
                     <IconAlertCircle className="size-4 shrink-0 text-destructive" />
                     <span>A score is required to mark as Completed.</span>
                   </>
-                )}
+                ) : isInvalidDates ? (
+                  <>
+                    <IconAlertCircle className="size-4 shrink-0 text-destructive" />
+                    <span>Finish date cannot be earlier than start date.</span>
+                  </>
+                ) : null}
               </div>
 
               {initialEntry && (
@@ -2091,7 +2166,178 @@ export function MediaListModal({
           </div>
         )}
 
-        {/* Tab 2: Watchlists */}
+        {/* Tab 2: Repeats (Rewatches / Rereads / Replays) */}
+        {category !== "music" && activeTab === "repeats" && (
+          <div className="space-y-4">
+            {effectiveRepeatCount === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 bg-muted/10 p-8 text-center">
+                <div className="flex size-10 items-center justify-center rounded-full bg-muted/40 text-muted-foreground">
+                  <IconRotate2 className="size-5" />
+                </div>
+                <p className="mt-3 text-xs font-medium text-foreground">
+                  No {repeatLabel.plural.toLowerCase()} recorded yet
+                </p>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Keep track of each {repeatLabel.singular.toLowerCase()} with start and finish dates.
+                </p>
+              </div>
+            ) : (
+              <div className="max-h-[385px] sm:max-h-[390px] overflow-y-auto overscroll-contain space-y-3 pe-1">
+                {Array.from(
+                  { length: effectiveRepeatCount },
+                  (_, i) => effectiveRepeatCount - 1 - i
+                ).map((idx) => {
+                  const item = rewatchHistory[idx] || {}
+                  const itemStartedAt = formatDateToYmd(item.startedAt)
+                  const itemCompletedAt = formatDateToYmd(item.completedAt)
+                  const isItemInvalidDate = Boolean(
+                    itemStartedAt &&
+                      itemCompletedAt &&
+                      itemCompletedAt < itemStartedAt
+                  )
+
+                  return (
+                    <div
+                      key={idx}
+                      className="space-y-3 rounded-2xl border border-border bg-card p-4 shadow-xs transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-foreground">
+                            {repeatLabel.singular} #{idx + 1}
+                          </span>
+                          {idx === effectiveRepeatCount - 1 && (
+                            <Badge
+                              variant="secondary"
+                              className="border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary"
+                            >
+                              Latest
+                            </Badge>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRewatch(idx)}
+                          className="flex size-7 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                          aria-label={`Remove ${repeatLabel.singular.toLowerCase()} ${idx + 1}`}
+                          title={`Remove ${repeatLabel.singular} #${idx + 1}`}
+                        >
+                          <IconTrash className="size-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                        {/* Repeat Start Date */}
+                        <div className="space-y-1">
+                          <span className="text-[10px] tracking-wider text-muted-foreground uppercase">
+                            Start Date
+                          </span>
+                          <DatePicker
+                            value={itemStartedAt}
+                            onChange={(val) => {
+                              const curLen = Math.max(
+                                rewatched,
+                                rewatchHistory.length,
+                                idx + 1
+                              )
+                              const updated: RewatchHistoryItem[] = Array.from(
+                                { length: curLen },
+                                (_, i) => rewatchHistory[i] || {}
+                              )
+                              const curCompletedAt = formatDateToYmd(
+                                updated[idx]?.completedAt
+                              )
+                              const shouldBumpFinish =
+                                val && curCompletedAt && val > curCompletedAt
+                              updated[idx] = {
+                                ...updated[idx],
+                                startedAt: val || null,
+                                ...(shouldBumpFinish
+                                  ? { completedAt: val }
+                                  : {}),
+                              }
+                              setRewatchHistory(updated)
+                            }}
+                            placeholder="Pick date"
+                            ariaLabel={`${repeatLabel.singular} ${idx + 1} start date`}
+                          />
+                        </div>
+
+                        {/* Repeat Finish Date */}
+                        <div className="space-y-1">
+                          <span className="text-[10px] tracking-wider text-muted-foreground uppercase">
+                            Finish Date
+                          </span>
+                          <DatePicker
+                            value={itemCompletedAt}
+                            minValue={itemStartedAt || undefined}
+                            onChange={(val) => {
+                              if (
+                                val &&
+                                itemStartedAt &&
+                                val < itemStartedAt
+                              ) {
+                                return
+                              }
+                              const curLen = Math.max(
+                                rewatched,
+                                rewatchHistory.length,
+                                idx + 1
+                              )
+                              const updated: RewatchHistoryItem[] = Array.from(
+                                { length: curLen },
+                                (_, i) => rewatchHistory[i] || {}
+                              )
+                              updated[idx] = {
+                                ...updated[idx],
+                                completedAt: val || null,
+                              }
+                              setRewatchHistory(updated)
+                            }}
+                            placeholder="Pick date"
+                            ariaLabel={`${repeatLabel.singular} ${idx + 1} finish date`}
+                            align="end"
+                          />
+                        </div>
+                      </div>
+
+                      {isItemInvalidDate && (
+                        <div className="flex items-center gap-1.5 text-[11px] font-medium text-destructive">
+                          <IconAlertCircle className="size-3.5 shrink-0 text-destructive" />
+                          <span>
+                            Finish date cannot be earlier than start date.
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Bottom Row: Error Alongside Add Button */}
+            <div className="flex min-h-[32px] items-center justify-between gap-3 pt-1">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-destructive">
+                {isInvalidDates && (
+                  <>
+                    <IconAlertCircle className="size-4 shrink-0 text-destructive" />
+                    <span>Finish date cannot be earlier than start date.</span>
+                  </>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAddRewatch}
+                className="cursor-pointer rounded-xl border border-border bg-secondary px-4 py-1.5 text-xs font-medium text-secondary-foreground transition-colors hover:border-border/80 hover:bg-accent hover:text-foreground"
+              >
+                Add {repeatLabel.singular}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 3: Watchlists */}
         {activeTab === "watchlists" && (
           <MediaListWatchlistsTab
             mediaId={media.id}
@@ -2108,6 +2354,8 @@ export function MediaListModal({
             seasons={effectiveTvSeasons}
             episodes={effectiveAnimeEpisodes as any}
             episodeCount={media.episodeCount}
+            seasonCount={media.seasonCount}
+            isLoading={isFetchingTvSeasons}
             progress={progress}
             onProgressChange={(newProgress) => {
               handleProgressDirectChange(newProgress)

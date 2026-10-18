@@ -857,6 +857,16 @@ export function UserListView({
         setItems((prev) => {
           let next = prev.map((i) => {
             if (i.entry.id === entryId) {
+              const rewatchedCount =
+                updatedEntry.rewatched ??
+                updatedEntry.reread ??
+                (updatedEntry as any).replayed ??
+                0
+              const history =
+                updatedEntry.rewatchHistory ??
+                updatedEntry.rereadHistory ??
+                (updatedEntry as any).replayHistory ??
+                null
               return {
                 ...i,
                 entry: {
@@ -868,7 +878,12 @@ export function UserListView({
                   volumesProgress: updatedEntry.volumesProgress,
                   score: updatedEntry.score,
                   notes: updatedEntry.notes,
-                  rewatched: updatedEntry.rewatched,
+                  rewatched: rewatchedCount,
+                  reread: updatedEntry.reread ?? rewatchedCount,
+                  replayed: (updatedEntry as any).replayed ?? rewatchedCount,
+                  rewatchHistory: history,
+                  rereadHistory: updatedEntry.rereadHistory ?? history,
+                  replayHistory: (updatedEntry as any).replayHistory ?? history,
                   private: updatedEntry.private,
                   startedAt: updatedEntry.startedAt
                     ? String(updatedEntry.startedAt)
