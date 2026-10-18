@@ -23,7 +23,28 @@ export const kiroshiHistory = new Elysia({ prefix: '/kiroshi/history' })
     },
     async ({ query, session: userSession }) => {
       const user = userSession.requireUser()
-      return await KiroshiHistoryServ.getHistory(user.id, query?.limit)
+      return await KiroshiHistoryServ.getHistory(user.id, query)
+    }
+  )
+
+  // --- 2. POST /kiroshi/history/track (Track clicked site, image, or video) ---
+  .post(
+    '/track',
+    {
+      body: KiroshiHistoryModel.trackClickBody,
+      detail: {
+        summary: 'Track clicked site or media link in search history',
+        tags: ['Kiroshi History'],
+      },
+      response: {
+        200: KiroshiHistoryModel.trackClickResponse,
+        401: KiroshiHistoryModel.unauthorizedError,
+        422: KiroshiHistoryModel.validationError,
+      },
+    },
+    async ({ body, session: userSession }) => {
+      const user = userSession.requireUser()
+      return await KiroshiHistoryServ.recordClick(user.id, body)
     }
   )
 

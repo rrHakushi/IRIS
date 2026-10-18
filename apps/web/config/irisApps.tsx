@@ -119,10 +119,10 @@ export function getIrisApps(t: (key: string) => string): IrisApp[] {
       iconLeftRing: "/iris-icons/iris-search-ring-left.png",
       description: t
         ? t("irisSearch.description")
-        : "Privacy-focused meta-search powered by SearXNG.",
+        : "Web and meta-search.",
       descriptionShort: t
         ? t("irisSearch.descriptionShort")
-        : "Web & Meta Search",
+        : "Web Search",
     },
     // {
     //   id: "iris-cloud",

@@ -39,46 +39,19 @@ export class KiroshiSearchServ {
     const safeSearch = query.safesearch || '0'
     const isPrivateWindow = query.isPrivate === 'true' || query.isPrivate === '1'
 
-    // 1. Check user history preference
-    const dbUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { settings: true },
-    })
-    const userSettings = (dbUser?.settings as any) || {}
-    const historyEnabled = userSettings?.search?.historyEnabled !== false
-
-    // 2. Encrypted Search History persistence
-    if (!isPrivateWindow && historyEnabled) {
-      try {
-        const encrypted = encryptConnectionData(q, userId)
-        await prisma.searchHistory.create({
-          data: {
-            userId,
-            encryptedQuery: encrypted,
-            category,
-          },
-        })
-
-        // Background 30-day retention cleanup
-        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-        prisma.searchHistory
-          .deleteMany({
-            where: {
-              userId,
-              createdAt: { lt: thirtyDaysAgo },
-            },
-          })
-          .catch(() => {})
-      } catch (err) {
-        console.warn('[Kiroshi] Failed to save encrypted search history:', err)
-      }
-    }
-
-    // 3. Query Cache check (60s TTL)
+    // 1. Immediate Query Cache check (60s TTL)
     const cacheKey = `${category}:${language}:${safeSearch}:${timeRange}:${pageno}:${q.toLowerCase()}`
     const cached = await searchCache.get<any>(cacheKey)
     if (cached) {
+      if (!isPrivateWindow) {
+        KiroshiSearchServ.recordSearchHistoryAsync(userId, q, category).catch(() => {})
+      }
       return cached
+    }
+
+    // 2. Non-blocking asynchronous Search History persistence
+    if (!isPrivateWindow) {
+      KiroshiSearchServ.recordSearchHistoryAsync(userId, q, category).catch(() => {})
     }
 
     // 4. Proxy to SearXNG core
@@ -278,4 +251,41 @@ export class KiroshiSearchServ {
       return query.format === 'opensearch' ? [q, []] : { suggestions: [] }
     }
   }
+
+  /**
+   * Non-blocking background worker to encrypt and persist search history for the user,
+   * keeping 30-day retention pruned without blocking search query completion.
+   */
+  private static async recordSearchHistoryAsync(userId: string, q: string, category: string): Promise<void> {
+    try {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { settings: true },
+      })
+      const userSettings = (dbUser?.settings as any) || {}
+      const historyEnabled = userSettings?.search?.historyEnabled !== false
+      if (!historyEnabled) return
+
+      const encrypted = encryptConnectionData(q, userId)
+      await prisma.searchHistory.create({
+        data: {
+          userId,
+          encryptedQuery: encrypted,
+          category,
+        },
+      })
+
+      // Retention cleanup
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      await prisma.searchHistory.deleteMany({
+        where: {
+          userId,
+          createdAt: { lt: thirtyDaysAgo },
+        },
+      })
+    } catch (err) {
+      console.warn('[Kiroshi] Background search history persistence failed:', err)
+    }
+  }
 }
+

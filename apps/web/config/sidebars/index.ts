@@ -3,6 +3,7 @@ import type { Session } from "next-auth"
 import type { SidebarConfig } from "@/types/sidebar-config"
 import { useListSidebarConfig, getListSidebarConfig } from "./listSidebarConfig"
 import { usePassSidebarConfig, getPassSidebarConfig } from "./passSidebarConfig"
+import { useSearchSidebarConfig, getSearchSidebarConfig } from "./searchSidebarConfig"
 
 export interface AppSidebarRegistryEntry {
   appId: string
@@ -19,6 +20,7 @@ export function useAllAppSidebarConfigs(
 ): AppSidebarRegistryEntry[] {
   const listConfig = useListSidebarConfig(session)
   const passConfig = usePassSidebarConfig(session)
+  const searchConfig = useSearchSidebarConfig(session)
 
   return useMemo(
     () => [
@@ -32,8 +34,13 @@ export function useAllAppSidebarConfigs(
         appName: "Akaromi",
         config: passConfig,
       },
+      {
+        appId: "kiroshi",
+        appName: "Kiroshi",
+        config: searchConfig,
+      },
     ],
-    [listConfig, passConfig]
+    [listConfig, passConfig, searchConfig]
   )
 }
 
@@ -56,9 +63,15 @@ export function getAllAppSidebarConfigs(
       appName: "Akaromi",
       config: getPassSidebarConfig(session),
     },
+    {
+      appId: "kiroshi",
+      appName: "Kiroshi",
+      config: getSearchSidebarConfig(session),
+    },
   ]
 }
 
 export * from "./listSidebarConfig"
 export * from "./passSidebarConfig"
+export * from "./searchSidebarConfig"
 export * from "./accountUserSidebarConfig"

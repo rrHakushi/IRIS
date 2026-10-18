@@ -7,6 +7,7 @@ import {
   IconWorld,
   IconPhoto,
   IconNews,
+  IconVideo,
 } from "@tabler/icons-react"
 import { Session } from "next-auth"
 
@@ -40,11 +41,25 @@ export function getSearchSidebarConfig(
           position: 1,
         },
         {
+          label: tr("images", "Images"),
+          dataKey: "phone-images",
+          href: "/kiroshi?category=images",
+          icon: <IconPhoto className="size-5" />,
+          position: 2,
+        },
+        {
+          label: tr("news", "News"),
+          dataKey: "phone-news",
+          href: "/kiroshi?category=news",
+          icon: <IconNews className="size-5" />,
+          position: 3,
+        },
+        {
           label: tr("history", "History"),
           dataKey: "phone-history",
           href: "/kiroshi?view=history",
           icon: <IconHistory className="size-5" />,
-          position: 2,
+          position: 4,
         },
       ],
     },
@@ -95,11 +110,18 @@ export function getSearchSidebarConfig(
           position: 2,
         },
         {
+          label: tr("videos", "Videos"),
+          dataKey: "cat-videos",
+          href: "/kiroshi?category=videos",
+          icon: <IconVideo className="size-4" />,
+          position: 3,
+        },
+        {
           label: tr("news", "News"),
           dataKey: "cat-news",
           href: "/kiroshi?category=news",
           icon: <IconNews className="size-4" />,
-          position: 3,
+          position: 4,
         },
       ],
     },

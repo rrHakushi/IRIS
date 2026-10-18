@@ -546,3 +546,129 @@ export function applySidebarCustomization(
   return sections
 }
 
+/**
+ * Normalizes a URL path by stripping trailing slashes.
+ */
+export function normalizePath(path: string): string {
+  if (!path) return "/"
+  const trimmed = path.replace(/\/+$/, "")
+  return trimmed === "" ? "/" : trimmed
+}
+
+/**
+ * Determines whether a given sidebar or dock item href matches the current active route,
+ * taking into account both pathname segments and query parameters (e.g. ?category=images, ?view=history).
+ */
+export function isRouteActive(
+  currentPath: string,
+  href?: string,
+  searchParams?:
+    | URLSearchParams
+    | { get: (name: string) => string | null; toString: () => string }
+    | string
+    | null
+): boolean {
+  if (!href || href === "#") return false
+
+  // 1. Resolve current pathname and search parameters
+  let actualCurrentPath = currentPath
+  let actualSearchParams: URLSearchParams | null = null
+
+  if (searchParams instanceof URLSearchParams) {
+    actualSearchParams = searchParams
+  } else if (typeof searchParams === "string") {
+    actualSearchParams = new URLSearchParams(searchParams)
+  } else if (searchParams && typeof (searchParams as any).get === "function") {
+    actualSearchParams = new URLSearchParams(searchParams.toString())
+  }
+
+  if (actualCurrentPath.includes("?")) {
+    const parts = actualCurrentPath.split("?")
+    actualCurrentPath = parts[0] ?? ""
+    if (!actualSearchParams && parts[1]) {
+      actualSearchParams = new URLSearchParams(parts[1])
+    }
+  }
+
+  if (!actualSearchParams) {
+    if (typeof window !== "undefined") {
+      actualSearchParams = new URLSearchParams(window.location.search)
+    } else {
+      actualSearchParams = new URLSearchParams()
+    }
+  }
+
+  // 2. Resolve target pathname and search parameters
+  let targetPath = ""
+  let targetQueryStr = ""
+
+  if (href.startsWith("?")) {
+    targetPath = actualCurrentPath
+    targetQueryStr = href.slice(1)
+  } else if (href.includes("?")) {
+    const parts = href.split("?")
+    targetPath = parts[0] ?? ""
+    targetQueryStr = parts[1] ?? ""
+  } else {
+    targetPath = href
+    targetQueryStr = ""
+  }
+
+  const path = normalizePath(actualCurrentPath)
+  const target = normalizePath(targetPath)
+
+  // 3. Check pathname match
+  let pathMatches = false
+  if (path === target) {
+    pathMatches = true
+  } else {
+    const segments = target.split("/").filter(Boolean)
+    // App roots and single-segment roots (e.g. "/", "/borealis", "/kiroshi") must be exact match
+    if (segments.length > 1 && path.startsWith(`${target}/`)) {
+      pathMatches = true
+    }
+  }
+
+  if (!pathMatches) {
+    return false
+  }
+
+  // 4. Check query parameters match
+  if (targetQueryStr) {
+    const targetParams = new URLSearchParams(targetQueryStr)
+    for (const [key, expectedVal] of targetParams.entries()) {
+      const currentVal = actualSearchParams.get(key)
+      // Special case: category="general" is equivalent to null/empty category in Kiroshi/Iris
+      if (key === "category" && expectedVal === "general") {
+        if (currentVal && currentVal !== "general") {
+          return false
+        }
+        continue
+      }
+      if (currentVal !== expectedVal) {
+        return false
+      }
+    }
+    return true
+  }
+
+  // Target has NO query parameters (e.g. "/kiroshi")
+  // Check if current URL has view-defining parameters that belong to a specific tab
+  const currentCategory = actualSearchParams.get("category")
+  if (currentCategory && currentCategory !== "general") {
+    return false
+  }
+
+  const currentView = actualSearchParams.get("view")
+  if (currentView) {
+    return false
+  }
+
+  const currentTab = actualSearchParams.get("tab")
+  if (currentTab) {
+    return false
+  }
+
+  return true
+}
+

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState, useCallback } from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { hasPermission } from "@IRIS/permissions"
@@ -41,7 +41,7 @@ import {
 } from "@tabler/icons-react"
 import { useUser } from "@/context/user-context"
 import { useAllAppSidebarConfigs } from "@/config/sidebars"
-import { applySidebarCustomization } from "@/lib/navigation"
+import { applySidebarCustomization, isRouteActive } from "@/lib/navigation"
 import {
   getAppSidebarCustomization,
   type AppSidebarCustomization,
@@ -59,33 +59,6 @@ import { IrisAppMenu } from "./iris-app-menu"
 import { IrisUserMenu, openSettingsModal } from "./iris-user-menu"
 import { useDragScroll } from "@/hooks/use-drag-scroll"
 
-function normalizePath(path: string): string {
-  if (!path) return "/"
-  const trimmed = path.replace(/\/+$/, "")
-  return trimmed === "" ? "/" : trimmed
-}
-
-function isRouteActive(currentPath: string, href?: string): boolean {
-  if (!href || href === "#") return false
-  const path = normalizePath(currentPath)
-  const target = normalizePath(href)
-
-  if (path === target) return true
-
-  // Handle query parameter based routes like ?tab=xxx
-  if (href.startsWith("?") || target.startsWith("?")) {
-    if (typeof window !== "undefined") {
-      const search = window.location.search
-      return search === href || search === target
-    }
-  }
-
-  // App roots and single-segment roots (e.g. "/", "/IRIS-list") must be exact match
-  const segments = target.split("/").filter(Boolean)
-  if (segments.length <= 1) return false
-
-  return path.startsWith(`${target}/`)
-}
 
 function formatBadge(badge: string | number | undefined): string | null {
   if (badge === undefined || badge === null || badge === "") return null
@@ -121,6 +94,7 @@ export function IrisSidebar({
   const { user, updateSidebar } = useUser()
   const allAppConfigs = useAllAppSidebarConfigs(session)
   const pathname = usePathname() || "/"
+  const searchParams = useSearchParams()
   const router = useRouter()
   const { isMobile, setOpenMobile, state } = useSidebar()
   const { sidebarConfig, position } = useIrisSidebar(initialConfig)
@@ -297,7 +271,7 @@ export function IrisSidebar({
       section.items.forEach((item) => {
         if (item.children && item.children.length > 0) {
           const hasActiveChild = item.children.some((child) =>
-            isRouteActive(pathname, child.href)
+            isRouteActive(pathname, child.href, searchParams)
           )
           if (hasActiveChild) {
             const key = item.dataKey || item.label
@@ -309,7 +283,7 @@ export function IrisSidebar({
         }
       })
     })
-  }, [pathname, customizedConfig])
+  }, [pathname, searchParams, customizedConfig])
 
   // --- TOP / BOTTOM HORIZONTAL BAR MODE ---
   if (isHorizontal && !isMobile) {
@@ -357,9 +331,11 @@ export function IrisSidebar({
               if (hasSectionTitle) {
                 const isSectionActive = visibleItems.some((item) => {
                   if (item.isActive) return true
-                  if (isRouteActive(pathname, item.href)) return true
+                  if (isRouteActive(pathname, item.href, searchParams)) return true
                   if (
-                    item.children?.some((c) => isRouteActive(pathname, c.href))
+                    item.children?.some((c) =>
+                      isRouteActive(pathname, c.href, searchParams)
+                    )
                   )
                     return true
                   return false
@@ -385,14 +361,14 @@ export function IrisSidebar({
                       const isDirectActive =
                         item.isActive !== undefined
                           ? item.isActive
-                          : isRouteActive(pathname, item.href)
+                          : isRouteActive(pathname, item.href, searchParams)
                       const hasChildren = Boolean(
                         item.children && item.children.length > 0
                       )
                       const isChildActive =
                         hasChildren &&
                         item.children!.some((c) =>
-                          isRouteActive(pathname, c.href)
+                          isRouteActive(pathname, c.href, searchParams)
                         )
                       const isActive = isDirectActive || isChildActive
 
@@ -433,7 +409,7 @@ export function IrisSidebar({
                                 const isSubActive =
                                   child.isActive !== undefined
                                     ? child.isActive
-                                    : isRouteActive(pathname, child.href)
+                                    : isRouteActive(pathname, child.href, searchParams)
                                 return (
                                   <DropdownMenuItem
                                     key={cIdx}
@@ -523,7 +499,7 @@ export function IrisSidebar({
                         draggable={false}
                         className={cn(
                           "flex cursor-pointer items-center gap-1.5 rounded-s-xl px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors select-none",
-                          isRouteActive(pathname, sectionHref)
+                          isRouteActive(pathname, sectionHref, searchParams)
                             ? "font-bold text-primary"
                             : "text-inherit hover:text-foreground"
                         )}
@@ -583,11 +559,13 @@ export function IrisSidebar({
                 )
                 const isChildActive =
                   hasChildren &&
-                  item.children!.some((c) => isRouteActive(pathname, c.href))
+                  item.children!.some((c) =>
+                    isRouteActive(pathname, c.href, searchParams)
+                  )
                 const isDirectActive =
                   item.isActive !== undefined
                     ? item.isActive
-                    : isRouteActive(pathname, item.href)
+                    : isRouteActive(pathname, item.href, searchParams)
                 const isActive = isDirectActive || isChildActive
                 const hasValidHref = Boolean(item.href && item.href !== "#")
 
@@ -610,7 +588,7 @@ export function IrisSidebar({
                         const isSubActive =
                           child.isActive !== undefined
                             ? child.isActive
-                            : isRouteActive(pathname, child.href)
+                            : isRouteActive(pathname, child.href, searchParams)
                         return (
                           <DropdownMenuItem
                             key={cIdx}
@@ -908,12 +886,12 @@ export function IrisSidebar({
                         item.children!.some((child: SidebarItemChild) =>
                           child.isActive !== undefined
                             ? child.isActive
-                            : isRouteActive(pathname, child.href)
+                            : isRouteActive(pathname, child.href, searchParams)
                         )
                       const isDirectActive =
                         item.isActive !== undefined
                           ? item.isActive
-                          : isRouteActive(pathname, item.href)
+                          : isRouteActive(pathname, item.href, searchParams)
                       const isActive = isDirectActive || isChildActive
 
                       const isOpen =
@@ -1009,7 +987,11 @@ export function IrisSidebar({
                                       const isSubActive =
                                         child.isActive !== undefined
                                           ? child.isActive
-                                          : isRouteActive(pathname, child.href)
+                                          : isRouteActive(
+                                              pathname,
+                                              child.href,
+                                              searchParams
+                                            )
 
                                       if (child.component) {
                                         return (
@@ -1125,6 +1107,7 @@ export function IrisSidebar({
       {isMobile ? (
         <IrisBottomDock
           pathname={pathname}
+          searchParams={searchParams}
           navConfig={activeConfig}
           setOpenMobile={setOpenMobile}
           onOpenSettings={onOpenSettings}

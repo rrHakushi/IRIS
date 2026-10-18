@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { cn } from "@workspace/ui/lib/utils"
 import { Badge } from "@workspace/ui/components/badge"
@@ -12,35 +12,9 @@ import type {
   SidebarSection,
 } from "@/types/sidebar-config"
 import { formatBadgeNumber } from "@/lib/numbers"
+import { isRouteActive } from "@/lib/navigation"
 import { IrisUserMenu } from "./iris-user-menu"
 
-function normalizePath(path: string): string {
-  if (!path) return "/"
-  const trimmed = path.replace(/\/+$/, "")
-  return trimmed === "" ? "/" : trimmed
-}
-
-function isRouteActive(currentPath: string, href?: string): boolean {
-  if (!href || href === "#") return false
-  const path = normalizePath(currentPath)
-  const target = normalizePath(href)
-
-  if (path === target) return true
-
-  // Handle query parameter based routes like ?tab=xxx
-  if (href.startsWith("?") || target.startsWith("?")) {
-    if (typeof window !== "undefined") {
-      const search = window.location.search
-      return search === href || search === target
-    }
-  }
-
-  // App roots and single-segment roots (e.g. "/", "/iris-list") must be exact match
-  const segments = target.split("/").filter(Boolean)
-  if (segments.length <= 1) return false
-
-  return path.startsWith(`${target}/`)
-}
 
 export interface IrisMobileLauncherProps {
   open: boolean
@@ -57,6 +31,7 @@ export function IrisMobileLauncher({
 }: IrisMobileLauncherProps): React.JSX.Element {
   const t = useTranslations("navigation.mobileLauncher")
   const pathname = usePathname() || "/"
+  const searchParams = useSearchParams()
   const router = useRouter()
 
   // Track expanded state for sections (open by default)
@@ -103,7 +78,7 @@ export function IrisMobileLauncher({
           const hasActiveChild = item.children.some((child) =>
             child.isActive !== undefined
               ? child.isActive
-              : isRouteActive(pathname, child.href)
+              : isRouteActive(pathname, child.href, searchParams)
           )
           if (hasActiveChild) {
             const key = item.dataKey || item.label || `item-${iIdx}`
@@ -112,7 +87,7 @@ export function IrisMobileLauncher({
         }
       })
     })
-  }, [pathname, launcherSections])
+  }, [pathname, searchParams, launcherSections])
 
   const handleNavigate = (href?: string) => {
     if (href) {
@@ -176,12 +151,12 @@ export function IrisMobileLauncher({
                       item.children!.some((child) =>
                         child.isActive !== undefined
                           ? child.isActive
-                          : isRouteActive(pathname, child.href)
+                          : isRouteActive(pathname, child.href, searchParams)
                       )
                     const isDirectActive =
                       item.isActive !== undefined
                         ? item.isActive
-                        : isRouteActive(pathname, item.href)
+                        : isRouteActive(pathname, item.href, searchParams)
                     const isActive = isDirectActive || isChildActive
                     const isOpen = openItems[itemKey] ?? false
 
@@ -295,7 +270,11 @@ export function IrisMobileLauncher({
                                   const isSubActive =
                                     child.isActive !== undefined
                                       ? child.isActive
-                                      : isRouteActive(pathname, child.href)
+                                      : isRouteActive(
+                                          pathname,
+                                          child.href,
+                                          searchParams
+                                        )
 
                                   if (child.component) {
                                     return (

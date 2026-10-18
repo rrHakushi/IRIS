@@ -7,7 +7,7 @@
     - 
     
 # Kiroshi
-    - Remake the ui
+    - 
 
 # Carina
     - Web extension for managing and using bookmarks

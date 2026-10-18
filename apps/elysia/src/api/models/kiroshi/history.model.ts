@@ -16,6 +16,29 @@ export const KiroshiHistoryModel = {
         description: 'Number of search history entries to retrieve (default: 30, max: 100)',
       })
     ),
+    type: t.Optional(
+      t.String({
+        description: 'Filter entries by type ("all", "query", "site")',
+      })
+    ),
+    category: t.Optional(
+      t.String({
+        description: 'Filter entries by category ("general", "images", "videos", "news")',
+      })
+    ),
+  }),
+
+  trackClickBody: t.Object({
+    url: t.String({ minLength: 1, description: 'Destination URL of the clicked site or media' }),
+    title: t.String({ description: 'Title or label of the clicked result' }),
+    category: t.Optional(t.String({ description: 'Result category (general, images, videos, news)' })),
+    thumbnail: t.Optional(t.String({ description: 'Thumbnail preview image URL' })),
+    query: t.Optional(t.String({ description: 'Active search query context' })),
+  }),
+
+  trackClickResponse: t.Object({
+    success: t.Boolean(),
+    id: t.String(),
   }),
 
   historyDeleteQuery: t.Object({
@@ -29,8 +52,12 @@ export const KiroshiHistoryModel = {
   // Schemas
   historyItem: t.Object({
     id: t.String({ description: 'Unique search history record ID (UUID)' }),
-    query: t.String({ description: 'Decrypted search query string' }),
+    type: t.String({ description: 'Record type: "query" or "site"' }),
+    query: t.String({ description: 'Search query string or query context' }),
     category: t.String({ description: 'Search category' }),
+    url: t.Optional(t.String({ description: 'Destination URL for visited sites' })),
+    title: t.Optional(t.String({ description: 'Title for visited sites' })),
+    thumbnail: t.Optional(t.String({ description: 'Thumbnail URL for images/videos' })),
     createdAt: t.String({ description: 'Creation ISO timestamp' }),
   }),
 
@@ -39,8 +66,12 @@ export const KiroshiHistoryModel = {
     history: t.Array(
       t.Object({
         id: t.String(),
+        type: t.String(),
         query: t.String(),
         category: t.String(),
+        url: t.Optional(t.String()),
+        title: t.Optional(t.String()),
+        thumbnail: t.Optional(t.String()),
         createdAt: t.String(),
       })
     ),
