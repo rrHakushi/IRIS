@@ -40,7 +40,7 @@ export const app = new Elysia()
   .use(openapi())
   .use(websocket())
   .ws('/ws', {
-    async open(ws) {
+    async open(ws: any) {
       const request = ws.request
       let userId: string | null = (ws.query as Record<string, string> | undefined)?.userId ?? null
 
@@ -73,10 +73,10 @@ export const app = new Elysia()
         authTimeouts.set(ws, authTimeout)
       }
     },
-    message(ws, message) {
+    message(ws: any, message: any) {
       wsHub.handleMessage(ws as any, message)
     },
-    close(ws) {
+    close(ws: any) {
       const authTimeout = authTimeouts.get(ws)
       if (authTimeout) {
         clearTimeout(authTimeout)
