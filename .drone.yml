@@ -71,7 +71,7 @@ steps:
       - Backend
 
   - name: JellyBorealis Release
-    image: mcr.microsoft.com/dotnet/sdk:9.0
+    image: mcr.microsoft.com/dotnet/sdk:10.0
     environment:
       GITHUB_TOKEN:
         from_secret: github_token
@@ -101,6 +101,10 @@ steps:
       - docker image prune -f
     depends_on:
       - Frontend
+    when:
+      status:
+        - success
+        - failure
 
 volumes:
   - name: docker_sock
