@@ -194,31 +194,15 @@ export function OAuthAppItemCard({
         </div>
       </div>
 
-      {/* Footer info: Scopes and active authorizations */}
-      <div className="flex items-center justify-between border-t border-border/40 pt-1 text-xs">
-        <div className="flex flex-wrap gap-1">
-          {app.allowedScopes.slice(0, 4).map((scope) => (
-            <span
-              key={scope}
-              className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
-            >
-              {scope}
-            </span>
-          ))}
-          {app.allowedScopes.length > 4 && (
-            <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-              +{app.allowedScopes.length - 4} more
-            </span>
-          )}
-        </div>
-
-        {app.authorizedUsersCount !== undefined && (
+      {/* Footer info: active authorizations */}
+      {app.authorizedUsersCount !== undefined && (
+        <div className="flex items-center justify-end border-t border-border/40 pt-1 text-xs">
           <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
             <IconUsers className="size-3" />
             <span>{app.authorizedUsersCount} users</span>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

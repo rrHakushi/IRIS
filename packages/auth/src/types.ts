@@ -31,7 +31,7 @@ export interface AuthUser {
 /**
  * Supported Multi-Factor Authentication (MFA) verification types.
  */
-export type MfaType = "totp" | "email" | "passkey";
+export type MfaType = "totp" | "email" | "passkey" | "backup_code";
 
 /**
  * Authentication strategy mode used during credentials verification.

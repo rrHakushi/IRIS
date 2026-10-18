@@ -20,25 +20,19 @@ import type { SettingsTabProps } from "../types"
 interface AuthorizationItem {
   id: string
   clientId: string
-  client: {
-    id: string
-    clientId: string
-    name: string
-    description?: string | null
+  appName?: string
+  appLogo?: string | null
+  websiteUrl?: string | null
+  client?: {
+    id?: string
+    clientId?: string
+    name?: string
     logoUrl?: string | null
     websiteUrl?: string | null
-    isPublic: boolean
-    isTrusted: boolean
+    isTrusted?: boolean
   }
-  scopes: string[]
-  scopeDetails: Array<{
-    scope: string
-    name: string
-    description: string
-  }>
   authorizedAt: string
   lastUsedAt?: string | null
-  isActive: boolean
 }
 
 export function AuthorizedAppsSettingsTab({
@@ -62,7 +56,7 @@ export function AuthorizedAppsSettingsTab({
     setError(null)
 
     try {
-      const res = await elysia.oauth.authorizations.get({
+      const res = await elysia.carina.oauth.authorizations.get({
         fetch: { credentials: "include" },
       })
 
@@ -97,9 +91,10 @@ export function AuthorizedAppsSettingsTab({
   }, [fetchAuthorizations])
 
   const handleRevoke = async (item: AuthorizationItem) => {
+    const appName = item.appName || item.client?.name || item.clientId
     if (
       !confirm(
-        `Are you sure you want to revoke access for "${item.client.name}"? This application will no longer be able to access your account.`
+        `Are you sure you want to revoke access for "${appName}"? This application will no longer be able to access your account.`
       )
     ) {
       return
@@ -107,9 +102,9 @@ export function AuthorizedAppsSettingsTab({
 
     setRevokingId(item.id)
     try {
-      const res = await elysia.oauth
+      const res = await elysia.carina.oauth
         .authorizations({ id: item.id })
-        .delete({}, { fetch: { credentials: "include" } })
+        .delete()
 
       if (res.error) {
         const errData = res.error.value as { message?: string } | undefined
@@ -118,7 +113,7 @@ export function AuthorizedAppsSettingsTab({
       }
 
       setAuthorizations((prev) => prev.filter((a) => a.id !== item.id))
-      toast.success(`Revoked access for ${item.client.name}`)
+      toast.success(`Revoked access for ${appName}`)
     } catch (err: any) {
       toast.error(err.message || "Failed to revoke authorization")
     } finally {
@@ -143,7 +138,7 @@ export function AuthorizedAppsSettingsTab({
           <Button
             type="button"
             variant="outline"
-            onClick={() => fetchAuthorizations(true)}
+            onPress={() => fetchAuthorizations(true)}
             className="mt-4 h-8 text-xs"
           >
             Retry
@@ -180,6 +175,20 @@ export function AuthorizedAppsSettingsTab({
                 })
               : null
 
+            const appName = item.appName || item.client?.name || item.clientId
+            const appLogo = item.appLogo || item.client?.logoUrl || null
+            const websiteUrl = item.websiteUrl || item.client?.websiteUrl || null
+            const isTrusted = item.client?.isTrusted || false
+
+            let hostname = ""
+            if (websiteUrl) {
+              try {
+                hostname = new URL(websiteUrl).hostname
+              } catch {
+                hostname = websiteUrl
+              }
+            }
+
             return (
               <div
                 key={item.id}
@@ -188,11 +197,11 @@ export function AuthorizedAppsSettingsTab({
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
                     <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/30">
-                      {item.client.logoUrl ? (
+                      {appLogo ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={item.client.logoUrl}
-                          alt={item.client.name}
+                          src={appLogo}
+                          alt={appName}
                           className="size-full object-cover"
                         />
                       ) : (
@@ -202,9 +211,9 @@ export function AuthorizedAppsSettingsTab({
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <h3 className="truncate font-heading text-sm font-semibold text-foreground">
-                          {item.client.name}
+                          {appName}
                         </h3>
-                        {item.client.isTrusted && (
+                        {isTrusted && (
                           <Badge
                             variant="secondary"
                             className="h-4 px-1.5 py-0 text-[10px]"
@@ -213,16 +222,14 @@ export function AuthorizedAppsSettingsTab({
                           </Badge>
                         )}
                       </div>
-                      {item.client.websiteUrl && (
+                      {websiteUrl && (
                         <a
-                          href={item.client.websiteUrl}
+                          href={websiteUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
                         >
-                          <span>
-                            {new URL(item.client.websiteUrl).hostname}
-                          </span>
+                          <span>{hostname}</span>
                           <IconExternalLink className="size-3" />
                         </a>
                       )}
@@ -245,27 +252,11 @@ export function AuthorizedAppsSettingsTab({
                   </Button>
                 </div>
 
-                {/* Scopes granted */}
-                <div className="space-y-1 text-xs">
-                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                    <span>Permissions granted</span>
-                    <span>
-                      Authorized on {formattedDate}
-                      {lastUsedFormatted &&
-                        ` • Last active: ${lastUsedFormatted}`}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {item.scopeDetails.map((scope) => (
-                      <span
-                        key={scope.scope}
-                        className="rounded bg-muted px-2 py-0.5 text-[10px] font-medium text-foreground/80"
-                        title={scope.description}
-                      >
-                        {scope.name}
-                      </span>
-                    ))}
-                  </div>
+                <div className="flex items-center justify-between border-t border-border/40 pt-1 text-[11px] text-muted-foreground">
+                  <span>
+                    Authorized on {formattedDate}
+                    {lastUsedFormatted && ` • Last active: ${lastUsedFormatted}`}
+                  </span>
                 </div>
               </div>
             )

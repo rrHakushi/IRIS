@@ -57,6 +57,7 @@ import { formatBadgeNumber } from "@/lib/numbers"
 import { useNotifications } from "@/context/notification-context"
 import { useUser } from "@/context/user-context"
 import { useEncryption } from "@/context/encryption-context"
+import { deriveVaultKey, safeDecryptText, safeEncryptText } from "@/lib/client-encryption"
 import { useLocale } from "next-intl"
 import { locales, localeNames, type Locale } from "@/i18n/routing"
 import { useIrisApps, renderIrisAppIcon, type IrisApp } from "@/config/irisApps"
@@ -185,6 +186,12 @@ export function IrisUserMenu({
     return current || visibleApps[0] || irisApps[0]
   }, [pathname, visibleApps, irisApps])
 
+  const { secretKey, isActive } = useEncryption()
+  const vaultKey = useMemo(
+    () => (isActive && secretKey ? deriveVaultKey(secretKey) : null),
+    [isActive, secretKey]
+  )
+
   const [isEditing, setIsEditing] = useState(false)
   const [appOrder, setAppOrder] = useState<string[]>([])
   const [bookmarks, setBookmarks] = useState<UserBookmark[]>(
@@ -249,12 +256,17 @@ export function IrisUserMenu({
 
       inFlightBookmarksPromise = (async () => {
         try {
-          const { data, error } = await elysia.users.me.bookmarks.get({
-            fetch: { credentials: "include" },
+          const { data, error } = await elysia.carina.bookmarks.get({
+            query: { limit: 50 },
           })
           if (error || !data) return null
 
-          const list = (data.bookmarks as UserBookmark[]) || []
+          const rawList = (data.bookmarks as unknown as UserBookmark[]) || []
+          const list = rawList.map((b) => ({
+            ...b,
+            title: safeDecryptText(b.title, vaultKey),
+            url: safeDecryptText(b.url, vaultKey),
+          }))
           const groups = (data.groups as string[]) || []
 
           cachedBookmarks = list
@@ -280,6 +292,19 @@ export function IrisUserMenu({
   useEffect(() => {
     fetchBookmarks()
   }, [fetchBookmarks])
+
+  // Re-decrypt bookmarks if vaultKey activates after initial fetch
+  useEffect(() => {
+    if (vaultKey) {
+      setBookmarks((prev) =>
+        prev.map((b) => ({
+          ...b,
+          title: safeDecryptText(b.title, vaultKey),
+          url: safeDecryptText(b.url, vaultKey),
+        }))
+      )
+    }
+  }, [vaultKey])
 
   // Automatically open settings on connections tab and alert on OAuth return
   useEffect(() => {
@@ -321,6 +346,7 @@ export function IrisUserMenu({
   const displayName = user?.displayName || user?.username
   const userEmail = user?.email
   const username = user?.username
+  const userId = user?.id || session?.user?.id
 
   const isMobile = useIsMobile()
 
@@ -500,23 +526,20 @@ export function IrisUserMenu({
 
     if (isAuthenticated) {
       try {
-        await elysia.users.me.bookmarks.put(
-          {
-            bookmarks: bookmarks.map((b, idx) => ({
-              id: b.id,
-              title: b.title,
-              url: b.url,
-              icon: b.icon,
-              color: b.color,
-              pinned: b.pinned,
-              appId: b.appId,
-              group: b.group,
-              order: idx,
-              createdAt: b.createdAt,
-            })),
-          },
-          { fetch: { credentials: "include" } }
-        )
+        await elysia.carina.bookmarks.put({
+          bookmarks: bookmarks.map((b, idx) => ({
+            id: b.id,
+            title: safeEncryptText(b.title, vaultKey),
+            url: safeEncryptText(b.url, vaultKey),
+            icon: b.icon,
+            color: b.color,
+            pinned: b.pinned,
+            appId: b.appId,
+            group: b.group,
+            order: idx,
+            createdAt: b.createdAt,
+          })),
+        })
       } catch (err) {
         console.error("Failed to persist bookmark order:", err)
       }
@@ -549,9 +572,9 @@ export function IrisUserMenu({
     }
     if (!isAuthenticated) return
 
-    const { error } = await elysia.users.me
-      .bookmarks({ id })
-      .delete(undefined, { fetch: { credentials: "include" } })
+    const { error } = await elysia.carina
+      .bookmarks({ bookmarkId: id })
+      .delete()
 
     if (error) {
       toast.error(tApp("failedDeleteBookmark"))
@@ -579,10 +602,9 @@ export function IrisUserMenu({
     cachedBookmarks = updated
 
     try {
-      await elysia.users.me.bookmarks({ id: bm.id }).patch(
-        { pinned: newPinned },
-        { fetch: { credentials: "include" } }
-      )
+      await elysia.carina.bookmarks({ bookmarkId: bm.id }).patch({
+        pinned: newPinned,
+      })
     } catch {
       // revert on error
       setBookmarks(bookmarks)
@@ -602,25 +624,27 @@ export function IrisUserMenu({
   }) => {
     if (data.id) {
       if (isAuthenticated) {
-        const { data: resData, error } = await elysia.users.me
-          .bookmarks({ id: data.id })
-          .patch(
-            {
-              title: data.title,
-              url: data.url,
-              icon: data.icon,
-              color: data.color,
-              pinned: data.pinned,
-              appId: data.appId,
-              group: data.group,
-            },
-            { fetch: { credentials: "include" } }
-          )
+        const { data: resData, error } = await elysia.carina
+          .bookmarks({ bookmarkId: data.id })
+          .patch({
+            title: safeEncryptText(data.title, vaultKey),
+            url: safeEncryptText(data.url, vaultKey),
+            icon: data.icon,
+            color: data.color,
+            pinned: data.pinned,
+            appId: data.appId,
+            group: data.group,
+          })
         if (error || !resData?.bookmark) {
           throw new Error("Failed to update bookmark")
         }
+        const savedBookmark: UserBookmark = {
+          ...(resData.bookmark as unknown as UserBookmark),
+          title: data.title.trim(),
+          url: data.url.trim(),
+        }
         const updatedList = bookmarks.map((b) =>
-          b.id === data.id ? resData.bookmark : b
+          b.id === data.id ? savedBookmark : b
         )
         setBookmarks(updatedList)
         cachedBookmarks = updatedList
@@ -635,22 +659,27 @@ export function IrisUserMenu({
       }
     } else {
       if (isAuthenticated) {
-        const { data: resData, error } = await elysia.users.me.bookmarks.post(
-          {
-            title: data.title,
-            url: data.url,
-            icon: data.icon,
-            color: data.color,
-            pinned: data.pinned,
-            appId: data.appId,
-            group: data.group,
-          },
-          { fetch: { credentials: "include" } }
-        )
+        const { data: resData, error } = await elysia.carina.bookmarks.post({
+          title: safeEncryptText(data.title, vaultKey),
+          url: safeEncryptText(data.url, vaultKey),
+          icon: data.icon,
+          color: data.color,
+          pinned: data.pinned,
+          appId: data.appId,
+          group: data.group,
+        })
         if (error || !resData?.bookmark) {
           throw new Error("Failed to create bookmark")
         }
-        const updatedList = [...bookmarks, resData.bookmark]
+        const createdBookmark: UserBookmark = {
+          ...(resData.bookmark as unknown as UserBookmark),
+          title: data.title.trim(),
+          url: data.url.trim(),
+        }
+        const updatedList = [
+          ...bookmarks,
+          createdBookmark,
+        ]
         setBookmarks(updatedList)
         cachedBookmarks = updatedList
         if (data.group && data.group.trim()) {
@@ -789,7 +818,7 @@ export function IrisUserMenu({
   // User Card section
   const renderUserCard = (isCompact = false) => (
     <Link
-      href={`/IRIS-account/users/${username}`}
+      href={userId ? `/carina/users/${userId}` : `/carina`}
       onClick={() => setMenuOpen(false)}
       className={cn(
         "group transition-all",

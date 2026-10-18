@@ -70,6 +70,28 @@ steps:
     depends_on:
       - Backend
 
+  - name: JellyBorealis Release
+    image: mcr.microsoft.com/dotnet/sdk:9.0
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    commands:
+      - apt-get update && apt-get install -y python3
+      - python3 plugins/JellyBorealis/package.py --ci
+    depends_on:
+      - Packages
+
+  - name: BorealisExtra Release
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    commands:
+      - apt-get update && apt-get install -y python3
+      - python3 plugins/BorealisExtra/package.py --ci
+    depends_on:
+      - Packages
+
   - name: Cleanup
     image: docker:latest
     volumes:

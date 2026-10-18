@@ -214,6 +214,81 @@ export function DiscoverPageClient({ category }: DiscoverPageClientProps) {
   // ---------------------------------------------------------------------------
   // 1. Fetch Filter Facets & Counts
   // ---------------------------------------------------------------------------
+const getMediaCategory = (cat: string): "anime" | "manga" | "movies" | "tv" | "games" | "books" | "music" => {
+  const c = cat.toLowerCase()
+  if (c === "movie" || c === "movies") return "movies"
+  if (c === "game" || c === "games") return "games"
+  if (c === "book" || c === "books") return "books"
+  if (c === "manga") return "manga"
+  if (c === "tv") return "tv"
+  if (c === "music") return "music"
+  return "anime"
+}
+
+const getEntitySortBy = (
+  sort: DiscoverSortByOption
+): "popularity" | "favorites" | "name" => {
+  if (sort === "title") return "name"
+  if (sort === "favorites") return "favorites"
+  return "popularity"
+}
+
+const getStudioAnimationFilter = (formats: string[]): boolean | undefined => {
+  if (!formats || formats.length === 0) return undefined
+  const hasAnimation = formats.some((f) => f.toLowerCase().includes("animation"))
+  const hasOther = formats.some(
+    (f) => f.toLowerCase().includes("other") || f.toLowerCase() === "studio"
+  )
+  if (hasAnimation && !hasOther) return true
+  if (hasOther && !hasAnimation) return false
+  return undefined
+}
+
+const mapCharacterItem = (c: any): DiscoverItem => ({
+  id: c.id,
+  titlePrimary: c.namePrimary,
+  titleNative: c.nameNative,
+  coverImage: c.image,
+  format: c.gender || null,
+  favorites: c.favorites,
+  genres: c.age ? [`Age: ${c.age}`] : [],
+  isAdult: false,
+})
+
+const mapPersonItem = (p: any): DiscoverItem => ({
+  id: p.id,
+  titlePrimary: p.namePrimary,
+  titleNative: p.nameNative,
+  coverImage: p.image,
+  format: p.primaryOccupations?.[0] || p.gender || null,
+  favorites: p.favorites,
+  genres: p.primaryOccupations || [],
+  isAdult: false,
+})
+
+const mapStudioItem = (s: any): DiscoverItem => ({
+  id: s.id,
+  titlePrimary: s.name,
+  coverImage: null,
+  format: s.isAnimationStudio ? "Animation Studio" : "Studio",
+  favorites: s.favorites,
+  genres: s.isAnimationStudio ? ["Animation"] : ["Production"],
+  isAdult: false,
+})
+
+const mapMediaItem = (x: any): DiscoverItem => ({
+  ...x,
+  genres: Array.isArray(x.genres)
+    ? x.genres
+        .map((g: any) =>
+          typeof g === "string" ? g : g?.name || g?.genre?.name || ""
+        )
+        .filter(Boolean)
+    : [],
+  releaseYear: x.year ?? x.releaseYear ?? x.seasonYear,
+  seasonSeason: x.season ?? x.seasonSeason,
+})
+
   const fetchFacets = useCallback(
     async (force = false) => {
       if (!category) return
@@ -231,19 +306,68 @@ export function DiscoverPageClient({ category }: DiscoverPageClientProps) {
       isFetchingFacetsRef.current = true
 
       try {
-        const { data, error } = await elysia
-          .discover({ media: category })
-          .filters.get()
+        if (category === "characters") {
+          const { data, error } = await elysia.borealis.characters.filters.get()
+          if (!error && data && data.success) {
+            setFacets({
+              statuses: [],
+              formats: (data.genders || []).map((g) => ({
+                value: g.value,
+                count: g.count,
+              })),
+              genres: [],
+              years: [],
+              seasons: [],
+              artists: [],
+            })
+          }
+        } else if (category === "staff") {
+          const { data, error } = await elysia.borealis.people.filters.get()
+          if (!error && data && data.success) {
+            setFacets({
+              statuses: [],
+              formats: (data.genders || []).map((g) => ({
+                value: g.value,
+                count: g.count,
+              })),
+              genres: (data.occupations || []).map((o) => ({
+                value: o.value,
+                count: o.count,
+              })),
+              years: [],
+              seasons: [],
+              artists: [],
+            })
+          }
+        } else if (category === "studios") {
+          const { data, error } = await elysia.borealis.studios.filters.get()
+          if (!error && data && data.success) {
+            setFacets({
+              statuses: [],
+              formats: (data.types || []).map((t) => ({
+                value: t.value,
+                count: t.count,
+              })),
+              genres: [],
+              years: [],
+              seasons: [],
+              artists: [],
+            })
+          }
+        } else {
+          const targetCat = getMediaCategory(category)
+          const { data, error } = await elysia.borealis.media[targetCat].filters.get()
 
-        if (!error && data && data.success) {
-          setFacets({
-            statuses: data.statuses || [],
-            formats: data.formats || [],
-            genres: data.genres || [],
-            years: data.years || [],
-            seasons: data.seasons || [],
-            artists: data.artists || [],
-          })
+          if (!error && data && data.success) {
+            setFacets({
+              statuses: data.statuses || [],
+              formats: data.formats || [],
+              genres: data.genres || [],
+              years: data.years || [],
+              seasons: (data as any).seasons || [],
+              artists: [],
+            })
+          }
         }
       } catch (err) {
         console.error("[Discover] Failed to fetch filter facets:", err)
@@ -293,30 +417,103 @@ export function DiscoverPageClient({ category }: DiscoverPageClientProps) {
       setIsLoading(true)
 
       try {
-        const { data, error } = await elysia.discover({ media: category }).get({
-          query: {
-            limit: 32,
-            status: statusParam,
-            mediaFormat: formatsParam,
-            genres: genresParam,
-            year: yearsParam,
-            seasonSeason: seasonsParam,
-            artist: artistsParam,
-            sortBy,
-            order: sortOrder,
-            q: cleanSearch || undefined,
-          },
-        })
+        if (category === "characters") {
+          const entitySortBy = getEntitySortBy(sortBy)
+          const { data, error } = await elysia.borealis.characters.get({
+            query: {
+              page: 1,
+              limit: 40,
+              search: cleanSearch || undefined,
+              gender: selectedFormats[0] || undefined,
+              sortBy: entitySortBy,
+              sortOrder,
+            },
+          })
 
-        if (!error && data && data.success) {
-          setItems(data.items as DiscoverItem[])
-          setNextCursor(data.pagination?.nextCursor ?? null)
-          setHasMore(Boolean(data.pagination?.hasMore))
-          setTotalCount(data.pagination?.total ?? 0)
+          if (!error && data && data.success) {
+            setItems((data.items || []).map(mapCharacterItem))
+            setNextCursor(data.pagination?.hasMore ? 2 : null)
+            setHasMore(Boolean(data.pagination?.hasMore))
+            setTotalCount(data.pagination?.total ?? 0)
+          } else {
+            setItems([])
+            setNextCursor(null)
+            setHasMore(false)
+          }
+        } else if (category === "staff") {
+          const entitySortBy = getEntitySortBy(sortBy)
+          const { data, error } = await elysia.borealis.people.get({
+            query: {
+              page: 1,
+              limit: 40,
+              search: cleanSearch || undefined,
+              gender: selectedFormats[0] || undefined,
+              occupation: selectedGenres[0] || undefined,
+              sortBy: entitySortBy,
+              sortOrder,
+            },
+          })
+
+          if (!error && data && data.success) {
+            setItems((data.items || []).map(mapPersonItem))
+            setNextCursor(data.pagination?.hasMore ? 2 : null)
+            setHasMore(Boolean(data.pagination?.hasMore))
+            setTotalCount(data.pagination?.total ?? 0)
+          } else {
+            setItems([])
+            setNextCursor(null)
+            setHasMore(false)
+          }
+        } else if (category === "studios") {
+          const entitySortBy = getEntitySortBy(sortBy)
+          const { data, error } = await elysia.borealis.studios.get({
+            query: {
+              page: 1,
+              limit: 40,
+              search: cleanSearch || undefined,
+              isAnimationStudio: getStudioAnimationFilter(selectedFormats),
+              sortBy: entitySortBy,
+              sortOrder,
+            },
+          })
+
+          if (!error && data && data.success) {
+            setItems((data.items || []).map(mapStudioItem))
+            setNextCursor(data.pagination?.hasMore ? 2 : null)
+            setHasMore(Boolean(data.pagination?.hasMore))
+            setTotalCount(data.pagination?.total ?? 0)
+          } else {
+            setItems([])
+            setNextCursor(null)
+            setHasMore(false)
+          }
         } else {
-          setItems([])
-          setNextCursor(null)
-          setHasMore(false)
+          const targetCat = getMediaCategory(category)
+          const { data, error } = await elysia.borealis.media[targetCat].get({
+            query: {
+              page: 1,
+              limit: 32,
+              statuses: statusParam,
+              formats: formatsParam,
+              genres: genresParam,
+              years: yearsParam,
+              season: seasonsParam,
+              sortBy: sortBy as any,
+              sortOrder: sortOrder as any,
+              search: cleanSearch || undefined,
+            },
+          })
+
+          if (!error && data && data.success) {
+            setItems((data.items || []).map(mapMediaItem))
+            setNextCursor(data.pagination?.hasMore ? 2 : null)
+            setHasMore(Boolean(data.pagination?.hasMore))
+            setTotalCount(data.pagination?.total ?? 0)
+          } else {
+            setItems([])
+            setNextCursor(null)
+            setHasMore(false)
+          }
         }
       } catch (err) {
         console.error("[Discover] Failed to fetch items:", err)
@@ -365,33 +562,99 @@ export function DiscoverPageClient({ category }: DiscoverPageClientProps) {
         selectedYears.length > 0 ? selectedYears.join(",") : undefined
       const seasonsParam =
         selectedSeasons.length > 0 ? selectedSeasons.join(",") : undefined
-      const artistsParam =
-        selectedArtists.length > 0 ? selectedArtists.join(",") : undefined
 
       const cleanSearch = debouncedSearch.trim()
-      const { data, error } = await elysia.discover({ media: category }).get({
-        query: {
-          limit: 32,
-          cursor: nextCursor ?? undefined,
-          status: statusParam,
-          mediaFormat: formatsParam,
-          genres: genresParam,
-          year: yearsParam,
-          seasonSeason: seasonsParam,
-          artist: artistsParam,
-          sortBy,
-          order: sortOrder,
-          q: cleanSearch || undefined,
-        },
-      })
+      const pageToFetch = typeof nextCursor === "number" ? nextCursor : 2
 
-      if (!error && data && data.success) {
-        const newItems = (data.items as DiscoverItem[]) || []
-        setItems((prev) => [...prev, ...newItems])
-        setNextCursor(data.pagination?.nextCursor ?? null)
-        setHasMore(Boolean(data.pagination?.hasMore))
+      if (category === "characters") {
+        const entitySortBy = getEntitySortBy(sortBy)
+        const { data, error } = await elysia.borealis.characters.get({
+          query: {
+            page: pageToFetch,
+            limit: 40,
+            search: cleanSearch || undefined,
+            gender: selectedFormats[0] || undefined,
+            sortBy: entitySortBy,
+            sortOrder,
+          },
+        })
+
+        if (!error && data && data.success) {
+          const newItems = (data.items || []).map(mapCharacterItem)
+          setItems((prev) => [...prev, ...newItems])
+          setNextCursor(data.pagination?.hasMore ? pageToFetch + 1 : null)
+          setHasMore(Boolean(data.pagination?.hasMore))
+        } else {
+          setHasMore(false)
+        }
+      } else if (category === "staff") {
+        const entitySortBy = getEntitySortBy(sortBy)
+        const { data, error } = await elysia.borealis.people.get({
+          query: {
+            page: pageToFetch,
+            limit: 40,
+            search: cleanSearch || undefined,
+            gender: selectedFormats[0] || undefined,
+            occupation: selectedGenres[0] || undefined,
+            sortBy: entitySortBy,
+            sortOrder,
+          },
+        })
+
+        if (!error && data && data.success) {
+          const newItems = (data.items || []).map(mapPersonItem)
+          setItems((prev) => [...prev, ...newItems])
+          setNextCursor(data.pagination?.hasMore ? pageToFetch + 1 : null)
+          setHasMore(Boolean(data.pagination?.hasMore))
+        } else {
+          setHasMore(false)
+        }
+      } else if (category === "studios") {
+        const entitySortBy = getEntitySortBy(sortBy)
+        const { data, error } = await elysia.borealis.studios.get({
+          query: {
+            page: pageToFetch,
+            limit: 40,
+            search: cleanSearch || undefined,
+            isAnimationStudio: getStudioAnimationFilter(selectedFormats),
+            sortBy: entitySortBy,
+            sortOrder,
+          },
+        })
+
+        if (!error && data && data.success) {
+          const newItems = (data.items || []).map(mapStudioItem)
+          setItems((prev) => [...prev, ...newItems])
+          setNextCursor(data.pagination?.hasMore ? pageToFetch + 1 : null)
+          setHasMore(Boolean(data.pagination?.hasMore))
+        } else {
+          setHasMore(false)
+        }
       } else {
-        setHasMore(false)
+        const targetCat = getMediaCategory(category)
+        const { data, error } = await elysia.borealis.media[targetCat].get({
+          query: {
+            page: pageToFetch,
+            limit: 32,
+            statuses: statusParam,
+            formats: formatsParam,
+            genres: genresParam,
+            years: yearsParam,
+            season: seasonsParam,
+            sortBy: sortBy as any,
+            sortOrder: sortOrder as any,
+            search: cleanSearch || undefined,
+          },
+        })
+
+        if (!error && data && data.success) {
+          const newItems = (data.items || []).map(mapMediaItem)
+          setItems((prev) => [...prev, ...newItems])
+          setNextCursor(data.pagination?.hasMore ? pageToFetch + 1 : null)
+          setHasMore(Boolean(data.pagination?.hasMore))
+        } else {
+          setHasMore(false)
+        }
       }
     } catch (err) {
       console.error("[Discover] Failed to load more items:", err)
@@ -410,7 +673,6 @@ export function DiscoverPageClient({ category }: DiscoverPageClientProps) {
     selectedGenres,
     selectedYears,
     selectedSeasons,
-    selectedArtists,
     sortBy,
     sortOrder,
     debouncedSearch,

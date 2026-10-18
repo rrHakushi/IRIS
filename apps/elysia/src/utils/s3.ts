@@ -12,7 +12,7 @@ const RUSTFS_REGION = process.env.RUSTFS_REGION || "us-east-1"
 const RUSTFS_ACCESS_KEY = process.env.RUSTFS_ACCESS_KEY || ""
 const RUSTFS_SECRET_KEY = process.env.RUSTFS_SECRET_KEY || ""
 export const PUBLIC_BUCKET =
-  process.env.RUSTFS_PUBLIC_BUCKET || "runa-public-dev"
+  process.env.RUSTFS_PUBLIC_BUCKET!
 
 export const s3Client = new S3Client({
   endpoint: RUSTFS_ENDPOINT,
@@ -96,7 +96,6 @@ export async function getPublicAsset(key: string): Promise<{
     if (err?.name === "NoSuchKey" || err?.$metadata?.httpStatusCode === 404) {
       return null
     }
-    console.error(`[RustFS] Failed to fetch object ${key}:`, err)
     return null
   }
 }

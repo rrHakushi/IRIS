@@ -32,11 +32,13 @@ import {
 import { MarkdownRenderer } from "@/components/markdown"
 import { renderBadgeIcon } from "./settings-tabs/account/profile/badge-showcase-card"
 import { cn } from "@workspace/ui/lib/utils"
+import { resolveUserId } from "@/lib/user-profile"
 
 export interface UserPreviewModalProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   username: string
+  userId?: string
   profile?: UserProfileCustomization | null
 }
 
@@ -44,8 +46,24 @@ export function UserPreviewModal({
   isOpen,
   onOpenChange,
   username,
+  userId,
   profile,
 }: UserPreviewModalProps): React.JSX.Element {
+  const [resolvedId, setResolvedId] = React.useState<string | undefined>(userId)
+
+  React.useEffect(() => {
+    if (userId) {
+      setResolvedId(userId)
+      return
+    }
+    if (username) {
+      resolveUserId(username).then((id) => {
+        if (id) setResolvedId(id)
+      })
+    }
+  }, [userId, username])
+
+  const profileHref = `/carina/users/${resolvedId || userId || username}`
   const displayName = profile?.displayName || username
   const initial = (displayName || "?").charAt(0).toUpperCase()
   const nameStyle = getDisplayNameStyleCss(profile?.displayNameStyle)
@@ -173,7 +191,7 @@ export function UserPreviewModal({
           </div>
 
           <Link
-            href={`/IRIS-account/users/${username}`}
+            href={profileHref}
             onClick={() => onOpenChange(false)}
             className={cn(
               buttonVariants({ variant: "default", size: "sm" }),

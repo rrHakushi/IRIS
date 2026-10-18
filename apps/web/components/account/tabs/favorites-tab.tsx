@@ -1,10 +1,10 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useCallback } from "react"
+import dynamic from "next/dynamic"
 import Link from "next/link"
 import Image from "next/image"
 import { elysia } from "@/lib/elysia"
-import { Badge } from "@workspace/ui/components/badge"
 import {
   IconHeart,
   IconDeviceTv,
@@ -15,17 +15,32 @@ import {
   IconUser,
   IconBuildingCommunity,
   IconSparkles,
-  IconStar,
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
+import { resolveUserId } from "@/lib/user-profile"
+import { MediaListCard } from "@/components/lists/media-list-card"
+import {
+  toNormalizedMedia,
+  toMediaListEntry,
+} from "@/components/lists/media-list-grid"
+import type { ListEntryData, MediaListType } from "@/components/lists/types"
+import { getMediaDetailHref } from "@/lib/media-routes"
+
+const MediaListModal = dynamic(
+  () =>
+    import("@/components/media/list/media-list-modal").then(
+      (m) => m.MediaListModal
+    ),
+  { ssr: false }
+)
 
 export interface FavoritesTabProps {
   username: string
+  userId?: string
   isOwner: boolean
 }
 
 const FAVORITE_CATEGORIES = [
-  { id: "ALL", name: "All Favorites", icon: IconHeart },
   { id: "ANIME", name: "Anime", icon: IconDeviceTv },
   { id: "MANGA", name: "Manga", icon: IconBook },
   { id: "MOVIE", name: "Movies", icon: IconMovie },
@@ -37,6 +52,16 @@ const FAVORITE_CATEGORIES = [
   { id: "PERSON", name: "Staff & Cast", icon: IconUser },
   { id: "STUDIO", name: "Studios", icon: IconBuildingCommunity },
 ]
+
+const CATEGORY_TO_MEDIA_TYPE: Record<string, MediaListType> = {
+  ANIME: "anime",
+  MANGA: "manga",
+  MOVIE: "movie",
+  TV: "tv",
+  GAME: "game",
+  BOOK: "book",
+  MUSIC_TRACK: "music",
+}
 
 const inFlightRequests = new Map<string, Promise<any>>()
 const favoritesClientCache = new Map<string, { data: any[]; timestamp: number }>()
@@ -50,19 +75,24 @@ export function invalidateClientFavorites(username?: string, category?: string) 
   }
 }
 
-export function FavoritesTab({ username, isOwner }: FavoritesTabProps): React.JSX.Element {
-  const [selectedCategory, setSelectedCategory] = useState<string>("ALL")
+export function FavoritesTab({ username, userId, isOwner }: FavoritesTabProps): React.JSX.Element {
+  const [selectedCategory, setSelectedCategory] = useState<string>("ANIME")
+  const [refreshKey, setRefreshKey] = useState(0)
   const cacheKey = `${username}:${selectedCategory}`
   const cached = favoritesClientCache.get(cacheKey)
   const isFresh = Boolean(cached && Date.now() - cached.timestamp < CLIENT_CACHE_TTL_MS)
 
   const [favorites, setFavorites] = useState<any[]>(() => (isFresh && cached ? cached.data : []))
   const [isLoading, setIsLoading] = useState(!isFresh)
+  const [editingItem, setEditingItem] = useState<{
+    item: ListEntryData
+    mediaType: MediaListType
+  } | null>(null)
 
   useEffect(() => {
     let isMounted = true
 
-    if (favoritesClientCache.has(cacheKey)) {
+    if (refreshKey === 0 && favoritesClientCache.has(cacheKey)) {
       const entry = favoritesClientCache.get(cacheKey)!
       if (Date.now() - entry.timestamp < CLIENT_CACHE_TTL_MS) {
         setFavorites(entry.data)
@@ -75,11 +105,17 @@ export function FavoritesTab({ username, isOwner }: FavoritesTabProps): React.JS
 
     async function fetchFavorites() {
       let promise = inFlightRequests.get(cacheKey)
-      if (!promise) {
+      if (!promise || refreshKey > 0) {
         promise = (async () => {
-          const queryType = selectedCategory !== "ALL" ? (selectedCategory as any) : undefined
-          return await elysia.user({ username }).favorites.get({
-            query: { type: queryType },
+          let targetId = userId
+          if (!targetId) {
+            targetId = (await resolveUserId(username)) || undefined
+          }
+          if (!targetId) return null
+
+          const cat = selectedCategory.toLowerCase().replace("_track", "")
+          return await elysia.carina.users({ userId: targetId }).favorites({ category: cat }).get({
+            query: { limit: 50 },
           })
         })().finally(() => {
           inFlightRequests.delete(cacheKey)
@@ -89,8 +125,8 @@ export function FavoritesTab({ username, isOwner }: FavoritesTabProps): React.JS
 
       try {
         const res = await promise
-        if (isMounted && !res.error && res.data?.success) {
-          const data = res.data.data || []
+        if (isMounted && res && !res.error && res.data?.success) {
+          const data = (res.data as any).favorites || (res.data as any).data || []
           favoritesClientCache.set(cacheKey, {
             data,
             timestamp: Date.now(),
@@ -109,17 +145,32 @@ export function FavoritesTab({ username, isOwner }: FavoritesTabProps): React.JS
     return () => {
       isMounted = false
     }
-  }, [cacheKey, username, selectedCategory])
+  }, [cacheKey, username, userId, selectedCategory, refreshKey])
 
-  const filteredFavorites =
-    selectedCategory === "ALL"
-      ? favorites
-      : favorites.filter((f) => {
-          if (selectedCategory === "MUSIC_TRACK") {
-            return f.type === "MUSIC_TRACK" || f.type === "MUSIC_ALBUM" || f.type === "MUSIC"
-          }
-          return f.type === selectedCategory
-        })
+  const handleOpenEditModal = useCallback(
+    (item: ListEntryData, mType?: MediaListType) => {
+      setEditingItem({
+        item,
+        mediaType: mType || CATEGORY_TO_MEDIA_TYPE[selectedCategory] || "anime",
+      })
+    },
+    [selectedCategory]
+  )
+
+  const handleEntryUpdated = useCallback(() => {
+    invalidateClientFavorites(username, selectedCategory)
+    setEditingItem(null)
+    setRefreshKey((k) => k + 1)
+  }, [username, selectedCategory])
+
+  const filteredFavorites = favorites.filter((f) => {
+    if (selectedCategory === "MUSIC_TRACK") {
+      return f.type === "MUSIC_TRACK" || f.type === "MUSIC_ALBUM" || f.type === "MUSIC"
+    }
+    return f.type === selectedCategory
+  })
+
+  const currentMediaType = CATEGORY_TO_MEDIA_TYPE[selectedCategory]
 
   return (
     <div className="space-y-6">
@@ -149,13 +200,12 @@ export function FavoritesTab({ username, isOwner }: FavoritesTabProps): React.JS
 
       {/* Favorites Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="animate-pulse space-y-2 rounded-2xl border border-border/40 bg-card/40 p-3">
-              <div className="aspect-[3/4] w-full rounded-xl bg-muted/70" />
-              <div className="h-3 w-3/4 rounded bg-muted/60" />
-              <div className="h-2 w-1/2 rounded bg-muted/40" />
-            </div>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2.5 sm:gap-3">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => (
+            <div
+              key={i}
+              className="aspect-2/3 animate-pulse rounded-xl border border-border/40 bg-card/40"
+            />
           ))}
         </div>
       ) : filteredFavorites.length === 0 ? (
@@ -169,109 +219,151 @@ export function FavoritesTab({ username, isOwner }: FavoritesTabProps): React.JS
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          {filteredFavorites.map((fav) => {
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2.5 sm:gap-3">
+          {filteredFavorites.map((fav, idx) => {
             const entity = fav.entity || {}
             const title = entity.title || `${fav.type} #${fav.targetId}`
             const subtitle = entity.subtitle
             const coverImage = entity.coverImage
-            const score = entity.score
-            const typeLower = fav.type.toLowerCase()
-            const linkPath =
-              typeLower === "anime"
-                ? "anime"
-                : typeLower === "manga"
-                  ? "manga"
-                  : typeLower === "movie"
-                    ? "movies"
-                    : typeLower === "tv"
-                      ? "tv"
-                      : typeLower === "game"
-                        ? "games"
-                        : typeLower === "book"
-                          ? "books"
-                          : typeLower.startsWith("music")
-                            ? "music"
-                            : typeLower === "character"
-                              ? "characters"
-                              : typeLower === "person"
-                                ? "people"
-                                : typeLower === "studio"
-                                  ? "studios"
-                                  : typeLower
-            const link = (
-              entity.link || `/IRIS-list/${linkPath}/${fav.targetId}`
-            ).replace("/IRIS-media/media/", "/IRIS-list/")
             const formatBadge = entity.format || fav.type
 
+            // 1. Media Items: Use MediaListCard
+            if (currentMediaType) {
+              const mediaType =
+                fav.type === "MUSIC_TRACK" || fav.type === "MUSIC_ALBUM" || fav.type === "MUSIC"
+                  ? "music"
+                  : CATEGORY_TO_MEDIA_TYPE[fav.type] || currentMediaType
+
+              const normalizedItem: ListEntryData = {
+                entry: {
+                  id: fav.targetId,
+                  status: "FAVORITE",
+                  score: typeof entity.score === "number" ? entity.score : null,
+                  notes: null,
+                  private: false,
+                  itemType:
+                    fav.type === "MUSIC_TRACK"
+                      ? "TRACK"
+                      : fav.type === "MUSIC_ALBUM"
+                        ? "ALBUM"
+                        : undefined,
+                  trackId: fav.type === "MUSIC_TRACK" ? fav.targetId : undefined,
+                  albumId: fav.type === "MUSIC_ALBUM" ? fav.targetId : undefined,
+                  createdAt: fav.createdAt,
+                  updatedAt: fav.createdAt,
+                },
+                media: {
+                  id: fav.targetId,
+                  titlePrimary: title,
+                  title,
+                  titleSecondary: subtitle,
+                  coverImage,
+                  format: entity.format,
+                  artistName: subtitle,
+                  updatedAt: fav.createdAt,
+                },
+              }
+
+              return (
+                <MediaListCard
+                  key={`${fav.id}-${fav.targetId}`}
+                  item={normalizedItem}
+                  mediaType={mediaType}
+                  onOpenEditModal={handleOpenEditModal}
+                  priority={idx < 4}
+                />
+              )
+            }
+
+            // 2. Non-media items (Characters, People, Studios): Matching card design
+            const link = getMediaDetailHref(fav.type, fav.targetId)
+
             return (
-              <Link
-                key={fav.id}
-                href={link}
-                className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/60 p-2.5 shadow-xs transition-all hover:border-border hover:bg-card/90"
+              <div
+                key={`${fav.id}-${fav.targetId}`}
+                className="group media-card-contain relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card hover:border-primary/40"
               >
-                {/* Media Poster / Picture */}
-                <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-muted/40 shadow-xs">
-                  {coverImage ? (
-                    <Image
-                      src={coverImage}
-                      alt={title}
-                      fill
-                      sizes="(max-width: 768px) 50vw, 200px"
-                      unoptimized
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex size-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-primary/10 via-background to-muted/40 p-3 text-center">
-                      <IconSparkles className="size-6 text-primary/40" />
-                      <span className="font-heading text-xs font-bold text-foreground line-clamp-3">
-                        {title}
-                      </span>
-                    </div>
-                  )}
+                {/* Cover Image Container */}
+                <div className="relative aspect-2/3 w-full overflow-hidden bg-muted select-none">
+                  <Link
+                    href={link}
+                    prefetch={false}
+                    className="absolute inset-0 block size-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-hidden"
+                  >
+                    {coverImage ? (
+                      <Image
+                        src={coverImage}
+                        alt={title}
+                        fill
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1536px) 25vw, 384px"
+                        priority={idx < 4}
+                        unoptimized
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex size-full flex-col items-center justify-center gap-1.5 p-2 text-muted-foreground/50">
+                        {fav.type === "STUDIO" ? (
+                          <IconBuildingCommunity className="size-8 stroke-[1.5]" />
+                        ) : fav.type === "PERSON" ? (
+                          <IconUser className="size-8 stroke-[1.5]" />
+                        ) : (
+                          <IconSparkles className="size-8 stroke-[1.5]" />
+                        )}
+                        <span className="line-clamp-2 text-center text-[10px] font-medium text-muted-foreground/70">
+                          {title}
+                        </span>
+                      </div>
+                    )}
+                  </Link>
 
-                  {/* User Score Overlay if rated */}
-                  {typeof score === "number" && score > 0 && (
-                    <div className="absolute top-2 left-2 flex items-center gap-1 rounded-lg border border-amber-500/20 bg-background/90 px-1.5 py-0.5 text-[10px] font-bold text-amber-400 shadow-sm backdrop-blur-xs">
-                      <IconStar className="size-2.5 fill-amber-400 text-amber-400" />
-                      <span>{score}</span>
+                  {/* Format badge bottom left */}
+                  <div className="pointer-events-none absolute start-1.5 bottom-1.5 z-10 flex max-w-[calc(100%-2rem)] flex-col items-start gap-1 select-none">
+                    <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 tabular-nums shadow-xs backdrop-blur-md">
+                      <span>{formatBadge}</span>
                     </div>
-                  )}
-
-                  {/* Format Badge Pill at bottom */}
-                  <div className="absolute bottom-2 left-2">
-                    <Badge
-                      variant="outline"
-                      className="h-4.5 border-border/70 bg-background/80 px-1.5 text-[9px] font-bold uppercase tracking-wider backdrop-blur-xs"
-                    >
-                      {formatBadge}
-                    </Badge>
                   </div>
                 </div>
 
-                {/* Title & Subtitle Details */}
-                <div className="mt-2.5 flex flex-1 flex-col justify-between space-y-1">
-                  <h4
-                    className="line-clamp-2 text-xs font-bold leading-tight text-foreground transition-colors group-hover:text-rose-400"
+                {/* Card Meta */}
+                <div className="flex flex-1 flex-col p-2">
+                  <Link
+                    href={link}
+                    prefetch={false}
                     title={title}
+                    className="line-clamp-2 text-[11px] leading-tight font-semibold text-foreground hover:text-primary sm:text-xs"
                   >
                     {title}
-                  </h4>
-
+                  </Link>
                   {subtitle ? (
-                    <p className="line-clamp-1 text-[10px] text-muted-foreground" title={subtitle}>
+                    <p
+                      className="mt-0.5 line-clamp-1 text-[10px] text-muted-foreground"
+                      title={subtitle}
+                    >
                       {subtitle}
                     </p>
                   ) : (
-                    <span className="text-[10px] text-muted-foreground">
-                      Added {new Date(fav.createdAt).toLocaleDateString()}
+                    <span className="mt-0.5 text-[10px] text-muted-foreground/70">
+                      Favorite
                     </span>
                   )}
                 </div>
-              </Link>
+              </div>
             )
           })}
         </div>
+      )}
+
+      {/* Edit List Modal */}
+      {editingItem && (
+        <MediaListModal
+          isOpen={Boolean(editingItem)}
+          onOpenChange={(open) => {
+            if (!open) setEditingItem(null)
+          }}
+          media={toNormalizedMedia(editingItem.item.media, editingItem.mediaType)}
+          initialEntry={toMediaListEntry(editingItem.item.entry)}
+          onEntryUpdated={handleEntryUpdated}
+        />
       )}
     </div>
   )

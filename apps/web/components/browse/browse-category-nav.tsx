@@ -13,6 +13,7 @@ import {
   IconUser,
   IconUsers,
   IconBuildingStore,
+  IconCategory,
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { Button } from "@workspace/ui/components/button"
@@ -32,6 +33,7 @@ const CATEGORY_ICONS: Record<
   characters: IconUser,
   people: IconUsers,
   studios: IconBuildingStore,
+  other: IconCategory,
 }
 
 interface BrowseCategoryNavProps {
@@ -65,6 +67,8 @@ export function getCategoryLabel(
       return t("categories.people")
     case "studios":
       return t("categories.studios")
+    case "other":
+      return t("categories.other")
   }
 }
 

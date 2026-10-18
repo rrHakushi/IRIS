@@ -1,3 +1,8 @@
 {
-  "prisma.enableDiagnostics": true
+  "prisma.enableDiagnostics": true,
+  "jellyfinDir": "${workspaceFolder}/plugins/JellyBorealis/.jellyfin/server",
+  "jellyfinWebDir": "${workspaceFolder}/plugins/JellyBorealis/.jellyfin/web",
+  "jellyfinDevDataDir": "${workspaceFolder}/plugins/JellyBorealis/.jellyfin/data",
+  "jellyfinSystemDataDir": "${env:HOME}/.local/share/jellyfin",
+  "pluginName": "JellyBorealis"
 }

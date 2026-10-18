@@ -128,6 +128,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
     >()
 
     person.voicedCharacters.forEach((vc) => {
+      if (!vc.character) return
       const type = vc.mediaType.toUpperCase() as
         "ANIME" | "MOVIE" | "TV" | "BOOK"
       const key = `${vc.character.id}-${type}-${vc.mediaId}`
@@ -1033,9 +1034,9 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                         </div>
                       )}
 
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4">
+                    <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
                       {musicAlbums.map((album) => {
-                        const albumHref = `/IRIS-list/music/albums/${album.id}`
+                        const albumHref = `/borealis/music/albums/${album.id}`
                         return (
                           <Link
                             key={`album-${album.id}`}
@@ -1127,9 +1128,9 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                         </div>
                       )}
 
-                    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                       {musicTracks.map((track) => {
-                        const trackHref = `/IRIS-list/music/tracks/${track.id}`
+                        const trackHref = `/borealis/music/tracks/${track.id}`
                         return (
                           <div
                             key={`track-${track.id}`}
@@ -1305,18 +1306,18 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                       </div>
 
                       {/* Voiced Roles Grid: Left Character, Right Media */}
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                         {group.items.map((item) => {
                           const mediaHref = getMediaDetailHref(
                             item.mediaType,
                             item.mediaId
                           )
-                          const characterHref = `/IRIS-list/characters/${item.characterId}`
+                          const characterHref = `/borealis/characters/${item.characterId}`
 
                           return (
                             <div
                               key={item.key}
-                              className="flex items-center justify-between gap-3 rounded-2xl border border-border/40 bg-card/60 p-2.5 transition-colors hover:border-border/60"
+                              className="flex items-center justify-between gap-2.5 rounded-xl border border-border/40 bg-card/60 p-2 transition-colors hover:border-border/60"
                             >
                               {/* Left Side: Character Details */}
                               <div className="flex min-w-0 flex-1 items-center gap-2.5">
@@ -1499,7 +1500,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                       </div>
 
                       {/* Staff Cards Grid */}
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                         {group.items.map((item) => {
                           const mediaHref = getMediaDetailHref(
                             item.mediaType,
@@ -1509,7 +1510,7 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
                           return (
                             <div
                               key={item.key}
-                              className="flex items-center gap-3 rounded-2xl border border-border/40 bg-card/60 p-2.5 transition-colors hover:border-border/60"
+                              className="flex items-center gap-2.5 rounded-xl border border-border/40 bg-card/60 p-2 transition-colors hover:border-border/60"
                             >
                               <Link
                                 href={mediaHref}

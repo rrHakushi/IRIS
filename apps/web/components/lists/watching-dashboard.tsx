@@ -19,6 +19,7 @@ import {
   IconArrowsSort,
   IconRotateClockwise,
   IconChevronDown,
+  IconCategory,
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { Button, buttonVariants } from "@workspace/ui/components/button"
@@ -58,6 +59,7 @@ const DEFAULT_CATEGORY_ORDER: WatchingMediaListType[] = [
   "manga",
   "game",
   "book",
+  "other",
 ]
 
 const CATEGORY_META: Record<
@@ -111,6 +113,13 @@ const CATEGORY_META: Record<
     activeVerb: "Reading",
     progressUnit: "Pages",
     icon: IconBook,
+  },
+  other: {
+    statusParam: "WATCHING",
+    label: "Other",
+    activeVerb: "Tracking",
+    progressUnit: "Progress",
+    icon: IconCategory,
   },
 }
 
@@ -169,21 +178,45 @@ function getInitialCollapsedSections(): Record<string, boolean> {
   return {}
 }
 
-function useGridColumns(): number {
+const CARD_FIXED_WIDTH = 140
+const CARD_GAP = 10
+
+function useGridColumns(
+  containerRef: React.RefObject<HTMLDivElement | null>
+): number {
   const [cols, setCols] = useState(8)
   useEffect(() => {
+    const calculate = (width: number) => {
+      if (width <= 0) return
+      const count = Math.max(
+        1,
+        Math.floor((width + CARD_GAP) / (CARD_FIXED_WIDTH + CARD_GAP))
+      )
+      setCols(count)
+    }
+
+    const el = containerRef.current
+    if (el) {
+      calculate(el.clientWidth)
+      const ro = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          calculate(entry.contentRect.width)
+        }
+      })
+      ro.observe(el)
+      return () => ro.disconnect()
+    }
+
     const updateCols = () => {
       const w = window.innerWidth
-      if (w < 640) setCols(3)
-      else if (w < 768) setCols(4)
-      else if (w < 1024) setCols(5)
-      else if (w < 1280) setCols(6)
-      else setCols(8)
+      const sidebar = w >= 768 ? 256 : 0
+      const padding = w >= 640 ? 48 : 24
+      calculate(w - sidebar - padding)
     }
     updateCols()
     window.addEventListener("resize", updateCols, { passive: true })
     return () => window.removeEventListener("resize", updateCols)
-  }, [])
+  }, [containerRef])
   return cols
 }
 
@@ -239,7 +272,7 @@ function VirtualRow({
   return (
     <div
       ref={rowRef}
-      className="grid min-h-[220px] grid-cols-3 gap-2 sm:min-h-[260px] sm:grid-cols-4 sm:gap-2.5 md:min-h-[300px] md:grid-cols-5 md:gap-3 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-8"
+      className="grid min-h-[220px] grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:min-h-[260px] md:min-h-[280px]"
     >
       {isVisible
         ? items.map((item, idx) => (
@@ -341,11 +374,11 @@ function WatchingCategorySection({
               <div className="h-5 w-28 rounded bg-muted/40" />
             </div>
             {!isCollapsed && (
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2.5 md:grid-cols-5 md:gap-3 lg:grid-cols-6 xl:grid-cols-8">
+              <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5">
                 {Array.from({ length: cols }).map((_, i) => (
                   <div
                     key={i}
-                    className="aspect-2/3 rounded-2xl border border-border/20 bg-muted/20"
+                    className="aspect-2/3 w-[140px] rounded-2xl border border-border/20 bg-muted/20"
                   />
                 ))}
               </div>
@@ -610,10 +643,11 @@ interface CategoryState {
 }
 
 export function WatchingDashboard(): React.JSX.Element {
+  const containerRef = useRef<HTMLDivElement>(null)
   const { data: session, status: authStatus } = useSession()
   const { user: currentUser, updateUser } = useUser()
-  const username = session?.user?.username || currentUser?.username
-  const cols = useGridColumns()
+  const userId = session?.user?.id || currentUser?.id
+  const cols = useGridColumns(containerRef)
 
   const mediaTitlePreference =
     getMediaPreferences(currentUser?.customization).title || "primary"
@@ -715,6 +749,7 @@ export function WatchingDashboard(): React.JSX.Element {
     manga: { items: [], isLoaded: false, isLoading: false },
     game: { items: [], isLoaded: false, isLoading: false },
     book: { items: [], isLoaded: false, isLoading: false },
+    other: { items: [], isLoaded: false, isLoading: false },
   })
 
   // Edit Modal State
@@ -743,11 +778,11 @@ export function WatchingDashboard(): React.JSX.Element {
   useEffect(() => {
     loadedCategoriesRef.current.clear()
     inFlightCategoriesRef.current.clear()
-  }, [username])
+  }, [userId])
 
   const fetchCategory = useCallback(
     async (type: WatchingMediaListType) => {
-      if (!username) return
+      if (!userId) return
       if (
         loadedCategoriesRef.current.has(type) ||
         inFlightCategoriesRef.current.has(type)
@@ -762,16 +797,39 @@ export function WatchingDashboard(): React.JSX.Element {
       }))
 
       try {
-        const userLists = elysia.user({ username }).lists
         const meta = CATEGORY_META[type]
-        const res = await userLists[type].get({
-          query: {
-            status: meta.statusParam,
-            limit: 100,
-            sortBy: "updatedAt",
-            order: "desc",
-          },
-        })
+        const query = {
+          status: meta.statusParam,
+          limit: 100,
+          sortBy: "updatedAt",
+          order: "desc" as const,
+          userId,
+        }
+
+        let res: any = null
+        switch (type) {
+          case "anime":
+            res = await elysia.borealis.lists.anime.get({ query })
+            break
+          case "tv":
+            res = await elysia.borealis.lists.tv.get({ query })
+            break
+          case "movie":
+            res = await elysia.borealis.lists.movies.get({ query })
+            break
+          case "manga":
+            res = await elysia.borealis.lists.manga.get({ query })
+            break
+          case "game":
+            res = await elysia.borealis.lists.games.get({ query })
+            break
+          case "book":
+            res = await elysia.borealis.lists.books.get({ query })
+            break
+          case "other":
+            res = await elysia.borealis.lists.other.get({ query })
+            break
+        }
 
         const items =
           res?.data?.success && Array.isArray(res.data.items)
@@ -794,34 +852,34 @@ export function WatchingDashboard(): React.JSX.Element {
         inFlightCategoriesRef.current.delete(type)
       }
     },
-    [username]
+    [userId]
   )
 
   // Fetch the first category in order immediately when authenticated
   useEffect(() => {
     const first = categoryOrder[0]
-    if (authStatus === "authenticated" && username && first) {
+    if (authStatus === "authenticated" && userId && first) {
       fetchCategory(first)
     }
-  }, [authStatus, username, categoryOrder, fetchCategory])
+  }, [authStatus, userId, categoryOrder, fetchCategory])
 
   // Pre-fetch remaining categories when reorder dialog is opened so counts are accurate
   useEffect(() => {
-    if (isReorderOpen && authStatus === "authenticated" && username) {
+    if (isReorderOpen && authStatus === "authenticated" && userId) {
       for (const type of DEFAULT_CATEGORY_ORDER) {
         if (!categoryData[type].isLoaded && !categoryData[type].isLoading) {
           fetchCategory(type)
         }
       }
     }
-  }, [isReorderOpen, authStatus, username, categoryData, fetchCategory])
+  }, [isReorderOpen, authStatus, userId, categoryData, fetchCategory])
 
   // ---------------------------------------------------------------------------
   // Debounced Increment Handler (Optimistic Update)
   // ---------------------------------------------------------------------------
   const handleIncrementProgress = useCallback(
     async (item: ListEntryData, count: number, mediaType?: MediaListType) => {
-      if (!username || !mediaType) return
+      if (!userId || !mediaType) return
 
       const type = mediaType as WatchingMediaListType
       const entryId = item.entry.id
@@ -906,6 +964,18 @@ export function WatchingDashboard(): React.JSX.Element {
           }
           return null
         }
+        if (type === "other") {
+          const incKey = (item.media as any)?.incrementFieldKey
+          if (incKey && Array.isArray((item.media as any)?.progressFields)) {
+            const field = (item.media as any).progressFields.find(
+              (f: any) => f.key === incKey
+            )
+            if (field && typeof field.max === "number" && field.max > 0) {
+              return field.max
+            }
+          }
+          return null
+        }
         return null
       })()
 
@@ -974,11 +1044,11 @@ export function WatchingDashboard(): React.JSX.Element {
       })
 
       try {
-        const client = elysia.user({ username }).lists
+        const numMediaId = Number(mediaId)
 
         if (type === "anime") {
-          const { error } = await client
-            .anime({ id: mediaId })
+          const { error } = await elysia.borealis.lists
+            .anime({ animeId: numMediaId })
             .increment.post({ count })
           if (error) throw new Error("Failed to increment anime progress")
           const nextProg = (item.entry.progress ?? 0) + count
@@ -989,8 +1059,8 @@ export function WatchingDashboard(): React.JSX.Element {
               : `Episode ${nextProg} marked as watched`
           )
         } else if (type === "tv") {
-          const { error } = await client
-            .tv({ id: mediaId })
+          const { error } = await elysia.borealis.lists
+            .tv({ tvId: numMediaId })
             .increment.post({ count })
           if (error) throw new Error("Failed to increment TV progress")
           const nextProg = (item.entry.progress ?? 0) + count
@@ -1001,10 +1071,12 @@ export function WatchingDashboard(): React.JSX.Element {
               : `Episode ${nextProg} marked as watched`
           )
         } else if (type === "manga") {
-          const { error } = await client.manga({ id: mediaId }).increment.post({
-            count,
-            type: "CHAPTER",
-          })
+          const { error } = await elysia.borealis.lists
+            .manga({ mangaId: numMediaId })
+            .increment.post({
+              count,
+              type: "chapter",
+            })
           if (error) throw new Error("Failed to increment manga progress")
           const nextProg = (item.entry.chaptersProgress ?? 0) + count
           const isCompleted = maxCount && maxCount > 0 && nextProg >= maxCount
@@ -1014,25 +1086,34 @@ export function WatchingDashboard(): React.JSX.Element {
               : `Chapter ${nextProg} marked as read`
           )
         } else if (type === "movie") {
-          const { error } = await client.movie({ id: mediaId }).increment.post()
+          const { error } = await elysia.borealis.lists
+            .movies({ movieId: numMediaId })
+            .increment.post({ count: 1 })
           if (error) throw new Error("Failed to mark movie as completed")
           toast.success("Movie marked as watched!")
         } else if (type === "game") {
-          const { error } = await client
-            .game({ id: mediaId })
+          const { error } = await elysia.borealis.lists
+            .games({ gameId: numMediaId })
             .increment.post({ count })
           if (error) throw new Error("Failed to increment playtime")
           toast.success(`Logged +${count} hrs`)
         } else if (type === "book") {
-          const { error } = await client
-            .book({ id: mediaId })
-            .increment.post({ count })
+          const { error } = await elysia.borealis.lists
+            .books({ bookId: numMediaId })
+            .increment.post({ count, type: "chapter" })
           if (error) throw new Error("Failed to increment book progress")
           const nextProg = (item.entry.progress ?? 0) + count
           const isCompleted = maxCount && maxCount > 0 && nextProg >= maxCount
           toast.success(
             isCompleted ? "Completed book!" : `Page ${nextProg} marked as read`
           )
+        } else if (type === "other") {
+          const { error } = await elysia.borealis.lists
+            .other({ otherId: numMediaId })
+            .increment.post({ count })
+          if (error) throw new Error("Failed to increment progress")
+          const nextProg = (item.entry.progress ?? 0) + count
+          toast.success(`Progress updated (+${count})`)
         }
       } catch (err) {
         console.error("[WatchingDashboard] Failed to increment progress:", err)
@@ -1040,7 +1121,7 @@ export function WatchingDashboard(): React.JSX.Element {
         fetchCategory(type)
       }
     },
-    [username]
+    [userId]
   )
 
   const handleEntryUpdated = useCallback((entryId: number, updated: any) => {
@@ -1054,7 +1135,14 @@ export function WatchingDashboard(): React.JSX.Element {
         if (idx !== -1) {
           changed = true
           const targetStatus = CATEGORY_META[type].statusParam
-          if (updated.status && updated.status !== targetStatus) {
+          const newStatus = updated?.status?.toUpperCase()
+          const isStillActive =
+            type === "other"
+              ? newStatus === "WATCHING" ||
+                newStatus === "CURRENT" ||
+                newStatus === "TRACKING"
+              : newStatus === targetStatus
+          if (updated?.status && !isStillActive) {
             next[type] = {
               ...cat,
               items: cat.items.filter((it) => it.entry.id !== entryId),
@@ -1155,7 +1243,7 @@ export function WatchingDashboard(): React.JSX.Element {
             library and add titles to your watching, reading, or playing lists.
           </p>
           <Link
-            href="/IRIS-list/browse"
+            href="/borealis/browse"
             className={buttonVariants({
               className:
                 "mt-6 gap-2 rounded-2xl px-5 text-sm font-medium shadow-xs",
@@ -1173,7 +1261,7 @@ export function WatchingDashboard(): React.JSX.Element {
   // Active In-Progress Dashboard
   // ---------------------------------------------------------------------------
   return (
-    <div className="flex flex-col gap-8 pb-12">
+    <div ref={containerRef} className="flex flex-col gap-8 pb-12">
       {/* Ordered Category Sections */}
       <div className="flex flex-col gap-8">
         {categoryOrder.map((type, idx) => (

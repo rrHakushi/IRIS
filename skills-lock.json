@@ -1,29 +1,65 @@
 {
   "version": 1,
   "skills": {
-    "cicd-pipeline-generator": {
-      "source": "ailabs-393/ai-labs-claude-skills",
+    "bullmq-specialist": {
+      "source": "sickn33/agentic-awesome-skills",
       "sourceType": "github",
-      "skillPath": "packages/skills/cicd-pipeline-generator/SKILL.md",
-      "computedHash": "44bc43aad27639bcd52ebe4d71376aad7adc15d9a88ba81e13e2529f0dfbf713"
+      "skillPath": "skills/bullmq-specialist/SKILL.md",
+      "computedHash": "1012ef335f73d4469d0a00dd9189923c9fa666c3a21e032b5f84733c360aa94a"
     },
-    "multi-stage-dockerfile": {
+    "data-encryption": {
+      "source": "aj-geddes/useful-ai-prompts",
+      "sourceType": "github",
+      "skillPath": "skills/data-encryption/SKILL.md",
+      "computedHash": "78f45efcae4037f3ec9760dc6c2690bd774560dc587fa88ac46a9ccb6a817b08"
+    },
+    "elysiajs": {
+      "source": "elysiajs/skills",
+      "sourceType": "github",
+      "skillPath": "elysia/SKILL.md",
+      "computedHash": "55268e69a2c766ed67e56a0db57544f60cc52dba0c7f024a974baf965e525e1b"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "b146008599c31057cef1c145774cea5d5afb30e8f43fa802e47a4b461419aaaf"
+    },
+    "firefox-extension-dev": {
+      "source": "acaprino/daodan",
+      "sourceType": "github",
+      "skillPath": "exports/claude/plugins/browser-extensions/skills/firefox-extension-dev/SKILL.md",
+      "computedHash": "2a39e3c55845dfa4a09fb4c4eb02d9e6e3ca60f36bf7cd7ae6fb718ca8a97350"
+    },
+    "git-commit": {
       "source": "github/awesome-copilot",
       "sourceType": "github",
-      "skillPath": "skills/multi-stage-dockerfile/SKILL.md",
-      "computedHash": "698bf93a84dae18fd7bd0b1d35c21427307fde78fbdf4624be9726f5f98189ca"
+      "skillPath": "skills/git-commit/SKILL.md",
+      "computedHash": "2607fc60629b82b257136dd2a7a373f0a4466c0b49df7746d845d59313c99b21"
     },
-    "nestia": {
-      "source": "mktawileh/nestia-skill",
+    "grill-me": {
+      "source": "mattpocock/skills",
       "sourceType": "github",
-      "skillPath": "SKILL.md",
-      "computedHash": "7190d9025ca71a1eb292883748f3ef443feff37fd73a7e2e1bf12e13e799e515"
+      "skillPath": "skills/productivity/grill-me/SKILL.md",
+      "computedHash": "9cdbb4b8f7a3aeaef82e6230c9e823500d4a8a1214c726cf342cf9829d34fc7d"
+    },
+    "grilling": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/productivity/grilling/SKILL.md",
+      "computedHash": "ef1641a2047b71b60f1942cd35efb47d3afc9d584dff5a0b01f8c7db923aaa08"
     },
     "nextauth": {
       "source": "claude-dev-suite/claude-dev-suite",
       "sourceType": "github",
       "skillPath": "skills/authentication/nextauth/SKILL.md",
       "computedHash": "8711d137ef1576321eae5f754a590c0945060faebb25564f057826cad6504ef8"
+    },
+    "ponytail": {
+      "source": "dietrichgebert/ponytail",
+      "sourceType": "github",
+      "skillPath": "skills/ponytail/SKILL.md",
+      "computedHash": "99f0589e5646b46da07b9419a5daa178004b3dd8930fec528918a51ab07f5efc"
     },
     "security-review": {
       "source": "github/awesome-copilot",
@@ -35,25 +71,19 @@
       "source": "shadcn/ui",
       "sourceType": "github",
       "skillPath": "skills/shadcn/SKILL.md",
-      "computedHash": "d04e43ec01e921558b93bb8046c14a42a22556689a2827243df900825a4e1604"
+      "computedHash": "da388f632cd83783c02967446e21941c9ee8291ccb43ba74c23f7d4e9b7c298c"
     },
     "skill-creator": {
       "source": "anthropics/skills",
       "sourceType": "github",
       "skillPath": "skills/skill-creator/SKILL.md",
-      "computedHash": "7e3c9cd74e9e2b4828527a857170e86310f2dab5ea8030a9043df2c7e6c88857"
+      "computedHash": "5ea13a6d9f0d4bb694405d79acd00cadec0d21bb138c4dd10fcf3c500cb835c2"
     },
     "vercel-react-best-practices": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/react-best-practices/SKILL.md",
       "computedHash": "ca7b0c0c6e5f2750043f7f0cd72d16ac4e2abc48f9b5500d047a4b77a2506212"
-    },
-    "web-design-guidelines": {
-      "source": "vercel-labs/agent-skills",
-      "sourceType": "github",
-      "skillPath": "skills/web-design-guidelines/SKILL.md",
-      "computedHash": "f3bc47f890f42a44db1007ab390709ec368e4b8c089baee6b0007182236ac474"
     }
   }
 }

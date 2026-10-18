@@ -107,7 +107,7 @@ export function CalendarPageClient() {
 
     async function loadReleases() {
       try {
-        const { data, error } = await elysia.media.calendar.get({
+        const { data, error } = await elysia.borealis.calendar.get({
           query: {
             start: dateRange.start,
             end: dateRange.end,
@@ -199,7 +199,7 @@ export function CalendarPageClient() {
 
   return (
     <div className="flex w-full flex-1 flex-col bg-background">
-      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 px-3 py-4 pb-32 sm:gap-6 sm:px-6 sm:py-6 sm:pb-8 lg:px-8">
+      <div className="flex w-full flex-1 flex-col gap-4 px-3 py-4 pb-32 sm:gap-6 sm:px-6 sm:py-6 sm:pb-8 lg:px-8">
         {/* Header Navigation & Filters */}
         <CalendarHeader
           currentDate={currentDate}

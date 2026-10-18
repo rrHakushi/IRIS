@@ -39,7 +39,6 @@ import { cn } from "@workspace/ui/lib/utils"
 import { ProfileSettingsTab } from "./settings-tabs/account/profile-tab"
 import { InfoSettingsTab } from "./settings-tabs/account/info-tab"
 import { SecuritySettingsTab } from "./settings-tabs/account/security-tab"
-import { EncryptionSettingsTab } from "./settings-tabs/account/encryption-tab"
 import { ApiKeysSettingsTab } from "./settings-tabs/account/api-keys-tab"
 import { ConnectionsSettingsTab } from "./settings-tabs/account/connections-tab"
 import { PrivacySettingsTab } from "./settings-tabs/account/privacy-tab"
@@ -74,7 +73,6 @@ export type IrisSettingsCategory =
   | "profile"
   | "info"
   | "security"
-  | "encryption"
   | "pass"
   | "apiKeys"
   | "connections"
@@ -123,13 +121,6 @@ function renderTabContent(
     case "security":
       return (
         <SecuritySettingsTab
-          onOpenChange={onOpenChange}
-          setFooterContent={setFooterContent}
-        />
-      )
-    case "encryption":
-      return (
-        <EncryptionSettingsTab
           onOpenChange={onOpenChange}
           setFooterContent={setFooterContent}
         />
@@ -291,12 +282,6 @@ export function IrisSettingsModal({
         id: "security",
         name: t("tabs.security"),
         icon: IconShieldCheck,
-        group: t("groups.account"),
-      },
-      {
-        id: "encryption",
-        name: t("tabs.encryption"),
-        icon: IconLock,
         group: t("groups.account"),
       },
       {

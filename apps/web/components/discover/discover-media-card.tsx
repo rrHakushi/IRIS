@@ -28,30 +28,30 @@ function getMediaDetailHref(
 ): string {
   switch (category) {
     case "anime":
-      return `/IRIS-list/anime/${item.id}`
+      return `/borealis/anime/${item.id}`
     case "manga":
-      return `/IRIS-list/manga/${item.id}`
+      return `/borealis/manga/${item.id}`
     case "movies":
-      return `/IRIS-list/movies/${item.id}`
+      return `/borealis/movies/${item.id}`
     case "tv":
-      return `/IRIS-list/tv/${item.id}`
+      return `/borealis/tv/${item.id}`
     case "games":
-      return `/IRIS-list/games/${item.id}`
+      return `/borealis/games/${item.id}`
     case "books":
-      return `/IRIS-list/books/${item.id}`
+      return `/borealis/books/${item.id}`
     case "music":
       if (item.itemType === "ALBUM" || !item.duration) {
-        return `/IRIS-list/music/album/${item.id}`
+        return `/borealis/music/albums/${item.id}`
       }
-      return `/IRIS-list/music/track/${item.id}`
+      return `/borealis/music/tracks/${item.id}`
     case "characters":
-      return `/IRIS-list/characters/${item.id}`
+      return `/borealis/characters/${item.id}`
     case "staff":
-      return `/IRIS-list/people/${item.id}`
+      return `/borealis/people/${item.id}`
     case "studios":
-      return `/IRIS-list/studios/${item.id}`
+      return `/borealis/studios/${item.id}`
     default:
-      return `/IRIS-list/anime/${item.id}`
+      return `/borealis/anime/${item.id}`
   }
 }
 
@@ -85,11 +85,34 @@ export function DiscoverMediaCard({
         ).toFixed(1)
       : null
 
+  const formatDisplay = (() => {
+    if (!item.format) return null
+    if (typeof item.format === "string") return item.format.replace(/_/g, " ")
+    if (typeof (item.format as any)?.name === "string")
+      return (item.format as any).name
+    return String(item.format)
+  })()
+
   const yearOrSeason = (() => {
-    if (item.seasonSeason && item.releaseYear) {
-      return `${item.seasonSeason.slice(0, 3)} ${item.releaseYear}`
+    const yearVal = item.releaseYear ?? (item as any).year
+    const seasonVal = item.seasonSeason ?? (item as any).season
+    if (seasonVal && yearVal) {
+      return `${String(seasonVal).slice(0, 3)} ${yearVal}`
     }
-    return item.releaseYear ? String(item.releaseYear) : null
+    return yearVal ? String(yearVal) : null
+  })()
+
+  const genresDisplay = (() => {
+    if (!item.genres || !Array.isArray(item.genres) || item.genres.length === 0) {
+      return null
+    }
+    const names = item.genres
+      .slice(0, 2)
+      .map((g: any) =>
+        typeof g === "string" ? g : g?.name || g?.genre?.name || ""
+      )
+      .filter(Boolean)
+    return names.length > 0 ? names.join(", ") : null
   })()
 
   return (
@@ -146,12 +169,12 @@ export function DiscoverMediaCard({
 
         {/* Top Badges: Score & Format */}
         <div className="absolute inset-x-1.5 top-1.5 flex items-center justify-between gap-1">
-          {item.format ? (
+          {formatDisplay ? (
             <Badge
               variant="secondary"
               className="h-5 rounded-md border-none bg-black/60 px-1.5 text-[10px] font-semibold text-white/90 backdrop-blur-md"
             >
-              {item.format.replace(/_/g, " ")}
+              {formatDisplay}
             </Badge>
           ) : (
             <span />
@@ -192,9 +215,9 @@ export function DiscoverMediaCard({
           <p className="line-clamp-1 text-[11px] text-muted-foreground">
             {item.artistName}
           </p>
-        ) : item.genres && item.genres.length > 0 ? (
+        ) : genresDisplay ? (
           <p className="line-clamp-1 text-[11px] text-muted-foreground">
-            {item.genres.slice(0, 2).join(", ")}
+            {genresDisplay}
           </p>
         ) : null}
       </div>

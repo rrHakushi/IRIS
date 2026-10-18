@@ -9,7 +9,6 @@ export type MediaTabKey =
   | "trailers"
   | "stats"
   | "friends"
-  | "reviews"
   | "recommendations"
 
 export interface MusicTrackItem {
@@ -103,6 +102,7 @@ export interface RelationItem {
     id: number
     titlePrimary: string
     titleSecondary?: string | null
+    titleNative?: string | null
     coverImage?: string | null
     format?: string | null
     seasonYear?: number | null
@@ -159,7 +159,7 @@ export interface ThemeSongsData {
 
 export interface NormalizedMediaData {
   id: number
-  category: "anime" | "movies" | "tv" | "manga" | "books" | "games" | "music"
+  category: "anime" | "movies" | "tv" | "manga" | "books" | "games" | "music" | "other"
   titlePrimary: string
   titleSecondary: string | null
   titleNative: string | null
@@ -336,6 +336,15 @@ export interface NormalizedMediaData {
   lastFmListeners?: number | null
   lastFmPlayCount?: number | null
   lastFmUrl?: string | null
+
+  // Other / Custom item fields
+  progressFields?: Array<{
+    key: string
+    label: string
+    unit?: string | null
+    max?: number | null
+  }> | null
+  incrementFieldKey?: string | null
 
   updatedAt: string | Date
 }

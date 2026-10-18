@@ -30,6 +30,7 @@ const categoryToFavoriteType: Record<string, FavoriteType> = {
   games: "GAME",
   books: "BOOK",
   music: "MUSIC",
+  other: "OTHER",
 }
 
 interface MediaHeroProps {
@@ -60,6 +61,20 @@ export function MediaHero({
     mainTitle !== media.titleNative && subTitle !== media.titleNative
       ? media.titleNative
       : null
+
+  const artistDisplay =
+    typeof media.artist === "object" && media.artist !== null
+      ? (media.artist as any).namePrimary
+      : typeof media.artist === "string"
+        ? media.artist
+        : null
+
+  const albumDisplay =
+    typeof media.album === "object" && media.album !== null
+      ? (media.album as any).titlePrimary
+      : typeof media.album === "string"
+        ? media.album
+        : null
 
   return (
     <div className="relative w-full border-b border-border/40 bg-card/40">
@@ -99,7 +114,7 @@ export function MediaHero({
       </div>
 
       {/* Hero Content Container */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="relative -mt-16 pb-2 sm:-mt-20">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
             {/* Poster Image */}
@@ -141,22 +156,22 @@ export function MediaHero({
                   {/* Music: Artist and Album info */}
                   {media.category === "music" ? (
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 pt-0.5 text-xs text-muted-foreground">
-                      {media.artist && (
+                      {artistDisplay && (
                         <span className="font-semibold text-foreground/90">
                           by{" "}
                           {media.artistPersonId ? (
                             <Link
-                              href={`/IRIS-list/people/${media.artistPersonId}`}
+                              href={`/borealis/people/${media.artistPersonId}`}
                               className="text-foreground/90 transition-colors hover:text-primary hover:underline"
                             >
-                              {media.artist}
+                              {artistDisplay}
                             </Link>
                           ) : (
-                            media.artist
+                            artistDisplay
                           )}
                         </span>
                       )}
-                      {media.album &&
+                      {albumDisplay &&
                         media.albumId &&
                         media.format === "TRACK" && (
                           <>
@@ -164,10 +179,10 @@ export function MediaHero({
                             <span>
                               From album{" "}
                               <Link
-                                href={`/IRIS-list/music/albums/${media.albumId}`}
+                                href={`/borealis/music/albums/${media.albumId}`}
                                 className="font-medium text-primary hover:underline"
                               >
-                                {media.album}
+                                {albumDisplay}
                               </Link>
                             </span>
                           </>

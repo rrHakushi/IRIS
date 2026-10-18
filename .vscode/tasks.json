@@ -1,0 +1,84 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build-and-copy-dev",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "build-plugin",
+        "make-dev-plugin-dir",
+        "copy-dll-dev"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "build-and-copy-system",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "build-plugin",
+        "make-system-plugin-dir",
+        "copy-dll-system"
+      ]
+    },
+    {
+      "label": "build-plugin",
+      "command": "dotnet",
+      "type": "shell",
+      "args": [
+        "publish",
+        "plugins/JellyBorealis/Jellyfin.Plugin.Borealis.csproj",
+        "--configuration=Debug",
+        "-o",
+        "plugins/JellyBorealis/bin/Debug/net10.0/publish",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "group": "build",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "make-dev-plugin-dir",
+      "type": "shell",
+      "command": "mkdir",
+      "args": [
+        "-p",
+        "${workspaceFolder}/plugins/JellyBorealis/.jellyfin/data/plugins/JellyBorealis"
+      ]
+    },
+    {
+      "label": "make-system-plugin-dir",
+      "type": "shell",
+      "command": "mkdir",
+      "args": [
+        "-p",
+        "${env:HOME}/.local/share/jellyfin/plugins/JellyBorealis"
+      ]
+    },
+    {
+      "label": "copy-dll-dev",
+      "type": "shell",
+      "command": "cp",
+      "args": [
+        "-r",
+        "${workspaceFolder}/plugins/JellyBorealis/bin/Debug/net10.0/publish/.",
+        "${workspaceFolder}/plugins/JellyBorealis/.jellyfin/data/plugins/JellyBorealis/"
+      ]
+    },
+    {
+      "label": "copy-dll-system",
+      "type": "shell",
+      "command": "cp",
+      "args": [
+        "-r",
+        "${workspaceFolder}/plugins/JellyBorealis/bin/Debug/net10.0/publish/.",
+        "${env:HOME}/.local/share/jellyfin/plugins/JellyBorealis/"
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useMemo } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useSession } from "next-auth/react"
@@ -37,9 +37,12 @@ import { getMediaDetailHref } from "@/lib/media-routes"
 import { UserListBanner } from "./user-list-banner"
 import type { UserProfileCustomization } from "@IRIS/shared"
 import { cn } from "@workspace/ui/lib/utils"
+import { useEncryption } from "@/context/encryption-context"
+import { deriveVaultKey, safeDecryptText } from "@/lib/client-encryption"
 
 export interface CustomListsViewProps {
   username: string
+  userId?: string
   initialProfile?: UserProfileCustomization | null
 }
 
@@ -97,10 +100,20 @@ interface CustomListEntryItem {
 
 export function CustomListsView({
   username,
+  userId,
   initialProfile,
 }: CustomListsViewProps): React.JSX.Element {
   const { data: session } = useSession()
-  const isOwner = session?.user?.username === username
+  const isOwner = Boolean(
+    (userId && session?.user?.id === userId) ||
+    session?.user?.username === username
+  )
+
+  const { secretKey, isActive } = useEncryption()
+  const vaultKey = useMemo(
+    () => (isActive && secretKey ? deriveVaultKey(secretKey) : null),
+    [isActive, secretKey]
+  )
 
   const [lists, setLists] = useState<CustomListItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -130,16 +143,16 @@ export function CustomListsView({
   const fetchLists = useCallback(async () => {
     setLoading(true)
     try {
-      const { data, error } = await elysia.user({ username }).watchlists.get()
-      if (!error && data?.watchlists) {
-        setLists(data.watchlists)
+      const { data, error } = await elysia.borealis.playlists.get()
+      if (!error && (data as any)?.playlists) {
+        setLists((data as any).playlists)
       }
     } catch {
       toast.error("Failed to load custom lists")
     } finally {
       setLoading(false)
     }
-  }, [username])
+  }, [])
 
   useEffect(() => {
     fetchLists()
@@ -149,12 +162,19 @@ export function CustomListsView({
     async (watchlistId: string) => {
       setEntriesLoading(true)
       try {
-        const { data, error } = await elysia
-          .user({ username })
-          .lists.custom({ watchlistId })
-          .get()
-        if (!error && data?.items) {
-          setEntries(data.items)
+        const { data, error } = await elysia.borealis
+          .playlists({ playlistId: watchlistId })
+          .entries.get()
+        if (!error && (data as any)?.items) {
+          const rawItems = (data as any).items
+          const decryptedItems = rawItems.map((item: any) => ({
+            ...item,
+            entry: {
+              ...item.entry,
+              customNotes: safeDecryptText(item.entry.customNotes, vaultKey),
+            },
+          }))
+          setEntries(decryptedItems)
         }
       } catch {
         toast.error("Failed to load custom list entries")
@@ -162,8 +182,22 @@ export function CustomListsView({
         setEntriesLoading(false)
       }
     },
-    [username]
+    [vaultKey]
   )
+
+  useEffect(() => {
+    if (vaultKey) {
+      setEntries((prev) =>
+        prev.map((item) => ({
+          ...item,
+          entry: {
+            ...item.entry,
+            customNotes: safeDecryptText(item.entry.customNotes, vaultKey),
+          },
+        }))
+      )
+    }
+  }, [vaultKey])
 
   const handleSelectList = (list: CustomListItem) => {
     setSelectedList(list)
@@ -176,23 +210,23 @@ export function CustomListsView({
 
     setCreating(true)
     try {
-      const { data, error } = await elysia.user({ username }).watchlists.post({
+      const { data, error } = await elysia.borealis.playlists.post({
         name: newListName.trim(),
         description: newListDescription.trim() || undefined,
         isPrivate: newListIsPrivate,
       })
 
-      if (error || !data?.watchlist) {
+      if (error || !(data as any)?.playlist) {
         toast.error("Failed to create custom list")
         return
       }
 
-      setLists((prev) => [data.watchlist, ...prev])
+      setLists((prev) => [(data as any).playlist, ...prev])
       setCreateDialogOpen(false)
       setNewListName("")
       setNewListDescription("")
       setNewListIsPrivate(false)
-      toast.success(`Created custom list "${data.watchlist.name}"`)
+      toast.success(`Created custom list "${(data as any).playlist.name}"`)
     } catch {
       toast.error("An error occurred while creating custom list")
     } finally {
@@ -205,9 +239,8 @@ export function CustomListsView({
 
     setDeletingId(listId)
     try {
-      const { error } = await elysia
-        .user({ username })
-        .lists.custom({ watchlistId: listId })
+      const { error } = await elysia.borealis
+        .playlists({ playlistId: listId })
         .delete()
 
       if (error) {
@@ -229,46 +262,17 @@ export function CustomListsView({
 
   const handleImportDeezerPlaylist = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!deezerPlaylistInput.trim() || deezerImporting) return
-
-    setDeezerImporting(true)
-    try {
-      const res = await elysia.media.music.import.deezer.post({
-        playlistId: deezerPlaylistInput.trim(),
-      })
-
-      if (!res.error && res.data?.success) {
-        toast.success(
-          `Imported ${res.data.tracksImported} tracks into "${res.data.customList?.name || "Deezer Playlist"}"!`
-        )
-        setDeezerImportOpen(false)
-        setDeezerPlaylistInput("")
-        fetchLists()
-      } else {
-        const errorMsg =
-          res.data?.error ||
-          (typeof res.error?.value === "string"
-            ? res.error.value
-            : "Failed to import Deezer playlist.")
-        toast.error(errorMsg)
-      }
-    } catch {
-      toast.error("Failed to import playlist from Deezer.")
-    } finally {
-      setDeezerImporting(false)
-    }
+    setDeezerImportOpen(false)
+    toast.info("Deezer playlist import is managed via Connections settings.")
   }
 
   const handleRemoveEntry = async (item: CustomListEntryItem) => {
     if (!selectedList) return
     try {
-      const { error } = await elysia
-        .user({ username })
-        .lists.custom({ watchlistId: selectedList.id })({
-          id: item.entry.mediaId,
-        })
-        .delete({
-          query: { mediaType: item.entry.mediaType },
+      const { error } = await elysia.borealis
+        .playlists({ playlistId: selectedList.id })
+        .entries.delete({
+          id: item.entry.id,
         })
 
       if (error) {
@@ -344,7 +348,7 @@ export function CustomListsView({
     <div className="min-h-screen bg-background text-foreground">
       <UserListBanner username={username} profile={initialProfile} />
 
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="w-full px-4 py-6 sm:px-6 lg:px-8">
         {/* Navigation Breadcrumb / Header */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
@@ -493,7 +497,7 @@ export function CustomListsView({
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+              <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
                 {filteredEntries.map((item) => {
                   const media = item.media
                   const title =

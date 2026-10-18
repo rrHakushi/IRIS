@@ -85,23 +85,23 @@
   "navigation": {
     "apps": {
       "irisAccount": {
-        "name": "IRIS Account",
+        "name": "Carina",
         "description": "Unified identity, user profile, security, and sessions.",
         "descriptionShort": "Identity & Security"
       },
       "irisList": {
-        "name": "IRIS List",
+        "name": "Borealis",
         "description": "Track your media. Watch, read, listen, and enjoy.",
         "descriptionShort": "Media tracking."
       },
       "irisPass": {
-        "name": "IRIS Pass",
+        "name": "Akaromi",
         "description": "Zero-knowledge encrypted password, credential, and SSH key manager.",
         "descriptionShort": "Vault & Generator"
       },
       "irisSearch": {
-        "name": "IRIS Search",
-        "description": "Privacy-focused meta-search powered by SearXNG.",
+        "name": "Kiroshi",
+        "description": "Web & meta-search.",
         "descriptionShort": "Web & Meta Search"
       }
     },
@@ -916,7 +916,8 @@
       "music": "Music",
       "characters": "Characters",
       "people": "Staff",
-      "studios": "Studios"
+      "studios": "Studios",
+      "other": "Other"
     }
   },
   "calendar": {

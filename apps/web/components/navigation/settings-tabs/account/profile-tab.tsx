@@ -132,7 +132,7 @@ export function ProfileTab({
       // Process all staged pending files (uploads and deletions)
       for (const [type, file] of Object.entries(pendingFiles)) {
         if (file instanceof File) {
-          const { data, error } = await elysia.users.me.assets.post(
+          const { data, error } = await elysia.carina.users.me.assets.post(
             { file, assetType: type as any },
             { fetch: { credentials: "include" } }
           )
@@ -179,7 +179,7 @@ export function ProfileTab({
             oldUrl.includes("users/")
           ) {
             try {
-              await elysia.users.me.assets.delete(
+              await elysia.carina.users.me.assets.delete(
                 { key: oldUrl },
                 { fetch: { credentials: "include" } }
               )
@@ -408,6 +408,7 @@ export function ProfileTab({
           <ProfilePreviewCard
             profile={draftProfile}
             username={username}
+            userId={user?.id}
             email={email}
           />
         </div>
@@ -443,6 +444,7 @@ export function ProfileTab({
           <ProfilePreviewCard
             profile={draftProfile}
             username={username}
+            userId={user?.id}
             email={email}
           />
         </div>

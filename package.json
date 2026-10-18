@@ -15,21 +15,15 @@
     "db:all": "turbo run db:all --filter=@IRIS/database",
     "elysia:dev": "dotenvx run -- turbo run dev --filter=@IRIS/elysia",
     "elysia:build": "turbo run build --filter=@IRIS/elysia",
-    "route:create": "bun run --cwd apps/elysia scripts/create-route.ts",
-    "route:delete": "bun run --cwd apps/elysia scripts/delete-route.ts",
-    "route:sync": "bun run --cwd apps/elysia scripts/generate-manifests.ts",
-    "anime:theme-songs": "dotenvx run -- bun run apps/elysia/scripts/update-anime-theme-songs.ts --",
-    "sdk": "echo \"nestia sdk disabled\"",
-    "swagger": "echo \"nestia swagger disabled\"",
-    "test:oauth": "pnpm --filter @IRIS/elysia test:oauth",
-    "nestia": "echo \"nestia disabled\""
+    "plugin:borealis:build": "python3 plugins/JellyBorealis/package.py",
+    "plugin:borealis:release": "python3 plugins/JellyBorealis/package.py --ci"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
-    "prettier": "^3.9.6",
+    "prettier": "^3.9.10",
     "prettier-plugin-tailwindcss": "^0.8.1",
-    "turbo": "^2.10.11",
+    "turbo": "^2.11.7",
     "typescript": "^7.0.2"
   },
   "packageManager": "pnpm@12.5.1",
@@ -37,6 +31,24 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@dotenvx/dotenvx": "^2.21.0"
+    "@dotenvx/dotenvx": "^2.34.2"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "pnpm": {
+    "overrides": {
+      "prisma": "^7",
+      "@prisma/client": "^7",
+      "@prisma/adapter-pg": "^7",
+      "@prisma/client-runtime-utils": "^7"
+    },
+    "updateConfig": {
+      "ignoreDependencies": [
+        "prisma",
+        "@prisma/*"
+      ]
+    }
   }
 }

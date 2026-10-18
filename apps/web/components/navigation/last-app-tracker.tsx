@@ -18,8 +18,15 @@ export function LastAppTracker(): null {
     // Do not record authentication flows as last used apps
     if (pathname.includes("/auth/")) return
 
-    // Detect if we are inside a known app (e.g. /IRIS-list, /IRIS-account, etc.)
-    if (pathname.startsWith("/IRIS-") || pathname.startsWith("/list")) {
+    // Detect if we are inside a known app (e.g. /borealis, /carina, /kiroshi, /akaromi)
+    if (
+      pathname.startsWith("/borealis") ||
+      pathname.startsWith("/carina") ||
+      pathname.startsWith("/kiroshi") ||
+      pathname.startsWith("/akaromi") ||
+      pathname.startsWith("/IRIS-") ||
+      pathname.startsWith("/list")
+    ) {
       document.cookie = `iris_last_app=${encodeURIComponent(
         pathname
       )}; path=/; max-age=${ONE_YEAR_SECONDS}; SameSite=Lax`

@@ -20,6 +20,7 @@ import {
   IconClock,
 } from "@tabler/icons-react"
 import { elysia } from "@/lib/elysia"
+import { resolveUserId } from "@/lib/user-profile"
 import {
   Avatar,
   AvatarFallback,
@@ -94,6 +95,7 @@ export interface ProfileCommentItem {
 
 export interface UserProfileCommentsProps {
   username: string
+  userId?: string
   isOwner: boolean
   pageSize?: number
 }
@@ -143,6 +145,7 @@ function formatCommentDate(dateStr: string | Date): {
 
 export function UserProfileComments({
   username,
+  userId,
   isOwner,
   pageSize = 4,
 }: UserProfileCommentsProps): React.JSX.Element {
@@ -181,13 +184,21 @@ export function UserProfileComments({
 
   const isFetchingRef = useRef(false)
 
+  const getTargetUserId = useCallback(async () => {
+    if (userId) return userId
+    return await resolveUserId(username)
+  }, [userId, username])
+
   const fetchComments = useCallback(
     async (pageToFetch: number) => {
       if (isFetchingRef.current) return
       isFetchingRef.current = true
 
       try {
-        const res = await elysia.users({ username }).comments.get({
+        const targetId = await getTargetUserId()
+        if (!targetId) return
+
+        const res = await elysia.carina.comments.user({ userId: targetId }).get({
           query: {
             page: pageToFetch,
             limit: pageSize,
@@ -213,7 +224,7 @@ export function UserProfileComments({
         isFetchingRef.current = false
       }
     },
-    [username]
+    [getTargetUserId, pageSize]
   )
 
   useEffect(() => {
@@ -262,7 +273,10 @@ export function UserProfileComments({
 
     setIsSubmittingComment(true)
     try {
-      const res = await elysia.users({ username }).comments.post({
+      const targetId = await getTargetUserId()
+      if (!targetId) return
+
+      const res = await elysia.carina.comments.user({ userId: targetId }).post({
         content: commentText.trim(),
         isSpoiler,
       })
@@ -297,12 +311,11 @@ export function UserProfileComments({
     if (!replyText.trim()) return
     setIsSubmittingReply(true)
     try {
-      const res = await elysia
-        .users({ username })
-        .comments({ id: commentId })
+      const res = await elysia.carina
+        .comments({ commentId })
         .reply.post({ content: replyText.trim() })
 
-      const createdReply = res.data?.reply || res.data?.data
+      const createdReply = res.data?.reply || (res.data as any)?.data
       if (!res.error && res.data?.success && createdReply) {
         setComments((prev) =>
           prev.map((c) =>
@@ -326,12 +339,12 @@ export function UserProfileComments({
     if (!editReplyText.trim()) return
     setIsSavingEditReply(true)
     try {
-      const res = await elysia
-        .users({ username })
-        .comments({ id: commentId })
-        .reply.put({ content: editReplyText.trim() })
+      const res = await elysia.carina
+        .comments({ commentId })
+        .reply({ replyId: editingReplyId! })
+        .patch({ content: editReplyText.trim() })
 
-      const updatedReply = res.data?.reply || res.data?.data
+      const updatedReply = res.data?.reply || (res.data as any)?.data
       if (!res.error && res.data?.success && updatedReply) {
         setComments((prev) =>
           prev.map((c) =>
@@ -355,10 +368,10 @@ export function UserProfileComments({
     if (!deleteReplyTarget) return
     setIsDeletingReply(true)
     try {
-      const res = await elysia
-        .users({ username })
-        .comments({ id: deleteReplyTarget.commentId })
-        .reply.delete()
+      const res = await elysia.carina
+        .comments({ commentId: deleteReplyTarget.commentId })
+        .reply({ replyId: deleteReplyTarget.id })
+        .delete()
 
       if (!res.error) {
         setComments((prev) =>
@@ -382,9 +395,8 @@ export function UserProfileComments({
     if (!deleteCommentTarget) return
     setIsDeletingComment(true)
     try {
-      const res = await elysia
-        .users({ username })
-        .comments({ id: deleteCommentTarget.id })
+      const res = await elysia.carina
+        .comments({ commentId: deleteCommentTarget.id })
         .delete()
 
       if (!res.error) {
@@ -576,7 +588,7 @@ export function UserProfileComments({
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
                     <Link
-                      href={`/IRIS-account/users/${comment.author.username}`}
+                      href={`/carina/users/${comment.author.id}`}
                       className="group relative flex shrink-0 cursor-pointer items-center justify-center rounded-full"
                     >
                       <Avatar className="size-9 border border-border/60">
@@ -607,7 +619,7 @@ export function UserProfileComments({
                     <div>
                       <div className="flex flex-wrap items-center gap-1.5">
                         <Link
-                          href={`/IRIS-account/users/${comment.author.username}`}
+                          href={`/carina/users/${comment.author.id}`}
                           className={cn(
                             "text-xs font-bold hover:underline",
                             authorEffect

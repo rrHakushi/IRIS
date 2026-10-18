@@ -20,6 +20,7 @@ import {
   IconClock,
 } from "@tabler/icons-react"
 import { elysia } from "@/lib/elysia"
+import { resolveUserId } from "@/lib/user-profile"
 import {
   Avatar,
   AvatarFallback,
@@ -97,6 +98,7 @@ export interface ListCommentItem {
 
 export interface ListCommentsTabProps {
   username: string
+  userId?: string
   mediaType: MediaListType
   isOwner: boolean
 }
@@ -181,6 +183,7 @@ function getPaginationPages(
 
 export function ListCommentsTab({
   username,
+  userId,
   mediaType,
   isOwner,
 }: ListCommentsTabProps): React.JSX.Element {
@@ -205,6 +208,7 @@ export function ListCommentsTab({
   })
   const [totalComments, setTotalComments] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
+  const isFetchingRef = useRef(false)
 
   const paginationPages = getPaginationPages(currentPage, totalPages)
 
@@ -279,8 +283,10 @@ export function ListCommentsTab({
     useState<CommentReply | null>(null)
   const [isDeletingReply, setIsDeletingReply] = useState(false)
 
-  // Data fetching
-  const isFetchingRef = useRef(false)
+  const getTargetUserId = useCallback(async () => {
+    if (userId) return userId
+    return await resolveUserId(username)
+  }, [userId, username])
 
   const fetchComments = useCallback(
     async (pageToFetch: number) => {
@@ -288,23 +294,24 @@ export function ListCommentsTab({
       isFetchingRef.current = true
 
       try {
-        const res = await elysia
-          .lists({ username })({ mediaType })
-          .comments.get({
+        const targetId = await getTargetUserId()
+        if (!targetId) return
+
+        const res = await elysia.carina
+          .comments.lists({ userId: targetId })({ mediaType })
+          .get({
             query: {
               page: pageToFetch,
               limit: COMMENTS_PER_PAGE,
             },
           })
 
-        console.log(res)
-
         if (
           !res.error &&
           res.data?.success &&
           Array.isArray(res.data.comments)
         ) {
-          setComments(res.data.comments)
+          setComments(res.data.comments as any)
           const pagination = res.data.pagination
           if (pagination) {
             const total = pagination.total ?? 0
@@ -328,7 +335,7 @@ export function ListCommentsTab({
         isFetchingRef.current = false
       }
     },
-    [username, mediaType, navigateToPage]
+    [getTargetUserId, mediaType, navigateToPage]
   )
 
   useEffect(() => {
@@ -419,9 +426,12 @@ export function ListCommentsTab({
 
     setIsSubmittingComment(true)
     try {
-      const res = await elysia
-        .lists({ username })({ mediaType })
-        .comments.post({
+      const targetId = await getTargetUserId()
+      if (!targetId) return
+
+      const res = await elysia.carina
+        .comments.lists({ userId: targetId })({ mediaType })
+        .post({
           content: commentText.trim(),
           isSpoiler,
         })
@@ -471,18 +481,17 @@ export function ListCommentsTab({
 
     setIsSubmittingReply(true)
     try {
-      const res = await elysia
-        .lists({ username })({ mediaType })
-        .comments({ id: commentId })
+      const res = await elysia.carina
+        .comments({ commentId })
         .reply.post({
           content: replyText.trim(),
         })
 
-      const createdReply = res.data?.reply || res.data?.data
+      const createdReply = res.data?.reply || (res.data as any)?.data
       if (!res.error && res.data?.success && createdReply) {
         setComments((prev) =>
           prev.map((c) =>
-            c.id === commentId ? { ...c, reply: createdReply } : c
+            c.id === commentId ? { ...c, reply: createdReply as any } : c
           )
         )
         setReplyingToId(null)
@@ -512,18 +521,18 @@ export function ListCommentsTab({
 
     setIsSavingEditReply(true)
     try {
-      const res = await elysia
-        .lists({ username })({ mediaType })
-        .comments({ id: commentId })
-        .reply.put({
+      const res = await elysia.carina
+        .comments({ commentId })
+        .reply({ replyId: editingReplyId! })
+        .patch({
           content: editReplyText.trim(),
         })
 
-      const updatedReply = res.data?.reply || res.data?.data
+      const updatedReply = res.data?.reply || (res.data as any)?.data
       if (!res.error && res.data?.success && updatedReply) {
         setComments((prev) =>
           prev.map((c) =>
-            c.id === commentId ? { ...c, reply: updatedReply } : c
+            c.id === commentId ? { ...c, reply: updatedReply as any } : c
           )
         )
         setEditingReplyId(null)
@@ -553,10 +562,10 @@ export function ListCommentsTab({
 
     setIsDeletingReply(true)
     try {
-      const res = await elysia
-        .lists({ username })({ mediaType })
-        .comments({ id: deleteReplyTarget.commentId })
-        .reply.delete()
+      const res = await elysia.carina
+        .comments({ commentId: deleteReplyTarget.commentId })
+        .reply({ replyId: deleteReplyTarget.id })
+        .delete()
 
       if (!res.error) {
         setComments((prev) =>
@@ -590,9 +599,8 @@ export function ListCommentsTab({
 
     setIsDeletingComment(true)
     try {
-      const res = await elysia
-        .lists({ username })({ mediaType })
-        .comments({ id: deleteCommentTarget.id })
+      const res = await elysia.carina
+        .comments({ commentId: deleteCommentTarget.id })
         .delete()
 
       if (!res.error) {
@@ -820,6 +828,7 @@ export function ListCommentsTab({
                   <UserProfilePopover
                     profile={authorProfile}
                     username={comment.author.username}
+                    userId={comment.authorId}
                     isOwner={isAuthorListOwner}
                     placement="right top"
                     className="group relative flex shrink-0 cursor-pointer items-center justify-center rounded-full transition-transform hover:scale-105 focus:outline-hidden"
@@ -857,6 +866,7 @@ export function ListCommentsTab({
                         <UserProfilePopover
                           profile={authorProfile}
                           username={comment.author.username}
+                          userId={comment.authorId}
                           isOwner={isAuthorListOwner}
                           placement="right top"
                           className={cn(
@@ -1015,6 +1025,7 @@ export function ListCommentsTab({
                         <UserProfilePopover
                           profile={replyAuthorProfile}
                           username={reply.author.username}
+                          userId={reply.authorId}
                           isOwner={true}
                           placement="right top"
                           className="group relative flex shrink-0 cursor-pointer items-center justify-center rounded-full transition-transform hover:scale-105 focus:outline-hidden"
@@ -1051,6 +1062,7 @@ export function ListCommentsTab({
                               <UserProfilePopover
                                 profile={replyAuthorProfile}
                                 username={reply.author.username}
+                                userId={reply.authorId}
                                 isOwner={true}
                                 placement="right top"
                                 className={cn(

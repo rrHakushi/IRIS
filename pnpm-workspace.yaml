@@ -7,7 +7,16 @@ allowBuilds:
   '@prisma/engines': true
   '@swc/core': true
   esbuild: true
+  msgpackr-extract: true
   msw: false
   prisma: true
   sharp: true
   unrs-resolver: true
+
+minimumReleaseAgeExclude:
+  - bullmq@6.3.13
+
+update:
+  ignoreDeps:
+    - prisma
+    - "@prisma/*"

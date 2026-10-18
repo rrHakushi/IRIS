@@ -1,0 +1,307 @@
+/* Akaromi for Firefox — Left Navigation Drawer & User Profile */
+
+.drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(2px);
+  z-index: 50;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.app-drawer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 270px;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+  animation: drawerSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes drawerSlideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.drawer-header {
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* IRIS Sidebar User Card (Mirrors IrisSidebarUserCard) */
+.iris-sidebar-user-card {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(24, 24, 27, 0.65);
+  backdrop-filter: blur(16px);
+  padding: 8px 10px;
+  transition: all 0.2s ease;
+  cursor: default;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.iris-sidebar-user-card.has-nameplate {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+/* Background Nameplate & Dark Gradient Overlay */
+.user-card-nameplate {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.user-card-nameplate-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.76) 55%, rgba(0, 0, 0, 0.25) 100%);
+  pointer-events: none;
+}
+
+/* Avatar Container with Optional Frame */
+.user-card-avatar-container {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-card-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.user-card-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.user-card-avatar-fallback {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-card-avatar-frame {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 46px;
+  height: 46px;
+  max-width: none;
+  pointer-events: none;
+  z-index: 3;
+  object-fit: contain;
+}
+
+/* User Metadata */
+.user-card-meta {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.25;
+}
+
+.user-card-name-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  width: 100%;
+}
+
+.user-card-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  letter-spacing: -0.01em;
+  max-width: 100%;
+}
+
+.user-card-name.has-nameplate {
+  color: #ffffff;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.95));
+}
+
+.user-card-subtitle {
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 1px;
+  min-width: 0;
+  width: 100%;
+}
+
+.user-card-status {
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--muted-foreground);
+  display: block;
+  line-height: 1.2;
+  max-width: 100%;
+}
+
+.user-card-status.has-nameplate {
+  color: #e4e4e7;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+}
+
+.user-card-server {
+  font-size: 9.5px;
+  font-weight: 400;
+  color: #a1a1aa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+  max-width: 100%;
+}
+
+.user-card-server.has-nameplate {
+  color: #d4d4d8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+}
+
+/* Display Name Effect Animations */
+@keyframes glitchPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: translate(0);
+  }
+  50% {
+    opacity: 0.95;
+    transform: translate(-1px, 0.5px);
+  }
+}
+
+.effect-glitch {
+  animation: glitchPulse 2s ease-in-out infinite;
+}
+
+
+.drawer-menu {
+  flex: 1;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.drawer-menu-item {
+  width: 100%;
+  height: 36px;
+  padding-inline: 12px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start !important;
+  text-align: start !important;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--foreground);
+  transition: background 0.12s ease;
+  border: none;
+  background: none;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.drawer-menu-item:hover {
+  background: var(--secondary);
+}
+
+.drawer-menu-item.text-danger {
+  color: #f87171;
+}
+
+.drawer-menu-item.text-danger:hover {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.drawer-menu-item .tabler-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.drawer-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 4px;
+}
+
+.drawer-footer {
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: #71717a;
+  text-align: center;
+}

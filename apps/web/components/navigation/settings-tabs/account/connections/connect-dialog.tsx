@@ -85,11 +85,10 @@ export function ConnectDialog({
           : "/settings?tab=connections"
 
       const normalizedHost = hostUrl.trim().replace(/\/+$/, "")
-      const { data, error: authErr } = await elysia
-        .connections({ id: "iris" })
+      const { data, error: authErr } = await elysia.carina
+        .connections({ connectionId: "iris" })
         .auth.get({
           query: { returnTo, hostUrl: normalizedHost },
-          fetch: { credentials: "include" },
         })
 
       if (authErr || !data?.url) {
@@ -114,18 +113,13 @@ export function ConnectDialog({
     setError(null)
 
     try {
-      const { error: submitErr } = await elysia.connections.post(
-        {
-          provider: provider.provider as any,
-          apiKey: apiKey.trim() || undefined,
-          hostUrl: hostUrl.trim() || undefined,
-          username: username.trim() || undefined,
-          password: password || undefined,
-        },
-        {
-          fetch: { credentials: "include" },
-        }
-      )
+      const { error: submitErr } = await elysia.carina.connections.post({
+        provider: provider.provider as any,
+        apiKey: apiKey.trim() || undefined,
+        hostUrl: hostUrl.trim() || undefined,
+        username: username.trim() || undefined,
+        password: password || undefined,
+      })
 
       if (submitErr) {
         throw new Error(

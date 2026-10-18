@@ -1,0 +1,1359 @@
+<!doctype html>
+<html lang="en" style="width: 650px; min-width: 650px; height: 446px; min-height: 446px;">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Akaromi for Firefox</title>
+  <link rel="stylesheet" href="popup.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Dancing+Script:wght@700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Orbitron:wght@600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Press+Start+2P&family=UnifrakturMaguntia&display=swap" rel="stylesheet" />
+</head>
+
+<body style="width: 650px; min-width: 650px; height: 446px; min-height: 446px;">
+  <div class="popup-container" style="width: 650px; min-width: 650px; height: 446px; min-height: 446px;">
+
+    <!-- Top Navigation Header -->
+    <header class="app-header" id="app-header" style="display: none;">
+      <div class="header-left">
+        <!-- Akaromi Drawer Trigger -->
+        <button type="button" id="btn-menu-drawer" class="header-brand-trigger" title="Open menu" aria-label="Open menu">
+          <img src="../icons/icon-128.png" alt="Akaromi" class="header-brand-icon" />
+        </button>
+        <span class="header-brand-title" id="header-brand-title">Akaromi</span>
+      </div>
+
+      <!-- Center: Search in all items -->
+      <div class="header-center">
+        <div class="search-input-wrap">
+          <svg class="tabler-icon search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="10" cy="10" r="7" />
+            <path d="m21 21-6-6" />
+          </svg>
+          <input type="text" id="vault-search-input" placeholder="Search in all items..." autocomplete="off" spellcheck="false" />
+          <button type="button" id="btn-search-clear" class="search-clear-btn" style="display: none;" title="Clear search">
+            <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: Action Buttons -->
+      <div class="header-right">
+        <button type="button" id="btn-header-sync" class="pill-action-btn" title="Sync Vault">
+          <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4m-4 4a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+          </svg>
+          <span class="btn-text">Sync</span>
+        </button>
+
+        <div class="add-menu-wrapper">
+          <button type="button" id="btn-header-add" class="add-plus-btn" title="Add item" aria-label="Add item" aria-haspopup="true" aria-expanded="false">
+            <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </button>
+
+          <!-- + Dropdown Menu -->
+          <div id="add-dropdown-menu" class="dropdown-popover add-type-popover" style="display: none;">
+            <div class="dropdown-header">Create New</div>
+            <button type="button" class="dropdown-item" data-create-type="login">
+              <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <span>Login</span>
+            </button>
+            <button type="button" class="dropdown-item" data-create-type="note">
+              <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+                <path d="M13.5 6.5l4 4" />
+              </svg>
+              <span>Note</span>
+            </button>
+            <button type="button" class="dropdown-item" data-create-type="card">
+              <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="14" x="2" y="5" rx="2" />
+                <line x1="2" y1="10" x2="22" y2="10" />
+              </svg>
+              <span>Credit Card</span>
+            </button>
+            <button type="button" class="dropdown-item" data-create-type="ssh">
+              <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="4 17 10 11 4 5" />
+                <line x1="12" y1="19" x2="20" y2="19" />
+              </svg>
+              <span>SSH Key</span>
+            </button>
+            <button type="button" class="dropdown-item" data-create-type="identity">
+              <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="13" x="3" y="6" rx="2" />
+                <circle cx="9" cy="12" r="2" />
+                <path d="M15 10h2M15 14h2" />
+              </svg>
+              <span>Identity</span>
+            </button>
+            <button type="button" class="dropdown-item" data-create-type="other">
+              <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="1" />
+                <circle cx="19" cy="12" r="1" />
+                <circle cx="5" cy="12" r="1" />
+              </svg>
+              <span>Other</span>
+            </button>
+            <div class="dropdown-divider"></div>
+            <button type="button" class="dropdown-item" id="btn-dropdown-generator">
+              <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="8" cy="15" r="4" />
+                <path d="m10.85 12.15 7.65-7.65a1.5 1.5 0 0 1 2.12 0l1.41 1.41a1.5 1.5 0 0 1 0 2.12l-1.03 1.03-2-2-1.5 1.5 2 2-1.5 1.5-2-2-3.15 3.15" />
+              </svg>
+              <span>Password</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Side Navigation Drawer -->
+    <div id="drawer-backdrop" class="drawer-backdrop" style="display: none;"></div>
+    <aside id="app-drawer" class="app-drawer" style="display: none;">
+      <div class="drawer-header">
+        <div class="iris-sidebar-user-card" id="drawer-user-card">
+          <!-- Background nameplate image & gradient overlay -->
+          <div class="user-card-nameplate" id="user-card-nameplate" style="display: none;"></div>
+          <div class="user-card-nameplate-overlay" id="user-card-nameplate-overlay" style="display: none;"></div>
+
+          <!-- Avatar & avatar frame -->
+          <div class="user-card-avatar-container">
+            <div class="user-card-avatar" id="drawer-avatar">
+              <img id="drawer-avatar-img" class="user-card-avatar-img" style="display: none;" alt="" />
+              <span id="drawer-avatar-fallback" class="user-card-avatar-fallback">D</span>
+            </div>
+            <img id="drawer-avatar-frame" class="user-card-avatar-frame" style="display: none;" alt="Avatar Frame" />
+          </div>
+
+          <!-- User Info -->
+          <div class="user-card-meta">
+            <div class="user-card-name-row">
+              <span class="user-card-name" id="drawer-user-name">User</span>
+            </div>
+            <span class="user-card-subtitle" id="drawer-user-subtitle">
+              <span id="drawer-user-status" class="user-card-status" style="display: none;"></span>
+              <span id="drawer-user-server" class="user-card-server">localhost:4000</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="drawer-menu">
+        <button type="button" class="drawer-menu-item" id="btn-nav-settings">
+          <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          <span>Settings</span>
+        </button>
+
+        <button type="button" class="drawer-menu-item" id="btn-nav-sync">
+          <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4m-4 4a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+          </svg>
+          <span>Sync Vault Now</span>
+        </button>
+
+        <div class="drawer-divider"></div>
+
+        <button type="button" class="drawer-menu-item" id="btn-nav-lock">
+          <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          <span>Lock Vault</span>
+        </button>
+
+        <button type="button" class="drawer-menu-item text-danger" id="btn-nav-logout">
+          <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+          </svg>
+          <span>Log out</span>
+        </button>
+      </nav>
+
+      <div class="drawer-footer">
+        <span>Akaromi for Firefox v2.0.0</span>
+      </div>
+    </aside>
+
+    <!-- State 1: Login Screen (Not logged in) -->
+    <div id="view-login" class="view-panel" style="display: none">
+      <div class="auth-card">
+        <h2 class="auth-title">Sign in to Akaromi</h2>
+        <p class="auth-subtitle">Connect to your zero-knowledge password vault</p>
+
+        <!-- Method Switcher (Account vs API Key) -->
+        <div class="login-type-selector">
+          <button type="button" id="btn-login-tab-account" class="type-btn active">
+            Account
+          </button>
+          <button type="button" id="btn-login-tab-apikey" class="type-btn">
+            API Key
+          </button>
+        </div>
+
+        <form id="form-login" class="auth-form">
+          <div id="login-error" class="error-badge" style="display: none"></div>
+
+          <!-- Account Fields -->
+          <div id="login-account-fields" class="login-fields-group">
+            <div class="input-wrap">
+              <input type="text" id="login-identifier" placeholder="Username or Email" autofocus />
+            </div>
+
+            <div class="input-wrap">
+              <input type="password" id="login-password" placeholder="Account Password" />
+              <button type="button" id="btn-toggle-login-eye" class="eye-btn" tabindex="-1" title="Show password">
+                <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="2" />
+                  <path d="M22 12c-2.667 4.667-6 7-10 7s-7.333-2.333-10-7c2.667-4.667 6-7 10-7s7.333 2.333 10 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- API Key Fields -->
+          <div id="login-apikey-fields" class="login-fields-group" style="display: none">
+            <div class="input-wrap">
+              <input type="password" id="login-api-key" placeholder="IRIS API Key (iris_...)" />
+              <button type="button" id="btn-toggle-apikey-eye" class="eye-btn" tabindex="-1">
+                <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="2" />
+                  <path d="M22 12c-2.667 4.667-6 7-10 7s-7.333-2.333-10-7c2.667-4.667 6-7 10-7s7.333 2.333 10 7" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="input-wrap">
+              <input type="password" id="login-api-masterpass" placeholder="Account Password" />
+              <button type="button" id="btn-toggle-masterpass-eye" class="eye-btn" tabindex="-1">
+                <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="2" />
+                  <path d="M22 12c-2.667 4.667-6 7-10 7s-7.333-2.333-10-7c2.667-4.667 6-7 10-7s7.333 2.333 10 7" />
+                </svg>
+              </button>
+            </div>
+            <p class="field-hint">
+              Account password decrypts your vault locally on this device.
+            </p>
+          </div>
+
+          <button type="submit" id="btn-login-submit" class="btn-primary">
+            Sign In
+          </button>
+        </form>
+
+        <!-- Instance Configuration Dropdown -->
+        <div class="server-config-section">
+          <button type="button" id="toggle-server-config" class="server-config-toggle">
+            <span>Server: <strong id="login-server-label">http://localhost:4000</strong></span>
+            <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </button>
+          <div id="server-config-body" class="server-config-body" style="display: none">
+            <label for="login-server-url">Instance Base URL</label>
+            <div class="server-input-group">
+              <input type="url" id="login-server-url" value="http://localhost:4000" placeholder="https://iris.example.com" />
+              <button type="button" id="btn-save-server-url" class="btn-secondary mini">
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- State 2: Two-Factor Authentication (TOTP / Email / Backup Code) -->
+    <div id="view-mfa" class="view-panel" style="display: none">
+      <div class="auth-card">
+        <h2 class="auth-title">Two-Factor Authentication</h2>
+        <p class="auth-subtitle" id="mfa-subtitle">
+          Enter the 6-digit verification code from your authenticator app
+        </p>
+
+        <form id="form-mfa" class="auth-form">
+          <div id="mfa-error" class="error-badge" style="display: none"></div>
+
+          <!-- 6-digit Separate OTP Input -->
+          <div class="otp-container" id="otp-container">
+            <div class="otp-boxes" id="otp-boxes">
+              <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="0" autocomplete="off" />
+              <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="1" autocomplete="off" />
+              <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="2" autocomplete="off" />
+              <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="3" autocomplete="off" />
+              <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="4" autocomplete="off" />
+              <input type="text" class="otp-box" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="5" autocomplete="off" />
+            </div>
+          </div>
+
+          <!-- Recovery Backup Code Input (Hidden by default, toggled via button) -->
+          <div class="input-wrap" id="backup-code-wrap" style="display: none">
+            <input type="text" id="mfa-backup-code" placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="24" autocomplete="off" />
+          </div>
+
+          <input type="hidden" id="mfa-code" />
+
+          <button type="submit" id="btn-mfa-submit" class="btn-primary">
+            Verify Code
+          </button>
+
+          <div class="mfa-actions">
+            <button type="button" id="btn-resend-email-otp" class="text-btn mini" style="display: none">
+              Resend verification email
+            </button>
+            <button type="button" id="btn-toggle-mfa-type" class="text-btn mini">
+              Use Backup Recovery Code
+            </button>
+            <button type="button" id="btn-mfa-cancel" class="text-btn mini">
+              Back to Login
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- State 3: Locked Screen (PIN or Account Password) -->
+    <div id="view-locked" class="view-panel" style="display: none">
+      <div class="auth-card">
+        <div class="auth-icon-wrap">
+          <svg class="tabler-icon auth-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+        </div>
+        <h2 class="auth-title">Vault is Locked</h2>
+        <div class="locked-user-pill">
+          <div class="user-avatar-mini" id="locked-avatar">A</div>
+          <div class="locked-user-info">
+            <span id="locked-user-name" class="locked-user-name">User</span>
+            <span id="locked-user-email" class="locked-user-email"></span>
+          </div>
+        </div>
+
+        <div id="unlock-error" class="error-badge" style="display: none"></div>
+
+        <!-- Mode A: PIN Unlock Form (Active when PIN enabled) -->
+        <form id="form-unlock-pin" class="auth-form" style="display: none">
+          <div class="input-wrap">
+            <input type="password" id="unlock-pin" class="font-mono text-center" placeholder="Enter PIN..." maxlength="16" autocomplete="current-password" autofocus />
+            <button type="button" id="btn-toggle-unlock-pin-eye" class="eye-btn" tabindex="-1">
+              <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="2" />
+                <path d="M22 12c-2.667 4.667-6 7-10 7s-7.333-2.333-10-7c2.667-4.667 6-7 10-7s7.333 2.333 10 7" />
+              </svg>
+            </button>
+          </div>
+          <button type="submit" id="btn-unlock-pin-submit" class="btn-primary">
+            Unlock with PIN
+          </button>
+          <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
+            <button type="button" id="btn-forgot-pin" class="text-btn mini">
+              Unlock with Account Password
+            </button>
+          </div>
+        </form>
+
+        <!-- Mode B: Account Password Unlock Form -->
+        <form id="form-unlock-password" class="auth-form">
+          <div class="input-wrap">
+            <input type="password" id="unlock-password" placeholder="Account Password..." required autofocus />
+            <button type="button" id="btn-toggle-unlock-eye" class="eye-btn" tabindex="-1">
+              <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="2" />
+                <path d="M22 12c-2.667 4.667-6 7-10 7s-7.333-2.333-10-7c2.667-4.667 6-7 10-7s7.333 2.333 10 7" />
+              </svg>
+            </button>
+          </div>
+          <button type="submit" id="btn-unlock-submit" class="btn-primary">
+            Unlock Vault
+          </button>
+          <button type="button" id="btn-use-pin" class="text-btn mini" style="display: none; margin-top: 6px;">
+            Unlock with PIN instead
+          </button>
+        </form>
+
+        <div class="locked-footer">
+          <button type="button" id="btn-switch-account" class="text-btn">
+            Log out / Switch account
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- State 4: Unlocked Master-Detail Vault View (Proton Pass Style) -->
+    <main id="view-unlocked" class="view-unlocked" style="display: none;">
+      <div class="master-detail-container">
+
+        <!-- Left Column: Items List -->
+        <section class="items-list-pane" id="items-list-pane">
+          <!-- Filter / Sort Bar -->
+          <div class="list-filters-bar">
+            <div class="sort-wrapper">
+              <button type="button" id="btn-sort-toggle" class="icon-btn-round mini" title="Sort items" aria-haspopup="true" aria-expanded="false">
+                <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m3 9 4-4 4 4M7 5v14M21 15l-4 4-4-4M17 19V5" />
+                </svg>
+              </button>
+              <div id="sort-dropdown-menu" class="dropdown-popover right sort-dropdown-popover" style="display: none;">
+                <div class="dropdown-header">Sort By</div>
+                <button type="button" class="sort-dropdown-item active" data-sort="title_asc">
+                  <span class="sort-label">Title (A → Z)</span>
+                  <svg class="tabler-icon check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+                </button>
+                <button type="button" class="sort-dropdown-item" data-sort="title_desc">
+                  <span class="sort-label">Title (Z → A)</span>
+                  <svg class="tabler-icon check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+                </button>
+                <button type="button" class="sort-dropdown-item" data-sort="updated">
+                  <span class="sort-label">Recently updated</span>
+                  <svg class="tabler-icon check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+                </button>
+                <button type="button" class="sort-dropdown-item" data-sort="created_desc">
+                  <span class="sort-label">Created (Newest first)</span>
+                  <svg class="tabler-icon check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+                </button>
+                <button type="button" class="sort-dropdown-item" data-sort="created_asc">
+                  <span class="sort-label">Created (Oldest first)</span>
+                  <svg class="tabler-icon check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+                </button>
+                <button type="button" class="sort-dropdown-item" data-sort="recent_used">
+                  <span class="sort-label">Recently used</span>
+                  <svg class="tabler-icon check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Items List Container -->
+          <div id="ciphers-scroll-container" class="ciphers-scroll-container">
+            <!-- Section: Matching current tab (if applicable) -->
+            <div id="section-matching" class="list-section" style="display: none;">
+              <div class="section-header">
+                <span id="matching-tab-label">Matching current site</span>
+              </div>
+              <div id="matching-cards-list" class="cards-list"></div>
+            </div>
+
+            <!-- Section: All items / Recent items -->
+            <div id="section-all" class="list-section">
+              <div class="section-header" id="all-items-section-header">
+                <span>All items</span>
+              </div>
+              <div id="vault-cards-list" class="cards-list">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+
+            <!-- Empty Items State -->
+            <div id="vault-empty-state" class="vault-empty-state" style="display: none;">
+              <svg class="tabler-icon empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="8" cy="15" r="4" />
+                <path d="m10.85 12.15 7.65-7.65a1.5 1.5 0 0 1 2.12 0l1.41 1.41a1.5 1.5 0 0 1 0 2.12l-1.03 1.03-2-2-1.5 1.5 2 2-1.5 1.5-2-2-3.15 3.15" />
+              </svg>
+              <p class="empty-title">No items found</p>
+              <p class="empty-desc">Create your first item or clear the search filter.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right Column: Item Detail View -->
+        <section class="item-detail-pane" id="item-detail-pane">
+          <!-- Mobile Back Button (narrow screens) -->
+          <div class="mobile-detail-nav" id="mobile-detail-nav">
+            <button type="button" id="btn-mobile-back" class="mobile-back-btn">
+              <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+              <span>Back to items</span>
+            </button>
+          </div>
+
+          <!-- Active Detail Container -->
+          <div id="detail-active-view" class="detail-active-view" style="display: none;">
+            <!-- Detail Header -->
+            <div class="detail-header">
+              <div class="detail-title-group">
+                <h1 id="detail-title" class="detail-title">Title</h1>
+              </div>
+
+              <div class="detail-actions-group">
+                <button type="button" id="btn-detail-edit" class="detail-action-btn primary" title="Edit Item">
+                  <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 20h4l10.5-10.5a2.828 2.828 0 1 0-4-4L4 16v4zM13.5 6.5l4 4" />
+                  </svg>
+                  <span>Edit</span>
+                </button>
+
+                <div class="detail-menu-wrapper">
+                  <button type="button" id="btn-detail-more" class="icon-btn-round" title="More options" aria-haspopup="true">
+                    <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="1" />
+                      <circle cx="12" cy="5" r="1" />
+                      <circle cx="12" cy="19" r="1" />
+                    </svg>
+                  </button>
+                  <div id="detail-dropdown-menu" class="dropdown-popover right" style="display: none;">
+                    <button type="button" class="dropdown-item" id="btn-menu-autofill">
+                      <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z" />
+                      </svg>
+                      <span>Autofill on page</span>
+                    </button>
+                    <button type="button" class="dropdown-item" id="btn-menu-favorite">
+                      <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                      <span id="label-menu-favorite">Favorite</span>
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button type="button" class="dropdown-item text-danger" id="btn-menu-delete">
+                      <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
+                      </svg>
+                      <span>Delete Item</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Credentials Box Card -->
+            <div class="proton-card">
+              <!-- Email Row -->
+              <div class="proton-field-row clickable" id="row-detail-email" style="display: none;" title="Click to copy email">
+                <div class="field-icon-cell">
+                  <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="20" height="16" x="2" y="4" rx="2" />
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                  </svg>
+                </div>
+                <div class="field-data-cell">
+                  <div class="field-label">Email</div>
+                  <div class="field-value font-mono" id="detail-val-email">user@example.com</div>
+                </div>
+              </div>
+
+              <!-- Username Row -->
+              <div class="proton-field-row clickable" id="row-detail-username" style="display: none;" title="Click to copy username">
+                <div class="field-icon-cell">
+                  <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                </div>
+                <div class="field-data-cell">
+                  <div class="field-label">Username</div>
+                  <div class="field-value font-mono" id="detail-val-username">username</div>
+                </div>
+              </div>
+
+              <!-- Password Row -->
+              <div class="proton-field-row clickable" id="row-detail-password" style="display: none;" title="Click to copy password">
+                <div class="field-icon-cell">
+                  <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="8" cy="15" r="4" />
+                    <path d="m10.85 12.15 7.65-7.65a1.5 1.5 0 0 1 2.12 0l1.41 1.41a1.5 1.5 0 0 1 0 2.12l-1.03 1.03-2-2-1.5 1.5 2 2-1.5 1.5-2-2-3.15 3.15" />
+                  </svg>
+                </div>
+                <div class="field-data-cell">
+                  <div class="field-label">Password</div>
+                  <div class="field-value font-mono masked-dots" id="detail-val-password">••••••••••••</div>
+                </div>
+                <div class="field-inline-actions">
+                  <span class="shield-indicator" id="detail-password-shield" title="Password strength">
+                    <svg class="tabler-icon shield-icon text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 3a12 12 0 0 0 8.5 3A12 12 0 0 1 12 21 12 12 0 0 1 3.5 6 12 12 0 0 0 12 3" />
+                      <path d="m9 12 2 2 4-4" />
+                    </svg>
+                  </span>
+                  <button type="button" class="icon-btn-round mini" id="btn-toggle-detail-eye" title="Show/Hide Password">
+                    <svg class="tabler-icon" id="icon-detail-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="2" />
+                      <path d="M22 12c-2.667 4.667-6 7-10 7s-7.333-2.333-10-7c2.667-4.667 6-7 10-7s7.333 2.333 10 7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- TOTP Authenticator Row -->
+              <div class="proton-field-row clickable" id="row-detail-totp" style="display: none;" title="Click to copy 2FA code">
+                <div class="field-icon-cell">
+                  <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                </div>
+                <div class="field-data-cell">
+                  <div class="field-label">2FA Code</div>
+                  <div class="totp-code-display font-mono" id="detail-val-totp">------</div>
+                  <div class="totp-next-display font-mono" id="detail-val-next-totp" style="display: none;">Next: ------</div>
+                </div>
+                <div class="field-inline-actions">
+                  <div class="totp-circular-progress" id="detail-totp-circle" title="Time remaining">
+                    <span id="detail-totp-seconds">30</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Passkey Row -->
+              <div class="proton-field-row" id="row-detail-passkey" style="display: none;">
+                <div class="field-icon-cell">
+                  <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18.9 7a8 8 0 0 0-13.8 0M3.3 15A13 13 0 0 1 2 12 10 10 0 0 1 21.3 8M2 16c.5 2.3 2 4.1 4 5M8 15a4 4 0 0 1 8 0c0 4-2 6-4 7M12 11v4" />
+                  </svg>
+                </div>
+                <div class="field-data-cell">
+                  <div class="field-value">Passkey</div>
+                </div>
+              </div>
+
+              <!-- Websites List Row -->
+              <div class="proton-field-row websites-block" id="row-detail-websites" style="display: none;">
+                <div class="field-icon-cell">
+                  <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 2a14.5 14.5 0 0 0 0 20M12 2a14.5 14.5 0 0 1 0 20M2 12h20" />
+                  </svg>
+                </div>
+                <div class="field-data-cell">
+                  <div class="field-label">Websites</div>
+                  <div id="detail-websites-container" class="websites-list-view"></div>
+                </div>
+              </div>
+
+              <!-- Notes Row -->
+              <div class="proton-field-row notes-block" id="row-detail-notes" style="display: none;">
+                <div class="field-icon-cell">
+                  <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                    <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" />
+                    <line x1="9" y1="9" x2="10" y2="9" />
+                    <line x1="9" y1="13" x2="15" y2="13" />
+                    <line x1="9" y1="17" x2="15" y2="17" />
+                  </svg>
+                </div>
+                <div class="field-data-cell">
+                  <div class="field-label">Notes</div>
+                  <div class="field-value notes-text" id="detail-val-notes"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Additional Passwords Card -->
+            <div class="proton-card" id="detail-additional-passwords-card" style="display: none; flex-direction: column; gap: 8px;">
+              <div class="card-subtitle-header" style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-muted-foreground); margin-bottom: 2px;">Additional Passwords</div>
+              <div id="detail-additional-passwords-list" class="additional-passwords-view-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
+            </div>
+
+            <!-- Custom Fields Card -->
+            <div class="proton-card" id="detail-custom-fields-card" style="display: none; flex-direction: column; gap: 8px;">
+              <div class="card-subtitle-header" style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-muted-foreground); margin-bottom: 2px;">Custom Fields</div>
+              <div id="detail-custom-fields-list" class="custom-fields-view-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
+            </div>
+
+            <!-- Metadata Box Card -->
+            <div class="proton-card metadata-card">
+              <div class="proton-field-row mini">
+                <div class="field-icon-cell mini">
+                  <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z" />
+                  </svg>
+                </div>
+                <div class="field-data-cell">
+                  <div class="field-label">Last autofill</div>
+                  <div class="field-subval" id="detail-meta-autofill">Never</div>
+                </div>
+              </div>
+
+              <div class="proton-field-row mini">
+                <div class="field-icon-cell mini">
+                  <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 20h4l10.5-10.5a2.828 2.828 0 1 0-4-4L4 16v4zM13.5 6.5l4 4" />
+                  </svg>
+                </div>
+                <div class="field-data-cell">
+                  <div class="field-label">Last modified</div>
+                  <div class="field-subval" id="detail-meta-modified">-</div>
+                </div>
+              </div>
+
+              <div class="proton-field-row mini">
+                <div class="field-icon-cell mini">
+                  <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                </div>
+                <div class="field-data-cell">
+                  <div class="field-label">Created</div>
+                  <div class="field-subval" id="detail-meta-created">-</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty Detail Placeholder (when no item selected) -->
+          <div id="detail-empty-placeholder" class="detail-empty-placeholder">
+            <div class="empty-detail-graphic">
+              <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="8" cy="15" r="4" />
+                <path d="m10.85 12.15 7.65-7.65a1.5 1.5 0 0 1 2.12 0l1.41 1.41a1.5 1.5 0 0 1 0 2.12l-1.03 1.03-2-2-1.5 1.5 2 2-1.5 1.5-2-2-3.15 3.15" />
+              </svg>
+            </div>
+            <h2>No Item Selected</h2>
+            <p>Select an item from the list to view its credentials and details, or create a new item.</p>
+            <button type="button" id="btn-empty-create" class="btn-primary mini">
+              + Create Item
+            </button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- State 5: Item Create / Edit Modal (Screenshots 2 & 3) -->
+    <div id="modal-edit-cipher" class="modal-overlay" style="display: none;">
+      <div class="modal-sheet-dialog">
+        <!-- Top Bar -->
+        <div class="modal-sheet-header">
+          <button type="button" id="btn-edit-cancel" class="icon-btn-round" title="Cancel">
+            <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+          <span class="modal-sheet-title" id="edit-modal-heading">New Item</span>
+          <button type="button" id="btn-edit-save" class="btn-save-pill">
+            Save
+          </button>
+        </div>
+
+
+        <div id="edit-modal-error" class="error-badge" style="display: none;"></div>
+
+        <!-- Scrollable Form Body -->
+        <form id="form-edit-cipher" class="modal-sheet-form">
+          <!-- Card 1: Title -->
+          <div class="proton-form-card">
+            <div class="form-field-group">
+              <label for="edit-title" class="form-field-label">Title</label>
+              <input type="text" id="edit-title" class="form-input large-title" placeholder="Title (e.g. EA, Google, Netflix)" required autofocus />
+            </div>
+          </div>
+
+          <!-- Section: Login Fields -->
+          <div id="group-fields-login" class="type-fields-group">
+            <!-- Card 2: Credentials -->
+            <div class="proton-form-card">
+              <!-- Mode A: Single "Email or username" Field (Proton style initial state) -->
+              <div class="form-row-stacked" id="wrap-email-or-username">
+                <div class="field-icon-prefix">
+                  <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                </div>
+                <div class="field-input-flex">
+                  <label for="edit-email-or-username" class="form-field-label">Email or username</label>
+                  <input type="text" id="edit-email-or-username" class="form-input" placeholder="name@example.com or username" />
+                </div>
+                <button type="button" id="btn-add-username-field" class="btn-account-badge" title="Add username field" aria-label="Add separate username field">
+                  <div class="badge-icon-container">
+                    <svg class="tabler-icon user-base-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                    <span class="badge-plus-dot">+</span>
+                  </div>
+                </button>
+              </div>
+
+              <!-- Mode B: Split Email and Username Fields -->
+              <div id="wrap-split-fields" style="display: none;">
+                <div class="form-row-stacked">
+                  <div class="field-icon-prefix">
+                    <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect width="20" height="16" x="2" y="4" rx="2" />
+                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                    </svg>
+                  </div>
+                  <div class="field-input-flex">
+                    <label for="edit-email" class="form-field-label">Email</label>
+                    <input type="email" id="edit-email" class="form-input" placeholder="name@example.com" />
+                  </div>
+                </div>
+
+                <div class="form-row-stacked">
+                  <div class="field-icon-prefix">
+                    <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </div>
+                  <div class="field-input-flex">
+                    <label for="edit-username" class="form-field-label">Username</label>
+                    <input type="text" id="edit-username" class="form-input" placeholder="username" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Password Field -->
+              <div class="form-row-stacked" id="wrap-edit-password">
+                <div class="field-icon-prefix">
+                  <svg class="tabler-icon shield-icon text-success" id="edit-pass-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3a12 12 0 0 0 8.5 3A12 12 0 0 1 12 21 12 12 0 0 1 3.5 6 12 12 0 0 0 12 3" />
+                    <path d="m9 12 2 2 4-4" />
+                  </svg>
+                </div>
+                <div class="field-input-flex">
+                  <div class="password-label-row">
+                    <span class="form-field-label" id="edit-pass-strength-text">Password · Strong</span>
+                  </div>
+                  <input type="password" id="edit-password" class="form-input font-mono" placeholder="Password" />
+                </div>
+                <div class="field-row-actions">
+                  <button type="button" id="btn-toggle-edit-pass-eye" class="icon-btn-round mini" title="Toggle visibility">
+                    <svg class="tabler-icon" id="icon-edit-pass-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="2" />
+                      <path d="M22 12c-2.667 4.667-6 7-10 7s-7.333-2.333-10-7c2.667-4.667 6-7 10-7s7.333 2.333 10 7" />
+                    </svg>
+                  </button>
+                  <button type="button" id="btn-edit-regen-pass" class="icon-btn-round mini" title="Generate password">
+                    <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4m-4 4a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 2FA Secret Key Section -->
+              <div class="form-row-stacked" id="wrap-edit-totp-section">
+                <!-- Inactive State (Default when no 2FA secret): Clean Button to Add 2FA -->
+                <div id="wrap-edit-totp-inactive" style="width: 100%; display: flex; align-items: center; justify-content: flex-start;">
+                  <button type="button" id="btn-enable-totp" class="text-action-link" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                    <span>+ Set up 2FA Code</span>
+                  </button>
+                </div>
+
+                <!-- Active State: Visible when 2FA secret is set or being configured -->
+                <div id="wrap-edit-totp-active" style="display: none; width: 100%; align-items: center; gap: 10px;">
+                  <div class="field-icon-prefix">
+                    <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                  </div>
+                  <div class="field-input-flex">
+                    <label for="edit-totp-secret" class="form-field-label">2FA Secret Key</label>
+                    <input type="password" id="edit-totp-secret" class="form-input font-mono" placeholder="Base32 key or otpauth://" />
+                  </div>
+                  <div class="field-row-actions">
+                    <button type="button" id="btn-scan-qr" class="icon-btn-round mini" title="Scan QR Code from tab">
+                      <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="5" height="5" x="3" y="3" rx="1" />
+                        <rect width="5" height="5" x="16" y="3" rx="1" />
+                        <rect width="5" height="5" x="3" y="16" rx="1" />
+                        <path d="M21 16v3a2 2 0 0 1-2 2h-3M21 12h-4M12 21v-4M12 12v3M12 7h4M7 12H3" />
+                      </svg>
+                    </button>
+                    <button type="button" id="btn-remove-totp-secret" class="icon-btn-round mini" title="Remove 2FA key">
+                      <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 6 6 18M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Passkey Field (Placed dynamically under TOTP if it exists, otherwise under Password) -->
+              <div class="form-row-stacked" id="card-edit-passkey" style="display: none;">
+                <div class="field-icon-prefix">
+                  <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18.9 7a8 8 0 0 0-13.8 0" />
+                    <path d="M3.3 15A13 13 0 0 1 2 12 10 10 0 0 1 21.3 8" />
+                    <path d="M2 16c.5 2.3 2 4.1 4 5" />
+                    <path d="M8 15a4 4 0 0 1 8 0c0 4-2 6-4 7" />
+                    <path d="M12 11v4" />
+                  </svg>
+                </div>
+                <div class="field-input-flex">
+                  <span class="form-field-label">Passkey</span>
+                  <div style="font-size: 11px; color: var(--muted-foreground);" id="edit-passkey-rp-info">WebAuthn passkey registered</div>
+                </div>
+                <div class="field-row-actions">
+                  <button type="button" id="btn-remove-passkey" class="icon-btn-round mini" title="Remove Passkey">
+                    <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 3: Websites -->
+            <div class="proton-form-card">
+              <div class="websites-header-row">
+                <div class="field-icon-prefix">
+                  <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 2a14.5 14.5 0 0 0 0 20M12 2a14.5 14.5 0 0 1 0 20M2 12h20" />
+                  </svg>
+                </div>
+                <span class="form-field-label">Websites</span>
+              </div>
+              <div id="edit-websites-list" class="edit-websites-list">
+                <!-- Inputs populated dynamically -->
+              </div>
+              <button type="button" id="btn-add-website-row" class="text-action-link">
+                + Add website
+              </button>
+            </div>
+
+            <!-- Card 4: Additional Passwords -->
+            <div class="proton-form-card" id="card-edit-additional-passwords">
+              <div class="websites-header-row">
+                <div class="field-icon-prefix">
+                  <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="8" cy="15" r="4" />
+                    <path d="m10.85 12.15 7.65-7.65a1.5 1.5 0 0 1 2.12 0l1.41 1.41a1.5 1.5 0 0 1 0 2.12l-1.03 1.03-2-2-1.5 1.5 2 2-1.5 1.5-2-2-3.15 3.15" />
+                  </svg>
+                </div>
+                <span class="form-field-label">Additional Passwords / Codes</span>
+              </div>
+              <div id="edit-additional-passwords-list" class="edit-additional-passwords-list">
+                <!-- Inputs populated dynamically -->
+              </div>
+              <button type="button" id="btn-add-additional-password-row" class="text-action-link">
+                + Add Password / Code
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Section: Note Fields -->
+          <div id="group-fields-note" class="type-fields-group" style="display: none;">
+            <div class="proton-form-card">
+              <label for="edit-note-body" class="form-field-label">Secure Note</label>
+              <textarea id="edit-note-body" class="form-textarea" rows="6" placeholder="Write your private note..."></textarea>
+            </div>
+          </div>
+
+          <!-- Section: Credit Card Fields -->
+          <div id="group-fields-card" class="type-fields-group" style="display: none;">
+            <div class="proton-form-card">
+              <div class="form-field-group">
+                <label for="edit-card-holder" class="form-field-label">Cardholder Name</label>
+                <input type="text" id="edit-card-holder" class="form-input" placeholder="Name on card" />
+              </div>
+              <div class="form-field-group">
+                <label for="edit-card-number" class="form-field-label">Card Number</label>
+                <input type="text" id="edit-card-number" class="form-input font-mono" placeholder="•••• •••• •••• ••••" maxlength="23" />
+              </div>
+              <div class="grid-2-col">
+                <div class="form-field-group">
+                  <label for="edit-card-exp" class="form-field-label">Expires</label>
+                  <input type="text" id="edit-card-exp" class="form-input font-mono" placeholder="MM/YY" maxlength="7" />
+                </div>
+                <div class="form-field-group">
+                  <label for="edit-card-cvv" class="form-field-label">Security Code (CVV)</label>
+                  <input type="password" id="edit-card-cvv" class="form-input font-mono" placeholder="CVV" maxlength="4" />
+                </div>
+              </div>
+              <div class="form-field-group">
+                <label for="edit-card-pin" class="form-field-label">Card PIN</label>
+                <input type="password" id="edit-card-pin" class="form-input font-mono" placeholder="PIN" maxlength="8" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: SSH Key Fields -->
+          <div id="group-fields-ssh" class="type-fields-group" style="display: none;">
+            <div class="proton-form-card">
+              <div class="form-field-group">
+                <label for="edit-ssh-keytype" class="form-field-label">Key Type</label>
+                <select id="edit-ssh-keytype" class="form-select font-mono">
+                  <option value="ED25519">ED25519</option>
+                  <option value="RSA_4096">RSA 4096</option>
+                  <option value="RSA_2048">RSA 2048</option>
+                </select>
+              </div>
+              <div class="form-field-group">
+                <label for="edit-ssh-publickey" class="form-field-label">Public Key</label>
+                <textarea id="edit-ssh-publickey" class="form-textarea font-mono" rows="2" placeholder="ssh-ed25519 AAAA..."></textarea>
+              </div>
+              <div class="form-field-group">
+                <label for="edit-ssh-privatekey" class="form-field-label">Private Key</label>
+                <textarea id="edit-ssh-privatekey" class="form-textarea font-mono" rows="4" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----..."></textarea>
+              </div>
+              <div class="form-field-group">
+                <label for="edit-ssh-passphrase" class="form-field-label">Passphrase</label>
+                <input type="password" id="edit-ssh-passphrase" class="form-input" placeholder="Passphrase (optional)" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: Identity Fields -->
+          <div id="group-fields-identity" class="type-fields-group" style="display: none;">
+            <div class="proton-form-card">
+              <div class="form-field-group">
+                <label for="edit-id-fullname" class="form-field-label">Full Name</label>
+                <input type="text" id="edit-id-fullname" class="form-input" placeholder="Full name" />
+              </div>
+              <div class="grid-2-col">
+                <div class="form-field-group">
+                  <label for="edit-id-email" class="form-field-label">Email</label>
+                  <input type="email" id="edit-id-email" class="form-input" placeholder="Email" />
+                </div>
+                <div class="form-field-group">
+                  <label for="edit-id-phone" class="form-field-label">Phone</label>
+                  <input type="tel" id="edit-id-phone" class="form-input" placeholder="Phone" />
+                </div>
+              </div>
+              <div class="form-field-group">
+                <label for="edit-id-address" class="form-field-label">Address</label>
+                <input type="text" id="edit-id-address" class="form-input" placeholder="Street, City, Postal Code" />
+              </div>
+              <div class="form-field-group">
+                <label for="edit-id-company" class="form-field-label">Company / Title</label>
+                <input type="text" id="edit-id-company" class="form-input" placeholder="Company, Job Title" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: Other Custom Fields -->
+          <div id="group-fields-other" class="type-fields-group" style="display: none;">
+            <div class="proton-form-card" id="edit-custom-fields-container">
+              <span class="form-field-label">Custom Fields</span>
+              <div id="custom-fields-list"></div>
+              <button type="button" id="btn-add-custom-field" class="text-action-link">
+                + Add custom field
+              </button>
+            </div>
+          </div>
+
+          <!-- Card: Notes for any item -->
+          <div class="proton-form-card" id="card-general-notes">
+            <label for="edit-general-notes" class="form-field-label">Notes</label>
+            <textarea id="edit-general-notes" class="form-textarea" rows="3" placeholder="Additional notes or instructions..."></textarea>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- State 6: Password Generator Modal / View -->
+    <div id="modal-generator" class="modal-overlay" style="display: none;">
+      <div class="modal-sheet-dialog">
+        <div class="modal-sheet-header">
+          <button type="button" id="btn-gen-close" class="icon-btn-round" title="Close">
+            <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+          <span class="modal-sheet-title">Password Generator</span>
+          <div style="width: 32px;"></div>
+        </div>
+
+        <div class="generator-panel">
+          <!-- Output Box -->
+          <div class="gen-output-box">
+            <div id="gen-output-text" class="gen-output-text font-mono">Generating...</div>
+            <div class="gen-output-actions">
+              <button type="button" id="btn-gen-refresh" class="icon-btn-round" title="Regenerate">
+                <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4m-4 4a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                </svg>
+              </button>
+              <button type="button" id="btn-gen-copy" class="icon-btn-round primary" title="Copy to clipboard">
+                <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Type Switcher -->
+          <div class="login-type-selector">
+            <button type="button" id="btn-type-password" class="type-btn active">Password</button>
+            <button type="button" id="btn-type-passphrase" class="type-btn">Passphrase</button>
+          </div>
+
+          <!-- Password Options -->
+          <div id="gen-password-options" class="proton-form-card">
+            <div class="slider-group">
+              <div class="slider-header">
+                <span>Length</span>
+                <span id="label-pass-length" class="font-mono">24</span>
+              </div>
+              <input type="range" id="slider-pass-length" min="8" max="256" value="24" />
+            </div>
+
+            <div class="checkboxes-grid">
+              <label class="custom-checkbox-row">
+                <input type="checkbox" id="chk-upper" checked />
+                <span>Uppercase (A-Z)</span>
+              </label>
+              <label class="custom-checkbox-row">
+                <input type="checkbox" id="chk-lower" checked />
+                <span>Lowercase (a-z)</span>
+              </label>
+              <label class="custom-checkbox-row">
+                <input type="checkbox" id="chk-nums" checked />
+                <span>Numbers (0-9)</span>
+              </label>
+              <label class="custom-checkbox-row">
+                <input type="checkbox" id="chk-syms" checked />
+                <span>Symbols (!@#$)</span>
+              </label>
+              <label class="custom-checkbox-row">
+                <input type="checkbox" id="chk-ambig" checked />
+                <span>Avoid ambiguous (1, l, 0, O)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Passphrase Options -->
+          <div id="gen-passphrase-options" class="proton-form-card" style="display: none;">
+            <div class="slider-group">
+              <div class="slider-header">
+                <span>Word Count</span>
+                <span id="label-words-count" class="font-mono">4</span>
+              </div>
+              <input type="range" id="slider-words-count" min="3" max="32" value="4" />
+            </div>
+
+            <div class="form-field-group">
+              <label for="input-separator" class="form-field-label">Word Separator</label>
+              <input type="text" id="input-separator" class="form-input font-mono" value="-" maxlength="3" />
+            </div>
+
+            <div class="checkboxes-grid">
+              <label class="custom-checkbox-row">
+                <input type="checkbox" id="chk-capitalize" checked />
+                <span>Capitalize each word</span>
+              </label>
+              <label class="custom-checkbox-row">
+                <input type="checkbox" id="chk-include-num" checked />
+                <span>Include number</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="gen-action-bar" style="display: flex; gap: 8px;">
+            <button type="button" id="btn-gen-use" class="btn-primary" style="display: none; flex: 1;">
+              Use Password
+            </button>
+            <button type="button" id="btn-gen-fill" class="btn-primary" style="flex: 1;">
+              Autofill into Page
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- State 7: Settings Modal / View -->
+    <div id="modal-settings" class="modal-overlay" style="display: none;">
+      <div class="modal-sheet-dialog">
+        <div class="modal-sheet-header">
+          <button type="button" id="btn-settings-close" class="icon-btn-round" title="Close">
+            <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+          <span class="modal-sheet-title">Settings</span>
+          <div style="width: 32px;"></div>
+        </div>
+
+        <div class="settings-content-scroll">
+          <!-- Security Section -->
+          <div class="settings-section">
+            <div class="settings-section-title">Security & Locking</div>
+
+            <div class="settings-card">
+              <!-- Auto-Lock -->
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <div class="settings-row-label">Auto-lock Vault</div>
+                  <div class="settings-row-sub">Lock vault after period of inactivity</div>
+                </div>
+                <select id="select-auto-lock" class="form-select mini">
+                  <option value="1">1 minute</option>
+                  <option value="5">5 minutes</option>
+                  <option value="15" selected>15 minutes</option>
+                  <option value="60">1 hour</option>
+                  <option value="0">Never</option>
+                </select>
+              </div>
+
+              <!-- PIN Unlock -->
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <div class="settings-row-label">PIN Unlock</div>
+                  <div class="settings-row-sub">Unlock vault faster with a numeric PIN</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="toggle-pin-unlock" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div id="pin-active-actions" class="settings-sub-actions" style="display: none;">
+                <button type="button" id="btn-change-pin" class="btn-secondary mini">
+                  Change PIN
+                </button>
+              </div>
+
+              <!-- Clear Clipboard -->
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <div class="settings-row-label">Clear Clipboard</div>
+                  <div class="settings-row-sub">Wipe copied passwords from clipboard</div>
+                </div>
+                <select id="select-clipboard-timer" class="form-select mini">
+                  <option value="10">10 seconds</option>
+                  <option value="30" selected>30 seconds</option>
+                  <option value="60">1 minute</option>
+                  <option value="0">Never</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Autofill & Integration -->
+          <div class="settings-section">
+            <div class="settings-section-title">Browser Integration</div>
+
+            <div class="settings-card">
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <div class="settings-row-label">Default Password Manager</div>
+                  <div class="settings-row-sub">Override browser's native password prompt</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="toggle-default-pm" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Instance Connection -->
+          <div class="settings-section">
+            <div class="settings-section-title">Connection</div>
+
+            <div class="settings-card">
+              <div class="form-field-group">
+                <label for="setting-server-url" class="form-field-label">Instance Server URL</label>
+                <div class="server-input-group">
+                  <input type="url" id="setting-server-url" class="form-input font-mono" placeholder="http://localhost:4000" />
+                  <button type="button" id="btn-save-settings-server" class="btn-secondary mini">
+                    Save
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- About -->
+          <div class="settings-section">
+            <div class="settings-card about-card">
+              <div class="about-logo-row">
+                <img src="../icons/icon-48.png" alt="Akaromi" class="about-icon" />
+                <div>
+                  <div class="about-name">Akaromi for Firefox</div>
+                  <div class="about-version">Version 2.0.0</div>
+                </div>
+              </div>
+              <p class="about-desc">
+                High-security, zero-knowledge password manager for the IRIS ecosystem. Post-quantum encryption with local key derivation.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- State 8: PIN Setup Modal Dialog -->
+    <div id="modal-pin-setup" class="modal-overlay dialog-center" style="display: none;">
+      <div class="modal-dialog-box">
+        <div class="modal-dialog-header">
+          <h3>Set Up PIN Unlock</h3>
+        </div>
+
+        <form id="form-pin-setup">
+          <p class="pin-setup-desc">
+            Enter a 4 to 12 digit PIN to unlock your vault quickly. You can always use your account password if you forget your PIN.
+          </p>
+
+          <div id="pin-setup-error" class="error-badge" style="display: none;"></div>
+
+          <div class="input-wrap">
+            <input type="password" id="pin-setup-new" placeholder="New PIN (4-12 digits)" maxlength="16" required autofocus />
+            <button type="button" id="btn-toggle-pin-setup-eye" class="eye-btn" tabindex="-1">
+              <svg class="tabler-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="2" />
+                <path d="M22 12c-2.667 4.667-6 7-10 7s-7.333-2.333-10-7c2.667-4.667 6-7 10-7s7.333 2.333 10 7" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="input-wrap">
+            <input type="password" id="pin-setup-confirm" placeholder="Confirm PIN" maxlength="16" required />
+          </div>
+
+          <div class="modal-dialog-actions">
+            <button type="button" id="btn-pin-setup-cancel" class="btn-secondary mini">
+              Cancel
+            </button>
+            <button type="submit" id="btn-pin-setup-save" class="btn-primary mini">
+              Save PIN
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container">
+      <div id="popup-toast" class="popup-toast">
+        <span id="popup-toast-text"></span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Extension Core Scripts -->
+  <script src="../lib/noble.js"></script>
+  <script src="../lib/crypto.js"></script>
+  <script src="../lib/icons.js"></script>
+  <script src="../lib/matching.js"></script>
+  <script src="../lib/totp.js"></script>
+  <script src="../lib/qr-decoder.js"></script>
+  <script src="../lib/storage.js"></script>
+  <script src="../lib/api.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/customization.js"></script>
+  <script src="js/vault.js"></script>
+  <script src="js/editor.js"></script>
+  <script src="js/generator.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/popup.js"></script>
+</body>
+
+</html>

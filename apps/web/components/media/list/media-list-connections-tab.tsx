@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from "react"
 import {
-  IconLink,
   IconCheck,
   IconExternalLink,
   IconSearch,
@@ -155,7 +154,7 @@ async function fetchRemoteMediaDetails(
               ? "MOVIE"
               : "ANIME"
 
-      const res = await (elysia.connections.search as any).get({
+      const res = await elysia.carina.connections.search.get({
         query: {
           provider: "SIMKL",
           id: strId,
@@ -170,8 +169,8 @@ async function fetchRemoteMediaDetails(
       ) {
         const item = res.data.results[0]
         const coverUrl =
-          item.coverImage?.large ||
           item.coverImage?.medium ||
+          item.coverImage?.large ||
           (typeof item.coverImage === "string" ? item.coverImage : null)
         const primaryTitle =
           item.title?.userPreferred ||
@@ -204,7 +203,7 @@ async function fetchRemoteMediaDetails(
   // 1b. Last.fm: Query via server proxy
   if (providerKey === "lastfm") {
     try {
-      const res = await (elysia.connections.search as any).get({
+      const res = await elysia.carina.connections.search.get({
         query: {
           provider: "LASTFM",
           id: strId,
@@ -219,8 +218,8 @@ async function fetchRemoteMediaDetails(
       ) {
         const item = res.data.results[0]
         const coverUrl =
-          item.coverImage?.large ||
           item.coverImage?.medium ||
+          item.coverImage?.large ||
           (typeof item.coverImage === "string" ? item.coverImage : null)
         const primaryTitle =
           item.title?.userPreferred ||
@@ -277,8 +276,8 @@ async function fetchRemoteMediaDetails(
                   romaji
                 }
                 coverImage {
-                  large
                   medium
+                  large
                 }
               }
             }
@@ -289,7 +288,7 @@ async function fetchRemoteMediaDetails(
       const json = await resp.json()
       const m = json?.data?.Media
       if (!m) return null
-      const coverUrl = m.coverImage?.large || m.coverImage?.medium || null
+      const coverUrl = m.coverImage?.medium || m.coverImage?.large || null
       return {
         title: m.title?.userPreferred || m.title?.english || m.title?.romaji,
         cover: coverUrl,
@@ -309,7 +308,7 @@ async function fetchRemoteMediaDetails(
   if (providerKey === "mal") {
     try {
       const searchType = category === "manga" ? "MANGA" : "ANIME"
-      const res = await (elysia.connections.search as any).get({
+      const res = await elysia.carina.connections.search.get({
         query: {
           provider: "MAL",
           id: strId,
@@ -324,8 +323,8 @@ async function fetchRemoteMediaDetails(
       ) {
         const item = res.data.results[0]
         const coverUrl =
-          item.coverImage?.large ||
           item.coverImage?.medium ||
+          item.coverImage?.large ||
           (typeof item.coverImage === "string" ? item.coverImage : null)
         const primaryTitle =
           item.title?.userPreferred ||
@@ -738,7 +737,7 @@ export function MediaListConnectionsTab({
           idPrefixMatch?.[1] || malUrlMatch?.[1] || (isNumeric ? q : undefined)
 
         try {
-          const res = await (elysia.connections.search as any).get({
+          const res = await elysia.carina.connections.search.get({
             query: {
               provider: provider.key.toUpperCase(),
               q,
@@ -795,8 +794,8 @@ export function MediaListConnectionsTab({
                       ? r.title?.english
                       : r.title?.romaji || null,
                   coverImage:
-                    r.coverImage?.large ||
                     r.coverImage?.medium ||
+                    r.coverImage?.large ||
                     (typeof r.coverImage === "string" ? r.coverImage : null),
                   releaseYear: r.releaseYear ?? r.year ?? null,
                   format: r.format ?? null,
@@ -839,8 +838,8 @@ export function MediaListConnectionsTab({
                     romaji
                   }
                   coverImage {
-                    large
                     medium
+                    large
                   }
                 }
               }
@@ -871,7 +870,7 @@ export function MediaListConnectionsTab({
                 m.title?.english && m.title?.english !== m.title?.userPreferred
                   ? m.title?.english
                   : m.title?.romaji || null,
-              coverImage: m.coverImage?.large || m.coverImage?.medium || null,
+              coverImage: m.coverImage?.medium || m.coverImage?.large || null,
               releaseYear: m.seasonYear ?? null,
               format: m.format ?? null,
               episodes: m.episodes ?? m.chapters ?? null,
@@ -1004,17 +1003,6 @@ export function MediaListConnectionsTab({
 
   return (
     <div className="space-y-4">
-      {/* Tab Header */}
-      <div className="flex items-center justify-between">
-        <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-          <IconLink className="size-4 text-primary" />
-          <span>Connected Services</span>
-        </h3>
-        <span className="text-[11px] font-medium text-muted-foreground">
-          {connectedProviders.length} active
-        </span>
-      </div>
-
       {/* Connected Providers List */}
       {connectedProviders.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border p-6 text-center text-muted-foreground">
@@ -1399,7 +1387,7 @@ export function MediaListConnectionsTab({
                           type="button"
                           size="sm"
                           variant="outline"
-                          onClick={() => openSearchModal(provider)}
+                          onPress={() => openSearchModal(provider)}
                           className="h-7.5 shrink-0 gap-1.5 border-border bg-card px-2.5 text-xs text-foreground hover:bg-muted"
                         >
                           <IconSearch className="size-3.5 text-muted-foreground" />
@@ -1450,7 +1438,7 @@ export function MediaListConnectionsTab({
                         type="button"
                         size="sm"
                         variant="outline"
-                        onClick={() => openSearchModal(provider)}
+                        onPress={() => openSearchModal(provider)}
                         className="h-7 gap-1 border-border px-2 text-[11px]"
                         aria-label={`Search ${provider.name}`}
                       >
@@ -1459,7 +1447,7 @@ export function MediaListConnectionsTab({
                       <Button
                         type="button"
                         size="sm"
-                        onClick={() => handleConnect(provider)}
+                        onPress={() => handleConnect(provider)}
                         className="h-7 bg-primary px-2.5 text-[11px] font-medium text-primary-foreground hover:bg-primary/90"
                       >
                         Connect
@@ -1470,7 +1458,7 @@ export function MediaListConnectionsTab({
                       type="button"
                       size="sm"
                       variant="outline"
-                      onClick={() => openSearchModal(provider)}
+                      onPress={() => openSearchModal(provider)}
                       className="h-7 gap-1.5 border-border px-2.5 text-[11px] font-medium text-foreground hover:bg-muted"
                     >
                       <IconSearch className="size-3 text-muted-foreground" />
@@ -1546,7 +1534,7 @@ export function MediaListConnectionsTab({
                     <Button
                       type="submit"
                       size="sm"
-                      disabled={isSearching || !searchQuery.trim()}
+                      isDisabled={isSearching || !searchQuery.trim()}
                       className="h-8 shrink-0 bg-primary px-3 text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                     >
                       {isSearching ? (
@@ -1691,7 +1679,7 @@ export function MediaListConnectionsTab({
                                 <Button
                                   type="button"
                                   size="sm"
-                                  onClick={() =>
+                                  onPress={() =>
                                     handleSelectSeries(
                                       searchModalProvider,
                                       result

@@ -14,7 +14,8 @@ export async function searchCategoryMedia(
   query: string,
   signal?: AbortSignal,
   titlePreference: MediaTitleLanguage = "primary",
-  musicType?: MusicFilterType
+  musicType?: MusicFilterType,
+  external?: boolean
 ): Promise<SearchResultItem[]> {
   const cleanQuery = query.trim()
   if (!cleanQuery || cleanQuery.length < 2) {
@@ -22,39 +23,22 @@ export async function searchCategoryMedia(
   }
 
   try {
-    if (category === "music") {
-      const typeParam =
-        musicType === "tracks"
-          ? ("TRACK" as const)
-          : musicType === "albums"
-            ? ("ALBUM" as const)
-            : ("ALL" as const)
-
-      const { data, error } = await elysia.search.music.get({
-        query: { q: cleanQuery, type: typeParam },
-        fetch: {
-          signal,
-          credentials: "include",
-        },
-      })
-
-      if (!error && Array.isArray(data)) {
-        return normalizeSearchResults(data, category, titlePreference)
-      }
-      return []
-    }
-
-    const searchClient = elysia.search[category]
-    const { data, error } = await searchClient.get({
-      query: { q: cleanQuery },
+    const { data, error } = await elysia.borealis.search.get({
+      query: {
+        q: cleanQuery,
+        category: category as any,
+        limit: 20,
+        ...(external ? { external: true } : {}),
+      },
       fetch: {
         signal,
         credentials: "include",
       },
     })
 
-    if (!error && Array.isArray(data)) {
-      return normalizeSearchResults(data, category, titlePreference)
+    const results = (data as any)?.results ?? (Array.isArray(data) ? data : [])
+    if (!error && Array.isArray(results)) {
+      return normalizeSearchResults(results, category, titlePreference)
     }
 
     return []
@@ -166,6 +150,8 @@ function normalizeSearchResults(
         format = item.language || "Person"
       } else if (category === "books" && item.authors?.length) {
         format = item.authors[0] ?? null
+      } else if (category === "other") {
+        format = "Custom Item"
       }
     }
 
@@ -174,6 +160,7 @@ function normalizeSearchResults(
       item.startDateYear ??
       item.releaseDateYear ??
       item.firstAiredYear ??
+      (item.startDate ? new Date(item.startDate).getFullYear() : null) ??
       null
 
     return {

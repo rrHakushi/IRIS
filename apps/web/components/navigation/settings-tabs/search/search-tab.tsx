@@ -24,13 +24,13 @@ export function SearchSettingsTab({}: SettingsTabProps): React.JSX.Element {
   const [copiedUrl, setCopiedUrl] = useState(false)
 
   const origin = typeof window !== "undefined" ? window.location.origin : "https://your-iris-instance.com"
-  const searchEngineUrl = `${origin}/IRIS-search?q=%s`
+  const searchEngineUrl = `${origin}/kiroshi?q=%s`
 
   useEffect(() => {
     let isMounted = true
     async function loadSettings() {
       try {
-        const res = await elysia.webSearch.settings.get()
+        const res = await elysia.kiroshi.settings.get()
         if (res.data?.success && isMounted) {
           setHistoryEnabled(res.data.settings.historyEnabled)
         }
@@ -50,7 +50,7 @@ export function SearchSettingsTab({}: SettingsTabProps): React.JSX.Element {
     setIsUpdating(true)
     setHistoryEnabled(checked)
     try {
-      const res = await elysia.webSearch.settings.patch({
+      const res = await elysia.kiroshi.settings.patch({
         historyEnabled: checked,
       })
       if (res.data?.success) {
@@ -75,7 +75,7 @@ export function SearchSettingsTab({}: SettingsTabProps): React.JSX.Element {
 
     setIsClearing(true)
     try {
-      const res = await elysia.webSearch.history.delete()
+      const res = await elysia.kiroshi.history.delete()
       if (res.data?.success) {
         toast.success("Search history cleared completely")
         setConfirmClear(false)
@@ -122,7 +122,7 @@ export function SearchSettingsTab({}: SettingsTabProps): React.JSX.Element {
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => setConfirmClear(false)}
+                  onPress={() => setConfirmClear(false)}
                   isDisabled={isClearing}
                 >
                   Cancel
@@ -132,7 +132,7 @@ export function SearchSettingsTab({}: SettingsTabProps): React.JSX.Element {
                 size="sm"
                 variant={confirmClear ? "destructive" : "outline"}
                 isDisabled={isClearing}
-                onClick={handleClearHistory}
+                onPress={handleClearHistory}
                 className="gap-1.5"
               >
                 <IconTrash className="size-4" />
@@ -162,7 +162,7 @@ export function SearchSettingsTab({}: SettingsTabProps): React.JSX.Element {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => copyToClipboard(searchEngineUrl)}
+                onPress={() => copyToClipboard(searchEngineUrl)}
                 className="gap-1.5 shrink-0"
               >
                 {copiedUrl ? <IconCheck className="size-4 text-emerald-500" /> : <IconCopy className="size-4" />}

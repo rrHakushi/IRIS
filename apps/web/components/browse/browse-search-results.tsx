@@ -51,7 +51,7 @@ export function BrowseSearchResults({
   if (isLoading) {
     return (
       <section aria-label="Search Results Loading" className={className}>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:gap-4">
+        <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
           {Array.from({ length: 12 }).map((_, i) => (
             <div
               key={i}
@@ -124,7 +124,7 @@ export function BrowseSearchResults({
 
       return (
         <section aria-label="Track Search Results" className={className}>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:gap-4">
+          <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
             {trackResults.map((item) => (
               <BrowseMediaCard
                 key={`track-${item.id}`}
@@ -163,7 +163,7 @@ export function BrowseSearchResults({
 
       return (
         <section aria-label="Album Search Results" className={className}>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:gap-4">
+          <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
             {albumResults.map((item) => (
               <BrowseMediaCard
                 key={`album-${item.id}`}
@@ -198,7 +198,7 @@ export function BrowseSearchResults({
                 {trackResults.length}
               </Badge>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:gap-4">
+            <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
               {trackResults.map((item) => (
                 <BrowseMediaCard
                   key={`track-${item.id}`}
@@ -226,7 +226,7 @@ export function BrowseSearchResults({
                 {albumResults.length}
               </Badge>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:gap-4">
+            <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
               {albumResults.map((item) => (
                 <BrowseMediaCard
                   key={`album-${item.id}`}
@@ -245,7 +245,7 @@ export function BrowseSearchResults({
   // Generic non-music search results
   return (
     <section aria-label="Search Results" className={className}>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:gap-4">
+      <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
         {results.map((item) => (
           <BrowseMediaCard
             key={item.id}

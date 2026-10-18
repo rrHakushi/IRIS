@@ -1,0 +1,16 @@
+import type { Metadata } from "next"
+import { WatchingDashboard } from "@/components/lists/watching-dashboard"
+
+export const metadata: Metadata = {
+  title: "Borealis | Home",
+  description:
+    "Track your in-progress watching, reading, and gaming library on Borealis",
+}
+
+export default function BorealisPage() {
+  return (
+    <div className="w-full px-3 py-4 sm:px-6 sm:py-6">
+      <WatchingDashboard />
+    </div>
+  )
+}

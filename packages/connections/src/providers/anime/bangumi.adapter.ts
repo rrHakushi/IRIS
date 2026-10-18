@@ -341,12 +341,17 @@ export class BangumiAdapter extends BaseConnectionAdapter {
       switch (s) {
         case "PLANNING":
         case "PLAN_TO_WATCH":
+        case "PLAN_TO_READ":
           bangumiType = 1;
           break;
         case "COMPLETED":
           bangumiType = 2;
           break;
         case "WATCHING":
+        case "READING":
+        case "PLAYING":
+        case "LISTENING":
+        case "CURRENT":
         case "REPEATING":
           bangumiType = 3;
           break;

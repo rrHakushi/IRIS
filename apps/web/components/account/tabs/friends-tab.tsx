@@ -28,6 +28,7 @@ import { cn } from "@workspace/ui/lib/utils"
 
 export interface ProfileFriendsTabProps {
   username: string
+  userId?: string
   isOwner: boolean
 }
 
@@ -47,6 +48,7 @@ interface FriendCardItem {
 
 export function ProfileFriendsTab({
   username,
+  userId,
   isOwner,
 }: ProfileFriendsTabProps): React.JSX.Element {
   const [friends, setFriends] = useState<FriendCardItem[]>([])
@@ -56,16 +58,35 @@ export function ProfileFriendsTab({
   const fetchUserFriends = useCallback(async () => {
     setIsLoading(true)
     try {
-      const res = await elysia.users({ username }).friends.get()
+      const res = userId
+        ? await elysia.carina.users({ userId }).friends.get({ query: { limit: 50 } })
+        : await elysia.carina.friends.get({ query: { limit: 50 } })
+
       if (!res.error && res.data?.success) {
-        setFriends(res.data.friends || [])
+        const rawFriends = (res.data as any).friends || (res.data as any).data || []
+        const list: FriendCardItem[] = rawFriends.map((f: any) => ({
+          id: f.friendId || f.id,
+          friendId: f.friendId || f.id,
+          nickname: f.nickname ?? null,
+          isPrivate: Boolean(f.isPrivate),
+          createdAt: f.createdAt,
+          user: {
+            id: f.user?.id || f.friendId,
+            username: f.user?.username || "",
+            customization: f.user?.customization || {},
+            createdAt: f.createdAt,
+            displayName: f.user?.displayName,
+            avatarUrl: f.user?.avatarUrl,
+          },
+        }))
+        setFriends(list)
       }
     } catch (err) {
       console.error("[ProfileFriendsTab] Error fetching friends:", err)
     } finally {
       setIsLoading(false)
     }
-  }, [username])
+  }, [userId])
 
   useEffect(() => {
     fetchUserFriends()
@@ -106,6 +127,7 @@ export function ProfileFriendsTab({
             <IconSearch className="pointer-events-none absolute start-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
+              aria-label="Search friends"
               placeholder="Search friends..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -126,8 +148,8 @@ export function ProfileFriendsTab({
 
       {/* Content Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
             <div
               key={i}
               className="h-44 animate-pulse rounded-2xl border border-border/40 bg-card/40"
@@ -153,7 +175,7 @@ export function ProfileFriendsTab({
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {filteredFriends.map((f) => {
             const profile = getProfileCustomization(f.user.customization)
             const nameToShow = profile.displayName || f.user.username
@@ -258,7 +280,7 @@ export function ProfileFriendsTab({
                     </div>
 
                     <Link
-                      href={`/IRIS-account/users/${f.user.username}`}
+                      href={`/carina/users/${f.user.id}`}
                       className="mb-1 text-xs font-semibold text-primary hover:underline flex items-center gap-1"
                     >
                       <span>Profile</span>

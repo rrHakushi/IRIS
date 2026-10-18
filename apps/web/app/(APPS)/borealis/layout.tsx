@@ -1,0 +1,22 @@
+import type { Metadata } from "next"
+import React from "react"
+import IrisListNavProvider from "@/components/navigation/providers/iris-list-nav-provider"
+
+export const metadata: Metadata = {
+  title: "Borealis",
+  description: "Media tracker",
+}
+
+export default function ListLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
+  return (
+    <div className="flex h-svh w-full overflow-hidden">
+      <IrisListNavProvider>
+        {children}
+      </IrisListNavProvider>
+    </div>
+  )
+}

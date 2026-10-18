@@ -2,11 +2,12 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { cn } from "@workspace/ui/lib/utils"
 import { Badge } from "@workspace/ui/components/badge"
 import { formatBadgeNumber } from "@/lib/numbers"
+import { isRouteActive } from "@/lib/navigation"
 import type {
   SidebarConfig,
   SidebarItem,
@@ -24,6 +25,10 @@ import { useIrisApps, renderIrisAppIcon } from "@/config/irisApps"
 
 export interface IrisBottomDockProps {
   pathname: string
+  searchParams?:
+    | URLSearchParams
+    | { get: (name: string) => string | null; toString: () => string }
+    | null
   navConfig?: SidebarConfig
   setOpenMobile?: (open: boolean) => void
   onOpenSettings?: () => void
@@ -151,6 +156,7 @@ function useDockScrollVisibility(
 
 export function IrisBottomDock({
   pathname,
+  searchParams: searchParamsProp,
   navConfig,
   setOpenMobile,
   onOpenSettings,
@@ -168,6 +174,8 @@ export function IrisBottomDock({
   const t = useTranslations("navigation.dock")
   const { user } = useUser()
   const isMobile = useIsMobile()
+  const hookSearchParams = useSearchParams()
+  const searchParams = searchParamsProp ?? hookSearchParams
   const [launcherOpen, setLauncherOpen] = useState(false)
   const isScrollVisible = useDockScrollVisibility(pathname, isPreview)
   const resolvedEmptyLabel = emptySlotLabel || t("empty")
@@ -180,6 +188,7 @@ export function IrisBottomDock({
     )
     return current || irisApps[0]
   }, [pathname, irisApps])
+  const activeAppId = activeApp?.id || "default"
 
   const [localMap, setLocalMap] = useState<Record<
     string,
@@ -187,8 +196,14 @@ export function IrisBottomDock({
   > | null>(() => {
     if (typeof window !== "undefined") {
       try {
-        const stored = localStorage.getItem("iris-phone-dock-items-default")
-        return stored ? JSON.parse(stored) : null
+        const appKey = `iris-phone-dock-items-${activeAppId}`
+        const stored = localStorage.getItem(appKey)
+        if (stored) return JSON.parse(stored)
+        // Fall back to legacy default storage key only on Borealis
+        if (activeAppId === "borealis") {
+          const legacy = localStorage.getItem("iris-phone-dock-items-default")
+          return legacy ? JSON.parse(legacy) : null
+        }
       } catch {
         return null
       }
@@ -199,7 +214,9 @@ export function IrisBottomDock({
   const [localGroups, setLocalGroups] = useState<CustomDockGroup[]>(() => {
     if (typeof window !== "undefined") {
       try {
-        const stored = localStorage.getItem("iris-phone-dock-custom-groups")
+        const stored =
+          localStorage.getItem(`iris-phone-dock-custom-groups-${activeAppId}`) ||
+          localStorage.getItem("iris-phone-dock-custom-groups")
         if (stored) return JSON.parse(stored)
       } catch {
         // ignore
@@ -211,39 +228,80 @@ export function IrisBottomDock({
   const resolvedGroups = useMemo((): CustomDockGroup[] => {
     if (customGroupsProp) return customGroupsProp
     if (user?.customization) {
-      const groups = getDockCustomization(user.customization).customGroups
+      const dockCust = getDockCustomization(user.customization)
+      const appGroups = (dockCust.apps as any)?.[activeAppId]?.customGroups
+      if (Array.isArray(appGroups) && appGroups.length > 0) return appGroups
+      const groups = dockCust.customGroups
       if (Array.isArray(groups) && groups.length > 0) return groups
     }
     return localGroups
-  }, [customGroupsProp, user?.customization, localGroups])
+  }, [customGroupsProp, user?.customization, localGroups, activeAppId])
 
-  // Read initial local storage on mount (client-only)
+  // Determine active custom dock slots: user profile customization > local storage
+  const userPositions = useMemo(() => {
+    if (!user?.customization) return null
+    const dockCust = getDockCustomization(user.customization)
+    const appPositions = (dockCust.apps as any)?.[activeAppId]?.positions
+    if (appPositions && Object.values(appPositions).some(Boolean)) {
+      return appPositions
+    }
+    if (
+      activeAppId === "borealis" &&
+      dockCust.positions &&
+      Object.values(dockCust.positions).some(Boolean)
+    ) {
+      return dockCust.positions
+    }
+    return null
+  }, [user?.customization, activeAppId])
+
+  const hasUserPositions =
+    userPositions && Object.values(userPositions).some(Boolean)
+  const customMap = hasUserPositions ? userPositions : localMap
+
+  // Read initial local storage on mount and route changes (client-only)
   useEffect(() => {
     if (isPreview) return
     try {
-      const stored = localStorage.getItem("iris-phone-dock-items-default")
+      const appKey = `iris-phone-dock-items-${activeAppId}`
+      const stored = localStorage.getItem(appKey)
       if (stored) {
         setLocalMap(JSON.parse(stored))
+      } else if (activeAppId === "borealis") {
+        const legacy = localStorage.getItem("iris-phone-dock-items-default")
+        setLocalMap(legacy ? JSON.parse(legacy) : null)
+      } else {
+        setLocalMap(null)
       }
-      const storedGroups = localStorage.getItem("iris-phone-dock-custom-groups")
+      const storedGroups =
+        localStorage.getItem(`iris-phone-dock-custom-groups-${activeAppId}`) ||
+        localStorage.getItem("iris-phone-dock-custom-groups")
       if (storedGroups) {
         setLocalGroups(JSON.parse(storedGroups))
       }
     } catch {
       // ignore
     }
-  }, [isPreview])
+  }, [isPreview, activeAppId])
 
   // Listen for iris-sidebar-changed to reactively reload local storage
   useEffect(() => {
     if (isPreview) return
     const handleSidebarChanged = () => {
       try {
-        const stored = localStorage.getItem("iris-phone-dock-items-default")
-        setLocalMap(stored ? JSON.parse(stored) : null)
-        const storedGroups = localStorage.getItem(
-          "iris-phone-dock-custom-groups"
-        )
+        const appKey = `iris-phone-dock-items-${activeAppId}`
+        const stored = localStorage.getItem(appKey)
+        if (stored) {
+          setLocalMap(JSON.parse(stored))
+        } else if (activeAppId === "borealis") {
+          const legacy = localStorage.getItem("iris-phone-dock-items-default")
+          setLocalMap(legacy ? JSON.parse(legacy) : null)
+        } else {
+          setLocalMap(null)
+        }
+        const storedGroups =
+          localStorage.getItem(`iris-phone-dock-custom-groups-${activeAppId}`) ||
+          localStorage.getItem("iris-phone-dock-custom-groups")
         setLocalGroups(storedGroups ? JSON.parse(storedGroups) : [])
       } catch {
         // ignore
@@ -253,20 +311,25 @@ export function IrisBottomDock({
     return () => {
       window.removeEventListener("iris-sidebar-changed", handleSidebarChanged)
     }
-  }, [isPreview])
+  }, [isPreview, activeAppId])
 
   // Sync server customization to localStorage when available
   useEffect(() => {
     if (isPreview) return
     if (user?.customization) {
       const dockCust = getDockCustomization(user.customization)
-      const serverPositions = dockCust.positions
+      const appPositions = (dockCust.apps as any)?.[activeAppId]?.positions
+      const serverPositions =
+        appPositions && Object.values(appPositions).some(Boolean)
+          ? appPositions
+          : activeAppId === "borealis"
+            ? dockCust.positions
+            : null
+
       if (serverPositions && Object.values(serverPositions).some(Boolean)) {
         try {
-          localStorage.setItem(
-            "iris-phone-dock-items-default",
-            JSON.stringify(serverPositions)
-          )
+          const appKey = `iris-phone-dock-items-${activeAppId}`
+          localStorage.setItem(appKey, JSON.stringify(serverPositions))
           setLocalMap(serverPositions)
         } catch {
           // ignore
@@ -275,7 +338,7 @@ export function IrisBottomDock({
       if (Array.isArray(dockCust.customGroups)) {
         try {
           localStorage.setItem(
-            "iris-phone-dock-custom-groups",
+            `iris-phone-dock-custom-groups-${activeAppId}`,
             JSON.stringify(dockCust.customGroups)
           )
           setLocalGroups(dockCust.customGroups)
@@ -284,7 +347,7 @@ export function IrisBottomDock({
         }
       }
     }
-  }, [user?.customization, isPreview])
+  }, [user?.customization, isPreview, activeAppId])
 
   // Only render on phones (mobile) unless in preview mode (e.g. inside settings modal)
   if (!isPreview && !isMobile) {
@@ -420,13 +483,6 @@ export function IrisBottomDock({
 
   const rawItems = phoneSection?.items ?? []
 
-  // Determine active custom dock slots: user profile customization > local storage
-  const userPositions = user?.customization
-    ? getDockCustomization(user.customization).positions
-    : null
-  const hasUserPositions =
-    userPositions && Object.values(userPositions).some(Boolean)
-  const customMap = hasUserPositions ? userPositions : localMap
 
   // Lookup helper across active config and all registered apps
   const lookupItem = (
@@ -434,22 +490,25 @@ export function IrisBottomDock({
   ): SidebarItem | undefined => {
     if (!key) return undefined
 
+    const matches = (it: SidebarItem | SidebarItemChild) => {
+      const itDataKey = (it as any).dataKey
+      const itComponentKey = it.component ? `label:${it.label}` : undefined
+      return (
+        it.href === key ||
+        itDataKey === key ||
+        itComponentKey === key ||
+        it.label === key
+      )
+    }
+
     // 1. Check current app navConfig
     if (navConfig) {
       for (const sec of navConfig) {
         for (const it of sec.items) {
-          const itemKey =
-            it.href ||
-            it.dataKey ||
-            (it.component ? `label:${it.label}` : undefined)
-          if (itemKey === key) return it
+          if (matches(it)) return it
           if (it.children) {
             for (const ch of it.children) {
-              const childKey =
-                ch.href ||
-                (ch as any).dataKey ||
-                (ch.component ? `label:${ch.label}` : undefined)
-              if (childKey === key) return ch as SidebarItem
+              if (matches(ch)) return ch as SidebarItem
             }
           }
         }
@@ -460,18 +519,10 @@ export function IrisBottomDock({
     for (const app of allAppConfigs) {
       for (const sec of app.config) {
         for (const it of sec.items) {
-          const itemKey =
-            it.href ||
-            it.dataKey ||
-            (it.component ? `label:${it.label}` : undefined)
-          if (itemKey === key) return it
+          if (matches(it)) return it
           if (it.children) {
             for (const ch of it.children) {
-              const childKey =
-                ch.href ||
-                (ch as any).dataKey ||
-                (ch.component ? `label:${ch.label}` : undefined)
-              if (childKey === key) return ch as SidebarItem
+              if (matches(ch)) return ch as SidebarItem
             }
           }
         }
@@ -482,11 +533,9 @@ export function IrisBottomDock({
   }
 
   const resolveSlotItem = (pos: string): SidebarItem | undefined => {
-    if (customMap) {
-      if (pos in customMap) {
-        const key = customMap[pos]
-        if (!key) return undefined
-
+    if (customMap && pos in customMap) {
+      const key = customMap[pos]
+      if (key) {
         // Handle custom groups
         if (key.startsWith("group:")) {
           const groupId = key.slice("group:".length)
@@ -508,12 +557,13 @@ export function IrisBottomDock({
               })),
             }
           }
-          return undefined
+        } else {
+          const resolved = lookupItem(key)
+          if (resolved) return resolved
         }
-
-        return lookupItem(key)
       }
     }
+    // Fall back to default dock item defined for this position in active app
     return rawItems.find((i) => i.position === Number(pos))
   }
 
@@ -534,9 +584,19 @@ export function IrisBottomDock({
   }
 
   const checkActive = (item: SidebarItem) => {
+    if (item.isActive !== undefined) return item.isActive
+    if (!item.href && (!item.children || item.children.length === 0)) return false
+
+    const isDirectActive = isRouteActive(pathname, item.href, searchParams)
     const isChildActive =
-      item.children && item.children.some((child) => pathname === child.href)
-    return (item.href && pathname === item.href) || !!isChildActive
+      item.children &&
+      item.children.some((child) =>
+        child.isActive !== undefined
+          ? child.isActive
+          : isRouteActive(pathname, child.href, searchParams)
+      )
+
+    return isDirectActive || !!isChildActive
   }
 
   const mapItem = (item?: SidebarItem) => {
@@ -550,7 +610,7 @@ export function IrisBottomDock({
     return (
       <div className="flex max-w-16 min-w-0 flex-1 justify-center">
         <IrisDockItem
-          key={item.href || item.label}
+          key={item.href || item.dataKey || item.label}
           item={{
             label: item.label,
             icon: item.icon,
@@ -561,6 +621,7 @@ export function IrisBottomDock({
             onClick: item.onClick,
           }}
           pathname={pathname}
+          searchParams={searchParams}
         />
       </div>
     )
@@ -621,9 +682,14 @@ export function IrisBottomDock({
 function IrisDockItem({
   item,
   pathname,
+  searchParams,
 }: {
   item: DockItemData
   pathname?: string
+  searchParams?:
+    | URLSearchParams
+    | { get: (name: string) => string | null; toString: () => string }
+    | null
 }): React.JSX.Element {
   const router = useRouter()
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -836,7 +902,10 @@ function IrisDockItem({
               onClick={(e) => e.stopPropagation()}
             >
               {item.children.map((child) => {
-                const isChildActive = pathname === child.href
+                const isChildActive =
+                  child.isActive !== undefined
+                    ? child.isActive
+                    : isRouteActive(pathname || "", child.href, searchParams)
                 return child.component ? (
                   <div
                     key={child.label}

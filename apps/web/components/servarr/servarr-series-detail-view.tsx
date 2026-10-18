@@ -400,7 +400,7 @@ export function ServarrSeriesDetailView({
         <p className="mt-1 text-xs text-muted-foreground">
           The requested series could not be loaded from Sonarr.
         </p>
-        <Link href="/IRIS-list/servarr/sonarr">
+        <Link href="/borealis/servarr/sonarr">
           <Button variant="outline" size="sm" className="mt-4 gap-2 rounded-xl">
             <IconArrowLeft className="size-4" /> Return to Series List
           </Button>
@@ -460,7 +460,7 @@ export function ServarrSeriesDetailView({
           {/* Floating Back Navigation Pill */}
           <div className="absolute start-3 top-3 z-20 sm:start-6 sm:top-4">
             <Link
-              href="/IRIS-list/servarr/sonarr"
+              href="/borealis/servarr/sonarr"
               className="group inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/80 px-3 py-1 text-xs font-semibold text-foreground shadow-xs backdrop-blur-md transition-colors hover:border-border hover:bg-background"
             >
               <IconArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
@@ -1444,7 +1444,7 @@ export function ServarrSeriesDetailView({
         mediaTitle={seriesData.title}
         path={seriesData.path}
         fileCount={files.length}
-        onDeleted={() => router.push("/IRIS-list/servarr/sonarr")}
+        onDeleted={() => router.push("/borealis/servarr/sonarr")}
       />
     </div>
   )

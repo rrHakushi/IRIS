@@ -11,6 +11,7 @@ enum FavoriteType {
     PERSON
     STUDIO
     USER
+    OTHER
 }
 
 model Favorite {

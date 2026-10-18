@@ -61,26 +61,10 @@ import type {
   CustomSidebarItem,
 } from "@/types/sidebar-config"
 import type { AppSidebarRegistryEntry } from "@/config/sidebars"
-import { getItemKey, getSectionKey } from "@/lib/navigation"
+import { getItemKey, getSectionKey, isRouteActive } from "@/lib/navigation"
 import { renderDockGroupIcon } from "@/config/dock-group-icons"
 import { IrisAppMenu } from "../../../iris-app-menu"
 import { IrisUserMenu } from "../../../iris-user-menu"
-
-function normalizePath(path: string): string {
-  if (!path) return "/"
-  const trimmed = path.replace(/\/+$/, "")
-  return trimmed === "" ? "/" : trimmed
-}
-
-function isRouteActive(currentPath: string, href?: string): boolean {
-  if (!href || href === "#") return false
-  const path = normalizePath(currentPath)
-  const target = normalizePath(href)
-  if (path === target) return true
-  const segments = target.split("/").filter(Boolean)
-  if (segments.length <= 1) return false
-  return path.startsWith(`${target}/`)
-}
 
 export interface SidebarCanvasEditorProps {
   appId: string

@@ -18,6 +18,7 @@ export type FavoriteType =
   | "GAME"
   | "BOOK"
   | "MUSIC"
+  | "OTHER"
   | "CHARACTER"
   | "PERSON"
   | "STUDIO"
@@ -41,12 +42,19 @@ const favoriteStatusCache = new Map<
 const favoriteInFlight = new Map<string, Promise<boolean>>()
 const CACHE_TTL_MS = 60_000
 
+function toFavoriteCategory(type: FavoriteType | string): string {
+  const lower = type.toLowerCase()
+  if (lower === "music") return "music_album"
+  return lower
+}
+
 export async function fetchFavoriteStatusDeduplicated(
   username: string,
   type: string,
   targetId: number
 ): Promise<boolean> {
-  const fetchKey = `${username}:${type}:${targetId}`
+  const category = toFavoriteCategory(type)
+  const fetchKey = `${username}:${category}:${targetId}`
 
   const cached = favoriteStatusCache.get(fetchKey)
   if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
@@ -60,14 +68,11 @@ export async function fetchFavoriteStatusDeduplicated(
 
   const promise = (async () => {
     try {
-      const { data, error } = await elysia
-        .user({ username })
-        .favorites({ targetId })
-        .get({
-          query: { type: type as any },
-        })
+      const { data, error } = await elysia.carina
+        .favorites({ category })({ targetId })
+        .get()
 
-      const isFav = !error && Boolean(data?.isFavorited)
+      const isFav = !error && Boolean(data?.isFavorite)
       favoriteStatusCache.set(fetchKey, {
         isFavorited: isFav,
         timestamp: Date.now(),
@@ -90,7 +95,8 @@ export function updateFavoriteCache(
   targetId: number,
   isFavorited: boolean
 ) {
-  const fetchKey = `${username}:${type}:${targetId}`
+  const category = toFavoriteCategory(type)
+  const fetchKey = `${username}:${category}:${targetId}`
   favoriteStatusCache.set(fetchKey, { isFavorited, timestamp: Date.now() })
 }
 
@@ -121,7 +127,8 @@ export function FavoriteButton({
       return
     }
 
-    const fetchKey = `${username}:${type}:${numericTargetId}`
+    const category = toFavoriteCategory(type)
+    const fetchKey = `${username}:${category}:${numericTargetId}`
     const cached = favoriteStatusCache.get(fetchKey)
     if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
       setIsFavorited(cached.isFavorited)
@@ -183,43 +190,57 @@ export function FavoriteButton({
 
     const previousState = isFavorited
     const nextState = !previousState
+    const category = toFavoriteCategory(type)
 
     // Instant optimistic update without animations
     setIsFavorited(nextState)
     setIsPending(true)
 
     try {
-      const { data, error } = await elysia
-        .user({ username })
-        .favorites({ targetId: numericTargetId })
-        .post({
-          type: type as any,
-          title: title || undefined,
+      if (nextState) {
+        const { data, error } = await elysia.carina.favorites.post({
+          category,
+          targetId: numericTargetId,
         })
-
-      if (error || !data) {
-        // Rollback on error
-        setIsFavorited(previousState)
-        toast.error("Failed to update favorites")
-        return
+        if (error || !data) {
+          setIsFavorited(previousState)
+          toast.error("Failed to update favorites")
+          return
+        }
+        setIsFavorited(true)
+        updateFavoriteCache(username, type, numericTargetId, true)
+        window.dispatchEvent(
+          new CustomEvent("iris:favorite-updated", {
+            detail: {
+              targetId: numericTargetId,
+              type,
+              isFavorited: true,
+            },
+          })
+        )
+        toast.success(data.message || `Added ${title || `${type} #${numericTargetId}`} to favorites`)
+      } else {
+        const { data, error } = await elysia.carina
+          .favorites({ category })({ targetId: numericTargetId })
+          .delete()
+        if (error || !data) {
+          setIsFavorited(previousState)
+          toast.error("Failed to update favorites")
+          return
+        }
+        setIsFavorited(false)
+        updateFavoriteCache(username, type, numericTargetId, false)
+        window.dispatchEvent(
+          new CustomEvent("iris:favorite-updated", {
+            detail: {
+              targetId: numericTargetId,
+              type,
+              isFavorited: false,
+            },
+          })
+        )
+        toast.success(data.message || `Removed ${title || `${type} #${numericTargetId}`} from favorites`)
       }
-
-      const newStatus = Boolean(data.isFavorited)
-      setIsFavorited(newStatus)
-      updateFavoriteCache(username, type, numericTargetId, newStatus)
-      window.dispatchEvent(
-        new CustomEvent("iris:favorite-updated", {
-          detail: {
-            targetId: numericTargetId,
-            type,
-            isFavorited: newStatus,
-          },
-        })
-      )
-      const fallbackMsg = nextState
-        ? `Added ${title || `${type} #${numericTargetId}`} to favorites`
-        : `Removed ${title || `${type} #${numericTargetId}`} from favorites`
-      toast.success(data.message || fallbackMsg)
     } catch {
       setIsFavorited(previousState)
       toast.error("An error occurred while updating favorites")
@@ -245,8 +266,8 @@ export function FavoriteButton({
       aria-label={tooltipText}
       aria-pressed={isFavorited}
       aria-busy={isPending}
-      disabled={isPending}
-      onClick={handleToggleFavorite}
+      isDisabled={isPending}
+      onPress={handleToggleFavorite}
       className={cn(
         "transition-none", // strictly no animations
         isFavorited

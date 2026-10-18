@@ -1,0 +1,195 @@
+/* Akaromi for Firefox — Header Bar & Action Controls */
+
+.app-header {
+  height: 52px;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: 12px;
+  background-color: var(--background);
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+  z-index: 20;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.header-brand-trigger {
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  flex-shrink: 0;
+}
+
+.header-brand-trigger:hover {
+  transform: scale(1.08);
+  opacity: 0.9;
+}
+
+.header-brand-trigger:active {
+  transform: scale(0.95);
+}
+
+.header-brand-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: contain;
+  display: block;
+}
+
+.header-brand-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--foreground);
+  letter-spacing: -0.01em;
+  user-select: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.header-brand-title:hover {
+  opacity: 0.85;
+}
+
+
+/* Header Center Search */
+.header-center {
+  flex: 1;
+  max-width: 320px;
+}
+
+.search-input-wrap {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 9px;
+  width: 14px;
+  height: 14px;
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+
+.search-input-wrap input {
+  width: 100%;
+  height: 32px;
+  background: #18181b;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  color: var(--foreground);
+  font-size: 12.5px;
+  padding-left: 30px;
+  padding-right: 28px;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.search-input-wrap input:focus {
+  border-color: #52525b;
+  background: #141418;
+  box-shadow: 0 0 0 1px #52525b;
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  color: var(--muted-foreground);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-clear-btn:hover {
+  color: var(--foreground);
+}
+
+.search-clear-btn .tabler-icon {
+  width: 12px;
+  height: 12px;
+}
+
+/* Header Right Actions */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.pill-action-btn {
+  height: 32px;
+  padding-inline: 10px;
+  border-radius: 9999px;
+  background: var(--secondary);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.pill-action-btn:hover {
+  background: #3f3f46;
+}
+
+.pill-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.add-menu-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.add-plus-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.add-plus-btn:hover {
+  opacity: 0.9;
+  transform: scale(1.04);
+}
+
+/* Add Dropdown Menu Positioning (Ensures completely on-screen) */
+#add-dropdown-menu,
+.add-menu-wrapper .dropdown-popover,
+.dropdown-popover.add-type-popover,
+.add-type-popover {
+  left: auto !important;
+  right: 0 !important;
+  min-width: 165px;
+  top: calc(100% + 6px);
+  z-index: 50;
+}

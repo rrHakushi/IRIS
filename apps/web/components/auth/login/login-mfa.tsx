@@ -120,7 +120,7 @@ export function LoginMfa({
             </Field>
             <Button
               type="submit"
-              disabled={loading || mfaCode.length < 6}
+              isDisabled={loading || mfaCode.length < 6}
               className="h-10 w-full text-sm font-semibold sm:h-11 sm:text-base md:h-12"
             >
               {loading ? <Spinner className="mr-2 size-4" /> : null}
@@ -167,7 +167,7 @@ export function LoginMfa({
 
             <Button
               type="submit"
-              disabled={loading || mfaCode.length < 6}
+              isDisabled={loading || mfaCode.length < 6}
               className="h-10 w-full text-sm font-semibold sm:h-11 sm:text-base md:h-12"
             >
               {loading ? <Spinner className="mr-2 size-4" /> : null}
@@ -199,7 +199,7 @@ export function LoginMfa({
             </Field>
             <Button
               type="submit"
-              disabled={loading || mfaCode.length < 8}
+              isDisabled={loading || mfaCode.length < 8}
               className="h-10 w-full text-sm font-semibold sm:h-11 sm:text-base md:h-12"
             >
               {loading ? <Spinner className="mr-2 size-4" /> : null}
@@ -216,7 +216,7 @@ export function LoginMfa({
             </p>
             <Button
               type="button"
-              disabled={loading}
+              isDisabled={loading}
               onClick={onRetryPasskey}
               className="h-10 w-full text-sm font-semibold sm:h-11 sm:text-base md:h-12"
             >

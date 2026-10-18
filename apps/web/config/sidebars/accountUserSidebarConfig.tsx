@@ -10,7 +10,8 @@ import {
 } from "@tabler/icons-react"
 
 export interface AccountUserSidebarOptions {
-  username: string
+  username?: string
+  userId?: string
   activeTab?: string
   onSelectTab?: (tabId: string) => void
   t?: (key: string) => string
@@ -27,6 +28,7 @@ export const ACCOUNT_USER_TABS = [
 
 export function getAccountUserSidebarConfig({
   username,
+  userId,
   activeTab = "overview",
   onSelectTab,
   t,
@@ -41,7 +43,8 @@ export function getAccountUserSidebarConfig({
     }
   }
 
-  const userBaseHref = `/IRIS-account/users/${username}`
+  const targetId = userId || username
+  const userBaseHref = `/carina/users/${targetId}`
 
   return [
     // ----------------------------------------------------
@@ -106,10 +109,11 @@ export function useAccountUserSidebarConfig(
     () =>
       getAccountUserSidebarConfig({
         username: options.username,
+        userId: options.userId,
         activeTab: options.activeTab,
         onSelectTab: stableOnSelectTab,
         t: tRef.current,
       }),
-    [options.username, options.activeTab, stableOnSelectTab]
+    [options.username, options.userId, options.activeTab, stableOnSelectTab]
   )
 }

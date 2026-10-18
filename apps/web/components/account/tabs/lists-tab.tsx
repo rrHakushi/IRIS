@@ -1,8 +1,7 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from "react"
-import Link from "next/link"
-import Image from "next/image"
+import React, { useState, useEffect, useCallback } from "react"
+import dynamic from "next/dynamic"
 import { elysia } from "@/lib/elysia"
 import { LinkButton } from "@workspace/ui/components/button"
 import {
@@ -13,16 +12,39 @@ import {
   IconHeadphones,
   IconArrowRight,
   IconPlayerPlay,
-  IconStar,
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
+import { resolveUserId } from "@/lib/user-profile"
+import { MediaListCard } from "@/components/lists/media-list-card"
+import {
+  toNormalizedMedia,
+  toMediaListEntry,
+} from "@/components/lists/media-list-grid"
+import type { ListEntryData, MediaListType } from "@/components/lists/types"
+
+const MediaListModal = dynamic(
+  () =>
+    import("@/components/media/list/media-list-modal").then(
+      (m) => m.MediaListModal
+    ),
+  { ssr: false }
+)
 
 export interface ListsTabProps {
   username: string
+  userId?: string
   isOwner: boolean
 }
 
-const MEDIA_TYPES = [
+interface MediaConfig {
+  id: MediaListType
+  name: string
+  action: string
+  icon: React.ComponentType<{ className?: string }>
+  path: string
+}
+
+const MEDIA_TYPES: MediaConfig[] = [
   { id: "anime", name: "Anime", action: "Watching", icon: IconDeviceTv, path: "anime" },
   { id: "manga", name: "Manga", action: "Reading", icon: IconBook, path: "manga" },
   { id: "movie", name: "Movies", action: "Watching", icon: IconMovie, path: "movies" },
@@ -44,15 +66,17 @@ export function invalidateClientLists(username?: string, activeType?: string) {
   }
 }
 
-export function ListsTab({ username, isOwner }: ListsTabProps): React.JSX.Element {
-  const [activeType, setActiveType] = useState<string>("anime")
+export function ListsTab({ username, userId, isOwner }: ListsTabProps): React.JSX.Element {
+  const [activeType, setActiveType] = useState<MediaListType>("anime")
+  const [resolvedId, setResolvedId] = useState<string | undefined>(userId)
   const cacheKey = `${username}:${activeType}`
   const cached = listClientCache.get(cacheKey)
   const isFresh = Boolean(cached && Date.now() - cached.timestamp < CLIENT_CACHE_TTL_MS)
 
-  const [items, setItems] = useState<any[]>(() => (isFresh && cached ? cached.items : []))
-  const [totalCount, setTotalCount] = useState<number>(() => (isFresh && cached ? cached.totalCount : 0))
+  const [items, setItems] = useState<ListEntryData[]>(() => (isFresh && cached ? cached.items : []))
+  const [, setTotalCount] = useState<number>(() => (isFresh && cached ? cached.totalCount : 0))
   const [isLoading, setIsLoading] = useState(!isFresh)
+  const [editingItem, setEditingItem] = useState<ListEntryData | null>(null)
 
   const currentMediaConfig =
     MEDIA_TYPES.find((m) => m.id === activeType) ?? MEDIA_TYPES[0]!
@@ -76,40 +100,37 @@ export function ListsTab({ username, isOwner }: ListsTabProps): React.JSX.Elemen
       let promise = inFlightRequests.get(cacheKey)
       if (!promise) {
         promise = (async () => {
+          let targetId = userId
+          if (!targetId) {
+            targetId = (await resolveUserId(username)) || undefined
+          }
+          if (targetId && isMounted) {
+            setResolvedId(targetId)
+          }
+
           let statusFilter = "WATCHING"
           if (activeType === "manga" || activeType === "book") statusFilter = "READING"
           else if (activeType === "game") statusFilter = "PLAYING"
           else if (activeType === "music") statusFilter = "LISTENING"
 
+          const query: any = { status: statusFilter, limit: 16 }
+          if (targetId) query.userId = targetId
+
           let res: any
           if (activeType === "anime") {
-            res = await elysia.user({ username }).lists.anime.get({
-              query: { status: statusFilter, limit: 12 },
-            })
+            res = await elysia.borealis.lists.anime.get({ query })
           } else if (activeType === "manga") {
-            res = await elysia.user({ username }).lists.manga.get({
-              query: { status: statusFilter, limit: 12 },
-            })
+            res = await elysia.borealis.lists.manga.get({ query })
           } else if (activeType === "movie") {
-            res = await elysia.user({ username }).lists.movie.get({
-              query: { status: statusFilter, limit: 12 },
-            })
+            res = await elysia.borealis.lists.movies.get({ query })
           } else if (activeType === "tv") {
-            res = await elysia.user({ username }).lists.tv.get({
-              query: { status: statusFilter, limit: 12 },
-            })
+            res = await elysia.borealis.lists.tv.get({ query })
           } else if (activeType === "game") {
-            res = await elysia.user({ username }).lists.game.get({
-              query: { status: statusFilter, limit: 12 },
-            })
+            res = await elysia.borealis.lists.games.get({ query })
           } else if (activeType === "book") {
-            res = await elysia.user({ username }).lists.book.get({
-              query: { status: statusFilter, limit: 12 },
-            })
+            res = await elysia.borealis.lists.books.get({ query })
           } else if (activeType === "music") {
-            res = await elysia.user({ username }).lists.music.get({
-              query: { status: statusFilter, limit: 12 },
-            })
+            res = await elysia.borealis.lists.music.get({ query })
           }
           return res
         })().finally(() => {
@@ -121,7 +142,7 @@ export function ListsTab({ username, isOwner }: ListsTabProps): React.JSX.Elemen
       try {
         const res = await promise
         if (isMounted && res && !res.error && res.data?.success) {
-          const listData = res.data.items || res.data.data || []
+          const listData = (res.data.items || res.data.data || []) as ListEntryData[]
           const count = res.data.pagination?.total ?? listData.length
           listClientCache.set(cacheKey, {
             items: listData,
@@ -143,7 +164,104 @@ export function ListsTab({ username, isOwner }: ListsTabProps): React.JSX.Elemen
     return () => {
       isMounted = false
     }
-  }, [cacheKey, username, activeType])
+  }, [cacheKey, username, userId, activeType])
+
+  const handleOpenEditModal = useCallback(
+    (item: ListEntryData) => {
+      if (isOwner) {
+        setEditingItem(item)
+      }
+    },
+    [isOwner]
+  )
+
+  const handleIncrementProgress = useCallback(
+    async (item: ListEntryData, count: number, mediaType?: MediaListType) => {
+      const type = mediaType || activeType
+      const entryId = item.entry.id
+      const mediaId =
+        (item.media as any)?.id ??
+        (item.entry as any)?.animeId ??
+        (item.entry as any)?.mangaId ??
+        (item.entry as any)?.movieId ??
+        (item.entry as any)?.tvId ??
+        (item.entry as any)?.gameId ??
+        (item.entry as any)?.bookId ??
+        (item.entry as any)?.musicId
+
+      if (!mediaId) return
+
+      // Optimistic state update
+      setItems((prev) =>
+        prev.map((it) => {
+          if (it.entry.id === entryId) {
+            if (type === "manga") {
+              return {
+                ...it,
+                entry: {
+                  ...it.entry,
+                  chaptersProgress: (it.entry.chaptersProgress ?? 0) + count,
+                },
+              }
+            }
+            return {
+              ...it,
+              entry: {
+                ...it.entry,
+                progress: (it.entry.progress ?? 0) + count,
+              },
+            }
+          }
+          return it
+        })
+      )
+
+      try {
+        const numMediaId = Number(mediaId)
+        if (type === "anime") {
+          await elysia.borealis.lists.anime({ animeId: numMediaId }).increment.post({ count })
+        } else if (type === "tv") {
+          await elysia.borealis.lists.tv({ tvId: numMediaId }).increment.post({ count })
+        } else if (type === "manga") {
+          await elysia.borealis.lists.manga({ mangaId: numMediaId }).increment.post({ count, type: "chapter" })
+        } else if (type === "movie") {
+          await elysia.borealis.lists.movies({ movieId: numMediaId }).increment.post({ count: 1 })
+        } else if (type === "game") {
+          await elysia.borealis.lists.games({ gameId: numMediaId }).increment.post({ count })
+        } else if (type === "book") {
+          await elysia.borealis.lists.books({ bookId: numMediaId }).increment.post({ count, type: "chapter" })
+        }
+      } catch (err) {
+        console.error("[ListsTab] Failed to increment progress:", err)
+      }
+    },
+    [activeType]
+  )
+
+  const handleItemUpdated = useCallback(
+    (entryId: number, updated: any) => {
+      if (!updated) {
+        setItems((prev) => prev.filter((it) => it.entry.id !== entryId))
+      } else {
+        setItems((prev) =>
+          prev.map((it) => {
+            if (it.entry.id === entryId) {
+              return {
+                ...it,
+                entry: {
+                  ...it.entry,
+                  ...updated,
+                },
+              }
+            }
+            return it
+          })
+        )
+      }
+      invalidateClientLists(username, activeType)
+    },
+    [username, activeType]
+  )
 
   return (
     <div className="space-y-6">
@@ -175,7 +293,7 @@ export function ListsTab({ username, isOwner }: ListsTabProps): React.JSX.Elemen
 
         {/* See All Button */}
         <LinkButton
-          href={`/IRIS-list/lists/${username}/${activeType}`}
+          href={`/borealis/lists/${resolvedId || userId || username}/${activeType}`}
           variant="outline"
           size="sm"
           className="h-8 gap-1.5 rounded-xl border-primary/30 bg-primary/10 text-xs font-bold text-primary shadow-xs hover:bg-primary/20"
@@ -197,13 +315,12 @@ export function ListsTab({ username, isOwner }: ListsTabProps): React.JSX.Elemen
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="animate-pulse space-y-2 rounded-2xl border border-border/40 bg-card/40 p-3">
-                <div className="aspect-[3/4] w-full rounded-xl bg-muted/70" />
-                <div className="h-3 w-3/4 rounded bg-muted/60" />
-                <div className="h-2 w-1/2 rounded bg-muted/40" />
-              </div>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2.5 sm:gap-3">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => (
+              <div
+                key={i}
+                className="aspect-2/3 animate-pulse rounded-xl border border-border/40 bg-card/40"
+              />
             ))}
           </div>
         ) : items.length === 0 ? (
@@ -218,7 +335,7 @@ export function ListsTab({ username, isOwner }: ListsTabProps): React.JSX.Elemen
               </p>
             </div>
             <LinkButton
-              href={`/IRIS-list/lists/${username}/${activeType}`}
+              href={`/borealis/lists/${resolvedId || userId || username}/${activeType}`}
               variant="outline"
               size="sm"
               className="rounded-xl text-xs"
@@ -227,72 +344,55 @@ export function ListsTab({ username, isOwner }: ListsTabProps): React.JSX.Elemen
             </LinkButton>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2.5 sm:gap-3">
             {items.map((item, idx) => {
-              const entry = item.entry ?? item
-              const media = item.media ?? item.anime ?? item.manga ?? item.movie ?? item.tv ?? item.game ?? item.book ?? item.music ?? {}
-              const mediaId = media.id ?? entry.animeId ?? entry.mangaId ?? entry.movieId ?? entry.tvId ?? entry.gameId ?? entry.bookId ?? entry.musicId ?? entry.id
-              const title = media.titlePrimary || media.titleSecondary || media.titleNative || media.title?.english || media.title?.romaji || media.title || `Item #${entry.id ?? idx}`
-              const coverUrl = media.coverImage?.large || media.coverImage || media.coverUrl || media.posterUrl || null
-              const progress = entry.progress ?? entry.chaptersProgress ?? entry.episodesProgress ?? 0
-              const totalUnits = media.episodeCount ?? media.chapterCount ?? media.pageCount ?? media.episodes ?? media.chapters ?? null
-              const score = entry.score
-              const detailUrl = `/IRIS-list/${currentMediaConfig.path}/${mediaId}`
+              const normalizedItem: ListEntryData =
+                item.entry && item.media
+                  ? item
+                  : {
+                      entry: (item as any).entry || item,
+                      media:
+                        (item as any).media ||
+                        (item as any).anime ||
+                        (item as any).manga ||
+                        (item as any).movie ||
+                        (item as any).tv ||
+                        (item as any).game ||
+                        (item as any).book ||
+                        (item as any).music ||
+                        {},
+                    }
 
               return (
-                <Link
-                  key={entry.id ?? idx}
-                  href={detailUrl}
-                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/60 p-2.5 shadow-xs transition-all hover:border-border hover:bg-card/90"
-                >
-                  {/* Poster Thumbnail */}
-                  <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-muted/40 shadow-xs">
-                    {coverUrl ? (
-                      <Image
-                        src={coverUrl}
-                        alt={title}
-                        fill
-                        sizes="(max-width: 768px) 50vw, 200px"
-                        unoptimized
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex size-full items-center justify-center p-2 text-center text-xs font-bold text-muted-foreground">
-                        {title}
-                      </div>
-                    )}
-
-                    {/* Score Badge Overlay */}
-                    {score && (
-                      <div className="absolute top-2 right-2 flex items-center gap-0.5 rounded-lg bg-background/90 px-1.5 py-0.5 text-[10px] font-bold text-amber-400 shadow-sm backdrop-blur-xs">
-                        <IconStar className="size-2.5 fill-amber-400 text-amber-400" />
-                        <span>{score}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Title & Progress Details */}
-                  <div className="mt-2.5 flex flex-1 flex-col justify-between space-y-1">
-                    <h4
-                      className="line-clamp-2 text-xs font-bold leading-tight text-foreground group-hover:text-primary transition-colors"
-                      title={title}
-                    >
-                      {title}
-                    </h4>
-
-                    <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1">
-                      <span className="font-semibold text-primary">
-                        {progress} {totalUnits ? `/ ${totalUnits}` : "consumed"}
-                      </span>
-                      <span className="capitalize">{entry.status?.toLowerCase()}</span>
-                    </div>
-                  </div>
-                </Link>
+                <MediaListCard
+                  key={`${normalizedItem.entry?.id ?? idx}-${normalizedItem.media?.id ?? idx}`}
+                  item={normalizedItem}
+                  mediaType={activeType}
+                  onOpenEditModal={handleOpenEditModal}
+                  onIncrementProgress={isOwner ? handleIncrementProgress : undefined}
+                  priority={idx < 4}
+                />
               )
             })}
           </div>
         )}
       </div>
+
+      {/* Edit List Modal */}
+      {editingItem && (
+        <MediaListModal
+          isOpen={Boolean(editingItem)}
+          onOpenChange={(open) => {
+            if (!open) setEditingItem(null)
+          }}
+          media={toNormalizedMedia(editingItem.media, activeType)}
+          initialEntry={toMediaListEntry(editingItem.entry)}
+          onEntryUpdated={(updated) => {
+            handleItemUpdated(editingItem.entry.id, updated)
+            setEditingItem(null)
+          }}
+        />
+      )}
     </div>
   )
 }

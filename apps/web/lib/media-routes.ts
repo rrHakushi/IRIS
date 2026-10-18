@@ -1,5 +1,5 @@
 /**
- * Canonical URL slug and link helpers for IRIS List media detail pages (/IRIS-list/[category]/[id]).
+ * Canonical URL slug and link helpers for Borealis media detail pages (/borealis/[category]/[id]).
  */
 
 /**
@@ -41,7 +41,7 @@ export interface MediaDetailHrefOptions {
 }
 
 /**
- * Constructs the canonical detail page href for any media item in IRIS List.
+ * Constructs the canonical detail page href for any media item in Borealis.
  * Correctly handles singular media types ("movie" -> "movies", "game" -> "games", "book" -> "books")
  * and resolves music tracks vs albums.
  */
@@ -59,8 +59,8 @@ export function getMediaDetailHref(
       options?.itemType?.toUpperCase() === "TRACK" ||
       Boolean(options?.trackId && !options?.albumId)
     const subpath = isTrack ? "tracks" : "albums"
-    return `/IRIS-list/music/${subpath}/${mediaId}${query}`
+    return `/borealis/music/${subpath}/${mediaId}${query}`
   }
 
-  return `/IRIS-list/${category}/${mediaId}${query}`
+  return `/borealis/${category}/${mediaId}${query}`
 }

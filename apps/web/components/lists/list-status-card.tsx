@@ -53,6 +53,7 @@ export interface ListStatusCardProps {
   sortOrder: SortOrderOption
   onSortOrderChange: (order: SortOrderOption) => void
   totalCount: number
+  action?: React.ReactNode
   className?: string
 }
 
@@ -91,6 +92,7 @@ export function ListStatusCard({
   sortOrder,
   onSortOrderChange,
   totalCount,
+  action,
   className,
 }: ListStatusCardProps): React.JSX.Element {
   const [internalTab, setInternalTab] = React.useState<ListViewTab>("list")
@@ -184,83 +186,55 @@ export function ListStatusCard({
 
   const formatOptions = React.useMemo(() => {
     if (facets.formats && facets.formats.length > 0) {
-      return facets.formats.map((f) => ({
-        value: f.value,
-        label: f.value.replace(/_/g, " "),
-        count: f.count,
-      }))
+      return facets.formats
+        .map((f) => ({
+          value: f.value,
+          label: f.value.charAt(0).toUpperCase() + f.value.slice(1).replace(/_/g, " "),
+          count: f.count,
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label))
     }
-    const fallbackMap: Record<MediaListType, string[]> = {
-      anime: ["TV", "MOVIE", "OVA", "ONA", "SPECIAL", "TV_SHORT", "MUSIC"],
-      manga: ["MANGA", "NOVEL", "ONE_SHOT", "MANHWA", "MANHUA"],
-      movie: ["MOVIE", "SPECIAL"],
-      tv: ["SERIES", "MINISERIES", "SPECIAL"],
-      game: ["GAME", "DLC", "REMAKE", "REMASTER"],
-      book: ["BOOK", "HARDCOVER", "PAPERBACK", "EBOOK", "AUDIOBOOK"],
-      music: ["ALBUM", "TRACK"],
-    }
-    return (fallbackMap[mediaType] || []).map((fmt) => ({
-      value: fmt,
-      label: fmt.replace(/_/g, " "),
-    }))
-  }, [facets.formats, mediaType])
+    return []
+  }, [facets.formats])
 
   const mediaStatusOptions = React.useMemo(() => {
     if (facets.mediaStatuses && facets.mediaStatuses.length > 0) {
-      return facets.mediaStatuses.map((s) => ({
-        value: s.value,
-        label: s.value.replace(/_/g, " "),
-        count: s.count,
-      }))
+      return facets.mediaStatuses
+        .map((s) => ({
+          value: s.value,
+          label: s.value.charAt(0).toUpperCase() + s.value.slice(1).toLowerCase().replace(/_/g, " "),
+          count: s.count,
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label))
     }
-    return [
-      { value: "FINISHED", label: "Finished" },
-      { value: "RELEASING", label: "Releasing" },
-      { value: "NOT_YET_RELEASED", label: "Upcoming" },
-      { value: "CANCELLED", label: "Cancelled" },
-    ]
+    return []
   }, [facets.mediaStatuses])
 
   const genreOptions = React.useMemo(() => {
     if (facets.genres && facets.genres.length > 0) {
-      return facets.genres.map((g) => ({
-        value: g.value,
-        label: g.value,
-        count: g.count,
-      }))
+      return facets.genres
+        .map((g) => ({
+          value: g.value,
+          label: g.value,
+          count: g.count,
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label))
     }
-    const defaultGenres = [
-      "Action",
-      "Adventure",
-      "Comedy",
-      "Drama",
-      "Fantasy",
-      "Horror",
-      "Mystery",
-      "Psychological",
-      "Romance",
-      "Sci-Fi",
-      "Slice of Life",
-      "Supernatural",
-      "Thriller",
-    ]
-    return defaultGenres.map((g) => ({ value: g, label: g }))
+    return []
   }, [facets.genres])
 
   const yearOptions = React.useMemo(() => {
     if (facets.years && facets.years.length > 0) {
-      return facets.years.map((y) => ({
-        value: String(y.value),
-        label: String(y.value),
-        count: y.count,
-      }))
+      return facets.years
+        .slice()
+        .sort((a, b) => b.value - a.value)
+        .map((y) => ({
+          value: String(y.value),
+          label: String(y.value),
+          count: y.count,
+        }))
     }
-    const currentYear = new Date().getFullYear()
-    const fallbackYears: Array<{ value: string; label: string }> = []
-    for (let y = currentYear + 1; y >= currentYear - 15; y--) {
-      fallbackYears.push({ value: String(y), label: String(y) })
-    }
-    return fallbackYears
+    return []
   }, [facets.years])
 
   const monthOptions = React.useMemo(() => {
@@ -286,10 +260,7 @@ export function ListStatusCard({
         count: m.count,
       }))
     }
-    return Object.entries(monthNames).map(([val, label]) => ({
-      value: val,
-      label,
-    }))
+    return []
   }, [facets.months])
 
   const artistOptions = React.useMemo(() => {
@@ -356,50 +327,47 @@ export function ListStatusCard({
           })}
         </div>
 
-        {/* Vertical Divider (Orange line in reference) */}
-        <Separator
-          orientation="vertical"
-          className="mx-1 h-5 shrink-0 self-center bg-border/60"
-        />
-
-        {/* Tab Switcher: List | Comments | Stats (Green circle in reference) */}
-        <Tabs
-          selectedKey={currentTab}
-          onSelectionChange={(key) =>
-            handleTabChange(String(key) as ListViewTab)
-          }
-          className="shrink-0 gap-0"
-        >
-          <TabsList
-            aria-label="View Switcher"
-            className="h-7 gap-0.5 rounded-full border border-border/40 bg-muted/40 p-0.5"
+        {/* Right-aligned Action & Tab Switcher: List | Comments | Stats | Activity */}
+        <div className="ms-auto flex shrink-0 items-center gap-2">
+          {action}
+          <Tabs
+            selectedKey={currentTab}
+            onSelectionChange={(key) =>
+              handleTabChange(String(key) as ListViewTab)
+            }
+            className="shrink-0 gap-0"
           >
-            <TabsTrigger
-              id="list"
-              className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
+            <TabsList
+              aria-label="View Switcher"
+              className="h-7 gap-0.5 rounded-full border border-border/40 bg-muted/40 p-0.5"
             >
-              List
-            </TabsTrigger>
-            <TabsTrigger
-              id="comments"
-              className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
-            >
-              Comments
-            </TabsTrigger>
-            <TabsTrigger
-              id="stats"
-              className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
-            >
-              Stats
-            </TabsTrigger>
-            <TabsTrigger
-              id="activity"
-              className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
-            >
-              Activity
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+              <TabsTrigger
+                id="list"
+                className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
+              >
+                List
+              </TabsTrigger>
+              <TabsTrigger
+                id="comments"
+                className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
+              >
+                Comments
+              </TabsTrigger>
+              <TabsTrigger
+                id="stats"
+                className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
+              >
+                Stats
+              </TabsTrigger>
+              <TabsTrigger
+                id="activity"
+                className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
+              >
+                Activity
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       {/* When List tab is active, show the search & filters bottom row */}
@@ -441,20 +409,19 @@ export function ListStatusCard({
 
             {/* Right: Multi-select dropdowns & Sort controls */}
             <div className="no-scrollbar flex flex-wrap items-center gap-2 overflow-x-auto pt-1 lg:pt-0">
-              {/* Artists Dropdown (for music or whenever artist facets exist) */}
-              {(mediaType === "music" || artistOptions.length > 0) &&
-                onArtistsChange && (
-                  <MultiSelectFilterPopover
-                    label="Artists"
-                    allLabel="All Artists"
-                    options={artistOptions}
-                    selected={selectedArtists || []}
-                    onChange={onArtistsChange}
-                  />
-                )}
+              {/* Filter Dropdowns strictly derived from the user's list */}
+              {artistOptions.length > 0 && onArtistsChange && (
+                <MultiSelectFilterPopover
+                  label="Artists"
+                  allLabel="All Artists"
+                  options={artistOptions}
+                  selected={selectedArtists || []}
+                  onChange={onArtistsChange}
+                />
+              )}
 
               {/* Formats Dropdown (hidden for music because top tabs handle All / Albums / Tracks) */}
-              {mediaType !== "music" && (
+              {mediaType !== "music" && formatOptions.length > 0 && (
                 <MultiSelectFilterPopover
                   label="Formats"
                   allLabel="All Formats"
@@ -464,8 +431,8 @@ export function ListStatusCard({
                 />
               )}
 
-              {/* Statuses Dropdown (hidden for music) */}
-              {mediaType !== "music" && (
+              {/* Statuses Dropdown */}
+              {mediaType !== "music" && mediaStatusOptions.length > 0 && (
                 <MultiSelectFilterPopover
                   label="Statuses"
                   allLabel="All Statuses"
@@ -476,35 +443,37 @@ export function ListStatusCard({
               )}
 
               {/* Genres Dropdown */}
-              <MultiSelectFilterPopover
-                label="Genres"
-                allLabel="All Genres"
-                options={genreOptions}
-                selected={selectedGenres}
-                onChange={onGenresChange}
-              />
+              {genreOptions.length > 0 && (
+                <MultiSelectFilterPopover
+                  label="Genres"
+                  allLabel="All Genres"
+                  options={genreOptions}
+                  selected={selectedGenres}
+                  onChange={onGenresChange}
+                />
+              )}
 
               {/* Years Dropdown */}
-              <MultiSelectFilterPopover
-                label="Years"
-                allLabel="All Years"
-                options={yearOptions}
-                selected={selectedYears}
-                onChange={onYearsChange}
-              />
+              {yearOptions.length > 0 && (
+                <MultiSelectFilterPopover
+                  label="Years"
+                  allLabel="All Years"
+                  options={yearOptions}
+                  selected={selectedYears}
+                  onChange={onYearsChange}
+                />
+              )}
 
-              {/* Months Dropdown (for music or whenever month facets exist) */}
-              {(mediaType === "music" ||
-                (facets.months && facets.months.length > 0)) &&
-                onMonthsChange && (
-                  <MultiSelectFilterPopover
-                    label="Months"
-                    allLabel="All Months"
-                    options={monthOptions}
-                    selected={selectedMonths || []}
-                    onChange={onMonthsChange}
-                  />
-                )}
+              {/* Months Dropdown */}
+              {monthOptions.length > 0 && onMonthsChange && (
+                <MultiSelectFilterPopover
+                  label="Months"
+                  allLabel="All Months"
+                  options={monthOptions}
+                  selected={selectedMonths || []}
+                  onChange={onMonthsChange}
+                />
+              )}
 
               {/* SORT Divider & Label */}
               <div className="hidden items-center gap-1.5 ps-1 sm:flex">

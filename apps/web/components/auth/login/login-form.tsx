@@ -83,7 +83,7 @@ export function LoginForm({ footer }: LoginFormProps) {
       if (document.hidden) return
 
       try {
-        const statusRes = await elysia.auth.quickconnect.status.get({
+        const statusRes = await elysia.carina.auth.qc.status.get({
           query: { sessionToken: quickConnectSessionToken },
         })
 
@@ -272,9 +272,10 @@ export function LoginForm({ footer }: LoginFormProps) {
     setMfaError(null)
 
     try {
-      const { data, error } = await elysia.auth.email.send.post({
-        mfaTicket,
-      })
+      const { data, error } =
+        await elysia.carina.auth.twofactor.email.send.post({
+          mfaTicket,
+        })
 
       if (error || !data) {
         setMfaError(t("failedSendEmailOtp"))
@@ -297,9 +298,10 @@ export function LoginForm({ footer }: LoginFormProps) {
 
     try {
       const cleanId = identifier.trim().toLowerCase()
-      const { data, error } = await elysia.auth.passkeys.login.post(
-        cleanId ? { identifier: cleanId } : {}
-      )
+      const { data, error } =
+        await elysia.carina.auth.twofactor.passkeys.login.post(
+          cleanId ? { identifier: cleanId } : {}
+        )
 
       if (error || !data) {
         throw new Error("FAILED_LOAD_PASSKEY_OPTIONS")
@@ -348,9 +350,10 @@ export function LoginForm({ footer }: LoginFormProps) {
 
     try {
       const targetIdent = (customIdentifier ?? identifier).trim() || undefined
-      const { data, error } = await elysia.auth.quickconnect.generate.post({
-        userIdentifier: targetIdent,
-      })
+      const { data, error } =
+        await elysia.carina.auth.qc.generate.post({
+          userIdentifier: targetIdent,
+        })
       if (error || !data) {
         throw new Error(t("failedGenerateCode"))
       }
@@ -420,9 +423,10 @@ export function LoginForm({ footer }: LoginFormProps) {
             setMfaError(null)
             try {
               const cleanId = identifier.trim().toLowerCase()
-              const { data, error } = await elysia.auth.passkeys.login.post(
-                cleanId ? { identifier: cleanId } : {}
-              )
+              const { data, error } =
+                await elysia.carina.auth.twofactor.passkeys.login.post(
+                  cleanId ? { identifier: cleanId } : {}
+                )
               if (error || !data) {
                 throw new Error("FAILED_LOAD_PASSKEY_OPTIONS")
               }

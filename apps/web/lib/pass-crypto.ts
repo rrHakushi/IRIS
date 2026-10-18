@@ -2,8 +2,10 @@
 
 import { hkdf } from "@noble/hashes/hkdf.js"
 import { sha256 } from "@noble/hashes/sha2.js"
+import { scrypt } from "@noble/hashes/scrypt.js"
 import { gcm } from "@noble/ciphers/aes.js"
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js"
+import type { PinUnlockData } from "./pass-types"
 
 const VAULT_SALT = new TextEncoder().encode("iris-pass-salt-v1")
 const VAULT_INFO = new TextEncoder().encode("iris-pass-vault-v1")
@@ -84,3 +86,94 @@ export function decryptVaultObject<T>(
   const json = decryptVaultData(encryptedPayload, vaultKey)
   return JSON.parse(json) as T
 }
+
+/**
+ * Cryptographically zeroizes sensitive key material in memory.
+ */
+export function zeroize(bytes: Uint8Array): void {
+  try {
+    crypto.getRandomValues(bytes)
+  } catch {
+    bytes.fill(0)
+  }
+}
+
+/**
+ * Derives a key via scrypt and encrypts the 256-bit vault key for fast PIN unlock.
+ */
+export function setupPinUnlock(
+  pin: string,
+  vaultKey: Uint8Array
+): PinUnlockData {
+  if (!pin || pin.length < 4) {
+    throw new Error("PIN must be at least 4 digits")
+  }
+
+  const salt = crypto.getRandomValues(new Uint8Array(16))
+  const iv = crypto.getRandomValues(new Uint8Array(12))
+
+  const pinKey = scrypt(pin.normalize("NFKC"), salt, {
+    N: 16384,
+    r: 8,
+    p: 1,
+    dkLen: 32,
+  })
+
+  const aes = gcm(pinKey, iv)
+  const ciphertextWithTag = aes.encrypt(vaultKey)
+  zeroize(pinKey)
+
+  const cipher = ciphertextWithTag.slice(0, -16)
+  const authTag = ciphertextWithTag.slice(-16)
+
+  return {
+    saltHex: bytesToHex(salt),
+    ivHex: bytesToHex(iv),
+    authTagHex: bytesToHex(authTag),
+    cipherHex: bytesToHex(cipher),
+  }
+}
+
+/**
+ * Unlocks the vault key using a PIN and saved PIN unlock data.
+ */
+export function unlockWithPin(
+  pin: string,
+  pinData: PinUnlockData
+): Uint8Array {
+  if (
+    !pinData?.saltHex ||
+    !pinData?.ivHex ||
+    !pinData?.authTagHex ||
+    !pinData?.cipherHex
+  ) {
+    throw new Error("Invalid or missing PIN unlock data")
+  }
+
+  const salt = hexToBytes(pinData.saltHex)
+  const iv = hexToBytes(pinData.ivHex)
+  const authTag = hexToBytes(pinData.authTagHex)
+  const cipher = hexToBytes(pinData.cipherHex)
+
+  const pinKey = scrypt(pin.normalize("NFKC"), salt, {
+    N: 16384,
+    r: 8,
+    p: 1,
+    dkLen: 32,
+  })
+
+  const ciphertextWithTag = new Uint8Array(cipher.length + authTag.length)
+  ciphertextWithTag.set(cipher, 0)
+  ciphertextWithTag.set(authTag, cipher.length)
+
+  const aes = gcm(pinKey, iv)
+  try {
+    const decrypted = aes.decrypt(ciphertextWithTag)
+    zeroize(pinKey)
+    return decrypted
+  } catch {
+    zeroize(pinKey)
+    throw new Error("Incorrect PIN")
+  }
+}
+

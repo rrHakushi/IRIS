@@ -19,14 +19,17 @@ import {
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { toast } from "sonner"
+import { resolveUserId } from "@/lib/user-profile"
 
 export interface ActivityTabProps {
   username: string
+  userId?: string
   isOwner: boolean
 }
 
 export function ActivityTab({
   username,
+  userId,
   isOwner,
 }: ActivityTabProps): React.JSX.Element {
   const [activities, setActivities] = useState<any[]>([])
@@ -43,7 +46,14 @@ export function ActivityTab({
       isFetchingRef.current = true
 
       try {
-        const res = await elysia.users({ username }).activity.get({
+        let targetId = userId
+        if (!targetId) {
+          targetId = (await resolveUserId(username)) || undefined
+        }
+
+        if (!targetId) return
+
+        const res = await elysia.carina.users({ userId: targetId }).activity.get({
           query: {
             page,
             limit: 25,
@@ -66,7 +76,7 @@ export function ActivityTab({
         isFetchingRef.current = false
       }
     },
-    [username]
+    [username, userId]
   )
 
   useEffect(() => {
@@ -83,7 +93,7 @@ export function ActivityTab({
 
   const handleDeleteActivity = async (id: string) => {
     try {
-      const res = await elysia.users({ username }).activity({ id }).delete()
+      const res = await elysia.carina.users.activity({ id }).delete()
 
       if (!res.error) {
         setActivities((prev) => prev.filter((a) => a.id !== id))

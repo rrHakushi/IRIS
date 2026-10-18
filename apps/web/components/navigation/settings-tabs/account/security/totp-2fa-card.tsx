@@ -83,10 +83,7 @@ export function Totp2faCard({
     setShowSecret(false)
 
     try {
-      const res = await elysia.auth.totp.setup.post(
-        {},
-        { fetch: { credentials: "include" } }
-      )
+      const res = await elysia.carina.auth.twofactor.totp.setup.post()
       if (res.error || !res.data) {
         const errorData = res.error?.value as { message?: string } | undefined
         const msg = errorData?.message || t("failedInitiateSetup")
@@ -125,16 +122,10 @@ export function Totp2faCard({
     setSetupError(null)
 
     try {
-      const res = await elysia.auth.totp.toggle.post(
-        {
-          enabled: true,
-          code: verificationCode.trim(),
-          secret: secretKey || undefined,
-        },
-        {
-          fetch: { credentials: "include" },
-        }
-      )
+      const res = await elysia.carina.auth.twofactor.totp.verify.post({
+        code: verificationCode.trim(),
+        secret: secretKey || undefined,
+      })
 
       if (res.error) {
         const errorData = res.error?.value as { message?: string } | undefined
@@ -218,17 +209,11 @@ export function Totp2faCard({
     setDisableError(null)
 
     try {
-      const res = await elysia.auth.totp.toggle.post(
-        {
-          enabled: false,
-          code: disableMethod === "code" ? disableCode.trim() : undefined,
-          password:
-            disableMethod === "password" ? disablePassword.trim() : undefined,
-        },
-        {
-          fetch: { credentials: "include" },
-        }
-      )
+      const res = await elysia.carina.auth.twofactor.totp.delete({
+        code: disableMethod === "code" ? disableCode.trim() : undefined,
+        password:
+          disableMethod === "password" ? disablePassword.trim() : undefined,
+      })
 
       if (res.error) {
         const errorData = res.error?.value as { message?: string } | undefined

@@ -4,19 +4,19 @@ import { scrypt } from "@noble/hashes/scrypt.js"
 import { gcm } from "@noble/ciphers/aes.js"
 import { sha256 } from "@noble/hashes/sha2.js"
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js"
-import { ml_kem768 } from "@noble/post-quantum/ml-kem.js"
+import type { PinUnlockData } from "./pass-types"
 
 const DB_NAME = "iris_vault_db"
-const DB_VERSION = 2
+const DB_VERSION = 3
 const STORE_NAME = "vault_entries"
 const SESSION_STORE_NAME = "session_keys"
+const PIN_STORE_NAME = "pin_unlock"
 
 export interface VaultRecord {
   userId: string
   publicKey: string // Base64
   encryptedPrivateKey: string // salt:iv:authTag:cipher
-  algorithm: "ML-KEM-768"
-  hasSeparateEncryptionPassword?: boolean
+  algorithm: "RSA-2048"
   lastUnlockedAt?: number | null
   updatedAt: number
 }
@@ -40,6 +40,9 @@ export function openVaultDB(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(SESSION_STORE_NAME)) {
         db.createObjectStore(SESSION_STORE_NAME, { keyPath: "id" })
+      }
+      if (!db.objectStoreNames.contains(PIN_STORE_NAME)) {
+        db.createObjectStore(PIN_STORE_NAME, { keyPath: "userId" })
       }
     }
 
@@ -162,27 +165,6 @@ export async function encryptPrivateKeyClient(
   return `${bytesToHex(salt)}:${bytesToHex(iv)}:${bytesToHex(authTag)}:${bytesToHex(cipher)}`
 }
 
-/**
- * Generates an ML-KEM-768 post-quantum keypair in the browser.
- */
-export async function generateKeypairClient(password: string): Promise<{
-  publicKey: string
-  encryptedPrivateKey: string
-  rawSecretKey: Uint8Array
-}> {
-  const kp = ml_kem768.keygen()
-  const publicKey = btoa(String.fromCharCode(...kp.publicKey))
-  const encryptedPrivateKey = await encryptPrivateKeyClient(
-    kp.secretKey,
-    password
-  )
-
-  return {
-    publicKey,
-    encryptedPrivateKey,
-    rawSecretKey: kp.secretKey,
-  }
-}
 
 /**
  * Generates a SHA-256 fingerprint string from a base64 public key.
@@ -207,9 +189,10 @@ export function calculateKeyFingerprint(publicKeyBase64: string): string {
 const SESSION_STORAGE_PREFIX = "iris_vault_session_"
 
 /**
- * Encrypts and persists the decrypted secret key in sessionStorage using a non-extractable WebCrypto key.
- * This guarantees that raw private key bytes are NEVER stored in plaintext in sessionStorage or IndexedDB,
- * and cannot be exported or exfiltrated via JavaScript.
+ * Encrypts and persists the decrypted secret key in IndexedDB using a non-extractable WebCrypto key.
+ * This guarantees that raw private key bytes are NEVER stored in plaintext in any storage or database,
+ * cannot be exported via JavaScript (non-extractable CryptoKey), and persists across browser restarts
+ * (Proton / Bitwarden style persistent unlock) until explicit logout.
  */
 export async function saveSessionSecretKey(
   userId: string,
@@ -217,7 +200,7 @@ export async function saveSessionSecretKey(
 ): Promise<void> {
   if (
     typeof window === "undefined" ||
-    !window.sessionStorage ||
+    !window.indexedDB ||
     !window.crypto?.subtle
   )
     return
@@ -225,18 +208,9 @@ export async function saveSessionSecretKey(
     const db = await openVaultDB()
     const wrapKey = await window.crypto.subtle.generateKey(
       { name: "AES-GCM", length: 256 },
-      false, // non-extractable! Cannot be exported by JS
+      false, // non-extractable! Cannot be exported or inspected by JS
       ["encrypt", "decrypt"]
     )
-
-    const keyId = userId || "active"
-    await new Promise<void>((resolve, reject) => {
-      const tx = db.transaction(SESSION_STORE_NAME, "readwrite")
-      const store = tx.objectStore(SESSION_STORE_NAME)
-      const req = store.put({ id: keyId, key: wrapKey, updatedAt: Date.now() })
-      req.onsuccess = () => resolve()
-      req.onerror = () => reject(req.error)
-    })
 
     const iv = window.crypto.getRandomValues(new Uint8Array(12))
     const encryptedBuffer = await window.crypto.subtle.encrypt(
@@ -247,74 +221,98 @@ export async function saveSessionSecretKey(
 
     const cipherBytes = new Uint8Array(encryptedBuffer)
     const payload = `${bytesToHex(iv)}:${bytesToHex(cipherBytes)}`
+    const keyId = userId || "active"
 
-    if (userId) {
-      window.sessionStorage.setItem(
-        `${SESSION_STORAGE_PREFIX}${userId}`,
-        payload
-      )
+    // Persist BOTH the non-extractable CryptoKey and the ciphertext in IndexedDB
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(SESSION_STORE_NAME, "readwrite")
+      const store = tx.objectStore(SESSION_STORE_NAME)
+      const record = {
+        id: keyId,
+        key: wrapKey,
+        payload,
+        updatedAt: Date.now(),
+      }
+      const req = store.put(record)
+      req.onsuccess = () => resolve()
+      req.onerror = () => reject(req.error)
+    })
+
+    // Also persist under "active" alias if user has a specific ID
+    if (userId && userId !== "active") {
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction(SESSION_STORE_NAME, "readwrite")
+        const store = tx.objectStore(SESSION_STORE_NAME)
+        const req = store.put({
+          id: "active",
+          key: wrapKey,
+          payload,
+          updatedAt: Date.now(),
+        })
+        req.onsuccess = () => resolve()
+        req.onerror = () => reject(req.error)
+      })
     }
-    window.sessionStorage.setItem(`${SESSION_STORAGE_PREFIX}active`, payload)
   } catch (err) {
     console.warn(
-      "[saveSessionSecretKey] Failed to wrap and save session key:",
+      "[saveSessionSecretKey] Failed to wrap and save persistent session key:",
       err
     )
   }
 }
 
 /**
- * Loads and decrypts the secret key using the non-extractable WebCrypto session wrapping key.
+ * Loads and decrypts the secret key using the non-extractable WebCrypto persistent wrapping key from IndexedDB.
+ * Seamlessly unlocks across browser restarts when the user session is authenticated.
  */
 export async function loadSessionSecretKey(
   userId?: string
 ): Promise<Uint8Array | null> {
   if (
     typeof window === "undefined" ||
-    !window.sessionStorage ||
+    !window.indexedDB ||
     !window.crypto?.subtle
   )
     return null
   try {
-    const keyName = userId ? `${SESSION_STORAGE_PREFIX}${userId}` : null
-    let payload = keyName ? window.sessionStorage.getItem(keyName) : null
-    if (!payload) {
-      payload = window.sessionStorage.getItem(`${SESSION_STORAGE_PREFIX}active`)
-    }
-    if (!payload || !payload.includes(":")) return null
+    const db = await openVaultDB()
+    const keyId = userId || "active"
 
-    const [ivHex, cipherHex] = payload.split(":")
+    let record = await new Promise<{
+      id: string
+      key: CryptoKey
+      payload: string
+    } | null>((resolve, reject) => {
+      const tx = db.transaction(SESSION_STORE_NAME, "readonly")
+      const store = tx.objectStore(SESSION_STORE_NAME)
+      const req = store.get(keyId)
+      req.onsuccess = () => resolve(req.result || null)
+      req.onerror = () => reject(req.error)
+    })
+
+    if ((!record || !record.payload) && userId && userId !== "active") {
+      record = await new Promise<{
+        id: string
+        key: CryptoKey
+        payload: string
+      } | null>((resolve, reject) => {
+        const tx = db.transaction(SESSION_STORE_NAME, "readonly")
+        const store = tx.objectStore(SESSION_STORE_NAME)
+        const req = store.get("active")
+        req.onsuccess = () => resolve(req.result || null)
+        req.onerror = () => reject(req.error)
+      })
+    }
+
+    if (!record?.key || !record?.payload || !record.payload.includes(":")) {
+      return null
+    }
+
+    const [ivHex, cipherHex] = record.payload.split(":")
     if (!ivHex || !cipherHex) return null
 
     const iv = hexToBytes(ivHex)
     const cipherBytes = hexToBytes(cipherHex)
-
-    const db = await openVaultDB()
-    const keyId = userId || "active"
-
-    let record = await new Promise<{ id: string; key: CryptoKey } | null>(
-      (resolve, reject) => {
-        const tx = db.transaction(SESSION_STORE_NAME, "readonly")
-        const store = tx.objectStore(SESSION_STORE_NAME)
-        const req = store.get(keyId)
-        req.onsuccess = () => resolve(req.result || null)
-        req.onerror = () => reject(req.error)
-      }
-    )
-
-    if (!record && userId) {
-      record = await new Promise<{ id: string; key: CryptoKey } | null>(
-        (resolve, reject) => {
-          const tx = db.transaction(SESSION_STORE_NAME, "readonly")
-          const store = tx.objectStore(SESSION_STORE_NAME)
-          const req = store.get("active")
-          req.onsuccess = () => resolve(req.result || null)
-          req.onerror = () => reject(req.error)
-        }
-      )
-    }
-
-    if (!record?.key) return null
 
     const decryptedBuffer = await window.crypto.subtle.decrypt(
       { name: "AES-GCM", iv },
@@ -324,30 +322,18 @@ export async function loadSessionSecretKey(
 
     return new Uint8Array(decryptedBuffer)
   } catch (err) {
-    console.warn("[loadSessionSecretKey] Failed to unwrap session key:", err)
+    console.warn("[loadSessionSecretKey] Failed to unwrap persistent session key:", err)
     return null
   }
 }
 
 /**
- * Purges encrypted session tokens and non-extractable session wrapping keys.
+ * Purges encrypted persistent session tokens and non-extractable session wrapping keys.
+ * Invoked on explicit logout or manual vault lock.
  */
 export async function clearSessionSecretKey(userId?: string): Promise<void> {
   if (typeof window === "undefined") return
   try {
-    if (window.sessionStorage) {
-      window.sessionStorage.removeItem(`${SESSION_STORAGE_PREFIX}active`)
-      if (userId) {
-        window.sessionStorage.removeItem(`${SESSION_STORAGE_PREFIX}${userId}`)
-      }
-      for (let i = window.sessionStorage.length - 1; i >= 0; i--) {
-        const key = window.sessionStorage.key(i)
-        if (key && key.startsWith(SESSION_STORAGE_PREFIX)) {
-          window.sessionStorage.removeItem(key)
-        }
-      }
-    }
-
     if (window.indexedDB) {
       const db = await openVaultDB()
       if (db.objectStoreNames.contains(SESSION_STORE_NAME)) {
@@ -358,12 +344,78 @@ export async function clearSessionSecretKey(userId?: string): Promise<void> {
             store.delete(userId)
           }
           store.delete("active")
+          store.clear()
           tx.oncomplete = () => resolve()
           tx.onerror = () => reject(tx.error)
         })
+      }
+    }
+
+    if (window.sessionStorage) {
+      for (let i = window.sessionStorage.length - 1; i >= 0; i--) {
+        const key = window.sessionStorage.key(i)
+        if (key && key.startsWith(SESSION_STORAGE_PREFIX)) {
+          window.sessionStorage.removeItem(key)
+        }
       }
     }
   } catch {
     // Ignore cleanup errors
   }
 }
+
+/**
+ * Persists encrypted PIN unlock data for fast client-side unlocking.
+ */
+export async function savePinUnlockRecord(
+  userId: string,
+  pinData: PinUnlockData
+): Promise<void> {
+  const db = await openVaultDB()
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(PIN_STORE_NAME, "readwrite")
+    const store = tx.objectStore(PIN_STORE_NAME)
+    const req = store.put({ userId, ...pinData, updatedAt: Date.now() })
+    req.onsuccess = () => resolve()
+    req.onerror = () => reject(req.error)
+  })
+}
+
+/**
+ * Retrieves encrypted PIN unlock data for a user.
+ */
+export async function getPinUnlockRecord(
+  userId: string
+): Promise<PinUnlockData | null> {
+  const db = await openVaultDB()
+  return new Promise((resolve, reject) => {
+    if (!db.objectStoreNames.contains(PIN_STORE_NAME)) {
+      resolve(null)
+      return
+    }
+    const tx = db.transaction(PIN_STORE_NAME, "readonly")
+    const store = tx.objectStore(PIN_STORE_NAME)
+    const req = store.get(userId)
+    req.onsuccess = () => resolve(req.result || null)
+    req.onerror = () => reject(req.error)
+  })
+}
+
+/**
+ * Removes PIN unlock data when PIN is disabled or on excessive failed attempts.
+ */
+export async function deletePinUnlockRecord(userId: string): Promise<void> {
+  const db = await openVaultDB()
+  return new Promise((resolve, reject) => {
+    if (!db.objectStoreNames.contains(PIN_STORE_NAME)) {
+      resolve()
+      return
+    }
+    const tx = db.transaction(PIN_STORE_NAME, "readwrite")
+    const store = tx.objectStore(PIN_STORE_NAME)
+    const req = store.delete(userId)
+    req.onsuccess = () => resolve()
+    req.onerror = () => reject(req.error)
+  })
+}
+

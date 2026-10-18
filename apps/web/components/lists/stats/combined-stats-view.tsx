@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { elysia } from "@/lib/elysia"
+import { resolveUserId } from "@/lib/user-profile"
 import { Skeleton } from "@workspace/ui/components/skeleton"
 import { Card } from "@workspace/ui/components/card"
 import { Progress } from "@workspace/ui/components/progress"
@@ -54,8 +55,14 @@ const MEDIA_NAMES: Record<string, string> = {
 const combinedStatsClientCache = new Map<string, { data: any; timestamp: number }>()
 const CLIENT_CACHE_TTL_MS = 30_000
 
+export interface CombinedStatsViewProps {
+  username: string
+  userId?: string
+}
+
 export function CombinedStatsView({
   username,
+  userId,
 }: CombinedStatsViewProps): React.JSX.Element {
   const cacheKey = `combined:${username}`
   const cached = combinedStatsClientCache.get(cacheKey)
@@ -86,8 +93,16 @@ export function CombinedStatsView({
 
     async function fetchStats() {
       try {
-        const client = elysia.user({ username }).lists
-        const res = await client.combined.stats.get()
+        let targetId = userId
+        if (!targetId && username) {
+          targetId = (await resolveUserId(username)) ?? undefined
+        }
+
+        const res = await elysia.borealis.lists.stats.get({
+          query: {
+            ...(targetId ? { userId: targetId } : {}),
+          },
+        })
 
         if (ignore) return
 
@@ -112,7 +127,7 @@ export function CombinedStatsView({
     return () => {
       ignore = true
     }
-  }, [cacheKey, username])
+  }, [cacheKey, username, userId])
 
   if (isLoading) {
     return (
@@ -273,7 +288,11 @@ export function CombinedStatsView({
                         {item.hours}h
                       </span>
                     </div>
-                    <Progress value={item.percentage} className="h-1" />
+                    <Progress
+                      value={item.percentage}
+                      aria-label={`${label}: ${item.count.toLocaleString()} titles (${item.percentage}%)`}
+                      className="h-1"
+                    />
                     <span className="block text-end text-[10px] text-muted-foreground">
                       {item.percentage}%
                     </span>

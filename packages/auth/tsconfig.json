@@ -4,7 +4,11 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "types": ["node"],
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "paths": {
+      "elysia": ["../../apps/elysia/node_modules/elysia"],
+      "elysia/*": ["../../apps/elysia/node_modules/elysia/*"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

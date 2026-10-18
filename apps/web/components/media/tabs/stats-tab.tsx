@@ -20,61 +20,77 @@ interface StatsTabProps {
 }
 
 export function StatsTab({ media }: StatsTabProps) {
-  // Score Distribution data
+  // Score Distribution data (always 10 bars for 1-10 point scale)
   const scoreData = useMemo(() => {
-    if (
-      !media.scoreDistribution ||
-      typeof media.scoreDistribution !== "object"
-    ) {
-      return []
-    }
-    const entries = Object.entries(media.scoreDistribution).map(
-      ([scoreStr, count]) => ({
-        score: Number(scoreStr),
-        count: Number(count) || 0,
-      })
-    )
-    entries.sort((a, b) => a.score - b.score)
-    const maxCount = Math.max(1, ...entries.map((e) => e.count))
-    return entries.map((e) => ({
-      ...e,
-      percentage: Math.round((e.count / maxCount) * 100),
+    const rawDist = (
+      media.scoreDistribution && typeof media.scoreDistribution === "object"
+        ? media.scoreDistribution
+        : {}
+    ) as Record<string, number>
+
+    const buckets = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => ({
+      score,
+      count: Number(rawDist[String(score)]) || Number(rawDist[score]) || 0,
+    }))
+
+    const maxCount = Math.max(1, ...buckets.map((b) => b.count))
+    const totalVotes = buckets.reduce((acc, b) => acc + b.count, 0)
+
+    return buckets.map((b) => ({
+      ...b,
+      percentage:
+        totalVotes > 0 && b.count > 0
+          ? Math.round((b.count / maxCount) * 100)
+          : 0,
     }))
   }, [media.scoreDistribution])
 
   // Status Distribution data
   const statusData = useMemo(() => {
-    if (
-      !media.statusDistribution ||
-      typeof media.statusDistribution !== "object"
-    ) {
-      return []
-    }
+    const rawDist = (
+      media.statusDistribution && typeof media.statusDistribution === "object"
+        ? media.statusDistribution
+        : {}
+    ) as Record<string, number>
+
     const colorMap: Record<string, string> = {
       current: "bg-emerald-500",
       watching: "bg-emerald-500",
       reading: "bg-emerald-500",
+      playing: "bg-emerald-500",
       completed: "bg-blue-500",
       planning: "bg-amber-500",
       paused: "bg-orange-500",
-      onHold: "bg-orange-500",
+      onhold: "bg-orange-500",
       dropped: "bg-rose-500",
+      repeating: "bg-purple-500",
     }
 
-    const items = Object.entries(media.statusDistribution).map(
-      ([status, count]) => {
-        const numCount = Number(count) || 0
-        const formattedStatus =
-          status.charAt(0).toUpperCase() +
-          status.slice(1).replace(/([A-Z])/g, " $1")
-        return {
-          key: status,
-          label: formattedStatus,
-          count: numCount,
-          color: colorMap[status.toLowerCase()] || "bg-muted-foreground",
-        }
+    const defaultStatuses = [
+      "current",
+      "completed",
+      "planning",
+      "paused",
+      "dropped",
+    ]
+    const rawKeys = Object.keys(rawDist).map((k) => k.toLowerCase())
+    const keys = Array.from(new Set([...defaultStatuses, ...rawKeys]))
+
+    const items = keys.map((key) => {
+      const matchedKey = Object.keys(rawDist).find(
+        (k) => k.toLowerCase() === key
+      )
+      const count = matchedKey ? Number(rawDist[matchedKey]) || 0 : 0
+      const formattedStatus =
+        key.charAt(0).toUpperCase() +
+        key.slice(1).replace(/([A-Z])/g, " $1")
+      return {
+        key,
+        label: formattedStatus,
+        count,
+        color: colorMap[key] || "bg-muted-foreground",
       }
-    )
+    })
 
     const total = items.reduce((acc, i) => acc + i.count, 0)
     return items.map((item) => ({
@@ -105,7 +121,7 @@ export function StatsTab({ media }: StatsTabProps) {
             />
             <span>
               {typeof media.averageScore === "number" && media.averageScore > 0
-                ? `${media.averageScore}%`
+                ? `${media.averageScore.toFixed(1)} / 10`
                 : "No ratings yet"}
             </span>
           </div>
@@ -451,69 +467,71 @@ export function StatsTab({ media }: StatsTabProps) {
       )}
 
       {/* 2. Status Distribution */}
-      {statusData.length > 0 && (
-        <section
-          aria-labelledby="status-dist-heading"
-          className="rounded-2xl border border-border/40 bg-card p-5"
-        >
-          <div className="mb-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <IconUsers className="size-4 text-primary" aria-hidden="true" />
-              <h3
-                id="status-dist-heading"
-                className="text-sm font-semibold text-foreground"
-              >
-                Status Distribution
-              </h3>
-            </div>
-            {totalStatusUsers > 0 && (
-              <span className="text-xs text-muted-foreground tabular-nums">
-                {totalStatusUsers.toLocaleString()} Total Users
-              </span>
-            )}
+      <section
+        aria-labelledby="status-dist-heading"
+        className="rounded-2xl border border-border/40 bg-card p-5"
+      >
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <IconUsers className="size-4 text-primary" aria-hidden="true" />
+            <h3
+              id="status-dist-heading"
+              className="text-sm font-semibold text-foreground"
+            >
+              Status Distribution
+            </h3>
           </div>
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {totalStatusUsers.toLocaleString()} Total Users
+          </span>
+        </div>
 
-          {/* Stacked Progress Bar */}
-          <div className="mb-4 flex h-3 w-full overflow-hidden rounded-full bg-muted/60">
-            {statusData.map((item) => (
-              <div
-                key={item.key}
-                style={{ width: `${item.share}%` }}
-                className={`h-full ${item.color}`}
-                title={`${item.label}: ${item.count.toLocaleString()} (${item.share}%)`}
-              />
-            ))}
-          </div>
+        {/* Stacked Progress Bar */}
+        <div className="mb-4 flex h-3 w-full overflow-hidden rounded-full bg-muted/60">
+          {totalStatusUsers > 0 ? (
+            statusData
+              .filter((item) => item.share > 0)
+              .map((item) => (
+                <div
+                  key={item.key}
+                  style={{ width: `${item.share}%` }}
+                  className={`h-full ${item.color}`}
+                  title={`${item.label}: ${item.count.toLocaleString()} (${item.share}%)`}
+                />
+              ))
+          ) : (
+            <div className="h-full w-full bg-muted/40" />
+          )}
+        </div>
 
-          {/* Status Breakdown Grid */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-            {statusData.map((item) => (
-              <div key={item.key} className="flex flex-col gap-0.5">
-                <div className="flex items-center gap-1.5">
-                  <span className={`size-2 rounded-full ${item.color}`} />
-                  <span className="text-xs text-muted-foreground">
-                    {item.label}
-                  </span>
-                </div>
-                <span className="text-xs font-semibold text-foreground tabular-nums">
-                  {item.count.toLocaleString()}{" "}
-                  <span className="text-[10px] font-normal text-muted-foreground">
-                    ({item.share}%)
-                  </span>
+        {/* Status Breakdown Grid */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+          {statusData.map((item) => (
+            <div key={item.key} className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-1.5">
+                <span className={`size-2 rounded-full ${item.color}`} />
+                <span className="text-xs text-muted-foreground">
+                  {item.label}
                 </span>
               </div>
-            ))}
-          </div>
-        </section>
-      )}
+              <span className="text-xs font-semibold text-foreground tabular-nums">
+                {item.count.toLocaleString()}{" "}
+                <span className="text-[10px] font-normal text-muted-foreground">
+                  ({item.share}%)
+                </span>
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* 3. Score Distribution */}
-      {scoreData.length > 0 && (
-        <section
-          aria-labelledby="score-dist-heading"
-          className="rounded-2xl border border-border/40 bg-card p-5"
-        >
-          <div className="mb-4 flex items-center gap-2">
+      <section
+        aria-labelledby="score-dist-heading"
+        className="rounded-2xl border border-border/40 bg-card p-5"
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
             <IconChartBar className="size-4 text-primary" aria-hidden="true" />
             <h3
               id="score-dist-heading"
@@ -522,33 +540,42 @@ export function StatsTab({ media }: StatsTabProps) {
               Score Distribution
             </h3>
           </div>
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {typeof media.scoredCount === "number" && media.scoredCount > 0
+              ? `${media.scoredCount.toLocaleString()} Total Votes`
+              : "0 Total Votes"}
+          </span>
+        </div>
 
-          <div className="flex h-40 w-full items-end justify-between gap-1.5 pt-4">
-            {scoreData.map((item) => (
+        <div className="flex h-40 w-full items-end justify-between gap-1.5 pt-4">
+          {scoreData.map((item) => (
+            <div
+              key={item.score}
+              className="flex h-full flex-1 flex-col items-center justify-end gap-1.5"
+            >
+              <span className="hidden text-[10px] text-muted-foreground tabular-nums sm:block">
+                {item.count > 0
+                  ? item.count > 999
+                    ? `${(item.count / 1000).toFixed(1)}k`
+                    : item.count
+                  : ""}
+              </span>
               <div
-                key={item.score}
-                className="flex h-full flex-1 flex-col items-center justify-end gap-1.5"
-              >
-                <span className="hidden text-[10px] text-muted-foreground tabular-nums sm:block">
-                  {item.count > 0
-                    ? item.count > 999
-                      ? `${(item.count / 1000).toFixed(1)}k`
-                      : item.count
-                    : ""}
-                </span>
-                <div
-                  className="w-full max-w-[28px] rounded-t-lg bg-primary/75 hover:bg-primary"
-                  style={{ height: `${Math.max(4, item.percentage)}%` }}
-                  title={`Score ${item.score}: ${item.count.toLocaleString()} votes`}
-                />
-                <span className="text-[10px] font-medium text-foreground/80 tabular-nums">
-                  {item.score}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+                className={`w-full max-w-[28px] rounded-t-lg transition-all ${
+                  item.count > 0
+                    ? "bg-primary/75 hover:bg-primary"
+                    : "bg-muted/40"
+                }`}
+                style={{ height: `${Math.max(4, item.percentage)}%` }}
+                title={`Score ${item.score}: ${item.count.toLocaleString()} votes`}
+              />
+              <span className="text-[10px] font-medium text-foreground/80 tabular-nums">
+                {item.score}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   )
 }

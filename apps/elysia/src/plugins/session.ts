@@ -1,735 +1,224 @@
-import { createHash } from "node:crypto"
-import { Elysia } from "elysia"
-import { decode, type JWT } from "next-auth/jwt"
-import { prisma as defaultPrisma } from "@IRIS/database"
-import { IRISBitField, type IRISBitFieldResolvable } from "@IRIS/permissions"
+import { Elysia } from 'elysia'
+import { decode } from 'next-auth/jwt'
+import { prisma as defaultPrisma, type PrismaClient } from '@IRIS/database'
+import { Unauthorized } from '../lib/errors'
+import { hashApiKey } from '../utils/auth-crypto'
 
-/**
- * Standard cookie names used by NextAuth to persist session tokens across HTTP and HTTPS environments.
- */
+export type DatabaseClient = PrismaClient
+
+export interface SessionUser {
+  id: string
+  username: string
+  email: string | null
+  permissions: number[]
+}
+
+export class Session {
+  readonly isAuthenticated: boolean
+  readonly user: SessionUser | null
+  readonly token: string | null
+
+  constructor(user: SessionUser | null, token: string | null = null) {
+    this.user = user
+    this.isAuthenticated = user !== null
+    this.token = token
+  }
+
+  getUser(): SessionUser | null {
+    return this.user
+  }
+
+  requireUser(): SessionUser {
+    if (!this.user) {
+      throw new Unauthorized('Authentication required')
+    }
+    return this.user
+  }
+}
+
 export const NEXTAUTH_SESSION_COOKIE_NAMES = [
-  "__Secure-next-auth.session-token",
-  "next-auth.session-token",
+  '__Secure-next-auth.session-token',
+  'next-auth.session-token',
+  'session',
 ] as const
 
-const USER_CACHE_TTL_MS = 60 * 1000 // 1 minute
-const API_KEY_CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
-
-const userCache = new Map<string, CacheEntry<SessionUser | null>>()
-const apiKeyCache = new Map<
-  string,
-  CacheEntry<{ id: string; userId: string; expiresAt: number | null } | null>
->()
-
-/**
- * Rich Session object representing the current request's authentication state.
- */
-export class Session {
-  /**
-   * Authentication status: "authenticated" or "unauthenticated".
-   */
-  public readonly status: SessionStatus
-
-  /**
-   * Authenticated user entity, or null if unauthenticated.
-   */
-  public readonly user: SessionUser | null
-
-  /**
-   * Authentication mechanism used: "session", "token", "api_key", or "none".
-   */
-  public readonly method: AuthMethod
-
-  /**
-   * Token string if authenticated via cookie or bearer token.
-   */
-  public readonly token: string | null
-
-  /**
-   * API key ID if authenticated via API key.
-   */
-  public readonly apiKeyId: string | null
-
-  /**
-   * Scopes granted if authenticated via OAuth 2.0.
-   */
-  public readonly oauthScopes: string[]
-
-  /**
-   * OAuth Client ID if authenticated via OAuth 2.0.
-   */
-  public readonly oauthClientId: string | null
-
-  constructor(data?: SessionInitData | null) {
-    this.user = data?.user ?? null
-    this.method = data?.method ?? "none"
-    this.token = data?.token ?? null
-    this.apiKeyId = data?.apiKeyId ?? null
-    this.oauthScopes = data?.oauthScopes ?? []
-    this.oauthClientId = data?.oauthClientId ?? null
-    this.status = this.user !== null ? "authenticated" : "unauthenticated"
-  }
-
-  /**
-   * Whether the request has a valid authenticated session.
-   */
-  public get isAuthenticated(): boolean {
-    return this.status === "authenticated"
-  }
-
-  /**
-   * Retrieves the authenticated user profile, or null if unauthenticated.
-   */
-  public getUser(): SessionUser | null {
-    return this.user
-  }
-
-  /**
-   * Returns the authenticated user or throws an unauthorized error.
-   */
-  public requireUser(): SessionUser {
-    if (!this.user) {
-      throw new Error("Unauthorized: Session is unauthenticated")
-    }
-    return this.user
-  }
-
-  /**
-   * Verifies if the authenticated user has the specified permission(s).
-   * Automatically grants access if user possesses ADMINISTRATOR permission.
-   */
-  public hasPermission(permission: IRISBitFieldResolvable | number): boolean {
-    if (!this.user || !this.user.permissions) {
-      return false
-    }
-    const bitfield = new IRISBitField(this.user.permissions)
-    const resolvable =
-      typeof permission === "number" ? BigInt(permission) : permission
-    return bitfield.has(resolvable as IRISBitFieldResolvable)
-  }
-
-  /**
-   * Verifies if the authenticated session has the specified OAuth scope.
-   * If session is not authenticated via OAuth (e.g. cookie session or API key),
-   * this automatically returns true (full scope).
-   */
-  public hasScope(scope: string): boolean {
-    if (this.method !== "oauth") {
-      return true
-    }
-    if (this.oauthScopes.includes("*") || this.oauthScopes.includes("all")) {
-      return true
-    }
-    return this.oauthScopes.includes(scope)
-  }
-}
-
-/**
- * Parses raw HTTP `Cookie` header string into a key-value dictionary.
- * Automatically decodes URI components and ignores malformed segments.
- *
- * @param cookieHeader - Raw string from `request.headers.get("cookie")`
- * @returns Dictionary mapping cookie names to decoded values
- */
-export function parseCookieHeader(
-  cookieHeader: string | null | undefined
-): Record<string, string> {
-  const result: Record<string, string> = {}
-  if (!cookieHeader || cookieHeader.trim().length === 0) return result
-
-  for (const pair of cookieHeader.split(";")) {
-    const trimmed = pair.trim()
-    if (trimmed.length === 0) continue
-    const sep = trimmed.indexOf("=")
-    if (sep === -1) continue
-    const key = trimmed.slice(0, sep).trim()
-    const rawVal = trimmed.slice(sep + 1).trim()
-    if (key.length === 0) continue
-    try {
-      result[key] = decodeURIComponent(rawVal)
-    } catch {
-      result[key] = rawVal
-    }
-  }
-  return result
-}
-
-export function extractNextAuthCookie(
-  cookieHeader: string | Record<string, string> | null | undefined
-): string | null {
-  if (!cookieHeader) return null
-  const cookies =
-    typeof cookieHeader === "string"
-      ? parseCookieHeader(cookieHeader)
-      : cookieHeader
-
-  for (const base of NEXTAUTH_SESSION_COOKIE_NAMES) {
-    const direct = cookies[base]
-    if (direct && direct.length > 0) return direct
-
-    const chunk0 = cookies[`${base}.0`]
-    if (chunk0 && chunk0.length > 0) {
-      let assembled = chunk0
-      let i = 1
-      while (cookies[`${base}.${i}`] !== undefined) {
-        assembled += cookies[`${base}.${i}`]
-        i++
-      }
-      return assembled
-    }
-  }
-  return null
-}
-
-export async function verifyNextAuthJwt(
-  rawToken: string | null | undefined,
-  secret: string | null | undefined = process.env.NEXTAUTH_SECRET
-): Promise<JWT | null> {
-  if (!rawToken || rawToken.trim().length === 0) return null
-  let effectiveSecret =
-    secret ?? process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET
-  if (!effectiveSecret) return null
-
-  // Strip any surrounding quotes or whitespace from env file parsing
-  effectiveSecret = effectiveSecret.trim().replace(/^["']|["']$/g, "")
-
-  try {
-    const decoded = await decode({
-      token: rawToken.trim(),
-      secret: effectiveSecret,
-    })
-    if (!decoded || typeof decoded !== "object") return null
-    return decoded as JWT
-  } catch (err) {
-    console.error("[Session] Error decoding NextAuth JWT:", err)
-    return null
-  }
-}
-
-export function extractBearerToken(
-  authorizationHeader: string | null | undefined
-): string | null {
-  if (!authorizationHeader || authorizationHeader.trim().length === 0) {
-    return null
-  }
-  const parts = authorizationHeader.trim().split(" ")
-  if (parts.length === 2 && parts[0]?.toLowerCase() === "bearer") {
-    return parts[1] ?? null
-  }
-  if (parts.length === 1 && parts[0] && !parts[0].includes(" ")) {
-    return parts[0]
-  }
-  return null
-}
-
-export function hashApiKey(apiKey: string): string {
-  return createHash("sha256").update(apiKey.trim()).digest("hex")
-}
-
-/**
- * Purges an API key from the in-memory cache by hash, API key ID, or clears entire cache.
- */
-export function invalidateApiKeyCache(keyHashOrId?: string): void {
-  if (!keyHashOrId) {
-    apiKeyCache.clear()
-    return
-  }
-  apiKeyCache.delete(keyHashOrId)
-  for (const [hash, entry] of apiKeyCache.entries()) {
-    if (entry.value?.id === keyHashOrId) {
-      apiKeyCache.delete(hash)
-    }
-  }
-}
-
-function getCached<T>(
-  cache: Map<string, CacheEntry<T>>,
-  key: string
-): T | undefined {
-  const entry = cache.get(key)
-  if (!entry) return undefined
-  if (Date.now() > entry.expiresAt) {
-    cache.delete(key)
-    return undefined
-  }
-  return entry.value
-}
-
-function setCached<T>(
-  cache: Map<string, CacheEntry<T>>,
-  key: string,
-  value: T,
-  ttlMs: number
-): void {
-  if (cache.size > 2000) {
-    cache.clear()
-  }
-  cache.set(key, { value, expiresAt: Date.now() + ttlMs })
-}
-
-/**
- * Fetches a user by ID from cache or database.
- */
-async function findUserById(
-  userId: string,
-  prisma: DatabaseClient
-): Promise<SessionUser | null> {
-  const cached = getCached(userCache, userId)
-  if (cached !== undefined) {
-    return cached
-  }
-
-  try {
-    const dbUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        permissions: true,
-        passwordChangedAt: true,
-      },
-    })
-
-    if (!dbUser) {
-      setCached(userCache, userId, null, USER_CACHE_TTL_MS)
-      return null
-    }
-
-    const user: SessionUser = {
-      id: dbUser.id,
-      username: dbUser.username.trim(),
-      email: dbUser.email,
-      permissions: dbUser.permissions,
-    }
-
-    setCached(userCache, userId, user, USER_CACHE_TTL_MS)
-    return user
-  } catch {
-    return null
-  }
-}
-
-/**
- * Extracts session in strict priority order:
- * 1. NextAuth Session Cookie
- * 2. Bearer / Header Token
- * 3. API Key
- *
- * If credentials are provided but invalid, expired, or non-existent,
- * returns an appropriate error (404 "Not Found" or 401 "Session expired").
- */
 export async function resolveSessionFromRequest(
   request: Request,
   prisma: DatabaseClient = defaultPrisma
-): Promise<ResolveSessionResult> {
-  const url = new URL(request.url)
+): Promise<{ user: SessionUser | null; token: string | null }> {
+  const secret = process.env.NEXTAUTH_SECRET || 'iris-default-secret-key-32-chars!!'
 
-  // ---------------------------------------------------------
-  // Priority 1: NextAuth Session Cookie
-  // ---------------------------------------------------------
-  const cookieHeader = request.headers.get("cookie")
-  const cookieToken = extractNextAuthCookie(cookieHeader)
+  // 1. Try Authorization header Bearer token
+  const authHeader = request.headers.get('authorization')
+  let rawToken: string | null = null
 
-  if (cookieToken !== null && cookieToken.trim().length > 0) {
-    let jwt: JWT | null = null
-    try {
-      jwt = await verifyNextAuthJwt(cookieToken)
-    } catch {
-      jwt = null
-    }
+  if (authHeader?.startsWith('Bearer ')) {
+    rawToken = authHeader.slice(7).trim()
+  }
 
-    if (!jwt || typeof jwt.id !== "string" || jwt.id.trim().length === 0) {
-      return {
-        sessionData: null,
-        error: {
-          status: 401,
-          error: "Unauthorized",
-          message: "Session expired",
-        },
+  // 2. Try Cookies if no bearer header
+  if (!rawToken) {
+    const cookieHeader = request.headers.get('cookie')
+    if (cookieHeader) {
+      const cookies = Object.fromEntries(
+        cookieHeader.split(';').map((c) => {
+          const [key, ...v] = c.trim().split('=')
+          return [key, decodeURIComponent(v.join('='))]
+        })
+      )
+      for (const name of NEXTAUTH_SESSION_COOKIE_NAMES) {
+        if (cookies[name]) {
+          rawToken = cookies[name]
+          break
+        }
       }
-    }
-
-    const user = await findUserById(jwt.id, prisma)
-    if (!user) {
-      return {
-        sessionData: null,
-        error: {
-          status: 404,
-          error: "Not Found",
-          message: "User not found",
-        },
-      }
-    }
-
-    // Verify if password was changed after token was issued
-    const dbUser = await prisma.user.findUnique({
-      where: { id: jwt.id },
-      select: { passwordChangedAt: true },
-    })
-
-    const pwdChangedSeconds = dbUser?.passwordChangedAt
-      ? Math.floor(dbUser.passwordChangedAt.getTime() / 1000)
-      : null
-
-    if (
-      pwdChangedSeconds !== null &&
-      typeof jwt.iat === "number" &&
-      jwt.iat < pwdChangedSeconds
-    ) {
-      return {
-        sessionData: null,
-        error: {
-          status: 401,
-          error: "Unauthorized",
-          message: "Session expired",
-        },
-      }
-    }
-
-    return {
-      sessionData: {
-        user,
-        method: "session",
-        token: cookieToken,
-      },
-      error: null,
     }
   }
 
-  // ---------------------------------------------------------
-  // Priority 2: Bearer / Header Token
-  // ---------------------------------------------------------
-  const authHeader = request.headers.get("authorization")
-  const bearerToken =
-    extractBearerToken(authHeader) ??
-    request.headers.get("x-auth-token")?.trim() ??
-    request.headers.get("x-token")?.trim() ??
-    url.searchParams.get("token")?.trim() ??
-    null
-
-  if (bearerToken !== null && bearerToken.length > 0) {
-    let jwt: JWT | null = null
+  if (rawToken) {
     try {
-      jwt = await verifyNextAuthJwt(bearerToken)
-    } catch {
-      jwt = null
-    }
-
-    if (!jwt || typeof jwt.id !== "string" || jwt.id.trim().length === 0) {
-      // Priority 2b: OAuth 2.0 Bearer Access Token
-      try {
-        const oauthToken = await prisma.oAuthAccessToken.findUnique({
-          where: { token: bearerToken },
-          include: {
-            user: {
-              select: {
-                id: true,
-                username: true,
-                email: true,
-                permissions: true,
-              },
-            },
+      const decoded = (await decode({ token: rawToken, secret })) as any
+      if (decoded && decoded.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: decoded.id },
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            permissions: true,
+            passwordChangedAt: true,
           },
         })
 
-        if (
-          oauthToken &&
-          !oauthToken.revokedAt &&
-          oauthToken.expiresAt.getTime() > Date.now()
-        ) {
-          const user: SessionUser = {
+        if (dbUser) {
+          // Verify token validity against passwordChangedAt
+          let isRevoked = false
+          if (dbUser.passwordChangedAt && decoded.iat) {
+            const pwdChangedSeconds = Math.floor(dbUser.passwordChangedAt.getTime() / 1000)
+            if (decoded.iat < pwdChangedSeconds) {
+              isRevoked = true
+            }
+          }
+
+          if (!isRevoked) {
+            return {
+              user: {
+                id: dbUser.id,
+                username: dbUser.username,
+                email: dbUser.email,
+                permissions: dbUser.permissions,
+              },
+              token: rawToken,
+            }
+          }
+        }
+      }
+    } catch {
+      // JWT decoding failed, proceed to OAuth token resolution
+    }
+
+    // 2. Try OAuth 2.0 Bearer Token
+    try {
+      const oauthToken = await prisma.oAuthAccessToken.findUnique({
+        where: { token: rawToken },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              email: true,
+              permissions: true,
+            },
+          },
+        },
+      })
+
+      if (
+        oauthToken &&
+        !oauthToken.revokedAt &&
+        oauthToken.expiresAt.getTime() > Date.now()
+      ) {
+        return {
+          user: {
             id: oauthToken.user.id,
             username: oauthToken.user.username.trim(),
             email: oauthToken.user.email,
             permissions: oauthToken.user.permissions,
-          }
-
-          return {
-            sessionData: {
-              user,
-              method: "oauth",
-              token: bearerToken,
-              oauthScopes: oauthToken.scopes,
-              oauthClientId: oauthToken.clientId,
-            },
-            error: null,
-          }
+          },
+          token: rawToken,
         }
-      } catch (err) {
-        console.error("[Session] Error querying OAuth access token:", err)
       }
-
-      return {
-        sessionData: null,
-        error: {
-          status: 401,
-          error: "Unauthorized",
-          message: "Session expired",
-        },
-      }
-    }
-
-    const user = await findUserById(jwt.id, prisma)
-    if (!user) {
-      return {
-        sessionData: null,
-        error: {
-          status: 404,
-          error: "Not Found",
-          message: "User not found",
-        },
-      }
-    }
-
-    const dbUser = await prisma.user.findUnique({
-      where: { id: jwt.id },
-      select: { passwordChangedAt: true },
-    })
-
-    const pwdChangedSeconds = dbUser?.passwordChangedAt
-      ? Math.floor(dbUser.passwordChangedAt.getTime() / 1000)
-      : null
-
-    if (
-      pwdChangedSeconds !== null &&
-      typeof jwt.iat === "number" &&
-      jwt.iat < pwdChangedSeconds
-    ) {
-      return {
-        sessionData: null,
-        error: {
-          status: 401,
-          error: "Unauthorized",
-          message: "Session expired",
-        },
-      }
-    }
-
-    return {
-      sessionData: {
-        user,
-        method: "token",
-        token: bearerToken,
-      },
-      error: null,
-    }
+    } catch {}
   }
 
-  // ---------------------------------------------------------
-  // Priority 3: API Key
-  // ---------------------------------------------------------
-  let rawApiKey: string | null = null
-  const xApiKey = request.headers.get("x-api-key")
-  const xApi = request.headers.get("x-api")
-  const apiKeyHeader = request.headers.get("apikey")
+  // 3. Try API Key from headers (x-api-key, apikey, x-api, Authorization: ApiKey)
+  const xApiKey =
+    request.headers.get('x-api-key') ||
+    request.headers.get('apikey') ||
+    request.headers.get('x-api') ||
+    (authHeader?.startsWith('ApiKey ') ? authHeader.slice(7).trim() : null)
 
   if (xApiKey && xApiKey.trim().length > 0) {
-    rawApiKey = xApiKey.trim()
-  } else if (xApi && xApi.trim().length > 0) {
-    rawApiKey = xApi.trim()
-  } else if (apiKeyHeader && apiKeyHeader.trim().length > 0) {
-    rawApiKey = apiKeyHeader.trim()
-  } else if (authHeader && authHeader.trim().startsWith("ApiKey ")) {
-    rawApiKey = authHeader.trim().slice(7).trim()
-  } else {
-    const queryKey =
-      url.searchParams.get("api_key") ??
-      url.searchParams.get("apiKey") ??
-      url.searchParams.get("apikey")
-    if (queryKey && queryKey.trim().length > 0) {
-      rawApiKey = queryKey.trim()
-    }
-  }
-
-  if (rawApiKey !== null && rawApiKey.length > 0) {
-    const keyHash = hashApiKey(rawApiKey)
-    const cachedKey = getCached(apiKeyCache, keyHash)
-
-    let keyRecord = cachedKey
-    if (keyRecord === undefined) {
-      let dbKey: { id: string; userId: string; expiresAt: Date | null } | null =
-        null
-      try {
-        dbKey = await prisma.apiKey.findFirst({
-          where: { hash: keyHash },
-          select: {
-            id: true,
-            userId: true,
-            expiresAt: true,
+    try {
+      const keyHash = hashApiKey(xApiKey.trim())
+      const keyRecord = await prisma.apiKey.findFirst({
+        where: { hash: keyHash },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              email: true,
+              permissions: true,
+            },
           },
-        })
-      } catch {
-        dbKey = null
-      }
+        },
+      })
 
-      if (!dbKey) {
-        setCached(apiKeyCache, keyHash, null, API_KEY_CACHE_TTL_MS)
+      if (
+        keyRecord &&
+        (!keyRecord.expiresAt || keyRecord.expiresAt.getTime() > Date.now())
+      ) {
+        prisma.apiKey
+          .update({
+            where: { id: keyRecord.id },
+            data: { lastUsedAt: new Date() },
+          })
+          .catch(() => {})
+
         return {
-          sessionData: null,
-          error: {
-            status: 404,
-            error: "Not Found",
-            message: "API key not found",
+          user: {
+            id: keyRecord.user.id,
+            username: keyRecord.user.username.trim(),
+            email: keyRecord.user.email,
+            permissions: keyRecord.user.permissions,
           },
+          token: null,
         }
       }
-
-      keyRecord = {
-        id: dbKey.id,
-        userId: dbKey.userId,
-        expiresAt: dbKey.expiresAt ? dbKey.expiresAt.getTime() : null,
-      }
-      setCached(apiKeyCache, keyHash, keyRecord, API_KEY_CACHE_TTL_MS)
-    }
-
-    if (!keyRecord) {
-      return {
-        sessionData: null,
-        error: {
-          status: 404,
-          error: "Not Found",
-          message: "API key not found",
-        },
-      }
-    }
-
-    // Check expiration
-    if (keyRecord.expiresAt !== null && Date.now() > keyRecord.expiresAt) {
-      return {
-        sessionData: null,
-        error: {
-          status: 401,
-          error: "Unauthorized",
-          message: "Session expired",
-        },
-      }
-    }
-
-    // Asynchronously update lastUsedAt
-    prisma.apiKey
-      .update({
-        where: { id: keyRecord.id },
-        data: { lastUsedAt: new Date() },
-      })
-      .catch(() => {})
-
-    const user = await findUserById(keyRecord.userId, prisma)
-    if (!user) {
-      return {
-        sessionData: null,
-        error: {
-          status: 404,
-          error: "Not Found",
-          message: "User not found",
-        },
-      }
-    }
-
-    return {
-      sessionData: {
-        user,
-        method: "api_key",
-        apiKeyId: keyRecord.id,
-      },
-      error: null,
-    }
+    } catch {}
   }
 
-  // ---------------------------------------------------------
-  // Fallback: No credentials provided
-  // ---------------------------------------------------------
-  return {
-    sessionData: null,
-    error: null,
-  }
+  return { user: null, token: null }
+}
+
+export interface SessionPluginOptions {
+  prisma?: DatabaseClient
 }
 
 /**
- * Elysia plugin that automatically resolves and extracts session context on every request.
- * Evaluates credentials in priority order:
- * 1. NextAuth session cookie
- * 2. Bearer / header token
- * 3. API key
- *
- * If credentials are provided but invalid or expired, rejects the request immediately:
- * - 404 "API key not found" / "User not found"
- * - 401 "Session expired"
- *
- * Injects `session` instance into the route context.
+ * Elysia session plugin providing request-scoped session resolution.
  */
-export const session = (options?: { prisma?: DatabaseClient }) =>
-  new Elysia({ name: "iris-session" })
-    .derive("global", async ({ request }) => {
-      const { sessionData, error } = await resolveSessionFromRequest(
+export const session = (options?: SessionPluginOptions) =>
+  (app: Elysia) =>
+    app.derive(async ({ request }) => {
+      const { user, token } = await resolveSessionFromRequest(
         request,
         options?.prisma ?? defaultPrisma
       )
-
       return {
-        session: new Session(sessionData),
-        authError: error,
-      }
-    })
-    .beforeHandle("global", ({ authError, set }) => {
-      if (authError) {
-        set.status = authError.status
-        return authError
+        session: new Session(user, token),
       }
     })
 
-/**
- * User representation within the active session.
- */
-export interface SessionUser {
-  /** Unique user identifier (UUID / cuid). */
-  id: string
-  /** Primary username. */
-  username: string
-  /** Primary email address, or null if unlinked. */
-  email: string | null
-  /** Bitfield array representing user permissions. */
-  permissions: number[]
-}
 
-/** Authentication status: "authenticated" or "unauthenticated". */
-export type SessionStatus = "authenticated" | "unauthenticated"
-
-/** Authentication mechanism detected for the request. */
-export type AuthMethod = "session" | "token" | "api_key" | "oauth" | "none"
-
-/**
- * Initialization parameters used to construct a Session instance.
- */
-export interface SessionInitData {
-  /** Authenticated user profile, or null. */
-  user: SessionUser | null
-  /** Authentication method detected. */
-  method: AuthMethod
-  /** Raw token string if authenticated via bearer/cookie. */
-  token?: string | null
-  /** Database ID of the API key if authenticated via API key. */
-  apiKeyId?: string | null
-  /** Scopes granted if authenticated via OAuth 2.0. */
-  oauthScopes?: string[]
-  /** Client ID if authenticated via OAuth 2.0. */
-  oauthClientId?: string | null
-}
-
-type DatabaseClient = typeof defaultPrisma
-
-interface CacheEntry<T> {
-  value: T
-  expiresAt: number
-}
-
-export interface AuthErrorResponse {
-  readonly status: 401 | 404
-  readonly error: "Unauthorized" | "Not Found"
-  readonly message: "Session expired" | "API key not found" | "User not found"
-}
-
-export interface ResolveSessionResult {
-  readonly sessionData: SessionInitData | null
-  readonly error: AuthErrorResponse | null
-}

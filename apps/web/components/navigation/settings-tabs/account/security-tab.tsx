@@ -76,15 +76,10 @@ export function SecuritySettingsTab({
     setPasswordSuccess(null)
 
     try {
-      const res = await elysia.auth.password.change.post(
-        {
-          currentPassword,
-          newPassword,
-        },
-        {
-          fetch: { credentials: "include" },
-        }
-      )
+      const res = await elysia.carina.auth.password.change.post({
+        currentPassword,
+        newPassword,
+      })
 
       if (res.error) {
         const errorData = res.error?.value as { message?: string } | undefined
@@ -131,15 +126,10 @@ export function SecuritySettingsTab({
           return
         }
 
-        const passRes = await elysia.auth.password.change.post(
-          {
-            currentPassword,
-            newPassword,
-          },
-          {
-            fetch: { credentials: "include" },
-          }
-        )
+        const passRes = await elysia.carina.auth.password.change.post({
+          currentPassword,
+          newPassword,
+        })
 
         if (passRes.error) {
           const errorData = passRes.error?.value as
@@ -154,14 +144,9 @@ export function SecuritySettingsTab({
 
       // 2. Process Email 2FA toggle if modified
       if (isEmailMfaDirty) {
-        const emailRes = await elysia.auth.email.toggle.post(
-          {
-            enabled: draftEmailMfa,
-          },
-          {
-            fetch: { credentials: "include" },
-          }
-        )
+        const emailRes = draftEmailMfa
+          ? await elysia.carina.auth.twofactor.email.setup.post()
+          : await elysia.carina.auth.twofactor.email.delete({})
 
         if (emailRes.error) {
           const errorData = emailRes.error?.value as

@@ -67,7 +67,8 @@ interface ExportShareItem {
 
 export function ListsExportSettingsTab({}: SettingsTabProps): React.JSX.Element {
   const { data: session } = useSession()
-  const username = session?.user?.username
+  const userId = session?.user?.id
+  const username = session?.user?.username || session?.user?.id || "user"
 
   // Export options
   const [selectedFormat, setSelectedFormat] = useState<"iris-json" | "mal-xml">(
@@ -94,7 +95,7 @@ export function ListsExportSettingsTab({}: SettingsTabProps): React.JSX.Element 
   // Fetch active shares with in-flight deduplication
   const fetchShares = useCallback(
     async (force = false) => {
-      if (!username) return
+      if (!userId) return
       if (inFlightFetchRef.current && !force) {
         return inFlightFetchRef.current
       }
@@ -102,11 +103,8 @@ export function ListsExportSettingsTab({}: SettingsTabProps): React.JSX.Element 
       const task = async () => {
         setIsLoadingShares(true)
         try {
-          const { data, error } = await elysia
-            .user({ username })
-            .lists.export.shares.get({
-              fetch: { credentials: "include" },
-            })
+          const { data, error } =
+            await elysia.borealis.lists.export.shares.get()
 
           if (!error && data?.success && Array.isArray(data.shares)) {
             setShares(data.shares as ExportShareItem[])
@@ -123,14 +121,14 @@ export function ListsExportSettingsTab({}: SettingsTabProps): React.JSX.Element 
       inFlightFetchRef.current = promise
       return promise
     },
-    [username]
+    [userId]
   )
 
   useEffect(() => {
-    if (!username || fetchedUserRef.current === username) return
-    fetchedUserRef.current = username
+    if (!userId || fetchedUserRef.current === userId) return
+    fetchedUserRef.current = userId
     fetchShares()
-  }, [username, fetchShares])
+  }, [userId, fetchShares])
 
   // When format switches to MAL XML, constrain selection to Anime & Manga
   const handleFormatChange = (format: "iris-json" | "mal-xml") => {
@@ -165,7 +163,7 @@ export function ListsExportSettingsTab({}: SettingsTabProps): React.JSX.Element 
 
   // Direct File Download
   const handleDownload = async () => {
-    if (!username) {
+    if (!userId) {
       toast.error("Please sign in to export your media lists.")
       return
     }
@@ -177,12 +175,11 @@ export function ListsExportSettingsTab({}: SettingsTabProps): React.JSX.Element 
 
     setIsExporting(true)
     try {
-      const res = await elysia.user({ username }).lists.export.get({
+      const res = await elysia.borealis.lists.export.get({
         query: {
           format: selectedFormat,
           types: selectedTypes.join(","),
         },
-        fetch: { credentials: "include" },
       })
 
       if (res.error || !res.data) {
@@ -193,15 +190,16 @@ export function ListsExportSettingsTab({}: SettingsTabProps): React.JSX.Element 
 
       let blob: Blob
       const isXml = selectedFormat === "mal-xml"
+      const exportData = res.data as unknown as any
 
-      if (typeof res.data === "string") {
-        blob = new Blob([res.data], {
+      if (typeof exportData === "string") {
+        blob = new Blob([exportData], {
           type: isXml
             ? "application/xml;charset=utf-8"
             : "application/json;charset=utf-8",
         })
       } else {
-        blob = new Blob([JSON.stringify(res.data, null, 2)], {
+        blob = new Blob([JSON.stringify(exportData, null, 2)], {
           type: "application/json;charset=utf-8",
         })
       }
@@ -226,7 +224,7 @@ export function ListsExportSettingsTab({}: SettingsTabProps): React.JSX.Element 
 
   // Create Share URL
   const handleCreateShare = async () => {
-    if (!username) return
+    if (!userId) return
     if (!sharePassword || sharePassword.length < 4) {
       toast.error("Password must be at least 4 characters long.")
       return
@@ -241,17 +239,13 @@ export function ListsExportSettingsTab({}: SettingsTabProps): React.JSX.Element 
 
     setIsCreatingShare(true)
     try {
-      const { data, error } = await elysia.user({ username }).lists.export.post(
-        {
+      const { data, error } =
+        await elysia.borealis.lists.export.shares.post({
           password: sharePassword,
           mediaTypes: selectedTypes,
           description: shareDescription.trim() || undefined,
           expiresInHours: shareExpiresIn,
-        },
-        {
-          fetch: { credentials: "include" },
-        }
-      )
+        })
 
       if (error || !data?.success) {
         throw new Error(
@@ -272,17 +266,11 @@ export function ListsExportSettingsTab({}: SettingsTabProps): React.JSX.Element 
 
   // Revoke Share URL
   const handleRevokeShare = async (shareId: string) => {
-    if (!username) return
+    if (!userId) return
     try {
-      const { data, error } = await elysia
-        .user({ username })
-        .lists.export.delete(
-          {},
-          {
-            query: { shareId },
-            fetch: { credentials: "include" },
-          }
-        )
+      const { data, error } = await elysia.borealis.lists.export
+        .shares({ shareId })
+        .delete()
 
       if (error || !data?.success) {
         throw new Error(

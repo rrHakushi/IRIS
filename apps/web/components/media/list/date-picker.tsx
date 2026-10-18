@@ -23,6 +23,8 @@ export interface DatePickerProps {
   disabled?: boolean
   ariaLabel?: string
   align?: "start" | "end"
+  minValue?: string | null
+  maxValue?: string | null
 }
 
 export function DatePicker({
@@ -33,6 +35,8 @@ export function DatePicker({
   disabled = false,
   ariaLabel = "Date picker",
   align = "start",
+  minValue,
+  maxValue,
 }: DatePickerProps) {
   // Parse date using @internationalized/date package
   const date = React.useMemo<CalendarDate | null>(() => {
@@ -45,8 +49,30 @@ export function DatePicker({
     }
   }, [value])
 
+  const minDate = React.useMemo<CalendarDate | null>(() => {
+    if (!minValue) return null
+    try {
+      const ymd = formatDateToYmd(minValue)
+      return ymd ? parseDate(ymd) : null
+    } catch {
+      return null
+    }
+  }, [minValue])
+
+  const maxDate = React.useMemo<CalendarDate | null>(() => {
+    if (!maxValue) return null
+    try {
+      const ymd = formatDateToYmd(maxValue)
+      return ymd ? parseDate(ymd) : null
+    } catch {
+      return null
+    }
+  }, [maxValue])
+
   const handleSelect = (newDate: CalendarDate | null, close?: () => void) => {
     if (newDate) {
+      if (minDate && newDate.compare(minDate) < 0) return
+      if (maxDate && newDate.compare(maxDate) > 0) return
       onChange(newDate.toString())
     } else {
       onChange(null)
@@ -54,7 +80,15 @@ export function DatePicker({
     if (close) close()
   }
 
+  const isTodayDisabled = React.useMemo(() => {
+    const todayDate = today(getLocalTimeZone())
+    if (minDate && todayDate.compare(minDate) < 0) return true
+    if (maxDate && todayDate.compare(maxDate) > 0) return true
+    return false
+  }, [minDate, maxDate])
+
   const handleSetToday = (close?: () => void) => {
+    if (isTodayDisabled) return
     const todayDate = today(getLocalTimeZone())
     onChange(todayDate.toString())
     if (close) close()
@@ -143,6 +177,8 @@ export function DatePicker({
             <Calendar
               aria-label={ariaLabel || "Choose date"}
               value={date as any}
+              minValue={minDate || undefined}
+              maxValue={maxDate || undefined}
               onChange={(val: any) => handleSelect(val as CalendarDate, close)}
               className="bg-transparent p-3"
             />
@@ -150,8 +186,13 @@ export function DatePicker({
             <div className="flex items-center justify-between border-t border-border bg-muted/30 px-3 py-2 text-xs">
               <button
                 type="button"
+                disabled={isTodayDisabled}
                 onClick={() => handleSetToday(close)}
-                className="cursor-pointer font-medium text-primary transition-colors hover:underline"
+                className={cn(
+                  "cursor-pointer font-medium text-primary transition-colors hover:underline",
+                  isTodayDisabled &&
+                    "cursor-not-allowed opacity-40 hover:no-underline"
+                )}
               >
                 Today
               </button>

@@ -9,10 +9,17 @@ import {
 
 function Textarea({
   className,
+  "aria-label": ariaLabel,
+  placeholder,
   ...props
 }: React.ComponentProps<typeof TextareaPrimitive>) {
+  const resolvedAriaLabel =
+    ariaLabel ?? (typeof placeholder === "string" ? placeholder : undefined)
+
   return (
     <TextareaPrimitive
+      aria-label={resolvedAriaLabel}
+      placeholder={placeholder}
       data-slot="textarea"
       className={composeRenderProps(className, (className) =>
         cn(

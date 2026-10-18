@@ -53,4 +53,7 @@ dev-account.json
 apps/elysia/insomnium.json
 bin/
 obj/
-releases/
+releases/**
+!releases/**/
+!releases/**/manifest.json
+.jellyfin/

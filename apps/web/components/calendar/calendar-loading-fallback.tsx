@@ -4,7 +4,7 @@ import { Skeleton } from "@workspace/ui/components/skeleton"
 export function CalendarLoadingFallback() {
   return (
     <div className="flex w-full flex-1 flex-col bg-background">
-      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+      <div className="flex w-full flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
         {/* Header Skeleton */}
         <div className="flex flex-col gap-4 border-b border-border/40 pb-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

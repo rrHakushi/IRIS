@@ -37,6 +37,7 @@ import { renderBadgeIcon } from "./badge-showcase-card"
 export interface ProfilePreviewCardProps {
   profile: UserProfileCustomization
   username: string
+  userId?: string
   email?: string
   className?: string
   variant?: "preview" | "popover"
@@ -60,6 +61,7 @@ function isValidFrameUrl(url?: string | null): url is string {
 export function ProfilePreviewCard({
   profile,
   username,
+  userId,
   email,
   className,
   variant = "preview",
@@ -434,6 +436,7 @@ export function ProfilePreviewCard({
           isOpen={internalPreviewModalOpen}
           onOpenChange={setInternalPreviewModalOpen}
           username={username}
+          userId={userId}
           profile={profile}
         />
       )}
@@ -444,6 +447,7 @@ export function ProfilePreviewCard({
 export interface UserProfilePopoverProps {
   profile: UserProfileCustomization
   username: string
+  userId?: string
   email?: string
   isOwner?: boolean
   children: React.ReactNode
@@ -455,6 +459,7 @@ export interface UserProfilePopoverProps {
 export function UserProfilePopover({
   profile,
   username,
+  userId,
   email,
   isOwner,
   children,
@@ -489,6 +494,7 @@ export function UserProfilePopover({
               <ProfilePreviewCard
                 profile={profile}
                 username={username}
+                userId={userId}
                 email={email}
                 isOwner={isOwner}
                 variant="popover"
@@ -507,6 +513,7 @@ export function UserProfilePopover({
         isOpen={isPreviewModalOpen}
         onOpenChange={setIsPreviewModalOpen}
         username={username}
+        userId={userId}
         profile={profile}
       />
     </>

@@ -20,6 +20,8 @@
       "@/plugins": ["../elysia/src/plugins/index.ts"],
       "@/plugins/*": ["../elysia/src/plugins/*"],
       "@/*": ["./*"],
+      "@IRIS/elysia": ["../elysia/src/index.ts"],
+      "@IRIS/elysia/*": ["../elysia/src/*"],
       "@IRIS/connections": ["../../packages/connections/src/index.ts"],
       "@IRIS/connections/*": ["../../packages/connections/src/*"],
       "@workspace/ui/postcss.config": ["../../packages/ui/postcss.config.mjs"],

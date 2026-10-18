@@ -1,8 +1,10 @@
 "use client"
 
 import React, { useCallback, useEffect, useMemo, useState } from "react"
+import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { cn } from "@workspace/ui/lib/utils"
+import { useIrisApps } from "@/config/irisApps"
 import {
   Dialog,
   DialogDescription,
@@ -41,6 +43,17 @@ export function IrisDockSettingsModal({
   onOpenChange,
 }: IrisDockSettingsModalProps): React.JSX.Element {
   const t = useTranslations("navigation.dockSettings")
+  const pathname = usePathname() || "/"
+  const irisApps = useIrisApps()
+  const activeApp = useMemo(() => {
+    const current = irisApps.find((app) =>
+      app.href !== "/" ? pathname.startsWith(app.href) : pathname === "/"
+    )
+    return current || irisApps[0]
+  }, [pathname, irisApps])
+  const activeAppId = activeApp?.id || "default"
+  const storageKey = `iris-phone-dock-items-${activeAppId}`
+
   const { sidebarConfig, position, setPosition } = useIrisSidebar()
 
   const [selectedPosition, setSelectedPosition] =
@@ -65,7 +78,11 @@ export function IrisDockSettingsModal({
     if (!open) return
 
     try {
-      const stored = localStorage.getItem(DOCK_STORAGE_KEY)
+      const stored =
+        localStorage.getItem(storageKey) ||
+        (activeAppId === "borealis"
+          ? localStorage.getItem(DOCK_STORAGE_KEY)
+          : null)
       if (stored) {
         setTempPositions(JSON.parse(stored))
       } else {
@@ -93,7 +110,7 @@ export function IrisDockSettingsModal({
     } catch {
       // ignore
     }
-  }, [open, sidebarConfig])
+  }, [open, sidebarConfig, storageKey, activeAppId])
 
   // Lookup helper for item metadata in preview
   const findItemByKey = useCallback(
@@ -169,7 +186,10 @@ export function IrisDockSettingsModal({
   const handleSave = () => {
     setPosition(selectedPosition)
     try {
-      localStorage.setItem(DOCK_STORAGE_KEY, JSON.stringify(tempPositions))
+      localStorage.setItem(storageKey, JSON.stringify(tempPositions))
+      if (activeAppId === "borealis") {
+        localStorage.setItem(DOCK_STORAGE_KEY, JSON.stringify(tempPositions))
+      }
       window.dispatchEvent(new Event("iris-sidebar-changed"))
     } catch {
       // ignore

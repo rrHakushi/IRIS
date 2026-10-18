@@ -118,7 +118,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
       inFlightPromise = (async () => {
         try {
-          const { data, error: apiError } = await elysia.users.me.get({
+          const { data, error: apiError } = await elysia.carina.users.me.get({
             fetch: { credentials: "include" },
           })
 
@@ -180,7 +180,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     settings?: Record<string, unknown>
   }): Promise<FullUser | null> => {
     try {
-      const { data: resData, error: updateErr } = await elysia.users.me.patch(
+      const { data: resData, error: updateErr } = await elysia.carina.users.me.patch(
         data as any,
         {
           fetch: { credentials: "include" },

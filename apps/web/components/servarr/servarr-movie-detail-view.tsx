@@ -171,7 +171,7 @@ export function ServarrMovieDetailView({
         <p className="mt-1 text-xs text-muted-foreground">
           The requested movie could not be loaded from Radarr.
         </p>
-        <Link href="/IRIS-list/servarr/radarr">
+        <Link href="/borealis/servarr/radarr">
           <Button variant="outline" size="sm" className="mt-4 gap-2 rounded-xl">
             <IconArrowLeft className="size-4" /> Return to Movies List
           </Button>
@@ -226,7 +226,7 @@ export function ServarrMovieDetailView({
           {/* Floating Back Navigation Pill */}
           <div className="absolute start-3 top-3 z-20 sm:start-6 sm:top-4">
             <Link
-              href="/IRIS-list/servarr/radarr"
+              href="/borealis/servarr/radarr"
               className="inline-flex items-center gap-1.5 rounded-full border border-border/40 bg-background/80 px-3 py-1.5 text-xs font-semibold text-foreground shadow-xs backdrop-blur-md transition-colors hover:bg-background hover:text-primary"
             >
               <IconArrowLeft className="size-3.5" />
@@ -553,7 +553,7 @@ export function ServarrMovieDetailView({
         mediaTitle={movieData.title}
         path={movieData.path}
         fileCount={files.length}
-        onDeleted={() => router.push("/IRIS-list/servarr/radarr")}
+        onDeleted={() => router.push("/borealis/servarr/radarr")}
       />
 
       <ServarrInteractiveSearchDialog

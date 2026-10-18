@@ -79,7 +79,7 @@ export function UserListBanner({
       </div>
 
       {/* 2. User Info Section */}
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="relative w-full px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 pt-1 pb-4 sm:pb-6 md:flex-row md:items-end md:justify-between">
           {/* Avatar and User Identification Row */}
           <div className="flex items-center gap-3.5 sm:items-end sm:gap-4">

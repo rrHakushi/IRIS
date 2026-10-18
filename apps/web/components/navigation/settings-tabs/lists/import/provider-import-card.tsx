@@ -61,8 +61,8 @@ export function ProviderImportCard({
           ? window.location.href
           : "/settings?tab=lists"
 
-      const { data, error } = await elysia
-        .connections({ id: config.id })
+      const { data, error } = await elysia.carina
+        .connections({ connectionId: config.id })
         .auth.get({
           query: { returnTo },
           fetch: { credentials: "include" },
@@ -85,20 +85,11 @@ export function ProviderImportCard({
   const handleStartImport = async (selectedTypes: string[]) => {
     setIsStartingImport(true)
     try {
-      const hasCustomLists = selectedTypes.includes("custom_lists")
-      const mediaTypes = selectedTypes.filter((type) => type !== "custom_lists")
-
-      const { data, error } = await elysia
-        .connections({ id: config.id })
-        .import.post(
-          {
-            mediaTypes: mediaTypes.length > 0 ? mediaTypes : undefined,
-            customLists: hasCustomLists || undefined,
-          },
-          {
-            fetch: { credentials: "include" },
-          }
-        )
+      const { data, error } = await elysia.carina
+        .connections({ connectionId: config.id })
+        .sync.post(undefined, {
+          fetch: { credentials: "include" },
+        })
 
       if (error || !data?.success) {
         throw new Error(

@@ -7,10 +7,7 @@ import {
   IconEye,
   IconEyeOff,
   IconCheck,
-  IconShieldLock,
   IconKey,
-  IconChevronDown,
-  IconChevronUp,
 } from "@tabler/icons-react"
 import { isReservedKeyword } from "@IRIS/shared"
 import { elysia } from "@/lib/elysia"
@@ -42,14 +39,6 @@ export function RegisterForm({ footer }: RegisterFormProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [isPasswordActive, setIsPasswordActive] = useState(false)
 
-  // Separate encryption password state
-  const [useSeparateEncryptionPassword, setUseSeparateEncryptionPassword] =
-    useState(false)
-  const [encryptionPassword, setEncryptionPassword] = useState("")
-  const [showEncryptionPassword, setShowEncryptionPassword] = useState(false)
-  const [isEncryptionPasswordActive, setIsEncryptionPasswordActive] =
-    useState(false)
-
   const [loading, setLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
@@ -77,29 +66,6 @@ export function RegisterForm({ footer }: RegisterFormProps) {
 
   const strengthScore = Object.values(criteria).filter(Boolean).length
 
-  // Separate encryption password criteria: min 16 chars, 2 numbers, 2 special chars, 1 uppercase
-  const encryptionCriteria: PasswordCriteria = {
-    length: encryptionPassword.length >= 16,
-    maxLength: encryptionPassword.length > 0 && encryptionPassword.length <= 64,
-    uppercase: /[A-Z]/.test(encryptionPassword),
-    number: /(?:.*[0-9]){2}/.test(encryptionPassword),
-    special: /(?:.*[!@#$%^&*(),.?":{}|<>~'_\-+=/\\\[\]\x60]){2}/.test(
-      encryptionPassword
-    ),
-  }
-
-  const isEncryptionPasswordValid =
-    Object.values(encryptionCriteria).every(Boolean)
-  const encryptionStrengthScore =
-    Object.values(encryptionCriteria).filter(Boolean).length
-
-  const encryptionRules = [
-    { key: "length" as const, label: "At least 16 characters" },
-    { key: "maxLength" as const, label: "At most 64 characters" },
-    { key: "uppercase" as const, label: "At least 1 uppercase letter" },
-    { key: "number" as const, label: "At least 2 numbers" },
-    { key: "special" as const, label: "At least 2 special characters" },
-  ]
 
   // Reactively update companion illustration based on user focus, strength, and server validation
   React.useEffect(() => {
@@ -194,12 +160,9 @@ export function RegisterForm({ footer }: RegisterFormProps) {
         username: cleanUsername,
         email: email.trim().toLowerCase(),
         password,
-        ...(useSeparateEncryptionPassword && encryptionPassword.trim()
-          ? { encryptionPassword: encryptionPassword.trim() }
-          : {}),
       }
 
-      const { data, error } = await elysia.auth.register.post(payload)
+      const { data, error } = await elysia.carina.auth.register.post(payload)
 
       if (error || !data) {
         const message =
@@ -247,7 +210,7 @@ export function RegisterForm({ footer }: RegisterFormProps) {
       setPassword("")
 
       setTimeout(() => {
-        router.push("/IRIS-account/auth/login")
+        router.push("/carina/auth/login")
       }, 1500)
     } catch (err: any) {
       setFieldErrors({ username: err.message || t("registrationFailed") })
@@ -388,81 +351,13 @@ export function RegisterForm({ footer }: RegisterFormProps) {
           )}
         </Field>
 
-        {/* Optional Separate Encryption Password */}
-        <div className="space-y-2.5 rounded-xl border border-border/50 bg-muted/20 p-3 transition-all">
-          <button
-            type="button"
-            onClick={() => setUseSeparateEncryptionPassword((prev) => !prev)}
-            className="flex w-full cursor-pointer items-center justify-between text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <div className="flex items-center gap-2">
-              <IconShieldLock className="size-4 text-emerald-400" />
-              <span>Use a separate Post-Quantum encryption password</span>
-            </div>
-            {useSeparateEncryptionPassword ? (
-              <IconChevronUp className="size-3.5 opacity-70" />
-            ) : (
-              <IconChevronDown className="size-3.5 opacity-70" />
-            )}
-          </button>
-
-          {useSeparateEncryptionPassword && (
-            <div className="animate-in space-y-2 pt-1 duration-200 fade-in-50">
-              <p className="text-[11px] leading-relaxed text-muted-foreground">
-                By default, your account password locks your private vault. You
-                can set an independent password used exclusively for
-                zero-knowledge post-quantum data encryption.
-              </p>
-              <div className="relative">
-                <Input
-                  type={showEncryptionPassword ? "text" : "password"}
-                  disabled={loading}
-                  value={encryptionPassword}
-                  minLength={16}
-                  maxLength={64}
-                  onFocus={() => setIsEncryptionPasswordActive(true)}
-                  onBlur={() => setIsEncryptionPasswordActive(false)}
-                  onChange={(e) => setEncryptionPassword(e.target.value)}
-                  placeholder="Separate encryption password (min 16 chars)"
-                  className="h-9 pe-10 text-xs sm:h-10"
-                />
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => setShowEncryptionPassword((prev) => !prev)}
-                  className="absolute end-2.5 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
-                  aria-label={
-                    showEncryptionPassword ? "Hide password" : "Show password"
-                  }
-                >
-                  {showEncryptionPassword ? (
-                    <IconEyeOff className="size-3.5" />
-                  ) : (
-                    <IconEye className="size-3.5" />
-                  )}
-                </button>
-              </div>
-
-              {/* Password visualizer - only visible when separate encryption password field is active */}
-              {isEncryptionPasswordActive && (
-                <PasswordChecklist
-                  criteria={encryptionCriteria}
-                  strengthScore={encryptionStrengthScore}
-                  rules={encryptionRules}
-                />
-              )}
-            </div>
-          )}
-        </div>
 
         <Button
           type="submit"
-          disabled={
+          isDisabled={
             loading ||
             !isPasswordValid ||
-            Boolean(fieldErrors.username) ||
-            (useSeparateEncryptionPassword && !isEncryptionPasswordValid)
+            Boolean(fieldErrors.username)
           }
           className="mt-1 h-10 w-full text-sm font-semibold sm:h-11 sm:text-base md:h-12"
         >

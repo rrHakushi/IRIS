@@ -56,14 +56,9 @@ export function QuickConnectCard(): React.JSX.Element {
     setSuccess(null)
 
     try {
-      const res = await elysia.auth.quickconnect.approve.post(
-        {
-          code: cleanCode,
-        },
-        {
-          fetch: { credentials: "include" },
-        }
-      )
+      const res = await elysia.carina.auth.qc.approve.post({
+        code: cleanCode,
+      })
 
       if (res.error) {
         const errorData = res.error?.value as { message?: string } | undefined
@@ -145,7 +140,7 @@ export function QuickConnectCard(): React.JSX.Element {
             <Button
               type="submit"
               size="sm"
-              disabled={
+              isDisabled={
                 isApproving || code.replace(/[^A-Z0-9]/g, "").length < 6
               }
               className="h-10 shrink-0 gap-1.5 rounded-xl px-4 text-xs font-semibold"

@@ -42,11 +42,13 @@ export interface WatchedEpisodeItem {
 }
 
 export interface MediaListTvTabProps {
-  mediaId: number
+  mediaId?: number | string
   category?: CanonicalMediaCategory
   seasons?: TvSeasonItem[]
   episodes?: AnimeEpisodeItem[]
   episodeCount?: number | null
+  seasonCount?: number | null
+  isLoading?: boolean
   progress?: number
   onProgressChange?: (newProgress: number) => void
   watchedEpisodes?: WatchedEpisodeItem[]
@@ -84,19 +86,137 @@ function formatEpisodeTitle(
   return cleaned || null
 }
 
+function getCurrentlyWatchingSeason(
+  seasonsList: TvSeasonItem[],
+  watched: WatchedEpisodeItem[]
+): number | null {
+  if (!seasonsList || seasonsList.length === 0) return null
+
+  // Filter regular seasons (seasonNumber > 0)
+  const regularSeasons = seasonsList.filter((s) => s.seasonNumber > 0)
+  const candidateSeasons =
+    regularSeasons.length > 0 ? regularSeasons : seasonsList
+
+  const seasonStats = candidateSeasons.map((season) => {
+    const seasonNum = season.seasonNumber
+    const count = season.episodeCount || season.episodes?.length || 0
+    const watchedInSeason = watched.filter(
+      (we) => we.seasonNumber === seasonNum
+    ).length
+    const isFullyWatched = count > 0 && watchedInSeason >= count
+    const isPartiallyWatched =
+      count > 0 ? watchedInSeason > 0 && !isFullyWatched : watchedInSeason > 0
+
+    return {
+      seasonNum,
+      count,
+      watchedInSeason,
+      isFullyWatched,
+      isPartiallyWatched,
+    }
+  })
+
+  // 1. First priority: Season currently in progress (partially watched, e.g. 4/10)
+  const inProgress = seasonStats.find((s) => s.isPartiallyWatched)
+  if (inProgress) {
+    return inProgress.seasonNum
+  }
+
+  // Check if Season 0 (Specials) is in progress
+  const seasonZero = seasonsList.find((s) => s.seasonNumber === 0)
+  if (seasonZero) {
+    const count0 = seasonZero.episodeCount || seasonZero.episodes?.length || 0
+    const watched0 = watched.filter((we) => we.seasonNumber === 0).length
+    if (count0 > 0 ? watched0 > 0 && watched0 < count0 : watched0 > 0) {
+      return 0
+    }
+  }
+
+  // 2. Second priority: First non-finished regular season (e.g. S1 finished -> S2)
+  const nextUp = seasonStats.find((s) => !s.isFullyWatched)
+  if (nextUp) {
+    return nextUp.seasonNum
+  }
+
+  // 3. Fallback: If all seasons are finished, default to the last regular season
+  return (
+    candidateSeasons[candidateSeasons.length - 1]?.seasonNumber ??
+    seasonsList[0]?.seasonNumber ??
+    null
+  )
+}
+
 export function MediaListTvTab({
+  mediaId,
   category = "tv",
   seasons = [],
   episodes = [],
   episodeCount = null,
+  seasonCount = null,
   progress = 0,
   onProgressChange,
   watchedEpisodes = [],
   onWatchedEpisodesChange,
+  isLoading = false,
 }: MediaListTvTabProps) {
+  const effectiveSeasons: TvSeasonItem[] = useMemo(() => {
+    if (seasons && seasons.length > 0) return seasons
+    if (isLoading) return []
+    if (
+      (!seasonCount || seasonCount <= 1) &&
+      episodeCount &&
+      episodeCount > 0
+    ) {
+      return [
+        {
+          seasonNumber: 1,
+          title: null,
+          episodeCount: episodeCount,
+        },
+      ]
+    }
+    return []
+  }, [seasons, episodeCount, seasonCount, isLoading])
+
   const [expandedSeasons, setExpandedSeasons] = useState<
     Record<number, boolean>
-  >({})
+  >(() => {
+    const active = getCurrentlyWatchingSeason(effectiveSeasons, watchedEpisodes)
+    return active !== null ? { [active]: true } : {}
+  })
+
+  const hasAutoOpenedRef = useRef(false)
+  const prevCountRef = useRef(0)
+
+  useEffect(() => {
+    if (effectiveSeasons.length > 0) {
+      if (
+        !hasAutoOpenedRef.current ||
+        effectiveSeasons.length !== prevCountRef.current
+      ) {
+        prevCountRef.current = effectiveSeasons.length
+        const active = getCurrentlyWatchingSeason(
+          effectiveSeasons,
+          watchedEpisodes
+        )
+        if (active !== null) {
+          setExpandedSeasons({ [active]: true })
+          hasAutoOpenedRef.current = true
+        }
+      }
+    }
+  }, [effectiveSeasons, watchedEpisodes])
+
+  useEffect(() => {
+    hasAutoOpenedRef.current = false
+    prevCountRef.current = 0
+    const active = getCurrentlyWatchingSeason(effectiveSeasons, watchedEpisodes)
+    if (active !== null) {
+      setExpandedSeasons({ [active]: true })
+      hasAutoOpenedRef.current = true
+    }
+  }, [mediaId])
+
   const activeEpRef = useRef<HTMLButtonElement | null>(null)
 
   // ==========================================
@@ -208,6 +328,23 @@ export function MediaListTvTab({
 
     onWatchedEpisodesChange?.(nextWatchedList)
     onProgressChange?.(nextWatchedList.length)
+
+    // If this completed the season, auto-advance to next season
+    const season = effectiveSeasons.find((s) => s.seasonNumber === seasonNumber)
+    const count = season?.episodeCount || season?.episodes?.length || 0
+    if (
+      count > 0 &&
+      nextWatched &&
+      nextWatchedList.filter((we) => we.seasonNumber === seasonNumber).length >=
+        count
+    ) {
+      const nextSeason = effectiveSeasons.find(
+        (s) => s.seasonNumber > seasonNumber
+      )
+      if (nextSeason) {
+        setExpandedSeasons({ [nextSeason.seasonNumber]: true })
+      }
+    }
   }
 
   const handleMarkTvSeasonAll = (
@@ -233,10 +370,19 @@ export function MediaListTvTab({
         })
       )
       nextWatchedList = [...otherSeasonsWatched, ...newSeasonWatched]
+
+      // Auto-open next season and close completed season
+      const nextSeason = effectiveSeasons.find(
+        (s) => s.seasonNumber > seasonNum
+      )
+      if (nextSeason) {
+        setExpandedSeasons({ [nextSeason.seasonNumber]: true })
+      }
     } else {
       nextWatchedList = watchedEpisodes.filter(
         (we) => we.seasonNumber !== seasonNum
       )
+      setExpandedSeasons({ [seasonNum]: true })
     }
 
     onWatchedEpisodesChange?.(nextWatchedList)
@@ -353,20 +499,18 @@ export function MediaListTvTab({
   // ==========================================
   // RENDER: TV Mode
   // ==========================================
-  const effectiveSeasons: TvSeasonItem[] =
-    seasons && seasons.length > 0
-      ? seasons
-      : episodeCount && episodeCount > 0
-        ? [
-            {
-              seasonNumber: 1,
-              title: null,
-              episodeCount: episodeCount,
-            },
-          ]
-        : []
-
   if (effectiveSeasons.length === 0) {
+    if (isLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
+          <IconDeviceTv className="size-8 animate-pulse opacity-50" />
+          <p className="mt-2 text-xs font-medium text-foreground">
+            Loading seasons & episodes...
+          </p>
+        </div>
+      )
+    }
+
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
         <IconDeviceTv className="size-8 opacity-40" />
@@ -383,12 +527,6 @@ export function MediaListTvTab({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col gap-1">
-        <h3 className="text-sm font-semibold text-foreground">
-          Seasons & Episodes
-        </h3>
-      </div>
-
       <div className="space-y-2">
         {effectiveSeasons.map((season) => {
           const seasonNum = season.seasonNumber
@@ -463,9 +601,14 @@ export function MediaListTvTab({
                     const epNum = idx + 1
                     const isWatched = isEpisodeWatched(seasonNum, epNum)
                     const epItem = season.episodes?.find(
-                      (e) => e.episodeNumber === epNum
+                      (e) => (e.episodeNumber ?? (e as any).number) === epNum
                     )
-                    const rawTitle = epItem?.title || epItem?.name || null
+                    const rawTitle =
+                      epItem?.title ||
+                      (epItem as any)?.titlePrimary ||
+                      epItem?.name ||
+                      (epItem as any)?.titleSecondary ||
+                      null
                     const displayTitle = formatEpisodeTitle(rawTitle, epNum)
 
                     return (

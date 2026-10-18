@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react"
 import { elysia } from "@/lib/elysia"
+import { resolveUserId } from "@/lib/user-profile"
 import { Skeleton } from "@workspace/ui/components/skeleton"
 import { IconChartBarOff } from "@tabler/icons-react"
 import type { MediaListType } from "../types"
@@ -15,6 +16,7 @@ import { ActivityHeatmap } from "./activity-heatmap"
 
 interface MediaStatsTabProps {
   username: string
+  userId?: string
   mediaType: MediaListType
 }
 
@@ -32,6 +34,7 @@ export function invalidateClientStats(username?: string, mediaType?: string) {
 
 export function MediaStatsTab({
   username,
+  userId,
   mediaType,
 }: MediaStatsTabProps): React.JSX.Element {
   const cacheKey = `${username}:${mediaType}`
@@ -67,30 +70,35 @@ export function MediaStatsTab({
 
       if (!promise) {
         promise = (async () => {
-          const client = elysia.user({ username }).lists
+          let targetId = userId
+          if (!targetId && username) {
+            targetId = (await resolveUserId(username)) ?? undefined
+          }
+
           let res: any = null
+          const query = targetId ? { userId: targetId } : undefined
 
           switch (mediaType) {
             case "anime":
-              res = await client.anime.stats.get()
+              res = await elysia.borealis.lists.anime.stats.get({ query })
               break
             case "manga":
-              res = await client.manga.stats.get()
+              res = await elysia.borealis.lists.manga.stats.get({ query })
               break
             case "movie":
-              res = await client.movie.stats.get()
+              res = await elysia.borealis.lists.movies.stats.get({ query })
               break
             case "tv":
-              res = await client.tv.stats.get()
+              res = await elysia.borealis.lists.tv.stats.get({ query })
               break
             case "game":
-              res = await client.game.stats.get()
+              res = await elysia.borealis.lists.games.stats.get({ query })
               break
             case "book":
-              res = await client.book.stats.get()
+              res = await elysia.borealis.lists.books.stats.get({ query })
               break
             case "music":
-              res = await client.music.stats.get()
+              res = await elysia.borealis.lists.music.stats.get({ query })
               break
           }
           return res
@@ -105,12 +113,13 @@ export function MediaStatsTab({
         const res = await promise
         if (ignore) return
 
-        if (res?.data?.success && res.data.data) {
+        const statsData = res?.data?.data || res?.data?.stats
+        if (res?.data?.success && statsData) {
           statsClientCache.set(cacheKey, {
-            data: res.data.data,
+            data: statsData,
             timestamp: Date.now(),
           })
-          setStats(res.data.data)
+          setStats(statsData)
         } else {
           setHasError(true)
         }
@@ -130,7 +139,7 @@ export function MediaStatsTab({
     return () => {
       ignore = true
     }
-  }, [cacheKey, username, mediaType])
+  }, [cacheKey, username, userId, mediaType])
 
   if (isLoading) {
     return (
@@ -154,7 +163,7 @@ export function MediaStatsTab({
     )
   }
 
-  if (hasError || !stats || stats.overview.totalCount === 0) {
+  if (hasError || !stats || stats?.overview?.totalCount === 0) {
     return (
       <div className="flex min-h-[360px] flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/60 p-8 text-center backdrop-blur-md">
         <div className="mb-3 flex size-14 items-center justify-center rounded-2xl bg-muted/50 text-muted-foreground">
@@ -180,42 +189,42 @@ export function MediaStatsTab({
       {/* 2. Charts Row: Score Distribution & Year Timeline */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <ScoreDistributionChart
-          scores={stats.scoreDistribution.scores}
-          unratedCount={stats.scoreDistribution.unratedCount}
-          meanScore={stats.overview.meanScore}
+          scores={stats.scoreDistribution?.scores ?? []}
+          unratedCount={stats.scoreDistribution?.unratedCount ?? 0}
+          meanScore={stats.overview?.meanScore ?? 0}
         />
         <YearTimelineChart
-          releaseYears={stats.releaseYearGraph}
-          activityYears={stats.activityYearGraph}
+          releaseYears={stats.releaseYearGraph ?? []}
+          activityYears={stats.activityYearGraph ?? []}
           mediaType={mediaType}
         />
       </div>
 
       {/* 3. Length & Episode Distribution */}
       <LengthDistributionChart
-        buckets={stats.lengthDistribution}
+        buckets={stats.lengthDistribution ?? []}
         mediaType={mediaType}
       />
 
       {/* 4. Format, Country & Status Distribution */}
       <FormatCountryDistribution
-        formats={stats.formatDistribution}
-        countries={stats.countryDistribution}
-        statuses={stats.statusDistribution}
+        formats={stats.formatDistribution ?? []}
+        countries={stats.countryDistribution ?? []}
+        statuses={stats.statusDistribution ?? []}
       />
 
       {/* 5. Top Genres & Top Studios/Creators */}
       <GenreStudioBreakdown
-        genres={stats.topGenres}
-        creators={stats.topCreators}
+        genres={stats.topGenres ?? []}
+        creators={stats.topCreators ?? []}
         mediaType={mediaType}
       />
 
       {/* 6. Activity Breakdown Heatmap (Monthly, Weekly, Days of Week) */}
       <ActivityHeatmap
-        monthlyData={stats.monthlyActivity}
-        weeklyData={stats.weeklyActivity}
-        dayOfWeekData={stats.dayOfWeekActivity}
+        monthlyData={stats.monthlyActivity ?? []}
+        weeklyData={stats.weeklyActivity ?? []}
+        dayOfWeekData={stats.dayOfWeekActivity ?? []}
       />
     </div>
   )

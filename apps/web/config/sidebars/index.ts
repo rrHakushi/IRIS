@@ -3,6 +3,7 @@ import type { Session } from "next-auth"
 import type { SidebarConfig } from "@/types/sidebar-config"
 import { useListSidebarConfig, getListSidebarConfig } from "./listSidebarConfig"
 import { usePassSidebarConfig, getPassSidebarConfig } from "./passSidebarConfig"
+import { useSearchSidebarConfig, getSearchSidebarConfig } from "./searchSidebarConfig"
 
 export interface AppSidebarRegistryEntry {
   appId: string
@@ -19,21 +20,27 @@ export function useAllAppSidebarConfigs(
 ): AppSidebarRegistryEntry[] {
   const listConfig = useListSidebarConfig(session)
   const passConfig = usePassSidebarConfig(session)
+  const searchConfig = useSearchSidebarConfig(session)
 
   return useMemo(
     () => [
       {
-        appId: "iris-list",
-        appName: "IRIS List",
+        appId: "borealis",
+        appName: "Borealis",
         config: listConfig,
       },
       {
-        appId: "iris-pass",
-        appName: "IRIS Pass",
+        appId: "akaromi",
+        appName: "Akaromi",
         config: passConfig,
       },
+      {
+        appId: "kiroshi",
+        appName: "Kiroshi",
+        config: searchConfig,
+      },
     ],
-    [listConfig, passConfig]
+    [listConfig, passConfig, searchConfig]
   )
 }
 
@@ -47,18 +54,24 @@ export function getAllAppSidebarConfigs(
 ): AppSidebarRegistryEntry[] {
   return [
     {
-      appId: "iris-list",
-      appName: "IRIS List",
+      appId: "borealis",
+      appName: "Borealis",
       config: getListSidebarConfig(session, tList, connectedServarr),
     },
     {
-      appId: "iris-pass",
-      appName: "IRIS Pass",
+      appId: "akaromi",
+      appName: "Akaromi",
       config: getPassSidebarConfig(session),
+    },
+    {
+      appId: "kiroshi",
+      appName: "Kiroshi",
+      config: getSearchSidebarConfig(session),
     },
   ]
 }
 
 export * from "./listSidebarConfig"
 export * from "./passSidebarConfig"
+export * from "./searchSidebarConfig"
 export * from "./accountUserSidebarConfig"

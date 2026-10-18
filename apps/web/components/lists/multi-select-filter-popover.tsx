@@ -110,6 +110,7 @@ export function MultiSelectFilterPopover({
               <IconSearch className="pointer-events-none absolute start-4 top-1/2 z-10 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
+                aria-label={`Filter ${label.toLowerCase()}`}
                 placeholder={`Filter ${label.toLowerCase()}...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}

@@ -19,6 +19,75 @@ const DEFAULT_ALLOWED_HEADERS = [
 ]
 
 /**
+ * Custom callback returning an allowed origin string or boolean.
+ */
+export type CorsOriginFunction = (
+  origin: string,
+  request: Request
+) => boolean | string
+
+/**
+ * Supported pattern types for matching incoming request origins.
+ * - `boolean`: `true` to mirror request Origin (or `*`), `false` to deny.
+ * - `string`: Exact origin string (e.g. `'https://example.com'`) or wildcard `'*'`.
+ * - `RegExp`: Regular expression matched against the origin header.
+ * - `CorsOriginFunction`: Custom callback `(origin, request) => boolean | string`.
+ * - `Array<string | RegExp | CorsOriginFunction>`: List of allowed origin strings, regex patterns, or callbacks.
+ */
+export type CorsOriginMatcher =
+  | string
+  | RegExp
+  | boolean
+  | CorsOriginFunction
+  | Array<string | RegExp | CorsOriginFunction>
+
+/**
+ * Options configuring cross-origin resource sharing behavior.
+ */
+export interface CorsOptions {
+  /**
+   * Allowed origin(s).
+   * - `true` (default): mirrors incoming request `Origin` header (or '*' if not present).
+   * - `false`: disables CORS origin header.
+   * - `string`: specific origin or `'*'`.
+   * - `Array<string | RegExp>`: list of allowed origins or patterns.
+   * - `(origin, request) => boolean | string`: custom resolver function.
+   *
+   * @default true
+   */
+  origin?: CorsOriginMatcher
+
+  /**
+   * Allowed HTTP methods.
+   * @default ["GET", "HEAD", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"]
+   */
+  methods?: string | string[]
+
+  /**
+   * Allowed HTTP headers in requests.
+   * @default ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"]
+   */
+  allowedHeaders?: string | string[]
+
+  /**
+   * Headers exposed to the client in response.
+   */
+  exposedHeaders?: string | string[]
+
+  /**
+   * Whether credentials (cookies, authorization headers) are supported.
+   * @default true
+   */
+  credentials?: boolean
+
+  /**
+   * Access-Control-Max-Age header in seconds.
+   * @default 86400 (24 hours)
+   */
+  maxAge?: number
+}
+
+/**
  * Resolves the Access-Control-Allow-Origin header value according to the configured
  * matcher and incoming request headers, adhering to the CORS specification for credentialed requests.
  *
@@ -28,7 +97,7 @@ const DEFAULT_ALLOWED_HEADERS = [
  * @param credentials - Whether credentials (cookies/auth) are enabled
  * @returns The origin string to return in Access-Control-Allow-Origin, or null if disallowed
  */
-function resolveAllowedOrigin(
+export function resolveAllowedOrigin(
   matcher: CorsOriginMatcher | undefined,
   requestOrigin: string | null,
   request: Request,
@@ -78,6 +147,11 @@ function resolveAllowedOrigin(
       }
       if (item instanceof RegExp && item.test(requestOrigin)) {
         return requestOrigin
+      }
+      if (typeof item === "function") {
+        const res = item(requestOrigin, request)
+        if (typeof res === "string") return res
+        if (res) return requestOrigin
       }
     }
     return null
@@ -131,6 +205,11 @@ export function cors(options: CorsOptions = {}) {
       credentials
     )
 
+    // Ensure set.headers is an initialized dictionary
+    if (!set.headers) {
+      set.headers = {}
+    }
+
     // Handle preflight OPTIONS request
     if (request.method === "OPTIONS") {
       const responseHeaders: Record<string, string> = {
@@ -178,65 +257,4 @@ export function cors(options: CorsOptions = {}) {
 
     set.headers["vary"] = "Origin"
   })
-}
-
-/**
- * Supported pattern types for matching incoming request origins.
- * - `boolean`: `true` to mirror request Origin (or `*`), `false` to deny.
- * - `string`: Exact origin string (e.g. `'https://example.com'`) or wildcard `'*'`.
- * - `RegExp`: Regular expression matched against the origin header.
- * - `Array<string | RegExp>`: List of allowed origin strings or regex patterns.
- * - `Function`: Custom callback `(origin, request) => boolean | string` returning allowed origin or boolean.
- */
-export type CorsOriginMatcher =
-  | string
-  | RegExp
-  | boolean
-  | Array<string | RegExp>
-  | ((origin: string, request: Request) => boolean | string)
-
-/**
- * Options configuring cross-origin resource sharing behavior.
- */
-export interface CorsOptions {
-  /**
-   * Allowed origin(s).
-   * - `true` (default): mirrors incoming request `Origin` header (or '*' if not present).
-   * - `false`: disables CORS origin header.
-   * - `string`: specific origin or `'*'`.
-   * - `Array<string | RegExp>`: list of allowed origins or patterns.
-   * - `(origin, request) => boolean | string`: custom resolver function.
-   *
-   * @default true
-   */
-  origin?: CorsOriginMatcher
-
-  /**
-   * Allowed HTTP methods.
-   * @default ["GET", "HEAD", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"]
-   */
-  methods?: string | string[]
-
-  /**
-   * Allowed HTTP headers in requests.
-   * @default ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"]
-   */
-  allowedHeaders?: string | string[]
-
-  /**
-   * Headers exposed to the client in response.
-   */
-  exposedHeaders?: string | string[]
-
-  /**
-   * Whether credentials (cookies, authorization headers) are supported.
-   * @default true
-   */
-  credentials?: boolean
-
-  /**
-   * Access-Control-Max-Age header in seconds.
-   * @default 86400 (24 hours)
-   */
-  maxAge?: number
 }

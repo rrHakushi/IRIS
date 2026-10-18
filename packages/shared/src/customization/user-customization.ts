@@ -87,9 +87,15 @@ export interface CustomDockGroup {
   itemKeys: string[];
 }
 
+export interface AppDockCustomization {
+  positions?: DockPositions;
+  customGroups?: CustomDockGroup[];
+}
+
 export interface UserDockCustomization {
   positions?: DockPositions;
   customGroups?: CustomDockGroup[];
+  apps?: Record<string, AppDockCustomization>;
   [key: string]: unknown;
 }
 
@@ -852,11 +858,11 @@ export const DEFAULT_DOCK_POSITIONS: DockPositions = {
  */
 export function getDockCustomization(customization?: unknown): UserDockCustomization {
   if (!customization || typeof customization !== "object") {
-    return { positions: { ...DEFAULT_DOCK_POSITIONS }, customGroups: [] };
+    return { positions: { ...DEFAULT_DOCK_POSITIONS }, customGroups: [], apps: {} };
   }
   const dock = (customization as any)?.dock;
   if (!dock || typeof dock !== "object") {
-    return { positions: { ...DEFAULT_DOCK_POSITIONS }, customGroups: [] };
+    return { positions: { ...DEFAULT_DOCK_POSITIONS }, customGroups: [], apps: {} };
   }
   return {
     ...dock,
@@ -865,6 +871,7 @@ export function getDockCustomization(customization?: unknown): UserDockCustomiza
       ...(dock.positions || {}),
     },
     customGroups: Array.isArray(dock.customGroups) ? dock.customGroups : [],
+    apps: dock.apps && typeof dock.apps === "object" ? dock.apps : {},
   };
 }
 
@@ -890,6 +897,10 @@ export function setDockCustomization(
     },
     customGroups:
       patch.customGroups !== undefined ? patch.customGroups : currentDock.customGroups || [],
+    apps: {
+      ...(currentDock.apps || {}),
+      ...(patch.apps || {}),
+    },
   };
 
   return {

@@ -85,22 +85,22 @@
   "navigation": {
     "apps": {
       "irisAccount": {
-        "name": "IRIS Account",
+        "name": "Carina",
         "description": "統合されたID、プロフィール、セキュリティ、セッション管理。",
         "descriptionShort": "アカウントとセキュリティ"
       },
       "irisList": {
-        "name": "IRIS List",
+        "name": "Borealis",
         "description": "メディアを記録。視聴、読書、リスニングをすべて楽しむ。",
         "descriptionShort": "メディア管理"
       },
       "irisPass": {
-        "name": "IRIS Pass",
+        "name": "Akaromi",
         "description": "ゼロ知識暗号化パスワード、認証情報、SSHキー管理。",
         "descriptionShort": "保管庫・生成"
       },
       "irisSearch": {
-        "name": "IRIS Search",
+        "name": "Kiroshi",
         "description": "SearXNGを活用したプライバシー重視のメタ検索エンジン。",
         "descriptionShort": "ウェブ・メタ検索"
       }
@@ -916,7 +916,8 @@
       "music": "音楽",
       "characters": "キャラクター",
       "people": "スタッフ",
-      "studios": "スタジオ"
+      "studios": "スタジオ",
+      "other": "その他"
     }
   },
   "calendar": {

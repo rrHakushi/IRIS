@@ -1,0 +1,315 @@
+/* Akaromi for Firefox — Master Items List Pane & Sort Controls */
+
+.view-unlocked {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.master-detail-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Left Pane: Items List */
+.items-list-pane {
+  width: 240px;
+  min-width: 240px;
+  max-width: 240px;
+  height: 100%;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+  flex-shrink: 0;
+  overflow: visible;
+  position: relative;
+  z-index: 10;
+}
+
+/* Filter & Sort Bar */
+.list-filters-bar,
+.items-filter-bar {
+  height: 32px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-inline: 10px;
+  border-bottom: 1px solid var(--border);
+  gap: 8px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+/* Sort Controls & Dropdown */
+.sort-wrapper,
+.sort-controls-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+#sort-dropdown-menu,
+.sort-dropdown-popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: auto !important;
+  right: 0 !important;
+  min-width: 195px;
+  background: #18181b;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+  padding: 4px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sort-dropdown-item {
+  width: 100%;
+  height: 28px;
+  padding-inline: 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--foreground);
+  transition: background 0.12s ease;
+  cursor: pointer;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.sort-dropdown-item .sort-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 8px;
+}
+
+.sort-dropdown-item:hover {
+  background: var(--secondary);
+}
+
+.sort-dropdown-item.active {
+  background: #27272a;
+  font-weight: 600;
+}
+
+.sort-dropdown-item .check-icon {
+  width: 13px;
+  height: 13px;
+  color: var(--foreground);
+  opacity: 0;
+  flex-shrink: 0;
+}
+
+.sort-dropdown-item.active .check-icon {
+  opacity: 1;
+}
+
+/* Items Scroll List Container */
+.ciphers-scroll-container,
+.items-scroll-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.list-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+
+
+.section-header {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted-foreground);
+  padding: 4px 6px 2px;
+}
+
+.cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* Cipher Item Card */
+.cipher-item-card {
+  width: 100%;
+  padding: 7px 8px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  background: transparent;
+  transition: background 0.12s ease;
+  text-align: left;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+}
+
+.cipher-item-card:hover {
+  background: var(--card);
+}
+
+.cipher-item-card.active {
+  background: var(--secondary);
+  border-color: var(--border);
+}
+
+.card-icon-wrap,
+.cipher-card-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+  border: 1px solid var(--border);
+}
+
+.card-icon-wrap .tabler-icon,
+.cipher-card-icon .tabler-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.cipher-item-card.active .card-icon-wrap,
+.cipher-item-card.active .cipher-card-icon {
+  background: #141418;
+  color: var(--foreground);
+}
+
+.card-content,
+.cipher-card-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.card-title,
+.cipher-card-title {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-subtitle,
+.cipher-card-subtitle {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Empty Vault List State */
+.vault-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 14px;
+  color: var(--muted-foreground);
+  gap: 8px;
+}
+
+.vault-empty-state .empty-icon {
+  width: 26px;
+  height: 26px;
+  color: #52525b;
+}
+
+.vault-empty-state .empty-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--foreground);
+  margin: 0;
+}
+
+.vault-empty-state .empty-desc {
+  font-size: 11px;
+  color: #71717a;
+}
+
+/* Card Badges (Passkey & TOTP 2FA Indicator Icons - Pure Monochrome Icons) */
+.card-badges {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-inline-start: auto;
+  flex-shrink: 0;
+}
+
+.card-badge-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  color: #71717a !important;
+  transition: color 0.12s ease;
+  line-height: 1;
+}
+
+.card-badge-icon .tabler-icon {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+.card-badge-icon.badge-totp,
+.card-badge-icon.badge-passkey {
+  color: #71717a !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.cipher-item-card:hover .card-badge-icon,
+.cipher-item-card:hover .card-badge-icon.badge-totp,
+.cipher-item-card:hover .card-badge-icon.badge-passkey {
+  color: #a1a1aa !important;
+}
+
+.cipher-item-card.active .card-badge-icon,
+.cipher-item-card.active .card-badge-icon.badge-totp,
+.cipher-item-card.active .card-badge-icon.badge-passkey {
+  color: #f4f4f5 !important;
+}
+
+
+

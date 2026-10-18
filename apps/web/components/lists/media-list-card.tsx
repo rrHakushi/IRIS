@@ -490,7 +490,13 @@ function MediaListCardInner({
           )}
 
           {/* 2. Progress Badge: Season/Episode, Volume/Chapter, Ep, Hrs, Pages, or Plays */}
-          {mediaType === "movie" ? (
+          {entry.status === "FAVORITE" ? (
+            media.format ? (
+              <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 tabular-nums shadow-xs backdrop-blur-md">
+                <span>{media.format}</span>
+              </div>
+            ) : null
+          ) : mediaType === "movie" ? (
             entry.rewatched && entry.rewatched > 0 ? (
               <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 tabular-nums shadow-xs backdrop-blur-md">
                 <span>Rewatched {entry.rewatched}x</span>

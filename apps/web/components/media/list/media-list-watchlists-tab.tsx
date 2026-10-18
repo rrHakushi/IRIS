@@ -41,8 +41,7 @@ export function MediaListWatchlistsTab({
 }: MediaListWatchlistsTabProps) {
   const { data: session } = useSession()
   const { user } = useUser()
-  const username =
-    user?.username || (session?.user as { username?: string })?.username
+  const userId = user?.id || (session?.user as any)?.id
 
   const [watchlists, setWatchlists] = useState<WatchlistSummaryItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -54,38 +53,33 @@ export function MediaListWatchlistsTab({
   const fetchedRef = useRef(false)
 
   const loadWatchlists = useCallback(async () => {
-    if (!username) return
+    if (!userId) return
     setLoading(true)
     try {
-      const { data, error } = await elysia.user({ username }).watchlists.get({
-        query: {
-          mediaType: backendMediaType as any,
-          mediaId: mediaId,
-        },
-      })
+      const { data, error } = await elysia.borealis.playlists.get()
 
-      if (!error && data?.watchlists) {
-        setWatchlists(data.watchlists)
+      if (!error && (data as any)?.playlists) {
+        setWatchlists((data as any).playlists)
       }
     } catch {
       toast.error("Failed to load custom lists")
     } finally {
       setLoading(false)
     }
-  }, [username, backendMediaType, mediaId])
+  }, [userId])
 
   useEffect(() => {
-    if (!fetchedRef.current && username) {
+    if (!fetchedRef.current && userId) {
       fetchedRef.current = true
       loadWatchlists()
     }
-  }, [username, loadWatchlists])
+  }, [userId, loadWatchlists])
 
   const handleToggleWatchlist = async (
     watchlist: WatchlistSummaryItem,
     nextState: boolean
   ) => {
-    if (!username) return
+    if (!userId) return
     if (pendingIds.has(watchlist.id)) return
 
     setPendingIds((prev) => new Set(prev).add(watchlist.id))
@@ -107,11 +101,11 @@ export function MediaListWatchlistsTab({
 
     try {
       if (nextState) {
-        const { error } = await elysia
-          .user({ username })
-          .lists.custom({ watchlistId: watchlist.id })({ id: mediaId })
-          ["quick-add"].post({
-            mediaType: backendMediaType as any,
+        const { error } = await elysia.borealis
+          .playlists({ playlistId: watchlist.id })
+          .entries.post({
+            mediaType: backendMediaType,
+            mediaId,
           })
 
         if (error) {
@@ -119,11 +113,11 @@ export function MediaListWatchlistsTab({
         }
         toast.success(`Added to "${watchlist.name}"`)
       } else {
-        const { error } = await elysia
-          .user({ username })
-          .lists.custom({ watchlistId: watchlist.id })({ id: mediaId })
-          .delete({
-            query: { mediaType: backendMediaType as any },
+        const { error } = await elysia.borealis
+          .playlists({ playlistId: watchlist.id })
+          .entries.delete({
+            mediaType: backendMediaType,
+            mediaId,
           })
 
         if (error) {
@@ -158,30 +152,30 @@ export function MediaListWatchlistsTab({
 
   const handleCreateWatchlist = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!username || !newWatchlistName.trim() || creating) return
+    if (!userId || !newWatchlistName.trim() || creating) return
 
     const name = newWatchlistName.trim()
     setCreating(true)
 
     try {
-      const { data, error } = await elysia.user({ username }).watchlists.post({
+      const { data, error } = await elysia.borealis.playlists.post({
         name,
         isPrivate: false,
       })
 
-      if (error || !data?.watchlist) {
+      if (error || !(data as any)?.playlist) {
         toast.error("Failed to create custom list")
         return
       }
 
-      const created = data.watchlist
+      const created = (data as any).playlist
 
       // Automatically add current media to newly created watchlist
-      await elysia
-        .user({ username })
-        .lists.custom({ watchlistId: created.id })({ id: mediaId })
-        ["quick-add"].post({
-          mediaType: backendMediaType as any,
+      await elysia.borealis
+        .playlists({ playlistId: created.id })
+        .entries.post({
+          mediaType: backendMediaType,
+          mediaId,
         })
 
       setWatchlists((prev) => [
@@ -213,10 +207,6 @@ export function MediaListWatchlistsTab({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-1">
-        <h3 className="text-sm font-semibold text-foreground">Custom Lists</h3>
-      </div>
-
       {/* New Custom List Inline Creator */}
       <form
         onSubmit={handleCreateWatchlist}
@@ -232,7 +222,7 @@ export function MediaListWatchlistsTab({
         <Button
           type="submit"
           size="sm"
-          disabled={!newWatchlistName.trim() || creating}
+          isDisabled={!newWatchlistName.trim() || creating}
           className="h-8.5 shrink-0 gap-1.5 rounded-xl px-3 text-xs"
         >
           {creating ? (

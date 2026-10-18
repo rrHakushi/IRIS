@@ -32,16 +32,18 @@ function normalizeLinkHref(href: string): {
     }
   }
 
-  // Rewrite legacy or shortcut internal paths to canonical IRIS list paths
-  if (cleanHref.startsWith("/IRIS-list/media/")) {
-    cleanHref = cleanHref.replace("/IRIS-list/media/", "/IRIS-list/")
+  // Rewrite legacy or shortcut internal paths to canonical Borealis list paths
+  if (cleanHref.startsWith("/borealis/media/") || cleanHref.startsWith("/IRIS-list/media/")) {
+    cleanHref = cleanHref.replace(/^\/(?:borealis|IRIS-list)\/media\//, "/borealis/")
   } else if (cleanHref.startsWith("/character/")) {
-    cleanHref = cleanHref.replace("/character/", "/IRIS-list/characters/")
+    cleanHref = cleanHref.replace("/character/", "/borealis/characters/")
   } else if (
     cleanHref.startsWith("/staff/") ||
     cleanHref.startsWith("/people/")
   ) {
-    cleanHref = cleanHref.replace(/^\/(?:staff|people)\//, "/IRIS-list/people/")
+    cleanHref = cleanHref.replace(/^\/(?:staff|people)\//, "/borealis/people/")
+  } else if (cleanHref.startsWith("/IRIS-list/")) {
+    cleanHref = cleanHref.replace("/IRIS-list/", "/borealis/")
   }
 
   const isInternal = cleanHref.startsWith("/") || cleanHref.startsWith("#")

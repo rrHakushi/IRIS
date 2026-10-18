@@ -1,4 +1,4 @@
-import React from "react";
+import React from "react"
 import {
   Html,
   Head,
@@ -9,12 +9,12 @@ import {
   Heading,
   Hr,
   Preview,
-} from "@react-email/components";
+} from "@react-email/components"
 
 export interface MfaVerificationEmailProps {
-  code: string;
-  validityMinutes?: number;
-  appName?: string;
+  code: string
+  validityMinutes?: number
+  appName?: string
 }
 
 export const MfaVerificationEmail: React.FC<MfaVerificationEmailProps> = ({
@@ -37,10 +37,10 @@ export const MfaVerificationEmail: React.FC<MfaVerificationEmailProps> = ({
           {/* Card */}
           <Section style={cardSection}>
             <Heading as="h3" style={cardHeading}>
-              Login Verification Code
+              Two-Factor Authentication Code
             </Heading>
             <Text style={cardText}>
-              Use the single-use verification code below to complete your sign-in to{" "}
+              Use the single-use verification code below to complete authentication or verify your email for{" "}
               {appName}.
             </Text>
 
@@ -56,9 +56,8 @@ export const MfaVerificationEmail: React.FC<MfaVerificationEmailProps> = ({
           {/* Footer Notice */}
           <Section style={footerSection}>
             <Text style={noticeText}>
-              <strong>Security Notice:</strong> If you did not initiate this sign-in
-              attempt, please disregard this email or update your password
-              immediately.
+              <strong>Security Notice:</strong> If you did not initiate this request,
+              please disregard this email or review your account password immediately.
             </Text>
             <Hr style={divider} />
             <Text style={copyrightText}>
@@ -68,10 +67,10 @@ export const MfaVerificationEmail: React.FC<MfaVerificationEmailProps> = ({
         </Container>
       </Body>
     </Html>
-  );
-};
+  )
+}
 
-export default MfaVerificationEmail;
+export default MfaVerificationEmail
 
 // --- Modern Dark-Themed Styles ---
 const main: React.CSSProperties = {
@@ -79,18 +78,18 @@ const main: React.CSSProperties = {
   fontFamily:
     "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
   padding: "40px 16px",
-};
+}
 
 const container: React.CSSProperties = {
   maxWidth: "520px",
   margin: "0 auto",
   backgroundColor: "#09090b",
-};
+}
 
 const headerSection: React.CSSProperties = {
   textAlign: "center",
   marginBottom: "28px",
-};
+}
 
 const brandHeading: React.CSSProperties = {
   color: "#ffffff",
@@ -99,7 +98,7 @@ const brandHeading: React.CSSProperties = {
   letterSpacing: "0.15em",
   textTransform: "uppercase",
   margin: "0 0 4px 0",
-};
+}
 
 const brandSubheading: React.CSSProperties = {
   color: "#a1a1aa",
@@ -108,7 +107,7 @@ const brandSubheading: React.CSSProperties = {
   letterSpacing: "0.2em",
   textTransform: "uppercase",
   margin: 0,
-};
+}
 
 const cardSection: React.CSSProperties = {
   backgroundColor: "#18181b",
@@ -117,21 +116,21 @@ const cardSection: React.CSSProperties = {
   padding: "32px 28px",
   textAlign: "center",
   marginBottom: "24px",
-};
+}
 
 const cardHeading: React.CSSProperties = {
   color: "#ffffff",
   fontSize: "18px",
   fontWeight: 700,
   margin: "0 0 12px 0",
-};
+}
 
 const cardText: React.CSSProperties = {
   color: "#a1a1aa",
   fontSize: "14px",
   lineHeight: "1.6",
   margin: "0 0 24px 0",
-};
+}
 
 const codeWrapper: React.CSSProperties = {
   backgroundColor: "#09090b",
@@ -140,7 +139,7 @@ const codeWrapper: React.CSSProperties = {
   padding: "16px 24px",
   margin: "0 auto 20px auto",
   display: "inline-block",
-};
+}
 
 const codeText: React.CSSProperties = {
   fontFamily:
@@ -151,33 +150,33 @@ const codeText: React.CSSProperties = {
   letterSpacing: "0.28em",
   margin: 0,
   textAlign: "center",
-};
+}
 
 const expiryText: React.CSSProperties = {
   color: "#71717a",
   fontSize: "12px",
   margin: 0,
-};
+}
 
 const footerSection: React.CSSProperties = {
   padding: "0 8px",
-};
+}
 
 const noticeText: React.CSSProperties = {
   color: "#71717a",
   fontSize: "12px",
   lineHeight: "1.6",
   margin: "0 0 16px 0",
-};
+}
 
 const divider: React.CSSProperties = {
   borderColor: "#27272a",
   margin: "16px 0",
-};
+}
 
 const copyrightText: React.CSSProperties = {
   color: "#52525b",
   fontSize: "11px",
   textAlign: "center",
   margin: 0,
-};
+}

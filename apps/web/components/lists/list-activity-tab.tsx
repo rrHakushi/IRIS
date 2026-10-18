@@ -24,6 +24,7 @@ import {
   IconExternalLink,
 } from "@tabler/icons-react"
 import { elysia } from "@/lib/elysia"
+import { resolveUserId } from "@/lib/user-profile"
 import { getMediaDetailHref } from "@/lib/media-routes"
 import {
   Avatar,
@@ -94,6 +95,7 @@ export interface ListActivityItem {
 
 export interface ListActivityTabProps {
   username: string
+  userId?: string
   mediaType: MediaListType
   isOwner: boolean
 }
@@ -271,6 +273,7 @@ function getActivityActionPhrasing(
 
 export function ListActivityTab({
   username,
+  userId,
   mediaType,
   isOwner,
 }: ListActivityTabProps): React.JSX.Element {
@@ -324,13 +327,19 @@ export function ListActivityTab({
           setIsLoadingMore(true)
         }
 
-        const res = await elysia
-          .lists({ username })({ mediaType })
-          .activity.get({
+        let targetId = userId
+        if (!targetId && username) {
+          targetId = (await resolveUserId(username)) ?? undefined
+        }
+        if (!targetId) return
+
+        const res = await elysia.carina
+          .users({ userId: targetId })
+          .activity({ category: mediaType })
+          .get({
             query: {
               page: targetPage,
               limit: 15,
-              ...(actionFilter !== "ALL" ? { action: actionFilter } : {}),
             },
           })
 
@@ -387,10 +396,7 @@ export function ListActivityTab({
     if (!deleteTarget) return
     setIsDeleting(true)
     try {
-      const res = await elysia
-        .lists({ username })({ mediaType })
-        .activity({ id: deleteTarget.id })
-        .delete()
+      const res = await elysia.carina.users.activity({ id: deleteTarget.id }).delete()
 
       if (!res.error) {
         toast.success("Activity removed.")
@@ -541,6 +547,7 @@ export function ListActivityTab({
                     <UserProfilePopover
                       profile={authorProfile}
                       username={author.username}
+                      userId={author.id}
                       isOwner={isUserOwner}
                       placement="right top"
                       className="group/avatar relative flex shrink-0 cursor-pointer items-center justify-center rounded-full transition-transform hover:scale-105 focus:outline-hidden"
@@ -575,6 +582,7 @@ export function ListActivityTab({
                       <UserProfilePopover
                         profile={authorProfile}
                         username={author.username}
+                        userId={author.id}
                         isOwner={isUserOwner}
                         placement="bottom start"
                         className="cursor-pointer text-xs font-bold text-foreground hover:underline"
@@ -609,6 +617,7 @@ export function ListActivityTab({
                       <UserProfilePopover
                         profile={authorProfile}
                         username={author.username}
+                        userId={author.id}
                         isOwner={isUserOwner}
                         placement="right top"
                         className="cursor-pointer font-bold text-foreground transition-colors hover:underline focus:outline-hidden"

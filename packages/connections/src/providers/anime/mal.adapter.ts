@@ -529,6 +529,8 @@ export class MyAnimeListAdapter extends BaseConnectionAdapter {
       const s = payload.status.toUpperCase();
       switch (s) {
         case "WATCHING":
+        case "READING":
+        case "CURRENT":
         case "REPEATING":
           malStatus = isManga ? "reading" : "watching";
           break;
