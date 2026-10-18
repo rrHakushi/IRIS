@@ -3,8 +3,8 @@
   "version": "2.0.0",
   "description": "Akaromi password manager extension for IRIS.",
   "scripts": {
-    "lint": "npx web-ext lint",
-    "build": "npx web-ext build --artifacts-dir ../../releases/akaromi --overwrite-dest"
+    "lint": "pnpx web-ext lint",
+    "build": "pnpx web-ext build --artifacts-dir ../../releases/akaromi --overwrite-dest"
   },
   "keywords": [
     "akaromi",
