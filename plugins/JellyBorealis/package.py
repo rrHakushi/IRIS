@@ -59,12 +59,20 @@ def create_release_zip(version: str) -> Path:
     zip_path = RELEASES_DIR / f"JellyBorealis_v{version}.zip"
 
     print(f"[2/4] Packaging release zip -> {zip_path.relative_to(REPO_ROOT)}...")
+    # Normalize zip timestamps and file permissions for reproducible/deterministic checksums
+    fixed_dt = (2026, 1, 1, 0, 0, 0)
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        zf.write(dll_file, arcname="Jellyfin.Plugin.Borealis.dll")
-        if META_FILE.exists():
-            zf.write(META_FILE, arcname="meta.json")
-        if THUMB_FILE.exists():
-            zf.write(THUMB_FILE, arcname="thumb.png")
+        for file_path, arcname in [
+            (dll_file, "Jellyfin.Plugin.Borealis.dll"),
+            (META_FILE, "meta.json"),
+            (THUMB_FILE, "thumb.png"),
+        ]:
+            if file_path.exists():
+                zinfo = zipfile.ZipInfo(filename=arcname, date_time=fixed_dt)
+                zinfo.compress_type = zipfile.ZIP_DEFLATED
+                zinfo.external_attr = 0o644 << 16
+                with open(file_path, "rb") as f:
+                    zf.writestr(zinfo, f.read())
 
     return zip_path
 
@@ -136,6 +144,8 @@ def update_manifest(meta: dict, version: str, zip_path: Path, checksum: str) -> 
         updated = False
         for idx, ver in enumerate(versions_list):
             if isinstance(ver, dict) and ver.get("version") == version:
+                if ver.get("checksum") == checksum and "timestamp" in ver:
+                    version_entry["timestamp"] = ver["timestamp"]
                 versions_list[idx] = version_entry
                 updated = True
                 break
@@ -155,7 +165,7 @@ def update_manifest(meta: dict, version: str, zip_path: Path, checksum: str) -> 
     print(f"  Source URL:     {source_url}")
 
 
-def publish_github_release(version: str, zip_path: Path):
+def publish_github_release(version: str, zip_path: Path, overwrite: bool = False):
     print("[4/4] Checking GitHub release...")
     token = os.environ.get("GITHUB_TOKEN")
     if not token:
@@ -218,6 +228,9 @@ def publish_github_release(version: str, zip_path: Path):
         assets = release.get("assets", [])
         existing_asset = next((a for a in assets if a.get("name") == zip_path.name), None)
         if existing_asset:
+            if not overwrite:
+                print(f"Asset {zip_path.name} already exists on release {tag_name}. Skipping re-upload to preserve checksum (pass --overwrite to force).")
+                return
             print(f"Asset {zip_path.name} already exists on release {tag_name}. Deleting previous asset...")
             del_req = urllib.request.Request(
                 existing_asset["url"],
@@ -250,6 +263,7 @@ def main():
     parser = argparse.ArgumentParser(description="Package JellyBorealis plugin for Jellyfin release.")
     parser.add_argument("--ci", action="store_true", help="Run CI checks and publish to GitHub Releases if GITHUB_TOKEN is present.")
     parser.add_argument("--skip-build", action="store_true", help="Skip dotnet build step.")
+    parser.add_argument("--overwrite", action="store_true", help="Overwrite existing release asset if it already exists.")
     args = parser.parse_args()
 
     meta = read_meta()
@@ -263,7 +277,7 @@ def main():
     update_manifest(meta, version, zip_path, checksum)
 
     if args.ci:
-        publish_github_release(version, zip_path)
+        publish_github_release(version, zip_path, overwrite=args.overwrite)
 
     print("\n[Done] Release packaging completed successfully!")
     print(f"  Artifact: {zip_path}")
