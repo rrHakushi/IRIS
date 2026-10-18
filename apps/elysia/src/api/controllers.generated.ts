@@ -29,10 +29,10 @@ import { carinaQc as _ctrl_24 } from './controllers/carina/qc.ctrl'
 import { carinaRecommendations as _ctrl_25 } from './controllers/carina/recommendations.ctrl'
 import { carinaTotp as _ctrl_26 } from './controllers/carina/totp.ctrl'
 import { carinaUsers as _ctrl_27 } from './controllers/carina/users.ctrl'
-import _ctrl_28 from './controllers/kiroshi/history.ctrl'
-import _ctrl_29 from './controllers/kiroshi/search.ctrl'
-import _ctrl_30 from './controllers/kiroshi/settings.ctrl'
-import _ctrl_31 from './controllers/servarr/servarr.ctrl'
+import { kiroshiHistory as _ctrl_28 } from './controllers/kiroshi/history.ctrl'
+import { kiroshiSearch as _ctrl_29 } from './controllers/kiroshi/search.ctrl'
+import { kiroshiSettings as _ctrl_30 } from './controllers/kiroshi/settings.ctrl'
+import { servarrController as _ctrl_31 } from './controllers/servarr/servarr.ctrl'
 
 export const controllers = new Elysia({ name: 'controllers' })
   .use(_ctrl_0)

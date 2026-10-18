@@ -29,7 +29,8 @@ WORKDIR /app/apps/elysia
 
 ENV NODE_ENV=production
 
-RUN bun build \
+RUN bun run codegen && \
+    bun build \
     --compile \
     --minify-whitespace \
     --minify-syntax \

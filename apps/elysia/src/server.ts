@@ -1,10 +1,11 @@
+import './lib/typebox'
 import { Elysia, NotFound, ValidationError } from 'elysia'
 import { openapi } from '@elysia/openapi'
-import { controllers, cors, rateLimiter } from './plugins'
+import { cors, rateLimiter, generateControllersManifest } from './plugins'
 import { isHttpError } from './lib/errors'
 import { LogFactory } from '@Iris/logger'
 import { wsHub } from './services/ws.serv'
-import type { ControllersApp } from './api/controllers.generated'
+import { controllers, type ControllersApp } from './api/controllers.generated'
 import { websocket } from 'elysia/websocket'
 
 declare global {
@@ -23,10 +24,19 @@ if (!('toJSON' in BigInt.prototype)) {
 const logger = new LogFactory('Elysia:Server')
 const authTimeouts = new WeakMap<object, ReturnType<typeof setTimeout>>()
 
+// In development, auto-sync static controllers manifest when running against source
+if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
+  try {
+    generateControllersManifest()
+  } catch (err: any) {
+    logger.warn(`Failed to auto-sync controllers manifest: ${err?.message || err}`)
+  }
+}
+
 export const app = new Elysia()
   .use(cors())
   .use(rateLimiter())
-  .use(controllers({ logger, generateTypes: true }))
+  .use(controllers as any)
   .use(openapi())
   .use(websocket())
   .ws('/ws', {
@@ -141,6 +151,7 @@ export function startServer(port = Number(process.env.ELYSIA_PORT || 4000)) {
     ({ hostname, port }) => {
       const host = hostname === '0.0.0.0' ? 'localhost' : hostname
       logger.info(`Worker ${process.pid} listening on http://${host}:${port}`)
+      logger.info(`Worker ${process.pid} loaded ${app.routes.length} routes`)
       logger.info(`OpenAPI docs available at http://${host}:${port}/openapi`)
     }
   )

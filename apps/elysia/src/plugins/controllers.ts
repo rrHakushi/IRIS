@@ -273,7 +273,7 @@ function extractControllersFromModule(
  * Generates a static TypeScript manifest file importing and chaining all discovered controllers.
  * Useful for 100% full compile-time Eden Treaty type inference.
  */
-function generateStaticManifest(
+export function generateStaticManifest(
   controllers: LoadedControllerItem[],
   outputFile: string
 ) {
@@ -319,6 +319,52 @@ function generateStaticManifest(
   }
   fs.writeFileSync(outputFile, code, 'utf-8')
 }
+
+/**
+ * Scans controller files in specifiedDir and regenerates the static controllers.generated.ts manifest.
+ */
+export function generateControllersManifest(
+  specifiedDir?: string,
+  specifiedOutFile?: string
+): string | null {
+  const targetDir = resolveControllerDir(specifiedDir)
+  if (!fs.existsSync(targetDir)) {
+    return null
+  }
+
+  const files = scanFiles(targetDir, true)
+  const items: { exportName: string; filePath: string }[] = []
+
+  for (const filePath of files) {
+    try {
+      const content = fs.readFileSync(filePath, 'utf-8')
+      const namedRegex = /export\s+const\s+([a-zA-Z0-9_$]+)\s*=\s*(?:new\s+Elysia|create\w+Router|\()/g
+      let match: RegExpExecArray | null
+      let foundNamed = false
+
+      while ((match = namedRegex.exec(content)) !== null) {
+        if (match[1]) {
+          items.push({ exportName: match[1], filePath })
+          foundNamed = true
+        }
+      }
+
+      if (!foundNamed && /export\s+default\s+/.test(content)) {
+        items.push({ exportName: 'default', filePath })
+      }
+    } catch (err: any) {
+      console.warn(`[ControllersManifest] Skipping ${filePath}:`, err?.message || err)
+    }
+  }
+
+  const outFile = specifiedOutFile
+    ? path.resolve(process.cwd(), specifiedOutFile)
+    : path.join(path.dirname(targetDir), 'controllers.generated.ts')
+
+  generateStaticManifest(items as any, outFile)
+  return outFile
+}
+
 
 /**
  * Scans and registers controllers synchronously into an Elysia plugin.
@@ -527,3 +573,13 @@ export const controllers: ControllersPlugin = Object.assign(controllersSync, {
  */
 export const autoloadControllers = controllers
 export default controllers
+
+if (import.meta.main) {
+  const outFile = generateControllersManifest()
+  if (outFile) {
+    console.log(`[Controllers] Generated static controllers manifest at ${outFile}`)
+  } else {
+    console.warn('[Controllers] Could not locate controllers directory to generate manifest')
+  }
+}
+
