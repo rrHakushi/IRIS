@@ -3,8 +3,8 @@
   "name": "JellyBorealis",
   "description": "Integrates Jellyfin with the Borealis media tracker platform.",
   "overview": "Borealis integration plugin for Jellyfin",
-  "owner": "Borealis",
+  "owner": "rrHakushi",
   "category": "General",
-  "version": "2.0.0.0",
+  "version": "2.0.1.0",
   "imagePath": "thumb.png"
 }

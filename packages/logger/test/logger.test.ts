@@ -1,6 +1,6 @@
 import { describe, it, beforeEach, afterEach } from "node:test"
 import assert from "node:assert/strict"
-import { LogFactory, type LogEntry } from "../src/index.js"
+import { LogFactory, type LogEntry } from "../dist/index.js"
 
 describe("LogFactory (@Iris/logger)", () => {
   const originalEnv = { ...process.env }

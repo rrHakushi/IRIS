@@ -1,6 +1,5 @@
 import { prisma } from '@IRIS/database'
 import { IRISFlags } from '@IRIS/permissions'
-import sharp from 'sharp'
 import { BadRequest, Forbidden, NotFound, Conflict } from '../../lib/errors'
 import { uploadPublicAsset } from '../../utils/s3'
 import { CarinaNotificationsServ } from '../carina/notifications.serv'
@@ -433,6 +432,7 @@ export class BorealisOtherServ {
     }
 
     const rawBuffer = Buffer.from(await file.arrayBuffer())
+    const sharp = (await import('sharp')).default
     const webpBuffer = await sharp(rawBuffer).webp({ quality: 85 }).toBuffer()
 
     const key = `borealis/other/${userId}/${type}-${Date.now()}.webp`

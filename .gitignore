@@ -57,3 +57,5 @@ releases/**
 !releases/**/
 !releases/**/manifest.json
 .jellyfin/
+
+/apps/elysia/server
