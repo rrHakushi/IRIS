@@ -332,7 +332,7 @@ export class BorealisListsServ {
 
   public static async getAnimeList(userId: string, query?: ListQuery) {
     const page = Math.max(1, Number(query?.page ?? 1))
-    const limit = Math.max(1, Math.min(100, Number(query?.limit ?? 40)))
+    const limit = Math.max(1, Math.min(250, Number(query?.limit ?? 40)))
     const skip = (page - 1) * limit
     const order = query?.order === 'asc' ? 'asc' : 'desc'
 
@@ -746,7 +746,7 @@ export class BorealisListsServ {
 
   public static async getMangaList(userId: string, query?: ListQuery) {
     const page = Math.max(1, Number(query?.page ?? 1))
-    const limit = Math.max(1, Math.min(100, Number(query?.limit ?? 40)))
+    const limit = Math.max(1, Math.min(250, Number(query?.limit ?? 40)))
     const skip = (page - 1) * limit
     const order = query?.order === 'asc' ? 'asc' : 'desc'
 
@@ -1178,7 +1178,7 @@ export class BorealisListsServ {
 
   public static async getMovieList(userId: string, query?: ListQuery) {
     const page = Math.max(1, Number(query?.page ?? 1))
-    const limit = Math.max(1, Math.min(100, Number(query?.limit ?? 40)))
+    const limit = Math.max(1, Math.min(250, Number(query?.limit ?? 40)))
     const skip = (page - 1) * limit
     const order = query?.order === 'asc' ? 'asc' : 'desc'
 
@@ -1554,7 +1554,7 @@ export class BorealisListsServ {
 
   public static async getTvList(userId: string, query?: ListQuery) {
     const page = Math.max(1, Number(query?.page ?? 1))
-    const limit = Math.max(1, Math.min(100, Number(query?.limit ?? 40)))
+    const limit = Math.max(1, Math.min(250, Number(query?.limit ?? 40)))
     const skip = (page - 1) * limit
     const order = query?.order === 'asc' ? 'asc' : 'desc'
 
@@ -1981,7 +1981,7 @@ export class BorealisListsServ {
 
   public static async getGameList(userId: string, query?: ListQuery) {
     const page = Math.max(1, Number(query?.page ?? 1))
-    const limit = Math.max(1, Math.min(100, Number(query?.limit ?? 40)))
+    const limit = Math.max(1, Math.min(250, Number(query?.limit ?? 40)))
     const skip = (page - 1) * limit
     const order = query?.order === 'asc' ? 'asc' : 'desc'
 
@@ -2373,7 +2373,7 @@ export class BorealisListsServ {
 
   public static async getBookList(userId: string, query?: ListQuery) {
     const page = Math.max(1, Number(query?.page ?? 1))
-    const limit = Math.max(1, Math.min(100, Number(query?.limit ?? 40)))
+    const limit = Math.max(1, Math.min(250, Number(query?.limit ?? 40)))
     const skip = (page - 1) * limit
     const order = query?.order === 'asc' ? 'asc' : 'desc'
 
@@ -2803,7 +2803,7 @@ export class BorealisListsServ {
 
   public static async getMusicList(userId: string, query?: ListQuery) {
     const page = Math.max(1, Number(query?.page ?? 1))
-    const limit = Math.max(1, Math.min(100, Number(query?.limit ?? 40)))
+    const limit = Math.max(1, Math.min(250, Number(query?.limit ?? 40)))
     const skip = (page - 1) * limit
     const order = query?.order === 'asc' ? 'asc' : 'desc'
 
@@ -3189,7 +3189,7 @@ export class BorealisListsServ {
 
   public static async getOtherList(userId: string, query?: ListQuery) {
     const page = Math.max(1, Number(query?.page ?? 1))
-    const limit = Math.max(1, Math.min(100, Number(query?.limit ?? 40)))
+    const limit = Math.max(1, Math.min(250, Number(query?.limit ?? 40)))
     const skip = (page - 1) * limit
 
     const where: any = { userId }
