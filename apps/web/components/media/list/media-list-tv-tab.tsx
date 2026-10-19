@@ -352,7 +352,16 @@ export function MediaListTvTab({
     markWatched: boolean
   ) => {
     const seasonNum = season.seasonNumber ?? 1
-    const totalEpisodes = season.episodes?.length || season.episodeCount || 0
+    const maxEpNum =
+      season.episodes?.reduce(
+        (max, ep) => Math.max(max, ep.episodeNumber ?? (ep as any).number ?? 0),
+        0
+      ) || 0
+    const totalEpisodes = Math.max(
+      season.episodeCount || 0,
+      season.episodes?.length || 0,
+      maxEpNum
+    )
     if (totalEpisodes <= 0) return
 
     let nextWatchedList: WatchedEpisodeItem[]
@@ -531,7 +540,17 @@ export function MediaListTvTab({
         {effectiveSeasons.map((season) => {
           const seasonNum = season.seasonNumber
           const isExpanded = Boolean(expandedSeasons[seasonNum])
-          const count = season.episodeCount || season.episodes?.length || 0
+          const maxEpNum =
+            season.episodes?.reduce(
+              (max, ep) =>
+                Math.max(max, ep.episodeNumber ?? (ep as any).number ?? 0),
+              0
+            ) || 0
+          const count = Math.max(
+            season.episodeCount || 0,
+            season.episodes?.length || 0,
+            maxEpNum
+          )
 
           const watchedInSeason = watchedEpisodes.filter(
             (we) => we.seasonNumber === seasonNum
@@ -570,10 +589,16 @@ export function MediaListTvTab({
                       : ""}
                   </span>
                   <Badge
-                    variant={isFullyWatched ? "default" : "secondary"}
+                    variant={
+                      count > 0
+                        ? isFullyWatched
+                          ? "default"
+                          : "secondary"
+                        : "outline"
+                    }
                     className="px-1.5 py-0 font-mono text-[10px]"
                   >
-                    {watchedInSeason} / {count || "?"}
+                    {count > 0 ? `${watchedInSeason} / ${count}` : "0 episodes"}
                   </Badge>
                 </div>
 
@@ -584,75 +609,84 @@ export function MediaListTvTab({
                   <Button
                     variant="outline"
                     size="xs"
+                    isDisabled={count <= 0}
                     onClick={() =>
                       handleMarkTvSeasonAll(season, !isFullyWatched)
                     }
-                    className="h-6.5 border-border text-[11px] font-medium"
+                    className="h-6.5 border-border text-[11px] font-medium disabled:opacity-40"
                   >
                     {isFullyWatched ? "Reset" : "Mark Watched"}
                   </Button>
                 </div>
               </div>
 
-              {/* Episode Vertical Scrollable List */}
-              {isExpanded && count > 0 && (
-                <div className="no-scrollbar max-h-[300px] space-y-1.5 overflow-y-auto border-t border-border bg-muted/20 p-2.5 pe-1">
-                  {Array.from({ length: count }, (_, idx) => {
-                    const epNum = idx + 1
-                    const isWatched = isEpisodeWatched(seasonNum, epNum)
-                    const epItem = season.episodes?.find(
-                      (e) => (e.episodeNumber ?? (e as any).number) === epNum
-                    )
-                    const rawTitle =
-                      epItem?.title ||
-                      (epItem as any)?.titlePrimary ||
-                      epItem?.name ||
-                      (epItem as any)?.titleSecondary ||
-                      null
-                    const displayTitle = formatEpisodeTitle(rawTitle, epNum)
+              {/* Episode Vertical Scrollable List or Empty State */}
+              {isExpanded && (
+                count > 0 ? (
+                  <div className="no-scrollbar max-h-[300px] space-y-1.5 overflow-y-auto border-t border-border bg-muted/20 p-2.5 pe-1">
+                    {Array.from({ length: count }, (_, idx) => {
+                      const epNum = idx + 1
+                      const isWatched = isEpisodeWatched(seasonNum, epNum)
+                      const epItem = season.episodes?.find(
+                        (e) => (e.episodeNumber ?? (e as any).number) === epNum
+                      )
+                      const rawTitle =
+                        epItem?.title ||
+                        (epItem as any)?.titlePrimary ||
+                        epItem?.name ||
+                        (epItem as any)?.titleSecondary ||
+                        null
+                      const displayTitle = formatEpisodeTitle(rawTitle, epNum)
 
-                    return (
-                      <button
-                        key={epNum}
-                        type="button"
-                        onClick={() => handleToggleTvEpisode(seasonNum, epNum)}
-                        className={`group flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border p-2 text-xs font-medium transition-colors ${
-                          isWatched
-                            ? "border-primary/40 bg-primary/10 text-primary"
-                            : "border-border bg-card text-muted-foreground hover:border-border/80 hover:bg-muted hover:text-foreground"
-                        }`}
-                      >
-                        <div className="flex min-w-0 items-center gap-3">
-                          <span className="w-12 shrink-0 font-mono text-xs font-bold text-muted-foreground">
-                            Ep {epNum}
-                          </span>
-                          {displayTitle ? (
-                            <span
-                              className={`truncate text-xs font-medium ${
-                                isWatched
-                                  ? "font-semibold text-foreground"
-                                  : "text-foreground"
-                              }`}
-                            >
-                              {displayTitle}
-                            </span>
-                          ) : null}
-                        </div>
-                        <span
-                          className={`flex size-4.5 shrink-0 items-center justify-center rounded-md border transition-colors ${
+                      return (
+                        <button
+                          key={epNum}
+                          type="button"
+                          onClick={() => handleToggleTvEpisode(seasonNum, epNum)}
+                          className={`group flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border p-2 text-xs font-medium transition-colors ${
                             isWatched
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-border bg-card group-hover:border-foreground/40"
+                              ? "border-primary/40 bg-primary/10 text-primary"
+                              : "border-border bg-card text-muted-foreground hover:border-border/80 hover:bg-muted hover:text-foreground"
                           }`}
                         >
-                          {isWatched && (
-                            <IconCheck className="size-2.5 stroke-[3]" />
-                          )}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
+                          <div className="flex min-w-0 items-center gap-3">
+                            <span className="w-12 shrink-0 font-mono text-xs font-bold text-muted-foreground">
+                              Ep {epNum}
+                            </span>
+                            {displayTitle ? (
+                              <span
+                                className={`truncate text-xs font-medium ${
+                                  isWatched
+                                    ? "font-semibold text-foreground"
+                                    : "text-foreground"
+                                }`}
+                              >
+                                {displayTitle}
+                              </span>
+                            ) : null}
+                          </div>
+                          <span
+                            className={`flex size-4.5 shrink-0 items-center justify-center rounded-md border transition-colors ${
+                              isWatched
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border bg-card group-hover:border-foreground/40"
+                            }`}
+                          >
+                            {isWatched && (
+                              <IconCheck className="size-2.5 stroke-[3]" />
+                            )}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="border-t border-border bg-muted/10 p-4 text-center">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      No episodes released or available yet for Season {seasonNum}.
+                    </p>
+                  </div>
+                )
               )}
             </div>
           )

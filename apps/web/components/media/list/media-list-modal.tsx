@@ -259,22 +259,41 @@ export function MediaListModal({
 
   const effectiveTvSeasons: TvSeasonItem[] = useMemo(() => {
     if (category !== "tv") return []
-    const source =
-      fetchedTvSeasons && fetchedTvSeasons.length > 0
+    const source: any[] = [
+      ...(fetchedTvSeasons && fetchedTvSeasons.length > 0
         ? fetchedTvSeasons
-        : media.seasons && media.seasons.length > 1
+        : media.seasons && media.seasons.length > 0
           ? media.seasons
-          : media.seasons && media.seasons.length > 0
-            ? media.seasons
-            : []
+          : []),
+    ]
+
+    const allTvEpisodes =
+      fetchedTvEpisodes && fetchedTvEpisodes.length > 0
+        ? fetchedTvEpisodes
+        : media.episodes && media.episodes.length > 0
+          ? media.episodes
+          : []
+
+    // Also discover any seasons present in allTvEpisodes that aren't yet in source
+    const knownSeasonNumbers = new Set(
+      source.map((s: any) => s.seasonNumber).filter((n) => typeof n === "number")
+    )
+    for (const ep of allTvEpisodes) {
+      const sNum = ep.seasonNumber ?? ep.season
+      if (typeof sNum === "number" && !knownSeasonNumbers.has(sNum)) {
+        knownSeasonNumbers.add(sNum)
+        source.push({
+          seasonNumber: sNum,
+          title: `Season ${sNum}`,
+          titlePrimary: `Season ${sNum}`,
+          episodeCount: null,
+          episodes: [],
+        })
+      }
+    }
 
     if (source.length > 0) {
-      const allTvEpisodes =
-        fetchedTvEpisodes && fetchedTvEpisodes.length > 0
-          ? fetchedTvEpisodes
-          : media.episodes && media.episodes.length > 0
-            ? media.episodes
-            : []
+      source.sort((a, b) => (a.seasonNumber ?? 0) - (b.seasonNumber ?? 0))
       return source.map((s: any) => {
         const seasonEpisodes = (
           s.episodes && s.episodes.length > 0
@@ -282,7 +301,8 @@ export function MediaListModal({
             : allTvEpisodes.filter(
                 (ep: any) =>
                   ep.seasonNumber === s.seasonNumber ||
-                  ep.season === s.seasonNumber
+                  ep.season === s.seasonNumber ||
+                  (s.id && ep.seasonId === s.id)
               )
         ).map((ep: any) => ({
           id: ep.id,
@@ -292,6 +312,11 @@ export function MediaListModal({
           titleSecondary: ep.titleSecondary || null,
           name: ep.name || null,
         }))
+
+        // Sort season episodes by episodeNumber
+        seasonEpisodes.sort(
+          (a: any, b: any) => (a.episodeNumber ?? 0) - (b.episodeNumber ?? 0)
+        )
 
         return {
           id: s.id,
@@ -444,37 +469,69 @@ export function MediaListModal({
     initialEntry?.watchedEpisodes || []
   )
 
-  // Auto-synthesize watchedEpisodes from overall progress when seasons are available and watchedEpisodes is empty
+  // Auto-synthesize watchedEpisodes from overall progress when seasons are available
+  const hasSynthesizedRef = useRef(false)
+  const isFallbackOnly =
+    effectiveTvSeasons.length === 1 &&
+    effectiveTvSeasons[0]?.seasonNumber === 1 &&
+    Boolean(media.seasonCount && media.seasonCount > 1)
+
   useEffect(() => {
     if (
       category === "tv" &&
+      !isFetchingTvSeasons &&
       effectiveTvSeasons.length > 0 &&
-      progress > 0 &&
-      watchedEpisodes.length === 0
+      !isFallbackOnly &&
+      progress > 0
     ) {
       const regularSeasons = effectiveTvSeasons.filter((s) => s.seasonNumber > 0)
       const list = regularSeasons.length > 0 ? regularSeasons : effectiveTvSeasons
-      let remaining = progress
-      const synthesized: WatchedEpisodeItem[] = []
-      const now = new Date().toISOString()
-      for (const s of list) {
-        if (remaining <= 0) break
-        const count = s.episodes?.length || s.episodeCount || 0
-        const take = count > 0 ? Math.min(remaining, count) : remaining
-        for (let ep = 1; ep <= take; ep++) {
-          synthesized.push({
-            seasonNumber: s.seasonNumber,
-            episodeNumber: ep,
-            watchedAt: now,
-          })
+
+      // Detect if watchedEpisodes was corrupted into Season 1 only while progress spans multiple seasons
+      const allUnderSeasonOne =
+        watchedEpisodes.length > 0 &&
+        list.length > 1 &&
+        watchedEpisodes.every((we) => we.seasonNumber === 1) &&
+        (list[0]?.episodeCount || 0) > 0 &&
+        progress > (list[0]?.episodeCount || 0)
+
+      const shouldSynthesize =
+        watchedEpisodes.length === 0 ||
+        allUnderSeasonOne ||
+        (!hasSynthesizedRef.current && (initialEntry?.watchedEpisodes?.length || 0) === 0)
+
+      if (shouldSynthesize) {
+        let remaining = progress
+        const synthesized: WatchedEpisodeItem[] = []
+        const now = new Date().toISOString()
+        for (const s of list) {
+          if (remaining <= 0) break
+          const count = s.episodes?.length || s.episodeCount || 0
+          const take = count > 0 ? Math.min(remaining, count) : remaining
+          for (let ep = 1; ep <= take; ep++) {
+            synthesized.push({
+              seasonNumber: s.seasonNumber,
+              episodeNumber: ep,
+              watchedAt: now,
+            })
+          }
+          remaining -= take
         }
-        remaining -= take
-      }
-      if (synthesized.length > 0) {
-        setWatchedEpisodes(synthesized)
+        if (synthesized.length > 0) {
+          hasSynthesizedRef.current = true
+          setWatchedEpisodes(synthesized)
+        }
       }
     }
-  }, [category, effectiveTvSeasons, progress, watchedEpisodes.length])
+  }, [
+    category,
+    isFetchingTvSeasons,
+    effectiveTvSeasons,
+    isFallbackOnly,
+    progress,
+    watchedEpisodes,
+    initialEntry?.watchedEpisodes?.length,
+  ])
   const [connections, setConnections] = useState<
     Record<string, ConnectionItem>
   >((initialEntry?.connections as Record<string, ConnectionItem>) || {})

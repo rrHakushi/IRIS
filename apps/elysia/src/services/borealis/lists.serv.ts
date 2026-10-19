@@ -1611,6 +1611,16 @@ export class BorealisListsServ {
               averageScore: true,
               firstAiredYear: true,
               genres: { select: { id: true, name: true } },
+              seasons: {
+                select: {
+                  id: true,
+                  seasonNumber: true,
+                  titlePrimary: true,
+                  titleSecondary: true,
+                  episodeCount: true,
+                },
+                orderBy: { seasonNumber: 'asc' },
+              },
             },
           },
         },
@@ -1654,6 +1664,16 @@ export class BorealisListsServ {
             averageScore: true,
             firstAiredYear: true,
             genres: { select: { id: true, name: true } },
+            seasons: {
+              select: {
+                id: true,
+                seasonNumber: true,
+                titlePrimary: true,
+                titleSecondary: true,
+                episodeCount: true,
+              },
+              orderBy: { seasonNumber: 'asc' },
+            },
           },
         },
       },
