@@ -14,6 +14,8 @@ const nextConfig: NextConfig = {
   transpilePackages: ["@workspace/ui"],
   images: {
     formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 60 * 60 * 24 * 180, // 6 months (180 days)
+    maximumDiskCacheSize: 30 * 1024 * 1024 * 1024, // 30 GB in bytes
     remotePatterns: [
       { protocol: "https", hostname: "**.anilist.co" },
       { protocol: "https", hostname: "cdn.myanimelist.net" },
