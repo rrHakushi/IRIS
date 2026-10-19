@@ -44,7 +44,7 @@ export const BorealisListsModel = {
   // --- List Query Schema ---
   listQuery: t.Object({
     page: t.Optional(t.Numeric({ default: 1, minimum: 1, description: 'Page number' })),
-    limit: t.Optional(t.Numeric({ default: 40, minimum: 1, maximum: 100, description: 'Items per page (default 40)' })),
+    limit: t.Optional(t.Numeric({ default: 40, minimum: 1, maximum: 250, description: 'Items per page (default 40)' })),
     status: t.Optional(t.String({ description: 'Filter by list status (e.g. WATCHING, COMPLETED)' })),
     format: t.Optional(t.String({ description: 'Filter by format e.g. app, activity, or comma-separated' })),
     mediaFormat: t.Optional(t.String({ description: 'Filter by media format' })),

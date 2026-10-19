@@ -90,6 +90,8 @@ services:
       - ELYSIA_INTERNAL_URL=http://elysia:4000
     depends_on:
       - elysia
+    volumes:
+      - next_image_cache:/app/apps/web/.next/cache/images
     networks:
       IRIS:
         ipv4_address: 172.28.0.6
@@ -110,3 +112,4 @@ volumes:
   postgres_data:
   redis_data:
   rustfs_data:
+  next_image_cache:

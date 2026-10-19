@@ -491,7 +491,7 @@ export function UserListView({
         const { data, error } = await resource.get({
           query: {
             page: 1,
-            limit: 40,
+            limit: 100,
             status: statusParam,
             format: formatsParam,
             mediaStatus: mediaStatusesParam,
@@ -573,7 +573,7 @@ export function UserListView({
       const { data, error } = await resource.get({
         query: {
           page: nextPage,
-          limit: 40,
+          limit: 100,
           status: statusParam,
           format: formatsParam,
           mediaStatus: mediaStatusesParam,
@@ -614,6 +614,33 @@ export function UserListView({
     sortBy,
     sortOrder,
     targetUserId,
+  ])
+
+  // ---------------------------------------------------------------------------
+  // 3b. Eager Background Pre-fetching for Personal Lists
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    // Only eager prefetch when on "ALL" status and not actively typing/searching
+    if (activeStatus !== "ALL" || debouncedSearch.trim()) return
+    if (!hasMore || isLoading || isLoadingMore || isFetchingMoreRef.current)
+      return
+
+    // Safety guard: cap continuous eager pre-fetching at 1000 items
+    if (items.length >= 1000) return
+
+    const timer = setTimeout(() => {
+      handleLoadMore()
+    }, 60)
+
+    return () => clearTimeout(timer)
+  }, [
+    activeStatus,
+    debouncedSearch,
+    hasMore,
+    isLoading,
+    isLoadingMore,
+    items.length,
+    handleLoadMore,
   ])
 
   // ---------------------------------------------------------------------------
@@ -1091,6 +1118,8 @@ export function UserListView({
             onIncrementProgress={isOwner ? handleIncrementProgress : undefined}
             mediaTitlePreference={mediaTitlePreference}
             searchQuery={searchQuery.trim()}
+            facets={facets}
+            totalCount={totalCount}
           />
         )}
 

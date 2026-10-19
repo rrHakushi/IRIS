@@ -24,9 +24,31 @@ import {
   type ListEntryData,
   type MediaListType,
   type StatusKey,
+  type ListFilterFacets,
   MEDIA_CATEGORIES,
 } from "./types"
 import { MediaListCard } from "./media-list-card"
+
+export function MediaListCardSkeleton({
+  isMusic = false,
+}: {
+  isMusic?: boolean
+}): React.JSX.Element {
+  return (
+    <div className="relative flex flex-col overflow-hidden rounded-xl border border-border/40 bg-card/60 animate-pulse">
+      <div
+        className={cn(
+          "w-full bg-muted/60",
+          isMusic ? "aspect-square" : "aspect-2/3"
+        )}
+      />
+      <div className="flex flex-col gap-1.5 p-2.5">
+        <div className="h-3.5 w-3/4 rounded bg-muted/70" />
+        <div className="h-2.5 w-1/2 rounded bg-muted/40" />
+      </div>
+    </div>
+  )
+}
 
 export interface MediaListGridProps {
   mediaType: MediaListType
@@ -44,6 +66,8 @@ export interface MediaListGridProps {
   onIncrementProgress?: (item: ListEntryData, count: number) => Promise<void>
   mediaTitlePreference?: "primary" | "secondary" | "native"
   searchQuery?: string
+  facets?: ListFilterFacets
+  totalCount?: number
   className?: string
 }
 
@@ -199,6 +223,8 @@ export function MediaListGrid({
   onIncrementProgress,
   mediaTitlePreference = "primary",
   searchQuery,
+  facets,
+  totalCount,
   className,
 }: MediaListGridProps): React.JSX.Element {
   const currentCategory = MEDIA_CATEGORIES.find((c) => c.key === mediaType)
@@ -211,6 +237,46 @@ export function MediaListGrid({
   const handleOpenEditModal = useCallback((target: ListEntryData) => {
     setEditingItem(target)
   }, [])
+
+  // Compute status badge counts from facets
+  const statusExpectedCounts = useMemo(() => {
+    const map: Record<string, number> = {
+      WATCHING: 0,
+      ON_HOLD: 0,
+      COMPLETED: 0,
+      DROPPED: 0,
+      PLANNING: 0,
+    }
+
+    if (!facets?.statuses) return map
+
+    facets.statuses.forEach((item) => {
+      const upper = item.value.toUpperCase()
+      if (
+        upper === "WATCHING" ||
+        upper === "READING" ||
+        upper === "PLAYING" ||
+        upper === "LISTENING" ||
+        upper === "CURRENT"
+      ) {
+        map.WATCHING = (map.WATCHING || 0) + item.count
+      } else if (
+        upper === "ON_HOLD" ||
+        upper === "HOLD" ||
+        upper === "PAUSED"
+      ) {
+        map.ON_HOLD = (map.ON_HOLD || 0) + item.count
+      } else if (upper === "COMPLETED" || upper === "FINISHED") {
+        map.COMPLETED = (map.COMPLETED || 0) + item.count
+      } else if (upper === "DROPPED") {
+        map.DROPPED = (map.DROPPED || 0) + item.count
+      } else if (upper === "PLANNING") {
+        map.PLANNING = (map.PLANNING || 0) + item.count
+      }
+    })
+
+    return map
+  }, [facets?.statuses])
 
   // When All is selected, separate entries by status in this exact order:
   // 1. Watching (or Reading / Playing)
@@ -226,26 +292,31 @@ export function MediaListGrid({
     const watchingSection = {
       key: "WATCHING",
       title: currentCategory?.activeVerb || "Watching",
+      expectedCount: statusExpectedCounts.WATCHING ?? 0,
       items: [] as ListEntryData[],
     }
     const onHoldSection = {
       key: "ON_HOLD",
       title: "On hold",
+      expectedCount: statusExpectedCounts.ON_HOLD ?? 0,
       items: [] as ListEntryData[],
     }
     const completedSection = {
       key: "COMPLETED",
       title: "Completed",
+      expectedCount: statusExpectedCounts.COMPLETED ?? 0,
       items: [] as ListEntryData[],
     }
     const droppedSection = {
       key: "DROPPED",
       title: "Dropped",
+      expectedCount: statusExpectedCounts.DROPPED ?? 0,
       items: [] as ListEntryData[],
     }
     const planningSection = {
       key: "PLANNING",
       title: "Planning",
+      expectedCount: statusExpectedCounts.PLANNING ?? 0,
       items: [] as ListEntryData[],
     }
 
@@ -255,7 +326,8 @@ export function MediaListGrid({
         upperStatus === "WATCHING" ||
         upperStatus === "READING" ||
         upperStatus === "PLAYING" ||
-        upperStatus === "CURRENT"
+        upperStatus === "CURRENT" ||
+        upperStatus === "LISTENING"
       ) {
         watchingSection.items.push(item)
       } else if (
@@ -281,10 +353,35 @@ export function MediaListGrid({
       planningSection,
     ]
 
-    return sections.filter((sec) => sec.items.length > 0)
-  }, [items, activeStatus, currentCategory?.activeVerb])
+    const hasFilter = Boolean(searchQuery?.trim())
 
-  // Infinite Scroll IntersectionObserver
+    return sections.filter((sec) => {
+      // If a search query is active, only show sections that contain matching loaded items
+      if (hasFilter) {
+        return sec.items.length > 0
+      }
+
+      // If we have loaded items for this section, always keep it
+      if (sec.items.length > 0) return true
+
+      // If items are still streaming/loading and this status exists in user's library, keep section visible
+      if (sec.expectedCount > 0 && (hasMore || isLoadingMore)) {
+        return true
+      }
+
+      return false
+    })
+  }, [
+    items,
+    activeStatus,
+    currentCategory?.activeVerb,
+    statusExpectedCounts,
+    searchQuery,
+    hasMore,
+    isLoadingMore,
+  ])
+
+  // Infinite Scroll IntersectionObserver with generous rootMargin
   useEffect(() => {
     if (!hasMore || isLoading || isLoadingMore || !onLoadMore) return
 
@@ -295,7 +392,7 @@ export function MediaListGrid({
           onLoadMore()
         }
       },
-      { rootMargin: "300px" }
+      { rootMargin: "1200px" }
     )
 
     const el = sentinelRef.current
@@ -345,37 +442,66 @@ export function MediaListGrid({
     <div className={cn("flex flex-col gap-6", className)}>
       {groupedSections ? (
         <div className="flex flex-col gap-8">
-          {groupedSections.map((section, sectionIdx) => (
-            <div key={section.key} className="flex flex-col gap-3">
-              {/* Section Header with Title & Count */}
-              <div className="flex items-center gap-2">
-                <h2 className="font-heading text-sm font-semibold tracking-tight text-foreground sm:text-base">
-                  {section.title}
-                </h2>
-                <span className="rounded-full bg-muted/80 px-2 py-0.5 font-mono text-[11px] font-medium text-muted-foreground tabular-nums">
-                  {section.items.length}
-                </span>
-              </div>
+          {groupedSections.map((section, sectionIdx) => {
+            const isSectionLoading =
+              (hasMore || isLoadingMore) &&
+              section.items.length < section.expectedCount
+            const displayCount =
+              section.expectedCount > 0 && (hasMore || isLoadingMore)
+                ? section.expectedCount
+                : section.items.length
 
-              {/* Fixed-Size Auto-Fill Grid */}
-              <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
-                {section.items.map((item, idx) => (
-                  <MediaListCard
-                    key={`${item.entry.id}-${item.media.id}`}
-                    item={item}
-                    mediaType={mediaType}
-                    mediaTitlePreference={mediaTitlePreference}
-                    progressUnit={progressUnit}
-                    onOpenEditModal={handleOpenEditModal}
-                    onIncrementProgress={
-                      isOwner ? onIncrementProgress : undefined
-                    }
-                    priority={sectionIdx === 0 && idx === 0}
-                  />
-                ))}
+            // Skeleton placeholders for pending items (capped at 12)
+            const skeletonCount = isSectionLoading
+              ? Math.min(
+                  12,
+                  Math.max(
+                    section.items.length === 0 ? 4 : 2,
+                    section.expectedCount - section.items.length
+                  )
+                )
+              : 0
+
+            return (
+              <div key={section.key} className="flex flex-col gap-3">
+                {/* Section Header with Title & Count */}
+                <div className="flex items-center gap-2">
+                  <h2 className="font-heading text-sm font-semibold tracking-tight text-foreground sm:text-base">
+                    {section.title}
+                  </h2>
+                  <span className="rounded-full bg-muted/80 px-2 py-0.5 font-mono text-[11px] font-medium text-muted-foreground tabular-nums">
+                    {displayCount}
+                  </span>
+                </div>
+
+                {/* Fixed-Size Auto-Fill Grid */}
+                <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
+                  {section.items.map((item, idx) => (
+                    <MediaListCard
+                      key={`${item.entry.id}-${item.media.id}`}
+                      item={item}
+                      mediaType={mediaType}
+                      mediaTitlePreference={mediaTitlePreference}
+                      progressUnit={progressUnit}
+                      onOpenEditModal={handleOpenEditModal}
+                      onIncrementProgress={
+                        isOwner ? onIncrementProgress : undefined
+                      }
+                      priority={sectionIdx === 0 && idx === 0}
+                    />
+                  ))}
+
+                  {/* Skeleton Placeholders while pending items stream in */}
+                  {Array.from({ length: skeletonCount }).map((_, sIdx) => (
+                    <MediaListCardSkeleton
+                      key={`skeleton-${section.key}-${sIdx}`}
+                      isMusic={mediaType === "music"}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">

@@ -1327,7 +1327,6 @@ export class BorealisMediaServ {
         },
         seasons: {
           orderBy: { seasonNumber: 'asc' },
-          take: 20,
         },
         episodes: {
           orderBy: [{ seasonNumber: 'asc' }, { episodeNumber: 'asc' }],

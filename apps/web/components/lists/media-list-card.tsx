@@ -123,21 +123,72 @@ export function computeTvProgress(item: ListEntryData): {
   // 3. Fallback: cumulative episodes calculated across seasons
   const overallProg = entry.progress ?? 0
   if (seasons.length > 0) {
+    const regularSeasons = seasons
+      .filter((s: any) => s.seasonNumber > 0)
+      .sort((a: any, b: any) => a.seasonNumber - b.seasonNumber)
+    const list =
+      regularSeasons.length > 0
+        ? regularSeasons
+        : [...seasons].sort((a: any, b: any) => a.seasonNumber - b.seasonNumber)
+
+    if (overallProg <= 0) {
+      const first = list[0]
+      return {
+        seasonNumber: first?.seasonNumber ?? 1,
+        episodeNumber: 0,
+        seasonEpisodeCount:
+          first?.episodeCount && first.episodeCount > 0
+            ? first.episodeCount
+            : undefined,
+      }
+    }
+
     let remaining = overallProg
-    const sortedSeasons = [...seasons].sort(
-      (a, b) => a.seasonNumber - b.seasonNumber
-    )
-    for (let i = 0; i < sortedSeasons.length; i++) {
-      const s = sortedSeasons[i]
+    let lastValidSeason: any = null
+
+    for (let i = 0; i < list.length; i++) {
+      const s = list[i]
       const count = s.episodeCount || 0
-      if (i === sortedSeasons.length - 1 || remaining <= count) {
+
+      if (count > 0) {
+        lastValidSeason = s
+      }
+
+      // If this season has no episodes, and we completed all episodes of prior seasons:
+      // do not advance into an unreleased season with 0 episodes!
+      if (count <= 0 && remaining > 0 && lastValidSeason) {
+        return {
+          seasonNumber: lastValidSeason.seasonNumber,
+          episodeNumber: lastValidSeason.episodeCount || remaining,
+          seasonEpisodeCount:
+            lastValidSeason.episodeCount > 0
+              ? lastValidSeason.episodeCount
+              : undefined,
+        }
+      }
+
+      if (remaining <= count) {
         return {
           seasonNumber: s.seasonNumber,
           episodeNumber: remaining,
           seasonEpisodeCount: count > 0 ? count : undefined,
         }
       }
-      remaining -= count
+
+      if (count > 0) {
+        remaining -= count
+      }
+    }
+
+    if (lastValidSeason) {
+      return {
+        seasonNumber: lastValidSeason.seasonNumber,
+        episodeNumber: lastValidSeason.episodeCount || remaining,
+        seasonEpisodeCount:
+          lastValidSeason.episodeCount > 0
+            ? lastValidSeason.episodeCount
+            : undefined,
+      }
     }
   }
 
@@ -507,10 +558,18 @@ function MediaListCardInner({
               <span className="font-semibold text-white">
                 S{tvProg.seasonNumber}
               </span>
-              <span className="text-white/80">/E{tvDisplayEpisode}</span>
+              <span className="text-white/80">
+                /E
+                {tvDisplayEpisode < 100
+                  ? String(tvDisplayEpisode).padStart(2, "0")
+                  : tvDisplayEpisode}
+              </span>
               {tvProg.seasonEpisodeCount ? (
                 <span className="font-semibold text-primary">
-                  /{tvProg.seasonEpisodeCount}
+                  /
+                  {tvProg.seasonEpisodeCount < 100
+                    ? String(tvProg.seasonEpisodeCount).padStart(2, "0")
+                    : tvProg.seasonEpisodeCount}
                 </span>
               ) : null}
             </div>
