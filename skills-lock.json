@@ -17,7 +17,7 @@
       "source": "elysiajs/skills",
       "sourceType": "github",
       "skillPath": "elysia/SKILL.md",
-      "computedHash": "55268e69a2c766ed67e56a0db57544f60cc52dba0c7f024a974baf965e525e1b"
+      "computedHash": "e0bc0ecce6cecc34f14cf445c72f7df0cec278e64dfd4ea99f26c503e98624d6"
     },
     "find-skills": {
       "source": "vercel-labs/skills",
@@ -25,17 +25,11 @@
       "skillPath": "skills/find-skills/SKILL.md",
       "computedHash": "b146008599c31057cef1c145774cea5d5afb30e8f43fa802e47a4b461419aaaf"
     },
-    "firefox-extension-dev": {
-      "source": "acaprino/daodan",
-      "sourceType": "github",
-      "skillPath": "exports/claude/plugins/browser-extensions/skills/firefox-extension-dev/SKILL.md",
-      "computedHash": "2a39e3c55845dfa4a09fb4c4eb02d9e6e3ca60f36bf7cd7ae6fb718ca8a97350"
-    },
     "git-commit": {
       "source": "github/awesome-copilot",
       "sourceType": "github",
       "skillPath": "skills/git-commit/SKILL.md",
-      "computedHash": "2607fc60629b82b257136dd2a7a373f0a4466c0b49df7746d845d59313c99b21"
+      "computedHash": "78b6a33700091345cd449f9e3642ddd611b479b341efc9d6c750f7e04d15216a"
     },
     "grill-me": {
       "source": "mattpocock/skills",
@@ -59,7 +53,7 @@
       "source": "dietrichgebert/ponytail",
       "sourceType": "github",
       "skillPath": "skills/ponytail/SKILL.md",
-      "computedHash": "99f0589e5646b46da07b9419a5daa178004b3dd8930fec528918a51ab07f5efc"
+      "computedHash": "061f887d9e3e735f85db3be3655a8936a00f24d5fb65ac4ab74a968a770fe342"
     },
     "security-review": {
       "source": "github/awesome-copilot",
@@ -71,7 +65,7 @@
       "source": "shadcn/ui",
       "sourceType": "github",
       "skillPath": "skills/shadcn/SKILL.md",
-      "computedHash": "da388f632cd83783c02967446e21941c9ee8291ccb43ba74c23f7d4e9b7c298c"
+      "computedHash": "b864a958765563321f485a96f4d59c0bb6539f4286ab6d8b8b66895b7ebd302d"
     },
     "skill-creator": {
       "source": "anthropics/skills",
