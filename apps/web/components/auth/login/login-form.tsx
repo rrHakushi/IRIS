@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { signIn } from "next-auth/react"
+import { signIn } from "@/context/session-context"
 import { useTranslations } from "next-intl"
 import { startAuthentication } from "@simplewebauthn/browser"
 import { elysia } from "@/lib/elysia"
@@ -169,16 +169,29 @@ export function LoginForm({ footer }: LoginFormProps) {
     const cleanId = identifier.trim().toLowerCase()
 
     try {
-      const res = await signIn("credentials", {
+      const res: any = await signIn("credentials", {
         redirect: false,
         identifier: cleanId,
         password,
       })
 
+      if (res?.mfaRequired && res?.mfaTicket) {
+        setMfaTicket(res.mfaTicket)
+        const types = (res.allowedMfaTypes || ["totp"]) as MfaType[]
+        setAllowedMfaTypes(types)
+        setActiveMfaType(types[0] || "totp")
+        setView("mfa")
+        setLoading(false)
+        return
+      }
+
       if (res?.error) {
         try {
           const parsed = JSON.parse(res.error)
-          if (parsed.error === "MFA_REQUIRED" && parsed.mfaTicket) {
+          if (
+            (parsed.error === "MFA_REQUIRED" || parsed.mfaRequired) &&
+            parsed.mfaTicket
+          ) {
             setMfaTicket(parsed.mfaTicket)
             const types = (parsed.allowedMfaTypes || ["totp"]) as MfaType[]
             setAllowedMfaTypes(types)

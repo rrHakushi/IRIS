@@ -9,7 +9,7 @@ import {
   IconNews,
   IconVideo,
 } from "@tabler/icons-react"
-import { Session } from "next-auth"
+import type { Session } from "@/context/session-context"
 
 export function getSearchSidebarConfig(
   session: Session | null,

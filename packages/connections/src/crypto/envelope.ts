@@ -18,7 +18,7 @@ const AUTH_TAG_LENGTH = 16; // 128 bits
 function getMasterSecret(): Buffer {
   const secret =
     process.env.CONNECTIONS_SECRET ||
-    process.env.NEXTAUTH_SECRET ||
+    process.env.JWT_SECRET ||
     process.env.APP_SECRET ||
     "iris-default-connections-master-key-32chars";
   return createHash("sha256").update(secret).digest();

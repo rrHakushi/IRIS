@@ -1,7 +1,7 @@
 import { prisma } from '@IRIS/database'
 import { cache } from '../../utils/cache'
-import { generateBackupCodes, verifyBackupCode } from '../../utils/auth-crypto'
-import { BadRequest, NotFound } from '../../lib/errors'
+import { generateBackupCodes, verifyBackupCode, signUserJwt } from '../../utils/auth-crypto'
+import { BadRequest, NotFound, Unauthorized } from '../../lib/errors'
 import type { CarinaBackupCodesModel } from '../../api/models/carina/backupcodes.model'
 
 export abstract class CarinaBackupCodesServ {
@@ -93,11 +93,81 @@ export abstract class CarinaBackupCodesServ {
 
   /**
    * Verify and consume a single-use backup recovery code.
+   * Supports both active login challenges (via mfaTicket) and authenticated verification.
    */
   static async verifyCode(
-    userId: string,
+    userId: string | null | undefined,
     body: CarinaBackupCodesModel['verifyBody']
   ) {
+    // 1. Unauthenticated Login Challenge Flow via mfaTicket
+    if (body.mfaTicket) {
+      const ticketData = await cache.get<{ userId: string }>(
+        `auth:mfa-ticket:${body.mfaTicket}`
+      )
+      if (!ticketData?.userId) {
+        throw new BadRequest('Invalid or expired MFA session ticket.')
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: ticketData.userId },
+      })
+
+      if (!user) {
+        throw new NotFound('User account not found.')
+      }
+
+      if (user.backupCodes.length === 0) {
+        throw new BadRequest('No backup codes exist for this account.')
+      }
+
+      const matchedIndex = await verifyBackupCode(body.code, user.backupCodes)
+
+      if (matchedIndex === -1) {
+        throw new Unauthorized('Invalid or previously used backup recovery code.')
+      }
+
+      // Consume the matched single-use code
+      const updatedCodes = user.backupCodes.filter((_, idx) => idx !== matchedIndex)
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          backupCodes: updatedCodes,
+        },
+      })
+
+      // Invalidate ticket & caches
+      await cache.del(`auth:mfa-ticket:${body.mfaTicket}`)
+      await cache.del(`users:me:user:${user.id}`)
+      await cache.del(`user:${user.id}`)
+
+      // Issue authenticated JWT session token
+      const token = await signUserJwt({
+        ...user,
+        username: user.username.trim(),
+      })
+
+      return {
+        success: true,
+        message: 'Backup code verified successfully',
+        remainingCount: updatedCodes.length,
+        token,
+        user: {
+          id: user.id,
+          username: user.username.trim(),
+          email: user.email,
+          passwordChangedAt: user.passwordChangedAt
+            ? Math.floor(user.passwordChangedAt.getTime() / 1000)
+            : null,
+        },
+      }
+    }
+
+    // 2. Authenticated Verification Flow
+    if (!userId) {
+      throw new Unauthorized('Authentication required or valid mfaTicket required.')
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
     })

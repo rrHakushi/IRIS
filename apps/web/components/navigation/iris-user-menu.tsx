@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import Link from "next/link"
 import { useTheme } from "next-themes"
-import { useSession, signIn, signOut } from "next-auth/react"
+import { useSession, signIn, signOut } from "@/context/session-context"
 import { useTranslations } from "next-intl"
 import { usePathname } from "next/navigation"
 import { useRouter } from "next/navigation"

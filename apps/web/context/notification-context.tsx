@@ -9,7 +9,7 @@ import React, {
   useRef,
   useMemo,
 } from "react"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/session-context"
 import { toast } from "sonner"
 import { elysia } from "@/lib/elysia"
 import { useWebSocket } from "./websocket-context"

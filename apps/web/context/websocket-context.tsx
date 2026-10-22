@@ -4,11 +4,10 @@ import React, {
   createContext,
   useContext,
   useEffect,
-  useRef,
   useState,
   useCallback,
 } from "react"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/session-context"
 import { API_URL } from "@/lib/elysia"
 
 export interface WsMessage<T = any> {
@@ -44,6 +43,71 @@ const WebSocketContext = createContext<WebSocketContextValue>({
   reconnect: () => {},
 })
 
+// =============================================================================
+// Persistent Singleton Connection State (survives route navigation & re-renders)
+// =============================================================================
+let globalWs: WebSocket | null = null
+let globalAuthenticatedUserId: string | null = null
+let globalActiveUserId: string | null = null
+let globalHeartbeatInterval: ReturnType<typeof setInterval> | null = null
+let globalReconnectTimeout: ReturnType<typeof setTimeout> | null = null
+let globalReconnectAttempts = 0
+let globalIsConnecting = false
+
+// Global subscriber registries
+const globalListeners = new Map<string, Set<WsSubscriptionCallback>>()
+const connectionListeners = new Set<
+  (connected: boolean, userId: string | null) => void
+>()
+
+function notifyConnectionChange(connected: boolean, userId: string | null) {
+  connectionListeners.forEach((cb) => {
+    try {
+      cb(connected, userId)
+    } catch {}
+  })
+}
+
+function dispatchIncomingMessage(msg: WsMessage) {
+  // 1. Direct event match (e.g. "notification:new")
+  const eventListeners = globalListeners.get(msg.event)
+  if (eventListeners) {
+    eventListeners.forEach((cb) => {
+      try {
+        cb(msg)
+      } catch (e) {
+        console.error("[WebSocket] Listener error:", e)
+      }
+    })
+  }
+
+  // 2. Channel match (e.g. "user:123")
+  if (msg.channel) {
+    const channelListeners = globalListeners.get(msg.channel)
+    if (channelListeners) {
+      channelListeners.forEach((cb) => {
+        try {
+          cb(msg)
+        } catch (e) {
+          console.error("[WebSocket] Channel listener error:", e)
+        }
+      })
+    }
+  }
+
+  // 3. Catch-all "*" listener
+  const allListeners = globalListeners.get("*")
+  if (allListeners) {
+    allListeners.forEach((cb) => {
+      try {
+        cb(msg)
+      } catch (e) {
+        console.error("[WebSocket] Global listener error:", e)
+      }
+    })
+  }
+}
+
 function getWebSocketUrl(userId?: string | null): string {
   try {
     const raw = API_URL || "http://localhost:4000"
@@ -61,234 +125,231 @@ function getWebSocketUrl(userId?: string | null): string {
   }
 }
 
+function ensureWebSocketConnected(
+  userId: string | null | undefined,
+  force = false
+) {
+  if (typeof window === "undefined") return
+
+  // Unauthenticated -> disconnect cleanly
+  if (!userId) {
+    if (globalWs) {
+      try {
+        globalWs.close(1000, "Logout")
+      } catch {}
+      globalWs = null
+    }
+    globalAuthenticatedUserId = null
+    globalActiveUserId = null
+    if (globalHeartbeatInterval) {
+      clearInterval(globalHeartbeatInterval)
+      globalHeartbeatInterval = null
+    }
+    if (globalReconnectTimeout) {
+      clearTimeout(globalReconnectTimeout)
+      globalReconnectTimeout = null
+    }
+    notifyConnectionChange(false, null)
+    return
+  }
+
+  // Already connected or actively establishing for the same user -> DO NOT DISCONNECT OR RECONNECT
+  if (
+    !force &&
+    globalWs &&
+    (globalWs.readyState === WebSocket.OPEN ||
+      globalWs.readyState === WebSocket.CONNECTING) &&
+    globalActiveUserId === userId
+  ) {
+    if (globalWs.readyState === WebSocket.OPEN) {
+      notifyConnectionChange(true, globalAuthenticatedUserId ?? userId)
+    }
+    return
+  }
+
+  // Force reconnect or switching to another user
+  if (globalWs && (force || globalActiveUserId !== userId)) {
+    try {
+      globalWs.close()
+    } catch {}
+    globalWs = null
+  }
+
+  if (globalReconnectTimeout) {
+    clearTimeout(globalReconnectTimeout)
+    globalReconnectTimeout = null
+  }
+
+  try {
+    globalIsConnecting = true
+    globalActiveUserId = userId
+    const wsUrl = getWebSocketUrl(userId)
+    const ws = new WebSocket(wsUrl)
+    globalWs = ws
+
+    ws.onopen = () => {
+      if (globalWs !== ws) return
+      globalIsConnecting = false
+      globalReconnectAttempts = 0
+      globalAuthenticatedUserId = userId
+      notifyConnectionChange(true, userId)
+
+      // Send auth frame immediately
+      try {
+        ws.send(JSON.stringify({ type: "auth", userId }))
+      } catch {}
+
+      // Re-subscribe any channels previously registered in globalListeners
+      for (const channel of globalListeners.keys()) {
+        if (!channel.includes(":") && channel !== "*") {
+          try {
+            ws.send(JSON.stringify({ type: "subscribe", channel }))
+          } catch {}
+        }
+      }
+
+      // Heartbeat ping every 15 seconds
+      if (globalHeartbeatInterval) clearInterval(globalHeartbeatInterval)
+      globalHeartbeatInterval = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          try {
+            ws.send(JSON.stringify({ type: "ping" }))
+          } catch {}
+        }
+      }, 15000)
+    }
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.event === "auth:success" && data.data?.userId) {
+          globalAuthenticatedUserId = data.data.userId
+          notifyConnectionChange(true, data.data.userId)
+        }
+        dispatchIncomingMessage(data)
+      } catch {
+        // Non-JSON frame ignored
+      }
+    }
+
+    ws.onclose = (event) => {
+      if (globalWs !== ws) return
+      globalWs = null
+      globalIsConnecting = false
+      notifyConnectionChange(false, null)
+
+      if (globalHeartbeatInterval) {
+        clearInterval(globalHeartbeatInterval)
+        globalHeartbeatInterval = null
+      }
+
+      // Do not reconnect if unauthorized (4401) or if session is unauthenticated
+      if (event.code === 4401 || !globalActiveUserId) {
+        return
+      }
+
+      // Reconnect with exponential backoff (min 1s, max 10s)
+      const delay = Math.min(1000 * 2 ** globalReconnectAttempts, 10000)
+      globalReconnectAttempts += 1
+      if (globalReconnectTimeout) clearTimeout(globalReconnectTimeout)
+      globalReconnectTimeout = setTimeout(() => {
+        ensureWebSocketConnected(globalActiveUserId, false)
+      }, delay)
+    }
+
+    ws.onerror = () => {
+      // onclose handles reconnect
+    }
+  } catch (err) {
+    console.warn("[WebSocket] Connection attempt failed:", err)
+    globalIsConnecting = false
+  }
+}
+
 export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
   const userId = session?.user?.id
-  const [isConnected, setIsConnected] = useState(false)
+
+  const [isConnected, setIsConnected] = useState<boolean>(
+    () => globalWs?.readyState === WebSocket.OPEN
+  )
   const [authenticatedUserId, setAuthenticatedUserId] = useState<string | null>(
-    null
+    () => globalAuthenticatedUserId
   )
 
-  const socketRef = useRef<WebSocket | null>(null)
-  const listenersRef = useRef<Map<string, Set<WsSubscriptionCallback>>>(
-    new Map()
-  )
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
-    null
-  )
-  const reconnectAttempts = useRef<number>(0)
-  const isConnectingRef = useRef<boolean>(false)
-
-  // Dispatch incoming event to all subscribed listeners
-  const dispatchMessage = useCallback((msg: WsMessage) => {
-    // 1. Direct event match (e.g. "notification:new")
-    const eventListeners = listenersRef.current.get(msg.event)
-    if (eventListeners) {
-      eventListeners.forEach((cb) => {
-        try {
-          cb(msg)
-        } catch (e) {
-          console.error("[WebSocket] Listener error:", e)
-        }
-      })
-    }
-
-    // 2. Channel match (e.g. "user:123")
-    if (msg.channel) {
-      const channelListeners = listenersRef.current.get(msg.channel)
-      if (channelListeners) {
-        channelListeners.forEach((cb) => {
-          try {
-            cb(msg)
-          } catch (e) {
-            console.error("[WebSocket] Channel listener error:", e)
-          }
-        })
-      }
-    }
-
-    // 3. Catch-all "*" listener
-    const globalListeners = listenersRef.current.get("*")
-    if (globalListeners) {
-      globalListeners.forEach((cb) => {
-        try {
-          cb(msg)
-        } catch (e) {
-          console.error("[WebSocket] Global listener error:", e)
-        }
-      })
-    }
-  }, [])
-
-  const connect = useCallback(
-    (force = false) => {
-      if (typeof window === "undefined") return
-
-      // Strict authentication check: NEVER connect if user is not logged in
-      if (status !== "authenticated" || !userId) {
-        if (socketRef.current) {
-          socketRef.current.close()
-          socketRef.current = null
-        }
-        setIsConnected(false)
-        setAuthenticatedUserId(null)
-        return
-      }
-
-      if (
-        !force &&
-        socketRef.current &&
-        (socketRef.current.readyState === WebSocket.OPEN ||
-          socketRef.current.readyState === WebSocket.CONNECTING)
-      ) {
-        return
-      }
-
-      if (force && socketRef.current) {
-        socketRef.current.close()
-        socketRef.current = null
-      }
-
-      try {
-        isConnectingRef.current = true
-        const wsUrl = getWebSocketUrl(userId)
-        const ws = new WebSocket(wsUrl)
-        socketRef.current = ws
-
-        ws.onopen = () => {
-          setIsConnected(true)
-          isConnectingRef.current = false
-          reconnectAttempts.current = 0
-          console.log("[WebSocket] Connected to realtime gateway", {
-            url: wsUrl,
-            userId,
-          })
-
-          // Send auth frame immediately if userId is known
-          if (userId) {
-            ws.send(JSON.stringify({ type: "auth", userId }))
-          }
-
-          // Heartbeat ping every 15 seconds
-          if (heartbeatIntervalRef.current)
-            clearInterval(heartbeatIntervalRef.current)
-          heartbeatIntervalRef.current = setInterval(() => {
-            if (ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ type: "ping" }))
-            }
-          }, 15000)
-        }
-
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data)
-            if (data.event === "auth:success" && data.data?.userId) {
-              setAuthenticatedUserId(data.data.userId)
-              console.log(
-                "[WebSocket] Authenticated session:",
-                data.data.userId
-              )
-            }
-            dispatchMessage(data)
-          } catch {
-            // Ignore non-JSON frame
-          }
-        }
-
-        ws.onclose = (event) => {
-          setIsConnected(false)
-          isConnectingRef.current = false
-          setAuthenticatedUserId(null)
-          if (heartbeatIntervalRef.current)
-            clearInterval(heartbeatIntervalRef.current)
-          console.log("[WebSocket] Connection closed", {
-            code: event.code,
-            reason: event.reason,
-          })
-
-          // Do not reconnect if unauthorized (4401) or if session is unauthenticated
-          if (event.code === 4401 || status !== "authenticated" || !userId) {
-            return
-          }
-
-          const delay = Math.min(1000 * 2 ** reconnectAttempts.current, 10000)
-          reconnectAttempts.current += 1
-          if (reconnectTimeoutRef.current)
-            clearTimeout(reconnectTimeoutRef.current)
-          reconnectTimeoutRef.current = setTimeout(() => connect(false), delay)
-        }
-
-        ws.onerror = () => {
-          // Handled by onclose
-        }
-      } catch (err) {
-        console.warn("[WebSocket] Connection attempt failed:", err)
-        isConnectingRef.current = false
-      }
-    },
-    [dispatchMessage, status, userId]
-  )
-
-  // Handle session lifecycle: connect on login, disconnect on logout
   useEffect(() => {
-    if (status === "authenticated" && userId) {
-      connect(false)
-    } else if (status === "unauthenticated") {
-      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
-      if (heartbeatIntervalRef.current)
-        clearInterval(heartbeatIntervalRef.current)
-      if (socketRef.current) {
-        socketRef.current.close()
-        socketRef.current = null
-      }
-      setIsConnected(false)
-      setAuthenticatedUserId(null)
+    const handleConnectionUpdate = (
+      connected: boolean,
+      authUserId: string | null
+    ) => {
+      setIsConnected(connected)
+      setAuthenticatedUserId(authUserId)
+    }
+
+    connectionListeners.add(handleConnectionUpdate)
+
+    // Sync initial state on mount
+    if (globalWs?.readyState === WebSocket.OPEN) {
+      setIsConnected(true)
+      setAuthenticatedUserId(globalAuthenticatedUserId ?? userId ?? null)
     }
 
     return () => {
-      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
-      if (heartbeatIntervalRef.current)
-        clearInterval(heartbeatIntervalRef.current)
+      connectionListeners.delete(handleConnectionUpdate)
     }
-  }, [status, userId, connect])
+  }, [userId])
+
+  useEffect(() => {
+    if (status === "authenticated" && userId) {
+      ensureWebSocketConnected(userId, false)
+    } else if (status === "unauthenticated") {
+      ensureWebSocketConnected(null, false)
+    }
+  }, [status, userId])
 
   const subscribe = useCallback(
     (
       eventOrChannel: string,
       callback: WsSubscriptionCallback
     ): (() => void) => {
-      let set = listenersRef.current.get(eventOrChannel)
+      let set = globalListeners.get(eventOrChannel)
       if (!set) {
         set = new Set()
-        listenersRef.current.set(eventOrChannel, set)
+        globalListeners.set(eventOrChannel, set)
 
         if (
-          socketRef.current?.readyState === WebSocket.OPEN &&
+          globalWs?.readyState === WebSocket.OPEN &&
           !eventOrChannel.includes(":") &&
           eventOrChannel !== "*"
         ) {
-          socketRef.current.send(
-            JSON.stringify({ type: "subscribe", channel: eventOrChannel })
-          )
+          try {
+            globalWs.send(
+              JSON.stringify({ type: "subscribe", channel: eventOrChannel })
+            )
+          } catch {}
         }
       }
       set.add(callback)
 
       return () => {
-        const currentSet = listenersRef.current.get(eventOrChannel)
+        const currentSet = globalListeners.get(eventOrChannel)
         if (currentSet) {
           currentSet.delete(callback)
           if (currentSet.size === 0) {
-            listenersRef.current.delete(eventOrChannel)
+            globalListeners.delete(eventOrChannel)
             if (
-              socketRef.current?.readyState === WebSocket.OPEN &&
+              globalWs?.readyState === WebSocket.OPEN &&
               !eventOrChannel.includes(":") &&
               eventOrChannel !== "*"
             ) {
-              socketRef.current.send(
-                JSON.stringify({ type: "unsubscribe", channel: eventOrChannel })
-              )
+              try {
+                globalWs.send(
+                  JSON.stringify({
+                    type: "unsubscribe",
+                    channel: eventOrChannel,
+                  })
+                )
+              } catch {}
             }
           }
         }
@@ -299,14 +360,18 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
 
   const send = useCallback(
     (typeOrEvent: string, data?: Record<string, unknown>) => {
-      if (socketRef.current?.readyState === WebSocket.OPEN) {
-        socketRef.current.send(
-          JSON.stringify({
-            type: typeOrEvent,
-            event: typeOrEvent,
-            ...data,
-          })
-        )
+      if (globalWs?.readyState === WebSocket.OPEN) {
+        try {
+          globalWs.send(
+            JSON.stringify({
+              type: typeOrEvent,
+              event: typeOrEvent,
+              ...data,
+            })
+          )
+        } catch (e) {
+          console.warn("[WebSocket] Failed to send frame:", e)
+        }
       }
     },
     []
@@ -315,13 +380,9 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const reconnect = useCallback(
     (force = true) => {
       if (status !== "authenticated" || !userId) return
-      if (socketRef.current) {
-        socketRef.current.close()
-        socketRef.current = null
-      }
-      connect(force)
+      ensureWebSocketConnected(userId, force)
     },
-    [connect, status, userId]
+    [status, userId]
   )
 
   return (

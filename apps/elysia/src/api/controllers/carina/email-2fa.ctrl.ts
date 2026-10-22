@@ -2,6 +2,7 @@ import { Elysia } from 'elysia'
 import { session } from '../../../plugins/session'
 import { CarinaEmail2faModel } from '../../models/carina/email-2fa.model'
 import { CarinaEmail2faServ } from '../../../services/carina/email-2fa.serv'
+import { getDomainConfig } from '../../../utils/domain'
 
 export const carinaEmail2fa = new Elysia({ prefix: '/carina/auth/twofactor/email' })
   .use(session())
@@ -75,9 +76,22 @@ export const carinaEmail2fa = new Elysia({ prefix: '/carina/auth/twofactor/email
         422: CarinaEmail2faModel.validationError,
       },
     },
-    async ({ body, session: userSession }) => {
+    async ({ body, session: userSession, cookie: { session: sessionCookie } }) => {
       const user = userSession.getUser()
-      return await CarinaEmail2faServ.verifyEmail2fa(user?.id, body)
+      const res = await CarinaEmail2faServ.verifyEmail2fa(user?.id, body)
+      if (res.token) {
+        const { isSecure, cookieDomain } = getDomainConfig()
+        sessionCookie.set({
+          value: res.token,
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+          secure: isSecure,
+          maxAge: 365 * 24 * 60 * 60,
+          ...(cookieDomain ? { domain: cookieDomain } : {}),
+        })
+      }
+      return res
     }
   )
 

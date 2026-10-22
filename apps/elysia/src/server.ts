@@ -62,6 +62,7 @@ export const app = new Elysia()
   .use(websocket())
   .ws('/ws', {
     async open(ws: any) {
+      const conn = ws.raw ?? ws
       const request = ws.request
       let userId: string | null = (ws.query as Record<string, string> | undefined)?.userId ?? null
 
@@ -79,32 +80,34 @@ export const app = new Elysia()
       }
 
       if (userId) {
-        wsHub.register(ws as any, userId)
+        wsHub.register(conn as any, userId)
         logger.info(`WebSocket connected: user ${userId}`)
-        wsHub.send(ws as any, 'auth:success', { userId })
+        wsHub.send(conn as any, 'auth:success', { userId })
       } else {
         // Allow a 5-second grace period for client to authenticate via auth message frame
         const authTimeout = setTimeout(() => {
-          if (!wsHub.hasConnection(ws as any)) {
+          if (!wsHub.hasConnection(conn as any)) {
             try {
               ws.close?.(4401, 'Unauthorized')
             } catch { }
           }
         }, 5000)
-        authTimeouts.set(ws, authTimeout)
+        authTimeouts.set(conn, authTimeout)
       }
     },
     message(ws: any, message: any) {
-      wsHub.handleMessage(ws as any, message)
+      const conn = ws.raw ?? ws
+      wsHub.handleMessage(conn as any, message)
     },
     close(ws: any) {
-      const authTimeout = authTimeouts.get(ws)
+      const conn = ws.raw ?? ws
+      const authTimeout = authTimeouts.get(conn)
       if (authTimeout) {
         clearTimeout(authTimeout)
-        authTimeouts.delete(ws)
+        authTimeouts.delete(conn)
       }
-      const hadUser = wsHub.hasConnection(ws as any)
-      wsHub.unregister(ws as any)
+      const hadUser = wsHub.hasConnection(conn as any)
+      wsHub.unregister(conn as any)
       if (hadUser) {
         logger.info('WebSocket disconnected')
       }

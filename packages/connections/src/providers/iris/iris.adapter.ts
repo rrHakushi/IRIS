@@ -65,7 +65,7 @@ export class IrisAdapter extends BaseConnectionAdapter {
   }
 
   private normalizeHost(hostUrl?: string): string {
-    const raw = hostUrl || process.env.NEXTAUTH_URL || "http://localhost:4000";
+    const raw = hostUrl || process.env.NEXT_PUBLIC_URL || "http://localhost:4000";
     return raw.replace(/\/+$/, "");
   }
 

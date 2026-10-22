@@ -2,6 +2,7 @@ import { Elysia } from 'elysia'
 import { session } from '../../../plugins/session'
 import { CarinaBackupCodesModel } from '../../models/carina/backupcodes.model'
 import { CarinaBackupCodesServ } from '../../../services/carina/backupcodes.serv'
+import { getDomainConfig } from '../../../utils/domain'
 
 export const carinaBackupCodes = new Elysia({ prefix: '/carina/auth/twofactor/backupcodes' })
   .use(session())
@@ -65,9 +66,21 @@ export const carinaBackupCodes = new Elysia({ prefix: '/carina/auth/twofactor/ba
         422: CarinaBackupCodesModel.validationError,
       },
     },
-    async ({ body, session: userSession }) => {
-      const user = userSession.requireUser()
-      return await CarinaBackupCodesServ.verifyCode(user.id, body)
+    async ({ body, session: userSession, cookie: { session: sessionCookie } }) => {
+      const res = await CarinaBackupCodesServ.verifyCode(userSession.user?.id, body)
+      if (res.token) {
+        const { isSecure, cookieDomain } = getDomainConfig()
+        sessionCookie.set({
+          value: res.token,
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+          secure: isSecure,
+          maxAge: 365 * 24 * 60 * 60,
+          ...(cookieDomain ? { domain: cookieDomain } : {}),
+        })
+      }
+      return res
     }
   )
 

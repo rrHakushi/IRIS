@@ -2,6 +2,7 @@ import { Elysia } from 'elysia'
 import { session } from '../../../plugins/session'
 import { CarinaAuthModel } from '../../models/carina/auth.model'
 import { CarinaAuthServ } from '../../../services/carina/auth.serv'
+import { getDomainConfig } from '../../../utils/domain'
 
 export const carinaAuth = new Elysia({ prefix: '/carina/auth' })
   .use(session())
@@ -24,12 +25,46 @@ export const carinaAuth = new Elysia({ prefix: '/carina/auth' })
     async ({ body, cookie: { session: sessionCookie } }) => {
       const response = await CarinaAuthServ.login(body)
 
-      // // Set session cookie if authenticated
-      // if (response.token) {
-      //   sessionCookie!.value = response.token
-      // }
+      // Set session cookie if authenticated
+      if (response.token) {
+        const { isSecure, cookieDomain } = getDomainConfig()
+        sessionCookie.set({
+          value: response.token,
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+          secure: isSecure,
+          maxAge: 365 * 24 * 60 * 60,
+          ...(cookieDomain ? { domain: cookieDomain } : {}),
+        })
+      }
 
       return response
+    }
+  )
+
+  // POST /carina/auth/logout
+  .post(
+    '/logout',
+    {
+      detail: {
+        summary: 'User logout (clears session cookie)',
+        tags: ['Carina Auth'],
+      },
+      response: {
+        200: CarinaAuthModel.logoutResponse,
+      },
+    },
+    async ({ cookie: { session: sessionCookie } }) => {
+      const { cookieDomain } = getDomainConfig()
+      sessionCookie.remove({
+        path: '/',
+        ...(cookieDomain ? { domain: cookieDomain } : {}),
+      })
+      return {
+        success: true,
+        message: 'Logged out successfully',
+      }
     }
   )
 

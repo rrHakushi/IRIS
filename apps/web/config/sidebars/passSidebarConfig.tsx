@@ -11,7 +11,7 @@ import {
   IconTrash,
   IconSparkles,
 } from "@tabler/icons-react"
-import { Session } from "next-auth"
+import type { Session } from "@/context/session-context"
 
 export function getPassSidebarConfig(
   session: Session | null,

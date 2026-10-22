@@ -1,3 +1,6 @@
+process.env.JWT_SECRET = 'iris-default-secret-key-32-chars!!'
+process.env.NEXT_PUBLIC_URL = 'http://localhost:3000'
+
 import { describe, expect, it, beforeEach } from 'bun:test'
 import { Elysia } from 'elysia'
 import { session, resolveSessionFromRequest } from '../../src/plugins/session'
@@ -66,7 +69,7 @@ describe('Session Plugin Test Suite', () => {
   const ALICE_ID = '00000000-0000-0000-0000-000000000001'
 
   beforeEach(() => {
-    process.env.NEXTAUTH_SECRET = SECRET
+    process.env.JWT_SECRET = SECRET
     setupPrismaMock()
   })
 
@@ -100,7 +103,7 @@ describe('Session Plugin Test Suite', () => {
     expect(data.permissions).toEqual([1, 2])
   })
 
-  it('authenticates user via next-auth cookie headers', async () => {
+  it('authenticates user via session cookie headers', async () => {
     const token = await signUserJwt({
       id: ALICE_ID,
       username: 'alice',
@@ -109,7 +112,7 @@ describe('Session Plugin Test Suite', () => {
 
     const res = await app.handle(
       new Request('http://localhost/test/required', {
-        headers: { Cookie: `next-auth.session-token=${token}` },
+        headers: { Cookie: `session=${token}` },
       })
     )
     expect(res.status).toBe(200)

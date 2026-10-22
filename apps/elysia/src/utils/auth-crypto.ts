@@ -8,7 +8,7 @@ import {
   timingSafeEqual,
 } from "node:crypto"
 import { promisify } from "node:util"
-import { encode } from "next-auth/jwt"
+import { SignJWT } from "jose"
 
 const scryptAsync = promisify(scrypt)
 
@@ -86,11 +86,13 @@ export async function verifyBackupCode(
 }
 
 /**
- * Derives a 256-bit encryption key from `NEXTAUTH_SECRET`.
+ * Derives a 256-bit encryption key strictly from `JWT_SECRET`.
  */
 function getEncryptionKey(): Buffer {
-  const secret =
-    process.env.NEXTAUTH_SECRET || "iris-default-secret-key-32-chars!!"
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error("JWT_SECRET environment variable is required")
+  }
   return createHash("sha256").update(secret).digest()
 }
 
@@ -196,27 +198,32 @@ export interface UserSessionTokenData {
 }
 
 /**
- * Signs a NextAuth-compatible JWT session token.
+ * Signs a standard JWT session token using HS256.
  */
 export async function signUserJwt(user: UserSessionTokenData): Promise<string> {
-  const secret = process.env.NEXTAUTH_SECRET || "iris-default-secret-key-32-chars!!"
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error("JWT_SECRET environment variable is required")
+  }
 
   const pwdChangedSeconds = user.passwordChangedAt
     ? Math.floor(user.passwordChangedAt.getTime() / 1000)
     : null
 
-  return await encode({
-    token: {
-      id: user.id,
-      username: user.username,
-      email: user.email ?? "",
-      passwordChangedAt: pwdChangedSeconds,
-      iat: Math.floor(Date.now() / 1000),
-      error: null,
-    },
-    secret,
-    maxAge: 365 * 24 * 60 * 60, // 1 year (365 days)
+  const secretKey = new TextEncoder().encode(secret)
+  const now = Math.floor(Date.now() / 1000)
+
+  return await new SignJWT({
+    id: user.id,
+    username: user.username,
+    email: user.email ?? "",
+    passwordChangedAt: pwdChangedSeconds,
+    permissions: user.permissions ?? [],
   })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt(now)
+    .setExpirationTime("365d")
+    .sign(secretKey)
 }
 
 /**

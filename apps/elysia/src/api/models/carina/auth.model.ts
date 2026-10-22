@@ -117,6 +117,12 @@ export const CarinaAuthModel = {
     message: t.String(),
   }),
 
+  // --- Logout ---
+  logoutResponse: t.Object({
+    success: t.Boolean(),
+    message: t.String(),
+  }),
+
   // --- Detailed Error Responses (RFC 9457) ---
   badRequestError: t.Object({
     type: t.String({ description: 'Slug identifying the problem type ("bad-request")' }),

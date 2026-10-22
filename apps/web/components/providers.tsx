@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { RouterProvider } from "react-aria-components"
-import { SessionProvider } from "next-auth/react"
+import { SessionProvider } from "@/context/session-context"
 import { ThemeProvider } from "next-themes"
 import { DirectionProvider } from "@workspace/ui/components/direction"
 import { IrisSidebarProvider } from "@/components/navigation/sidebar-provider"
@@ -55,7 +55,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const router = useRouter()
 
   return (
-    <RouterProvider navigate={(to, options) => router.push(to, options)}>
+    <RouterProvider navigate={router.push}>
       <SessionProvider
         refetchOnWindowFocus={false}
         refetchInterval={0}

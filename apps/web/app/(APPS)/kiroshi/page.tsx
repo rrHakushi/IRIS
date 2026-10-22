@@ -9,7 +9,7 @@ import React, {
   Suspense,
 } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useSession, signIn } from "next-auth/react"
+import { useSession, signIn } from "@/context/session-context"
 import { elysia } from "@/lib/elysia"
 import { Spinner } from "@workspace/ui/components/spinner"
 import { IconSearch, IconInfoCircle, IconSparkles } from "@tabler/icons-react"

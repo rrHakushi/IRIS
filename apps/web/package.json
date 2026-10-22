@@ -15,7 +15,6 @@
     "i18n:prune": "node scripts/manage-i18n.ts --prune"
   },
   "dependencies": {
-    "@IRIS/auth": "workspace:*",
     "@IRIS/database": "workspace:*",
     "@IRIS/elysia": "workspace:*",
     "@IRIS/permissions": "workspace:*",
@@ -33,8 +32,8 @@
     "cn": "^0.5.0",
     "embla-carousel-react": "^8.6.0",
     "input-otp": "^1.5.0",
+    "jose": "^5.9.6",
     "next": "16.4.2",
-    "next-auth": "^4.24.15",
     "next-intl": "^4.14.9",
     "next-themes": "^0.4.6",
     "react": "19.3.1",

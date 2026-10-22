@@ -89,6 +89,7 @@ export const CarinaPasskeysModel = {
 
   verifyLoginResponse: t.Object({
     success: t.Boolean(),
+    token: t.Optional(t.Nullable(t.String())),
     user: t.Object({
       id: t.String(),
       username: t.String(),

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef, useCallback } from "react"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/session-context"
 import { toast } from "sonner"
 import { elysia } from "@/lib/elysia"
 import { resolveUserId } from "@/lib/user-profile"

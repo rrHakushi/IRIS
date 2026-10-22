@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/session-context"
 import { toast } from "sonner"
 import {
   IconCornerDownRight,

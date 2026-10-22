@@ -43,7 +43,7 @@ let mockTvLists: any[] = []
 let mockAnimeLists: any[] = []
 
 function setupPrismaMock() {
-  process.env.NEXTAUTH_SECRET = 'iris-default-secret-key-32-chars!!'
+  process.env.JWT_SECRET = 'iris-default-secret-key-32-chars!!'
 
   mockUsers = [
     {

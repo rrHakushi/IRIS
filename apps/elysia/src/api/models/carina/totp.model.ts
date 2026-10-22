@@ -21,11 +21,27 @@ export const CarinaTotpModel = {
         description: 'Optional manual Base32 secret if setup session cache expired',
       })
     ),
+    mfaTicket: t.Optional(
+      t.String({
+        description: 'Optional temporary MFA challenge ticket for login',
+      })
+    ),
   }),
 
   verifyResponse: t.Object({
     success: t.Boolean(),
     message: t.String({ description: 'Success confirmation message' }),
+    token: t.Optional(t.Nullable(t.String())),
+    user: t.Optional(
+      t.Nullable(
+        t.Object({
+          id: t.String(),
+          username: t.String(),
+          email: t.String(),
+          passwordChangedAt: t.Nullable(t.Number()),
+        })
+      )
+    ),
     backupCodes: t.Optional(
       t.Array(t.String(), {
         description: 'Initial plaintext recovery backup codes if this is the first MFA method enabled',

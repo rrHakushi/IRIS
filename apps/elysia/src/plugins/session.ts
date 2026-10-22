@@ -1,5 +1,7 @@
 import { Elysia } from 'elysia'
-import { decode } from 'next-auth/jwt'
+import { bearer } from '@elysia/bearer'
+import { jwt } from '@elysia/jwt'
+import { jwtVerify } from 'jose'
 import { prisma as defaultPrisma, type PrismaClient } from '@IRIS/database'
 import { Unauthorized } from '../lib/errors'
 import { hashApiKey } from '../utils/auth-crypto'
@@ -36,51 +38,65 @@ export class Session {
   }
 }
 
-export const NEXTAUTH_SESSION_COOKIE_NAMES = [
-  '__Secure-next-auth.session-token',
-  'next-auth.session-token',
-  'session',
-] as const
-
+/**
+ * Resolves an authenticated user session from a Request.
+ *
+ * Supports:
+ * 1. Bearer Token (`Authorization: Bearer <jwt>`)
+ * 2. Session Cookie (`Cookie: session=<jwt>`)
+ * 3. OAuth 2.0 Access Token (`Authorization: Bearer <oauth_token>`)
+ * 4. API Key (`x-api-key`, `apikey`, `x-api`, `Authorization: ApiKey <key>`)
+ */
 export async function resolveSessionFromRequest(
   request: Request,
-  prisma: DatabaseClient = defaultPrisma
+  prisma: DatabaseClient = defaultPrisma,
+  injectedBearer?: string,
+  injectedSessionCookie?: string
 ): Promise<{ user: SessionUser | null; token: string | null }> {
-  const secret = process.env.NEXTAUTH_SECRET || 'iris-default-secret-key-32-chars!!'
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is required')
+  }
 
-  // 1. Try Authorization header Bearer token
   const authHeader = request.headers.get('authorization')
   let rawToken: string | null = null
 
-  if (authHeader?.startsWith('Bearer ')) {
+  // 1. Try Authorization header Bearer token
+  if (injectedBearer && injectedBearer.trim().length > 0) {
+    rawToken = injectedBearer.trim()
+  } else if (authHeader?.startsWith('Bearer ')) {
     rawToken = authHeader.slice(7).trim()
   }
 
-  // 2. Try Cookies if no bearer header
+  // 2. Try session cookie if no Bearer header
   if (!rawToken) {
-    const cookieHeader = request.headers.get('cookie')
-    if (cookieHeader) {
-      const cookies = Object.fromEntries(
-        cookieHeader.split(';').map((c) => {
-          const [key, ...v] = c.trim().split('=')
-          return [key, decodeURIComponent(v.join('='))]
-        })
-      )
-      for (const name of NEXTAUTH_SESSION_COOKIE_NAMES) {
-        if (cookies[name]) {
-          rawToken = cookies[name]
-          break
+    if (injectedSessionCookie && injectedSessionCookie.trim().length > 0) {
+      rawToken = injectedSessionCookie.trim()
+    } else {
+      const cookieHeader = request.headers.get('cookie')
+      if (cookieHeader) {
+        const cookies = Object.fromEntries(
+          cookieHeader.split(';').map((c) => {
+            const [key, ...v] = c.trim().split('=')
+            return [key, decodeURIComponent(v.join('='))]
+          })
+        )
+        if (cookies.session) {
+          rawToken = cookies.session
         }
       }
     }
   }
 
+  // If a token was provided, evaluate as JWT first, then OAuth token
   if (rawToken) {
     try {
-      const decoded = (await decode({ token: rawToken, secret })) as any
-      if (decoded && decoded.id) {
+      const secretKey = new TextEncoder().encode(secret)
+      const { payload } = await jwtVerify(rawToken, secretKey)
+
+      if (payload && payload.id) {
         const dbUser = await prisma.user.findUnique({
-          where: { id: decoded.id },
+          where: { id: payload.id as string },
           select: {
             id: true,
             username: true,
@@ -91,11 +107,12 @@ export async function resolveSessionFromRequest(
         })
 
         if (dbUser) {
-          // Verify token validity against passwordChangedAt
           let isRevoked = false
-          if (dbUser.passwordChangedAt && decoded.iat) {
-            const pwdChangedSeconds = Math.floor(dbUser.passwordChangedAt.getTime() / 1000)
-            if (decoded.iat < pwdChangedSeconds) {
+          if (dbUser.passwordChangedAt && payload.iat) {
+            const pwdChangedSeconds = Math.floor(
+              dbUser.passwordChangedAt.getTime() / 1000
+            )
+            if ((payload.iat as number) < pwdChangedSeconds) {
               isRevoked = true
             }
           }
@@ -117,7 +134,7 @@ export async function resolveSessionFromRequest(
       // JWT decoding failed, proceed to OAuth token resolution
     }
 
-    // 2. Try OAuth 2.0 Bearer Token
+    // Try OAuth 2.0 Bearer Token in DB
     try {
       const oauthToken = await prisma.oAuthAccessToken.findUnique({
         where: { token: rawToken },
@@ -209,16 +226,26 @@ export interface SessionPluginOptions {
 /**
  * Elysia session plugin providing request-scoped session resolution.
  */
-export const session = (options?: SessionPluginOptions) =>
-  (app: Elysia) =>
-    app.derive(async ({ request }) => {
+export const session = (options?: SessionPluginOptions) => {
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is required')
+  }
+
+  return new Elysia({ name: 'iris-session' })
+    .use(bearer())
+    .use(jwt({ name: 'jwt', secret, exp: '365d' }))
+    .derive('global', async ({ request, bearer: bearerToken, cookie }) => {
       const { user, token } = await resolveSessionFromRequest(
         request,
-        options?.prisma ?? defaultPrisma
+        options?.prisma ?? defaultPrisma,
+        bearerToken,
+        cookie?.session?.value
       )
       return {
         session: new Session(user, token),
       }
     })
+}
 
-
+export default session

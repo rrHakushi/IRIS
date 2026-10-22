@@ -9,7 +9,12 @@ import {
   IconChevronDown,
   IconLoader2,
 } from "@tabler/icons-react"
-import { DialogTrigger, Popover, Dialog } from "react-aria-components"
+import {
+  DialogTrigger,
+  Popover,
+  Dialog,
+  Button as RACButton,
+} from "react-aria-components"
 import { cn } from "@workspace/ui/lib/utils"
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
@@ -484,14 +489,12 @@ export function ListStatusCard({
 
               {/* Sort Dropdown Trigger with RAC Button */}
               <DialogTrigger>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 gap-1.5 rounded-2xl border border-border/60 bg-card/60 px-3 text-xs font-medium text-foreground select-none hover:bg-muted hover:text-foreground"
+                <RACButton
+                  className="inline-flex shrink-0 items-center justify-center font-medium transition-all outline-hidden select-none focus-visible:ring-3 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:opacity-50 h-8 gap-1.5 rounded-2xl border border-border/60 bg-card/60 px-3 text-xs text-foreground select-none hover:bg-muted hover:text-foreground"
                 >
                   <span>{currentSortLabel}</span>
                   <IconChevronDown className="size-3.5 shrink-0 opacity-60" />
-                </Button>
+                </RACButton>
 
                 <Popover
                   placement="bottom end"

@@ -4,6 +4,7 @@ import { cache } from '../../utils/cache'
 import { signUserJwt } from '../../utils/auth-crypto'
 import { BadRequest } from '../../lib/errors'
 import type { CarinaQcModel } from '../../api/models/carina/qc.model'
+import { getDomainConfig } from '../../utils/domain'
 
 interface QuickConnectSessionData {
   status: 'pending' | 'approved'
@@ -28,7 +29,7 @@ export abstract class CarinaQcServ {
     // Generate private 256-bit unguessable polling session token
     const sessionToken = randomBytes(32).toString('hex')
 
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    const baseUrl = getDomainConfig().url
     const qrPayload = `${baseUrl.replace(/\/$/, '')}/qc?code=${code}`
 
     const sessionData: QuickConnectSessionData = {

@@ -11,7 +11,7 @@ import { prisma } from '@IRIS/database'
 // -----------------------------------------------------------------------------
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()
@@ -411,7 +411,7 @@ describe('Borealis Calendar Controller & Service Test Suite', () => {
   let bobToken: string
 
   beforeEach(async () => {
-    process.env.NEXTAUTH_SECRET = 'iris-default-secret-key-32-chars!!'
+    process.env.JWT_SECRET = 'iris-default-secret-key-32-chars!!'
     await cache.clear()
     setupPrismaMock()
 

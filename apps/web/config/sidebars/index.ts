@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import type { Session } from "next-auth"
+import type { Session } from "@/context/session-context"
 import type { SidebarConfig } from "@/types/sidebar-config"
 import { useListSidebarConfig, getListSidebarConfig } from "./listSidebarConfig"
 import { usePassSidebarConfig, getPassSidebarConfig } from "./passSidebarConfig"

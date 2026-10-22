@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/session-context"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { elysia } from "@/lib/elysia"
 import { Skeleton } from "@workspace/ui/components/skeleton"

@@ -5,7 +5,7 @@ import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
 import { cache } from '../../src/utils/cache'
 import { prisma } from '@IRIS/database'
-import { decode } from 'next-auth/jwt'
+import { jwtVerify } from 'jose'
 
 // -----------------------------------------------------------------------------
 // In-Memory Database Mock for Users
@@ -49,7 +49,7 @@ function setupPrismaMock() {
 // -----------------------------------------------------------------------------
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()
@@ -256,8 +256,11 @@ describe('Comprehensive Carina Quick Connect (QC) Test Suite', () => {
       expect(approvedData.token).toBeDefined()
 
       // 5. Verify issued JWT token
-      const secret = process.env.NEXTAUTH_SECRET || 'iris-default-secret-key-32-chars!!'
-      const decoded = await decode({ token: approvedData.token, secret })
+      const secret = process.env.JWT_SECRET || 'iris-default-secret-key-32-chars!!'
+      const { payload: decoded } = await jwtVerify(
+        approvedData.token,
+        new TextEncoder().encode(secret)
+      )
       expect(decoded).toBeDefined()
       expect(decoded?.id).toBe('user-alice-123')
       expect(decoded?.username).toBe('alice')

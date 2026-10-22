@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useCallback } from "react"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/session-context"
 import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
 import { Progress } from "@workspace/ui/components/progress"

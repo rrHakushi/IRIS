@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useSession, signIn } from "next-auth/react"
+import { useSession, signIn } from "@/context/session-context"
 import { elysia } from "@/lib/elysia"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"

@@ -14,6 +14,7 @@ import {
 import { BadRequest, Conflict, NotFound, Unauthorized } from '../../lib/errors'
 import { EmailService } from '../email/email.serv'
 import type { CarinaAuthModel } from '../../api/models/carina/auth.model'
+import { getDomainConfig } from '../../utils/domain'
 
 /** In-memory cache tracking whether an administrator account already exists. */
 let hasAdminCached: boolean | null = null
@@ -310,7 +311,7 @@ export abstract class CarinaAuthServ {
     email: string,
     resetToken: string
   ): Promise<void> {
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    const baseUrl = getDomainConfig().url
     const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken}`
     await EmailService.sendPasswordResetEmail(email, resetUrl, 15)
   }

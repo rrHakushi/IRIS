@@ -221,9 +221,10 @@ export class WsServ {
         msg.userId.trim().length > 0
       ) {
         const uid = msg.userId.trim()
-        const alreadyRegistered = this.connectionUsers.get(ws) === uid
-        this.register(ws, uid)
-        this.send(ws, 'auth:success', { userId: uid })
+        const conn = (ws as any).raw ?? ws
+        const alreadyRegistered = this.connectionUsers.get(conn) === uid
+        this.register(conn, uid)
+        this.send(conn, 'auth:success', { userId: uid })
         if (!alreadyRegistered) {
           logger.info(`Client authenticated: user ${uid}`)
         }

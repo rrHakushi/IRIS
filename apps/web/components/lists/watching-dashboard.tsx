@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import Link from "next/link"
 import dynamic from "next/dynamic"
-import { useSession, signIn } from "next-auth/react"
+import { useSession, signIn } from "@/context/session-context"
 import {
   IconDeviceTv,
   IconMovie,

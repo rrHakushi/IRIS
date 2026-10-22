@@ -7,6 +7,7 @@ import {
   decryptSecret,
   verifyPassword,
   generateBackupCodes,
+  signUserJwt,
 } from '../../utils/auth-crypto'
 import { BadRequest, NotFound, Unauthorized } from '../../lib/errors'
 import type { CarinaTotpModel } from '../../api/models/carina/totp.model'
@@ -55,12 +56,75 @@ export abstract class CarinaTotpServ {
   }
 
   /**
-   * Verify the TOTP code and enable TOTP on the user's account.
+   * Verify the TOTP code.
+   * Handles either an active login challenge (via mfaTicket) or setup verification (authenticated).
    */
   static async verifyTotp(
-    userId: string,
+    userId: string | null | undefined,
     body: CarinaTotpModel['verifyBody']
   ) {
+    // 1. Unauthenticated Login Challenge Flow via mfaTicket
+    if (body.mfaTicket) {
+      const ticketData = await cache.get<{ userId: string }>(
+        `auth:mfa-ticket:${body.mfaTicket}`
+      )
+      if (!ticketData?.userId) {
+        throw new BadRequest('Invalid or expired MFA session ticket.')
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: ticketData.userId },
+      })
+      if (!user || !user.TOTPSecret || !user.TOTPEnabled) {
+        throw new Unauthorized('TOTP is not configured or active on this account.')
+      }
+
+      const decryptedSecret = decryptSecret(user.TOTPSecret)
+      let isCodeValid = false
+      try {
+        const verifyResult = await verifyTotpCode({
+          token: body.code.trim(),
+          secret: decryptedSecret,
+          epochTolerance: 30,
+        })
+        isCodeValid = verifyResult.valid
+      } catch {
+        isCodeValid = false
+      }
+
+      if (!isCodeValid) {
+        throw new Unauthorized('Invalid verification code.')
+      }
+
+      // Cleanup single-use ticket
+      await cache.del(`auth:mfa-ticket:${body.mfaTicket}`)
+
+      // Issue authenticated JWT session token
+      const token = await signUserJwt({
+        ...user,
+        username: user.username.trim(),
+      })
+
+      return {
+        success: true,
+        message: 'Successfully verified and logged in',
+        token,
+        user: {
+          id: user.id,
+          username: user.username.trim(),
+          email: user.email,
+          passwordChangedAt: user.passwordChangedAt
+            ? Math.floor(user.passwordChangedAt.getTime() / 1000)
+            : null,
+        },
+      }
+    }
+
+    // 2. Setup Verification Flow (requires authenticated session)
+    if (!userId) {
+      throw new Unauthorized('Authentication required or valid mfaTicket required.')
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
     })

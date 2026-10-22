@@ -6,19 +6,22 @@ import {
 } from '@simplewebauthn/server'
 import { prisma } from '@IRIS/database'
 import { cache } from '../../utils/cache'
-import { generateBackupCodes } from '../../utils/auth-crypto'
+import { generateBackupCodes, signUserJwt } from '../../utils/auth-crypto'
 import { BadRequest, NotFound } from '../../lib/errors'
 import type { CarinaPasskeysModel } from '../../api/models/carina/passkeys.model'
+import { getDomainConfig } from '../../utils/domain'
 
 function getOriginAndRpId(request: Request) {
+  const domainConfig = getDomainConfig()
   const originHeader = request.headers.get('origin') || request.headers.get('referer')
   const allowedOrigins = new Set<string>()
 
-  if (process.env.NEXTAUTH_URL) allowedOrigins.add(process.env.NEXTAUTH_URL)
-  if (process.env.NEXT_PUBLIC_URL) allowedOrigins.add(process.env.NEXT_PUBLIC_URL)
-  allowedOrigins.add('http://localhost:3000')
-  allowedOrigins.add('http://127.0.0.1:3000')
-  allowedOrigins.add('http://localhost:4000')
+  allowedOrigins.add(domainConfig.origin)
+  if (domainConfig.hostname === 'localhost' || domainConfig.hostname === '127.0.0.1') {
+    allowedOrigins.add('http://localhost:3000')
+    allowedOrigins.add('http://127.0.0.1:3000')
+    allowedOrigins.add('http://localhost:4000')
+  }
 
   if (originHeader) {
     try {
@@ -27,24 +30,9 @@ function getOriginAndRpId(request: Request) {
     } catch {}
   }
 
-  let rpID = 'localhost'
-  try {
-    const primaryOrigin = originHeader || process.env.NEXTAUTH_URL || 'http://localhost:3000'
-    const hostname = new URL(primaryOrigin).hostname
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      rpID = 'localhost'
-    } else if (process.env.RP_ID && process.env.RP_ID.trim()) {
-      rpID = process.env.RP_ID.trim()
-    } else {
-      rpID = hostname
-    }
-  } catch {
-    rpID = 'localhost'
-  }
-
   return {
     expectedOrigin: Array.from(allowedOrigins),
-    rpID,
+    rpID: domainConfig.rpId,
   }
 }
 
@@ -276,14 +264,21 @@ export abstract class CarinaPasskeysServ {
 
     await cache.del(`auth:passkey-auth:${challenge}`)
 
+    // Issue authenticated JWT session token
+    const token = await signUserJwt({
+      ...passkey.user,
+      username: passkey.user.username.trim(),
+    })
+
     return {
       success: true,
+      token,
       user: {
         id: passkey.user.id,
         username: passkey.user.username,
         email: passkey.user.email,
         passwordChangedAt: passkey.user.passwordChangedAt
-          ? passkey.user.passwordChangedAt.getTime()
+          ? Math.floor(passkey.user.passwordChangedAt.getTime() / 1000)
           : null,
       },
     }

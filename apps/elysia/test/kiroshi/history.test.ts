@@ -80,7 +80,7 @@ function setupPrismaMock() {
 }
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()
@@ -105,7 +105,7 @@ describe('Comprehensive Kiroshi Search History Test Suite', () => {
   const BOB_ID = '00000000-0000-0000-0000-000000000002'
 
   beforeEach(async () => {
-    process.env.NEXTAUTH_SECRET = 'test-iris-secret-key-at-least-32-chars!'
+    process.env.JWT_SECRET = 'test-iris-secret-key-at-least-32-chars!'
     setupPrismaMock()
 
     aliceToken = await signUserJwt({
