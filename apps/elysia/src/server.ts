@@ -1,7 +1,8 @@
 import './lib/typebox'
 import { Elysia, NotFound, ValidationError } from 'elysia'
 import { openapi } from '@elysia/openapi'
-import { cors, rateLimiter, generateControllersManifest } from './plugins'
+import { cors } from '@elysia/cors'
+import { rateLimiter, generateControllersManifest } from './plugins'
 import { isHttpError } from './lib/errors'
 import { LogFactory } from '@Iris/logger'
 import { wsHub } from './services/ws.serv'
@@ -15,7 +16,7 @@ declare global {
 }
 
 if (!('toJSON' in BigInt.prototype)) {
-  ;(BigInt.prototype as any).toJSON = function () {
+  ; (BigInt.prototype as any).toJSON = function () {
     const num = Number(this)
     return Number.isSafeInteger(num) ? num : this.toString()
   }
@@ -37,7 +38,27 @@ export const app = new Elysia()
   .use(cors())
   .use(rateLimiter())
   .use(controllers as any)
-  .use(openapi())
+  .use(
+    openapi({
+      provider: 'scalar',
+      scalar: {
+        darkMode: true,
+      },
+      documentation: {
+        servers: [
+
+          {
+            url: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000",
+            description: 'Direct API url',
+          },
+          {
+            url: `${process.env.NEXT_PUBLIC_URL}/elysia`,
+            description: 'Proxied api url thru page url',
+          }
+        ],
+      },
+    })
+  )
   .use(websocket())
   .ws('/ws', {
     async open(ws: any) {
@@ -89,7 +110,7 @@ export const app = new Elysia()
       }
     },
   })
-  .error(({ error, request, set }) => {
+  .onError(({ error, request, set }) => {
     const { method, url } = request
 
     // 1. Custom RFC 9457 HttpErrors (4xx, 5xx)
