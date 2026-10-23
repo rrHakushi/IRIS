@@ -18,14 +18,14 @@
 
 # Akaromi [Password manager]
     - Clicking unlock in the inline fill doesnt open the modal on android
+    - Fix scan QR code (doesnt detect them)
     
 # Kiroshi [Web search]
     - 
 
 # Carina [Account management]
     - Web extension for managing and using bookmarks
-    - Change totp title to "Carina" and "Carina Dev"
-    - Opening the edit modal on media in favorites tab on user's page crashes the site
+
 
 # Lynx [Discord bot]
     - Copy from Runa and update
@@ -37,6 +37,8 @@
     - mcp server for all the apps
     - create missing sidebar configs
     - Complete migration from node and pnpm to bun
+    - Default banner image for all apps (each different) to be used in server metadata 
+    - Migrate from Prisma 7 to Prisma 8
 
 # Apertune [Music player]
     - 

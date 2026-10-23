@@ -43,6 +43,8 @@ import {
   IconMoon,
   IconEdit,
   IconDotsVertical,
+  IconLock,
+  IconLockOpen,
 } from "@tabler/icons-react"
 import { useIrisSidebar } from "./sidebar-provider"
 import { IrisSidebarUserCard } from "./iris-sidebar-user-card"
@@ -53,6 +55,7 @@ import {
   type IrisSettingsCategory,
 } from "./iris-settings-modal"
 import { BookmarkDialog } from "./bookmark-dialog"
+import { UnlockVaultDialog } from "./unlock-vault-dialog"
 import { formatBadgeNumber } from "@/lib/numbers"
 import { useNotifications } from "@/context/notification-context"
 import { useUser } from "@/context/user-context"
@@ -133,7 +136,8 @@ export function IrisUserMenu({
   const tApp = useTranslations("navigation.appMenu")
   const { data: session, status } = useSession()
   const { user } = useUser()
-  const { isActive: isEncryptionActive } = useEncryption()
+  const { isActive: isEncryptionActive, lockVault } = useEncryption()
+  const [unlockVaultOpen, setUnlockVaultOpen] = useState(false)
   const {
     unreadCount,
     isModalOpen: notificationsOpen,
@@ -823,7 +827,7 @@ export function IrisUserMenu({
       className={cn(
         "group transition-all",
         isCompact
-          ? "flex min-w-0 flex-1 items-center rounded-xl"
+          ? "flex min-w-0 max-w-[200px] sm:max-w-[220px] flex-1 items-center rounded-xl"
           : "block w-full rounded-2xl"
       )}
       title={t("viewProfile") || "View Profile"}
@@ -848,6 +852,48 @@ export function IrisUserMenu({
       />
     </Link>
   )
+
+  // Encryption Vault Lock / Unlock Action Button
+  const renderLockAction = (isCompact = false) => {
+    if (status !== "authenticated") return null
+
+    const isUnlocked = isEncryptionActive
+    const label = isUnlocked
+      ? t("vaultUnlocked") || "Vault unlocked (click to lock)"
+      : t("vaultLocked") || "Vault locked (click to unlock)"
+
+    return (
+      <TooltipTrigger delay={150}>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          className={cn(
+            "cursor-pointer rounded-xl border transition-all shadow-2xs shrink-0",
+            isUnlocked
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 hover:text-emerald-400"
+              : "border-amber-500/30 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 hover:text-amber-400",
+            isCompact ? "size-8" : "size-9"
+          )}
+          onPress={() => {
+            if (isUnlocked) {
+              lockVault()
+              toast.info(t("vaultLockedToast") || "Encryption vault locked")
+            } else {
+              setUnlockVaultOpen(true)
+            }
+          }}
+          aria-label={label}
+        >
+          {isUnlocked ? (
+            <IconLockOpen className="size-4" />
+          ) : (
+            <IconLock className="size-4" />
+          )}
+        </Button>
+        <Tooltip>{label}</Tooltip>
+      </TooltipTrigger>
+    )
+  }
 
   // Quick Action Toolbar
   const renderToolbar = (isCompact = false) => (
@@ -1463,6 +1509,11 @@ export function IrisUserMenu({
             : undefined
         }
       />
+
+      <UnlockVaultDialog
+        isOpen={unlockVaultOpen}
+        onClose={() => setUnlockVaultOpen(false)}
+      />
     </>
   )
 
@@ -1528,8 +1579,13 @@ export function IrisUserMenu({
             {/* 3. Toolbar */}
             {renderToolbar(false)}
 
-            {/* 4. User card */}
-            {renderUserCard(false)}
+            {/* 4. User card + Lock */}
+            <div className="flex items-center gap-2 w-full">
+              <div className="min-w-0 flex-1">
+                {renderUserCard(false)}
+              </div>
+              {renderLockAction(false)}
+            </div>
           </div>
         </Sheet>
 
@@ -1588,9 +1644,12 @@ export function IrisUserMenu({
             aria-label={t("title") || "Navigation & Profile Menu"}
             className="flex flex-col gap-2.5 h-full min-h-0 outline-none overflow-hidden"
           >
-            {/* Desktop Top Bar: User Card on Left + Toolbar on Right */}
+            {/* Desktop Top Bar: User Card on Left + Lock + Toolbar on Right */}
             <div className="flex items-center justify-between gap-2 rounded-2xl border border-border/50 bg-card/60 px-3 py-2 shadow-xs shrink-0">
-              {renderUserCard(true)}
+              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                {renderUserCard(true)}
+                {renderLockAction(true)}
+              </div>
               {renderToolbar(true)}
             </div>
 
