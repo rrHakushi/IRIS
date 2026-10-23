@@ -1,3 +1,5 @@
+// use prisma-8
+
 enum AnimeStatus {
     FINISHED
     RELEASING
@@ -63,15 +65,15 @@ model Anime {
     bangumiId Int?
     kitsuId   Int?
 
-    titlePrimary   String  @db.Text
-    titleSecondary String? @db.Text
-    titleNative    String? @db.Text
+    titlePrimary   String
+    titleSecondary String?
+    titleNative    String?
 
-    coverImage  String? @db.Text
-    bannerImage String? @db.Text
-    images      Json?   @db.JsonB
+    coverImage  String?
+    bannerImage String?
+    images      Jsonb?
 
-    description     String? @db.Text
+    description     String?
     hashtag         String?
     countryOfOrigin String?
 
@@ -88,8 +90,8 @@ model Anime {
     endDateMonth Int?
     endDateDay   Int?
 
-    genres       Genre[]
-    tags         Tag[]
+    genres AnimeGenre[]
+    tags AnimeTag[]
     source       AnimeSource @default(UNKNOWN)
     format       AnimeFormat @default(UNKNOWN)
     status       AnimeStatus @default(UNKNOWN)
@@ -99,10 +101,10 @@ model Anime {
     averageScore       Float?
     favorites          Int    @default(0)
     popularity         Int    @default(0)
-    totalScoreSum      Int?   @db.Integer
-    scoredCount        Int?   @db.Integer
-    statusDistribution Json   @default("{}") @db.JsonB
-    scoreDistribution  Json   @default("{}") @db.JsonB
+    totalScoreSum      Int?
+    scoredCount        Int?
+    statusDistribution Jsonb @default(json`{}`)
+    scoreDistribution Jsonb @default(json`{}`)
 
     alAverageScore Int?
     alFavorites    Int?
@@ -113,15 +115,15 @@ model Anime {
     malPopularity   Int?
 
     isAdult  Boolean  @default(false)
-    synonyms String[] @db.Text
-    trailers Json?    @db.JsonB
+    synonyms String[]
+    trailers Jsonb?
     locked   Boolean  @default(false)
 
-    siteUrl       String? @db.Text
-    externalLinks Json?   @db.JsonB
-    sources       Json?   @db.JsonB
+    siteUrl       String?
+    externalLinks Jsonb?
+    sources       Jsonb?
 
-    themeSongs Json? @db.JsonB
+    themeSongs Jsonb?
 
     ageRating      String?
     ageRatingGuide String?
@@ -134,7 +136,7 @@ model Anime {
     anidbUpdatedAt Int?
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     characters       MediaCharacter[]
     studios          MediaStudio[]
@@ -147,8 +149,8 @@ model Anime {
     @@index([status])
     @@index([format])
     @@index([seasonYear, seasonSeason])
-    @@index([popularity(sort: Desc)])
-    @@index([averageScore(sort: Desc)])
+    @@index([popularity])
+    @@index([averageScore])
     @@index([nextAiringAt])
     @@index([tvDBId])
 }
@@ -160,17 +162,17 @@ model AnimeEpisode {
     number  Int
     type    EpisodeType @default(REGULAR)
 
-    titlePrimary   String  @db.Text
-    titleSecondary String? @db.Text
-    titleNative    String? @db.Text
+    titlePrimary   String
+    titleSecondary String?
+    titleNative    String?
 
-    description    String?   @db.Text
+    description    String?
     duration       Int?
     airDate        DateTime?
-    thumbnail      String?   @db.Text
+    thumbnail      String?
     isFiller       Boolean   @default(false)
     isRecap        Boolean   @default(false)
-    streamingLinks Json?     @db.JsonB
+    streamingLinks Jsonb?
 
     opStart    Int?
     opEnd      Int?
@@ -179,11 +181,11 @@ model AnimeEpisode {
     recapStart Int?
     recapEnd   Int?
 
-    skipTimestamps Json? @db.JsonB
+    skipTimestamps Jsonb?
 
     anidbEpisodeId Int?
     createdAt      DateTime @default(now())
-    updatedAt      DateTime @updatedAt
+    updatedAt      DateTime @onCreate(now()) @onUpdate(now())
 
     @@unique([animeId, number, type])
     @@index([animeId])
@@ -198,7 +200,7 @@ model AnimeAiringSchedule {
     airingAt        DateTime
     anilistAiringId Int?     @unique
     createdAt       DateTime @default(now())
-    updatedAt       DateTime @updatedAt
+    updatedAt       DateTime @onCreate(now()) @onUpdate(now())
 
     @@unique([animeId, episodeNumber])
     @@index([animeId])

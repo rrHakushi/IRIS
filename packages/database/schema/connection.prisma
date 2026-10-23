@@ -1,3 +1,5 @@
+// use prisma-8
+
 enum ConnectionProvider {
     ANILIST
     MAL
@@ -33,7 +35,7 @@ enum ConnectionStatus {
 }
 
 model Connection {
-    id             String             @id @default(uuid())
+    id             String             @id @onCreate(uuid())
     userId         String
     user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
     provider       ConnectionProvider
@@ -47,21 +49,21 @@ model Connection {
     
     // Secure token and credential storage
     // Format: AES-256-GCM encrypted JSON payload containing tokens, API keys, or credentials
-    encryptedData  String             @db.Text
+    encryptedData  String
     
     // Connection state
     status         ConnectionStatus   @default(CONNECTED)
-    errorMessage   String?            @db.Text
+    errorMessage   String?
     
     // Configurable settings per connection
     // e.g. { autoSync: true, scrobbleEnabled: true, searchQuotaShare: true, isPrivate: false, hostUrl: "http://..." }
-    settings       Json?              @db.Json
+    settings       Json?
     
     // Timestamps
     lastSyncedAt   DateTime?
     expiresAt      DateTime?          // OAuth token expiration timestamp if applicable
     createdAt      DateTime           @default(now())
-    updatedAt      DateTime           @updatedAt
+    updatedAt      DateTime           @onCreate(now()) @onUpdate(now())
 
     @@unique([userId, provider, externalId])
     @@index([userId])

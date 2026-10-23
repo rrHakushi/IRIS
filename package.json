@@ -9,10 +9,9 @@
     "lint": "turbo run lint",
     "format": "turbo format",
     "typecheck": "turbo typecheck",
-    "db:push": "turbo run db:push --filter=@IRIS/database",
-    "db:studio": "turbo run db:studio --filter=@IRIS/database",
-    "db:generate": "turbo run db:generate --filter=@IRIS/database",
-    "db:all": "turbo run db:all --filter=@IRIS/database",
+    "db:contract:emit": "turbo run contract:emit --filter=@Iris/db",
+    "db:update": "turbo run db:update --filter=@Iris/db",
+    "db:verify": "turbo run db:verify --filter=@Iris/db",
     "elysia:dev": "turbo run dev --filter=@IRIS/elysia",
     "elysia:build": "turbo run build --filter=@IRIS/elysia",
     "auth:migrate-passwords": "bun scripts/migrate-passwords.ts",
@@ -20,7 +19,7 @@
     "plugin:borealis:release": "python3 plugins/JellyBorealis/package.py --ci"
   },
   "devDependencies": {
-    "@IRIS/database": "workspace:*",
+    "@Iris/db": "workspace:*",
     "@types/bun": "^1.4.3",
     "@workspace/eslint-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
@@ -45,11 +44,5 @@
     "msgpackr-extract",
     "prisma",
     "unrs-resolver"
-  ],
-  "overrides": {
-    "prisma": "^7",
-    "@prisma/client": "^7",
-    "@prisma/adapter-pg": "^7",
-    "@prisma/client-runtime-utils": "^7"
-  }
+  ]
 }

@@ -1,15 +1,17 @@
+// use prisma-8
+
 model Other {
     id          Int     @id @default(autoincrement())
     creatorId   String
     creator     User    @relation("CreatedOtherItems", fields: [creatorId], references: [id], onDelete: Cascade)
 
-    titlePrimary   String  @db.Text
-    titleSecondary String? @db.Text
-    description    String? @db.Text
+    titlePrimary   String
+    titleSecondary String?
+    description    String?
 
-    coverImage     String? @db.Text
-    bannerImage    String? @db.Text
-    format         String? @db.Text
+    coverImage     String?
+    bannerImage    String?
+    format         String?
 
     startDate      DateTime?
     endDate        DateTime?
@@ -17,27 +19,27 @@ model Other {
     isPublished    Boolean @default(false)
 
     // [{ key: string, label: string, unit?: string, max?: number }]
-    progressFields Json    @default("[]") @db.JsonB
+    progressFields Jsonb   @default(json`[]`)
     // The designated progress field key to increment in /increment route (max 1)
     incrementFieldKey String?
 
     // Custom status labels/options [{ key: string, label: string, isCompleted?: boolean }]
-    statuses       Json    @default("[]") @db.JsonB
+    statuses       Jsonb   @default(json`[]`)
 
     // Stored pre-update snapshot for tracking users when published item is edited
-    preUpdateSnapshot Json? @db.JsonB
+    preUpdateSnapshot Jsonb?
 
     // Mandatory statistics fields
     averageScore       Float?
     favorites          Int    @default(0)
     popularity         Int    @default(0)
-    totalScoreSum      Int?   @db.Integer
-    scoredCount        Int?   @db.Integer
-    statusDistribution Json   @default("{}") @db.JsonB
-    scoreDistribution  Json   @default("{}") @db.JsonB
+    totalScoreSum      Int?
+    scoredCount        Int?
+    statusDistribution Jsonb @default(json`{}`)
+    scoreDistribution Jsonb @default(json`{}`)
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     userLists         OtherList[]
     customListEntries CustomListEntry[]
@@ -45,8 +47,8 @@ model Other {
     @@index([creatorId])
     @@index([titlePrimary])
     @@index([isPublished])
-    @@index([popularity(sort: Desc)])
-    @@index([averageScore(sort: Desc)])
+    @@index([popularity])
+    @@index([averageScore])
 }
 
 model OtherList {
@@ -58,22 +60,22 @@ model OtherList {
 
     status      String    @default("PLANNING")
     // Map of progress field keys to values: { [key: string]: number }
-    progressValues Json   @default("{}") @db.JsonB
+    progressValues Jsonb @default(json`{}`)
 
     score       Float?
-    notes       String?   @db.Text
+    notes       String?
     private     Boolean   @default(false)
 
     startedAt   DateTime?
     completedAt DateTime?
 
     createdAt   DateTime  @default(now())
-    updatedAt   DateTime  @updatedAt
+    updatedAt   DateTime  @onCreate(now()) @onUpdate(now())
 
     @@unique([userId, otherId])
     @@index([userId])
     @@index([otherId])
     @@index([status])
     @@index([userId, status])
-    @@index([userId, score(sort: Desc)])
+    @@index([userId, score])
 }

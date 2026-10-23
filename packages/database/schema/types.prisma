@@ -1,0 +1,5 @@
+// use prisma-8
+
+types {
+  DateTime = Timestamp
+}

@@ -1,3 +1,5 @@
+// use prisma-8
+
 enum GameStatus {
     RELEASED
     EARLY_ACCESS
@@ -16,75 +18,75 @@ model Game {
     giantbombId String?
     vndbId      String?
 
-    titlePrimary   String  @db.Text
-    titleSecondary String? @db.Text
-    titleNative    String? @db.Text
+    titlePrimary   String
+    titleSecondary String?
+    titleNative    String?
     slug           String?
-    tagline        String? @db.Text
+    tagline        String?
 
-    coverImage      String? @db.Text
-    bannerImage     String? @db.Text
-    backgroundImage String? @db.Text
-    images          Json?   @db.JsonB
+    coverImage      String?
+    bannerImage     String?
+    backgroundImage String?
+    images          Jsonb?
 
-    description String? @db.Text
+    description String?
 
     releaseDateYear  Int?
     releaseDateMonth Int?
     releaseDateDay   Int?
     releaseDate      DateTime?
 
-    genres             Genre[]
-    tags               Tag[]
-    platforms          String[]   @db.Text
-    developers         String[]   @db.Text
-    publishers         String[]   @db.Text
-    franchise          String?    @db.Text
-    gameModes          String[]   @db.Text
-    playerPerspectives String[]   @db.Text
+    genres GameGenre[]
+    tags GameTag[]
+    platforms          String[]
+    developers         String[]
+    publishers         String[]
+    franchise          String?
+    gameModes          String[]
+    playerPerspectives String[]
     status             GameStatus @default(UNKNOWN)
     isAdult            Boolean    @default(false)
-    synonyms           String[]   @db.Text
-    trailers           Json?      @db.JsonB
+    synonyms           String[]
+    trailers           Jsonb?
     locked             Boolean    @default(false)
 
     averageScore    Float?
     igdbRating      Float?
     igdbRatingCount Int?
 
-    requirements      Json?    @db.JsonB
-    languages         String[] @db.Text
+    requirements      Jsonb?
+    languages         String[]
     controllerSupport String?
-    achievements      Json?    @db.JsonB
+    achievements      Jsonb?
 
     linuxSupport    Boolean?
     steamDeckStatus String?
-    steamDeck       Json?    @db.JsonB
+    steamDeck       Jsonb?
 
     favorites          Int  @default(0)
     popularity         Int  @default(0)
-    totalScoreSum      Int? @db.Integer
-    scoredCount        Int? @db.Integer
-    statusDistribution Json @default("{}") @db.JsonB
-    scoreDistribution  Json @default("{}") @db.JsonB
+    totalScoreSum      Int?
+    scoredCount        Int?
+    statusDistribution Jsonb @default(json`{}`)
+    scoreDistribution Jsonb @default(json`{}`)
 
     averagePlaytime  Float?
     totalPlaytimeSum Float? @default(0)
     playtimeCount    Int?   @default(0)
 
-    sources Json? @db.JsonB
+    sources Jsonb?
 
     esrbRating     String?
     pegiRating     String?
     ageRating      String?
     ageRatingGuide String?
-    contentRatings Json?   @db.JsonB
+    contentRatings Jsonb?
 
     igdbUpdatedAt  Int?
     steamUpdatedAt Int?
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     studios          MediaStudio[]
     userLists        GameList[]
@@ -93,6 +95,6 @@ model Game {
 
     @@index([titlePrimary])
     @@index([status])
-    @@index([popularity(sort: Desc)])
-    @@index([averageScore(sort: Desc)])
+    @@index([popularity])
+    @@index([averageScore])
 }

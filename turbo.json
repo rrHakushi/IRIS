@@ -45,17 +45,16 @@
       "cache": false,
       "persistent": true
     },
-    "db:push": {
+    "contract:emit": {
       "cache": false
     },
-    "db:studio": {
-      "cache": false,
-      "persistent": true
-    },
-    "db:generate": {
+    "db:update": {
       "cache": false
     },
-    "db:all": {
+    "db:verify": {
+      "cache": false
+    },
+    "db:migrate": {
       "cache": false
     },
     "sdk": {

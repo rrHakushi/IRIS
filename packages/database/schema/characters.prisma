@@ -1,3 +1,5 @@
+// use prisma-8
+
 enum CharacterRole {
     MAIN
     SUPPORTING
@@ -12,14 +14,14 @@ model Character {
     tvDBId    Int? @unique
     bangumiId Int? @unique
 
-    namePrimary            String   @db.Text
-    nameNative             String?  @db.Text
-    nameAlternative        String[] @db.Text
-    nameAlternativeSpoiler String[] @db.Text
+    namePrimary            String
+    nameNative             String?
+    nameAlternative        String[]
+    nameAlternativeSpoiler String[]
 
-    image       String? @db.Text
-    images      Json?   @db.JsonB
-    description String? @db.Text
+    image       String?
+    images      Jsonb?
+    description String?
     gender      String?
     age         String?
 
@@ -30,7 +32,7 @@ model Character {
     favorites   Int? @default(0)
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     mediaCharacters MediaCharacter[]
 

@@ -1,18 +1,20 @@
+// use prisma-8
+
 model SearchHistory {
-  id     String @id @default(uuid())
+  id     String @id @onCreate(uuid())
   userId String
   user   User   @relation("UserSearchHistory", fields: [userId], references: [id], onDelete: Cascade)
 
   // Record type: "query" (search query) or "site" (clicked website / image / video)
   type           String  @default("query")
   // Encrypted query text using user AES-256-GCM envelope
-  encryptedQuery String? @db.Text
+  encryptedQuery String?
   category       String  @default("general")
 
   // For clicked sites (images, videos, web pages)
-  url       String? @db.Text
-  title     String? @db.Text
-  thumbnail String? @db.Text
+  url       String?
+  title     String?
+  thumbnail String?
 
   createdAt DateTime @default(now())
 

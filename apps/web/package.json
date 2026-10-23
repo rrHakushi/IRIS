@@ -15,7 +15,7 @@
     "i18n:prune": "bun scripts/manage-i18n.ts --prune"
   },
   "dependencies": {
-    "@IRIS/database": "workspace:*",
+    "@Iris/db": "workspace:*",
     "@IRIS/elysia": "workspace:*",
     "@IRIS/permissions": "workspace:*",
     "@IRIS/shared": "workspace:*",

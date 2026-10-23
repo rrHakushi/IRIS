@@ -1,3 +1,5 @@
+// use prisma-8
+
 enum MusicType {
     TRACK
     ALBUM
@@ -17,16 +19,16 @@ model Music {
     isrc           String?
     upc            String?     // Album barcode / UPC
 
-    titlePrimary   String      @db.Text
-    titleSecondary String?     @db.Text // title_short
-    titleVersion   String?     @db.Text
-    titleNative    String?     @db.Text
+    titlePrimary   String
+    titleSecondary String? // title_short
+    titleVersion   String?
+    titleNative    String?
 
-    link           String?     @db.Text
-    share          String?     @db.Text
+    link           String?
+    share          String?
 
-    coverImage     String?     @db.Text
-    images         Json?       @db.JsonB // { small, medium, big, xl }
+    coverImage     String?
+    images         Jsonb? // { small, medium, big, xl }
     md5Image       String?
 
     duration       Int?        // Duration in seconds
@@ -43,23 +45,23 @@ model Music {
     explicitContentLyrics  Int?     @default(0)
     explicitContentCover   Int?     @default(0)
 
-    audioPreviewUrl String?    @db.Text
+    audioPreviewUrl String?
     bpm             Float?
     gain            Float?
     availableCountries String[] @default([])
 
     recordType     String?     // "album", "single", "compile", "ep"
-    label          String?     @db.Text
+    label          String?
     nbTracks       Int?
     fans           Int?        @default(0)
 
-    lyrics         String?     @db.Text
-    syncedLyrics   String?     @db.Text
+    lyrics         String?
+    syncedLyrics   String?
     lyricsSource   String?
 
-    description    String?     @db.Text
+    description    String?
     status         MusicStatus @default(RELEASED)
-    sources        Json?       @db.JsonB
+    sources        Jsonb?
     deezerUpdatedAt Int?
 
     // Local platform stats (application metrics)
@@ -76,24 +78,24 @@ model Music {
     // Artist relation
     artistId       Int?
     artist         Person?     @relation("MusicArtist", fields: [artistId], references: [id], onDelete: SetNull)
-    artistName     String?     @db.Text
+    artistName     String?
     deezerArtistId String?
 
     // Media relations
     staff          MediaStaff[]
-    genres         Genre[]
-    tags           Tag[]
+    genres MusicGenre[]
+    tags MusicTag[]
     userLists      MusicList[]
     reviews        MusicReview[]
     customListEntries CustomListEntry[]
 
     createdAt      DateTime    @default(now())
-    updatedAt      DateTime    @updatedAt
+    updatedAt      DateTime    @onCreate(now()) @onUpdate(now())
 
     @@index([titlePrimary])
     @@index([artistName])
     @@index([type])
     @@index([albumId])
-    @@index([popularity(sort: Desc)])
-    @@index([rank(sort: Desc)])
+    @@index([popularity])
+    @@index([rank])
 }

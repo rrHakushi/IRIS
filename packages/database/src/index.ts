@@ -1,28 +1,37 @@
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../generated-client/index.js";
+import postgres from "@prisma/orm-postgres/runtime";
+import { contractFromJson } from "@prisma/orm-postgres/static";
+import type { Contract } from "./contract.js";
+import contractJson from "./contract.json" with { type: "json" };
 
-const prismaClientSingleton = () => {
-  const url = Bun.env.DATABASE_URL || "postgresql://dummy:dummy@localhost:5432/dummy";
+export const contract = contractFromJson<Contract>(contractJson);
 
-  // Mask sensitive info for logging
-  const maskedUrl = url.replace(/:.+@/, ":****@");
-  console.info(`[PRISMA] DATABASE_URL: ${maskedUrl}`);
+export type PrismaClient = ReturnType<typeof postgres<Contract>>;
 
-  const adapter = new PrismaPg({
-    connectionString: url,
-  });
+const url =
+  (typeof Bun !== "undefined" ? Bun.env.DATABASE_URL : process.env.DATABASE_URL) ||
+  "postgresql://dummy:dummy@localhost:5432/dummy";
 
-  return new PrismaClient({ adapter });
-};
+// Mask sensitive info for logging
+const maskedUrl = url.replace(/:.+@/, ":****@");
+console.info(`[PRISMA] DATABASE_URL: ${maskedUrl}`);
 
 declare global {
-  var prismaGlobal: undefined | ReturnType<typeof prismaClientSingleton>;
+  var prismaGlobal: undefined | PrismaClient;
 }
 
-export const prisma = globalThis.prismaGlobal ?? prismaClientSingleton();
+export const prisma: PrismaClient =
+  globalThis.prismaGlobal ??
+  postgres({
+    contract,
+    url,
+  });
 
-if (Bun.env.NODE_ENV !== "production") {
+if (
+  (typeof Bun !== "undefined" ? Bun.env.NODE_ENV : process.env.NODE_ENV) !==
+  "production"
+) {
   globalThis.prismaGlobal = prisma;
 }
 
-export * from "../generated-client/index.js";
+export type { Contract };
+export type * from "./contract.js";

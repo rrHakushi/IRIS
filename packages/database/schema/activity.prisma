@@ -1,3 +1,5 @@
+// use prisma-8
+
 enum ActivityType {
     // Media List Tracking Events
     LIST_ITEM_ADDED
@@ -18,13 +20,13 @@ enum ActivityType {
     FAVORITE_REMOVED
     FRIEND_ADDED
 
-    // User Text Post / Status
+    // User String Post / Status
     STATUS_POST
     USER_MILESTONE
 }
 
 model ActivityLog {
-    id     String @id @default(uuid())
+    id     String @id @onCreate(uuid())
     userId String
     user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -42,10 +44,10 @@ model ActivityLog {
 
     // Content for reviews, status posts, or notes
     title   String?
-    content String? @db.Text
+    content String?
 
     // Extra dynamic metadata (old status, old progress, reviewId, watchlistId, etc.)
-    metadata Json? @db.Json
+    metadata Json?
 
     // Visibility & Flags
     isPrivate Boolean @default(false)
@@ -60,7 +62,7 @@ model ActivityLog {
     replies ActivityReply[]
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     @@index([userId, createdAt])
     @@index([type])
@@ -69,7 +71,7 @@ model ActivityLog {
 }
 
 model ActivityLike {
-    id         String      @id @default(uuid())
+    id         String      @id @onCreate(uuid())
     activityId String
     activity   ActivityLog @relation(fields: [activityId], references: [id], onDelete: Cascade)
     userId     String
@@ -82,15 +84,15 @@ model ActivityLike {
 }
 
 model ActivityReply {
-    id         String      @id @default(uuid())
+    id         String      @id @onCreate(uuid())
     activityId String
     activity   ActivityLog @relation(fields: [activityId], references: [id], onDelete: Cascade)
     userId     String
     user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-    content    String      @db.Text
+    content    String
     likeCount  Int         @default(0)
     createdAt  DateTime    @default(now())
-    updatedAt  DateTime    @updatedAt
+    updatedAt  DateTime    @onCreate(now()) @onUpdate(now())
 
     @@index([activityId, createdAt])
     @@index([userId])

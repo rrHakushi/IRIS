@@ -1,3 +1,5 @@
+// use prisma-8
+
 enum RelationType {
     PREQUEL
     SEQUEL
@@ -22,4 +24,158 @@ model MediaRelation {
     @@unique([sourceType, sourceId, targetType, targetId, type])
     @@index([sourceType, sourceId])
     @@index([targetType, targetId])
+}
+
+model AnimeGenre {
+    animeId Int   @map("A")
+    genreId Int   @map("B")
+    anime   Anime @relation(fields: [animeId], references: [id], onDelete: Cascade)
+    genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+    @@id([animeId, genreId])
+    @@index([genreId])
+    @@map("_AnimeToGenre")
+}
+
+model AnimeTag {
+    animeId Int   @map("A")
+    tagId   Int   @map("B")
+    anime   Anime @relation(fields: [animeId], references: [id], onDelete: Cascade)
+    tag     Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+    @@id([animeId, tagId])
+    @@index([tagId])
+    @@map("_AnimeToTag")
+}
+
+model MangaGenre {
+    genreId Int   @map("A")
+    mangaId Int   @map("B")
+    genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+    manga   Manga @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+
+    @@id([genreId, mangaId])
+    @@index([mangaId])
+    @@map("_GenreToManga")
+}
+
+model MangaTag {
+    mangaId Int   @map("A")
+    tagId   Int   @map("B")
+    manga   Manga @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+    tag     Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+    @@id([mangaId, tagId])
+    @@index([tagId])
+    @@map("_MangaToTag")
+}
+
+model MovieGenre {
+    genreId Int   @map("A")
+    movieId Int   @map("B")
+    genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+    movie   Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+    @@id([genreId, movieId])
+    @@index([movieId])
+    @@map("_GenreToMovie")
+}
+
+model MovieTag {
+    movieId Int   @map("A")
+    tagId   Int   @map("B")
+    movie   Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+    tag     Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+    @@id([movieId, tagId])
+    @@index([tagId])
+    @@map("_MovieToTag")
+}
+
+model TvGenre {
+    genreId Int   @map("A")
+    tvId    Int   @map("B")
+    genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+    tv      Tv    @relation(fields: [tvId], references: [id], onDelete: Cascade)
+
+    @@id([genreId, tvId])
+    @@index([tvId])
+    @@map("_GenreToTv")
+}
+
+model TvTag {
+    tagId Int @map("A")
+    tvId  Int @map("B")
+    tag   Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+    tv    Tv  @relation(fields: [tvId], references: [id], onDelete: Cascade)
+
+    @@id([tagId, tvId])
+    @@index([tvId])
+    @@map("_TagToTv")
+}
+
+model GameGenre {
+    gameId  Int   @map("A")
+    genreId Int   @map("B")
+    game    Game  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+    @@id([gameId, genreId])
+    @@index([genreId])
+    @@map("_GameToGenre")
+}
+
+model GameTag {
+    gameId Int  @map("A")
+    tagId  Int  @map("B")
+    game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+    @@id([gameId, tagId])
+    @@index([tagId])
+    @@map("_GameToTag")
+}
+
+model BookGenre {
+    bookId  Int   @map("A")
+    genreId Int   @map("B")
+    book    Book  @relation(fields: [bookId], references: [id], onDelete: Cascade)
+    genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+    @@id([bookId, genreId])
+    @@index([genreId])
+    @@map("_BookToGenre")
+}
+
+model BookTag {
+    bookId Int  @map("A")
+    tagId  Int  @map("B")
+    book   Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+    tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+    @@id([bookId, tagId])
+    @@index([tagId])
+    @@map("_BookToTag")
+}
+
+model MusicGenre {
+    genreId Int   @map("A")
+    musicId Int   @map("B")
+    genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+    music   Music @relation(fields: [musicId], references: [id], onDelete: Cascade)
+
+    @@id([genreId, musicId])
+    @@index([musicId])
+    @@map("_GenreToMusic")
+}
+
+model MusicTag {
+    musicId Int   @map("A")
+    tagId   Int   @map("B")
+    music   Music @relation(fields: [musicId], references: [id], onDelete: Cascade)
+    tag     Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+    @@id([musicId, tagId])
+    @@index([tagId])
+    @@map("_MusicToTag")
 }

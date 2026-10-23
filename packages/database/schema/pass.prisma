@@ -1,3 +1,5 @@
+// use prisma-8
+
 enum PassCipherType {
   LOGIN
   SSH_KEY
@@ -15,7 +17,7 @@ enum SshKeyType {
 }
 
 model PassCipher {
-  id             String           @id @default(uuid())
+  id             String           @id @onCreate(uuid())
   userId         String
   user           User             @relation("UserToPassCiphers", fields: [userId], references: [id], onDelete: Cascade)
 
@@ -24,19 +26,19 @@ model PassCipher {
   reprompt       PassRepromptType @default(NONE)
 
   // Encrypted item display name / title (encrypted client-side with VaultKey)
-  encryptedTitle String           @db.Text
+  encryptedTitle String
 
   // Encrypted JSON data payload (encrypted client-side with VaultKey)
   // For LOGIN: { username, password, uris: [{ uri, match }], totpSecret, customFields: [...] }
   // For SSH_KEY: { keyType, publicKey, encryptedPrivateKey, passphrase, fingerprint, notes }
   // STRICT ZERO PASSWORD HISTORY: Previous passwords are never saved.
-  encryptedData  String           @db.Text
+  encryptedData  String
 
   // Soft Delete / Trash Bin (null = active item)
   deletedAt      DateTime?
 
   createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  updatedAt      DateTime         @onCreate(now()) @onUpdate(now())
 
   @@index([userId, type])
   @@index([userId, deletedAt])

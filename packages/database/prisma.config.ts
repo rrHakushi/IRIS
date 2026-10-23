@@ -1,11 +1,18 @@
-import { defineConfig } from "prisma/config";
+import { definePrismaConfig } from "prisma/config";
+import { defineConfig as ormConfig } from "@prisma/orm-postgres/config";
 
-export default defineConfig({
-  schema: "schema",
-  migrations: {
-    path: "migrations",
-  },
-  datasource: {
-    url: (typeof Bun !== "undefined" ? Bun.env.DATABASE_URL : process.env.DATABASE_URL) || "",
-  },
+const config: Record<string, unknown> = definePrismaConfig({
+  orm: ormConfig({
+    contract: "./schema/*.prisma",
+    output: "./src",
+    db: {
+      connection:
+        (typeof Bun !== "undefined" ? Bun.env.DATABASE_URL : process.env.DATABASE_URL) || "",
+    },
+    migrations: {
+      dir: "migrations",
+    },
+  }),
 });
+
+export default config;

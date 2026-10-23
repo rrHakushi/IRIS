@@ -1,3 +1,5 @@
+// use prisma-8
+
 enum MediaType {
     ANIME
     MANGA
@@ -68,34 +70,34 @@ enum MusicListStatus {
 }
 
 model CustomList {
-    id          String   @id @default(uuid())
+    id          String   @id @onCreate(uuid())
     userId      String
     user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
     name        String
-    description String?  @db.Text
+    description String?
     isDefault   Boolean  @default(false)
     isPrivate   Boolean  @default(false)
-    coverImage  String?  @db.Text
+    coverImage  String?
     order       Int      @default(0)
 
     entries CustomListEntry[]
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     @@index([userId])
     @@index([userId, isDefault])
 }
 
 model CustomListEntry {
-    id          String     @id @default(uuid())
+    id          String     @id @onCreate(uuid())
     listId      String
     customList  CustomList @relation(fields: [listId], references: [id], onDelete: Cascade)
 
     mediaType   MediaType
     mediaId     Int
     order       Int        @default(0)
-    customNotes String?    @db.Text
+    customNotes String?
     addedAt     DateTime   @default(now())
 
     animeId Int?
@@ -130,24 +132,24 @@ model AnimeList {
     status      AnimeListStatus @default(PLANNING)
     progress    Int             @default(0)
     score       Float?
-    notes       String?         @db.Text
+    notes       String?
     rewatched   Int             @default(0)
     private     Boolean         @default(false)
 
     startedAt      DateTime?
     completedAt    DateTime?
-    rewatchHistory Json?     @db.JsonB
-    connections    Json?     @db.JsonB
+    rewatchHistory Jsonb?
+    connections    Jsonb?
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     @@unique([userId, animeId])
     @@index([userId])
     @@index([animeId])
     @@index([status])
     @@index([userId, status])
-    @@index([userId, score(sort: Desc)])
+    @@index([userId, score])
 }
 
 model MangaList {
@@ -160,24 +162,24 @@ model MangaList {
     chaptersProgress Int             @default(0)
     volumesProgress  Int             @default(0)
     score            Float?
-    notes            String?         @db.Text
+    notes            String?
     reread           Int             @default(0)
     private          Boolean         @default(false)
 
     startedAt     DateTime?
     completedAt   DateTime?
-    rereadHistory Json?     @db.JsonB
-    connections   Json?     @db.JsonB
+    rereadHistory Jsonb?
+    connections   Jsonb?
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     @@unique([userId, mangaId])
     @@index([userId])
     @@index([mangaId])
     @@index([status])
     @@index([userId, status])
-    @@index([userId, score(sort: Desc)])
+    @@index([userId, score])
 }
 
 model MovieList {
@@ -188,24 +190,24 @@ model MovieList {
     movie       Movie           @relation(fields: [movieId], references: [id], onDelete: Cascade)
     status      MovieListStatus @default(PLANNING)
     score       Float?
-    notes       String?         @db.Text
+    notes       String?
     rewatched   Int             @default(0)
     private     Boolean         @default(false)
 
     startedAt      DateTime?
     completedAt    DateTime?
-    rewatchHistory Json?     @db.JsonB
-    connections    Json?     @db.JsonB
+    rewatchHistory Jsonb?
+    connections    Jsonb?
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     @@unique([userId, movieId])
     @@index([userId])
     @@index([movieId])
     @@index([status])
     @@index([userId, status])
-    @@index([userId, score(sort: Desc)])
+    @@index([userId, score])
 }
 
 model TvList {
@@ -217,27 +219,27 @@ model TvList {
     status      TvListStatus @default(PLANNING)
     progress    Int          @default(0)
     score       Float?
-    notes       String?      @db.Text
+    notes       String?
     rewatched   Int          @default(0)
     private     Boolean      @default(false)
 
     startedAt      DateTime?
     completedAt    DateTime?
-    rewatchHistory Json?     @db.JsonB
-    connections    Json?     @db.JsonB
+    rewatchHistory Jsonb?
+    connections    Jsonb?
 
     seasons         TvSeasonProgress[]
     watchedEpisodes TvWatchedEpisode[]
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     @@unique([userId, tvId])
     @@index([userId])
     @@index([tvId])
     @@index([status])
     @@index([userId, status])
-    @@index([userId, score(sort: Desc)])
+    @@index([userId, score])
 }
 
 model TvSeasonProgress {
@@ -250,15 +252,15 @@ model TvSeasonProgress {
     status       TvListStatus @default(PLANNING)
     progress     Int          @default(0)
     score        Float?
-    notes        String?      @db.Text
+    notes        String?
     rewatched    Int          @default(0)
 
     startedAt      DateTime?
     completedAt    DateTime?
-    rewatchHistory Json?     @db.JsonB
+    rewatchHistory Jsonb?
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     @@unique([tvListId, seasonNumber])
     @@index([tvListId])
@@ -289,24 +291,24 @@ model GameList {
     status      GameListStatus @default(PLANNING)
     progress    Int            @default(0)
     score       Float?
-    notes       String?        @db.Text
+    notes       String?
     replayed    Int            @default(0)
     private     Boolean        @default(false)
 
     startedAt     DateTime?
     completedAt   DateTime?
-    replayHistory Json?     @db.JsonB
-    connections   Json?     @db.JsonB
+    replayHistory Jsonb?
+    connections   Jsonb?
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     @@unique([userId, gameId])
     @@index([userId])
     @@index([gameId])
     @@index([status])
     @@index([userId, status])
-    @@index([userId, score(sort: Desc)])
+    @@index([userId, score])
 }
 
 model BookList {
@@ -320,24 +322,24 @@ model BookList {
     progressChapters Int            @default(0)
     progressVolumes  Int            @default(0)
     score            Float?
-    notes            String?        @db.Text
+    notes            String?
     reread           Int            @default(0)
     private          Boolean        @default(false)
 
     startedAt     DateTime?
     completedAt   DateTime?
-    rereadHistory Json?     @db.JsonB
-    connections   Json?     @db.JsonB
+    rereadHistory Jsonb?
+    connections   Jsonb?
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     @@unique([userId, bookId])
     @@index([userId])
     @@index([bookId])
     @@index([status])
     @@index([userId, status])
-    @@index([userId, score(sort: Desc)])
+    @@index([userId, score])
 }
 
 model MusicList {
@@ -349,64 +351,64 @@ model MusicList {
     status      MusicListStatus @default(PLANNING)
     score       Float?
     playCount   Int             @default(0)
-    notes       String?         @db.Text
+    notes       String?
     private     Boolean         @default(false)
     startedAt   DateTime?
     completedAt DateTime?
-    connections Json?           @db.JsonB
+    connections Jsonb?
 
     createdAt   DateTime        @default(now())
-    updatedAt   DateTime        @updatedAt
+    updatedAt   DateTime        @onCreate(now()) @onUpdate(now())
 
     @@unique([userId, musicId])
     @@index([userId])
     @@index([musicId])
     @@index([status])
     @@index([userId, status])
-    @@index([userId, score(sort: Desc)])
+    @@index([userId, score])
 }
 
 model ListComment {
-    id          String             @id @default(uuid())
+    id          String             @id @onCreate(uuid())
     listOwnerId String
     listOwner   User               @relation("ListOwnerComments", fields: [listOwnerId], references: [id], onDelete: Cascade)
     mediaType   String             // "anime" | "manga" | "movie" | "tv" | "game" | "book" | "music"
     authorId    String
     author      User               @relation("AuthorListComments", fields: [authorId], references: [id], onDelete: Cascade)
-    content     String             @db.Text
+    content     String
     isSpoiler   Boolean            @default(false)
     reply       ListCommentReply?
     createdAt   DateTime           @default(now())
-    updatedAt   DateTime           @updatedAt
+    updatedAt   DateTime           @onCreate(now()) @onUpdate(now())
 
-    @@index([listOwnerId, mediaType, createdAt(sort: Desc)])
+    @@index([listOwnerId, mediaType, createdAt])
     @@index([authorId])
 }
 
 model ListCommentReply {
-    id        String      @id @default(uuid())
+    id        String      @id @onCreate(uuid())
     commentId String      @unique
     comment   ListComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
     authorId  String
     author    User        @relation("AuthorListCommentReplies", fields: [authorId], references: [id], onDelete: Cascade)
-    content   String      @db.Text
+    content   String
     createdAt DateTime    @default(now())
-    updatedAt DateTime    @updatedAt
+    updatedAt DateTime    @onCreate(now()) @onUpdate(now())
 
     @@index([authorId])
 }
 
 model ListExportShare {
-    id           String    @id @default(uuid())
+    id           String    @id @onCreate(uuid())
     userId       String
     user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-    passwordHash String    @db.Text
+    passwordHash String
     mediaTypes   String[]
     description  String?
     expiresAt    DateTime?
     lastUsedAt   DateTime?
     createdAt    DateTime  @default(now())
-    updatedAt    DateTime  @updatedAt
+    updatedAt    DateTime  @onCreate(now()) @onUpdate(now())
 
     @@index([userId])
 }

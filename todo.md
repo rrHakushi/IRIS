@@ -37,7 +37,8 @@
     - mcp server for all the apps
     - create missing sidebar configs
     - Default banner image for all apps (each different) to be used in server metadata 
-    - Migrate from Prisma 7 to Prisma 8
+    - [x] Migrate database package (@Iris/db) and schemas to Prisma 8
+    - [ ] Migrate applications (apps/elysia, apps/web) to Prisma 8 query surface
 
 # Apertune [Music player]
     - 

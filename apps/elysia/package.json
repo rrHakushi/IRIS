@@ -27,7 +27,7 @@
   "dependencies": {
     "@IRIS/cache": "workspace:*",
     "@IRIS/connections": "workspace:*",
-    "@IRIS/database": "workspace:*",
+    "@Iris/db": "workspace:*",
     "@IRIS/permissions": "workspace:*",
     "@IRIS/shared": "workspace:*",
     "@Iris/logger": "workspace:*",
