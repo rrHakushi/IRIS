@@ -4,16 +4,6 @@
     - Connection update fail notifications are not sent
     - On /increment routes, when a media progress is incremented and status is not watching, playing, reading etc it should be set to it
 
-    - Unified list status in api for all media types [
-        IN_PROGRESS, ON_HOLD, DROPPED, COMPLETED, PLANNED 
-        (check mal, anilist, simkl and bangumi docs on how they should be adapter for their platform)
-    ] 
-    - Unified media status [
-         RELEASED, RELEASING, UPCOMING, CANCELLED, HIATUS, UNKNOWN 
-    ]
-    - Script to update previous 2 points
-
-    
 
 # Akaromi [Password manager]
     - Clicking unlock in the inline fill doesnt open the modal on android
