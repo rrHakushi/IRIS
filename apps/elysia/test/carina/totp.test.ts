@@ -141,6 +141,7 @@ describe('Comprehensive Carina TOTP Test Suite', () => {
       expect(data.secret).toBeDefined()
       expect(data.secret.length).toBeGreaterThanOrEqual(16)
       expect(data.otpauthUrl).toContain('otpauth://totp/')
+      expect(data.otpauthUrl).toContain('Carina')
       expect(data.otpauthUrl).toContain('secret=' + data.secret)
       expect(data.qrCodeDataUrl).toMatch(/^data:image\/png;base64,/)
 
