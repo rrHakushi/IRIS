@@ -23,9 +23,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'e5e1acc2535dc229d5d2fac23dadb32749c5eaf9a0cb37a7ffadd397d56b4d30'>;
+  StorageHashBase<'f8bc9dea885e2a9e6b78cdc91f8ee6006d18e507cbe95a5589839fb78dbad7fa'>;
 export type ExecutionHash =
-  ExecutionHashBase<'80487c1520dae4e4e921ce4535e73f888c771f854abc2321b4f019913fb76828'>;
+  ExecutionHashBase<'b7640b0fcc81eff6f25706df08d8b4535a1b5e11bd21a8168ea15ca60dc18af0'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -4444,8 +4444,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -4515,8 +4515,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -4622,8 +4622,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -4698,8 +4698,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -4721,8 +4721,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -4869,8 +4869,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -5016,8 +5016,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly nextAiringAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -5178,8 +5178,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -5244,8 +5244,8 @@ type ContractBase = Omit<
             readonly AnimeAiringSchedule: {
               columns: {
                 readonly airingAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -5262,8 +5262,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -5285,8 +5285,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -5328,8 +5328,8 @@ type ContractBase = Omit<
             readonly AnimeEpisode: {
               columns: {
                 readonly airDate: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -5346,8 +5346,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -5483,8 +5483,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -5529,8 +5529,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly completedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -5541,8 +5541,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -5606,8 +5606,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly startedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -5622,8 +5622,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -5710,8 +5710,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -5765,8 +5765,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -5839,15 +5839,15 @@ type ContractBase = Omit<
             readonly ApiKey: {
               columns: {
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
                 };
                 readonly expiresAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -5864,8 +5864,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly lastUsedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -5882,8 +5882,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -5988,8 +5988,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -6135,8 +6135,8 @@ type ContractBase = Omit<
                   readonly many: { readonly elementNullable: false };
                 };
                 readonly releaseDate: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -6279,8 +6279,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -6336,8 +6336,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly completedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -6348,8 +6348,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -6433,8 +6433,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly startedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -6449,8 +6449,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -6537,8 +6537,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -6588,8 +6588,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -6658,8 +6658,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -6713,8 +6713,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -6811,8 +6811,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -6916,8 +6916,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -6959,8 +6959,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -6984,8 +6984,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly expiresAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -7002,8 +7002,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly lastSyncedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -7036,8 +7036,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -7096,8 +7096,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -7151,8 +7151,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -7197,8 +7197,8 @@ type ContractBase = Omit<
             readonly CustomListEntry: {
               columns: {
                 readonly addedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -7470,8 +7470,8 @@ type ContractBase = Omit<
             readonly Favorite: {
               columns: {
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -7535,8 +7535,8 @@ type ContractBase = Omit<
             readonly Friend: {
               columns: {
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -7570,8 +7570,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -7628,8 +7628,8 @@ type ContractBase = Omit<
             readonly FriendRequest: {
               columns: {
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -7670,8 +7670,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -7782,8 +7782,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -7957,8 +7957,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly releaseDate: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -8111,8 +8111,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -8156,8 +8156,8 @@ type ContractBase = Omit<
             readonly GameList: {
               columns: {
                 readonly completedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -8168,8 +8168,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -8239,8 +8239,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly startedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -8255,8 +8255,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -8337,8 +8337,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -8398,8 +8398,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -8472,8 +8472,8 @@ type ContractBase = Omit<
             readonly Genre: {
               columns: {
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -8501,8 +8501,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -8530,8 +8530,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -8565,8 +8565,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -8641,8 +8641,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -8654,8 +8654,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -8700,8 +8700,8 @@ type ContractBase = Omit<
             readonly ListExportShare: {
               columns: {
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -8713,8 +8713,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly expiresAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -8725,8 +8725,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly lastUsedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -8743,8 +8743,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -8861,8 +8861,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -9112,8 +9112,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -9176,8 +9176,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly completedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -9188,8 +9188,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -9249,8 +9249,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly startedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -9265,8 +9265,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -9357,8 +9357,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -9418,8 +9418,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -9722,8 +9722,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -9783,8 +9783,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -9861,8 +9861,8 @@ type ContractBase = Omit<
             readonly MediaRecommendationVote: {
               columns: {
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -9884,8 +9884,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -10487,8 +10487,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -10718,8 +10718,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -10757,8 +10757,8 @@ type ContractBase = Omit<
             readonly MovieList: {
               columns: {
                 readonly completedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -10769,8 +10769,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -10830,8 +10830,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly startedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -10846,8 +10846,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -10928,8 +10928,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -10989,8 +10989,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -11109,8 +11109,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -11312,8 +11312,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly releaseDate: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -11410,8 +11410,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -11492,8 +11492,8 @@ type ContractBase = Omit<
             readonly MusicList: {
               columns: {
                 readonly completedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -11504,8 +11504,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -11559,8 +11559,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly startedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -11575,8 +11575,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -11657,8 +11657,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -11718,8 +11718,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -11822,8 +11822,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -11841,8 +11841,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly expiresAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -11873,8 +11873,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly readAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -11889,8 +11889,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -11959,15 +11959,15 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
                 };
                 readonly expiresAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -11978,8 +11978,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly revokedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -12072,15 +12072,15 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
                 };
                 readonly expiresAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -12103,8 +12103,8 @@ type ContractBase = Omit<
                   readonly many: { readonly elementNullable: false };
                 };
                 readonly usedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -12186,8 +12186,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -12243,8 +12243,8 @@ type ContractBase = Omit<
                   readonly many: { readonly elementNullable: false };
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -12295,8 +12295,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -12314,8 +12314,8 @@ type ContractBase = Omit<
                   readonly many: { readonly elementNullable: false };
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -12378,15 +12378,15 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
                 };
                 readonly expiresAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -12397,8 +12397,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly revokedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -12485,8 +12485,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -12504,8 +12504,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly endDate: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -12594,8 +12594,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly startDate: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -12638,8 +12638,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -12696,14 +12696,14 @@ type ContractBase = Omit<
             readonly OtherList: {
               columns: {
                 readonly completedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -12757,8 +12757,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly startedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -12773,8 +12773,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -12849,15 +12849,15 @@ type ContractBase = Omit<
             readonly PassCipher: {
               columns: {
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
                 };
                 readonly deletedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -12910,8 +12910,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -12980,8 +12980,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -13081,15 +13081,15 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
                 };
                 readonly dateOfBirth: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -13112,8 +13112,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly dateOfDeath: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -13322,8 +13322,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -13364,8 +13364,8 @@ type ContractBase = Omit<
             readonly ReviewVote: {
               columns: {
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -13393,8 +13393,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -13457,8 +13457,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -13574,8 +13574,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -13641,8 +13641,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -13674,8 +13674,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -13709,8 +13709,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -13799,8 +13799,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -14084,8 +14084,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -14123,14 +14123,14 @@ type ContractBase = Omit<
             readonly TvEpisode: {
               columns: {
                 readonly airDate: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -14292,8 +14292,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -14346,8 +14346,8 @@ type ContractBase = Omit<
             readonly TvList: {
               columns: {
                 readonly completedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -14358,8 +14358,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -14423,8 +14423,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly startedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -14445,8 +14445,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -14527,8 +14527,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -14594,8 +14594,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -14704,8 +14704,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -14787,8 +14787,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -14821,14 +14821,14 @@ type ContractBase = Omit<
             readonly TvSeasonProgress: {
               columns: {
                 readonly completedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -14894,8 +14894,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly startedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -14916,8 +14916,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -15002,8 +15002,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly watchedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -15093,8 +15093,8 @@ type ContractBase = Omit<
                   readonly many: { readonly elementNullable: false };
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -15134,8 +15134,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly passwordChangedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -15168,8 +15168,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -15203,8 +15203,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -15278,8 +15278,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly createdAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                   readonly many: false;
@@ -15445,8 +15445,8 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly updatedAt: {
-                  readonly dataType: 'pg/timestamp';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
@@ -16078,7 +16078,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -16134,7 +16134,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -16197,7 +16197,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -16277,7 +16277,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -16292,7 +16292,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -16399,7 +16399,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly description: {
@@ -16486,7 +16486,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly nextAiringEpisodeNumber: {
@@ -16582,7 +16582,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
             };
@@ -16770,7 +16770,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly anilistAiringId: {
@@ -16785,7 +16785,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly episodeNumber: {
@@ -16800,7 +16800,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
             };
@@ -16838,7 +16838,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly anidbEpisodeId: {
@@ -16853,7 +16853,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly description: {
@@ -16936,7 +16936,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
             };
@@ -17041,7 +17041,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly connections: {
@@ -17052,7 +17052,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -17087,7 +17087,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly status: {
@@ -17098,7 +17098,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -17165,7 +17165,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly downvotes: {
@@ -17196,7 +17196,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly upvotes: {
@@ -17299,14 +17299,14 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly expiresAt: {
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly hash: {
@@ -17321,7 +17321,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly name: {
@@ -17336,7 +17336,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -17418,7 +17418,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly description: {
@@ -17506,7 +17506,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly releaseDateDay: {
@@ -17599,7 +17599,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly volumeCount: {
@@ -17817,7 +17817,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly connections: {
@@ -17828,7 +17828,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -17871,7 +17871,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly status: {
@@ -17882,7 +17882,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -17948,7 +17948,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly group: {
@@ -17979,7 +17979,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly url: {
@@ -18035,7 +18035,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly downvotes: {
@@ -18066,7 +18066,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly upvotes: {
@@ -18179,7 +18179,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly dateOfBirthDay: {
@@ -18248,7 +18248,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
             };
@@ -18307,7 +18307,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly displayName: {
@@ -18326,7 +18326,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly externalId: {
@@ -18341,7 +18341,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly profileUrl: {
@@ -18364,7 +18364,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -18416,7 +18416,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly description: {
@@ -18447,7 +18447,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -18500,7 +18500,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly animeId: {
@@ -18689,7 +18689,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -18738,7 +18738,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly friendId: {
@@ -18761,7 +18761,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -18809,7 +18809,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -18840,7 +18840,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
             };
@@ -18924,7 +18924,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly description: {
@@ -19033,7 +19033,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly releaseDateDay: {
@@ -19129,7 +19129,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly vndbId: {
@@ -19321,7 +19321,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly connections: {
@@ -19332,7 +19332,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly gameId: {
@@ -19371,7 +19371,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly status: {
@@ -19382,7 +19382,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -19442,7 +19442,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly downvotes: {
@@ -19477,7 +19477,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly upvotes: {
@@ -19574,7 +19574,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -19593,7 +19593,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
             };
@@ -19702,7 +19702,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -19725,7 +19725,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
             };
@@ -19794,7 +19794,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -19805,7 +19805,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
             };
@@ -19851,7 +19851,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly description: {
@@ -19862,7 +19862,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -19873,7 +19873,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly mediaTypes: {
@@ -19889,7 +19889,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -19982,7 +19982,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly description: {
@@ -20126,7 +20126,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly volumeCount: {
@@ -20326,7 +20326,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly connections: {
@@ -20337,7 +20337,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -20372,7 +20372,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly status: {
@@ -20383,7 +20383,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -20451,7 +20451,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly downvotes: {
@@ -20486,7 +20486,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly upvotes: {
@@ -20743,7 +20743,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly downvotes: {
@@ -20778,7 +20778,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly upvotes: {
@@ -20837,7 +20837,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -20852,7 +20852,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -21250,7 +21250,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly description: {
@@ -21386,7 +21386,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
             };
@@ -21580,7 +21580,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly connections: {
@@ -21591,7 +21591,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -21626,7 +21626,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly status: {
@@ -21637,7 +21637,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -21699,7 +21699,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly downvotes: {
@@ -21734,7 +21734,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly upvotes: {
@@ -21866,7 +21866,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly deezerArtistId: {
@@ -21977,7 +21977,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly releaseDateDay: {
@@ -22040,7 +22040,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
             };
@@ -22256,7 +22256,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly connections: {
@@ -22267,7 +22267,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -22298,7 +22298,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly status: {
@@ -22309,7 +22309,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -22370,7 +22370,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly downvotes: {
@@ -22405,7 +22405,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly upvotes: {
@@ -22528,7 +22528,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly encryptedData: {
@@ -22543,7 +22543,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -22562,7 +22562,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly type: {
@@ -22573,7 +22573,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -22625,14 +22625,14 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly expiresAt: {
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -22643,7 +22643,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly scopes: {
@@ -22720,14 +22720,14 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly expiresAt: {
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -22747,7 +22747,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -22815,7 +22815,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly description: {
@@ -22851,7 +22851,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -22949,7 +22949,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -22965,7 +22965,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -23019,14 +23019,14 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly expiresAt: {
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -23037,7 +23037,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly scopes: {
@@ -23110,7 +23110,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly creatorId: {
@@ -23125,7 +23125,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly favorites: {
@@ -23172,7 +23172,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly statusDistribution: {
@@ -23199,7 +23199,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
             };
@@ -23273,14 +23273,14 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly createdAt: {
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -23311,7 +23311,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly status: {
@@ -23322,7 +23322,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -23378,14 +23378,14 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly deletedAt: {
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly encryptedData: {
@@ -23416,7 +23416,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -23462,7 +23462,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -23542,14 +23542,14 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly dateOfBirth: {
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly dateOfBirthDay: {
@@ -23568,7 +23568,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly dateOfDeathDay: {
@@ -23697,7 +23697,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly yearsActive: {
@@ -23798,7 +23798,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -23817,7 +23817,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -23864,7 +23864,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly encryptedQuery: {
@@ -23945,7 +23945,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly favorites: {
@@ -23984,7 +23984,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
             };
@@ -24032,7 +24032,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly description: {
@@ -24055,7 +24055,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
             };
@@ -24203,7 +24203,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly description: {
@@ -24376,7 +24376,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
             };
@@ -24559,14 +24559,14 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly createdAt: {
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly description: {
@@ -24669,7 +24669,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
             };
@@ -24790,7 +24790,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly connections: {
@@ -24801,7 +24801,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -24836,7 +24836,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly status: {
@@ -24851,7 +24851,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -24933,7 +24933,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly downvotes: {
@@ -24972,7 +24972,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly upvotes: {
@@ -25054,7 +25054,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly description: {
@@ -25109,7 +25109,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
             };
@@ -25187,14 +25187,14 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly createdAt: {
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -25233,7 +25233,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly status: {
@@ -25248,7 +25248,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
             };
@@ -25365,7 +25365,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
             };
@@ -25432,7 +25432,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly customization: {
@@ -25459,7 +25459,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly passwordHash: {
@@ -25483,7 +25483,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly username: {
@@ -26048,7 +26048,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly id: {
@@ -26101,7 +26101,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly currentCount: {
@@ -26188,7 +26188,7 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: {
                   readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamp-temporal@1';
+                  readonly codecId: 'pg/timestamptz-date@1';
                 };
               };
               readonly userId: {
@@ -27068,8 +27068,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'ActivityLog';
             readonly field: 'updatedAt';
@@ -27085,8 +27085,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'ActivityReply';
             readonly field: 'updatedAt';
@@ -27094,8 +27094,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'Anime';
             readonly field: 'updatedAt';
@@ -27103,8 +27103,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'AnimeAiringSchedule';
             readonly field: 'updatedAt';
@@ -27112,8 +27112,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'AnimeEpisode';
             readonly field: 'updatedAt';
@@ -27121,8 +27121,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'AnimeList';
             readonly field: 'updatedAt';
@@ -27130,8 +27130,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'AnimeReview';
             readonly field: 'updatedAt';
@@ -27147,8 +27147,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'ApiKey';
             readonly field: 'updatedAt';
@@ -27156,8 +27156,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'Book';
             readonly field: 'updatedAt';
@@ -27165,8 +27165,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'BookList';
             readonly field: 'updatedAt';
@@ -27174,8 +27174,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'BookReview';
             readonly field: 'updatedAt';
@@ -27191,8 +27191,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'Bookmark';
             readonly field: 'updatedAt';
@@ -27200,8 +27200,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'Character';
             readonly field: 'updatedAt';
@@ -27217,8 +27217,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'Connection';
             readonly field: 'updatedAt';
@@ -27234,8 +27234,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'CustomList';
             readonly field: 'updatedAt';
@@ -27267,8 +27267,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'Friend';
             readonly field: 'updatedAt';
@@ -27284,8 +27284,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'FriendRequest';
             readonly field: 'updatedAt';
@@ -27293,8 +27293,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'Game';
             readonly field: 'updatedAt';
@@ -27302,8 +27302,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'GameList';
             readonly field: 'updatedAt';
@@ -27311,8 +27311,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'GameReview';
             readonly field: 'updatedAt';
@@ -27320,8 +27320,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'Genre';
             readonly field: 'updatedAt';
@@ -27337,8 +27337,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'ListComment';
             readonly field: 'updatedAt';
@@ -27354,8 +27354,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'ListCommentReply';
             readonly field: 'updatedAt';
@@ -27371,8 +27371,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'ListExportShare';
             readonly field: 'updatedAt';
@@ -27380,8 +27380,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'Manga';
             readonly field: 'updatedAt';
@@ -27389,8 +27389,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'MangaList';
             readonly field: 'updatedAt';
@@ -27398,8 +27398,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'MangaReview';
             readonly field: 'updatedAt';
@@ -27407,8 +27407,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'MediaRecommendation';
             readonly field: 'updatedAt';
@@ -27416,8 +27416,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'MediaRecommendationVote';
             readonly field: 'updatedAt';
@@ -27425,8 +27425,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'Movie';
             readonly field: 'updatedAt';
@@ -27434,8 +27434,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'MovieList';
             readonly field: 'updatedAt';
@@ -27443,8 +27443,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'MovieReview';
             readonly field: 'updatedAt';
@@ -27452,8 +27452,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'Music';
             readonly field: 'updatedAt';
@@ -27461,8 +27461,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'MusicList';
             readonly field: 'updatedAt';
@@ -27470,8 +27470,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'MusicReview';
             readonly field: 'updatedAt';
@@ -27487,8 +27487,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'Notification';
             readonly field: 'updatedAt';
@@ -27520,8 +27520,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'OAuthClient';
             readonly field: 'updatedAt';
@@ -27537,8 +27537,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'OAuthConsent';
             readonly field: 'updatedAt';
@@ -27554,8 +27554,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'Other';
             readonly field: 'updatedAt';
@@ -27563,8 +27563,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'OtherList';
             readonly field: 'updatedAt';
@@ -27580,8 +27580,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'PassCipher';
             readonly field: 'updatedAt';
@@ -27597,8 +27597,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'Person';
             readonly field: 'updatedAt';
@@ -27606,8 +27606,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'ReviewVote';
             readonly field: 'updatedAt';
@@ -27623,8 +27623,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'Studio';
             readonly field: 'updatedAt';
@@ -27632,8 +27632,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'Tag';
             readonly field: 'updatedAt';
@@ -27641,8 +27641,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'Tv';
             readonly field: 'updatedAt';
@@ -27650,8 +27650,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'TvEpisode';
             readonly field: 'updatedAt';
@@ -27659,8 +27659,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'TvList';
             readonly field: 'updatedAt';
@@ -27668,8 +27668,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'TvReview';
             readonly field: 'updatedAt';
@@ -27677,8 +27677,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'TvSeason';
             readonly field: 'updatedAt';
@@ -27686,8 +27686,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'TvSeasonProgress';
             readonly field: 'updatedAt';
@@ -27703,8 +27703,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'User';
             readonly field: 'updatedAt';
@@ -27728,8 +27728,8 @@ type ContractBase = Omit<
           };
         },
         {
-          readonly onCreate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
-          readonly onUpdate: { readonly id: 'plainDateTimeNow'; readonly kind: 'generator' };
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'UserStats';
             readonly field: 'updatedAt';

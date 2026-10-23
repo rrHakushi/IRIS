@@ -1480,6 +1480,17 @@ export function MediaListConnectionsTab({
             if (!open) setSearchModalProvider(null)
           }}
           isDismissable
+          shouldCloseOnInteractOutside={(element) => {
+            if (!element) return true
+            if (
+              element.closest?.(
+                '[data-slot="popover-content"], [data-slot="calendar"], .react-aria-Popover, [data-testid="underlay"], [data-trigger="DialogTrigger"], [role="listbox"], [role="tooltip"], [data-react-aria-top-layer]'
+              )
+            ) {
+              return false
+            }
+            return true
+          }}
           className="fixed inset-0 isolate z-50 bg-black/40 duration-100 data-entering:animate-in data-entering:fade-in-0 data-exiting:animate-out data-exiting:fade-out-0 supports-backdrop-filter:backdrop-blur-sm"
         >
           <AriaModal className="fixed start-1/2 top-1/2 z-50 grid w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 gap-6 overflow-hidden rounded-3xl bg-popover p-6 text-sm text-popover-foreground shadow-xl ring-1 ring-foreground/5 duration-100 outline-none data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:fade-out-0 data-exiting:zoom-out-95 sm:max-w-lg rtl:translate-x-1/2">

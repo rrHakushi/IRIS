@@ -5,7 +5,7 @@ import { openapi } from '@elysia/openapi'
 import { cors } from '@elysia/cors'
 import { rateLimiter, generateControllersManifest } from './plugins'
 import { isHttpError } from './lib/errors'
-import { LogFactory } from '@Iris/logger'
+import { LogFactory, c } from '@Iris/logger'
 import { wsHub } from './services/ws.serv'
 import { controllers, type ControllersApp } from './api/controllers.generated'
 import { websocket } from 'elysia/websocket'
@@ -23,8 +23,9 @@ if (!('toJSON' in BigInt.prototype)) {
   }
 }
 
-const logger = new LogFactory('Elysia:Server')
+const logger = new LogFactory(`Elysia:Server`)
 const authTimeouts = new WeakMap<object, ReturnType<typeof setTimeout>>()
+const requestStartTimes = new WeakMap<Request, number>()
 
 // In development, auto-sync static controllers manifest when running against source
 if (Bun.env.NODE_ENV !== 'production' && Bun.env.NODE_ENV !== 'test') {
@@ -38,6 +39,83 @@ if (Bun.env.NODE_ENV !== 'production' && Bun.env.NODE_ENV !== 'test') {
 export const app = new Elysia()
   .use(cors())
   .use(rateLimiter())
+  .onRequest(({ request }) => {
+    if (request.url.startsWith(`${Bun.env.NEXT_PUBLIC_API_URL}/ws`)) return
+    requestStartTimes.set(request, performance.now())
+  })
+  .onAfterResponse(({ request, path, set, responseValue }) => {
+    if (request.url.startsWith(`${Bun.env.NEXT_PUBLIC_API_URL}/ws`)) return
+    const start = requestStartTimes.get(request)
+    const duration = start ? (performance.now() - start).toFixed(1) : '?'
+    let status = typeof set.status === 'number' ? set.status : 200
+    if (responseValue instanceof Response) {
+      status = responseValue.status
+    }
+
+    const { method, url } = request
+    let pathname = path
+    try {
+      const parsed = new URL(url)
+      pathname = parsed.pathname + parsed.search
+    } catch { }
+
+    const formattedDuration = c.dim(`(${duration}ms)`)
+    const formattedMethod = c.bold(method)
+
+    if (status >= 500) {
+      logger.error(`${formattedMethod} ${pathname} -> ${c.red(c.bold(String(status)))} ${formattedDuration}`)
+    } else if (status >= 400) {
+      logger.warn(`${formattedMethod} ${pathname} -> ${c.yellow(c.bold(String(status)))} ${formattedDuration}`)
+    } else {
+      logger.info(`${formattedMethod} ${pathname} -> ${c.green(c.bold(String(status)))} ${formattedDuration}`)
+    }
+  })
+  .onError(({ error, request, set }) => {
+    const { method, url } = request
+
+    // 1. Custom RFC 9457 HttpErrors (4xx, 5xx)
+    if (isHttpError(error)) {
+      if (error.status >= 500) {
+        logger.error(
+          `${method} ${url} -> ${error.status} [${error.code}]: ${error.message}`,
+          error.cause ?? error.stack
+        )
+      } else {
+        logger.warn(`${method} ${url} -> ${error.status} [${error.code}]: ${error.message}`)
+      }
+      return error.toResponse()
+    }
+
+    // 2. TypeBox / Schema Validation errors
+    if (error instanceof ValidationError) {
+      logger.warn(`${method} ${url} -> 422 [validation]: ${error.message}`)
+      set.status = 422
+      return {
+        type: 'validation',
+        title: 'Unprocessable Content',
+        status: 422,
+        code: 'validation',
+        detail: error.message,
+      }
+    }
+
+    // 3. Built-in 404 Route Not Found
+    if (error instanceof NotFound) {
+      logger.warn(`${method} ${url} -> 404 [not-found]: Route not found`)
+      return error.toResponse()
+    }
+
+    // 4. Uncaught server exceptions
+    logger.error(`${method} ${url} -> 500 [internal-error]:`, error)
+    set.status = 500
+    return {
+      type: 'internal-server-error',
+      title: 'Internal Server Error',
+      status: 500,
+      code: 'internal-server-error',
+      detail: error instanceof Error ? error.message : String(error),
+    }
+  })
   .use(controllers as any)
   .use(
     openapi({
@@ -113,52 +191,6 @@ export const app = new Elysia()
         logger.info('WebSocket disconnected')
       }
     },
-  })
-  .onError(({ error, request, set }) => {
-    const { method, url } = request
-
-    // 1. Custom RFC 9457 HttpErrors (4xx, 5xx)
-    if (isHttpError(error)) {
-      if (error.status >= 500) {
-        logger.error(
-          `${method} ${url} -> ${error.status} [${error.code}]: ${error.message}`,
-          error.cause ?? error.stack
-        )
-      } else {
-        logger.warn(`${method} ${url} -> ${error.status} [${error.code}]: ${error.message}`)
-      }
-      return error.toResponse()
-    }
-
-    // 2. TypeBox / Schema Validation errors
-    if (error instanceof ValidationError) {
-      logger.warn(`${method} ${url} -> 422 [validation]: ${error.message}`)
-      set.status = 422
-      return {
-        type: 'validation',
-        title: 'Unprocessable Content',
-        status: 422,
-        code: 'validation',
-        detail: error.message,
-      }
-    }
-
-    // 3. Built-in 404 Route Not Found
-    if (error instanceof NotFound) {
-      logger.warn(`${method} ${url} -> 404 [not-found]: Route not found`)
-      return error.toResponse()
-    }
-
-    // 4. Uncaught server exceptions
-    logger.error(`${method} ${url} -> 500 [internal-error]:`, error)
-    set.status = 500
-    return {
-      type: 'internal-server-error',
-      title: 'Internal Server Error',
-      status: 500,
-      code: 'internal-server-error',
-      detail: error instanceof Error ? error.message : String(error),
-    }
   })
 
 export type App = ControllersApp

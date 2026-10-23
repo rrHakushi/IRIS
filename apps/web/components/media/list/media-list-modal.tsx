@@ -26,6 +26,7 @@ import {
   IconDeviceTv,
   IconAlertCircle,
   IconTrash,
+  IconLock,
 } from "@tabler/icons-react"
 import {
   ModalOverlay as AriaModalOverlay,
@@ -39,6 +40,7 @@ import {
 } from "../favorite-button"
 import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
+import { Switch } from "@workspace/ui/components/switch"
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile"
 import { toast } from "sonner"
 import { elysia } from "@/lib/elysia"
@@ -2193,6 +2195,28 @@ export function MediaListModal({
               />
             </div>
 
+            {/* Card 3: PRIVACY TOGGLE */}
+            <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4">
+              <div className="space-y-0.5">
+                <label
+                  htmlFor="media-list-private-toggle"
+                  className="flex items-center gap-1.5 text-xs font-medium text-foreground cursor-pointer"
+                >
+                  <IconLock className="size-3.5 text-muted-foreground" />
+                  Private Entry
+                </label>
+                <p className="text-[11px] text-muted-foreground">
+                  Hide this entry and its progress from your public profile.
+                </p>
+              </div>
+              <Switch
+                id="media-list-private-toggle"
+                isSelected={isPrivate}
+                onChange={setIsPrivate}
+                aria-label="Private entry"
+              />
+            </div>
+
             {/* Bottom Row: Error Alongside Delete Button */}
             <div className="flex min-h-[32px] items-center justify-between gap-3 pt-1">
               <div className="flex items-center gap-1.5 text-xs font-medium text-destructive">
@@ -2458,12 +2482,48 @@ export function MediaListModal({
     </div>
   )
 
+  const sendDebugLog = (type: string, details: any) => {
+    try {
+      fetch("/api/debug-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, details, time: new Date().toISOString() }),
+      }).catch(() => {})
+    } catch {}
+  }
+
+  const handleOpenChangeWrapped = useCallback((open: boolean) => {
+    sendDebugLog("onOpenChangeWrapped", {
+      open,
+      stack: new Error().stack,
+    })
+    onOpenChange(open)
+  }, [onOpenChange])
+
+  const handleModalInteractOutside = useCallback((element: Element) => {
+    if (!element) return true
+    const isInsideOverlay = Boolean(
+      element.closest?.(
+        '[data-slot="popover-content"], [data-slot="calendar"], .react-aria-Popover, [data-testid="underlay"], [data-trigger="DialogTrigger"], [role="listbox"], [role="tooltip"], [data-react-aria-top-layer]'
+      )
+    )
+    sendDebugLog("handleModalInteractOutside", {
+      tag: element.tagName,
+      className: element.className,
+      id: element.id,
+      isInsideOverlay,
+      shouldClose: !isInsideOverlay,
+    })
+    return !isInsideOverlay
+  }, [])
+
   if (isMobile) {
     return (
       <AriaModalOverlay
         isOpen={isOpen}
-        onOpenChange={onOpenChange}
+        onOpenChange={handleOpenChangeWrapped}
         isDismissable
+        shouldCloseOnInteractOutside={handleModalInteractOutside}
         className="fixed inset-0 z-50 bg-black/40 transition-opacity duration-150 data-entering:opacity-0 data-exiting:opacity-0 supports-backdrop-filter:backdrop-blur-sm"
       >
         <AriaModal className="fixed inset-x-0 bottom-0 z-50 no-scrollbar flex h-[90dvh] max-h-[90dvh] flex-col overflow-hidden rounded-t-3xl border-t border-border bg-background p-0 text-foreground transition duration-200 ease-in-out outline-none data-entering:translate-y-[2.5rem] data-exiting:translate-y-[2.5rem]">
@@ -2482,8 +2542,9 @@ export function MediaListModal({
   return (
     <AriaModalOverlay
       isOpen={isOpen}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChangeWrapped}
       isDismissable
+      shouldCloseOnInteractOutside={handleModalInteractOutside}
       className="fixed inset-0 isolate z-50 bg-black/40 duration-100 data-entering:animate-in data-entering:fade-in-0 data-exiting:animate-out data-exiting:fade-out-0 supports-backdrop-filter:backdrop-blur-sm"
     >
       <AriaModal className="fixed start-1/2 top-1/2 z-50 no-scrollbar flex max-h-[90vh] w-full max-w-xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-3xl border border-border bg-background p-0 text-foreground shadow-2xl outline-none data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:fade-out-0 data-exiting:zoom-out-95 sm:max-w-2xl rtl:translate-x-1/2">

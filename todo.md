@@ -1,10 +1,9 @@
 # Borealis [Media tracker]
     - Stremio plugin for borealis
     - In media pages (anime, manga etc) add tab People in which it will list all users who have that media in list (that is public and media is not private)
-    - Media edit modal add Private toggle
     - Connection update fail notifications are not sent
     - On /increment routes, when a media progress is incremented and status is not watching, playing, reading etc it should be set to it
-    - Image modal in images tab has 2 close buttons (x)
+
     - Unified list status in api for all media types [
         IN_PROGRESS, ON_HOLD, DROPPED, COMPLETED, PLANNED 
         (check mal, anilist, simkl and bangumi docs on how they should be adapter for their platform)
@@ -13,7 +12,7 @@
          RELEASED, RELEASING, UPCOMING, CANCELLED, HIATUS, UNKNOWN 
     ]
     - Script to update previous 2 points
-    - Script to update character and media descriptions so we dont have to rely on /IRIS-list redirect (change the url to /borealis in them)
+
     
 
 # Akaromi [Password manager]
@@ -37,8 +36,7 @@
     - mcp server for all the apps
     - create missing sidebar configs
     - Default banner image for all apps (each different) to be used in server metadata 
-    - [x] Migrate database package (@Iris/db) and schemas to Prisma 8
-    - [ ] Migrate applications (apps/elysia [x], apps/web) to Prisma 8 query surface
+
 
 # Apertune [Music player]
     - 
@@ -78,8 +76,6 @@
 # Elysia [Backend powering all this]
     --- Elysia 2 docs https://next.elysiajs.com/at-glance/
 
-    - use pnpm add @elysia/bearer@next  for bearer token and  pnpm add @elysia/jwt@next for session  (completely remove nextauth)
-
 # Next
     - pnpm add @elysia/eden@next if not already
     - pnpm add -d elysia@rc  (Need Elysia to infer utility types)
@@ -100,3 +96,11 @@
 # Borealis Extra
     - Add support for other list
     - https://github.com/accntech/shad-ui  for the UI
+
+
+
+
+TODO AFTER UPDATNG TO LATEST
+  run migrate-passwords
+  run update-description-urls
+  run db:prepare-prisma8

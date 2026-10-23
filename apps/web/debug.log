@@ -1,0 +1,154 @@
+[2026-10-23T16:38:48.962Z] {
+  "component": "DatePicker",
+  "type": "DatePicker.shouldCloseOnInteractOutside",
+  "details": {
+    "tag": "BUTTON",
+    "className": "group/button shrink-0 bg-clip-padding whitespace-nowrap outline-none select-none focus-visible:border-ring active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 gap-1.5 has-data-[icon=inline-end]:pe-2.5 has-data-[icon=inline-start]:ps-2.5 relative flex h-9 w-full cursor-pointer items-center justify-between rounded-xl border border-border bg-card px-3 py-2 text-xs font-normal text-foreground transition-colors hover:border-border/80 hover:bg-accent focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none",
+    "isTrigger": true,
+    "isPopover": false,
+    "shouldClose": false
+  },
+  "time": "2026-10-23T16:38:48.771Z"
+}
+[2026-10-23T16:38:48.969Z] {
+  "component": "DatePicker",
+  "type": "DatePicker.shouldCloseOnInteractOutside",
+  "details": {
+    "tag": "BUTTON",
+    "className": "group/button shrink-0 bg-clip-padding whitespace-nowrap outline-none select-none focus-visible:border-ring active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 gap-1.5 has-data-[icon=inline-end]:pe-2.5 has-data-[icon=inline-start]:ps-2.5 relative flex h-9 w-full cursor-pointer items-center justify-between rounded-xl border border-border bg-card px-3 py-2 text-xs font-normal text-foreground transition-colors hover:border-border/80 hover:bg-accent focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none",
+    "isTrigger": true,
+    "isPopover": false,
+    "shouldClose": false
+  },
+  "time": "2026-10-23T16:38:48.767Z"
+}
+[2026-10-23T16:38:49.839Z] {
+  "type": "handleModalInteractOutside",
+  "details": {
+    "tag": "BODY",
+    "className": "min-h-svh bg-background text-foreground selection:bg-primary/20 selection:text-primary",
+    "id": "",
+    "isInsideOverlay": false,
+    "shouldClose": true
+  },
+  "time": "2026-10-23T16:38:49.821Z"
+}
+[2026-10-23T16:38:49.843Z] {
+  "component": "DatePicker",
+  "type": "DatePicker.shouldCloseOnInteractOutside",
+  "details": {
+    "tag": "BODY",
+    "className": "min-h-svh bg-background text-foreground selection:bg-primary/20 selection:text-primary",
+    "isTrigger": false,
+    "isPopover": false,
+    "shouldClose": true
+  },
+  "time": "2026-10-23T16:38:49.822Z"
+}
+[2026-10-23T16:38:49.927Z] {
+  "type": "handleModalInteractOutside",
+  "details": {
+    "tag": "BODY",
+    "className": "min-h-svh bg-background text-foreground selection:bg-primary/20 selection:text-primary",
+    "id": "",
+    "isInsideOverlay": false,
+    "shouldClose": true
+  },
+  "time": "2026-10-23T16:38:49.905Z"
+}
+[2026-10-23T16:38:49.930Z] {
+  "type": "onOpenChangeWrapped",
+  "details": {
+    "open": false,
+    "stack": "MediaListModal.useCallback[handleOpenChangeWrapped]@http://localhost:3000/_next/static/chunks/_0w2ej-fztozk2._.js:5706:24\n$3e6197669829fe11$export$40bfa8c7b0832715/setValue<@http://localhost:3000/_next/static/chunks/node_modules__bun_0qpyq0cb2701i._.js:1370:23\n$f11fb0bcf1b2687a$export$61c6a8c84e605fb6/close<@http://localhost:3000/_next/static/chunks/node_modules__bun_0qpyq0cb2701i._.js:628:16\nonHide@http://localhost:3000/_next/static/chunks/0ncd_react-aria_dist_private_0m3lmc3s963xv._.js:8784:121\nonInteractOutside@http://localhost:3000/_next/static/chunks/0ncd_react-aria_dist_private_0m3lmc3s963xv._.js:8796:53\n$e260d131964da0f9$export$872b660ac5a1ff98/triggerInteractOutside<@http://localhost:3000/_next/static/chunks/0ncd_react-aria_dist_private_0m3lmc3s963xv._.js:4275:49\n$fe16bffc7a557bf0$export$7f54fc3180508a52/<@http://localhost:3000/_next/static/chunks/0ncd_react-aria_dist_private_0m3lmc3s963xv._.js:12647:16\nonClick@http://localhost:3000/_next/static/chunks/0ncd_react-aria_dist_private_0m3lmc3s963xv._.js:4285:110\n"
+  },
+  "time": "2026-10-23T16:38:49.907Z"
+}
+[2026-10-23T16:41:09.944Z] {
+  "component": "DatePicker",
+  "type": "DatePicker.shouldCloseOnInteractOutside",
+  "details": {
+    "tag": "BUTTON",
+    "className": "group/button shrink-0 bg-clip-padding whitespace-nowrap outline-none select-none focus-visible:border-ring active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 gap-1.5 has-data-[icon=inline-end]:pe-2.5 has-data-[icon=inline-start]:ps-2.5 relative flex h-9 w-full cursor-pointer items-center justify-between rounded-xl border border-border bg-card px-3 py-2 text-xs font-normal text-foreground transition-colors hover:border-border/80 hover:bg-accent focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none",
+    "isTrigger": true,
+    "isPopover": false,
+    "shouldClose": false
+  },
+  "time": "2026-10-23T16:41:09.931Z"
+}
+[2026-10-23T16:41:09.948Z] {
+  "component": "DatePicker",
+  "type": "DatePicker.shouldCloseOnInteractOutside",
+  "details": {
+    "tag": "BUTTON",
+    "className": "group/button shrink-0 bg-clip-padding whitespace-nowrap outline-none select-none focus-visible:border-ring active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 gap-1.5 has-data-[icon=inline-end]:pe-2.5 has-data-[icon=inline-start]:ps-2.5 relative flex h-9 w-full cursor-pointer items-center justify-between rounded-xl border border-border bg-card px-3 py-2 text-xs font-normal text-foreground transition-colors hover:border-border/80 hover:bg-accent focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none",
+    "isTrigger": true,
+    "isPopover": false,
+    "shouldClose": false
+  },
+  "time": "2026-10-23T16:41:09.938Z"
+}
+[2026-10-23T16:46:29.666Z] {
+  "type": "handleModalInteractOutside",
+  "details": {
+    "tag": "BODY",
+    "className": "min-h-svh bg-background text-foreground selection:bg-primary/20 selection:text-primary",
+    "id": "",
+    "isInsideOverlay": false,
+    "shouldClose": true
+  },
+  "time": "2026-10-23T16:46:29.645Z"
+}
+[2026-10-23T16:46:29.669Z] {
+  "component": "DatePicker",
+  "type": "DatePicker.shouldCloseOnInteractOutside",
+  "details": {
+    "tag": "BODY",
+    "className": "min-h-svh bg-background text-foreground selection:bg-primary/20 selection:text-primary",
+    "isTrigger": false,
+    "isPopover": false,
+    "shouldClose": true
+  },
+  "time": "2026-10-23T16:46:29.645Z"
+}
+[2026-10-23T16:46:29.771Z] {
+  "type": "onOpenChangeWrapped",
+  "details": {
+    "open": false,
+    "stack": "MediaListModal.useCallback[handleOpenChangeWrapped]@http://localhost:3000/_next/static/chunks/_0w2ej-fztozk2._.js:5706:24\n$3e6197669829fe11$export$40bfa8c7b0832715/setValue<@http://localhost:3000/_next/static/chunks/node_modules__bun_0qpyq0cb2701i._.js:1370:23\n$f11fb0bcf1b2687a$export$61c6a8c84e605fb6/close<@http://localhost:3000/_next/static/chunks/node_modules__bun_0qpyq0cb2701i._.js:628:16\nonHide@http://localhost:3000/_next/static/chunks/0ncd_react-aria_dist_private_0m3lmc3s963xv._.js:8784:121\nonInteractOutside@http://localhost:3000/_next/static/chunks/0ncd_react-aria_dist_private_0m3lmc3s963xv._.js:8796:53\n$e260d131964da0f9$export$872b660ac5a1ff98/triggerInteractOutside<@http://localhost:3000/_next/static/chunks/0ncd_react-aria_dist_private_0m3lmc3s963xv._.js:4275:49\n$fe16bffc7a557bf0$export$7f54fc3180508a52/<@http://localhost:3000/_next/static/chunks/0ncd_react-aria_dist_private_0m3lmc3s963xv._.js:12647:16\nonClick@http://localhost:3000/_next/static/chunks/0ncd_react-aria_dist_private_0m3lmc3s963xv._.js:4285:110\n"
+  },
+  "time": "2026-10-23T16:46:29.758Z"
+}
+[2026-10-23T16:46:29.773Z] {
+  "type": "handleModalInteractOutside",
+  "details": {
+    "tag": "BODY",
+    "className": "min-h-svh bg-background text-foreground selection:bg-primary/20 selection:text-primary",
+    "id": "",
+    "isInsideOverlay": false,
+    "shouldClose": true
+  },
+  "time": "2026-10-23T16:46:29.757Z"
+}
+[2026-10-23T16:46:41.299Z] {
+  "type": "handleModalInteractOutside",
+  "details": {
+    "tag": "BUTTON",
+    "className": "group/button inline-flex shrink-0 items-center justify-center rounded-2xl border border-transparent bg-clip-padding font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 gap-1 has-data-[icon=inline-end]:pe-2 has-data-[icon=inline-start]:ps-2 h-7 bg-primary px-3 text-xs text-primary-foreground hover:bg-primary/90",
+    "id": "react-aria4873857190-_r_5b_",
+    "isInsideOverlay": false,
+    "shouldClose": true
+  },
+  "time": "2026-10-23T16:46:41.278Z"
+}
+[2026-10-23T16:46:41.359Z] {
+  "type": "handleModalInteractOutside",
+  "details": {
+    "tag": "BUTTON",
+    "className": "group/button inline-flex shrink-0 items-center justify-center rounded-2xl border border-transparent bg-clip-padding font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 gap-1 has-data-[icon=inline-end]:pe-2 has-data-[icon=inline-start]:ps-2 h-7 bg-primary px-3 text-xs text-primary-foreground hover:bg-primary/90",
+    "id": "react-aria4873857190-_r_5b_",
+    "isInsideOverlay": false,
+    "shouldClose": true
+  },
+  "time": "2026-10-23T16:46:41.343Z"
+}
