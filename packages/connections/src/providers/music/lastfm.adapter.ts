@@ -39,8 +39,8 @@ export class LastFmAdapter extends BaseConnectionAdapter {
   };
 
   private getCredentials(): { apiKey: string; apiSecret: string } {
-    const apiKey = process.env.LASTFM_API_KEY?.trim();
-    const apiSecret = process.env.LASTFM_API_SECRET?.trim();
+    const apiKey = Bun.env.LASTFM_API_KEY?.trim();
+    const apiSecret = Bun.env.LASTFM_API_SECRET?.trim();
     if (!apiKey || !apiSecret) {
       throw new ConnectionError(
         "Missing LASTFM_API_KEY or LASTFM_API_SECRET in environment",

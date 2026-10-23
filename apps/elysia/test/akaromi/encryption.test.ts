@@ -90,7 +90,7 @@ describe('Comprehensive Akaromi Encryption Test Suite', () => {
   const BOB_ID = '00000000-0000-0000-0000-000000000002'
 
   beforeEach(async () => {
-    process.env.JWT_SECRET = 'test-iris-secret-key-at-least-32-chars!'
+    Bun.env.JWT_SECRET = 'test-iris-secret-key-at-least-32-chars!'
     setupPrismaMock()
 
     aliceToken = await signUserJwt({

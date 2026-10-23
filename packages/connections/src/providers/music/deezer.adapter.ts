@@ -58,8 +58,8 @@ export class DeezerAdapter extends BaseConnectionAdapter {
   };
 
   private getAppCredentials(): { appId: string; appSecret: string } {
-    const appId = process.env.DEEZER_APP_ID?.trim();
-    const appSecret = process.env.DEEZER_APP_SECRET?.trim();
+    const appId = Bun.env.DEEZER_APP_ID?.trim();
+    const appSecret = Bun.env.DEEZER_APP_SECRET?.trim();
     if (!appId || !appSecret) {
       throw new ConnectionError(
         "Missing DEEZER_APP_ID or DEEZER_APP_SECRET in environment",

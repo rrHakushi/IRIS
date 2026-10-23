@@ -4,42 +4,34 @@ name: default
 
 steps:
   - name: Environment
-    image: node:22-alpine
+    image: oven/bun:latest
     environment:
       ENV_FILE:
         from_secret: ENV_FILE
     commands:
-      - apk add --no-cache libc6-compat openssl
       - 'if [ -z "$ENV_FILE" ]; then echo "WARNING: ENV_FILE secret is empty"; fi'
       - 'printf "%s\n" "$ENV_FILE" > .env'
       - chmod 600 .env
-      - corepack enable
-      - pnpm install --frozen-lockfile
+      - bun install --frozen-lockfile
 
   - name: Prisma Push
-    image: node:22-alpine
+    image: oven/bun:latest
     commands:
-      - apk add --no-cache libc6-compat openssl
-      - corepack enable
-      - pnpm --filter @IRIS/database db:push
+      - bun run --filter=@IRIS/database db:push
     depends_on:
       - Environment
 
   - name: Prisma Generation
-    image: node:22-alpine
+    image: oven/bun:latest
     commands:
-      - apk add --no-cache libc6-compat openssl
-      - corepack enable
-      - pnpm --filter @IRIS/database db:generate
+      - bun run --filter=@IRIS/database db:generate
     depends_on:
       - Prisma Push
 
   - name: Packages
-    image: node:22-alpine
+    image: oven/bun:latest
     commands:
-      - apk add --no-cache libc6-compat openssl
-      - corepack enable
-      - pnpm turbo run build --filter="./packages/*"
+      - bun x turbo run build --filter="./packages/*"
     depends_on:
       - Prisma Generation
 

@@ -181,7 +181,7 @@ function setupPrismaMock() {
 // -----------------------------------------------------------------------------
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()

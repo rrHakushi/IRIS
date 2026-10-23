@@ -48,13 +48,13 @@ export function resolveCacheOptions(options: CacheOptions = {}): ResolvedCacheOp
   const hasExplicitTarget = Boolean(redisConfig.url || redisConfig.host);
 
   if (autoEnv) {
-    const envUrl = process.env['REDIS_URL'];
-    const envHost = process.env['REDIS_HOST'];
-    const envPort = process.env['REDIS_PORT'];
-    const envPassword = process.env['REDIS_PASSWORD'];
-    const envUsername = process.env['REDIS_USERNAME'];
-    const envDb = process.env['REDIS_DB'];
-    const envTls = process.env['REDIS_TLS'];
+    const envUrl = Bun.env['REDIS_URL'];
+    const envHost = Bun.env['REDIS_HOST'];
+    const envPort = Bun.env['REDIS_PORT'];
+    const envPassword = Bun.env['REDIS_PASSWORD'];
+    const envUsername = Bun.env['REDIS_USERNAME'];
+    const envDb = Bun.env['REDIS_DB'];
+    const envTls = Bun.env['REDIS_TLS'];
 
     if (!redisConfig.url && envUrl) {
       redisConfig.url = envUrl;
@@ -110,24 +110,24 @@ export function resolveCacheOptions(options: CacheOptions = {}): ResolvedCacheOp
   }
 
   let defaultTtlSeconds = options.defaultTtlSeconds ?? 300;
-  if (options.defaultTtlSeconds === undefined && autoEnv && process.env['CACHE_DEFAULT_TTL']) {
-    const parsedTtl = parseInt(process.env['CACHE_DEFAULT_TTL'], 10);
+  if (options.defaultTtlSeconds === undefined && autoEnv && Bun.env['CACHE_DEFAULT_TTL']) {
+    const parsedTtl = parseInt(Bun.env['CACHE_DEFAULT_TTL'], 10);
     if (Number.isNaN(parsedTtl)) {
       throw new MissingEnvError(
         ['CACHE_DEFAULT_TTL'],
-        `Invalid CACHE_DEFAULT_TTL environment variable value: "${process.env['CACHE_DEFAULT_TTL']}". Expected a number.`,
+        `Invalid CACHE_DEFAULT_TTL environment variable value: "${Bun.env['CACHE_DEFAULT_TTL']}". Expected a number.`,
       );
     }
     defaultTtlSeconds = parsedTtl;
   }
 
   let maxMemoryItems = options.memory?.maxItems ?? 5000;
-  if (options.memory?.maxItems === undefined && autoEnv && process.env['CACHE_MEMORY_MAX_ITEMS']) {
-    const parsedMax = parseInt(process.env['CACHE_MEMORY_MAX_ITEMS'], 10);
+  if (options.memory?.maxItems === undefined && autoEnv && Bun.env['CACHE_MEMORY_MAX_ITEMS']) {
+    const parsedMax = parseInt(Bun.env['CACHE_MEMORY_MAX_ITEMS'], 10);
     if (Number.isNaN(parsedMax)) {
       throw new MissingEnvError(
         ['CACHE_MEMORY_MAX_ITEMS'],
-        `Invalid CACHE_MEMORY_MAX_ITEMS environment variable value: "${process.env['CACHE_MEMORY_MAX_ITEMS']}". Expected a number.`,
+        `Invalid CACHE_MEMORY_MAX_ITEMS environment variable value: "${Bun.env['CACHE_MEMORY_MAX_ITEMS']}". Expected a number.`,
       );
     }
     maxMemoryItems = parsedMax;

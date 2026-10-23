@@ -123,10 +123,14 @@ export class CacheModule {
         inject: [CACHE_OPTIONS],
       },
       {
-        provide: CACHE_SERVICE,
-        useClass: CacheService,
+        provide: CacheService,
+        useFactory: (manager: CacheManager): CacheService => new CacheService(manager),
+        inject: [CACHE_MANAGER],
       },
-      CacheService,
+      {
+        provide: CACHE_SERVICE,
+        useExisting: CacheService,
+      },
     ];
 
     return {
@@ -153,10 +157,14 @@ export class CacheModule {
         inject: [CACHE_OPTIONS],
       },
       {
-        provide: CACHE_SERVICE,
-        useClass: CacheService,
+        provide: CacheService,
+        useFactory: (manager: CacheManager): CacheService => new CacheService(manager),
+        inject: [CACHE_MANAGER],
       },
-      CacheService,
+      {
+        provide: CACHE_SERVICE,
+        useExisting: CacheService,
+      },
     ];
 
     return {

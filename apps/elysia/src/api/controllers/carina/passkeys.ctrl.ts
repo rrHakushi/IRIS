@@ -84,7 +84,7 @@ export const carinaPasskeys = new Elysia({ prefix: '/carina/auth/twofactor/passk
     },
     async ({ body, request, cookie: { session: sessionCookie } }) => {
       const res = await CarinaPasskeysServ.verifyLogin(body, request)
-      if (res.token) {
+      if (res.token && sessionCookie) {
         const { isSecure, cookieDomain } = getDomainConfig()
         sessionCookie.set({
           value: res.token,

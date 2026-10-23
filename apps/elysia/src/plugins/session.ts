@@ -1,3 +1,4 @@
+import '../load-env'
 import { Elysia } from 'elysia'
 import { bearer } from '@elysia/bearer'
 import { jwt } from '@elysia/jwt'
@@ -53,7 +54,7 @@ export async function resolveSessionFromRequest(
   injectedBearer?: string,
   injectedSessionCookie?: string
 ): Promise<{ user: SessionUser | null; token: string | null }> {
-  const secret = process.env.JWT_SECRET
+  const secret = Bun.env.JWT_SECRET
   if (!secret) {
     throw new Error('JWT_SECRET environment variable is required')
   }
@@ -227,7 +228,7 @@ export interface SessionPluginOptions {
  * Elysia session plugin providing request-scoped session resolution.
  */
 export const session = (options?: SessionPluginOptions) => {
-  const secret = process.env.JWT_SECRET
+  const secret = Bun.env.JWT_SECRET
   if (!secret) {
     throw new Error('JWT_SECRET environment variable is required')
   }
@@ -240,7 +241,7 @@ export const session = (options?: SessionPluginOptions) => {
         request,
         options?.prisma ?? defaultPrisma,
         bearerToken,
-        cookie?.session?.value
+        cookie?.session?.value as string | undefined
       )
       return {
         session: new Session(user, token),

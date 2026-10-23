@@ -31,11 +31,11 @@ export class IGDBProvider {
   private readonly minDelayMs = 250 // 4 req/s
 
   private getClientId(): string {
-    return process.env.IGDB_CLIENT_ID || ''
+    return Bun.env.IGDB_CLIENT_ID || ''
   }
 
   private getClientSecret(): string {
-    return process.env.IGDB_CLIENT_SECRET || ''
+    return Bun.env.IGDB_CLIENT_SECRET || ''
   }
 
   private async waitForRateLimit(): Promise<void> {

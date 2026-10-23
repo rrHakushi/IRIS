@@ -36,7 +36,7 @@ export class SteamAdapter extends BaseConnectionAdapter {
   };
 
   private getSteamApiKey(): string {
-    return process.env.STEAM_API_KEY || "";
+    return Bun.env.STEAM_API_KEY || "";
   }
 
   async getAuthUrl(options: AuthUrlOptions): Promise<AuthUrlResult> {

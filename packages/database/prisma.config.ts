@@ -6,6 +6,6 @@ export default defineConfig({
     path: "migrations",
   },
   datasource: {
-    url: process.env.DATABASE_URL || "",
+    url: (typeof Bun !== "undefined" ? Bun.env.DATABASE_URL : process.env.DATABASE_URL) || "",
   },
 });

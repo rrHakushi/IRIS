@@ -4,7 +4,8 @@
  * Eliminates redundant environment variables (RP_ID, COOKIE_DOMAIN, NEXTAUTH_URL).
  */
 export function getDomainConfig() {
-  const urlStr = process.env.NEXT_PUBLIC_URL
+  const urlStr =
+    (typeof Bun !== "undefined" ? Bun.env.NEXT_PUBLIC_URL : process.env.NEXT_PUBLIC_URL)
   if (!urlStr) {
     throw new Error('NEXT_PUBLIC_URL environment variable is required')
   }
@@ -24,7 +25,9 @@ export function getDomainConfig() {
     cookieDomain = parts.length >= 2 ? `.${parts.slice(-2).join('.')}` : `.${hostname}`
   }
 
-  const isSecure = process.env.NODE_ENV === 'production' && !isLocalhost
+  const nodeEnv =
+    typeof Bun !== "undefined" ? Bun.env.NODE_ENV : process.env.NODE_ENV
+  const isSecure = nodeEnv === 'production' && !isLocalhost
 
   return {
     url: urlStr,

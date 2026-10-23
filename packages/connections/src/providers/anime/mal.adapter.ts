@@ -42,11 +42,11 @@ export class MyAnimeListAdapter extends BaseConnectionAdapter {
   };
 
   private getClientId(): string {
-    return process.env.MAL_CLIENT_ID || "";
+    return Bun.env.MAL_CLIENT_ID || "";
   }
 
   private getClientSecret(): string {
-    return process.env.MAL_CLIENT_SECRET || "";
+    return Bun.env.MAL_CLIENT_SECRET || "";
   }
 
   async getAuthUrl(options: AuthUrlOptions): Promise<AuthUrlResult> {

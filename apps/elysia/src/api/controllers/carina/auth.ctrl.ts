@@ -26,7 +26,7 @@ export const carinaAuth = new Elysia({ prefix: '/carina/auth' })
       const response = await CarinaAuthServ.login(body)
 
       // Set session cookie if authenticated
-      if (response.token) {
+      if (response.token && sessionCookie) {
         const { isSecure, cookieDomain } = getDomainConfig()
         sessionCookie.set({
           value: response.token,
@@ -56,11 +56,7 @@ export const carinaAuth = new Elysia({ prefix: '/carina/auth' })
       },
     },
     async ({ cookie: { session: sessionCookie } }) => {
-      const { cookieDomain } = getDomainConfig()
-      sessionCookie.remove({
-        path: '/',
-        ...(cookieDomain ? { domain: cookieDomain } : {}),
-      })
+      sessionCookie?.remove()
       return {
         success: true,
         message: 'Logged out successfully',

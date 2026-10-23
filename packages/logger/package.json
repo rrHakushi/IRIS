@@ -16,9 +16,10 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "tsc && node --test test/logger.test.ts"
+    "test": "bun test"
   },
   "devDependencies": {
+    "@types/bun": "^1.4.3",
     "@types/node": "^26.6.5",
     "@workspace/typescript-config": "workspace:*",
     "typescript": "^7.0.2"

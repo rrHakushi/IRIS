@@ -64,7 +64,7 @@ export const carinaQc = new Elysia({ prefix: '/carina/auth/qc' })
     },
     async ({ query, cookie: { session: sessionCookie } }) => {
       const res = await CarinaQcServ.checkStatus(query.sessionToken)
-      if (res.status === 'approved' && res.token) {
+      if (res.status === 'approved' && res.token && sessionCookie) {
         const { isSecure, cookieDomain } = getDomainConfig()
         sessionCookie.set({
           value: res.token,

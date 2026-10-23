@@ -14,7 +14,7 @@ describe('Borealis Other & Custom Item System', () => {
   let adminToken: string
 
   beforeAll(async () => {
-    process.env.JWT_SECRET = 'iris-default-secret-key-32-chars!!'
+    Bun.env.JWT_SECRET = 'iris-default-secret-key-32-chars!!'
 
     aliceToken = await signUserJwt({
       id: '00000000-0000-0000-0000-000000000001',

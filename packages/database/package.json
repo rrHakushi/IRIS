@@ -13,20 +13,20 @@
     }
   },
   "scripts": {
-    "build": "dotenvx run -f ../../.env -- tsc",
-    "db:generate": "dotenvx run -f ../../.env -- prisma generate",
-    "db:push": "dotenvx run -f ../../.env -- prisma db push",
-    "db:studio": "dotenvx run -f ../../.env -- prisma studio",
-    "db:all": "pnpm db:push && pnpm db:generate && pnpm build"
+    "build": "tsc",
+    "db:generate": "bun --bun prisma generate",
+    "db:push": "bun --bun prisma db push",
+    "db:studio": "bun --bun prisma studio",
+    "db:all": "bun run db:push && bun run db:generate && bun run build"
   },
   "dependencies": {
     "@prisma/adapter-pg": "~7.10.0",
     "@prisma/client": "~7.10.0",
     "@prisma/client-runtime-utils": "~7.10.0",
-    "dotenv": "^18.0.7",
     "pg": "^8.23.1"
   },
   "devDependencies": {
+    "@types/bun": "^1.4.3",
     "prisma": "~7.10.0",
     "typescript": "^7.0.2"
   }

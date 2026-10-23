@@ -65,15 +65,15 @@ export class TheTVDBProvider {
 
   private getApiKey(): string {
     return (
-      process.env.THETVDB_KEY ||
-      process.env.TVDB_API_KEY ||
-      process.env.TVDB_KEY ||
+      Bun.env.THETVDB_KEY ||
+      Bun.env.TVDB_API_KEY ||
+      Bun.env.TVDB_KEY ||
       ''
     )
   }
 
   private getPin(): string {
-    return process.env.THETVDB_PIN || process.env.TVDB_PIN || ''
+    return Bun.env.THETVDB_PIN || Bun.env.TVDB_PIN || ''
   }
 
   private async waitForRateLimit(): Promise<void> {

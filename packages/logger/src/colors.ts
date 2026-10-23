@@ -5,11 +5,9 @@ import type { TagColor } from "./types.js"
  * Compatible with Node.js, Bun, Linux, macOS, and Windows terminals.
  */
 export const isColorSupported =
-  typeof process !== "undefined" &&
-  !("NO_COLOR" in (process.env || {})) &&
-  (process.platform === "win32" ||
-    process.env?.TERM !== "dumb" ||
-    Boolean(process.env?.CI) ||
+  !("NO_COLOR" in (Bun.env || {})) &&
+  (Bun.env?.TERM !== "dumb" ||
+    Boolean(Bun.env?.CI) ||
     Boolean(process.stdout?.isTTY))
 
 const format = (open: number, close: number) => (str: unknown) =>

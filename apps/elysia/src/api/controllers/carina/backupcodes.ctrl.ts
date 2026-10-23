@@ -68,7 +68,7 @@ export const carinaBackupCodes = new Elysia({ prefix: '/carina/auth/twofactor/ba
     },
     async ({ body, session: userSession, cookie: { session: sessionCookie } }) => {
       const res = await CarinaBackupCodesServ.verifyCode(userSession.user?.id, body)
-      if (res.token) {
+      if (res.token && sessionCookie) {
         const { isSecure, cookieDomain } = getDomainConfig()
         sessionCookie.set({
           value: res.token,

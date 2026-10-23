@@ -1,0 +1,11 @@
+[install]
+exact = false
+
+[test]
+root = "."
+
+[install.overrides]
+prisma = "^7"
+"@prisma/client" = "^7"
+"@prisma/adapter-pg" = "^7"
+"@prisma/client-runtime-utils" = "^7"

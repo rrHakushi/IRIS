@@ -26,7 +26,7 @@ export abstract class CarinaTotpServ {
     }
 
     const secret = generateSecret()
-    const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV
+    const isDev = Bun.env.NODE_ENV === 'development' || !Bun.env.NODE_ENV
     const issuer = isDev ? 'Carina Dev' : 'Carina'
     const label = user.email ? `${user.username} (${user.email})` : user.username
 

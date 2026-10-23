@@ -256,7 +256,7 @@ describe('Comprehensive Carina Quick Connect (QC) Test Suite', () => {
       expect(approvedData.token).toBeDefined()
 
       // 5. Verify issued JWT token
-      const secret = process.env.JWT_SECRET || 'iris-default-secret-key-32-chars!!'
+      const secret = Bun.env.JWT_SECRET || 'iris-default-secret-key-32-chars!!'
       const { payload: decoded } = await jwtVerify(
         approvedData.token,
         new TextEncoder().encode(secret)

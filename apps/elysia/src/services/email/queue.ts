@@ -36,9 +36,9 @@ export type EmailJobData =
     }
 
 export function getRedisConnectionOptions() {
-  if (process.env.REDIS_URL) {
+  if (Bun.env.REDIS_URL) {
     try {
-      const url = new URL(process.env.REDIS_URL)
+      const url = new URL(Bun.env.REDIS_URL)
       return {
         host: url.hostname || '127.0.0.1',
         port: parseInt(url.port || '6379', 10),
@@ -53,10 +53,10 @@ export function getRedisConnectionOptions() {
   }
 
   return {
-    host: process.env.REDIS_HOST || '127.0.0.1',
-    port: Number(process.env.REDIS_PORT) || 6379,
-    password: process.env.REDIS_PASSWORD || undefined,
-    db: Number(process.env.REDIS_DB) || 0,
+    host: Bun.env.REDIS_HOST || '127.0.0.1',
+    port: Number(Bun.env.REDIS_PORT) || 6379,
+    password: Bun.env.REDIS_PASSWORD || undefined,
+    db: Number(Bun.env.REDIS_DB) || 0,
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
     retryStrategy(times: number) {

@@ -72,7 +72,7 @@ export abstract class BaseConnectionAdapter implements ConnectionProviderAdapter
       return [];
     }
     return this.requiredEnvVars.filter((varName) => {
-      const val = process.env[varName];
+      const val = Bun.env[varName];
       return val === undefined || val === null || val.trim() === "";
     });
   }

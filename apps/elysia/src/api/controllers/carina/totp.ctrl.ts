@@ -46,7 +46,7 @@ export const carinaTotp = new Elysia({ prefix: '/carina/auth/twofactor/totp' })
     },
     async ({ body, session: userSession, cookie: { session: sessionCookie } }) => {
       const res = await CarinaTotpServ.verifyTotp(userSession.user?.id, body)
-      if (res.token) {
+      if (res.token && sessionCookie) {
         const { isSecure, cookieDomain } = getDomainConfig()
         sessionCookie.set({
           value: res.token,

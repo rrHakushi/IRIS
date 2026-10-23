@@ -41,11 +41,11 @@ export class BangumiAdapter extends BaseConnectionAdapter {
   };
 
   private getClientId(): string {
-    return process.env.BANGUMI_CLIENT_ID || "";
+    return Bun.env.BANGUMI_CLIENT_ID || "";
   }
 
   private getClientSecret(): string {
-    return process.env.BANGUMI_CLIENT_SECRET || "";
+    return Bun.env.BANGUMI_CLIENT_SECRET || "";
   }
 
   async getAuthUrl(options: AuthUrlOptions): Promise<AuthUrlResult> {

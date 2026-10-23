@@ -20,7 +20,8 @@ export interface Session {
  * Strict implementation with zero fallbacks.
  */
 export async function auth(): Promise<Session | null> {
-  const secret = process.env.JWT_SECRET
+  const secret =
+    typeof Bun !== "undefined" ? Bun.env.JWT_SECRET : process.env.JWT_SECRET
   if (!secret) {
     throw new Error("JWT_SECRET environment variable is required")
   }

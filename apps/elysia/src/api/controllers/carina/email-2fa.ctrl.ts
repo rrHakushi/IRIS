@@ -79,7 +79,7 @@ export const carinaEmail2fa = new Elysia({ prefix: '/carina/auth/twofactor/email
     async ({ body, session: userSession, cookie: { session: sessionCookie } }) => {
       const user = userSession.getUser()
       const res = await CarinaEmail2faServ.verifyEmail2fa(user?.id, body)
-      if (res.token) {
+      if (res.token && sessionCookie) {
         const { isSecure, cookieDomain } = getDomainConfig()
         sessionCookie.set({
           value: res.token,

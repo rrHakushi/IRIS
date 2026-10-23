@@ -1,3 +1,4 @@
+import './load-env'
 import './lib/typebox'
 import { Elysia, NotFound, ValidationError } from 'elysia'
 import { openapi } from '@elysia/openapi'
@@ -26,7 +27,7 @@ const logger = new LogFactory('Elysia:Server')
 const authTimeouts = new WeakMap<object, ReturnType<typeof setTimeout>>()
 
 // In development, auto-sync static controllers manifest when running against source
-if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
+if (Bun.env.NODE_ENV !== 'production' && Bun.env.NODE_ENV !== 'test') {
   try {
     generateControllersManifest()
   } catch (err: any) {
@@ -48,11 +49,11 @@ export const app = new Elysia()
         servers: [
 
           {
-            url: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000",
+            url: Bun.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000",
             description: 'Direct API url',
           },
           {
-            url: `${process.env.NEXT_PUBLIC_URL}/elysia`,
+            url: `${Bun.env.NEXT_PUBLIC_URL}/elysia`,
             description: 'Proxied api url thru page url',
           }
         ],
@@ -166,7 +167,7 @@ export type App = ControllersApp
  * Starts listening for incoming HTTP connections.
  * Uses reusePort: true for kernel-level multi-threaded connection distribution across cluster workers.
  */
-export function startServer(port = Number(process.env.ELYSIA_PORT || 4000)) {
+export function startServer(port = Number(Bun.env.ELYSIA_PORT || 4000)) {
   const server = app.listen(
     {
       port,

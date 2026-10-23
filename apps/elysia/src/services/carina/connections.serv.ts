@@ -374,7 +374,7 @@ export class CarinaConnectionsServ {
 
     const redirectUri =
       query?.redirectUri?.trim() ||
-      process.env.CONNECTIONS_REDIRECT_URI ||
+      Bun.env.CONNECTIONS_REDIRECT_URI ||
       'http://localhost:4000/carina/connections/callback'
 
     const stateToken = createOAuthStateToken({
@@ -672,7 +672,7 @@ export class CarinaConnectionsServ {
 
     // Handle Last.fm connection search natively if requested
     if (rawProvider === 'LASTFM') {
-      const apiKey = process.env.LASTFM_API_KEY?.trim()
+      const apiKey = Bun.env.LASTFM_API_KEY?.trim()
       const searchQuery = (query.q || query.id || '').trim()
 
       if (!apiKey || !searchQuery) {

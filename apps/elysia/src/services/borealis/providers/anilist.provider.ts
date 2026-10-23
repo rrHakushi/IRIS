@@ -311,8 +311,8 @@ export class AniListProvider {
   private tokenExpiresAt = 0
 
   private async getAppToken(): Promise<string | null> {
-    const clientId = process.env.ANILIST_CLIENT_ID
-    const clientSecret = process.env.ANILIST_CLIENT_SECRET
+    const clientId = Bun.env.ANILIST_CLIENT_ID
+    const clientSecret = Bun.env.ANILIST_CLIENT_SECRET
     if (!clientId || !clientSecret) return null
 
     const now = Date.now()

@@ -13,13 +13,14 @@ import { SignJWT } from "jose"
 const scryptAsync = promisify(scrypt)
 
 /**
- * Standard password hashing utilizing native scrypt with a random 32-byte salt.
- * Produces format: `${saltHex}:${derivedKeyHex}`.
+ * Standard password hashing utilizing native Bun Argon2id.
  */
 export async function hashPassword(password: string): Promise<string> {
-  const salt = randomBytes(32)
-  const derivedKey = (await scryptAsync(password, salt, 64)) as Buffer
-  return `${salt.toString("hex")}:${derivedKey.toString("hex")}`
+  return await Bun.password.hash(password, {
+    algorithm: "argon2id",
+    memoryCost: 65536,
+    timeCost: 2,
+  })
 }
 
 /**
@@ -89,7 +90,7 @@ export async function verifyBackupCode(
  * Derives a 256-bit encryption key strictly from `JWT_SECRET`.
  */
 function getEncryptionKey(): Buffer {
-  const secret = process.env.JWT_SECRET
+  const secret = Bun.env.JWT_SECRET
   if (!secret) {
     throw new Error("JWT_SECRET environment variable is required")
   }
@@ -145,8 +146,7 @@ export function decryptSecret(serialized: string): string {
 
 
 /**
- * Timing-safe password verification supporting both IRIS native scrypt format
- * (`${saltHex}:${derivedKeyHex}`) and legacy/migrated bcrypt hashes (`$2a$`, `$2b$`).
+ * Password verification utilizing native Bun.password.
  */
 export async function verifyPassword(
   password: string,
@@ -156,37 +156,11 @@ export async function verifyPassword(
     return false
   }
 
-  // 1. Scrypt format: "saltHex:hashHex"
-  if (storedHash.includes(":")) {
-    const parts = storedHash.split(":")
-    if (parts.length !== 2 || !parts[0] || !parts[1]) {
-      return false
-    }
-
-    const salt = Buffer.from(parts[0], "hex")
-    const expectedKey = Buffer.from(parts[1], "hex")
-    const derivedKey = (await scryptAsync(
-      password,
-      salt,
-      expectedKey.length
-    )) as Buffer
-
-    if (derivedKey.length !== expectedKey.length) {
-      return false
-    }
-    return timingSafeEqual(derivedKey, expectedKey)
+  try {
+    return await Bun.password.verify(password, storedHash)
+  } catch {
+    return false
   }
-
-  // 2. Bun native password verification fallback (supports bcrypt, argon2id)
-  if (typeof Bun !== "undefined" && (Bun as any).password?.verify) {
-    try {
-      return await (Bun as any).password.verify(password, storedHash)
-    } catch {
-      return false
-    }
-  }
-
-  return false
 }
 
 export interface UserSessionTokenData {
@@ -201,7 +175,7 @@ export interface UserSessionTokenData {
  * Signs a standard JWT session token using HS256.
  */
 export async function signUserJwt(user: UserSessionTokenData): Promise<string> {
-  const secret = process.env.JWT_SECRET
+  const secret = Bun.env.JWT_SECRET
   if (!secret) {
     throw new Error("JWT_SECRET environment variable is required")
   }

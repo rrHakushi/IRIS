@@ -36,7 +36,6 @@
     - .md version of every single page
     - mcp server for all the apps
     - create missing sidebar configs
-    - Complete migration from node and pnpm to bun
     - Default banner image for all apps (each different) to be used in server metadata 
     - Migrate from Prisma 7 to Prisma 8
 

@@ -7,16 +7,16 @@ import { CacheManager } from "@IRIS/cache"
  */
 export const cache = new CacheManager({
   autoEnv: false,
-  redis: process.env.REDIS_URL
-    ? { url: process.env.REDIS_URL }
+  redis: Bun.env.REDIS_URL
+    ? { url: Bun.env.REDIS_URL }
     : {
-        host: process.env.REDIS_HOST,
-        port: Number(process.env.REDIS_PORT),
-        password: process.env.REDIS_PASSWORD,
-        db: Number(process.env.REDIS_DB),
+        host: Bun.env.REDIS_HOST,
+        port: Number(Bun.env.REDIS_PORT),
+        password: Bun.env.REDIS_PASSWORD,
+        db: Number(Bun.env.REDIS_DB),
       },
-  defaultTtlSeconds: process.env.CACHE_DEFAULT_TTL
-    ? Number(process.env.CACHE_DEFAULT_TTL)
+  defaultTtlSeconds: Bun.env.CACHE_DEFAULT_TTL
+    ? Number(Bun.env.CACHE_DEFAULT_TTL)
     : 300,
   fallbackToMemory: true,
   logger: false,

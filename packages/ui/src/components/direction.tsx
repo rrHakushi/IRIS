@@ -21,7 +21,7 @@ function DirectionProvider(
   return <I18nProvider {...props} locale={locale} />
 }
 
-function useDirection() {
+function useDirection(): "ltr" | "rtl" {
   const { direction } = useLocale()
   return direction
 }

@@ -1,3 +1,4 @@
+import './load-env'
 import cluster from 'node:cluster'
 import os from 'node:os'
 import process from 'node:process'
@@ -13,13 +14,13 @@ export * from './types/media-details'
 
 const logger = new LogFactory('Elysia:Cluster')
 
-const isTest = process.env.NODE_ENV === 'test'
-const isClusteringEnabled = !isTest && process.env.CLUSTER !== 'false'
+const isTest = Bun.env.NODE_ENV === 'test'
+const isClusteringEnabled = !isTest && Bun.env.CLUSTER !== 'false'
 
 if (isClusteringEnabled && cluster.isPrimary) {
   const availableCpus = os.availableParallelism()
-  const numWorkers = process.env.CLUSTER_WORKERS
-    ? Math.max(1, parseInt(process.env.CLUSTER_WORKERS, 10))
+  const numWorkers = Bun.env.CLUSTER_WORKERS
+    ? Math.max(1, parseInt(Bun.env.CLUSTER_WORKERS, 10))
     : availableCpus
 
   logger.info(

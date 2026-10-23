@@ -40,7 +40,7 @@ export class SimklAdapter extends BaseConnectionAdapter {
   }
 
   private getClientId(): string {
-    const raw = process.env.SIMKL_CLIENT_ID || ""
+    const raw = Bun.env.SIMKL_CLIENT_ID || ""
     return raw
       .trim()
       .replace(/^["']|["']$/g, "")
@@ -48,7 +48,7 @@ export class SimklAdapter extends BaseConnectionAdapter {
   }
 
   private getClientSecret(): string {
-    const raw = process.env.SIMKL_CLIENT_SECRET || ""
+    const raw = Bun.env.SIMKL_CLIENT_SECRET || ""
     return raw
       .trim()
       .replace(/^["']|["']$/g, "")

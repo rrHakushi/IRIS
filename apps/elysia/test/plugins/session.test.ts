@@ -1,5 +1,5 @@
-process.env.JWT_SECRET = 'iris-default-secret-key-32-chars!!'
-process.env.NEXT_PUBLIC_URL = 'http://localhost:3000'
+Bun.env.JWT_SECRET = 'iris-default-secret-key-32-chars!!'
+Bun.env.NEXT_PUBLIC_URL = 'http://localhost:3000'
 
 import { describe, expect, it, beforeEach } from 'bun:test'
 import { Elysia } from 'elysia'
@@ -69,7 +69,7 @@ describe('Session Plugin Test Suite', () => {
   const ALICE_ID = '00000000-0000-0000-0000-000000000001'
 
   beforeEach(() => {
-    process.env.JWT_SECRET = SECRET
+    Bun.env.JWT_SECRET = SECRET
     setupPrismaMock()
   })
 

@@ -105,6 +105,6 @@ export function generateSecureToken(prefix = '', bytes = 32): string {
  * Resolves the server base URL for discovery metadata and issuer identification.
  */
 export function getIssuerUrl(): string {
-  const url = process.env.NEXT_PUBLIC_URL || process.env.NEXT_PUBLIC_API_URL!
+  const url = Bun.env.NEXT_PUBLIC_URL || Bun.env.NEXT_PUBLIC_API_URL!
   return url.replace(/\/+$/, '')
 }

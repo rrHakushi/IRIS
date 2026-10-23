@@ -411,7 +411,7 @@ describe('Borealis Calendar Controller & Service Test Suite', () => {
   let bobToken: string
 
   beforeEach(async () => {
-    process.env.JWT_SECRET = 'iris-default-secret-key-32-chars!!'
+    Bun.env.JWT_SECRET = 'iris-default-secret-key-32-chars!!'
     await cache.clear()
     setupPrismaMock()
 

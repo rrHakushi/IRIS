@@ -113,8 +113,8 @@ describe('Comprehensive Kiroshi Search Test Suite', () => {
   const BOB_ID = '00000000-0000-0000-0000-000000000002'
 
   beforeEach(async () => {
-    process.env.JWT_SECRET = 'test-iris-secret-key-at-least-32-chars!'
-    process.env.SEARXNG_URL = 'http://searxng.internal.test:8888'
+    Bun.env.JWT_SECRET = 'test-iris-secret-key-at-least-32-chars!'
+    Bun.env.SEARXNG_URL = 'http://searxng.internal.test:8888'
     await cache.clear()
     setupPrismaMock()
     originalFetch = globalThis.fetch

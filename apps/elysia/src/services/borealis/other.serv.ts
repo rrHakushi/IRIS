@@ -432,8 +432,7 @@ export class BorealisOtherServ {
     }
 
     const rawBuffer = Buffer.from(await file.arrayBuffer())
-    const sharp = (await import('sharp')).default
-    const webpBuffer = await sharp(rawBuffer).webp({ quality: 85 }).toBuffer()
+    const webpBuffer = await new Bun.Image(rawBuffer).webp({ quality: 85 }).toBuffer()
 
     const key = `borealis/other/${userId}/${type}-${Date.now()}.webp`
     const { publicUrl } = await uploadPublicAsset({

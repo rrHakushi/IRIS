@@ -11,7 +11,7 @@ import { prisma } from '@IRIS/database'
 // -----------------------------------------------------------------------------
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()
@@ -43,7 +43,7 @@ let mockTvLists: any[] = []
 let mockAnimeLists: any[] = []
 
 function setupPrismaMock() {
-  process.env.JWT_SECRET = 'iris-default-secret-key-32-chars!!'
+  Bun.env.JWT_SECRET = 'iris-default-secret-key-32-chars!!'
 
   mockUsers = [
     {

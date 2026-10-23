@@ -7,12 +7,12 @@ import {
   CreateBucketCommand,
 } from "@aws-sdk/client-s3"
 
-const RUSTFS_ENDPOINT = process.env.RUSTFS_ENDPOINT || "http://127.0.0.1:9000"
-const RUSTFS_REGION = process.env.RUSTFS_REGION || "us-east-1"
-const RUSTFS_ACCESS_KEY = process.env.RUSTFS_ACCESS_KEY || ""
-const RUSTFS_SECRET_KEY = process.env.RUSTFS_SECRET_KEY || ""
+const RUSTFS_ENDPOINT = Bun.env.RUSTFS_ENDPOINT || "http://127.0.0.1:9000"
+const RUSTFS_REGION = Bun.env.RUSTFS_REGION || "us-east-1"
+const RUSTFS_ACCESS_KEY = Bun.env.RUSTFS_ACCESS_KEY || ""
+const RUSTFS_SECRET_KEY = Bun.env.RUSTFS_SECRET_KEY || ""
 export const PUBLIC_BUCKET =
-  process.env.RUSTFS_PUBLIC_BUCKET!
+  Bun.env.RUSTFS_PUBLIC_BUCKET!
 
 export const s3Client = new S3Client({
   endpoint: RUSTFS_ENDPOINT,

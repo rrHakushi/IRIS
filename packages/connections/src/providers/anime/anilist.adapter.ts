@@ -40,11 +40,11 @@ export class AniListAdapter extends BaseConnectionAdapter {
   };
 
   private getClientId(): string {
-    return process.env.ANILIST_CLIENT_ID || "";
+    return Bun.env.ANILIST_CLIENT_ID || "";
   }
 
   private getClientSecret(): string {
-    return process.env.ANILIST_CLIENT_SECRET || "";
+    return Bun.env.ANILIST_CLIENT_SECRET || "";
   }
 
   async getAuthUrl(options: AuthUrlOptions): Promise<AuthUrlResult> {
