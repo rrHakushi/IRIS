@@ -683,8 +683,8 @@
         const bannerImage = rawMedia.bannerImage || rawMedia.backdropImage || rawMedia.coverImage || '';
 
         const actualEntry = (listEntry && (listEntry.entry || listEntry.data)) || listEntry;
-        let hasListEntry = Boolean(actualEntry && (actualEntry.id !== undefined || actualEntry.status !== undefined));
-        let listStatus = (actualEntry?.status || "PLANNING").toUpperCase();
+        let rawStatus = (actualEntry?.status || "PLANNED").toUpperCase();
+        let listStatus = rawStatus === "WATCHING" ? "IN_PROGRESS" : (rawStatus === "PLANNING" ? "PLANNED" : rawStatus);
         let score = actualEntry?.score !== undefined && actualEntry?.score !== null ? actualEntry.score.toString() : "";
         let progress = actualEntry?.progress !== undefined ? actualEntry.progress : 0;
         let rewatches = actualEntry?.rewatched !== undefined ? actualEntry.rewatched.toString() : "0";
@@ -1456,7 +1456,7 @@
                     const isComplete = eps.length > 0 && watchedCount >= eps.length;
                     return {
                         seasonNumber: sNum,
-                        status: isComplete ? "COMPLETED" : (watchedCount > 0 ? "WATCHING" : "PLANNING"),
+                        status: isComplete ? "COMPLETED" : (watchedCount > 0 ? "IN_PROGRESS" : "PLANNED"),
                         progress: watchedCount
                     };
                 });
@@ -1498,14 +1498,15 @@
         if (mediaType === "movie") {
             return [
                 { value: "COMPLETED", label: "✓ Completed" },
-                { value: "PLANNING", label: "Planning" },
+                { value: "IN_PROGRESS", label: "Watching" },
+                { value: "PLANNED", label: "Planning" },
                 { value: "DROPPED", label: "Dropped" }
             ];
         }
         return [
             { value: "COMPLETED", label: "✓ Completed" },
-            { value: "WATCHING", label: "Watching" },
-            { value: "PLANNING", label: "Planning" },
+            { value: "IN_PROGRESS", label: "Watching" },
+            { value: "PLANNED", label: "Planning" },
             { value: "ON_HOLD", label: "On Hold" },
             { value: "DROPPED", label: "Dropped" }
         ];

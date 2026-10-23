@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'f8bc9dea885e2a9e6b78cdc91f8ee6006d18e507cbe95a5589839fb78dbad7fa'>;
+  StorageHashBase<'a6b34d37c099ae394f0d4378b33f4e892b10c4dc8dd6a87619216caca8b1cbec'>;
 export type ExecutionHash =
   ExecutionHashBase<'b7640b0fcc81eff6f25706df08d8b4535a1b5e11bd21a8168ea15ca60dc18af0'>;
 export type ProfileHash =
@@ -356,9 +356,9 @@ type FieldTypeOverrides = {
         };
         readonly status: {
           readonly output:
-            'FINISHED' | 'RELEASING' | 'NOT_YET_RELEASED' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
+            'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
           readonly input:
-            'FINISHED' | 'RELEASING' | 'NOT_YET_RELEASED' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
+            'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
         };
       };
       readonly AnimeEpisode: {
@@ -369,20 +369,22 @@ type FieldTypeOverrides = {
       };
       readonly AnimeList: {
         readonly status: {
-          readonly output: 'PLANNING' | 'WATCHING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
-          readonly input: 'PLANNING' | 'WATCHING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
+          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
         };
       };
       readonly Book: {
         readonly status: {
-          readonly output: 'PUBLISHED' | 'RELEASING' | 'CANCELLED' | 'ON_HIATUS' | 'UNKNOWN';
-          readonly input: 'PUBLISHED' | 'RELEASING' | 'CANCELLED' | 'ON_HIATUS' | 'UNKNOWN';
+          readonly output:
+            'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
+          readonly input:
+            'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
         };
       };
       readonly BookList: {
         readonly status: {
-          readonly output: 'PLANNING' | 'READING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
-          readonly input: 'PLANNING' | 'READING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
+          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
         };
       };
       readonly Connection: {
@@ -500,27 +502,15 @@ type FieldTypeOverrides = {
       readonly Game: {
         readonly status: {
           readonly output:
-            | 'RELEASED'
-            | 'EARLY_ACCESS'
-            | 'ANNOUNCED'
-            | 'IN_DEVELOPMENT'
-            | 'DELAYED'
-            | 'CANCELLED'
-            | 'UNKNOWN';
+            'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
           readonly input:
-            | 'RELEASED'
-            | 'EARLY_ACCESS'
-            | 'ANNOUNCED'
-            | 'IN_DEVELOPMENT'
-            | 'DELAYED'
-            | 'CANCELLED'
-            | 'UNKNOWN';
+            'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
         };
       };
       readonly GameList: {
         readonly status: {
-          readonly output: 'PLANNING' | 'PLAYING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
-          readonly input: 'PLANNING' | 'PLAYING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
+          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
         };
       };
       readonly Manga: {
@@ -568,15 +558,15 @@ type FieldTypeOverrides = {
         };
         readonly status: {
           readonly output:
-            'FINISHED' | 'RELEASING' | 'NOT_YET_RELEASED' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
+            'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
           readonly input:
-            'FINISHED' | 'RELEASING' | 'NOT_YET_RELEASED' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
+            'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
         };
       };
       readonly MangaList: {
         readonly status: {
-          readonly output: 'PLANNING' | 'READING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
-          readonly input: 'PLANNING' | 'READING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
+          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
         };
       };
       readonly MediaCharacter: {
@@ -854,28 +844,30 @@ type FieldTypeOverrides = {
       readonly Movie: {
         readonly status: {
           readonly output:
-            'RELEASED' | 'IN_PRODUCTION' | 'POST_PRODUCTION' | 'RUMORED' | 'CANCELLED' | 'UNKNOWN';
+            'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
           readonly input:
-            'RELEASED' | 'IN_PRODUCTION' | 'POST_PRODUCTION' | 'RUMORED' | 'CANCELLED' | 'UNKNOWN';
+            'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
         };
       };
       readonly MovieList: {
         readonly status: {
-          readonly output: 'PLANNING' | 'WATCHING' | 'COMPLETED' | 'DROPPED';
-          readonly input: 'PLANNING' | 'WATCHING' | 'COMPLETED' | 'DROPPED';
+          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
         };
       };
       readonly Music: {
         readonly status: {
-          readonly output: 'RELEASED' | 'UPCOMING' | 'CANCELLED' | 'UNKNOWN';
-          readonly input: 'RELEASED' | 'UPCOMING' | 'CANCELLED' | 'UNKNOWN';
+          readonly output:
+            'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
+          readonly input:
+            'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
         };
         readonly type: { readonly output: 'TRACK' | 'ALBUM'; readonly input: 'TRACK' | 'ALBUM' };
       };
       readonly MusicList: {
         readonly status: {
-          readonly output: 'PLANNING' | 'LISTENING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
-          readonly input: 'PLANNING' | 'LISTENING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
+          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
         };
       };
       readonly Notification: {
@@ -890,6 +882,12 @@ type FieldTypeOverrides = {
         readonly type: {
           readonly output: 'INFO' | 'ACTION_CONFIRM' | 'ACTION_INPUT' | 'ACTION_SELECT';
           readonly input: 'INFO' | 'ACTION_CONFIRM' | 'ACTION_INPUT' | 'ACTION_SELECT';
+        };
+      };
+      readonly OtherList: {
+        readonly status: {
+          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
         };
       };
       readonly PassCipher: {
@@ -937,21 +935,21 @@ type FieldTypeOverrides = {
       readonly Tv: {
         readonly status: {
           readonly output:
-            'RETURNING_SERIES' | 'ENDED' | 'CANCELED' | 'IN_PRODUCTION' | 'UPCOMING' | 'UNKNOWN';
+            'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
           readonly input:
-            'RETURNING_SERIES' | 'ENDED' | 'CANCELED' | 'IN_PRODUCTION' | 'UPCOMING' | 'UNKNOWN';
+            'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
         };
       };
       readonly TvList: {
         readonly status: {
-          readonly output: 'WATCHING' | 'PLANNING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
-          readonly input: 'WATCHING' | 'PLANNING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
+          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
         };
       };
       readonly TvSeasonProgress: {
         readonly status: {
-          readonly output: 'WATCHING' | 'PLANNING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
-          readonly input: 'WATCHING' | 'PLANNING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
+          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
         };
       };
       readonly UserStats: {
@@ -1115,10 +1113,8 @@ type ColumnTypeOverrides = {
           | 'UNKNOWN';
       };
       readonly status: {
-        readonly output:
-          'FINISHED' | 'RELEASING' | 'NOT_YET_RELEASED' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
-        readonly input:
-          'FINISHED' | 'RELEASING' | 'NOT_YET_RELEASED' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
+        readonly output: 'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
+        readonly input: 'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
       };
     };
     readonly AnimeEpisode: {
@@ -1129,20 +1125,20 @@ type ColumnTypeOverrides = {
     };
     readonly AnimeList: {
       readonly status: {
-        readonly output: 'PLANNING' | 'WATCHING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
-        readonly input: 'PLANNING' | 'WATCHING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
       };
     };
     readonly Book: {
       readonly status: {
-        readonly output: 'PUBLISHED' | 'RELEASING' | 'CANCELLED' | 'ON_HIATUS' | 'UNKNOWN';
-        readonly input: 'PUBLISHED' | 'RELEASING' | 'CANCELLED' | 'ON_HIATUS' | 'UNKNOWN';
+        readonly output: 'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
+        readonly input: 'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
       };
     };
     readonly BookList: {
       readonly status: {
-        readonly output: 'PLANNING' | 'READING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
-        readonly input: 'PLANNING' | 'READING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
       };
     };
     readonly Connection: {
@@ -1259,28 +1255,14 @@ type ColumnTypeOverrides = {
     };
     readonly Game: {
       readonly status: {
-        readonly output:
-          | 'RELEASED'
-          | 'EARLY_ACCESS'
-          | 'ANNOUNCED'
-          | 'IN_DEVELOPMENT'
-          | 'DELAYED'
-          | 'CANCELLED'
-          | 'UNKNOWN';
-        readonly input:
-          | 'RELEASED'
-          | 'EARLY_ACCESS'
-          | 'ANNOUNCED'
-          | 'IN_DEVELOPMENT'
-          | 'DELAYED'
-          | 'CANCELLED'
-          | 'UNKNOWN';
+        readonly output: 'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
+        readonly input: 'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
       };
     };
     readonly GameList: {
       readonly status: {
-        readonly output: 'PLANNING' | 'PLAYING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
-        readonly input: 'PLANNING' | 'PLAYING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
       };
     };
     readonly Manga: {
@@ -1327,16 +1309,14 @@ type ColumnTypeOverrides = {
           | 'UNKNOWN';
       };
       readonly status: {
-        readonly output:
-          'FINISHED' | 'RELEASING' | 'NOT_YET_RELEASED' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
-        readonly input:
-          'FINISHED' | 'RELEASING' | 'NOT_YET_RELEASED' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
+        readonly output: 'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
+        readonly input: 'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
       };
     };
     readonly MangaList: {
       readonly status: {
-        readonly output: 'PLANNING' | 'READING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
-        readonly input: 'PLANNING' | 'READING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
       };
     };
     readonly MediaCharacter: {
@@ -1613,29 +1593,27 @@ type ColumnTypeOverrides = {
     };
     readonly Movie: {
       readonly status: {
-        readonly output:
-          'RELEASED' | 'IN_PRODUCTION' | 'POST_PRODUCTION' | 'RUMORED' | 'CANCELLED' | 'UNKNOWN';
-        readonly input:
-          'RELEASED' | 'IN_PRODUCTION' | 'POST_PRODUCTION' | 'RUMORED' | 'CANCELLED' | 'UNKNOWN';
+        readonly output: 'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
+        readonly input: 'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
       };
     };
     readonly MovieList: {
       readonly status: {
-        readonly output: 'PLANNING' | 'WATCHING' | 'COMPLETED' | 'DROPPED';
-        readonly input: 'PLANNING' | 'WATCHING' | 'COMPLETED' | 'DROPPED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
       };
     };
     readonly Music: {
       readonly status: {
-        readonly output: 'RELEASED' | 'UPCOMING' | 'CANCELLED' | 'UNKNOWN';
-        readonly input: 'RELEASED' | 'UPCOMING' | 'CANCELLED' | 'UNKNOWN';
+        readonly output: 'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
+        readonly input: 'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
       };
       readonly type: { readonly output: 'TRACK' | 'ALBUM'; readonly input: 'TRACK' | 'ALBUM' };
     };
     readonly MusicList: {
       readonly status: {
-        readonly output: 'PLANNING' | 'LISTENING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
-        readonly input: 'PLANNING' | 'LISTENING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
       };
     };
     readonly Notification: {
@@ -1650,6 +1628,12 @@ type ColumnTypeOverrides = {
       readonly type: {
         readonly output: 'INFO' | 'ACTION_CONFIRM' | 'ACTION_INPUT' | 'ACTION_SELECT';
         readonly input: 'INFO' | 'ACTION_CONFIRM' | 'ACTION_INPUT' | 'ACTION_SELECT';
+      };
+    };
+    readonly OtherList: {
+      readonly status: {
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
       };
     };
     readonly PassCipher: {
@@ -1693,22 +1677,20 @@ type ColumnTypeOverrides = {
     };
     readonly Tv: {
       readonly status: {
-        readonly output:
-          'RETURNING_SERIES' | 'ENDED' | 'CANCELED' | 'IN_PRODUCTION' | 'UPCOMING' | 'UNKNOWN';
-        readonly input:
-          'RETURNING_SERIES' | 'ENDED' | 'CANCELED' | 'IN_PRODUCTION' | 'UPCOMING' | 'UNKNOWN';
+        readonly output: 'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
+        readonly input: 'RELEASED' | 'RELEASING' | 'UPCOMING' | 'CANCELLED' | 'HIATUS' | 'UNKNOWN';
       };
     };
     readonly TvList: {
       readonly status: {
-        readonly output: 'WATCHING' | 'PLANNING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
-        readonly input: 'WATCHING' | 'PLANNING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
       };
     };
     readonly TvSeasonProgress: {
       readonly status: {
-        readonly output: 'WATCHING' | 'PLANNING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
-        readonly input: 'WATCHING' | 'PLANNING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
       };
     };
     readonly UserStats: {
@@ -2984,7 +2966,6 @@ export namespace Models {
     scoredCount: FieldOutputTypes['public']['Other']['scoredCount'];
     startDate: FieldOutputTypes['public']['Other']['startDate'];
     statusDistribution: FieldOutputTypes['public']['Other']['statusDistribution'];
-    statuses: FieldOutputTypes['public']['Other']['statuses'];
     titlePrimary: FieldOutputTypes['public']['Other']['titlePrimary'];
     titleSecondary: FieldOutputTypes['public']['Other']['titleSecondary'];
     totalScoreSum: FieldOutputTypes['public']['Other']['totalScoreSum'];
@@ -5617,7 +5598,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'PLANNING'>;
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'PLANNED'>;
                   };
                   readonly many: false;
                 };
@@ -6444,7 +6425,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'PLANNING'>;
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'PLANNED'>;
                   };
                   readonly many: false;
                 };
@@ -8250,7 +8231,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'PLANNING'>;
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'PLANNED'>;
                   };
                   readonly many: false;
                 };
@@ -9260,7 +9241,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'PLANNING'>;
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'PLANNED'>;
                   };
                   readonly many: false;
                 };
@@ -10841,7 +10822,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'PLANNING'>;
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'PLANNED'>;
                   };
                   readonly many: false;
                 };
@@ -11570,7 +11551,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'PLANNING'>;
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'PLANNED'>;
                   };
                   readonly many: false;
                 };
@@ -12609,16 +12590,6 @@ type ContractBase = Omit<
                   };
                   readonly many: false;
                 };
-                readonly statuses: {
-                  readonly dataType: 'pg/jsonb';
-                  readonly codecId: 'pg/jsonb@1';
-                  readonly nullable: false;
-                  readonly default: {
-                    readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/jsonb@1', readonly []>;
-                  };
-                  readonly many: false;
-                };
                 readonly titlePrimary: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
@@ -12768,7 +12739,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'PLANNING'>;
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'PLANNED'>;
                   };
                   readonly many: false;
                 };
@@ -14434,7 +14405,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'PLANNING'>;
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'PLANNED'>;
                   };
                   readonly many: false;
                 };
@@ -14905,7 +14876,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'PLANNING'>;
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'PLANNED'>;
                   };
                   readonly many: false;
                 };
@@ -15531,10 +15502,6 @@ type ContractBase = Omit<
                 'UNKNOWN',
               ];
             };
-            readonly AnimeListStatus: {
-              readonly kind: 'valueSet';
-              readonly values: readonly ['PLANNING', 'WATCHING', 'COMPLETED', 'ON_HOLD', 'DROPPED'];
-            };
             readonly AnimeSeason: {
               readonly kind: 'valueSet';
               readonly values: readonly ['WINTER', 'SPRING', 'SUMMER', 'FALL', 'UNKNOWN'];
@@ -15557,31 +15524,6 @@ type ContractBase = Omit<
                 'COMIC',
                 'MULTIMEDIA_PROJECT',
                 'PICTURE_BOOK',
-                'UNKNOWN',
-              ];
-            };
-            readonly AnimeStatus: {
-              readonly kind: 'valueSet';
-              readonly values: readonly [
-                'FINISHED',
-                'RELEASING',
-                'NOT_YET_RELEASED',
-                'CANCELLED',
-                'HIATUS',
-                'UNKNOWN',
-              ];
-            };
-            readonly BookListStatus: {
-              readonly kind: 'valueSet';
-              readonly values: readonly ['PLANNING', 'READING', 'COMPLETED', 'ON_HOLD', 'DROPPED'];
-            };
-            readonly BookStatus: {
-              readonly kind: 'valueSet';
-              readonly values: readonly [
-                'PUBLISHED',
-                'RELEASING',
-                'CANCELLED',
-                'ON_HIATUS',
                 'UNKNOWN',
               ];
             };
@@ -15650,20 +15592,14 @@ type ContractBase = Omit<
               readonly kind: 'valueSet';
               readonly values: readonly ['PENDING', 'ACCEPTED', 'DECLINED', 'BLOCKED'];
             };
-            readonly GameListStatus: {
-              readonly kind: 'valueSet';
-              readonly values: readonly ['PLANNING', 'PLAYING', 'COMPLETED', 'ON_HOLD', 'DROPPED'];
-            };
-            readonly GameStatus: {
+            readonly ListStatus: {
               readonly kind: 'valueSet';
               readonly values: readonly [
-                'RELEASED',
-                'EARLY_ACCESS',
-                'ANNOUNCED',
-                'IN_DEVELOPMENT',
-                'DELAYED',
-                'CANCELLED',
-                'UNKNOWN',
+                'IN_PROGRESS',
+                'ON_HOLD',
+                'DROPPED',
+                'COMPLETED',
+                'PLANNED',
               ];
             };
             readonly MangaFormat: {
@@ -15678,16 +15614,12 @@ type ContractBase = Omit<
                 'UNKNOWN',
               ];
             };
-            readonly MangaListStatus: {
-              readonly kind: 'valueSet';
-              readonly values: readonly ['PLANNING', 'READING', 'COMPLETED', 'ON_HOLD', 'DROPPED'];
-            };
-            readonly MangaStatus: {
+            readonly MediaStatus: {
               readonly kind: 'valueSet';
               readonly values: readonly [
-                'FINISHED',
+                'RELEASED',
                 'RELEASING',
-                'NOT_YET_RELEASED',
+                'UPCOMING',
                 'CANCELLED',
                 'HIATUS',
                 'UNKNOWN',
@@ -15708,35 +15640,6 @@ type ContractBase = Omit<
                 'OTHER',
                 'UNKNOWN',
               ];
-            };
-            readonly MovieListStatus: {
-              readonly kind: 'valueSet';
-              readonly values: readonly ['PLANNING', 'WATCHING', 'COMPLETED', 'DROPPED'];
-            };
-            readonly MovieStatus: {
-              readonly kind: 'valueSet';
-              readonly values: readonly [
-                'RELEASED',
-                'IN_PRODUCTION',
-                'POST_PRODUCTION',
-                'RUMORED',
-                'CANCELLED',
-                'UNKNOWN',
-              ];
-            };
-            readonly MusicListStatus: {
-              readonly kind: 'valueSet';
-              readonly values: readonly [
-                'PLANNING',
-                'LISTENING',
-                'COMPLETED',
-                'ON_HOLD',
-                'DROPPED',
-              ];
-            };
-            readonly MusicStatus: {
-              readonly kind: 'valueSet';
-              readonly values: readonly ['RELEASED', 'UPCOMING', 'CANCELLED', 'UNKNOWN'];
             };
             readonly MusicType: {
               readonly kind: 'valueSet';
@@ -15819,21 +15722,6 @@ type ContractBase = Omit<
                 'LYRICIST',
                 'ARRANGER',
                 'OTHER',
-              ];
-            };
-            readonly TvListStatus: {
-              readonly kind: 'valueSet';
-              readonly values: readonly ['WATCHING', 'PLANNING', 'COMPLETED', 'ON_HOLD', 'DROPPED'];
-            };
-            readonly TvStatus: {
-              readonly kind: 'valueSet';
-              readonly values: readonly [
-                'RETURNING_SERIES',
-                'ENDED',
-                'CANCELED',
-                'IN_PRODUCTION',
-                'UPCOMING',
-                'UNKNOWN',
               ];
             };
           };
@@ -23179,10 +23067,6 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/jsonb@1' };
               };
-              readonly statuses: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/jsonb@1' };
-              };
               readonly titlePrimary: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -23259,7 +23143,6 @@ type ContractBase = Omit<
                 readonly scoredCount: { readonly column: 'scoredCount' };
                 readonly startDate: { readonly column: 'startDate' };
                 readonly statusDistribution: { readonly column: 'statusDistribution' };
-                readonly statuses: { readonly column: 'statuses' };
                 readonly titlePrimary: { readonly column: 'titlePrimary' };
                 readonly titleSecondary: { readonly column: 'titleSecondary' };
                 readonly totalScoreSum: { readonly column: 'totalScoreSum' };
@@ -26281,16 +26164,6 @@ type ContractBase = Omit<
               { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
             ];
           };
-          readonly AnimeListStatus: {
-            readonly codecId: 'pg/text@1';
-            readonly members: readonly [
-              { readonly name: 'PLANNING'; readonly value: 'PLANNING' },
-              { readonly name: 'WATCHING'; readonly value: 'WATCHING' },
-              { readonly name: 'COMPLETED'; readonly value: 'COMPLETED' },
-              { readonly name: 'ON_HOLD'; readonly value: 'ON_HOLD' },
-              { readonly name: 'DROPPED'; readonly value: 'DROPPED' },
-            ];
-          };
           readonly AnimeSeason: {
             readonly codecId: 'pg/text@1';
             readonly members: readonly [
@@ -26319,37 +26192,6 @@ type ContractBase = Omit<
               { readonly name: 'COMIC'; readonly value: 'COMIC' },
               { readonly name: 'MULTIMEDIA_PROJECT'; readonly value: 'MULTIMEDIA_PROJECT' },
               { readonly name: 'PICTURE_BOOK'; readonly value: 'PICTURE_BOOK' },
-              { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
-            ];
-          };
-          readonly AnimeStatus: {
-            readonly codecId: 'pg/text@1';
-            readonly members: readonly [
-              { readonly name: 'FINISHED'; readonly value: 'FINISHED' },
-              { readonly name: 'RELEASING'; readonly value: 'RELEASING' },
-              { readonly name: 'NOT_YET_RELEASED'; readonly value: 'NOT_YET_RELEASED' },
-              { readonly name: 'CANCELLED'; readonly value: 'CANCELLED' },
-              { readonly name: 'HIATUS'; readonly value: 'HIATUS' },
-              { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
-            ];
-          };
-          readonly BookListStatus: {
-            readonly codecId: 'pg/text@1';
-            readonly members: readonly [
-              { readonly name: 'PLANNING'; readonly value: 'PLANNING' },
-              { readonly name: 'READING'; readonly value: 'READING' },
-              { readonly name: 'COMPLETED'; readonly value: 'COMPLETED' },
-              { readonly name: 'ON_HOLD'; readonly value: 'ON_HOLD' },
-              { readonly name: 'DROPPED'; readonly value: 'DROPPED' },
-            ];
-          };
-          readonly BookStatus: {
-            readonly codecId: 'pg/text@1';
-            readonly members: readonly [
-              { readonly name: 'PUBLISHED'; readonly value: 'PUBLISHED' },
-              { readonly name: 'RELEASING'; readonly value: 'RELEASING' },
-              { readonly name: 'CANCELLED'; readonly value: 'CANCELLED' },
-              { readonly name: 'ON_HIATUS'; readonly value: 'ON_HIATUS' },
               { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
             ];
           };
@@ -26439,26 +26281,14 @@ type ContractBase = Omit<
               { readonly name: 'BLOCKED'; readonly value: 'BLOCKED' },
             ];
           };
-          readonly GameListStatus: {
+          readonly ListStatus: {
             readonly codecId: 'pg/text@1';
             readonly members: readonly [
-              { readonly name: 'PLANNING'; readonly value: 'PLANNING' },
-              { readonly name: 'PLAYING'; readonly value: 'PLAYING' },
-              { readonly name: 'COMPLETED'; readonly value: 'COMPLETED' },
+              { readonly name: 'IN_PROGRESS'; readonly value: 'IN_PROGRESS' },
               { readonly name: 'ON_HOLD'; readonly value: 'ON_HOLD' },
               { readonly name: 'DROPPED'; readonly value: 'DROPPED' },
-            ];
-          };
-          readonly GameStatus: {
-            readonly codecId: 'pg/text@1';
-            readonly members: readonly [
-              { readonly name: 'RELEASED'; readonly value: 'RELEASED' },
-              { readonly name: 'EARLY_ACCESS'; readonly value: 'EARLY_ACCESS' },
-              { readonly name: 'ANNOUNCED'; readonly value: 'ANNOUNCED' },
-              { readonly name: 'IN_DEVELOPMENT'; readonly value: 'IN_DEVELOPMENT' },
-              { readonly name: 'DELAYED'; readonly value: 'DELAYED' },
-              { readonly name: 'CANCELLED'; readonly value: 'CANCELLED' },
-              { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
+              { readonly name: 'COMPLETED'; readonly value: 'COMPLETED' },
+              { readonly name: 'PLANNED'; readonly value: 'PLANNED' },
             ];
           };
           readonly MangaFormat: {
@@ -26473,22 +26303,12 @@ type ContractBase = Omit<
               { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
             ];
           };
-          readonly MangaListStatus: {
+          readonly MediaStatus: {
             readonly codecId: 'pg/text@1';
             readonly members: readonly [
-              { readonly name: 'PLANNING'; readonly value: 'PLANNING' },
-              { readonly name: 'READING'; readonly value: 'READING' },
-              { readonly name: 'COMPLETED'; readonly value: 'COMPLETED' },
-              { readonly name: 'ON_HOLD'; readonly value: 'ON_HOLD' },
-              { readonly name: 'DROPPED'; readonly value: 'DROPPED' },
-            ];
-          };
-          readonly MangaStatus: {
-            readonly codecId: 'pg/text@1';
-            readonly members: readonly [
-              { readonly name: 'FINISHED'; readonly value: 'FINISHED' },
+              { readonly name: 'RELEASED'; readonly value: 'RELEASED' },
               { readonly name: 'RELEASING'; readonly value: 'RELEASING' },
-              { readonly name: 'NOT_YET_RELEASED'; readonly value: 'NOT_YET_RELEASED' },
+              { readonly name: 'UPCOMING'; readonly value: 'UPCOMING' },
               { readonly name: 'CANCELLED'; readonly value: 'CANCELLED' },
               { readonly name: 'HIATUS'; readonly value: 'HIATUS' },
               { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
@@ -26507,45 +26327,6 @@ type ContractBase = Omit<
               { readonly name: 'MUSIC_ALBUM'; readonly value: 'MUSIC_ALBUM' },
               { readonly name: 'MUSIC_TRACK'; readonly value: 'MUSIC_TRACK' },
               { readonly name: 'OTHER'; readonly value: 'OTHER' },
-              { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
-            ];
-          };
-          readonly MovieListStatus: {
-            readonly codecId: 'pg/text@1';
-            readonly members: readonly [
-              { readonly name: 'PLANNING'; readonly value: 'PLANNING' },
-              { readonly name: 'WATCHING'; readonly value: 'WATCHING' },
-              { readonly name: 'COMPLETED'; readonly value: 'COMPLETED' },
-              { readonly name: 'DROPPED'; readonly value: 'DROPPED' },
-            ];
-          };
-          readonly MovieStatus: {
-            readonly codecId: 'pg/text@1';
-            readonly members: readonly [
-              { readonly name: 'RELEASED'; readonly value: 'RELEASED' },
-              { readonly name: 'IN_PRODUCTION'; readonly value: 'IN_PRODUCTION' },
-              { readonly name: 'POST_PRODUCTION'; readonly value: 'POST_PRODUCTION' },
-              { readonly name: 'RUMORED'; readonly value: 'RUMORED' },
-              { readonly name: 'CANCELLED'; readonly value: 'CANCELLED' },
-              { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
-            ];
-          };
-          readonly MusicListStatus: {
-            readonly codecId: 'pg/text@1';
-            readonly members: readonly [
-              { readonly name: 'PLANNING'; readonly value: 'PLANNING' },
-              { readonly name: 'LISTENING'; readonly value: 'LISTENING' },
-              { readonly name: 'COMPLETED'; readonly value: 'COMPLETED' },
-              { readonly name: 'ON_HOLD'; readonly value: 'ON_HOLD' },
-              { readonly name: 'DROPPED'; readonly value: 'DROPPED' },
-            ];
-          };
-          readonly MusicStatus: {
-            readonly codecId: 'pg/text@1';
-            readonly members: readonly [
-              { readonly name: 'RELEASED'; readonly value: 'RELEASED' },
-              { readonly name: 'UPCOMING'; readonly value: 'UPCOMING' },
-              { readonly name: 'CANCELLED'; readonly value: 'CANCELLED' },
               { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
             ];
           };
@@ -26667,27 +26448,6 @@ type ContractBase = Omit<
               { readonly name: 'OTHER'; readonly value: 'OTHER' },
             ];
           };
-          readonly TvListStatus: {
-            readonly codecId: 'pg/text@1';
-            readonly members: readonly [
-              { readonly name: 'WATCHING'; readonly value: 'WATCHING' },
-              { readonly name: 'PLANNING'; readonly value: 'PLANNING' },
-              { readonly name: 'COMPLETED'; readonly value: 'COMPLETED' },
-              { readonly name: 'ON_HOLD'; readonly value: 'ON_HOLD' },
-              { readonly name: 'DROPPED'; readonly value: 'DROPPED' },
-            ];
-          };
-          readonly TvStatus: {
-            readonly codecId: 'pg/text@1';
-            readonly members: readonly [
-              { readonly name: 'RETURNING_SERIES'; readonly value: 'RETURNING_SERIES' },
-              { readonly name: 'ENDED'; readonly value: 'ENDED' },
-              { readonly name: 'CANCELED'; readonly value: 'CANCELED' },
-              { readonly name: 'IN_PRODUCTION'; readonly value: 'IN_PRODUCTION' },
-              { readonly name: 'UPCOMING'; readonly value: 'UPCOMING' },
-              { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
-            ];
-          };
         };
         readonly enumMemberTypes?: {
           readonly ActivityType: readonly [
@@ -26719,13 +26479,6 @@ type ContractBase = Omit<
             { readonly name: 'MUSIC'; readonly value: 'MUSIC' },
             { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
           ];
-          readonly AnimeListStatus: readonly [
-            { readonly name: 'PLANNING'; readonly value: 'PLANNING' },
-            { readonly name: 'WATCHING'; readonly value: 'WATCHING' },
-            { readonly name: 'COMPLETED'; readonly value: 'COMPLETED' },
-            { readonly name: 'ON_HOLD'; readonly value: 'ON_HOLD' },
-            { readonly name: 'DROPPED'; readonly value: 'DROPPED' },
-          ];
           readonly AnimeSeason: readonly [
             { readonly name: 'WINTER'; readonly value: 'WINTER' },
             { readonly name: 'SPRING'; readonly value: 'SPRING' },
@@ -26749,28 +26502,6 @@ type ContractBase = Omit<
             { readonly name: 'COMIC'; readonly value: 'COMIC' },
             { readonly name: 'MULTIMEDIA_PROJECT'; readonly value: 'MULTIMEDIA_PROJECT' },
             { readonly name: 'PICTURE_BOOK'; readonly value: 'PICTURE_BOOK' },
-            { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
-          ];
-          readonly AnimeStatus: readonly [
-            { readonly name: 'FINISHED'; readonly value: 'FINISHED' },
-            { readonly name: 'RELEASING'; readonly value: 'RELEASING' },
-            { readonly name: 'NOT_YET_RELEASED'; readonly value: 'NOT_YET_RELEASED' },
-            { readonly name: 'CANCELLED'; readonly value: 'CANCELLED' },
-            { readonly name: 'HIATUS'; readonly value: 'HIATUS' },
-            { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
-          ];
-          readonly BookListStatus: readonly [
-            { readonly name: 'PLANNING'; readonly value: 'PLANNING' },
-            { readonly name: 'READING'; readonly value: 'READING' },
-            { readonly name: 'COMPLETED'; readonly value: 'COMPLETED' },
-            { readonly name: 'ON_HOLD'; readonly value: 'ON_HOLD' },
-            { readonly name: 'DROPPED'; readonly value: 'DROPPED' },
-          ];
-          readonly BookStatus: readonly [
-            { readonly name: 'PUBLISHED'; readonly value: 'PUBLISHED' },
-            { readonly name: 'RELEASING'; readonly value: 'RELEASING' },
-            { readonly name: 'CANCELLED'; readonly value: 'CANCELLED' },
-            { readonly name: 'ON_HIATUS'; readonly value: 'ON_HIATUS' },
             { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
           ];
           readonly CharacterRole: readonly [
@@ -26838,21 +26569,12 @@ type ContractBase = Omit<
             { readonly name: 'DECLINED'; readonly value: 'DECLINED' },
             { readonly name: 'BLOCKED'; readonly value: 'BLOCKED' },
           ];
-          readonly GameListStatus: readonly [
-            { readonly name: 'PLANNING'; readonly value: 'PLANNING' },
-            { readonly name: 'PLAYING'; readonly value: 'PLAYING' },
-            { readonly name: 'COMPLETED'; readonly value: 'COMPLETED' },
+          readonly ListStatus: readonly [
+            { readonly name: 'IN_PROGRESS'; readonly value: 'IN_PROGRESS' },
             { readonly name: 'ON_HOLD'; readonly value: 'ON_HOLD' },
             { readonly name: 'DROPPED'; readonly value: 'DROPPED' },
-          ];
-          readonly GameStatus: readonly [
-            { readonly name: 'RELEASED'; readonly value: 'RELEASED' },
-            { readonly name: 'EARLY_ACCESS'; readonly value: 'EARLY_ACCESS' },
-            { readonly name: 'ANNOUNCED'; readonly value: 'ANNOUNCED' },
-            { readonly name: 'IN_DEVELOPMENT'; readonly value: 'IN_DEVELOPMENT' },
-            { readonly name: 'DELAYED'; readonly value: 'DELAYED' },
-            { readonly name: 'CANCELLED'; readonly value: 'CANCELLED' },
-            { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
+            { readonly name: 'COMPLETED'; readonly value: 'COMPLETED' },
+            { readonly name: 'PLANNED'; readonly value: 'PLANNED' },
           ];
           readonly MangaFormat: readonly [
             { readonly name: 'MANGA'; readonly value: 'MANGA' },
@@ -26863,17 +26585,10 @@ type ContractBase = Omit<
             { readonly name: 'MANHUA'; readonly value: 'MANHUA' },
             { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
           ];
-          readonly MangaListStatus: readonly [
-            { readonly name: 'PLANNING'; readonly value: 'PLANNING' },
-            { readonly name: 'READING'; readonly value: 'READING' },
-            { readonly name: 'COMPLETED'; readonly value: 'COMPLETED' },
-            { readonly name: 'ON_HOLD'; readonly value: 'ON_HOLD' },
-            { readonly name: 'DROPPED'; readonly value: 'DROPPED' },
-          ];
-          readonly MangaStatus: readonly [
-            { readonly name: 'FINISHED'; readonly value: 'FINISHED' },
+          readonly MediaStatus: readonly [
+            { readonly name: 'RELEASED'; readonly value: 'RELEASED' },
             { readonly name: 'RELEASING'; readonly value: 'RELEASING' },
-            { readonly name: 'NOT_YET_RELEASED'; readonly value: 'NOT_YET_RELEASED' },
+            { readonly name: 'UPCOMING'; readonly value: 'UPCOMING' },
             { readonly name: 'CANCELLED'; readonly value: 'CANCELLED' },
             { readonly name: 'HIATUS'; readonly value: 'HIATUS' },
             { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
@@ -26889,33 +26604,6 @@ type ContractBase = Omit<
             { readonly name: 'MUSIC_ALBUM'; readonly value: 'MUSIC_ALBUM' },
             { readonly name: 'MUSIC_TRACK'; readonly value: 'MUSIC_TRACK' },
             { readonly name: 'OTHER'; readonly value: 'OTHER' },
-            { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
-          ];
-          readonly MovieListStatus: readonly [
-            { readonly name: 'PLANNING'; readonly value: 'PLANNING' },
-            { readonly name: 'WATCHING'; readonly value: 'WATCHING' },
-            { readonly name: 'COMPLETED'; readonly value: 'COMPLETED' },
-            { readonly name: 'DROPPED'; readonly value: 'DROPPED' },
-          ];
-          readonly MovieStatus: readonly [
-            { readonly name: 'RELEASED'; readonly value: 'RELEASED' },
-            { readonly name: 'IN_PRODUCTION'; readonly value: 'IN_PRODUCTION' },
-            { readonly name: 'POST_PRODUCTION'; readonly value: 'POST_PRODUCTION' },
-            { readonly name: 'RUMORED'; readonly value: 'RUMORED' },
-            { readonly name: 'CANCELLED'; readonly value: 'CANCELLED' },
-            { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
-          ];
-          readonly MusicListStatus: readonly [
-            { readonly name: 'PLANNING'; readonly value: 'PLANNING' },
-            { readonly name: 'LISTENING'; readonly value: 'LISTENING' },
-            { readonly name: 'COMPLETED'; readonly value: 'COMPLETED' },
-            { readonly name: 'ON_HOLD'; readonly value: 'ON_HOLD' },
-            { readonly name: 'DROPPED'; readonly value: 'DROPPED' },
-          ];
-          readonly MusicStatus: readonly [
-            { readonly name: 'RELEASED'; readonly value: 'RELEASED' },
-            { readonly name: 'UPCOMING'; readonly value: 'UPCOMING' },
-            { readonly name: 'CANCELLED'; readonly value: 'CANCELLED' },
             { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
           ];
           readonly MusicType: readonly [
@@ -26999,21 +26687,6 @@ type ContractBase = Omit<
             { readonly name: 'LYRICIST'; readonly value: 'LYRICIST' },
             { readonly name: 'ARRANGER'; readonly value: 'ARRANGER' },
             { readonly name: 'OTHER'; readonly value: 'OTHER' },
-          ];
-          readonly TvListStatus: readonly [
-            { readonly name: 'WATCHING'; readonly value: 'WATCHING' },
-            { readonly name: 'PLANNING'; readonly value: 'PLANNING' },
-            { readonly name: 'COMPLETED'; readonly value: 'COMPLETED' },
-            { readonly name: 'ON_HOLD'; readonly value: 'ON_HOLD' },
-            { readonly name: 'DROPPED'; readonly value: 'DROPPED' },
-          ];
-          readonly TvStatus: readonly [
-            { readonly name: 'RETURNING_SERIES'; readonly value: 'RETURNING_SERIES' },
-            { readonly name: 'ENDED'; readonly value: 'ENDED' },
-            { readonly name: 'CANCELED'; readonly value: 'CANCELED' },
-            { readonly name: 'IN_PRODUCTION'; readonly value: 'IN_PRODUCTION' },
-            { readonly name: 'UPCOMING'; readonly value: 'UPCOMING' },
-            { readonly name: 'UNKNOWN'; readonly value: 'UNKNOWN' },
           ];
         };
       };

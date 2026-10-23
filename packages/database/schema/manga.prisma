@@ -10,15 +10,6 @@ enum MangaFormat {
     UNKNOWN
 }
 
-enum MangaStatus {
-    FINISHED
-    RELEASING
-    NOT_YET_RELEASED
-    CANCELLED
-    HIATUS
-    UNKNOWN
-}
-
 model Manga {
     id             Int     @id @default(autoincrement())
     anilistId      Int?    @unique
@@ -53,7 +44,7 @@ model Manga {
     tags MangaTag[]
     source AnimeSource @default(UNKNOWN)
     format MangaFormat @default(UNKNOWN)
-    status MangaStatus @default(UNKNOWN)
+    status MediaStatus @default(UNKNOWN)
 
     averageScore       Float?
     favorites          Int    @default(0)

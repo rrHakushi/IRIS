@@ -411,8 +411,8 @@ export class MediaStatsService {
           statusCounts[status] = (statusCounts[status] ?? 0) + 1
 
           if (status === "COMPLETED") completedCount++
-          else if (status === "WATCHING") watchingCount++
-          else if (status === "PLANNING") planningCount++
+          else if (status === "IN_PROGRESS") watchingCount++
+          else if (status === "PLANNED") planningCount++
           else if (status === "ON_HOLD") onHoldCount++
           else if (status === "DROPPED") droppedCount++
 
@@ -431,7 +431,7 @@ export class MediaStatsService {
           const entryWatchedMinutes = progress * duration * (rewatched + 1)
           totalTimeMinutes += entryWatchedMinutes
 
-          if (status === "PLANNING" || status === "WATCHING") {
+          if (status === "PLANNED" || status === "IN_PROGRESS") {
             const totalEps = anime?.episodeCount || progress
             const remaining = Math.max(0, totalEps - progress)
             plannedMinutes += remaining * duration
@@ -838,8 +838,8 @@ export class MediaStatsService {
           statusCounts[status] = (statusCounts[status] ?? 0) + 1
 
           if (status === "COMPLETED") completedCount++
-          else if (status === "READING") readingCount++
-          else if (status === "PLANNING") planningCount++
+          else if (status === "IN_PROGRESS") readingCount++
+          else if (status === "PLANNED") planningCount++
           else if (status === "ON_HOLD") onHoldCount++
           else if (status === "DROPPED") droppedCount++
 
@@ -866,7 +866,7 @@ export class MediaStatsService {
           }
           totalTimeMinutes += entryMinutes
 
-          if (status === "PLANNING" || status === "READING") {
+          if (status === "PLANNED" || status === "IN_PROGRESS") {
             if (manga?.chapterCount) {
               const rem = Math.max(0, manga.chapterCount - chProg)
               plannedMinutes += rem * chRate
@@ -1259,8 +1259,8 @@ export class MediaStatsService {
         for (const e of filtered) {
           statusCounts[e.status] = (statusCounts[e.status] ?? 0) + 1
           if (e.status === "COMPLETED") completedCount++
-          else if (e.status === "WATCHING") watchingCount++
-          else if (e.status === "PLANNING") planningCount++
+          else if (e.status === "IN_PROGRESS") watchingCount++
+          else if (e.status === "PLANNED") planningCount++
           else if (e.status === "DROPPED") droppedCount++
 
           const movie = e.movie
@@ -1569,8 +1569,8 @@ export class MediaStatsService {
         for (const e of filtered) {
           statusCounts[e.status] = (statusCounts[e.status] ?? 0) + 1
           if (e.status === "COMPLETED") completedCount++
-          else if (e.status === "WATCHING") watchingCount++
-          else if (e.status === "PLANNING") planningCount++
+          else if (e.status === "IN_PROGRESS") watchingCount++
+          else if (e.status === "PLANNED") planningCount++
           else if (e.status === "ON_HOLD") onHoldCount++
           else if (e.status === "DROPPED") droppedCount++
 
@@ -1891,8 +1891,8 @@ export class MediaStatsService {
         for (const e of filtered) {
           statusCounts[e.status] = (statusCounts[e.status] ?? 0) + 1
           if (e.status === "COMPLETED") completedCount++
-          else if (e.status === "PLAYING") playingCount++
-          else if (e.status === "PLANNING") planningCount++
+          else if (e.status === "IN_PROGRESS") playingCount++
+          else if (e.status === "PLANNED") planningCount++
           else if (e.status === "ON_HOLD") onHoldCount++
           else if (e.status === "DROPPED") droppedCount++
 
@@ -2204,8 +2204,8 @@ export class MediaStatsService {
         for (const e of filtered) {
           statusCounts[e.status] = (statusCounts[e.status] ?? 0) + 1
           if (e.status === "COMPLETED") completedCount++
-          else if (e.status === "READING") readingCount++
-          else if (e.status === "PLANNING") planningCount++
+          else if (e.status === "IN_PROGRESS") readingCount++
+          else if (e.status === "PLANNED") planningCount++
           else if (e.status === "ON_HOLD") onHoldCount++
           else if (e.status === "DROPPED") droppedCount++
 
@@ -2543,9 +2543,9 @@ export class MediaStatsService {
             totalCount,
             completedCount: filtered.filter((i) => i.status === "COMPLETED")
               .length,
-            currentCount: filtered.filter((i) => i.status === "LISTENING")
+            currentCount: filtered.filter((i) => i.status === "IN_PROGRESS")
               .length,
-            planningCount: filtered.filter((i) => i.status === "PLANNING")
+            planningCount: filtered.filter((i) => i.status === "PLANNED")
               .length,
             onHoldCount: 0,
             droppedCount: filtered.filter((i) => i.status === "DROPPED").length,

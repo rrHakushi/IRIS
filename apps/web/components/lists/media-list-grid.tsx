@@ -169,9 +169,26 @@ export function toMediaListEntry(
   entry: ListEntryData["entry"]
 ): MediaListEntryData {
   const e = entry as any
-  let status = (entry.status?.toUpperCase() || "PLANNING") as MediaListStatus
-  if ((status as any) === "CURRENT" || (status as any) === "TRACKING") {
-    status = "WATCHING"
+  let raw = entry.status?.toUpperCase() || "PLANNED"
+  let status: MediaListStatus = "PLANNED"
+  if (
+    raw === "IN_PROGRESS" ||
+    raw === "WATCHING" ||
+    raw === "READING" ||
+    raw === "PLAYING" ||
+    raw === "LISTENING" ||
+    raw === "CURRENT" ||
+    raw === "TRACKING"
+  ) {
+    status = "IN_PROGRESS"
+  } else if (raw === "ON_HOLD" || raw === "HOLD" || raw === "PAUSED") {
+    status = "ON_HOLD"
+  } else if (raw === "COMPLETED" || raw === "FINISHED") {
+    status = "COMPLETED"
+  } else if (raw === "DROPPED") {
+    status = "DROPPED"
+  } else {
+    status = "PLANNED"
   }
   const rewatchedCount =
     entry.rewatched ??
@@ -241,11 +258,11 @@ export function MediaListGrid({
   // Compute status badge counts from facets
   const statusExpectedCounts = useMemo(() => {
     const map: Record<string, number> = {
-      WATCHING: 0,
+      IN_PROGRESS: 0,
       ON_HOLD: 0,
       COMPLETED: 0,
       DROPPED: 0,
-      PLANNING: 0,
+      PLANNED: 0,
     }
 
     if (!facets?.statuses) return map
@@ -253,13 +270,15 @@ export function MediaListGrid({
     facets.statuses.forEach((item) => {
       const upper = item.value.toUpperCase()
       if (
+        upper === "IN_PROGRESS" ||
         upper === "WATCHING" ||
         upper === "READING" ||
         upper === "PLAYING" ||
         upper === "LISTENING" ||
-        upper === "CURRENT"
+        upper === "CURRENT" ||
+        upper === "TRACKING"
       ) {
-        map.WATCHING = (map.WATCHING || 0) + item.count
+        map.IN_PROGRESS = (map.IN_PROGRESS || 0) + item.count
       } else if (
         upper === "ON_HOLD" ||
         upper === "HOLD" ||
@@ -270,8 +289,8 @@ export function MediaListGrid({
         map.COMPLETED = (map.COMPLETED || 0) + item.count
       } else if (upper === "DROPPED") {
         map.DROPPED = (map.DROPPED || 0) + item.count
-      } else if (upper === "PLANNING") {
-        map.PLANNING = (map.PLANNING || 0) + item.count
+      } else if (upper === "PLANNED" || upper === "PLANNING") {
+        map.PLANNED = (map.PLANNED || 0) + item.count
       }
     })
 
@@ -279,20 +298,20 @@ export function MediaListGrid({
   }, [facets?.statuses])
 
   // When All is selected, separate entries by status in this exact order:
-  // 1. Watching (or Reading / Playing)
+  // 1. In Progress (Watching, Reading, Playing, etc.)
   // 2. On hold
   // 3. Completed
   // 4. Dropped
-  // 5. Planning
+  // 5. Planned
   const groupedSections = useMemo(() => {
     if (activeStatus && activeStatus !== "ALL") {
       return null
     }
 
-    const watchingSection = {
-      key: "WATCHING",
+    const inProgressSection = {
+      key: "IN_PROGRESS",
       title: currentCategory?.activeVerb || "Watching",
-      expectedCount: statusExpectedCounts.WATCHING ?? 0,
+      expectedCount: statusExpectedCounts.IN_PROGRESS ?? 0,
       items: [] as ListEntryData[],
     }
     const onHoldSection = {
@@ -313,23 +332,25 @@ export function MediaListGrid({
       expectedCount: statusExpectedCounts.DROPPED ?? 0,
       items: [] as ListEntryData[],
     }
-    const planningSection = {
-      key: "PLANNING",
+    const plannedSection = {
+      key: "PLANNED",
       title: "Planning",
-      expectedCount: statusExpectedCounts.PLANNING ?? 0,
+      expectedCount: statusExpectedCounts.PLANNED ?? 0,
       items: [] as ListEntryData[],
     }
 
     for (const item of items) {
       const upperStatus = (item.entry.status || "").toUpperCase()
       if (
+        upperStatus === "IN_PROGRESS" ||
         upperStatus === "WATCHING" ||
         upperStatus === "READING" ||
         upperStatus === "PLAYING" ||
         upperStatus === "CURRENT" ||
-        upperStatus === "LISTENING"
+        upperStatus === "LISTENING" ||
+        upperStatus === "TRACKING"
       ) {
-        watchingSection.items.push(item)
+        inProgressSection.items.push(item)
       } else if (
         upperStatus === "ON_HOLD" ||
         upperStatus === "HOLD" ||
@@ -341,16 +362,16 @@ export function MediaListGrid({
       } else if (upperStatus === "DROPPED") {
         droppedSection.items.push(item)
       } else {
-        planningSection.items.push(item)
+        plannedSection.items.push(item)
       }
     }
 
     const sections = [
-      watchingSection,
+      inProgressSection,
       onHoldSection,
       completedSection,
       droppedSection,
-      planningSection,
+      plannedSection,
     ]
 
     const hasFilter = Boolean(searchQuery?.trim())

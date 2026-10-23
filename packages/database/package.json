@@ -19,7 +19,8 @@
     "db:update": "bun --bun --env-file=../../.env prisma db update",
     "db:verify": "bun --bun --env-file=../../.env prisma db verify",
     "db:migrate": "bun --bun --env-file=../../.env prisma db migrate",
-    "db:prepare-prisma8": "bun --bun --env-file=../../.env run scripts/prepare-prisma8.ts"
+    "db:prepare-prisma8": "bun --bun --env-file=../../.env run scripts/prepare-prisma8.ts",
+    "db:unify-status": "bun --bun --env-file=../../.env run scripts/unify-status.ts"
   },
   "dependencies": {
     "@prisma/orm-postgres": "^8.0.0-rc.20"

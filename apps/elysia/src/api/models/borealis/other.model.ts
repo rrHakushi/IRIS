@@ -7,11 +7,6 @@ export const ProgressFieldSchema = t.Object({
   max: t.Optional(t.Nullable(t.Number({ minimum: 1, description: 'Optional maximum value for completion' }))),
 })
 
-export const StatusOptionSchema = t.Object({
-  key: t.String({ minLength: 1, description: 'Status identifier key (e.g. PLANNING, IN_PROGRESS)' }),
-  label: t.String({ minLength: 1, description: 'Display label for status' }),
-  isCompleted: t.Optional(t.Boolean({ description: 'Whether this status signifies completion' })),
-})
 
 export const BorealisOtherModel = {
   otherParam: t.Object({
@@ -19,7 +14,6 @@ export const BorealisOtherModel = {
   }),
 
   progressField: ProgressFieldSchema,
-  statusOption: StatusOptionSchema,
 
   createOtherBody: t.Object({
     titlePrimary: t.String({ minLength: 1, description: 'Primary title for custom item' }),
@@ -39,11 +33,6 @@ export const BorealisOtherModel = {
       minLength: 1,
       description: 'Designated field key to increment via /increment route (max 1)',
     }),
-    statuses: t.Optional(
-      t.Array(StatusOptionSchema, {
-        description: 'Optional custom status options overriding defaults',
-      })
-    ),
   }),
 
   updateOtherBody: t.Object({
@@ -66,11 +55,6 @@ export const BorealisOtherModel = {
       t.String({
         minLength: 1,
         description: 'Designated field key to increment via /increment route (max 1)',
-      })
-    ),
-    statuses: t.Optional(
-      t.Array(StatusOptionSchema, {
-        description: 'Optional custom status options',
       })
     ),
   }),

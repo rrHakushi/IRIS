@@ -66,26 +66,83 @@ export type ReviewVoteType = EnumValues<"ReviewVoteType">;
 export type RecommendationVoteType = EnumValues<"RecommendationVoteType">;
 export type StaffRole = EnumValues<"StaffRole">;
 export type CharacterRole = EnumValues<"CharacterRole">;
-export type AnimeStatus = EnumValues<"AnimeStatus">;
+export type MediaStatus = EnumValues<"MediaStatus">;
+export type ListStatus = EnumValues<"ListStatus">;
 export type AnimeSeason = EnumValues<"AnimeSeason">;
 export type AnimeSource = EnumValues<"AnimeSource">;
 export type AnimeFormat = EnumValues<"AnimeFormat">;
 export type EpisodeType = EnumValues<"EpisodeType">;
 export type MangaFormat = EnumValues<"MangaFormat">;
-export type MangaStatus = EnumValues<"MangaStatus">;
-export type MovieStatus = EnumValues<"MovieStatus">;
-export type TvStatus = EnumValues<"TvStatus">;
-export type BookStatus = EnumValues<"BookStatus">;
-export type GameStatus = EnumValues<"GameStatus">;
 export type MusicType = EnumValues<"MusicType">;
-export type MusicStatus = EnumValues<"MusicStatus">;
-export type AnimeListStatus = EnumValues<"AnimeListStatus">;
-export type MangaListStatus = EnumValues<"MangaListStatus">;
-export type MovieListStatus = EnumValues<"MovieListStatus">;
-export type TvListStatus = EnumValues<"TvListStatus">;
-export type GameListStatus = EnumValues<"GameListStatus">;
-export type BookListStatus = EnumValues<"BookListStatus">;
-export type MusicListStatus = EnumValues<"MusicListStatus">;
+
+export const LIST_STATUSES = [
+  "IN_PROGRESS",
+  "ON_HOLD",
+  "DROPPED",
+  "COMPLETED",
+  "PLANNED",
+] as const satisfies readonly ListStatus[];
+
+export const MEDIA_STATUSES = [
+  "RELEASED",
+  "RELEASING",
+  "UPCOMING",
+  "CANCELLED",
+  "HIATUS",
+  "UNKNOWN",
+] as const satisfies readonly MediaStatus[];
+
+const LEGACY_LIST_STATUS: Record<string, ListStatus> = {
+  PLANNING: "PLANNED",
+  WATCHING: "IN_PROGRESS",
+  READING: "IN_PROGRESS",
+  PLAYING: "IN_PROGRESS",
+  LISTENING: "IN_PROGRESS",
+  TRACKING: "IN_PROGRESS",
+  CURRENT: "IN_PROGRESS",
+  REPEATING: "IN_PROGRESS",
+  PAUSED: "ON_HOLD",
+};
+
+const LEGACY_MEDIA_STATUS: Record<string, MediaStatus> = {
+  FINISHED: "RELEASED",
+  PUBLISHED: "RELEASED",
+  ENDED: "RELEASED",
+  RETURNING_SERIES: "RELEASING",
+  CONTINUING: "RELEASING",
+  EARLY_ACCESS: "RELEASING",
+  NOT_YET_RELEASED: "UPCOMING",
+  IN_PRODUCTION: "UPCOMING",
+  POST_PRODUCTION: "UPCOMING",
+  RUMORED: "UPCOMING",
+  ANNOUNCED: "UPCOMING",
+  IN_DEVELOPMENT: "UPCOMING",
+  CANCELED: "CANCELLED",
+  ON_HIATUS: "HIATUS",
+  DELAYED: "HIATUS",
+};
+
+/**
+ * Normalises any list-status string (including pre-unification values found in
+ * old backups/imports) to the unified `ListStatus`. Unknown values -> fallback.
+ */
+export function normalizeListStatus(
+  value: unknown,
+  fallback: ListStatus = "PLANNED"
+): ListStatus {
+  if (typeof value !== "string") return fallback;
+  const v = value.trim().toUpperCase().replace(/[\s-]+/g, "_");
+  if ((LIST_STATUSES as readonly string[]).includes(v)) return v as ListStatus;
+  return LEGACY_LIST_STATUS[v] ?? fallback;
+}
+
+/** Normalises provider/legacy media status strings to the unified `MediaStatus`. */
+export function normalizeMediaStatus(value: unknown): MediaStatus {
+  if (typeof value !== "string") return "UNKNOWN";
+  const v = value.trim().toUpperCase().replace(/[\s-]+/g, "_");
+  if ((MEDIA_STATUSES as readonly string[]).includes(v)) return v as MediaStatus;
+  return LEGACY_MEDIA_STATUS[v] ?? "UNKNOWN";
+}
 
 // Helper utilities
 export async function countOf(collection: {

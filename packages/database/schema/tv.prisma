@@ -1,14 +1,5 @@
 // use prisma-8
 
-enum TvStatus {
-    RETURNING_SERIES
-    ENDED
-    CANCELED
-    IN_PRODUCTION
-    UPCOMING
-    UNKNOWN
-}
-
 model Tv {
     id       Int     @id @default(autoincrement())
     tmdbId   Int?
@@ -48,7 +39,7 @@ model Tv {
     tags TvTag[]
     networks String[]
 
-    status   TvStatus @default(UNKNOWN)
+    status   MediaStatus @default(UNKNOWN)
     isAdult  Boolean  @default(false)
     synonyms String[]
     trailers Jsonb?

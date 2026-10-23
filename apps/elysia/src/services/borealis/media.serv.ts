@@ -2249,15 +2249,15 @@ export class BorealisMediaServ {
         const jaccard = tagIntersection.length / tagUnion.size
         const points = Math.round(jaccard * 25)
         similarityScore += points
-        const sharedTags = candidate.tags
-          .filter((t) => sourceTagIds.has(t.id))
-          .map((t) => t.name)
+        const sharedTags = (candidate.tags || [])
+          .filter((t: any) => sourceTagIds.has(t.id))
+          .map((t: any) => t.name)
         matchReasons.push(`Shared gameplay themes: ${sharedTags.slice(0, 3).join(', ')} (+${points} pts)`)
       }
 
       // 3. Developer / Studio Overlap (Max 20 points)
-      const candDevs = (candidate.developers || []).map((d) => d.toLowerCase().trim())
-      const sharedDevs = candDevs.filter((d) => sourceDevelopers.has(d))
+      const candDevs = (candidate.developers || []).map((d: any) => String(d).toLowerCase().trim())
+      const sharedDevs = candDevs.filter((d: any) => sourceDevelopers.has(d))
       if (sharedDevs.length > 0) {
         similarityScore += 20
         matchReasons.push(`Same developer (${sharedDevs.join(', ')}) (+20 pts)`)
@@ -2271,8 +2271,8 @@ export class BorealisMediaServ {
       }
 
       // 5. Platform Overlap (Max 10 points)
-      const candPlatforms = (candidate.platforms || []).map((p) => p.toLowerCase().trim())
-      const sharedPlatforms = candPlatforms.filter((p) => sourcePlatforms.has(p))
+      const candPlatforms = (candidate.platforms || []).map((p: any) => String(p).toLowerCase().trim())
+      const sharedPlatforms = candPlatforms.filter((p: any) => sourcePlatforms.has(p))
       if (sharedPlatforms.length > 0) {
         similarityScore += 10
         matchReasons.push(`Shared platforms (${sharedPlatforms.slice(0, 3).join(', ')}) (+10 pts)`)
@@ -2613,30 +2613,30 @@ export class BorealisMediaServ {
       }
 
       // 2. Genre Jaccard Similarity (Max 30 points)
-      const candGenreIds = new Set(candidate.genres.map((g) => g.id))
+      const candGenreIds = new Set((candidate.genres || []).map((g: any) => g.id))
       const genreIntersection = Array.from(sourceGenreIds).filter((gid) => candGenreIds.has(gid))
       const genreUnion = new Set([...sourceGenreIds, ...candGenreIds])
       if (genreUnion.size > 0 && genreIntersection.length > 0) {
         const jaccard = genreIntersection.length / genreUnion.size
         const points = Math.round(jaccard * 30)
         similarityScore += points
-        const sharedNames = candidate.genres
-          .filter((g) => sourceGenreIds.has(g.id))
-          .map((g) => g.name)
+        const sharedNames = (candidate.genres || [])
+          .filter((g: any) => sourceGenreIds.has(g.id))
+          .map((g: any) => g.name)
         matchReasons.push(`Shared genres: ${sharedNames.join(', ')} (+${points} pts)`)
       }
 
       // 3. Tag / Theme Jaccard Similarity (Max 20 points)
-      const candTagIds = new Set(candidate.tags.map((t) => t.id))
+      const candTagIds = new Set((candidate.tags || []).map((t: any) => t.id))
       const tagIntersection = Array.from(sourceTagIds).filter((tid) => candTagIds.has(tid))
       const tagUnion = new Set([...sourceTagIds, ...candTagIds])
       if (tagUnion.size > 0 && tagIntersection.length > 0) {
         const jaccard = tagIntersection.length / tagUnion.size
         const points = Math.round(jaccard * 20)
         similarityScore += points
-        const sharedTags = candidate.tags
-          .filter((t) => sourceTagIds.has(t.id))
-          .map((t) => t.name)
+        const sharedTags = (candidate.tags || [])
+          .filter((t: any) => sourceTagIds.has(t.id))
+          .map((t: any) => t.name)
         matchReasons.push(`Shared mood / tags: ${sharedTags.slice(0, 3).join(', ')} (+${points} pts)`)
       }
 

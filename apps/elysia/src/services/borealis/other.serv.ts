@@ -5,14 +5,6 @@ import { uploadPublicAsset } from '../../utils/s3'
 import { CarinaNotificationsServ } from '../carina/notifications.serv'
 import type { CreateOtherBody, UpdateOtherBody } from '../../api/models/borealis/other.model'
 
-const DEFAULT_STATUSES = [
-  { key: 'PLANNING', label: 'Planning', isCompleted: false },
-  { key: 'TRACKING', label: 'Tracking', isCompleted: false },
-  { key: 'COMPLETED', label: 'Completed', isCompleted: true },
-  { key: 'ON_HOLD', label: 'On Hold', isCompleted: false },
-  { key: 'DROPPED', label: 'Dropped', isCompleted: false },
-]
-
 export class BorealisOtherServ {
   /**
    * Create a custom trackable catalog item.
@@ -44,8 +36,6 @@ export class BorealisOtherServ {
     const startDate = body.startDate ? new Date(body.startDate) : null
     const endDate = body.endDate ? new Date(body.endDate) : null
     const format = body.format ? body.format.trim().toLowerCase() : null
-    const statuses =
-      body.statuses && body.statuses.length > 0 ? body.statuses : DEFAULT_STATUSES
 
     const created = await prisma.orm.public.Other.create({
       creatorId: userId,
@@ -60,7 +50,6 @@ export class BorealisOtherServ {
       isPublished: Boolean(body.isPublished),
       progressFields: body.progressFields as any,
       incrementFieldKey: body.incrementFieldKey,
-      statuses: statuses as any,
     })
 
     const item = await prisma.orm.public.Other
@@ -155,7 +144,6 @@ export class BorealisOtherServ {
         endDate: existing.endDate ? toDate(existing.endDate).toISOString() : null,
         progressFields: existing.progressFields,
         incrementFieldKey: existing.incrementFieldKey,
-        statuses: existing.statuses,
         updatedAt: toDate(existing.updatedAt).toISOString(),
       } as any
 
@@ -228,7 +216,6 @@ export class BorealisOtherServ {
         isPublished: body.isPublished !== undefined ? Boolean(body.isPublished) : undefined,
         progressFields: body.progressFields !== undefined ? (body.progressFields as any) : undefined,
         incrementFieldKey: incrementFieldKey !== undefined ? incrementFieldKey : undefined,
-        statuses: body.statuses !== undefined ? (body.statuses as any) : undefined,
         preUpdateSnapshot: preUpdateSnapshot as any,
       })
 
@@ -357,7 +344,6 @@ export class BorealisOtherServ {
       isPublished: false,
       progressFields: (snapshot.progressFields || item.progressFields) as any,
       incrementFieldKey: snapshot.incrementFieldKey || item.incrementFieldKey,
-      statuses: (snapshot.statuses || item.statuses) as any,
     })
 
     // Repoint user's list entry if present

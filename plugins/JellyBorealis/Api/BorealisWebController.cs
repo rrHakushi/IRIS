@@ -318,7 +318,7 @@ public class BorealisWebController : ControllerBase
         _logger.LogInformation("[Borealis WebController] [INCREMENT FALLBACK] Upserting entry for Id={Id}...", id);
         var saveDto = new BorealisSaveEntryDto
         {
-            Status = "WATCHING",
+            Status = "IN_PROGRESS",
             Progress = count
         };
 

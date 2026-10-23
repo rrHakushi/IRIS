@@ -49,14 +49,21 @@ export interface MediaSearchResult {
   url?: string
 }
 
+/** Unified list status used across IRIS (mirrors the DB `ListStatus` enum). */
+export type UnifiedListStatus =
+  | "IN_PROGRESS"
+  | "ON_HOLD"
+  | "DROPPED"
+  | "COMPLETED"
+  | "PLANNED"
+
 export interface LibraryItem {
   id: string
   externalId: string
   provider: string
   mediaType: MediaType
   title: string
-  status:
-    "CURRENT" | "PLANNING" | "COMPLETED" | "DROPPED" | "PAUSED" | "REPEATING"
+  status: UnifiedListStatus
   score?: number | null
   progress?: number
   progressVolumes?: number

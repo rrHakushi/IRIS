@@ -1,14 +1,5 @@
 // use prisma-8
 
-enum AnimeStatus {
-    FINISHED
-    RELEASING
-    NOT_YET_RELEASED
-    CANCELLED
-    HIATUS
-    UNKNOWN
-}
-
 enum AnimeSeason {
     WINTER
     SPRING
@@ -94,7 +85,7 @@ model Anime {
     tags AnimeTag[]
     source       AnimeSource @default(UNKNOWN)
     format       AnimeFormat @default(UNKNOWN)
-    status       AnimeStatus @default(UNKNOWN)
+    status       MediaStatus @default(UNKNOWN)
     seasonSeason AnimeSeason @default(UNKNOWN)
     seasonYear   Int?
 

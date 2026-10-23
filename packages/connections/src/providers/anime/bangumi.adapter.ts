@@ -292,10 +292,10 @@ export class BangumiAdapter extends BaseConnectionAdapter {
     });
 
     const statusMap: Record<number, LibraryItem["status"]> = {
-      1: "PLANNING",
+      1: "PLANNED",
       2: "COMPLETED",
-      3: "CURRENT",
-      4: "PAUSED",
+      3: "IN_PROGRESS",
+      4: "ON_HOLD",
       5: "DROPPED",
     };
 
@@ -305,7 +305,7 @@ export class BangumiAdapter extends BaseConnectionAdapter {
       provider: "BANGUMI",
       mediaType: entry.subject_type === 1 ? "MANGA" : "ANIME",
       title: entry.subject?.name_cn || entry.subject?.name || `Subject ${entry.subject_id}`,
-      status: statusMap[entry.type] || "CURRENT",
+      status: statusMap[entry.type] || "IN_PROGRESS",
       score: entry.rate ? entry.rate * 10 : null,
       progress: entry.ep_status,
       progressVolumes: entry.vol_status,
@@ -339,25 +339,27 @@ export class BangumiAdapter extends BaseConnectionAdapter {
     if (payload.status) {
       const s = payload.status.toUpperCase();
       switch (s) {
+        case "PLANNED":
         case "PLANNING":
-        case "PLAN_TO_WATCH":
-        case "PLAN_TO_READ":
+        case "WISH":
           bangumiType = 1;
           break;
         case "COMPLETED":
+        case "COLLECT":
           bangumiType = 2;
           break;
+        case "IN_PROGRESS":
+        case "REPEATING":
         case "WATCHING":
         case "READING":
         case "PLAYING":
         case "LISTENING":
-        case "CURRENT":
-        case "REPEATING":
+        case "TRACKING":
+        case "DO":
           bangumiType = 3;
           break;
         case "ON_HOLD":
         case "PAUSED":
-        case "HOLD":
           bangumiType = 4;
           break;
         case "DROPPED":

@@ -84,7 +84,7 @@ public class BorealisSyncManager
             var listEntryDoc = await _apiClient.GetListEntryAsync(effectiveMediaType, borealisMediaId, userConfig.ApiKey, userConfig.BorealisServerUrl, userConfig.CachedUsername).ConfigureAwait(false);
 
             int currentProgress = 0;
-            string status = "WATCHING";
+            string status = "IN_PROGRESS";
             double score = 0;
             bool entryExists = listEntryDoc.HasValue;
             int? entryMaxProgress = entry.MaxProgress;
@@ -102,7 +102,7 @@ public class BorealisSyncManager
                 }
                 if (target.TryGetProperty("status", out var sProp) && sProp.ValueKind == JsonValueKind.String)
                 {
-                    status = sProp.GetString() ?? "WATCHING";
+                    status = sProp.GetString() ?? "IN_PROGRESS";
                 }
                 if (target.TryGetProperty("score", out var scProp) && scProp.ValueKind == JsonValueKind.Number)
                 {
@@ -156,11 +156,11 @@ public class BorealisSyncManager
                 int targetProgress = Math.Max(currentProgress + 1, 1);
                 var saveDto = new BorealisSaveEntryDto
                 {
-                    Status = "WATCHING",
+                    Status = "IN_PROGRESS",
                     Progress = targetProgress
                 };
 
-                _logger.LogInformation("[Borealis SyncManager] FALLBACK UPSERT: Creating entry for Title '{Title}' (Borealis ID {BorealisId}) with Status=WATCHING, Progress={Progress}",
+                _logger.LogInformation("[Borealis SyncManager] FALLBACK UPSERT: Creating entry for Title '{Title}' (Borealis ID {BorealisId}) with Status=IN_PROGRESS, Progress={Progress}",
                     entryTitle, borealisMediaId, targetProgress);
 
                 bool saveSuccess = await _apiClient.SaveListEntryAsync(effectiveMediaType, borealisMediaId, saveDto, userConfig.ApiKey, userConfig.BorealisServerUrl, userConfig.CachedUsername).ConfigureAwait(false);

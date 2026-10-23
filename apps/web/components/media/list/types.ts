@@ -9,12 +9,8 @@ export type CanonicalMediaCategory =
   | "other"
 
 export type MediaListStatus =
-  | "PLANNING"
-  | "WATCHING"
-  | "READING"
-  | "PLAYING"
-  | "LISTENING"
-  | "TRACKING"
+  | "PLANNED"
+  | "IN_PROGRESS"
   | "COMPLETED"
   | "ON_HOLD"
   | "DROPPED"
@@ -79,81 +75,62 @@ export function toBackendMediaType(category: CanonicalMediaCategory): string {
 }
 
 export function getInProgressStatus(
-  category: CanonicalMediaCategory
+  _category?: CanonicalMediaCategory
 ): MediaListStatus {
+  return "IN_PROGRESS"
+}
+
+export function getInProgressLabel(category: CanonicalMediaCategory): string {
   switch (category) {
     case "anime":
     case "movie":
     case "tv":
-      return "WATCHING"
+      return "Watching"
     case "other":
-      return "TRACKING"
+      return "Tracking"
     case "manga":
     case "book":
-      return "READING"
+      return "Reading"
     case "game":
-      return "PLAYING"
+      return "Playing"
     case "music":
-      return "LISTENING"
+      return "Listening"
   }
 }
 
 export function getAvailableStatuses(
   category: CanonicalMediaCategory
 ): StatusConfig[] {
-  if (category === "music") {
-    return [
-      {
-        value: "LISTENING",
-        label: "Listening",
-        color: "primary",
-        badgeClass: "border-primary/40 bg-primary/10 text-primary",
-      },
-    ]
-  }
-
-  const inProgress = getInProgressStatus(category)
-
-  const inProgressLabels: Record<MediaListStatus, string> = {
-    PLANNING: "Planning",
-    WATCHING: "Watching",
-    READING: "Reading",
-    PLAYING: "Playing",
-    LISTENING: "Listening",
-    TRACKING: "Tracking",
-    COMPLETED: "Completed",
-    ON_HOLD: "On Hold",
-    DROPPED: "Dropped",
-  }
+  const inProgressLabel = getInProgressLabel(category)
 
   return [
     {
-      value: "PLANNING",
-      label: inProgressLabels.PLANNING,
+      value: "PLANNED",
+      label: "Planning",
       color: "secondary",
       badgeClass: "border-border bg-muted/60 text-muted-foreground",
     },
     {
-      value: inProgress,
-      label: inProgressLabels[inProgress],
+      value: "IN_PROGRESS",
+      label: inProgressLabel,
       color: "primary",
       badgeClass: "border-primary/40 bg-primary/10 text-primary",
     },
     {
       value: "COMPLETED",
-      label: inProgressLabels.COMPLETED,
+      label: "Completed",
       color: "primary",
       badgeClass: "border-primary/40 bg-primary/10 text-primary",
     },
     {
       value: "ON_HOLD",
-      label: inProgressLabels.ON_HOLD,
+      label: "On Hold",
       color: "secondary",
       badgeClass: "border-border bg-muted/60 text-muted-foreground",
     },
     {
       value: "DROPPED",
-      label: inProgressLabels.DROPPED,
+      label: "Dropped",
       color: "destructive",
       badgeClass: "border-destructive/40 bg-destructive/10 text-destructive",
     },

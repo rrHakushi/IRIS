@@ -73,49 +73,49 @@ const CATEGORY_META: Record<
   }
 > = {
   anime: {
-    statusParam: "WATCHING",
+    statusParam: "IN_PROGRESS",
     label: "Anime",
     activeVerb: "Watching",
     progressUnit: "Ep",
     icon: IconDeviceTv,
   },
   tv: {
-    statusParam: "WATCHING",
+    statusParam: "IN_PROGRESS",
     label: "TV Shows",
     activeVerb: "Watching",
     progressUnit: "Ep",
     icon: IconDeviceTv,
   },
   movie: {
-    statusParam: "WATCHING",
+    statusParam: "IN_PROGRESS",
     label: "Movies",
     activeVerb: "Watching",
     progressUnit: "Movie",
     icon: IconMovie,
   },
   manga: {
-    statusParam: "READING",
+    statusParam: "IN_PROGRESS",
     label: "Manga",
     activeVerb: "Reading",
     progressUnit: "Ch",
     icon: IconBook2,
   },
   game: {
-    statusParam: "PLAYING",
+    statusParam: "IN_PROGRESS",
     label: "Games",
     activeVerb: "Playing",
     progressUnit: "Hrs",
     icon: IconDeviceGamepad,
   },
   book: {
-    statusParam: "READING",
+    statusParam: "IN_PROGRESS",
     label: "Books",
     activeVerb: "Reading",
     progressUnit: "Pages",
     icon: IconBook,
   },
   other: {
-    statusParam: "WATCHING",
+    statusParam: "IN_PROGRESS",
     label: "Other",
     activeVerb: "Tracking",
     progressUnit: "Progress",
@@ -933,9 +933,10 @@ export function WatchingDashboard(): React.JSX.Element {
           return null
         }
         if (type === "tv") {
+          const st = String((item.media as any)?.status).toUpperCase()
           const isOngoing =
-            String((item.media as any)?.status).toUpperCase() ===
-              "RETURNING_SERIES" ||
+            st === "RELEASING" ||
+            st === "RETURNING_SERIES" ||
             !(item.media as any)?.episodeCount ||
             (item.media as any)?.episodeCount <= 0
           if (isOngoing) {
@@ -1134,14 +1135,15 @@ export function WatchingDashboard(): React.JSX.Element {
         const idx = cat.items.findIndex((it) => it.entry.id === entryId)
         if (idx !== -1) {
           changed = true
-          const targetStatus = CATEGORY_META[type].statusParam
           const newStatus = updated?.status?.toUpperCase()
           const isStillActive =
-            type === "other"
-              ? newStatus === "WATCHING" ||
-                newStatus === "CURRENT" ||
-                newStatus === "TRACKING"
-              : newStatus === targetStatus
+            newStatus === "IN_PROGRESS" ||
+            newStatus === "WATCHING" ||
+            newStatus === "CURRENT" ||
+            newStatus === "TRACKING" ||
+            newStatus === "READING" ||
+            newStatus === "PLAYING" ||
+            newStatus === "LISTENING"
           if (updated?.status && !isStillActive) {
             next[type] = {
               ...cat,

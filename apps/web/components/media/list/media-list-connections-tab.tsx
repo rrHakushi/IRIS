@@ -93,17 +93,27 @@ function formatStatusLabel(
 ): string {
   if (!status) return "Planning"
   const upper = status.toUpperCase()
-  if (upper === "PLANNING") return "Planning"
-  if (upper === "WATCHING")
-    return category === "manga"
+  if (upper === "PLANNED" || upper === "PLANNING") return "Planning"
+  if (
+    upper === "IN_PROGRESS" ||
+    upper === "WATCHING" ||
+    upper === "READING" ||
+    upper === "PLAYING" ||
+    upper === "LISTENING" ||
+    upper === "TRACKING"
+  ) {
+    return category === "manga" || category === "book"
       ? "Reading"
       : category === "game"
         ? "Playing"
-        : "Watching"
-  if (upper === "READING") return "Reading"
-  if (upper === "PLAYING") return "Playing"
+        : category === "music"
+          ? "Listening"
+          : category === "other"
+            ? "Tracking"
+            : "Watching"
+  }
   if (upper === "COMPLETED") return "Completed"
-  if (upper === "PAUSED") return "On Hold"
+  if (upper === "ON_HOLD" || upper === "PAUSED") return "On Hold"
   if (upper === "DROPPED") return "Dropped"
   return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
 }
@@ -379,7 +389,7 @@ export function MediaListConnectionsTab({
   category,
   connections = {},
   onConnectionsChange,
-  inheritedStatus = "PLANNING",
+  inheritedStatus = "PLANNED",
   inheritedProgress = 0,
   inheritedStartedAt = "",
   inheritedCompletedAt = "",
@@ -670,7 +680,7 @@ export function MediaListConnectionsTab({
     // Initialize sensible defaults when toggled on
     if (willBeActive) {
       if (field === "overrideStatus" && !current.status) {
-        changes.status = inheritedStatus || "PLANNING"
+        changes.status = inheritedStatus || "PLANNED"
       } else if (
         field === "overrideProgress" &&
         current.progress === undefined
@@ -691,16 +701,24 @@ export function MediaListConnectionsTab({
 
   // Available statuses for category
   const statusChoices = useMemo(() => {
-    const isManga = category === "manga"
+    const isManga = category === "manga" || category === "book"
     const isGame = category === "game"
+    const isMusic = category === "music"
+    const isOther = category === "other"
+    const activeLabel = isManga
+      ? "Reading"
+      : isGame
+        ? "Playing"
+        : isMusic
+          ? "Listening"
+          : isOther
+            ? "Tracking"
+            : "Watching"
     return [
-      { value: "PLANNING", label: "Planning" },
-      {
-        value: isManga ? "READING" : isGame ? "PLAYING" : "WATCHING",
-        label: isManga ? "Reading" : isGame ? "Playing" : "Watching",
-      },
+      { value: "PLANNED", label: "Planning" },
+      { value: "IN_PROGRESS", label: activeLabel },
       { value: "COMPLETED", label: "Completed" },
-      { value: "PAUSED", label: "On Hold" },
+      { value: "ON_HOLD", label: "On Hold" },
       { value: "DROPPED", label: "Dropped" },
     ]
   }, [category])
@@ -1123,7 +1141,7 @@ export function MediaListConnectionsTab({
                               (
                                 item.status ||
                                 inheritedStatus ||
-                                "PLANNING"
+                                "PLANNED"
                               ).toUpperCase() === st.value.toUpperCase()
 
                             return (

@@ -1,4 +1,4 @@
-import { prisma, type RelationType } from '@IRIS/database'
+import { prisma, normalizeMediaStatus, type RelationType } from '@IRIS/database'
 import { LogFactory, c } from '@Iris/logger'
 import {
   anilistProvider,
@@ -401,7 +401,7 @@ export class MediaEntitySyncer {
         seasonYear: alData.seasonYear || undefined,
         seasonSeason: (alData.season as any) || undefined,
         format: (alData.format as any) || undefined,
-        status: (alData.status as any) || undefined,
+        status: alData.status ? normalizeMediaStatus(alData.status) : undefined,
         alUpdatedAt: nowUnix,
         updatedAt: now,
       })
@@ -585,7 +585,7 @@ export class MediaEntitySyncer {
         alFavorites: alData.favourites || undefined,
         startDateYear: alData.startDate?.year || undefined,
         format: (alData.format as any) || undefined,
-        status: (alData.status as any) || undefined,
+        status: alData.status ? normalizeMediaStatus(alData.status) : undefined,
         alUpdatedAt: nowUnix,
         updatedAt: now,
       })

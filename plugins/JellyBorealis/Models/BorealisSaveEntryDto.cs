@@ -30,7 +30,7 @@ public class BorealisSaveEntryDto
     public int? MovieId { get; set; }
 
     /// <summary>
-    /// Gets or sets the List Status (PLANNING, WATCHING, COMPLETED, ON_HOLD, DROPPED).
+    /// Gets or sets the List Status (PLANNED, IN_PROGRESS, COMPLETED, ON_HOLD, DROPPED).
     /// </summary>
     [JsonPropertyName("status")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

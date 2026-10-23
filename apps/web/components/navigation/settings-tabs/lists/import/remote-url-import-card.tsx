@@ -91,7 +91,7 @@ export function RemoteUrlImportCard(): React.JSX.Element {
                 mediaType: key as any,
                 title: entry.title || "Untitled",
                 externalIds: entry.externalIds || {},
-                status: entry.status || "PLANNING",
+                status: entry.status || "PLANNED",
                 progress: entry.progress,
                 progressVolumes: entry.progressVolumes,
                 progressPages: entry.progressPages,

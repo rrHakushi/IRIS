@@ -23,9 +23,6 @@ model Other {
     // The designated progress field key to increment in /increment route (max 1)
     incrementFieldKey String?
 
-    // Custom status labels/options [{ key: string, label: string, isCompleted?: boolean }]
-    statuses       Jsonb   @default(json`[]`)
-
     // Stored pre-update snapshot for tracking users when published item is edited
     preUpdateSnapshot Jsonb?
 
@@ -58,7 +55,7 @@ model OtherList {
     otherId     Int
     other       Other     @relation(fields: [otherId], references: [id], onDelete: Cascade)
 
-    status      String    @default("PLANNING")
+    status      ListStatus @default(PLANNED)
     // Map of progress field keys to values: { [key: string]: number }
     progressValues Jsonb @default(json`{}`)
 

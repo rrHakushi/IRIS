@@ -1,4 +1,4 @@
-import { prisma } from '@IRIS/database'
+import { prisma, normalizeMediaStatus } from '@IRIS/database'
 import { LogFactory, c } from '@Iris/logger'
 import { normalizeTvdbImageUrl, type TvdbSearchItem } from '../providers/tvdb.provider'
 import type { AniListAnimeSearchPreview, AniListMangaSearchPreview } from '../providers/anilist.provider'
@@ -53,32 +53,12 @@ export function mapMangaFormat(fmt?: string): any {
 }
 
 function mapTvStatus(st?: string): any {
-  const map: Record<string, string> = {
-    'RETURNING SERIES': 'RETURNING_SERIES',
-    RETURNING_SERIES: 'RETURNING_SERIES',
-    CONTINUING: 'RETURNING_SERIES',
-    ENDED: 'ENDED',
-    CANCELED: 'CANCELED',
-    CANCELLED: 'CANCELED',
-    'IN PRODUCTION': 'IN_PRODUCTION',
-    IN_PRODUCTION: 'IN_PRODUCTION',
-    UPCOMING: 'UPCOMING',
-  }
-  return (st && map[st.toUpperCase()]) || 'UNKNOWN'
+  return st ? normalizeMediaStatus(st) : 'UNKNOWN'
 }
 
 function mapMovieStatus(st?: string): any {
-  const map: Record<string, string> = {
-    RELEASED: 'RELEASED',
-    'IN PRODUCTION': 'IN_PRODUCTION',
-    IN_PRODUCTION: 'IN_PRODUCTION',
-    'POST PRODUCTION': 'POST_PRODUCTION',
-    POST_PRODUCTION: 'POST_PRODUCTION',
-    RUMORED: 'RUMORED',
-    CANCELLED: 'CANCELLED',
-    CANCELED: 'CANCELLED',
-  }
-  return (st && map[st.toUpperCase()]) || 'RELEASED'
+  const mapped = st ? normalizeMediaStatus(st) : 'UNKNOWN'
+  return mapped === 'UNKNOWN' ? 'RELEASED' : mapped
 }
 
 export class MediaPreviewSyncer {

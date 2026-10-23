@@ -443,31 +443,6 @@
               }
             ]
           },
-          "AnimeListStatus": {
-            "codecId": "pg/text@1",
-            "members": [
-              {
-                "name": "PLANNING",
-                "value": "PLANNING"
-              },
-              {
-                "name": "WATCHING",
-                "value": "WATCHING"
-              },
-              {
-                "name": "COMPLETED",
-                "value": "COMPLETED"
-              },
-              {
-                "name": "ON_HOLD",
-                "value": "ON_HOLD"
-              },
-              {
-                "name": "DROPPED",
-                "value": "DROPPED"
-              }
-            ]
-          },
           "AnimeSeason": {
             "codecId": "pg/text@1",
             "members": [
@@ -555,85 +530,6 @@
               {
                 "name": "PICTURE_BOOK",
                 "value": "PICTURE_BOOK"
-              },
-              {
-                "name": "UNKNOWN",
-                "value": "UNKNOWN"
-              }
-            ]
-          },
-          "AnimeStatus": {
-            "codecId": "pg/text@1",
-            "members": [
-              {
-                "name": "FINISHED",
-                "value": "FINISHED"
-              },
-              {
-                "name": "RELEASING",
-                "value": "RELEASING"
-              },
-              {
-                "name": "NOT_YET_RELEASED",
-                "value": "NOT_YET_RELEASED"
-              },
-              {
-                "name": "CANCELLED",
-                "value": "CANCELLED"
-              },
-              {
-                "name": "HIATUS",
-                "value": "HIATUS"
-              },
-              {
-                "name": "UNKNOWN",
-                "value": "UNKNOWN"
-              }
-            ]
-          },
-          "BookListStatus": {
-            "codecId": "pg/text@1",
-            "members": [
-              {
-                "name": "PLANNING",
-                "value": "PLANNING"
-              },
-              {
-                "name": "READING",
-                "value": "READING"
-              },
-              {
-                "name": "COMPLETED",
-                "value": "COMPLETED"
-              },
-              {
-                "name": "ON_HOLD",
-                "value": "ON_HOLD"
-              },
-              {
-                "name": "DROPPED",
-                "value": "DROPPED"
-              }
-            ]
-          },
-          "BookStatus": {
-            "codecId": "pg/text@1",
-            "members": [
-              {
-                "name": "PUBLISHED",
-                "value": "PUBLISHED"
-              },
-              {
-                "name": "RELEASING",
-                "value": "RELEASING"
-              },
-              {
-                "name": "CANCELLED",
-                "value": "CANCELLED"
-              },
-              {
-                "name": "ON_HIATUS",
-                "value": "ON_HIATUS"
               },
               {
                 "name": "UNKNOWN",
@@ -880,20 +776,12 @@
               }
             ]
           },
-          "GameListStatus": {
+          "ListStatus": {
             "codecId": "pg/text@1",
             "members": [
               {
-                "name": "PLANNING",
-                "value": "PLANNING"
-              },
-              {
-                "name": "PLAYING",
-                "value": "PLAYING"
-              },
-              {
-                "name": "COMPLETED",
-                "value": "COMPLETED"
+                "name": "IN_PROGRESS",
+                "value": "IN_PROGRESS"
               },
               {
                 "name": "ON_HOLD",
@@ -902,39 +790,14 @@
               {
                 "name": "DROPPED",
                 "value": "DROPPED"
-              }
-            ]
-          },
-          "GameStatus": {
-            "codecId": "pg/text@1",
-            "members": [
-              {
-                "name": "RELEASED",
-                "value": "RELEASED"
               },
               {
-                "name": "EARLY_ACCESS",
-                "value": "EARLY_ACCESS"
+                "name": "COMPLETED",
+                "value": "COMPLETED"
               },
               {
-                "name": "ANNOUNCED",
-                "value": "ANNOUNCED"
-              },
-              {
-                "name": "IN_DEVELOPMENT",
-                "value": "IN_DEVELOPMENT"
-              },
-              {
-                "name": "DELAYED",
-                "value": "DELAYED"
-              },
-              {
-                "name": "CANCELLED",
-                "value": "CANCELLED"
-              },
-              {
-                "name": "UNKNOWN",
-                "value": "UNKNOWN"
+                "name": "PLANNED",
+                "value": "PLANNED"
               }
             ]
           },
@@ -971,45 +834,20 @@
               }
             ]
           },
-          "MangaListStatus": {
+          "MediaStatus": {
             "codecId": "pg/text@1",
             "members": [
               {
-                "name": "PLANNING",
-                "value": "PLANNING"
-              },
-              {
-                "name": "READING",
-                "value": "READING"
-              },
-              {
-                "name": "COMPLETED",
-                "value": "COMPLETED"
-              },
-              {
-                "name": "ON_HOLD",
-                "value": "ON_HOLD"
-              },
-              {
-                "name": "DROPPED",
-                "value": "DROPPED"
-              }
-            ]
-          },
-          "MangaStatus": {
-            "codecId": "pg/text@1",
-            "members": [
-              {
-                "name": "FINISHED",
-                "value": "FINISHED"
+                "name": "RELEASED",
+                "value": "RELEASED"
               },
               {
                 "name": "RELEASING",
                 "value": "RELEASING"
               },
               {
-                "name": "NOT_YET_RELEASED",
-                "value": "NOT_YET_RELEASED"
+                "name": "UPCOMING",
+                "value": "UPCOMING"
               },
               {
                 "name": "CANCELLED",
@@ -1067,102 +905,6 @@
               {
                 "name": "OTHER",
                 "value": "OTHER"
-              },
-              {
-                "name": "UNKNOWN",
-                "value": "UNKNOWN"
-              }
-            ]
-          },
-          "MovieListStatus": {
-            "codecId": "pg/text@1",
-            "members": [
-              {
-                "name": "PLANNING",
-                "value": "PLANNING"
-              },
-              {
-                "name": "WATCHING",
-                "value": "WATCHING"
-              },
-              {
-                "name": "COMPLETED",
-                "value": "COMPLETED"
-              },
-              {
-                "name": "DROPPED",
-                "value": "DROPPED"
-              }
-            ]
-          },
-          "MovieStatus": {
-            "codecId": "pg/text@1",
-            "members": [
-              {
-                "name": "RELEASED",
-                "value": "RELEASED"
-              },
-              {
-                "name": "IN_PRODUCTION",
-                "value": "IN_PRODUCTION"
-              },
-              {
-                "name": "POST_PRODUCTION",
-                "value": "POST_PRODUCTION"
-              },
-              {
-                "name": "RUMORED",
-                "value": "RUMORED"
-              },
-              {
-                "name": "CANCELLED",
-                "value": "CANCELLED"
-              },
-              {
-                "name": "UNKNOWN",
-                "value": "UNKNOWN"
-              }
-            ]
-          },
-          "MusicListStatus": {
-            "codecId": "pg/text@1",
-            "members": [
-              {
-                "name": "PLANNING",
-                "value": "PLANNING"
-              },
-              {
-                "name": "LISTENING",
-                "value": "LISTENING"
-              },
-              {
-                "name": "COMPLETED",
-                "value": "COMPLETED"
-              },
-              {
-                "name": "ON_HOLD",
-                "value": "ON_HOLD"
-              },
-              {
-                "name": "DROPPED",
-                "value": "DROPPED"
-              }
-            ]
-          },
-          "MusicStatus": {
-            "codecId": "pg/text@1",
-            "members": [
-              {
-                "name": "RELEASED",
-                "value": "RELEASED"
-              },
-              {
-                "name": "UPCOMING",
-                "value": "UPCOMING"
-              },
-              {
-                "name": "CANCELLED",
-                "value": "CANCELLED"
               },
               {
                 "name": "UNKNOWN",
@@ -1450,60 +1192,6 @@
               {
                 "name": "OTHER",
                 "value": "OTHER"
-              }
-            ]
-          },
-          "TvListStatus": {
-            "codecId": "pg/text@1",
-            "members": [
-              {
-                "name": "WATCHING",
-                "value": "WATCHING"
-              },
-              {
-                "name": "PLANNING",
-                "value": "PLANNING"
-              },
-              {
-                "name": "COMPLETED",
-                "value": "COMPLETED"
-              },
-              {
-                "name": "ON_HOLD",
-                "value": "ON_HOLD"
-              },
-              {
-                "name": "DROPPED",
-                "value": "DROPPED"
-              }
-            ]
-          },
-          "TvStatus": {
-            "codecId": "pg/text@1",
-            "members": [
-              {
-                "name": "RETURNING_SERIES",
-                "value": "RETURNING_SERIES"
-              },
-              {
-                "name": "ENDED",
-                "value": "ENDED"
-              },
-              {
-                "name": "CANCELED",
-                "value": "CANCELED"
-              },
-              {
-                "name": "IN_PRODUCTION",
-                "value": "IN_PRODUCTION"
-              },
-              {
-                "name": "UPCOMING",
-                "value": "UPCOMING"
-              },
-              {
-                "name": "UNKNOWN",
-                "value": "UNKNOWN"
               }
             ]
           }
@@ -2321,7 +2009,7 @@
                 },
                 "valueSet": {
                   "entityKind": "enum",
-                  "entityName": "AnimeStatus",
+                  "entityName": "MediaStatus",
                   "namespaceId": "public",
                   "plane": "domain"
                 }
@@ -3266,7 +2954,7 @@
                 },
                 "valueSet": {
                   "entityKind": "enum",
-                  "entityName": "AnimeListStatus",
+                  "entityName": "ListStatus",
                   "namespaceId": "public",
                   "plane": "domain"
                 }
@@ -4042,7 +3730,7 @@
                 },
                 "valueSet": {
                   "entityKind": "enum",
-                  "entityName": "BookStatus",
+                  "entityName": "MediaStatus",
                   "namespaceId": "public",
                   "plane": "domain"
                 }
@@ -4600,7 +4288,7 @@
                 },
                 "valueSet": {
                   "entityKind": "enum",
-                  "entityName": "BookListStatus",
+                  "entityName": "ListStatus",
                   "namespaceId": "public",
                   "plane": "domain"
                 }
@@ -6649,7 +6337,7 @@
                 },
                 "valueSet": {
                   "entityKind": "enum",
-                  "entityName": "GameStatus",
+                  "entityName": "MediaStatus",
                   "namespaceId": "public",
                   "plane": "domain"
                 }
@@ -7200,7 +6888,7 @@
                 },
                 "valueSet": {
                   "entityKind": "enum",
-                  "entityName": "GameListStatus",
+                  "entityName": "ListStatus",
                   "namespaceId": "public",
                   "plane": "domain"
                 }
@@ -8375,7 +8063,7 @@
                 },
                 "valueSet": {
                   "entityKind": "enum",
-                  "entityName": "MangaStatus",
+                  "entityName": "MediaStatus",
                   "namespaceId": "public",
                   "plane": "domain"
                 }
@@ -8862,7 +8550,7 @@
                 },
                 "valueSet": {
                   "entityKind": "enum",
-                  "entityName": "MangaListStatus",
+                  "entityName": "ListStatus",
                   "namespaceId": "public",
                   "plane": "domain"
                 }
@@ -10519,7 +10207,7 @@
                 },
                 "valueSet": {
                   "entityKind": "enum",
-                  "entityName": "MovieStatus",
+                  "entityName": "MediaStatus",
                   "namespaceId": "public",
                   "plane": "domain"
                 }
@@ -11008,7 +10696,7 @@
                 },
                 "valueSet": {
                   "entityKind": "enum",
-                  "entityName": "MovieListStatus",
+                  "entityName": "ListStatus",
                   "namespaceId": "public",
                   "plane": "domain"
                 }
@@ -11632,7 +11320,7 @@
                 },
                 "valueSet": {
                   "entityKind": "enum",
-                  "entityName": "MusicStatus",
+                  "entityName": "MediaStatus",
                   "namespaceId": "public",
                   "plane": "domain"
                 }
@@ -12147,7 +11835,7 @@
                 },
                 "valueSet": {
                   "entityKind": "enum",
-                  "entityName": "MusicListStatus",
+                  "entityName": "ListStatus",
                   "namespaceId": "public",
                   "plane": "domain"
                 }
@@ -13568,13 +13256,6 @@
                   "kind": "scalar"
                 }
               },
-              "statuses": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/jsonb@1",
-                  "kind": "scalar"
-                }
-              },
               "titlePrimary": {
                 "nullable": false,
                 "type": {
@@ -13711,9 +13392,6 @@
                 "statusDistribution": {
                   "column": "statusDistribution"
                 },
-                "statuses": {
-                  "column": "statuses"
-                },
                 "titlePrimary": {
                   "column": "titlePrimary"
                 },
@@ -13801,6 +13479,12 @@
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "ListStatus",
+                  "namespaceId": "public",
+                  "plane": "domain"
                 }
               },
               "updatedAt": {
@@ -15513,7 +15197,7 @@
                 },
                 "valueSet": {
                   "entityKind": "enum",
-                  "entityName": "TvStatus",
+                  "entityName": "MediaStatus",
                   "namespaceId": "public",
                   "plane": "domain"
                 }
@@ -16421,7 +16105,7 @@
                 },
                 "valueSet": {
                   "entityKind": "enum",
-                  "entityName": "TvListStatus",
+                  "entityName": "ListStatus",
                   "namespaceId": "public",
                   "plane": "domain"
                 }
@@ -17084,7 +16768,7 @@
                 },
                 "valueSet": {
                   "entityKind": "enum",
-                  "entityName": "TvListStatus",
+                  "entityName": "ListStatus",
                   "namespaceId": "public",
                   "plane": "domain"
                 }
@@ -19089,8 +18773,8 @@
                   "prefix": "Anime_source_check"
                 },
                 {
-                  "expression": "\"status\" IN ('FINISHED', 'RELEASING', 'NOT_YET_RELEASED', 'CANCELLED', 'HIATUS', 'UNKNOWN')",
-                  "name": "Anime_status_check_a9e63772",
+                  "expression": "\"status\" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')",
+                  "name": "Anime_status_check_645a4e8b",
                   "prefix": "Anime_status_check"
                 },
                 {
@@ -19408,7 +19092,7 @@
                   "nullable": false,
                   "valueSet": {
                     "entityKind": "valueSet",
-                    "entityName": "AnimeStatus",
+                    "entityName": "MediaStatus",
                     "namespaceId": "public",
                     "plane": "storage"
                   }
@@ -19876,8 +19560,8 @@
             "AnimeList": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('PLANNING', 'WATCHING', 'COMPLETED', 'ON_HOLD', 'DROPPED')",
-                  "name": "AnimeList_status_check_5a8afe5d",
+                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')",
+                  "name": "AnimeList_status_check_eb83cefb",
                   "prefix": "AnimeList_status_check"
                 }
               ],
@@ -19967,12 +19651,12 @@
                   "dataType": "pg/text",
                   "default": {
                     "kind": "literal",
-                    "value": "PLANNING"
+                    "value": "PLANNED"
                   },
                   "nullable": false,
                   "valueSet": {
                     "entityKind": "valueSet",
-                    "entityName": "AnimeListStatus",
+                    "entityName": "ListStatus",
                     "namespaceId": "public",
                     "plane": "storage"
                   }
@@ -20365,8 +20049,8 @@
                   "prefix": "Book_publishers_elem_not_null"
                 },
                 {
-                  "expression": "\"status\" IN ('PUBLISHED', 'RELEASING', 'CANCELLED', 'ON_HIATUS', 'UNKNOWN')",
-                  "name": "Book_status_check_7f93b93c",
+                  "expression": "\"status\" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')",
+                  "name": "Book_status_check_645a4e8b",
                   "prefix": "Book_status_check"
                 },
                 {
@@ -20645,7 +20329,7 @@
                   "nullable": false,
                   "valueSet": {
                     "entityKind": "valueSet",
-                    "entityName": "BookStatus",
+                    "entityName": "MediaStatus",
                     "namespaceId": "public",
                     "plane": "storage"
                   }
@@ -20767,8 +20451,8 @@
             "BookList": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('PLANNING', 'READING', 'COMPLETED', 'ON_HOLD', 'DROPPED')",
-                  "name": "BookList_status_check_97f2c647",
+                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')",
+                  "name": "BookList_status_check_eb83cefb",
                   "prefix": "BookList_status_check"
                 }
               ],
@@ -20876,12 +20560,12 @@
                   "dataType": "pg/text",
                   "default": {
                     "kind": "literal",
-                    "value": "PLANNING"
+                    "value": "PLANNED"
                   },
                   "nullable": false,
                   "valueSet": {
                     "entityKind": "valueSet",
-                    "entityName": "BookListStatus",
+                    "entityName": "ListStatus",
                     "namespaceId": "public",
                     "plane": "storage"
                   }
@@ -22555,8 +22239,8 @@
                   "prefix": "Game_publishers_elem_not_null"
                 },
                 {
-                  "expression": "\"status\" IN ('RELEASED', 'EARLY_ACCESS', 'ANNOUNCED', 'IN_DEVELOPMENT', 'DELAYED', 'CANCELLED', 'UNKNOWN')",
-                  "name": "Game_status_check_3cd1d392",
+                  "expression": "\"status\" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')",
+                  "name": "Game_status_check_645a4e8b",
                   "prefix": "Game_status_check"
                 },
                 {
@@ -22846,7 +22530,7 @@
                   "nullable": false,
                   "valueSet": {
                     "entityKind": "valueSet",
-                    "entityName": "GameStatus",
+                    "entityName": "MediaStatus",
                     "namespaceId": "public",
                     "plane": "storage"
                   }
@@ -22989,8 +22673,8 @@
             "GameList": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('PLANNING', 'PLAYING', 'COMPLETED', 'ON_HOLD', 'DROPPED')",
-                  "name": "GameList_status_check_65997e90",
+                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')",
+                  "name": "GameList_status_check_eb83cefb",
                   "prefix": "GameList_status_check"
                 }
               ],
@@ -23080,12 +22764,12 @@
                   "dataType": "pg/text",
                   "default": {
                     "kind": "literal",
-                    "value": "PLANNING"
+                    "value": "PLANNED"
                   },
                   "nullable": false,
                   "valueSet": {
                     "entityKind": "valueSet",
-                    "entityName": "GameListStatus",
+                    "entityName": "ListStatus",
                     "namespaceId": "public",
                     "plane": "storage"
                   }
@@ -23768,8 +23452,8 @@
                   "prefix": "Manga_source_check"
                 },
                 {
-                  "expression": "\"status\" IN ('FINISHED', 'RELEASING', 'NOT_YET_RELEASED', 'CANCELLED', 'HIATUS', 'UNKNOWN')",
-                  "name": "Manga_status_check_a9e63772",
+                  "expression": "\"status\" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')",
+                  "name": "Manga_status_check_645a4e8b",
                   "prefix": "Manga_status_check"
                 },
                 {
@@ -24042,7 +23726,7 @@
                   "nullable": false,
                   "valueSet": {
                     "entityKind": "valueSet",
-                    "entityName": "MangaStatus",
+                    "entityName": "MediaStatus",
                     "namespaceId": "public",
                     "plane": "storage"
                   }
@@ -24159,8 +23843,8 @@
             "MangaList": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('PLANNING', 'READING', 'COMPLETED', 'ON_HOLD', 'DROPPED')",
-                  "name": "MangaList_status_check_97f2c647",
+                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')",
+                  "name": "MangaList_status_check_eb83cefb",
                   "prefix": "MangaList_status_check"
                 }
               ],
@@ -24250,12 +23934,12 @@
                   "dataType": "pg/text",
                   "default": {
                     "kind": "literal",
-                    "value": "PLANNING"
+                    "value": "PLANNED"
                   },
                   "nullable": false,
                   "valueSet": {
                     "entityKind": "valueSet",
-                    "entityName": "MangaListStatus",
+                    "entityName": "ListStatus",
                     "namespaceId": "public",
                     "plane": "storage"
                   }
@@ -25886,8 +25570,8 @@
             "Movie": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('RELEASED', 'IN_PRODUCTION', 'POST_PRODUCTION', 'RUMORED', 'CANCELLED', 'UNKNOWN')",
-                  "name": "Movie_status_check_143651cf",
+                  "expression": "\"status\" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')",
+                  "name": "Movie_status_check_645a4e8b",
                   "prefix": "Movie_status_check"
                 },
                 {
@@ -26080,7 +25764,7 @@
                   "nullable": false,
                   "valueSet": {
                     "entityKind": "valueSet",
-                    "entityName": "MovieStatus",
+                    "entityName": "MediaStatus",
                     "namespaceId": "public",
                     "plane": "storage"
                   }
@@ -26199,8 +25883,8 @@
             "MovieList": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('PLANNING', 'WATCHING', 'COMPLETED', 'DROPPED')",
-                  "name": "MovieList_status_check_f9116bcd",
+                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')",
+                  "name": "MovieList_status_check_eb83cefb",
                   "prefix": "MovieList_status_check"
                 }
               ],
@@ -26281,12 +25965,12 @@
                   "dataType": "pg/text",
                   "default": {
                     "kind": "literal",
-                    "value": "PLANNING"
+                    "value": "PLANNED"
                   },
                   "nullable": false,
                   "valueSet": {
                     "entityKind": "valueSet",
-                    "entityName": "MovieListStatus",
+                    "entityName": "ListStatus",
                     "namespaceId": "public",
                     "plane": "storage"
                   }
@@ -26575,8 +26259,8 @@
                   "prefix": "Music_availableCountries_elem_not_null"
                 },
                 {
-                  "expression": "\"status\" IN ('RELEASED', 'UPCOMING', 'CANCELLED', 'UNKNOWN')",
-                  "name": "Music_status_check_f147606c",
+                  "expression": "\"status\" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')",
+                  "name": "Music_status_check_645a4e8b",
                   "prefix": "Music_status_check"
                 },
                 {
@@ -26847,7 +26531,7 @@
                   "nullable": false,
                   "valueSet": {
                     "entityKind": "valueSet",
-                    "entityName": "MusicStatus",
+                    "entityName": "MediaStatus",
                     "namespaceId": "public",
                     "plane": "storage"
                   }
@@ -27024,8 +26708,8 @@
             "MusicList": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('PLANNING', 'LISTENING', 'COMPLETED', 'ON_HOLD', 'DROPPED')",
-                  "name": "MusicList_status_check_fc73b297",
+                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')",
+                  "name": "MusicList_status_check_eb83cefb",
                   "prefix": "MusicList_status_check"
                 }
               ],
@@ -27101,12 +26785,12 @@
                   "dataType": "pg/text",
                   "default": {
                     "kind": "literal",
-                    "value": "PLANNING"
+                    "value": "PLANNED"
                   },
                   "nullable": false,
                   "valueSet": {
                     "entityKind": "valueSet",
-                    "entityName": "MusicListStatus",
+                    "entityName": "ListStatus",
                     "namespaceId": "public",
                     "plane": "storage"
                   }
@@ -28406,15 +28090,6 @@
                   },
                   "nullable": false
                 },
-                "statuses": {
-                  "codecId": "pg/jsonb@1",
-                  "dataType": "pg/jsonb",
-                  "default": {
-                    "kind": "literal",
-                    "value": []
-                  },
-                  "nullable": false
-                },
                 "titlePrimary": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -28508,6 +28183,13 @@
               "uniques": []
             },
             "OtherList": {
+              "checks": [
+                {
+                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')",
+                  "name": "OtherList_status_check_eb83cefb",
+                  "prefix": "OtherList_status_check"
+                }
+              ],
               "columns": {
                 "completedAt": {
                   "codecId": "pg/timestamptz-date@1",
@@ -28575,9 +28257,15 @@
                   "dataType": "pg/text",
                   "default": {
                     "kind": "literal",
-                    "value": "PLANNING"
+                    "value": "PLANNED"
                   },
-                  "nullable": false
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "ListStatus",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
                 },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-date@1",
@@ -29764,8 +29452,8 @@
                   "prefix": "Tv_networks_elem_not_null"
                 },
                 {
-                  "expression": "\"status\" IN ('RETURNING_SERIES', 'ENDED', 'CANCELED', 'IN_PRODUCTION', 'UPCOMING', 'UNKNOWN')",
-                  "name": "Tv_status_check_bf3dd5fe",
+                  "expression": "\"status\" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')",
+                  "name": "Tv_status_check_645a4e8b",
                   "prefix": "Tv_status_check"
                 },
                 {
@@ -30014,7 +29702,7 @@
                   "nullable": false,
                   "valueSet": {
                     "entityKind": "valueSet",
-                    "entityName": "TvStatus",
+                    "entityName": "MediaStatus",
                     "namespaceId": "public",
                     "plane": "storage"
                   }
@@ -30377,8 +30065,8 @@
             "TvList": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('WATCHING', 'PLANNING', 'COMPLETED', 'ON_HOLD', 'DROPPED')",
-                  "name": "TvList_status_check_ee24f4a5",
+                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')",
+                  "name": "TvList_status_check_eb83cefb",
                   "prefix": "TvList_status_check"
                 }
               ],
@@ -30463,12 +30151,12 @@
                   "dataType": "pg/text",
                   "default": {
                     "kind": "literal",
-                    "value": "PLANNING"
+                    "value": "PLANNED"
                   },
                   "nullable": false,
                   "valueSet": {
                     "entityKind": "valueSet",
-                    "entityName": "TvListStatus",
+                    "entityName": "ListStatus",
                     "namespaceId": "public",
                     "plane": "storage"
                   }
@@ -30925,8 +30613,8 @@
             "TvSeasonProgress": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('WATCHING', 'PLANNING', 'COMPLETED', 'ON_HOLD', 'DROPPED')",
-                  "name": "TvSeasonProgress_status_check_ee24f4a5",
+                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')",
+                  "name": "TvSeasonProgress_status_check_eb83cefb",
                   "prefix": "TvSeasonProgress_status_check"
                 }
               ],
@@ -31007,12 +30695,12 @@
                   "dataType": "pg/text",
                   "default": {
                     "kind": "literal",
-                    "value": "PLANNING"
+                    "value": "PLANNED"
                   },
                   "nullable": false,
                   "valueSet": {
                     "entityKind": "valueSet",
-                    "entityName": "TvListStatus",
+                    "entityName": "ListStatus",
                     "namespaceId": "public",
                     "plane": "storage"
                   }
@@ -32896,16 +32584,6 @@
                 "UNKNOWN"
               ]
             },
-            "AnimeListStatus": {
-              "kind": "valueSet",
-              "values": [
-                "PLANNING",
-                "WATCHING",
-                "COMPLETED",
-                "ON_HOLD",
-                "DROPPED"
-              ]
-            },
             "AnimeSeason": {
               "kind": "valueSet",
               "values": [
@@ -32934,37 +32612,6 @@
                 "COMIC",
                 "MULTIMEDIA_PROJECT",
                 "PICTURE_BOOK",
-                "UNKNOWN"
-              ]
-            },
-            "AnimeStatus": {
-              "kind": "valueSet",
-              "values": [
-                "FINISHED",
-                "RELEASING",
-                "NOT_YET_RELEASED",
-                "CANCELLED",
-                "HIATUS",
-                "UNKNOWN"
-              ]
-            },
-            "BookListStatus": {
-              "kind": "valueSet",
-              "values": [
-                "PLANNING",
-                "READING",
-                "COMPLETED",
-                "ON_HOLD",
-                "DROPPED"
-              ]
-            },
-            "BookStatus": {
-              "kind": "valueSet",
-              "values": [
-                "PUBLISHED",
-                "RELEASING",
-                "CANCELLED",
-                "ON_HIATUS",
                 "UNKNOWN"
               ]
             },
@@ -33054,26 +32701,14 @@
                 "BLOCKED"
               ]
             },
-            "GameListStatus": {
+            "ListStatus": {
               "kind": "valueSet",
               "values": [
-                "PLANNING",
-                "PLAYING",
-                "COMPLETED",
+                "IN_PROGRESS",
                 "ON_HOLD",
-                "DROPPED"
-              ]
-            },
-            "GameStatus": {
-              "kind": "valueSet",
-              "values": [
-                "RELEASED",
-                "EARLY_ACCESS",
-                "ANNOUNCED",
-                "IN_DEVELOPMENT",
-                "DELAYED",
-                "CANCELLED",
-                "UNKNOWN"
+                "DROPPED",
+                "COMPLETED",
+                "PLANNED"
               ]
             },
             "MangaFormat": {
@@ -33088,22 +32723,12 @@
                 "UNKNOWN"
               ]
             },
-            "MangaListStatus": {
+            "MediaStatus": {
               "kind": "valueSet",
               "values": [
-                "PLANNING",
-                "READING",
-                "COMPLETED",
-                "ON_HOLD",
-                "DROPPED"
-              ]
-            },
-            "MangaStatus": {
-              "kind": "valueSet",
-              "values": [
-                "FINISHED",
+                "RELEASED",
                 "RELEASING",
-                "NOT_YET_RELEASED",
+                "UPCOMING",
                 "CANCELLED",
                 "HIATUS",
                 "UNKNOWN"
@@ -33122,45 +32747,6 @@
                 "MUSIC_ALBUM",
                 "MUSIC_TRACK",
                 "OTHER",
-                "UNKNOWN"
-              ]
-            },
-            "MovieListStatus": {
-              "kind": "valueSet",
-              "values": [
-                "PLANNING",
-                "WATCHING",
-                "COMPLETED",
-                "DROPPED"
-              ]
-            },
-            "MovieStatus": {
-              "kind": "valueSet",
-              "values": [
-                "RELEASED",
-                "IN_PRODUCTION",
-                "POST_PRODUCTION",
-                "RUMORED",
-                "CANCELLED",
-                "UNKNOWN"
-              ]
-            },
-            "MusicListStatus": {
-              "kind": "valueSet",
-              "values": [
-                "PLANNING",
-                "LISTENING",
-                "COMPLETED",
-                "ON_HOLD",
-                "DROPPED"
-              ]
-            },
-            "MusicStatus": {
-              "kind": "valueSet",
-              "values": [
-                "RELEASED",
-                "UPCOMING",
-                "CANCELLED",
                 "UNKNOWN"
               ]
             },
@@ -33275,27 +32861,6 @@
                 "ARRANGER",
                 "OTHER"
               ]
-            },
-            "TvListStatus": {
-              "kind": "valueSet",
-              "values": [
-                "WATCHING",
-                "PLANNING",
-                "COMPLETED",
-                "ON_HOLD",
-                "DROPPED"
-              ]
-            },
-            "TvStatus": {
-              "kind": "valueSet",
-              "values": [
-                "RETURNING_SERIES",
-                "ENDED",
-                "CANCELED",
-                "IN_PRODUCTION",
-                "UPCOMING",
-                "UNKNOWN"
-              ]
             }
           }
         },
@@ -33303,7 +32868,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "f8bc9dea885e2a9e6b78cdc91f8ee6006d18e507cbe95a5589839fb78dbad7fa"
+    "storageHash": "a6b34d37c099ae394f0d4378b33f4e892b10c4dc8dd6a87619216caca8b1cbec"
   },
   "execution": {
     "executionHash": "b7640b0fcc81eff6f25706df08d8b4535a1b5e11bd21a8168ea15ca60dc18af0",

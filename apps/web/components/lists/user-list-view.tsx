@@ -129,17 +129,20 @@ function getListResource(mediaType: MediaListType) {
 }
 
 const STATUS_PRIORITY_ORDER: Record<string, number> = {
+  IN_PROGRESS: 1,
   WATCHING: 1,
   READING: 1,
   PLAYING: 1,
   LISTENING: 1,
   CURRENT: 1,
+  TRACKING: 1,
   ON_HOLD: 2,
   HOLD: 2,
   PAUSED: 2,
   COMPLETED: 3,
   FINISHED: 3,
   DROPPED: 4,
+  PLANNED: 5,
   PLANNING: 5,
 }
 
@@ -683,6 +686,7 @@ export function UserListView({
         }
         if (mediaType === "tv") {
           const isOngoing =
+            (item.media as any)?.status === "RELEASING" ||
             (item.media as any)?.status === "RETURNING_SERIES" ||
             !(item.media as any)?.episodeCount
           if (isOngoing) {
@@ -942,14 +946,20 @@ export function UserListView({
               const upperActive = activeStatus.toUpperCase()
               const isMatch =
                 upperStatus === upperActive ||
-                ((upperActive === "WATCHING" ||
+                ((upperActive === "IN_PROGRESS" ||
+                  upperActive === "WATCHING" ||
                   upperActive === "READING" ||
                   upperActive === "PLAYING" ||
-                  upperActive === "LISTENING") &&
-                  (upperStatus === "WATCHING" ||
+                  upperActive === "LISTENING" ||
+                  upperActive === "TRACKING") &&
+                  (upperStatus === "IN_PROGRESS" ||
+                    upperStatus === "WATCHING" ||
                     upperStatus === "READING" ||
                     upperStatus === "PLAYING" ||
-                    upperStatus === "LISTENING"))
+                    upperStatus === "LISTENING" ||
+                    upperStatus === "TRACKING")) ||
+                ((upperActive === "PLANNED" || upperActive === "PLANNING") &&
+                  (upperStatus === "PLANNED" || upperStatus === "PLANNING"))
               if (!isMatch) {
                 next = next.filter((i) => i.entry.id !== entryId)
               }

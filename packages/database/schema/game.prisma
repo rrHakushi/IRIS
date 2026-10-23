@@ -1,15 +1,5 @@
 // use prisma-8
 
-enum GameStatus {
-    RELEASED
-    EARLY_ACCESS
-    ANNOUNCED
-    IN_DEVELOPMENT
-    DELAYED
-    CANCELLED
-    UNKNOWN
-}
-
 model Game {
     id          Int     @id @default(autoincrement())
     rawgId      Int?
@@ -44,7 +34,7 @@ model Game {
     franchise          String?
     gameModes          String[]
     playerPerspectives String[]
-    status             GameStatus @default(UNKNOWN)
+    status             MediaStatus @default(UNKNOWN)
     isAdult            Boolean    @default(false)
     synonyms           String[]
     trailers           Jsonb?

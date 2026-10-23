@@ -377,15 +377,25 @@ export function MediaListModal({
 
   // Form State
   const [status, setStatus] = useState<MediaListStatus>(() => {
-    if (category === "music") return "LISTENING"
-    if (category === "other") {
-      const s = initialEntry?.status
-      if (s === "WATCHING" || (s as any) === "CURRENT" || (s as any) === "IN_PROGRESS" || s === "TRACKING") {
-        return "TRACKING"
+    const raw = initialEntry?.status as string | undefined
+    if (raw) {
+      if (
+        raw === "WATCHING" ||
+        raw === "READING" ||
+        raw === "PLAYING" ||
+        raw === "LISTENING" ||
+        raw === "TRACKING" ||
+        (raw as any) === "CURRENT" ||
+        raw === "IN_PROGRESS"
+      ) {
+        return "IN_PROGRESS"
       }
-      return initialEntry?.status || "PLANNING"
+      if (raw === "PLANNING" || raw === "PLANNED") {
+        return "PLANNED"
+      }
+      return raw as MediaListStatus
     }
-    return initialEntry?.status || "PLANNING"
+    return "PLANNED"
   })
   const [progress, setProgress] = useState<number>(() => {
     const raw = initialEntry?.progress ?? 0
@@ -651,17 +661,21 @@ export function MediaListModal({
       setActiveTab("general")
       setStatusDropdownOpen(false)
       if (initialEntry) {
-        if (category === "music") {
-          setStatus("LISTENING")
-        } else if (category === "other") {
-          const s = initialEntry.status
-          if (s === "WATCHING" || (s as any) === "CURRENT" || (s as any) === "IN_PROGRESS" || s === "TRACKING") {
-            setStatus("TRACKING")
-          } else {
-            setStatus(initialEntry.status)
-          }
+        const raw = initialEntry.status as string | undefined
+        if (
+          raw === "WATCHING" ||
+          raw === "READING" ||
+          raw === "PLAYING" ||
+          raw === "LISTENING" ||
+          raw === "TRACKING" ||
+          (raw as any) === "CURRENT" ||
+          raw === "IN_PROGRESS"
+        ) {
+          setStatus("IN_PROGRESS")
+        } else if (raw === "PLANNING" || raw === "PLANNED") {
+          setStatus("PLANNED")
         } else {
-          setStatus(initialEntry.status)
+          setStatus(initialEntry.status as MediaListStatus)
         }
         const rawProgress = initialEntry.progress ?? 0
         setProgress(
@@ -758,7 +772,7 @@ export function MediaListModal({
           ((initialEntry as any)?.progressValues as Record<string, number>) || {}
         )
       } else {
-        setStatus("PLANNING")
+        setStatus("PLANNED")
         setProgress(0)
         setProgressValues({})
         setChaptersProgress(0)
@@ -1004,7 +1018,7 @@ export function MediaListModal({
 
     if (maxLimit !== undefined && clamped >= maxLimit) {
       handleStatusChange("COMPLETED")
-    } else if (clamped > 0 && status === "PLANNING") {
+    } else if (clamped > 0 && (status === "PLANNED" || (status as any) === "PLANNING")) {
       handleStatusChange(inProgressStatus)
     }
   }
@@ -1203,7 +1217,6 @@ export function MediaListModal({
             .music({ musicId: numericId })
             .post({
               ...commonPayload,
-              status: "LISTENING",
               playCount: rewatched,
             })
           break
@@ -1342,17 +1355,21 @@ export function MediaListModal({
   // Status icon mapping
   const getStatusIcon = (st: MediaListStatus) => {
     switch (st) {
-      case "PLANNING":
+      case "PLANNED":
+      case "PLANNING" as any:
         return IconClock
-      case "WATCHING":
+      case "IN_PROGRESS":
+      case "WATCHING" as any:
+      case "PLAYING" as any:
+        if (category === "book" || category === "manga") return IconBook
+        if (category === "music") return IconHeadphones
+        if (category === "other") return IconActivity
         return IconPlayerPlay
-      case "READING":
+      case "READING" as any:
         return IconBook
-      case "PLAYING":
-        return IconPlayerPlay
-      case "LISTENING":
+      case "LISTENING" as any:
         return IconHeadphones
-      case "TRACKING":
+      case "TRACKING" as any:
         return IconActivity
       case "COMPLETED":
         return IconCheck
@@ -1360,6 +1377,8 @@ export function MediaListModal({
         return IconPlayerPause
       case "DROPPED":
         return IconX
+      default:
+        return IconClock
     }
   }
 
@@ -2451,7 +2470,7 @@ export function MediaListModal({
               )
               if (totalTvEpisodes > 0 && newWatched.length >= totalTvEpisodes) {
                 handleStatusChange("COMPLETED")
-              } else if (newWatched.length > 0 && status === "PLANNING") {
+              } else if (newWatched.length > 0 && (status === "PLANNED" || (status as any) === "PLANNING")) {
                 handleStatusChange(inProgressStatus)
               }
             }}

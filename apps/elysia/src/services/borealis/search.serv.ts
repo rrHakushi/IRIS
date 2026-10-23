@@ -820,7 +820,6 @@ export class BorealisSearchServ {
               'popularity',
               'progressFields',
               'incrementFieldKey',
-              'statuses',
               'creatorId'
             )
             .include('creator', (c) => c.select('id', 'username'))

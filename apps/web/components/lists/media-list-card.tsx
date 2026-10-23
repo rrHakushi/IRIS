@@ -378,10 +378,13 @@ function MediaListCardInner({
 
   const upperStatus = (entry.status || "").toUpperCase()
   const isWatchingOrActive =
+    upperStatus === "IN_PROGRESS" ||
     upperStatus === "WATCHING" ||
     upperStatus === "READING" ||
     upperStatus === "PLAYING" ||
-    upperStatus === "LISTENING"
+    upperStatus === "LISTENING" ||
+    upperStatus === "TRACKING" ||
+    upperStatus === "CURRENT"
 
   const handleIncrementClick = () => {
     if (!onIncrementProgress) return

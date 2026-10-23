@@ -1,4 +1,4 @@
-import { prisma, toDate } from '@IRIS/database'
+import { prisma, toDate, normalizeMediaStatus } from '@IRIS/database'
 import { LogFactory, c } from '@Iris/logger'
 import type { MediaType } from './queue'
 
@@ -23,17 +23,10 @@ export interface FreshnessEvaluation {
 }
 
 /**
- * Statuses considered completed, finished, released, published, or cancelled.
+ * Unified statuses considered finished: released or cancelled.
  * Media with these statuses must be at least 3 calendar months old to be eligible for update.
  */
-export const THREE_MONTH_STATUSES = new Set([
-  'FINISHED',
-  'ENDED',
-  'RELEASED',
-  'PUBLISHED',
-  'CANCELLED',
-  'CANCELED',
-])
+export const THREE_MONTH_STATUSES = new Set(['RELEASED', 'CANCELLED'])
 
 /**
  * Normalizes a date to midnight (00:00:00.000) so time of day is completely ignored
@@ -109,8 +102,8 @@ export function evaluateRecordFreshness(
   const today = normalizeToStartOfDay(now)
   const lastUpdated = normalizeToStartOfDay(record.updatedAt)
 
-  const statusUpper = (record.status || '').toUpperCase()
-  const isThreeMonthStatus = THREE_MONTH_STATUSES.has(statusUpper)
+  const normStatus = normalizeMediaStatus(record.status)
+  const isThreeMonthStatus = THREE_MONTH_STATUSES.has(normStatus)
 
   if (isThreeMonthStatus) {
     const targetDate = new Date(lastUpdated)
@@ -122,8 +115,8 @@ export function evaluateRecordFreshness(
       isHydrated: true,
       statusGroup: 'three-months',
       reason: isFresh
-        ? `Status "${statusUpper}" is fresh until ${targetDate.toISOString().split('T')[0]}`
-        : `Status "${statusUpper}" reached 3-month threshold (${targetDate.toISOString().split('T')[0]})`,
+        ? `Status "${normStatus}" is fresh until ${targetDate.toISOString().split('T')[0]}`
+        : `Status "${normStatus}" reached 3-month threshold (${targetDate.toISOString().split('T')[0]})`,
     }
   } else {
     const targetDate = new Date(lastUpdated)
@@ -135,8 +128,8 @@ export function evaluateRecordFreshness(
       isHydrated: true,
       statusGroup: 'one-week',
       reason: isFresh
-        ? `Status "${statusUpper || 'UNKNOWN'}" is fresh until ${targetDate.toISOString().split('T')[0]}`
-        : `Status "${statusUpper || 'UNKNOWN'}" reached 1-week threshold (${targetDate.toISOString().split('T')[0]})`,
+        ? `Status "${normStatus || 'UNKNOWN'}" is fresh until ${targetDate.toISOString().split('T')[0]}`
+        : `Status "${normStatus || 'UNKNOWN'}" reached 1-week threshold (${targetDate.toISOString().split('T')[0]})`,
     }
   }
 }

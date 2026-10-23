@@ -1,13 +1,5 @@
 // use prisma-8
 
-enum BookStatus {
-    PUBLISHED
-    RELEASING
-    CANCELLED
-    ON_HIATUS
-    UNKNOWN
-}
-
 model Book {
     id            Int     @id @default(autoincrement())
     googleBookId  String? @unique
@@ -51,7 +43,7 @@ model Book {
     tags BookTag[]
     publishers String[]
     authors    String[]
-    status     BookStatus @default(UNKNOWN)
+    status     MediaStatus @default(UNKNOWN)
     isAdult    Boolean    @default(false)
     synonyms   String[]
     locked     Boolean    @default(false)

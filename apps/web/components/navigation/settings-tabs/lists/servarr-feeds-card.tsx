@@ -30,43 +30,31 @@ interface OptionItem {
 }
 
 const LIST_STATUS_OPTIONS: OptionItem[] = [
-  { id: "PLANNING", label: "Planning" },
-  { id: "WATCHING", label: "Watching" },
+  { id: "PLANNED", label: "Planning" },
+  { id: "IN_PROGRESS", label: "Watching" },
   { id: "COMPLETED", label: "Completed" },
   { id: "ON_HOLD", label: "On Hold" },
   { id: "DROPPED", label: "Dropped" },
 ]
 
 const MOVIE_LIST_STATUS_OPTIONS: OptionItem[] = [
-  { id: "PLANNING", label: "Planning" },
-  { id: "WATCHING", label: "Watching" },
+  { id: "PLANNED", label: "Planning" },
+  { id: "IN_PROGRESS", label: "Watching" },
   { id: "COMPLETED", label: "Completed" },
   { id: "DROPPED", label: "Dropped" },
 ]
 
-const TV_RELEASE_STATUS_OPTIONS: OptionItem[] = [
-  { id: "RETURNING_SERIES", label: "Returning Series" },
-  { id: "ENDED", label: "Ended" },
-  { id: "CANCELED", label: "Canceled" },
-  { id: "IN_PRODUCTION", label: "In Production" },
-  { id: "UPCOMING", label: "Upcoming" },
-]
-
-const ANIME_RELEASE_STATUS_OPTIONS: OptionItem[] = [
-  { id: "FINISHED", label: "Finished" },
+const UNIFIED_MEDIA_STATUS_OPTIONS: OptionItem[] = [
+  { id: "RELEASED", label: "Released" },
   { id: "RELEASING", label: "Releasing" },
-  { id: "NOT_YET_RELEASED", label: "Not Yet Released" },
+  { id: "UPCOMING", label: "Upcoming" },
   { id: "CANCELLED", label: "Cancelled" },
   { id: "HIATUS", label: "Hiatus" },
 ]
 
-const MOVIE_RELEASE_STATUS_OPTIONS: OptionItem[] = [
-  { id: "RELEASED", label: "Released" },
-  { id: "IN_PRODUCTION", label: "In Production" },
-  { id: "POST_PRODUCTION", label: "Post-Production" },
-  { id: "RUMORED", label: "Rumored" },
-  { id: "CANCELLED", label: "Cancelled" },
-]
+const TV_RELEASE_STATUS_OPTIONS: OptionItem[] = UNIFIED_MEDIA_STATUS_OPTIONS
+const ANIME_RELEASE_STATUS_OPTIONS: OptionItem[] = UNIFIED_MEDIA_STATUS_OPTIONS
+const MOVIE_RELEASE_STATUS_OPTIONS: OptionItem[] = UNIFIED_MEDIA_STATUS_OPTIONS
 
 const ANIME_FORMAT_OPTIONS: OptionItem[] = [
   { id: "TV", label: "TV" },
@@ -116,30 +104,30 @@ interface RadarrAnimeState {
 const DEFAULT_SONARR_ANIME: SonarrAnimeState = {
   enabled: true,
   monitored: true,
-  listStatuses: ["PLANNING", "WATCHING"],
-  animeStatuses: ["FINISHED", "RELEASING"],
+  listStatuses: ["PLANNED", "IN_PROGRESS"],
+  animeStatuses: ["RELEASED", "RELEASING"],
   animeFormats: ["TV", "TV_SHORT"],
 }
 
 const DEFAULT_SONARR_TV: SonarrTvState = {
   enabled: true,
   monitored: true,
-  listStatuses: ["PLANNING", "WATCHING"],
-  tvStatuses: ["RETURNING_SERIES", "ENDED"],
+  listStatuses: ["PLANNED", "IN_PROGRESS"],
+  tvStatuses: ["RELEASED", "RELEASING"],
 }
 
 const DEFAULT_RADARR_MOVIE: RadarrMovieState = {
   enabled: true,
   monitored: true,
-  listStatuses: ["PLANNING"],
+  listStatuses: ["PLANNED"],
   movieStatuses: ["RELEASED"],
 }
 
 const DEFAULT_RADARR_ANIME: RadarrAnimeState = {
   enabled: true,
   monitored: true,
-  listStatuses: ["PLANNING"],
-  animeStatuses: ["FINISHED", "RELEASING"],
+  listStatuses: ["PLANNED"],
+  animeStatuses: ["RELEASED", "RELEASING"],
   animeMovieFormats: ["MOVIE"],
 }
 

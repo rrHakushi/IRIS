@@ -25,7 +25,7 @@ export function computeMediaStats(entries: EntryItem[]) {
   let rawScoreSum = 0
 
   for (const item of entries) {
-    const status = item.status || 'PLANNING'
+    const status = item.status || 'PLANNED'
     statusDistribution[status] = (statusDistribution[status] || 0) + 1
 
     if (item.score !== null && item.score !== undefined && item.score > 0) {

@@ -1,14 +1,5 @@
 // use prisma-8
 
-enum MovieStatus {
-    RELEASED
-    IN_PRODUCTION
-    POST_PRODUCTION
-    RUMORED
-    CANCELLED
-    UNKNOWN
-}
-
 model Movie {
     id      Int     @id @default(autoincrement())
     tmdbId  Int?
@@ -37,7 +28,7 @@ model Movie {
 
     genres MovieGenre[]
     tags MovieTag[]
-    status   MovieStatus @default(RELEASED)
+    status   MediaStatus @default(RELEASED)
     isAdult  Boolean     @default(false)
     synonyms String[]
     trailers Jsonb?

@@ -5,13 +5,6 @@ enum MusicType {
     ALBUM
 }
 
-enum MusicStatus {
-    RELEASED
-    UPCOMING
-    CANCELLED
-    UNKNOWN
-}
-
 model Music {
     id             Int         @id @default(autoincrement())
     type           MusicType   @default(TRACK)
@@ -60,7 +53,7 @@ model Music {
     lyricsSource   String?
 
     description    String?
-    status         MusicStatus @default(RELEASED)
+    status         MediaStatus @default(RELEASED)
     sources        Jsonb?
     deezerUpdatedAt Int?
 

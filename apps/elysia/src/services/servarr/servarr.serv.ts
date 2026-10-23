@@ -2,13 +2,11 @@ import {
   prisma,
   and,
   toDate,
+  normalizeListStatus,
+  normalizeMediaStatus,
   type AnimeFormat,
-  type AnimeListStatus,
-  type AnimeStatus,
-  type MovieListStatus,
-  type MovieStatus,
-  type TvListStatus,
-  type TvStatus,
+  type ListStatus,
+  type MediaStatus,
 } from '@IRIS/database'
 import {
   getConnectionAdapter,
@@ -34,31 +32,42 @@ export interface ServarrConnectionContext {
 export interface SonarrAnimeConfig {
   enabled: boolean
   monitored: boolean
-  listStatuses: AnimeListStatus[]
-  animeStatuses: AnimeStatus[]
+  listStatuses: ListStatus[]
+  animeStatuses: MediaStatus[]
   animeFormats: AnimeFormat[]
 }
 
 export interface SonarrTvConfig {
   enabled: boolean
   monitored: boolean
-  listStatuses: TvListStatus[]
-  tvStatuses: TvStatus[]
+  listStatuses: ListStatus[]
+  tvStatuses: MediaStatus[]
 }
 
 export interface RadarrMovieConfig {
   enabled: boolean
   monitored: boolean
-  listStatuses: MovieListStatus[]
-  movieStatuses: MovieStatus[]
+  listStatuses: ListStatus[]
+  movieStatuses: MediaStatus[]
 }
 
 export interface RadarrAnimeConfig {
   enabled: boolean
   monitored: boolean
-  listStatuses: AnimeListStatus[]
-  animeStatuses: AnimeStatus[]
+  listStatuses: ListStatus[]
+  animeStatuses: MediaStatus[]
   animeMovieFormats: AnimeFormat[]
+}
+
+/** Normalises a stored status array (tolerates pre-unification values), falling back when empty. */
+function listStatusesOr(raw: unknown, fallback: ListStatus[]): ListStatus[] {
+  if (!Array.isArray(raw) || raw.length === 0) return fallback
+  return [...new Set(raw.map((s) => normalizeListStatus(s)))]
+}
+
+function mediaStatusesOr(raw: unknown, fallback: MediaStatus[]): MediaStatus[] {
+  if (!Array.isArray(raw) || raw.length === 0) return fallback
+  return [...new Set(raw.map((s) => normalizeMediaStatus(s)))]
 }
 
 export function getSourceExternalId(
@@ -160,14 +169,8 @@ export function parseSonarrAnimeConfig(
   return {
     enabled: cfg?.enabled ?? true,
     monitored: cfg?.monitored ?? true,
-    listStatuses:
-      Array.isArray(cfg?.listStatuses) && cfg.listStatuses.length > 0
-        ? cfg.listStatuses
-        : (['PLANNING', 'WATCHING'] as AnimeListStatus[]),
-    animeStatuses:
-      Array.isArray(cfg?.animeStatuses) && cfg.animeStatuses.length > 0
-        ? cfg.animeStatuses
-        : (['FINISHED', 'RELEASING'] as AnimeStatus[]),
+    listStatuses: listStatusesOr(cfg?.listStatuses, ['PLANNED', 'IN_PROGRESS']),
+    animeStatuses: mediaStatusesOr(cfg?.animeStatuses, ['RELEASED', 'RELEASING']),
     animeFormats:
       Array.isArray(cfg?.animeFormats) && cfg.animeFormats.length > 0
         ? cfg.animeFormats
@@ -181,14 +184,8 @@ export function parseSonarrTvConfig(userSettings: unknown): SonarrTvConfig {
   return {
     enabled: cfg?.enabled ?? true,
     monitored: cfg?.monitored ?? true,
-    listStatuses:
-      Array.isArray(cfg?.listStatuses) && cfg.listStatuses.length > 0
-        ? cfg.listStatuses
-        : (['PLANNING', 'WATCHING'] as TvListStatus[]),
-    tvStatuses:
-      Array.isArray(cfg?.tvStatuses) && cfg.tvStatuses.length > 0
-        ? cfg.tvStatuses
-        : (['RETURNING_SERIES', 'ENDED'] as TvStatus[]),
+    listStatuses: listStatusesOr(cfg?.listStatuses, ['PLANNED', 'IN_PROGRESS']),
+    tvStatuses: mediaStatusesOr(cfg?.tvStatuses, ['RELEASING', 'RELEASED']),
   }
 }
 
@@ -200,14 +197,8 @@ export function parseRadarrMovieConfig(
   return {
     enabled: cfg?.enabled ?? true,
     monitored: cfg?.monitored ?? true,
-    listStatuses:
-      Array.isArray(cfg?.listStatuses) && cfg.listStatuses.length > 0
-        ? cfg.listStatuses
-        : (['PLANNING'] as MovieListStatus[]),
-    movieStatuses:
-      Array.isArray(cfg?.movieStatuses) && cfg.movieStatuses.length > 0
-        ? cfg.movieStatuses
-        : (['RELEASED'] as MovieStatus[]),
+    listStatuses: listStatusesOr(cfg?.listStatuses, ['PLANNED']),
+    movieStatuses: mediaStatusesOr(cfg?.movieStatuses, ['RELEASED']),
   }
 }
 
@@ -219,14 +210,8 @@ export function parseRadarrAnimeConfig(
   return {
     enabled: cfg?.enabled ?? true,
     monitored: cfg?.monitored ?? true,
-    listStatuses:
-      Array.isArray(cfg?.listStatuses) && cfg.listStatuses.length > 0
-        ? cfg.listStatuses
-        : (['PLANNING'] as AnimeListStatus[]),
-    animeStatuses:
-      Array.isArray(cfg?.animeStatuses) && cfg.animeStatuses.length > 0
-        ? cfg.animeStatuses
-        : (['FINISHED', 'RELEASING'] as AnimeStatus[]),
+    listStatuses: listStatusesOr(cfg?.listStatuses, ['PLANNED']),
+    animeStatuses: mediaStatusesOr(cfg?.animeStatuses, ['RELEASED', 'RELEASING']),
     animeMovieFormats:
       Array.isArray(cfg?.animeMovieFormats) && cfg.animeMovieFormats.length > 0
         ? cfg.animeMovieFormats

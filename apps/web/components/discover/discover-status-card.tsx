@@ -122,9 +122,10 @@ export function DiscoverStatusCard({
     }
     return [
       { value: "RELEASING", label: "Releasing" },
-      { value: "FINISHED", label: "Finished" },
-      { value: "NOT_YET_RELEASED", label: "Upcoming" },
+      { value: "RELEASED", label: "Released" },
+      { value: "UPCOMING", label: "Upcoming" },
       { value: "CANCELLED", label: "Cancelled" },
+      { value: "HIATUS", label: "Hiatus" },
     ]
   }, [facets.statuses, isStatusSupported])
 

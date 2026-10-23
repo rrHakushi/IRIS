@@ -553,7 +553,7 @@ export class CarinaConnectionsServ {
           rawItems.push({
             mediaType: 'game',
             title: game.name,
-            status: 'CURRENT',
+            status: 'IN_PROGRESS',
             progress: game.playtimeMinutes,
             externalId: game.externalId,
             provider: connection.provider,
@@ -581,7 +581,7 @@ export class CarinaConnectionsServ {
           return {
             mediaType: (item.mediaType || 'anime').toLowerCase(),
             title: item.title,
-            status: item.status || 'PLANNING',
+            status: item.status || 'PLANNED',
             score: item.score,
             progress: item.progress,
             progressVolumes: item.progressVolumes,

@@ -64,7 +64,7 @@ export function FileBackupImportCard(): React.JSX.Element {
               mediaType: k,
               title: item.title || "Untitled",
               externalIds: item.externalIds || {},
-              status: item.status || "PLANNING",
+              status: item.status || "PLANNED",
               progress: item.progress,
               progressVolumes: item.progressVolumes,
               progressPages: item.progressPages,
@@ -204,7 +204,7 @@ export function FileBackupImportCard(): React.JSX.Element {
           tmdbId: ids.tmdb ? Number(ids.tmdb) : null,
           imdbId: ids.imdb ? String(ids.imdb) : null,
         },
-        status: entry.status || "PLANNING",
+        status: entry.status || "PLANNED",
         progress: entry.watched_episodes_count || 0,
         score: entry.user_rating || null,
         notes: entry.memo || null,
@@ -259,7 +259,7 @@ export function FileBackupImportCard(): React.JSX.Element {
           imdbId: row["imdb id"] || null,
           malId: row["mal id"] ? Number(row["mal id"]) : null,
         },
-        status: row["status"] || "PLANNING",
+        status: row["status"] || "PLANNED",
         progress:
           row["watched episodes"] || row["episodes watched"]
             ? Number(row["watched episodes"] || row["episodes watched"])
