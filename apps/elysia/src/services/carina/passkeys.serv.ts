@@ -247,18 +247,42 @@ export abstract class CarinaPasskeysServ {
         },
       })
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Passkey assertion verification failed'
-      throw new BadRequest(msg)
+      // Multi-device passkeys (e.g. iCloud Keychain, Bitwarden, 1Password, Windows Hello)
+      // often do not increment signature counters across synced devices. If the counter
+      // check fails because it is static or equal, retry with counter: 0 to verify signature.
+      if (err instanceof Error && err.message.includes('was lower than expected')) {
+        try {
+          verification = await verifyAuthenticationResponse({
+            response: resp,
+            expectedChallenge,
+            expectedOrigin,
+            expectedRPID: rpID,
+            credential: {
+              id: passkey.id,
+              publicKey: Buffer.from(passkey.publicKey, 'base64url'),
+              counter: 0,
+              transports: passkey.transports as any,
+            },
+          })
+        } catch (retryErr: unknown) {
+          const msg = retryErr instanceof Error ? retryErr.message : 'Passkey assertion verification failed'
+          throw new BadRequest(msg)
+        }
+      } else {
+        const msg = err instanceof Error ? err.message : 'Passkey assertion verification failed'
+        throw new BadRequest(msg)
+      }
     }
 
     if (!verification.verified) {
       throw new BadRequest('Passkey authentication verification failed.')
     }
 
+    const newCounter = verification.authenticationInfo?.newCounter ?? passkey.counter
     await prisma.passkey.update({
       where: { id: passkey.id },
       data: {
-        counter: verification.authenticationInfo.newCounter,
+        counter: Math.max(passkey.counter, newCounter),
       },
     })
 

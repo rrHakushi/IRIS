@@ -187,7 +187,13 @@ export async function getSession(): Promise<Session | null> {
  */
 export async function signIn(provider?: string, options?: any) {
   if (!provider || provider === "credentials") {
-    if (!options?.identifier && !options?.mfaTicket) {
+    if (
+      !options?.identifier &&
+      !options?.mfaTicket &&
+      !options?.isPasskeyOnly &&
+      options?.mfaType !== "passkey" &&
+      !options?.isLoginCode
+    ) {
       window.location.href = "/carina/auth/login"
       return { ok: true, error: null }
     }
