@@ -173,7 +173,7 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
   describe('4. Job Processor Execution & Retry Triggers', () => {
     it('notifies user and skips retrying if user connection does not exist', async () => {
       let createdNotif: any = null
-      ;(prisma.connection.findFirst as any) = async () => null
+      ;((prisma as any).connection.findFirst as any) = async () => null
       ;(CarinaNotificationsServ.createNotification as any) = async (data: any) => {
         createdNotif = data
         return { id: 'notif-1' }
@@ -205,14 +205,14 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
       let updatedConnection = false
       let adapterUpdated = false
 
-      ;(prisma.connection.findFirst as any) = async () => ({
+      ;((prisma as any).connection.findFirst as any) = async () => ({
         id: 'conn-1',
         userId: 'user-100',
         provider: 'ANILIST',
         encryptedData: 'encrypted-test-data',
         status: 'CONNECTED',
       })
-      ;(prisma.connection.update as any) = async (args: any) => {
+      ;((prisma as any).connection.update as any) = async (args: any) => {
         if (args?.data?.lastSyncedAt) {
           updatedConnection = true
         }
@@ -279,7 +279,7 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
     })
 
     it('pauses worker and throws ConnectionRateLimitError on 429 response', async () => {
-      ;(prisma.connection.findFirst as any) = async () => ({
+      ;((prisma as any).connection.findFirst as any) = async () => ({
         id: 'conn-rate',
         userId: 'user-rate',
         provider: 'ANILIST',
@@ -342,7 +342,7 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
         notifiedPayload = data
         return { id: 'notif-fail' }
       }
-      ;(prisma.connection.updateMany as any) = async (args: any) => {
+      ;((prisma as any).connection.updateMany as any) = async (args: any) => {
         if (args?.data?.errorMessage) {
           updatedErrorMsg = args.data.errorMessage
         }
@@ -382,14 +382,14 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
 
   describe('6. Borealis List Mutation Integration', () => {
     it('enqueues connection sync jobs on upsertAnimeEntry', async () => {
-      ;(prisma.anime.findUnique as any) = async () => ({
+      ;((prisma as any).anime.findUnique as any) = async () => ({
         id: 1,
         episodeCount: 12,
         status: 'FINISHED',
         titlePrimary: 'Death Note',
         titleSecondary: 'Desu Noto',
       })
-      ;(prisma.animeList.upsert as any) = async (args: any) => ({
+      ;((prisma as any).animeList.upsert as any) = async (args: any) => ({
         id: 10,
         userId: 'user-test',
         animeId: 1,
@@ -424,14 +424,14 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
     })
 
     it('enqueues connection sync jobs on incrementAnime', async () => {
-      ;(prisma.anime.findUnique as any) = async () => ({
+      ;((prisma as any).anime.findUnique as any) = async () => ({
         id: 2,
         episodeCount: 24,
         status: 'RELEASING',
         titlePrimary: 'Jujutsu Kaisen',
         titleSecondary: 'Sorcery Fight',
       })
-      ;(prisma.animeList.findUnique as any) = async () => ({
+      ;((prisma as any).animeList.findUnique as any) = async () => ({
         id: 20,
         userId: 'user-test',
         animeId: 2,
@@ -444,7 +444,7 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
           anilist: { id: 113415 },
         },
       })
-      ;(prisma.animeList.upsert as any) = async (args: any) => ({
+      ;((prisma as any).animeList.upsert as any) = async (args: any) => ({
         id: 20,
         userId: 'user-test',
         animeId: 2,

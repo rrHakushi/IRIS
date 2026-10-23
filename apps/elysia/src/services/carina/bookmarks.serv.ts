@@ -1,4 +1,4 @@
-import { prisma } from '@IRIS/database'
+import { prisma, countOf, toDate } from '@IRIS/database'
 import { IRISBitField, IRISFlags } from '@IRIS/permissions'
 import { NotFound, BadRequest, Forbidden } from '../../lib/errors'
 
@@ -17,8 +17,8 @@ export class CarinaBookmarksServ {
     appId: string | null
     group: string | null
     order: number
-    createdAt: Date
-    updatedAt: Date
+    createdAt: any
+    updatedAt: any
   }) {
     return {
       id: b.id,
@@ -31,8 +31,8 @@ export class CarinaBookmarksServ {
       appId: b.appId ?? null,
       group: b.group ?? null,
       order: b.order,
-      createdAt: b.createdAt.toISOString(),
-      updatedAt: b.updatedAt.toISOString(),
+      createdAt: toDate(b.createdAt).toISOString(),
+      updatedAt: toDate(b.updatedAt).toISOString(),
     }
   }
 
@@ -52,27 +52,24 @@ export class CarinaBookmarksServ {
     const limit = Math.max(1, Math.min(50, query?.limit ?? 10))
     const skip = (page - 1) * limit
 
-    const where: any = { userId }
+    let bmQuery = prisma.orm.public.Bookmark.where({ userId })
     if (query?.group !== undefined) {
-      where.group = query.group.trim()
+      bmQuery = bmQuery.where({ group: query.group.trim() })
     }
     if (query?.pinned !== undefined) {
-      where.pinned = Boolean(query.pinned)
+      bmQuery = bmQuery.where({ pinned: Boolean(query.pinned) })
     }
 
     const [total, rawBookmarks] = await Promise.all([
-      prisma.bookmark.count({ where }),
-      prisma.bookmark.findMany({
-        where,
-        orderBy: [
-          { pinned: 'desc' },
-          { order: 'asc' },
-          { createdAt: 'desc' },
-        ],
-        skip,
-        take: limit,
-      }),
+      countOf(bmQuery),
+      bmQuery
+        .orderBy([(b) => b.order.asc(), (b) => b.createdAt.desc()])
+        .offset(skip)
+        .limit(limit)
+        .all(),
     ])
+
+    rawBookmarks.sort((a, b) => (b.pinned === a.pinned ? 0 : b.pinned ? 1 : -1))
 
     const totalPages = Math.max(1, Math.ceil(total / limit))
     const hasMore = page < totalPages
@@ -118,28 +115,27 @@ export class CarinaBookmarksServ {
       }>
     }
   ) {
-    await prisma.$transaction(
-      body.bookmarks.map((bm, index) =>
-        prisma.bookmark.updateMany({
-          where: { id: bm.id, userId },
-          data: {
-            order: bm.order ?? index,
-            pinned: Boolean(bm.pinned),
-            title: bm.title.trim(),
-            url: bm.url.trim(),
-            icon: bm.icon?.trim() || null,
-            color: bm.color?.trim() || null,
-            appId: bm.appId?.trim() || null,
-            group: bm.group?.trim() || null,
-          },
+    await prisma.transaction(async (tx) => {
+      for (let index = 0; index < body.bookmarks.length; index++) {
+        const bm = body.bookmarks[index]!
+        await tx.orm.public.Bookmark.where({ id: bm.id, userId }).update({
+          order: bm.order ?? index,
+          pinned: Boolean(bm.pinned),
+          title: bm.title.trim(),
+          url: bm.url.trim(),
+          icon: bm.icon?.trim() || null,
+          color: bm.color?.trim() || null,
+          appId: bm.appId?.trim() || null,
+          group: bm.group?.trim() || null,
         })
-      )
-    )
-
-    const dbBookmarks = await prisma.bookmark.findMany({
-      where: { userId },
-      orderBy: [{ pinned: 'desc' }, { order: 'asc' }, { createdAt: 'desc' }],
+      }
     })
+
+    const dbBookmarks = await prisma.orm.public.Bookmark.where({ userId })
+      .orderBy([(b) => b.order.asc(), (b) => b.createdAt.desc()])
+      .all()
+
+    dbBookmarks.sort((a, b) => (b.pinned === a.pinned ? 0 : b.pinned ? 1 : -1))
 
     return {
       success: true,
@@ -172,18 +168,16 @@ export class CarinaBookmarksServ {
       throw new BadRequest('Bookmark URL cannot be empty')
     }
 
-    const created = await prisma.bookmark.create({
-      data: {
-        userId,
-        title,
-        url,
-        icon: body.icon?.trim() || null,
-        color: body.color?.trim() || null,
-        pinned: Boolean(body.pinned),
-        appId: body.appId?.trim() || null,
-        group: body.group?.trim() || null,
-        order: body.order ?? 0,
-      },
+    const created = await prisma.orm.public.Bookmark.create({
+      userId,
+      title,
+      url,
+      icon: body.icon?.trim() || null,
+      color: body.color?.trim() || null,
+      pinned: Boolean(body.pinned),
+      appId: body.appId?.trim() || null,
+      group: body.group?.trim() || null,
+      order: body.order ?? 0,
     })
 
     return {
@@ -210,9 +204,7 @@ export class CarinaBookmarksServ {
       order?: number
     }
   ) {
-    const bookmark = await prisma.bookmark.findUnique({
-      where: { id: bookmarkId.trim() },
-    })
+    const bookmark = await prisma.orm.public.Bookmark.where({ id: bookmarkId.trim() }).first()
 
     if (!bookmark) {
       throw new NotFound('Bookmark not found')
@@ -255,10 +247,11 @@ export class CarinaBookmarksServ {
       data.order = body.order
     }
 
-    const updated = await prisma.bookmark.update({
-      where: { id: bookmark.id },
-      data,
-    })
+    const updated = await prisma.orm.public.Bookmark.where({ id: bookmark.id }).update(data)
+
+    if (!updated) {
+      throw new NotFound('Bookmark not found')
+    }
 
     return {
       success: true,
@@ -274,9 +267,7 @@ export class CarinaBookmarksServ {
     user: { id: string; permissions: number[] },
     bookmarkId: string
   ) {
-    const bookmark = await prisma.bookmark.findUnique({
-      where: { id: bookmarkId.trim() },
-    })
+    const bookmark = await prisma.orm.public.Bookmark.where({ id: bookmarkId.trim() }).first()
 
     if (!bookmark) {
       throw new NotFound('Bookmark not found')
@@ -289,9 +280,7 @@ export class CarinaBookmarksServ {
       throw new Forbidden('You do not have permission to delete this bookmark')
     }
 
-    await prisma.bookmark.delete({
-      where: { id: bookmark.id },
-    })
+    await prisma.orm.public.Bookmark.where({ id: bookmark.id }).delete()
 
     return {
       success: true,

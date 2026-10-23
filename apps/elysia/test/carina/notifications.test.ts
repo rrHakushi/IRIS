@@ -69,17 +69,17 @@ function setupPrismaMock() {
   mockNotifications = []
 
   // Mock User findUnique
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return mockUsers.find((u) => u.id === where.id) ?? null
   }
 
   // Mock Notification findUnique
-  ;(prisma.notification.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).notification.findUnique as any) = async ({ where }: any) => {
     return mockNotifications.find((n) => n.id === where.id) ?? null
   }
 
   // Mock Notification findMany
-  ;(prisma.notification.findMany as any) = async ({
+  ;((prisma as any).notification.findMany as any) = async ({
     where,
     orderBy,
     skip = 0,
@@ -105,7 +105,7 @@ function setupPrismaMock() {
   }
 
   // Mock Notification count
-  ;(prisma.notification.count as any) = async ({ where }: any) => {
+  ;((prisma as any).notification.count as any) = async ({ where }: any) => {
     return mockNotifications.filter((n) => {
       if (where.userId && n.userId !== where.userId) return false
       if (where.isRead !== undefined && n.isRead !== where.isRead) return false
@@ -118,7 +118,7 @@ function setupPrismaMock() {
   }
 
   // Mock Notification create
-  ;(prisma.notification.create as any) = async ({ data }: any) => {
+  ;((prisma as any).notification.create as any) = async ({ data }: any) => {
     const item: MockNotification = {
       id: `notif-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
       userId: data.userId,
@@ -142,7 +142,7 @@ function setupPrismaMock() {
   }
 
   // Mock Notification update
-  ;(prisma.notification.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).notification.update as any) = async ({ where, data }: any) => {
     const item = mockNotifications.find((n) => n.id === where.id)
     if (!item) throw new Error('Notification not found')
 
@@ -156,7 +156,7 @@ function setupPrismaMock() {
   }
 
   // Mock Notification updateMany
-  ;(prisma.notification.updateMany as any) = async ({ where, data }: any) => {
+  ;((prisma as any).notification.updateMany as any) = async ({ where, data }: any) => {
     let count = 0
     for (const item of mockNotifications) {
       if (where.userId && item.userId !== where.userId) continue
@@ -171,7 +171,7 @@ function setupPrismaMock() {
   }
 
   // Mock Notification delete
-  ;(prisma.notification.delete as any) = async ({ where }: any) => {
+  ;((prisma as any).notification.delete as any) = async ({ where }: any) => {
     const idx = mockNotifications.findIndex((n) => n.id === where.id)
     if (idx === -1) throw new Error('Notification not found')
     const [deleted] = mockNotifications.splice(idx, 1)
@@ -179,7 +179,7 @@ function setupPrismaMock() {
   }
 
   // Mock Notification deleteMany
-  ;(prisma.notification.deleteMany as any) = async ({ where }: any) => {
+  ;((prisma as any).notification.deleteMany as any) = async ({ where }: any) => {
     let count = 0
     mockNotifications = mockNotifications.filter((n) => {
       if (where.userId && n.userId !== where.userId) return true

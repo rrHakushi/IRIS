@@ -1,4 +1,4 @@
-import type { Prisma } from '@IRIS/database'
+import type { Models } from '@IRIS/database'
 
 export interface MediaRelationItem {
   id: number
@@ -46,13 +46,9 @@ export const animeInclude = {
       studio: true,
     },
   },
-} as const satisfies Prisma.AnimeInclude
+} as const
 
-export type AnimeDetails = NonNullable<
-  Prisma.AnimeGetPayload<{
-    include: typeof animeInclude
-  }>
-> & {
+export type AnimeDetails = Models.public_Anime & {
   relations: MediaRelationItem[]
 }
 
@@ -76,16 +72,9 @@ export const movieInclude = {
       studio: true,
     },
   },
-} as const satisfies Prisma.MovieInclude
+} as const
 
-export type MovieDetails = Omit<
-  NonNullable<
-    Prisma.MovieGetPayload<{
-      include: typeof movieInclude
-    }>
-  >,
-  'budget' | 'revenue'
-> & {
+export type MovieDetails = Omit<Models.public_Movie, 'budget' | 'revenue'> & {
   budget: number | bigint | null
   revenue: number | bigint | null
   relations: MediaRelationItem[]
@@ -119,13 +108,9 @@ export const tvInclude = {
   episodes: {
     orderBy: [{ seasonNumber: 'asc' }, { episodeNumber: 'asc' }],
   },
-} as const satisfies Prisma.TvInclude
+} as const
 
-export type TvDetails = NonNullable<
-  Prisma.TvGetPayload<{
-    include: typeof tvInclude
-  }>
-> & {
+export type TvDetails = Models.public_Tv & {
   relations: MediaRelationItem[]
 }
 
@@ -144,13 +129,9 @@ export const mangaInclude = {
       person: true,
     },
   },
-} as const satisfies Prisma.MangaInclude
+} as const
 
-export type MangaDetails = NonNullable<
-  Prisma.MangaGetPayload<{
-    include: typeof mangaInclude
-  }>
-> & {
+export type MangaDetails = Models.public_Manga & {
   relations: MediaRelationItem[]
 }
 
@@ -163,13 +144,9 @@ export const gameInclude = {
       studio: true,
     },
   },
-} as const satisfies Prisma.GameInclude
+} as const
 
-export type GameDetails = NonNullable<
-  Prisma.GameGetPayload<{
-    include: typeof gameInclude
-  }>
-> & {
+export type GameDetails = Models.public_Game & {
   relations: MediaRelationItem[]
 }
 
@@ -193,15 +170,12 @@ export const bookInclude = {
       studio: true,
     },
   },
-} as const satisfies Prisma.BookInclude
+} as const
 
-export type BookDetails = NonNullable<
-  Prisma.BookGetPayload<{
-    include: typeof bookInclude
-  }>
-> & {
+export type BookDetails = Models.public_Book & {
   relations: MediaRelationItem[]
 }
+
 
 // 7. Character
 export interface MediaAppearanceItem {

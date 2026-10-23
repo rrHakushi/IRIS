@@ -22,55 +22,55 @@ describe('Borealis: Media Relations Cascade & Deezer Queueing', () => {
     enqueuedJobs = []
 
     // Mock Prisma Anime
-    ;(prisma.anime.findUnique as any) = async ({ where }: any) => {
+    ;((prisma as any).anime.findUnique as any) = async ({ where }: any) => {
       if (where.id === 603 || where.anilistId === 206949) {
         return { id: 603, anilistId: 206949, titlePrimary: 'Nia Liston' }
       }
       return createdAnimeStubs.find((a) => a.anilistId === where.anilistId) || null
     }
 
-    ;(prisma.anime.create as any) = async ({ data }: any) => {
+    ;((prisma as any).anime.create as any) = async ({ data }: any) => {
       const created = { id: 700 + createdAnimeStubs.length, ...data }
       createdAnimeStubs.push(created)
       return created
     }
 
-    ;(prisma.anime.update as any) = async ({ where, data }: any) => {
+    ;((prisma as any).anime.update as any) = async ({ where, data }: any) => {
       updatedAnime.push({ id: where.id, ...data })
       return { id: where.id, ...data }
     }
 
     // Mock Prisma Manga
-    ;(prisma.manga.findUnique as any) = async ({ where }: any) => {
+    ;((prisma as any).manga.findUnique as any) = async ({ where }: any) => {
       return createdMangaStubs.find((m) => m.anilistId === where.anilistId) || null
     }
 
-    ;(prisma.manga.create as any) = async ({ data }: any) => {
+    ;((prisma as any).manga.create as any) = async ({ data }: any) => {
       const created = { id: 800 + createdMangaStubs.length, ...data }
       createdMangaStubs.push(created)
       return created
     }
 
-    ;(prisma.manga.update as any) = async ({ where, data }: any) => {
+    ;((prisma as any).manga.update as any) = async ({ where, data }: any) => {
       return { id: where.id, ...data }
     }
 
     // Mock Prisma Music
-    ;(prisma.music.findFirst as any) = async () => null
-    ;(prisma.music.findUnique as any) = async () => null
-    ;(prisma.music.create as any) = async ({ data }: any) => {
+    ;((prisma as any).music.findFirst as any) = async () => null
+    ;((prisma as any).music.findUnique as any) = async () => null
+    ;((prisma as any).music.create as any) = async ({ data }: any) => {
       const created = { id: 900 + createdMusicStubs.length, ...data }
       createdMusicStubs.push(created)
       return created
     }
-    ;(prisma.music.upsert as any) = async ({ create, update, where }: any) => {
+    ;((prisma as any).music.upsert as any) = async ({ create, update, where }: any) => {
       const created = { id: 900 + createdMusicStubs.length, ...create }
       createdMusicStubs.push(created)
       return created
     }
 
     // Mock Prisma MediaRelation
-    ;(prisma.mediaRelation.upsert as any) = async ({ create, where }: any) => {
+    ;((prisma as any).mediaRelation.upsert as any) = async ({ create, where }: any) => {
       upsertedRelations.push(create)
       return { id: upsertedRelations.length, ...create }
     }

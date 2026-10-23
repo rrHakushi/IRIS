@@ -376,18 +376,18 @@ function setupPrismaMock() {
   ]
 
   // Mock Prisma methods
-  ;(prisma.genre.findMany as any) = async () => mockGenres
+  ;((prisma as any).genre.findMany as any) = async () => mockGenres
 
   // Anime
-  ;(prisma.anime.count as any) = async () => mockAnime.length
-  ;(prisma.anime.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
+  ;((prisma as any).anime.count as any) = async () => mockAnime.length
+  ;((prisma as any).anime.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
     let items = mockAnime
     if (where?.id?.in) items = items.filter((a) => where.id.in.includes(a.id))
     if (where?.id?.not) items = items.filter((a) => a.id !== where.id.not)
     return items.slice(skip, skip + take)
   }
-  ;(prisma.anime.findUnique as any) = async ({ where }: any) => mockAnime.find((a) => a.id === where.id) ?? null
-  ;(prisma.anime.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).anime.findUnique as any) = async ({ where }: any) => mockAnime.find((a) => a.id === where.id) ?? null
+  ;((prisma as any).anime.update as any) = async ({ where, data }: any) => {
     const idx = mockAnime.findIndex((a) => a.id === where.id)
     if (idx !== -1) {
       mockAnime[idx] = { ...mockAnime[idx], ...data }
@@ -397,15 +397,15 @@ function setupPrismaMock() {
   }
 
   // Manga
-  ;(prisma.manga.count as any) = async () => mockManga.length
-  ;(prisma.manga.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
+  ;((prisma as any).manga.count as any) = async () => mockManga.length
+  ;((prisma as any).manga.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
     let items = mockManga
     if (where?.id?.in) items = items.filter((m) => where.id.in.includes(m.id))
     if (where?.id?.not) items = items.filter((m) => m.id !== where.id.not)
     return items.slice(skip, skip + take)
   }
-  ;(prisma.manga.findUnique as any) = async ({ where }: any) => mockManga.find((m) => m.id === where.id) ?? null
-  ;(prisma.manga.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).manga.findUnique as any) = async ({ where }: any) => mockManga.find((m) => m.id === where.id) ?? null
+  ;((prisma as any).manga.update as any) = async ({ where, data }: any) => {
     const idx = mockManga.findIndex((m) => m.id === where.id)
     if (idx !== -1) {
       mockManga[idx] = { ...mockManga[idx], ...data }
@@ -415,15 +415,15 @@ function setupPrismaMock() {
   }
 
   // Movies
-  ;(prisma.movie.count as any) = async () => mockMovies.length
-  ;(prisma.movie.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
+  ;((prisma as any).movie.count as any) = async () => mockMovies.length
+  ;((prisma as any).movie.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
     let items = mockMovies
     if (where?.id?.in) items = items.filter((m) => where.id.in.includes(m.id))
     if (where?.id?.not) items = items.filter((m) => m.id !== where.id.not)
     return items.slice(skip, skip + take)
   }
-  ;(prisma.movie.findUnique as any) = async ({ where }: any) => mockMovies.find((m) => m.id === where.id) ?? null
-  ;(prisma.movie.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).movie.findUnique as any) = async ({ where }: any) => mockMovies.find((m) => m.id === where.id) ?? null
+  ;((prisma as any).movie.update as any) = async ({ where, data }: any) => {
     const idx = mockMovies.findIndex((m) => m.id === where.id)
     if (idx !== -1) {
       mockMovies[idx] = { ...mockMovies[idx], ...data }
@@ -433,15 +433,15 @@ function setupPrismaMock() {
   }
 
   // TV
-  ;(prisma.tv.count as any) = async () => mockTv.length
-  ;(prisma.tv.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
+  ;((prisma as any).tv.count as any) = async () => mockTv.length
+  ;((prisma as any).tv.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
     let items = mockTv
     if (where?.id?.in) items = items.filter((t) => where.id.in.includes(t.id))
     if (where?.id?.not) items = items.filter((t) => t.id !== where.id.not)
     return items.slice(skip, skip + take)
   }
-  ;(prisma.tv.findUnique as any) = async ({ where }: any) => mockTv.find((t) => t.id === where.id) ?? null
-  ;(prisma.tv.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).tv.findUnique as any) = async ({ where }: any) => mockTv.find((t) => t.id === where.id) ?? null
+  ;((prisma as any).tv.update as any) = async ({ where, data }: any) => {
     const idx = mockTv.findIndex((t) => t.id === where.id)
     if (idx !== -1) {
       mockTv[idx] = { ...mockTv[idx], ...data }
@@ -451,15 +451,15 @@ function setupPrismaMock() {
   }
 
   // Books
-  ;(prisma.book.count as any) = async () => mockBooks.length
-  ;(prisma.book.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
+  ;((prisma as any).book.count as any) = async () => mockBooks.length
+  ;((prisma as any).book.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
     let items = mockBooks
     if (where?.id?.in) items = items.filter((b) => where.id.in.includes(b.id))
     if (where?.id?.not) items = items.filter((b) => b.id !== where.id.not)
     return items.slice(skip, skip + take)
   }
-  ;(prisma.book.findUnique as any) = async ({ where }: any) => mockBooks.find((b) => b.id === where.id) ?? null
-  ;(prisma.book.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).book.findUnique as any) = async ({ where }: any) => mockBooks.find((b) => b.id === where.id) ?? null
+  ;((prisma as any).book.update as any) = async ({ where, data }: any) => {
     const idx = mockBooks.findIndex((b) => b.id === where.id)
     if (idx !== -1) {
       mockBooks[idx] = { ...mockBooks[idx], ...data }
@@ -469,15 +469,15 @@ function setupPrismaMock() {
   }
 
   // Games
-  ;(prisma.game.count as any) = async () => mockGames.length
-  ;(prisma.game.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
+  ;((prisma as any).game.count as any) = async () => mockGames.length
+  ;((prisma as any).game.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
     let items = mockGames
     if (where?.id?.in) items = items.filter((g) => where.id.in.includes(g.id))
     if (where?.id?.not) items = items.filter((g) => g.id !== where.id.not)
     return items.slice(skip, skip + take)
   }
-  ;(prisma.game.findUnique as any) = async ({ where }: any) => mockGames.find((g) => g.id === where.id) ?? null
-  ;(prisma.game.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).game.findUnique as any) = async ({ where }: any) => mockGames.find((g) => g.id === where.id) ?? null
+  ;((prisma as any).game.update as any) = async ({ where, data }: any) => {
     const idx = mockGames.findIndex((g) => g.id === where.id)
     if (idx !== -1) {
       mockGames[idx] = { ...mockGames[idx], ...data }
@@ -487,15 +487,15 @@ function setupPrismaMock() {
   }
 
   // Music
-  ;(prisma.music.count as any) = async () => mockMusic.length
-  ;(prisma.music.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
+  ;((prisma as any).music.count as any) = async () => mockMusic.length
+  ;((prisma as any).music.findMany as any) = async ({ where, skip = 0, take = 40 }: any = {}) => {
     let items = mockMusic
     if (where?.id?.in) items = items.filter((m) => where.id.in.includes(m.id))
     if (where?.id?.not) items = items.filter((m) => m.id !== where.id.not)
     return items.slice(skip, skip + take)
   }
-  ;(prisma.music.findUnique as any) = async ({ where }: any) => mockMusic.find((m) => m.id === where.id) ?? null
-  ;(prisma.music.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).music.findUnique as any) = async ({ where }: any) => mockMusic.find((m) => m.id === where.id) ?? null
+  ;((prisma as any).music.update as any) = async ({ where, data }: any) => {
     const idx = mockMusic.findIndex((m) => m.id === where.id)
     if (idx !== -1) {
       mockMusic[idx] = { ...mockMusic[idx], ...data }
@@ -505,7 +505,7 @@ function setupPrismaMock() {
   }
 
   // MediaRelation
-  ;(prisma.mediaRelation.findMany as any) = async ({ where }: any = {}) => {
+  ;((prisma as any).mediaRelation.findMany as any) = async ({ where }: any = {}) => {
     if (where?.OR) {
       return mockRelations.filter((r) =>
         where.OR.some(

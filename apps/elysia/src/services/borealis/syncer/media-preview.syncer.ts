@@ -1,4 +1,4 @@
-import { prisma, type Prisma } from '@IRIS/database'
+import { prisma } from '@IRIS/database'
 import { LogFactory, c } from '@Iris/logger'
 import { normalizeTvdbImageUrl, type TvdbSearchItem } from '../providers/tvdb.provider'
 import type { AniListAnimeSearchPreview, AniListMangaSearchPreview } from '../providers/anilist.provider'
@@ -101,23 +101,22 @@ export class MediaPreviewSyncer {
         : 'UNKNOWN'
     ) as any
 
-    const existing = await prisma.anime.findUnique({
-      where: { anilistId: item.id },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        titleNative: true,
-        coverImage: true,
-        isAdult: true,
-        format: true,
-        seasonYear: true,
-        seasonSeason: true,
-        updatedAt: true,
-        status: true,
-        alUpdatedAt: true,
-      },
-    })
+    const existing = await prisma.orm.public.Anime.where({ anilistId: item.id })
+      .select(
+        'id',
+        'titlePrimary',
+        'titleSecondary',
+        'titleNative',
+        'coverImage',
+        'isAdult',
+        'format',
+        'seasonYear',
+        'seasonSeason',
+        'updatedAt',
+        'status',
+        'alUpdatedAt'
+      )
+      .first()
 
     if (existing) {
       const freshness = evaluateRecordFreshness('ANIME', existing)
@@ -132,30 +131,18 @@ export class MediaPreviewSyncer {
       }
     }
 
-    const created = await prisma.anime.create({
-      data: {
-        anilistId: item.id,
-        titlePrimary,
-        titleSecondary,
-        titleNative,
-        coverImage,
-        isAdult: item.isAdult ?? false,
-        format,
-        seasonSeason,
-        seasonYear: item.seasonYear,
-        alUpdatedAt: null, // Marks as unhydrated stub -> full background fetch will proceed
-      },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        titleNative: true,
-        coverImage: true,
-        isAdult: true,
-        format: true,
-        seasonYear: true,
-        seasonSeason: true,
-      },
+    const created = await prisma.orm.public.Anime.create({
+      anilistId: item.id,
+      titlePrimary,
+      titleSecondary,
+      titleNative,
+      coverImage,
+      isAdult: item.isAdult ?? false,
+      format,
+      seasonSeason,
+      seasonYear: item.seasonYear,
+      synonyms: [],
+      alUpdatedAt: null, // Marks as unhydrated stub -> full background fetch will proceed
     })
 
     logger.info(
@@ -183,22 +170,21 @@ export class MediaPreviewSyncer {
     const coverImage = item.coverImage?.medium || item.coverImage?.large || null
     const format = mapMangaFormat(item.format)
 
-    const existing = await prisma.manga.findUnique({
-      where: { anilistId: item.id },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        titleNative: true,
-        coverImage: true,
-        isAdult: true,
-        format: true,
-        startDateYear: true,
-        updatedAt: true,
-        status: true,
-        alUpdatedAt: true,
-      },
-    })
+    const existing = await prisma.orm.public.Manga.where({ anilistId: item.id })
+      .select(
+        'id',
+        'titlePrimary',
+        'titleSecondary',
+        'titleNative',
+        'coverImage',
+        'isAdult',
+        'format',
+        'startDateYear',
+        'updatedAt',
+        'status',
+        'alUpdatedAt'
+      )
+      .first()
 
     if (existing) {
       const freshness = evaluateRecordFreshness('MANGA', existing)
@@ -213,28 +199,17 @@ export class MediaPreviewSyncer {
       }
     }
 
-    const created = await prisma.manga.create({
-      data: {
-        anilistId: item.id,
-        titlePrimary,
-        titleSecondary,
-        titleNative,
-        coverImage,
-        isAdult: item.isAdult ?? false,
-        format,
-        startDateYear: item.startDate?.year,
-        alUpdatedAt: null,
-      },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        titleNative: true,
-        coverImage: true,
-        isAdult: true,
-        format: true,
-        startDateYear: true,
-      },
+    const created = await prisma.orm.public.Manga.create({
+      anilistId: item.id,
+      titlePrimary,
+      titleSecondary,
+      titleNative,
+      coverImage,
+      isAdult: item.isAdult ?? false,
+      format,
+      startDateYear: item.startDate?.year,
+      synonyms: [],
+      alUpdatedAt: null,
     })
 
     logger.info(
@@ -275,20 +250,19 @@ export class MediaPreviewSyncer {
     const description = engOverview || item.overview || undefined
 
     if (tvdbId) {
-      const existing = await prisma.tv.findUnique({
-        where: { tvDBId: tvdbId },
-        select: {
-          id: true,
-          titlePrimary: true,
-          titleSecondary: true,
-          titleNative: true,
-          coverImage: true,
-          firstAiredYear: true,
-          status: true,
-          updatedAt: true,
-          tvdbUpdatedAt: true,
-        },
-      })
+      const existing = await prisma.orm.public.Tv.where({ tvDBId: tvdbId })
+        .select(
+          'id',
+          'titlePrimary',
+          'titleSecondary',
+          'titleNative',
+          'coverImage',
+          'firstAiredYear',
+          'status',
+          'updatedAt',
+          'tvdbUpdatedAt'
+        )
+        .first()
 
       if (existing) {
         const freshness = evaluateRecordFreshness('TV', existing)
@@ -305,27 +279,19 @@ export class MediaPreviewSyncer {
       }
     }
 
-    const created = await prisma.tv.create({
-      data: {
-        tvDBId: tvdbId || undefined,
-        titlePrimary,
-        titleSecondary,
-        titleNative,
-        coverImage,
-        firstAiredYear: isNaN(firstAiredYear as number) ? undefined : firstAiredYear,
-        status,
-        description,
-        tvdbUpdatedAt: null,
-      },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        titleNative: true,
-        coverImage: true,
-        firstAiredYear: true,
-        status: true,
-      },
+    const created = await prisma.orm.public.Tv.create({
+      tvDBId: tvdbId || undefined,
+      titlePrimary,
+      titleSecondary,
+      titleNative,
+      coverImage,
+      firstAiredYear: isNaN(firstAiredYear as number) ? undefined : firstAiredYear,
+      status,
+      description,
+      broadcastDays: [],
+      networks: [],
+      synonyms: [],
+      tvdbUpdatedAt: null,
     })
 
     logger.info(
@@ -367,21 +333,20 @@ export class MediaPreviewSyncer {
     const description = engOverview || item.overview || undefined
 
     if (tvdbId) {
-      const existing = await prisma.movie.findUnique({
-        where: { tvDBId: tvdbId },
-        select: {
-          id: true,
-          titlePrimary: true,
-          titleSecondary: true,
-          titleNative: true,
-          coverImage: true,
-          bannerImage: true,
-          releaseDateYear: true,
-          status: true,
-          updatedAt: true,
-          tvdbUpdatedAt: true,
-        },
-      })
+      const existing = await prisma.orm.public.Movie.where({ tvDBId: tvdbId })
+        .select(
+          'id',
+          'titlePrimary',
+          'titleSecondary',
+          'titleNative',
+          'coverImage',
+          'bannerImage',
+          'releaseDateYear',
+          'status',
+          'updatedAt',
+          'tvdbUpdatedAt'
+        )
+        .first()
 
       if (existing) {
         const freshness = evaluateRecordFreshness('MOVIE', existing)
@@ -397,28 +362,17 @@ export class MediaPreviewSyncer {
       }
     }
 
-    const created = await prisma.movie.create({
-      data: {
-        tvDBId: tvdbId || undefined,
-        titlePrimary,
-        titleSecondary,
-        titleNative,
-        coverImage,
-        releaseDateYear: isNaN(releaseDateYear as number) ? undefined : releaseDateYear,
-        status,
-        description,
-        tvdbUpdatedAt: null,
-      },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        titleNative: true,
-        coverImage: true,
-        bannerImage: true,
-        releaseDateYear: true,
-        status: true,
-      },
+    const created = await prisma.orm.public.Movie.create({
+      tvDBId: tvdbId || undefined,
+      titlePrimary,
+      titleSecondary,
+      titleNative,
+      coverImage,
+      releaseDateYear: isNaN(releaseDateYear as number) ? undefined : releaseDateYear,
+      status,
+      description,
+      synonyms: [],
+      tvdbUpdatedAt: null,
     })
 
     logger.info(
@@ -451,20 +405,19 @@ export class MediaPreviewSyncer {
       if (!isNaN(yr)) releaseDateYear = yr
     }
 
-    const existing = await prisma.book.findUnique({
-      where: { googleBookId: item.id },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        authors: true,
-        releaseDateYear: true,
-        status: true,
-        updatedAt: true,
-        googleBooksUpdatedAt: true,
-      },
-    })
+    const existing = await prisma.orm.public.Book.where({ googleBookId: item.id })
+      .select(
+        'id',
+        'titlePrimary',
+        'titleSecondary',
+        'coverImage',
+        'authors',
+        'releaseDateYear',
+        'status',
+        'updatedAt',
+        'googleBooksUpdatedAt'
+      )
+      .first()
 
     if (existing) {
       const freshness = evaluateRecordFreshness('BOOK', existing)
@@ -479,28 +432,20 @@ export class MediaPreviewSyncer {
       }
     }
 
-    const created = await prisma.book.create({
-      data: {
-        googleBookId: item.id,
-        titlePrimary,
-        titleSecondary,
-        subtitle: info.subtitle,
-        coverImage,
-        authors,
-        publishers: info.publisher ? [info.publisher] : [],
-        description: info.description,
-        releaseDateYear,
-        pageCount: info.pageCount,
-        googleBooksUpdatedAt: null,
-      },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        authors: true,
-        releaseDateYear: true,
-      },
+    const created = await prisma.orm.public.Book.create({
+      googleBookId: item.id,
+      titlePrimary,
+      titleSecondary,
+      subtitle: info.subtitle,
+      coverImage,
+      authors,
+      publishers: info.publisher ? [info.publisher] : [],
+      description: info.description,
+      releaseDateYear,
+      pageCount: info.pageCount,
+      subjects: [],
+      synonyms: [],
+      googleBooksUpdatedAt: null,
     })
 
     logger.info(
@@ -527,19 +472,18 @@ export class MediaPreviewSyncer {
       releaseDateYear = new Date(item.first_release_date * 1000).getUTCFullYear()
     }
 
-    const existing = await prisma.game.findUnique({
-      where: { igdbId: item.id },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        releaseDateYear: true,
-        status: true,
-        updatedAt: true,
-        igdbUpdatedAt: true,
-      },
-    })
+    const existing = await prisma.orm.public.Game.where({ igdbId: item.id })
+      .select(
+        'id',
+        'titlePrimary',
+        'titleSecondary',
+        'coverImage',
+        'releaseDateYear',
+        'status',
+        'updatedAt',
+        'igdbUpdatedAt'
+      )
+      .first()
 
     if (existing) {
       const freshness = evaluateRecordFreshness('GAME', existing)
@@ -554,21 +498,19 @@ export class MediaPreviewSyncer {
       }
     }
 
-    const created = await prisma.game.create({
-      data: {
-        igdbId: item.id,
-        titlePrimary,
-        coverImage,
-        releaseDateYear,
-        igdbUpdatedAt: null,
-      },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        releaseDateYear: true,
-      },
+    const created = await prisma.orm.public.Game.create({
+      igdbId: item.id,
+      titlePrimary,
+      coverImage,
+      releaseDateYear,
+      developers: [],
+      gameModes: [],
+      languages: [],
+      platforms: [],
+      playerPerspectives: [],
+      publishers: [],
+      synonyms: [],
+      igdbUpdatedAt: null,
     })
 
     logger.info(
@@ -591,21 +533,20 @@ export class MediaPreviewSyncer {
     const deezerIdStr = String(item.id)
     const coverImage = item.album?.cover_big || item.album?.cover_medium || item.album?.cover || null
 
-    const existing = await prisma.music.findUnique({
-      where: { deezerId: deezerIdStr },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        artistName: true,
-        coverImage: true,
-        duration: true,
-        audioPreviewUrl: true,
-        status: true,
-        updatedAt: true,
-        deezerUpdatedAt: true,
-      },
-    })
+    const existing = await prisma.orm.public.Music.where({ deezerId: deezerIdStr })
+      .select(
+        'id',
+        'titlePrimary',
+        'titleSecondary',
+        'artistName',
+        'coverImage',
+        'duration',
+        'audioPreviewUrl',
+        'status',
+        'updatedAt',
+        'deezerUpdatedAt'
+      )
+      .first()
 
     if (existing) {
       const freshness = evaluateRecordFreshness('MUSIC', existing)
@@ -623,15 +564,7 @@ export class MediaPreviewSyncer {
       }
     }
 
-    const created = await prisma.music.upsert({
-      where: { deezerId: deezerIdStr },
-      update: {
-        titlePrimary,
-        artistName: artist,
-        coverImage,
-        duration: item.duration,
-        audioPreviewUrl: item.preview,
-      },
+    const created = await prisma.orm.public.Music.upsert({
       create: {
         type: 'TRACK',
         deezerId: deezerIdStr,
@@ -642,14 +575,12 @@ export class MediaPreviewSyncer {
         audioPreviewUrl: item.preview,
         deezerUpdatedAt: null,
       },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        artistName: true,
-        coverImage: true,
-        duration: true,
-        audioPreviewUrl: true,
+      update: {
+        titlePrimary,
+        artistName: artist,
+        coverImage,
+        duration: item.duration,
+        audioPreviewUrl: item.preview,
       },
     })
 
@@ -681,20 +612,19 @@ export class MediaPreviewSyncer {
       if (!isNaN(yr)) releaseDateYear = yr
     }
 
-    const existing = await prisma.music.findUnique({
-      where: { deezerId: deezerIdStr },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        artistName: true,
-        coverImage: true,
-        duration: true,
-        status: true,
-        updatedAt: true,
-        deezerUpdatedAt: true,
-      },
-    })
+    const existing = await prisma.orm.public.Music.where({ deezerId: deezerIdStr })
+      .select(
+        'id',
+        'titlePrimary',
+        'titleSecondary',
+        'artistName',
+        'coverImage',
+        'duration',
+        'status',
+        'updatedAt',
+        'deezerUpdatedAt'
+      )
+      .first()
 
     if (existing) {
       const freshness = evaluateRecordFreshness('MUSIC', existing)
@@ -713,14 +643,7 @@ export class MediaPreviewSyncer {
       }
     }
 
-    const created = await prisma.music.upsert({
-      where: { deezerId: deezerIdStr },
-      update: {
-        titlePrimary,
-        artistName: artist,
-        coverImage,
-        duration: item.duration,
-      },
+    const created = await prisma.orm.public.Music.upsert({
       create: {
         type: 'ALBUM',
         deezerId: deezerIdStr,
@@ -730,13 +653,11 @@ export class MediaPreviewSyncer {
         duration: item.duration,
         deezerUpdatedAt: null,
       },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        artistName: true,
-        coverImage: true,
-        duration: true,
+      update: {
+        titlePrimary,
+        artistName: artist,
+        coverImage,
+        duration: item.duration,
       },
     })
 

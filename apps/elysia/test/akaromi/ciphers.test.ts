@@ -56,12 +56,12 @@ function setupPrismaMock() {
   ]
 
   // Mock User findUnique
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return mockUsers.find((u) => u.id === where.id) ?? null
   }
 
   // Mock PassCipher findFirst
-  ;(prisma.passCipher.findFirst as any) = async ({ where }: any) => {
+  ;((prisma as any).passCipher.findFirst as any) = async ({ where }: any) => {
     return (
       mockCiphers.find(
         (c) =>
@@ -72,7 +72,7 @@ function setupPrismaMock() {
   }
 
   // Mock PassCipher findMany
-  ;(prisma.passCipher.findMany as any) = async ({ where, orderBy }: any) => {
+  ;((prisma as any).passCipher.findMany as any) = async ({ where, orderBy }: any) => {
     let result = mockCiphers.filter((c) => {
       if (where.userId && c.userId !== where.userId) return false
       if (where.type && c.type !== where.type) return false
@@ -100,7 +100,7 @@ function setupPrismaMock() {
   }
 
   // Mock PassCipher create
-  ;(prisma.passCipher.create as any) = async ({ data }: any) => {
+  ;((prisma as any).passCipher.create as any) = async ({ data }: any) => {
     const created: MockCipher = {
       id: `cipher-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
       userId: data.userId,
@@ -118,7 +118,7 @@ function setupPrismaMock() {
   }
 
   // Mock PassCipher update
-  ;(prisma.passCipher.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).passCipher.update as any) = async ({ where, data }: any) => {
     const cipher = mockCiphers.find((c) => c.id === where.id)
     if (!cipher) throw new Error('Cipher not found')
 
@@ -134,7 +134,7 @@ function setupPrismaMock() {
   }
 
   // Mock PassCipher delete
-  ;(prisma.passCipher.delete as any) = async ({ where }: any) => {
+  ;((prisma as any).passCipher.delete as any) = async ({ where }: any) => {
     const index = mockCiphers.findIndex((c) => c.id === where.id)
     if (index === -1) throw new Error('Cipher not found')
     const deleted = mockCiphers.splice(index, 1)[0]
@@ -142,7 +142,7 @@ function setupPrismaMock() {
   }
 
   // Mock PassCipher deleteMany
-  ;(prisma.passCipher.deleteMany as any) = async ({ where }: any) => {
+  ;((prisma as any).passCipher.deleteMany as any) = async ({ where }: any) => {
     const initialCount = mockCiphers.length
     mockCiphers = mockCiphers.filter((c) => {
       if (where.userId && c.userId !== where.userId) return true

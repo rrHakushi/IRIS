@@ -38,7 +38,7 @@
     - create missing sidebar configs
     - Default banner image for all apps (each different) to be used in server metadata 
     - [x] Migrate database package (@Iris/db) and schemas to Prisma 8
-    - [ ] Migrate applications (apps/elysia, apps/web) to Prisma 8 query surface
+    - [ ] Migrate applications (apps/elysia [x], apps/web) to Prisma 8 query surface
 
 # Apertune [Music player]
     - 

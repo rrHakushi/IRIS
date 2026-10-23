@@ -44,11 +44,11 @@ function setupPrismaMock() {
     },
   ]
 
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return mockUsers.find((u) => u.id === where.id) ?? null
   }
 
-  ;(prisma.searchHistory.findMany as any) = async ({ where, orderBy, take }: any) => {
+  ;((prisma as any).searchHistory.findMany as any) = async ({ where, orderBy, take }: any) => {
     let result = mockHistories.filter((h) => {
       if (where.userId && h.userId !== where.userId) return false
       if (where.createdAt?.gte && h.createdAt.getTime() < where.createdAt.gte.getTime()) {
@@ -68,7 +68,7 @@ function setupPrismaMock() {
     return result
   }
 
-  ;(prisma.searchHistory.deleteMany as any) = async ({ where }: any) => {
+  ;((prisma as any).searchHistory.deleteMany as any) = async ({ where }: any) => {
     const initialLen = mockHistories.length
     mockHistories = mockHistories.filter((h) => {
       if (where.userId && h.userId !== where.userId) return true

@@ -207,11 +207,11 @@ function setupPrismaMock() {
     },
   ]
 
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return mockUsers.find((u) => u.id === where.id) ?? null
   }
 
-  ;(prisma.connection.findFirst as any) = async ({ where }: any) => {
+  ;((prisma as any).connection.findFirst as any) = async ({ where }: any) => {
     return (
       mockConnections.find(
         (c) =>
@@ -222,7 +222,7 @@ function setupPrismaMock() {
     )
   }
 
-  ;(prisma.movieList.findMany as any) = async ({ where }: any) => {
+  ;((prisma as any).movieList.findMany as any) = async ({ where }: any) => {
     return mockMovieLists.filter((m) => {
       if (where.userId && m.userId !== where.userId) return false
       if (where.status?.in && !where.status.in.includes(m.status)) return false
@@ -235,7 +235,7 @@ function setupPrismaMock() {
     })
   }
 
-  ;(prisma.tvList.findMany as any) = async ({ where }: any) => {
+  ;((prisma as any).tvList.findMany as any) = async ({ where }: any) => {
     return mockTvLists.filter((t) => {
       if (where.userId && t.userId !== where.userId) return false
       if (where.status?.in && !where.status.in.includes(t.status)) return false
@@ -245,7 +245,7 @@ function setupPrismaMock() {
     })
   }
 
-  ;(prisma.animeList.findMany as any) = async ({ where }: any) => {
+  ;((prisma as any).animeList.findMany as any) = async ({ where }: any) => {
     return mockAnimeLists.filter((a) => {
       if (where.userId && a.userId !== where.userId) return false
       if (where.status?.in && !where.status.in.includes(a.status)) return false

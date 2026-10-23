@@ -1,4 +1,4 @@
-import { prisma, type FavoriteType } from '@IRIS/database'
+import { prisma, toDate, type FavoriteType } from '@IRIS/database'
 import { NotFound, BadRequest } from '../../lib/errors'
 import { MediaStatsServ } from '../borealis/media-stats.serv'
 import { ActivityServ } from './activity.serv'
@@ -49,21 +49,19 @@ export class CarinaFavoritesServ {
 
     const normType = this.parseFavoriteType(rawCategory)
 
-    const favorite = await prisma.favorite.upsert({
-      where: {
-        userId_type_targetId: {
-          userId,
-          type: normType,
-          targetId: body.targetId,
-        },
-      },
-      create: {
+    let favorite = await prisma.orm.public.Favorite.where({
+      userId,
+      type: normType,
+      targetId: body.targetId,
+    }).first()
+
+    if (!favorite) {
+      favorite = await prisma.orm.public.Favorite.create({
         userId,
         type: normType,
         targetId: body.targetId,
-      },
-      update: {},
-    })
+      })
+    }
 
     await MediaStatsServ.recalculateFavoritesCount(normType, body.targetId)
 
@@ -81,7 +79,7 @@ export class CarinaFavoritesServ {
         userId: favorite.userId,
         type: favorite.type,
         targetId: favorite.targetId,
-        createdAt: favorite.createdAt.toISOString(),
+        createdAt: toDate(favorite.createdAt).toISOString(),
       },
       message: 'Added to favorites successfully',
     }
@@ -97,15 +95,11 @@ export class CarinaFavoritesServ {
   ) {
     const normType = this.parseFavoriteType(category)
 
-    const favorite = await prisma.favorite.findUnique({
-      where: {
-        userId_type_targetId: {
-          userId,
-          type: normType,
-          targetId,
-        },
-      },
-    })
+    const favorite = await prisma.orm.public.Favorite.where({
+      userId,
+      type: normType,
+      targetId,
+    }).first()
 
     return {
       success: true,
@@ -116,7 +110,7 @@ export class CarinaFavoritesServ {
             userId: favorite.userId,
             type: favorite.type,
             targetId: favorite.targetId,
-            createdAt: favorite.createdAt.toISOString(),
+            createdAt: toDate(favorite.createdAt).toISOString(),
           }
         : null,
     }
@@ -132,23 +126,17 @@ export class CarinaFavoritesServ {
   ) {
     const normType = this.parseFavoriteType(category)
 
-    const favorite = await prisma.favorite.findUnique({
-      where: {
-        userId_type_targetId: {
-          userId,
-          type: normType,
-          targetId,
-        },
-      },
-    })
+    const favorite = await prisma.orm.public.Favorite.where({
+      userId,
+      type: normType,
+      targetId,
+    }).first()
 
     if (!favorite) {
       throw new NotFound('Favorite not found')
     }
 
-    await prisma.favorite.delete({
-      where: { id: favorite.id },
-    })
+    await prisma.orm.public.Favorite.where({ id: favorite.id }).delete()
 
     await MediaStatsServ.recalculateFavoritesCount(normType, targetId)
 

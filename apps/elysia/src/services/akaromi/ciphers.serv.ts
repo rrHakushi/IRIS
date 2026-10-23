@@ -1,4 +1,4 @@
-import { prisma, type PassCipherType, type PassRepromptType } from '@IRIS/database'
+import { prisma, toDate, type PassCipherType, type PassRepromptType } from '@IRIS/database'
 import { NotFound, BadRequest } from '../../lib/errors'
 
 export interface ListCiphersFilter {
@@ -34,9 +34,9 @@ export class AkaromiCiphersServ {
     reprompt: string
     encryptedTitle: string
     encryptedData: string
-    deletedAt: Date | null
-    createdAt: Date
-    updatedAt: Date
+    deletedAt: any | null
+    createdAt: any
+    updatedAt: any
   }) {
     return {
       id: cipher.id,
@@ -45,9 +45,9 @@ export class AkaromiCiphersServ {
       reprompt: cipher.reprompt as 'NONE' | 'REQUIRE_MASTER_PASSWORD',
       encryptedTitle: cipher.encryptedTitle,
       encryptedData: cipher.encryptedData,
-      deletedAt: cipher.deletedAt ? cipher.deletedAt.toISOString() : null,
-      createdAt: cipher.createdAt.toISOString(),
-      updatedAt: cipher.updatedAt.toISOString(),
+      deletedAt: cipher.deletedAt ? toDate(cipher.deletedAt).toISOString() : null,
+      createdAt: toDate(cipher.createdAt).toISOString(),
+      updatedAt: toDate(cipher.updatedAt).toISOString(),
     }
   }
 
@@ -55,37 +55,33 @@ export class AkaromiCiphersServ {
    * List vault ciphers with optional filtering by type, favorite, and trash status.
    */
   public static async listCiphers(userId: string, filter?: ListCiphersFilter) {
-    const where: {
-      userId: string
-      deletedAt?: { not: null } | null
-      type?: PassCipherType
-      favorite?: boolean
-    } = { userId }
+    let query = prisma.orm.public.PassCipher.where({ userId })
 
     if (typeof filter?.trash === 'boolean') {
       if (filter.trash) {
-        where.deletedAt = { not: null }
+        query = query.where((c) => c.deletedAt.isNotNull())
       } else {
-        where.deletedAt = null
+        query = query.where((c) => c.deletedAt.isNull())
       }
     }
 
     if (filter?.type) {
-      where.type = filter.type
+      query = query.where({ type: filter.type })
     }
 
     if (typeof filter?.favorite === 'boolean') {
-      where.favorite = filter.favorite
+      query = query.where({ favorite: filter.favorite })
     }
 
-    const ciphers = await prisma.passCipher.findMany({
-      where,
-      orderBy: [{ favorite: 'desc' }, { updatedAt: 'desc' }],
-    })
+    const ciphers = await query
+      .orderBy((c) => c.updatedAt.desc())
+      .all()
+
+    const sortedCiphers = ciphers.slice().sort((a, b) => Number(b.favorite) - Number(a.favorite))
 
     return {
       success: true,
-      ciphers: ciphers.map((c) => this.formatCipher(c)),
+      ciphers: sortedCiphers.map((c) => this.formatCipher(c)),
     }
   }
 
@@ -100,15 +96,13 @@ export class AkaromiCiphersServ {
       throw new BadRequest('Encrypted data payload is required and cannot be empty.')
     }
 
-    const cipher = await prisma.passCipher.create({
-      data: {
-        userId,
-        type: data.type,
-        encryptedTitle: data.encryptedTitle,
-        encryptedData: data.encryptedData,
-        favorite: data.favorite ?? false,
-        reprompt: data.reprompt ?? 'NONE',
-      },
+    const cipher = await prisma.orm.public.PassCipher.create({
+      userId,
+      type: data.type,
+      encryptedTitle: data.encryptedTitle,
+      encryptedData: data.encryptedData,
+      favorite: data.favorite ?? false,
+      reprompt: data.reprompt ?? 'NONE',
     })
 
     return {
@@ -122,9 +116,9 @@ export class AkaromiCiphersServ {
    * Retrieve a single cipher by ID.
    */
   public static async getCipher(userId: string, cipherId: string) {
-    const cipher = await prisma.passCipher.findFirst({
-      where: { id: cipherId, userId },
-    })
+    const cipher = await prisma.orm.public.PassCipher
+      .where({ id: cipherId, userId })
+      .first()
 
     if (!cipher) {
       throw new NotFound('Cipher not found.')
@@ -145,9 +139,9 @@ export class AkaromiCiphersServ {
     cipherId: string,
     data: UpdateCipherDto
   ) {
-    const existing = await prisma.passCipher.findFirst({
-      where: { id: cipherId, userId },
-    })
+    const existing = await prisma.orm.public.PassCipher
+      .where({ id: cipherId, userId })
+      .first()
 
     if (!existing) {
       throw new NotFound('Cipher not found.')
@@ -160,16 +154,19 @@ export class AkaromiCiphersServ {
       throw new BadRequest('Encrypted data payload cannot be empty.')
     }
 
-    const updated = await prisma.passCipher.update({
-      where: { id: cipherId },
-      data: {
+    const updated = await prisma.orm.public.PassCipher
+      .where({ id: cipherId })
+      .update({
         type: data.type ?? existing.type,
         encryptedTitle: data.encryptedTitle ?? existing.encryptedTitle,
         encryptedData: data.encryptedData ?? existing.encryptedData,
         favorite: data.favorite !== undefined ? data.favorite : existing.favorite,
         reprompt: data.reprompt !== undefined ? data.reprompt : existing.reprompt,
-      },
-    })
+      })
+
+    if (!updated) {
+      throw new NotFound('Cipher not found.')
+    }
 
     return {
       success: true,
@@ -186,18 +183,18 @@ export class AkaromiCiphersServ {
     cipherId: string,
     permanent: boolean = false
   ) {
-    const existing = await prisma.passCipher.findFirst({
-      where: { id: cipherId, userId },
-    })
+    const existing = await prisma.orm.public.PassCipher
+      .where({ id: cipherId, userId })
+      .first()
 
     if (!existing) {
       throw new NotFound('Cipher not found.')
     }
 
     if (permanent) {
-      await prisma.passCipher.delete({
-        where: { id: cipherId },
-      })
+      await prisma.orm.public.PassCipher
+        .where({ id: cipherId })
+        .delete()
       return {
         success: true,
         id: cipherId,
@@ -205,10 +202,9 @@ export class AkaromiCiphersServ {
         message: 'Cipher permanently deleted',
       }
     } else {
-      await prisma.passCipher.update({
-        where: { id: cipherId },
-        data: { deletedAt: new Date() },
-      })
+      await prisma.orm.public.PassCipher
+        .where({ id: cipherId })
+        .update({ deletedAt: new Date() })
       return {
         success: true,
         id: cipherId,
@@ -222,18 +218,17 @@ export class AkaromiCiphersServ {
    * Restore a cipher from trash bin.
    */
   public static async restoreCipher(userId: string, cipherId: string) {
-    const existing = await prisma.passCipher.findFirst({
-      where: { id: cipherId, userId },
-    })
+    const existing = await prisma.orm.public.PassCipher
+      .where({ id: cipherId, userId })
+      .first()
 
     if (!existing) {
       throw new NotFound('Cipher not found.')
     }
 
-    await prisma.passCipher.update({
-      where: { id: cipherId },
-      data: { deletedAt: null },
-    })
+    await prisma.orm.public.PassCipher
+      .where({ id: cipherId })
+      .update({ deletedAt: null })
 
     return {
       success: true,
@@ -246,17 +241,15 @@ export class AkaromiCiphersServ {
    * Permanently purge all trashed ciphers for the user.
    */
   public static async emptyTrash(userId: string) {
-    const result = await prisma.passCipher.deleteMany({
-      where: {
-        userId,
-        deletedAt: { not: null },
-      },
-    })
+    const deletedCount = await prisma.orm.public.PassCipher
+      .where({ userId })
+      .where((c) => c.deletedAt.isNotNull())
+      .deleteAndCount()
 
     return {
       success: true,
-      count: result.count,
-      message: `Permanently deleted ${result.count} ciphers from trash`,
+      count: deletedCount,
+      message: `Permanently deleted ${deletedCount} ciphers from trash`,
     }
   }
 }

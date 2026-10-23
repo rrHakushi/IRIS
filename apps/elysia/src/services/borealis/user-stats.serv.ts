@@ -332,28 +332,28 @@ export class MediaStatsService {
         const { start, end } = resolveDateRange(period)
         const isPeriodFiltered = Boolean(start || end)
 
-        const entries = await prisma.animeList.findMany({
-          where: {
-            userId,
-            ...(!isOwner ? { private: false } : {}),
-          },
-          include: {
-            anime: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                coverImage: true,
-                episodeCount: true,
-                episodeDuration: true,
-                format: true,
-                countryOfOrigin: true,
-                startDateYear: true,
-                genres: { select: { name: true } },
-                studios: { select: { studio: { select: { name: true } } } },
-              },
-            },
-          },
-        })
+        let q = prisma.orm.public.AnimeList.where({ userId })
+        if (!isOwner) {
+          q = q.where({ private: false })
+        }
+
+        const entries = await q
+          .include('anime', (a) =>
+            a
+              .select(
+                'id',
+                'titlePrimary',
+                'coverImage',
+                'episodeCount',
+                'episodeDuration',
+                'format',
+                'countryOfOrigin',
+                'startDateYear'
+              )
+              .include('genres', (g) => g.include('genre', (ge) => ge.select('name')))
+              .include('studios', (s) => s.include('studio', (st) => st.select('name')))
+          )
+          .all()
 
         const filteredEntries = isPeriodFiltered
           ? entries.filter((e) => {
@@ -506,11 +506,13 @@ export class MediaStatsService {
           dayOfWeekMap[entryDate.getUTCDay()] =
             (dayOfWeekMap[entryDate.getUTCDay()] ?? 0) + 1
 
-          for (const g of anime?.genres || []) {
-            let gNode = genreMap[g.name]
+          for (const g of (anime?.genres || []) as any[]) {
+            const gName = g?.genre?.name || g?.name
+            if (!gName) continue
+            let gNode = genreMap[gName]
             if (!gNode) {
               gNode = { count: 0, scores: [], minutes: 0 }
-              genreMap[g.name] = gNode
+              genreMap[gName] = gNode
             }
             gNode.count++
             gNode.minutes += entryWatchedMinutes
@@ -519,8 +521,8 @@ export class MediaStatsService {
             }
           }
 
-          for (const st of anime?.studios || []) {
-            const sName = st?.studio?.name
+          for (const st of (anime?.studios || []) as any[]) {
+            const sName = st?.studio?.name || st?.name
             if (!sName) continue
             let sNode = studioMap[sName]
             if (!sNode) {
@@ -755,30 +757,30 @@ export class MediaStatsService {
         const { start, end } = resolveDateRange(period)
         const isPeriodFiltered = Boolean(start || end)
 
-        const entries = await prisma.mangaList.findMany({
-          where: {
-            userId,
-            ...(!isOwner ? { private: false } : {}),
-          },
-          include: {
-            manga: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                coverImage: true,
-                volumeCount: true,
-                chapterCount: true,
-                format: true,
-                countryOfOrigin: true,
-                startDateYear: true,
-                genres: { select: { name: true } },
-                staff: {
-                  select: { person: { select: { namePrimary: true } } },
-                },
-              },
-            },
-          },
-        })
+        let q = prisma.orm.public.MangaList.where({ userId })
+        if (!isOwner) {
+          q = q.where({ private: false })
+        }
+
+        const entries = await q
+          .include('manga', (m) =>
+            m
+              .select(
+                'id',
+                'titlePrimary',
+                'coverImage',
+                'volumeCount',
+                'chapterCount',
+                'format',
+                'countryOfOrigin',
+                'startDateYear'
+              )
+              .include('genres', (g) => g.include('genre', (ge) => ge.select('name')))
+              .include('staff', (st) =>
+                st.include('person', (p) => p.select('namePrimary'))
+              )
+          )
+          .all()
 
         const filteredEntries = isPeriodFiltered
           ? entries.filter((e) => {
@@ -938,11 +940,13 @@ export class MediaStatsService {
           dayOfWeekMap[entryDate.getUTCDay()] =
             (dayOfWeekMap[entryDate.getUTCDay()] ?? 0) + 1
 
-          for (const g of manga?.genres || []) {
-            let gNode = genreMap[g.name]
+          for (const g of (manga?.genres || []) as any[]) {
+            const gName = g?.genre?.name || g?.name
+            if (!gName) continue
+            let gNode = genreMap[gName]
             if (!gNode) {
               gNode = { count: 0, scores: [], minutes: 0 }
-              genreMap[g.name] = gNode
+              genreMap[gName] = gNode
             }
             gNode.count++
             gNode.minutes += entryMinutes
@@ -951,8 +955,8 @@ export class MediaStatsService {
             }
           }
 
-          for (const st of manga?.staff || []) {
-            const pName = st?.person?.namePrimary
+          for (const st of (manga?.staff || []) as any[]) {
+            const pName = st?.person?.namePrimary || st?.namePrimary
             if (!pName) continue
             let cNode = creatorMap[pName]
             if (!cNode) {
@@ -1186,34 +1190,26 @@ export class MediaStatsService {
         const { start, end } = resolveDateRange(period)
         const isPeriodFiltered = Boolean(start || end)
 
-        const entries = await prisma.movieList.findMany({
-          where: {
-            userId,
-            ...(!isOwner ? { private: false } : {}),
-          },
-          include: {
-            movie: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                coverImage: true,
-                runtime: true,
-                countryOfOrigin: true,
-                releaseDateYear: true,
-                genres: { select: { name: true } },
-                studios: {
-                  select: {
-                    studio: {
-                      select: {
-                        name: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        })
+        let q = prisma.orm.public.MovieList.where({ userId })
+        if (!isOwner) {
+          q = q.where({ private: false })
+        }
+
+        const entries = await q
+          .include('movie', (m) =>
+            m
+              .select(
+                'id',
+                'titlePrimary',
+                'coverImage',
+                'runtime',
+                'countryOfOrigin',
+                'releaseDateYear'
+              )
+              .include('genres', (g) => g.include('genre', (ge) => ge.select('name')))
+              .include('studios', (s) => s.include('studio', (st) => st.select('name')))
+          )
+          .all()
 
         const filtered = isPeriodFiltered
           ? entries.filter((e) => {
@@ -1330,11 +1326,13 @@ export class MediaStatsService {
           dayOfWeekMap[entryDate.getUTCDay()] =
             (dayOfWeekMap[entryDate.getUTCDay()] ?? 0) + 1
 
-          for (const g of movie?.genres || []) {
-            let gNode = genreMap[g.name]
+          for (const g of (movie?.genres || []) as any[]) {
+            const gName = g?.genre?.name || g?.name
+            if (!gName) continue
+            let gNode = genreMap[gName]
             if (!gNode) {
               gNode = { count: 0, scores: [], minutes: 0 }
-              genreMap[g.name] = gNode
+              genreMap[gName] = gNode
             }
             gNode.count++
             gNode.minutes += entryMinutes
@@ -1344,8 +1342,8 @@ export class MediaStatsService {
 
           if (movie?.studios) {
             const seenInMovie = new Set<string>()
-            for (const st of movie.studios || []) {
-              const sName = st.studio?.name?.trim()
+            for (const st of (movie.studios || []) as any[]) {
+              const sName = (st.studio?.name || st.name)?.trim()
               if (!sName || seenInMovie.has(sName)) continue
               seenInMovie.add(sName)
               let sNode = studioMap[sName]
@@ -1506,27 +1504,27 @@ export class MediaStatsService {
         const { start, end } = resolveDateRange(period)
         const isPeriodFiltered = Boolean(start || end)
 
-        const entries = await prisma.tvList.findMany({
-          where: {
-            userId,
-            ...(!isOwner ? { private: false } : {}),
-          },
-          include: {
-            tv: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                coverImage: true,
-                episodeCount: true,
-                averageRuntime: true,
-                countryOfOrigin: true,
-                firstAiredYear: true,
-                genres: { select: { name: true } },
-                networks: true,
-              },
-            },
-          },
-        })
+        let q = prisma.orm.public.TvList.where({ userId })
+        if (!isOwner) {
+          q = q.where({ private: false })
+        }
+
+        const entries = await q
+          .include('tv', (t) =>
+            t
+              .select(
+                'id',
+                'titlePrimary',
+                'coverImage',
+                'episodeCount',
+                'averageRuntime',
+                'countryOfOrigin',
+                'firstAiredYear',
+                'networks'
+              )
+              .include('genres', (g) => g.include('genre', (ge) => ge.select('name')))
+          )
+          .all()
 
         const filtered = isPeriodFiltered
           ? entries.filter((e) => {
@@ -1627,11 +1625,13 @@ export class MediaStatsService {
           dayOfWeekMap[entryDate.getUTCDay()] =
             (dayOfWeekMap[entryDate.getUTCDay()] ?? 0) + 1
 
-          for (const g of tv?.genres || []) {
-            let gNode = genreMap[g.name]
+          for (const g of (tv?.genres || []) as any[]) {
+            const gName = g?.genre?.name || g?.name
+            if (!gName) continue
+            let gNode = genreMap[gName]
             if (!gNode) {
               gNode = { count: 0, scores: [], minutes: 0 }
-              genreMap[g.name] = gNode
+              genreMap[gName] = gNode
             }
             gNode.count++
             gNode.minutes += entryMinutes
@@ -1681,7 +1681,7 @@ export class MediaStatsService {
             {
               label: "Mini-Series (1–6 eps)",
               count: filtered.filter(
-                (i) => (i.tv.episodeCount || i.progress) <= 6
+                (i) => ((i.tv?.episodeCount ?? 0) || i.progress) <= 6
               ).length,
               description: "1-6 episodes",
             },
@@ -1689,8 +1689,8 @@ export class MediaStatsService {
               label: "Standard Season (7–13 eps)",
               count: filtered.filter(
                 (i) =>
-                  (i.tv.episodeCount || i.progress) > 6 &&
-                  (i.tv.episodeCount || i.progress) <= 13
+                  ((i.tv?.episodeCount ?? 0) || i.progress) > 6 &&
+                  ((i.tv?.episodeCount ?? 0) || i.progress) <= 13
               ).length,
               description: "7-13 episodes",
             },
@@ -1698,15 +1698,15 @@ export class MediaStatsService {
               label: "Full Season (14–24 eps)",
               count: filtered.filter(
                 (i) =>
-                  (i.tv.episodeCount || i.progress) > 13 &&
-                  (i.tv.episodeCount || i.progress) <= 24
+                  ((i.tv?.episodeCount ?? 0) || i.progress) > 13 &&
+                  ((i.tv?.episodeCount ?? 0) || i.progress) <= 24
               ).length,
               description: "14-24 episodes",
             },
             {
               label: "Multi-Season (25+ eps)",
               count: filtered.filter(
-                (i) => (i.tv.episodeCount || i.progress) > 24
+                (i) => ((i.tv?.episodeCount ?? 0) || i.progress) > 24
               ).length,
               description: "25+ episodes",
             },
@@ -1829,26 +1829,26 @@ export class MediaStatsService {
         const { start, end } = resolveDateRange(period)
         const isPeriodFiltered = Boolean(start || end)
 
-        const entries = await prisma.gameList.findMany({
-          where: {
-            userId,
-            ...(!isOwner ? { private: false } : {}),
-          },
-          include: {
-            game: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                coverImage: true,
-                platforms: true,
-                developers: true,
-                publishers: true,
-                releaseDateYear: true,
-                genres: { select: { name: true } },
-              },
-            },
-          },
-        })
+        let q = prisma.orm.public.GameList.where({ userId })
+        if (!isOwner) {
+          q = q.where({ private: false })
+        }
+
+        const entries = await q
+          .include('game', (g) =>
+            g
+              .select(
+                'id',
+                'titlePrimary',
+                'coverImage',
+                'platforms',
+                'developers',
+                'publishers',
+                'releaseDateYear'
+              )
+              .include('genres', (ge) => ge.include('genre', (g) => g.select('name')))
+          )
+          .all()
 
         const filtered = isPeriodFiltered
           ? entries.filter((e) => {
@@ -1946,11 +1946,13 @@ export class MediaStatsService {
           dayOfWeekMap[entryDate.getUTCDay()] =
             (dayOfWeekMap[entryDate.getUTCDay()] ?? 0) + 1
 
-          for (const g of game?.genres || []) {
-            let gNode = genreMap[g.name]
+          for (const g of (game?.genres || []) as any[]) {
+            const gName = g?.genre?.name || g?.name
+            if (!gName) continue
+            let gNode = genreMap[gName]
             if (!gNode) {
               gNode = { count: 0, scores: [], minutes: 0 }
-              genreMap[g.name] = gNode
+              genreMap[gName] = gNode
             }
             gNode.count++
             gNode.minutes += entryMinutes
@@ -2139,26 +2141,26 @@ export class MediaStatsService {
         const { start, end } = resolveDateRange(period)
         const isPeriodFiltered = Boolean(start || end)
 
-        const entries = await prisma.bookList.findMany({
-          where: {
-            userId,
-            ...(!isOwner ? { private: false } : {}),
-          },
-          include: {
-            book: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                coverImage: true,
-                pageCount: true,
-                authors: true,
-                publishers: true,
-                releaseDateYear: true,
-                genres: { select: { name: true } },
-              },
-            },
-          },
-        })
+        let q = prisma.orm.public.BookList.where({ userId })
+        if (!isOwner) {
+          q = q.where({ private: false })
+        }
+
+        const entries = await q
+          .include('book', (b) =>
+            b
+              .select(
+                'id',
+                'titlePrimary',
+                'coverImage',
+                'pageCount',
+                'authors',
+                'publishers',
+                'releaseDateYear'
+              )
+              .include('genres', (g) => g.include('genre', (ge) => ge.select('name')))
+          )
+          .all()
 
         const filtered = isPeriodFiltered
           ? entries.filter((e) => {
@@ -2256,11 +2258,13 @@ export class MediaStatsService {
           dayOfWeekMap[entryDate.getUTCDay()] =
             (dayOfWeekMap[entryDate.getUTCDay()] ?? 0) + 1
 
-          for (const g of book?.genres || []) {
-            let gNode = genreMap[g.name]
+          for (const g of (book?.genres || []) as any[]) {
+            const gName = g?.genre?.name || g?.name
+            if (!gName) continue
+            let gNode = genreMap[gName]
             if (!gNode) {
               gNode = { count: 0, scores: [], minutes: 0 }
-              genreMap[g.name] = gNode
+              genreMap[gName] = gNode
             }
             gNode.count++
             gNode.minutes += entryMinutes
@@ -2309,7 +2313,7 @@ export class MediaStatsService {
           lengthDistribution: [
             {
               label: "Novella (<200 pages)",
-              count: filtered.filter((i) => (i.book.pageCount || 250) < 200)
+              count: filtered.filter((i) => (i.book?.pageCount || 250) < 200)
                 .length,
               description: "<200 pages",
             },
@@ -2317,8 +2321,8 @@ export class MediaStatsService {
               label: "Regular (200–400 pages)",
               count: filtered.filter(
                 (i) =>
-                  (i.book.pageCount || 250) >= 200 &&
-                  (i.book.pageCount || 250) <= 400
+                  (i.book?.pageCount || 250) >= 200 &&
+                  (i.book?.pageCount || 250) <= 400
               ).length,
               description: "200-400 pages",
             },
@@ -2326,14 +2330,14 @@ export class MediaStatsService {
               label: "Thick (400–700 pages)",
               count: filtered.filter(
                 (i) =>
-                  (i.book.pageCount || 250) > 400 &&
-                  (i.book.pageCount || 250) <= 700
+                  (i.book?.pageCount || 250) > 400 &&
+                  (i.book?.pageCount || 250) <= 700
               ).length,
               description: "400-700 pages",
             },
             {
               label: "Epic (700+ pages)",
-              count: filtered.filter((i) => (i.book.pageCount || 250) > 700)
+              count: filtered.filter((i) => (i.book?.pageCount || 250) > 700)
                 .length,
               description: "700+ pages",
             },
@@ -2456,25 +2460,25 @@ export class MediaStatsService {
         const { start, end } = resolveDateRange(period)
         const isPeriodFiltered = Boolean(start || end)
 
-        const entries = await prisma.musicList.findMany({
-          where: {
-            userId,
-            ...(!isOwner ? { private: false } : {}),
-          },
-          include: {
-            music: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                coverImage: true,
-                duration: true,
-                type: true,
-                releaseDateYear: true,
-                genres: { select: { name: true } },
-              },
-            },
-          },
-        })
+        let q = prisma.orm.public.MusicList.where({ userId })
+        if (!isOwner) {
+          q = q.where({ private: false })
+        }
+
+        const entries = await q
+          .include('music', (m) =>
+            m
+              .select(
+                'id',
+                'titlePrimary',
+                'coverImage',
+                'duration',
+                'type',
+                'releaseDateYear'
+              )
+              .include('genres', (g) => g.include('genre', (ge) => ge.select('name')))
+          )
+          .all()
 
         const filtered = isPeriodFiltered
           ? entries.filter((e) => {

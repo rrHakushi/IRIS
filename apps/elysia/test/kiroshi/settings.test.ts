@@ -36,11 +36,11 @@ function setupPrismaMock() {
     },
   ]
 
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return mockUsers.find((u) => u.id === where.id) ?? null
   }
 
-  ;(prisma.user.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).user.update as any) = async ({ where, data }: any) => {
     const user = mockUsers.find((u) => u.id === where.id)
     if (!user) throw new Error('User not found')
     if (data.settings !== undefined) {

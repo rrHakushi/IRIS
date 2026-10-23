@@ -1,6 +1,6 @@
 import { randomInt } from 'node:crypto'
 import { verify as verifyTotpCode } from 'otplib'
-import { prisma } from '@IRIS/database'
+import { prisma, toDate } from '@IRIS/database'
 import { cache } from '../../utils/cache'
 import {
   verifyPassword,
@@ -40,9 +40,7 @@ export abstract class CarinaEmail2faServ {
    * and emailing a 6-digit confirmation code.
    */
   static async setupEmail2fa(userId: string) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    })
+    const user = await prisma.orm.public.User.where({ id: userId }).first()
 
     if (!user) {
       throw new NotFound(`User with ID '${userId}' was not found.`)
@@ -111,10 +109,9 @@ export abstract class CarinaEmail2faServ {
         throw new BadRequest('Invalid or expired MFA session ticket.')
       }
 
-      const user = await prisma.user.findUnique({
-        where: { id: ticketData.userId },
-        select: { id: true, email: true, emailMfaEnabled: true },
-      })
+      const user = await prisma.orm.public.User.where({ id: ticketData.userId })
+        .select('id', 'email', 'emailMfaEnabled')
+        .first()
 
       if (!user || !user.email) {
         throw new NotFound('User account or email address not found.')
@@ -148,9 +145,7 @@ export abstract class CarinaEmail2faServ {
 
     // 2. Authenticated Resend Setup Flow
     if (userId) {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-      })
+      const user = await prisma.orm.public.User.where({ id: userId }).first()
 
       if (!user) {
         throw new NotFound(`User with ID '${userId}' was not found.`)
@@ -220,9 +215,7 @@ export abstract class CarinaEmail2faServ {
         throw new BadRequest('Invalid or expired MFA session ticket.')
       }
 
-      const user = await prisma.user.findUnique({
-        where: { id: ticketData.userId },
-      })
+      const user = await prisma.orm.public.User.where({ id: ticketData.userId }).first()
 
       if (!user) {
         throw new NotFound('User account not found.')
@@ -267,9 +260,8 @@ export abstract class CarinaEmail2faServ {
           isVerified = true
           const updatedCodes = [...user.backupCodes]
           updatedCodes.splice(matchedIndex, 1)
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { backupCodes: updatedCodes },
+          await prisma.orm.public.User.where({ id: user.id }).update({
+            backupCodes: updatedCodes,
           })
         }
       }
@@ -282,9 +274,12 @@ export abstract class CarinaEmail2faServ {
       await cache.del(`auth:mfa-ticket:${body.mfaTicket}`)
 
       // Issue authenticated JWT session token
+      const pwdChangedAt = toDate(user.passwordChangedAt)
       const token = await signUserJwt({
         ...user,
         username: user.username.trim(),
+        permissions: [...user.permissions],
+        passwordChangedAt: pwdChangedAt,
       })
 
       return {
@@ -295,8 +290,8 @@ export abstract class CarinaEmail2faServ {
           id: user.id,
           username: user.username.trim(),
           email: user.email,
-          passwordChangedAt: user.passwordChangedAt
-            ? Math.floor(user.passwordChangedAt.getTime() / 1000)
+          passwordChangedAt: pwdChangedAt
+            ? Math.floor(pwdChangedAt.getTime() / 1000)
             : null,
         },
       }
@@ -304,10 +299,9 @@ export abstract class CarinaEmail2faServ {
 
     // 2. Authenticated 2FA Setup Verification
     if (userId) {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        include: { passkeys: true },
-      })
+      const user = await prisma.orm.public.User.where({ id: userId })
+        .include('passkeys')
+        .first()
 
       if (!user) {
         throw new NotFound(`User with ID '${userId}' was not found.`)
@@ -338,12 +332,9 @@ export abstract class CarinaEmail2faServ {
         hashedBackupCodes = generated.hashed
       }
 
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          emailMfaEnabled: true,
-          ...(hashedBackupCodes ? { backupCodes: hashedBackupCodes } : {}),
-        },
+      await prisma.orm.public.User.where({ id: user.id }).update({
+        emailMfaEnabled: true,
+        ...(hashedBackupCodes ? { backupCodes: hashedBackupCodes } : {}),
       })
 
       // Clean up caches
@@ -369,10 +360,9 @@ export abstract class CarinaEmail2faServ {
     userId: string,
     body?: CarinaEmail2faModel['deleteBody'] | null
   ) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { passkeys: true },
-    })
+    const user = await prisma.orm.public.User.where({ id: userId })
+      .include('passkeys')
+      .first()
 
     if (!user) {
       throw new NotFound(`User with ID '${userId}' was not found.`)
@@ -396,12 +386,9 @@ export abstract class CarinaEmail2faServ {
 
     const remainingMfa = user.TOTPEnabled || user.passkeys.length > 0
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        emailMfaEnabled: false,
-        ...(!remainingMfa ? { backupCodes: [] } : {}),
-      },
+    await prisma.orm.public.User.where({ id: user.id }).update({
+      emailMfaEnabled: false,
+      ...(!remainingMfa ? { backupCodes: [] } : {}),
     })
 
     // Invalidate user cache

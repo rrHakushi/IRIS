@@ -1,4 +1,4 @@
-import { prisma } from '@IRIS/database'
+import { prisma, and, or, countOf, toDate } from '@IRIS/database'
 import { getProfileCustomization } from '@IRIS/shared'
 import { IRISBitField, IRISFlags } from '@IRIS/permissions'
 import { NotFound, BadRequest, Forbidden } from '../../lib/errors'
@@ -49,8 +49,8 @@ export class CarinaCommentsServ {
     authorId: string
     content: string
     isSpoiler: boolean
-    createdAt: Date
-    updatedAt: Date
+    createdAt: any
+    updatedAt: any
     author: {
       id: string
       username: string
@@ -61,8 +61,8 @@ export class CarinaCommentsServ {
       commentId: string
       authorId: string
       content: string
-      createdAt: Date
-      updatedAt: Date
+      createdAt: any
+      updatedAt: any
       author: {
         id: string
         username: string
@@ -77,8 +77,8 @@ export class CarinaCommentsServ {
       authorId: item.authorId,
       content: item.content,
       isSpoiler: item.isSpoiler,
-      createdAt: item.createdAt.toISOString(),
-      updatedAt: item.updatedAt.toISOString(),
+      createdAt: toDate(item.createdAt).toISOString(),
+      updatedAt: toDate(item.updatedAt).toISOString(),
       author: this.formatAuthor(item.author),
       reply: item.reply
         ? {
@@ -86,8 +86,8 @@ export class CarinaCommentsServ {
             commentId: item.reply.commentId,
             authorId: item.reply.authorId,
             content: item.reply.content,
-            createdAt: item.reply.createdAt.toISOString(),
-            updatedAt: item.reply.updatedAt.toISOString(),
+            createdAt: toDate(item.reply.createdAt).toISOString(),
+            updatedAt: toDate(item.reply.updatedAt).toISOString(),
             author: this.formatAuthor(item.reply.author),
           }
         : null,
@@ -102,8 +102,8 @@ export class CarinaCommentsServ {
     commentId: string
     authorId: string
     content: string
-    createdAt: Date
-    updatedAt: Date
+    createdAt: any
+    updatedAt: any
     author: {
       id: string
       username: string
@@ -115,8 +115,8 @@ export class CarinaCommentsServ {
       commentId: reply.commentId,
       authorId: reply.authorId,
       content: reply.content,
-      createdAt: reply.createdAt.toISOString(),
-      updatedAt: reply.updatedAt.toISOString(),
+      createdAt: toDate(reply.createdAt).toISOString(),
+      updatedAt: toDate(reply.updatedAt).toISOString(),
       author: this.formatAuthor(reply.author),
     }
   }
@@ -132,48 +132,28 @@ export class CarinaCommentsServ {
     const limit = Math.max(1, Math.min(50, query?.limit ?? 10))
     const skip = (page - 1) * limit
 
-    const profileOwner = await prisma.user.findUnique({
-      where: { id: targetUserId.trim() },
-      select: { id: true },
-    })
+    const profileOwner = await prisma.orm.public.User.where({ id: targetUserId.trim() })
+      .select('id')
+      .first()
 
     if (!profileOwner) {
       throw new NotFound('User not found')
     }
 
-    const where = {
+    const commentQuery = prisma.orm.public.ListComment.where({
       listOwnerId: profileOwner.id,
       mediaType: 'profile',
-    }
+    })
 
     const [total, rawComments] = await Promise.all([
-      prisma.listComment.count({ where }),
-      prisma.listComment.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-        include: {
-          author: {
-            select: {
-              id: true,
-              username: true,
-              customization: true,
-            },
-          },
-          reply: {
-            include: {
-              author: {
-                select: {
-                  id: true,
-                  username: true,
-                  customization: true,
-                },
-              },
-            },
-          },
-        },
-      }),
+      countOf(commentQuery),
+      commentQuery
+        .orderBy((c) => c.createdAt.desc())
+        .offset(skip)
+        .limit(limit)
+        .include('author')
+        .include('reply', (r) => r.include('author'))
+        .all(),
     ])
 
     const totalPages = Math.max(1, Math.ceil(total / limit))
@@ -207,24 +187,20 @@ export class CarinaCommentsServ {
       throw new BadRequest('Comment content cannot be empty.')
     }
 
-    const profileOwner = await prisma.user.findUnique({
-      where: { id: targetUserId.trim() },
-      select: { id: true, customization: true },
-    })
+    const profileOwner = await prisma.orm.public.User.where({ id: targetUserId.trim() })
+      .first()
 
     if (!profileOwner) {
       throw new NotFound('User not found')
     }
 
     // Check block relationship
-    const isBlocked = await prisma.userBlock.findFirst({
-      where: {
-        OR: [
-          { blockerId: authorId, blockedId: profileOwner.id },
-          { blockerId: profileOwner.id, blockedId: authorId },
-        ],
-      },
-    })
+    const isBlocked = await prisma.orm.public.UserBlock.where((b) =>
+      or(
+        and(b.blockerId.eq(authorId), b.blockedId.eq(profileOwner.id)),
+        and(b.blockerId.eq(profileOwner.id), b.blockedId.eq(authorId))
+      )
+    ).first()
 
     if (isBlocked) {
       throw new BadRequest('Cannot comment on profile due to user block.')
@@ -242,48 +218,33 @@ export class CarinaCommentsServ {
     }
 
     if (allowComments === 'friends' && authorId !== profileOwner.id) {
-      const areFriends = await prisma.friend.findFirst({
-        where: {
-          OR: [
-            { userId: profileOwner.id, friendId: authorId },
-            { userId: authorId, friendId: profileOwner.id },
-          ],
-        },
-      })
+      const areFriends = await prisma.orm.public.Friend.where((f) =>
+        or(
+          and(f.userId.eq(profileOwner.id), f.friendId.eq(authorId)),
+          and(f.userId.eq(authorId), f.friendId.eq(profileOwner.id))
+        )
+      ).first()
       if (!areFriends) {
         throw new BadRequest('Only friends can comment on this user profile.')
       }
     }
 
-    const rawComment = await prisma.listComment.create({
-      data: {
-        listOwnerId: profileOwner.id,
-        mediaType: 'profile',
-        authorId,
-        content: trimmed,
-        isSpoiler: Boolean(body.isSpoiler),
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            customization: true,
-          },
-        },
-        reply: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                username: true,
-                customization: true,
-              },
-            },
-          },
-        },
-      },
+    const created = await prisma.orm.public.ListComment.create({
+      listOwnerId: profileOwner.id,
+      mediaType: 'profile',
+      authorId,
+      content: trimmed,
+      isSpoiler: Boolean(body.isSpoiler),
     })
+
+    const rawComment = await prisma.orm.public.ListComment.where({ id: created.id })
+      .include('author')
+      .include('reply', (r) => r.include('author'))
+      .first()
+
+    if (!rawComment) {
+      throw new NotFound('Failed to create comment')
+    }
 
     return {
       success: true,
@@ -310,48 +271,28 @@ export class CarinaCommentsServ {
     const limit = Math.max(1, Math.min(50, query?.limit ?? 10))
     const skip = (page - 1) * limit
 
-    const listOwner = await prisma.user.findUnique({
-      where: { id: targetUserId.trim() },
-      select: { id: true },
-    })
+    const listOwner = await prisma.orm.public.User.where({ id: targetUserId.trim() })
+      .select('id')
+      .first()
 
     if (!listOwner) {
       throw new NotFound('User not found')
     }
 
-    const where = {
+    const commentQuery = prisma.orm.public.ListComment.where({
       listOwnerId: listOwner.id,
       mediaType: normMediaType,
-    }
+    })
 
     const [total, rawComments] = await Promise.all([
-      prisma.listComment.count({ where }),
-      prisma.listComment.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-        include: {
-          author: {
-            select: {
-              id: true,
-              username: true,
-              customization: true,
-            },
-          },
-          reply: {
-            include: {
-              author: {
-                select: {
-                  id: true,
-                  username: true,
-                  customization: true,
-                },
-              },
-            },
-          },
-        },
-      }),
+      countOf(commentQuery),
+      commentQuery
+        .orderBy((c) => c.createdAt.desc())
+        .offset(skip)
+        .limit(limit)
+        .include('author')
+        .include('reply', (r) => r.include('author'))
+        .all(),
     ])
 
     const totalPages = Math.max(1, Math.ceil(total / limit))
@@ -393,58 +334,42 @@ export class CarinaCommentsServ {
       throw new BadRequest('Comment content cannot be empty.')
     }
 
-    const listOwner = await prisma.user.findUnique({
-      where: { id: targetUserId.trim() },
-      select: { id: true },
-    })
+    const listOwner = await prisma.orm.public.User.where({ id: targetUserId.trim() })
+      .select('id')
+      .first()
 
     if (!listOwner) {
       throw new NotFound('User not found')
     }
 
     // Check block relationship
-    const isBlocked = await prisma.userBlock.findFirst({
-      where: {
-        OR: [
-          { blockerId: authorId, blockedId: listOwner.id },
-          { blockerId: listOwner.id, blockedId: authorId },
-        ],
-      },
-    })
+    const isBlocked = await prisma.orm.public.UserBlock.where((b) =>
+      or(
+        and(b.blockerId.eq(authorId), b.blockedId.eq(listOwner.id)),
+        and(b.blockerId.eq(listOwner.id), b.blockedId.eq(authorId))
+      )
+    ).first()
 
     if (isBlocked) {
       throw new BadRequest('Cannot comment on list due to user block.')
     }
 
-    const rawComment = await prisma.listComment.create({
-      data: {
-        listOwnerId: listOwner.id,
-        mediaType: normMediaType,
-        authorId,
-        content: trimmed,
-        isSpoiler: Boolean(body.isSpoiler),
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            customization: true,
-          },
-        },
-        reply: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                username: true,
-                customization: true,
-              },
-            },
-          },
-        },
-      },
+    const created = await prisma.orm.public.ListComment.create({
+      listOwnerId: listOwner.id,
+      mediaType: normMediaType,
+      authorId,
+      content: trimmed,
+      isSpoiler: Boolean(body.isSpoiler),
     })
+
+    const rawComment = await prisma.orm.public.ListComment.where({ id: created.id })
+      .include('author')
+      .include('reply', (r) => r.include('author'))
+      .first()
+
+    if (!rawComment) {
+      throw new NotFound('Failed to create comment')
+    }
 
     return {
       success: true,
@@ -460,9 +385,7 @@ export class CarinaCommentsServ {
     user: { id: string; permissions: number[] },
     commentId: string
   ) {
-    const comment = await prisma.listComment.findUnique({
-      where: { id: commentId.trim() },
-    })
+    const comment = await prisma.orm.public.ListComment.where({ id: commentId.trim() }).first()
 
     if (!comment) {
       throw new NotFound('Comment not found')
@@ -476,9 +399,7 @@ export class CarinaCommentsServ {
       throw new Forbidden('You do not have permission to delete this comment')
     }
 
-    await prisma.listComment.delete({
-      where: { id: comment.id },
-    })
+    await prisma.orm.public.ListComment.where({ id: comment.id }).delete()
 
     return {
       success: true,
@@ -500,10 +421,9 @@ export class CarinaCommentsServ {
       throw new BadRequest('Reply content cannot be empty.')
     }
 
-    const comment = await prisma.listComment.findUnique({
-      where: { id: commentId.trim() },
-      include: { reply: true },
-    })
+    const comment = await prisma.orm.public.ListComment.where({ id: commentId.trim() })
+      .include('reply')
+      .first()
 
     if (!comment) {
       throw new NotFound('Comment not found')
@@ -520,22 +440,19 @@ export class CarinaCommentsServ {
       throw new BadRequest('A reply already exists for this comment.')
     }
 
-    const rawReply = await prisma.listCommentReply.create({
-      data: {
-        commentId: comment.id,
-        authorId,
-        content: trimmed,
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            customization: true,
-          },
-        },
-      },
+    const created = await prisma.orm.public.ListCommentReply.create({
+      commentId: comment.id,
+      authorId,
+      content: trimmed,
     })
+
+    const rawReply = await prisma.orm.public.ListCommentReply.where({ id: created.id })
+      .include('author')
+      .first()
+
+    if (!rawReply) {
+      throw new NotFound('Failed to create reply')
+    }
 
     return {
       success: true,
@@ -552,10 +469,9 @@ export class CarinaCommentsServ {
     commentId: string,
     replyId: string
   ) {
-    const reply = await prisma.listCommentReply.findUnique({
-      where: { id: replyId.trim() },
-      include: { comment: true },
-    })
+    const reply = await prisma.orm.public.ListCommentReply.where({ id: replyId.trim() })
+      .include('comment')
+      .first()
 
     if (!reply || reply.commentId !== commentId.trim()) {
       throw new NotFound('Reply not found')
@@ -569,9 +485,7 @@ export class CarinaCommentsServ {
       throw new Forbidden('You do not have permission to delete this reply')
     }
 
-    await prisma.listCommentReply.delete({
-      where: { id: reply.id },
-    })
+    await prisma.orm.public.ListCommentReply.where({ id: reply.id }).delete()
 
     return {
       success: true,
@@ -595,9 +509,7 @@ export class CarinaCommentsServ {
       throw new BadRequest('Reply content cannot be empty.')
     }
 
-    const reply = await prisma.listCommentReply.findUnique({
-      where: { id: replyId.trim() },
-    })
+    const reply = await prisma.orm.public.ListCommentReply.where({ id: replyId.trim() }).first()
 
     if (!reply || reply.commentId !== commentId.trim()) {
       throw new NotFound('Reply not found')
@@ -610,19 +522,17 @@ export class CarinaCommentsServ {
       throw new Forbidden('You do not have permission to update this reply')
     }
 
-    const updated = await prisma.listCommentReply.update({
-      where: { id: reply.id },
-      data: { content: trimmed },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            customization: true,
-          },
-        },
-      },
+    await prisma.orm.public.ListCommentReply.where({ id: reply.id }).update({
+      content: trimmed,
     })
+
+    const updated = await prisma.orm.public.ListCommentReply.where({ id: reply.id })
+      .include('author')
+      .first()
+
+    if (!updated) {
+      throw new NotFound('Reply not found')
+    }
 
     return {
       success: true,

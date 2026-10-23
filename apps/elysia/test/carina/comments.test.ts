@@ -126,12 +126,12 @@ function setupPrismaMock() {
   mockFriends = []
 
   // Mock User findUnique
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return mockUsers.find((u) => u.id === where.id) ?? null
   }
 
   // Mock UserBlock findFirst
-  ;(prisma.userBlock.findFirst as any) = async ({ where }: any) => {
+  ;((prisma as any).userBlock.findFirst as any) = async ({ where }: any) => {
     if (where.OR) {
       return (
         mockBlocks.find((b) =>
@@ -146,7 +146,7 @@ function setupPrismaMock() {
   }
 
   // Mock Friend findFirst
-  ;(prisma.friend.findFirst as any) = async ({ where }: any) => {
+  ;((prisma as any).friend.findFirst as any) = async ({ where }: any) => {
     if (where.OR) {
       return (
         mockFriends.find((f) =>
@@ -165,7 +165,7 @@ function setupPrismaMock() {
   }
 
   // Mock ListComment findUnique
-  ;(prisma.listComment.findUnique as any) = async ({ where, include }: any) => {
+  ;((prisma as any).listComment.findUnique as any) = async ({ where, include }: any) => {
     const comment = mockComments.find((c) => c.id === where.id)
     if (!comment) return null
 
@@ -185,7 +185,7 @@ function setupPrismaMock() {
   }
 
   // Mock ListComment findMany
-  ;(prisma.listComment.findMany as any) = async ({
+  ;((prisma as any).listComment.findMany as any) = async ({
     where,
     orderBy,
     skip = 0,
@@ -218,7 +218,7 @@ function setupPrismaMock() {
   }
 
   // Mock ListComment count
-  ;(prisma.listComment.count as any) = async ({ where }: any) => {
+  ;((prisma as any).listComment.count as any) = async ({ where }: any) => {
     return mockComments.filter((c) => {
       if (where.listOwnerId && c.listOwnerId !== where.listOwnerId) return false
       if (where.mediaType && c.mediaType !== where.mediaType) return false
@@ -227,7 +227,7 @@ function setupPrismaMock() {
   }
 
   // Mock ListComment create
-  ;(prisma.listComment.create as any) = async ({ data }: any) => {
+  ;((prisma as any).listComment.create as any) = async ({ data }: any) => {
     const item: MockListComment = {
       id: `comment-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
       listOwnerId: data.listOwnerId,
@@ -249,7 +249,7 @@ function setupPrismaMock() {
   }
 
   // Mock ListComment delete
-  ;(prisma.listComment.delete as any) = async ({ where }: any) => {
+  ;((prisma as any).listComment.delete as any) = async ({ where }: any) => {
     const idx = mockComments.findIndex((c) => c.id === where.id)
     if (idx === -1) throw new Error('Comment not found')
     const [deleted] = mockComments.splice(idx, 1)
@@ -259,7 +259,7 @@ function setupPrismaMock() {
   }
 
   // Mock ListCommentReply findUnique
-  ;(prisma.listCommentReply.findUnique as any) = async ({ where, include }: any) => {
+  ;((prisma as any).listCommentReply.findUnique as any) = async ({ where, include }: any) => {
     const reply = mockReplies.find((r) => r.id === where.id)
     if (!reply) return null
 
@@ -277,7 +277,7 @@ function setupPrismaMock() {
   }
 
   // Mock ListCommentReply create
-  ;(prisma.listCommentReply.create as any) = async ({ data }: any) => {
+  ;((prisma as any).listCommentReply.create as any) = async ({ data }: any) => {
     const item: MockListCommentReply = {
       id: `reply-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
       commentId: data.commentId,
@@ -296,7 +296,7 @@ function setupPrismaMock() {
   }
 
   // Mock ListCommentReply delete
-  ;(prisma.listCommentReply.delete as any) = async ({ where }: any) => {
+  ;((prisma as any).listCommentReply.delete as any) = async ({ where }: any) => {
     const idx = mockReplies.findIndex((r) => r.id === where.id)
     if (idx === -1) throw new Error('Reply not found')
     const [deleted] = mockReplies.splice(idx, 1)
@@ -406,7 +406,7 @@ describe('Comprehensive Carina Comments & Discussions Test Suite', () => {
     it('returns paginated profile comments with author profile metadata', async () => {
       // Create 3 profile comments on Alice's profile
       for (let i = 1; i <= 3; i++) {
-        await prisma.listComment.create({
+        await (prisma as any).listComment.create({
           data: {
             listOwnerId: ALICE_ID,
             mediaType: 'profile',
@@ -418,7 +418,7 @@ describe('Comprehensive Carina Comments & Discussions Test Suite', () => {
       }
 
       // Also create 1 comment on Bob's profile to verify target isolation
-      await prisma.listComment.create({
+      await (prisma as any).listComment.create({
         data: {
           listOwnerId: BOB_ID,
           mediaType: 'profile',
@@ -615,7 +615,7 @@ describe('Comprehensive Carina Comments & Discussions Test Suite', () => {
 
     it('returns paginated comments for specific media list domain', async () => {
       // 2 comments on Alice's anime list
-      await prisma.listComment.create({
+      await (prisma as any).listComment.create({
         data: {
           listOwnerId: ALICE_ID,
           mediaType: 'anime',
@@ -623,7 +623,7 @@ describe('Comprehensive Carina Comments & Discussions Test Suite', () => {
           content: 'Anime list comment 1',
         },
       })
-      await prisma.listComment.create({
+      await (prisma as any).listComment.create({
         data: {
           listOwnerId: ALICE_ID,
           mediaType: 'anime',
@@ -633,7 +633,7 @@ describe('Comprehensive Carina Comments & Discussions Test Suite', () => {
       })
 
       // 1 comment on Alice's manga list (should not appear in anime list)
-      await prisma.listComment.create({
+      await (prisma as any).listComment.create({
         data: {
           listOwnerId: ALICE_ID,
           mediaType: 'manga',
@@ -777,7 +777,7 @@ describe('Comprehensive Carina Comments & Discussions Test Suite', () => {
 
     it('fails (403) when user is not the list or profile owner (only owner can reply)', async () => {
       // Bob commented on Alice's profile
-      const comment = await prisma.listComment.create({
+      const comment = await (prisma as any).listComment.create({
         data: {
           listOwnerId: ALICE_ID,
           mediaType: 'profile',
@@ -803,7 +803,7 @@ describe('Comprehensive Carina Comments & Discussions Test Suite', () => {
     })
 
     it('fails (400) when a reply already exists on the comment (max 1 reply)', async () => {
-      const comment = await prisma.listComment.create({
+      const comment = await (prisma as any).listComment.create({
         data: {
           listOwnerId: ALICE_ID,
           mediaType: 'profile',
@@ -812,7 +812,7 @@ describe('Comprehensive Carina Comments & Discussions Test Suite', () => {
         },
       })
       // Alice replies once
-      await prisma.listCommentReply.create({
+      await (prisma as any).listCommentReply.create({
         data: {
           commentId: comment.id,
           authorId: ALICE_ID,
@@ -837,7 +837,7 @@ describe('Comprehensive Carina Comments & Discussions Test Suite', () => {
     })
 
     it('successfully posts an owner reply to the comment', async () => {
-      const comment = await prisma.listComment.create({
+      const comment = await (prisma as any).listComment.create({
         data: {
           listOwnerId: ALICE_ID,
           mediaType: 'profile',
@@ -891,7 +891,7 @@ describe('Comprehensive Carina Comments & Discussions Test Suite', () => {
     })
 
     it('fails (403) when user is not reply author, not list owner, and not admin', async () => {
-      const comment = await prisma.listComment.create({
+      const comment = await (prisma as any).listComment.create({
         data: {
           listOwnerId: ALICE_ID,
           mediaType: 'profile',
@@ -899,7 +899,7 @@ describe('Comprehensive Carina Comments & Discussions Test Suite', () => {
           content: 'Comment',
         },
       })
-      const reply = await prisma.listCommentReply.create({
+      const reply = await (prisma as any).listCommentReply.create({
         data: {
           commentId: comment.id,
           authorId: ALICE_ID,
@@ -920,7 +920,7 @@ describe('Comprehensive Carina Comments & Discussions Test Suite', () => {
     })
 
     it('allows reply author (or list owner) to delete the reply', async () => {
-      const comment = await prisma.listComment.create({
+      const comment = await (prisma as any).listComment.create({
         data: {
           listOwnerId: ALICE_ID,
           mediaType: 'profile',
@@ -928,7 +928,7 @@ describe('Comprehensive Carina Comments & Discussions Test Suite', () => {
           content: 'Comment',
         },
       })
-      const reply = await prisma.listCommentReply.create({
+      const reply = await (prisma as any).listCommentReply.create({
         data: {
           commentId: comment.id,
           authorId: ALICE_ID,
@@ -950,7 +950,7 @@ describe('Comprehensive Carina Comments & Discussions Test Suite', () => {
     })
 
     it('allows system administrator to delete any reply', async () => {
-      const comment = await prisma.listComment.create({
+      const comment = await (prisma as any).listComment.create({
         data: {
           listOwnerId: ALICE_ID,
           mediaType: 'profile',
@@ -958,7 +958,7 @@ describe('Comprehensive Carina Comments & Discussions Test Suite', () => {
           content: 'Comment',
         },
       })
-      const reply = await prisma.listCommentReply.create({
+      const reply = await (prisma as any).listCommentReply.create({
         data: {
           commentId: comment.id,
           authorId: ALICE_ID,
@@ -1005,7 +1005,7 @@ describe('Comprehensive Carina Comments & Discussions Test Suite', () => {
 
     it('fails (403) when user is not comment author, not list owner, and not admin', async () => {
       // Bob commented on Alice's profile
-      const comment = await prisma.listComment.create({
+      const comment = await (prisma as any).listComment.create({
         data: {
           listOwnerId: ALICE_ID,
           mediaType: 'profile',
@@ -1027,7 +1027,7 @@ describe('Comprehensive Carina Comments & Discussions Test Suite', () => {
     })
 
     it('allows comment author to delete their own comment', async () => {
-      const comment = await prisma.listComment.create({
+      const comment = await (prisma as any).listComment.create({
         data: {
           listOwnerId: ALICE_ID,
           mediaType: 'profile',
@@ -1050,7 +1050,7 @@ describe('Comprehensive Carina Comments & Discussions Test Suite', () => {
     })
 
     it('allows list or profile owner to delete any comment on their page', async () => {
-      const comment = await prisma.listComment.create({
+      const comment = await (prisma as any).listComment.create({
         data: {
           listOwnerId: ALICE_ID,
           mediaType: 'profile',
@@ -1073,7 +1073,7 @@ describe('Comprehensive Carina Comments & Discussions Test Suite', () => {
     })
 
     it('allows system administrator to delete any comment', async () => {
-      const comment = await prisma.listComment.create({
+      const comment = await (prisma as any).listComment.create({
         data: {
           listOwnerId: ALICE_ID,
           mediaType: 'profile',

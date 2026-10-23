@@ -1,4 +1,4 @@
-import { prisma, type FavoriteType, type MediaType } from '@IRIS/database'
+import { prisma, countOf, type FavoriteType, type MediaType } from '@IRIS/database'
 import { LogFactory, c } from '@Iris/logger'
 
 const logger = new LogFactory('MediaStatsServ')
@@ -69,73 +69,75 @@ export class MediaStatsServ {
     try {
       switch (normType) {
         case 'ANIME': {
-          const entries = await prisma.animeList.findMany({
-            where: { animeId: mediaId },
-            select: { status: true, score: true },
-          })
+          const entries = await prisma.orm.public.AnimeList
+            .where({ animeId: mediaId })
+            .select('status', 'score')
+            .all()
           const stats = computeMediaStats(entries)
-          await prisma.anime.update({ where: { id: mediaId }, data: stats })
+          await prisma.orm.public.Anime.where({ id: mediaId }).update(stats)
           break
         }
         case 'MANGA': {
-          const entries = await prisma.mangaList.findMany({
-            where: { mangaId: mediaId },
-            select: { status: true, score: true },
-          })
+          const entries = await prisma.orm.public.MangaList
+            .where({ mangaId: mediaId })
+            .select('status', 'score')
+            .all()
           const stats = computeMediaStats(entries)
-          await prisma.manga.update({ where: { id: mediaId }, data: stats })
+          await prisma.orm.public.Manga.where({ id: mediaId }).update(stats)
           break
         }
         case 'MOVIE': {
-          const entries = await prisma.movieList.findMany({
-            where: { movieId: mediaId },
-            select: { status: true, score: true },
-          })
+          const entries = await prisma.orm.public.MovieList
+            .where({ movieId: mediaId })
+            .select('status', 'score')
+            .all()
           const stats = computeMediaStats(entries)
-          await prisma.movie.update({ where: { id: mediaId }, data: stats })
+          await prisma.orm.public.Movie.where({ id: mediaId }).update(stats)
           break
         }
         case 'TV': {
-          const entries = await prisma.tvList.findMany({
-            where: { tvId: mediaId },
-            select: { status: true, score: true },
-          })
+          const entries = await prisma.orm.public.TvList
+            .where({ tvId: mediaId })
+            .select('status', 'score')
+            .all()
           const stats = computeMediaStats(entries)
-          await prisma.tv.update({ where: { id: mediaId }, data: stats })
+          await prisma.orm.public.Tv.where({ id: mediaId }).update(stats)
           break
         }
         case 'GAME': {
-          const entries = await prisma.gameList.findMany({
-            where: { gameId: mediaId },
-            select: { status: true, score: true },
-          })
+          const entries = await prisma.orm.public.GameList
+            .where({ gameId: mediaId })
+            .select('status', 'score')
+            .all()
           const stats = computeMediaStats(entries)
-          await prisma.game.update({ where: { id: mediaId }, data: stats })
+          await prisma.orm.public.Game.where({ id: mediaId }).update(stats)
           break
         }
         case 'BOOK': {
-          const entries = await prisma.bookList.findMany({
-            where: { bookId: mediaId },
-            select: { status: true, score: true },
-          })
+          const entries = await prisma.orm.public.BookList
+            .where({ bookId: mediaId })
+            .select('status', 'score')
+            .all()
           const stats = computeMediaStats(entries)
-          await prisma.book.update({ where: { id: mediaId }, data: stats })
+          await prisma.orm.public.Book.where({ id: mediaId }).update(stats)
           break
         }
         case 'MUSIC': {
-          const count = await prisma.musicList.count({
-            where: { musicId: mediaId },
-          })
-          await prisma.music.update({ where: { id: mediaId }, data: { popularity: count } })
+          const count = await countOf(
+            prisma.orm.public.MusicList.where({ musicId: mediaId })
+          )
+          await prisma.orm.public.Music
+            .where({ id: mediaId })
+            .update({ popularity: count })
           break
         }
         case 'OTHER': {
-          const entries = await prisma.otherList.findMany({
-            where: { otherId: mediaId },
-            select: { status: true, score: true },
-          })
+          const entries = await prisma.orm.public.OtherList
+            .where({ otherId: mediaId })
+            .select('status', 'score')
+            .all()
           const stats = computeMediaStats(entries)
-          await prisma.other.update({ where: { id: mediaId }, data: stats })
+          await prisma.orm.public.Other.where({ id: mediaId }).update(stats)
           break
         }
         default:
@@ -158,44 +160,66 @@ export class MediaStatsServ {
     const normType = String(favoriteType).toUpperCase() as FavoriteType
 
     try {
-      const count = await prisma.favorite.count({
-        where: { type: normType, targetId },
-      })
+      const count = await countOf(
+        prisma.orm.public.Favorite.where({ type: normType, targetId })
+      )
 
       switch (normType) {
         case 'ANIME':
-          await prisma.anime.update({ where: { id: targetId }, data: { favorites: count } })
+          await prisma.orm.public.Anime
+            .where({ id: targetId })
+            .update({ favorites: count })
           break
         case 'MANGA':
-          await prisma.manga.update({ where: { id: targetId }, data: { favorites: count } })
+          await prisma.orm.public.Manga
+            .where({ id: targetId })
+            .update({ favorites: count })
           break
         case 'MOVIE':
-          await prisma.movie.update({ where: { id: targetId }, data: { favorites: count } })
+          await prisma.orm.public.Movie
+            .where({ id: targetId })
+            .update({ favorites: count })
           break
         case 'TV':
-          await prisma.tv.update({ where: { id: targetId }, data: { favorites: count } })
+          await prisma.orm.public.Tv
+            .where({ id: targetId })
+            .update({ favorites: count })
           break
         case 'GAME':
-          await prisma.game.update({ where: { id: targetId }, data: { favorites: count } })
+          await prisma.orm.public.Game
+            .where({ id: targetId })
+            .update({ favorites: count })
           break
         case 'BOOK':
-          await prisma.book.update({ where: { id: targetId }, data: { favorites: count } })
+          await prisma.orm.public.Book
+            .where({ id: targetId })
+            .update({ favorites: count })
           break
         case 'MUSIC_ALBUM':
         case 'MUSIC_TRACK':
-          await prisma.music.update({ where: { id: targetId }, data: { favorites: count } })
+          await prisma.orm.public.Music
+            .where({ id: targetId })
+            .update({ favorites: count })
           break
         case 'CHARACTER':
-          await prisma.character.update({ where: { id: targetId }, data: { favorites: count } })
+          await prisma.orm.public.Character
+            .where({ id: targetId })
+            .update({ favorites: count })
           break
         case 'PERSON':
-          await prisma.person.update({ where: { id: targetId }, data: { favorites: count } })
+          await prisma.orm.public.Person
+            .where({ id: targetId })
+            .update({ favorites: count })
           break
         case 'STUDIO':
-          await prisma.studio.update({ where: { id: targetId }, data: { favorites: count } })
+          await prisma.orm.public.Studio
+            .where({ id: targetId })
+            .update({ favorites: count })
           break
         case 'OTHER':
-          await prisma.other.update({ where: { id: targetId }, data: { favorites: count } })
+          await prisma.orm.public.Other
+            .where({ id: targetId })
+            .update({ favorites: count })
           break
         default:
           break

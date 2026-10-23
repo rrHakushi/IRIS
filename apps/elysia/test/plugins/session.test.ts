@@ -36,8 +36,23 @@ function setupPrismaMock() {
     },
   ]
 
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
-    return mockUsers.find((u) => u.id === where.id) ?? null
+  if (!(prisma as any).orm) {
+    ;(prisma as any).orm = { public: {} }
+  }
+  if (!(prisma as any).orm.public) {
+    ;(prisma as any).orm.public = {}
+  }
+  ;(prisma as any).orm.public.User = {
+    select: (..._fields: string[]) => ({
+      first: async (where: any) => {
+        return mockUsers.find((u) => u.id === where?.id) ?? null
+      },
+    }),
+    where: (where: any) => ({
+      first: async () => {
+        return mockUsers.find((u) => u.id === where?.id) ?? null
+      },
+    }),
   }
 }
 

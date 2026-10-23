@@ -56,12 +56,12 @@ function setupPrismaMock() {
   ]
 
   // Mock User findUnique
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return mockUsers.find((u) => u.id === where.id) ?? null
   }
 
   // Mock PassCipher findMany
-  ;(prisma.passCipher.findMany as any) = async ({ where, select, orderBy }: any) => {
+  ;((prisma as any).passCipher.findMany as any) = async ({ where, select, orderBy }: any) => {
     let result = mockCiphers.filter((c) => {
       if (where.userId && c.userId !== where.userId) return false
       if (where.deletedAt === null && c.deletedAt !== null) return false
@@ -93,7 +93,7 @@ function setupPrismaMock() {
   }
 
   // Mock PassCipher create
-  ;(prisma.passCipher.create as any) = async ({ data }: any) => {
+  ;((prisma as any).passCipher.create as any) = async ({ data }: any) => {
     const created: MockCipher = {
       id: `cipher-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
       userId: data.userId,

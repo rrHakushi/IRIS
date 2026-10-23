@@ -52,22 +52,22 @@ function setupPrismaMock() {
 
   mockApiKeys = []
 
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return mockUsers.find((u) => u.id === where.id) ?? null
   }
 
-  ;(prisma.apiKey.count as any) = async ({ where }: any) => {
+  ;((prisma as any).apiKey.count as any) = async ({ where }: any) => {
     return mockApiKeys.filter((k) => k.userId === where.userId).length
   }
 
-  ;(prisma.apiKey.findMany as any) = async ({ where, skip = 0, take = 10 }: any) => {
+  ;((prisma as any).apiKey.findMany as any) = async ({ where, skip = 0, take = 10 }: any) => {
     return mockApiKeys
       .filter((k) => k.userId === where.userId)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(skip, skip + take)
   }
 
-  ;(prisma.apiKey.findFirst as any) = async ({ where }: any) => {
+  ;((prisma as any).apiKey.findFirst as any) = async ({ where }: any) => {
     return (
       mockApiKeys.find((k) => {
         if (where.id && k.id !== where.id) return false
@@ -77,7 +77,7 @@ function setupPrismaMock() {
     )
   }
 
-  ;(prisma.apiKey.create as any) = async ({ data }: any) => {
+  ;((prisma as any).apiKey.create as any) = async ({ data }: any) => {
     const newKey: MockApiKey = {
       id: `key-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       userId: data.userId,
@@ -93,7 +93,7 @@ function setupPrismaMock() {
     return newKey
   }
 
-  ;(prisma.apiKey.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).apiKey.update as any) = async ({ where, data }: any) => {
     const key = mockApiKeys.find((k) => k.id === where.id)
     if (!key) throw new Error('Key not found')
 
@@ -107,7 +107,7 @@ function setupPrismaMock() {
     return key
   }
 
-  ;(prisma.apiKey.delete as any) = async ({ where }: any) => {
+  ;((prisma as any).apiKey.delete as any) = async ({ where }: any) => {
     const idx = mockApiKeys.findIndex((k) => k.id === where.id)
     if (idx === -1) throw new Error('Key not found')
     const [deleted] = mockApiKeys.splice(idx, 1)

@@ -1,4 +1,4 @@
-import { prisma, type MediaType } from '@IRIS/database'
+import { prisma, countOf, or, type MediaType } from '@IRIS/database'
 import { NotFound } from '../../lib/errors'
 import { MediaQueueManager } from './queue'
 import { fetchMediaRelations } from './media-relations.helper'
@@ -85,29 +85,80 @@ export class BorealisMediaServ {
     if (sortBy === 'releaseDate') orderBy = { seasonYear: sortOrder }
     if (sortBy === 'trending') orderBy = { favorites: sortOrder }
 
+    let q = prisma.orm.public.Anime
+    if (search) {
+      q = q.where((m) =>
+        or(
+          m.titlePrimary.ilike(`%${search}%`),
+          m.titleSecondary.ilike(`%${search}%`),
+          m.titleNative.ilike(`%${search}%`)
+        )
+      )
+    }
+    if (genres.length > 0) {
+      q = q.where((m) =>
+        m.genres.some((g) => g.genre.some((ge) => ge.name.in(genres)))
+      )
+    }
+    if (formats.length > 0) {
+      q = q.where((m) => m.format.in(formats as any))
+    }
+    if (statuses.length > 0) {
+      q = q.where((m) => m.status.in(statuses as any))
+    }
+    if (years.length > 0) {
+      q = q.where((m) => m.seasonYear.in(years))
+    }
+    if (season) {
+      q = q.where({ seasonSeason: season as any })
+    }
+
+    let itemsQ = q
+    if (sortBy === 'score') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.averageScore.asc() : x.averageScore.desc()
+      )
+    } else if (sortBy === 'title') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.titlePrimary.asc() : x.titlePrimary.desc()
+      )
+    } else if (sortBy === 'releaseDate') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.seasonYear.asc() : x.seasonYear.desc()
+      )
+    } else if (sortBy === 'trending') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.popularity.asc() : x.popularity.desc()
+      )
+    }
+
     const [total, items] = await Promise.all([
-      prisma.anime.count({ where }),
-      prisma.anime.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        select: {
-          id: true,
-          titlePrimary: true,
-          titleSecondary: true,
-          titleNative: true,
-          coverImage: true,
-          bannerImage: true,
-          format: true,
-          status: true,
-          seasonYear: true,
-          seasonSeason: true,
-          episodeCount: true,
-          averageScore: true,
-          genres: { select: { id: true, name: true } },
-        },
-      }),
+      countOf(q),
+      itemsQ
+        .offset(skip)
+        .limit(limit)
+        .select(
+          'id',
+          'titlePrimary',
+          'titleSecondary',
+          'titleNative',
+          'coverImage',
+          'bannerImage',
+          'format',
+          'status',
+          'seasonYear',
+          'seasonSeason',
+          'episodeCount',
+          'averageScore'
+        )
+        .include('genres', (g) =>
+          g.include('genre', (ge) => ge.select('id', 'name'))
+        )
+        .all(),
     ])
 
     return {
@@ -126,7 +177,7 @@ export class BorealisMediaServ {
         season: x.seasonSeason ? String(x.seasonSeason) : null,
         unitsCount: x.episodeCount,
         averageScore: x.averageScore,
-        genres: x.genres,
+        genres: (x.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
       })),
       pagination: {
         page,
@@ -140,22 +191,16 @@ export class BorealisMediaServ {
 
   public static async getAnimeFilters() {
     const [allAnime, allGenres] = await Promise.all([
-      prisma.anime.findMany({
-        select: {
-          status: true,
-          format: true,
-          seasonYear: true,
-          seasonSeason: true,
-        },
-      }),
-      prisma.genre.findMany({
-        select: {
-          id: true,
-          name: true,
-          _count: { select: { anime: true } },
-        },
-        orderBy: { name: 'asc' },
-      }),
+      prisma.orm.public.Anime.select(
+        'status',
+        'format',
+        'seasonYear',
+        'seasonSeason'
+      ).all(),
+      prisma.orm.public.Genre.select('id', 'name')
+        .include('anime', (a) => a.count())
+        .orderBy((g) => g.name.asc())
+        .all(),
     ])
 
     const statusCounts: Record<string, number> = {}
@@ -174,7 +219,7 @@ export class BorealisMediaServ {
       success: true,
       statuses: Object.entries(statusCounts).map(([value, count]) => ({ value, count })),
       formats: Object.entries(formatCounts).map(([value, count]) => ({ value, count })),
-      genres: allGenres.map((g) => ({ value: g.name, count: g._count?.anime ?? 0 })),
+      genres: allGenres.map((g: any) => ({ value: g.name, count: g.anime ?? 0 })),
       years: Object.entries(yearCounts)
         .map(([value, count]) => ({ value: Number(value), count }))
         .sort((a, b) => b.value - a.value),
@@ -183,33 +228,18 @@ export class BorealisMediaServ {
   }
 
   public static async getAnimeById(id: number) {
-    const anime = await prisma.anime.findUnique({
-      where: { id },
-      include: {
-        genres: true,
-        tags: true,
-        characters: {
-          include: {
-            character: true,
-            actor: true,
-          },
-        },
-        staff: {
-          include: {
-            person: true,
-          },
-        },
-        studios: {
-          include: {
-            studio: true,
-          },
-        },
-        episodes: {
-          orderBy: { number: 'asc' },
-          take: 50,
-        },
-      },
-    })
+    const anime = await prisma.orm.public.Anime.where({ id })
+      .include('genres', (g) => g.include('genre'))
+      .include('tags', (t) => t.include('tag'))
+      .include('characters', (c) =>
+        c.include('character').include('actor')
+      )
+      .include('staff', (s) => s.include('person'))
+      .include('studios', (st) => st.include('studio'))
+      .include('episodes', (e) =>
+        e.orderBy((ep) => ep.number.asc()).limit(50)
+      )
+      .first()
 
     if (!anime) {
       throw new NotFound(`Anime with ID ${id} not found`)
@@ -222,26 +252,22 @@ export class BorealisMediaServ {
       success: true,
       media: {
         ...anime,
+        genres: (anime.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+        tags: (anime.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
         relations,
       },
     }
   }
 
   public static async refreshAnime(id: number) {
-    const anime = await prisma.anime.findUnique({
-      where: { id },
-      select: { id: true, anilistId: true, titlePrimary: true },
-    })
+    const anime = await prisma.orm.public.Anime.where({ id }).select('id', 'anilistId', 'titlePrimary').first()
 
     if (!anime) {
       throw new NotFound(`Anime with ID ${id} not found`)
     }
 
     // Mark as updated and queue refresh
-    await prisma.anime.update({
-      where: { id },
-      data: { updatedAt: new Date() },
-    })
+    await prisma.orm.public.Anime.where({ id }).update({ updatedAt: new Date() })
 
     await MediaQueueManager.enqueueMediaUpdate('ANIME', id, {
       externalId: anime.anilistId,
@@ -260,63 +286,49 @@ export class BorealisMediaServ {
   }
 
   public static async getSimilarAnime(id: number, limit: number = 10) {
-    const source = await prisma.anime.findUnique({
-      where: { id },
-      include: {
-        genres: { select: { id: true, name: true } },
-        tags: { select: { id: true, name: true } },
-        studios: { include: { studio: { select: { id: true, name: true } } } },
-        characters: { select: { characterId: true } },
-      },
-    })
+    const source = await prisma.orm.public.Anime.where({ id })
+      .include('genres', (g) => g.include('genre', (ge) => ge.select('id', 'name')))
+      .include('tags', (t) => t.include('tag', (te) => te.select('id', 'name')))
+      .include('studios', (st) => st.include('studio', (s) => s.select('id', 'name')))
+      .include('characters', (c) => c.select('characterId'))
+      .first()
 
     if (!source) {
       throw new NotFound(`Anime with ID ${id} not found`)
     }
 
-    const sourceGenreIds = new Set(source.genres.map((g) => g.id))
-    const sourceTagIds = new Set(source.tags.map((t) => t.id))
+    const sourceGenres = (source.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!)
+    const sourceTags = (source.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!)
+    const sourceGenreIds = new Set(sourceGenres.map((g: any) => g.id))
+    const sourceTagIds = new Set(sourceTags.map((t: any) => t.id))
     const sourceStudioIds = new Set(source.studios.map((s) => s.studioId))
     const sourceCharacterIds = new Set(source.characters.map((c) => c.characterId))
     const sourceBaseTitle = cleanBaseTitle(source.titlePrimary)
 
     // Query candidates that share at least 1 genre or tag or format
-    const candidates = await prisma.anime.findMany({
-      where: {
-        id: { not: id },
-        OR: [
-          sourceGenreIds.size > 0
-            ? {
-                genres: {
-                  some: { id: { in: Array.from(sourceGenreIds) } },
-                },
-              }
-            : undefined,
-          sourceTagIds.size > 0
-            ? {
-                tags: {
-                  some: { id: { in: Array.from(sourceTagIds) } },
-                },
-              }
-            : undefined,
-          sourceStudioIds.size > 0
-            ? {
-                studios: {
-                  some: { studioId: { in: Array.from(sourceStudioIds) } },
-                },
-              }
-            : undefined,
-          { format: source.format },
-        ].filter(Boolean) as any,
-      },
-      take: 120,
-      include: {
-        genres: { select: { id: true, name: true } },
-        tags: { select: { id: true, name: true } },
-        studios: { include: { studio: { select: { id: true, name: true } } } },
-        characters: { select: { characterId: true } },
-      },
-    })
+    let candidatesQ = prisma.orm.public.Anime.where((a) => a.id.neq(id))
+    const conds: any[] = []
+    if (sourceGenreIds.size > 0) conds.push((a: any) => a.genres.some((g: any) => g.genreId.in(Array.from(sourceGenreIds))))
+    if (sourceTagIds.size > 0) conds.push((a: any) => a.tags.some((t: any) => t.tagId.in(Array.from(sourceTagIds))))
+    if (sourceStudioIds.size > 0) conds.push((a: any) => a.studios.some((s: any) => s.studioId.in(Array.from(sourceStudioIds))))
+    if (source.format) conds.push((a: any) => a.format.eq(source.format))
+    if (conds.length > 0) {
+      candidatesQ = candidatesQ.where((a) => or(...conds.map((c) => c(a))))
+    }
+
+    const rawCandidates = await candidatesQ
+      .limit(120)
+      .include('genres', (g) => g.include('genre', (ge) => ge.select('id', 'name')))
+      .include('tags', (t) => t.include('tag', (te) => te.select('id', 'name')))
+      .include('studios', (st) => st.include('studio', (s) => s.select('id', 'name')))
+      .include('characters', (c) => c.select('characterId'))
+      .all()
+
+    const candidates = rawCandidates.map((candidate: any) => ({
+      ...candidate,
+      genres: (candidate.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+      tags: (candidate.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
+    }))
 
     // Score candidates with improved multi-factor weighting
     const scored = candidates.map((candidate) => {
@@ -469,29 +481,77 @@ export class BorealisMediaServ {
     if (sortBy === 'releaseDate') orderBy = { startDateYear: sortOrder }
     if (sortBy === 'trending') orderBy = { favorites: sortOrder }
 
+    let q = prisma.orm.public.Manga
+    if (search) {
+      q = q.where((m) =>
+        or(
+          m.titlePrimary.ilike(`%${search}%`),
+          m.titleSecondary.ilike(`%${search}%`),
+          m.titleNative.ilike(`%${search}%`)
+        )
+      )
+    }
+    if (genres.length > 0) {
+      q = q.where((m) =>
+        m.genres.some((g) => g.genre.some((ge) => ge.name.in(genres)))
+      )
+    }
+    if (formats.length > 0) {
+      q = q.where((m) => m.format.in(formats as any))
+    }
+    if (statuses.length > 0) {
+      q = q.where((m) => m.status.in(statuses as any))
+    }
+    if (years.length > 0) {
+      q = q.where((m) => m.startDateYear.in(years))
+    }
+
+    let itemsQ = q
+    if (sortBy === 'score') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.averageScore.asc() : x.averageScore.desc()
+      )
+    } else if (sortBy === 'title') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.titlePrimary.asc() : x.titlePrimary.desc()
+      )
+    } else if (sortBy === 'releaseDate') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.startDateYear.asc() : x.startDateYear.desc()
+      )
+    } else if (sortBy === 'trending') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.popularity.asc() : x.popularity.desc()
+      )
+    }
+
     const [total, items] = await Promise.all([
-      prisma.manga.count({ where }),
-      prisma.manga.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        select: {
-          id: true,
-          titlePrimary: true,
-          titleSecondary: true,
-          titleNative: true,
-          coverImage: true,
-          bannerImage: true,
-          format: true,
-          status: true,
-          startDateYear: true,
-          chapterCount: true,
-          volumeCount: true,
-          averageScore: true,
-          genres: { select: { id: true, name: true } },
-        },
-      }),
+      countOf(q),
+      itemsQ
+        .offset(skip)
+        .limit(limit)
+        .select(
+          'id',
+          'titlePrimary',
+          'titleSecondary',
+          'titleNative',
+          'coverImage',
+          'bannerImage',
+          'format',
+          'status',
+          'startDateYear',
+          'chapterCount',
+          'volumeCount',
+          'averageScore'
+        )
+        .include('genres', (g) =>
+          g.include('genre', (ge) => ge.select('id', 'name'))
+        )
+        .all(),
     ])
 
     return {
@@ -509,7 +569,7 @@ export class BorealisMediaServ {
         year: x.startDateYear,
         unitsCount: x.chapterCount,
         averageScore: x.averageScore,
-        genres: x.genres,
+        genres: (x.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
       })),
       pagination: {
         page,
@@ -523,21 +583,15 @@ export class BorealisMediaServ {
 
   public static async getMangaFilters() {
     const [allManga, allGenres] = await Promise.all([
-      prisma.manga.findMany({
-        select: {
-          status: true,
-          format: true,
-          startDateYear: true,
-        },
-      }),
-      prisma.genre.findMany({
-        select: {
-          id: true,
-          name: true,
-          _count: { select: { manga: true } },
-        },
-        orderBy: { name: 'asc' },
-      }),
+      prisma.orm.public.Manga.select(
+        'status',
+        'format',
+        'startDateYear'
+      ).all(),
+      prisma.orm.public.Genre.select('id', 'name')
+        .include('manga', (m) => m.count())
+        .orderBy((g) => g.name.asc())
+        .all(),
     ])
 
     const statusCounts: Record<string, number> = {}
@@ -554,7 +608,7 @@ export class BorealisMediaServ {
       success: true,
       statuses: Object.entries(statusCounts).map(([value, count]) => ({ value, count })),
       formats: Object.entries(formatCounts).map(([value, count]) => ({ value, count })),
-      genres: allGenres.map((g) => ({ value: g.name, count: g._count?.manga ?? 0 })),
+      genres: allGenres.map((g: any) => ({ value: g.name, count: g.manga ?? 0 })),
       years: Object.entries(yearCounts)
         .map(([value, count]) => ({ value: Number(value), count }))
         .sort((a, b) => b.value - a.value),
@@ -562,24 +616,14 @@ export class BorealisMediaServ {
   }
 
   public static async getMangaById(id: number) {
-    const manga = await prisma.manga.findUnique({
-      where: { id },
-      include: {
-        genres: true,
-        tags: true,
-        characters: {
-          include: {
-            character: true,
-            actor: true,
-          },
-        },
-        staff: {
-          include: {
-            person: true,
-          },
-        },
-      },
-    })
+    const manga = await prisma.orm.public.Manga.where({ id })
+      .include('genres', (g) => g.include('genre'))
+      .include('tags', (t) => t.include('tag'))
+      .include('characters', (c) =>
+        c.include('character').include('actor')
+      )
+      .include('staff', (s) => s.include('person'))
+      .first()
 
     if (!manga) {
       throw new NotFound(`Manga with ID ${id} not found`)
@@ -591,25 +635,21 @@ export class BorealisMediaServ {
       success: true,
       media: {
         ...manga,
+        genres: (manga.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+        tags: (manga.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
         relations,
       },
     }
   }
 
   public static async refreshManga(id: number) {
-    const manga = await prisma.manga.findUnique({
-      where: { id },
-      select: { id: true, anilistId: true, titlePrimary: true },
-    })
+    const manga = await prisma.orm.public.Manga.where({ id }).select('id', 'anilistId', 'titlePrimary').first()
 
     if (!manga) {
       throw new NotFound(`Manga with ID ${id} not found`)
     }
 
-    await prisma.manga.update({
-      where: { id },
-      data: { updatedAt: new Date() },
-    })
+    await prisma.orm.public.Manga.where({ id }).update({ updatedAt: new Date() })
 
     await MediaQueueManager.enqueueMediaUpdate('MANGA', id, {
       externalId: manga.anilistId,
@@ -628,62 +668,48 @@ export class BorealisMediaServ {
   }
 
   public static async getSimilarManga(id: number, limit: number = 10) {
-    const source = await prisma.manga.findUnique({
-      where: { id },
-      include: {
-        genres: { select: { id: true, name: true } },
-        tags: { select: { id: true, name: true } },
-        staff: { include: { person: { select: { id: true, namePrimary: true } } } },
-        characters: { select: { characterId: true } },
-      },
-    })
+    const source = await prisma.orm.public.Manga.where({ id })
+      .include('genres', (g) => g.include('genre', (ge) => ge.select('id', 'name')))
+      .include('tags', (t) => t.include('tag', (te) => te.select('id', 'name')))
+      .include('staff', (s) => s.include('person', (p) => p.select('id', 'namePrimary')))
+      .include('characters', (c) => c.select('characterId'))
+      .first()
 
     if (!source) {
       throw new NotFound(`Manga with ID ${id} not found`)
     }
 
-    const sourceGenreIds = new Set(source.genres.map((g) => g.id))
-    const sourceTagIds = new Set(source.tags.map((t) => t.id))
+    const sourceGenres = (source.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!)
+    const sourceTags = (source.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!)
+    const sourceGenreIds = new Set(sourceGenres.map((g: any) => g.id))
+    const sourceTagIds = new Set(sourceTags.map((t: any) => t.id))
     const sourceStaffPersonIds = new Set(source.staff.map((s) => s.personId).filter(Boolean))
     const sourceCharacterIds = new Set(source.characters.map((c) => c.characterId))
     const sourceBaseTitle = cleanBaseTitle(source.titlePrimary)
 
-    const candidates = await prisma.manga.findMany({
-      where: {
-        id: { not: id },
-        OR: [
-          sourceGenreIds.size > 0
-            ? {
-                genres: {
-                  some: { id: { in: Array.from(sourceGenreIds) } },
-                },
-              }
-            : undefined,
-          sourceTagIds.size > 0
-            ? {
-                tags: {
-                  some: { id: { in: Array.from(sourceTagIds) } },
-                },
-              }
-            : undefined,
-          sourceStaffPersonIds.size > 0
-            ? {
-                staff: {
-                  some: { personId: { in: Array.from(sourceStaffPersonIds) as any } },
-                },
-              }
-            : undefined,
-          { format: source.format },
-        ].filter(Boolean) as any,
-      },
-      take: 120,
-      include: {
-        genres: { select: { id: true, name: true } },
-        tags: { select: { id: true, name: true } },
-        staff: { include: { person: { select: { id: true, namePrimary: true } } } },
-        characters: { select: { characterId: true } },
-      },
-    })
+    let candidatesQ = prisma.orm.public.Manga.where((m) => m.id.neq(id))
+    const conds: any[] = []
+    if (sourceGenreIds.size > 0) conds.push((m: any) => m.genres.some((g: any) => g.genreId.in(Array.from(sourceGenreIds))))
+    if (sourceTagIds.size > 0) conds.push((m: any) => m.tags.some((t: any) => t.tagId.in(Array.from(sourceTagIds))))
+    if (sourceStaffPersonIds.size > 0) conds.push((m: any) => m.staff.some((s: any) => s.personId.in(Array.from(sourceStaffPersonIds) as any)))
+    if (source.format) conds.push((m: any) => m.format.eq(source.format))
+    if (conds.length > 0) {
+      candidatesQ = candidatesQ.where((m) => or(...conds.map((c) => c(m))))
+    }
+
+    const rawCandidates = await candidatesQ
+      .limit(120)
+      .include('genres', (g) => g.include('genre', (ge) => ge.select('id', 'name')))
+      .include('tags', (t) => t.include('tag', (te) => te.select('id', 'name')))
+      .include('staff', (s) => s.include('person', (p) => p.select('id', 'namePrimary')))
+      .include('characters', (c) => c.select('characterId'))
+      .all()
+
+    const candidates = rawCandidates.map((candidate: any) => ({
+      ...candidate,
+      genres: (candidate.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+      tags: (candidate.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
+    }))
 
     const scored = candidates.map((candidate) => {
       let similarityScore = 0
@@ -832,27 +858,72 @@ export class BorealisMediaServ {
     if (sortBy === 'releaseDate') orderBy = { releaseDateYear: sortOrder }
     if (sortBy === 'trending') orderBy = { favorites: sortOrder }
 
+    let q = prisma.orm.public.Movie
+    if (search) {
+      q = q.where((m) =>
+        or(
+          m.titlePrimary.ilike(`%${search}%`),
+          m.titleSecondary.ilike(`%${search}%`),
+          m.titleNative.ilike(`%${search}%`)
+        )
+      )
+    }
+    if (genres.length > 0) {
+      q = q.where((m) =>
+        m.genres.some((g) => g.genre.some((ge) => ge.name.in(genres)))
+      )
+    }
+    if (statuses.length > 0) {
+      q = q.where((m) => m.status.in(statuses as any))
+    }
+    if (years.length > 0) {
+      q = q.where((m) => m.releaseDateYear.in(years))
+    }
+
+    let itemsQ = q
+    if (sortBy === 'score') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.averageScore.asc() : x.averageScore.desc()
+      )
+    } else if (sortBy === 'title') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.titlePrimary.asc() : x.titlePrimary.desc()
+      )
+    } else if (sortBy === 'releaseDate') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.releaseDateYear.asc() : x.releaseDateYear.desc()
+      )
+    } else if (sortBy === 'trending') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.popularity.asc() : x.popularity.desc()
+      )
+    }
+
     const [total, items] = await Promise.all([
-      prisma.movie.count({ where }),
-      prisma.movie.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        select: {
-          id: true,
-          titlePrimary: true,
-          titleSecondary: true,
-          titleNative: true,
-          coverImage: true,
-          bannerImage: true,
-          runtime: true,
-          status: true,
-          releaseDateYear: true,
-          averageScore: true,
-          genres: { select: { id: true, name: true } },
-        },
-      }),
+      countOf(q),
+      itemsQ
+        .offset(skip)
+        .limit(limit)
+        .select(
+          'id',
+          'titlePrimary',
+          'titleSecondary',
+          'titleNative',
+          'coverImage',
+          'bannerImage',
+          'runtime',
+          'releaseDateYear',
+          'averageScore',
+          'status'
+        )
+        .include('genres', (g) =>
+          g.include('genre', (ge) => ge.select('id', 'name'))
+        )
+        .all(),
     ])
 
     return {
@@ -870,7 +941,7 @@ export class BorealisMediaServ {
         year: x.releaseDateYear,
         unitsCount: x.runtime,
         averageScore: x.averageScore,
-        genres: x.genres,
+        genres: (x.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
       })),
       pagination: {
         page,
@@ -884,20 +955,14 @@ export class BorealisMediaServ {
 
   public static async getMovieFilters() {
     const [allMovies, allGenres] = await Promise.all([
-      prisma.movie.findMany({
-        select: {
-          status: true,
-          releaseDateYear: true,
-        },
-      }),
-      prisma.genre.findMany({
-        select: {
-          id: true,
-          name: true,
-          _count: { select: { movies: true } },
-        },
-        orderBy: { name: 'asc' },
-      }),
+      prisma.orm.public.Movie.select(
+        'status',
+        'releaseDateYear'
+      ).all(),
+      prisma.orm.public.Genre.select('id', 'name')
+        .include('movies', (m) => m.count())
+        .orderBy((g) => g.name.asc())
+        .all(),
     ])
 
     const statusCounts: Record<string, number> = {}
@@ -912,7 +977,7 @@ export class BorealisMediaServ {
       success: true,
       statuses: Object.entries(statusCounts).map(([value, count]) => ({ value, count })),
       formats: [{ value: 'MOVIE', count: allMovies.length }],
-      genres: allGenres.map((g) => ({ value: g.name, count: g._count?.movies ?? 0 })),
+      genres: allGenres.map((g: any) => ({ value: g.name, count: g.movies ?? 0 })),
       years: Object.entries(yearCounts)
         .map(([value, count]) => ({ value: Number(value), count }))
         .sort((a, b) => b.value - a.value),
@@ -920,29 +985,15 @@ export class BorealisMediaServ {
   }
 
   public static async getMovieById(id: number) {
-    const movie = await prisma.movie.findUnique({
-      where: { id },
-      include: {
-        genres: true,
-        tags: true,
-        characters: {
-          include: {
-            character: true,
-            actor: true,
-          },
-        },
-        staff: {
-          include: {
-            person: true,
-          },
-        },
-        studios: {
-          include: {
-            studio: true,
-          },
-        },
-      },
-    })
+    const movie = await prisma.orm.public.Movie.where({ id })
+      .include('genres', (g) => g.include('genre'))
+      .include('tags', (t) => t.include('tag'))
+      .include('characters', (c) =>
+        c.include('character').include('actor')
+      )
+      .include('staff', (s) => s.include('person'))
+      .include('studios', (st) => st.include('studio'))
+      .first()
 
     if (!movie) {
       throw new NotFound(`Movie with ID ${id} not found`)
@@ -954,6 +1005,8 @@ export class BorealisMediaServ {
       success: true,
       media: {
         ...movie,
+        genres: (movie.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+        tags: (movie.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
         budget: movie.budget != null ? Number(movie.budget) : null,
         revenue: movie.revenue != null ? Number(movie.revenue) : null,
         relations,
@@ -962,19 +1015,13 @@ export class BorealisMediaServ {
   }
 
   public static async refreshMovie(id: number) {
-    const movie = await prisma.movie.findUnique({
-      where: { id },
-      select: { id: true, titlePrimary: true },
-    })
+    const movie = await prisma.orm.public.Movie.where({ id }).select('id', 'titlePrimary', 'tvDBId').first()
 
     if (!movie) {
       throw new NotFound(`Movie with ID ${id} not found`)
     }
 
-    await prisma.movie.update({
-      where: { id },
-      data: { updatedAt: new Date() },
-    })
+    await prisma.orm.public.Movie.where({ id }).update({ updatedAt: new Date() })
 
     await MediaQueueManager.enqueueMediaUpdate('MOVIE', id, {
       externalId: (movie as any).tvDBId,
@@ -993,71 +1040,51 @@ export class BorealisMediaServ {
   }
 
   public static async getSimilarMovies(id: number, limit: number = 10) {
-    const source = await prisma.movie.findUnique({
-      where: { id },
-      include: {
-        genres: { select: { id: true, name: true } },
-        tags: { select: { id: true, name: true } },
-        studios: { include: { studio: { select: { id: true, name: true } } } },
-        staff: { include: { person: { select: { id: true, namePrimary: true } } } },
-        characters: { select: { characterId: true } },
-      },
-    })
+    const source = await prisma.orm.public.Movie.where({ id })
+      .include('genres', (g) => g.include('genre', (ge) => ge.select('id', 'name')))
+      .include('tags', (t) => t.include('tag', (te) => te.select('id', 'name')))
+      .include('studios', (st) => st.include('studio', (s) => s.select('id', 'name')))
+      .include('staff', (s) => s.include('person', (p) => p.select('id', 'namePrimary')))
+      .include('characters', (c) => c.select('characterId'))
+      .first()
 
     if (!source) {
       throw new NotFound(`Movie with ID ${id} not found`)
     }
 
-    const sourceGenreIds = new Set(source.genres.map((g) => g.id))
-    const sourceTagIds = new Set(source.tags.map((t) => t.id))
+    const sourceGenres = (source.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!)
+    const sourceTags = (source.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!)
+    const sourceGenreIds = new Set(sourceGenres.map((g: any) => g.id))
+    const sourceTagIds = new Set(sourceTags.map((t: any) => t.id))
     const sourceStudioIds = new Set(source.studios.map((s) => s.studioId))
     const sourcePersonIds = new Set(source.staff.map((s) => s.personId).filter(Boolean))
     const sourceCharacterIds = new Set(source.characters.map((c) => c.characterId))
     const sourceBaseTitle = cleanBaseTitle(source.titlePrimary)
 
-    const candidates = await prisma.movie.findMany({
-      where: {
-        id: { not: id },
-        OR: [
-          sourceGenreIds.size > 0
-            ? {
-                genres: {
-                  some: { id: { in: Array.from(sourceGenreIds) } },
-                },
-              }
-            : undefined,
-          sourceTagIds.size > 0
-            ? {
-                tags: {
-                  some: { id: { in: Array.from(sourceTagIds) } },
-                },
-              }
-            : undefined,
-          sourceStudioIds.size > 0
-            ? {
-                studios: {
-                  some: { studioId: { in: Array.from(sourceStudioIds) } },
-                },
-              }
-            : undefined,
-          sourcePersonIds.size > 0
-            ? {
-                staff: {
-                  some: { personId: { in: Array.from(sourcePersonIds) as any } },
-                },
-              }
-            : undefined,
-        ].filter(Boolean) as any,
-      },
-      take: 120,
-      include: {
-        genres: { select: { id: true, name: true } },
-        tags: { select: { id: true, name: true } },
-        studios: { include: { studio: { select: { id: true, name: true } } } },
-        staff: { include: { person: { select: { id: true, namePrimary: true } } } },
-        characters: { select: { characterId: true } },
-      },
-    })
+    let candidatesQ = prisma.orm.public.Movie.where((m) => m.id.neq(id))
+    const conds: any[] = []
+    if (sourceGenreIds.size > 0) conds.push((m: any) => m.genres.some((g: any) => g.genreId.in(Array.from(sourceGenreIds))))
+    if (sourceTagIds.size > 0) conds.push((m: any) => m.tags.some((t: any) => t.tagId.in(Array.from(sourceTagIds))))
+    if (sourceStudioIds.size > 0) conds.push((m: any) => m.studios.some((s: any) => s.studioId.in(Array.from(sourceStudioIds))))
+    if (sourcePersonIds.size > 0) conds.push((m: any) => m.staff.some((s: any) => s.personId.in(Array.from(sourcePersonIds) as any)))
+    if (conds.length > 0) {
+      candidatesQ = candidatesQ.where((m) => or(...conds.map((c) => c(m))))
+    }
+
+    const rawCandidates = await candidatesQ
+      .limit(120)
+      .include('genres', (g) => g.include('genre', (ge) => ge.select('id', 'name')))
+      .include('tags', (t) => t.include('tag', (te) => te.select('id', 'name')))
+      .include('studios', (st) => st.include('studio', (s) => s.select('id', 'name')))
+      .include('staff', (s) => s.include('person', (p) => p.select('id', 'namePrimary')))
+      .include('characters', (c) => c.select('characterId'))
+      .all()
+
+    const candidates = rawCandidates.map((candidate: any) => ({
+      ...candidate,
+      genres: (candidate.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+      tags: (candidate.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
+    }))
 
     const scored = candidates.map((candidate) => {
       let similarityScore = 0
@@ -1211,28 +1238,76 @@ export class BorealisMediaServ {
     if (sortBy === 'releaseDate') orderBy = { firstAiredYear: sortOrder }
     if (sortBy === 'trending') orderBy = { favorites: sortOrder }
 
+    let q = prisma.orm.public.Tv
+    if (search) {
+      q = q.where((m) =>
+        or(
+          m.titlePrimary.ilike(`%${search}%`),
+          m.titleSecondary.ilike(`%${search}%`),
+          m.titleNative.ilike(`%${search}%`)
+        )
+      )
+    }
+    if (genres.length > 0) {
+      q = q.where((m) =>
+        m.genres.some((g) => g.genre.some((ge) => ge.name.in(genres)))
+      )
+    }
+    if (formats.length > 0) {
+      q = q.where((m) => m.showType.in(formats as any))
+    }
+    if (statuses.length > 0) {
+      q = q.where((m) => m.status.in(statuses as any))
+    }
+    if (years.length > 0) {
+      q = q.where((m) => m.firstAiredYear.in(years))
+    }
+
+    let itemsQ = q
+    if (sortBy === 'score') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.averageScore.asc() : x.averageScore.desc()
+      )
+    } else if (sortBy === 'title') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.titlePrimary.asc() : x.titlePrimary.desc()
+      )
+    } else if (sortBy === 'releaseDate') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.firstAiredYear.asc() : x.firstAiredYear.desc()
+      )
+    } else if (sortBy === 'trending') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.popularity.asc() : x.popularity.desc()
+      )
+    }
+
     const [total, items] = await Promise.all([
-      prisma.tv.count({ where }),
-      prisma.tv.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        select: {
-          id: true,
-          titlePrimary: true,
-          titleSecondary: true,
-          titleNative: true,
-          coverImage: true,
-          bannerImage: true,
-          showType: true,
-          status: true,
-          firstAiredYear: true,
-          episodeCount: true,
-          averageScore: true,
-          genres: { select: { id: true, name: true } },
-        },
-      }),
+      countOf(q),
+      itemsQ
+        .offset(skip)
+        .limit(limit)
+        .select(
+          'id',
+          'titlePrimary',
+          'titleSecondary',
+          'titleNative',
+          'coverImage',
+          'bannerImage',
+          'episodeCount',
+          'firstAiredYear',
+          'averageScore',
+          'showType',
+          'status'
+        )
+        .include('genres', (g) =>
+          g.include('genre', (ge) => ge.select('id', 'name'))
+        )
+        .all(),
     ])
 
     return {
@@ -1250,7 +1325,7 @@ export class BorealisMediaServ {
         year: x.firstAiredYear,
         unitsCount: x.episodeCount,
         averageScore: x.averageScore,
-        genres: x.genres,
+        genres: (x.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
       })),
       pagination: {
         page,
@@ -1264,21 +1339,15 @@ export class BorealisMediaServ {
 
   public static async getTvFilters() {
     const [allTv, allGenres] = await Promise.all([
-      prisma.tv.findMany({
-        select: {
-          status: true,
-          showType: true,
-          firstAiredYear: true,
-        },
-      }),
-      prisma.genre.findMany({
-        select: {
-          id: true,
-          name: true,
-          _count: { select: { tv: true } },
-        },
-        orderBy: { name: 'asc' },
-      }),
+      prisma.orm.public.Tv.select(
+        'status',
+        'showType',
+        'firstAiredYear'
+      ).all(),
+      prisma.orm.public.Genre.select('id', 'name')
+        .include('tv', (t) => t.count())
+        .orderBy((g) => g.name.asc())
+        .all(),
     ])
 
     const statusCounts: Record<string, number> = {}
@@ -1296,7 +1365,7 @@ export class BorealisMediaServ {
       success: true,
       statuses: Object.entries(statusCounts).map(([value, count]) => ({ value, count })),
       formats: Object.entries(formatCounts).map(([value, count]) => ({ value, count })),
-      genres: allGenres.map((g) => ({ value: g.name, count: g._count?.tv ?? 0 })),
+      genres: allGenres.map((g: any) => ({ value: g.name, count: g.tv ?? 0 })),
       years: Object.entries(yearCounts)
         .map(([value, count]) => ({ value: Number(value), count }))
         .sort((a, b) => b.value - a.value),
@@ -1304,35 +1373,17 @@ export class BorealisMediaServ {
   }
 
   public static async getTvById(id: number) {
-    const tv = await prisma.tv.findUnique({
-      where: { id },
-      include: {
-        genres: true,
-        tags: true,
-        characters: {
-          include: {
-            character: true,
-            actor: true,
-          },
-        },
-        staff: {
-          include: {
-            person: true,
-          },
-        },
-        studios: {
-          include: {
-            studio: true,
-          },
-        },
-        seasons: {
-          orderBy: { seasonNumber: 'asc' },
-        },
-        episodes: {
-          orderBy: [{ seasonNumber: 'asc' }, { episodeNumber: 'asc' }],
-        },
-      },
-    })
+    const tv = await prisma.orm.public.Tv.where({ id })
+      .include('genres', (g) => g.include('genre'))
+      .include('tags', (t) => t.include('tag'))
+      .include('characters', (c) =>
+        c.include('character').include('actor')
+      )
+      .include('staff', (s) => s.include('person'))
+      .include('studios', (st) => st.include('studio'))
+      .include('seasons', (s) => s.orderBy((sn) => sn.seasonNumber.asc()))
+      .include('episodes', (e) => e.orderBy([(ep) => ep.seasonNumber.asc(), (ep) => ep.episodeNumber.asc()]))
+      .first()
 
     if (!tv) {
       throw new NotFound(`TV series with ID ${id} not found`)
@@ -1344,25 +1395,21 @@ export class BorealisMediaServ {
       success: true,
       media: {
         ...tv,
+        genres: (tv.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+        tags: (tv.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
         relations,
       },
     }
   }
 
   public static async refreshTv(id: number) {
-    const tv = await prisma.tv.findUnique({
-      where: { id },
-      select: { id: true, titlePrimary: true },
-    })
+    const tv = await prisma.orm.public.Tv.where({ id }).select('id', 'titlePrimary', 'tvDBId').first()
 
     if (!tv) {
       throw new NotFound(`TV series with ID ${id} not found`)
     }
 
-    await prisma.tv.update({
-      where: { id },
-      data: { updatedAt: new Date() },
-    })
+    await prisma.orm.public.Tv.where({ id }).update({ updatedAt: new Date() })
 
     await MediaQueueManager.enqueueMediaUpdate('TV', id, {
       externalId: (tv as any).tvDBId,
@@ -1381,71 +1428,51 @@ export class BorealisMediaServ {
   }
 
   public static async getSimilarTv(id: number, limit: number = 10) {
-    const source = await prisma.tv.findUnique({
-      where: { id },
-      include: {
-        genres: { select: { id: true, name: true } },
-        tags: { select: { id: true, name: true } },
-        studios: { include: { studio: { select: { id: true, name: true } } } },
-        staff: { include: { person: { select: { id: true, namePrimary: true } } } },
-        characters: { select: { characterId: true } },
-      },
-    })
+    const source = await prisma.orm.public.Tv.where({ id })
+      .include('genres', (g) => g.include('genre', (ge) => ge.select('id', 'name')))
+      .include('tags', (t) => t.include('tag', (te) => te.select('id', 'name')))
+      .include('studios', (st) => st.include('studio', (s) => s.select('id', 'name')))
+      .include('staff', (s) => s.include('person', (p) => p.select('id', 'namePrimary')))
+      .include('characters', (c) => c.select('characterId'))
+      .first()
 
     if (!source) {
       throw new NotFound(`TV series with ID ${id} not found`)
     }
 
-    const sourceGenreIds = new Set(source.genres.map((g) => g.id))
-    const sourceTagIds = new Set(source.tags.map((t) => t.id))
+    const sourceGenres = (source.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!)
+    const sourceTags = (source.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!)
+    const sourceGenreIds = new Set(sourceGenres.map((g: any) => g.id))
+    const sourceTagIds = new Set(sourceTags.map((t: any) => t.id))
     const sourceStudioIds = new Set(source.studios.map((s) => s.studioId))
     const sourcePersonIds = new Set(source.staff.map((s) => s.personId).filter(Boolean))
     const sourceCharacterIds = new Set(source.characters.map((c) => c.characterId))
     const sourceBaseTitle = cleanBaseTitle(source.titlePrimary)
 
-    const candidates = await prisma.tv.findMany({
-      where: {
-        id: { not: id },
-        OR: [
-          sourceGenreIds.size > 0
-            ? {
-                genres: {
-                  some: { id: { in: Array.from(sourceGenreIds) } },
-                },
-              }
-            : undefined,
-          sourceTagIds.size > 0
-            ? {
-                tags: {
-                  some: { id: { in: Array.from(sourceTagIds) } },
-                },
-              }
-            : undefined,
-          sourceStudioIds.size > 0
-            ? {
-                studios: {
-                  some: { studioId: { in: Array.from(sourceStudioIds) } },
-                },
-              }
-            : undefined,
-          sourcePersonIds.size > 0
-            ? {
-                staff: {
-                  some: { personId: { in: Array.from(sourcePersonIds) as any } },
-                },
-              }
-            : undefined,
-        ].filter(Boolean) as any,
-      },
-      take: 120,
-      include: {
-        genres: { select: { id: true, name: true } },
-        tags: { select: { id: true, name: true } },
-        studios: { include: { studio: { select: { id: true, name: true } } } },
-        staff: { include: { person: { select: { id: true, namePrimary: true } } } },
-        characters: { select: { characterId: true } },
-      },
-    })
+    let candidatesQ = prisma.orm.public.Tv.where((t) => t.id.neq(id))
+    const conds: any[] = []
+    if (sourceGenreIds.size > 0) conds.push((t: any) => t.genres.some((g: any) => g.genreId.in(Array.from(sourceGenreIds))))
+    if (sourceTagIds.size > 0) conds.push((t: any) => t.tags.some((tg: any) => tg.tagId.in(Array.from(sourceTagIds))))
+    if (sourceStudioIds.size > 0) conds.push((t: any) => t.studios.some((s: any) => s.studioId.in(Array.from(sourceStudioIds))))
+    if (sourcePersonIds.size > 0) conds.push((t: any) => t.staff.some((s: any) => s.personId.in(Array.from(sourcePersonIds) as any)))
+    if (conds.length > 0) {
+      candidatesQ = candidatesQ.where((t) => or(...conds.map((c) => c(t))))
+    }
+
+    const rawCandidates = await candidatesQ
+      .limit(120)
+      .include('genres', (g) => g.include('genre', (ge) => ge.select('id', 'name')))
+      .include('tags', (t) => t.include('tag', (te) => te.select('id', 'name')))
+      .include('studios', (st) => st.include('studio', (s) => s.select('id', 'name')))
+      .include('staff', (s) => s.include('person', (p) => p.select('id', 'namePrimary')))
+      .include('characters', (c) => c.select('characterId'))
+      .all()
+
+    const candidates = rawCandidates.map((candidate: any) => ({
+      ...candidate,
+      genres: (candidate.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+      tags: (candidate.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
+    }))
 
     const scored = candidates.map((candidate) => {
       let similarityScore = 0
@@ -1605,28 +1632,74 @@ export class BorealisMediaServ {
     if (sortBy === 'releaseDate') orderBy = { releaseDateYear: sortOrder }
     if (sortBy === 'trending') orderBy = { favorites: sortOrder }
 
+    let q = prisma.orm.public.Book
+    if (search) {
+      q = q.where((m) =>
+        or(
+          m.titlePrimary.ilike(`%${search}%`),
+          m.titleSecondary.ilike(`%${search}%`)
+        )
+      )
+    }
+    if (genres.length > 0) {
+      q = q.where((m) =>
+        m.genres.some((g) => g.genre.some((ge) => ge.name.in(genres)))
+      )
+    }
+    if (formats.length > 0) {
+      q = q.where((m) => m.format.in(formats as any))
+    }
+    if (statuses.length > 0) {
+      q = q.where((m) => m.status.in(statuses as any))
+    }
+    if (years.length > 0) {
+      q = q.where((m) => m.releaseDateYear.in(years))
+    }
+
+    let itemsQ = q
+    if (sortBy === 'score') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.averageScore.asc() : x.averageScore.desc()
+      )
+    } else if (sortBy === 'title') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.titlePrimary.asc() : x.titlePrimary.desc()
+      )
+    } else if (sortBy === 'releaseDate') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.releaseDateYear.asc() : x.releaseDateYear.desc()
+      )
+    } else if (sortBy === 'trending') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.popularity.asc() : x.popularity.desc()
+      )
+    }
+
     const [total, items] = await Promise.all([
-      prisma.book.count({ where }),
-      prisma.book.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        select: {
-          id: true,
-          titlePrimary: true,
-          titleSecondary: true,
-          coverImage: true,
-          bannerImage: true,
-          format: true,
-          status: true,
-          releaseDateYear: true,
-          pageCount: true,
-          chapterCount: true,
-          averageScore: true,
-          genres: { select: { id: true, name: true } },
-        },
-      }),
+      countOf(q),
+      itemsQ
+        .offset(skip)
+        .limit(limit)
+        .select(
+          'id',
+          'titlePrimary',
+          'titleSecondary',
+          'coverImage',
+          'bannerImage',
+          'pageCount',
+          'releaseDateYear',
+          'averageScore',
+          'format',
+          'status'
+        )
+        .include('genres', (g) =>
+          g.include('genre', (ge) => ge.select('id', 'name'))
+        )
+        .all(),
     ])
 
     return {
@@ -1642,9 +1715,9 @@ export class BorealisMediaServ {
         format: x.format || 'BOOK',
         status: String(x.status),
         year: x.releaseDateYear,
-        unitsCount: x.pageCount ?? x.chapterCount,
+        unitsCount: x.pageCount,
         averageScore: x.averageScore,
-        genres: x.genres,
+        genres: (x.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
       })),
       pagination: {
         page,
@@ -1658,21 +1731,15 @@ export class BorealisMediaServ {
 
   public static async getBookFilters() {
     const [allBooks, allGenres] = await Promise.all([
-      prisma.book.findMany({
-        select: {
-          status: true,
-          format: true,
-          releaseDateYear: true,
-        },
-      }),
-      prisma.genre.findMany({
-        select: {
-          id: true,
-          name: true,
-          _count: { select: { books: true } },
-        },
-        orderBy: { name: 'asc' },
-      }),
+      prisma.orm.public.Book.select(
+        'status',
+        'format',
+        'releaseDateYear'
+      ).all(),
+      prisma.orm.public.Genre.select('id', 'name')
+        .include('books', (b) => b.count())
+        .orderBy((g) => g.name.asc())
+        .all(),
     ])
 
     const statusCounts: Record<string, number> = {}
@@ -1690,7 +1757,7 @@ export class BorealisMediaServ {
       success: true,
       statuses: Object.entries(statusCounts).map(([value, count]) => ({ value, count })),
       formats: Object.entries(formatCounts).map(([value, count]) => ({ value, count })),
-      genres: allGenres.map((g) => ({ value: g.name, count: g._count?.books ?? 0 })),
+      genres: allGenres.map((g: any) => ({ value: g.name, count: g.books ?? 0 })),
       years: Object.entries(yearCounts)
         .map(([value, count]) => ({ value: Number(value), count }))
         .sort((a, b) => b.value - a.value),
@@ -1698,28 +1765,15 @@ export class BorealisMediaServ {
   }
 
   public static async getBookById(id: number) {
-    const book = await prisma.book.findUnique({
-      where: { id },
-      include: {
-        genres: true,
-        tags: true,
-        characters: {
-          include: {
-            character: true,
-          },
-        },
-        staff: {
-          include: {
-            person: true,
-          },
-        },
-        studios: {
-          include: {
-            studio: true,
-          },
-        },
-      },
-    })
+    const book = await prisma.orm.public.Book.where({ id })
+      .include('genres', (g) => g.include('genre'))
+      .include('tags', (t) => t.include('tag'))
+      .include('characters', (c) =>
+        c.include('character')
+      )
+      .include('staff', (s) => s.include('person'))
+      .include('studios', (st) => st.include('studio'))
+      .first()
 
     if (!book) {
       throw new NotFound(`Book with ID ${id} not found`)
@@ -1731,25 +1785,21 @@ export class BorealisMediaServ {
       success: true,
       media: {
         ...book,
+        genres: (book.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+        tags: (book.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
         relations,
       },
     }
   }
 
   public static async refreshBook(id: number) {
-    const book = await prisma.book.findUnique({
-      where: { id },
-      select: { id: true, titlePrimary: true },
-    })
+    const book = await prisma.orm.public.Book.where({ id }).select('id', 'titlePrimary').first()
 
     if (!book) {
       throw new NotFound(`Book with ID ${id} not found`)
     }
 
-    await prisma.book.update({
-      where: { id },
-      data: { updatedAt: new Date() },
-    })
+    await prisma.orm.public.Book.where({ id }).update({ updatedAt: new Date() })
 
     await MediaQueueManager.enqueueMediaUpdate('BOOK', id, {
       externalId: (book as any).googleBookId,
@@ -1768,69 +1818,48 @@ export class BorealisMediaServ {
   }
 
   public static async getSimilarBooks(id: number, limit: number = 10) {
-    const source = await prisma.book.findUnique({
-      where: { id },
-      include: {
-        genres: { select: { id: true, name: true } },
-        tags: { select: { id: true, name: true } },
-        staff: { include: { person: { select: { id: true, namePrimary: true } } } },
-        characters: { select: { characterId: true } },
-      },
-    })
+    const source = await prisma.orm.public.Book.where({ id })
+      .include('genres', (g) => g.include('genre', (ge) => ge.select('id', 'name')))
+      .include('tags', (t) => t.include('tag', (te) => te.select('id', 'name')))
+      .include('staff', (s) => s.include('person', (p) => p.select('id', 'namePrimary')))
+      .include('characters', (c) => c.select('characterId'))
+      .first()
 
     if (!source) {
       throw new NotFound(`Book with ID ${id} not found`)
     }
 
-    const sourceGenreIds = new Set(source.genres.map((g) => g.id))
-    const sourceTagIds = new Set(source.tags.map((t) => t.id))
-    const sourceAuthors = new Set((source.authors || []).map((a) => a.toLowerCase().trim()))
+    const sourceGenres = (source.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!)
+    const sourceTags = (source.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!)
+    const sourceGenreIds = new Set(sourceGenres.map((g: any) => g.id))
+    const sourceTagIds = new Set(sourceTags.map((t: any) => t.id))
+    const sourceAuthors = new Set(((source as any).authors || []).map((a: string) => a.toLowerCase().trim()))
     const sourceStaffPersonIds = new Set(source.staff.map((s) => s.personId).filter(Boolean))
     const sourceCharacterIds = new Set(source.characters.map((c) => c.characterId))
     const sourceBaseTitle = cleanBaseTitle(source.titlePrimary)
 
-    const candidates = await prisma.book.findMany({
-      where: {
-        id: { not: id },
-        OR: [
-          sourceGenreIds.size > 0
-            ? {
-                genres: {
-                  some: { id: { in: Array.from(sourceGenreIds) } },
-                },
-              }
-            : undefined,
-          sourceTagIds.size > 0
-            ? {
-                tags: {
-                  some: { id: { in: Array.from(sourceTagIds) } },
-                },
-              }
-            : undefined,
-          sourceAuthors.size > 0
-            ? {
-                authors: {
-                  hasSome: Array.from(sourceAuthors),
-                },
-              }
-            : undefined,
-          sourceStaffPersonIds.size > 0
-            ? {
-                staff: {
-                  some: { personId: { in: Array.from(sourceStaffPersonIds) as any } },
-                },
-              }
-            : undefined,
-        ].filter(Boolean) as any,
-      },
-      take: 120,
-      include: {
-        genres: { select: { id: true, name: true } },
-        tags: { select: { id: true, name: true } },
-        staff: { include: { person: { select: { id: true, namePrimary: true } } } },
-        characters: { select: { characterId: true } },
-      },
-    })
+    let candidatesQ = prisma.orm.public.Book.where((b) => b.id.neq(id))
+    const conds: any[] = []
+    if (sourceGenreIds.size > 0) conds.push((b: any) => b.genres.some((g: any) => g.genreId.in(Array.from(sourceGenreIds))))
+    if (sourceTagIds.size > 0) conds.push((b: any) => b.tags.some((t: any) => t.tagId.in(Array.from(sourceTagIds))))
+    if (sourceStaffPersonIds.size > 0) conds.push((b: any) => b.staff.some((s: any) => s.personId.in(Array.from(sourceStaffPersonIds) as any)))
+    if (conds.length > 0) {
+      candidatesQ = candidatesQ.where((b) => or(...conds.map((c) => c(b))))
+    }
+
+    const rawCandidates = await candidatesQ
+      .limit(120)
+      .include('genres', (g) => g.include('genre', (ge) => ge.select('id', 'name')))
+      .include('tags', (t) => t.include('tag', (te) => te.select('id', 'name')))
+      .include('staff', (s) => s.include('person', (p) => p.select('id', 'namePrimary')))
+      .include('characters', (c) => c.select('characterId'))
+      .all()
+
+    const candidates = rawCandidates.map((candidate: any) => ({
+      ...candidate,
+      genres: (candidate.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+      tags: (candidate.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
+    }))
 
     const scored = candidates.map((candidate) => {
       let similarityScore = 0
@@ -1980,27 +2009,69 @@ export class BorealisMediaServ {
     if (sortBy === 'releaseDate') orderBy = { releaseDateYear: sortOrder }
     if (sortBy === 'trending') orderBy = { favorites: sortOrder }
 
+    let q = prisma.orm.public.Game
+    if (search) {
+      q = q.where((m) =>
+        or(
+          m.titlePrimary.ilike(`%${search}%`),
+          m.titleSecondary.ilike(`%${search}%`)
+        )
+      )
+    }
+    if (genres.length > 0) {
+      q = q.where((m) =>
+        m.genres.some((g) => g.genre.some((ge) => ge.name.in(genres)))
+      )
+    }
+    if (statuses.length > 0) {
+      q = q.where((m) => m.status.in(statuses as any))
+    }
+    if (years.length > 0) {
+      q = q.where((m) => m.releaseDateYear.in(years))
+    }
+
+    let itemsQ = q
+    if (sortBy === 'score') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.averageScore.asc() : x.averageScore.desc()
+      )
+    } else if (sortBy === 'title') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.titlePrimary.asc() : x.titlePrimary.desc()
+      )
+    } else if (sortBy === 'releaseDate') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.releaseDateYear.asc() : x.releaseDateYear.desc()
+      )
+    } else if (sortBy === 'trending') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.popularity.asc() : x.popularity.desc()
+      )
+    }
+
     const [total, items] = await Promise.all([
-      prisma.game.count({ where }),
-      prisma.game.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        select: {
-          id: true,
-          titlePrimary: true,
-          titleSecondary: true,
-          titleNative: true,
-          coverImage: true,
-          bannerImage: true,
-          backgroundImage: true,
-          status: true,
-          releaseDateYear: true,
-          averageScore: true,
-          genres: { select: { id: true, name: true } },
-        },
-      }),
+      countOf(q),
+      itemsQ
+        .offset(skip)
+        .limit(limit)
+        .select(
+          'id',
+          'titlePrimary',
+          'titleSecondary',
+          'coverImage',
+          'bannerImage',
+          'releaseDateYear',
+          'averageScore',
+          'status'
+        )
+        .include('genres', (g) =>
+          g.include('genre', (ge) => ge.select('id', 'name'))
+        )
+        .all(),
     ])
 
     return {
@@ -2010,15 +2081,15 @@ export class BorealisMediaServ {
         mediaType: 'game',
         titlePrimary: x.titlePrimary,
         titleSecondary: x.titleSecondary,
-        titleNative: x.titleNative,
+        titleNative: null,
         coverImage: x.coverImage,
-        bannerImage: x.bannerImage || x.backgroundImage,
+        bannerImage: x.bannerImage,
         format: 'GAME',
         status: String(x.status),
         year: x.releaseDateYear,
         unitsCount: null,
         averageScore: x.averageScore,
-        genres: x.genres,
+        genres: (x.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
       })),
       pagination: {
         page,
@@ -2032,20 +2103,14 @@ export class BorealisMediaServ {
 
   public static async getGameFilters() {
     const [allGames, allGenres] = await Promise.all([
-      prisma.game.findMany({
-        select: {
-          status: true,
-          releaseDateYear: true,
-        },
-      }),
-      prisma.genre.findMany({
-        select: {
-          id: true,
-          name: true,
-          _count: { select: { games: true } },
-        },
-        orderBy: { name: 'asc' },
-      }),
+      prisma.orm.public.Game.select(
+        'status',
+        'releaseDateYear'
+      ).all(),
+      prisma.orm.public.Genre.select('id', 'name')
+        .include('games', (g) => g.count())
+        .orderBy((g) => g.name.asc())
+        .all(),
     ])
 
     const statusCounts: Record<string, number> = {}
@@ -2060,7 +2125,7 @@ export class BorealisMediaServ {
       success: true,
       statuses: Object.entries(statusCounts).map(([value, count]) => ({ value, count })),
       formats: [{ value: 'GAME', count: allGames.length }],
-      genres: allGenres.map((g) => ({ value: g.name, count: g._count?.games ?? 0 })),
+      genres: allGenres.map((g: any) => ({ value: g.name, count: g.games ?? 0 })),
       years: Object.entries(yearCounts)
         .map(([value, count]) => ({ value: Number(value), count }))
         .sort((a, b) => b.value - a.value),
@@ -2068,18 +2133,11 @@ export class BorealisMediaServ {
   }
 
   public static async getGameById(id: number) {
-    const game = await prisma.game.findUnique({
-      where: { id },
-      include: {
-        genres: true,
-        tags: true,
-        studios: {
-          include: {
-            studio: true,
-          },
-        },
-      },
-    })
+    const game = await prisma.orm.public.Game.where({ id })
+      .include('genres', (g) => g.include('genre'))
+      .include('tags', (t) => t.include('tag'))
+      .include('studios', (st) => st.include('studio'))
+      .first()
 
     if (!game) {
       throw new NotFound(`Game with ID ${id} not found`)
@@ -2091,25 +2149,21 @@ export class BorealisMediaServ {
       success: true,
       media: {
         ...game,
+        genres: (game.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+        tags: (game.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
         relations,
       },
     }
   }
 
   public static async refreshGame(id: number) {
-    const game = await prisma.game.findUnique({
-      where: { id },
-      select: { id: true, titlePrimary: true },
-    })
+    const game = await prisma.orm.public.Game.where({ id }).select('id', 'titlePrimary').first()
 
     if (!game) {
       throw new NotFound(`Game with ID ${id} not found`)
     }
 
-    await prisma.game.update({
-      where: { id },
-      data: { updatedAt: new Date() },
-    })
+    await prisma.orm.public.Game.where({ id }).update({ updatedAt: new Date() })
 
     await MediaQueueManager.enqueueMediaUpdate('GAME', id, {
       externalId: (game as any).igdbId,
@@ -2128,67 +2182,46 @@ export class BorealisMediaServ {
   }
 
   public static async getSimilarGames(id: number, limit: number = 10) {
-    const source = await prisma.game.findUnique({
-      where: { id },
-      include: {
-        genres: { select: { id: true, name: true } },
-        tags: { select: { id: true, name: true } },
-        studios: { include: { studio: { select: { id: true, name: true } } } },
-      },
-    })
+    const source = await prisma.orm.public.Game.where({ id })
+      .include('genres', (g) => g.include('genre', (ge) => ge.select('id', 'name')))
+      .include('tags', (t) => t.include('tag', (te) => te.select('id', 'name')))
+      .include('studios', (st) => st.include('studio', (s) => s.select('id', 'name')))
+      .first()
 
     if (!source) {
       throw new NotFound(`Game with ID ${id} not found`)
     }
 
-    const sourceGenreIds = new Set(source.genres.map((g) => g.id))
-    const sourceTagIds = new Set(source.tags.map((t) => t.id))
+    const sourceGenres = (source.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!)
+    const sourceTags = (source.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!)
+    const sourceGenreIds = new Set(sourceGenres.map((g: any) => g.id))
+    const sourceTagIds = new Set(sourceTags.map((t: any) => t.id))
     const sourceStudioIds = new Set(source.studios.map((s) => s.studioId))
-    const sourceDevelopers = new Set((source.developers || []).map((d) => d.toLowerCase().trim()))
-    const sourcePlatforms = new Set((source.platforms || []).map((p) => p.toLowerCase().trim()))
+    const sourceDevelopers = new Set(((source as any).developers || []).map((d: string) => d.toLowerCase().trim()))
+    const sourcePlatforms = new Set(((source as any).platforms || []).map((p: string) => p.toLowerCase().trim()))
     const sourceBaseTitle = cleanBaseTitle(source.titlePrimary)
 
-    const candidates = await prisma.game.findMany({
-      where: {
-        id: { not: id },
-        OR: [
-          sourceGenreIds.size > 0
-            ? {
-                genres: {
-                  some: { id: { in: Array.from(sourceGenreIds) } },
-                },
-              }
-            : undefined,
-          sourceTagIds.size > 0
-            ? {
-                tags: {
-                  some: { id: { in: Array.from(sourceTagIds) } },
-                },
-              }
-            : undefined,
-          sourceStudioIds.size > 0
-            ? {
-                studios: {
-                  some: { studioId: { in: Array.from(sourceStudioIds) } },
-                },
-              }
-            : undefined,
-          sourceDevelopers.size > 0
-            ? {
-                developers: {
-                  hasSome: Array.from(sourceDevelopers),
-                },
-              }
-            : undefined,
-        ].filter(Boolean) as any,
-      },
-      take: 120,
-      include: {
-        genres: { select: { id: true, name: true } },
-        tags: { select: { id: true, name: true } },
-        studios: { include: { studio: { select: { id: true, name: true } } } },
-      },
-    })
+    let candidatesQ = prisma.orm.public.Game.where((g) => g.id.neq(id))
+    const conds: any[] = []
+    if (sourceGenreIds.size > 0) conds.push((g: any) => g.genres.some((ge: any) => ge.genreId.in(Array.from(sourceGenreIds))))
+    if (sourceTagIds.size > 0) conds.push((g: any) => g.tags.some((t: any) => t.tagId.in(Array.from(sourceTagIds))))
+    if (sourceStudioIds.size > 0) conds.push((g: any) => g.studios.some((s: any) => s.studioId.in(Array.from(sourceStudioIds))))
+    if (conds.length > 0) {
+      candidatesQ = candidatesQ.where((g) => or(...conds.map((c) => c(g))))
+    }
+
+    const rawCandidates = await candidatesQ
+      .limit(120)
+      .include('genres', (g) => g.include('genre', (ge) => ge.select('id', 'name')))
+      .include('tags', (t) => t.include('tag', (te) => te.select('id', 'name')))
+      .include('studios', (st) => st.include('studio', (s) => s.select('id', 'name')))
+      .all()
+
+    const candidates = rawCandidates.map((candidate: any) => ({
+      ...candidate,
+      genres: (candidate.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+      tags: (candidate.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
+    }))
 
     const scored = candidates.map((candidate) => {
       let similarityScore = 0
@@ -2332,26 +2365,75 @@ export class BorealisMediaServ {
     if (sortBy === 'releaseDate') orderBy = { releaseDateYear: sortOrder }
     if (sortBy === 'trending') orderBy = { favorites: sortOrder }
 
+    let q = prisma.orm.public.Music
+    if (search) {
+      q = q.where((m) =>
+        or(
+          m.titlePrimary.ilike(`%${search}%`),
+          m.titleSecondary.ilike(`%${search}%`),
+          m.artistName.ilike(`%${search}%`)
+        )
+      )
+    }
+    if (genres.length > 0) {
+      q = q.where((m) =>
+        m.genres.some((g) => g.genre.some((ge) => ge.name.in(genres)))
+      )
+    }
+    if (formats.length > 0) {
+      q = q.where((m) => m.type.in(formats as any))
+    }
+    if (statuses.length > 0) {
+      q = q.where((m) => m.status.in(statuses as any))
+    }
+    if (years.length > 0) {
+      q = q.where((m) => m.releaseDateYear.in(years))
+    }
+
+    let itemsQ = q
+    if (sortBy === 'score') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else if (sortBy === 'title') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.titlePrimary.asc() : x.titlePrimary.desc()
+      )
+    } else if (sortBy === 'releaseDate') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.releaseDateYear.asc() : x.releaseDateYear.desc()
+      )
+    } else if (sortBy === 'trending') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.popularity.asc() : x.popularity.desc()
+      )
+    }
+
     const [total, items] = await Promise.all([
-      prisma.music.count({ where }),
-      prisma.music.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        select: {
-          id: true,
-          titlePrimary: true,
-          titleSecondary: true,
-          titleNative: true,
-          coverImage: true,
-          type: true,
-          status: true,
-          releaseDateYear: true,
-          duration: true,
-          genres: { select: { id: true, name: true } },
-        },
-      }),
+      countOf(q),
+      itemsQ
+        .offset(skip)
+        .limit(limit)
+        .select(
+          'id',
+          'titlePrimary',
+          'titleSecondary',
+          'titleNative',
+          'artistName',
+          'coverImage',
+          'type',
+          'duration',
+          'releaseDateYear',
+          'status'
+        )
+        .include('genres', (g) =>
+          g.include('genre', (ge) => ge.select('id', 'name'))
+        )
+        .all(),
     ])
 
     return {
@@ -2369,7 +2451,7 @@ export class BorealisMediaServ {
         year: x.releaseDateYear,
         unitsCount: x.duration,
         averageScore: null,
-        genres: x.genres,
+        genres: (x.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
       })),
       pagination: {
         page,
@@ -2383,21 +2465,15 @@ export class BorealisMediaServ {
 
   public static async getMusicFilters() {
     const [allMusic, allGenres] = await Promise.all([
-      prisma.music.findMany({
-        select: {
-          status: true,
-          type: true,
-          releaseDateYear: true,
-        },
-      }),
-      prisma.genre.findMany({
-        select: {
-          id: true,
-          name: true,
-          _count: { select: { music: true } },
-        },
-        orderBy: { name: 'asc' },
-      }),
+      prisma.orm.public.Music.select(
+        'status',
+        'type',
+        'releaseDateYear'
+      ).all(),
+      prisma.orm.public.Genre.select('id', 'name')
+        .include('music', (m) => m.count())
+        .orderBy((g) => g.name.asc())
+        .all(),
     ])
 
     const statusCounts: Record<string, number> = {}
@@ -2414,7 +2490,7 @@ export class BorealisMediaServ {
       success: true,
       statuses: Object.entries(statusCounts).map(([value, count]) => ({ value, count })),
       formats: Object.entries(formatCounts).map(([value, count]) => ({ value, count })),
-      genres: allGenres.map((g) => ({ value: g.name, count: g._count?.music ?? 0 })),
+      genres: allGenres.map((g: any) => ({ value: g.name, count: g.music ?? 0 })),
       years: Object.entries(yearCounts)
         .map(([value, count]) => ({ value: Number(value), count }))
         .sort((a, b) => b.value - a.value),
@@ -2422,36 +2498,19 @@ export class BorealisMediaServ {
   }
 
   public static async getMusicById(id: number) {
-    const music = await prisma.music.findUnique({
-      where: { id },
-      include: {
-        genres: true,
-        tags: true,
-        artist: true,
-        album: {
-          select: {
-            id: true,
-            titlePrimary: true,
-            coverImage: true,
-          },
-        },
-        tracks: {
-          select: {
-            id: true,
-            titlePrimary: true,
-            duration: true,
-            trackPosition: true,
-          },
-          orderBy: { trackPosition: 'asc' },
-          take: 50,
-        },
-        staff: {
-          include: {
-            person: true,
-          },
-        },
-      },
-    })
+    const music = await prisma.orm.public.Music.where({ id })
+      .include('genres', (g) => g.include('genre'))
+      .include('tags', (t) => t.include('tag'))
+      .include('artist')
+      .include('album', (al) => al.select('id', 'titlePrimary', 'coverImage'))
+      .include('tracks', (tr) =>
+        tr
+          .select('id', 'titlePrimary', 'duration', 'trackPosition')
+          .orderBy((tp) => tp.trackPosition.asc())
+          .limit(50)
+      )
+      .include('staff', (s) => s.include('person'))
+      .first()
 
     if (!music) {
       throw new NotFound(`Music with ID ${id} not found`)
@@ -2463,25 +2522,21 @@ export class BorealisMediaServ {
       success: true,
       media: {
         ...music,
+        genres: (music.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+        tags: (music.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
         relations,
       },
     }
   }
 
   public static async refreshMusic(id: number) {
-    const music = await prisma.music.findUnique({
-      where: { id },
-      select: { id: true, titlePrimary: true },
-    })
+    const music = await prisma.orm.public.Music.where({ id }).select('id', 'titlePrimary').first()
 
     if (!music) {
       throw new NotFound(`Music with ID ${id} not found`)
     }
 
-    await prisma.music.update({
-      where: { id },
-      data: { updatedAt: new Date() },
-    })
+    await prisma.orm.public.Music.where({ id }).update({ updatedAt: new Date() })
 
     await MediaQueueManager.enqueueMediaUpdate('MUSIC', id, {
       priority: 1,
@@ -2499,56 +2554,49 @@ export class BorealisMediaServ {
   }
 
   public static async getSimilarMusic(id: number, limit: number = 10) {
-    const source = await prisma.music.findUnique({
-      where: { id },
-      include: {
-        genres: { select: { id: true, name: true } },
-        tags: { select: { id: true, name: true } },
-        artist: { select: { id: true, namePrimary: true } },
-      },
-    })
+    const source = await prisma.orm.public.Music.where({ id })
+      .include('genres', (g) => g.include('genre', (ge) => ge.select('id', 'name')))
+      .include('tags', (t) => t.include('tag', (te) => te.select('id', 'name')))
+      .include('artist', (a) => a.select('id', 'namePrimary'))
+      .first()
 
     if (!source) {
       throw new NotFound(`Music with ID ${id} not found`)
     }
 
-    const sourceGenreIds = new Set(source.genres.map((g) => g.id))
-    const sourceTagIds = new Set(source.tags.map((t) => t.id))
+    const sourceGenres = (source.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!)
+    const sourceTags = (source.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!)
+    const sourceGenreIds = new Set(sourceGenres.map((g: any) => g.id))
+    const sourceTagIds = new Set(sourceTags.map((t: any) => t.id))
     const sourceArtistId = source.artistId
     const sourceArtistName = source.artistName?.toLowerCase().trim()
     const sourceAlbumId = source.albumId
     const sourceBaseTitle = cleanBaseTitle(source.titlePrimary)
 
-    const candidates = await prisma.music.findMany({
-      where: {
-        id: { not: id },
-        OR: [
-          sourceArtistId ? { artistId: sourceArtistId } : undefined,
-          sourceArtistName ? { artistName: { equals: source.artistName, mode: 'insensitive' } } : undefined,
-          sourceAlbumId ? { albumId: sourceAlbumId } : undefined,
-          sourceGenreIds.size > 0
-            ? {
-                genres: {
-                  some: { id: { in: Array.from(sourceGenreIds) } },
-                },
-              }
-            : undefined,
-          sourceTagIds.size > 0
-            ? {
-                tags: {
-                  some: { id: { in: Array.from(sourceTagIds) } },
-                },
-              }
-            : undefined,
-        ].filter(Boolean) as any,
-      },
-      take: 120,
-      include: {
-        genres: { select: { id: true, name: true } },
-        tags: { select: { id: true, name: true } },
-        artist: { select: { id: true, namePrimary: true } },
-      },
-    })
+    let candidatesQ = prisma.orm.public.Music.where((m) => m.id.neq(id))
+    const conds: any[] = []
+    if (sourceArtistId) conds.push((m: any) => m.artistId.eq(sourceArtistId))
+    if (sourceArtistName && source.artistName) conds.push((m: any) => m.artistName.ilike(source.artistName!))
+    if (sourceAlbumId) conds.push((m: any) => m.albumId.eq(sourceAlbumId))
+    if (sourceGenreIds.size > 0) conds.push((m: any) => m.genres.some((g: any) => g.genreId.in(Array.from(sourceGenreIds))))
+    if (sourceTagIds.size > 0) conds.push((m: any) => m.tags.some((t: any) => t.tagId.in(Array.from(sourceTagIds))))
+
+    if (conds.length > 0) {
+      candidatesQ = candidatesQ.where((m) => or(...conds.map((c) => c(m))))
+    }
+
+    const rawCandidates = await candidatesQ
+      .limit(120)
+      .include('genres', (g) => g.include('genre', (ge) => ge.select('id', 'name')))
+      .include('tags', (t) => t.include('tag', (te) => te.select('id', 'name')))
+      .include('artist', (a) => a.select('id', 'namePrimary'))
+      .all()
+
+    const candidates = rawCandidates.map((candidate: any) => ({
+      ...candidate,
+      genres: (candidate.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+      tags: (candidate.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
+    }))
 
     const scored = candidates.map((candidate) => {
       let similarityScore = 0

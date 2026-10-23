@@ -13,7 +13,7 @@ import { prisma } from '@IRIS/database'
 import { IRISFlags } from '@IRIS/permissions'
 
 // -----------------------------------------------------------------------------
-// In-Memory Database Mock for prisma.user
+// In-Memory Database Mock for (prisma as any).user
 // -----------------------------------------------------------------------------
 
 interface MockUser {
@@ -36,7 +36,7 @@ let mockUsers: MockUser[] = []
 function setupPrismaMock() {
   mockUsers = []
 
-  ;(prisma.user.findFirst as any) = async ({ where, include }: any) => {
+  ;((prisma as any).user.findFirst as any) = async ({ where, include }: any) => {
     return (
       mockUsers.find((u) => {
         if (where.OR) {
@@ -51,7 +51,7 @@ function setupPrismaMock() {
     )
   }
 
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return (
       mockUsers.find((u) => {
         if (where.id && u.id === where.id) return true
@@ -61,7 +61,7 @@ function setupPrismaMock() {
     )
   }
 
-  ;(prisma.user.findMany as any) = async ({ where, select }: any) => {
+  ;((prisma as any).user.findMany as any) = async ({ where, select }: any) => {
     return mockUsers
       .filter((u) => {
         if (where.OR) {
@@ -85,11 +85,11 @@ function setupPrismaMock() {
       })
   }
 
-  ;(prisma.user.count as any) = async () => {
+  ;((prisma as any).user.count as any) = async () => {
     return mockUsers.length
   }
 
-  ;(prisma.user.create as any) = async ({ data }: any) => {
+  ;((prisma as any).user.create as any) = async ({ data }: any) => {
     const newUser: MockUser = {
       id: `usr_${Math.random().toString(36).slice(2, 10)}`,
       username: data.username,
@@ -108,7 +108,7 @@ function setupPrismaMock() {
     return newUser
   }
 
-  ;(prisma.user.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).user.update as any) = async ({ where, data }: any) => {
     const user = mockUsers.find((u) => u.id === where.id)
     if (!user) throw new Error('User not found in mock')
     Object.assign(user, data)

@@ -1,5 +1,7 @@
 import {
   prisma,
+  and,
+  toDate,
   type AnimeFormat,
   type AnimeListStatus,
   type AnimeStatus,
@@ -242,13 +244,13 @@ export class ServarrServ {
   ): Promise<ServarrConnectionContext> {
     const provider = app.toUpperCase() as 'RADARR' | 'SONARR'
 
-    const connection = await prisma.connection.findFirst({
-      where: {
-        userId,
-        provider,
-        status: 'CONNECTED',
-      },
-    })
+    const connection = await prisma.orm.public.Connection.where((c) =>
+      and(
+        c.userId.eq(userId),
+        c.provider.eq(provider),
+        c.status.eq('CONNECTED')
+      )
+    ).first()
 
     if (!connection) {
       return {
@@ -878,12 +880,11 @@ export class ServarrServ {
 
     // Fallback to local database lists
     if (app === 'radarr') {
-      const localList = await prisma.movieList.findMany({
-        where: { userId },
-        include: { movie: true },
-        take: 100,
-        orderBy: { createdAt: 'desc' },
-      })
+      const localList = await prisma.orm.public.MovieList.where((m) => m.userId.eq(userId))
+        .include('movie')
+        .orderBy((m) => m.createdAt.desc())
+        .limit(100)
+        .all()
 
       const fallbackItems = localList.map((entry: any) => ({
         id: entry.movie.id,
@@ -897,7 +898,7 @@ export class ServarrServ {
         qualityProfileId: 1,
         sizeOnDisk: null,
         status: entry.status === 'COMPLETED' ? 'Downloaded' : 'Wanted',
-        added: entry.createdAt.toISOString(),
+        added: toDate(entry.createdAt).toISOString(),
         posterUrl: entry.movie.coverImage || null,
         fanartUrl: entry.movie.bannerImage || null,
         tmdbId: entry.movie.id,
@@ -916,12 +917,11 @@ export class ServarrServ {
         totalCount: fallbackItems.length,
       }
     } else {
-      const localList = await prisma.tvList.findMany({
-        where: { userId },
-        include: { tv: true },
-        take: 100,
-        orderBy: { createdAt: 'desc' },
-      })
+      const localList = await prisma.orm.public.TvList.where((t) => t.userId.eq(userId))
+        .include('tv')
+        .orderBy((t) => t.createdAt.desc())
+        .limit(100)
+        .all()
 
       const fallbackItems = localList.map((entry: any) => ({
         id: entry.tv.id,
@@ -935,7 +935,7 @@ export class ServarrServ {
         qualityProfileId: 1,
         sizeOnDisk: null,
         status: entry.status === 'COMPLETED' ? 'Downloaded' : 'Wanted',
-        added: entry.createdAt.toISOString(),
+        added: toDate(entry.createdAt).toISOString(),
         posterUrl: entry.tv.coverImage || null,
         fanartUrl: entry.tv.bannerImage || null,
         tvdbId: entry.tv.tvDBId || null,
@@ -1745,10 +1745,7 @@ export class ServarrServ {
   // 14. Radarr Specific (Movies & Feeds)
   // ===========================================================================
   public static async getRadarrMoviesFeed(userId: string) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { settings: true },
-    })
+    const user = await prisma.orm.public.User.where((u) => u.id.eq(userId)).first()
 
     const config = parseRadarrMovieConfig(user?.settings)
 
@@ -1756,18 +1753,18 @@ export class ServarrServ {
       return []
     }
 
-    const movieEntries = await prisma.movieList.findMany({
-      where: {
-        userId,
-        status: { in: config.listStatuses },
-        movie: {
-          status: { in: config.movieStatuses },
-        },
-      },
-      include: {
-        movie: true,
-      },
-    })
+    const movieEntries = await prisma.orm.public.MovieList.where((m) =>
+      and(
+        m.userId.eq(userId),
+        m.status.in(config.listStatuses)
+      )
+    )
+      .include('movie')
+      .all()
+
+    const filteredEntries = movieEntries.filter((e) =>
+      config.movieStatuses.includes(e.movie.status)
+    )
 
     const results: Array<{
       title: string
@@ -1778,7 +1775,7 @@ export class ServarrServ {
       hasFile: boolean
     }> = []
 
-    for (const entry of movieEntries) {
+    for (const entry of filteredEntries) {
       const tmdbId = resolveMovieTmdbId(entry.movie)
       if (!tmdbId) continue
 
@@ -1796,10 +1793,7 @@ export class ServarrServ {
   }
 
   public static async getRadarrAnimeMoviesFeed(userId: string) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { settings: true },
-    })
+    const user = await prisma.orm.public.User.where((u) => u.id.eq(userId)).first()
 
     const config = parseRadarrAnimeConfig(user?.settings)
 
@@ -1807,19 +1801,20 @@ export class ServarrServ {
       return []
     }
 
-    const animeEntries = await prisma.animeList.findMany({
-      where: {
-        userId,
-        status: { in: config.listStatuses },
-        anime: {
-          format: { in: config.animeMovieFormats },
-          status: { in: config.animeStatuses },
-        },
-      },
-      include: {
-        anime: true,
-      },
-    })
+    const animeEntries = await prisma.orm.public.AnimeList.where((a) =>
+      and(
+        a.userId.eq(userId),
+        a.status.in(config.listStatuses)
+      )
+    )
+      .include('anime')
+      .all()
+
+    const filteredEntries = animeEntries.filter(
+      (e) =>
+        config.animeMovieFormats.includes(e.anime.format) &&
+        config.animeStatuses.includes(e.anime.status)
+    )
 
     const results: Array<{
       title: string
@@ -1830,7 +1825,7 @@ export class ServarrServ {
       hasFile: boolean
     }> = []
 
-    for (const entry of animeEntries) {
+    for (const entry of filteredEntries) {
       const tmdbId = resolveAnimeTmdbId(entry.anime)
       const imdbId = resolveAnimeImdbId(entry.anime)
 
@@ -1975,10 +1970,7 @@ export class ServarrServ {
   // 15. Sonarr Specific (Series, Episodes & Feeds)
   // ===========================================================================
   public static async getSonarrAnimeFeed(userId: string) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { settings: true },
-    })
+    const user = await prisma.orm.public.User.where((u) => u.id.eq(userId)).first()
 
     const config = parseSonarrAnimeConfig(user?.settings)
 
@@ -1986,19 +1978,20 @@ export class ServarrServ {
       return []
     }
 
-    const animeEntries = await prisma.animeList.findMany({
-      where: {
-        userId,
-        status: { in: config.listStatuses },
-        anime: {
-          format: { in: config.animeFormats },
-          status: { in: config.animeStatuses },
-        },
-      },
-      include: {
-        anime: true,
-      },
-    })
+    const animeEntries = await prisma.orm.public.AnimeList.where((a) =>
+      and(
+        a.userId.eq(userId),
+        a.status.in(config.listStatuses)
+      )
+    )
+      .include('anime')
+      .all()
+
+    const filteredEntries = animeEntries.filter(
+      (e) =>
+        config.animeFormats.includes(e.anime.format) &&
+        config.animeStatuses.includes(e.anime.status)
+    )
 
     const results: Array<{
       title: string
@@ -2010,7 +2003,7 @@ export class ServarrServ {
       seasonFolder: boolean
     }> = []
 
-    for (const entry of animeEntries) {
+    for (const entry of filteredEntries) {
       const tvdbId = resolveAnimeTvdbId(entry.anime)
       if (!tvdbId) continue
 
@@ -2031,10 +2024,7 @@ export class ServarrServ {
   }
 
   public static async getSonarrTvFeed(userId: string) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { settings: true },
-    })
+    const user = await prisma.orm.public.User.where((u) => u.id.eq(userId)).first()
 
     const config = parseSonarrTvConfig(user?.settings)
 
@@ -2042,18 +2032,18 @@ export class ServarrServ {
       return []
     }
 
-    const tvEntries = await prisma.tvList.findMany({
-      where: {
-        userId,
-        status: { in: config.listStatuses },
-        tv: {
-          status: { in: config.tvStatuses },
-        },
-      },
-      include: {
-        tv: true,
-      },
-    })
+    const tvEntries = await prisma.orm.public.TvList.where((t) =>
+      and(
+        t.userId.eq(userId),
+        t.status.in(config.listStatuses)
+      )
+    )
+      .include('tv')
+      .all()
+
+    const filteredEntries = tvEntries.filter((e) =>
+      config.tvStatuses.includes(e.tv.status)
+    )
 
     const results: Array<{
       title: string
@@ -2065,7 +2055,7 @@ export class ServarrServ {
       seasonFolder: boolean
     }> = []
 
-    for (const entry of tvEntries) {
+    for (const entry of filteredEntries) {
       const tvdbId = resolveTvTvdbId(entry.tv)
       if (!tvdbId) continue
 

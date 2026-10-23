@@ -1,4 +1,4 @@
-import { prisma } from '@IRIS/database'
+import { prisma, and, not, countOf, toDate } from '@IRIS/database'
 import { IRISFlags } from '@IRIS/permissions'
 import { BadRequest, Forbidden, NotFound, Conflict } from '../../lib/errors'
 import { uploadPublicAsset } from '../../utils/s3'
@@ -20,9 +20,9 @@ export class BorealisOtherServ {
    */
   public static async createItem(userId: string, body: CreateOtherBody, isAdmin: boolean) {
     if (!isAdmin) {
-      const existingCount = await prisma.other.count({
-        where: { creatorId: userId },
-      })
+      const existingCount = await countOf(
+        prisma.orm.public.Other.where({ creatorId: userId })
+      )
       if (existingCount >= 500) {
         throw new Forbidden(
           'You have reached the maximum limit of 500 custom items. Administrator permission is required to create more.'
@@ -47,31 +47,26 @@ export class BorealisOtherServ {
     const statuses =
       body.statuses && body.statuses.length > 0 ? body.statuses : DEFAULT_STATUSES
 
-    const item = await prisma.other.create({
-      data: {
-        creatorId: userId,
-        titlePrimary: body.titlePrimary.trim(),
-        titleSecondary: body.titleSecondary?.trim() || null,
-        description: body.description?.trim() || null,
-        coverImage: body.coverImage || null,
-        bannerImage: body.bannerImage || null,
-        format,
-        startDate,
-        endDate,
-        isPublished: Boolean(body.isPublished),
-        progressFields: body.progressFields as any,
-        incrementFieldKey: body.incrementFieldKey,
-        statuses: statuses as any,
-      },
-      include: {
-        creator: {
-          select: {
-            id: true,
-            username: true,
-          },
-        },
-      },
+    const created = await prisma.orm.public.Other.create({
+      creatorId: userId,
+      titlePrimary: body.titlePrimary.trim(),
+      titleSecondary: body.titleSecondary?.trim() || null,
+      description: body.description?.trim() || null,
+      coverImage: body.coverImage || null,
+      bannerImage: body.bannerImage || null,
+      format,
+      startDate,
+      endDate,
+      isPublished: Boolean(body.isPublished),
+      progressFields: body.progressFields as any,
+      incrementFieldKey: body.incrementFieldKey,
+      statuses: statuses as any,
     })
+
+    const item = await prisma.orm.public.Other
+      .where({ id: created.id })
+      .include('creator', (c) => c.select('id', 'username'))
+      .first()
 
     return {
       success: true,
@@ -83,17 +78,10 @@ export class BorealisOtherServ {
    * Get single custom item by ID.
    */
   public static async getItem(otherId: number, currentUserId?: string, isAdmin = false) {
-    const item = await prisma.other.findUnique({
-      where: { id: otherId },
-      include: {
-        creator: {
-          select: {
-            id: true,
-            username: true,
-          },
-        },
-      },
-    })
+    const item = await prisma.orm.public.Other
+      .where({ id: otherId })
+      .include('creator', (c) => c.select('id', 'username'))
+      .first()
 
     if (!item) {
       throw new NotFound(`Custom item with ID ${otherId} not found`)
@@ -121,9 +109,9 @@ export class BorealisOtherServ {
     body: UpdateOtherBody,
     isAdmin = false
   ) {
-    const existing = await prisma.other.findUnique({
-      where: { id: otherId },
-    })
+    const existing = await prisma.orm.public.Other
+      .where({ id: otherId })
+      .first()
 
     if (!existing) {
       throw new NotFound(`Custom item with ID ${otherId} not found`)
@@ -149,13 +137,10 @@ export class BorealisOtherServ {
     }
 
     // Check if other users track this item
-    const trackers = await prisma.otherList.findMany({
-      where: {
-        otherId,
-        userId: { not: userId },
-      },
-      select: { userId: true },
-    })
+    const trackers = await prisma.orm.public.OtherList
+      .where((ol) => and(ol.otherId.eq(otherId), ol.userId.neq(userId)))
+      .select('userId')
+      .all()
 
     let preUpdateSnapshot = existing.preUpdateSnapshot
     if (existing.isPublished && trackers.length > 0) {
@@ -166,12 +151,12 @@ export class BorealisOtherServ {
         coverImage: existing.coverImage,
         bannerImage: existing.bannerImage,
         format: existing.format,
-        startDate: existing.startDate ? existing.startDate.toISOString() : null,
-        endDate: existing.endDate ? existing.endDate.toISOString() : null,
+        startDate: existing.startDate ? toDate(existing.startDate).toISOString() : null,
+        endDate: existing.endDate ? toDate(existing.endDate).toISOString() : null,
         progressFields: existing.progressFields,
         incrementFieldKey: existing.incrementFieldKey,
         statuses: existing.statuses,
-        updatedAt: existing.updatedAt.toISOString(),
+        updatedAt: toDate(existing.updatedAt).toISOString(),
       } as any
 
       // Dispatch notifications to tracking users
@@ -204,9 +189,9 @@ export class BorealisOtherServ {
       }
     }
 
-    const updated = await prisma.other.update({
-      where: { id: otherId },
-      data: {
+    await prisma.orm.public.Other
+      .where({ id: otherId })
+      .update({
         titlePrimary: body.titlePrimary !== undefined ? body.titlePrimary.trim() : undefined,
         titleSecondary:
           body.titleSecondary !== undefined
@@ -245,16 +230,12 @@ export class BorealisOtherServ {
         incrementFieldKey: incrementFieldKey !== undefined ? incrementFieldKey : undefined,
         statuses: body.statuses !== undefined ? (body.statuses as any) : undefined,
         preUpdateSnapshot: preUpdateSnapshot as any,
-      },
-      include: {
-        creator: {
-          select: {
-            id: true,
-            username: true,
-          },
-        },
-      },
-    })
+      })
+
+    const updated = await prisma.orm.public.Other
+      .where({ id: otherId })
+      .include('creator', (c) => c.select('id', 'username'))
+      .first()
 
     return {
       success: true,
@@ -268,9 +249,9 @@ export class BorealisOtherServ {
    * deletion is strictly blocked (even for admins).
    */
   public static async deleteItem(userId: string, otherId: number, isAdmin = false) {
-    const existing = await prisma.other.findUnique({
-      where: { id: otherId },
-    })
+    const existing = await prisma.orm.public.Other
+      .where({ id: otherId })
+      .first()
 
     if (!existing) {
       throw new NotFound(`Custom item with ID ${otherId} not found`)
@@ -281,29 +262,38 @@ export class BorealisOtherServ {
     }
 
     // Check if other users have it tracked or favorited
-    const otherUserTrackingCount = await prisma.otherList.count({
-      where: {
-        otherId,
-        userId: { not: existing.creatorId },
-      },
-    })
+    const otherUserTrackingCount = await countOf(
+      prisma.orm.public.OtherList.where((ol) =>
+        and(ol.otherId.eq(otherId), ol.userId.neq(existing.creatorId))
+      )
+    )
 
-    const otherUserFavoriteCount = await prisma.favorite.count({
-      where: {
-        type: 'OTHER',
-        targetId: otherId,
-        userId: { not: existing.creatorId },
-      },
-    })
+    const otherUserFavoriteCount = await countOf(
+      prisma.orm.public.Favorite.where((f) =>
+        and(
+          f.type.eq('OTHER'),
+          f.targetId.eq(otherId),
+          f.userId.neq(existing.creatorId)
+        )
+      )
+    )
 
-    const otherUserCustomListCount = await prisma.customListEntry.count({
-      where: {
-        otherId,
-        customList: {
-          userId: { not: existing.creatorId },
-        },
-      },
-    })
+    const userCustomLists = await prisma.orm.public.CustomList
+      .where({ userId: existing.creatorId })
+      .select('id')
+      .all()
+    const userCustomListIds = userCustomLists.map((cl) => cl.id)
+
+    const customListEntryQuery =
+      userCustomListIds.length > 0
+        ? prisma.orm.public.CustomListEntry.where((cle) =>
+            and(cle.otherId.eq(otherId), not(cle.listId.in(userCustomListIds)))
+          )
+        : prisma.orm.public.CustomListEntry.where((cle) =>
+            cle.otherId.eq(otherId)
+          )
+
+    const otherUserCustomListCount = await countOf(customListEntryQuery)
 
     if (
       otherUserTrackingCount > 0 ||
@@ -316,12 +306,12 @@ export class BorealisOtherServ {
     }
 
     // Safe to delete: cascade creator's own list entry, favorites, and the item
-    await prisma.$transaction([
-      prisma.otherList.deleteMany({ where: { otherId } }),
-      prisma.favorite.deleteMany({ where: { type: 'OTHER', targetId: otherId } }),
-      prisma.customListEntry.deleteMany({ where: { otherId } }),
-      prisma.other.delete({ where: { id: otherId } }),
-    ])
+    await prisma.transaction(async (tx) => {
+      await tx.orm.public.OtherList.where({ otherId }).delete()
+      await tx.orm.public.Favorite.where({ type: 'OTHER', targetId: otherId }).delete()
+      await tx.orm.public.CustomListEntry.where({ otherId }).delete()
+      await tx.orm.public.Other.where({ id: otherId }).delete()
+    })
 
     return {
       success: true,
@@ -335,9 +325,9 @@ export class BorealisOtherServ {
    */
   public static async forkItem(userId: string, otherId: number, isAdmin = false) {
     if (!isAdmin) {
-      const existingCount = await prisma.other.count({
-        where: { creatorId: userId },
-      })
+      const existingCount = await countOf(
+        prisma.orm.public.Other.where({ creatorId: userId })
+      )
       if (existingCount >= 500) {
         throw new Forbidden(
           'You have reached the maximum limit of 500 custom items. Administrator permission is required to create more.'
@@ -345,9 +335,9 @@ export class BorealisOtherServ {
       }
     }
 
-    const item = await prisma.other.findUnique({
-      where: { id: otherId },
-    })
+    const item = await prisma.orm.public.Other
+      .where({ id: otherId })
+      .first()
 
     if (!item) {
       throw new NotFound(`Custom item with ID ${otherId} not found`)
@@ -355,52 +345,41 @@ export class BorealisOtherServ {
 
     const snapshot = (item.preUpdateSnapshot as any) || item
 
-    const cloned = await prisma.other.create({
-      data: {
-        creatorId: userId,
-        titlePrimary: `${snapshot.titlePrimary || item.titlePrimary} (Copy)`,
-        titleSecondary: snapshot.titleSecondary || item.titleSecondary || null,
-        description: snapshot.description || item.description || null,
-        coverImage: snapshot.coverImage || item.coverImage || null,
-        bannerImage: snapshot.bannerImage || item.bannerImage || null,
-        startDate: snapshot.startDate ? new Date(snapshot.startDate) : item.startDate,
-        endDate: snapshot.endDate ? new Date(snapshot.endDate) : item.endDate,
-        isPublished: false,
-        progressFields: (snapshot.progressFields || item.progressFields) as any,
-        incrementFieldKey: snapshot.incrementFieldKey || item.incrementFieldKey,
-        statuses: (snapshot.statuses || item.statuses) as any,
-      },
+    const cloned = await prisma.orm.public.Other.create({
+      creatorId: userId,
+      titlePrimary: `${snapshot.titlePrimary || item.titlePrimary} (Copy)`,
+      titleSecondary: snapshot.titleSecondary || item.titleSecondary || null,
+      description: snapshot.description || item.description || null,
+      coverImage: snapshot.coverImage || item.coverImage || null,
+      bannerImage: snapshot.bannerImage || item.bannerImage || null,
+      startDate: snapshot.startDate ? new Date(snapshot.startDate) : (item.startDate ? toDate(item.startDate) : null),
+      endDate: snapshot.endDate ? new Date(snapshot.endDate) : (item.endDate ? toDate(item.endDate) : null),
+      isPublished: false,
+      progressFields: (snapshot.progressFields || item.progressFields) as any,
+      incrementFieldKey: snapshot.incrementFieldKey || item.incrementFieldKey,
+      statuses: (snapshot.statuses || item.statuses) as any,
     })
 
     // Repoint user's list entry if present
     let updatedEntry: any = null
-    const existingListEntry = await prisma.otherList.findUnique({
-      where: {
-        userId_otherId: {
-          userId,
-          otherId,
-        },
-      },
-    })
+    const existingListEntry = await prisma.orm.public.OtherList
+      .where({ userId, otherId })
+      .first()
 
     if (existingListEntry) {
       // Delete old entry and create/update to new cloned item
-      await prisma.otherList.delete({
-        where: { id: existingListEntry.id },
-      })
+      await prisma.orm.public.OtherList.where({ id: existingListEntry.id }).delete()
 
-      updatedEntry = await prisma.otherList.create({
-        data: {
-          userId,
-          otherId: cloned.id,
-          status: existingListEntry.status,
-          progressValues: existingListEntry.progressValues as any,
-          score: existingListEntry.score,
-          notes: existingListEntry.notes,
-          private: existingListEntry.private,
-          startedAt: existingListEntry.startedAt,
-          completedAt: existingListEntry.completedAt,
-        },
+      updatedEntry = await prisma.orm.public.OtherList.create({
+        userId,
+        otherId: cloned.id,
+        status: existingListEntry.status,
+        progressValues: existingListEntry.progressValues as any,
+        score: existingListEntry.score,
+        notes: existingListEntry.notes,
+        private: existingListEntry.private,
+        startedAt: existingListEntry.startedAt ? toDate(existingListEntry.startedAt) : null,
+        completedAt: existingListEntry.completedAt ? toDate(existingListEntry.completedAt) : null,
       })
     }
 

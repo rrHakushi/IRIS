@@ -63,15 +63,15 @@ function setupPrismaMock() {
     },
   ]
 
-    ; (prisma.user.findUnique as any) = async ({ where }: any) => {
+    ; ((prisma as any).user.findUnique as any) = async ({ where }: any) => {
       return mockUsers.find((u) => u.id === where.id) ?? null
     }
 
-    ; (prisma.apiKey.findFirst as any) = async ({ where }: any) => {
+    ; ((prisma as any).apiKey.findFirst as any) = async ({ where }: any) => {
       return mockApiKeys.find((k) => k.hash === where.hash) ?? null
     }
 
-    ; (prisma.searchHistory.create as any) = async ({ data }: any) => {
+    ; ((prisma as any).searchHistory.create as any) = async ({ data }: any) => {
       const created: MockSearchHistory = {
         id: `sh-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
         userId: data.userId,
@@ -83,7 +83,7 @@ function setupPrismaMock() {
       return created
     }
 
-    ; (prisma.searchHistory.deleteMany as any) = async () => {
+    ; ((prisma as any).searchHistory.deleteMany as any) = async () => {
       return { count: 0 }
     }
 }

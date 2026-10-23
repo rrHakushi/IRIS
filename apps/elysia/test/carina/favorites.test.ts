@@ -51,12 +51,12 @@ function setupPrismaMock() {
   ]
 
   // Mock User findUnique
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return mockUsers.find((u) => u.id === where.id) ?? null
   }
 
   // Mock Favorite findUnique
-  ;(prisma.favorite.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).favorite.findUnique as any) = async ({ where }: any) => {
     if (where.userId_type_targetId) {
       const key = where.userId_type_targetId
       return (
@@ -75,7 +75,7 @@ function setupPrismaMock() {
   }
 
   // Mock Favorite upsert
-  ;(prisma.favorite.upsert as any) = async ({ where, create }: any) => {
+  ;((prisma as any).favorite.upsert as any) = async ({ where, create }: any) => {
     const key = where.userId_type_targetId
     const existing = mockFavorites.find(
       (f) =>
@@ -98,7 +98,7 @@ function setupPrismaMock() {
   }
 
   // Mock Favorite delete
-  ;(prisma.favorite.delete as any) = async ({ where }: any) => {
+  ;((prisma as any).favorite.delete as any) = async ({ where }: any) => {
     const idx = mockFavorites.findIndex((f) => f.id === where.id)
     if (idx === -1) throw new Error('Favorite not found')
     const [deleted] = mockFavorites.splice(idx, 1)

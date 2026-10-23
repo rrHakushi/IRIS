@@ -3,7 +3,7 @@ import { Elysia } from 'elysia'
 import { bearer } from '@elysia/bearer'
 import { jwt } from '@elysia/jwt'
 import { jwtVerify } from 'jose'
-import { prisma as defaultPrisma, type PrismaClient } from '@IRIS/database'
+import { prisma as defaultPrisma, type PrismaClient, toDate } from '@IRIS/database'
 import { Unauthorized } from '../lib/errors'
 import { hashApiKey } from '../utils/auth-crypto'
 
@@ -96,22 +96,15 @@ export async function resolveSessionFromRequest(
       const { payload } = await jwtVerify(rawToken, secretKey)
 
       if (payload && payload.id) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: payload.id as string },
-          select: {
-            id: true,
-            username: true,
-            email: true,
-            permissions: true,
-            passwordChangedAt: true,
-          },
-        })
+        const dbUser = await prisma.orm.public.User
+          .select('id', 'username', 'email', 'permissions', 'passwordChangedAt')
+          .first({ id: payload.id as string })
 
         if (dbUser) {
           let isRevoked = false
           if (dbUser.passwordChangedAt && payload.iat) {
             const pwdChangedSeconds = Math.floor(
-              dbUser.passwordChangedAt.getTime() / 1000
+              toDate(dbUser.passwordChangedAt).getTime() / 1000
             )
             if ((payload.iat as number) < pwdChangedSeconds) {
               isRevoked = true
@@ -124,7 +117,7 @@ export async function resolveSessionFromRequest(
                 id: dbUser.id,
                 username: dbUser.username,
                 email: dbUser.email,
-                permissions: dbUser.permissions,
+                permissions: [...dbUser.permissions],
               },
               token: rawToken,
             }
@@ -137,31 +130,25 @@ export async function resolveSessionFromRequest(
 
     // Try OAuth 2.0 Bearer Token in DB
     try {
-      const oauthToken = await prisma.oAuthAccessToken.findUnique({
-        where: { token: rawToken },
-        include: {
-          user: {
-            select: {
-              id: true,
-              username: true,
-              email: true,
-              permissions: true,
-            },
-          },
-        },
-      })
+      const oauthToken = await prisma.orm.public.OAuthAccessToken
+        .where({ token: rawToken })
+        .include('user', (u) =>
+          u.select('id', 'username', 'email', 'permissions')
+        )
+        .first()
 
       if (
         oauthToken &&
+        oauthToken.user &&
         !oauthToken.revokedAt &&
-        oauthToken.expiresAt.getTime() > Date.now()
+        toDate(oauthToken.expiresAt).getTime() > Date.now()
       ) {
         return {
           user: {
             id: oauthToken.user.id,
             username: oauthToken.user.username.trim(),
             email: oauthToken.user.email,
-            permissions: oauthToken.user.permissions,
+            permissions: [...oauthToken.user.permissions],
           },
           token: rawToken,
         }
@@ -179,29 +166,21 @@ export async function resolveSessionFromRequest(
   if (xApiKey && xApiKey.trim().length > 0) {
     try {
       const keyHash = hashApiKey(xApiKey.trim())
-      const keyRecord = await prisma.apiKey.findFirst({
-        where: { hash: keyHash },
-        include: {
-          user: {
-            select: {
-              id: true,
-              username: true,
-              email: true,
-              permissions: true,
-            },
-          },
-        },
-      })
+      const keyRecord = await prisma.orm.public.ApiKey
+        .where({ hash: keyHash })
+        .include('user', (u) =>
+          u.select('id', 'username', 'email', 'permissions')
+        )
+        .first()
 
       if (
         keyRecord &&
-        (!keyRecord.expiresAt || keyRecord.expiresAt.getTime() > Date.now())
+        keyRecord.user &&
+        (!keyRecord.expiresAt || toDate(keyRecord.expiresAt).getTime() > Date.now())
       ) {
-        prisma.apiKey
-          .update({
-            where: { id: keyRecord.id },
-            data: { lastUsedAt: new Date() },
-          })
+        prisma.orm.public.ApiKey
+          .where({ id: keyRecord.id })
+          .update({ lastUsedAt: new Date() })
           .catch(() => {})
 
         return {
@@ -209,7 +188,7 @@ export async function resolveSessionFromRequest(
             id: keyRecord.user.id,
             username: keyRecord.user.username.trim(),
             email: keyRecord.user.email,
-            permissions: keyRecord.user.permissions,
+            permissions: [...keyRecord.user.permissions],
           },
           token: null,
         }

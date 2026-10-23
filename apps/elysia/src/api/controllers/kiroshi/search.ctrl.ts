@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { Elysia } from 'elysia'
-import { prisma } from '@IRIS/database'
+import { prisma, toDate } from '@IRIS/database'
 import { session } from '../../../plugins/session'
 import { KiroshiSearchModel } from '../../models/kiroshi/search.model'
 import { KiroshiSearchServ } from '../../../services/kiroshi/search.serv'
@@ -41,12 +41,12 @@ export const kiroshiSearch = new Elysia({ prefix: '/kiroshi' })
 
         if (apiKey) {
           const hash = createHash('sha256').update(apiKey).digest('hex')
-          const keyRecord = await prisma.apiKey.findFirst({
-            where: { hash },
-          })
+          const keyRecord = await prisma.orm.public.ApiKey
+            .where({ hash })
+            .first()
           if (
             keyRecord &&
-            (!keyRecord.expiresAt || keyRecord.expiresAt.getTime() > Date.now())
+            (!keyRecord.expiresAt || toDate(keyRecord.expiresAt).getTime() > Date.now())
           ) {
             authenticatedUserId = keyRecord.userId
           }

@@ -61,7 +61,7 @@ export async function generateBackupCodes(): Promise<{
  */
 export async function verifyBackupCode(
   inputCode: string,
-  storedHashes: string[]
+  storedHashes: readonly string[]
 ): Promise<number> {
   const cleanCode = inputCode.trim().toUpperCase()
   const cleanNoDash = cleanCode.replaceAll("-", "")

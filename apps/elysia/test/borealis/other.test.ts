@@ -58,7 +58,7 @@ describe('Borealis Other & Custom Item System', () => {
       .use(borealisLists)
 
     // Ensure mock users exist in test database
-    await prisma.user.upsert({
+    await (prisma as any).user.upsert({
       where: { id: '00000000-0000-0000-0000-000000000001' },
       create: {
         id: '00000000-0000-0000-0000-000000000001',
@@ -70,7 +70,7 @@ describe('Borealis Other & Custom Item System', () => {
       update: {},
     })
 
-    await prisma.user.upsert({
+    await (prisma as any).user.upsert({
       where: { id: '00000000-0000-0000-0000-000000000002' },
       create: {
         id: '00000000-0000-0000-0000-000000000002',
@@ -82,7 +82,7 @@ describe('Borealis Other & Custom Item System', () => {
       update: {},
     })
 
-    await prisma.user.upsert({
+    await (prisma as any).user.upsert({
       where: { id: '00000000-0000-0000-0000-000000000003' },
       create: {
         id: '00000000-0000-0000-0000-000000000003',
@@ -395,7 +395,7 @@ describe('Borealis Other & Custom Item System', () => {
     await new Promise((resolve) => setTimeout(resolve, 50))
 
     // 3. Verify ActivityLog was recorded
-    const activities = await prisma.activityLog.findMany({
+    const activities = await (prisma as any).activityLog.findMany({
       where: {
         userId: '00000000-0000-0000-0000-000000000001',
         mediaType: 'OTHER',

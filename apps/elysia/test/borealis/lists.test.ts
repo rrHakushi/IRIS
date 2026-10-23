@@ -215,7 +215,7 @@ function setupPrismaMock() {
   mockOtherLists = []
 
   // User queries
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return mockUsers.find((u) => u.id === where.id) ?? null
   }
 

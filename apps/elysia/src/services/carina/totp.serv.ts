@@ -1,6 +1,6 @@
 import { generateSecret, generateURI, verify as verifyTotpCode } from 'otplib'
 import QRCode from 'qrcode'
-import { prisma } from '@IRIS/database'
+import { prisma, toDate } from '@IRIS/database'
 import { cache } from '../../utils/cache'
 import {
   encryptSecret,
@@ -17,9 +17,7 @@ export abstract class CarinaTotpServ {
    * Generate a new TOTP secret and QR code for authenticator setup.
    */
   static async setupTotp(userId: string) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    })
+    const user = await prisma.orm.public.User.where({ id: userId }).first()
 
     if (!user) {
       throw new NotFound(`User with ID '${userId}' was not found.`)
@@ -72,9 +70,7 @@ export abstract class CarinaTotpServ {
         throw new BadRequest('Invalid or expired MFA session ticket.')
       }
 
-      const user = await prisma.user.findUnique({
-        where: { id: ticketData.userId },
-      })
+      const user = await prisma.orm.public.User.where({ id: ticketData.userId }).first()
       if (!user || !user.TOTPSecret || !user.TOTPEnabled) {
         throw new Unauthorized('TOTP is not configured or active on this account.')
       }
@@ -100,9 +96,12 @@ export abstract class CarinaTotpServ {
       await cache.del(`auth:mfa-ticket:${body.mfaTicket}`)
 
       // Issue authenticated JWT session token
+      const pwdChangedAt = toDate(user.passwordChangedAt)
       const token = await signUserJwt({
         ...user,
         username: user.username.trim(),
+        permissions: [...user.permissions],
+        passwordChangedAt: pwdChangedAt,
       })
 
       return {
@@ -113,8 +112,8 @@ export abstract class CarinaTotpServ {
           id: user.id,
           username: user.username.trim(),
           email: user.email,
-          passwordChangedAt: user.passwordChangedAt
-            ? Math.floor(user.passwordChangedAt.getTime() / 1000)
+          passwordChangedAt: pwdChangedAt
+            ? Math.floor(pwdChangedAt.getTime() / 1000)
             : null,
         },
       }
@@ -125,9 +124,7 @@ export abstract class CarinaTotpServ {
       throw new Unauthorized('Authentication required or valid mfaTicket required.')
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    })
+    const user = await prisma.orm.public.User.where({ id: userId }).first()
 
     if (!user) {
       throw new NotFound(`User with ID '${userId}' was not found.`)
@@ -172,13 +169,10 @@ export abstract class CarinaTotpServ {
       hashedBackupCodes = generated.hashed
     }
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        TOTPSecret: encryptedSecret,
-        TOTPEnabled: true,
-        ...(hashedBackupCodes ? { backupCodes: hashedBackupCodes } : {}),
-      },
+    await prisma.orm.public.User.where({ id: user.id }).update({
+      TOTPSecret: encryptedSecret,
+      TOTPEnabled: true,
+      ...(hashedBackupCodes ? { backupCodes: hashedBackupCodes } : {}),
     })
 
     // Clear pending setup and caches
@@ -200,10 +194,9 @@ export abstract class CarinaTotpServ {
     userId: string,
     body?: CarinaTotpModel['deleteBody'] | null
   ) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { passkeys: true },
-    })
+    const user = await prisma.orm.public.User.where({ id: userId })
+      .include('passkeys')
+      .first()
 
     if (!user) {
       throw new NotFound(`User with ID '${userId}' was not found.`)
@@ -265,13 +258,10 @@ export abstract class CarinaTotpServ {
 
     const remainingMfa = user.emailMfaEnabled || user.passkeys.length > 0
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        TOTPEnabled: false,
-        TOTPSecret: null,
-        ...(!remainingMfa ? { backupCodes: [] } : {}),
-      },
+    await prisma.orm.public.User.where({ id: user.id }).update({
+      TOTPEnabled: false,
+      TOTPSecret: null,
+      ...(!remainingMfa ? { backupCodes: [] } : {}),
     })
 
     await cache.del(`users:me:user:${user.id}`)

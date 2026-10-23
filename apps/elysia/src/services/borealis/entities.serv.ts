@@ -1,4 +1,4 @@
-import { prisma } from '@IRIS/database'
+import { prisma, and, or, countOf } from '@IRIS/database'
 import { NotFound } from '../../lib/errors'
 
 export interface CharacterCatalogQuery {
@@ -45,38 +45,45 @@ export class BorealisEntitiesServ {
     const sortBy = query?.sortBy ?? 'popularity'
     const sortOrder = query?.sortOrder ?? (sortBy === 'name' ? 'asc' : 'desc')
 
-    const where: any = {
-      ...(search
-        ? {
-            OR: [
-              { namePrimary: { contains: search, mode: 'insensitive' } },
-              { nameNative: { contains: search, mode: 'insensitive' } },
-            ],
-          }
-        : {}),
-      ...(gender ? { gender: { equals: gender, mode: 'insensitive' } } : {}),
+    let q = prisma.orm.public.Character
+    if (search) {
+      q = q.where((c) =>
+        or(
+          c.namePrimary.ilike(`%${search}%`),
+          c.nameNative.ilike(`%${search}%`)
+        )
+      )
+    }
+    if (gender) {
+      q = q.where((c) => c.gender.ilike(gender))
     }
 
-    let orderBy: any = { favorites: sortOrder }
-    if (sortBy === 'name') orderBy = { namePrimary: sortOrder }
+    let itemsQ = q
+    if (sortBy === 'name') {
+      itemsQ = itemsQ.orderBy((c) =>
+        sortOrder === 'desc' ? c.namePrimary.desc() : c.namePrimary.asc()
+      )
+    } else {
+      itemsQ = itemsQ.orderBy((c) =>
+        sortOrder === 'asc' ? c.favorites.asc() : c.favorites.desc()
+      )
+    }
 
     const [total, items] = await Promise.all([
-      prisma.character.count({ where }),
-      prisma.character.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        select: {
-          id: true,
-          namePrimary: true,
-          nameNative: true,
-          image: true,
-          gender: true,
-          age: true,
-          favorites: true,
-        },
-      }),
+      countOf(q),
+      itemsQ
+        .offset(skip)
+        .limit(limit)
+        .select(
+          'id',
+          'namePrimary',
+          'nameNative',
+          'image',
+          'gender',
+          'age',
+          'favorites'
+        )
+        .all(),
     ])
 
     return {
@@ -102,10 +109,8 @@ export class BorealisEntitiesServ {
 
   public static async getCharacterFilters() {
     const [allCharacters, total] = await Promise.all([
-      prisma.character.findMany({
-        select: { gender: true },
-      }),
-      prisma.character.count(),
+      prisma.orm.public.Character.select('gender').all(),
+      countOf(prisma.orm.public.Character),
     ])
 
     const genderCounts: Record<string, number> = {}
@@ -125,82 +130,77 @@ export class BorealisEntitiesServ {
   }
 
   public static async getCharacterById(id: number) {
-    const character = await prisma.character.findUnique({
-      where: { id },
-      include: {
-        mediaCharacters: {
-          include: {
-            actor: true,
-            anime: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                titleSecondary: true,
-                titleNative: true,
-                coverImage: true,
-                bannerImage: true,
-                format: true,
-                seasonYear: true,
-                averageScore: true,
-              },
-            },
-            manga: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                titleSecondary: true,
-                titleNative: true,
-                coverImage: true,
-                bannerImage: true,
-                format: true,
-                startDateYear: true,
-                averageScore: true,
-              },
-            },
-            movie: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                titleSecondary: true,
-                titleNative: true,
-                coverImage: true,
-                bannerImage: true,
-                releaseDateYear: true,
-                averageScore: true,
-              },
-            },
-            tv: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                titleSecondary: true,
-                titleNative: true,
-                coverImage: true,
-                bannerImage: true,
-                showType: true,
-                firstAiredYear: true,
-                averageScore: true,
-              },
-            },
-            book: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                titleSecondary: true,
-                coverImage: true,
-                bannerImage: true,
-                format: true,
-                releaseDateYear: true,
-                averageScore: true,
-              },
-            },
-          },
-          orderBy: {
-            order: 'asc',
-          },
-        },
-      },
-    })
+    const character = await prisma.orm.public.Character
+      .where({ id })
+      .include('mediaCharacters', (mc) =>
+        mc
+          .include('actor')
+          .include('anime', (a) =>
+            a.select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'titleNative',
+              'coverImage',
+              'bannerImage',
+              'format',
+              'seasonYear',
+              'averageScore'
+            )
+          )
+          .include('manga', (m) =>
+            m.select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'titleNative',
+              'coverImage',
+              'bannerImage',
+              'format',
+              'startDateYear',
+              'averageScore'
+            )
+          )
+          .include('movie', (m) =>
+            m.select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'titleNative',
+              'coverImage',
+              'bannerImage',
+              'releaseDateYear',
+              'averageScore'
+            )
+          )
+          .include('tv', (t) =>
+            t.select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'titleNative',
+              'coverImage',
+              'bannerImage',
+              'showType',
+              'firstAiredYear',
+              'averageScore'
+            )
+          )
+          .include('book', (b) =>
+            b.select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'coverImage',
+              'bannerImage',
+              'format',
+              'releaseDateYear',
+              'averageScore'
+            )
+          )
+          .orderBy((m) => m.order.asc())
+      )
+      .first()
 
     if (!character) {
       throw new NotFound(`Character with ID ${id} not found`)
@@ -228,43 +228,54 @@ export class BorealisEntitiesServ {
     const sortBy = query?.sortBy ?? 'popularity'
     const sortOrder = query?.sortOrder ?? (sortBy === 'name' ? 'asc' : 'desc')
 
-    const where: any = {
-      ...(search
-        ? {
-            OR: [
-              { namePrimary: { contains: search, mode: 'insensitive' } },
-              { nameNative: { contains: search, mode: 'insensitive' } },
-              { givenName: { contains: search, mode: 'insensitive' } },
-              { familyName: { contains: search, mode: 'insensitive' } },
-            ],
-          }
-        : {}),
-      ...(occupation ? { primaryOccupations: { has: occupation } } : {}),
-      ...(language ? { language: { equals: language, mode: 'insensitive' } } : {}),
-      ...(gender ? { gender: { equals: gender, mode: 'insensitive' } } : {}),
+    let q = prisma.orm.public.Person
+    if (search) {
+      q = q.where((p) =>
+        or(
+          p.namePrimary.ilike(`%${search}%`),
+          p.nameNative.ilike(`%${search}%`),
+          p.givenName.ilike(`%${search}%`),
+          p.familyName.ilike(`%${search}%`)
+        )
+      )
+    }
+    if (occupation) {
+      q = q.where((p) => p.primaryOccupations.ilike(`%${occupation}%`))
+    }
+    if (language) {
+      q = q.where((p) => p.language.ilike(language))
+    }
+    if (gender) {
+      q = q.where((p) => p.gender.ilike(gender))
     }
 
-    let orderBy: any = { favorites: sortOrder }
-    if (sortBy === 'name') orderBy = { namePrimary: sortOrder }
+    let itemsQ = q
+    if (sortBy === 'name') {
+      itemsQ = itemsQ.orderBy((p) =>
+        sortOrder === 'desc' ? p.namePrimary.desc() : p.namePrimary.asc()
+      )
+    } else {
+      itemsQ = itemsQ.orderBy((p) =>
+        sortOrder === 'asc' ? p.favorites.asc() : p.favorites.desc()
+      )
+    }
 
     const [total, items] = await Promise.all([
-      prisma.person.count({ where }),
-      prisma.person.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        select: {
-          id: true,
-          namePrimary: true,
-          nameNative: true,
-          image: true,
-          primaryOccupations: true,
-          language: true,
-          gender: true,
-          favorites: true,
-        },
-      }),
+      countOf(q),
+      itemsQ
+        .offset(skip)
+        .limit(limit)
+        .select(
+          'id',
+          'namePrimary',
+          'nameNative',
+          'image',
+          'primaryOccupations',
+          'language',
+          'gender',
+          'favorites'
+        )
+        .all(),
     ])
 
     return {
@@ -274,7 +285,7 @@ export class BorealisEntitiesServ {
         namePrimary: p.namePrimary,
         nameNative: p.nameNative,
         image: p.image,
-        primaryOccupations: p.primaryOccupations,
+        primaryOccupations: [...p.primaryOccupations],
         language: p.language,
         gender: p.gender,
         favorites: p.favorites,
@@ -291,10 +302,12 @@ export class BorealisEntitiesServ {
 
   public static async getPeopleFilters() {
     const [allPeople, total] = await Promise.all([
-      prisma.person.findMany({
-        select: { primaryOccupations: true, language: true, gender: true },
-      }),
-      prisma.person.count(),
+      prisma.orm.public.Person.select(
+        'primaryOccupations',
+        'language',
+        'gender'
+      ).all(),
+      countOf(prisma.orm.public.Person),
     ])
 
     const occupationCounts: Record<string, number> = {}
@@ -331,151 +344,142 @@ export class BorealisEntitiesServ {
   }
 
   public static async getPersonById(id: number) {
-    const person = await prisma.person.findUnique({
-      where: { id },
-      include: {
-        voicedCharacters: {
-          include: {
-            character: true,
-            anime: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                titleSecondary: true,
-                coverImage: true,
-                format: true,
-                seasonYear: true,
-                averageScore: true,
-              },
-            },
-            movie: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                titleSecondary: true,
-                coverImage: true,
-                releaseDateYear: true,
-                averageScore: true,
-              },
-            },
-            tv: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                titleSecondary: true,
-                coverImage: true,
-                firstAiredYear: true,
-                averageScore: true,
-              },
-            },
-            book: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                titleSecondary: true,
-                coverImage: true,
-                releaseDateYear: true,
-                averageScore: true,
-              },
-            },
-          },
-          orderBy: {
-            order: 'asc',
-          },
-        },
-        mediaStaff: {
-          include: {
-            anime: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                titleSecondary: true,
-                coverImage: true,
-                format: true,
-                seasonYear: true,
-                averageScore: true,
-              },
-            },
-            manga: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                titleSecondary: true,
-                coverImage: true,
-                format: true,
-                startDateYear: true,
-                averageScore: true,
-              },
-            },
-            movie: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                titleSecondary: true,
-                coverImage: true,
-                releaseDateYear: true,
-                averageScore: true,
-              },
-            },
-            tv: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                titleSecondary: true,
-                coverImage: true,
-                firstAiredYear: true,
-                averageScore: true,
-              },
-            },
-            book: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                titleSecondary: true,
-                coverImage: true,
-                releaseDateYear: true,
-                averageScore: true,
-              },
-            },
-            music: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                titleSecondary: true,
-                coverImage: true,
-                type: true,
-                releaseDateYear: true,
-                popularity: true,
-              },
-            },
-          },
-        },
-        musicTracks: {
-          select: {
-            id: true,
-            titlePrimary: true,
-            titleSecondary: true,
-            type: true,
-            coverImage: true,
-            duration: true,
-            popularity: true,
-            releaseDateYear: true,
-            recordType: true,
-            albumId: true,
-            trackPosition: true,
-            album: {
-              select: {
-                id: true,
-                titlePrimary: true,
-                coverImage: true,
-              },
-            },
-          },
-          take: 50,
-          orderBy: { popularity: 'desc' },
-        },
-      },
-    })
+    const person = await prisma.orm.public.Person
+      .where({ id })
+      .include('voicedCharacters', (vc) =>
+        vc
+          .include('character')
+          .include('anime', (a) =>
+            a.select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'coverImage',
+              'format',
+              'seasonYear',
+              'averageScore'
+            )
+          )
+          .include('movie', (m) =>
+            m.select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'coverImage',
+              'releaseDateYear',
+              'averageScore'
+            )
+          )
+          .include('tv', (t) =>
+            t.select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'coverImage',
+              'firstAiredYear',
+              'averageScore'
+            )
+          )
+          .include('book', (b) =>
+            b.select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'coverImage',
+              'releaseDateYear',
+              'averageScore'
+            )
+          )
+          .orderBy((v) => v.order.asc())
+      )
+      .include('mediaStaff', (ms) =>
+        ms
+          .include('anime', (a) =>
+            a.select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'coverImage',
+              'format',
+              'seasonYear',
+              'averageScore'
+            )
+          )
+          .include('manga', (m) =>
+            m.select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'coverImage',
+              'format',
+              'startDateYear',
+              'averageScore'
+            )
+          )
+          .include('movie', (m) =>
+            m.select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'coverImage',
+              'releaseDateYear',
+              'averageScore'
+            )
+          )
+          .include('tv', (t) =>
+            t.select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'coverImage',
+              'firstAiredYear',
+              'averageScore'
+            )
+          )
+          .include('book', (b) =>
+            b.select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'coverImage',
+              'releaseDateYear',
+              'averageScore'
+            )
+          )
+          .include('music', (mu) =>
+            mu.select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'coverImage',
+              'type',
+              'releaseDateYear',
+              'popularity'
+            )
+          )
+      )
+      .include('musicTracks', (mt) =>
+        mt
+          .select(
+            'id',
+            'titlePrimary',
+            'titleSecondary',
+            'type',
+            'coverImage',
+            'duration',
+            'popularity',
+            'releaseDateYear',
+            'recordType',
+            'albumId',
+            'trackPosition'
+          )
+          .include('album', (al) =>
+            al.select('id', 'titlePrimary', 'coverImage')
+          )
+          .orderBy((m) => m.popularity.desc())
+          .limit(50)
+      )
+      .first()
 
     if (!person) {
       throw new NotFound(`Person with ID ${id} not found`)
@@ -484,33 +488,27 @@ export class BorealisEntitiesServ {
     // Automatically aggregate artist music if present and not already linked
     let musicTracks = person.musicTracks
     if (musicTracks.length === 0 && person.namePrimary) {
-      musicTracks = await prisma.music.findMany({
-        where: {
-          artistName: { equals: person.namePrimary, mode: 'insensitive' },
-        },
-        select: {
-          id: true,
-          titlePrimary: true,
-          titleSecondary: true,
-          type: true,
-          coverImage: true,
-          duration: true,
-          popularity: true,
-          releaseDateYear: true,
-          recordType: true,
-          albumId: true,
-          trackPosition: true,
-          album: {
-            select: {
-              id: true,
-              titlePrimary: true,
-              coverImage: true,
-            },
-          },
-        },
-        take: 50,
-        orderBy: { popularity: 'desc' },
-      })
+      musicTracks = await prisma.orm.public.Music
+        .where((m) => m.artistName.ilike(person.namePrimary!))
+        .select(
+          'id',
+          'titlePrimary',
+          'titleSecondary',
+          'type',
+          'coverImage',
+          'duration',
+          'popularity',
+          'releaseDateYear',
+          'recordType',
+          'albumId',
+          'trackPosition'
+        )
+        .include('album', (al) =>
+          al.select('id', 'titlePrimary', 'coverImage')
+        )
+        .orderBy((m) => m.popularity.desc())
+        .limit(50)
+        .all()
     }
 
     return {
@@ -536,29 +534,32 @@ export class BorealisEntitiesServ {
     const sortBy = query?.sortBy ?? 'popularity'
     const sortOrder = query?.sortOrder ?? (sortBy === 'name' ? 'asc' : 'desc')
 
-    const where: any = {
-      ...(search ? { name: { contains: search, mode: 'insensitive' } } : {}),
-      ...(typeof isAnimationStudio === 'boolean' ? { isAnimationStudio } : {}),
+    let q = prisma.orm.public.Studio
+    if (search) {
+      q = q.where((s) => s.name.ilike(`%${search}%`))
+    }
+    if (typeof isAnimationStudio === 'boolean') {
+      q = q.where({ isAnimationStudio })
     }
 
-    let orderBy: any = { favorites: sortOrder }
-    if (sortBy === 'name') orderBy = { name: sortOrder }
+    let itemsQ = q
+    if (sortBy === 'name') {
+      itemsQ = itemsQ.orderBy((s) =>
+        sortOrder === 'desc' ? s.name.desc() : s.name.asc()
+      )
+    } else {
+      itemsQ = itemsQ.orderBy((s) =>
+        sortOrder === 'asc' ? s.favorites.asc() : s.favorites.desc()
+      )
+    }
 
     const [total, items] = await Promise.all([
-      prisma.studio.count({ where }),
-      prisma.studio.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        select: {
-          id: true,
-          name: true,
-          isAnimationStudio: true,
-          siteUrl: true,
-          favorites: true,
-        },
-      }),
+      countOf(q),
+      itemsQ
+        .offset(skip)
+        .limit(limit)
+        .select('id', 'name', 'isAnimationStudio', 'siteUrl', 'favorites')
+        .all(),
     ])
 
     return {
@@ -582,8 +583,8 @@ export class BorealisEntitiesServ {
 
   public static async getStudioFilters() {
     const [animationCount, total] = await Promise.all([
-      prisma.studio.count({ where: { isAnimationStudio: true } }),
-      prisma.studio.count(),
+      countOf(prisma.orm.public.Studio.where({ isAnimationStudio: true })),
+      countOf(prisma.orm.public.Studio),
     ])
 
     const otherCount = Math.max(0, total - animationCount)
@@ -599,100 +600,96 @@ export class BorealisEntitiesServ {
   }
 
   public static async getStudioById(id: number) {
-    const studio = await prisma.studio.findUnique({
-      where: { id },
-    })
+    const studio = await prisma.orm.public.Studio.where({ id }).first()
 
     if (!studio) {
       throw new NotFound(`Studio with ID ${id} not found`)
     }
 
     const [mediaStudioRecords, totalCreations] = await Promise.all([
-      prisma.mediaStudio.findMany({
-        where: { studioId: id },
-        include: {
-          anime: {
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              titleNative: true,
-              coverImage: true,
-              bannerImage: true,
-              format: true,
-              seasonYear: true,
-              startDateYear: true,
-              averageScore: true,
-              popularity: true,
-              favorites: true,
-              status: true,
-            },
-          },
-          movie: {
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              titleNative: true,
-              coverImage: true,
-              bannerImage: true,
-              releaseDateYear: true,
-              averageScore: true,
-              popularity: true,
-              favorites: true,
-              status: true,
-            },
-          },
-          tv: {
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              titleNative: true,
-              coverImage: true,
-              bannerImage: true,
-              firstAiredYear: true,
-              averageScore: true,
-              popularity: true,
-              favorites: true,
-              status: true,
-            },
-          },
-          game: {
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              titleNative: true,
-              coverImage: true,
-              bannerImage: true,
-              backgroundImage: true,
-              releaseDateYear: true,
-              averageScore: true,
-              popularity: true,
-              favorites: true,
-              status: true,
-            },
-          },
-          book: {
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              coverImage: true,
-              bannerImage: true,
-              releaseDateYear: true,
-              averageScore: true,
-              popularity: true,
-              favorites: true,
-              status: true,
-            },
-          },
-        },
-        take: 50,
-        orderBy: [{ id: 'desc' }],
-      }),
-      prisma.mediaStudio.count({ where: { studioId: id } }),
+      prisma.orm.public.MediaStudio
+        .where({ studioId: id })
+        .include('anime', (a) =>
+          a.select(
+            'id',
+            'titlePrimary',
+            'titleSecondary',
+            'titleNative',
+            'coverImage',
+            'bannerImage',
+            'format',
+            'seasonYear',
+            'startDateYear',
+            'averageScore',
+            'popularity',
+            'favorites',
+            'status'
+          )
+        )
+        .include('movie', (m) =>
+          m.select(
+            'id',
+            'titlePrimary',
+            'titleSecondary',
+            'titleNative',
+            'coverImage',
+            'bannerImage',
+            'releaseDateYear',
+            'averageScore',
+            'popularity',
+            'favorites',
+            'status'
+          )
+        )
+        .include('tv', (t) =>
+          t.select(
+            'id',
+            'titlePrimary',
+            'titleSecondary',
+            'titleNative',
+            'coverImage',
+            'bannerImage',
+            'firstAiredYear',
+            'averageScore',
+            'popularity',
+            'favorites',
+            'status'
+          )
+        )
+        .include('game', (g) =>
+          g.select(
+            'id',
+            'titlePrimary',
+            'titleSecondary',
+            'titleNative',
+            'coverImage',
+            'bannerImage',
+            'backgroundImage',
+            'releaseDateYear',
+            'averageScore',
+            'popularity',
+            'favorites',
+            'status'
+          )
+        )
+        .include('book', (b) =>
+          b.select(
+            'id',
+            'titlePrimary',
+            'titleSecondary',
+            'coverImage',
+            'bannerImage',
+            'releaseDateYear',
+            'averageScore',
+            'popularity',
+            'favorites',
+            'status'
+          )
+        )
+        .orderBy((ms) => ms.id.desc())
+        .limit(50)
+        .all(),
+      countOf(prisma.orm.public.MediaStudio.where({ studioId: id })),
     ])
 
     const creations = mediaStudioRecords.map((record) => {

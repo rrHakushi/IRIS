@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import { prisma } from '@IRIS/database'
+import { prisma, countOf, toDate } from '@IRIS/database'
 import { hashApiKey } from '../../utils/auth-crypto'
 import { BadRequest, NotFound } from '../../lib/errors'
 import type { CarinaApiKeysModel } from '../../api/models/carina/apikeys.model'
@@ -8,19 +8,19 @@ function serializeApiKey(k: {
   id: string
   name: string
   prefix: string
-  createdAt: Date
-  updatedAt: Date
-  lastUsedAt: Date | null
-  expiresAt: Date | null
+  createdAt: any
+  updatedAt: any
+  lastUsedAt: any | null
+  expiresAt: any | null
 }) {
   return {
     id: k.id,
     name: k.name,
     prefix: k.prefix,
-    createdAt: k.createdAt.toISOString(),
-    updatedAt: k.updatedAt.toISOString(),
-    lastUsedAt: k.lastUsedAt ? k.lastUsedAt.toISOString() : null,
-    expiresAt: k.expiresAt ? k.expiresAt.toISOString() : null,
+    createdAt: toDate(k.createdAt).toISOString(),
+    updatedAt: toDate(k.updatedAt).toISOString(),
+    lastUsedAt: k.lastUsedAt ? toDate(k.lastUsedAt).toISOString() : null,
+    expiresAt: k.expiresAt ? toDate(k.expiresAt).toISOString() : null,
   }
 }
 
@@ -37,15 +37,13 @@ export abstract class CarinaApiKeysServ {
     const skip = (page - 1) * limit
 
     const [total, keys] = await Promise.all([
-      prisma.apiKey.count({
-        where: { userId },
-      }),
-      prisma.apiKey.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
+      countOf(prisma.orm.public.ApiKey.where({ userId })),
+      prisma.orm.public.ApiKey
+        .where({ userId })
+        .orderBy((k) => k.createdAt.desc())
+        .offset(skip)
+        .limit(limit)
+        .all(),
     ])
 
     return {
@@ -82,14 +80,12 @@ export abstract class CarinaApiKeysServ {
       )
     }
 
-    const created = await prisma.apiKey.create({
-      data: {
-        userId,
-        name: rawName.slice(0, 64),
-        prefix,
-        hash,
-        expiresAt,
-      },
+    const created = await prisma.orm.public.ApiKey.create({
+      userId,
+      name: rawName.slice(0, 64),
+      prefix,
+      hash,
+      expiresAt,
     })
 
     return {
@@ -112,18 +108,21 @@ export abstract class CarinaApiKeysServ {
       throw new BadRequest('API key name cannot be empty or contain only whitespace.')
     }
 
-    const existing = await prisma.apiKey.findFirst({
-      where: { id: keyId, userId },
-    })
+    const existing = await prisma.orm.public.ApiKey
+      .where({ id: keyId, userId })
+      .first()
 
     if (!existing) {
       throw new NotFound(`API key with ID '${keyId}' was not found.`)
     }
 
-    const updated = await prisma.apiKey.update({
-      where: { id: existing.id },
-      data: { name: rawName.slice(0, 64) },
-    })
+    const updated = await prisma.orm.public.ApiKey
+      .where({ id: existing.id })
+      .update({ name: rawName.slice(0, 64) })
+
+    if (!updated) {
+      throw new NotFound(`API key with ID '${keyId}' was not found.`)
+    }
 
     return {
       success: true,
@@ -135,17 +134,17 @@ export abstract class CarinaApiKeysServ {
    * Delete an existing API key.
    */
   static async deleteKey(userId: string, keyId: string) {
-    const existing = await prisma.apiKey.findFirst({
-      where: { id: keyId, userId },
-    })
+    const existing = await prisma.orm.public.ApiKey
+      .where({ id: keyId, userId })
+      .first()
 
     if (!existing) {
       throw new NotFound(`API key with ID '${keyId}' was not found.`)
     }
 
-    await prisma.apiKey.delete({
-      where: { id: existing.id },
-    })
+    await prisma.orm.public.ApiKey
+      .where({ id: existing.id })
+      .delete()
 
     return {
       success: true,
@@ -158,9 +157,9 @@ export abstract class CarinaApiKeysServ {
    * Generates a new secret, updates database hash and prefix, resets lastUsedAt.
    */
   static async regenerateKey(userId: string, keyId: string) {
-    const existing = await prisma.apiKey.findFirst({
-      where: { id: keyId, userId },
-    })
+    const existing = await prisma.orm.public.ApiKey
+      .where({ id: keyId, userId })
+      .first()
 
     if (!existing) {
       throw new NotFound(`API key with ID '${keyId}' was not found.`)
@@ -171,14 +170,17 @@ export abstract class CarinaApiKeysServ {
     const prefix = rawKey.slice(0, 17)
     const hash = hashApiKey(rawKey)
 
-    const updated = await prisma.apiKey.update({
-      where: { id: existing.id },
-      data: {
+    const updated = await prisma.orm.public.ApiKey
+      .where({ id: existing.id })
+      .update({
         hash,
         prefix,
         lastUsedAt: null,
-      },
-    })
+      })
+
+    if (!updated) {
+      throw new NotFound(`API key with ID '${keyId}' was not found.`)
+    }
 
     return {
       success: true,

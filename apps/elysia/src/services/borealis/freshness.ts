@@ -1,4 +1,4 @@
-import { prisma } from '@IRIS/database'
+import { prisma, toDate } from '@IRIS/database'
 import { LogFactory, c } from '@Iris/logger'
 import type { MediaType } from './queue'
 
@@ -153,48 +153,97 @@ export async function getEntityFreshness(
 
   try {
     switch (mediaType) {
-      case 'ANIME':
-        record = await prisma.anime.findUnique({
-          where: { id: mediaId },
-          select: { updatedAt: true, status: true, alUpdatedAt: true },
-        })
+      case 'ANIME': {
+        const res = await prisma.orm.public.Anime.where({ id: mediaId })
+          .select('updatedAt', 'status', 'alUpdatedAt')
+          .first()
+        if (res) {
+          record = {
+            updatedAt: toDate(res.updatedAt),
+            status: res.status,
+            alUpdatedAt: res.alUpdatedAt,
+          }
+        }
         break
-      case 'MANGA':
-        record = await prisma.manga.findUnique({
-          where: { id: mediaId },
-          select: { updatedAt: true, status: true, alUpdatedAt: true },
-        })
+      }
+      case 'MANGA': {
+        const res = await prisma.orm.public.Manga.where({ id: mediaId })
+          .select('updatedAt', 'status', 'alUpdatedAt')
+          .first()
+        if (res) {
+          record = {
+            updatedAt: toDate(res.updatedAt),
+            status: res.status,
+            alUpdatedAt: res.alUpdatedAt,
+          }
+        }
         break
-      case 'TV':
-        record = await prisma.tv.findUnique({
-          where: { id: mediaId },
-          select: { updatedAt: true, status: true, tvdbUpdatedAt: true },
-        })
+      }
+      case 'TV': {
+        const res = await prisma.orm.public.Tv.where({ id: mediaId })
+          .select('updatedAt', 'status', 'tvdbUpdatedAt')
+          .first()
+        if (res) {
+          record = {
+            updatedAt: toDate(res.updatedAt),
+            status: res.status,
+            tvdbUpdatedAt: res.tvdbUpdatedAt,
+          }
+        }
         break
-      case 'MOVIE':
-        record = await prisma.movie.findUnique({
-          where: { id: mediaId },
-          select: { updatedAt: true, status: true, tvdbUpdatedAt: true },
-        })
+      }
+      case 'MOVIE': {
+        const res = await prisma.orm.public.Movie.where({ id: mediaId })
+          .select('updatedAt', 'status', 'tvdbUpdatedAt')
+          .first()
+        if (res) {
+          record = {
+            updatedAt: toDate(res.updatedAt),
+            status: res.status,
+            tvdbUpdatedAt: res.tvdbUpdatedAt,
+          }
+        }
         break
-      case 'BOOK':
-        record = await prisma.book.findUnique({
-          where: { id: mediaId },
-          select: { updatedAt: true, status: true, googleBooksUpdatedAt: true },
-        })
+      }
+      case 'BOOK': {
+        const res = await prisma.orm.public.Book.where({ id: mediaId })
+          .select('updatedAt', 'status', 'googleBooksUpdatedAt')
+          .first()
+        if (res) {
+          record = {
+            updatedAt: toDate(res.updatedAt),
+            status: res.status,
+            googleBooksUpdatedAt: res.googleBooksUpdatedAt,
+          }
+        }
         break
-      case 'GAME':
-        record = await prisma.game.findUnique({
-          where: { id: mediaId },
-          select: { updatedAt: true, status: true, igdbUpdatedAt: true },
-        })
+      }
+      case 'GAME': {
+        const res = await prisma.orm.public.Game.where({ id: mediaId })
+          .select('updatedAt', 'status', 'igdbUpdatedAt')
+          .first()
+        if (res) {
+          record = {
+            updatedAt: toDate(res.updatedAt),
+            status: res.status,
+            igdbUpdatedAt: res.igdbUpdatedAt,
+          }
+        }
         break
-      case 'MUSIC':
-        record = await prisma.music.findUnique({
-          where: { id: mediaId },
-          select: { updatedAt: true, status: true, deezerUpdatedAt: true },
-        })
+      }
+      case 'MUSIC': {
+        const res = await prisma.orm.public.Music.where({ id: mediaId })
+          .select('updatedAt', 'status', 'deezerUpdatedAt')
+          .first()
+        if (res) {
+          record = {
+            updatedAt: toDate(res.updatedAt),
+            status: res.status,
+            deezerUpdatedAt: res.deezerUpdatedAt,
+          }
+        }
         break
+      }
     }
   } catch (err: any) {
     logger.warn(`Failed to query ${mediaType} #${mediaId} for freshness check: ${err?.message || err}`)

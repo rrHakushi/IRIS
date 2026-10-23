@@ -1,4 +1,4 @@
-import { prisma, type PassCipherType } from '@IRIS/database'
+import { prisma, toDate, type PassCipherType } from '@IRIS/database'
 import { AkaromiCiphersServ } from './ciphers.serv'
 
 export interface ImportCipherItem {
@@ -22,15 +22,14 @@ export class AkaromiVaultServ {
     const hasValidSince = sinceDate !== null && !isNaN(sinceDate.getTime())
 
     // 1. Fetch ciphers (modified or created since timestamp)
-    const cipherWhere: { userId: string; updatedAt?: { gte: Date } } = { userId }
-    if (hasValidSince) {
-      cipherWhere.updatedAt = { gte: sinceDate }
+    let query = prisma.orm.public.PassCipher.where({ userId })
+    if (hasValidSince && sinceDate) {
+      query = query.where((c) => c.updatedAt.gte(sinceDate))
     }
 
-    const rawCiphers = await prisma.passCipher.findMany({
-      where: cipherWhere,
-      orderBy: { updatedAt: 'desc' },
-    })
+    const rawCiphers = await query
+      .orderBy((c) => c.updatedAt.desc())
+      .all()
 
     // 2. Extract IDs of ciphers currently in trash or soft deleted
     const deletedCipherIds = rawCiphers
@@ -49,22 +48,12 @@ export class AkaromiVaultServ {
    * Exports full non-deleted vault data for backup or client migration.
    */
   public static async exportVault(userId: string) {
-    const ciphers = await prisma.passCipher.findMany({
-      where: {
-        userId,
-        deletedAt: null,
-      },
-      select: {
-        id: true,
-        type: true,
-        favorite: true,
-        encryptedTitle: true,
-        encryptedData: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-      orderBy: { createdAt: 'asc' },
-    })
+    const ciphers = await prisma.orm.public.PassCipher
+      .where({ userId })
+      .where((c) => c.deletedAt.isNull())
+      .select('id', 'type', 'favorite', 'encryptedTitle', 'encryptedData', 'createdAt', 'updatedAt')
+      .orderBy((c) => c.createdAt.asc())
+      .all()
 
     return {
       success: true,
@@ -75,8 +64,8 @@ export class AkaromiVaultServ {
         favorite: c.favorite,
         encryptedTitle: c.encryptedTitle,
         encryptedData: c.encryptedData,
-        createdAt: c.createdAt.toISOString(),
-        updatedAt: c.updatedAt.toISOString(),
+        createdAt: toDate(c.createdAt).toISOString(),
+        updatedAt: toDate(c.updatedAt).toISOString(),
       })),
     }
   }
@@ -88,14 +77,12 @@ export class AkaromiVaultServ {
     let importedCiphersCount = 0
     for (const cipherItem of body.ciphers) {
       if (cipherItem.encryptedTitle?.trim() && cipherItem.encryptedData?.trim()) {
-        await prisma.passCipher.create({
-          data: {
-            userId,
-            type: cipherItem.type,
-            encryptedTitle: cipherItem.encryptedTitle,
-            encryptedData: cipherItem.encryptedData,
-            favorite: cipherItem.favorite ?? false,
-          },
+        await prisma.orm.public.PassCipher.create({
+          userId,
+          type: cipherItem.type,
+          encryptedTitle: cipherItem.encryptedTitle,
+          encryptedData: cipherItem.encryptedData,
+          favorite: cipherItem.favorite ?? false,
         })
         importedCiphersCount++
       }

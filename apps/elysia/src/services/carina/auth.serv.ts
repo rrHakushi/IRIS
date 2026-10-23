@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import { prisma } from '@IRIS/database'
+import { prisma, or, toDate, countOf } from '@IRIS/database'
 import { isReservedKeyword } from '@IRIS/shared'
 import { IRISFlags } from '@IRIS/permissions'
 import { cache } from '../../utils/cache'
@@ -29,14 +29,10 @@ export abstract class CarinaAuthServ {
     const lowerIdentifier = rawIdentifier.toLowerCase()
 
     // 1. Locate user by username or email
-    const user = await prisma.user.findFirst({
-      where: {
-        OR: [{ email: lowerIdentifier }, { username: rawIdentifier }],
-      },
-      include: {
-        passkeys: true,
-      },
-    })
+    const user = await prisma.orm.public.User
+      .where((u) => or(u.email.eq(lowerIdentifier), u.username.eq(rawIdentifier)))
+      .include('passkeys')
+      .first()
 
     if (!user) {
       throw new Unauthorized('No account was found with the provided identifier.')
@@ -78,6 +74,7 @@ export abstract class CarinaAuthServ {
     // 4. Issue authenticated session token
     const token = await signUserJwt({
       ...user,
+      permissions: [...user.permissions],
       username: user.username.trim(),
     })
 
@@ -91,7 +88,7 @@ export abstract class CarinaAuthServ {
         username: user.username.trim(),
         email: user.email,
         passwordChangedAt: user.passwordChangedAt
-          ? Math.floor(user.passwordChangedAt.getTime() / 1000)
+          ? Math.floor(toDate(user.passwordChangedAt).getTime() / 1000)
           : null,
       },
       token,
@@ -121,15 +118,10 @@ export abstract class CarinaAuthServ {
     }
 
     // 2. Uniqueness check for username & email
-    const conflicts = await prisma.user.findMany({
-      where: {
-        OR: [{ email: lowerEmail }, { username: lowerUsername }],
-      },
-      select: {
-        email: true,
-        username: true,
-      },
-    })
+    const conflicts = await prisma.orm.public.User
+      .where((u) => or(u.email.eq(lowerEmail), u.username.eq(lowerUsername)))
+      .select('email', 'username')
+      .all()
 
     if (conflicts.length > 0) {
       const isEmailTaken = conflicts.some(
@@ -156,7 +148,7 @@ export abstract class CarinaAuthServ {
 
     // 3. Admin initialization check
     if (hasAdminCached === null) {
-      const userCount = await prisma.user.count()
+      const userCount = await countOf(prisma.orm.public.User)
       hasAdminCached = userCount > 0
     }
 
@@ -173,15 +165,13 @@ export abstract class CarinaAuthServ {
     const { publicKey, encryptedPrivateKey } = await generateUserKeypair(body.password)
 
     // 6. Persist user in database
-    const user = await prisma.user.create({
-      data: {
-        username: sanitizedUsername,
-        email: lowerEmail,
-        passwordHash,
-        permissions,
-        publicKey,
-        encryptedPrivateKey,
-      },
+    const user = await prisma.orm.public.User.create({
+      username: sanitizedUsername,
+      email: lowerEmail,
+      passwordHash,
+      permissions,
+      publicKey,
+      encryptedPrivateKey,
     })
 
     return {
@@ -203,9 +193,7 @@ export abstract class CarinaAuthServ {
     userId: string,
     body: CarinaAuthModel['changePasswordBody']
   ) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    })
+    const user = await prisma.orm.public.User.first({ id: userId })
 
     if (!user) {
       throw new NotFound(`User account with ID '${userId}' could not be found.`)
@@ -256,15 +244,14 @@ export abstract class CarinaAuthServ {
     const newHash = await hashPassword(body.newPassword)
     const now = new Date()
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
+    await prisma.orm.public.User
+      .where({ id: user.id })
+      .update({
         passwordHash: newHash,
         publicKey: updatedPublicKey,
         encryptedPrivateKey: updatedEncryptedPrivateKey,
         passwordChangedAt: now,
-      },
-    })
+      })
 
     return {
       success: true,
@@ -281,10 +268,10 @@ export abstract class CarinaAuthServ {
     const lowerEmail = body.email.trim().toLowerCase()
 
     // 1. Locate user account by email
-    const user = await prisma.user.findUnique({
-      where: { email: lowerEmail },
-      select: { id: true, email: true },
-    })
+    const user = await prisma.orm.public.User
+      .where({ email: lowerEmail })
+      .select('id', 'email')
+      .first()
 
     if (user && user.email) {
       // 2. Generate secure 256-bit reset token
@@ -336,15 +323,14 @@ export abstract class CarinaAuthServ {
     )
     const now = new Date()
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
+    await prisma.orm.public.User
+      .where({ id: userId })
+      .update({
         passwordHash: newHash,
         publicKey,
         encryptedPrivateKey,
         passwordChangedAt: now,
-      },
-    })
+      })
 
     // 3. Invalidate token immediately
     await cache.del(`auth:pwd-reset:${body.token}`)

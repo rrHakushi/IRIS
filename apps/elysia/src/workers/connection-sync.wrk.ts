@@ -1,6 +1,8 @@
 import { Worker, type Job } from 'bullmq'
 import {
   prisma,
+  and,
+  toDate,
   type ConnectionProvider,
   type MediaType,
 } from '@IRIS/database'
@@ -103,13 +105,13 @@ export async function processConnectionSyncJob(
   }
 
   // 1. Fetch user's active connection from database
-  const userConn = await prisma.connection.findFirst({
-    where: {
-      userId,
-      provider,
-      status: { in: ['CONNECTED', 'EXPIRED'] },
-    },
-  })
+  const userConn = await prisma.orm.public.Connection.where((c) =>
+    and(
+      c.userId.eq(userId),
+      c.provider.eq(provider),
+      c.status.in(['CONNECTED', 'EXPIRED'])
+    )
+  ).first()
 
   if (!userConn) {
     if (!autoInjected) {
@@ -160,20 +162,17 @@ export async function processConnectionSyncJob(
   // 3. Proactive token refresh if expiring (< 5 minutes left)
   const isExpiring =
     userConn.expiresAt &&
-    new Date(userConn.expiresAt).getTime() - Date.now() < 300000
+    toDate(userConn.expiresAt).getTime() - Date.now() < 300000
 
   if (isExpiring && credentials.refreshToken && adapter.refreshAccessToken) {
     try {
       const refreshed = await adapter.refreshAccessToken(credentials.refreshToken)
       credentials = { ...credentials, ...refreshed }
       const updatedEncrypted = encryptFn(credentials, userId)
-      await prisma.connection.update({
-        where: { id: userConn.id },
-        data: {
-          encryptedData: updatedEncrypted,
-          expiresAt: refreshed.expiresAt ? new Date(refreshed.expiresAt) : null,
-          status: 'CONNECTED',
-        },
+      await prisma.orm.public.Connection.where((c) => c.id.eq(userConn.id)).update({
+        encryptedData: updatedEncrypted,
+        expiresAt: refreshed.expiresAt ? new Date(refreshed.expiresAt) : null,
+        status: 'CONNECTED',
       })
       logger.info(`[Worker:${provider}] Proactive token refresh succeeded for user ${userId}`)
     } catch (refreshErr: any) {
@@ -225,13 +224,10 @@ export async function processConnectionSyncJob(
         const refreshed = await adapter.refreshAccessToken(credentials.refreshToken)
         credentials = { ...credentials, ...refreshed }
         const updatedEncrypted = encryptFn(credentials, userId)
-        await prisma.connection.update({
-          where: { id: userConn.id },
-          data: {
-            encryptedData: updatedEncrypted,
-            expiresAt: refreshed.expiresAt ? new Date(refreshed.expiresAt) : null,
-            status: 'CONNECTED',
-          },
+        await prisma.orm.public.Connection.where((c) => c.id.eq(userConn.id)).update({
+          encryptedData: updatedEncrypted,
+          expiresAt: refreshed.expiresAt ? new Date(refreshed.expiresAt) : null,
+          status: 'CONNECTED',
         })
 
         // Retry update with fresh token
@@ -245,13 +241,10 @@ export async function processConnectionSyncJob(
   }
 
   // 5. Update lastSyncedAt on successful sync
-  await prisma.connection.update({
-    where: { id: userConn.id },
-    data: {
-      lastSyncedAt: new Date(),
-      status: 'CONNECTED',
-      errorMessage: null,
-    },
+  await prisma.orm.public.Connection.where((c) => c.id.eq(userConn.id)).update({
+    lastSyncedAt: new Date(),
+    status: 'CONNECTED',
+    errorMessage: null,
   })
 
   logger.info(
@@ -307,19 +300,15 @@ export async function handleJobFailure(
     })
 
     // 2. Persist error message on the connection record
-    await prisma.connection
-      .updateMany({
-        where: {
-          userId: job.data.userId,
-          provider,
-        },
-        data: {
-          errorMessage: `Sync failed: ${errMsg}`,
-        },
+    await prisma.orm.public.Connection
+      .where((c) => and(c.userId.eq(job.data.userId), c.provider.eq(provider)))
+      .updateAndCount({
+        errorMessage: `Sync failed: ${errMsg}`,
       })
       .catch(() => {})
   }
 }
+
 
 /**
  * Creates and initializes a production-ready BullMQ worker for a specific connection provider.

@@ -116,29 +116,27 @@ export class ActivityServ {
         : undefined
 
     this.runNonBlocking(async () => {
-      await prisma.activityLog.create({
-        data: {
-          userId: input.userId,
-          type,
-          mediaType: input.mediaType,
-          mediaId: input.mediaId,
-          status: input.status ?? null,
-          progress: input.progress ?? null,
-          progressVolumes: input.progressVolumes ?? null,
-          score: scoreInt ?? null,
-          title: input.title ?? null,
-          metadata: {
-            exactScore: input.score ?? null,
-            prevStatus: input.prevStatus ?? null,
-            prevProgress: input.prevProgress ?? null,
-            prevScore: input.prevScore ?? null,
-            coverImage: input.coverImage ?? null,
-            bannerImage: input.bannerImage ?? null,
-            format: input.format ?? null,
-          },
-          isPrivate: input.isPrivate ?? false,
-          isSpoiler: input.isSpoiler ?? false,
+      await prisma.orm.public.ActivityLog.create({
+        userId: input.userId,
+        type,
+        mediaType: input.mediaType,
+        mediaId: input.mediaId,
+        status: input.status ?? null,
+        progress: input.progress ?? null,
+        progressVolumes: input.progressVolumes ?? null,
+        score: scoreInt ?? null,
+        title: input.title ?? null,
+        metadata: {
+          exactScore: input.score ?? null,
+          prevStatus: input.prevStatus ?? null,
+          prevProgress: input.prevProgress ?? null,
+          prevScore: input.prevScore ?? null,
+          coverImage: input.coverImage ?? null,
+          bannerImage: input.bannerImage ?? null,
+          format: input.format ?? null,
         },
+        isPrivate: input.isPrivate ?? false,
+        isSpoiler: input.isSpoiler ?? false,
       })
     }, `MediaListActivity:${type}`)
   }
@@ -162,91 +160,61 @@ export class ActivityServ {
       if (!title) {
         try {
           if (input.favoriteType === 'ANIME') {
-            const m = await prisma.anime.findUnique({
-              where: { id: input.targetId },
-              select: { titlePrimary: true, titleSecondary: true, coverImage: true },
-            })
+            const m = await prisma.orm.public.Anime.where({ id: input.targetId }).first()
             if (m) {
               title = m.titlePrimary || m.titleSecondary
               coverImage = m.coverImage
             }
           } else if (input.favoriteType === 'MANGA') {
-            const m = await prisma.manga.findUnique({
-              where: { id: input.targetId },
-              select: { titlePrimary: true, titleSecondary: true, coverImage: true },
-            })
+            const m = await prisma.orm.public.Manga.where({ id: input.targetId }).first()
             if (m) {
               title = m.titlePrimary || m.titleSecondary
               coverImage = m.coverImage
             }
           } else if (input.favoriteType === 'MOVIE') {
-            const m = await prisma.movie.findUnique({
-              where: { id: input.targetId },
-              select: { titlePrimary: true, titleSecondary: true, coverImage: true },
-            })
+            const m = await prisma.orm.public.Movie.where({ id: input.targetId }).first()
             if (m) {
               title = m.titlePrimary || m.titleSecondary
               coverImage = m.coverImage
             }
           } else if (input.favoriteType === 'TV') {
-            const m = await prisma.tv.findUnique({
-              where: { id: input.targetId },
-              select: { titlePrimary: true, titleSecondary: true, coverImage: true },
-            })
+            const m = await prisma.orm.public.Tv.where({ id: input.targetId }).first()
             if (m) {
               title = m.titlePrimary || m.titleSecondary
               coverImage = m.coverImage
             }
           } else if (input.favoriteType === 'GAME') {
-            const m = await prisma.game.findUnique({
-              where: { id: input.targetId },
-              select: { titlePrimary: true, titleSecondary: true, coverImage: true },
-            })
+            const m = await prisma.orm.public.Game.where({ id: input.targetId }).first()
             if (m) {
               title = m.titlePrimary || m.titleSecondary
               coverImage = m.coverImage
             }
           } else if (input.favoriteType === 'BOOK') {
-            const m = await prisma.book.findUnique({
-              where: { id: input.targetId },
-              select: { titlePrimary: true, titleSecondary: true, coverImage: true },
-            })
+            const m = await prisma.orm.public.Book.where({ id: input.targetId }).first()
             if (m) {
               title = m.titlePrimary || m.titleSecondary
               coverImage = m.coverImage
             }
           } else if (input.favoriteType === 'OTHER') {
-            const o = await prisma.other.findUnique({
-              where: { id: input.targetId },
-              select: { titlePrimary: true, titleSecondary: true, coverImage: true },
-            })
+            const o = await prisma.orm.public.Other.where({ id: input.targetId }).first()
             if (o) {
               title = o.titlePrimary || o.titleSecondary
               coverImage = o.coverImage
             }
           } else if (input.favoriteType === 'CHARACTER') {
-            const c = await prisma.character.findUnique({
-              where: { id: input.targetId },
-              select: { namePrimary: true, image: true },
-            })
+            const c = await prisma.orm.public.Character.where({ id: input.targetId }).first()
             if (c) {
               title = c.namePrimary
               coverImage = c.image
             }
           } else if (input.favoriteType === 'PERSON') {
-            const p = await prisma.person.findUnique({
-              where: { id: input.targetId },
-              select: { namePrimary: true, image: true },
-            })
+            const p = await prisma.orm.public.Person.where({ id: input.targetId }).first()
             if (p) {
               title = p.namePrimary
               coverImage = p.image
             }
           } else if (input.favoriteType === 'STUDIO') {
-            const s = await prisma.studio.findUnique({
-              where: { id: input.targetId },
-              select: { name: true },
-            })
+            const s = await prisma.orm.public.Studio.where({ id: input.targetId }).first()
             if (s) {
               title = s.name
             }
@@ -258,21 +226,19 @@ export class ActivityServ {
         ? `${verb} ${title} ${isAdded ? 'to' : 'from'} favorites`
         : `${verb} ${input.favoriteType} #${input.targetId} ${isAdded ? 'to' : 'from'} favorites`
 
-      await prisma.activityLog.create({
-        data: {
-          userId: input.userId,
-          type: input.action,
-          mediaType,
-          mediaId: mediaType ? input.targetId : null,
-          title: displayTitle,
-          metadata: {
-            favoriteType: input.favoriteType,
-            targetId: input.targetId,
-            itemTitle: title ?? null,
-            coverImage: coverImage ?? null,
-          },
-          isPrivate: input.isPrivate ?? false,
+      await prisma.orm.public.ActivityLog.create({
+        userId: input.userId,
+        type: input.action,
+        mediaType,
+        mediaId: mediaType ? input.targetId : null,
+        title: displayTitle,
+        metadata: {
+          favoriteType: input.favoriteType,
+          targetId: input.targetId,
+          itemTitle: title ?? null,
+          coverImage: coverImage ?? null,
         },
+        isPrivate: input.isPrivate ?? false,
       })
     }, `FavoriteActivity:${input.action}`)
   }
@@ -282,19 +248,17 @@ export class ActivityServ {
    */
   public static recordFriendActivity(input: RecordFriendActivityInput): void {
     this.runNonBlocking(async () => {
-      await prisma.activityLog.create({
-        data: {
-          userId: input.userId,
-          type: 'FRIEND_ADDED',
-          title: `Became friends with ${input.friendDisplayName || input.friendUsername || 'a user'}`,
-          metadata: {
-            friendId: input.friendId,
-            friendUsername: input.friendUsername ?? null,
-            friendDisplayName: input.friendDisplayName ?? null,
-            friendAvatarUrl: input.friendAvatarUrl ?? null,
-          },
-          isPrivate: false,
+      await prisma.orm.public.ActivityLog.create({
+        userId: input.userId,
+        type: 'FRIEND_ADDED',
+        title: `Became friends with ${input.friendDisplayName || input.friendUsername || 'a user'}`,
+        metadata: {
+          friendId: input.friendId,
+          friendUsername: input.friendUsername ?? null,
+          friendDisplayName: input.friendDisplayName ?? null,
+          friendAvatarUrl: input.friendAvatarUrl ?? null,
         },
+        isPrivate: false,
       })
     }, 'FriendActivity:FRIEND_ADDED')
   }
@@ -304,14 +268,7 @@ export class ActivityServ {
    */
   public static async purgeOldActivities(daysToKeep = 30): Promise<number> {
     const cutoff = new Date(Date.now() - daysToKeep * 24 * 60 * 60 * 1000)
-    const result = await prisma.activityLog.deleteMany({
-      where: {
-        createdAt: {
-          lt: cutoff,
-        },
-      },
-    })
-    return result.count
+    return await prisma.orm.public.ActivityLog.where((a) => a.createdAt.lt(cutoff)).deleteAndCount()
   }
 
   /**

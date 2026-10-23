@@ -1,4 +1,4 @@
-import { prisma } from '@IRIS/database'
+import { prisma, or, toDate } from '@IRIS/database'
 import {
   SUPPORTED_SCOPES,
   parseScopes,
@@ -81,9 +81,7 @@ export abstract class CarinaOAuthServ {
   ) {
     const { client_id, redirect_uri, scope, state } = query
 
-    const client = await prisma.oAuthClient.findUnique({
-      where: { clientId: client_id },
-    })
+    const client = await prisma.orm.public.OAuthClient.where({ clientId: client_id }).first()
 
     if (!client) {
       throw new NotFound(`OAuth application '${client_id}' was not found.`)
@@ -132,9 +130,7 @@ export abstract class CarinaOAuthServ {
   ) {
     const { client_id, redirect_uri, scope, state, code_challenge, code_challenge_method } = body
 
-    const client = await prisma.oAuthClient.findUnique({
-      where: { clientId: client_id },
-    })
+    const client = await prisma.orm.public.OAuthClient.where({ clientId: client_id }).first()
 
     if (!client) {
       throw new NotFound(`OAuth application '${client_id}' was not found.`)
@@ -149,38 +145,36 @@ export abstract class CarinaOAuthServ {
     const requestedScopes = parseScopes(scope)
 
     // Record user consent for this client
-    await prisma.oAuthConsent.upsert({
-      where: {
-        userId_clientId: {
-          userId: sessionUser.id,
-          clientId: client.id,
-        },
-      },
-      update: {
+    const existingConsent = await prisma.orm.public.OAuthConsent.where({
+      userId: sessionUser.id,
+      clientId: client.id,
+    }).first()
+
+    if (existingConsent) {
+      await prisma.orm.public.OAuthConsent.where({ id: existingConsent.id }).update({
         scopes: requestedScopes,
-      },
-      create: {
+      })
+    } else {
+      await prisma.orm.public.OAuthConsent.create({
         userId: sessionUser.id,
         clientId: client.id,
         scopes: requestedScopes,
-      },
-    })
+      })
+    }
 
     // Generate single-use authorization code (10 minutes TTL)
     const authCode = generateSecureToken('iris_code_', 24)
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
 
-    await prisma.oAuthAuthorizationCode.create({
-      data: {
-        code: authCode,
-        clientId: client.id,
-        userId: sessionUser.id,
-        redirectUri: redirect_uri,
-        scopes: requestedScopes,
-        codeChallenge: code_challenge || null,
-        codeChallengeMethod: code_challenge_method || 'S256',
-        expiresAt,
-      },
+    await prisma.orm.public.OAuthAuthorizationCode.create({
+      code: authCode,
+      clientId: client.id,
+      userId: sessionUser.id,
+      redirectUri: redirect_uri,
+      scopes: requestedScopes,
+      codeChallenge: code_challenge || null,
+      codeChallengeMethod: code_challenge_method || 'S256',
+      expiresAt,
     })
 
     // Construct callback redirect URI
@@ -238,10 +232,10 @@ export abstract class CarinaOAuthServ {
         throw new BadRequest("Missing required 'code' parameter.")
       }
 
-      const authCode = await prisma.oAuthAuthorizationCode.findUnique({
-        where: { code },
-        include: { client: true, user: true },
-      })
+      const authCode = await prisma.orm.public.OAuthAuthorizationCode.where({ code })
+        .include('client')
+        .include('user')
+        .first()
 
       if (!authCode) {
         throw new BadRequest('Invalid or expired authorization code.')
@@ -249,14 +243,16 @@ export abstract class CarinaOAuthServ {
 
       // Replay detection: Revoke all tokens if code is presented more than once
       if (authCode.usedAt !== null) {
-        await prisma.oAuthAccessToken.updateMany({
-          where: { clientId: authCode.clientId, userId: authCode.userId },
-          data: { revokedAt: new Date() },
+        await prisma.orm.public.OAuthAccessToken.where({
+          clientId: authCode.clientId,
+          userId: authCode.userId,
+        }).updateAll({
+          revokedAt: new Date(),
         })
         throw new BadRequest('Authorization code already used. Potential replay detected.')
       }
 
-      if (authCode.expiresAt.getTime() < Date.now()) {
+      if (toDate(authCode.expiresAt).getTime() < Date.now()) {
         throw new BadRequest('Authorization code has expired.')
       }
 
@@ -284,9 +280,8 @@ export abstract class CarinaOAuthServ {
       }
 
       // Mark authorization code as used
-      await prisma.oAuthAuthorizationCode.update({
-        where: { id: authCode.id },
-        data: { usedAt: new Date() },
+      await prisma.orm.public.OAuthAuthorizationCode.where({ id: authCode.id }).update({
+        usedAt: new Date(),
       })
 
       // Issue Bearer Access Token (30 days) and Refresh Token (90 days)
@@ -296,23 +291,19 @@ export abstract class CarinaOAuthServ {
       const refreshExpiresAt = new Date(Date.now() + 90 * 86400 * 1000)
 
       await Promise.all([
-        prisma.oAuthAccessToken.create({
-          data: {
-            token: accessToken,
-            clientId: authCode.clientId,
-            userId: authCode.userId,
-            scopes: authCode.scopes,
-            expiresAt: accessExpiresAt,
-          },
+        prisma.orm.public.OAuthAccessToken.create({
+          token: accessToken,
+          clientId: authCode.clientId,
+          userId: authCode.userId,
+          scopes: authCode.scopes,
+          expiresAt: accessExpiresAt,
         }),
-        prisma.oAuthRefreshToken.create({
-          data: {
-            token: refreshToken,
-            clientId: authCode.clientId,
-            userId: authCode.userId,
-            scopes: authCode.scopes,
-            expiresAt: refreshExpiresAt,
-          },
+        prisma.orm.public.OAuthRefreshToken.create({
+          token: refreshToken,
+          clientId: authCode.clientId,
+          userId: authCode.userId,
+          scopes: authCode.scopes,
+          expiresAt: refreshExpiresAt,
         }),
       ])
 
@@ -334,12 +325,11 @@ export abstract class CarinaOAuthServ {
         throw new BadRequest("Missing 'refresh_token' parameter.")
       }
 
-      const tokenRecord = await prisma.oAuthRefreshToken.findUnique({
-        where: { token: refresh_token },
-        include: { client: true },
-      })
+      const tokenRecord = await prisma.orm.public.OAuthRefreshToken.where({ token: refresh_token })
+        .include('client')
+        .first()
 
-      if (!tokenRecord || tokenRecord.revokedAt || tokenRecord.expiresAt.getTime() < Date.now()) {
+      if (!tokenRecord || tokenRecord.revokedAt || toDate(tokenRecord.expiresAt).getTime() < Date.now()) {
         throw new BadRequest('Invalid, expired, or revoked refresh token.')
       }
 
@@ -349,29 +339,24 @@ export abstract class CarinaOAuthServ {
       const refreshExpiresAt = new Date(Date.now() + 90 * 86400 * 1000)
 
       // Rotate refresh token
-      await prisma.oAuthRefreshToken.update({
-        where: { id: tokenRecord.id },
-        data: { revokedAt: new Date() },
+      await prisma.orm.public.OAuthRefreshToken.where({ id: tokenRecord.id }).update({
+        revokedAt: new Date(),
       })
 
       await Promise.all([
-        prisma.oAuthAccessToken.create({
-          data: {
-            token: newAccessToken,
-            clientId: tokenRecord.clientId,
-            userId: tokenRecord.userId,
-            scopes: tokenRecord.scopes,
-            expiresAt: accessExpiresAt,
-          },
+        prisma.orm.public.OAuthAccessToken.create({
+          token: newAccessToken,
+          clientId: tokenRecord.clientId,
+          userId: tokenRecord.userId,
+          scopes: tokenRecord.scopes,
+          expiresAt: accessExpiresAt,
         }),
-        prisma.oAuthRefreshToken.create({
-          data: {
-            token: newRefreshToken,
-            clientId: tokenRecord.clientId,
-            userId: tokenRecord.userId,
-            scopes: tokenRecord.scopes,
-            expiresAt: refreshExpiresAt,
-          },
+        prisma.orm.public.OAuthRefreshToken.create({
+          token: newRefreshToken,
+          clientId: tokenRecord.clientId,
+          userId: tokenRecord.userId,
+          scopes: tokenRecord.scopes,
+          expiresAt: refreshExpiresAt,
         }),
       ])
 
@@ -392,9 +377,7 @@ export abstract class CarinaOAuthServ {
         throw new Unauthorized('Client ID and Client Secret are required.')
       }
 
-      const client = await prisma.oAuthClient.findUnique({
-        where: { clientId: effectiveClientId },
-      })
+      const client = await prisma.orm.public.OAuthClient.where({ clientId: effectiveClientId }).first()
 
       if (!client || !client.clientSecret || !verifyClientSecret(effectiveClientSecret, client.clientSecret)) {
         throw new Unauthorized('Invalid client credentials.')
@@ -404,14 +387,12 @@ export abstract class CarinaOAuthServ {
       const accessExpiresAt = new Date(Date.now() + 30 * 86400 * 1000)
       const scopes = parseScopes(body.scope)
 
-      await prisma.oAuthAccessToken.create({
-        data: {
-          token: accessToken,
-          clientId: client.id,
-          userId: client.userId,
-          scopes,
-          expiresAt: accessExpiresAt,
-        },
+      await prisma.orm.public.OAuthAccessToken.create({
+        token: accessToken,
+        clientId: client.id,
+        userId: client.userId,
+        scopes,
+        expiresAt: accessExpiresAt,
       })
 
       return {
@@ -429,15 +410,9 @@ export abstract class CarinaOAuthServ {
    * OIDC UserInfo endpoint: returns identity claims for the authenticated subject.
    */
   static async getUserinfo(sessionUser: SessionUser) {
-    const user = await prisma.user.findUnique({
-      where: { id: sessionUser.id },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        permissions: true,
-      },
-    })
+    const user = await prisma.orm.public.User.where({ id: sessionUser.id })
+      .select('id', 'username', 'email', 'permissions')
+      .first()
 
     if (!user) {
       throw new NotFound('User profile not found.')
@@ -450,7 +425,7 @@ export abstract class CarinaOAuthServ {
       name: user.username,
       email: user.email,
       email_verified: Boolean(user.email),
-      permissions: user.permissions,
+      permissions: [...user.permissions],
     }
   }
 
@@ -461,13 +436,11 @@ export abstract class CarinaOAuthServ {
     const { token } = body
     if (token) {
       await Promise.all([
-        prisma.oAuthAccessToken.updateMany({
-          where: { token },
-          data: { revokedAt: new Date() },
+        prisma.orm.public.OAuthAccessToken.where({ token }).updateAll({
+          revokedAt: new Date(),
         }),
-        prisma.oAuthRefreshToken.updateMany({
-          where: { token },
-          data: { revokedAt: new Date() },
+        prisma.orm.public.OAuthRefreshToken.where({ token }).updateAll({
+          revokedAt: new Date(),
         }),
       ])
     }
@@ -488,34 +461,32 @@ export abstract class CarinaOAuthServ {
     }
 
     // 1. Check access token
-    const accessToken = await prisma.oAuthAccessToken.findUnique({
-      where: { token },
-      include: { client: true },
-    })
+    const accessToken = await prisma.orm.public.OAuthAccessToken.where({ token })
+      .include('client')
+      .first()
 
-    if (accessToken && !accessToken.revokedAt && accessToken.expiresAt.getTime() > Date.now()) {
+    if (accessToken && !accessToken.revokedAt && toDate(accessToken.expiresAt).getTime() > Date.now()) {
       return {
         active: true,
         client_id: accessToken.client.clientId,
         sub: accessToken.userId,
         scope: accessToken.scopes.join(' '),
-        exp: Math.floor(accessToken.expiresAt.getTime() / 1000),
+        exp: Math.floor(toDate(accessToken.expiresAt).getTime() / 1000),
       }
     }
 
     // 2. Check refresh token
-    const refreshToken = await prisma.oAuthRefreshToken.findUnique({
-      where: { token },
-      include: { client: true },
-    })
+    const refreshToken = await prisma.orm.public.OAuthRefreshToken.where({ token })
+      .include('client')
+      .first()
 
-    if (refreshToken && !refreshToken.revokedAt && refreshToken.expiresAt.getTime() > Date.now()) {
+    if (refreshToken && !refreshToken.revokedAt && toDate(refreshToken.expiresAt).getTime() > Date.now()) {
       return {
         active: true,
         client_id: refreshToken.client.clientId,
         sub: refreshToken.userId,
         scope: refreshToken.scopes.join(' '),
-        exp: Math.floor(refreshToken.expiresAt.getTime() / 1000),
+        exp: Math.floor(toDate(refreshToken.expiresAt).getTime() / 1000),
       }
     }
 
@@ -532,7 +503,7 @@ export abstract class CarinaOAuthServ {
     let ownerUserId = sessionUser?.id
 
     if (!ownerUserId) {
-      const firstUser = await prisma.user.findFirst({ select: { id: true } })
+      const firstUser = await prisma.orm.public.User.select('id').first()
       if (!firstUser) {
         throw new BadRequest('No user accounts available to associate client registration.')
       }
@@ -551,26 +522,24 @@ export abstract class CarinaOAuthServ {
 
     const scopes = parseScopes(body.scope)
 
-    const client = await prisma.oAuthClient.create({
-      data: {
-        clientId,
-        clientSecret: hashedSecret,
-        name: body.client_name.trim(),
-        redirectUris: body.redirect_uris,
-        logoUrl: body.logo_uri || null,
-        websiteUrl: body.client_uri || null,
-        allowedScopes: scopes,
-        isPublic,
-        userId: ownerUserId,
-      },
+    const client = await prisma.orm.public.OAuthClient.create({
+      clientId,
+      clientSecret: hashedSecret,
+      name: body.client_name.trim(),
+      redirectUris: body.redirect_uris,
+      logoUrl: body.logo_uri || null,
+      websiteUrl: body.client_uri || null,
+      allowedScopes: scopes,
+      isPublic,
+      userId: ownerUserId,
     })
 
     return {
       client_id: client.clientId,
       client_secret: rawSecret,
       client_name: client.name,
-      redirect_uris: client.redirectUris,
-      scopes: client.allowedScopes,
+      redirect_uris: [...client.redirectUris],
+      scopes: [...client.allowedScopes],
     }
   }
 
@@ -579,10 +548,9 @@ export abstract class CarinaOAuthServ {
   // ===========================================================================
 
   static async listApps(userId: string) {
-    const clients = await prisma.oAuthClient.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    })
+    const clients = await prisma.orm.public.OAuthClient.where({ userId })
+      .orderBy((c) => c.createdAt.desc())
+      .all()
 
     return {
       success: true,
@@ -593,10 +561,10 @@ export abstract class CarinaOAuthServ {
         description: c.description,
         logoUrl: c.logoUrl,
         websiteUrl: c.websiteUrl,
-        redirectUris: c.redirectUris,
+        redirectUris: [...c.redirectUris],
         isPublic: c.isPublic,
         isTrusted: c.isTrusted,
-        createdAt: c.createdAt.toISOString(),
+        createdAt: toDate(c.createdAt).toISOString(),
       })),
     }
   }
@@ -615,19 +583,17 @@ export abstract class CarinaOAuthServ {
       hashedSecret = hashClientSecret(rawSecret)
     }
 
-    const client = await prisma.oAuthClient.create({
-      data: {
-        clientId,
-        clientSecret: hashedSecret,
-        name: body.name.trim(),
-        description: body.description?.trim() || null,
-        redirectUris: body.redirectUris,
-        logoUrl: body.logoUrl?.trim() || null,
-        websiteUrl: body.websiteUrl?.trim() || null,
-        allowedScopes: [...SUPPORTED_SCOPES],
-        isPublic,
-        userId,
-      },
+    const client = await prisma.orm.public.OAuthClient.create({
+      clientId,
+      clientSecret: hashedSecret,
+      name: body.name.trim(),
+      description: body.description?.trim() || null,
+      redirectUris: body.redirectUris,
+      logoUrl: body.logoUrl?.trim() || null,
+      websiteUrl: body.websiteUrl?.trim() || null,
+      allowedScopes: [...SUPPORTED_SCOPES],
+      isPublic,
+      userId,
     })
 
     return {
@@ -640,21 +606,18 @@ export abstract class CarinaOAuthServ {
         description: client.description,
         logoUrl: client.logoUrl,
         websiteUrl: client.websiteUrl,
-        redirectUris: client.redirectUris,
+        redirectUris: [...client.redirectUris],
         isPublic: client.isPublic,
         isTrusted: client.isTrusted,
-        createdAt: client.createdAt.toISOString(),
+        createdAt: toDate(client.createdAt).toISOString(),
       },
     }
   }
 
   static async getApp(userId: string, idOrClientId: string) {
-    const client = await prisma.oAuthClient.findFirst({
-      where: {
-        OR: [{ id: idOrClientId }, { clientId: idOrClientId }],
-        userId,
-      },
-    })
+    const client = await prisma.orm.public.OAuthClient.where({ userId })
+      .where((c) => or(c.id.eq(idOrClientId), c.clientId.eq(idOrClientId)))
+      .first()
 
     if (!client) {
       throw new NotFound(`OAuth application '${idOrClientId}' was not found.`)
@@ -669,11 +632,11 @@ export abstract class CarinaOAuthServ {
         description: client.description,
         logoUrl: client.logoUrl,
         websiteUrl: client.websiteUrl,
-        redirectUris: client.redirectUris,
+        redirectUris: [...client.redirectUris],
         isPublic: client.isPublic,
         isTrusted: client.isTrusted,
-        createdAt: client.createdAt.toISOString(),
-        updatedAt: client.updatedAt.toISOString(),
+        createdAt: toDate(client.createdAt).toISOString(),
+        updatedAt: toDate(client.updatedAt).toISOString(),
       },
     }
   }
@@ -683,28 +646,26 @@ export abstract class CarinaOAuthServ {
     idOrClientId: string,
     body: CarinaOAuthModel['updateAppBody']
   ) {
-    const client = await prisma.oAuthClient.findFirst({
-      where: {
-        OR: [{ id: idOrClientId }, { clientId: idOrClientId }],
-        userId,
-      },
-    })
+    const client = await prisma.orm.public.OAuthClient.where({ userId })
+      .where((c) => or(c.id.eq(idOrClientId), c.clientId.eq(idOrClientId)))
+      .first()
 
     if (!client) {
       throw new NotFound(`OAuth application '${idOrClientId}' was not found.`)
     }
 
-    const updated = await prisma.oAuthClient.update({
-      where: { id: client.id },
-      data: {
-        ...(body.name !== undefined ? { name: body.name.trim() } : {}),
-        ...(body.description !== undefined ? { description: body.description.trim() || null } : {}),
-        ...(body.redirectUris !== undefined ? { redirectUris: body.redirectUris } : {}),
-        ...(body.logoUrl !== undefined ? { logoUrl: body.logoUrl.trim() || null } : {}),
-        ...(body.websiteUrl !== undefined ? { websiteUrl: body.websiteUrl.trim() || null } : {}),
-        ...(body.isPublic !== undefined ? { isPublic: body.isPublic } : {}),
-      },
+    const updated = await prisma.orm.public.OAuthClient.where({ id: client.id }).update({
+      ...(body.name !== undefined ? { name: body.name.trim() } : {}),
+      ...(body.description !== undefined ? { description: body.description.trim() || null } : {}),
+      ...(body.redirectUris !== undefined ? { redirectUris: body.redirectUris } : {}),
+      ...(body.logoUrl !== undefined ? { logoUrl: body.logoUrl.trim() || null } : {}),
+      ...(body.websiteUrl !== undefined ? { websiteUrl: body.websiteUrl.trim() || null } : {}),
+      ...(body.isPublic !== undefined ? { isPublic: body.isPublic } : {}),
     })
+
+    if (!updated) {
+      throw new NotFound(`OAuth application '${idOrClientId}' was not found.`)
+    }
 
     return {
       success: true,
@@ -715,30 +676,25 @@ export abstract class CarinaOAuthServ {
         description: updated.description,
         logoUrl: updated.logoUrl,
         websiteUrl: updated.websiteUrl,
-        redirectUris: updated.redirectUris,
+        redirectUris: [...updated.redirectUris],
         isPublic: updated.isPublic,
         isTrusted: updated.isTrusted,
-        createdAt: updated.createdAt.toISOString(),
-        updatedAt: updated.updatedAt.toISOString(),
+        createdAt: toDate(updated.createdAt).toISOString(),
+        updatedAt: toDate(updated.updatedAt).toISOString(),
       },
     }
   }
 
   static async deleteApp(userId: string, idOrClientId: string) {
-    const client = await prisma.oAuthClient.findFirst({
-      where: {
-        OR: [{ id: idOrClientId }, { clientId: idOrClientId }],
-        userId,
-      },
-    })
+    const client = await prisma.orm.public.OAuthClient.where({ userId })
+      .where((c) => or(c.id.eq(idOrClientId), c.clientId.eq(idOrClientId)))
+      .first()
 
     if (!client) {
       throw new NotFound(`OAuth application '${idOrClientId}' was not found.`)
     }
 
-    await prisma.oAuthClient.delete({
-      where: { id: client.id },
-    })
+    await prisma.orm.public.OAuthClient.where({ id: client.id }).delete()
 
     return {
       success: true,
@@ -747,12 +703,9 @@ export abstract class CarinaOAuthServ {
   }
 
   static async regenerateSecret(userId: string, idOrClientId: string) {
-    const client = await prisma.oAuthClient.findFirst({
-      where: {
-        OR: [{ id: idOrClientId }, { clientId: idOrClientId }],
-        userId,
-      },
-    })
+    const client = await prisma.orm.public.OAuthClient.where({ userId })
+      .where((c) => or(c.id.eq(idOrClientId), c.clientId.eq(idOrClientId)))
+      .first()
 
     if (!client) {
       throw new NotFound(`OAuth application '${idOrClientId}' was not found.`)
@@ -761,9 +714,8 @@ export abstract class CarinaOAuthServ {
     const newSecret = generateClientSecret()
     const hashed = hashClientSecret(newSecret)
 
-    await prisma.oAuthClient.update({
-      where: { id: client.id },
-      data: { clientSecret: hashed },
+    await prisma.orm.public.OAuthClient.where({ id: client.id }).update({
+      clientSecret: hashed,
     })
 
     return {
@@ -777,11 +729,10 @@ export abstract class CarinaOAuthServ {
   // ===========================================================================
 
   static async listAuthorizations(userId: string) {
-    const consents = await prisma.oAuthConsent.findMany({
-      where: { userId },
-      include: { client: true },
-      orderBy: { createdAt: 'desc' },
-    })
+    const consents = await prisma.orm.public.OAuthConsent.where({ userId })
+      .include('client')
+      .orderBy((c) => c.createdAt.desc())
+      .all()
 
     return {
       success: true,
@@ -791,39 +742,36 @@ export abstract class CarinaOAuthServ {
         appName: c.client.name,
         appLogo: c.client.logoUrl,
         websiteUrl: c.client.websiteUrl,
-        scopes: c.scopes,
-        authorizedAt: c.createdAt.toISOString(),
+        scopes: [...c.scopes],
+        authorizedAt: toDate(c.createdAt).toISOString(),
       })),
     }
   }
 
   static async revokeAuthorization(userId: string, idOrClientId: string) {
-    const consent = await prisma.oAuthConsent.findFirst({
-      where: {
-        userId,
-        OR: [
-          { id: idOrClientId },
-          { client: { clientId: idOrClientId } },
-          { clientId: idOrClientId },
-        ],
-      },
-    })
+    const targetClient = await prisma.orm.public.OAuthClient.where(
+      (c) => or(c.id.eq(idOrClientId), c.clientId.eq(idOrClientId))
+    ).first()
+
+    const consent = await prisma.orm.public.OAuthConsent.where({ userId })
+      .where((c) =>
+        targetClient
+          ? or(c.id.eq(idOrClientId), c.clientId.eq(targetClient.id))
+          : c.id.eq(idOrClientId)
+      )
+      .first()
 
     if (!consent) {
       throw new NotFound('User authorization grant not found.')
     }
 
     await Promise.all([
-      prisma.oAuthConsent.delete({
-        where: { id: consent.id },
+      prisma.orm.public.OAuthConsent.where({ id: consent.id }).delete(),
+      prisma.orm.public.OAuthAccessToken.where({ userId, clientId: consent.clientId }).updateAll({
+        revokedAt: new Date(),
       }),
-      prisma.oAuthAccessToken.updateMany({
-        where: { userId, clientId: consent.clientId },
-        data: { revokedAt: new Date() },
-      }),
-      prisma.oAuthRefreshToken.updateMany({
-        where: { userId, clientId: consent.clientId },
-        data: { revokedAt: new Date() },
+      prisma.orm.public.OAuthRefreshToken.where({ userId, clientId: consent.clientId }).updateAll({
+        revokedAt: new Date(),
       }),
     ])
 
