@@ -35,15 +35,17 @@ declare module "react-aria-components" {
   }
 }
 
-// Suppress false-positive React 19 / Next.js 16 script tag warning emitted by next-themes SSR inline script
+// Suppress false-positive React 19 / Next.js 16 warnings (script tag emitted by next-themes SSR inline script and extension attribute injection)
 if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
   const origError = console.error
   console.error = (...args: unknown[]) => {
+    const firstArg = typeof args[0] === "string" ? args[0] : ""
     if (
-      typeof args[0] === "string" &&
-      args[0].includes(
+      firstArg.includes(
         "Encountered a script tag while rendering React component"
-      )
+      ) ||
+      firstArg.includes("data-akaromi-attached") ||
+      firstArg.includes("akaromi")
     ) {
       return
     }

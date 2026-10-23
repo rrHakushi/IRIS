@@ -109,6 +109,7 @@ export function LoginMfa({
                 required
                 maxLength={6}
                 disabled={loading}
+                suppressHydrationWarning
                 value={mfaCode}
                 onChange={(e) =>
                   setMfaCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))
@@ -141,6 +142,7 @@ export function LoginMfa({
                 required
                 maxLength={6}
                 disabled={loading}
+                suppressHydrationWarning
                 value={mfaCode}
                 onChange={(e) =>
                   setMfaCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))
@@ -188,6 +190,7 @@ export function LoginMfa({
                 required
                 maxLength={10}
                 disabled={loading}
+                suppressHydrationWarning
                 value={mfaCode}
                 onChange={(e) =>
                   setMfaCode(e.target.value.trim().toUpperCase())
