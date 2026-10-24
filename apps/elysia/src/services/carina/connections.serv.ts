@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 import {
   prisma,
   and,
@@ -23,6 +24,29 @@ import { NotFound, BadRequest } from '../../lib/errors'
 import { BorealisListsServ } from '../borealis/lists.serv'
 
 export class CarinaConnectionsServ {
+  public static readonly REGISTERED_PROVIDERS: readonly string[] = [
+    'ANILIST',
+    'MAL',
+    'SIMKL',
+    'BANGUMI',
+    'STEAM',
+    'RIOT_GAMES',
+    'RADARR',
+    'SONARR',
+    'READARR',
+    'LIDARR',
+    'JELLYFIN',
+    'PLEX',
+    'DEEZER',
+    'LASTFM',
+    'CUSTOM',
+    'IRIS',
+    'HIKKA',
+    'MANGAUPDATES',
+    'MANGABAKA',
+    'TRAKT',
+  ]
+
   /**
    * Helper to format a Prisma connection record for API responses (safely omitting raw tokens).
    */
@@ -360,6 +384,10 @@ export class CarinaConnectionsServ {
       'LASTFM',
       'CUSTOM',
       'IRIS',
+      'HIKKA',
+      'MANGAUPDATES',
+      'MANGABAKA',
+      'TRAKT',
     ]
 
     if (registeredProviders.includes(normalized)) {
@@ -382,15 +410,24 @@ export class CarinaConnectionsServ {
       throw new BadRequest(`Provider ${provider} does not support OAuth authentication`)
     }
 
+    const apiBaseUrl =
+      Bun.env.API_BASE_URL ||
+      Bun.env.NEXT_PUBLIC_API_URL ||
+      'http://localhost:4000'
+
     const redirectUri =
       query?.redirectUri?.trim() ||
       Bun.env.CONNECTIONS_REDIRECT_URI ||
-      'http://localhost:4000/carina/connections/callback'
+      `${apiBaseUrl}/carina/connections/${provider.toLowerCase()}/callback`
+
+    // Generate PKCE code verifier (RFC 7636) for providers that support PKCE
+    const codeVerifier = crypto.randomBytes(32).toString('base64url')
 
     const stateToken = createOAuthStateToken({
       userId,
       provider,
       redirectUri,
+      codeVerifier,
       hostUrl: query?.hostUrl?.trim(),
       returnTo: query?.returnTo?.trim(),
     })
@@ -398,6 +435,7 @@ export class CarinaConnectionsServ {
     const authResult = await adapter.getAuthUrl({
       state: stateToken,
       redirectUri,
+      codeVerifier,
     })
 
     return {
@@ -419,33 +457,96 @@ export class CarinaConnectionsServ {
       state?: string
       error?: string
       error_description?: string
+      request_reference?: string
+      reference?: string
     }
   ) {
     if (query.error) {
       throw new BadRequest(query.error_description || query.error)
     }
 
-    if (!query.code || !query.state) {
+    const authCode = query.code || query.request_reference || query.reference
+
+    if (!authCode) {
       throw new BadRequest('Missing required OAuth code or state parameter')
     }
 
-    const statePayload = verifyOAuthStateToken(query.state)
-    if (!statePayload) {
-      throw new BadRequest('Invalid or expired OAuth state token')
+    const apiBaseUrl =
+      Bun.env.API_BASE_URL ||
+      Bun.env.NEXT_PUBLIC_API_URL ||
+      'http://localhost:4000'
+
+    let provider: ConnectionProvider | null = null
+    let redirectUri: string
+    let codeVerifier: string | undefined
+    let hostUrl: string | undefined
+
+    if (query.state) {
+      const statePayload = verifyOAuthStateToken(query.state)
+      if (!statePayload) {
+        throw new BadRequest('Invalid or expired OAuth state token')
+      }
+
+      if (statePayload.userId !== userId) {
+        throw new BadRequest('OAuth state user mismatch')
+      }
+
+      provider = statePayload.provider
+      redirectUri = statePayload.redirectUri
+      codeVerifier = statePayload.codeVerifier
+      hostUrl = statePayload.hostUrl
+    } else {
+      // Some providers (like Hikka) do not return the state parameter in the callback redirect.
+      // In this case, resolve the provider directly from connectionIdOrProvider.
+      const normalized = connectionIdOrProvider.trim().toUpperCase()
+      const registeredProviders: readonly string[] = [
+        'ANILIST',
+        'MAL',
+        'SIMKL',
+        'BANGUMI',
+        'STEAM',
+        'RIOT_GAMES',
+        'RADARR',
+        'SONARR',
+        'READARR',
+        'LIDARR',
+        'JELLYFIN',
+        'PLEX',
+        'DEEZER',
+        'LASTFM',
+        'CUSTOM',
+        'IRIS',
+        'HIKKA',
+        'MANGAUPDATES',
+        'MANGABAKA',
+        'TRAKT',
+      ]
+
+      if (registeredProviders.includes(normalized)) {
+        provider = normalized as ConnectionProvider
+      } else {
+        const existing = await prisma.orm.public.Connection.where((c) =>
+          c.id.eq(connectionIdOrProvider.trim())
+        ).first()
+        if (existing && existing.userId === userId) {
+          provider = existing.provider
+        }
+      }
+
+      if (!provider) {
+        throw new BadRequest('Missing OAuth state parameter and provider could not be resolved')
+      }
+
+      redirectUri = `${apiBaseUrl}/carina/connections/${provider.toLowerCase()}/callback`
     }
 
-    if (statePayload.userId !== userId) {
-      throw new BadRequest('OAuth state user mismatch')
-    }
-
-    const provider = statePayload.provider
     const adapter = getConnectionAdapter(provider)
 
     const tokens: OAuthTokens = await adapter.exchangeAuthCode(
-      query.code,
-      statePayload.redirectUri,
-      statePayload.codeVerifier,
-      { hostUrl: statePayload.hostUrl }
+      authCode,
+      redirectUri,
+      codeVerifier,
+      { hostUrl }
     )
 
     const profile = await adapter.getProfile(tokens)

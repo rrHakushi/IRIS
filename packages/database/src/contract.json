@@ -641,6 +641,22 @@
               {
                 "name": "IRIS",
                 "value": "IRIS"
+              },
+              {
+                "name": "HIKKA",
+                "value": "HIKKA"
+              },
+              {
+                "name": "MANGAUPDATES",
+                "value": "MANGAUPDATES"
+              },
+              {
+                "name": "MANGABAKA",
+                "value": "MANGABAKA"
+              },
+              {
+                "name": "TRAKT",
+                "value": "TRAKT"
               }
             ]
           },
@@ -21168,8 +21184,8 @@
                   "prefix": "Connection_authType_check"
                 },
                 {
-                  "expression": "\"provider\" IN ('ANILIST', 'MAL', 'SIMKL', 'BANGUMI', 'STEAM', 'RIOT_GAMES', 'RADARR', 'SONARR', 'READARR', 'LIDARR', 'JELLYFIN', 'PLEX', 'DEEZER', 'LASTFM', 'CUSTOM', 'IRIS')",
-                  "name": "Connection_provider_check_43600405",
+                  "expression": "\"provider\" IN ('ANILIST', 'MAL', 'SIMKL', 'BANGUMI', 'STEAM', 'RIOT_GAMES', 'RADARR', 'SONARR', 'READARR', 'LIDARR', 'JELLYFIN', 'PLEX', 'DEEZER', 'LASTFM', 'CUSTOM', 'IRIS', 'HIKKA', 'MANGAUPDATES', 'MANGABAKA', 'TRAKT')",
+                  "name": "Connection_provider_check_537f4a65",
                   "prefix": "Connection_provider_check"
                 },
                 {
@@ -32650,7 +32666,11 @@
                 "DEEZER",
                 "LASTFM",
                 "CUSTOM",
-                "IRIS"
+                "IRIS",
+                "HIKKA",
+                "MANGAUPDATES",
+                "MANGABAKA",
+                "TRAKT"
               ]
             },
             "ConnectionStatus": {
@@ -32868,7 +32888,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "a6b34d37c099ae394f0d4378b33f4e892b10c4dc8dd6a87619216caca8b1cbec"
+    "storageHash": "dfda105c1a90ebc11f3d640b7a221d71fab6104ff155adeec20d0e44bb0e3194"
   },
   "execution": {
     "executionHash": "b7640b0fcc81eff6f25706df08d8b4535a1b5e11bd21a8168ea15ca60dc18af0",

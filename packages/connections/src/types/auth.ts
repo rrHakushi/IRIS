@@ -14,7 +14,11 @@ export type ConnectionProvider =
   | "DEEZER"
   | "LASTFM"
   | "CUSTOM"
-  | "IRIS";
+  | "IRIS"
+  | "HIKKA"
+  | "MANGAUPDATES"
+  | "MANGABAKA"
+  | "TRAKT";
 
 export type ConnectionAuthType =
   | "OAUTH2"

@@ -92,3 +92,5 @@ TODO AFTER UPDATNG TO LATEST
   run update-description-urls
   run db:prepare-prisma8
   run db:unify-status
+
+  update oauth callback urls https://[url]/carina/connections/[provider]/callback

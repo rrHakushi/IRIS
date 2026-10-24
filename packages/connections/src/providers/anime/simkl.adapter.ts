@@ -165,6 +165,10 @@ export class SimklAdapter extends BaseConnectionAdapter {
     credentials?: ConnectionCredentials,
     options?: SearchOptions
   ): Promise<MediaSearchResult[]> {
+    if (options?.type === "MANGA" || options?.type === "BOOK" || options?.type === "GAME") {
+      return []
+    }
+
     const clientId = this.getClientId()
     const searchCategory =
       options?.type === "MOVIE"
@@ -426,6 +430,10 @@ export class SimklAdapter extends BaseConnectionAdapter {
         "Missing SIMKL_CLIENT_ID configuration",
         this.provider
       )
+    }
+
+    if (payload.mediaType === "MANGA" || payload.mediaType === "BOOK" || payload.mediaType === "GAME") {
+      return false
     }
 
     const providerId = Number(payload.mediaId)

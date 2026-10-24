@@ -24,7 +24,7 @@ const logger = new LogFactory('Worker:ConnectionSync')
 export interface ConnectionSyncJobData {
   userId: string
   provider: ConnectionProvider
-  providerMediaId: number
+  providerMediaId: number | string
   mediaType: MediaType
   mediaId: number
   mediaTitle: string
@@ -48,6 +48,10 @@ export const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   MAL: 'MyAnimeList',
   SIMKL: 'Simkl',
   BANGUMI: 'Bangumi',
+  HIKKA: 'Hikka',
+  MANGAUPDATES: 'MangaUpdates',
+  MANGABAKA: 'MangaBaka',
+  TRAKT: 'Trakt',
 }
 
 /**
@@ -61,6 +65,10 @@ export const PROVIDER_WORKER_CONFIGS: Record<
   MAL: { concurrency: 1, max: 30, duration: 60000 },
   SIMKL: { concurrency: 2, max: 40, duration: 60000 },
   BANGUMI: { concurrency: 3, max: 60, duration: 60000 },
+  HIKKA: { concurrency: 2, max: 30, duration: 60000 },
+  MANGAUPDATES: { concurrency: 1, max: 20, duration: 60000 },
+  MANGABAKA: { concurrency: 2, max: 40, duration: 60000 },
+  TRAKT: { concurrency: 2, max: 40, duration: 60000 },
 }
 
 const workerInstances = new Map<ConnectionProvider, Worker<ConnectionSyncJobData>>()
@@ -207,6 +215,19 @@ export async function processConnectionSyncJob(
       throw firstErr
     }
 
+    const is404 =
+      firstErr?.statusCode === 404 ||
+      /status 404|404 (page not found|not found)|"status":\s*404/i.test(firstErr?.message || '')
+
+    if (is404) {
+      logger.warn(
+        `[Worker:${provider}] Media #${providerMediaId} not found (404) on ${provider}. Skipping retries.`
+      )
+      throw new UnrecoverableError(
+        `Media not found (404) on ${provider}: ${firstErr?.message || firstErr}`
+      )
+    }
+
     const isAuthErr =
       firstErr instanceof ConnectionAuthError ||
       firstErr?.statusCode === 401 ||
@@ -271,17 +292,35 @@ export async function handleJobFailure(
     err?.statusCode === 429 ||
     /rate limit|too many requests/i.test(err?.message || '')
 
+  const is404 =
+    err?.statusCode === 404 ||
+    /status 404|404 (page not found|not found)|"status":\s*404/i.test(err?.message || '')
+
   const isUnrecoverable =
     err instanceof UnrecoverableError ||
     err?.name === 'UnrecoverableError' ||
+    is404 ||
     !isRateLimit
+
+  // Discard job to ensure BullMQ does not attempt retries on 404 or unrecoverable errors
+  if (isUnrecoverable && typeof (job as any).discard === 'function') {
+    try {
+      await (job as any).discard()
+    } catch {}
+  }
 
   const isExhausted = job.attemptsMade >= maxAttempts
   const isTerminal = isUnrecoverable || isExhausted
 
-  logger.warn(
-    `${c.red(c.bold('❌ [Job Attempt Failed]'))}: [${provider}] Attempt ${job.attemptsMade}/${maxAttempts} failed: ${err?.message || err}`
-  )
+  if (is404) {
+    logger.warn(
+      `${c.red(c.bold('❌ [Job Dropped (404 Not Found)]'))}: [${provider}] "${job.data.mediaTitle}" was not found on ${provider}. Discarding job without retrying.`
+    )
+  } else {
+    logger.warn(
+      `${c.red(c.bold('❌ [Job Attempt Failed]'))}: [${provider}] Attempt ${job.attemptsMade}/${maxAttempts} failed: ${err?.message || err}`
+    )
+  }
 
   // Send failure notification & persist error message when failure is terminal
   if (isTerminal) {
@@ -407,7 +446,16 @@ export function getConnectionWorker(
  * Initializes all provider workers simultaneously.
  */
 export function initConnectionWorkers(): void {
-  const providers: ConnectionProvider[] = ['ANILIST', 'MAL', 'SIMKL', 'BANGUMI']
+  const providers: ConnectionProvider[] = [
+    'ANILIST',
+    'MAL',
+    'SIMKL',
+    'BANGUMI',
+    'HIKKA',
+    'MANGAUPDATES',
+    'MANGABAKA',
+    'TRAKT',
+  ]
   for (const provider of providers) {
     getConnectionWorker(provider)
   }

@@ -154,6 +154,26 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
         delay: 60000,
       })
     })
+
+    it('enqueues jobs with string slug IDs for providers like HIKKA', async () => {
+      await ConnectionSyncQueueManager.enqueueSyncJobs({
+        userId: 'user-slug-test',
+        mediaType: 'MANGA',
+        mediaId: 153,
+        mediaTitle: 'Kakegurui',
+        entry: {
+          status: 'READING',
+          progress: 5,
+        },
+        connections: {
+          hikka: { id: 'kakegurui-ffec17' },
+        },
+      })
+
+      expect(enqueuedJobs.length).toBe(1)
+      expect(enqueuedJobs[0]!.queueProvider).toBe('HIKKA')
+      expect(enqueuedJobs[0]!.data.providerMediaId).toBe('kakegurui-ffec17')
+    })
   })
 
   describe('3. Worker Rate Limiter & Concurrency Configurations', () => {
@@ -392,6 +412,40 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
       expect(notifiedPayload.content.body).toContain('Chainsaw Man')
       expect(notifiedPayload.content.body).toContain('AniList GraphQL downstream 500 server error')
       expect(updatedErrorMsg).toContain('AniList GraphQL downstream 500 server error')
+    })
+
+    it('does NOT retry on 404 errors and discards job immediately', async () => {
+      let discarded = false
+      let notified = false
+
+      ;(CarinaNotificationsServ.createNotification as any) = async () => {
+        notified = true
+        return { id: 'notif-404' }
+      }
+
+      const mockJob: any = {
+        data: {
+          userId: 'user-404',
+          provider: 'BANGUMI',
+          providerMediaId: 108783,
+          mediaType: 'MANGA',
+          mediaId: 153,
+          mediaTitle: 'Kakegurui',
+          payload: { status: 'READING', progress: 1 },
+        },
+        opts: { attempts: 4 },
+        attemptsMade: 1,
+        discard: async () => {
+          discarded = true
+        },
+      }
+
+      const err = new Error('[BANGUMI] Request failed with status 404: Page Not Found')
+
+      await handleJobFailure('BANGUMI', mockJob, err)
+
+      expect(discarded).toBe(true)
+      expect(notified).toBe(true)
     })
 
     it('does NOT dispatch notification on 429 rate limit attempts prior to exhaustion', async () => {

@@ -17,6 +17,10 @@ enum ConnectionProvider {
     LASTFM
     CUSTOM
     IRIS
+    HIKKA
+    MANGAUPDATES
+    MANGABAKA
+    TRAKT
 }
 
 enum ConnectionAuthType {

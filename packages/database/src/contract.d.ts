@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'a6b34d37c099ae394f0d4378b33f4e892b10c4dc8dd6a87619216caca8b1cbec'>;
+  StorageHashBase<'dfda105c1a90ebc11f3d640b7a221d71fab6104ff155adeec20d0e44bb0e3194'>;
 export type ExecutionHash =
   ExecutionHashBase<'b7640b0fcc81eff6f25706df08d8b4535a1b5e11bd21a8168ea15ca60dc18af0'>;
 export type ProfileHash =
@@ -409,7 +409,11 @@ type FieldTypeOverrides = {
             | 'DEEZER'
             | 'LASTFM'
             | 'CUSTOM'
-            | 'IRIS';
+            | 'IRIS'
+            | 'HIKKA'
+            | 'MANGAUPDATES'
+            | 'MANGABAKA'
+            | 'TRAKT';
           readonly input:
             | 'ANILIST'
             | 'MAL'
@@ -426,7 +430,11 @@ type FieldTypeOverrides = {
             | 'DEEZER'
             | 'LASTFM'
             | 'CUSTOM'
-            | 'IRIS';
+            | 'IRIS'
+            | 'HIKKA'
+            | 'MANGAUPDATES'
+            | 'MANGABAKA'
+            | 'TRAKT';
         };
         readonly status: {
           readonly output: 'CONNECTED' | 'EXPIRED' | 'REVOKED' | 'ERROR' | 'DISCONNECTED';
@@ -1163,7 +1171,11 @@ type ColumnTypeOverrides = {
           | 'DEEZER'
           | 'LASTFM'
           | 'CUSTOM'
-          | 'IRIS';
+          | 'IRIS'
+          | 'HIKKA'
+          | 'MANGAUPDATES'
+          | 'MANGABAKA'
+          | 'TRAKT';
         readonly input:
           | 'ANILIST'
           | 'MAL'
@@ -1180,7 +1192,11 @@ type ColumnTypeOverrides = {
           | 'DEEZER'
           | 'LASTFM'
           | 'CUSTOM'
-          | 'IRIS';
+          | 'IRIS'
+          | 'HIKKA'
+          | 'MANGAUPDATES'
+          | 'MANGABAKA'
+          | 'TRAKT';
       };
       readonly status: {
         readonly output: 'CONNECTED' | 'EXPIRED' | 'REVOKED' | 'ERROR' | 'DISCONNECTED';
@@ -15554,6 +15570,10 @@ type ContractBase = Omit<
                 'LASTFM',
                 'CUSTOM',
                 'IRIS',
+                'HIKKA',
+                'MANGAUPDATES',
+                'MANGABAKA',
+                'TRAKT',
               ];
             };
             readonly ConnectionStatus: {
@@ -26231,6 +26251,10 @@ type ContractBase = Omit<
               { readonly name: 'LASTFM'; readonly value: 'LASTFM' },
               { readonly name: 'CUSTOM'; readonly value: 'CUSTOM' },
               { readonly name: 'IRIS'; readonly value: 'IRIS' },
+              { readonly name: 'HIKKA'; readonly value: 'HIKKA' },
+              { readonly name: 'MANGAUPDATES'; readonly value: 'MANGAUPDATES' },
+              { readonly name: 'MANGABAKA'; readonly value: 'MANGABAKA' },
+              { readonly name: 'TRAKT'; readonly value: 'TRAKT' },
             ];
           };
           readonly ConnectionStatus: {
@@ -26532,6 +26556,10 @@ type ContractBase = Omit<
             { readonly name: 'LASTFM'; readonly value: 'LASTFM' },
             { readonly name: 'CUSTOM'; readonly value: 'CUSTOM' },
             { readonly name: 'IRIS'; readonly value: 'IRIS' },
+            { readonly name: 'HIKKA'; readonly value: 'HIKKA' },
+            { readonly name: 'MANGAUPDATES'; readonly value: 'MANGAUPDATES' },
+            { readonly name: 'MANGABAKA'; readonly value: 'MANGABAKA' },
+            { readonly name: 'TRAKT'; readonly value: 'TRAKT' },
           ];
           readonly ConnectionStatus: readonly [
             { readonly name: 'CONNECTED'; readonly value: 'CONNECTED' },

@@ -35,6 +35,7 @@ import {
 import { toast } from "sonner"
 import { elysia } from "@/lib/elysia"
 import { DatePicker } from "./date-picker"
+import { ProviderIcon } from "@/components/navigation/settings-tabs/account/connections/icons"
 import type { NormalizedMediaData } from "../media-types"
 import { type CanonicalMediaCategory, formatDateToYmd } from "./types"
 
@@ -152,8 +153,17 @@ async function fetchRemoteMediaDetails(
   if (!strId || strId === "linked" || strId === "undefined" || strId === "null")
     return null
 
-  // 1. Simkl: Query via server proxy
-  if (providerKey === "simkl") {
+  // 1. Third-party providers via server proxy (Simkl, Bangumi, Hikka, MangaUpdates, MangaBaka, Trakt)
+  const proxyProviders = [
+    "simkl",
+    "bangumi",
+    "bgm",
+    "hikka",
+    "mangaupdates",
+    "mangabaka",
+    "trakt",
+  ]
+  if (proxyProviders.includes(providerKey)) {
     try {
       const searchType =
         category === "manga"
@@ -162,11 +172,15 @@ async function fetchRemoteMediaDetails(
             ? "TV"
             : category === "movie"
               ? "MOVIE"
-              : "ANIME"
+              : category === "game"
+                ? "GAME"
+                : category === "music"
+                  ? "TRACK"
+                  : "ANIME"
 
       const res = await elysia.carina.connections.search.get({
         query: {
-          provider: "SIMKL",
+          provider: (providerKey === "bgm" ? "BANGUMI" : providerKey).toUpperCase(),
           id: strId,
           type: searchType,
         },
@@ -189,19 +203,30 @@ async function fetchRemoteMediaDetails(
           item.title ||
           null
 
+        const defaultUrl =
+          providerKey === "bangumi" || providerKey === "bgm"
+            ? `https://bgm.tv/subject/${strId}`
+            : providerKey === "hikka"
+              ? `https://hikka.io/${category === "manga" ? "manga" : "anime"}/${strId}`
+              : providerKey === "mangaupdates"
+                ? `https://www.mangaupdates.com/series/${strId}`
+                : providerKey === "mangabaka"
+                  ? `https://mangabaka.org/series/${strId}`
+                  : providerKey === "trakt"
+                    ? `https://trakt.tv/${category === "tv" ? "shows" : "movies"}/${strId}`
+                    : category === "movie"
+                        ? `https://simkl.com/movies/${strId}`
+                        : category === "tv"
+                          ? `https://simkl.com/tv/${strId}`
+                          : `https://simkl.com/anime/${strId}`
+
         return {
           title: primaryTitle,
           cover: coverUrl,
           coverImage: coverUrl,
           year: item.releaseYear ?? null,
           format: item.format ?? null,
-          externalUrl:
-            item.url ||
-            (category === "movie"
-              ? `https://simkl.com/movies/${strId}`
-              : category === "tv"
-                ? `https://simkl.com/tv/${strId}`
-                : `https://simkl.com/anime/${strId}`),
+          externalUrl: item.url || defaultUrl,
         }
       }
     } catch {
@@ -439,6 +464,22 @@ export function MediaListConnectionsTab({
           externalUrl: media.simklId
             ? `https://simkl.com/anime/${media.simklId}`
             : null,
+        },
+        {
+          key: "bangumi",
+          name: "Bangumi",
+          detectedId: (media as any).bangumiId ?? null,
+          externalUrl: (media as any).bangumiId
+            ? `https://bgm.tv/subject/${(media as any).bangumiId}`
+            : null,
+        },
+        {
+          key: "hikka",
+          name: "Hikka",
+          detectedId: (media as any).hikkaId ?? null,
+          externalUrl: (media as any).hikkaId
+            ? `https://hikka.io/anime/${(media as any).hikkaId}`
+            : null,
         }
       )
     } else if (category === "manga") {
@@ -458,19 +499,68 @@ export function MediaListConnectionsTab({
           externalUrl: media.malId
             ? `https://myanimelist.net/manga/${media.malId}`
             : null,
+        },
+        {
+          key: "bangumi",
+          name: "Bangumi",
+          detectedId: (media as any).bangumiId ?? null,
+          externalUrl: (media as any).bangumiId
+            ? `https://bgm.tv/subject/${(media as any).bangumiId}`
+            : null,
+        },
+        {
+          key: "hikka",
+          name: "Hikka",
+          detectedId: (media as any).hikkaId ?? null,
+          externalUrl: (media as any).hikkaId
+            ? `https://hikka.io/manga/${(media as any).hikkaId}`
+            : null,
+        },
+        {
+          key: "mangaupdates",
+          name: "MangaUpdates",
+          detectedId: (media as any).mangaupdatesId ?? null,
+          externalUrl: (media as any).mangaupdatesId
+            ? `https://www.mangaupdates.com/series/${(media as any).mangaupdatesId}`
+            : null,
+        },
+        {
+          key: "mangabaka",
+          name: "MangaBaka",
+          detectedId: (media as any).mangabakaId ?? null,
+          externalUrl: (media as any).mangabakaId
+            ? `https://mangabaka.org/series/${(media as any).mangabakaId}`
+            : null,
         }
       )
     } else if (category === "tv" || category === "movie") {
+      list.push(
+        {
+          key: "simkl",
+          name: "Simkl",
+          detectedId: media.simklId ?? null,
+          externalUrl: media.simklId
+            ? `https://simkl.com/${category === "tv" ? "tv" : "movies"}/${media.simklId}`
+            : null,
+        },
+        {
+          key: "trakt",
+          name: "Trakt",
+          detectedId: (media as any).traktId ?? null,
+          externalUrl: (media as any).traktId
+            ? `https://trakt.tv/${category === "tv" ? "shows" : "movies"}/${(media as any).traktId}`
+            : null,
+        }
+      )
+    } else if (category === "game") {
       list.push({
-        key: "simkl",
-        name: "Simkl",
-        detectedId: media.simklId ?? null,
-        externalUrl: media.simklId
-          ? `https://simkl.com/${category === "tv" ? "tv" : "movies"}/${media.simklId}`
+        key: "bangumi",
+        name: "Bangumi",
+        detectedId: (media as any).bangumiId ?? null,
+        externalUrl: (media as any).bangumiId
+          ? `https://bgm.tv/subject/${(media as any).bangumiId}`
           : null,
       })
-    } else if (category === "game") {
-      // External providers disabled for games
     } else if (category === "music") {
       const lastFmUrl = (media as any).lastFmUrl ?? null
       const lastFmSlug = lastFmUrl
@@ -741,11 +831,13 @@ export function MediaListConnectionsTab({
               ? "TV"
               : category === "movie"
                 ? "MOVIE"
-                : category === "music"
-                  ? media.format === "TRACK"
-                    ? "TRACK"
-                    : "ALBUM"
-                  : "ANIME"
+                : category === "game"
+                  ? "GAME"
+                  : category === "music"
+                    ? media.format === "TRACK"
+                      ? "TRACK"
+                      : "ALBUM"
+                    : "ANIME"
 
         // Check if query is an explicit ID pattern (e.g. id:25623, mal:25623, #25623, or full MAL URL)
         const idPrefixMatch = q.match(/^(?:id:|mal:|#)\s*(\d+)$/i)
@@ -1050,6 +1142,10 @@ export function MediaListConnectionsTab({
                 {/* Header: ANILIST #184356 ^ X */}
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-2">
+                    <ProviderIcon
+                      provider={provider.key}
+                      className="size-4 shrink-0 rounded-sm"
+                    />
                     <span className="text-xs font-black tracking-wider text-foreground uppercase">
                       {provider.name}
                     </span>
@@ -1434,8 +1530,11 @@ export function MediaListConnectionsTab({
                 className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card p-2.5 transition-all hover:border-border/80"
               >
                 <div className="flex min-w-0 items-center gap-2">
-                  <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-[11px] font-bold text-muted-foreground uppercase">
-                    {provider.name.slice(0, 2)}
+                  <div className="flex size-7 shrink-0 items-center justify-center rounded-lg border border-border/40 bg-muted/40 p-1">
+                    <ProviderIcon
+                      provider={provider.key}
+                      className="size-5 shrink-0"
+                    />
                   </div>
                   <div className="flex min-w-0 flex-col">
                     <span className="truncate text-xs font-semibold text-foreground">
@@ -1525,7 +1624,10 @@ export function MediaListConnectionsTab({
                     id="search-modal-provider-title"
                     className="flex items-center gap-2 text-base font-bold text-foreground"
                   >
-                    <IconSearch className="size-4 text-primary" />
+                    <ProviderIcon
+                      provider={searchModalProvider.key}
+                      className="size-5 shrink-0 rounded-sm"
+                    />
                     <span>Search {searchModalProvider.name}</span>
                   </DialogTitle>
                   <DialogDescription className="sr-only">

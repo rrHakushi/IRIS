@@ -244,6 +244,8 @@ export const CarinaConnectionsModel = {
     state: t.Optional(t.String({ description: 'HMAC-signed state token' })),
     error: t.Optional(t.String({ description: 'OAuth provider error code if authorization was denied' })),
     error_description: t.Optional(t.String({ description: 'OAuth provider error details' })),
+    request_reference: t.Optional(t.String({ description: 'Hikka request reference parameter' })),
+    reference: t.Optional(t.String({ description: 'Alternative OAuth reference parameter' })),
   }),
 
   callbackResponse: t.Object({

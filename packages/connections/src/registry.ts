@@ -16,6 +16,10 @@ import {
   SonarrAdapter,
   SteamAdapter,
   IrisAdapter,
+  HikkaAdapter,
+  MangaUpdatesAdapter,
+  MangaBakaAdapter,
+  TraktAdapter,
 } from "./providers/index.js";
 
 export interface ProviderMetadata {
@@ -57,6 +61,10 @@ registerConnectionAdapter(new SonarrAdapter());
 registerConnectionAdapter(new DeezerAdapter());
 registerConnectionAdapter(new LastFmAdapter());
 registerConnectionAdapter(new IrisAdapter());
+registerConnectionAdapter(new HikkaAdapter());
+registerConnectionAdapter(new MangaUpdatesAdapter());
+registerConnectionAdapter(new MangaBakaAdapter());
+registerConnectionAdapter(new TraktAdapter());
 
 /**
  * Retrieves the adapter implementation for a given provider.
@@ -188,6 +196,38 @@ export function getSupportedProviders(): ProviderMetadata[] {
       description: "Link another IRIS instance to synchronize media libraries, activity, and federate accounts.",
       websiteUrl: "https://github.com/rrHakushi/IRIS",
       accentColor: "#E11D48",
+    },
+    {
+      provider: "HIKKA",
+      name: "Hikka",
+      category: "TRACKING",
+      description: "Track anime & manga, sync watchlists and reading progress with Hikka.",
+      websiteUrl: "https://hikka.io",
+      accentColor: "#7C3AED",
+    },
+    {
+      provider: "MANGAUPDATES",
+      name: "MangaUpdates",
+      category: "TRACKING",
+      description: "Sync manga reading lists, chapters, and releases with MangaUpdates (Baka-Updates).",
+      websiteUrl: "https://www.mangaupdates.com",
+      accentColor: "#0091FF",
+    },
+    {
+      provider: "MANGABAKA",
+      name: "MangaBaka",
+      category: "TRACKING",
+      description: "Community-driven manga and light novel database & reading tracker.",
+      websiteUrl: "https://mangabaka.org",
+      accentColor: "#10B981",
+    },
+    {
+      provider: "TRAKT",
+      name: "Trakt.tv",
+      category: "TRACKING",
+      description: "Track movies and TV shows, sync watch history, ratings, and episode progress.",
+      websiteUrl: "https://trakt.tv",
+      accentColor: "#ED1C24",
     },
   ];
 

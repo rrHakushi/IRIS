@@ -90,6 +90,10 @@ describe("@IRIS/connections - Provider Registry", () => {
       "RIOT_GAMES",
       "RADARR",
       "SONARR",
+      "HIKKA",
+      "MANGAUPDATES",
+      "MANGABAKA",
+      "TRAKT",
     ] as const;
 
     for (const provider of providers) {
@@ -102,16 +106,29 @@ describe("@IRIS/connections - Provider Registry", () => {
 
   it("should list supported providers metadata for UI rendering", () => {
     const list = getSupportedProviders();
-    assert.ok(list.length >= 8);
+    assert.ok(list.length >= 12);
     assert.ok(list.some((p) => p.provider === "MAL"));
     assert.ok(list.some((p) => p.provider === "STEAM"));
     assert.ok(list.some((p) => p.provider === "RADARR"));
+    assert.ok(list.some((p) => p.provider === "HIKKA"));
+    assert.ok(list.some((p) => p.provider === "MANGAUPDATES"));
+    assert.ok(list.some((p) => p.provider === "MANGABAKA"));
+    assert.ok(list.some((p) => p.provider === "TRAKT"));
   });
 });
 
 describe("@IRIS/connections - Search Proxy", () => {
-  it("should ensure ANILIST, MAL, SIMKL, and BANGUMI have search capability enabled", () => {
-    const searchProviders = ["ANILIST", "MAL", "SIMKL", "BANGUMI"] as const;
+  it("should ensure tracking providers have search capability enabled", () => {
+    const searchProviders = [
+      "ANILIST",
+      "MAL",
+      "SIMKL",
+      "BANGUMI",
+      "HIKKA",
+      "MANGAUPDATES",
+      "MANGABAKA",
+      "TRAKT",
+    ] as const;
     for (const prov of searchProviders) {
       const adapter = getConnectionAdapter(prov);
       assert.ok(adapter.capabilities.supportsSearch, `${prov} must have supportsSearch enabled`);

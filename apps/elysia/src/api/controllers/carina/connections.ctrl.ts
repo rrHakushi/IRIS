@@ -1,7 +1,9 @@
 import { Elysia } from 'elysia'
+import { verifyOAuthStateToken } from '@IRIS/connections'
 import { session } from '../../../plugins/session'
 import { CarinaConnectionsModel } from '../../models/carina/connections.model'
 import { CarinaConnectionsServ } from '../../../services/carina/connections.serv'
+import { Unauthorized, BadRequest } from '../../../lib/errors'
 
 export const carinaConnections = new Elysia({ prefix: '/carina/connections' })
   .use(session())
@@ -106,13 +108,25 @@ export const carinaConnections = new Elysia({ prefix: '/carina/connections' })
         422: CarinaConnectionsModel.validationError,
       },
     },
-    async ({ params, query, session: userSession }) => {
+    async ({ params, query, cookie, session: userSession }) => {
       const user = userSession.requireUser()
-      return await CarinaConnectionsServ.getAuthUrl(
+      const authResult = await CarinaConnectionsServ.getAuthUrl(
         user.id,
         params.connectionId,
         query
       )
+
+      if (authResult.state && (cookie as any)?.oauth_state) {
+        ;(cookie as any).oauth_state.set({
+          value: authResult.state,
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 600,
+        })
+      }
+
+      return authResult
     }
   )
 
@@ -126,21 +140,116 @@ export const carinaConnections = new Elysia({ prefix: '/carina/connections' })
         summary: 'OAuth callback handler to exchange code and persist encrypted tokens',
         tags: ['Carina Connections'],
       },
-      response: {
-        200: CarinaConnectionsModel.callbackResponse,
-        400: CarinaConnectionsModel.badRequestError,
-        401: CarinaConnectionsModel.unauthorizedError,
-        404: CarinaConnectionsModel.notFoundError,
-        422: CarinaConnectionsModel.validationError,
+    },
+    async ({ params, query, cookie, request, session: userSession }) => {
+      const cookieState = (cookie as any)?.oauth_state?.value
+      const rawState = query.state || cookieState
+      const statePayload = rawState ? verifyOAuthStateToken(rawState) : null
+
+      // Check for OAuth error from provider
+      if (query.error) {
+        if (request.headers.get('accept')?.includes('text/html')) {
+          const returnTo = statePayload?.returnTo || 'http://localhost:3000/settings?tab=connections'
+          const redirectUrl = new URL(returnTo)
+          redirectUrl.searchParams.set('tab', 'connections')
+          redirectUrl.searchParams.set('error', query.error_description || query.error)
+          return Response.redirect(redirectUrl.toString(), 302)
+        }
+        throw new BadRequest(query.error_description || query.error)
+      }
+
+      const userId = userSession.user?.id || statePayload?.userId
+      if (!userId) {
+        throw new Unauthorized('Authentication required')
+      }
+
+      const effectiveQuery = {
+        ...query,
+        state: rawState || query.state,
+      }
+
+      const result = await CarinaConnectionsServ.handleOAuthCallback(
+        userId,
+        params.connectionId,
+        effectiveQuery
+      )
+
+      if ((cookie as any)?.oauth_state) {
+        try {
+          ;(cookie as any).oauth_state.remove()
+        } catch {}
+      }
+
+      if (request.headers.get('accept')?.includes('text/html')) {
+        const returnTo = statePayload?.returnTo || 'http://localhost:3000/settings?tab=connections'
+        const redirectUrl = new URL(returnTo)
+        redirectUrl.searchParams.set('tab', 'connections')
+        redirectUrl.searchParams.set('connected', params.connectionId.toLowerCase())
+        return Response.redirect(redirectUrl.toString(), 302)
+      }
+
+      return result
+    }
+  )
+
+  // --- 4b. GET /carina/connections/callback (Fallback OAuth callback handler) ---
+  .get(
+    '/callback',
+    {
+      query: CarinaConnectionsModel.callbackQuery,
+      detail: {
+        summary: 'Fallback OAuth callback handler to exchange code and persist encrypted tokens',
+        tags: ['Carina Connections'],
       },
     },
-    async ({ params, query, session: userSession }) => {
-      const user = userSession.requireUser()
-      return await CarinaConnectionsServ.handleOAuthCallback(
-        user.id,
-        params.connectionId,
-        query
+    async ({ query, cookie, request, session: userSession }) => {
+      const cookieState = (cookie as any)?.oauth_state?.value
+      const rawState = query.state || cookieState
+      const statePayload = rawState ? verifyOAuthStateToken(rawState) : null
+
+      if (query.error) {
+        if (request.headers.get('accept')?.includes('text/html')) {
+          const returnTo = statePayload?.returnTo || 'http://localhost:3000/settings?tab=connections'
+          const redirectUrl = new URL(returnTo)
+          redirectUrl.searchParams.set('tab', 'connections')
+          redirectUrl.searchParams.set('error', query.error_description || query.error)
+          return Response.redirect(redirectUrl.toString(), 302)
+        }
+        throw new BadRequest(query.error_description || query.error)
+      }
+
+      const userId = userSession.user?.id || statePayload?.userId
+      if (!userId) {
+        throw new Unauthorized('Authentication required')
+      }
+
+      const providerKey = statePayload?.provider?.toLowerCase() || 'connection'
+      const effectiveQuery = {
+        ...query,
+        state: rawState || query.state,
+      }
+
+      const result = await CarinaConnectionsServ.handleOAuthCallback(
+        userId,
+        providerKey,
+        effectiveQuery
       )
+
+      if ((cookie as any)?.oauth_state) {
+        try {
+          ;(cookie as any).oauth_state.remove()
+        } catch {}
+      }
+
+      if (request.headers.get('accept')?.includes('text/html')) {
+        const returnTo = statePayload?.returnTo || 'http://localhost:3000/settings?tab=connections'
+        const redirectUrl = new URL(returnTo)
+        redirectUrl.searchParams.set('tab', 'connections')
+        redirectUrl.searchParams.set('connected', providerKey)
+        return Response.redirect(redirectUrl.toString(), 302)
+      }
+
+      return result
     }
   )
 

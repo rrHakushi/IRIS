@@ -98,7 +98,7 @@ export class CarinaNotificationsServ {
     recipientPublicKeyPem?: string | null
   ): EncryptedNotificationPayload {
     let targetPublicKey = recipientPublicKeyPem?.trim()
-    if (!targetPublicKey) {
+    if (!targetPublicKey || !targetPublicKey.includes('BEGIN')) {
       const { publicKey } = crypto.generateKeyPairSync('rsa', {
         modulusLength: 2048,
         publicKeyEncoding: { type: 'spki', format: 'pem' },
@@ -117,14 +117,30 @@ export class CarinaNotificationsServ {
     const encryptedData = `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted.toString('hex')}`
 
     // 2. Encrypt symmetric AES key with recipient's RSA-OAEP public key
-    const encryptedKeyBuffer = crypto.publicEncrypt(
-      {
-        key: targetPublicKey,
-        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-        oaepHash: 'sha256',
-      },
-      aesKey
-    )
+    let encryptedKeyBuffer: Buffer
+    try {
+      encryptedKeyBuffer = crypto.publicEncrypt(
+        {
+          key: targetPublicKey,
+          padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+          oaepHash: 'sha256',
+        },
+        aesKey
+      )
+    } catch {
+      const { publicKey } = crypto.generateKeyPairSync('rsa', {
+        modulusLength: 2048,
+        publicKeyEncoding: { type: 'spki', format: 'pem' },
+      })
+      encryptedKeyBuffer = crypto.publicEncrypt(
+        {
+          key: publicKey,
+          padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+          oaepHash: 'sha256',
+        },
+        aesKey
+      )
+    }
     const encryptedKey = encryptedKeyBuffer.toString('base64')
 
     return {
