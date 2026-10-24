@@ -760,10 +760,11 @@ export function UserListView({
                 entry: {
                   ...it.entry,
                   chaptersProgress: nextProg,
-                  status: isCompleted ? "COMPLETED" : it.entry.status,
+                  status: isCompleted ? "COMPLETED" : "IN_PROGRESS",
+                  startedAt: it.entry.startedAt || nowIso,
                   completedAt: isCompleted
                     ? it.entry.completedAt || nowIso
-                    : it.entry.completedAt,
+                    : null,
                   updatedAt: nowIso,
                 },
               }
@@ -786,8 +787,9 @@ export function UserListView({
                   ...it.entry,
                   progress: nextProg,
                   progressValues: updatedProgValues,
-                  status: isCompleted ? "COMPLETED" : it.entry.status,
-                  completedAt: isCompleted ? it.entry.completedAt || nowIso : it.entry.completedAt,
+                  status: isCompleted ? "COMPLETED" : "IN_PROGRESS",
+                  startedAt: it.entry.startedAt || nowIso,
+                  completedAt: isCompleted ? it.entry.completedAt || nowIso : null,
                   updatedAt: nowIso,
                 },
               }
@@ -801,10 +803,11 @@ export function UserListView({
               entry: {
                 ...it.entry,
                 progress: nextProg,
-                status: isCompleted ? "COMPLETED" : it.entry.status,
+                status: isCompleted ? "COMPLETED" : "IN_PROGRESS",
+                startedAt: it.entry.startedAt || nowIso,
                 completedAt: isCompleted
                   ? it.entry.completedAt || nowIso
-                  : it.entry.completedAt,
+                  : null,
                 updatedAt: nowIso,
               },
             }

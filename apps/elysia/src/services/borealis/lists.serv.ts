@@ -637,7 +637,7 @@ export class BorealisListsServ {
     let newStatus = body?.status ?? existing?.status ?? 'IN_PROGRESS'
     let completedAt = existing?.completedAt ?? null
 
-    if (newStatus === 'PLANNED') {
+    if (newStatus !== 'IN_PROGRESS') {
       newStatus = 'IN_PROGRESS'
     }
 
@@ -647,6 +647,8 @@ export class BorealisListsServ {
       if (!completedAt) {
         completedAt = new Date()
       }
+    } else {
+      completedAt = null
     }
 
     const entry = existing
@@ -654,7 +656,7 @@ export class BorealisListsServ {
           status: newStatus as any,
           progress: newProgress,
           completedAt,
-          ...(existing?.status === 'PLANNED' ? { startedAt: new Date() } : {}),
+          ...(existing?.status === 'PLANNED' || !existing?.startedAt ? { startedAt: existing?.startedAt ?? new Date() } : {}),
           ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
         })
       : await prisma.orm.public.AnimeList.create({
@@ -1076,12 +1078,21 @@ export class BorealisListsServ {
     let newStatus = body?.status ?? existing?.status ?? 'IN_PROGRESS'
     let completedAt = existing?.completedAt ?? null
 
-    if (newStatus === 'PLANNED') {
+    if (newStatus !== 'IN_PROGRESS') {
       newStatus = 'IN_PROGRESS'
     }
 
     if (isVolume) {
       volumesProgress += count
+      if (manga.volumeCount && manga.volumeCount > 0 && volumesProgress >= manga.volumeCount) {
+        volumesProgress = manga.volumeCount
+        newStatus = 'COMPLETED'
+        if (!completedAt) {
+          completedAt = new Date()
+        }
+      } else {
+        completedAt = null
+      }
     } else {
       chaptersProgress += count
       if (manga.chapterCount && manga.chapterCount > 0 && chaptersProgress >= manga.chapterCount) {
@@ -1090,6 +1101,8 @@ export class BorealisListsServ {
         if (!completedAt) {
           completedAt = new Date()
         }
+      } else {
+        completedAt = null
       }
     }
 
@@ -1099,7 +1112,7 @@ export class BorealisListsServ {
           chaptersProgress,
           volumesProgress,
           completedAt,
-          ...(existing?.status === 'PLANNED' ? { startedAt: new Date() } : {}),
+          ...(existing?.status === 'PLANNED' || !existing?.startedAt ? { startedAt: existing?.startedAt ?? new Date() } : {}),
           ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
         })
       : await prisma.orm.public.MangaList.create({
@@ -1885,7 +1898,7 @@ export class BorealisListsServ {
     let newStatus = body?.status ?? existing?.status ?? 'IN_PROGRESS'
     let completedAt = existing?.completedAt ?? null
 
-    if (newStatus === 'PLANNED') {
+    if (newStatus !== 'IN_PROGRESS') {
       newStatus = 'IN_PROGRESS'
     }
 
@@ -1895,6 +1908,8 @@ export class BorealisListsServ {
       if (!completedAt) {
         completedAt = new Date()
       }
+    } else {
+      completedAt = null
     }
 
     const entry = existing
@@ -1902,7 +1917,7 @@ export class BorealisListsServ {
           status: newStatus as any,
           progress: newProgress,
           completedAt,
-          ...(existing?.status === 'PLANNED' ? { startedAt: new Date() } : {}),
+          ...(existing?.status === 'PLANNED' || !existing?.startedAt ? { startedAt: existing?.startedAt ?? new Date() } : {}),
           ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
         })
       : await prisma.orm.public.TvList.create({
@@ -2286,7 +2301,7 @@ export class BorealisListsServ {
     const newProgress = currentProgress + count
     let newStatus = body?.status ?? existing?.status ?? 'IN_PROGRESS'
 
-    if (newStatus === 'PLANNED') {
+    if (newStatus !== 'IN_PROGRESS') {
       newStatus = 'IN_PROGRESS'
     }
 
@@ -2294,7 +2309,7 @@ export class BorealisListsServ {
       ? await prisma.orm.public.GameList.where({ id: existing.id }).update({
           status: newStatus as any,
           progress: newProgress,
-          ...(existing?.status === 'PLANNED' ? { startedAt: new Date() } : {}),
+          ...(existing?.status === 'PLANNED' || !existing?.startedAt ? { startedAt: existing?.startedAt ?? new Date() } : {}),
           ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
         })
       : await prisma.orm.public.GameList.create({
@@ -2702,14 +2717,32 @@ export class BorealisListsServ {
     let newStatus = body?.status ?? existing?.status ?? 'IN_PROGRESS'
     let completedAt = existing?.completedAt ?? null
 
-    if (newStatus === 'PLANNED') {
+    if (newStatus !== 'IN_PROGRESS') {
       newStatus = 'IN_PROGRESS'
     }
 
     if (type === 'chapter') {
       progressChapters += count
+      if (book.chapterCount && book.chapterCount > 0 && progressChapters >= book.chapterCount) {
+        progressChapters = book.chapterCount
+        newStatus = 'COMPLETED'
+        if (!completedAt) {
+          completedAt = new Date()
+        }
+      } else {
+        completedAt = null
+      }
     } else if (type === 'volume') {
       progressVolumes += count
+      if (book.volumeCount && book.volumeCount > 0 && progressVolumes >= book.volumeCount) {
+        progressVolumes = book.volumeCount
+        newStatus = 'COMPLETED'
+        if (!completedAt) {
+          completedAt = new Date()
+        }
+      } else {
+        completedAt = null
+      }
     } else {
       progressPages += count
       if (book.pageCount && book.pageCount > 0 && progressPages >= book.pageCount) {
@@ -2718,6 +2751,8 @@ export class BorealisListsServ {
         if (!completedAt) {
           completedAt = new Date()
         }
+      } else {
+        completedAt = null
       }
     }
 
@@ -2728,7 +2763,7 @@ export class BorealisListsServ {
           progressChapters,
           progressVolumes,
           completedAt,
-          ...(existing?.status === 'PLANNED' ? { startedAt: new Date() } : {}),
+          ...(existing?.status === 'PLANNED' || !existing?.startedAt ? { startedAt: existing?.startedAt ?? new Date() } : {}),
           ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
         })
       : await prisma.orm.public.BookList.create({
@@ -3128,7 +3163,7 @@ export class BorealisListsServ {
     const count = Math.max(1, body?.count ?? 1)
     const newPlayCount = (existing?.playCount ?? 0) + count
     let newStatus = existing?.status ?? 'IN_PROGRESS'
-    if (newStatus === 'PLANNED') {
+    if (newStatus !== 'IN_PROGRESS') {
       newStatus = 'IN_PROGRESS'
     }
 
@@ -3136,7 +3171,7 @@ export class BorealisListsServ {
       ? await prisma.orm.public.MusicList.where({ id: existing.id }).update({
           status: newStatus as any,
           playCount: newPlayCount,
-          ...(existing?.status === 'PLANNED' ? { startedAt: new Date() } : {}),
+          ...(existing?.status === 'PLANNED' || !existing?.startedAt ? { startedAt: existing?.startedAt ?? new Date() } : {}),
           ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
         })
       : await prisma.orm.public.MusicList.create({
@@ -3534,7 +3569,7 @@ export class BorealisListsServ {
     let newStatus = (body?.status ?? existing?.status ?? 'IN_PROGRESS') as ListStatus
     let completedAt = existing?.completedAt ?? null
 
-    if (newStatus === 'PLANNED') {
+    if (newStatus !== 'IN_PROGRESS') {
       newStatus = 'IN_PROGRESS'
     }
 
@@ -3544,6 +3579,8 @@ export class BorealisListsServ {
       if (!completedAt) {
         completedAt = new Date()
       }
+    } else {
+      completedAt = null
     }
 
     const updatedProgValues = {
@@ -3556,6 +3593,7 @@ export class BorealisListsServ {
           status: newStatus,
           progressValues: updatedProgValues,
           completedAt,
+          ...(existing?.status === 'PLANNED' || !existing?.startedAt ? { startedAt: existing?.startedAt ?? new Date() } : {}),
         })
       : await prisma.orm.public.OtherList.create({
           userId,
