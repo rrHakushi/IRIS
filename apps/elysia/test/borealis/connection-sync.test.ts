@@ -79,8 +79,8 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
     })
   })
 
-  describe('2. Job Enqueueing & 2 Attempts Configuration', () => {
-    it('enqueues sync jobs with attempts: 2 and exponential backoff', async () => {
+  describe('2. Job Enqueueing & 4 Attempts Configuration', () => {
+    it('enqueues sync jobs with attempts: 4 and fixed 60s backoff', async () => {
       await ConnectionSyncQueueManager.enqueueSyncJobs({
         userId: 'user-123',
         mediaType: 'ANIME',
@@ -104,11 +104,11 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
       expect(enqueuedJobs.length).toBe(4)
 
       for (const job of enqueuedJobs) {
-        // Must strictly have attempts: 2 as instructed by user
-        expect(job.opts?.attempts).toBe(2)
+        // Must have attempts: 4 (1 initial + 3 retries for 429)
+        expect(job.opts?.attempts).toBe(4)
         expect(job.opts?.backoff).toEqual({
-          type: 'exponential',
-          delay: 2000,
+          type: 'fixed',
+          delay: 60000,
         })
         expect(job.data.userId).toBe('user-123')
         expect(job.data.mediaId).toBe(101)
@@ -148,7 +148,11 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
       expect(enqueuedJobs.length).toBe(1)
       expect(enqueuedJobs[0]!.queueProvider).toBe('SIMKL')
       expect(enqueuedJobs[0]!.data.providerMediaId).toBe(10001)
-      expect(enqueuedJobs[0]!.opts?.attempts).toBe(2)
+      expect(enqueuedJobs[0]!.opts?.attempts).toBe(4)
+      expect(enqueuedJobs[0]!.opts?.backoff).toEqual({
+        type: 'fixed',
+        delay: 60000,
+      })
     })
   })
 
@@ -173,7 +177,10 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
   describe('4. Job Processor Execution & Retry Triggers', () => {
     it('notifies user and skips retrying if user connection does not exist', async () => {
       let createdNotif: any = null
-      ;((prisma as any).connection.findFirst as any) = async () => null
+      prisma.orm.public.Connection.where = (() => ({
+        first: async () => null,
+      })) as any
+
       ;(CarinaNotificationsServ.createNotification as any) = async (data: any) => {
         createdNotif = data
         return { id: 'notif-1' }
@@ -190,7 +197,7 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
           payload: { status: 'COMPLETED', progress: 24 },
           autoInjected: false,
         },
-        opts: { attempts: 2 },
+        opts: { attempts: 4 },
         attemptsMade: 0,
       }
 
@@ -198,6 +205,7 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
       expect(result).toBe(false)
       expect(createdNotif).toBeDefined()
       expect(createdNotif.userId).toBe('user-789')
+      expect(createdNotif.app).toBe('Borealis')
       expect(createdNotif.content.title).toContain('AniList Not Connected')
     })
 
@@ -205,19 +213,21 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
       let updatedConnection = false
       let adapterUpdated = false
 
-      ;((prisma as any).connection.findFirst as any) = async () => ({
-        id: 'conn-1',
-        userId: 'user-100',
-        provider: 'ANILIST',
-        encryptedData: 'encrypted-test-data',
-        status: 'CONNECTED',
-      })
-      ;((prisma as any).connection.update as any) = async (args: any) => {
-        if (args?.data?.lastSyncedAt) {
-          updatedConnection = true
-        }
-        return { id: 'conn-1' }
-      }
+      prisma.orm.public.Connection.where = (() => ({
+        first: async () => ({
+          id: 'conn-1',
+          userId: 'user-100',
+          provider: 'ANILIST',
+          encryptedData: 'encrypted-test-data',
+          status: 'CONNECTED',
+        }),
+        update: async (args: any) => {
+          if (args?.lastSyncedAt) {
+            updatedConnection = true
+          }
+          return { id: 'conn-1' }
+        },
+      })) as any
 
       const mockAdapter = {
         id: 'ANILIST',
@@ -240,7 +250,7 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
           mediaTitle: 'Cowboy Bebop',
           payload: { status: 'COMPLETED', progress: 12 },
         },
-        opts: { attempts: 2 },
+        opts: { attempts: 4 },
         attemptsMade: 0,
       }
 
@@ -279,13 +289,15 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
     })
 
     it('pauses worker and throws ConnectionRateLimitError on 429 response', async () => {
-      ;((prisma as any).connection.findFirst as any) = async () => ({
-        id: 'conn-rate',
-        userId: 'user-rate',
-        provider: 'ANILIST',
-        encryptedData: 'encrypted-data',
-        status: 'CONNECTED',
-      })
+      prisma.orm.public.Connection.where = (() => ({
+        first: async () => ({
+          id: 'conn-rate',
+          userId: 'user-rate',
+          provider: 'ANILIST',
+          encryptedData: 'encrypted-data',
+          status: 'CONNECTED',
+        }),
+      })) as any
 
       const mockAdapter = {
         id: 'ANILIST',
@@ -312,7 +324,7 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
           mediaTitle: 'Rate Limited Anime',
           payload: { status: 'WATCHING', progress: 1 },
         },
-        opts: { attempts: 2 },
+        opts: { attempts: 4 },
         attemptsMade: 0,
       }
 
@@ -329,12 +341,13 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
           decrypt: () => ({ accessToken: 'valid-token' }),
         })
       } catch {}
-      expect(rateLimitDuration).toBe(15000)
+      // Math.max(15, 60) * 1000 = 60000ms minimum rate limit pause
+      expect(rateLimitDuration).toBe(60000)
     })
   })
 
-  describe('5. Complete Failure Notification After 2 Attempts', () => {
-    it('dispatches HIGH priority notification to user when all 2 attempts fail', async () => {
+  describe('5. Complete Failure Notification & 429 Retries', () => {
+    it('dispatches HIGH priority notification to user immediately on non-429 terminal failure', async () => {
       let notifiedPayload: any = null
       let updatedErrorMsg = ''
 
@@ -342,12 +355,14 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
         notifiedPayload = data
         return { id: 'notif-fail' }
       }
-      ;((prisma as any).connection.updateMany as any) = async (args: any) => {
-        if (args?.data?.errorMessage) {
-          updatedErrorMsg = args.data.errorMessage
-        }
-        return { count: 1 }
-      }
+      prisma.orm.public.Connection.where = (() => ({
+        updateAndCount: async (args: any) => {
+          if (args?.errorMessage) {
+            updatedErrorMsg = args.errorMessage
+          }
+          return 1
+        },
+      })) as any
 
       const mockJob: any = {
         data: {
@@ -359,8 +374,8 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
           mediaTitle: 'Chainsaw Man',
           payload: { status: 'WATCHING', progress: 4 },
         },
-        opts: { attempts: 2 },
-        attemptsMade: 2, // 2nd attempt failed -> exhausted!
+        opts: { attempts: 4 },
+        attemptsMade: 1, // 1st attempt failed with non-429 error!
       }
 
       const err = new Error('AniList GraphQL downstream 500 server error')
@@ -369,7 +384,7 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
 
       expect(notifiedPayload).toBeDefined()
       expect(notifiedPayload.userId).toBe('user-fail')
-      expect(notifiedPayload.app).toBe('IRIS List')
+      expect(notifiedPayload.app).toBe('Borealis')
       expect(notifiedPayload.category).toBe('Connections')
       expect(notifiedPayload.type).toBe('INFO')
       expect(notifiedPayload.priority).toBe('HIGH')
@@ -378,33 +393,129 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
       expect(notifiedPayload.content.body).toContain('AniList GraphQL downstream 500 server error')
       expect(updatedErrorMsg).toContain('AniList GraphQL downstream 500 server error')
     })
+
+    it('does NOT dispatch notification on 429 rate limit attempts prior to exhaustion', async () => {
+      let notifiedPayload: any = null
+
+      ;(CarinaNotificationsServ.createNotification as any) = async (data: any) => {
+        notifiedPayload = data
+        return { id: 'notif-fail' }
+      }
+
+      const mockJob: any = {
+        data: {
+          userId: 'user-rate',
+          provider: 'ANILIST',
+          providerMediaId: 5555,
+          mediaType: 'ANIME',
+          mediaId: 99,
+          mediaTitle: 'Chainsaw Man',
+          payload: { status: 'WATCHING', progress: 4 },
+        },
+        opts: { attempts: 4 },
+        attemptsMade: 1, // attempt 1/4
+      }
+
+      const rateLimitErr = new ConnectionRateLimitError('Too Many Requests', 'ANILIST', 60)
+
+      await handleJobFailure('ANILIST', mockJob, rateLimitErr)
+      expect(notifiedPayload).toBeNull()
+
+      mockJob.attemptsMade = 2
+      await handleJobFailure('ANILIST', mockJob, rateLimitErr)
+      expect(notifiedPayload).toBeNull()
+
+      mockJob.attemptsMade = 3
+      await handleJobFailure('ANILIST', mockJob, rateLimitErr)
+      expect(notifiedPayload).toBeNull()
+    })
+
+    it('dispatches HIGH priority notification on 429 rate limit once all 4 attempts (3 retries) are exhausted', async () => {
+      let notifiedPayload: any = null
+      let updatedErrorMsg = ''
+
+      ;(CarinaNotificationsServ.createNotification as any) = async (data: any) => {
+        notifiedPayload = data
+        return { id: 'notif-fail' }
+      }
+      prisma.orm.public.Connection.where = (() => ({
+        updateAndCount: async (args: any) => {
+          if (args?.errorMessage) {
+            updatedErrorMsg = args.errorMessage
+          }
+          return 1
+        },
+      })) as any
+
+      const mockJob: any = {
+        data: {
+          userId: 'user-rate',
+          provider: 'ANILIST',
+          providerMediaId: 5555,
+          mediaType: 'ANIME',
+          mediaId: 99,
+          mediaTitle: 'Chainsaw Man',
+          payload: { status: 'WATCHING', progress: 4 },
+        },
+        opts: { attempts: 4 },
+        attemptsMade: 4, // 4th attempt failed -> exhausted 3 retries!
+      }
+
+      const rateLimitErr = new ConnectionRateLimitError('Rate limit exceeded after 3 retries', 'ANILIST', 60)
+
+      await handleJobFailure('ANILIST', mockJob, rateLimitErr)
+
+      expect(notifiedPayload).toBeDefined()
+      expect(notifiedPayload.userId).toBe('user-rate')
+      expect(notifiedPayload.app).toBe('Borealis')
+      expect(notifiedPayload.priority).toBe('HIGH')
+      expect(notifiedPayload.content.title).toBe('AniList Sync Failed')
+      expect(notifiedPayload.content.body).toContain('Chainsaw Man')
+      expect(updatedErrorMsg).toContain('Rate limit exceeded')
+    })
   })
 
   describe('6. Borealis List Mutation Integration', () => {
-    it('enqueues connection sync jobs on upsertAnimeEntry', async () => {
-      ;((prisma as any).anime.findUnique as any) = async () => ({
-        id: 1,
-        episodeCount: 12,
-        status: 'FINISHED',
-        titlePrimary: 'Death Note',
-        titleSecondary: 'Desu Noto',
-      })
-      ;((prisma as any).animeList.upsert as any) = async (args: any) => ({
+    it('enqueues connection sync jobs with attempts: 4 on upsertAnimeEntry', async () => {
+      prisma.orm.public.Anime.where = (() => ({
+        select: () => ({
+          first: async () => ({
+            id: 1,
+            episodeCount: 12,
+            status: 'FINISHED',
+            titlePrimary: 'Death Note',
+            titleSecondary: 'Desu Noto',
+          }),
+        }),
+        first: async () => ({
+          id: 1,
+          episodeCount: 12,
+          status: 'FINISHED',
+          titlePrimary: 'Death Note',
+          titleSecondary: 'Desu Noto',
+        }),
+      })) as any
+
+      prisma.orm.public.AnimeList.where = (() => ({
+        first: async () => null,
+      })) as any
+
+      prisma.orm.public.AnimeList.create = (async (args: any) => ({
         id: 10,
         userId: 'user-test',
         animeId: 1,
-        status: args.create.status,
-        progress: args.create.progress,
-        score: args.create.score,
-        notes: args.create.notes,
-        rewatched: args.create.rewatched,
-        private: args.create.private,
-        startedAt: args.create.startedAt,
-        completedAt: args.create.completedAt,
-        connections: args.create.connections,
+        status: args?.data?.status ?? 'COMPLETED',
+        progress: args?.data?.progress ?? 12,
+        score: args?.data?.score ?? 10,
+        notes: args?.data?.notes,
+        rewatched: args?.data?.rewatched ?? 0,
+        private: false,
+        startedAt: new Date(),
+        completedAt: new Date(),
+        connections: args?.data?.connections ?? { anilist: { id: 1535 } },
         createdAt: new Date(),
         updatedAt: new Date(),
-      })
+      })) as any
 
       await BorealisListsServ.upsertAnimeEntry('user-test', 1, {
         status: 'COMPLETED',
@@ -420,45 +531,63 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
       expect(enqueuedJobs[0]!.data.providerMediaId).toBe(1535)
       expect(enqueuedJobs[0]!.data.mediaTitle).toBe('Death Note')
       expect(enqueuedJobs[0]!.data.payload.progress).toBe(12)
-      expect(enqueuedJobs[0]!.opts?.attempts).toBe(2)
+      expect(enqueuedJobs[0]!.opts?.attempts).toBe(4)
+      expect(enqueuedJobs[0]!.opts?.backoff).toEqual({
+        type: 'fixed',
+        delay: 60000,
+      })
     })
 
-    it('enqueues connection sync jobs on incrementAnime', async () => {
-      ;((prisma as any).anime.findUnique as any) = async () => ({
-        id: 2,
-        episodeCount: 24,
-        status: 'RELEASING',
-        titlePrimary: 'Jujutsu Kaisen',
-        titleSecondary: 'Sorcery Fight',
-      })
-      ;((prisma as any).animeList.findUnique as any) = async () => ({
-        id: 20,
-        userId: 'user-test',
-        animeId: 2,
-        status: 'WATCHING',
-        progress: 3,
-        score: null,
-        notes: null,
-        rewatched: 0,
-        connections: {
-          anilist: { id: 113415 },
-        },
-      })
-      ;((prisma as any).animeList.upsert as any) = async (args: any) => ({
-        id: 20,
-        userId: 'user-test',
-        animeId: 2,
-        status: args.update.status,
-        progress: args.update.progress,
-        score: null,
-        notes: null,
-        rewatched: 0,
-        startedAt: new Date(),
-        completedAt: null,
-        connections: { anilist: { id: 113415 } },
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
+    it('enqueues connection sync jobs with attempts: 4 on incrementAnime', async () => {
+      prisma.orm.public.Anime.where = (() => ({
+        select: () => ({
+          first: async () => ({
+            id: 2,
+            episodeCount: 24,
+            status: 'RELEASING',
+            titlePrimary: 'Jujutsu Kaisen',
+            titleSecondary: 'Sorcery Fight',
+          }),
+        }),
+        first: async () => ({
+          id: 2,
+          episodeCount: 24,
+          status: 'RELEASING',
+          titlePrimary: 'Jujutsu Kaisen',
+          titleSecondary: 'Sorcery Fight',
+        }),
+      })) as any
+
+      prisma.orm.public.AnimeList.where = (() => ({
+        first: async () => ({
+          id: 20,
+          userId: 'user-test',
+          animeId: 2,
+          status: 'WATCHING',
+          progress: 3,
+          score: null,
+          notes: null,
+          rewatched: 0,
+          connections: {
+            anilist: { id: 113415 },
+          },
+        }),
+        update: async (args: any) => ({
+          id: 20,
+          userId: 'user-test',
+          animeId: 2,
+          status: args?.status ?? 'WATCHING',
+          progress: args?.progress ?? 4,
+          score: null,
+          notes: null,
+          rewatched: 0,
+          startedAt: new Date(),
+          completedAt: null,
+          connections: args?.connections ?? { anilist: { id: 113415 } },
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+      })) as any
 
       await BorealisListsServ.incrementAnime('user-test', 2, {
         count: 1,
@@ -469,7 +598,11 @@ describe('Borealis Media Connection Sync Queue & Worker Test Suite', () => {
       expect(enqueuedJobs[0]!.data.providerMediaId).toBe(113415)
       expect(enqueuedJobs[0]!.data.mediaTitle).toBe('Jujutsu Kaisen')
       expect(enqueuedJobs[0]!.data.payload.progress).toBe(4) // 3 + 1
-      expect(enqueuedJobs[0]!.opts?.attempts).toBe(2)
+      expect(enqueuedJobs[0]!.opts?.attempts).toBe(4)
+      expect(enqueuedJobs[0]!.opts?.backoff).toEqual({
+        type: 'fixed',
+        delay: 60000,
+      })
     })
   })
 })

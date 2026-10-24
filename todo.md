@@ -1,10 +1,7 @@
 # Borealis [Media tracker]
     - Stremio plugin for borealis
     - In media pages (anime, manga etc) add tab People in which it will list all users who have that media in list (that is public and media is not private)
-    - Connection update fail notifications are not sent
-    - On /increment routes, when a media progress is incremented and status is not watching, playing, reading etc it should be set to it
-
-
+   
 # Akaromi [Password manager]
     - Clicking unlock in the inline fill doesnt open the modal on android
     - Fix scan QR code (doesnt detect them)

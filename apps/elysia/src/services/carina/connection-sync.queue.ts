@@ -84,10 +84,10 @@ export function getConnectionSyncQueue(
     queue = new Queue<ConnectionSyncJobData>(queueName, {
       connection,
       defaultJobOptions: {
-        attempts: 2, // 2 attempts total (initial run + 1 retry)
+        attempts: 4, // 1 initial try + 3 retries (for 429 rate limits)
         backoff: {
-          type: 'exponential',
-          delay: 2000,
+          type: 'fixed',
+          delay: 60000, // 1 minute between retries
         },
         removeOnComplete: { count: 1000 },
         removeOnFail: { count: 5000 },
@@ -238,10 +238,10 @@ export class ConnectionSyncQueueManager {
       try {
         const queue = this.getQueue(normProvider)
         await queue.add('sync-entry', jobData, {
-          attempts: 2,
+          attempts: 4,
           backoff: {
-            type: 'exponential',
-            delay: 2000,
+            type: 'fixed',
+            delay: 60000, // 1 minute between retries
           },
           removeOnComplete: { count: 1000 },
           removeOnFail: { count: 5000 },

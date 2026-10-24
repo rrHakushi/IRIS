@@ -1,4 +1,4 @@
-import { Worker, type Job } from 'bullmq'
+import { Worker, UnrecoverableError, type Job } from 'bullmq'
 import {
   prisma,
   and,
@@ -95,13 +95,13 @@ export async function processConnectionSyncJob(
       adapter = getConnectionAdapter(provider)
     } catch (err: any) {
       logger.warn(`[Worker:${provider}] Unsupported connection provider: ${provider}`)
-      return false
+      throw new UnrecoverableError(`Unsupported connection provider: ${provider}`)
     }
   }
 
   if (!adapter.updateMediaEntry) {
     logger.warn(`[Worker:${provider}] Adapter does not support updateMediaEntry`)
-    return false
+    throw new UnrecoverableError(`Provider ${displayName} does not support syncing media entries`)
   }
 
   // 1. Fetch user's active connection from database
@@ -117,7 +117,7 @@ export async function processConnectionSyncJob(
     if (!autoInjected) {
       await CarinaNotificationsServ.createNotification({
         userId,
-        app: 'IRIS List',
+        app: 'Borealis',
         category: 'Connections',
         type: 'INFO',
         priority: 'NORMAL',
@@ -143,20 +143,9 @@ export async function processConnectionSyncJob(
       userId
     )
   } catch (decryptErr: any) {
-    await CarinaNotificationsServ.createNotification({
-      userId,
-      app: 'IRIS List',
-      category: 'Connections',
-      type: 'INFO',
-      priority: 'HIGH',
-      content: {
-        title: `${displayName} Authentication Error`,
-        body: `Failed to decrypt credentials for ${displayName}. Please reconnect your account.`,
-        icon: adapter.iconUrl,
-        link: '/settings?tab=connections',
-      },
-    }).catch(() => {})
-    return false
+    throw new UnrecoverableError(
+      `Failed to decrypt credentials for ${displayName}. Please reconnect your account.`
+    )
   }
 
   // 3. Proactive token refresh if expiring (< 5 minutes left)
@@ -200,7 +189,10 @@ export async function processConnectionSyncJob(
     await adapter.updateMediaEntry(credentials, updatePayload)
   } catch (firstErr: any) {
     const isRateLimit =
-      firstErr instanceof ConnectionRateLimitError || firstErr?.statusCode === 429
+      firstErr instanceof ConnectionRateLimitError ||
+      firstErr?.statusCode === 429 ||
+      /rate limit|too many requests/i.test(firstErr?.message || '')
+
     if (isRateLimit) {
       const retryAfterSec = firstErr?.retryAfterSeconds || 60
       logger.warn(
@@ -208,10 +200,11 @@ export async function processConnectionSyncJob(
       )
       if (worker && typeof (worker as any).rateLimit === 'function') {
         try {
-          await (worker as any).rateLimit(retryAfterSec * 1000)
+          await (worker as any).rateLimit(Math.max(retryAfterSec, 60) * 1000)
         } catch {}
       }
-      throw firstErr // Re-throw to allow BullMQ exponential backoff
+      // Re-throw regular error to allow BullMQ fixed 60s backoff (retry 3x)
+      throw firstErr
     }
 
     const isAuthErr =
@@ -233,10 +226,19 @@ export async function processConnectionSyncJob(
         // Retry update with fresh token
         await adapter.updateMediaEntry(credentials, updatePayload)
       } catch (retryErr: any) {
-        throw retryErr
+        const isRetryRateLimit =
+          retryErr instanceof ConnectionRateLimitError ||
+          retryErr?.statusCode === 429 ||
+          /rate limit|too many requests/i.test(retryErr?.message || '')
+
+        if (isRetryRateLimit) {
+          throw retryErr
+        }
+        throw new UnrecoverableError(retryErr?.message || String(retryErr))
       }
     } else {
-      throw firstErr
+      // Non-429 error fails immediately without retrying
+      throw new UnrecoverableError(firstErr?.message || String(firstErr))
     }
   }
 
@@ -263,18 +265,31 @@ export async function handleJobFailure(
 ): Promise<void> {
   if (!job) return
 
-  const maxAttempts = job.opts.attempts ?? 2
+  const maxAttempts = job.opts.attempts ?? 4
+  const isRateLimit =
+    err instanceof ConnectionRateLimitError ||
+    err?.statusCode === 429 ||
+    /rate limit|too many requests/i.test(err?.message || '')
+
+  const isUnrecoverable =
+    err instanceof UnrecoverableError ||
+    err?.name === 'UnrecoverableError' ||
+    !isRateLimit
+
+  const isExhausted = job.attemptsMade >= maxAttempts
+  const isTerminal = isUnrecoverable || isExhausted
+
   logger.warn(
     `${c.red(c.bold('❌ [Job Attempt Failed]'))}: [${provider}] Attempt ${job.attemptsMade}/${maxAttempts} failed: ${err?.message || err}`
   )
 
-  // Complete failure when all attempts have been exhausted
-  if (job.attemptsMade >= maxAttempts) {
+  // Send failure notification & persist error message when failure is terminal
+  if (isTerminal) {
     const displayName = PROVIDER_DISPLAY_NAMES[provider] || provider
     const errMsg = err?.message || String(err)
 
     logger.error(
-      `${c.red(c.bold('🚨 [Sync Completely Failed]'))}: [${provider}] Exhausted all ${maxAttempts} attempts for "${job.data.mediaTitle}" (User: ${job.data.userId})`
+      `${c.red(c.bold('🚨 [Sync Completely Failed]'))}: [${provider}] Sync failed for "${job.data.mediaTitle}" (User: ${job.data.userId}): ${errMsg}`
     )
 
     let adapter
@@ -285,7 +300,7 @@ export async function handleJobFailure(
     // 1. Send in-app notification to user
     await CarinaNotificationsServ.createNotification({
       userId: job.data.userId,
-      app: 'IRIS List',
+      app: 'Borealis',
       category: 'Connections',
       type: 'INFO',
       priority: 'HIGH',
@@ -347,7 +362,7 @@ export function createConnectionProviderWorker(
 
   worker.on('active', (job) => {
     logger.info(
-      `${c.blue(c.bold('🚀 [Job Active]'))}: [${provider}] Syncing ${job.data.mediaType} #${job.data.mediaId} (${job.data.mediaTitle}) | Attempt: ${job.attemptsMade + 1}/${job.opts.attempts ?? 2}`
+      `${c.blue(c.bold('🚀 [Job Active]'))}: [${provider}] Syncing ${job.data.mediaType} #${job.data.mediaId} (${job.data.mediaTitle}) | Attempt: ${job.attemptsMade + 1}/${job.opts.attempts ?? 4}`
     )
   })
 
