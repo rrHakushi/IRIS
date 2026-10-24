@@ -89,6 +89,7 @@
 
 TODO AFTER UPDATNG TO LATEST
   run migrate-passwords
+  run vault:migrate-keys
   run update-description-urls
   run db:prepare-prisma8
   run db:unify-status

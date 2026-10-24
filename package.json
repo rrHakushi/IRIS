@@ -15,6 +15,7 @@
     "elysia:dev": "turbo run dev --filter=@IRIS/elysia",
     "elysia:build": "turbo run build --filter=@IRIS/elysia",
     "auth:migrate-passwords": "bun scripts/migrate-passwords.ts",
+    "vault:migrate-keys": "bun scripts/migrate-vault-keys.ts",
     "db:update-description-urls": "bun scripts/update-description-urls.ts",
     "plugin:borealis:build": "python3 plugins/JellyBorealis/package.py",
     "plugin:borealis:release": "python3 plugins/JellyBorealis/package.py --ci"

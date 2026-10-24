@@ -15,6 +15,9 @@ import { BadRequest, Conflict, NotFound, Unauthorized } from '../../lib/errors'
 import { EmailService } from '../email/email.serv'
 import type { CarinaAuthModel } from '../../api/models/carina/auth.model'
 import { getDomainConfig } from '../../utils/domain'
+import { LogFactory } from '@Iris/logger'
+
+const logger = new LogFactory('CarinaAuth')
 
 /** In-memory cache tracking whether an administrator account already exists. */
 let hasAdminCached: boolean | null = null
@@ -71,7 +74,30 @@ export abstract class CarinaAuthServ {
       }
     }
 
-    // 4. Issue authenticated session token
+    // 4. Auto-upgrade user keys to standard RSA-2048 if missing or legacy and user has no stored ciphers
+    if (
+      !user.publicKey ||
+      !user.publicKey.startsWith('-----BEGIN PUBLIC KEY-----') ||
+      !user.encryptedPrivateKey
+    ) {
+      const hasCiphers = await prisma.orm.public.PassCipher
+        .where({ userId: user.id })
+        .first()
+      if (!hasCiphers) {
+        try {
+          const { publicKey, encryptedPrivateKey } = await generateUserKeypair(body.password)
+          await prisma.orm.public.User.where({ id: user.id }).update({
+            publicKey,
+            encryptedPrivateKey,
+          })
+          logger.info(`Auto-upgraded encryption keys to RSA-2048 for user ${user.username}`)
+        } catch (keyErr) {
+          logger.warn(`Failed to auto-upgrade keys for ${user.username}: ${keyErr}`)
+        }
+      }
+    }
+
+    // 5. Issue authenticated session token
     const token = await signUserJwt({
       ...user,
       permissions: [...user.permissions],

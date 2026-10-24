@@ -203,20 +203,11 @@ export class CarinaNotificationsServ {
       .select('id', 'publicKey')
       .first()
 
-    let userPublicKey = user?.publicKey
-    if (user && !userPublicKey) {
-      const { publicKey } = crypto.generateKeyPairSync('rsa', {
-        modulusLength: 2048,
-        publicKeyEncoding: { type: 'spki', format: 'pem' },
-      })
-      userPublicKey = publicKey
-      try {
-        await prisma.orm.public.User.where({ id: user.id }).update({
-          publicKey: userPublicKey,
-        })
-      } catch (err) {
-        logger.warn(`Failed to update recipient user public key: ${err}`)
-      }
+    const userPublicKey = user?.publicKey?.trim()
+    if (!userPublicKey || !userPublicKey.includes('BEGIN')) {
+      const msg = `User ${params.userId} does not have a valid RSA public key (found: ${userPublicKey ? 'legacy/invalid' : 'none'}).`
+      logger.warn(`[CarinaNotifications] ${msg}`)
+      throw new Error(msg)
     }
 
     const { encryptedKey, encryptedData } = this.encryptNotificationPayload(
