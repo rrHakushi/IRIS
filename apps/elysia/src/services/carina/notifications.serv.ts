@@ -1,7 +1,8 @@
 import crypto from 'node:crypto'
 import {
   prisma,
-  Prisma,
+  countOf,
+  toDate,
   type NotificationType,
   type NotificationPriority,
   type NotificationActionStatus,
@@ -70,7 +71,7 @@ export interface SendNotificationParams {
   priority?: NotificationPriority
   content: NotificationContent
   actionHandler?: string
-  actionPayload?: Prisma.InputJsonValue | null
+  actionPayload?: any
   expiresAt?: Date | null
 }
 
@@ -97,7 +98,7 @@ export class CarinaNotificationsServ {
     recipientPublicKeyPem?: string | null
   ): EncryptedNotificationPayload {
     let targetPublicKey = recipientPublicKeyPem?.trim()
-    if (!targetPublicKey) {
+    if (!targetPublicKey || !targetPublicKey.includes('BEGIN')) {
       const { publicKey } = crypto.generateKeyPairSync('rsa', {
         modulusLength: 2048,
         publicKeyEncoding: { type: 'spki', format: 'pem' },
@@ -116,14 +117,30 @@ export class CarinaNotificationsServ {
     const encryptedData = `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted.toString('hex')}`
 
     // 2. Encrypt symmetric AES key with recipient's RSA-OAEP public key
-    const encryptedKeyBuffer = crypto.publicEncrypt(
-      {
-        key: targetPublicKey,
-        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-        oaepHash: 'sha256',
-      },
-      aesKey
-    )
+    let encryptedKeyBuffer: Buffer
+    try {
+      encryptedKeyBuffer = crypto.publicEncrypt(
+        {
+          key: targetPublicKey,
+          padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+          oaepHash: 'sha256',
+        },
+        aesKey
+      )
+    } catch {
+      const { publicKey } = crypto.generateKeyPairSync('rsa', {
+        modulusLength: 2048,
+        publicKeyEncoding: { type: 'spki', format: 'pem' },
+      })
+      encryptedKeyBuffer = crypto.publicEncrypt(
+        {
+          key: publicKey,
+          padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+          oaepHash: 'sha256',
+        },
+        aesKey
+      )
+    }
     const encryptedKey = encryptedKeyBuffer.toString('base64')
 
     return {
@@ -179,31 +196,18 @@ export class CarinaNotificationsServ {
     priority?: NotificationPriority
     content: NotificationContent
     actionHandler?: string
-    actionPayload?: Prisma.InputJsonValue | null
+    actionPayload?: any
     expiresAt?: Date | null
   }) {
-    const user = await prisma.user.findUnique({
-      where: { id: params.userId },
-      select: { id: true, publicKey: true },
-    })
+    const user = await prisma.orm.public.User.where({ id: params.userId })
+      .select('id', 'publicKey')
+      .first()
 
-    let userPublicKey = user?.publicKey
-    if (user && !userPublicKey) {
-      const { publicKey } = crypto.generateKeyPairSync('rsa', {
-        modulusLength: 2048,
-        publicKeyEncoding: { type: 'spki', format: 'pem' },
-      })
-      userPublicKey = publicKey
-      try {
-        if (typeof (prisma.user as any)?.update === 'function') {
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { publicKey: userPublicKey },
-          })
-        }
-      } catch (err) {
-        logger.warn(`Failed to update recipient user public key: ${err}`)
-      }
+    const userPublicKey = user?.publicKey?.trim()
+    if (!userPublicKey || !userPublicKey.includes('BEGIN')) {
+      const msg = `User ${params.userId} does not have a valid RSA public key (found: ${userPublicKey ? 'legacy/invalid' : 'none'}).`
+      logger.warn(`[CarinaNotifications] ${msg}`)
+      throw new Error(msg)
     }
 
     const { encryptedKey, encryptedData } = this.encryptNotificationPayload(
@@ -211,20 +215,18 @@ export class CarinaNotificationsServ {
       userPublicKey
     )
 
-    const notification = await prisma.notification.create({
-      data: {
-        userId: params.userId,
-        app: params.app,
-        category: params.category,
-        type: params.type ?? 'INFO',
-        priority: params.priority ?? 'NORMAL',
-        actionStatus: params.type && params.type !== 'INFO' ? 'PENDING' : null,
-        actionHandler: params.actionHandler ?? null,
-        actionPayload: params.actionPayload === null ? Prisma.JsonNull : (params.actionPayload ?? undefined),
-        encryptedKey,
-        encryptedData,
-        expiresAt: params.expiresAt ?? null,
-      },
+    const notification = await prisma.orm.public.Notification.create({
+      userId: params.userId,
+      app: params.app,
+      category: params.category,
+      type: params.type ?? 'INFO',
+      priority: params.priority ?? 'NORMAL',
+      actionStatus: params.type && params.type !== 'INFO' ? 'PENDING' : null,
+      actionHandler: params.actionHandler ?? null,
+      actionPayload: params.actionPayload ?? null,
+      encryptedKey,
+      encryptedData,
+      expiresAt: params.expiresAt ?? null,
     })
 
     // Broadcast to registered listeners
@@ -256,33 +258,33 @@ export class CarinaNotificationsServ {
     const limit = Math.max(1, Math.min(50, query?.limit ?? 10))
     const skip = (page - 1) * limit
 
-    const where: Prisma.NotificationWhereInput = { userId }
+    let notifQuery = prisma.orm.public.Notification.where({ userId })
 
     if (query?.isRead !== undefined) {
-      where.isRead = typeof query.isRead === 'string' ? query.isRead === 'true' : Boolean(query.isRead)
+      const isReadVal = typeof query.isRead === 'string' ? query.isRead === 'true' : Boolean(query.isRead)
+      notifQuery = notifQuery.where({ isRead: isReadVal })
     }
     if (query?.app) {
-      where.app = query.app
+      notifQuery = notifQuery.where({ app: query.app })
     }
     if (query?.category) {
-      where.category = query.category
+      notifQuery = notifQuery.where({ category: query.category })
     }
     if (query?.priority) {
-      where.priority = query.priority as NotificationPriority
+      notifQuery = notifQuery.where({ priority: query.priority as NotificationPriority })
     }
     if (query?.type) {
-      where.type = query.type as NotificationType
+      notifQuery = notifQuery.where({ type: query.type as NotificationType })
     }
 
     const [total, unreadCount, rawNotifications] = await Promise.all([
-      prisma.notification.count({ where }),
-      prisma.notification.count({ where: { userId, isRead: false } }),
-      prisma.notification.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
+      countOf(notifQuery),
+      countOf(prisma.orm.public.Notification.where({ userId, isRead: false })),
+      notifQuery
+        .orderBy((n) => n.createdAt.desc())
+        .offset(skip)
+        .limit(limit)
+        .all(),
     ])
 
     const totalPages = Math.max(1, Math.ceil(total / limit))
@@ -296,15 +298,15 @@ export class CarinaNotificationsServ {
       type: n.type,
       priority: n.priority,
       isRead: n.isRead,
-      readAt: n.readAt ? n.readAt.toISOString() : null,
+      readAt: n.readAt ? toDate(n.readAt).toISOString() : null,
       actionStatus: n.actionStatus,
       actionPayload: n.actionPayload,
       actionHandler: n.actionHandler,
       encryptedKey: n.encryptedKey,
       encryptedData: n.encryptedData,
-      expiresAt: n.expiresAt ? n.expiresAt.toISOString() : null,
-      createdAt: n.createdAt.toISOString(),
-      updatedAt: n.updatedAt.toISOString(),
+      expiresAt: n.expiresAt ? toDate(n.expiresAt).toISOString() : null,
+      createdAt: toDate(n.createdAt).toISOString(),
+      updatedAt: toDate(n.updatedAt).toISOString(),
     }))
 
     return {
@@ -329,24 +331,22 @@ export class CarinaNotificationsServ {
     userId: string,
     query?: { onlyRead?: boolean | string }
   ) {
-    const where: Prisma.NotificationWhereInput = { userId }
+    let delQuery = prisma.orm.public.Notification.where({ userId })
     const onlyRead = typeof query?.onlyRead === 'string' ? query.onlyRead === 'true' : Boolean(query?.onlyRead)
     if (onlyRead) {
-      where.isRead = true
+      delQuery = delQuery.where({ isRead: true })
     }
 
-    const result = await prisma.notification.deleteMany({ where })
-    const unreadCount = await prisma.notification.count({
-      where: { userId, isRead: false },
-    })
+    const deletedCount = await delQuery.deleteAndCount()
+    const unreadCount = await countOf(prisma.orm.public.Notification.where({ userId, isRead: false }))
 
     try {
-      wsHub.sendToUser(userId, 'notification:bulk-delete', { deletedCount: result.count })
+      wsHub.sendToUser(userId, 'notification:bulk-delete', { deletedCount })
     } catch {}
 
     return {
       success: true,
-      deletedCount: result.count,
+      deletedCount,
       unreadCount,
       message: 'Notifications deleted successfully',
     }
@@ -361,9 +361,7 @@ export class CarinaNotificationsServ {
     notificationId: string,
     secretKey?: Uint8Array
   ) {
-    const notification = await prisma.notification.findUnique({
-      where: { id: notificationId.trim() },
-    })
+    const notification = await prisma.orm.public.Notification.where({ id: notificationId.trim() }).first()
 
     if (!notification || notification.userId !== userId) {
       throw new NotFound('Notification not found')
@@ -392,15 +390,15 @@ export class CarinaNotificationsServ {
         type: notification.type,
         priority: notification.priority,
         isRead: notification.isRead,
-        readAt: notification.readAt ? notification.readAt.toISOString() : null,
+        readAt: notification.readAt ? toDate(notification.readAt).toISOString() : null,
         actionStatus: notification.actionStatus,
         actionPayload: notification.actionPayload,
         actionHandler: notification.actionHandler,
         encryptedKey: notification.encryptedKey,
         encryptedData: notification.encryptedData,
-        expiresAt: notification.expiresAt ? notification.expiresAt.toISOString() : null,
-        createdAt: notification.createdAt.toISOString(),
-        updatedAt: notification.updatedAt.toISOString(),
+        expiresAt: notification.expiresAt ? toDate(notification.expiresAt).toISOString() : null,
+        createdAt: toDate(notification.createdAt).toISOString(),
+        updatedAt: toDate(notification.updatedAt).toISOString(),
         ...(decryptedContent ? { content: decryptedContent } : {}),
       },
     }
@@ -410,21 +408,15 @@ export class CarinaNotificationsServ {
    * Delete single notification strictly by notification ID.
    */
   public static async deleteNotification(userId: string, notificationId: string) {
-    const notification = await prisma.notification.findUnique({
-      where: { id: notificationId.trim() },
-    })
+    const notification = await prisma.orm.public.Notification.where({ id: notificationId.trim() }).first()
 
     if (!notification || notification.userId !== userId) {
       throw new NotFound('Notification not found')
     }
 
-    await prisma.notification.delete({
-      where: { id: notification.id },
-    })
+    await prisma.orm.public.Notification.where({ id: notification.id }).delete()
 
-    const unreadCount = await prisma.notification.count({
-      where: { userId, isRead: false },
-    })
+    const unreadCount = await countOf(prisma.orm.public.Notification.where({ userId, isRead: false }))
 
     try {
       wsHub.sendToUser(userId, 'notification:delete', { id: notification.id })
@@ -446,9 +438,7 @@ export class CarinaNotificationsServ {
     notificationId: string,
     body: { action: string; payload?: any }
   ) {
-    const notification = await prisma.notification.findUnique({
-      where: { id: notificationId.trim() },
-    })
+    const notification = await prisma.orm.public.Notification.where({ id: notificationId.trim() }).first()
 
     if (!notification || notification.userId !== userId) {
       throw new NotFound('Notification not found')
@@ -462,30 +452,28 @@ export class CarinaNotificationsServ {
       actionStatus = 'SUBMITTED'
     }
 
-    const updated = await prisma.notification.update({
-      where: { id: notification.id },
-      data: {
-        actionStatus,
-        actionPayload: body.payload !== undefined ? body.payload : notification.actionPayload,
-        isRead: true,
-        readAt: notification.readAt ?? new Date(),
-      },
+    const updated = await prisma.orm.public.Notification.where({ id: notification.id }).update({
+      actionStatus,
+      actionPayload: body.payload !== undefined ? body.payload : notification.actionPayload,
+      isRead: true,
+      readAt: notification.readAt ? toDate(notification.readAt) : new Date(),
     })
 
-    const unreadCount = await prisma.notification.count({
-      where: { userId, isRead: false },
-    })
+    if (!updated) {
+      throw new NotFound('Notification not found')
+    }
+
+    const unreadCount = await countOf(prisma.orm.public.Notification.where({ userId, isRead: false }))
 
     if (actionStatus === 'CONFIRMED' && notification.actionHandler === 'borealis.other.fork') {
       const otherId = (notification.actionPayload as any)?.otherId
       if (otherId) {
         try {
-          const userRecord = await prisma.user.findUnique({
-            where: { id: userId },
-            select: { permissions: true },
-          })
+          const userRecord = await prisma.orm.public.User.where({ id: userId })
+            .select('permissions')
+            .first()
           const { hasPermission, IRISFlags } = await import('@IRIS/permissions')
-          const isAdmin = hasPermission(userRecord?.permissions ?? null, IRISFlags.ADMINISTRATOR)
+          const isAdmin = hasPermission(userRecord?.permissions ? [...userRecord.permissions] : null, IRISFlags.ADMINISTRATOR)
           const { BorealisOtherServ } = await import('../borealis/other.serv')
           await BorealisOtherServ.forkItem(userId, Number(otherId), isAdmin)
         } catch (forkErr) {
@@ -517,31 +505,24 @@ export class CarinaNotificationsServ {
    * Mark single notification as read strictly by notification ID.
    */
   public static async markNotificationRead(userId: string, notificationId: string) {
-    const notification = await prisma.notification.findUnique({
-      where: { id: notificationId.trim() },
-    })
+    const notification = await prisma.orm.public.Notification.where({ id: notificationId.trim() }).first()
 
     if (!notification || notification.userId !== userId) {
       throw new NotFound('Notification not found')
     }
 
     const now = new Date()
-    let readAtDate = notification.readAt || now
+    let readAtDate = notification.readAt ? toDate(notification.readAt) : now
 
     if (!notification.isRead) {
-      const updated = await prisma.notification.update({
-        where: { id: notification.id },
-        data: {
-          isRead: true,
-          readAt: now,
-        },
+      const updated = await prisma.orm.public.Notification.where({ id: notification.id }).update({
+        isRead: true,
+        readAt: now,
       })
-      readAtDate = updated.readAt || now
+      readAtDate = updated?.readAt ? toDate(updated.readAt) : now
     }
 
-    const unreadCount = await prisma.notification.count({
-      where: { userId, isRead: false },
-    })
+    const unreadCount = await countOf(prisma.orm.public.Notification.where({ userId, isRead: false }))
 
     try {
       wsHub.sendToUser(userId, 'notification:update', {
@@ -565,26 +546,23 @@ export class CarinaNotificationsServ {
    * Mark all notifications as read for authenticated user.
    */
   public static async markAllRead(userId: string) {
-    const result = await prisma.notification.updateMany({
-      where: {
-        userId,
-        isRead: false,
-      },
-      data: {
-        isRead: true,
-        readAt: new Date(),
-      },
+    const markedCount = await prisma.orm.public.Notification.where({
+      userId,
+      isRead: false,
+    }).updateAndCount({
+      isRead: true,
+      readAt: new Date(),
     })
 
     try {
       wsHub.sendToUser(userId, 'notification:mark-all-read', {
-        markedCount: result.count,
+        markedCount,
       })
     } catch {}
 
     return {
       success: true,
-      markedCount: result.count,
+      markedCount,
       unreadCount: 0 as const,
       message: 'All notifications marked as read',
     }
@@ -594,9 +572,10 @@ export class CarinaNotificationsServ {
    * Count unread notifications for a user.
    */
   public static async countUnread(userId: string): Promise<number> {
-    return await prisma.notification.count({
-      where: { userId, isRead: false },
-    })
+    return await countOf(prisma.orm.public.Notification.where({
+      userId,
+      isRead: false,
+    }))
   }
 
   /**

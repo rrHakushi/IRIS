@@ -108,17 +108,17 @@ function setupPrismaMock() {
   ]
 
   // Mock User findUnique
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return mockUsers.find((u) => u.id === where.id) ?? null
   }
 
   // Mock MediaRecommendation findUnique
-  ;(prisma.mediaRecommendation.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).mediaRecommendation.findUnique as any) = async ({ where }: any) => {
     return mockRecommendations.find((r) => r.id === where.id) ?? null
   }
 
   // Mock MediaRecommendation findFirst
-  ;(prisma.mediaRecommendation.findFirst as any) = async ({ where }: any) => {
+  ;((prisma as any).mediaRecommendation.findFirst as any) = async ({ where }: any) => {
     return (
       mockRecommendations.find((r) => {
         if (where.id !== undefined && r.id !== where.id) return false
@@ -129,7 +129,7 @@ function setupPrismaMock() {
   }
 
   // Mock MediaRecommendation count
-  ;(prisma.mediaRecommendation.count as any) = async ({ where }: any) => {
+  ;((prisma as any).mediaRecommendation.count as any) = async ({ where }: any) => {
     if (where?.OR && Array.isArray(where.OR)) {
       return mockRecommendations.filter((r) => {
         return where.OR.some((cond: any) => {
@@ -147,7 +147,7 @@ function setupPrismaMock() {
   }
 
   // Mock MediaRecommendation findMany
-  ;(prisma.mediaRecommendation.findMany as any) = async ({
+  ;((prisma as any).mediaRecommendation.findMany as any) = async ({
     where,
     skip = 0,
     take = 10,
@@ -198,7 +198,7 @@ function setupPrismaMock() {
   }
 
   // Mock MediaRecommendation upsert
-  ;(prisma.mediaRecommendation.upsert as any) = async ({
+  ;((prisma as any).mediaRecommendation.upsert as any) = async ({
     where,
     create,
     update,
@@ -245,7 +245,7 @@ function setupPrismaMock() {
   }
 
   // Mock MediaRecommendation update
-  ;(prisma.mediaRecommendation.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).mediaRecommendation.update as any) = async ({ where, data }: any) => {
     const idx = mockRecommendations.findIndex((r) => r.id === where.id)
     if (idx === -1) throw new Error('Recommendation not found')
     const rec = mockRecommendations[idx]!
@@ -260,7 +260,7 @@ function setupPrismaMock() {
   }
 
   // Mock MediaRecommendation delete
-  ;(prisma.mediaRecommendation.delete as any) = async ({ where }: any) => {
+  ;((prisma as any).mediaRecommendation.delete as any) = async ({ where }: any) => {
     const idx = mockRecommendations.findIndex((r) => r.id === where.id)
     if (idx === -1) throw new Error('Recommendation not found')
     const [deleted] = mockRecommendations.splice(idx, 1)
@@ -272,7 +272,7 @@ function setupPrismaMock() {
   }
 
   // Mock MediaRecommendationVote findMany
-  ;(prisma.mediaRecommendationVote.findMany as any) = async ({ where }: any) => {
+  ;((prisma as any).mediaRecommendationVote.findMany as any) = async ({ where }: any) => {
     return mockRecommendationVotes.filter((v) => {
       if (where.recommendationId?.in && !where.recommendationId.in.includes(v.recommendationId)) {
         return false
@@ -283,7 +283,7 @@ function setupPrismaMock() {
   }
 
   // Mock MediaRecommendationVote count
-  ;(prisma.mediaRecommendationVote.count as any) = async ({ where }: any) => {
+  ;((prisma as any).mediaRecommendationVote.count as any) = async ({ where }: any) => {
     return mockRecommendationVotes.filter((v) => {
       if (where.recommendationId && v.recommendationId !== where.recommendationId) {
         return false
@@ -294,7 +294,7 @@ function setupPrismaMock() {
   }
 
   // Mock MediaRecommendationVote upsert
-  ;(prisma.mediaRecommendationVote.upsert as any) = async ({
+  ;((prisma as any).mediaRecommendationVote.upsert as any) = async ({
     where,
     create,
     update,
@@ -327,7 +327,7 @@ function setupPrismaMock() {
   }
 
   // Mock MediaRecommendationVote deleteMany
-  ;(prisma.mediaRecommendationVote.deleteMany as any) = async ({ where }: any) => {
+  ;((prisma as any).mediaRecommendationVote.deleteMany as any) = async ({ where }: any) => {
     const initialCount = mockRecommendationVotes.length
     mockRecommendationVotes = mockRecommendationVotes.filter((v) => {
       if (where.recommendationId && v.recommendationId !== where.recommendationId) {
@@ -345,7 +345,7 @@ function setupPrismaMock() {
 // -----------------------------------------------------------------------------
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()

@@ -6,10 +6,9 @@ export class KiroshiSettingsServ {
    * Retrieves search engine settings and preferences for the user.
    */
   public static async getSettings(userId: string) {
-    const dbUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { settings: true },
-    })
+    const dbUser = await prisma.orm.public.User
+      .select('settings')
+      .first({ id: userId })
 
     if (!dbUser) {
       throw new NotFound('User not found.')
@@ -33,10 +32,9 @@ export class KiroshiSettingsServ {
     userId: string,
     body: { historyEnabled: boolean }
   ) {
-    const dbUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { settings: true },
-    })
+    const dbUser = await prisma.orm.public.User
+      .select('settings')
+      .first({ id: userId })
 
     if (!dbUser) {
       throw new NotFound('User not found.')
@@ -53,10 +51,9 @@ export class KiroshiSettingsServ {
       search: updatedSearch,
     }
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: { settings: newSettings },
-    })
+    await prisma.orm.public.User
+      .where({ id: userId })
+      .update({ settings: newSettings })
 
     return {
       success: true,

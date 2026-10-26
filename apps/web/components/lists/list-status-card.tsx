@@ -9,7 +9,12 @@ import {
   IconChevronDown,
   IconLoader2,
 } from "@tabler/icons-react"
-import { DialogTrigger, Popover, Dialog } from "react-aria-components"
+import {
+  DialogTrigger,
+  Popover,
+  Dialog,
+  Button as RACButton,
+} from "react-aria-components"
 import { cn } from "@workspace/ui/lib/utils"
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
@@ -117,30 +122,33 @@ export function ListStatusCard({
 
     const map: Record<string, number> = {
       ALL: allTotal,
-      WATCHING: 0,
+      IN_PROGRESS: 0,
       ON_HOLD: 0,
       COMPLETED: 0,
       DROPPED: 0,
-      PLANNING: 0,
+      PLANNED: 0,
     }
 
     facets.statuses.forEach((item) => {
       const upper = item.value.toUpperCase()
       if (
+        upper === "IN_PROGRESS" ||
         upper === "WATCHING" ||
         upper === "READING" ||
         upper === "PLAYING" ||
-        upper === "LISTENING"
+        upper === "LISTENING" ||
+        upper === "CURRENT" ||
+        upper === "TRACKING"
       ) {
-        map.WATCHING = (map.WATCHING || 0) + item.count
-      } else if (upper === "ON_HOLD") {
+        map.IN_PROGRESS = (map.IN_PROGRESS || 0) + item.count
+      } else if (upper === "ON_HOLD" || upper === "HOLD" || upper === "PAUSED") {
         map.ON_HOLD = item.count
-      } else if (upper === "COMPLETED") {
+      } else if (upper === "COMPLETED" || upper === "FINISHED") {
         map.COMPLETED = item.count
       } else if (upper === "DROPPED") {
         map.DROPPED = item.count
-      } else if (upper === "PLANNING") {
-        map.PLANNING = item.count
+      } else if (upper === "PLANNED" || upper === "PLANNING") {
+        map.PLANNED = item.count
       }
     })
 
@@ -169,9 +177,9 @@ export function ListStatusCard({
     return [
       { key: "ALL", label: "ALL", count: statusCounts.ALL ?? 0 },
       {
-        key: "WATCHING",
+        key: "IN_PROGRESS",
         label: activeVerb.toUpperCase(),
-        count: statusCounts.WATCHING ?? 0,
+        count: statusCounts.IN_PROGRESS ?? 0,
       },
       { key: "ON_HOLD", label: "ON HOLD", count: statusCounts.ON_HOLD ?? 0 },
       {
@@ -180,7 +188,7 @@ export function ListStatusCard({
         count: statusCounts.COMPLETED ?? 0,
       },
       { key: "DROPPED", label: "DROPPED", count: statusCounts.DROPPED ?? 0 },
-      { key: "PLANNING", label: "PLANNING", count: statusCounts.PLANNING ?? 0 },
+      { key: "PLANNED", label: "PLANNING", count: statusCounts.PLANNED ?? 0 },
     ]
   }, [mediaType, statusCounts, facets.formats, activeVerb])
 
@@ -484,14 +492,12 @@ export function ListStatusCard({
 
               {/* Sort Dropdown Trigger with RAC Button */}
               <DialogTrigger>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 gap-1.5 rounded-2xl border border-border/60 bg-card/60 px-3 text-xs font-medium text-foreground select-none hover:bg-muted hover:text-foreground"
+                <RACButton
+                  className="inline-flex shrink-0 items-center justify-center font-medium transition-all outline-hidden select-none focus-visible:ring-3 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:opacity-50 h-8 gap-1.5 rounded-2xl border border-border/60 bg-card/60 px-3 text-xs text-foreground select-none hover:bg-muted hover:text-foreground"
                 >
                   <span>{currentSortLabel}</span>
                   <IconChevronDown className="size-3.5 shrink-0 opacity-60" />
-                </Button>
+                </RACButton>
 
                 <Popover
                   placement="bottom end"

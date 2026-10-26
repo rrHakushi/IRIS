@@ -19,6 +19,15 @@ import type {
   UpdateMediaPayload,
 } from "../../types/index.js";
 
+const ANILIST_TO_UNIFIED: Record<string, LibraryItem["status"]> = {
+  CURRENT: "IN_PROGRESS",
+  REPEATING: "IN_PROGRESS",
+  PLANNING: "PLANNED",
+  COMPLETED: "COMPLETED",
+  PAUSED: "ON_HOLD",
+  DROPPED: "DROPPED",
+};
+
 export class AniListAdapter extends BaseConnectionAdapter {
   readonly provider: ConnectionProvider = "ANILIST";
   readonly category: ConnectionCategory = "TRACKING";
@@ -40,11 +49,11 @@ export class AniListAdapter extends BaseConnectionAdapter {
   };
 
   private getClientId(): string {
-    return process.env.ANILIST_CLIENT_ID || "";
+    return Bun.env.ANILIST_CLIENT_ID || "";
   }
 
   private getClientSecret(): string {
-    return process.env.ANILIST_CLIENT_SECRET || "";
+    return Bun.env.ANILIST_CLIENT_SECRET || "";
   }
 
   async getAuthUrl(options: AuthUrlOptions): Promise<AuthUrlResult> {
@@ -163,7 +172,7 @@ export class AniListAdapter extends BaseConnectionAdapter {
       id: String(data.Viewer.id),
       username: data.Viewer.name,
       displayName: data.Viewer.name,
-      avatarUrl: data.Viewer.avatar?.medium || data.Viewer.avatar?.large,
+      avatarUrl: data.Viewer.avatar?.large || data.Viewer.avatar?.medium,
       profileUrl: data.Viewer.siteUrl || `https://anilist.co/user/${data.Viewer.name}`,
     };
   }
@@ -212,8 +221,9 @@ export class AniListAdapter extends BaseConnectionAdapter {
               native
             }
             coverImage {
-              medium
+              extraLarge
               large
+              medium
               color
             }
             bannerImage
@@ -248,8 +258,9 @@ export class AniListAdapter extends BaseConnectionAdapter {
             native?: string;
           };
           coverImage?: {
-            medium?: string;
+            extraLarge?: string;
             large?: string;
+            medium?: string;
             color?: string;
           };
           bannerImage?: string;
@@ -365,7 +376,7 @@ export class AniListAdapter extends BaseConnectionAdapter {
           provider: "ANILIST",
           mediaType: type === "MANGA" ? "MANGA" : "ANIME",
           title: entry.media.title.userPreferred,
-          status: (entry.status as any) || "CURRENT",
+          status: ANILIST_TO_UNIFIED[entry.status] || "IN_PROGRESS",
           score: entry.score,
           progress: entry.progress,
           progressVolumes: entry.progressVolumes,
@@ -401,28 +412,23 @@ export class AniListAdapter extends BaseConnectionAdapter {
 
     let status: "CURRENT" | "PLANNING" | "COMPLETED" | "DROPPED" | "PAUSED" | "REPEATING" | undefined;
     if (payload.status) {
+      // Unified: IN_PROGRESS→CURRENT, PLANNED→PLANNING, ON_HOLD→PAUSED
       const s = payload.status.toUpperCase();
       if (
+        s === "IN_PROGRESS" ||
         s === "WATCHING" ||
         s === "READING" ||
-        s === "CURRENT" ||
         s === "PLAYING" ||
-        s === "LISTENING"
+        s === "LISTENING" ||
+        s === "TRACKING" ||
+        s === "CURRENT"
       ) {
         status = "CURRENT";
-      } else if (
-        s === "REPEATING" ||
-        s === "REWATCHING" ||
-        s === "REREADING"
-      ) {
+      } else if (s === "REPEATING") {
         status = "REPEATING";
-      } else if (s === "ON_HOLD" || s === "HOLD" || s === "PAUSED") {
+      } else if (s === "ON_HOLD" || s === "PAUSED") {
         status = "PAUSED";
-      } else if (
-        s === "PLANNING" ||
-        s === "PLAN_TO_WATCH" ||
-        s === "PLAN_TO_READ"
-      ) {
+      } else if (s === "PLANNED" || s === "PLANNING") {
         status = "PLANNING";
       } else if (s === "COMPLETED") {
         status = "COMPLETED";

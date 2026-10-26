@@ -4,21 +4,24 @@ import {
   verifyRegistrationResponse,
   verifyAuthenticationResponse,
 } from '@simplewebauthn/server'
-import { prisma } from '@IRIS/database'
+import { prisma, countOf, or, toDate } from '@IRIS/database'
 import { cache } from '../../utils/cache'
-import { generateBackupCodes } from '../../utils/auth-crypto'
+import { generateBackupCodes, signUserJwt } from '../../utils/auth-crypto'
 import { BadRequest, NotFound } from '../../lib/errors'
 import type { CarinaPasskeysModel } from '../../api/models/carina/passkeys.model'
+import { getDomainConfig } from '../../utils/domain'
 
 function getOriginAndRpId(request: Request) {
+  const domainConfig = getDomainConfig()
   const originHeader = request.headers.get('origin') || request.headers.get('referer')
   const allowedOrigins = new Set<string>()
 
-  if (process.env.NEXTAUTH_URL) allowedOrigins.add(process.env.NEXTAUTH_URL)
-  if (process.env.NEXT_PUBLIC_URL) allowedOrigins.add(process.env.NEXT_PUBLIC_URL)
-  allowedOrigins.add('http://localhost:3000')
-  allowedOrigins.add('http://127.0.0.1:3000')
-  allowedOrigins.add('http://localhost:4000')
+  allowedOrigins.add(domainConfig.origin)
+  if (domainConfig.hostname === 'localhost' || domainConfig.hostname === '127.0.0.1') {
+    allowedOrigins.add('http://localhost:3000')
+    allowedOrigins.add('http://127.0.0.1:3000')
+    allowedOrigins.add('http://localhost:4000')
+  }
 
   if (originHeader) {
     try {
@@ -27,24 +30,9 @@ function getOriginAndRpId(request: Request) {
     } catch {}
   }
 
-  let rpID = 'localhost'
-  try {
-    const primaryOrigin = originHeader || process.env.NEXTAUTH_URL || 'http://localhost:3000'
-    const hostname = new URL(primaryOrigin).hostname
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      rpID = 'localhost'
-    } else if (process.env.RP_ID && process.env.RP_ID.trim()) {
-      rpID = process.env.RP_ID.trim()
-    } else {
-      rpID = hostname
-    }
-  } catch {
-    rpID = 'localhost'
-  }
-
   return {
     expectedOrigin: Array.from(allowedOrigins),
-    rpID,
+    rpID: domainConfig.rpId,
   }
 }
 
@@ -61,21 +49,13 @@ export abstract class CarinaPasskeysServ {
     const skip = (page - 1) * limit
 
     const [total, passkeys] = await Promise.all([
-      prisma.passkey.count({
-        where: { userId },
-      }),
-      prisma.passkey.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-        select: {
-          id: true,
-          name: true,
-          createdAt: true,
-          transports: true,
-        },
-      }),
+      countOf(prisma.orm.public.Passkey.where({ userId })),
+      prisma.orm.public.Passkey.where({ userId })
+        .orderBy((pk) => pk.createdAt.desc())
+        .offset(skip)
+        .limit(limit)
+        .select('id', 'name', 'createdAt', 'transports')
+        .all(),
     ])
 
     return {
@@ -86,8 +66,8 @@ export abstract class CarinaPasskeysServ {
       passkeys: passkeys.map((pk) => ({
         id: pk.id,
         name: pk.name,
-        createdAt: pk.createdAt.toISOString(),
-        transports: pk.transports,
+        createdAt: toDate(pk.createdAt).toISOString(),
+        transports: [...pk.transports],
       })),
     }
   }
@@ -96,10 +76,9 @@ export abstract class CarinaPasskeysServ {
    * Generate WebAuthn passkey registration options challenge.
    */
   static async createRegistrationChallenge(userId: string, request: Request) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { passkeys: true },
-    })
+    const user = await prisma.orm.public.User.where({ id: userId })
+      .include('passkeys')
+      .first()
 
     if (!user) {
       throw new NotFound(`User with ID '${userId}' was not found.`)
@@ -146,12 +125,11 @@ export abstract class CarinaPasskeysServ {
       const rawIdentifier = body.identifier.trim()
       const lowerIdentifier = rawIdentifier.toLowerCase()
 
-      const user = await prisma.user.findFirst({
-        where: {
-          OR: [{ email: lowerIdentifier }, { username: rawIdentifier }],
-        },
-        include: { passkeys: true },
-      })
+      const user = await prisma.orm.public.User.where(
+        (u) => or(u.email.eq(lowerIdentifier), u.username.eq(rawIdentifier))
+      )
+        .include('passkeys')
+        .first()
 
       if (user && user.passkeys.length > 0) {
         allowCredentials = user.passkeys.map((pk) => ({
@@ -204,10 +182,9 @@ export abstract class CarinaPasskeysServ {
       throw new BadRequest('Missing passkey credential ID.')
     }
 
-    const passkey = await prisma.passkey.findUnique({
-      where: { id: credentialId },
-      include: { user: true },
-    })
+    const passkey = await prisma.orm.public.Passkey.where({ id: credentialId })
+      .include('user')
+      .first()
 
     if (!passkey || !passkey.user) {
       throw new NotFound('Passkey credential not recognized on this server.')
@@ -259,31 +236,62 @@ export abstract class CarinaPasskeysServ {
         },
       })
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Passkey assertion verification failed'
-      throw new BadRequest(msg)
+      // Multi-device passkeys (e.g. iCloud Keychain, Bitwarden, 1Password, Windows Hello)
+      // often do not increment signature counters across synced devices. If the counter
+      // check fails because it is static or equal, retry with counter: 0 to verify signature.
+      if (err instanceof Error && err.message.includes('was lower than expected')) {
+        try {
+          verification = await verifyAuthenticationResponse({
+            response: resp,
+            expectedChallenge,
+            expectedOrigin,
+            expectedRPID: rpID,
+            credential: {
+              id: passkey.id,
+              publicKey: Buffer.from(passkey.publicKey, 'base64url'),
+              counter: 0,
+              transports: passkey.transports as any,
+            },
+          })
+        } catch (retryErr: unknown) {
+          const msg = retryErr instanceof Error ? retryErr.message : 'Passkey assertion verification failed'
+          throw new BadRequest(msg)
+        }
+      } else {
+        const msg = err instanceof Error ? err.message : 'Passkey assertion verification failed'
+        throw new BadRequest(msg)
+      }
     }
 
     if (!verification.verified) {
       throw new BadRequest('Passkey authentication verification failed.')
     }
 
-    await prisma.passkey.update({
-      where: { id: passkey.id },
-      data: {
-        counter: verification.authenticationInfo.newCounter,
-      },
+    const newCounter = verification.authenticationInfo?.newCounter ?? passkey.counter
+    await prisma.orm.public.Passkey.where({ id: passkey.id }).update({
+      counter: Math.max(passkey.counter, newCounter),
     })
 
     await cache.del(`auth:passkey-auth:${challenge}`)
 
+    // Issue authenticated JWT session token
+    const pwdChangedAt = toDate(passkey.user.passwordChangedAt)
+    const token = await signUserJwt({
+      ...passkey.user,
+      username: passkey.user.username.trim(),
+      permissions: [...passkey.user.permissions],
+      passwordChangedAt: pwdChangedAt,
+    })
+
     return {
       success: true,
+      token,
       user: {
         id: passkey.user.id,
         username: passkey.user.username,
         email: passkey.user.email,
-        passwordChangedAt: passkey.user.passwordChangedAt
-          ? passkey.user.passwordChangedAt.getTime()
+        passwordChangedAt: pwdChangedAt
+          ? Math.floor(pwdChangedAt.getTime() / 1000)
           : null,
       },
     }
@@ -297,10 +305,9 @@ export abstract class CarinaPasskeysServ {
     body: CarinaPasskeysModel['verifyBody'],
     request: Request
   ) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { passkeys: true },
-    })
+    const user = await prisma.orm.public.User.where({ id: userId })
+      .include('passkeys')
+      .first()
 
     if (!user) {
       throw new NotFound(`User with ID '${userId}' was not found.`)
@@ -344,24 +351,21 @@ export abstract class CarinaPasskeysServ {
     const isOtherMfaActive = user.TOTPEnabled || user.emailMfaEnabled
     if (!isOtherMfaActive && user.backupCodes.length === 0) {
       const generated = await generateBackupCodes()
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { backupCodes: generated.hashed },
+      await prisma.orm.public.User.where({ id: user.id }).update({
+        backupCodes: generated.hashed,
       })
       backupCodes = generated.plain
     }
 
     // 4. Persist passkey in database
-    await prisma.passkey.create({
-      data: {
-        id: credentialID,
-        publicKey: Buffer.from(credentialPublicKey).toString('base64url'),
-        counter,
-        transports:
-          transports ?? body.passkeyResponse.response?.transports ?? [],
-        name: (body.name || '').trim() || 'Passkey',
-        userId: user.id,
-      },
+    await prisma.orm.public.Passkey.create({
+      id: credentialID,
+      publicKey: Buffer.from(credentialPublicKey).toString('base64url'),
+      counter,
+      transports:
+        transports ?? body.passkeyResponse.response?.transports ?? [],
+      name: (body.name || '').trim() || 'Passkey',
+      userId: user.id,
     })
 
     // 5. Clean up cached challenge and user cache
@@ -380,23 +384,18 @@ export abstract class CarinaPasskeysServ {
    * Delete a registered passkey belonging to the user.
    */
   static async deletePasskey(userId: string, passkeyId: string) {
-    const passkey = await prisma.passkey.findFirst({
-      where: { id: passkeyId, userId },
-    })
+    const passkey = await prisma.orm.public.Passkey.where({ id: passkeyId, userId }).first()
 
     if (!passkey) {
       throw new NotFound(`Passkey with ID '${passkeyId}' was not found.`)
     }
 
-    await prisma.passkey.delete({
-      where: { id: passkey.id },
-    })
+    await prisma.orm.public.Passkey.where({ id: passkey.id }).delete()
 
     // Check remaining MFA methods
-    const remainingUser = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { passkeys: true },
-    })
+    const remainingUser = await prisma.orm.public.User.where({ id: userId })
+      .include('passkeys')
+      .first()
 
     if (remainingUser) {
       const remainingMfa =
@@ -405,9 +404,8 @@ export abstract class CarinaPasskeysServ {
         remainingUser.passkeys.length > 0
 
       if (!remainingMfa && remainingUser.backupCodes.length > 0) {
-        await prisma.user.update({
-          where: { id: userId },
-          data: { backupCodes: [] },
+        await prisma.orm.public.User.where({ id: userId }).update({
+          backupCodes: [],
         })
       }
     }

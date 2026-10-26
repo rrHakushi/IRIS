@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useMemo } from "react"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/session-context"
 import { usePassSidebarConfig } from "@/config/sidebars/passSidebarConfig"
 import { IrisSidebar } from "@/components/navigation/iris-sidebar"
 import { useIrisSidebar } from "@/components/navigation/sidebar-provider"

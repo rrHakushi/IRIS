@@ -1,4 +1,4 @@
-import { prisma } from '@IRIS/database'
+import { prisma, toDate } from '@IRIS/database'
 import { decryptConnectionData, encryptConnectionData } from '@IRIS/connections'
 import { NotFound } from '../../lib/errors'
 
@@ -16,10 +16,9 @@ export class KiroshiHistoryServ {
       query?: string
     }
   ) {
-    const dbUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { settings: true },
-    })
+    const dbUser = await prisma.orm.public.User
+      .select('settings')
+      .first({ id: userId })
     const userSettings = (dbUser?.settings as any) || {}
     const historyEnabled = userSettings?.search?.historyEnabled !== false
     if (!historyEnabled) {
@@ -28,27 +27,23 @@ export class KiroshiHistoryServ {
 
     const encryptedQuery = data.query ? encryptConnectionData(data.query, userId) : null
 
-    const record = await prisma.searchHistory.create({
-      data: {
-        userId,
-        type: 'site',
-        url: data.url,
-        title: data.title,
-        thumbnail: data.thumbnail,
-        category: data.category || 'general',
-        encryptedQuery,
-      },
+    const record = await prisma.orm.public.SearchHistory.create({
+      userId,
+      type: 'site',
+      url: data.url,
+      title: data.title,
+      thumbnail: data.thumbnail,
+      category: data.category || 'general',
+      encryptedQuery,
     })
 
     // Retention cleanup in background
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-    prisma.searchHistory
-      .deleteMany({
-        where: {
-          userId,
-          createdAt: { lt: thirtyDaysAgo },
-        },
-      })
+    prisma.orm.public.SearchHistory
+      .where({ userId })
+      .where((s) => s.createdAt.lt(thirtyDaysAgo))
+      .deleteAll()
+      .toArray()
       .catch(() => {})
 
     return {
@@ -74,16 +69,20 @@ export class KiroshiHistoryServ {
     const typeFilter = options?.type
     const categoryFilter = options?.category
 
-    const records = await prisma.searchHistory.findMany({
-      where: {
-        userId,
-        createdAt: { gte: thirtyDaysAgo },
-        ...(typeFilter && typeFilter !== 'all' ? { type: typeFilter } : {}),
-        ...(categoryFilter && categoryFilter !== 'all' ? { category: categoryFilter } : {}),
-      },
-      orderBy: { createdAt: 'desc' },
-      take: limit * 2,
-    })
+    let query = prisma.orm.public.SearchHistory
+      .where({ userId })
+      .where((s) => s.createdAt.gte(thirtyDaysAgo))
+    if (typeFilter && typeFilter !== 'all') {
+      query = query.where({ type: typeFilter })
+    }
+    if (categoryFilter && categoryFilter !== 'all') {
+      query = query.where({ category: categoryFilter })
+    }
+
+    const records = await query
+      .orderBy((s) => s.createdAt.desc())
+      .limit(limit * 2)
+      .all()
 
     const seenQueries = new Set<string>()
     const history: Array<{
@@ -119,7 +118,7 @@ export class KiroshiHistoryServ {
             url: rec.url || '',
             title: rec.title || rec.url || 'Visited Site',
             thumbnail: rec.thumbnail || undefined,
-            createdAt: rec.createdAt.toISOString(),
+            createdAt: toDate(rec.createdAt).toISOString(),
           })
           if (history.length >= limit) break
         } else {
@@ -134,7 +133,7 @@ export class KiroshiHistoryServ {
               type: 'query',
               query: plainQuery,
               category: rec.category || 'general',
-              createdAt: rec.createdAt.toISOString(),
+              createdAt: toDate(rec.createdAt).toISOString(),
             })
             if (history.length >= limit) break
           }
@@ -154,12 +153,11 @@ export class KiroshiHistoryServ {
    * Deletes search history records for the user.
    */
   public static async clearHistory(userId: string, type?: string) {
-    await prisma.searchHistory.deleteMany({
-      where: {
-        userId,
-        ...(type && type !== 'all' ? { type } : {}),
-      },
-    })
+    let query = prisma.orm.public.SearchHistory.where({ userId })
+    if (type && type !== 'all') {
+      query = query.where({ type })
+    }
+    await query.deleteAll()
 
     return {
       success: true,
@@ -171,11 +169,11 @@ export class KiroshiHistoryServ {
    * Deletes an individual history record by ID.
    */
   public static async deleteHistoryItem(userId: string, id: string) {
-    const result = await prisma.searchHistory.deleteMany({
-      where: { id, userId },
-    })
+    const deletedCount = await prisma.orm.public.SearchHistory
+      .where({ id, userId })
+      .deleteAndCount()
 
-    if (result.count === 0) {
+    if (deletedCount === 0) {
       throw new NotFound('History record not found.')
     }
 
@@ -185,4 +183,3 @@ export class KiroshiHistoryServ {
     }
   }
 }
-

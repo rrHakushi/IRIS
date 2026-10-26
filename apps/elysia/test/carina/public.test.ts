@@ -14,7 +14,7 @@ const testUploadsDir = path.resolve(process.cwd(), 'uploads')
 const testFilePath = path.join(testUploadsDir, 'local-only-file.txt')
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()

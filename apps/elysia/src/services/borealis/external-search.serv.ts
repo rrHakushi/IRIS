@@ -265,24 +265,22 @@ export class BorealisExternalSearchServ {
         )
         for (const item of items) {
           try {
-            const charImage = item.image?.medium || item.image?.large || null
-            let existing = await prisma.character.findUnique({
-              where: { anilistId: item.id },
-            })
+            const charImage = item.image?.large || item.image?.medium || null
+            let existing = await prisma.orm.public.Character
+              .where({ anilistId: item.id })
+              .first()
             if (!existing) {
-              existing = await prisma.character.create({
-                data: {
-                  anilistId: item.id,
-                  namePrimary: item.name.full,
-                  nameNative: item.name.native || null,
-                  nameAlternative: item.name.alternative || [],
-                  nameAlternativeSpoiler: item.name.alternativeSpoiler || [],
-                  image: charImage,
-                  description: item.description || null,
-                  gender: item.gender || null,
-                  age: item.age || null,
-                  favorites: item.favourites || 0,
-                },
+              existing = await prisma.orm.public.Character.create({
+                anilistId: item.id,
+                namePrimary: item.name.full,
+                nameNative: item.name.native || null,
+                nameAlternative: item.name.alternative || [],
+                nameAlternativeSpoiler: item.name.alternativeSpoiler || [],
+                image: charImage,
+                description: item.description || null,
+                gender: item.gender || null,
+                age: item.age || null,
+                favorites: item.favourites || 0,
               })
             }
             results.push({
@@ -306,21 +304,19 @@ export class BorealisExternalSearchServ {
         )
         for (const item of items) {
           try {
-            const staffImage = item.image?.medium || item.image?.large || null
-            let existing = await prisma.person.findUnique({
-              where: { anilistId: item.id },
-            })
+            const staffImage = item.image?.large || item.image?.medium || null
+            let existing = await prisma.orm.public.Person
+              .where({ anilistId: item.id })
+              .first()
             if (!existing) {
-              existing = await prisma.person.create({
-                data: {
-                  anilistId: item.id,
-                  namePrimary: item.name.full,
-                  nameNative: item.name.native || null,
-                  nameAlternative: item.name.alternative || [],
-                  image: staffImage,
-                  description: item.description || null,
-                  primaryOccupations: item.primaryOccupations || [],
-                },
+              existing = await prisma.orm.public.Person.create({
+                anilistId: item.id,
+                namePrimary: item.name.full,
+                nameNative: item.name.native || null,
+                nameAlternative: item.name.alternative || [],
+                image: staffImage,
+                description: item.description || null,
+                primaryOccupations: item.primaryOccupations || [],
               })
             }
             results.push({

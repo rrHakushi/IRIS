@@ -235,7 +235,7 @@ export function createRateLimiter(config: RateLimitConfig = {}) {
 export function rateLimiter(options: RateLimitConfig = {}) {
   const limiter = createRateLimiter(options)
 
-  return new Elysia({ name: "iris-rate-limiter" }).beforeHandle(
+  return new Elysia({ name: "iris-rate-limiter" }).onBeforeHandle(
     "global",
     (ctx) => {
       const errorResponse = limiter(ctx as unknown as RateLimitContext)

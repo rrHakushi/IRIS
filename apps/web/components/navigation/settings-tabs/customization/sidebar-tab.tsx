@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react"
 import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/session-context"
 import { useUser } from "@/context/user-context"
 import { useIrisSidebar } from "../../sidebar-provider"
 import type { SettingsTabProps } from "../types"

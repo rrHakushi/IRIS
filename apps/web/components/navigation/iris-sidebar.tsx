@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/session-context"
 import { useTranslations } from "next-intl"
 import { hasPermission } from "@IRIS/permissions"
 import { cn } from "@workspace/ui/lib/utils"
@@ -254,6 +254,42 @@ export function IrisSidebar({
       )
     }
   }, [currentAppId])
+
+  const handleNavClick = useCallback(
+    (
+      e: React.MouseEvent,
+      href?: string,
+      customOnClick?: (e: React.MouseEvent) => void
+    ) => {
+      if (customOnClick) {
+        customOnClick(e)
+      }
+
+      if (
+        !href ||
+        href === "#" ||
+        href.startsWith("http://") ||
+        href.startsWith("https://")
+      ) {
+        return
+      }
+
+      if (
+        e.defaultPrevented ||
+        e.button !== 0 ||
+        e.metaKey ||
+        e.ctrlKey ||
+        e.altKey ||
+        e.shiftKey
+      ) {
+        return
+      }
+
+      e.preventDefault()
+      router.push(href)
+    },
+    [router]
+  )
 
   // Resolved hierarchy with user customizations applied
   const customizedConfig = useMemo(() => {
@@ -929,11 +965,13 @@ export function IrisSidebar({
                                         ? "font-medium text-foreground"
                                         : ""
                                   )}
-                                  onClick={
-                                    !item.href
-                                      ? () => toggleItem(itemKey, isOpen)
-                                      : undefined
-                                  }
+                                  onClick={(e) => {
+                                    if (item.href) {
+                                      handleNavClick(e, item.href)
+                                    } else {
+                                      toggleItem(itemKey, isOpen)
+                                    }
+                                  }}
                                 >
                                   <span className="flex min-w-0 flex-1 items-center gap-2.5">
                                     {item.icon && (
@@ -1011,6 +1049,9 @@ export function IrisSidebar({
                                               isSubActive &&
                                                 "bg-primary/10 font-semibold text-primary hover:bg-primary/15 hover:text-primary"
                                             )}
+                                            onClick={(e) => {
+                                              handleNavClick(e, child.href)
+                                            }}
                                           >
                                             <span className="flex min-w-0 flex-1 items-center gap-2">
                                               {child.icon && (
@@ -1050,7 +1091,9 @@ export function IrisSidebar({
                                 isDirectActive &&
                                   "bg-primary/10 font-semibold text-primary hover:bg-primary/15 hover:text-primary"
                               )}
-                              onClick={item.onClick}
+                              onClick={(e) => {
+                                handleNavClick(e, item.href, item.onClick)
+                              }}
                               {...(item.dataKey?.startsWith("link:") &&
                               item.href?.startsWith("http")
                                 ? {

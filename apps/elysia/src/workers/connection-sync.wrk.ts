@@ -1,6 +1,8 @@
-import { Worker, type Job } from 'bullmq'
+import { Worker, UnrecoverableError, type Job } from 'bullmq'
 import {
   prisma,
+  and,
+  toDate,
   type ConnectionProvider,
   type MediaType,
 } from '@IRIS/database'
@@ -22,7 +24,7 @@ const logger = new LogFactory('Worker:ConnectionSync')
 export interface ConnectionSyncJobData {
   userId: string
   provider: ConnectionProvider
-  providerMediaId: number
+  providerMediaId: number | string
   mediaType: MediaType
   mediaId: number
   mediaTitle: string
@@ -46,6 +48,10 @@ export const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   MAL: 'MyAnimeList',
   SIMKL: 'Simkl',
   BANGUMI: 'Bangumi',
+  HIKKA: 'Hikka',
+  MANGAUPDATES: 'MangaUpdates',
+  MANGABAKA: 'MangaBaka',
+  TRAKT: 'Trakt',
 }
 
 /**
@@ -59,6 +65,10 @@ export const PROVIDER_WORKER_CONFIGS: Record<
   MAL: { concurrency: 1, max: 30, duration: 60000 },
   SIMKL: { concurrency: 2, max: 40, duration: 60000 },
   BANGUMI: { concurrency: 3, max: 60, duration: 60000 },
+  HIKKA: { concurrency: 2, max: 30, duration: 60000 },
+  MANGAUPDATES: { concurrency: 1, max: 20, duration: 60000 },
+  MANGABAKA: { concurrency: 2, max: 40, duration: 60000 },
+  TRAKT: { concurrency: 2, max: 40, duration: 60000 },
 }
 
 const workerInstances = new Map<ConnectionProvider, Worker<ConnectionSyncJobData>>()
@@ -93,29 +103,29 @@ export async function processConnectionSyncJob(
       adapter = getConnectionAdapter(provider)
     } catch (err: any) {
       logger.warn(`[Worker:${provider}] Unsupported connection provider: ${provider}`)
-      return false
+      throw new UnrecoverableError(`Unsupported connection provider: ${provider}`)
     }
   }
 
   if (!adapter.updateMediaEntry) {
     logger.warn(`[Worker:${provider}] Adapter does not support updateMediaEntry`)
-    return false
+    throw new UnrecoverableError(`Provider ${displayName} does not support syncing media entries`)
   }
 
   // 1. Fetch user's active connection from database
-  const userConn = await prisma.connection.findFirst({
-    where: {
-      userId,
-      provider,
-      status: { in: ['CONNECTED', 'EXPIRED'] },
-    },
-  })
+  const userConn = await prisma.orm.public.Connection.where((c) =>
+    and(
+      c.userId.eq(userId),
+      c.provider.eq(provider),
+      c.status.in(['CONNECTED', 'EXPIRED'])
+    )
+  ).first()
 
   if (!userConn) {
     if (!autoInjected) {
       await CarinaNotificationsServ.createNotification({
         userId,
-        app: 'IRIS List',
+        app: 'Borealis',
         category: 'Connections',
         type: 'INFO',
         priority: 'NORMAL',
@@ -141,39 +151,25 @@ export async function processConnectionSyncJob(
       userId
     )
   } catch (decryptErr: any) {
-    await CarinaNotificationsServ.createNotification({
-      userId,
-      app: 'IRIS List',
-      category: 'Connections',
-      type: 'INFO',
-      priority: 'HIGH',
-      content: {
-        title: `${displayName} Authentication Error`,
-        body: `Failed to decrypt credentials for ${displayName}. Please reconnect your account.`,
-        icon: adapter.iconUrl,
-        link: '/settings?tab=connections',
-      },
-    }).catch(() => {})
-    return false
+    throw new UnrecoverableError(
+      `Failed to decrypt credentials for ${displayName}. Please reconnect your account.`
+    )
   }
 
   // 3. Proactive token refresh if expiring (< 5 minutes left)
   const isExpiring =
     userConn.expiresAt &&
-    new Date(userConn.expiresAt).getTime() - Date.now() < 300000
+    toDate(userConn.expiresAt).getTime() - Date.now() < 300000
 
   if (isExpiring && credentials.refreshToken && adapter.refreshAccessToken) {
     try {
       const refreshed = await adapter.refreshAccessToken(credentials.refreshToken)
       credentials = { ...credentials, ...refreshed }
       const updatedEncrypted = encryptFn(credentials, userId)
-      await prisma.connection.update({
-        where: { id: userConn.id },
-        data: {
-          encryptedData: updatedEncrypted,
-          expiresAt: refreshed.expiresAt ? new Date(refreshed.expiresAt) : null,
-          status: 'CONNECTED',
-        },
+      await prisma.orm.public.Connection.where((c) => c.id.eq(userConn.id)).update({
+        encryptedData: updatedEncrypted,
+        expiresAt: refreshed.expiresAt ? new Date(refreshed.expiresAt) : null,
+        status: 'CONNECTED',
       })
       logger.info(`[Worker:${provider}] Proactive token refresh succeeded for user ${userId}`)
     } catch (refreshErr: any) {
@@ -201,7 +197,10 @@ export async function processConnectionSyncJob(
     await adapter.updateMediaEntry(credentials, updatePayload)
   } catch (firstErr: any) {
     const isRateLimit =
-      firstErr instanceof ConnectionRateLimitError || firstErr?.statusCode === 429
+      firstErr instanceof ConnectionRateLimitError ||
+      firstErr?.statusCode === 429 ||
+      /rate limit|too many requests/i.test(firstErr?.message || '')
+
     if (isRateLimit) {
       const retryAfterSec = firstErr?.retryAfterSeconds || 60
       logger.warn(
@@ -209,10 +208,24 @@ export async function processConnectionSyncJob(
       )
       if (worker && typeof (worker as any).rateLimit === 'function') {
         try {
-          await (worker as any).rateLimit(retryAfterSec * 1000)
+          await (worker as any).rateLimit(Math.max(retryAfterSec, 60) * 1000)
         } catch {}
       }
-      throw firstErr // Re-throw to allow BullMQ exponential backoff
+      // Re-throw regular error to allow BullMQ fixed 60s backoff (retry 3x)
+      throw firstErr
+    }
+
+    const is404 =
+      firstErr?.statusCode === 404 ||
+      /status 404|404 (page not found|not found)|"status":\s*404/i.test(firstErr?.message || '')
+
+    if (is404) {
+      logger.warn(
+        `[Worker:${provider}] Media #${providerMediaId} not found (404) on ${provider}. Skipping retries.`
+      )
+      throw new UnrecoverableError(
+        `Media not found (404) on ${provider}: ${firstErr?.message || firstErr}`
+      )
     }
 
     const isAuthErr =
@@ -225,33 +238,36 @@ export async function processConnectionSyncJob(
         const refreshed = await adapter.refreshAccessToken(credentials.refreshToken)
         credentials = { ...credentials, ...refreshed }
         const updatedEncrypted = encryptFn(credentials, userId)
-        await prisma.connection.update({
-          where: { id: userConn.id },
-          data: {
-            encryptedData: updatedEncrypted,
-            expiresAt: refreshed.expiresAt ? new Date(refreshed.expiresAt) : null,
-            status: 'CONNECTED',
-          },
+        await prisma.orm.public.Connection.where((c) => c.id.eq(userConn.id)).update({
+          encryptedData: updatedEncrypted,
+          expiresAt: refreshed.expiresAt ? new Date(refreshed.expiresAt) : null,
+          status: 'CONNECTED',
         })
 
         // Retry update with fresh token
         await adapter.updateMediaEntry(credentials, updatePayload)
       } catch (retryErr: any) {
-        throw retryErr
+        const isRetryRateLimit =
+          retryErr instanceof ConnectionRateLimitError ||
+          retryErr?.statusCode === 429 ||
+          /rate limit|too many requests/i.test(retryErr?.message || '')
+
+        if (isRetryRateLimit) {
+          throw retryErr
+        }
+        throw new UnrecoverableError(retryErr?.message || String(retryErr))
       }
     } else {
-      throw firstErr
+      // Non-429 error fails immediately without retrying
+      throw new UnrecoverableError(firstErr?.message || String(firstErr))
     }
   }
 
   // 5. Update lastSyncedAt on successful sync
-  await prisma.connection.update({
-    where: { id: userConn.id },
-    data: {
-      lastSyncedAt: new Date(),
-      status: 'CONNECTED',
-      errorMessage: null,
-    },
+  await prisma.orm.public.Connection.where((c) => c.id.eq(userConn.id)).update({
+    lastSyncedAt: new Date(),
+    status: 'CONNECTED',
+    errorMessage: null,
   })
 
   logger.info(
@@ -270,18 +286,49 @@ export async function handleJobFailure(
 ): Promise<void> {
   if (!job) return
 
-  const maxAttempts = job.opts.attempts ?? 2
-  logger.warn(
-    `${c.red(c.bold('❌ [Job Attempt Failed]'))}: [${provider}] Attempt ${job.attemptsMade}/${maxAttempts} failed: ${err?.message || err}`
-  )
+  const maxAttempts = job.opts.attempts ?? 4
+  const isRateLimit =
+    err instanceof ConnectionRateLimitError ||
+    err?.statusCode === 429 ||
+    /rate limit|too many requests/i.test(err?.message || '')
 
-  // Complete failure when all attempts have been exhausted
-  if (job.attemptsMade >= maxAttempts) {
+  const is404 =
+    err?.statusCode === 404 ||
+    /status 404|404 (page not found|not found)|"status":\s*404/i.test(err?.message || '')
+
+  const isUnrecoverable =
+    err instanceof UnrecoverableError ||
+    err?.name === 'UnrecoverableError' ||
+    is404 ||
+    !isRateLimit
+
+  // Discard job to ensure BullMQ does not attempt retries on 404 or unrecoverable errors
+  if (isUnrecoverable && typeof (job as any).discard === 'function') {
+    try {
+      await (job as any).discard()
+    } catch {}
+  }
+
+  const isExhausted = job.attemptsMade >= maxAttempts
+  const isTerminal = isUnrecoverable || isExhausted
+
+  if (is404) {
+    logger.warn(
+      `${c.red(c.bold('❌ [Job Dropped (404 Not Found)]'))}: [${provider}] "${job.data.mediaTitle}" was not found on ${provider}. Discarding job without retrying.`
+    )
+  } else {
+    logger.warn(
+      `${c.red(c.bold('❌ [Job Attempt Failed]'))}: [${provider}] Attempt ${job.attemptsMade}/${maxAttempts} failed: ${err?.message || err}`
+    )
+  }
+
+  // Send failure notification & persist error message when failure is terminal
+  if (isTerminal) {
     const displayName = PROVIDER_DISPLAY_NAMES[provider] || provider
     const errMsg = err?.message || String(err)
 
     logger.error(
-      `${c.red(c.bold('🚨 [Sync Completely Failed]'))}: [${provider}] Exhausted all ${maxAttempts} attempts for "${job.data.mediaTitle}" (User: ${job.data.userId})`
+      `${c.red(c.bold('🚨 [Sync Completely Failed]'))}: [${provider}] Sync failed for "${job.data.mediaTitle}" (User: ${job.data.userId}): ${errMsg}`
     )
 
     let adapter
@@ -292,7 +339,7 @@ export async function handleJobFailure(
     // 1. Send in-app notification to user
     await CarinaNotificationsServ.createNotification({
       userId: job.data.userId,
-      app: 'IRIS List',
+      app: 'Borealis',
       category: 'Connections',
       type: 'INFO',
       priority: 'HIGH',
@@ -307,19 +354,15 @@ export async function handleJobFailure(
     })
 
     // 2. Persist error message on the connection record
-    await prisma.connection
-      .updateMany({
-        where: {
-          userId: job.data.userId,
-          provider,
-        },
-        data: {
-          errorMessage: `Sync failed: ${errMsg}`,
-        },
+    await prisma.orm.public.Connection
+      .where((c) => and(c.userId.eq(job.data.userId), c.provider.eq(provider)))
+      .updateAndCount({
+        errorMessage: `Sync failed: ${errMsg}`,
       })
       .catch(() => {})
   }
 }
+
 
 /**
  * Creates and initializes a production-ready BullMQ worker for a specific connection provider.
@@ -358,7 +401,7 @@ export function createConnectionProviderWorker(
 
   worker.on('active', (job) => {
     logger.info(
-      `${c.blue(c.bold('🚀 [Job Active]'))}: [${provider}] Syncing ${job.data.mediaType} #${job.data.mediaId} (${job.data.mediaTitle}) | Attempt: ${job.attemptsMade + 1}/${job.opts.attempts ?? 2}`
+      `${c.blue(c.bold('🚀 [Job Active]'))}: [${provider}] Syncing ${job.data.mediaType} #${job.data.mediaId} (${job.data.mediaTitle}) | Attempt: ${job.attemptsMade + 1}/${job.opts.attempts ?? 4}`
     )
   })
 
@@ -403,7 +446,16 @@ export function getConnectionWorker(
  * Initializes all provider workers simultaneously.
  */
 export function initConnectionWorkers(): void {
-  const providers: ConnectionProvider[] = ['ANILIST', 'MAL', 'SIMKL', 'BANGUMI']
+  const providers: ConnectionProvider[] = [
+    'ANILIST',
+    'MAL',
+    'SIMKL',
+    'BANGUMI',
+    'HIKKA',
+    'MANGAUPDATES',
+    'MANGABAKA',
+    'TRAKT',
+  ]
   for (const provider of providers) {
     getConnectionWorker(provider)
   }

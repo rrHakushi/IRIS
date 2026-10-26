@@ -3,7 +3,7 @@
 import React, { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/session-context"
 import {
   Avatar,
   AvatarFallback,

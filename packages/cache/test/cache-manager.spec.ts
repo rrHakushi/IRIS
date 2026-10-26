@@ -6,10 +6,11 @@ import { resolveCacheOptions } from '../src/utils/env';
 
 describe('CacheManager', () => {
   it('should throw MissingEnvError when autoEnv is true and no Redis env vars or config are present', () => {
-    const originalEnv = { ...process.env };
+    const originalUrl = Bun.env['REDIS_URL'];
+    const originalHost = Bun.env['REDIS_HOST'];
     try {
-      delete process.env['REDIS_URL'];
-      delete process.env['REDIS_HOST'];
+      delete Bun.env['REDIS_URL'];
+      delete Bun.env['REDIS_HOST'];
 
       assert.throws(
         () => {
@@ -25,7 +26,8 @@ describe('CacheManager', () => {
         },
       );
     } finally {
-      process.env = originalEnv;
+      if (originalUrl !== undefined) Bun.env['REDIS_URL'] = originalUrl;
+      if (originalHost !== undefined) Bun.env['REDIS_HOST'] = originalHost;
     }
   });
 

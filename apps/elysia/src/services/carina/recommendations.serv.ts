@@ -1,4 +1,4 @@
-import { prisma, type MediaType } from '@IRIS/database'
+import { prisma, and, or, countOf, toDate, type MediaType } from '@IRIS/database'
 import { getProfileCustomization } from '@IRIS/shared'
 import { IRISBitField, IRISFlags } from '@IRIS/permissions'
 import { NotFound, BadRequest, Forbidden } from '../../lib/errors'
@@ -75,8 +75,8 @@ export class CarinaRecommendationsServ {
       upvotes: number
       downvotes: number
       score: number
-      createdAt: Date
-      updatedAt: Date
+      createdAt: any
+      updatedAt: any
       user: {
         id: string
         username: string
@@ -98,8 +98,8 @@ export class CarinaRecommendationsServ {
       score: item.score,
       ...(userVote !== undefined ? { userVote: userVote ?? null } : {}),
       author: this.formatAuthor(item.user),
-      createdAt: item.createdAt.toISOString(),
-      updatedAt: item.updatedAt.toISOString(),
+      createdAt: toDate(item.createdAt).toISOString(),
+      updatedAt: toDate(item.updatedAt).toISOString(),
     }
   }
 
@@ -128,41 +128,43 @@ export class CarinaRecommendationsServ {
 
     const trimmedBody = body.body?.trim() || null
 
-    const rec = await prisma.mediaRecommendation.upsert({
-      where: {
-        userId_sourceType_sourceId_targetType_targetId: {
-          userId,
-          sourceType: normSourceType,
-          sourceId: body.sourceId,
-          targetType: normTargetType,
-          targetId: body.targetId,
-        },
-      },
-      create: {
+    let rec = await prisma.orm.public.MediaRecommendation.where({
+      userId,
+      sourceType: normSourceType,
+      sourceId: body.sourceId,
+      targetType: normTargetType,
+      targetId: body.targetId,
+    }).first()
+
+    if (rec) {
+      rec = await prisma.orm.public.MediaRecommendation.where({ id: rec.id })
+        .update({ body: trimmedBody })
+    } else {
+      rec = await prisma.orm.public.MediaRecommendation.create({
         userId,
         sourceType: normSourceType,
         sourceId: body.sourceId,
         targetType: normTargetType,
         targetId: body.targetId,
         body: trimmedBody,
-      },
-      update: {
-        body: trimmedBody,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            customization: true,
-          },
-        },
-      },
-    })
+      })
+    }
+
+    if (!rec) {
+      throw new BadRequest('Failed to save recommendation')
+    }
+
+    const recWithUser = await prisma.orm.public.MediaRecommendation.where({ id: rec.id })
+      .include('user')
+      .first()
+
+    if (!recWithUser) {
+      throw new NotFound('Recommendation not found')
+    }
 
     return {
       success: true,
-      recommendation: this.formatRecommendation(rec),
+      recommendation: this.formatRecommendation(recWithUser),
       message: 'Recommendation submitted successfully',
     }
   }
@@ -182,48 +184,31 @@ export class CarinaRecommendationsServ {
     const limit = Math.max(1, Math.min(50, query?.limit ?? 10))
     const skip = (page - 1) * limit
 
-    const where = {
-      OR: [
-        { sourceType: normType, sourceId: id },
-        { targetType: normType, targetId: id },
-      ],
-    }
+    const recQuery = prisma.orm.public.MediaRecommendation.where((r) =>
+      or(
+        and(r.sourceType.eq(normType), r.sourceId.eq(id)),
+        and(r.targetType.eq(normType), r.targetId.eq(id))
+      )
+    )
 
     const [total, rawRecommendations] = await Promise.all([
-      prisma.mediaRecommendation.count({ where }),
-      prisma.mediaRecommendation.findMany({
-        where,
-        orderBy: [
-          { score: 'desc' },
-          { createdAt: 'desc' },
-        ],
-        skip,
-        take: limit,
-        include: {
-          user: {
-            select: {
-              id: true,
-              username: true,
-              customization: true,
-            },
-          },
-        },
-      }),
+      countOf(recQuery),
+      recQuery
+        .orderBy([(r) => r.score.desc(), (r) => r.createdAt.desc()])
+        .offset(skip)
+        .limit(limit)
+        .include('user')
+        .all(),
     ])
 
     const voteMap = new Map<number, string>()
     if (requestingUserId && rawRecommendations.length > 0) {
       const recIds = rawRecommendations.map((r) => r.id)
-      const votes = await prisma.mediaRecommendationVote.findMany({
-        where: {
-          recommendationId: { in: recIds },
-          userId: requestingUserId,
-        },
-        select: {
-          recommendationId: true,
-          voteType: true,
-        },
-      })
+      const votes = await prisma.orm.public.MediaRecommendationVote.where({ userId: requestingUserId })
+        .where((v) => v.recommendationId.in(recIds))
+        .select('recommendationId', 'voteType')
+        .all()
+
       for (const v of votes) {
         voteMap.set(v.recommendationId, v.voteType)
       }
@@ -261,9 +246,7 @@ export class CarinaRecommendationsServ {
     user: { id: string; permissions: number[] },
     id: number
   ) {
-    const recommendation = await prisma.mediaRecommendation.findUnique({
-      where: { id },
-    })
+    const recommendation = await prisma.orm.public.MediaRecommendation.where({ id }).first()
 
     if (!recommendation) {
       throw new NotFound('Recommendation not found')
@@ -276,9 +259,7 @@ export class CarinaRecommendationsServ {
       throw new Forbidden('You do not have permission to delete this recommendation')
     }
 
-    await prisma.mediaRecommendation.delete({
-      where: { id },
-    })
+    await prisma.orm.public.MediaRecommendation.where({ id }).delete()
 
     return {
       success: true,
@@ -296,58 +277,57 @@ export class CarinaRecommendationsServ {
     id: number,
     voteType: 'UPVOTE' | 'DOWNVOTE' | 'NONE'
   ) {
-    const recommendation = await prisma.mediaRecommendation.findUnique({
-      where: { id },
-    })
+    const recommendation = await prisma.orm.public.MediaRecommendation.where({ id }).first()
 
     if (!recommendation) {
       throw new NotFound('Recommendation not found')
     }
 
     if (voteType === 'NONE') {
-      await prisma.mediaRecommendationVote.deleteMany({
-        where: {
-          recommendationId: id,
-          userId,
-        },
-      })
+      await prisma.orm.public.MediaRecommendationVote.where({
+        recommendationId: id,
+        userId,
+      }).deleteAll()
     } else {
-      await prisma.mediaRecommendationVote.upsert({
-        where: {
-          recommendationId_userId: {
-            recommendationId: id,
-            userId,
-          },
-        },
-        create: {
+      const existingVote = await prisma.orm.public.MediaRecommendationVote.where({
+        recommendationId: id,
+        userId,
+      }).first()
+
+      if (existingVote) {
+        await prisma.orm.public.MediaRecommendationVote.where({ id: existingVote.id }).update({
+          voteType,
+        })
+      } else {
+        await prisma.orm.public.MediaRecommendationVote.create({
           recommendationId: id,
           userId,
           voteType,
-        },
-        update: {
-          voteType,
-        },
-      })
+        })
+      }
     }
 
     const [upvotes, downvotes] = await Promise.all([
-      prisma.mediaRecommendationVote.count({
-        where: { recommendationId: id, voteType: 'UPVOTE' },
-      }),
-      prisma.mediaRecommendationVote.count({
-        where: { recommendationId: id, voteType: 'DOWNVOTE' },
-      }),
+      countOf(
+        prisma.orm.public.MediaRecommendationVote.where({
+          recommendationId: id,
+          voteType: 'UPVOTE',
+        })
+      ),
+      countOf(
+        prisma.orm.public.MediaRecommendationVote.where({
+          recommendationId: id,
+          voteType: 'DOWNVOTE',
+        })
+      ),
     ])
 
     const score = upvotes - downvotes
 
-    await prisma.mediaRecommendation.update({
-      where: { id },
-      data: {
-        upvotes,
-        downvotes,
-        score,
-      },
+    await prisma.orm.public.MediaRecommendation.where({ id }).update({
+      upvotes,
+      downvotes,
+      score,
     })
 
     return {
@@ -364,3 +344,4 @@ export class CarinaRecommendationsServ {
     }
   }
 }
+

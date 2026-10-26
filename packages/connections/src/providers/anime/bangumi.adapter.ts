@@ -37,15 +37,15 @@ export class BangumiAdapter extends BaseConnectionAdapter {
     supportsSearch: true,
     supportsLibrarySync: true,
     supportsScrobble: false,
-    supportsGamingLibrary: false,
+    supportsGamingLibrary: true,
   };
 
   private getClientId(): string {
-    return process.env.BANGUMI_CLIENT_ID || "";
+    return Bun.env.BANGUMI_CLIENT_ID || "";
   }
 
   private getClientSecret(): string {
-    return process.env.BANGUMI_CLIENT_SECRET || "";
+    return Bun.env.BANGUMI_CLIENT_SECRET || "";
   }
 
   async getAuthUrl(options: AuthUrlOptions): Promise<AuthUrlResult> {
@@ -205,38 +205,56 @@ export class BangumiAdapter extends BaseConnectionAdapter {
     const limit = options?.perPage || 20;
     const offset = ((options?.page || 1) - 1) * limit;
 
-    const data = await this.fetchJson<{
-      total: number;
-      limit: number;
-      offset: number;
-      data: Array<{
-        id: number;
-        type: number;
-        name: string;
-        name_cn: string;
-        summary: string;
-        date?: string;
-        images?: { large?: string; common?: string; medium?: string; small?: string };
-        score?: number;
-        rank?: number;
-        eps?: number;
-        volumes?: number;
-      }>;
-    }>("https://api.bgm.tv/v0/search/subjects", {
-      method: "POST",
-      headers: {
-        ...headers,
+    const executeSearch = async (authToken?: string) => {
+      const headers: Record<string, string> = {
+        "User-Agent": BangumiAdapter.USER_AGENT,
         "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        keyword: query,
-        filter: {
-          type: typeFilter,
-        },
-        limit,
-        offset,
-      }),
-    });
+      };
+      if (authToken) {
+        headers["Authorization"] = `Bearer ${authToken}`;
+      }
+      return this.fetchJson<{
+        total: number;
+        limit: number;
+        offset: number;
+        data: Array<{
+          id: number;
+          type: number;
+          name: string;
+          name_cn: string;
+          summary: string;
+          date?: string;
+          images?: { large?: string; common?: string; medium?: string; small?: string };
+          score?: number;
+          rank?: number;
+          eps?: number;
+          volumes?: number;
+        }>;
+      }>("https://api.bgm.tv/v0/search/subjects", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          keyword: query,
+          filter: {
+            type: typeFilter,
+          },
+          limit,
+          offset,
+        }),
+      });
+    };
+
+    let data;
+    try {
+      data = await executeSearch(token);
+    } catch (err: unknown) {
+      // If token expired or is unauthorized, retry search without auth header as endpoint is public
+      if (token && (err instanceof ConnectionAuthError || String(err).includes("401"))) {
+        data = await executeSearch(undefined);
+      } else {
+        throw err;
+      }
+    }
 
     return (data.data || []).map((sub) => ({
       id: String(sub.id),
@@ -259,6 +277,76 @@ export class BangumiAdapter extends BaseConnectionAdapter {
       releaseYear: sub.date ? parseInt(sub.date.substring(0, 4), 10) : undefined,
       url: `https://bgm.tv/subject/${sub.id}`,
     }));
+  }
+
+  async getMediaById(
+    externalId: string,
+    credentials?: ConnectionCredentials,
+    _options?: SearchOptions
+  ): Promise<MediaSearchResult | null> {
+    const token = credentials?.accessToken || credentials?.apiKey;
+    const fetchSubject = async (authToken?: string) => {
+      const headers: Record<string, string> = {
+        "User-Agent": BangumiAdapter.USER_AGENT,
+      };
+      if (authToken) {
+        headers["Authorization"] = `Bearer ${authToken}`;
+      }
+      return this.fetchJson<{
+        id: number;
+        type: number;
+        name: string;
+        name_cn: string;
+        summary: string;
+        date?: string;
+        images?: { large?: string; common?: string; medium?: string; small?: string };
+        score?: number;
+        rank?: number;
+        eps?: number;
+        volumes?: number;
+      }>(`https://api.bgm.tv/v0/subjects/${externalId}`, {
+        headers,
+      });
+    };
+
+    try {
+      let sub;
+      try {
+        sub = await fetchSubject(token);
+      } catch (err: unknown) {
+        if (token && (err instanceof ConnectionAuthError || String(err).includes("401"))) {
+          sub = await fetchSubject(undefined);
+        } else {
+          throw err;
+        }
+      }
+
+      if (!sub || !sub.id) return null;
+
+      return {
+        id: String(sub.id),
+        externalId: String(sub.id),
+        provider: "BANGUMI",
+        mediaType: sub.type === 1 ? "MANGA" : sub.type === 4 ? "GAME" : "ANIME",
+        title: {
+          userPreferred: sub.name_cn || sub.name,
+          native: sub.name,
+          romaji: sub.name,
+        },
+        description: sub.summary,
+        coverImage: {
+          large: sub.images?.large || sub.images?.common,
+          medium: sub.images?.medium,
+        },
+        episodes: sub.eps,
+        volumes: sub.volumes,
+        averageScore: sub.score ? Math.round(sub.score * 10) : undefined,
+        releaseYear: sub.date ? parseInt(sub.date.substring(0, 4), 10) : undefined,
+        url: `https://bgm.tv/subject/${sub.id}`,
+      };
+    } catch {
+      return null;
+    }
   }
 
   async getLibrary(
@@ -292,10 +380,10 @@ export class BangumiAdapter extends BaseConnectionAdapter {
     });
 
     const statusMap: Record<number, LibraryItem["status"]> = {
-      1: "PLANNING",
+      1: "PLANNED",
       2: "COMPLETED",
-      3: "CURRENT",
-      4: "PAUSED",
+      3: "IN_PROGRESS",
+      4: "ON_HOLD",
       5: "DROPPED",
     };
 
@@ -303,9 +391,14 @@ export class BangumiAdapter extends BaseConnectionAdapter {
       id: String(entry.subject_id),
       externalId: String(entry.subject_id),
       provider: "BANGUMI",
-      mediaType: entry.subject_type === 1 ? "MANGA" : "ANIME",
+      mediaType:
+        entry.subject_type === 1
+          ? "MANGA"
+          : entry.subject_type === 4
+            ? "GAME"
+            : "ANIME",
       title: entry.subject?.name_cn || entry.subject?.name || `Subject ${entry.subject_id}`,
-      status: statusMap[entry.type] || "CURRENT",
+      status: statusMap[entry.type] || "IN_PROGRESS",
       score: entry.rate ? entry.rate * 10 : null,
       progress: entry.ep_status,
       progressVolumes: entry.vol_status,
@@ -339,25 +432,27 @@ export class BangumiAdapter extends BaseConnectionAdapter {
     if (payload.status) {
       const s = payload.status.toUpperCase();
       switch (s) {
+        case "PLANNED":
         case "PLANNING":
-        case "PLAN_TO_WATCH":
-        case "PLAN_TO_READ":
+        case "WISH":
           bangumiType = 1;
           break;
         case "COMPLETED":
+        case "COLLECT":
           bangumiType = 2;
           break;
+        case "IN_PROGRESS":
+        case "REPEATING":
         case "WATCHING":
         case "READING":
         case "PLAYING":
         case "LISTENING":
-        case "CURRENT":
-        case "REPEATING":
+        case "TRACKING":
+        case "DO":
           bangumiType = 3;
           break;
         case "ON_HOLD":
         case "PAUSED":
-        case "HOLD":
           bangumiType = 4;
           break;
         case "DROPPED":
@@ -366,27 +461,101 @@ export class BangumiAdapter extends BaseConnectionAdapter {
       }
     }
 
+    const normMediaType = String(payload.mediaType || "").toUpperCase();
+    const isBook = normMediaType === "MANGA" || normMediaType === "BOOK";
+
     const body: Record<string, unknown> = {
       type: bangumiType,
     };
     if (payload.score !== undefined && payload.score !== null && payload.score > 0) {
       body.rate = Math.min(10, Math.max(1, Math.round(Number(payload.score))));
     }
-    if (payload.progress !== undefined && payload.progress !== null) {
-      body.ep_status = Number(payload.progress);
+    // In Bangumi collection API, ep_status and vol_status are STRICTLY only allowed for books/manga.
+    // Setting them on any other subject type (Anime, Game, Music) produces a 400 "can't set 'vol_status' or 'ep_status' on non-book subject" error.
+    if (isBook) {
+      if (payload.progress !== undefined && payload.progress !== null) {
+        body.ep_status = Number(payload.progress);
+      }
+      if (payload.extra?.volumes !== undefined && payload.extra.volumes !== null) {
+        body.vol_status = Number(payload.extra.volumes);
+      }
     }
     if (payload.notes !== undefined && payload.notes !== null) {
       body.comment = String(payload.notes);
     }
 
-    await this.fetchJson(`https://bgm.tv/v0/users/-/collections/${providerId}`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${credentials.accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
+    try {
+      await this.fetchJson(`https://api.bgm.tv/v0/users/-/collections/${providerId}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${credentials.accessToken}`,
+          "Content-Type": "application/json",
+          "User-Agent": BangumiAdapter.USER_AGENT,
+        },
+        body: JSON.stringify(body),
+      });
+    } catch (err: unknown) {
+      const errStr = String(err);
+      if (errStr.includes("non-book subject") || errStr.includes("vol_status") || errStr.includes("ep_status")) {
+        // Fallback retry: strip vol_status and ep_status if subject type mismatch on Bangumi
+        delete body.vol_status;
+        delete body.ep_status;
+        await this.fetchJson(`https://api.bgm.tv/v0/users/-/collections/${providerId}`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${credentials.accessToken}`,
+            "Content-Type": "application/json",
+            "User-Agent": BangumiAdapter.USER_AGENT,
+          },
+          body: JSON.stringify(body),
+        });
+      } else {
+        throw err;
+      }
+    }
+
+    // For Anime episode progress, Bangumi requires episode collection update via PATCH /v0/users/-/collections/{subject_id}/episodes
+    if (
+      normMediaType === "ANIME" &&
+      payload.progress !== undefined &&
+      payload.progress !== null &&
+      Number(payload.progress) > 0
+    ) {
+      try {
+        const targetProgress = Number(payload.progress);
+        const offset = Math.max(0, Math.floor((targetProgress - 1) / 100) * 100);
+        const epData = await this.fetchJson<{
+          total: number;
+          data: Array<{ id: number; sort: number; type: number }>;
+        }>(`https://api.bgm.tv/v0/episodes?subject_id=${providerId}&type=0&limit=100&offset=${offset}`, {
+          headers: {
+            "User-Agent": BangumiAdapter.USER_AGENT,
+          },
+        });
+
+        // Filter standard episodes (type === 0) up to target progress
+        const targetEpIds = (epData.data || [])
+          .filter((ep) => ep.sort <= targetProgress && ep.type === 0)
+          .map((ep) => ep.id);
+
+        if (targetEpIds.length > 0) {
+          await this.fetchJson(`https://api.bgm.tv/v0/users/-/collections/${providerId}/episodes`, {
+            method: "PATCH",
+            headers: {
+              Authorization: `Bearer ${credentials.accessToken}`,
+              "Content-Type": "application/json",
+              "User-Agent": BangumiAdapter.USER_AGENT,
+            },
+            body: JSON.stringify({
+              episode_id: targetEpIds,
+              type: 2, // 2: Watched
+            }),
+          });
+        }
+      } catch {
+        // Episode progress sync on Bangumi is best-effort and non-fatal
+      }
+    }
 
     return true;
   }

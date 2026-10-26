@@ -17,6 +17,10 @@ export const SYNC_PROVIDERS: readonly ConnectionProvider[] = [
   'MAL',
   'SIMKL',
   'BANGUMI',
+  'HIKKA',
+  'MANGAUPDATES',
+  'MANGABAKA',
+  'TRAKT',
 ] as const
 
 /**
@@ -29,9 +33,15 @@ export function isProviderSupportedForMediaType(
   switch (provider) {
     case 'ANILIST':
     case 'MAL':
+    case 'HIKKA':
       return mediaType === 'ANIME' || mediaType === 'MANGA'
+    case 'MANGAUPDATES':
+    case 'MANGABAKA':
+      return mediaType === 'MANGA' || mediaType === 'BOOK'
     case 'SIMKL':
       return mediaType === 'ANIME' || mediaType === 'TV' || mediaType === 'MOVIE'
+    case 'TRAKT':
+      return mediaType === 'TV' || mediaType === 'MOVIE'
     case 'BANGUMI':
       return (
         mediaType === 'ANIME' ||
@@ -84,10 +94,10 @@ export function getConnectionSyncQueue(
     queue = new Queue<ConnectionSyncJobData>(queueName, {
       connection,
       defaultJobOptions: {
-        attempts: 2, // 2 attempts total (initial run + 1 retry)
+        attempts: 4, // 1 initial try + 3 retries (for 429 rate limits)
         backoff: {
-          type: 'exponential',
-          delay: 2000,
+          type: 'fixed',
+          delay: 60000, // 1 minute between retries
         },
         removeOnComplete: { count: 1000 },
         removeOnFail: { count: 5000 },
@@ -153,15 +163,33 @@ export class ConnectionSyncQueueManager {
       // Skip explicitly disabled connections
       if (rawConn.sync === false) continue
 
-      const providerMediaId = Number(
+      const rawMediaId =
         rawConn.id ??
-          rawConn.simklId ??
-          rawConn.providerId ??
-          rawConn.malId ??
-          rawConn.anilistId ??
-          rawConn.bangumiId
-      )
-      if (Number.isNaN(providerMediaId) || providerMediaId <= 0) continue
+        rawConn.slug ??
+        rawConn.simklId ??
+        rawConn.providerId ??
+        rawConn.malId ??
+        rawConn.anilistId ??
+        rawConn.bangumiId
+
+      if (rawMediaId === undefined || rawMediaId === null || String(rawMediaId).trim() === '') {
+        continue
+      }
+
+      const isPureNumeric =
+        typeof rawMediaId === 'number' ||
+        (typeof rawMediaId === 'string' && /^\d+$/.test(rawMediaId.trim()))
+
+      const providerMediaId: number | string = isPureNumeric
+        ? Number(rawMediaId)
+        : String(rawMediaId).trim()
+
+      if (
+        typeof providerMediaId === 'number' &&
+        (Number.isNaN(providerMediaId) || providerMediaId <= 0)
+      ) {
+        continue
+      }
 
       // Resolve overrides
       let connStatus = entry.status
@@ -238,10 +266,10 @@ export class ConnectionSyncQueueManager {
       try {
         const queue = this.getQueue(normProvider)
         await queue.add('sync-entry', jobData, {
-          attempts: 2,
+          attempts: 4,
           backoff: {
-            type: 'exponential',
-            delay: 2000,
+            type: 'fixed',
+            delay: 60000, // 1 minute between retries
           },
           removeOnComplete: { count: 1000 },
           removeOnFail: { count: 5000 },

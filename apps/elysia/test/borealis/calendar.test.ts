@@ -11,7 +11,7 @@ import { prisma } from '@IRIS/database'
 // -----------------------------------------------------------------------------
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()
@@ -254,7 +254,7 @@ function setupPrismaMock() {
   ]
 
   // Mock User resolution
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return mockUsers.find((u) => u.id === where.id) ?? null
   }
 
@@ -266,7 +266,7 @@ function setupPrismaMock() {
   }
 
   // Mock AnimeAiringSchedule
-  ;(prisma.animeAiringSchedule.findMany as any) = async ({ where, include }: any) => {
+  ;((prisma as any).animeAiringSchedule.findMany as any) = async ({ where, include }: any) => {
     return mockAnimeSchedules
       .filter((sched) => {
         if (where.airingAt?.gte && sched.airingAt < where.airingAt.gte) return false
@@ -289,7 +289,7 @@ function setupPrismaMock() {
   }
 
   // Mock Manga
-  ;(prisma.manga.findMany as any) = async ({ where, select }: any) => {
+  ;((prisma as any).manga.findMany as any) = async ({ where, select }: any) => {
     return mockManga
       .filter((m) => {
         if (where.userLists?.some?.userId) {
@@ -307,7 +307,7 @@ function setupPrismaMock() {
   }
 
   // Mock Game
-  ;(prisma.game.findMany as any) = async ({ where, select }: any) => {
+  ;((prisma as any).game.findMany as any) = async ({ where, select }: any) => {
     return mockGames
       .filter((g) => {
         if (where.userLists?.some?.userId) {
@@ -325,7 +325,7 @@ function setupPrismaMock() {
   }
 
   // Mock Book
-  ;(prisma.book.findMany as any) = async ({ where, select }: any) => {
+  ;((prisma as any).book.findMany as any) = async ({ where, select }: any) => {
     return mockBooks
       .filter((b) => {
         if (where.userLists?.some?.userId) {
@@ -343,7 +343,7 @@ function setupPrismaMock() {
   }
 
   // Mock Movie
-  ;(prisma.movie.findMany as any) = async ({ where, select }: any) => {
+  ;((prisma as any).movie.findMany as any) = async ({ where, select }: any) => {
     return mockMovies
       .filter((m) => {
         if (where.userLists?.some?.userId) {
@@ -361,7 +361,7 @@ function setupPrismaMock() {
   }
 
   // Mock TvEpisode
-  ;(prisma.tvEpisode.findMany as any) = async ({ where, include }: any) => {
+  ;((prisma as any).tvEpisode.findMany as any) = async ({ where, include }: any) => {
     return mockTvEpisodes
       .filter((ep) => {
         if (where.airDate?.gte && ep.airDate < where.airDate.gte) return false
@@ -384,7 +384,7 @@ function setupPrismaMock() {
   }
 
   // Mock Music
-  ;(prisma.music.findMany as any) = async ({ where, select }: any) => {
+  ;((prisma as any).music.findMany as any) = async ({ where, select }: any) => {
     return mockMusic
       .filter((m) => {
         if (where.userLists?.some?.userId) {
@@ -411,7 +411,7 @@ describe('Borealis Calendar Controller & Service Test Suite', () => {
   let bobToken: string
 
   beforeEach(async () => {
-    process.env.NEXTAUTH_SECRET = 'iris-default-secret-key-32-chars!!'
+    Bun.env.JWT_SECRET = 'iris-default-secret-key-32-chars!!'
     await cache.clear()
     setupPrismaMock()
 

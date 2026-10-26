@@ -63,7 +63,7 @@ function setupPrismaMock() {
   ]
 
   // Mock ActivityLog.create
-  ;(prisma.activityLog.create as any) = async ({ data }: any) => {
+  ;((prisma as any).activityLog.create as any) = async ({ data }: any) => {
     const entry: MockActivityLog = {
       id: `act-${mockActivities.length + 1}`,
       userId: data.userId,
@@ -88,7 +88,7 @@ function setupPrismaMock() {
   }
 
   // Mock ActivityLog.findMany
-  ;(prisma.activityLog.findMany as any) = async (args: any = {}) => {
+  ;((prisma as any).activityLog.findMany as any) = async (args: any = {}) => {
     let items = [...mockActivities]
     const where = args.where || {}
 
@@ -131,13 +131,13 @@ function setupPrismaMock() {
   }
 
   // Mock ActivityLog.count
-  ;(prisma.activityLog.count as any) = async (args: any = {}) => {
-    const items = await (prisma.activityLog.findMany as any)(args)
+  ;((prisma as any).activityLog.count as any) = async (args: any = {}) => {
+    const items = await ((prisma as any).activityLog.findMany as any)(args)
     return items.length
   }
 
   // Mock ActivityLog.deleteMany
-  ;(prisma.activityLog.deleteMany as any) = async ({ where }: any) => {
+  ;((prisma as any).activityLog.deleteMany as any) = async ({ where }: any) => {
     const beforeCount = mockActivities.length
     if (where?.createdAt?.lt) {
       mockActivities = mockActivities.filter((a) => a.createdAt >= where.createdAt.lt)
@@ -146,12 +146,12 @@ function setupPrismaMock() {
   }
 
   // Mock User.findUnique
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return mockUsers.find((u) => u.id === where.id || u.username === where.username) ?? null
   }
 
   // Mock Anime.findUnique
-  ;(prisma.anime.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).anime.findUnique as any) = async ({ where }: any) => {
     if (where.id === 101) {
       return {
         id: 101,

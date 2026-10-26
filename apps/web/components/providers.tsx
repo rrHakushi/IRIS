@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { RouterProvider } from "react-aria-components"
-import { SessionProvider } from "next-auth/react"
+import { SessionProvider } from "@/context/session-context"
 import { ThemeProvider } from "next-themes"
 import { DirectionProvider } from "@workspace/ui/components/direction"
 import { IrisSidebarProvider } from "@/components/navigation/sidebar-provider"
@@ -35,15 +35,17 @@ declare module "react-aria-components" {
   }
 }
 
-// Suppress false-positive React 19 / Next.js 16 script tag warning emitted by next-themes SSR inline script
+// Suppress false-positive React 19 / Next.js 16 warnings (script tag emitted by next-themes SSR inline script and extension attribute injection)
 if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
   const origError = console.error
   console.error = (...args: unknown[]) => {
+    const firstArg = typeof args[0] === "string" ? args[0] : ""
     if (
-      typeof args[0] === "string" &&
-      args[0].includes(
+      firstArg.includes(
         "Encountered a script tag while rendering React component"
-      )
+      ) ||
+      firstArg.includes("data-akaromi-attached") ||
+      firstArg.includes("akaromi")
     ) {
       return
     }
@@ -55,7 +57,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const router = useRouter()
 
   return (
-    <RouterProvider navigate={(to, options) => router.push(to, options)}>
+    <RouterProvider navigate={router.push}>
       <SessionProvider
         refetchOnWindowFocus={false}
         refetchInterval={0}

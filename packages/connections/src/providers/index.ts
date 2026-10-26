@@ -11,3 +11,7 @@ export * from "./media/sonarr.adapter.js";
 export * from "./music/deezer.adapter.js";
 export * from "./music/lastfm.adapter.js";
 export * from "./iris/iris.adapter.js";
+export * from "./anime/hikka.adapter.js";
+export * from "./manga/mangaupdates.adapter.js";
+export * from "./manga/mangabaka.adapter.js";
+export * from "./media/trakt.adapter.js";

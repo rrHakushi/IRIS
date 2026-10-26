@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react"
 import { usePathname } from "next/navigation"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/session-context"
 import { useTranslations } from "next-intl"
 import { useIrisApps, renderIrisAppIcon, type IrisApp } from "@/config/irisApps"
 import { hasPermission } from "@IRIS/permissions"

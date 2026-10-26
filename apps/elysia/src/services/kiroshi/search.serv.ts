@@ -55,7 +55,7 @@ export class KiroshiSearchServ {
     }
 
     // 4. Proxy to SearXNG core
-    const searxBase = process.env.SEARXNG_URL || 'http://192.168.0.44:4500'
+    const searxBase = Bun.env.SEARXNG_URL || 'http://192.168.0.44:4500'
     const url = new URL('/search', searxBase)
     url.searchParams.set('q', q)
     url.searchParams.set('format', 'json')
@@ -210,7 +210,7 @@ export class KiroshiSearchServ {
       return { suggestions: cached }
     }
 
-    const searxBase = process.env.SEARXNG_URL || 'http://192.168.0.44:4500'
+    const searxBase = Bun.env.SEARXNG_URL || 'http://192.168.0.44:4500'
     const url = new URL('/autocompleter', searxBase)
     url.searchParams.set('q', q)
 
@@ -258,31 +258,26 @@ export class KiroshiSearchServ {
    */
   private static async recordSearchHistoryAsync(userId: string, q: string, category: string): Promise<void> {
     try {
-      const dbUser = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { settings: true },
-      })
+      const dbUser = await prisma.orm.public.User
+        .select('settings')
+        .first({ id: userId })
       const userSettings = (dbUser?.settings as any) || {}
       const historyEnabled = userSettings?.search?.historyEnabled !== false
       if (!historyEnabled) return
 
       const encrypted = encryptConnectionData(q, userId)
-      await prisma.searchHistory.create({
-        data: {
-          userId,
-          encryptedQuery: encrypted,
-          category,
-        },
+      await prisma.orm.public.SearchHistory.create({
+        userId,
+        encryptedQuery: encrypted,
+        category,
       })
 
       // Retention cleanup
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-      await prisma.searchHistory.deleteMany({
-        where: {
-          userId,
-          createdAt: { lt: thirtyDaysAgo },
-        },
-      })
+      await prisma.orm.public.SearchHistory
+        .where({ userId })
+        .where((s) => s.createdAt.lt(thirtyDaysAgo))
+        .deleteAll()
     } catch (err) {
       console.warn('[Kiroshi] Background search history persistence failed:', err)
     }

@@ -1,7 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from "react"
-import dynamic from "next/dynamic"
+import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { elysia } from "@/lib/elysia"
@@ -19,20 +18,8 @@ import {
 import { cn } from "@workspace/ui/lib/utils"
 import { resolveUserId } from "@/lib/user-profile"
 import { MediaListCard } from "@/components/lists/media-list-card"
-import {
-  toNormalizedMedia,
-  toMediaListEntry,
-} from "@/components/lists/media-list-grid"
 import type { ListEntryData, MediaListType } from "@/components/lists/types"
 import { getMediaDetailHref } from "@/lib/media-routes"
-
-const MediaListModal = dynamic(
-  () =>
-    import("@/components/media/list/media-list-modal").then(
-      (m) => m.MediaListModal
-    ),
-  { ssr: false }
-)
 
 export interface FavoritesTabProps {
   username: string
@@ -84,10 +71,6 @@ export function FavoritesTab({ username, userId, isOwner }: FavoritesTabProps): 
 
   const [favorites, setFavorites] = useState<any[]>(() => (isFresh && cached ? cached.data : []))
   const [isLoading, setIsLoading] = useState(!isFresh)
-  const [editingItem, setEditingItem] = useState<{
-    item: ListEntryData
-    mediaType: MediaListType
-  } | null>(null)
 
   useEffect(() => {
     let isMounted = true
@@ -146,22 +129,6 @@ export function FavoritesTab({ username, userId, isOwner }: FavoritesTabProps): 
       isMounted = false
     }
   }, [cacheKey, username, userId, selectedCategory, refreshKey])
-
-  const handleOpenEditModal = useCallback(
-    (item: ListEntryData, mType?: MediaListType) => {
-      setEditingItem({
-        item,
-        mediaType: mType || CATEGORY_TO_MEDIA_TYPE[selectedCategory] || "anime",
-      })
-    },
-    [selectedCategory]
-  )
-
-  const handleEntryUpdated = useCallback(() => {
-    invalidateClientFavorites(username, selectedCategory)
-    setEditingItem(null)
-    setRefreshKey((k) => k + 1)
-  }, [username, selectedCategory])
 
   const filteredFavorites = favorites.filter((f) => {
     if (selectedCategory === "MUSIC_TRACK") {
@@ -269,7 +236,6 @@ export function FavoritesTab({ username, userId, isOwner }: FavoritesTabProps): 
                   key={`${fav.id}-${fav.targetId}`}
                   item={normalizedItem}
                   mediaType={mediaType}
-                  onOpenEditModal={handleOpenEditModal}
                   priority={idx < 4}
                 />
               )
@@ -351,19 +317,6 @@ export function FavoritesTab({ username, userId, isOwner }: FavoritesTabProps): 
             )
           })}
         </div>
-      )}
-
-      {/* Edit List Modal */}
-      {editingItem && (
-        <MediaListModal
-          isOpen={Boolean(editingItem)}
-          onOpenChange={(open) => {
-            if (!open) setEditingItem(null)
-          }}
-          media={toNormalizedMedia(editingItem.item.media, editingItem.mediaType)}
-          initialEntry={toMediaListEntry(editingItem.item.entry)}
-          onEntryUpdated={handleEntryUpdated}
-        />
       )}
     </div>
   )

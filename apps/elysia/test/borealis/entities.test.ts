@@ -151,44 +151,44 @@ function setupPrismaMock() {
 
   // Mock Prisma methods
   // Character
-  ;(prisma.character.count as any) = async () => mockCharacters.length
-  ;(prisma.character.findMany as any) = async ({ skip = 0, take = 40 }: any) => {
+  ;((prisma as any).character.count as any) = async () => mockCharacters.length
+  ;((prisma as any).character.findMany as any) = async ({ skip = 0, take = 40 }: any) => {
     return mockCharacters.slice(skip, skip + take)
   }
-  ;(prisma.character.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).character.findUnique as any) = async ({ where }: any) => {
     return mockCharacters.find((c) => c.id === where.id) ?? null
   }
 
   // Person
-  ;(prisma.person.count as any) = async () => mockPeople.length
-  ;(prisma.person.findMany as any) = async ({ skip = 0, take = 40 }: any) => {
+  ;((prisma as any).person.count as any) = async () => mockPeople.length
+  ;((prisma as any).person.findMany as any) = async ({ skip = 0, take = 40 }: any) => {
     return mockPeople.slice(skip, skip + take)
   }
-  ;(prisma.person.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).person.findUnique as any) = async ({ where }: any) => {
     return mockPeople.find((p) => p.id === where.id) ?? null
   }
 
   // Studio
-  ;(prisma.studio.count as any) = async (args?: any) => {
+  ;((prisma as any).studio.count as any) = async (args?: any) => {
     if (args?.where?.isAnimationStudio !== undefined) {
       return mockStudios.filter((s) => s.isAnimationStudio === args.where.isAnimationStudio).length
     }
     return mockStudios.length
   }
-  ;(prisma.studio.findMany as any) = async ({ skip = 0, take = 40 }: any) => {
+  ;((prisma as any).studio.findMany as any) = async ({ skip = 0, take = 40 }: any) => {
     return mockStudios.slice(skip, skip + take)
   }
-  ;(prisma.studio.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).studio.findUnique as any) = async ({ where }: any) => {
     return mockStudios.find((s) => s.id === where.id) ?? null
   }
 
   // MediaStudio
-  ;(prisma.mediaStudio.count as any) = async () => mockMediaStudios.length
-  ;(prisma.mediaStudio.findMany as any) = async () => mockMediaStudios
+  ;((prisma as any).mediaStudio.count as any) = async () => mockMediaStudios.length
+  ;((prisma as any).mediaStudio.findMany as any) = async () => mockMediaStudios
 }
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()

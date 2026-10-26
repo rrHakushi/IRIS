@@ -1,4 +1,5 @@
-import { prisma } from '@IRIS/database'
+import { prisma, countOf, or } from '@IRIS/database'
+import { BadRequest } from '../../lib/errors'
 import { BorealisExternalSearchServ } from './external-search.serv'
 import type { PreviewResult } from './syncer/media-preview.syncer'
 
@@ -38,48 +39,58 @@ function mergeWithExternal<T extends { id: number }>(
       (x as any).alUpdatedAt === null ||
       (x as any).tvdbUpdatedAt === null,
   }))
-  const existingIds = new Set(results.map((r) => r.id))
-  let addedCount = 0
-  for (const stub of externalStubs) {
-    if (!existingIds.has(stub.id)) {
-      results.push({ ...stub, mediaType, queuedForFetch: true } as any)
-      addedCount++
-    }
+
+  const existingIds = new Set(items.map((x) => x.id))
+  const newStubs = externalStubs
+    .filter((stub) => !existingIds.has(stub.id))
+    .map((stub) => ({
+      ...stub,
+      mediaType,
+      queuedForFetch: true,
+    }))
+
+  const combined = [...results, ...newStubs]
+  return {
+    results: combined,
+    total: total + newStubs.length,
   }
-  return { results, total: total + addedCount }
 }
 
 export class BorealisSearchServ {
+  /**
+   * Unified catalog search across media formats and entities.
+   */
   public static async search(query: SearchQuery) {
-    const cleanQuery = decodeURIComponent(String(query.q || ''))
-      .replace(/\+/g, ' ')
-      .trim()
-    const rawCategory = query.category || 'media'
-    const category = rawCategory === 'staff' ? 'people' : rawCategory
-    const page = Math.max(1, Number(query.page ?? 1))
-    const limit = Math.max(1, Math.min(50, Number(query.limit ?? 20)))
-    const skip = (page - 1) * limit
-    const isExternal = query.external === true || query.external === 'true'
-
-    if (!cleanQuery) {
-      return {
-        success: true,
-        category,
-        query: cleanQuery,
-        results: [],
-        pagination: {
-          page,
-          limit,
-          total: 0,
-          hasMore: false,
-        },
-      }
+    const rawQuery = query.q
+    if (!rawQuery || rawQuery.trim().length === 0) {
+      throw new BadRequest('Query parameter "q" cannot be empty.')
     }
+
+    const cleanQuery = rawQuery.trim()
+    const category = query.category || 'media'
+    const page = Math.max(1, Number(query.page || 1))
+    const limit = Math.min(50, Math.max(1, Number(query.limit || 20)))
+    const skip = (page - 1) * limit
+    const isExternal =
+      query.external === true ||
+      query.external === 'true' ||
+      query.external === '1'
 
     let externalStubs: PreviewResult[] = []
     if (
       isExternal &&
-      ['anime', 'manga', 'movies', 'tv', 'games', 'books', 'music', 'characters', 'people', 'staff'].includes(category)
+      [
+        'anime',
+        'manga',
+        'movies',
+        'tv',
+        'games',
+        'books',
+        'music',
+        'characters',
+        'people',
+        'staff',
+      ].includes(category)
     ) {
       externalStubs = await BorealisExternalSearchServ.enqueueSearchFetch(
         category,
@@ -90,38 +101,53 @@ export class BorealisSearchServ {
 
     switch (category) {
       case 'anime': {
-        const where = {
-          OR: [
-            { titlePrimary: { contains: cleanQuery, mode: 'insensitive' as const } },
-            { titleSecondary: { contains: cleanQuery, mode: 'insensitive' as const } },
-            { titleNative: { contains: cleanQuery, mode: 'insensitive' as const } },
-          ],
-        }
+        const q = prisma.orm.public.Anime.where((a) =>
+          or(
+            a.titlePrimary.ilike(`%${cleanQuery}%`),
+            a.titleSecondary.ilike(`%${cleanQuery}%`),
+            a.titleNative.ilike(`%${cleanQuery}%`)
+          )
+        )
         const [total, items] = await Promise.all([
-          prisma.anime.count({ where }),
-          prisma.anime.findMany({
-            where,
-            skip,
-            take: limit,
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              titleNative: true,
-              coverImage: true,
-              bannerImage: true,
-              format: true,
-              status: true,
-              seasonYear: true,
-              seasonSeason: true,
-              episodeCount: true,
-              averageScore: true,
-              alUpdatedAt: true,
-              genres: { select: { id: true, name: true } },
-            },
-          }),
+          countOf(q),
+          q
+            .offset(skip)
+            .limit(limit)
+            .select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'titleNative',
+              'coverImage',
+              'bannerImage',
+              'format',
+              'status',
+              'seasonYear',
+              'seasonSeason',
+              'episodeCount',
+              'averageScore',
+              'alUpdatedAt'
+            )
+            .include('genres', (g) =>
+              g.include('genre', (ge) => ge.select('id', 'name'))
+            )
+            .all(),
         ])
-        const { results, total: combinedTotal } = mergeWithExternal(items, externalStubs, 'anime', total)
+        const mappedItems = items.map((x) => ({
+          ...x,
+          genres: (x.genres || [])
+            .filter((g) => Boolean(g.genre))
+            .map((g) => ({
+              id: g.genre!.id,
+              name: g.genre!.name,
+            })),
+        }))
+        const { results, total: combinedTotal } = mergeWithExternal(
+          mappedItems,
+          externalStubs,
+          'anime',
+          total
+        )
         return {
           success: true,
           category,
@@ -137,38 +163,53 @@ export class BorealisSearchServ {
       }
 
       case 'manga': {
-        const where = {
-          OR: [
-            { titlePrimary: { contains: cleanQuery, mode: 'insensitive' as const } },
-            { titleSecondary: { contains: cleanQuery, mode: 'insensitive' as const } },
-            { titleNative: { contains: cleanQuery, mode: 'insensitive' as const } },
-          ],
-        }
+        const q = prisma.orm.public.Manga.where((m) =>
+          or(
+            m.titlePrimary.ilike(`%${cleanQuery}%`),
+            m.titleSecondary.ilike(`%${cleanQuery}%`),
+            m.titleNative.ilike(`%${cleanQuery}%`)
+          )
+        )
         const [total, items] = await Promise.all([
-          prisma.manga.count({ where }),
-          prisma.manga.findMany({
-            where,
-            skip,
-            take: limit,
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              titleNative: true,
-              coverImage: true,
-              bannerImage: true,
-              format: true,
-              status: true,
-              startDateYear: true,
-              chapterCount: true,
-              volumeCount: true,
-              averageScore: true,
-              alUpdatedAt: true,
-              genres: { select: { id: true, name: true } },
-            },
-          }),
+          countOf(q),
+          q
+            .offset(skip)
+            .limit(limit)
+            .select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'titleNative',
+              'coverImage',
+              'bannerImage',
+              'format',
+              'status',
+              'startDateYear',
+              'chapterCount',
+              'volumeCount',
+              'averageScore',
+              'alUpdatedAt'
+            )
+            .include('genres', (g) =>
+              g.include('genre', (ge) => ge.select('id', 'name'))
+            )
+            .all(),
         ])
-        const { results, total: combinedTotal } = mergeWithExternal(items, externalStubs, 'manga', total)
+        const mappedItems = items.map((x) => ({
+          ...x,
+          genres: (x.genres || [])
+            .filter((g) => Boolean(g.genre))
+            .map((g) => ({
+              id: g.genre!.id,
+              name: g.genre!.name,
+            })),
+        }))
+        const { results, total: combinedTotal } = mergeWithExternal(
+          mappedItems,
+          externalStubs,
+          'manga',
+          total
+        )
         return {
           success: true,
           category,
@@ -184,36 +225,51 @@ export class BorealisSearchServ {
       }
 
       case 'movies': {
-        const where = {
-          OR: [
-            { titlePrimary: { contains: cleanQuery, mode: 'insensitive' as const } },
-            { titleSecondary: { contains: cleanQuery, mode: 'insensitive' as const } },
-            { titleNative: { contains: cleanQuery, mode: 'insensitive' as const } },
-          ],
-        }
+        const q = prisma.orm.public.Movie.where((m) =>
+          or(
+            m.titlePrimary.ilike(`%${cleanQuery}%`),
+            m.titleSecondary.ilike(`%${cleanQuery}%`),
+            m.titleNative.ilike(`%${cleanQuery}%`)
+          )
+        )
         const [total, items] = await Promise.all([
-          prisma.movie.count({ where }),
-          prisma.movie.findMany({
-            where,
-            skip,
-            take: limit,
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              titleNative: true,
-              coverImage: true,
-              bannerImage: true,
-              runtime: true,
-              releaseDateYear: true,
-              averageScore: true,
-              tvdbUpdatedAt: true,
-              genres: { select: { id: true, name: true } },
-            },
-          }),
+          countOf(q),
+          q
+            .offset(skip)
+            .limit(limit)
+            .select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'titleNative',
+              'coverImage',
+              'bannerImage',
+              'runtime',
+              'releaseDateYear',
+              'averageScore',
+              'tvdbUpdatedAt'
+            )
+            .include('genres', (g) =>
+              g.include('genre', (ge) => ge.select('id', 'name'))
+            )
+            .all(),
         ])
-        const mappedItems = items.map((x) => ({ ...x, duration: x.runtime }))
-        const { results, total: combinedTotal } = mergeWithExternal(mappedItems, externalStubs, 'movie', total)
+        const mappedItems = items.map((x) => ({
+          ...x,
+          duration: x.runtime,
+          genres: (x.genres || [])
+            .filter((g) => Boolean(g.genre))
+            .map((g) => ({
+              id: g.genre!.id,
+              name: g.genre!.name,
+            })),
+        }))
+        const { results, total: combinedTotal } = mergeWithExternal(
+          mappedItems,
+          externalStubs,
+          'movie',
+          total
+        )
         return {
           success: true,
           category,
@@ -229,36 +285,51 @@ export class BorealisSearchServ {
       }
 
       case 'tv': {
-        const where = {
-          OR: [
-            { titlePrimary: { contains: cleanQuery, mode: 'insensitive' as const } },
-            { titleSecondary: { contains: cleanQuery, mode: 'insensitive' as const } },
-            { titleNative: { contains: cleanQuery, mode: 'insensitive' as const } },
-          ],
-        }
+        const q = prisma.orm.public.Tv.where((t) =>
+          or(
+            t.titlePrimary.ilike(`%${cleanQuery}%`),
+            t.titleSecondary.ilike(`%${cleanQuery}%`),
+            t.titleNative.ilike(`%${cleanQuery}%`)
+          )
+        )
         const [total, items] = await Promise.all([
-          prisma.tv.count({ where }),
-          prisma.tv.findMany({
-            where,
-            skip,
-            take: limit,
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              titleNative: true,
-              coverImage: true,
-              bannerImage: true,
-              episodeCount: true,
-              firstAiredYear: true,
-              averageScore: true,
-              tvdbUpdatedAt: true,
-              genres: { select: { id: true, name: true } },
-            },
-          }),
+          countOf(q),
+          q
+            .offset(skip)
+            .limit(limit)
+            .select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'titleNative',
+              'coverImage',
+              'bannerImage',
+              'episodeCount',
+              'firstAiredYear',
+              'averageScore',
+              'tvdbUpdatedAt'
+            )
+            .include('genres', (g) =>
+              g.include('genre', (ge) => ge.select('id', 'name'))
+            )
+            .all(),
         ])
-        const mappedItems = items.map((x) => ({ ...x, releaseDateYear: x.firstAiredYear }))
-        const { results, total: combinedTotal } = mergeWithExternal(mappedItems, externalStubs, 'tv', total)
+        const mappedItems = items.map((x) => ({
+          ...x,
+          releaseDateYear: x.firstAiredYear,
+          genres: (x.genres || [])
+            .filter((g) => Boolean(g.genre))
+            .map((g) => ({
+              id: g.genre!.id,
+              name: g.genre!.name,
+            })),
+        }))
+        const { results, total: combinedTotal } = mergeWithExternal(
+          mappedItems,
+          externalStubs,
+          'tv',
+          total
+        )
         return {
           success: true,
           category,
@@ -274,33 +345,49 @@ export class BorealisSearchServ {
       }
 
       case 'games': {
-        const where = {
-          OR: [
-            { titlePrimary: { contains: cleanQuery, mode: 'insensitive' as const } },
-            { titleSecondary: { contains: cleanQuery, mode: 'insensitive' as const } },
-          ],
-        }
+        const q = prisma.orm.public.Game.where((g) =>
+          or(
+            g.titlePrimary.ilike(`%${cleanQuery}%`),
+            g.titleSecondary.ilike(`%${cleanQuery}%`)
+          )
+        )
         const [total, items] = await Promise.all([
-          prisma.game.count({ where }),
-          prisma.game.findMany({
-            where,
-            skip,
-            take: limit,
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              coverImage: true,
-              bannerImage: true,
-              platforms: true,
-              releaseDateYear: true,
-              averageScore: true,
-              igdbUpdatedAt: true,
-              genres: { select: { id: true, name: true } },
-            },
-          }),
+          countOf(q),
+          q
+            .offset(skip)
+            .limit(limit)
+            .select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'coverImage',
+              'bannerImage',
+              'platforms',
+              'releaseDateYear',
+              'averageScore',
+              'igdbUpdatedAt'
+            )
+            .include('genres', (g) =>
+              g.include('genre', (ge) => ge.select('id', 'name'))
+            )
+            .all(),
         ])
-        const { results, total: combinedTotal } = mergeWithExternal(items, externalStubs, 'game', total)
+        const mappedItems = items.map((x) => ({
+          ...x,
+          platforms: [...x.platforms],
+          genres: (x.genres || [])
+            .filter((g) => Boolean(g.genre))
+            .map((g) => ({
+              id: g.genre!.id,
+              name: g.genre!.name,
+            })),
+        }))
+        const { results, total: combinedTotal } = mergeWithExternal(
+          mappedItems,
+          externalStubs,
+          'game',
+          total
+        )
         return {
           success: true,
           category,
@@ -316,40 +403,52 @@ export class BorealisSearchServ {
       }
 
       case 'music': {
-        const where = {
-          OR: [
-            { titlePrimary: { contains: cleanQuery, mode: 'insensitive' as const } },
-            { titleSecondary: { contains: cleanQuery, mode: 'insensitive' as const } },
-            { artistName: { contains: cleanQuery, mode: 'insensitive' as const } },
-          ],
-        }
+        const q = prisma.orm.public.Music.where((m) =>
+          or(
+            m.titlePrimary.ilike(`%${cleanQuery}%`),
+            m.titleSecondary.ilike(`%${cleanQuery}%`),
+            m.artistName.ilike(`%${cleanQuery}%`)
+          )
+        )
         const [total, items] = await Promise.all([
-          prisma.music.count({ where }),
-          prisma.music.findMany({
-            where,
-            skip,
-            take: limit,
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              artistName: true,
-              coverImage: true,
-              type: true,
-              duration: true,
-              releaseDateYear: true,
-              album: { select: { titlePrimary: true } },
-              genres: { select: { id: true, name: true } },
-            },
-          }),
+          countOf(q),
+          q
+            .offset(skip)
+            .limit(limit)
+            .select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'artistName',
+              'coverImage',
+              'type',
+              'duration',
+              'releaseDateYear'
+            )
+            .include('album', (a) => a.select('titlePrimary'))
+            .include('genres', (g) =>
+              g.include('genre', (ge) => ge.select('id', 'name'))
+            )
+            .all(),
         ])
         const mappedItems = items.map((x) => ({
           ...x,
           artist: x.artistName,
           albumTitle: x.album?.titlePrimary ?? null,
           durationMs: x.duration ? x.duration * 1000 : null,
+          genres: (x.genres || [])
+            .filter((g) => Boolean(g.genre))
+            .map((g) => ({
+              id: g.genre!.id,
+              name: g.genre!.name,
+            })),
         }))
-        const { results, total: combinedTotal } = mergeWithExternal(mappedItems, externalStubs, 'music', total)
+        const { results, total: combinedTotal } = mergeWithExternal(
+          mappedItems,
+          externalStubs,
+          'music',
+          total
+        )
         return {
           success: true,
           category,
@@ -365,32 +464,48 @@ export class BorealisSearchServ {
       }
 
       case 'books': {
-        const where = {
-          OR: [
-            { titlePrimary: { contains: cleanQuery, mode: 'insensitive' as const } },
-            { titleSecondary: { contains: cleanQuery, mode: 'insensitive' as const } },
-          ],
-        }
+        const q = prisma.orm.public.Book.where((b) =>
+          or(
+            b.titlePrimary.ilike(`%${cleanQuery}%`),
+            b.titleSecondary.ilike(`%${cleanQuery}%`)
+          )
+        )
         const [total, items] = await Promise.all([
-          prisma.book.count({ where }),
-          prisma.book.findMany({
-            where,
-            skip,
-            take: limit,
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              authors: true,
-              coverImage: true,
-              pageCount: true,
-              releaseDateYear: true,
-              averageScore: true,
-              genres: { select: { id: true, name: true } },
-            },
-          }),
+          countOf(q),
+          q
+            .offset(skip)
+            .limit(limit)
+            .select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'authors',
+              'coverImage',
+              'pageCount',
+              'releaseDateYear',
+              'averageScore'
+            )
+            .include('genres', (g) =>
+              g.include('genre', (ge) => ge.select('id', 'name'))
+            )
+            .all(),
         ])
-        const { results, total: combinedTotal } = mergeWithExternal(items, externalStubs, 'book', total)
+        const mappedItems = items.map((x) => ({
+          ...x,
+          authors: [...x.authors],
+          genres: (x.genres || [])
+            .filter((g) => Boolean(g.genre))
+            .map((g) => ({
+              id: g.genre!.id,
+              name: g.genre!.name,
+            })),
+        }))
+        const { results, total: combinedTotal } = mergeWithExternal(
+          mappedItems,
+          externalStubs,
+          'book',
+          total
+        )
         return {
           success: true,
           category,
@@ -406,30 +521,34 @@ export class BorealisSearchServ {
       }
 
       case 'characters': {
-        const where = {
-          OR: [
-            { namePrimary: { contains: cleanQuery, mode: 'insensitive' as const } },
-            { nameNative: { contains: cleanQuery, mode: 'insensitive' as const } },
-          ],
-        }
+        const q = prisma.orm.public.Character.where((c) =>
+          or(
+            c.namePrimary.ilike(`%${cleanQuery}%`),
+            c.nameNative.ilike(`%${cleanQuery}%`)
+          )
+        )
         const [total, items] = await Promise.all([
-          prisma.character.count({ where }),
-          prisma.character.findMany({
-            where,
-            skip,
-            take: limit,
-            select: {
-              id: true,
-              namePrimary: true,
-              nameNative: true,
-              image: true,
-              gender: true,
-              age: true,
-              description: true,
-            },
-          }),
+          countOf(q),
+          q
+            .offset(skip)
+            .limit(limit)
+            .select(
+              'id',
+              'namePrimary',
+              'nameNative',
+              'image',
+              'gender',
+              'age',
+              'description'
+            )
+            .all(),
         ])
-        const merged = mergeWithExternal(items, externalStubs, 'characters', total)
+        const merged = mergeWithExternal(
+          items,
+          externalStubs,
+          'characters',
+          total
+        )
         return {
           success: true,
           category,
@@ -445,30 +564,38 @@ export class BorealisSearchServ {
       }
 
       case 'people': {
-        const where = {
-          OR: [
-            { namePrimary: { contains: cleanQuery, mode: 'insensitive' as const } },
-            { nameNative: { contains: cleanQuery, mode: 'insensitive' as const } },
-          ],
-        }
+        const q = prisma.orm.public.Person.where((p) =>
+          or(
+            p.namePrimary.ilike(`%${cleanQuery}%`),
+            p.nameNative.ilike(`%${cleanQuery}%`)
+          )
+        )
         const [total, items] = await Promise.all([
-          prisma.person.count({ where }),
-          prisma.person.findMany({
-            where,
-            skip,
-            take: limit,
-            select: {
-              id: true,
-              namePrimary: true,
-              nameNative: true,
-              image: true,
-              language: true,
-              primaryOccupations: true,
-              description: true,
-            },
-          }),
+          countOf(q),
+          q
+            .offset(skip)
+            .limit(limit)
+            .select(
+              'id',
+              'namePrimary',
+              'nameNative',
+              'image',
+              'language',
+              'primaryOccupations',
+              'description'
+            )
+            .all(),
         ])
-        const merged = mergeWithExternal(items, externalStubs, 'people', total)
+        const mappedItems = items.map((x) => ({
+          ...x,
+          primaryOccupations: [...x.primaryOccupations],
+        }))
+        const merged = mergeWithExternal(
+          mappedItems,
+          externalStubs,
+          'people',
+          total
+        )
         return {
           success: true,
           category,
@@ -484,23 +611,16 @@ export class BorealisSearchServ {
       }
 
       case 'studios': {
-        const where = {
-          name: { contains: cleanQuery, mode: 'insensitive' as const },
-        }
+        const q = prisma.orm.public.Studio.where((s) =>
+          s.name.ilike(`%${cleanQuery}%`)
+        )
         const [total, items] = await Promise.all([
-          prisma.studio.count({ where }),
-          prisma.studio.findMany({
-            where,
-            skip,
-            take: limit,
-            select: {
-              id: true,
-              name: true,
-              isAnimationStudio: true,
-              siteUrl: true,
-              favorites: true,
-            },
-          }),
+          countOf(q),
+          q
+            .offset(skip)
+            .limit(limit)
+            .select('id', 'name', 'isAnimationStudio', 'siteUrl', 'favorites')
+            .all(),
         ])
         return {
           success: true,
@@ -519,140 +639,128 @@ export class BorealisSearchServ {
       case 'media':
       default: {
         // Multi-media search across anime, manga, tv, movie, game, book, music, other
-        const [anime, manga, tv, movie, game, book, music, other] = await Promise.all([
-          prisma.anime.findMany({
-            where: {
-              OR: [
-                { titlePrimary: { contains: cleanQuery, mode: 'insensitive' } },
-                { titleSecondary: { contains: cleanQuery, mode: 'insensitive' } },
-              ],
-            },
-            take: limit,
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              coverImage: true,
-              format: true,
-              averageScore: true,
-            },
-          }),
-          prisma.manga.findMany({
-            where: {
-              OR: [
-                { titlePrimary: { contains: cleanQuery, mode: 'insensitive' } },
-                { titleSecondary: { contains: cleanQuery, mode: 'insensitive' } },
-              ],
-            },
-            take: limit,
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              coverImage: true,
-              format: true,
-              averageScore: true,
-            },
-          }),
-          prisma.tv.findMany({
-            where: {
-              OR: [
-                { titlePrimary: { contains: cleanQuery, mode: 'insensitive' } },
-                { titleSecondary: { contains: cleanQuery, mode: 'insensitive' } },
-              ],
-            },
-            take: limit,
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              coverImage: true,
-              averageScore: true,
-            },
-          }),
-          prisma.movie.findMany({
-            where: {
-              OR: [
-                { titlePrimary: { contains: cleanQuery, mode: 'insensitive' } },
-                { titleSecondary: { contains: cleanQuery, mode: 'insensitive' } },
-              ],
-            },
-            take: limit,
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              coverImage: true,
-              averageScore: true,
-            },
-          }),
-          prisma.game.findMany({
-            where: {
-              OR: [
-                { titlePrimary: { contains: cleanQuery, mode: 'insensitive' } },
-                { titleSecondary: { contains: cleanQuery, mode: 'insensitive' } },
-              ],
-            },
-            take: limit,
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              coverImage: true,
-              averageScore: true,
-            },
-          }),
-          prisma.book.findMany({
-            where: {
-              OR: [
-                { titlePrimary: { contains: cleanQuery, mode: 'insensitive' } },
-                { titleSecondary: { contains: cleanQuery, mode: 'insensitive' } },
-              ],
-            },
-            take: limit,
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              coverImage: true,
-              averageScore: true,
-            },
-          }),
-          prisma.music.findMany({
-            where: {
-              OR: [
-                { titlePrimary: { contains: cleanQuery, mode: 'insensitive' } },
-                { artistName: { contains: cleanQuery, mode: 'insensitive' } },
-              ],
-            },
-            take: limit,
-            select: {
-              id: true,
-              titlePrimary: true,
-              artistName: true,
-              coverImage: true,
-            },
-          }),
-          prisma.other.findMany({
-            where: {
-              isPublished: true,
-              OR: [
-                { titlePrimary: { contains: cleanQuery, mode: 'insensitive' } },
-                { titleSecondary: { contains: cleanQuery, mode: 'insensitive' } },
-                { description: { contains: cleanQuery, mode: 'insensitive' } },
-              ],
-            },
-            take: limit,
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              coverImage: true,
-              averageScore: true,
-              format: true,
-            },
-          }),
-        ])
+        const [anime, manga, tv, movie, game, book, music, other] =
+          await Promise.all([
+            prisma.orm.public.Anime.where((a) =>
+              or(
+                a.titlePrimary.ilike(`%${cleanQuery}%`),
+                a.titleSecondary.ilike(`%${cleanQuery}%`)
+              )
+            )
+              .limit(limit)
+              .select(
+                'id',
+                'titlePrimary',
+                'titleSecondary',
+                'coverImage',
+                'format',
+                'averageScore'
+              )
+              .all(),
+            prisma.orm.public.Manga.where((m) =>
+              or(
+                m.titlePrimary.ilike(`%${cleanQuery}%`),
+                m.titleSecondary.ilike(`%${cleanQuery}%`)
+              )
+            )
+              .limit(limit)
+              .select(
+                'id',
+                'titlePrimary',
+                'titleSecondary',
+                'coverImage',
+                'format',
+                'averageScore'
+              )
+              .all(),
+            prisma.orm.public.Tv.where((t) =>
+              or(
+                t.titlePrimary.ilike(`%${cleanQuery}%`),
+                t.titleSecondary.ilike(`%${cleanQuery}%`)
+              )
+            )
+              .limit(limit)
+              .select(
+                'id',
+                'titlePrimary',
+                'titleSecondary',
+                'coverImage',
+                'averageScore'
+              )
+              .all(),
+            prisma.orm.public.Movie.where((m) =>
+              or(
+                m.titlePrimary.ilike(`%${cleanQuery}%`),
+                m.titleSecondary.ilike(`%${cleanQuery}%`)
+              )
+            )
+              .limit(limit)
+              .select(
+                'id',
+                'titlePrimary',
+                'titleSecondary',
+                'coverImage',
+                'averageScore'
+              )
+              .all(),
+            prisma.orm.public.Game.where((g) =>
+              or(
+                g.titlePrimary.ilike(`%${cleanQuery}%`),
+                g.titleSecondary.ilike(`%${cleanQuery}%`)
+              )
+            )
+              .limit(limit)
+              .select(
+                'id',
+                'titlePrimary',
+                'titleSecondary',
+                'coverImage',
+                'averageScore'
+              )
+              .all(),
+            prisma.orm.public.Book.where((b) =>
+              or(
+                b.titlePrimary.ilike(`%${cleanQuery}%`),
+                b.titleSecondary.ilike(`%${cleanQuery}%`)
+              )
+            )
+              .limit(limit)
+              .select(
+                'id',
+                'titlePrimary',
+                'titleSecondary',
+                'coverImage',
+                'averageScore'
+              )
+              .all(),
+            prisma.orm.public.Music.where((m) =>
+              or(
+                m.titlePrimary.ilike(`%${cleanQuery}%`),
+                m.artistName.ilike(`%${cleanQuery}%`)
+              )
+            )
+              .limit(limit)
+              .select('id', 'titlePrimary', 'artistName', 'coverImage')
+              .all(),
+            prisma.orm.public.Other.where({ isPublished: true })
+              .where((o) =>
+                or(
+                  o.titlePrimary.ilike(`%${cleanQuery}%`),
+                  o.titleSecondary.ilike(`%${cleanQuery}%`),
+                  o.description.ilike(`%${cleanQuery}%`)
+                )
+              )
+              .limit(limit)
+              .select(
+                'id',
+                'titlePrimary',
+                'titleSecondary',
+                'coverImage',
+                'averageScore',
+                'format'
+              )
+              .all(),
+          ])
 
         const combined = [
           ...anime.map((x) => ({ ...x, mediaType: 'anime' })),
@@ -683,46 +791,39 @@ export class BorealisSearchServ {
       }
 
       case 'other': {
-        const where = {
-          isPublished: true,
-          OR: [
-            { titlePrimary: { contains: cleanQuery, mode: 'insensitive' as const } },
-            { titleSecondary: { contains: cleanQuery, mode: 'insensitive' as const } },
-            { description: { contains: cleanQuery, mode: 'insensitive' as const } },
-          ],
-        }
+        const q = prisma.orm.public.Other.where({ isPublished: true }).where(
+          (o) =>
+            or(
+              o.titlePrimary.ilike(`%${cleanQuery}%`),
+              o.titleSecondary.ilike(`%${cleanQuery}%`),
+              o.description.ilike(`%${cleanQuery}%`)
+            )
+        )
         const [total, items] = await Promise.all([
-          prisma.other.count({ where }),
-          prisma.other.findMany({
-            where,
-            skip,
-            take: limit,
-            orderBy: [{ popularity: 'desc' }, { averageScore: 'desc' }],
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              description: true,
-              coverImage: true,
-              bannerImage: true,
-              format: true,
-              startDate: true,
-              endDate: true,
-              averageScore: true,
-              favorites: true,
-              popularity: true,
-              progressFields: true,
-              incrementFieldKey: true,
-              statuses: true,
-              creatorId: true,
-              creator: {
-                select: {
-                  id: true,
-                  username: true,
-                },
-              },
-            },
-          }),
+          countOf(q),
+          q
+            .offset(skip)
+            .limit(limit)
+            .orderBy([(o) => o.popularity.desc(), (o) => o.averageScore.desc()])
+            .select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'description',
+              'coverImage',
+              'bannerImage',
+              'format',
+              'startDate',
+              'endDate',
+              'averageScore',
+              'favorites',
+              'popularity',
+              'progressFields',
+              'incrementFieldKey',
+              'creatorId'
+            )
+            .include('creator', (c) => c.select('id', 'username'))
+            .all(),
         ])
 
         const results = items.map((x) => ({

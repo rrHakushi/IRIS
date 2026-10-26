@@ -89,7 +89,7 @@ function setupPrismaMock() {
 
   mockPasskeys = []
 
-  ;(prisma.user.findUnique as any) = async ({ where, include }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where, include }: any) => {
     const user = mockUsers.find((u) => u.id === where.id)
     if (!user) return null
     if (include?.passkeys) {
@@ -101,25 +101,25 @@ function setupPrismaMock() {
     return { ...user }
   }
 
-  ;(prisma.user.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).user.update as any) = async ({ where, data }: any) => {
     const user = mockUsers.find((u) => u.id === where.id)
     if (!user) throw new Error('User not found')
     if (data.backupCodes !== undefined) user.backupCodes = data.backupCodes
     return { ...user }
   }
 
-  ;(prisma.passkey.count as any) = async ({ where }: any) => {
+  ;((prisma as any).passkey.count as any) = async ({ where }: any) => {
     return mockPasskeys.filter((pk) => pk.userId === where.userId).length
   }
 
-  ;(prisma.passkey.findMany as any) = async ({ where, skip = 0, take = 10 }: any) => {
+  ;((prisma as any).passkey.findMany as any) = async ({ where, skip = 0, take = 10 }: any) => {
     return mockPasskeys
       .filter((pk) => pk.userId === where.userId)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(skip, skip + take)
   }
 
-  ;(prisma.passkey.findFirst as any) = async ({ where }: any) => {
+  ;((prisma as any).passkey.findFirst as any) = async ({ where }: any) => {
     return (
       mockPasskeys.find((pk) => {
         if (where.id && pk.id !== where.id) return false
@@ -129,7 +129,7 @@ function setupPrismaMock() {
     )
   }
 
-  ;(prisma.passkey.create as any) = async ({ data }: any) => {
+  ;((prisma as any).passkey.create as any) = async ({ data }: any) => {
     const newPk: MockPasskey = {
       id: data.id,
       publicKey: data.publicKey,
@@ -143,7 +143,7 @@ function setupPrismaMock() {
     return newPk
   }
 
-  ;(prisma.passkey.delete as any) = async ({ where }: any) => {
+  ;((prisma as any).passkey.delete as any) = async ({ where }: any) => {
     const idx = mockPasskeys.findIndex((pk) => pk.id === where.id)
     if (idx === -1) throw new Error('Passkey not found')
     const [deleted] = mockPasskeys.splice(idx, 1)
@@ -156,7 +156,7 @@ function setupPrismaMock() {
 // -----------------------------------------------------------------------------
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()

@@ -20,10 +20,10 @@ export function getTransporter(): Transporter | null {
     return transporter
   }
 
-  const host = process.env.SMTP_HOST
-  const port = process.env.SMTP_PORT
-  const user = process.env.SMTP_USER
-  const pass = process.env.SMTP_PASS
+  const host = Bun.env.SMTP_HOST
+  const port = Bun.env.SMTP_PORT
+  const user = Bun.env.SMTP_USER
+  const pass = Bun.env.SMTP_PASS
 
   if (host && port) {
     transporter = nodemailer.createTransport({
@@ -52,11 +52,11 @@ export async function sendDirectMail({
   html,
   text,
 }: SendMailParams): Promise<boolean> {
-  const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV
-  const useMailInDev = process.env.USE_MAIL_IN_DEV === 'true'
+  const isDev = Bun.env.NODE_ENV === 'development' || !Bun.env.NODE_ENV
+  const useMailInDev = Bun.env.USE_MAIL_IN_DEV === 'true'
   const shouldSendRealMail = !isDev || useMailInDev
 
-  const from = process.env.SMTP_FROM || 'noreply@iris.local'
+  const from = Bun.env.SMTP_FROM || 'noreply@iris.local'
   const activeTransporter = getTransporter()
 
   if (shouldSendRealMail && activeTransporter) {

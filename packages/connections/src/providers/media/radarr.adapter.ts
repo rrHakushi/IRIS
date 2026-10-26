@@ -72,7 +72,7 @@ export class RadarrAdapter extends ServarrBaseAdapter {
       provider: "RADARR",
       mediaType: "MOVIE" as const,
       title: m.title,
-      status: m.hasFile ? ("COMPLETED" as const) : ("PLANNING" as const),
+      status: m.hasFile ? ("COMPLETED" as const) : ("PLANNED" as const),
       releaseYear: m.year,
       notes: m.overview,
     }));

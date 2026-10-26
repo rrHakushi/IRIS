@@ -57,5 +57,13 @@ releases/**
 !releases/**/
 !releases/**/manifest.json
 .jellyfin/
-
 /apps/elysia/server
+
+# agent tooling
+.claude/
+.cursor/
+.devin/
+packages/*/.agents/
+packages/*/.claude/
+packages/*/.cursor/
+packages/*/.devin/

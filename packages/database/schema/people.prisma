@@ -1,3 +1,5 @@
+// use prisma-8
+
 enum StaffRole {
     DIRECTOR
     EPISODE_DIRECTOR
@@ -38,22 +40,22 @@ model Person {
     spotifyId   String? @unique
 
     // Names & Identity
-    namePrimary     String   @db.Text
-    nameNative      String?  @db.Text
-    nameAlternative String[] @db.Text
-    givenName       String?  @db.Text
-    familyName      String?  @db.Text
+    namePrimary     String
+    nameNative      String?
+    nameAlternative String[]
+    givenName       String?
+    familyName      String?
 
     // Visuals (main image and sized variations in images JSON)
-    image  String? @db.Text
-    images Json?   @db.JsonB // { small, medium, big, xl, original }
+    image  String?
+    images Jsonb? // { small, medium, big, xl, original }
 
     // Biography & Profile
-    description        String?  @db.Text
+    description        String?
     gender             String?
     bloodType          String?
-    homeTown           String?  @db.Text
-    birthPlace         String?  @db.Text
+    homeTown           String?
+    birthPlace         String?
     language           String?
     primaryOccupations String[] @default([])
 
@@ -72,18 +74,18 @@ model Person {
     // Deezer Artist Specific Fields
     nbAlbum     Int?     @default(0)
     nbFan       Int?     @default(0)
-    deezerLink  String?  @db.Text
-    deezerShare String?  @db.Text
+    deezerLink  String?
+    deezerShare String?
     hasRadio    Boolean? @default(false)
 
     // Local platform stats (application metrics)
     favorites Int? @default(0)
 
     // Sources & Raw metadata
-    sources Json? @db.JsonB
+    sources Jsonb?
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     mediaStaff       MediaStaff[]
     voicedCharacters MediaCharacter[]

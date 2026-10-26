@@ -28,6 +28,7 @@ import {
   IconSend,
   IconSquare,
   IconSquareCheck,
+  IconAlertTriangle,
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { formatBadgeNumber } from "@/lib/numbers"
@@ -1164,6 +1165,14 @@ export function IrisNotificationsModal({
                           </a>
                         </div>
                       )}
+                    </div>
+                  ) : item.decryptionError ? (
+                    /* Decryption Error State */
+                    <div className="flex items-center gap-2 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+                      <IconAlertTriangle className="size-4 shrink-0" />
+                      <span className="text-[11px] font-medium leading-tight">
+                        Unable to decrypt notification (legacy or mismatched encryption key)
+                      </span>
                     </div>
                   ) : (
                     /* Locked / Encrypted Placeholder */

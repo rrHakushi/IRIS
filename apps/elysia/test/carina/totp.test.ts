@@ -57,7 +57,7 @@ function setupPrismaMock() {
     },
   ]
 
-  ;(prisma.user.findUnique as any) = async ({ where, include }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where, include }: any) => {
     const user = mockUsers.find((u) => u.id === where.id)
     if (!user) return null
     if (include?.passkeys) {
@@ -66,7 +66,7 @@ function setupPrismaMock() {
     return { ...user }
   }
 
-  ;(prisma.user.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).user.update as any) = async ({ where, data }: any) => {
     const user = mockUsers.find((u) => u.id === where.id)
     if (!user) throw new Error('User not found')
     if (data.TOTPSecret !== undefined) user.TOTPSecret = data.TOTPSecret
@@ -81,7 +81,7 @@ function setupPrismaMock() {
 // -----------------------------------------------------------------------------
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()
@@ -141,6 +141,7 @@ describe('Comprehensive Carina TOTP Test Suite', () => {
       expect(data.secret).toBeDefined()
       expect(data.secret.length).toBeGreaterThanOrEqual(16)
       expect(data.otpauthUrl).toContain('otpauth://totp/')
+      expect(data.otpauthUrl).toContain('Carina')
       expect(data.otpauthUrl).toContain('secret=' + data.secret)
       expect(data.qrCodeDataUrl).toMatch(/^data:image\/png;base64,/)
 

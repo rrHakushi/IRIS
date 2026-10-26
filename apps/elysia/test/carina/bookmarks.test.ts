@@ -71,17 +71,17 @@ function setupPrismaMock() {
   ]
 
   // Mock User findUnique
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return mockUsers.find((u) => u.id === where.id) ?? null
   }
 
   // Mock Bookmark findUnique
-  ;(prisma.bookmark.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).bookmark.findUnique as any) = async ({ where }: any) => {
     return mockBookmarks.find((b) => b.id === where.id) ?? null
   }
 
   // Mock Bookmark count
-  ;(prisma.bookmark.count as any) = async ({ where }: any) => {
+  ;((prisma as any).bookmark.count as any) = async ({ where }: any) => {
     return mockBookmarks.filter((b) => {
       if (where.userId && b.userId !== where.userId) return false
       if (where.group !== undefined && b.group !== where.group) return false
@@ -91,7 +91,7 @@ function setupPrismaMock() {
   }
 
   // Mock Bookmark findMany
-  ;(prisma.bookmark.findMany as any) = async ({
+  ;((prisma as any).bookmark.findMany as any) = async ({
     where,
     skip = 0,
     take = 10,
@@ -134,7 +134,7 @@ function setupPrismaMock() {
   }
 
   // Mock Bookmark create
-  ;(prisma.bookmark.create as any) = async ({ data }: any) => {
+  ;((prisma as any).bookmark.create as any) = async ({ data }: any) => {
     const item: MockBookmark = {
       id: `bm-${nextBookmarkId++}`,
       userId: data.userId,
@@ -154,7 +154,7 @@ function setupPrismaMock() {
   }
 
   // Mock Bookmark update
-  ;(prisma.bookmark.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).bookmark.update as any) = async ({ where, data }: any) => {
     const idx = mockBookmarks.findIndex((b) => b.id === where.id)
     if (idx === -1) throw new Error('Bookmark not found')
     const current = mockBookmarks[idx]!
@@ -168,7 +168,7 @@ function setupPrismaMock() {
   }
 
   // Mock Bookmark delete
-  ;(prisma.bookmark.delete as any) = async ({ where }: any) => {
+  ;((prisma as any).bookmark.delete as any) = async ({ where }: any) => {
     const idx = mockBookmarks.findIndex((b) => b.id === where.id)
     if (idx === -1) throw new Error('Bookmark not found')
     const [deleted] = mockBookmarks.splice(idx, 1)
@@ -181,7 +181,7 @@ function setupPrismaMock() {
 // -----------------------------------------------------------------------------
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()

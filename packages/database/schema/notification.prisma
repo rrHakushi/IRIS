@@ -1,3 +1,5 @@
+// use prisma-8
+
 enum NotificationType {
     INFO
     ACTION_CONFIRM
@@ -21,7 +23,7 @@ enum NotificationActionStatus {
 }
 
 model Notification {
-    id String @id @default(uuid())
+    id String @id @onCreate(uuid())
 
     userId String
     user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -35,16 +37,16 @@ model Notification {
     readAt DateTime?
 
     actionStatus  NotificationActionStatus?
-    actionPayload Json?                     @db.Json
+    actionPayload Json?
     actionHandler String?
 
     // ENCRYPTED PAYLOAD (RSA-OAEP + AES-256-GCM)
-    encryptedKey  String @db.Text
-    encryptedData String @db.Text
+    encryptedKey  String
+    encryptedData String
 
     expiresAt DateTime?
     createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
+    updatedAt DateTime  @onCreate(now()) @onUpdate(now())
 
     @@index([userId])
     @@index([userId, isRead])

@@ -112,7 +112,7 @@ export class CacheManager extends EventEmitter {
     this.options = resolveCacheOptions(options);
     this.serializer = serializer;
 
-    if (this.options.logger === true || (this.options.logger === undefined && process.env['NODE_ENV'] !== 'production')) {
+    if (this.options.logger === true || (this.options.logger === undefined && Bun.env['NODE_ENV'] !== 'production')) {
       this.logger = {
         debug: (msg, ...args) => console.log('\x1b[36m[IRIS:Cache]\x1b[0m', msg, ...args),
         info: (msg, ...args) => console.log('\x1b[32m[IRIS:Cache]\x1b[0m', msg, ...args),

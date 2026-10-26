@@ -124,19 +124,19 @@ function setupPrismaMock() {
   mockMusicList = []
 
   // Mock User
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return mockUsers.find((u) => u.id === where.id) ?? null
   }
 
   // Mock Friends
-  ;(prisma.friend.count as any) = async ({ where }: any) => {
+  ;((prisma as any).friend.count as any) = async ({ where }: any) => {
     return mockFriends.filter((f) => {
       if (where.userId && f.userId !== where.userId) return false
       return true
     }).length
   }
 
-  ;(prisma.friend.findMany as any) = async ({ where, skip = 0, take = 10 }: any) => {
+  ;((prisma as any).friend.findMany as any) = async ({ where, skip = 0, take = 10 }: any) => {
     let list = mockFriends.filter((f) => {
       if (where.userId && f.userId !== where.userId) return false
       if (where.friendId?.in && !where.friendId.in.includes(f.friendId)) return false
@@ -164,7 +164,7 @@ function setupPrismaMock() {
     })
   }
 
-  ;(prisma.friend.findFirst as any) = async ({ where }: any) => {
+  ;((prisma as any).friend.findFirst as any) = async ({ where }: any) => {
     return (
       mockFriends.find((f) => {
         if (where.userId && f.userId !== where.userId) return false
@@ -186,7 +186,7 @@ function setupPrismaMock() {
     )
   }
 
-  ;(prisma.friend.upsert as any) = async ({ where, create }: any) => {
+  ;((prisma as any).friend.upsert as any) = async ({ where, create }: any) => {
     const { userId, friendId } = where.userId_friendId
     let existing = mockFriends.find(
       (f) => f.userId === userId && f.friendId === friendId
@@ -206,7 +206,7 @@ function setupPrismaMock() {
     return existing
   }
 
-  ;(prisma.friend.deleteMany as any) = async ({ where }: any) => {
+  ;((prisma as any).friend.deleteMany as any) = async ({ where }: any) => {
     let count = 0
     if (where.OR) {
       mockFriends = mockFriends.filter((f) => {
@@ -221,7 +221,7 @@ function setupPrismaMock() {
   }
 
   // Mock Friend Requests
-  ;(prisma.friendRequest.count as any) = async ({ where }: any) => {
+  ;((prisma as any).friendRequest.count as any) = async ({ where }: any) => {
     return mockFriendRequests.filter((r) => {
       if (where.status && r.status !== where.status) return false
       if (where.senderId && r.senderId !== where.senderId) return false
@@ -238,7 +238,7 @@ function setupPrismaMock() {
     }).length
   }
 
-  ;(prisma.friendRequest.findMany as any) = async ({ where, skip = 0, take = 10 }: any) => {
+  ;((prisma as any).friendRequest.findMany as any) = async ({ where, skip = 0, take = 10 }: any) => {
     let list = mockFriendRequests.filter((r) => {
       if (where.status && r.status !== where.status) return false
       if (where.senderId && r.senderId !== where.senderId) return false
@@ -275,11 +275,11 @@ function setupPrismaMock() {
     })
   }
 
-  ;(prisma.friendRequest.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).friendRequest.findUnique as any) = async ({ where }: any) => {
     return mockFriendRequests.find((r) => r.id === where.id) ?? null
   }
 
-  ;(prisma.friendRequest.findFirst as any) = async ({ where }: any) => {
+  ;((prisma as any).friendRequest.findFirst as any) = async ({ where }: any) => {
     return (
       mockFriendRequests.find((r) => {
         if (where.senderId && r.senderId !== where.senderId) return false
@@ -290,7 +290,7 @@ function setupPrismaMock() {
     )
   }
 
-  ;(prisma.friendRequest.create as any) = async ({ data }: any) => {
+  ;((prisma as any).friendRequest.create as any) = async ({ data }: any) => {
     const req: MockFriendRequest = {
       id: `req-${Date.now()}-${Math.random()}`,
       senderId: data.senderId,
@@ -304,7 +304,7 @@ function setupPrismaMock() {
     return req
   }
 
-  ;(prisma.friendRequest.delete as any) = async ({ where }: any) => {
+  ;((prisma as any).friendRequest.delete as any) = async ({ where }: any) => {
     const idx = mockFriendRequests.findIndex((r) => r.id === where.id)
     if (idx === -1) throw new Error('Request not found')
     const [deleted] = mockFriendRequests.splice(idx, 1)
@@ -312,7 +312,7 @@ function setupPrismaMock() {
   }
 
   // Mock User Blocks
-  ;(prisma.userBlock.findFirst as any) = async ({ where }: any) => {
+  ;((prisma as any).userBlock.findFirst as any) = async ({ where }: any) => {
     if (where.OR) {
       return (
         mockUserBlocks.find((b) =>
@@ -326,7 +326,7 @@ function setupPrismaMock() {
     return null
   }
 
-  ;(prisma.userBlock.findMany as any) = async ({ where }: any) => {
+  ;((prisma as any).userBlock.findMany as any) = async ({ where }: any) => {
     return mockUserBlocks
       .filter((b) => !where?.blockerId || b.blockerId === where.blockerId)
       .map((b) => {
@@ -351,55 +351,55 @@ function setupPrismaMock() {
   }
 
   // Mock Media List Queries
-  ;(prisma.animeList.findMany as any) = async ({ where }: any) => {
+  ;((prisma as any).animeList.findMany as any) = async ({ where }: any) => {
     return mockAnimeList
       .filter((e) => where.userId.in.includes(e.userId) && e.mediaId === where.animeId)
       .map((e) => ({ ...e, animeId: e.mediaId }))
   }
 
-  ;(prisma.mangaList.findMany as any) = async ({ where }: any) => {
+  ;((prisma as any).mangaList.findMany as any) = async ({ where }: any) => {
     return mockMangaList
       .filter((e) => where.userId.in.includes(e.userId) && e.mediaId === where.mangaId)
       .map((e) => ({ ...e, mangaId: e.mediaId }))
   }
 
-  ;(prisma.movieList.findMany as any) = async ({ where }: any) => {
+  ;((prisma as any).movieList.findMany as any) = async ({ where }: any) => {
     return mockMovieList
       .filter((e) => where.userId.in.includes(e.userId) && e.mediaId === where.movieId)
       .map((e) => ({ ...e, movieId: e.mediaId }))
   }
 
-  ;(prisma.tvList.findMany as any) = async ({ where }: any) => {
+  ;((prisma as any).tvList.findMany as any) = async ({ where }: any) => {
     return mockTvList
       .filter((e) => where.userId.in.includes(e.userId) && e.mediaId === where.tvId)
       .map((e) => ({ ...e, tvId: e.mediaId }))
   }
 
-  ;(prisma.gameList.findMany as any) = async ({ where }: any) => {
+  ;((prisma as any).gameList.findMany as any) = async ({ where }: any) => {
     return mockGameList
       .filter((e) => where.userId.in.includes(e.userId) && e.mediaId === where.gameId)
       .map((e) => ({ ...e, gameId: e.mediaId }))
   }
 
-  ;(prisma.bookList.findMany as any) = async ({ where }: any) => {
+  ;((prisma as any).bookList.findMany as any) = async ({ where }: any) => {
     return mockBookList
       .filter((e) => where.userId.in.includes(e.userId) && e.mediaId === where.bookId)
       .map((e) => ({ ...e, bookId: e.mediaId }))
   }
 
-  ;(prisma.musicList.findMany as any) = async ({ where }: any) => {
+  ;((prisma as any).musicList.findMany as any) = async ({ where }: any) => {
     return mockMusicList
       .filter((e) => where.userId.in.includes(e.userId) && e.mediaId === where.musicId)
       .map((e) => ({ ...e, musicId: e.mediaId }))
   }
 
   // Mock Activity Log
-  ;(prisma.activityLog.create as any) = async ({ data }: any) => {
+  ;((prisma as any).activityLog.create as any) = async ({ data }: any) => {
     return { id: 'act-new', ...data }
   }
 
   // Mock $transaction
-  ;(prisma.$transaction as any) = async (ops: any[]) => {
+  ;((prisma as any).$transaction as any) = async (ops: any[]) => {
     return await Promise.all(ops)
   }
 }
@@ -409,7 +409,7 @@ function setupPrismaMock() {
 // -----------------------------------------------------------------------------
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()

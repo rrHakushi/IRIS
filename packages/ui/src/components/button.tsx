@@ -45,6 +45,14 @@ const buttonVariants = cva(
   }
 )
 
+export interface ButtonProps
+  extends Omit<ButtonPrimitiveProps, "className">,
+    React.RefAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  className?: string
+  disabled?: boolean
+}
+
 function Button({
   className,
   variant = "default",
@@ -52,12 +60,7 @@ function Button({
   disabled,
   isDisabled,
   ...props
-}: Omit<ButtonPrimitiveProps, "className"> &
-  React.RefAttributes<HTMLButtonElement> &
-  VariantProps<typeof buttonVariants> & {
-    className?: string
-    disabled?: boolean
-  }) {
+}: ButtonProps) {
   return (
     <ButtonPrimitive
       data-slot="button"
@@ -70,15 +73,19 @@ function Button({
   )
 }
 
+export interface LinkButtonProps
+  extends Omit<LinkPrimitiveProps, "className">,
+    VariantProps<typeof buttonVariants> {
+  className?: string
+  disabled?: boolean
+}
+
 function LinkButton({
   className,
   variant = "default",
   size = "default",
   ...props
-}: Omit<LinkPrimitiveProps, "className"> &
-  VariantProps<typeof buttonVariants> & {
-    className?: string
-  }) {
+}: LinkButtonProps) {
   return (
     <LinkPrimitive
       data-slot="button"

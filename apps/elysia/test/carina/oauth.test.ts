@@ -103,18 +103,18 @@ function setupPrismaMock() {
   mockConsents = []
 
   // User queries
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return mockUsers.find((u) => u.id === where.id || u.email === where.email) || null
   }
-  ;(prisma.user.findFirst as any) = async () => {
+  ;((prisma as any).user.findFirst as any) = async () => {
     return mockUsers[0] || null
   }
 
   // OAuthClient queries
-  ;(prisma.oAuthClient.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).oAuthClient.findUnique as any) = async ({ where }: any) => {
     return mockClients.find((c) => c.id === where.id || c.clientId === where.clientId) || null
   }
-  ;(prisma.oAuthClient.findFirst as any) = async ({ where }: any) => {
+  ;((prisma as any).oAuthClient.findFirst as any) = async ({ where }: any) => {
     return (
       mockClients.find((c) => {
         if (where.userId && c.userId !== where.userId) return false
@@ -126,10 +126,10 @@ function setupPrismaMock() {
       }) || null
     )
   }
-  ;(prisma.oAuthClient.findMany as any) = async ({ where }: any) => {
+  ;((prisma as any).oAuthClient.findMany as any) = async ({ where }: any) => {
     return mockClients.filter((c) => (where?.userId ? c.userId === where.userId : true))
   }
-  ;(prisma.oAuthClient.create as any) = async ({ data }: any) => {
+  ;((prisma as any).oAuthClient.create as any) = async ({ data }: any) => {
     const newClient: MockOAuthClient = {
       id: `client-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       createdAt: new Date(),
@@ -145,27 +145,27 @@ function setupPrismaMock() {
     mockClients.push(newClient)
     return newClient
   }
-  ;(prisma.oAuthClient.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).oAuthClient.update as any) = async ({ where, data }: any) => {
     const client = mockClients.find((c) => c.id === where.id)
     if (!client) throw new Error('Client not found')
     Object.assign(client, data, { updatedAt: new Date() })
     return client
   }
-  ;(prisma.oAuthClient.delete as any) = async ({ where }: any) => {
+  ;((prisma as any).oAuthClient.delete as any) = async ({ where }: any) => {
     const idx = mockClients.findIndex((c) => c.id === where.id)
     if (idx !== -1) mockClients.splice(idx, 1)
     return { success: true }
   }
 
   // OAuthAuthorizationCode queries
-  ;(prisma.oAuthAuthorizationCode.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).oAuthAuthorizationCode.findUnique as any) = async ({ where }: any) => {
     const code = mockCodes.find((c) => c.code === where.code)
     if (!code) return null
     const client = mockClients.find((c) => c.id === code.clientId)!
     const user = mockUsers.find((u) => u.id === code.userId)!
     return { ...code, client, user }
   }
-  ;(prisma.oAuthAuthorizationCode.create as any) = async ({ data }: any) => {
+  ;((prisma as any).oAuthAuthorizationCode.create as any) = async ({ data }: any) => {
     const newCode: MockAuthCode = {
       id: `code-${Date.now()}`,
       usedAt: null,
@@ -174,7 +174,7 @@ function setupPrismaMock() {
     mockCodes.push(newCode)
     return newCode
   }
-  ;(prisma.oAuthAuthorizationCode.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).oAuthAuthorizationCode.update as any) = async ({ where, data }: any) => {
     const code = mockCodes.find((c) => c.id === where.id)
     if (!code) throw new Error('Code not found')
     Object.assign(code, data)
@@ -182,7 +182,7 @@ function setupPrismaMock() {
   }
 
   // OAuthAccessToken queries
-  ;(prisma.oAuthAccessToken.findUnique as any) = async ({ where, include }: any) => {
+  ;((prisma as any).oAuthAccessToken.findUnique as any) = async ({ where, include }: any) => {
     const token = mockAccessTokens.find((t) => t.token === where.token)
     if (!token) return null
     if (include?.client) {
@@ -195,7 +195,7 @@ function setupPrismaMock() {
     }
     return { ...token }
   }
-  ;(prisma.oAuthAccessToken.create as any) = async ({ data }: any) => {
+  ;((prisma as any).oAuthAccessToken.create as any) = async ({ data }: any) => {
     const newToken: MockToken = {
       id: `at-${Date.now()}`,
       revokedAt: null,
@@ -204,7 +204,7 @@ function setupPrismaMock() {
     mockAccessTokens.push(newToken)
     return newToken
   }
-  ;(prisma.oAuthAccessToken.updateMany as any) = async ({ where, data }: any) => {
+  ;((prisma as any).oAuthAccessToken.updateMany as any) = async ({ where, data }: any) => {
     let count = 0
     for (const t of mockAccessTokens) {
       if (where.token && t.token !== where.token) continue
@@ -217,7 +217,7 @@ function setupPrismaMock() {
   }
 
   // OAuthRefreshToken queries
-  ;(prisma.oAuthRefreshToken.findUnique as any) = async ({ where, include }: any) => {
+  ;((prisma as any).oAuthRefreshToken.findUnique as any) = async ({ where, include }: any) => {
     const token = mockRefreshTokens.find((t) => t.token === where.token)
     if (!token) return null
     if (include?.client) {
@@ -226,7 +226,7 @@ function setupPrismaMock() {
     }
     return { ...token }
   }
-  ;(prisma.oAuthRefreshToken.create as any) = async ({ data }: any) => {
+  ;((prisma as any).oAuthRefreshToken.create as any) = async ({ data }: any) => {
     const newToken: MockToken = {
       id: `rt-${Date.now()}`,
       revokedAt: null,
@@ -235,13 +235,13 @@ function setupPrismaMock() {
     mockRefreshTokens.push(newToken)
     return newToken
   }
-  ;(prisma.oAuthRefreshToken.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).oAuthRefreshToken.update as any) = async ({ where, data }: any) => {
     const token = mockRefreshTokens.find((t) => t.id === where.id)
     if (!token) throw new Error('Token not found')
     Object.assign(token, data)
     return token
   }
-  ;(prisma.oAuthRefreshToken.updateMany as any) = async ({ where, data }: any) => {
+  ;((prisma as any).oAuthRefreshToken.updateMany as any) = async ({ where, data }: any) => {
     let count = 0
     for (const t of mockRefreshTokens) {
       if (where.token && t.token !== where.token) continue
@@ -254,7 +254,7 @@ function setupPrismaMock() {
   }
 
   // OAuthConsent queries
-  ;(prisma.oAuthConsent.upsert as any) = async ({ where, create, update }: any) => {
+  ;((prisma as any).oAuthConsent.upsert as any) = async ({ where, create, update }: any) => {
     const existing = mockConsents.find(
       (c) => c.userId === where.userId_clientId.userId && c.clientId === where.userId_clientId.clientId
     )
@@ -271,7 +271,7 @@ function setupPrismaMock() {
     mockConsents.push(newConsent)
     return newConsent
   }
-  ;(prisma.oAuthConsent.findMany as any) = async ({ where }: any) => {
+  ;((prisma as any).oAuthConsent.findMany as any) = async ({ where }: any) => {
     return mockConsents
       .filter((c) => (where.userId ? c.userId === where.userId : true))
       .map((c) => {
@@ -279,7 +279,7 @@ function setupPrismaMock() {
         return { ...c, client }
       })
   }
-  ;(prisma.oAuthConsent.findFirst as any) = async ({ where }: any) => {
+  ;((prisma as any).oAuthConsent.findFirst as any) = async ({ where }: any) => {
     return (
       mockConsents.find((c) => {
         if (where.userId && c.userId !== where.userId) return false
@@ -296,7 +296,7 @@ function setupPrismaMock() {
       }) || null
     )
   }
-  ;(prisma.oAuthConsent.delete as any) = async ({ where }: any) => {
+  ;((prisma as any).oAuthConsent.delete as any) = async ({ where }: any) => {
     const idx = mockConsents.findIndex((c) => c.id === where.id)
     if (idx !== -1) mockConsents.splice(idx, 1)
     return { success: true }
@@ -308,7 +308,7 @@ function setupPrismaMock() {
 // -----------------------------------------------------------------------------
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()

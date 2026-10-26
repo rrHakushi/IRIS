@@ -1,4 +1,4 @@
-import { prisma, type MediaType } from '@IRIS/database'
+import { prisma, and, or, type MediaType } from '@IRIS/database'
 
 export interface HydratedMediaTarget {
   id: number
@@ -41,14 +41,14 @@ export async function fetchMediaRelations(
   sourceType: MediaType,
   sourceId: number
 ): Promise<HydratedMediaRelationItem[]> {
-  const rawRelations = await prisma.mediaRelation.findMany({
-    where: {
-      OR: [
-        { sourceType, sourceId },
-        { targetType: sourceType, targetId: sourceId },
-      ],
-    },
-  })
+  const rawRelations = await prisma.orm.public.MediaRelation
+    .where((r) =>
+      or(
+        and(r.sourceType.eq(sourceType), r.sourceId.eq(sourceId)),
+        and(r.targetType.eq(sourceType), r.targetId.eq(sourceId))
+      )
+    )
+    .all()
 
   if (!rawRelations || rawRelations.length === 0) {
     return []
@@ -135,24 +135,23 @@ export async function fetchMediaRelations(
   }
 
   const targetMap = new Map<string, HydratedMediaTarget>()
-  const queries: Promise<void>[] = []
+  const queries: PromiseLike<void>[] = []
 
   if (animeIds.length > 0) {
     queries.push(
-      prisma.anime
-        .findMany({
-          where: { id: { in: Array.from(new Set(animeIds)) } },
-          select: {
-            id: true,
-            titlePrimary: true,
-            titleSecondary: true,
-            titleNative: true,
-            coverImage: true,
-            format: true,
-            seasonYear: true,
-            startDateYear: true,
-          },
-        })
+      prisma.orm.public.Anime
+        .where((a) => a.id.in(Array.from(new Set(animeIds))))
+        .select(
+          'id',
+          'titlePrimary',
+          'titleSecondary',
+          'titleNative',
+          'coverImage',
+          'format',
+          'seasonYear',
+          'startDateYear'
+        )
+        .all()
         .then((items) => {
           for (const item of items) {
             targetMap.set(`ANIME:${item.id}`, {
@@ -171,19 +170,18 @@ export async function fetchMediaRelations(
 
   if (mangaIds.length > 0) {
     queries.push(
-      prisma.manga
-        .findMany({
-          where: { id: { in: Array.from(new Set(mangaIds)) } },
-          select: {
-            id: true,
-            titlePrimary: true,
-            titleSecondary: true,
-            titleNative: true,
-            coverImage: true,
-            format: true,
-            startDateYear: true,
-          },
-        })
+      prisma.orm.public.Manga
+        .where((m) => m.id.in(Array.from(new Set(mangaIds))))
+        .select(
+          'id',
+          'titlePrimary',
+          'titleSecondary',
+          'titleNative',
+          'coverImage',
+          'format',
+          'startDateYear'
+        )
+        .all()
         .then((items) => {
           for (const item of items) {
             targetMap.set(`MANGA:${item.id}`, {
@@ -202,18 +200,17 @@ export async function fetchMediaRelations(
 
   if (movieIds.length > 0) {
     queries.push(
-      prisma.movie
-        .findMany({
-          where: { id: { in: Array.from(new Set(movieIds)) } },
-          select: {
-            id: true,
-            titlePrimary: true,
-            titleSecondary: true,
-            titleNative: true,
-            coverImage: true,
-            releaseDateYear: true,
-          },
-        })
+      prisma.orm.public.Movie
+        .where((m) => m.id.in(Array.from(new Set(movieIds))))
+        .select(
+          'id',
+          'titlePrimary',
+          'titleSecondary',
+          'titleNative',
+          'coverImage',
+          'releaseDateYear'
+        )
+        .all()
         .then((items) => {
           for (const item of items) {
             targetMap.set(`MOVIE:${item.id}`, {
@@ -232,19 +229,18 @@ export async function fetchMediaRelations(
 
   if (tvIds.length > 0) {
     queries.push(
-      prisma.tv
-        .findMany({
-          where: { id: { in: Array.from(new Set(tvIds)) } },
-          select: {
-            id: true,
-            titlePrimary: true,
-            titleSecondary: true,
-            titleNative: true,
-            coverImage: true,
-            showType: true,
-            firstAiredYear: true,
-          },
-        })
+      prisma.orm.public.Tv
+        .where((t) => t.id.in(Array.from(new Set(tvIds))))
+        .select(
+          'id',
+          'titlePrimary',
+          'titleSecondary',
+          'titleNative',
+          'coverImage',
+          'showType',
+          'firstAiredYear'
+        )
+        .all()
         .then((items) => {
           for (const item of items) {
             targetMap.set(`TV:${item.id}`, {
@@ -263,18 +259,17 @@ export async function fetchMediaRelations(
 
   if (gameIds.length > 0) {
     queries.push(
-      prisma.game
-        .findMany({
-          where: { id: { in: Array.from(new Set(gameIds)) } },
-          select: {
-            id: true,
-            titlePrimary: true,
-            titleSecondary: true,
-            titleNative: true,
-            coverImage: true,
-            releaseDateYear: true,
-          },
-        })
+      prisma.orm.public.Game
+        .where((g) => g.id.in(Array.from(new Set(gameIds))))
+        .select(
+          'id',
+          'titlePrimary',
+          'titleSecondary',
+          'titleNative',
+          'coverImage',
+          'releaseDateYear'
+        )
+        .all()
         .then((items) => {
           for (const item of items) {
             targetMap.set(`GAME:${item.id}`, {
@@ -293,18 +288,17 @@ export async function fetchMediaRelations(
 
   if (bookIds.length > 0) {
     queries.push(
-      prisma.book
-        .findMany({
-          where: { id: { in: Array.from(new Set(bookIds)) } },
-          select: {
-            id: true,
-            titlePrimary: true,
-            titleSecondary: true,
-            coverImage: true,
-            format: true,
-            releaseDateYear: true,
-          },
-        })
+      prisma.orm.public.Book
+        .where((b) => b.id.in(Array.from(new Set(bookIds))))
+        .select(
+          'id',
+          'titlePrimary',
+          'titleSecondary',
+          'coverImage',
+          'format',
+          'releaseDateYear'
+        )
+        .all()
         .then((items) => {
           for (const item of items) {
             targetMap.set(`BOOK:${item.id}`, {
@@ -324,19 +318,18 @@ export async function fetchMediaRelations(
   if (musicIds.length > 0) {
     const uniqueMusicIds = Array.from(new Set(musicIds))
     queries.push(
-      prisma.music
-        .findMany({
-          where: { id: { in: uniqueMusicIds } },
-          select: {
-            id: true,
-            titlePrimary: true,
-            titleSecondary: true,
-            titleNative: true,
-            coverImage: true,
-            type: true,
-            releaseDateYear: true,
-          },
-        })
+      prisma.orm.public.Music
+        .where((m) => m.id.in(uniqueMusicIds))
+        .select(
+          'id',
+          'titlePrimary',
+          'titleSecondary',
+          'titleNative',
+          'coverImage',
+          'type',
+          'releaseDateYear'
+        )
+        .all()
         .then((items) => {
           for (const item of items) {
             const entry: HydratedMediaTarget = {

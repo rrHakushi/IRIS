@@ -1,18 +1,20 @@
+// use prisma-8
+
 model Genre {
     id        Int      @id @default(autoincrement())
-    name      String   @unique @db.Text
-    slug      String   @unique @db.Text
+    name String @unique
+    slug String @unique
 
-    anime     Anime[]
-    manga     Manga[]
-    movies    Movie[]
-    tv        Tv[]
-    games     Game[]
-    books     Book[]
-    music     Music[]
+    anime AnimeGenre[]
+    manga MangaGenre[]
+    movies MovieGenre[]
+    tv TvGenre[]
+    games GameGenre[]
+    books BookGenre[]
+    music MusicGenre[]
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     @@index([slug])
     @@index([name])

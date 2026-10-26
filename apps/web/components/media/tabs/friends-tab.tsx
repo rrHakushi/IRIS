@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useSession, signIn } from "next-auth/react"
+import { useSession, signIn } from "@/context/session-context"
 import { elysia } from "@/lib/elysia"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
@@ -116,14 +116,16 @@ export function FriendsMediaTab({
             <span>Completed</span>
           </Badge>
         )
+      case "IN_PROGRESS":
       case "WATCHING":
       case "READING":
       case "LISTENING":
       case "PLAYING":
+      case "TRACKING":
         return (
           <Badge className="gap-1 rounded-lg border-primary/30 bg-primary/15 text-[10px] font-bold text-primary">
             <IconPlayerPlay className="size-3" />
-            <span className="capitalize">{statusStr.toLowerCase()}</span>
+            <span className="capitalize">{s === "IN_PROGRESS" ? "In Progress" : statusStr.toLowerCase()}</span>
           </Badge>
         )
       case "ON_HOLD":
@@ -142,6 +144,7 @@ export function FriendsMediaTab({
             <span>Dropped</span>
           </Badge>
         )
+      case "PLANNED":
       case "PLANNING":
       default:
         return (

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react"
 import Image from "next/image"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/session-context"
 import { toast } from "sonner"
 import {
   IconCornerDownRight,
@@ -31,6 +31,7 @@ import { Badge } from "@workspace/ui/components/badge"
 import { Textarea } from "@workspace/ui/components/textarea"
 import { Switch } from "@workspace/ui/components/switch"
 import { Tooltip, TooltipTrigger } from "@workspace/ui/components/tooltip"
+import { Pressable } from "react-aria-components"
 import {
   Dialog,
   DialogHeader,
@@ -888,12 +889,14 @@ export function ListCommentsTab({
                         )}
 
                         <TooltipTrigger delay={300}>
-                          <button
-                            type="button"
-                            className="cursor-default border-0 bg-transparent p-0 text-start text-[11px] text-muted-foreground outline-none hover:underline focus-visible:underline"
-                          >
-                            {commentDate.relative}
-                          </button>
+                          <Pressable>
+                            <button
+                              type="button"
+                              className="cursor-default border-0 bg-transparent p-0 text-start text-[11px] text-muted-foreground outline-none hover:underline focus-visible:underline"
+                            >
+                              {commentDate.relative}
+                            </button>
+                          </Pressable>
                           <Tooltip className="rounded-xl px-2.5 py-1 text-xs">
                             {commentDate.full}
                           </Tooltip>
@@ -1088,12 +1091,14 @@ export function ListCommentsTab({
                               </Badge>
 
                               <TooltipTrigger delay={300}>
-                                <button
-                                  type="button"
-                                  className="cursor-default border-0 bg-transparent p-0 text-start text-[10px] text-muted-foreground outline-none hover:underline focus-visible:underline"
-                                >
-                                  {formatCommentDate(reply.createdAt).relative}
-                                </button>
+                                <Pressable>
+                                  <button
+                                    type="button"
+                                    className="cursor-default border-0 bg-transparent p-0 text-start text-[10px] text-muted-foreground outline-none hover:underline focus-visible:underline"
+                                  >
+                                    {formatCommentDate(reply.createdAt).relative}
+                                  </button>
+                                </Pressable>
                                 <Tooltip className="rounded-xl px-2 py-0.5 text-xs">
                                   {formatCommentDate(reply.createdAt).full}
                                 </Tooltip>

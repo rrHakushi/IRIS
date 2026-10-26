@@ -70,8 +70,8 @@ export interface CreateOtherItemDialogProps {
 }
 
 const DEFAULT_STATUSES: StatusOptionDef[] = [
-  { key: "TRACKING", label: "Tracking", isCompleted: false },
-  { key: "PLANNING", label: "Planning", isCompleted: false },
+  { key: "IN_PROGRESS", label: "Tracking", isCompleted: false },
+  { key: "PLANNED", label: "Planning", isCompleted: false },
   { key: "COMPLETED", label: "Completed", isCompleted: true },
   { key: "ON_HOLD", label: "On Hold", isCompleted: false },
   { key: "DROPPED", label: "Dropped", isCompleted: false },
@@ -322,7 +322,6 @@ export function CreateOtherItemDialog({
           max: f.max && f.max > 0 ? Number(f.max) : null,
         })),
         incrementFieldKey: validIncKey,
-        statuses: DEFAULT_STATUSES,
       }
 
       if (isEditing && initialData?.id) {
@@ -356,7 +355,7 @@ export function CreateOtherItemDialog({
             await elysia.borealis.lists.other({
               otherId: createdItem.id,
             }).post({
-              status: "TRACKING",
+              status: "IN_PROGRESS",
               progress: 0,
             })
           } catch {

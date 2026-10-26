@@ -64,17 +64,17 @@ function setupPrismaMock() {
   mockConnections = []
 
   // Mock User findUnique
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return mockUsers.find((u) => u.id === where.id) ?? null
   }
 
   // Mock Connection findUnique
-  ;(prisma.connection.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).connection.findUnique as any) = async ({ where }: any) => {
     return mockConnections.find((c) => c.id === where.id) ?? null
   }
 
   // Mock Connection findFirst
-  ;(prisma.connection.findFirst as any) = async ({ where }: any) => {
+  ;((prisma as any).connection.findFirst as any) = async ({ where }: any) => {
     return (
       mockConnections.find((c) => {
         if (where.userId && c.userId !== where.userId) return false
@@ -86,7 +86,7 @@ function setupPrismaMock() {
   }
 
   // Mock Connection findMany
-  ;(prisma.connection.findMany as any) = async ({
+  ;((prisma as any).connection.findMany as any) = async ({
     where,
     orderBy,
     skip = 0,
@@ -107,7 +107,7 @@ function setupPrismaMock() {
   }
 
   // Mock Connection count
-  ;(prisma.connection.count as any) = async ({ where }: any) => {
+  ;((prisma as any).connection.count as any) = async ({ where }: any) => {
     return mockConnections.filter((c) => {
       if (where.userId && c.userId !== where.userId) return false
       if (where.provider && c.provider !== where.provider) return false
@@ -117,7 +117,7 @@ function setupPrismaMock() {
   }
 
   // Mock Connection create
-  ;(prisma.connection.create as any) = async ({ data }: any) => {
+  ;((prisma as any).connection.create as any) = async ({ data }: any) => {
     const item: MockConnection = {
       id: `conn-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
       userId: data.userId,
@@ -141,7 +141,7 @@ function setupPrismaMock() {
   }
 
   // Mock Connection update
-  ;(prisma.connection.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).connection.update as any) = async ({ where, data }: any) => {
     const item = mockConnections.find((c) => c.id === where.id)
     if (!item) throw new Error('Connection not found')
 
@@ -161,7 +161,7 @@ function setupPrismaMock() {
   }
 
   // Mock Connection delete
-  ;(prisma.connection.delete as any) = async ({ where }: any) => {
+  ;((prisma as any).connection.delete as any) = async ({ where }: any) => {
     const idx = mockConnections.findIndex((c) => c.id === where.id)
     if (idx === -1) throw new Error('Connection not found')
     const [deleted] = mockConnections.splice(idx, 1)
@@ -174,7 +174,7 @@ function setupPrismaMock() {
 // -----------------------------------------------------------------------------
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()
@@ -288,7 +288,7 @@ describe('Comprehensive Carina Connected Accounts Test Suite', () => {
     it('returns paginated connections strictly isolated to authenticated user', async () => {
       // Alice has 3 connections
       for (const p of ['MAL', 'ANILIST', 'STEAM'] as const) {
-        await prisma.connection.create({
+        await (prisma as any).connection.create({
           data: {
             userId: ALICE_ID,
             provider: p,
@@ -299,7 +299,7 @@ describe('Comprehensive Carina Connected Accounts Test Suite', () => {
       }
 
       // Bob has 1 connection
-      await prisma.connection.create({
+      await (prisma as any).connection.create({
         data: {
           userId: BOB_ID,
           provider: 'MAL',
@@ -338,7 +338,7 @@ describe('Comprehensive Carina Connected Accounts Test Suite', () => {
     })
 
     it('filters connections by provider and status', async () => {
-      await prisma.connection.create({
+      await (prisma as any).connection.create({
         data: {
           userId: ALICE_ID,
           provider: 'MAL',
@@ -346,7 +346,7 @@ describe('Comprehensive Carina Connected Accounts Test Suite', () => {
           encryptedData: encryptConnectionData({ t: 1 }, ALICE_ID),
         },
       })
-      await prisma.connection.create({
+      await (prisma as any).connection.create({
         data: {
           userId: ALICE_ID,
           provider: 'STEAM',
@@ -416,7 +416,7 @@ describe('Comprehensive Carina Connected Accounts Test Suite', () => {
     })
 
     it('fails (404) when trying to access another user connection', async () => {
-      const bobConn = await prisma.connection.create({
+      const bobConn = await (prisma as any).connection.create({
         data: {
           userId: BOB_ID,
           provider: 'MAL',
@@ -434,7 +434,7 @@ describe('Comprehensive Carina Connected Accounts Test Suite', () => {
     })
 
     it('returns single connection details strictly by UUID', async () => {
-      const aliceConn = await prisma.connection.create({
+      const aliceConn = await (prisma as any).connection.create({
         data: {
           userId: ALICE_ID,
           provider: 'MAL',
@@ -493,7 +493,7 @@ describe('Comprehensive Carina Connected Accounts Test Suite', () => {
     })
 
     it('updates connection settings and custom profile display info successfully', async () => {
-      const conn = await prisma.connection.create({
+      const conn = await (prisma as any).connection.create({
         data: {
           userId: ALICE_ID,
           provider: 'MAL',
@@ -551,7 +551,7 @@ describe('Comprehensive Carina Connected Accounts Test Suite', () => {
     })
 
     it('fails (404) when trying to delete another user connection', async () => {
-      const bobConn = await prisma.connection.create({
+      const bobConn = await (prisma as any).connection.create({
         data: {
           userId: BOB_ID,
           provider: 'MAL',
@@ -569,7 +569,7 @@ describe('Comprehensive Carina Connected Accounts Test Suite', () => {
     })
 
     it('disconnects and deletes connection record successfully', async () => {
-      const conn = await prisma.connection.create({
+      const conn = await (prisma as any).connection.create({
         data: {
           userId: ALICE_ID,
           provider: 'MAL',
@@ -652,7 +652,7 @@ describe('Comprehensive Carina Connected Accounts Test Suite', () => {
     })
 
     it('generates OAuth initiation URL for an existing connection ID', async () => {
-      const conn = await prisma.connection.create({
+      const conn = await (prisma as any).connection.create({
         data: {
           userId: ALICE_ID,
           provider: 'MAL',
@@ -837,7 +837,7 @@ describe('Comprehensive Carina Connected Accounts Test Suite', () => {
     })
 
     it('successfully syncs connection library and updates lastSyncedAt', async () => {
-      const conn = await prisma.connection.create({
+      const conn = await (prisma as any).connection.create({
         data: {
           userId: ALICE_ID,
           provider: 'MAL',
@@ -881,7 +881,7 @@ describe('Comprehensive Carina Connected Accounts Test Suite', () => {
         expect(json.message).toBe('Library synced successfully')
 
         // Verify DB update
-        const updated = await prisma.connection.findUnique({
+        const updated = await (prisma as any).connection.findUnique({
           where: { id: conn.id },
         })
         expect(updated?.lastSyncedAt).toBeDefined()
@@ -917,7 +917,7 @@ describe('Comprehensive Carina Connected Accounts Test Suite', () => {
     })
 
     it('tests connection successfully when credentials are valid', async () => {
-      const conn = await prisma.connection.create({
+      const conn = await (prisma as any).connection.create({
         data: {
           userId: ALICE_ID,
           provider: 'MAL',
@@ -956,7 +956,7 @@ describe('Comprehensive Carina Connected Accounts Test Suite', () => {
         expect(json.message).toBe('Connection successful')
         expect(json.profile.username).toBe('alice')
 
-        const updated = await prisma.connection.findUnique({
+        const updated = await (prisma as any).connection.findUnique({
           where: { id: conn.id },
         })
         expect(updated?.status).toBe('CONNECTED')
@@ -967,7 +967,7 @@ describe('Comprehensive Carina Connected Accounts Test Suite', () => {
     })
 
     it('updates connection status to ERROR when test fails', async () => {
-      const conn = await prisma.connection.create({
+      const conn = await (prisma as any).connection.create({
         data: {
           userId: ALICE_ID,
           provider: 'MAL',
@@ -1000,7 +1000,7 @@ describe('Comprehensive Carina Connected Accounts Test Suite', () => {
         expect(json.status).toBe('ERROR')
         expect(json.message).toBe('OAuth token has expired')
 
-        const updated = await prisma.connection.findUnique({
+        const updated = await (prisma as any).connection.findUnique({
           where: { id: conn.id },
         })
         expect(updated?.status).toBe('ERROR')

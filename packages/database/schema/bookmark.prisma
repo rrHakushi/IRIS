@@ -1,9 +1,11 @@
+// use prisma-8
+
 model Bookmark {
-    id        String   @id @default(uuid())
+    id        String   @id @onCreate(uuid())
     userId    String
     user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
     title     String
-    url       String   @db.Text
+    url       String
     icon      String?
     color     String?
     pinned    Boolean  @default(false)
@@ -11,7 +13,7 @@ model Bookmark {
     group     String?
     order     Int      @default(0)
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     @@index([userId])
     @@index([userId, pinned])

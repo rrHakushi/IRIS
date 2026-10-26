@@ -108,10 +108,7 @@ export function ListsTab({ username, userId, isOwner }: ListsTabProps): React.JS
             setResolvedId(targetId)
           }
 
-          let statusFilter = "WATCHING"
-          if (activeType === "manga" || activeType === "book") statusFilter = "READING"
-          else if (activeType === "game") statusFilter = "PLAYING"
-          else if (activeType === "music") statusFilter = "LISTENING"
+          const statusFilter = "IN_PROGRESS"
 
           const query: any = { status: statusFilter, limit: 16 }
           if (targetId) query.userId = targetId

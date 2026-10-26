@@ -1,7 +1,12 @@
 "use client"
 
 import React, { useState, useMemo } from "react"
-import { DialogTrigger, Popover, Dialog } from "react-aria-components"
+import {
+  DialogTrigger,
+  Popover,
+  Dialog,
+  Button as RACButton,
+} from "react-aria-components"
 import {
   IconChevronDown,
   IconCheck,
@@ -63,11 +68,10 @@ export function MultiSelectFilterPopover({
 
   return (
     <DialogTrigger>
-      <Button
-        variant="outline"
-        size="sm"
+      <RACButton
         className={cn(
-          "h-8 gap-1.5 rounded-2xl border px-3 text-xs font-medium transition-colors select-none",
+          "inline-flex shrink-0 items-center justify-center font-medium transition-all outline-hidden select-none focus-visible:ring-3 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:opacity-50",
+          "h-8 gap-1.5 rounded-2xl border px-3 text-xs",
           hasSelection
             ? "border-primary/50 bg-primary/10 text-primary hover:bg-primary/15"
             : "border-border/60 bg-card/60 text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -76,7 +80,7 @@ export function MultiSelectFilterPopover({
       >
         <span>{triggerText}</span>
         <IconChevronDown className="size-3.5 shrink-0 opacity-60" />
-      </Button>
+      </RACButton>
 
       <Popover
         placement="bottom start"

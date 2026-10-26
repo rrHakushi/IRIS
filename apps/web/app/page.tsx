@@ -1,10 +1,9 @@
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@IRIS/auth"
+import { auth } from "@/lib/auth"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
 export default async function RootPage() {
-  const session = await getServerSession(authOptions)
+  const session = await auth()
 
   if (!session) {
     redirect("/carina/auth/login")

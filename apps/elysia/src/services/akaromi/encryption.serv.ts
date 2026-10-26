@@ -6,15 +6,9 @@ export class AkaromiEncryptionServ {
    * Retrieves the authenticated user's post-quantum encryption keys and cryptographic salt.
    */
   public static async getEncryptionKeys(userId: string) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        publicKey: true,
-        encryptedPrivateKey: true,
-        passwordHash: true,
-      },
-    })
+    const user = await prisma.orm.public.User
+      .select('id', 'publicKey', 'encryptedPrivateKey', 'passwordHash')
+      .first({ id: userId })
 
     if (!user) {
       throw new NotFound('User not found.')
@@ -39,4 +33,3 @@ export class AkaromiEncryptionServ {
     }
   }
 }
-

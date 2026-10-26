@@ -1,3 +1,5 @@
+// use prisma-8
+
 enum RecommendationVoteType {
     UPVOTE
     DOWNVOTE
@@ -14,7 +16,7 @@ model MediaRecommendation {
     targetType MediaType
     targetId   Int
 
-    body       String?  @db.Text
+    body       String?
 
     upvotes    Int      @default(0)
     downvotes  Int      @default(0)
@@ -23,13 +25,13 @@ model MediaRecommendation {
     votes      MediaRecommendationVote[]
 
     createdAt  DateTime @default(now())
-    updatedAt  DateTime @updatedAt
+    updatedAt  DateTime @onCreate(now()) @onUpdate(now())
 
     @@unique([userId, sourceType, sourceId, targetType, targetId])
     @@index([sourceType, sourceId])
     @@index([targetType, targetId])
     @@index([userId])
-    @@index([score(sort: Desc)])
+    @@index([score])
 }
 
 model MediaRecommendationVote {
@@ -43,7 +45,7 @@ model MediaRecommendationVote {
     voteType         RecommendationVoteType
 
     createdAt        DateTime            @default(now())
-    updatedAt        DateTime            @updatedAt
+    updatedAt        DateTime            @onCreate(now()) @onUpdate(now())
 
     @@unique([recommendationId, userId])
     @@index([recommendationId])

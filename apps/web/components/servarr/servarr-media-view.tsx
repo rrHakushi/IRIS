@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react"
 import Link from "next/link"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/session-context"
 import { useTranslations } from "next-intl"
 import {
   IconRefresh,

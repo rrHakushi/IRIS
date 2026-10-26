@@ -1,4 +1,4 @@
-import { prisma } from '@IRIS/database'
+import { prisma, and, or, toDate } from '@IRIS/database'
 import { cache } from '../../utils/cache'
 
 export interface CalendarQuery {
@@ -150,6 +150,83 @@ export class BorealisCalendarServ {
 
         // 5. Parallel database queries for all requested media types
         const [
+          userAnimeIds,
+          userMangaIds,
+          userGameIds,
+          userBookIds,
+          userMovieIds,
+          userTvIds,
+          userMusicIds,
+        ] = currentUserId
+          ? await Promise.all([
+              isRequested('anime')
+                ? prisma.orm.public.AnimeList.where((l) =>
+                    l.userId.eq(currentUserId)
+                  )
+                    .select('animeId')
+                    .all()
+                    .then((rows) => new Set(rows.map((r) => r.animeId)))
+                : Promise.resolve(new Set<number>()),
+              isRequested('manga')
+                ? prisma.orm.public.MangaList.where((l) =>
+                    l.userId.eq(currentUserId)
+                  )
+                    .select('mangaId')
+                    .all()
+                    .then((rows) => new Set(rows.map((r) => r.mangaId)))
+                : Promise.resolve(new Set<number>()),
+              isRequested('game')
+                ? prisma.orm.public.GameList.where((l) =>
+                    l.userId.eq(currentUserId)
+                  )
+                    .select('gameId')
+                    .all()
+                    .then((rows) => new Set(rows.map((r) => r.gameId)))
+                : Promise.resolve(new Set<number>()),
+              isRequested('book')
+                ? prisma.orm.public.BookList.where((l) =>
+                    l.userId.eq(currentUserId)
+                  )
+                    .select('bookId')
+                    .all()
+                    .then((rows) => new Set(rows.map((r) => r.bookId)))
+                : Promise.resolve(new Set<number>()),
+              isRequested('movie')
+                ? prisma.orm.public.MovieList.where((l) =>
+                    l.userId.eq(currentUserId)
+                  )
+                    .select('movieId')
+                    .all()
+                    .then((rows) => new Set(rows.map((r) => r.movieId)))
+                : Promise.resolve(new Set<number>()),
+              isRequested('tv')
+                ? prisma.orm.public.TvList.where((l) =>
+                    l.userId.eq(currentUserId)
+                  )
+                    .select('tvId')
+                    .all()
+                    .then((rows) => new Set(rows.map((r) => r.tvId)))
+                : Promise.resolve(new Set<number>()),
+              isRequested('music')
+                ? prisma.orm.public.MusicList.where((l) =>
+                    l.userId.eq(currentUserId)
+                  )
+                    .select('musicId')
+                    .all()
+                    .then((rows) => new Set(rows.map((r) => r.musicId)))
+                : Promise.resolve(new Set<number>()),
+            ])
+          : [
+              new Set<number>(),
+              new Set<number>(),
+              new Set<number>(),
+              new Set<number>(),
+              new Set<number>(),
+              new Set<number>(),
+              new Set<number>(),
+            ]
+
+        const [
           animeSchedules,
           mangaList,
           gameList,
@@ -159,330 +236,253 @@ export class BorealisCalendarServ {
           musicList,
         ] = await Promise.all([
           // Anime: airing schedule
-          isRequested('anime')
-            ? prisma.animeAiringSchedule.findMany({
-                where: {
-                  airingAt: {
-                    gte: validStart,
-                    lte: validEnd,
-                  },
-                  ...(onlyInLists && currentUserId
-                    ? {
-                        anime: {
-                          userLists: {
-                            some: { userId: currentUserId },
-                          },
-                        },
-                      }
-                    : {}),
-                },
-                include: {
-                  anime: {
-                    select: {
-                      id: true,
-                      titlePrimary: true,
-                      titleSecondary: true,
-                      titleNative: true,
-                      coverImage: true,
-                      bannerImage: true,
-                      format: true,
-                      status: true,
-                      userLists: currentUserId
-                        ? {
-                            where: { userId: currentUserId },
-                            select: { id: true },
-                            take: 1,
-                          }
-                        : false,
-                    },
-                  },
-                },
-                orderBy: { airingAt: 'asc' },
-                take: 200,
-              })
+          isRequested('anime') && (!onlyInLists || userAnimeIds.size > 0)
+            ? (() => {
+                let q = prisma.orm.public.AnimeAiringSchedule.where((s) =>
+                  and(s.airingAt.gte(validStart), s.airingAt.lte(validEnd))
+                )
+                if (onlyInLists && currentUserId) {
+                  q = q.where((s) => s.animeId.in(Array.from(userAnimeIds)))
+                }
+                return q
+                  .include('anime', (a) =>
+                    a.select(
+                      'id',
+                      'titlePrimary',
+                      'titleSecondary',
+                      'titleNative',
+                      'coverImage',
+                      'bannerImage',
+                      'format',
+                      'status'
+                    )
+                  )
+                  .orderBy((s) => s.airingAt.asc())
+                  .limit(200)
+                  .all()
+              })()
             : Promise.resolve([]),
 
           // Manga: start dates / end dates
-          isRequested('manga')
-            ? prisma.manga.findMany({
-                where: {
-                  OR: [
-                    {
-                      startDateYear: { gte: startYear, lte: endYear },
-                    },
-                    {
-                      endDateYear: { gte: startYear, lte: endYear },
-                    },
-                  ],
-                  ...(onlyInLists && currentUserId
-                    ? {
-                        userLists: {
-                          some: { userId: currentUserId },
-                        },
-                      }
-                    : {}),
-                },
-                select: {
-                  id: true,
-                  titlePrimary: true,
-                  titleSecondary: true,
-                  titleNative: true,
-                  coverImage: true,
-                  bannerImage: true,
-                  format: true,
-                  status: true,
-                  startDateYear: true,
-                  startDateMonth: true,
-                  startDateDay: true,
-                  endDateYear: true,
-                  endDateMonth: true,
-                  endDateDay: true,
-                  chapterCount: true,
-                  volumeCount: true,
-                  userLists: currentUserId
-                    ? {
-                        where: { userId: currentUserId },
-                        select: { id: true },
-                        take: 1,
-                      }
-                    : false,
-                },
-                take: 200,
-              })
+          isRequested('manga') && (!onlyInLists || userMangaIds.size > 0)
+            ? (() => {
+                let q = prisma.orm.public.Manga.where((m) =>
+                  or(
+                    and(
+                      m.startDateYear.gte(startYear),
+                      m.startDateYear.lte(endYear)
+                    ),
+                    and(
+                      m.endDateYear.gte(startYear),
+                      m.endDateYear.lte(endYear)
+                    )
+                  )
+                )
+                if (onlyInLists && currentUserId) {
+                  q = q.where((m) => m.id.in(Array.from(userMangaIds)))
+                }
+                return q
+                  .select(
+                    'id',
+                    'titlePrimary',
+                    'titleSecondary',
+                    'titleNative',
+                    'coverImage',
+                    'bannerImage',
+                    'format',
+                    'status',
+                    'startDateYear',
+                    'startDateMonth',
+                    'startDateDay',
+                    'endDateYear',
+                    'endDateMonth',
+                    'endDateDay',
+                    'chapterCount',
+                    'volumeCount'
+                  )
+                  .limit(200)
+                  .all()
+              })()
             : Promise.resolve([]),
 
           // Games: releaseDate with fallback to releaseDateYear/Month/Day
-          isRequested('game')
-            ? prisma.game.findMany({
-                where: {
-                  OR: [
-                    {
-                      releaseDate: {
-                        gte: validStart,
-                        lte: validEnd,
-                      },
-                    },
-                    {
-                      releaseDateYear: { gte: startYear, lte: endYear },
-                    },
-                  ],
-                  ...(onlyInLists && currentUserId
-                    ? {
-                        userLists: {
-                          some: { userId: currentUserId },
-                        },
-                      }
-                    : {}),
-                },
-                select: {
-                  id: true,
-                  titlePrimary: true,
-                  titleSecondary: true,
-                  titleNative: true,
-                  coverImage: true,
-                  bannerImage: true,
-                  releaseDate: true,
-                  releaseDateYear: true,
-                  releaseDateMonth: true,
-                  releaseDateDay: true,
-                  platforms: true,
-                  status: true,
-                  userLists: currentUserId
-                    ? {
-                        where: { userId: currentUserId },
-                        select: { id: true },
-                        take: 1,
-                      }
-                    : false,
-                },
-                take: 200,
-              })
+          isRequested('game') && (!onlyInLists || userGameIds.size > 0)
+            ? (() => {
+                let q = prisma.orm.public.Game.where((g) =>
+                  or(
+                    and(
+                      g.releaseDate.gte(validStart),
+                      g.releaseDate.lte(validEnd)
+                    ),
+                    and(
+                      g.releaseDateYear.gte(startYear),
+                      g.releaseDateYear.lte(endYear)
+                    )
+                  )
+                )
+                if (onlyInLists && currentUserId) {
+                  q = q.where((g) => g.id.in(Array.from(userGameIds)))
+                }
+                return q
+                  .select(
+                    'id',
+                    'titlePrimary',
+                    'titleSecondary',
+                    'titleNative',
+                    'coverImage',
+                    'bannerImage',
+                    'releaseDate',
+                    'releaseDateYear',
+                    'releaseDateMonth',
+                    'releaseDateDay',
+                    'platforms',
+                    'status'
+                  )
+                  .limit(200)
+                  .all()
+              })()
             : Promise.resolve([]),
 
           // Books: releaseDate with fallback to releaseDateYear/Month/Day
-          isRequested('book')
-            ? prisma.book.findMany({
-                where: {
-                  OR: [
-                    {
-                      releaseDate: {
-                        gte: validStart,
-                        lte: validEnd,
-                      },
-                    },
-                    {
-                      releaseDateYear: { gte: startYear, lte: endYear },
-                    },
-                  ],
-                  ...(onlyInLists && currentUserId
-                    ? {
-                        userLists: {
-                          some: { userId: currentUserId },
-                        },
-                      }
-                    : {}),
-                },
-                select: {
-                  id: true,
-                  titlePrimary: true,
-                  titleSecondary: true,
-                  coverImage: true,
-                  bannerImage: true,
-                  releaseDate: true,
-                  releaseDateYear: true,
-                  releaseDateMonth: true,
-                  releaseDateDay: true,
-                  authors: true,
-                  series: true,
-                  format: true,
-                  userLists: currentUserId
-                    ? {
-                        where: { userId: currentUserId },
-                        select: { id: true },
-                        take: 1,
-                      }
-                    : false,
-                },
-                take: 200,
-              })
+          isRequested('book') && (!onlyInLists || userBookIds.size > 0)
+            ? (() => {
+                let q = prisma.orm.public.Book.where((b) =>
+                  or(
+                    and(
+                      b.releaseDate.gte(validStart),
+                      b.releaseDate.lte(validEnd)
+                    ),
+                    and(
+                      b.releaseDateYear.gte(startYear),
+                      b.releaseDateYear.lte(endYear)
+                    )
+                  )
+                )
+                if (onlyInLists && currentUserId) {
+                  q = q.where((b) => b.id.in(Array.from(userBookIds)))
+                }
+                return q
+                  .select(
+                    'id',
+                    'titlePrimary',
+                    'titleSecondary',
+                    'coverImage',
+                    'bannerImage',
+                    'releaseDate',
+                    'releaseDateYear',
+                    'releaseDateMonth',
+                    'releaseDateDay',
+                    'authors',
+                    'series',
+                    'format'
+                  )
+                  .limit(200)
+                  .all()
+              })()
             : Promise.resolve([]),
 
           // Movies: releaseDateYear / month / day
-          isRequested('movie')
-            ? prisma.movie.findMany({
-                where: {
-                  releaseDateYear: { gte: startYear, lte: endYear },
-                  ...(onlyInLists && currentUserId
-                    ? {
-                        userLists: {
-                          some: { userId: currentUserId },
-                        },
-                      }
-                    : {}),
-                },
-                select: {
-                  id: true,
-                  titlePrimary: true,
-                  titleSecondary: true,
-                  titleNative: true,
-                  coverImage: true,
-                  bannerImage: true,
-                  releaseDateYear: true,
-                  releaseDateMonth: true,
-                  releaseDateDay: true,
-                  runtime: true,
-                  status: true,
-                  userLists: currentUserId
-                    ? {
-                        where: { userId: currentUserId },
-                        select: { id: true },
-                        take: 1,
-                      }
-                    : false,
-                },
-                take: 200,
-              })
+          isRequested('movie') && (!onlyInLists || userMovieIds.size > 0)
+            ? (() => {
+                let q = prisma.orm.public.Movie.where((m) =>
+                  and(
+                    m.releaseDateYear.gte(startYear),
+                    m.releaseDateYear.lte(endYear)
+                  )
+                )
+                if (onlyInLists && currentUserId) {
+                  q = q.where((m) => m.id.in(Array.from(userMovieIds)))
+                }
+                return q
+                  .select(
+                    'id',
+                    'titlePrimary',
+                    'titleSecondary',
+                    'titleNative',
+                    'coverImage',
+                    'bannerImage',
+                    'releaseDateYear',
+                    'releaseDateMonth',
+                    'releaseDateDay',
+                    'runtime',
+                    'status'
+                  )
+                  .limit(200)
+                  .all()
+              })()
             : Promise.resolve([]),
 
           // TV: tvEpisode airDate with season
-          isRequested('tv')
-            ? prisma.tvEpisode.findMany({
-                where: {
-                  airDate: {
-                    gte: validStart,
-                    lte: validEnd,
-                  },
-                  ...(onlyInLists && currentUserId
-                    ? {
-                        tv: {
-                          userLists: {
-                            some: { userId: currentUserId },
-                          },
-                        },
-                      }
-                    : {}),
-                },
-                include: {
-                  tv: {
-                    select: {
-                      id: true,
-                      titlePrimary: true,
-                      titleSecondary: true,
-                      titleNative: true,
-                      coverImage: true,
-                      bannerImage: true,
-                      status: true,
-                      userLists: currentUserId
-                        ? {
-                            where: { userId: currentUserId },
-                            select: { id: true },
-                            take: 1,
-                          }
-                        : false,
-                    },
-                  },
-                  season: {
-                    select: {
-                      seasonNumber: true,
-                      titlePrimary: true,
-                    },
-                  },
-                },
-                orderBy: { airDate: 'asc' },
-                take: 200,
-              })
+          isRequested('tv') && (!onlyInLists || userTvIds.size > 0)
+            ? (() => {
+                let q = prisma.orm.public.TvEpisode.where((e) =>
+                  and(e.airDate.gte(validStart), e.airDate.lte(validEnd))
+                )
+                if (onlyInLists && currentUserId) {
+                  q = q.where((e) => e.tvId.in(Array.from(userTvIds)))
+                }
+                return q
+                  .include('tv', (t) =>
+                    t.select(
+                      'id',
+                      'titlePrimary',
+                      'titleSecondary',
+                      'titleNative',
+                      'coverImage',
+                      'bannerImage',
+                      'status'
+                    )
+                  )
+                  .include('season', (s) =>
+                    s.select('seasonNumber', 'titlePrimary')
+                  )
+                  .orderBy((e) => e.airDate.asc())
+                  .limit(200)
+                  .all()
+              })()
             : Promise.resolve([]),
 
           // Music: releaseDate with fallback to releaseDateYear/Month/Day
-          isRequested('music')
-            ? prisma.music.findMany({
-                where: {
-                  OR: [
-                    {
-                      releaseDate: {
-                        gte: validStart,
-                        lte: validEnd,
-                      },
-                    },
-                    {
-                      releaseDateYear: { gte: startYear, lte: endYear },
-                    },
-                  ],
-                  ...(onlyInLists && currentUserId
-                    ? {
-                        userLists: {
-                          some: { userId: currentUserId },
-                        },
-                      }
-                    : {}),
-                },
-                select: {
-                  id: true,
-                  titlePrimary: true,
-                  titleSecondary: true,
-                  coverImage: true,
-                  releaseDate: true,
-                  releaseDateYear: true,
-                  releaseDateMonth: true,
-                  releaseDateDay: true,
-                  type: true,
-                  artistName: true,
-                  recordType: true,
-                  userLists: currentUserId
-                    ? {
-                        where: { userId: currentUserId },
-                        select: { id: true },
-                        take: 1,
-                      }
-                    : false,
-                },
-                take: 200,
-              })
+          isRequested('music') && (!onlyInLists || userMusicIds.size > 0)
+            ? (() => {
+                let q = prisma.orm.public.Music.where((m) =>
+                  or(
+                    and(
+                      m.releaseDate.gte(validStart),
+                      m.releaseDate.lte(validEnd)
+                    ),
+                    and(
+                      m.releaseDateYear.gte(startYear),
+                      m.releaseDateYear.lte(endYear)
+                    )
+                  )
+                )
+                if (onlyInLists && currentUserId) {
+                  q = q.where((m) => m.id.in(Array.from(userMusicIds)))
+                }
+                return q
+                  .select(
+                    'id',
+                    'titlePrimary',
+                    'titleSecondary',
+                    'coverImage',
+                    'releaseDate',
+                    'releaseDateYear',
+                    'releaseDateMonth',
+                    'releaseDateDay',
+                    'type',
+                    'artistName',
+                    'recordType'
+                  )
+                  .limit(200)
+                  .all()
+              })()
             : Promise.resolve([]),
         ])
 
         // 6. Transform Anime schedules
         for (const schedule of animeSchedules) {
+          if (!schedule.anime) continue
           calendarItems.push({
             id: `anime-${schedule.id}`,
             mediaType: 'anime',
@@ -492,22 +492,18 @@ export class BorealisCalendarServ {
             titleNative: schedule.anime.titleNative,
             coverImage: schedule.anime.coverImage,
             bannerImage: schedule.anime.bannerImage,
-            releaseDate: schedule.airingAt.toISOString(),
+            releaseDate: toDate(schedule.airingAt).toISOString(),
             detail: `Episode ${schedule.episodeNumber}`,
             format: schedule.anime.format,
             status: schedule.anime.status,
             episodeNumber: schedule.episodeNumber,
-            inUserList: Array.isArray(schedule.anime.userLists)
-              ? schedule.anime.userLists.length > 0
-              : false,
+            inUserList: userAnimeIds.has(schedule.anime.id),
           })
         }
 
         // 7. Transform Manga start and end dates
         for (const manga of mangaList) {
-          const inUserList = Array.isArray(manga.userLists)
-            ? manga.userLists.length > 0
-            : false
+          const inUserList = userMangaIds.has(manga.id)
 
           if (manga.startDateYear) {
             const startD = new Date(
@@ -570,7 +566,7 @@ export class BorealisCalendarServ {
         for (const game of gameList) {
           let rDate: Date | null = null
           if (game.releaseDate) {
-            rDate = new Date(game.releaseDate)
+            rDate = toDate(game.releaseDate)
           } else if (game.releaseDateYear) {
             rDate = new Date(
               Date.UTC(
@@ -582,9 +578,10 @@ export class BorealisCalendarServ {
           }
 
           if (rDate && rDate >= validStart && rDate <= validEnd) {
+            const platforms = game.platforms as string[] | null
             const platformText =
-              game.platforms && game.platforms.length > 0
-                ? game.platforms.slice(0, 2).join(', ')
+              platforms && platforms.length > 0
+                ? platforms.slice(0, 2).join(', ')
                 : 'Game Launch'
 
             calendarItems.push({
@@ -599,9 +596,7 @@ export class BorealisCalendarServ {
               releaseDate: rDate.toISOString(),
               detail: platformText,
               status: game.status,
-              inUserList: Array.isArray(game.userLists)
-                ? game.userLists.length > 0
-                : false,
+              inUserList: userGameIds.has(game.id),
             })
           }
         }
@@ -610,7 +605,7 @@ export class BorealisCalendarServ {
         for (const book of bookList) {
           let rDate: Date | null = null
           if (book.releaseDate) {
-            rDate = new Date(book.releaseDate)
+            rDate = toDate(book.releaseDate)
           } else if (book.releaseDateYear) {
             rDate = new Date(
               Date.UTC(
@@ -622,9 +617,10 @@ export class BorealisCalendarServ {
           }
 
           if (rDate && rDate >= validStart && rDate <= validEnd) {
+            const authors = book.authors as string[] | null
             const authorText =
-              book.authors && book.authors.length > 0
-                ? book.authors[0]
+              authors && authors.length > 0
+                ? authors[0]
                 : book.series || 'Book Release'
 
             calendarItems.push({
@@ -638,9 +634,7 @@ export class BorealisCalendarServ {
               releaseDate: rDate.toISOString(),
               detail: authorText,
               format: book.format,
-              inUserList: Array.isArray(book.userLists)
-                ? book.userLists.length > 0
-                : false,
+              inUserList: userBookIds.has(book.id),
             })
           }
         }
@@ -669,9 +663,7 @@ export class BorealisCalendarServ {
                 releaseDate: rDate.toISOString(),
                 detail: movie.runtime ? `${movie.runtime}m` : 'Movie Premiere',
                 status: movie.status,
-                inUserList: Array.isArray(movie.userLists)
-                  ? movie.userLists.length > 0
-                  : false,
+                inUserList: userMovieIds.has(movie.id),
               })
             }
           }
@@ -679,38 +671,35 @@ export class BorealisCalendarServ {
 
         // 11. Transform TV episodes
         for (const ep of tvEpisodes) {
-          if (ep.airDate) {
-            const seasonNum = ep.seasonNumber ?? ep.season?.seasonNumber ?? 1
-            const epNum = ep.episodeNumber
-            const detailText = `Season ${seasonNum} • Ep ${epNum}`
+          if (!ep.tv || !ep.airDate) continue
+          const seasonNum = ep.seasonNumber ?? ep.season?.seasonNumber ?? 1
+          const epNum = ep.episodeNumber
+          const detailText = `Season ${seasonNum} • Ep ${epNum}`
 
-            calendarItems.push({
-              id: `tv-ep-${ep.id}`,
-              mediaType: 'tv',
-              mediaId: ep.tv.id,
-              title: ep.tv.titlePrimary,
-              titleSecondary: ep.tv.titleSecondary,
-              titleNative: ep.tv.titleNative,
-              coverImage: ep.thumbnail || ep.tv.coverImage,
-              bannerImage: ep.tv.bannerImage,
-              releaseDate: ep.airDate.toISOString(),
-              detail: detailText,
-              seasonNumber: seasonNum,
-              episodeNumber: epNum,
-              episodeTitle: ep.titlePrimary,
-              status: ep.tv.status,
-              inUserList: Array.isArray(ep.tv.userLists)
-                ? ep.tv.userLists.length > 0
-                : false,
-            })
-          }
+          calendarItems.push({
+            id: `tv-ep-${ep.id}`,
+            mediaType: 'tv',
+            mediaId: ep.tv.id,
+            title: ep.tv.titlePrimary,
+            titleSecondary: ep.tv.titleSecondary,
+            titleNative: ep.tv.titleNative,
+            coverImage: ep.thumbnail || ep.tv.coverImage,
+            bannerImage: ep.tv.bannerImage,
+            releaseDate: toDate(ep.airDate).toISOString(),
+            detail: detailText,
+            seasonNumber: seasonNum,
+            episodeNumber: epNum,
+            episodeTitle: ep.titlePrimary,
+            status: ep.tv.status,
+            inUserList: userTvIds.has(ep.tv.id),
+          })
         }
 
         // 12. Transform Music
         for (const music of musicList) {
           let rDate: Date | null = null
           if (music.releaseDate) {
-            rDate = new Date(music.releaseDate)
+            rDate = toDate(music.releaseDate)
           } else if (music.releaseDateYear) {
             rDate = new Date(
               Date.UTC(
@@ -737,9 +726,7 @@ export class BorealisCalendarServ {
               releaseDate: rDate.toISOString(),
               detail: detailText,
               format: music.recordType || typeLabel,
-              inUserList: Array.isArray(music.userLists)
-                ? music.userLists.length > 0
-                : false,
+              inUserList: userMusicIds.has(music.id),
             })
           }
         }

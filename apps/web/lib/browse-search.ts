@@ -87,6 +87,7 @@ export interface RawSearchResult extends FormattableMediaTitle {
   isAnimationStudio?: boolean
   gender?: string | null
   language?: string | null
+  startDate?: string | Date | null
   authors?: string[] | null
 }
 

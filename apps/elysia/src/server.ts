@@ -1,9 +1,11 @@
+import './load-env'
 import './lib/typebox'
 import { Elysia, NotFound, ValidationError } from 'elysia'
 import { openapi } from '@elysia/openapi'
-import { cors, rateLimiter, generateControllersManifest } from './plugins'
+import { cors } from '@elysia/cors'
+import { rateLimiter, generateControllersManifest } from './plugins'
 import { isHttpError } from './lib/errors'
-import { LogFactory } from '@Iris/logger'
+import { LogFactory, c } from '@Iris/logger'
 import { wsHub } from './services/ws.serv'
 import { controllers, type ControllersApp } from './api/controllers.generated'
 import { websocket } from 'elysia/websocket'
@@ -15,17 +17,18 @@ declare global {
 }
 
 if (!('toJSON' in BigInt.prototype)) {
-  ;(BigInt.prototype as any).toJSON = function () {
+  ; (BigInt.prototype as any).toJSON = function () {
     const num = Number(this)
     return Number.isSafeInteger(num) ? num : this.toString()
   }
 }
 
-const logger = new LogFactory('Elysia:Server')
+const logger = new LogFactory(`Elysia:Server`)
 const authTimeouts = new WeakMap<object, ReturnType<typeof setTimeout>>()
+const requestStartTimes = new WeakMap<Request, number>()
 
 // In development, auto-sync static controllers manifest when running against source
-if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
+if (Bun.env.NODE_ENV !== 'production' && Bun.env.NODE_ENV !== 'test') {
   try {
     generateControllersManifest()
   } catch (err: any) {
@@ -36,60 +39,38 @@ if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
 export const app = new Elysia()
   .use(cors())
   .use(rateLimiter())
-  .use(controllers as any)
-  .use(openapi())
-  .use(websocket())
-  .ws('/ws', {
-    async open(ws: any) {
-      const request = ws.request
-      let userId: string | null = (ws.query as Record<string, string> | undefined)?.userId ?? null
-
-      if (!userId && request) {
-        try {
-          const rawUrl = typeof request.url === 'string' ? request.url : ''
-          if (rawUrl) {
-            const parsedUrl = new URL(rawUrl, 'http://localhost:4000')
-            const queryUserId = parsedUrl.searchParams.get('userId')
-            if (queryUserId && queryUserId.trim()) {
-              userId = queryUserId.trim()
-            }
-          }
-        } catch { }
-      }
-
-      if (userId) {
-        wsHub.register(ws as any, userId)
-        logger.info(`WebSocket connected: user ${userId}`)
-        wsHub.send(ws as any, 'auth:success', { userId })
-      } else {
-        // Allow a 5-second grace period for client to authenticate via auth message frame
-        const authTimeout = setTimeout(() => {
-          if (!wsHub.hasConnection(ws as any)) {
-            try {
-              ws.close?.(4401, 'Unauthorized')
-            } catch { }
-          }
-        }, 5000)
-        authTimeouts.set(ws, authTimeout)
-      }
-    },
-    message(ws: any, message: any) {
-      wsHub.handleMessage(ws as any, message)
-    },
-    close(ws: any) {
-      const authTimeout = authTimeouts.get(ws)
-      if (authTimeout) {
-        clearTimeout(authTimeout)
-        authTimeouts.delete(ws)
-      }
-      const hadUser = wsHub.hasConnection(ws as any)
-      wsHub.unregister(ws as any)
-      if (hadUser) {
-        logger.info('WebSocket disconnected')
-      }
-    },
+  .onRequest(({ request }) => {
+    if (request.url.startsWith(`${Bun.env.NEXT_PUBLIC_API_URL}/ws`)) return
+    requestStartTimes.set(request, performance.now())
   })
-  .error(({ error, request, set }) => {
+  .onAfterResponse(({ request, path, set, responseValue }) => {
+    if (request.url.startsWith(`${Bun.env.NEXT_PUBLIC_API_URL}/ws`)) return
+    const start = requestStartTimes.get(request)
+    const duration = start ? (performance.now() - start).toFixed(1) : '?'
+    let status = typeof set.status === 'number' ? set.status : 200
+    if (responseValue instanceof Response) {
+      status = responseValue.status
+    }
+
+    const { method, url } = request
+    let pathname = path
+    try {
+      const parsed = new URL(url)
+      pathname = parsed.pathname + parsed.search
+    } catch { }
+
+    const formattedDuration = c.dim(`(${duration}ms)`)
+    const formattedMethod = c.bold(method)
+
+    if (status >= 500) {
+      logger.error(`${formattedMethod} ${pathname} -> ${c.red(c.bold(String(status)))} ${formattedDuration}`)
+    } else if (status >= 400) {
+      logger.warn(`${formattedMethod} ${pathname} -> ${c.yellow(c.bold(String(status)))} ${formattedDuration}`)
+    } else {
+      logger.info(`${formattedMethod} ${pathname} -> ${c.green(c.bold(String(status)))} ${formattedDuration}`)
+    }
+  })
+  .onError(({ error, request, set }) => {
     const { method, url } = request
 
     // 1. Custom RFC 9457 HttpErrors (4xx, 5xx)
@@ -135,6 +116,82 @@ export const app = new Elysia()
       detail: error instanceof Error ? error.message : String(error),
     }
   })
+  .use(controllers as any)
+  .use(
+    openapi({
+      provider: 'scalar',
+      scalar: {
+        darkMode: true,
+      },
+      documentation: {
+        servers: [
+
+          {
+            url: Bun.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000",
+            description: 'Direct API url',
+          },
+          {
+            url: `${Bun.env.NEXT_PUBLIC_URL}/elysia`,
+            description: 'Proxied api url thru page url',
+          }
+        ],
+      },
+    })
+  )
+  .use(websocket())
+  .ws('/ws', {
+    async open(ws: any) {
+      const conn = ws.raw ?? ws
+      const request = ws.request
+      let userId: string | null = (ws.query as Record<string, string> | undefined)?.userId ?? null
+
+      if (!userId && request) {
+        try {
+          const rawUrl = typeof request.url === 'string' ? request.url : ''
+          if (rawUrl) {
+            const parsedUrl = new URL(rawUrl, 'http://localhost:4000')
+            const queryUserId = parsedUrl.searchParams.get('userId')
+            if (queryUserId && queryUserId.trim()) {
+              userId = queryUserId.trim()
+            }
+          }
+        } catch { }
+      }
+
+      if (userId) {
+        wsHub.register(conn as any, userId)
+        logger.info(`WebSocket connected: user ${userId}`)
+        wsHub.send(conn as any, 'auth:success', { userId })
+      } else {
+        // Allow a 5-second grace period for client to authenticate via auth message frame
+        const authTimeout = setTimeout(() => {
+          if (!wsHub.hasConnection(conn as any)) {
+            try {
+              ws.close?.(4401, 'Unauthorized')
+            } catch { }
+          }
+        }, 5000)
+        authTimeouts.set(conn, authTimeout)
+      }
+    },
+    message(ws: any, message: any) {
+      const conn = ws.raw ?? ws
+      wsHub.handleMessage(conn as any, message)
+    },
+    close(ws: any) {
+      const conn = ws.raw ?? ws
+      const authTimeout = authTimeouts.get(conn)
+      if (authTimeout) {
+        clearTimeout(authTimeout)
+        authTimeouts.delete(conn)
+      }
+      const hadUser = wsHub.hasConnection(conn as any)
+      wsHub.unregister(conn as any)
+      if (hadUser) {
+        logger.info('WebSocket disconnected')
+      }
+    },
+  })
 
 export type App = ControllersApp
 
@@ -142,7 +199,7 @@ export type App = ControllersApp
  * Starts listening for incoming HTTP connections.
  * Uses reusePort: true for kernel-level multi-threaded connection distribution across cluster workers.
  */
-export function startServer(port = Number(process.env.ELYSIA_PORT || 4000)) {
+export function startServer(port = Number(Bun.env.ELYSIA_PORT || 4000)) {
   const server = app.listen(
     {
       port,

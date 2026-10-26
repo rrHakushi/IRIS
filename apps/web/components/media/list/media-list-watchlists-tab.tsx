@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from "react"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/session-context"
 import { useUser } from "@/context/user-context"
 import {
   IconFolderPlus,

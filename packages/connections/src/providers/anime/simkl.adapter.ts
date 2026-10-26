@@ -40,7 +40,7 @@ export class SimklAdapter extends BaseConnectionAdapter {
   }
 
   private getClientId(): string {
-    const raw = process.env.SIMKL_CLIENT_ID || ""
+    const raw = Bun.env.SIMKL_CLIENT_ID || ""
     return raw
       .trim()
       .replace(/^["']|["']$/g, "")
@@ -48,7 +48,7 @@ export class SimklAdapter extends BaseConnectionAdapter {
   }
 
   private getClientSecret(): string {
-    const raw = process.env.SIMKL_CLIENT_SECRET || ""
+    const raw = Bun.env.SIMKL_CLIENT_SECRET || ""
     return raw
       .trim()
       .replace(/^["']|["']$/g, "")
@@ -165,6 +165,10 @@ export class SimklAdapter extends BaseConnectionAdapter {
     credentials?: ConnectionCredentials,
     options?: SearchOptions
   ): Promise<MediaSearchResult[]> {
+    if (options?.type === "MANGA" || options?.type === "BOOK" || options?.type === "GAME") {
+      return []
+    }
+
     const clientId = this.getClientId()
     const searchCategory =
       options?.type === "MOVIE"
@@ -428,6 +432,10 @@ export class SimklAdapter extends BaseConnectionAdapter {
       )
     }
 
+    if (payload.mediaType === "MANGA" || payload.mediaType === "BOOK" || payload.mediaType === "GAME") {
+      return false
+    }
+
     const providerId = Number(payload.mediaId)
     if (Number.isNaN(providerId) || providerId <= 0) {
       throw new ConnectionError(
@@ -449,21 +457,25 @@ export class SimklAdapter extends BaseConnectionAdapter {
     if (payload.status) {
       const s = payload.status.toUpperCase()
       switch (s) {
-        case "WATCHING":
-        case "CURRENT":
+        case "IN_PROGRESS":
         case "REPEATING":
+        case "WATCHING":
+        case "READING":
+        case "PLAYING":
+        case "LISTENING":
+        case "TRACKING":
+        case "CURRENT":
           simklStatus = "watching"
           break
+        case "PLANNED":
         case "PLANNING":
-        case "PLAN_TO_WATCH":
           simklStatus = "plantowatch"
           break
         case "COMPLETED":
           simklStatus = "completed"
           break
-        case "PAUSED":
         case "ON_HOLD":
-        case "HOLD":
+        case "PAUSED":
           simklStatus = "hold"
           break
         case "DROPPED":

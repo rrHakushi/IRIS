@@ -56,12 +56,12 @@ function setupPrismaMock() {
   ]
 
   // Mock User findUnique
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return mockUsers.find((u) => u.id === where.id) ?? null
   }
 
   // Mock PassCipher findMany
-  ;(prisma.passCipher.findMany as any) = async ({ where, select, orderBy }: any) => {
+  ;((prisma as any).passCipher.findMany as any) = async ({ where, select, orderBy }: any) => {
     let result = mockCiphers.filter((c) => {
       if (where.userId && c.userId !== where.userId) return false
       if (where.deletedAt === null && c.deletedAt !== null) return false
@@ -93,7 +93,7 @@ function setupPrismaMock() {
   }
 
   // Mock PassCipher create
-  ;(prisma.passCipher.create as any) = async ({ data }: any) => {
+  ;((prisma as any).passCipher.create as any) = async ({ data }: any) => {
     const created: MockCipher = {
       id: `cipher-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
       userId: data.userId,
@@ -116,7 +116,7 @@ function setupPrismaMock() {
 // -----------------------------------------------------------------------------
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()
@@ -143,7 +143,7 @@ describe('Comprehensive Akaromi Vault Test Suite', () => {
   const ALICE_ID = '00000000-0000-0000-0000-000000000001'
 
   beforeEach(async () => {
-    process.env.NEXTAUTH_SECRET = 'test-iris-secret-key-at-least-32-chars!'
+    Bun.env.JWT_SECRET = 'test-iris-secret-key-at-least-32-chars!'
     setupPrismaMock()
 
     aliceToken = await signUserJwt({

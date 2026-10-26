@@ -1,12 +1,13 @@
 import { generateSecret, generateURI, verify as verifyTotpCode } from 'otplib'
 import QRCode from 'qrcode'
-import { prisma } from '@IRIS/database'
+import { prisma, toDate } from '@IRIS/database'
 import { cache } from '../../utils/cache'
 import {
   encryptSecret,
   decryptSecret,
   verifyPassword,
   generateBackupCodes,
+  signUserJwt,
 } from '../../utils/auth-crypto'
 import { BadRequest, NotFound, Unauthorized } from '../../lib/errors'
 import type { CarinaTotpModel } from '../../api/models/carina/totp.model'
@@ -16,17 +17,15 @@ export abstract class CarinaTotpServ {
    * Generate a new TOTP secret and QR code for authenticator setup.
    */
   static async setupTotp(userId: string) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    })
+    const user = await prisma.orm.public.User.where({ id: userId }).first()
 
     if (!user) {
       throw new NotFound(`User with ID '${userId}' was not found.`)
     }
 
     const secret = generateSecret()
-    const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV
-    const issuer = isDev ? 'IRIS account-dev' : 'IRIS account'
+    const isDev = Bun.env.NODE_ENV === 'development' || !Bun.env.NODE_ENV
+    const issuer = isDev ? 'Carina Dev' : 'Carina'
     const label = user.email ? `${user.username} (${user.email})` : user.username
 
     const otpauthUrl = generateURI({
@@ -55,15 +54,77 @@ export abstract class CarinaTotpServ {
   }
 
   /**
-   * Verify the TOTP code and enable TOTP on the user's account.
+   * Verify the TOTP code.
+   * Handles either an active login challenge (via mfaTicket) or setup verification (authenticated).
    */
   static async verifyTotp(
-    userId: string,
+    userId: string | null | undefined,
     body: CarinaTotpModel['verifyBody']
   ) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    })
+    // 1. Unauthenticated Login Challenge Flow via mfaTicket
+    if (body.mfaTicket) {
+      const ticketData = await cache.get<{ userId: string }>(
+        `auth:mfa-ticket:${body.mfaTicket}`
+      )
+      if (!ticketData?.userId) {
+        throw new BadRequest('Invalid or expired MFA session ticket.')
+      }
+
+      const user = await prisma.orm.public.User.where({ id: ticketData.userId }).first()
+      if (!user || !user.TOTPSecret || !user.TOTPEnabled) {
+        throw new Unauthorized('TOTP is not configured or active on this account.')
+      }
+
+      const decryptedSecret = decryptSecret(user.TOTPSecret)
+      let isCodeValid = false
+      try {
+        const verifyResult = await verifyTotpCode({
+          token: body.code.trim(),
+          secret: decryptedSecret,
+          epochTolerance: 30,
+        })
+        isCodeValid = verifyResult.valid
+      } catch {
+        isCodeValid = false
+      }
+
+      if (!isCodeValid) {
+        throw new Unauthorized('Invalid verification code.')
+      }
+
+      // Cleanup single-use ticket
+      await cache.del(`auth:mfa-ticket:${body.mfaTicket}`)
+
+      // Issue authenticated JWT session token
+      const pwdChangedAt = toDate(user.passwordChangedAt)
+      const token = await signUserJwt({
+        ...user,
+        username: user.username.trim(),
+        permissions: [...user.permissions],
+        passwordChangedAt: pwdChangedAt,
+      })
+
+      return {
+        success: true,
+        message: 'Successfully verified and logged in',
+        token,
+        user: {
+          id: user.id,
+          username: user.username.trim(),
+          email: user.email,
+          passwordChangedAt: pwdChangedAt
+            ? Math.floor(pwdChangedAt.getTime() / 1000)
+            : null,
+        },
+      }
+    }
+
+    // 2. Setup Verification Flow (requires authenticated session)
+    if (!userId) {
+      throw new Unauthorized('Authentication required or valid mfaTicket required.')
+    }
+
+    const user = await prisma.orm.public.User.where({ id: userId }).first()
 
     if (!user) {
       throw new NotFound(`User with ID '${userId}' was not found.`)
@@ -108,13 +169,10 @@ export abstract class CarinaTotpServ {
       hashedBackupCodes = generated.hashed
     }
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        TOTPSecret: encryptedSecret,
-        TOTPEnabled: true,
-        ...(hashedBackupCodes ? { backupCodes: hashedBackupCodes } : {}),
-      },
+    await prisma.orm.public.User.where({ id: user.id }).update({
+      TOTPSecret: encryptedSecret,
+      TOTPEnabled: true,
+      ...(hashedBackupCodes ? { backupCodes: hashedBackupCodes } : {}),
     })
 
     // Clear pending setup and caches
@@ -136,10 +194,9 @@ export abstract class CarinaTotpServ {
     userId: string,
     body?: CarinaTotpModel['deleteBody'] | null
   ) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { passkeys: true },
-    })
+    const user = await prisma.orm.public.User.where({ id: userId })
+      .include('passkeys')
+      .first()
 
     if (!user) {
       throw new NotFound(`User with ID '${userId}' was not found.`)
@@ -201,13 +258,10 @@ export abstract class CarinaTotpServ {
 
     const remainingMfa = user.emailMfaEnabled || user.passkeys.length > 0
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        TOTPEnabled: false,
-        TOTPSecret: null,
-        ...(!remainingMfa ? { backupCodes: [] } : {}),
-      },
+    await prisma.orm.public.User.where({ id: user.id }).update({
+      TOTPEnabled: false,
+      TOTPSecret: null,
+      ...(!remainingMfa ? { backupCodes: [] } : {}),
     })
 
     await cache.del(`users:me:user:${user.id}`)

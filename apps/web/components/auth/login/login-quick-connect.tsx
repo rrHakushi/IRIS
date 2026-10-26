@@ -101,6 +101,7 @@ export function LoginQuickConnect({
                 type="text"
                 placeholder={t("sendPromptPlaceholder")}
                 value={userIdentifier}
+                suppressHydrationWarning
                 onChange={(e) => {
                   setUserIdentifier(e.target.value)
                   setPromptSuccess(false)

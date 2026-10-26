@@ -1,11 +1,4 @@
-enum TvStatus {
-    RETURNING_SERIES
-    ENDED
-    CANCELED
-    IN_PRODUCTION
-    UPCOMING
-    UNKNOWN
-}
+// use prisma-8
 
 model Tv {
     id       Int     @id @default(autoincrement())
@@ -15,15 +8,15 @@ model Tv {
     simklId  Int?
     tvmazeId Int?
 
-    titlePrimary   String  @db.Text
-    titleSecondary String? @db.Text
-    titleNative    String? @db.Text
+    titlePrimary   String
+    titleSecondary String?
+    titleNative    String?
 
-    coverImage  String? @db.Text
-    bannerImage String? @db.Text
-    images      Json?   @db.JsonB
+    coverImage  String?
+    bannerImage String?
+    images      Jsonb?
 
-    description      String? @db.Text
+    description      String?
     originalLanguage String?
     countryOfOrigin  String?
     episodeCount     Int?
@@ -32,7 +25,7 @@ model Tv {
     showType         String?
 
     broadcastTime String?
-    broadcastDays String[] @db.Text
+    broadcastDays String[]
 
     firstAiredYear  Int?
     firstAiredMonth Int?
@@ -42,14 +35,14 @@ model Tv {
     lastAiredMonth Int?
     lastAiredDay   Int?
 
-    genres   Genre[]
-    tags     Tag[]
-    networks String[] @db.Text
+    genres TvGenre[]
+    tags TvTag[]
+    networks String[]
 
-    status   TvStatus @default(UNKNOWN)
+    status   MediaStatus @default(UNKNOWN)
     isAdult  Boolean  @default(false)
-    synonyms String[] @db.Text
-    trailers Json?    @db.JsonB
+    synonyms String[]
+    trailers Jsonb?
     locked   Boolean  @default(false)
 
     averageScore        Float?
@@ -57,27 +50,27 @@ model Tv {
     imdbVotes           Int?
     tvmazeRating        Float?
     rottenTomatoesScore Float?
-    awards              String? @db.Text
+    awards              String?
 
     favorites          Int  @default(0)
     popularity         Int  @default(0)
-    totalScoreSum      Int? @db.Integer
-    scoredCount        Int? @db.Integer
-    statusDistribution Json @default("{}") @db.JsonB
-    scoreDistribution  Json @default("{}") @db.JsonB
+    totalScoreSum      Int?
+    scoredCount        Int?
+    statusDistribution Jsonb @default(json`{}`)
+    scoreDistribution Jsonb @default(json`{}`)
 
-    sources Json? @db.JsonB
+    sources Jsonb?
 
     ageRating      String?
     ageRatingGuide String?
-    contentRatings Json?   @db.JsonB
+    contentRatings Jsonb?
 
     imdbUpdatedAt   Int?
     tvdbUpdatedAt   Int?
     tvmazeUpdatedAt Int?
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     seasons          TvSeason[]
     episodes         TvEpisode[]
@@ -90,8 +83,8 @@ model Tv {
 
     @@index([titlePrimary])
     @@index([status])
-    @@index([popularity(sort: Desc)])
-    @@index([averageScore(sort: Desc)])
+    @@index([popularity])
+    @@index([averageScore])
 }
 
 model TvSeason {
@@ -102,21 +95,21 @@ model TvSeason {
     tmdbSeasonId Int?
     tv           Tv   @relation(fields: [tvId], references: [id], onDelete: Cascade)
 
-    titlePrimary   String? @db.Text
-    titleSecondary String? @db.Text
-    description    String? @db.Text
-    posterImage    String? @db.Text
+    titlePrimary   String?
+    titleSecondary String?
+    description    String?
+    posterImage    String?
 
     airDateYear  Int?
     airDateMonth Int?
     airDateDay   Int?
     episodeCount Int?
 
-    trailers Json? @db.JsonB
-    sources  Json? @db.JsonB
+    trailers Jsonb?
+    sources  Jsonb?
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     episodes       TvEpisode[]
     seasonProgress TvSeasonProgress[]
@@ -135,19 +128,19 @@ model TvEpisode {
     tv            Tv        @relation(fields: [tvId], references: [id], onDelete: Cascade)
     season        TvSeason? @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 
-    titlePrimary   String  @db.Text
-    titleSecondary String? @db.Text
-    titleNative    String? @db.Text
+    titlePrimary   String
+    titleSecondary String?
+    titleNative    String?
 
-    description    String?   @db.Text
+    description    String?
     duration       Int?
     airDate        DateTime?
     rating         Float?
     episodeType    String?
-    thumbnail      String?   @db.Text
+    thumbnail      String?
     isFiller       Boolean   @default(false)
     isRecap        Boolean   @default(false)
-    streamingLinks Json?     @db.JsonB
+    streamingLinks Jsonb?
 
     opStart    Int?
     opEnd      Int?
@@ -156,11 +149,11 @@ model TvEpisode {
     recapStart Int?
     recapEnd   Int?
 
-    skipTimestamps Json? @db.JsonB
-    sources        Json? @db.JsonB
+    skipTimestamps Jsonb?
+    sources        Jsonb?
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     watchedEpisodes TvWatchedEpisode[]
 

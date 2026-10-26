@@ -46,7 +46,7 @@ function setupPrismaMock() {
     },
   ]
 
-  ;(prisma.user.findUnique as any) = async ({ where, include }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where, include }: any) => {
     const user = mockUsers.find((u) => u.id === where.id)
     if (!user) return null
     if (include?.passkeys) {
@@ -55,7 +55,7 @@ function setupPrismaMock() {
     return { ...user }
   }
 
-  ;(prisma.user.update as any) = async ({ where, data }: any) => {
+  ;((prisma as any).user.update as any) = async ({ where, data }: any) => {
     const user = mockUsers.find((u) => u.id === where.id)
     if (!user) throw new Error('User not found')
     if (data.backupCodes !== undefined) user.backupCodes = data.backupCodes
@@ -68,7 +68,7 @@ function setupPrismaMock() {
 // -----------------------------------------------------------------------------
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()

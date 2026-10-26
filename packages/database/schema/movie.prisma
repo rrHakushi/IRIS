@@ -1,11 +1,4 @@
-enum MovieStatus {
-    RELEASED
-    IN_PRODUCTION
-    POST_PRODUCTION
-    RUMORED
-    CANCELLED
-    UNKNOWN
-}
+// use prisma-8
 
 model Movie {
     id      Int     @id @default(autoincrement())
@@ -14,15 +7,15 @@ model Movie {
     tvDBId  Int?    @unique
     simklId Int?
 
-    titlePrimary   String  @db.Text
-    titleSecondary String? @db.Text
-    titleNative    String? @db.Text
+    titlePrimary   String
+    titleSecondary String?
+    titleNative    String?
 
-    coverImage  String? @db.Text
-    bannerImage String? @db.Text
-    images      Json?   @db.JsonB
+    coverImage  String?
+    bannerImage String?
+    images      Jsonb?
 
-    description      String? @db.Text
+    description      String?
     originalLanguage String?
     countryOfOrigin  String?
     runtime          Int?
@@ -33,26 +26,26 @@ model Movie {
     releaseDateMonth Int?
     releaseDateDay   Int?
 
-    genres   Genre[]
-    tags     Tag[]
-    status   MovieStatus @default(RELEASED)
+    genres MovieGenre[]
+    tags MovieTag[]
+    status   MediaStatus @default(RELEASED)
     isAdult  Boolean     @default(false)
-    synonyms String[]    @db.Text
-    trailers Json?       @db.JsonB
+    synonyms String[]
+    trailers Jsonb?
     locked   Boolean     @default(false)
 
     averageScore       Float?
     favorites          Int    @default(0)
     popularity         Int    @default(0)
-    totalScoreSum      Int?   @db.Integer
-    scoredCount        Int?   @db.Integer
-    statusDistribution Json   @default("{}") @db.JsonB
-    scoreDistribution  Json   @default("{}") @db.JsonB
+    totalScoreSum      Int?
+    scoredCount        Int?
+    statusDistribution Jsonb @default(json`{}`)
+    scoreDistribution Jsonb @default(json`{}`)
 
     imdbRating Float?
     imdbVotes  Int?
 
-    sources Json? @db.JsonB
+    sources Jsonb?
 
     ageRating      String?
     ageRatingGuide String?
@@ -61,7 +54,7 @@ model Movie {
     tvdbUpdatedAt Int?
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     characters       MediaCharacter[]
     studios          MediaStudio[]
@@ -72,6 +65,6 @@ model Movie {
 
     @@index([titlePrimary])
     @@index([status])
-    @@index([popularity(sort: Desc)])
-    @@index([averageScore(sort: Desc)])
+    @@index([popularity])
+    @@index([averageScore])
 }

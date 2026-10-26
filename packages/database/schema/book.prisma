@@ -1,10 +1,4 @@
-enum BookStatus {
-    PUBLISHED
-    RELEASING
-    CANCELLED
-    ON_HIATUS
-    UNKNOWN
-}
+// use prisma-8
 
 model Book {
     id            Int     @id @default(autoincrement())
@@ -13,27 +7,27 @@ model Book {
     isbn13        String?
     openLibraryId String?
 
-    titlePrimary   String  @db.Text
-    titleSecondary String? @db.Text
-    subtitle       String? @db.Text
+    titlePrimary   String
+    titleSecondary String?
+    subtitle       String?
     slug           String?
-    tagline        String? @db.Text
+    tagline        String?
 
-    coverImage  String? @db.Text
-    bannerImage String? @db.Text
-    images      Json?   @db.JsonB
+    coverImage  String?
+    bannerImage String?
+    images      Jsonb?
 
-    description      String? @db.Text
+    description      String?
     originalLanguage String?
     countryOfOrigin  String?
-    series           String? @db.Text
+    series           String?
     seriesPosition   Float?
     format           String?
-    website          String? @db.Text
-    siteUrl          String? @db.Text
-    previewLink      String? @db.Text
-    infoLink         String? @db.Text
-    buyLink          String? @db.Text
+    website          String?
+    siteUrl          String?
+    previewLink      String?
+    infoLink         String?
+    buyLink          String?
 
     releaseDateYear  Int?
     releaseDateMonth Int?
@@ -44,14 +38,14 @@ model Book {
     chapterCount Int?
     volumeCount  Int?
 
-    genres     Genre[]
-    subjects   String[]   @db.Text
-    tags       Tag[]
-    publishers String[]   @db.Text
-    authors    String[]   @db.Text
-    status     BookStatus @default(UNKNOWN)
+    genres BookGenre[]
+    subjects   String[]
+    tags BookTag[]
+    publishers String[]
+    authors    String[]
+    status     MediaStatus @default(UNKNOWN)
     isAdult    Boolean    @default(false)
-    synonyms   String[]   @db.Text
+    synonyms   String[]
     locked     Boolean    @default(false)
 
     averageScore            Float?
@@ -60,23 +54,23 @@ model Book {
 
     favorites          Int  @default(0)
     popularity         Int  @default(0)
-    totalScoreSum      Int? @db.Integer
-    scoredCount        Int? @db.Integer
-    statusDistribution Json @default("{}") @db.JsonB
-    scoreDistribution  Json @default("{}") @db.JsonB
+    totalScoreSum      Int?
+    scoredCount        Int?
+    statusDistribution Jsonb @default(json`{}`)
+    scoreDistribution Jsonb @default(json`{}`)
 
-    sources Json? @db.JsonB
+    sources Jsonb?
 
     retailPrice         Float?
     retailPriceCurrency String?
     ageRating           String?
     ageRatingGuide      String?
-    contentRatings      Json?   @db.JsonB
+    contentRatings      Jsonb?
 
     googleBooksUpdatedAt Int?
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     characters       MediaCharacter[]
     studios          MediaStudio[]
@@ -87,6 +81,6 @@ model Book {
 
     @@index([titlePrimary])
     @@index([status])
-    @@index([popularity(sort: Desc)])
-    @@index([averageScore(sort: Desc)])
+    @@index([popularity])
+    @@index([averageScore])
 }

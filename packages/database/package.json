@@ -1,7 +1,8 @@
 {
-  "name": "@IRIS/database",
+  "name": "@Iris/db",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -13,21 +14,22 @@
     }
   },
   "scripts": {
-    "build": "dotenvx run -f ../../.env -- tsc",
-    "db:generate": "dotenvx run -f ../../.env -- prisma generate",
-    "db:push": "dotenvx run -f ../../.env -- prisma db push",
-    "db:studio": "dotenvx run -f ../../.env -- prisma studio",
-    "db:all": "pnpm db:push && pnpm db:generate && pnpm build"
+    "build": "bun run contract:emit && tsc && cp src/contract.d.ts dist/contract.d.ts",
+    "contract:emit": "bun --bun --env-file=../../.env  prisma contract emit",
+    "db:update": "bun --bun --env-file=../../.env prisma db update",
+    "db:verify": "bun --bun --env-file=../../.env prisma db verify",
+    "db:migrate": "bun --bun --env-file=../../.env prisma db migrate",
+    "db:prepare-prisma8": "bun --bun --env-file=../../.env run scripts/prepare-prisma8.ts",
+    "db:unify-status": "bun --bun --env-file=../../.env run scripts/unify-status.ts"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "~7.10.0",
-    "@prisma/client": "~7.10.0",
-    "@prisma/client-runtime-utils": "~7.10.0",
-    "dotenv": "^18.0.7",
-    "pg": "^8.23.1"
+    "@prisma/orm-postgres": "^8.0.0-rc.20"
   },
   "devDependencies": {
-    "prisma": "~7.10.0",
+    "@types/bun": "^1.4.3",
+    "@types/pg": "^8.23.1",
+    "pg": "^8.23.1",
+    "prisma": "8.0.0-rc.27",
     "typescript": "^7.0.2"
   }
 }

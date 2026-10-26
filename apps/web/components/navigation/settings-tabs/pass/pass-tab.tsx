@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from "react"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/session-context"
 import { useEncryption } from "@/context/encryption-context"
 import { elysia } from "@/lib/elysia"
 import {

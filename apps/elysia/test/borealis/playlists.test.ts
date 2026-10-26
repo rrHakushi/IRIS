@@ -80,12 +80,12 @@ function setupPrismaMock() {
   ]
 
     // Mock User
-    ; (prisma.user.findUnique as any) = async ({ where }: any) => {
+    ; ((prisma as any).user.findUnique as any) = async ({ where }: any) => {
       return mockUsers.find((u) => u.id === where.id) ?? null
     }
 
     // Mock CustomList
-    ; (prisma.customList.count as any) = async ({ where }: any) => {
+    ; ((prisma as any).customList.count as any) = async ({ where }: any) => {
       return mockPlaylists.filter((p) => {
         if (where.userId && p.userId !== where.userId) return false
         if (where.name?.contains && !p.name.toLowerCase().includes(where.name.contains.toLowerCase())) return false
@@ -94,7 +94,7 @@ function setupPrismaMock() {
       }).length
     }
 
-    ; (prisma.customList.findMany as any) = async ({ where, skip = 0, take = 20 }: any) => {
+    ; ((prisma as any).customList.findMany as any) = async ({ where, skip = 0, take = 20 }: any) => {
       let filtered = mockPlaylists.filter((p) => {
         if (where.userId && p.userId !== where.userId) return false
         if (where.name?.contains && !p.name.toLowerCase().includes(where.name.contains.toLowerCase())) return false
@@ -109,7 +109,7 @@ function setupPrismaMock() {
       }))
     }
 
-    ; (prisma.customList.findUnique as any) = async ({ where }: any) => {
+    ; ((prisma as any).customList.findUnique as any) = async ({ where }: any) => {
       const p = mockPlaylists.find((item) => item.id === where.id)
       if (!p) return null
       return {
@@ -120,7 +120,7 @@ function setupPrismaMock() {
       }
     }
 
-    ; (prisma.customList.findFirst as any) = async ({ where }: any) => {
+    ; ((prisma as any).customList.findFirst as any) = async ({ where }: any) => {
       const p = mockPlaylists.find((item) => {
         if (where.id && item.id !== where.id) return false
         if (where.userId && item.userId !== where.userId) return false
@@ -135,7 +135,7 @@ function setupPrismaMock() {
       }
     }
 
-    ; (prisma.customList.create as any) = async ({ data }: any) => {
+    ; ((prisma as any).customList.create as any) = async ({ data }: any) => {
       const now = new Date()
       const p: MockCustomList = {
         id: `playlist-${nextPlaylistId++}`,
@@ -153,7 +153,7 @@ function setupPrismaMock() {
       return p
     }
 
-    ; (prisma.customList.update as any) = async ({ where, data }: any) => {
+    ; ((prisma as any).customList.update as any) = async ({ where, data }: any) => {
       const idx = mockPlaylists.findIndex((p) => p.id === where.id)
       if (idx === -1) throw new Error('Playlist not found')
       const current = mockPlaylists[idx]!
@@ -166,7 +166,7 @@ function setupPrismaMock() {
       return updated
     }
 
-    ; (prisma.customList.delete as any) = async ({ where }: any) => {
+    ; ((prisma as any).customList.delete as any) = async ({ where }: any) => {
       const idx = mockPlaylists.findIndex((p) => p.id === where.id)
       if (idx === -1) throw new Error('Playlist not found')
       const [deleted] = mockPlaylists.splice(idx, 1)
@@ -175,7 +175,7 @@ function setupPrismaMock() {
     }
 
     // Mock CustomListEntry
-    ; (prisma.customListEntry.count as any) = async ({ where }: any) => {
+    ; ((prisma as any).customListEntry.count as any) = async ({ where }: any) => {
       return mockEntries.filter((e) => {
         if (where.listId && e.listId !== where.listId) return false
         if (where.mediaType && e.mediaType !== where.mediaType) return false
@@ -183,7 +183,7 @@ function setupPrismaMock() {
       }).length
     }
 
-    ; (prisma.customListEntry.findMany as any) = async ({ where, skip = 0, take = 40, orderBy }: any) => {
+    ; ((prisma as any).customListEntry.findMany as any) = async ({ where, skip = 0, take = 40, orderBy }: any) => {
       let filtered = mockEntries.filter((e) => {
         if (where.listId && e.listId !== where.listId) return false
         if (where.mediaType && e.mediaType !== where.mediaType) return false
@@ -202,7 +202,7 @@ function setupPrismaMock() {
       }))
     }
 
-    ; (prisma.customListEntry.findFirst as any) = async ({ where, orderBy }: any) => {
+    ; ((prisma as any).customListEntry.findFirst as any) = async ({ where, orderBy }: any) => {
       if (where.listId && orderBy?.order === 'desc') {
         const items = mockEntries.filter((e) => e.listId === where.listId).sort((a, b) => b.order - a.order)
         return items[0] ?? null
@@ -214,7 +214,7 @@ function setupPrismaMock() {
       }) ?? null
     }
 
-    ; (prisma.customListEntry.findUnique as any) = async ({ where }: any) => {
+    ; ((prisma as any).customListEntry.findUnique as any) = async ({ where }: any) => {
       if (where.listId_mediaType_mediaId) {
         const { listId, mediaType, mediaId } = where.listId_mediaType_mediaId
         return mockEntries.find((e) => e.listId === listId && e.mediaType === mediaType && e.mediaId === mediaId) ?? null
@@ -222,7 +222,7 @@ function setupPrismaMock() {
       return null
     }
 
-    ; (prisma.customListEntry.upsert as any) = async ({ where, create, update }: any) => {
+    ; ((prisma as any).customListEntry.upsert as any) = async ({ where, create, update }: any) => {
       const { listId, mediaType, mediaId } = where.listId_mediaType_mediaId
       const idx = mockEntries.findIndex((e) => e.listId === listId && e.mediaType === mediaType && e.mediaId === mediaId)
 
@@ -256,7 +256,7 @@ function setupPrismaMock() {
       }
     }
 
-    ; (prisma.customListEntry.update as any) = async ({ where, data }: any) => {
+    ; ((prisma as any).customListEntry.update as any) = async ({ where, data }: any) => {
       const idx = mockEntries.findIndex((e) => e.id === where.id)
       if (idx === -1) throw new Error('Entry not found')
       const current = mockEntries[idx]!
@@ -268,7 +268,7 @@ function setupPrismaMock() {
       return updated
     }
 
-    ; (prisma.customListEntry.updateMany as any) = async ({ where, data }: any) => {
+    ; ((prisma as any).customListEntry.updateMany as any) = async ({ where, data }: any) => {
       let count = 0
       for (let i = 0; i < mockEntries.length; i++) {
         if (mockEntries[i]!.id === where.id && mockEntries[i]!.listId === where.listId) {
@@ -282,7 +282,7 @@ function setupPrismaMock() {
       return { count }
     }
 
-    ; (prisma.customListEntry.delete as any) = async ({ where }: any) => {
+    ; ((prisma as any).customListEntry.delete as any) = async ({ where }: any) => {
       const idx = mockEntries.findIndex((e) => e.id === where.id)
       if (idx === -1) throw new Error('Entry not found')
       const [deleted] = mockEntries.splice(idx, 1)
@@ -295,7 +295,7 @@ function setupPrismaMock() {
 // -----------------------------------------------------------------------------
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()

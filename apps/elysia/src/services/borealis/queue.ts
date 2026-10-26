@@ -1,5 +1,5 @@
 import { Queue, type Job, type JobsOptions } from 'bullmq'
-import { prisma } from '@IRIS/database'
+import { prisma, and, or, not } from '@IRIS/database'
 import { LogFactory, c } from '@Iris/logger'
 import { getRedisConnectionOptions } from '../email/queue'
 import {
@@ -99,7 +99,7 @@ function getWeekIdentifier(date: Date = new Date()): string {
 
 /**
  * Scans all media entities currently in active/ongoing publication/broadcasting status
- * (RELEASING, HIATUS, NOT_YET_RELEASED, IN_PRODUCTION, RETURNING_SERIES, etc.)
+ * (RELEASING, HIATUS, UPCOMING)
  * and enqueues background refresh jobs into the reusable BullMQ media queue.
  *
  * For weekly updates, depth is strictly set to 0 so only this single media item updates without cascading to relations.
@@ -120,24 +120,19 @@ export async function syncActiveMedia(): Promise<ActiveMediaSyncResult> {
   )
   const weekKey = getWeekIdentifier()
 
-  // 1. Anime (RELEASING, HIATUS, NOT_YET_RELEASED, or nextAiringAt has arrived)
+  // 1. Anime (RELEASING, HIATUS, UPCOMING, or nextAiringAt has arrived)
   try {
-    const animes = await prisma.anime.findMany({
-      where: {
-        OR: [
-          { status: { in: ['RELEASING', 'HIATUS', 'NOT_YET_RELEASED'] } },
-          {
-            nextAiringAt: { lte: new Date() },
-            status: { notIn: ['FINISHED', 'CANCELLED'] },
-          },
-        ],
-      },
-      select: {
-        id: true,
-        anilistId: true,
-        status: true,
-      },
-    })
+    const animes = await prisma.orm.public.Anime.where((a) =>
+      or(
+        a.status.in(['RELEASING', 'HIATUS', 'UPCOMING']),
+        and(
+          a.nextAiringAt.lte(new Date()),
+          not(a.status.in(['RELEASED', 'CANCELLED']))
+        )
+      )
+    )
+      .select('id', 'anilistId', 'status')
+      .all()
 
     for (const anime of animes) {
       await MediaQueueManager.enqueueMediaUpdate('ANIME', anime.id, {
@@ -155,18 +150,13 @@ export async function syncActiveMedia(): Promise<ActiveMediaSyncResult> {
     logger.error(`Error scanning active anime: ${err?.message || err}`)
   }
 
-  // 2. Manga (RELEASING, HIATUS, NOT_YET_RELEASED)
+  // 2. Manga (RELEASING, HIATUS, UPCOMING)
   try {
-    const mangas = await prisma.manga.findMany({
-      where: {
-        status: { in: ['RELEASING', 'HIATUS', 'NOT_YET_RELEASED'] },
-      },
-      select: {
-        id: true,
-        anilistId: true,
-        status: true,
-      },
-    })
+    const mangas = await prisma.orm.public.Manga.where((m) =>
+      m.status.in(['RELEASING', 'HIATUS', 'UPCOMING'])
+    )
+      .select('id', 'anilistId', 'status')
+      .all()
 
     for (const manga of mangas) {
       await MediaQueueManager.enqueueMediaUpdate('MANGA', manga.id, {
@@ -184,18 +174,13 @@ export async function syncActiveMedia(): Promise<ActiveMediaSyncResult> {
     logger.error(`Error scanning active manga: ${err?.message || err}`)
   }
 
-  // 3. TV Series (RETURNING_SERIES, IN_PRODUCTION, UPCOMING)
+  // 3. TV Series (RELEASING, UPCOMING)
   try {
-    const tvs = await prisma.tv.findMany({
-      where: {
-        status: { in: ['RETURNING_SERIES', 'IN_PRODUCTION', 'UPCOMING'] },
-      },
-      select: {
-        id: true,
-        tvDBId: true,
-        status: true,
-      },
-    })
+    const tvs = await prisma.orm.public.Tv.where((t) =>
+      t.status.in(['RELEASING', 'UPCOMING'])
+    )
+      .select('id', 'tvDBId', 'status')
+      .all()
 
     for (const tv of tvs) {
       await MediaQueueManager.enqueueMediaUpdate('TV', tv.id, {
@@ -212,18 +197,13 @@ export async function syncActiveMedia(): Promise<ActiveMediaSyncResult> {
     logger.error(`Error scanning active TV series: ${err?.message || err}`)
   }
 
-  // 4. Movies (IN_PRODUCTION, POST_PRODUCTION, RUMORED)
+  // 4. Movies (UPCOMING)
   try {
-    const movies = await prisma.movie.findMany({
-      where: {
-        status: { in: ['IN_PRODUCTION', 'POST_PRODUCTION', 'RUMORED'] },
-      },
-      select: {
-        id: true,
-        tvDBId: true,
-        status: true,
-      },
-    })
+    const movies = await prisma.orm.public.Movie.where((m) =>
+      m.status.in(['UPCOMING'])
+    )
+      .select('id', 'tvDBId', 'status')
+      .all()
 
     for (const movie of movies) {
       await MediaQueueManager.enqueueMediaUpdate('MOVIE', movie.id, {
@@ -240,18 +220,13 @@ export async function syncActiveMedia(): Promise<ActiveMediaSyncResult> {
     logger.error(`Error scanning active movies: ${err?.message || err}`)
   }
 
-  // 5. Books (RELEASING, ON_HIATUS)
+  // 5. Books (RELEASING, HIATUS)
   try {
-    const books = await prisma.book.findMany({
-      where: {
-        status: { in: ['RELEASING', 'ON_HIATUS'] },
-      },
-      select: {
-        id: true,
-        googleBookId: true,
-        status: true,
-      },
-    })
+    const books = await prisma.orm.public.Book.where((b) =>
+      b.status.in(['RELEASING', 'HIATUS'])
+    )
+      .select('id', 'googleBookId', 'status')
+      .all()
 
     for (const book of books) {
       await MediaQueueManager.enqueueMediaUpdate('BOOK', book.id, {
@@ -268,20 +243,13 @@ export async function syncActiveMedia(): Promise<ActiveMediaSyncResult> {
     logger.error(`Error scanning active books: ${err?.message || err}`)
   }
 
-  // 6. Games (EARLY_ACCESS, IN_DEVELOPMENT, ANNOUNCED, DELAYED)
+  // 6. Games (RELEASING, UPCOMING, HIATUS)
   try {
-    const games = await prisma.game.findMany({
-      where: {
-        status: {
-          in: ['EARLY_ACCESS', 'IN_DEVELOPMENT', 'ANNOUNCED', 'DELAYED'],
-        },
-      },
-      select: {
-        id: true,
-        igdbId: true,
-        status: true,
-      },
-    })
+    const games = await prisma.orm.public.Game.where((g) =>
+      g.status.in(['RELEASING', 'UPCOMING', 'HIATUS'])
+    )
+      .select('id', 'igdbId', 'status')
+      .all()
 
     for (const game of games) {
       await MediaQueueManager.enqueueMediaUpdate('GAME', game.id, {

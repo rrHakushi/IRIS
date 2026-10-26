@@ -44,11 +44,11 @@ function setupPrismaMock() {
     },
   ]
 
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return mockUsers.find((u) => u.id === where.id) ?? null
   }
 
-  ;(prisma.searchHistory.findMany as any) = async ({ where, orderBy, take }: any) => {
+  ;((prisma as any).searchHistory.findMany as any) = async ({ where, orderBy, take }: any) => {
     let result = mockHistories.filter((h) => {
       if (where.userId && h.userId !== where.userId) return false
       if (where.createdAt?.gte && h.createdAt.getTime() < where.createdAt.gte.getTime()) {
@@ -68,7 +68,7 @@ function setupPrismaMock() {
     return result
   }
 
-  ;(prisma.searchHistory.deleteMany as any) = async ({ where }: any) => {
+  ;((prisma as any).searchHistory.deleteMany as any) = async ({ where }: any) => {
     const initialLen = mockHistories.length
     mockHistories = mockHistories.filter((h) => {
       if (where.userId && h.userId !== where.userId) return true
@@ -80,7 +80,7 @@ function setupPrismaMock() {
 }
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()
@@ -105,7 +105,7 @@ describe('Comprehensive Kiroshi Search History Test Suite', () => {
   const BOB_ID = '00000000-0000-0000-0000-000000000002'
 
   beforeEach(async () => {
-    process.env.NEXTAUTH_SECRET = 'test-iris-secret-key-at-least-32-chars!'
+    Bun.env.JWT_SECRET = 'test-iris-secret-key-at-least-32-chars!'
     setupPrismaMock()
 
     aliceToken = await signUserJwt({

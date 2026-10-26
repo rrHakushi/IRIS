@@ -1,3 +1,5 @@
+// use prisma-8
+
 enum MangaFormat {
     MANGA
     NOVEL
@@ -5,15 +7,6 @@ enum MangaFormat {
     ONE_SHOT
     MANHWA
     MANHUA
-    UNKNOWN
-}
-
-enum MangaStatus {
-    FINISHED
-    RELEASING
-    NOT_YET_RELEASED
-    CANCELLED
-    HIATUS
     UNKNOWN
 }
 
@@ -25,15 +18,15 @@ model Manga {
     kitsuId        Int?
     bangumiId      Int?
 
-    titlePrimary   String  @db.Text
-    titleSecondary String? @db.Text
-    titleNative    String? @db.Text
+    titlePrimary   String
+    titleSecondary String?
+    titleNative    String?
 
-    coverImage  String? @db.Text
-    bannerImage String? @db.Text
-    images      Json?   @db.JsonB
+    coverImage  String?
+    bannerImage String?
+    images      Jsonb?
 
-    description     String? @db.Text
+    description     String?
     countryOfOrigin String?
 
     volumeCount  Int?
@@ -47,19 +40,19 @@ model Manga {
     endDateMonth Int?
     endDateDay   Int?
 
-    genres Genre[]
-    tags   Tag[]
+    genres MangaGenre[]
+    tags MangaTag[]
     source AnimeSource @default(UNKNOWN)
     format MangaFormat @default(UNKNOWN)
-    status MangaStatus @default(UNKNOWN)
+    status MediaStatus @default(UNKNOWN)
 
     averageScore       Float?
     favorites          Int    @default(0)
     popularity         Int    @default(0)
-    totalScoreSum      Int?   @db.Integer
-    scoredCount        Int?   @db.Integer
-    statusDistribution Json   @default("{}") @db.JsonB
-    scoreDistribution  Json   @default("{}") @db.JsonB
+    totalScoreSum      Int?
+    scoredCount        Int?
+    statusDistribution Jsonb @default(json`{}`)
+    scoreDistribution Jsonb @default(json`{}`)
 
     alAverageScore Int?
     alFavorites    Int?
@@ -70,12 +63,12 @@ model Manga {
     malPopularity   Int?
 
     isAdult  Boolean  @default(false)
-    synonyms String[] @db.Text
+    synonyms String[]
     locked   Boolean  @default(false)
 
-    siteUrl       String? @db.Text
-    externalLinks Json?   @db.JsonB
-    sources       Json?   @db.JsonB
+    siteUrl       String?
+    externalLinks Jsonb?
+    sources       Jsonb?
 
     ageRating      String?
     ageRatingGuide String?
@@ -84,7 +77,7 @@ model Manga {
     malUpdatedAt Int?
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     characters       MediaCharacter[]
     staff            MediaStaff[]
@@ -95,6 +88,6 @@ model Manga {
     @@index([titlePrimary])
     @@index([status])
     @@index([format])
-    @@index([popularity(sort: Desc)])
-    @@index([averageScore(sort: Desc)])
+    @@index([popularity])
+    @@index([averageScore])
 }

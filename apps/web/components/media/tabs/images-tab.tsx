@@ -1,13 +1,11 @@
 "use client"
 
 import React, { useMemo, useState } from "react"
-import { IconX } from "@tabler/icons-react"
 import {
   Dialog,
   DialogHeader,
   DialogTitle,
 } from "@workspace/ui/components/dialog"
-import { Button } from "@workspace/ui/components/button"
 
 interface ImagesTabProps {
   coverImage: string | null
@@ -248,19 +246,10 @@ export function ImagesTab({ coverImage, bannerImage, images }: ImagesTabProps) {
           }}
           className="gap-3 p-3 sm:max-w-5xl"
         >
-          <DialogHeader className="flex flex-row items-center justify-between border-b border-border/40 pb-2">
+          <DialogHeader className="border-b border-border/40 pb-2">
             <DialogTitle className="text-sm font-semibold">
               Artwork Preview
             </DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-7 rounded-lg"
-              onClick={() => setSelectedImage(null)}
-              aria-label="Close image preview"
-            >
-              <IconX className="size-4" aria-hidden="true" />
-            </Button>
           </DialogHeader>
 
           <div className="relative flex max-h-[82vh] w-full items-center justify-center overflow-auto rounded-xl bg-black/40 p-2">

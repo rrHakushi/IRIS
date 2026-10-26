@@ -70,6 +70,10 @@ export function ConnectDialog({
   const isRiot = provider.provider === "RIOT_GAMES"
   const isLastFm = provider.provider === "LASTFM"
   const isIris = provider.provider === "IRIS"
+  const isHikka = provider.provider === "HIKKA"
+  const isMangaUpdates = provider.provider === "MANGAUPDATES"
+  const isMangaBaka = provider.provider === "MANGABAKA"
+  const isTrakt = provider.provider === "TRAKT"
 
   const handleIrisOAuthConnect = async () => {
     if (!hostUrl.trim()) {
@@ -111,6 +115,12 @@ export function ConnectDialog({
     e.preventDefault()
     setIsSubmitting(true)
     setError(null)
+
+    if (isMangaUpdates && !apiKey.trim() && (!username.trim() || !password)) {
+      setError("Please provide either your username & password or an access token.")
+      setIsSubmitting(false)
+      return
+    }
 
     try {
       const { error: submitErr } = await elysia.carina.connections.post({
@@ -164,13 +174,21 @@ export function ConnectDialog({
                     ? "Enter your server host URL and API key to connect."
                     : isBangumi
                       ? "Enter your Bangumi Personal Access Token."
-                      : isRiot
-                        ? "Enter your Riot ID (e.g. Player#1234) or API Key."
-                        : isSteam
-                          ? "Enter your SteamID64 or Steam Web API Key."
-                          : isLastFm
-                            ? "Enter your Last.fm username or Session Key to scrobble tracks."
-                            : "Enter connection credentials."}
+                      : isHikka
+                        ? "Enter your Hikka.io personal access token from your account settings."
+                        : isMangaUpdates
+                          ? "Enter your MangaUpdates username and password, or session token."
+                          : isMangaBaka
+                            ? "Enter your MangaBaka API Key or access token."
+                            : isTrakt
+                              ? "Enter your Trakt OAuth access token or API credentials."
+                              : isRiot
+                                ? "Enter your Riot ID (e.g. Player#1234) or API Key."
+                                : isSteam
+                                  ? "Enter your SteamID64 or Steam Web API Key."
+                                  : isLastFm
+                                    ? "Enter your Last.fm username or Session Key to scrobble tracks."
+                                    : "Enter connection credentials."}
               </DialogDescription>
             </div>
           </div>
@@ -256,11 +274,53 @@ export function ConnectDialog({
             </div>
           )}
 
+          {isMangaUpdates && (
+            <>
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="credUsername"
+                  className="flex items-center gap-1.5 text-xs font-medium"
+                >
+                  <IconUser className="h-3.5 w-3.5 text-muted-foreground" />
+                  Username
+                </Label>
+                <Input
+                  id="credUsername"
+                  placeholder="Username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="text-xs"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="credPassword"
+                  className="flex items-center gap-1.5 text-xs font-medium"
+                >
+                  <IconKey className="h-3.5 w-3.5 text-muted-foreground" />
+                  Password
+                </Label>
+                <Input
+                  id="credPassword"
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="text-xs"
+                />
+              </div>
+            </>
+          )}
+
           {(isServarr ||
             isBangumi ||
             isSteam ||
             isRiot ||
             isLastFm ||
+            isHikka ||
+            isMangaBaka ||
+            isTrakt ||
+            isMangaUpdates ||
             (isIris && useApiKeyForIris)) && (
             <div className="space-y-1.5">
               <Label
@@ -270,15 +330,23 @@ export function ConnectDialog({
                 <IconKey className="h-3.5 w-3.5 text-muted-foreground" />
                 {isBangumi
                   ? "Personal Access Token"
-                  : isSteam
-                    ? "Steam Web API Key / SteamID"
-                    : isRiot
-                      ? "Riot API Key (Optional if configured in server .env)"
-                      : isLastFm
-                        ? "Last.fm Session Key / API Key (Optional for basic scrobbling)"
-                        : isIris
-                          ? "Personal Access Token / API Key"
-                          : "API Key"}
+                  : isHikka
+                    ? "Personal Access Token"
+                    : isMangaBaka
+                      ? "API Key / Token"
+                      : isTrakt
+                        ? "Trakt Access Token"
+                        : isMangaUpdates
+                          ? "Or Session Token"
+                          : isSteam
+                            ? "Steam Web API Key / SteamID"
+                            : isRiot
+                              ? "Riot API Key (Optional if configured in server .env)"
+                              : isLastFm
+                                ? "Last.fm Session Key / API Key (Optional for basic scrobbling)"
+                                : isIris
+                                  ? "Personal Access Token / API Key"
+                                  : "API Key"}
               </Label>
               <Input
                 id="apiKey"
@@ -286,20 +354,28 @@ export function ConnectDialog({
                 placeholder={
                   isBangumi
                     ? "Enter Bangumi access token"
-                    : isSteam
-                      ? "SteamID64 or Web API Key"
-                      : isRiot
-                        ? "RGAPI-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                        : isLastFm
-                          ? "Enter Last.fm session key (optional)"
-                          : isIris
-                            ? "Enter remote IRIS API key or Bearer token"
-                            : "Enter 32-character API key"
+                    : isHikka
+                      ? "Enter Hikka personal access token"
+                      : isMangaBaka
+                        ? "Enter MangaBaka API token"
+                        : isTrakt
+                          ? "Enter Trakt access token"
+                          : isMangaUpdates
+                            ? "Enter session token"
+                            : isSteam
+                              ? "SteamID64 or Web API Key"
+                              : isRiot
+                                ? "RGAPI-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                                : isLastFm
+                                  ? "Enter Last.fm session key (optional)"
+                                  : isIris
+                                    ? "Enter remote IRIS API key or Bearer token"
+                                    : "Enter 32-character API key"
                 }
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 className="font-mono text-xs"
-                required={!isRiot && !isLastFm}
+                required={!isRiot && !isLastFm && !isMangaUpdates}
               />
             </div>
           )}

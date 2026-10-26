@@ -63,15 +63,15 @@ function setupPrismaMock() {
     },
   ]
 
-    ; (prisma.user.findUnique as any) = async ({ where }: any) => {
+    ; ((prisma as any).user.findUnique as any) = async ({ where }: any) => {
       return mockUsers.find((u) => u.id === where.id) ?? null
     }
 
-    ; (prisma.apiKey.findFirst as any) = async ({ where }: any) => {
+    ; ((prisma as any).apiKey.findFirst as any) = async ({ where }: any) => {
       return mockApiKeys.find((k) => k.hash === where.hash) ?? null
     }
 
-    ; (prisma.searchHistory.create as any) = async ({ data }: any) => {
+    ; ((prisma as any).searchHistory.create as any) = async ({ data }: any) => {
       const created: MockSearchHistory = {
         id: `sh-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
         userId: data.userId,
@@ -83,13 +83,13 @@ function setupPrismaMock() {
       return created
     }
 
-    ; (prisma.searchHistory.deleteMany as any) = async () => {
+    ; ((prisma as any).searchHistory.deleteMany as any) = async () => {
       return { count: 0 }
     }
 }
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()
@@ -113,8 +113,8 @@ describe('Comprehensive Kiroshi Search Test Suite', () => {
   const BOB_ID = '00000000-0000-0000-0000-000000000002'
 
   beforeEach(async () => {
-    process.env.NEXTAUTH_SECRET = 'test-iris-secret-key-at-least-32-chars!'
-    process.env.SEARXNG_URL = 'http://searxng.internal.test:8888'
+    Bun.env.JWT_SECRET = 'test-iris-secret-key-at-least-32-chars!'
+    Bun.env.SEARXNG_URL = 'http://searxng.internal.test:8888'
     await cache.clear()
     setupPrismaMock()
     originalFetch = globalThis.fetch

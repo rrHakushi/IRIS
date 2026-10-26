@@ -1,4 +1,4 @@
-import { prisma, type RelationType } from '@IRIS/database'
+import { prisma, normalizeMediaStatus, type RelationType } from '@IRIS/database'
 import { LogFactory, c } from '@Iris/logger'
 import {
   anilistProvider,
@@ -73,13 +73,11 @@ export class MediaEntitySyncer {
       if (!clean) continue
       const slug = clean.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'genre'
       try {
-        const genre = await prisma.genre.upsert({
-          where: { name: clean },
-          update: {},
-          create: { name: clean, slug },
-          select: { id: true },
-        })
-        results.push(genre)
+        let genre = await prisma.orm.public.Genre.where({ name: clean }).select('id').first()
+        if (!genre) {
+          genre = await prisma.orm.public.Genre.create({ name: clean, slug })
+        }
+        results.push({ id: genre.id })
       } catch {}
     }
     return results
@@ -116,25 +114,22 @@ export class MediaEntitySyncer {
       }
 
       if (musicStub) {
-        await prisma.mediaRelation.upsert({
-          where: {
-            sourceType_sourceId_targetType_targetId_type: {
-              sourceType,
-              sourceId,
-              targetType: 'MUSIC' as MediaType,
-              targetId: musicStub.id,
-              type: 'OTHER' as RelationType,
-            },
-          },
-          update: {},
-          create: {
+        const existingRel = await prisma.orm.public.MediaRelation.where({
+          sourceType,
+          sourceId,
+          targetType: 'MUSIC' as MediaType,
+          targetId: musicStub.id,
+          type: 'OTHER' as RelationType,
+        }).first()
+        if (!existingRel) {
+          await prisma.orm.public.MediaRelation.create({
             sourceType,
             sourceId,
             targetType: 'MUSIC' as MediaType,
             targetId: musicStub.id,
             type: 'OTHER' as RelationType,
-          },
-        }).catch(() => {})
+          }).catch(() => {})
+        }
 
         await MediaQueueManager.enqueueMediaUpdate('MUSIC', musicStub.id, {
           externalId: musicStub.externalId,
@@ -169,34 +164,29 @@ export class MediaEntitySyncer {
     for (const edge of characters.edges) {
       if (!edge?.node?.name?.full) continue
       const anilistCharId = edge.node.id
-      const charImage = edge.node.image?.medium || edge.node.image?.large || null
+      const charImage = edge.node.image?.large || edge.node.image?.medium || null
 
       try {
-        let char = await prisma.character.findUnique({
-          where: { anilistId: anilistCharId },
-          select: { id: true, image: true },
-        })
+        let char = await prisma.orm.public.Character.where({ anilistId: anilistCharId })
+          .select('id', 'image')
+          .first()
 
         if (!char) {
-          char = await prisma.character.create({
-            data: {
-              anilistId: anilistCharId,
-              namePrimary: edge.node.name.full,
-              nameNative: edge.node.name.native || null,
-              nameAlternative: edge.node.name.alternative || [],
-              nameAlternativeSpoiler: edge.node.name.alternativeSpoiler || [],
-              image: charImage,
-              description: edge.node.description || null,
-              gender: edge.node.gender || null,
-              age: edge.node.age || null,
-              favorites: edge.node.favourites || 0,
-            },
-            select: { id: true, image: true },
+          char = await prisma.orm.public.Character.create({
+            anilistId: anilistCharId,
+            namePrimary: edge.node.name.full,
+            nameNative: edge.node.name.native || null,
+            nameAlternative: edge.node.name.alternative || [],
+            nameAlternativeSpoiler: edge.node.name.alternativeSpoiler || [],
+            image: charImage,
+            description: edge.node.description || null,
+            gender: edge.node.gender || null,
+            age: edge.node.age || null,
+            favorites: edge.node.favourites || 0,
           })
         } else if (!char.image && charImage) {
-          await prisma.character.update({
-            where: { id: char.id },
-            data: { image: charImage },
+          await prisma.orm.public.Character.where({ id: char.id }).update({
+            image: charImage,
           }).catch(() => {})
         }
 
@@ -211,44 +201,42 @@ export class MediaEntitySyncer {
         if (voiceActors && Array.isArray(voiceActors) && voiceActors.length > 0) {
           for (const va of voiceActors) {
             if (!va?.name?.full) continue
-            const vaImage = va.image?.medium || va.image?.large || null
-            let person = await prisma.person.findUnique({
-              where: { anilistId: va.id },
-              select: { id: true, image: true },
-            })
+            const vaImage = va.image?.large || va.image?.medium || null
+            let person = await prisma.orm.public.Person.where({ anilistId: va.id })
+              .select('id', 'image')
+              .first()
             if (!person) {
-              person = await prisma.person.create({
-                data: {
-                  anilistId: va.id,
-                  namePrimary: va.name.full,
-                  nameNative: va.name.native || null,
-                  image: vaImage,
-                  language: va.languageV2 || null,
-                },
-                select: { id: true, image: true },
+              person = await prisma.orm.public.Person.create({
+                anilistId: va.id,
+                namePrimary: va.name.full,
+                nameNative: va.name.native || null,
+                nameAlternative: [],
+                image: vaImage,
+                language: va.languageV2 || null,
+                primaryOccupations: [],
+                yearsActive: [],
               })
             } else if (!person.image && vaImage) {
-              await prisma.person.update({
-                where: { id: person.id },
-                data: { image: vaImage },
+              await prisma.orm.public.Person.where({ id: person.id }).update({
+                image: vaImage,
               }).catch(() => {})
             }
 
-            await prisma.mediaCharacter.upsert({
-              where: {
-                mediaType_mediaId_characterId_actorId: {
-                  mediaType,
-                  mediaId,
-                  characterId: char.id,
-                  actorId: person.id,
-                },
-              },
-              update: {
+            const existingMC = await prisma.orm.public.MediaCharacter.where({
+              mediaType,
+              mediaId,
+              characterId: char.id,
+              actorId: person.id,
+            }).first()
+
+            if (existingMC) {
+              await prisma.orm.public.MediaCharacter.where({ id: existingMC.id }).update({
                 role,
                 animeId: mediaType === 'ANIME' ? mediaId : null,
                 mangaId: mediaType === 'MANGA' ? mediaId : null,
-              },
-              create: {
+              }).catch(() => {})
+            } else {
+              await prisma.orm.public.MediaCharacter.create({
                 mediaType,
                 mediaId,
                 characterId: char.id,
@@ -256,38 +244,32 @@ export class MediaEntitySyncer {
                 role,
                 animeId: mediaType === 'ANIME' ? mediaId : null,
                 mangaId: mediaType === 'MANGA' ? mediaId : null,
-              },
-            }).catch(() => {})
+              }).catch(() => {})
+            }
           }
         } else {
-          const existingMC = await prisma.mediaCharacter.findFirst({
-            where: {
+          const existingMC = await prisma.orm.public.MediaCharacter.where({
+            mediaType,
+            mediaId,
+            characterId: char.id,
+            actorId: null,
+          }).first()
+
+          if (existingMC) {
+            await prisma.orm.public.MediaCharacter.where({ id: existingMC.id }).update({
+              role,
+              animeId: mediaType === 'ANIME' ? mediaId : null,
+              mangaId: mediaType === 'MANGA' ? mediaId : null,
+            }).catch(() => {})
+          } else {
+            await prisma.orm.public.MediaCharacter.create({
               mediaType,
               mediaId,
               characterId: char.id,
               actorId: null,
-            },
-          })
-          if (existingMC) {
-            await prisma.mediaCharacter.update({
-              where: { id: existingMC.id },
-              data: {
-                role,
-                animeId: mediaType === 'ANIME' ? mediaId : null,
-                mangaId: mediaType === 'MANGA' ? mediaId : null,
-              },
-            }).catch(() => {})
-          } else {
-            await prisma.mediaCharacter.create({
-              data: {
-                mediaType,
-                mediaId,
-                characterId: char.id,
-                actorId: null,
-                role,
-                animeId: mediaType === 'ANIME' ? mediaId : null,
-                mangaId: mediaType === 'MANGA' ? mediaId : null,
-              },
+              role,
+              animeId: mediaType === 'ANIME' ? mediaId : null,
+              mangaId: mediaType === 'MANGA' ? mediaId : null,
             }).catch(() => {})
           }
         }
@@ -307,49 +289,45 @@ export class MediaEntitySyncer {
     for (const edge of staff.edges) {
       if (!edge?.node?.name?.full) continue
       const anilistPersonId = edge.node.id
-      const staffImage = edge.node.image?.medium || edge.node.image?.large || null
+      const staffImage = edge.node.image?.large || edge.node.image?.medium || null
 
       try {
-        let person = await prisma.person.findUnique({
-          where: { anilistId: anilistPersonId },
-          select: { id: true, image: true },
-        })
+        let person = await prisma.orm.public.Person.where({ anilistId: anilistPersonId })
+          .select('id', 'image')
+          .first()
 
         if (!person) {
-          person = await prisma.person.create({
-            data: {
-              anilistId: anilistPersonId,
-              namePrimary: edge.node.name.full,
-              nameNative: edge.node.name.native || null,
-              nameAlternative: edge.node.name.alternative || [],
-              image: staffImage,
-              description: edge.node.description || null,
-              primaryOccupations: edge.node.primaryOccupations || [],
-            },
-            select: { id: true, image: true },
+          person = await prisma.orm.public.Person.create({
+            anilistId: anilistPersonId,
+            namePrimary: edge.node.name.full,
+            nameNative: edge.node.name.native || null,
+            nameAlternative: edge.node.name.alternative || [],
+            image: staffImage,
+            description: edge.node.description || null,
+            primaryOccupations: edge.node.primaryOccupations || [],
+            yearsActive: [],
           })
         } else if (!person.image && staffImage) {
-          await prisma.person.update({
-            where: { id: person.id },
-            data: { image: staffImage },
+          await prisma.orm.public.Person.where({ id: person.id }).update({
+            image: staffImage,
           }).catch(() => {})
         }
 
-        await prisma.mediaStaff.upsert({
-          where: {
-            mediaType_mediaId_personId_role: {
-              mediaType,
-              mediaId,
-              personId: person.id,
-              role: 'OTHER',
-            },
-          },
-          update: {
+        const existingStaff = await prisma.orm.public.MediaStaff.where({
+          mediaType,
+          mediaId,
+          personId: person.id,
+          role: 'OTHER',
+        }).first()
+
+        if (existingStaff) {
+          await prisma.orm.public.MediaStaff.where({ id: existingStaff.id }).update({
             customRole: edge.role,
             animeId: mediaType === 'ANIME' ? mediaId : null,
             mangaId: mediaType === 'MANGA' ? mediaId : null,
-          },
-          create: {
+          }).catch(() => {})
+        } else {
+          await prisma.orm.public.MediaStaff.create({
             mediaType,
             mediaId,
             personId: person.id,
@@ -357,8 +335,8 @@ export class MediaEntitySyncer {
             customRole: edge.role,
             animeId: mediaType === 'ANIME' ? mediaId : null,
             mangaId: mediaType === 'MANGA' ? mediaId : null,
-          },
-        }).catch(() => {})
+          }).catch(() => {})
+        }
       } catch (err: any) {
         logger.warn(`Failed to sync staff member for ${mediaType} #${mediaId}: ${err?.message || err}`)
       }
@@ -373,10 +351,9 @@ export class MediaEntitySyncer {
     try {
       let anilistId: number | null = externalId ? Number(externalId) : null
       if (!anilistId) {
-        const record = await prisma.anime.findUnique({
-          where: { id: animeId },
-          select: { anilistId: true },
-        })
+        const record = await prisma.orm.public.Anime.where({ id: animeId })
+          .select('anilistId')
+          .first()
         anilistId = record?.anilistId ?? null
       }
 
@@ -406,36 +383,39 @@ export class MediaEntitySyncer {
       const nowUnix = Math.floor(now.getTime() / 1000)
 
       logger.info(`${c.blue('💾 [2/2]')} Upserting Anime #${animeId} record to database...`)
-      await prisma.anime.update({
-        where: { id: animeId },
-        data: {
-          titlePrimary:
-            alData.title.english ||
-            alData.title.userPreferred ||
-            alData.title.romaji ||
-            undefined,
-          titleSecondary: alData.title.romaji || alData.title.english || undefined,
-          titleNative: alData.title.native || undefined,
-          description: alData.description || undefined,
-          coverImage: alData.coverImage?.medium || alData.coverImage?.large || undefined,
-          bannerImage: alData.bannerImage || undefined,
-          episodeCount: alData.episodes || undefined,
-          alAverageScore: alData.averageScore || undefined,
-          alPopularity: alData.popularity || undefined,
-          alFavorites: alData.favourites || undefined,
-          seasonYear: alData.seasonYear || undefined,
-          seasonSeason: (alData.season as any) || undefined,
-          format: (alData.format as any) || undefined,
-          status: (alData.status as any) || undefined,
-          alUpdatedAt: nowUnix,
-          updatedAt: now,
-          genres: {
-            set: genreRecords.map((g) => ({ id: g.id })),
-          },
-        },
+      await prisma.orm.public.Anime.where({ id: animeId }).update({
+        titlePrimary:
+          alData.title.english ||
+          alData.title.userPreferred ||
+          alData.title.romaji ||
+          undefined,
+        titleSecondary: alData.title.romaji || alData.title.english || undefined,
+        titleNative: alData.title.native || undefined,
+        description: alData.description || undefined,
+        coverImage: alData.coverImage?.extraLarge || alData.coverImage?.large || alData.coverImage?.medium || undefined,
+        bannerImage: alData.bannerImage || undefined,
+        episodeCount: alData.episodes || undefined,
+        alAverageScore: alData.averageScore || undefined,
+        alPopularity: alData.popularity || undefined,
+        alFavorites: alData.favourites || undefined,
+        seasonYear: alData.seasonYear || undefined,
+        seasonSeason: (alData.season as any) || undefined,
+        format: (alData.format as any) || undefined,
+        status: alData.status ? normalizeMediaStatus(alData.status) : undefined,
+        alUpdatedAt: nowUnix,
+        updatedAt: now,
       })
 
-      // Sync Characters, Voice Actors, and Staff with medium image (fallback to large)
+      if (genreRecords.length > 0) {
+        try {
+          await prisma.orm.public.AnimeGenre.where({ animeId }).deleteAll()
+        } catch {}
+        for (const g of genreRecords) {
+          await prisma.orm.public.AnimeGenre.create({ animeId, genreId: g.id }).catch(() => {})
+        }
+      }
+
+      // Sync Characters, Voice Actors, and Staff with large image (fallback to medium)
       await this.syncMediaCharacters('ANIME', animeId, alData.characters)
       await this.syncMediaStaff('ANIME', animeId, alData.staff)
 
@@ -464,75 +444,66 @@ export class MediaEntitySyncer {
 
           let localTargetId: number
           if (targetType === 'ANIME') {
-            let targetAnime = await prisma.anime.findUnique({
-              where: { anilistId: targetExternalId },
-              select: { id: true },
-            })
+            let targetAnime = await prisma.orm.public.Anime.where({ anilistId: targetExternalId })
+              .select('id')
+              .first()
             if (!targetAnime) {
               const targetTitle =
                 edge.node.title?.english ||
                 edge.node.title?.userPreferred ||
                 edge.node.title?.romaji ||
                 `Anime #${targetExternalId}`
-              targetAnime = await prisma.anime.create({
-                data: {
-                  anilistId: targetExternalId,
-                  titlePrimary: targetTitle,
-                  titleSecondary: edge.node.title?.romaji || edge.node.title?.english || null,
-                  titleNative: edge.node.title?.native || null,
-                  coverImage: edge.node.coverImage?.medium || edge.node.coverImage?.large || null,
-                  format: mapAnimeFormat(edge.node.format),
-                },
-                select: { id: true },
+              targetAnime = await prisma.orm.public.Anime.create({
+                anilistId: targetExternalId,
+                titlePrimary: targetTitle,
+                titleSecondary: edge.node.title?.romaji || edge.node.title?.english || null,
+                titleNative: edge.node.title?.native || null,
+                coverImage: edge.node.coverImage?.extraLarge || edge.node.coverImage?.large || edge.node.coverImage?.medium || null,
+                format: mapAnimeFormat(edge.node.format),
+                synonyms: [],
               })
             }
             localTargetId = targetAnime.id
           } else {
-            let targetManga = await prisma.manga.findUnique({
-              where: { anilistId: targetExternalId },
-              select: { id: true },
-            })
+            let targetManga = await prisma.orm.public.Manga.where({ anilistId: targetExternalId })
+              .select('id')
+              .first()
             if (!targetManga) {
               const targetTitle =
                 edge.node.title?.english ||
                 edge.node.title?.userPreferred ||
                 edge.node.title?.romaji ||
                 `Manga #${targetExternalId}`
-              targetManga = await prisma.manga.create({
-                data: {
-                  anilistId: targetExternalId,
-                  titlePrimary: targetTitle,
-                  titleSecondary: edge.node.title?.romaji || edge.node.title?.english || null,
-                  titleNative: edge.node.title?.native || null,
-                  coverImage: edge.node.coverImage?.medium || edge.node.coverImage?.large || null,
-                  format: mapMangaFormat(edge.node.format),
-                },
-                select: { id: true },
+              targetManga = await prisma.orm.public.Manga.create({
+                anilistId: targetExternalId,
+                titlePrimary: targetTitle,
+                titleSecondary: edge.node.title?.romaji || edge.node.title?.english || null,
+                titleNative: edge.node.title?.native || null,
+                coverImage: edge.node.coverImage?.extraLarge || edge.node.coverImage?.large || edge.node.coverImage?.medium || null,
+                format: mapMangaFormat(edge.node.format),
+                synonyms: [],
               })
             }
             localTargetId = targetManga.id
           }
 
-          // Upsert relation edge using local IDs
-          await prisma.mediaRelation.upsert({
-            where: {
-              sourceType_sourceId_targetType_targetId_type: {
-                sourceType: 'ANIME',
-                sourceId: animeId,
-                targetType,
-                targetId: localTargetId,
-                type: relType,
-              },
-            },
-            update: {},
-            create: {
+          const existingRel = await prisma.orm.public.MediaRelation.where({
+            sourceType: 'ANIME',
+            sourceId: animeId,
+            targetType,
+            targetId: localTargetId,
+            type: relType,
+          }).first()
+
+          if (!existingRel) {
+            await prisma.orm.public.MediaRelation.create({
               sourceType: 'ANIME',
               sourceId: animeId,
               targetType,
               targetId: localTargetId,
               type: relType,
-            },
-          }).catch(() => {})
+            }).catch(() => {})
+          }
 
           discoveredRelations.push({
             sourceType: 'ANIME',
@@ -564,10 +535,9 @@ export class MediaEntitySyncer {
     try {
       let anilistId: number | null = externalId ? Number(externalId) : null
       if (!anilistId) {
-        const record = await prisma.manga.findUnique({
-          where: { id: mangaId },
-          select: { anilistId: true },
-        })
+        const record = await prisma.orm.public.Manga.where({ id: mangaId })
+          .select('anilistId')
+          .first()
         anilistId = record?.anilistId ?? null
       }
 
@@ -597,36 +567,39 @@ export class MediaEntitySyncer {
       const nowUnix = Math.floor(now.getTime() / 1000)
 
       logger.info(`${c.blue('💾 [2/2]')} Upserting Manga #${mangaId} record to database...`)
-      await prisma.manga.update({
-        where: { id: mangaId },
-        data: {
-          titlePrimary:
-            alData.title.english ||
-            alData.title.userPreferred ||
-            alData.title.romaji ||
-            undefined,
-          titleSecondary: alData.title.romaji || alData.title.english || undefined,
-          titleNative: alData.title.native || undefined,
-          description: alData.description || undefined,
-          coverImage: alData.coverImage?.medium || alData.coverImage?.large || undefined,
-          bannerImage: alData.bannerImage || undefined,
-          chapterCount: alData.chapters || undefined,
-          volumeCount: alData.volumes || undefined,
-          alAverageScore: alData.averageScore || undefined,
-          alPopularity: alData.popularity || undefined,
-          alFavorites: alData.favourites || undefined,
-          startDateYear: alData.startDate?.year || undefined,
-          format: (alData.format as any) || undefined,
-          status: (alData.status as any) || undefined,
-          alUpdatedAt: nowUnix,
-          updatedAt: now,
-          genres: {
-            set: genreRecords.map((g) => ({ id: g.id })),
-          },
-        },
+      await prisma.orm.public.Manga.where({ id: mangaId }).update({
+        titlePrimary:
+          alData.title.english ||
+          alData.title.userPreferred ||
+          alData.title.romaji ||
+          undefined,
+        titleSecondary: alData.title.romaji || alData.title.english || undefined,
+        titleNative: alData.title.native || undefined,
+        description: alData.description || undefined,
+        coverImage: alData.coverImage?.extraLarge || alData.coverImage?.large || alData.coverImage?.medium || undefined,
+        bannerImage: alData.bannerImage || undefined,
+        chapterCount: alData.chapters || undefined,
+        volumeCount: alData.volumes || undefined,
+        alAverageScore: alData.averageScore || undefined,
+        alPopularity: alData.popularity || undefined,
+        alFavorites: alData.favourites || undefined,
+        startDateYear: alData.startDate?.year || undefined,
+        format: (alData.format as any) || undefined,
+        status: alData.status ? normalizeMediaStatus(alData.status) : undefined,
+        alUpdatedAt: nowUnix,
+        updatedAt: now,
       })
 
-      // Sync Characters and Staff with medium image (fallback to large)
+      if (genreRecords.length > 0) {
+        try {
+          await prisma.orm.public.MangaGenre.where({ mangaId }).deleteAll()
+        } catch {}
+        for (const g of genreRecords) {
+          await prisma.orm.public.MangaGenre.create({ mangaId, genreId: g.id }).catch(() => {})
+        }
+      }
+
+      // Sync Characters and Staff with large image (fallback to medium)
       await this.syncMediaCharacters('MANGA', mangaId, alData.characters)
       await this.syncMediaStaff('MANGA', mangaId, alData.staff)
 
@@ -655,75 +628,66 @@ export class MediaEntitySyncer {
 
           let localTargetId: number
           if (targetType === 'ANIME') {
-            let targetAnime = await prisma.anime.findUnique({
-              where: { anilistId: targetExternalId },
-              select: { id: true },
-            })
+            let targetAnime = await prisma.orm.public.Anime.where({ anilistId: targetExternalId })
+              .select('id')
+              .first()
             if (!targetAnime) {
               const targetTitle =
                 edge.node.title?.english ||
                 edge.node.title?.userPreferred ||
                 edge.node.title?.romaji ||
                 `Anime #${targetExternalId}`
-              targetAnime = await prisma.anime.create({
-                data: {
-                  anilistId: targetExternalId,
-                  titlePrimary: targetTitle,
-                  titleSecondary: edge.node.title?.romaji || edge.node.title?.english || null,
-                  titleNative: edge.node.title?.native || null,
-                  coverImage: edge.node.coverImage?.medium || edge.node.coverImage?.large || null,
-                  format: mapAnimeFormat(edge.node.format),
-                },
-                select: { id: true },
+              targetAnime = await prisma.orm.public.Anime.create({
+                anilistId: targetExternalId,
+                titlePrimary: targetTitle,
+                titleSecondary: edge.node.title?.romaji || edge.node.title?.english || null,
+                titleNative: edge.node.title?.native || null,
+                coverImage: edge.node.coverImage?.extraLarge || edge.node.coverImage?.large || edge.node.coverImage?.medium || null,
+                format: mapAnimeFormat(edge.node.format),
+                synonyms: [],
               })
             }
             localTargetId = targetAnime.id
           } else {
-            let targetManga = await prisma.manga.findUnique({
-              where: { anilistId: targetExternalId },
-              select: { id: true },
-            })
+            let targetManga = await prisma.orm.public.Manga.where({ anilistId: targetExternalId })
+              .select('id')
+              .first()
             if (!targetManga) {
               const targetTitle =
                 edge.node.title?.english ||
                 edge.node.title?.userPreferred ||
                 edge.node.title?.romaji ||
                 `Manga #${targetExternalId}`
-              targetManga = await prisma.manga.create({
-                data: {
-                  anilistId: targetExternalId,
-                  titlePrimary: targetTitle,
-                  titleSecondary: edge.node.title?.romaji || edge.node.title?.english || null,
-                  titleNative: edge.node.title?.native || null,
-                  coverImage: edge.node.coverImage?.medium || edge.node.coverImage?.large || null,
-                  format: mapMangaFormat(edge.node.format),
-                },
-                select: { id: true },
+              targetManga = await prisma.orm.public.Manga.create({
+                anilistId: targetExternalId,
+                titlePrimary: targetTitle,
+                titleSecondary: edge.node.title?.romaji || edge.node.title?.english || null,
+                titleNative: edge.node.title?.native || null,
+                coverImage: edge.node.coverImage?.extraLarge || edge.node.coverImage?.large || edge.node.coverImage?.medium || null,
+                format: mapMangaFormat(edge.node.format),
+                synonyms: [],
               })
             }
             localTargetId = targetManga.id
           }
 
-          // Upsert relation edge using local IDs
-          await prisma.mediaRelation.upsert({
-            where: {
-              sourceType_sourceId_targetType_targetId_type: {
-                sourceType: 'MANGA',
-                sourceId: mangaId,
-                targetType,
-                targetId: localTargetId,
-                type: relType,
-              },
-            },
-            update: {},
-            create: {
+          const existingRel = await prisma.orm.public.MediaRelation.where({
+            sourceType: 'MANGA',
+            sourceId: mangaId,
+            targetType,
+            targetId: localTargetId,
+            type: relType,
+          }).first()
+
+          if (!existingRel) {
+            await prisma.orm.public.MediaRelation.create({
               sourceType: 'MANGA',
               sourceId: mangaId,
               targetType,
               targetId: localTargetId,
               type: relType,
-            },
-          }).catch(() => {})
+            }).catch(() => {})
+          }
 
           discoveredRelations.push({
             sourceType: 'MANGA',
@@ -754,10 +718,9 @@ export class MediaEntitySyncer {
     try {
       let tvdbId: number | null = externalId ? Number(externalId) : null
       if (!tvdbId) {
-        const record = await prisma.tv.findUnique({
-          where: { id: tvId },
-          select: { tvDBId: true },
-        })
+        const record = await prisma.orm.public.Tv.where({ id: tvId })
+          .select('tvDBId')
+          .first()
         tvdbId = record?.tvDBId ?? null
       }
 
@@ -788,20 +751,23 @@ export class MediaEntitySyncer {
       const nowUnix = Math.floor(now.getTime() / 1000)
 
       logger.info(`${c.blue('💾 [2/2]')} Upserting TV Series #${tvId} record to database...`)
-      await prisma.tv.update({
-        where: { id: tvId },
-        data: {
-          titlePrimary: series.name || undefined,
-          description: series.overview || undefined,
-          coverImage: series.image || undefined,
-          firstAiredYear: series.firstAired ? parseInt(series.firstAired.slice(0, 4), 10) : undefined,
-          tvdbUpdatedAt: nowUnix,
-          updatedAt: now,
-          genres: {
-            set: genreRecords.map((g) => ({ id: g.id })),
-          },
-        },
+      await prisma.orm.public.Tv.where({ id: tvId }).update({
+        titlePrimary: series.name || undefined,
+        description: series.overview || undefined,
+        coverImage: series.image || undefined,
+        firstAiredYear: series.firstAired ? parseInt(series.firstAired.slice(0, 4), 10) : undefined,
+        tvdbUpdatedAt: nowUnix,
+        updatedAt: now,
       })
+
+      if (genreRecords.length > 0) {
+        try {
+          await prisma.orm.public.TvGenre.where({ tvId }).deleteAll()
+        } catch {}
+        for (const g of genreRecords) {
+          await prisma.orm.public.TvGenre.create({ tvId, genreId: g.id }).catch(() => {})
+        }
+      }
 
       logger.info(
         `${c.green('✅ [Sync Complete]')} Successfully synced TV Series #${tvId} ("${displayTitle}")`
@@ -820,10 +786,9 @@ export class MediaEntitySyncer {
     try {
       let tvdbId: number | null = externalId ? Number(externalId) : null
       if (!tvdbId) {
-        const record = await prisma.movie.findUnique({
-          where: { id: movieId },
-          select: { tvDBId: true },
-        })
+        const record = await prisma.orm.public.Movie.where({ id: movieId })
+          .select('tvDBId')
+          .first()
         tvdbId = record?.tvDBId ?? null
       }
 
@@ -854,21 +819,24 @@ export class MediaEntitySyncer {
       const nowUnix = Math.floor(now.getTime() / 1000)
 
       logger.info(`${c.blue('💾 [2/2]')} Upserting Movie #${movieId} record to database...`)
-      await prisma.movie.update({
-        where: { id: movieId },
-        data: {
-          titlePrimary: movie.name || undefined,
-          description: movie.overview || undefined,
-          coverImage: movie.image || undefined,
-          runtime: movie.runtime || undefined,
-          releaseDateYear: movie.first_release_date ? parseInt(movie.first_release_date.slice(0, 4), 10) : undefined,
-          tvdbUpdatedAt: nowUnix,
-          updatedAt: now,
-          genres: {
-            set: genreRecords.map((g) => ({ id: g.id })),
-          },
-        },
+      await prisma.orm.public.Movie.where({ id: movieId }).update({
+        titlePrimary: movie.name || undefined,
+        description: movie.overview || undefined,
+        coverImage: movie.image || undefined,
+        runtime: movie.runtime || undefined,
+        releaseDateYear: movie.first_release_date ? parseInt(movie.first_release_date.slice(0, 4), 10) : undefined,
+        tvdbUpdatedAt: nowUnix,
+        updatedAt: now,
       })
+
+      if (genreRecords.length > 0) {
+        try {
+          await prisma.orm.public.MovieGenre.where({ movieId }).deleteAll()
+        } catch {}
+        for (const g of genreRecords) {
+          await prisma.orm.public.MovieGenre.create({ movieId, genreId: g.id }).catch(() => {})
+        }
+      }
 
       logger.info(
         `${c.green('✅ [Sync Complete]')} Successfully synced Movie #${movieId} ("${displayTitle}")`
@@ -887,10 +855,9 @@ export class MediaEntitySyncer {
     try {
       let igdbId: number | null = externalId ? Number(externalId) : null
       if (!igdbId) {
-        const record = await prisma.game.findUnique({
-          where: { id: gameId },
-          select: { igdbId: true },
-        })
+        const record = await prisma.orm.public.Game.where({ id: gameId })
+          .select('igdbId')
+          .first()
         igdbId = record?.igdbId ?? null
       }
 
@@ -922,27 +889,30 @@ export class MediaEntitySyncer {
       const nowUnix = Math.floor(now.getTime() / 1000)
 
       logger.info(`${c.blue('💾 [2/2]')} Upserting Game #${gameId} record to database...`)
-      await prisma.game.update({
-        where: { id: gameId },
-        data: {
-          titlePrimary: game.name || undefined,
-          description: game.summary || game.storyline || undefined,
-          coverImage: game.cover?.image_id
-            ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.jpg`
-            : undefined,
-          releaseDateYear: game.first_release_date
-            ? new Date(game.first_release_date * 1000).getUTCFullYear()
-            : undefined,
-          igdbRating: game.rating ? Math.round(game.rating * 10) / 10 : undefined,
-          igdbRatingCount: (game as any).rating_count || undefined,
-          platforms,
-          igdbUpdatedAt: nowUnix,
-          updatedAt: now,
-          genres: {
-            set: genreRecords.map((g) => ({ id: g.id })),
-          },
-        },
+      await prisma.orm.public.Game.where({ id: gameId }).update({
+        titlePrimary: game.name || undefined,
+        description: game.summary || game.storyline || undefined,
+        coverImage: game.cover?.image_id
+          ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.jpg`
+          : undefined,
+        releaseDateYear: game.first_release_date
+          ? new Date(game.first_release_date * 1000).getUTCFullYear()
+          : undefined,
+        igdbRating: game.rating ? Math.round(game.rating * 10) / 10 : undefined,
+        igdbRatingCount: (game as any).rating_count || undefined,
+        platforms,
+        igdbUpdatedAt: nowUnix,
+        updatedAt: now,
       })
+
+      if (genreRecords.length > 0) {
+        try {
+          await prisma.orm.public.GameGenre.where({ gameId }).deleteAll()
+        } catch {}
+        for (const g of genreRecords) {
+          await prisma.orm.public.GameGenre.create({ gameId, genreId: g.id }).catch(() => {})
+        }
+      }
 
       logger.info(
         `${c.green('✅ [Sync Complete]')} Successfully synced Game #${gameId} ("${displayTitle}")`
@@ -961,10 +931,9 @@ export class MediaEntitySyncer {
     try {
       let volumeId: string | null = externalId ? String(externalId) : null
       if (!volumeId) {
-        const record = await prisma.book.findUnique({
-          where: { id: bookId },
-          select: { googleBookId: true },
-        })
+        const record = await prisma.orm.public.Book.where({ id: bookId })
+          .select('googleBookId')
+          .first()
         volumeId = record?.googleBookId ?? null
       }
 
@@ -1002,25 +971,28 @@ export class MediaEntitySyncer {
       }
 
       logger.info(`${c.blue('💾 [2/2]')} Upserting Book #${bookId} record to database...`)
-      await prisma.book.update({
-        where: { id: bookId },
-        data: {
-          titlePrimary: info.title || undefined,
-          titleSecondary: info.subtitle || undefined,
-          description: info.description || undefined,
-          pageCount: info.pageCount || undefined,
-          authors: info.authors || undefined,
-          publishers: info.publisher ? [info.publisher] : undefined,
-          releaseDateYear,
-          googleBooksRating: (info as any).averageRating || undefined,
-          googleBooksRatingsCount: (info as any).ratingsCount || undefined,
-          googleBooksUpdatedAt: nowUnix,
-          updatedAt: now,
-          genres: {
-            set: genreRecords.map((g) => ({ id: g.id })),
-          },
-        },
+      await prisma.orm.public.Book.where({ id: bookId }).update({
+        titlePrimary: info.title || undefined,
+        titleSecondary: info.subtitle || undefined,
+        description: info.description || undefined,
+        pageCount: info.pageCount || undefined,
+        authors: info.authors || undefined,
+        publishers: info.publisher ? [info.publisher] : undefined,
+        releaseDateYear,
+        googleBooksRating: (info as any).averageRating || undefined,
+        googleBooksRatingsCount: (info as any).ratingsCount || undefined,
+        googleBooksUpdatedAt: nowUnix,
+        updatedAt: now,
       })
+
+      if (genreRecords.length > 0) {
+        try {
+          await prisma.orm.public.BookGenre.where({ bookId }).deleteAll()
+        } catch {}
+        for (const g of genreRecords) {
+          await prisma.orm.public.BookGenre.create({ bookId, genreId: g.id }).catch(() => {})
+        }
+      }
 
       logger.info(
         `${c.green('✅ [Sync Complete]')} Successfully synced Book #${bookId} ("${displayTitle}")`
@@ -1039,10 +1011,9 @@ export class MediaEntitySyncer {
     try {
       let deezerId: string | null = externalId ? String(externalId) : null
       if (!deezerId) {
-        const record = await prisma.music.findUnique({
-          where: { id: musicId },
-          select: { deezerId: true, type: true },
-        })
+        const record = await prisma.orm.public.Music.where({ id: musicId })
+          .select('deezerId', 'type')
+          .first()
         deezerId = record?.deezerId ?? null
       }
 
@@ -1063,16 +1034,13 @@ export class MediaEntitySyncer {
           `${c.cyan('📥 [1/2]')} Deezer received Track: "${c.bold(track.title)}" (artist=${track.artist?.name || 'N/A'}, duration=${track.duration || 0}s)`
         )
         logger.info(`${c.blue('💾 [2/2]')} Upserting Music Track #${musicId} record to database...`)
-        await prisma.music.update({
-          where: { id: musicId },
-          data: {
-            titlePrimary: track.title || undefined,
-            artistName: track.artist?.name || undefined,
-            duration: track.duration || undefined,
-            audioPreviewUrl: track.preview || undefined,
-            deezerUpdatedAt: nowUnix,
-            updatedAt: now,
-          },
+        await prisma.orm.public.Music.where({ id: musicId }).update({
+          titlePrimary: track.title || undefined,
+          artistName: track.artist?.name || undefined,
+          duration: track.duration || undefined,
+          audioPreviewUrl: track.preview || undefined,
+          deezerUpdatedAt: nowUnix,
+          updatedAt: now,
         })
         logger.info(
           `${c.green('✅ [Sync Complete]')} Successfully synced Music Track #${musicId} ("${track.title}")`
@@ -1086,15 +1054,12 @@ export class MediaEntitySyncer {
           `${c.cyan('📥 [1/2]')} Deezer received Album: "${c.bold(album.title)}" (artist=${album.artist?.name || 'N/A'}, duration=${album.duration || 0}s)`
         )
         logger.info(`${c.blue('💾 [2/2]')} Upserting Music Album #${musicId} record to database...`)
-        await prisma.music.update({
-          where: { id: musicId },
-          data: {
-            titlePrimary: album.title || undefined,
-            artistName: album.artist?.name || undefined,
-            duration: album.duration || undefined,
-            deezerUpdatedAt: nowUnix,
-            updatedAt: now,
-          },
+        await prisma.orm.public.Music.where({ id: musicId }).update({
+          titlePrimary: album.title || undefined,
+          artistName: album.artist?.name || undefined,
+          duration: album.duration || undefined,
+          deezerUpdatedAt: nowUnix,
+          updatedAt: now,
         })
         logger.info(
           `${c.green('✅ [Sync Complete]')} Successfully synced Music Album #${musicId} ("${album.title}")`

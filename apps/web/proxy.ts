@@ -1,36 +1,21 @@
 import { NextResponse, type NextRequest } from "next/server"
-
-function getCookieDomain(): string | undefined {
-  if (process.env.COOKIE_DOMAIN) {
-    return process.env.COOKIE_DOMAIN
-  }
-  if (process.env.NODE_ENV === "production") {
-    return ".runerra.org"
-  }
-  return undefined
-}
+import { getDomainConfig } from "@/lib/domain"
 
 export default function proxy(request: NextRequest) {
   const response = NextResponse.next()
-  const domain = getCookieDomain()
+  const { cookieDomain, isSecure } = getDomainConfig()
 
-  if (domain) {
-    const sessionCookie = request.cookies.get(
-      "__Secure-next-auth.session-token"
-    )
+  if (cookieDomain) {
+    const sessionCookie = request.cookies.get("session")
     if (sessionCookie?.value) {
-      response.cookies.set(
-        "__Secure-next-auth.session-token",
-        sessionCookie.value,
-        {
-          domain,
-          path: "/",
-          httpOnly: true,
-          secure: true,
-          sameSite: "lax",
-          maxAge: 365 * 24 * 60 * 60,
-        }
-      )
+      response.cookies.set("session", sessionCookie.value, {
+        domain: cookieDomain,
+        path: "/",
+        httpOnly: true,
+        secure: isSecure,
+        sameSite: "lax",
+        maxAge: 365 * 24 * 60 * 60,
+      })
     }
   }
 

@@ -805,7 +805,10 @@
       "selectLanguage": "Select Language",
       "encryption": "Encryption",
       "locked": "Locked",
-      "active": "Active"
+      "active": "Active",
+      "vaultLocked": "Vault locked (click to unlock)",
+      "vaultUnlocked": "Vault unlocked (click to lock)",
+      "vaultLockedToast": "Encryption vault locked"
     },
     "userProfileTabs": {
       "overview": "Overview",

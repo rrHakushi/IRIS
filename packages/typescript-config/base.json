@@ -17,6 +17,7 @@
     "strict": true,
     "target": "ES2022",
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "types": ["bun"]
   }
 }

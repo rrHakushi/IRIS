@@ -8,7 +8,7 @@ import React, {
   useContext,
 } from "react"
 import { useTranslations } from "next-intl"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/session-context"
 import { useUser } from "@/context/user-context"
 import type { SettingsTabProps } from "../types"
 import {

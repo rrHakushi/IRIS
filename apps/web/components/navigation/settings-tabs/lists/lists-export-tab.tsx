@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from "react"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/session-context"
 import type { SettingsTabProps } from "../types"
 import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"

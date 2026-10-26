@@ -1,4 +1,4 @@
-import { prisma, type ActivityType, type FavoriteType, type MediaType, type Prisma } from '@IRIS/database'
+import { prisma, and, or, countOf, toDate, type ActivityType, type FavoriteType, type MediaType } from '@IRIS/database'
 import { getBadgeById, getProfileCustomization, setProfileCustomization } from '@IRIS/shared'
 import { IRISBitField, IRISFlags } from '@IRIS/permissions'
 import { BadRequest, Forbidden, NotFound } from '../../lib/errors'
@@ -126,9 +126,7 @@ export class CarinaUsersServ {
       throw new NotFound('User not found')
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: trimmed },
-    })
+    const user = await prisma.orm.public.User.where({ id: trimmed }).first()
 
     if (!user) {
       throw new NotFound(`User "${trimmed}" not found`)
@@ -146,11 +144,7 @@ export class CarinaUsersServ {
       throw new NotFound('User not found')
     }
 
-    const user = await prisma.user.findFirst({
-      where: {
-        username: { equals: trimmed, mode: 'insensitive' },
-      },
-    })
+    const user = await prisma.orm.public.User.where((u) => u.username.ilike(trimmed)).first()
 
     if (!user) {
       throw new NotFound(`User "${trimmed}" not found`)
@@ -172,25 +166,19 @@ export class CarinaUsersServ {
     const skip = (page - 1) * limit
 
     const searchTerm = query?.q?.trim()
-    const where: Prisma.UserWhereInput = searchTerm
-      ? { username: { contains: searchTerm, mode: 'insensitive' } }
-      : {}
+    let queryUsers = prisma.orm.public.User
+    if (searchTerm) {
+      queryUsers = queryUsers.where((u) => u.username.ilike(`%${searchTerm}%`))
+    }
 
     const [total, rawUsers] = await Promise.all([
-      prisma.user.count({ where }),
-      prisma.user.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-        select: {
-          id: true,
-          username: true,
-          customization: true,
-          badges: true,
-          createdAt: true,
-        },
-      }),
+      countOf(queryUsers),
+      queryUsers
+        .orderBy((u) => u.createdAt.desc())
+        .offset(skip)
+        .limit(limit)
+        .select('id', 'username', 'customization', 'badges', 'createdAt')
+        .all(),
     ])
 
     const totalPages = Math.max(1, Math.ceil(total / limit))
@@ -206,8 +194,8 @@ export class CarinaUsersServ {
         avatarFrame: profile.avatarFrame || null,
         bannerUrl: profile.bannerUrl || null,
         bio: profile.bio || null,
-        badges: u.badges,
-        createdAt: u.createdAt.toISOString(),
+        badges: [...u.badges],
+        createdAt: toDate(u.createdAt).toISOString(),
       }
     })
 
@@ -232,31 +220,15 @@ export class CarinaUsersServ {
     const isOwner = viewerUserId === target.id
 
     const [friendsCount, favoritesCount, rawConnections] = await Promise.all([
-      prisma.friend.count({
-        where: {
-          userId: target.id,
-        },
-      }),
-      prisma.favorite.count({
-        where: { userId: target.id },
-      }),
-      prisma.connection.findMany({
-        where: {
-          userId: target.id,
-          status: 'CONNECTED',
-        },
-        select: {
-          id: true,
-          provider: true,
-          displayName: true,
-          avatarUrl: true,
-          profileUrl: true,
-          status: true,
-          settings: true,
-          createdAt: true,
-        },
-        orderBy: { createdAt: 'desc' },
-      }),
+      countOf(prisma.orm.public.Friend.where({ userId: target.id })),
+      countOf(prisma.orm.public.Favorite.where({ userId: target.id })),
+      prisma.orm.public.Connection.where({
+        userId: target.id,
+        status: 'CONNECTED',
+      })
+        .select('id', 'provider', 'displayName', 'avatarUrl', 'profileUrl', 'status', 'settings', 'createdAt')
+        .orderBy((c) => c.createdAt.desc())
+        .all(),
     ])
 
     const connections = rawConnections
@@ -268,7 +240,7 @@ export class CarinaUsersServ {
         avatarUrl: c.avatarUrl,
         profileUrl: c.profileUrl,
         status: c.status,
-        createdAt: c.createdAt.toISOString(),
+        createdAt: toDate(c.createdAt).toISOString(),
       }))
 
     const profile = getProfileCustomization(target.customization)
@@ -287,9 +259,9 @@ export class CarinaUsersServ {
         bio: profile.bio || null,
         statusText: profile.statusText || null,
         pronouns: profile.pronouns || null,
-        badges: target.badges,
+        badges: [...target.badges],
         customization: target.customization as any,
-        createdAt: target.createdAt.toISOString(),
+        createdAt: toDate(target.createdAt).toISOString(),
         stats: {
           friendsCount,
           favoritesCount,
@@ -311,38 +283,32 @@ export class CarinaUsersServ {
     }
 
     // 1. Upsert block record
-    await prisma.userBlock.upsert({
-      where: {
-        blockerId_blockedId: {
-          blockerId: currentUserId,
-          blockedId: target.id,
-        },
-      },
-      update: {},
-      create: {
+    const existingBlock = await prisma.orm.public.UserBlock.where({
+      blockerId: currentUserId,
+      blockedId: target.id,
+    }).first()
+
+    if (!existingBlock) {
+      await prisma.orm.public.UserBlock.create({
         blockerId: currentUserId,
         blockedId: target.id,
-      },
-    })
+      })
+    }
 
     // 2. Sever existing friendship & pending requests
     await Promise.all([
-      prisma.friend.deleteMany({
-        where: {
-          OR: [
-            { userId: currentUserId, friendId: target.id },
-            { userId: target.id, friendId: currentUserId },
-          ],
-        },
-      }),
-      prisma.friendRequest.deleteMany({
-        where: {
-          OR: [
-            { senderId: currentUserId, receiverId: target.id },
-            { senderId: target.id, receiverId: currentUserId },
-          ],
-        },
-      }),
+      prisma.orm.public.Friend.where((f) =>
+        or(
+          and(f.userId.eq(currentUserId), f.friendId.eq(target.id)),
+          and(f.userId.eq(target.id), f.friendId.eq(currentUserId))
+        )
+      ).deleteAll(),
+      prisma.orm.public.FriendRequest.where((r) =>
+        or(
+          and(r.senderId.eq(currentUserId), r.receiverId.eq(target.id)),
+          and(r.senderId.eq(target.id), r.receiverId.eq(currentUserId))
+        )
+      ).deleteAll(),
     ])
 
     return {
@@ -358,12 +324,10 @@ export class CarinaUsersServ {
   public static async unblockUser(currentUserId: string, targetIdentifier: string) {
     const target = await this.resolveUser(targetIdentifier)
 
-    await prisma.userBlock.deleteMany({
-      where: {
-        blockerId: currentUserId,
-        blockedId: target.id,
-      },
-    })
+    await prisma.orm.public.UserBlock.where({
+      blockerId: currentUserId,
+      blockedId: target.id,
+    }).deleteAll()
 
     return {
       success: true,
@@ -393,14 +357,11 @@ export class CarinaUsersServ {
     }
 
     // Check if blocked by caller
-    const blockedByCaller = await prisma.userBlock.findUnique({
-      where: {
-        blockerId_blockedId: {
-          blockerId: currentUserId,
-          blockedId: target.id,
-        },
-      },
-    })
+    const blockedByCaller = await prisma.orm.public.UserBlock.where({
+      blockerId: currentUserId,
+      blockedId: target.id,
+    }).first()
+
     if (blockedByCaller) {
       return {
         success: true,
@@ -414,14 +375,11 @@ export class CarinaUsersServ {
     }
 
     // Check if caller is blocked by target
-    const blockedByTarget = await prisma.userBlock.findUnique({
-      where: {
-        blockerId_blockedId: {
-          blockerId: target.id,
-          blockedId: currentUserId,
-        },
-      },
-    })
+    const blockedByTarget = await prisma.orm.public.UserBlock.where({
+      blockerId: target.id,
+      blockedId: currentUserId,
+    }).first()
+
     if (blockedByTarget) {
       return {
         success: true,
@@ -435,14 +393,13 @@ export class CarinaUsersServ {
     }
 
     // Check if friends
-    const friend = await prisma.friend.findFirst({
-      where: {
-        OR: [
-          { userId: currentUserId, friendId: target.id },
-          { userId: target.id, friendId: currentUserId },
-        ],
-      },
-    })
+    const friend = await prisma.orm.public.Friend.where((f) =>
+      or(
+        and(f.userId.eq(currentUserId), f.friendId.eq(target.id)),
+        and(f.userId.eq(target.id), f.friendId.eq(currentUserId))
+      )
+    ).first()
+
     if (friend) {
       return {
         success: true,
@@ -456,14 +413,16 @@ export class CarinaUsersServ {
     }
 
     // Check pending friend requests
-    const friendReq = await prisma.friendRequest.findFirst({
-      where: {
-        OR: [
-          { senderId: currentUserId, receiverId: target.id, status: 'PENDING' },
-          { senderId: target.id, receiverId: currentUserId, status: 'PENDING' },
-        ],
-      },
-    })
+    const friendReq = await prisma.orm.public.FriendRequest.where((r) =>
+      and(
+        r.status.eq('PENDING'),
+        or(
+          and(r.senderId.eq(currentUserId), r.receiverId.eq(target.id)),
+          and(r.senderId.eq(target.id), r.receiverId.eq(currentUserId))
+        )
+      )
+    ).first()
+
     if (friendReq) {
       const isOutgoing = friendReq.senderId === currentUserId
       return {
@@ -565,14 +524,14 @@ export class CarinaUsersServ {
       musicCount,
       customListCount,
     ] = await Promise.all([
-      prisma.animeList.count({ where: { userId: target.id } }),
-      prisma.mangaList.count({ where: { userId: target.id } }),
-      prisma.movieList.count({ where: { userId: target.id } }),
-      prisma.tvList.count({ where: { userId: target.id } }),
-      prisma.gameList.count({ where: { userId: target.id } }),
-      prisma.bookList.count({ where: { userId: target.id } }),
-      prisma.musicList.count({ where: { userId: target.id } }),
-      prisma.customList.count({ where: { userId: target.id } }),
+      countOf(prisma.orm.public.AnimeList.where({ userId: target.id })),
+      countOf(prisma.orm.public.MangaList.where({ userId: target.id })),
+      countOf(prisma.orm.public.MovieList.where({ userId: target.id })),
+      countOf(prisma.orm.public.TvList.where({ userId: target.id })),
+      countOf(prisma.orm.public.GameList.where({ userId: target.id })),
+      countOf(prisma.orm.public.BookList.where({ userId: target.id })),
+      countOf(prisma.orm.public.MusicList.where({ userId: target.id })),
+      countOf(prisma.orm.public.CustomList.where({ userId: target.id })),
     ])
 
     const earnedBadgeIds = new Set<number>()
@@ -617,12 +576,11 @@ export class CarinaUsersServ {
       (id) => !currentBadgesSet.has(id)
     )
 
-    let updatedBadges = target.badges
+    let updatedBadges = [...target.badges]
     if (newlyAwardedBadgeIds.length > 0) {
       updatedBadges = [...target.badges, ...newlyAwardedBadgeIds]
-      await prisma.user.update({
-        where: { id: target.id },
-        data: { badges: updatedBadges },
+      await prisma.orm.public.User.where({ id: target.id }).update({
+        badges: updatedBadges,
       })
     }
 
@@ -656,28 +614,19 @@ export class CarinaUsersServ {
       ? new IRISBitField(sessionUser.permissions).has(IRISFlags.ADMINISTRATOR)
       : false
 
-    const where: Prisma.ActivityLogWhereInput = {
-      userId: target.id,
-      ...(!isOwner && !isAdmin ? { isPrivate: false } : {}),
+    let activityQuery = prisma.orm.public.ActivityLog.where({ userId: target.id })
+    if (!isOwner && !isAdmin) {
+      activityQuery = activityQuery.where({ isPrivate: false })
     }
 
     const [total, rawActivities] = await Promise.all([
-      prisma.activityLog.count({ where }),
-      prisma.activityLog.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-        include: {
-          user: {
-            select: {
-              id: true,
-              username: true,
-              customization: true,
-            },
-          },
-        },
-      }),
+      countOf(activityQuery),
+      activityQuery
+        .orderBy((a) => a.createdAt.desc())
+        .offset(skip)
+        .limit(limit)
+        .include('user')
+        .all(),
     ])
 
     const totalPages = Math.max(1, Math.ceil(total / limit))
@@ -702,7 +651,7 @@ export class CarinaUsersServ {
         isSpoiler: a.isSpoiler,
         likeCount: a.likeCount,
         replyCount: a.replyCount,
-        createdAt: a.createdAt.toISOString(),
+        createdAt: toDate(a.createdAt).toISOString(),
         user: {
           id: a.user.id,
           username: a.user.username,
@@ -820,30 +769,25 @@ export class CarinaUsersServ {
       ? new IRISBitField(sessionUser.permissions).has(IRISFlags.ADMINISTRATOR)
       : false
 
-    const where: Prisma.ActivityLogWhereInput = {
-      userId: target.id,
-      ...(mediaTypeFilter ? { mediaType: mediaTypeFilter } : {}),
-      ...(allowedTypes ? { type: { in: allowedTypes } } : {}),
-      ...(!isOwner && !isAdmin ? { isPrivate: false } : {}),
+    let activityQuery = prisma.orm.public.ActivityLog.where({ userId: target.id })
+    if (mediaTypeFilter) {
+      activityQuery = activityQuery.where({ mediaType: mediaTypeFilter })
+    }
+    if (allowedTypes && allowedTypes.length > 0) {
+      activityQuery = activityQuery.where((a) => a.type.in(allowedTypes!))
+    }
+    if (!isOwner && !isAdmin) {
+      activityQuery = activityQuery.where({ isPrivate: false })
     }
 
     const [total, rawActivities] = await Promise.all([
-      prisma.activityLog.count({ where }),
-      prisma.activityLog.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-        include: {
-          user: {
-            select: {
-              id: true,
-              username: true,
-              customization: true,
-            },
-          },
-        },
-      }),
+      countOf(activityQuery),
+      activityQuery
+        .orderBy((a) => a.createdAt.desc())
+        .offset(skip)
+        .limit(limit)
+        .include('user')
+        .all(),
     ])
 
     const totalPages = Math.max(1, Math.ceil(total / limit))
@@ -868,7 +812,7 @@ export class CarinaUsersServ {
         isSpoiler: a.isSpoiler,
         likeCount: a.likeCount,
         replyCount: a.replyCount,
-        createdAt: a.createdAt.toISOString(),
+        createdAt: toDate(a.createdAt).toISOString(),
         user: {
           id: a.user.id,
           username: a.user.username,
@@ -907,9 +851,7 @@ export class CarinaUsersServ {
     currentUserPermissions: number[],
     activityId: string
   ) {
-    const activity = await prisma.activityLog.findUnique({
-      where: { id: activityId },
-    })
+    const activity = await prisma.orm.public.ActivityLog.where({ id: activityId }).first()
 
     if (!activity) {
       throw new NotFound('Activity item not found')
@@ -922,9 +864,7 @@ export class CarinaUsersServ {
       throw new Forbidden('You do not have permission to delete this activity item')
     }
 
-    await prisma.activityLog.delete({
-      where: { id: activityId },
-    })
+    await prisma.orm.public.ActivityLog.where({ id: activityId }).delete()
 
     return {
       success: true,
@@ -941,7 +881,7 @@ export class CarinaUsersServ {
       userId: string
       type: FavoriteType
       targetId: number
-      createdAt: Date
+      createdAt: any
     }>,
     targetUserId: string
   ) {
@@ -995,112 +935,101 @@ export class CarinaUsersServ {
       userOtherEntries,
     ] = await Promise.all([
       animeIds.length
-        ? prisma.anime.findMany({
-            where: { id: { in: animeIds } },
-            select: { id: true, titlePrimary: true, titleSecondary: true, titleNative: true, coverImage: true, format: true },
-          })
+        ? prisma.orm.public.Anime.where((m) => m.id.in(animeIds))
+            .select('id', 'titlePrimary', 'titleSecondary', 'titleNative', 'coverImage', 'format')
+            .all()
         : [],
       mangaIds.length
-        ? prisma.manga.findMany({
-            where: { id: { in: mangaIds } },
-            select: { id: true, titlePrimary: true, titleSecondary: true, titleNative: true, coverImage: true, format: true },
-          })
+        ? prisma.orm.public.Manga.where((m) => m.id.in(mangaIds))
+            .select('id', 'titlePrimary', 'titleSecondary', 'titleNative', 'coverImage', 'format')
+            .all()
         : [],
       movieIds.length
-        ? prisma.movie.findMany({
-            where: { id: { in: movieIds } },
-            select: { id: true, titlePrimary: true, titleSecondary: true, titleNative: true, coverImage: true },
-          })
+        ? prisma.orm.public.Movie.where((m) => m.id.in(movieIds))
+            .select('id', 'titlePrimary', 'titleSecondary', 'titleNative', 'coverImage')
+            .all()
         : [],
       tvIds.length
-        ? prisma.tv.findMany({
-            where: { id: { in: tvIds } },
-            select: { id: true, titlePrimary: true, titleSecondary: true, titleNative: true, coverImage: true },
-          })
+        ? prisma.orm.public.Tv.where((m) => m.id.in(tvIds))
+            .select('id', 'titlePrimary', 'titleSecondary', 'titleNative', 'coverImage')
+            .all()
         : [],
       gameIds.length
-        ? prisma.game.findMany({
-            where: { id: { in: gameIds } },
-            select: { id: true, titlePrimary: true, titleSecondary: true, coverImage: true },
-          })
+        ? prisma.orm.public.Game.where((m) => m.id.in(gameIds))
+            .select('id', 'titlePrimary', 'titleSecondary', 'coverImage')
+            .all()
         : [],
       bookIds.length
-        ? prisma.book.findMany({
-            where: { id: { in: bookIds } },
-            select: { id: true, titlePrimary: true, titleSecondary: true, coverImage: true },
-          })
+        ? prisma.orm.public.Book.where((m) => m.id.in(bookIds))
+            .select('id', 'titlePrimary', 'titleSecondary', 'coverImage')
+            .all()
         : [],
       musicIds.length
-        ? prisma.music.findMany({
-            where: { id: { in: musicIds } },
-            select: { id: true, titlePrimary: true, titleSecondary: true, coverImage: true, type: true },
-          })
+        ? prisma.orm.public.Music.where((m) => m.id.in(musicIds))
+            .select('id', 'titlePrimary', 'titleSecondary', 'coverImage', 'type')
+            .all()
         : [],
       characterIds.length
-        ? prisma.character.findMany({
-            where: { id: { in: characterIds } },
-            select: { id: true, namePrimary: true, nameNative: true, image: true },
-          })
+        ? prisma.orm.public.Character.where((m) => m.id.in(characterIds))
+            .select('id', 'namePrimary', 'nameNative', 'image')
+            .all()
         : [],
       personIds.length
-        ? prisma.person.findMany({
-            where: { id: { in: personIds } },
-            select: { id: true, namePrimary: true, nameNative: true, image: true },
-          })
+        ? prisma.orm.public.Person.where((m) => m.id.in(personIds))
+            .select('id', 'namePrimary', 'nameNative', 'image')
+            .all()
         : [],
       studioIds.length
-        ? prisma.studio.findMany({
-            where: { id: { in: studioIds } },
-            select: { id: true, name: true },
-          })
+        ? prisma.orm.public.Studio.where((m) => m.id.in(studioIds))
+            .select('id', 'name')
+            .all()
         : [],
       animeIds.length
-        ? prisma.animeList.findMany({
-            where: { userId: targetUserId, animeId: { in: animeIds } },
-            select: { animeId: true, score: true },
-          })
+        ? prisma.orm.public.AnimeList.where({ userId: targetUserId })
+            .where((m) => m.animeId.in(animeIds))
+            .select('animeId', 'score')
+            .all()
         : [],
       mangaIds.length
-        ? prisma.mangaList.findMany({
-            where: { userId: targetUserId, mangaId: { in: mangaIds } },
-            select: { mangaId: true, score: true },
-          })
+        ? prisma.orm.public.MangaList.where({ userId: targetUserId })
+            .where((m) => m.mangaId.in(mangaIds))
+            .select('mangaId', 'score')
+            .all()
         : [],
       movieIds.length
-        ? prisma.movieList.findMany({
-            where: { userId: targetUserId, movieId: { in: movieIds } },
-            select: { movieId: true, score: true },
-          })
+        ? prisma.orm.public.MovieList.where({ userId: targetUserId })
+            .where((m) => m.movieId.in(movieIds))
+            .select('movieId', 'score')
+            .all()
         : [],
       tvIds.length
-        ? prisma.tvList.findMany({
-            where: { userId: targetUserId, tvId: { in: tvIds } },
-            select: { tvId: true, score: true },
-          })
+        ? prisma.orm.public.TvList.where({ userId: targetUserId })
+            .where((m) => m.tvId.in(tvIds))
+            .select('tvId', 'score')
+            .all()
         : [],
       gameIds.length
-        ? prisma.gameList.findMany({
-            where: { userId: targetUserId, gameId: { in: gameIds } },
-            select: { gameId: true, score: true },
-          })
+        ? prisma.orm.public.GameList.where({ userId: targetUserId })
+            .where((m) => m.gameId.in(gameIds))
+            .select('gameId', 'score')
+            .all()
         : [],
       bookIds.length
-        ? prisma.bookList.findMany({
-            where: { userId: targetUserId, bookId: { in: bookIds } },
-            select: { bookId: true, score: true },
-          })
+        ? prisma.orm.public.BookList.where({ userId: targetUserId })
+            .where((m) => m.bookId.in(bookIds))
+            .select('bookId', 'score')
+            .all()
         : [],
       otherIds.length
-        ? prisma.other.findMany({
-            where: { id: { in: otherIds } },
-            select: { id: true, titlePrimary: true, titleSecondary: true, coverImage: true },
-          })
+        ? prisma.orm.public.Other.where((m) => m.id.in(otherIds))
+            .select('id', 'titlePrimary', 'titleSecondary', 'coverImage')
+            .all()
         : [],
       otherIds.length
-        ? prisma.otherList.findMany({
-            where: { userId: targetUserId, otherId: { in: otherIds } },
-            select: { otherId: true, score: true },
-          })
+        ? prisma.orm.public.OtherList.where({ userId: targetUserId })
+            .where((m) => m.otherId.in(otherIds))
+            .select('otherId', 'score')
+            .all()
         : [],
     ])
 
@@ -1220,7 +1149,7 @@ export class CarinaUsersServ {
         userId: f.userId,
         type: f.type,
         targetId: f.targetId,
-        createdAt: f.createdAt.toISOString(),
+        createdAt: toDate(f.createdAt).toISOString(),
         entity: {
           id: f.targetId,
           title,
@@ -1246,18 +1175,15 @@ export class CarinaUsersServ {
     const limit = Math.max(1, Math.min(50, query?.limit ?? 10))
     const skip = (page - 1) * limit
 
-    const where: Prisma.FavoriteWhereInput = {
-      userId: target.id,
-    }
+    const favQuery = prisma.orm.public.Favorite.where({ userId: target.id })
 
     const [total, rawFavorites] = await Promise.all([
-      prisma.favorite.count({ where }),
-      prisma.favorite.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
+      countOf(favQuery),
+      favQuery
+        .orderBy((f) => f.createdAt.desc())
+        .offset(skip)
+        .limit(limit)
+        .all(),
     ])
 
     const totalPages = Math.max(1, Math.ceil(total / limit))
@@ -1300,19 +1226,18 @@ export class CarinaUsersServ {
     const limit = Math.max(1, Math.min(50, query?.limit ?? 10))
     const skip = (page - 1) * limit
 
-    const where: Prisma.FavoriteWhereInput = {
+    const favQuery = prisma.orm.public.Favorite.where({
       userId: target.id,
       type: targetType,
-    }
+    })
 
     const [total, rawFavorites] = await Promise.all([
-      prisma.favorite.count({ where }),
-      prisma.favorite.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
+      countOf(favQuery),
+      favQuery
+        .orderBy((f) => f.createdAt.desc())
+        .offset(skip)
+        .limit(limit)
+        .all(),
     ])
 
     const totalPages = Math.max(1, Math.ceil(total / limit))
@@ -1347,29 +1272,19 @@ export class CarinaUsersServ {
     const limit = Math.max(1, Math.min(50, query?.limit ?? 10))
     const skip = (page - 1) * limit
 
-    const where: Prisma.FriendWhereInput = {
-      userId: target.id,
-      ...(isOwner ? {} : { isPrivate: false }),
+    let friendQuery = prisma.orm.public.Friend.where({ userId: target.id })
+    if (!isOwner) {
+      friendQuery = friendQuery.where({ isPrivate: false })
     }
 
     const [total, rawFriends] = await Promise.all([
-      prisma.friend.count({ where }),
-      prisma.friend.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-        include: {
-          friend: {
-            select: {
-              id: true,
-              username: true,
-              customization: true,
-              badges: true,
-            },
-          },
-        },
-      }),
+      countOf(friendQuery),
+      friendQuery
+        .orderBy((f) => f.createdAt.desc())
+        .offset(skip)
+        .limit(limit)
+        .include('friend')
+        .all(),
     ])
 
     const totalPages = Math.max(1, Math.ceil(total / limit))
@@ -1382,14 +1297,14 @@ export class CarinaUsersServ {
         friendId: f.friendId,
         nickname: isOwner ? f.nickname : null,
         isPrivate: f.isPrivate,
-        createdAt: f.createdAt.toISOString(),
+        createdAt: toDate(f.createdAt).toISOString(),
         user: {
           id: f.friend.id,
           username: f.friend.username,
           displayName: profile.displayName || null,
           avatarUrl: profile.avatarUrl || null,
           avatarFrame: profile.avatarFrame || null,
-          badges: f.friend.badges,
+          badges: [...f.friend.badges],
         },
       }
     })
@@ -1411,23 +1326,7 @@ export class CarinaUsersServ {
    * Return full account info for authenticated user.
    */
   public static async getMe(currentUserId: string) {
-    const dbUser = await prisma.user.findUnique({
-      where: { id: currentUserId },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        customization: true,
-        settings: true,
-        permissions: true,
-        badges: true,
-        TOTPEnabled: true,
-        emailMfaEnabled: true,
-        publicKey: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    })
+    const dbUser = await prisma.orm.public.User.where({ id: currentUserId }).first()
 
     if (!dbUser) {
       throw new NotFound('User not found')
@@ -1441,13 +1340,13 @@ export class CarinaUsersServ {
         email: dbUser.email,
         customization: dbUser.customization as any,
         settings: dbUser.settings as any,
-        permissions: dbUser.permissions,
-        badges: dbUser.badges,
+        permissions: [...dbUser.permissions],
+        badges: [...dbUser.badges],
         TOTPEnabled: dbUser.TOTPEnabled,
         emailMfaEnabled: dbUser.emailMfaEnabled,
         publicKey: dbUser.publicKey,
-        createdAt: dbUser.createdAt.toISOString(),
-        updatedAt: dbUser.updatedAt.toISOString(),
+        createdAt: toDate(dbUser.createdAt).toISOString(),
+        updatedAt: toDate(dbUser.updatedAt).toISOString(),
       },
     }
   }
@@ -1471,26 +1370,24 @@ export class CarinaUsersServ {
       }
     } | null
   ) {
-    const currentUser = await prisma.user.findUnique({
-      where: { id: currentUserId },
-    })
+    const currentUser = await prisma.orm.public.User.where({ id: currentUserId }).first()
 
     if (!currentUser) {
       throw new NotFound('User not found')
     }
 
-    const updates: Prisma.UserUpdateInput = {}
+    const updates: Record<string, any> = {}
 
     // Check unique username if updated
     if (body?.username) {
       const newUsername = body.username.trim()
       if (newUsername.toLowerCase() !== currentUser.username.toLowerCase()) {
-        const existingUser = await prisma.user.findFirst({
-          where: {
-            username: { equals: newUsername, mode: 'insensitive' },
-            NOT: { id: currentUserId },
-          },
-        })
+        const existingUser = await prisma.orm.public.User.where((u) =>
+          and(
+            u.username.ilike(newUsername),
+            u.id.neq(currentUserId)
+          )
+        ).first()
         if (existingUser) {
           throw new BadRequest(`Username "${newUsername}" is already taken`)
         }
@@ -1502,12 +1399,12 @@ export class CarinaUsersServ {
     if (body?.email) {
       const newEmail = body.email.trim().toLowerCase()
       if (newEmail !== currentUser.email.toLowerCase()) {
-        const existingEmail = await prisma.user.findFirst({
-          where: {
-            email: { equals: newEmail, mode: 'insensitive' },
-            NOT: { id: currentUserId },
-          },
-        })
+        const existingEmail = await prisma.orm.public.User.where((u) =>
+          and(
+            u.email.ilike(newEmail),
+            u.id.neq(currentUserId)
+          )
+        ).first()
         if (existingEmail) {
           throw new BadRequest(`Email "${newEmail}" is already in use`)
         }
@@ -1553,24 +1450,11 @@ export class CarinaUsersServ {
       updates.settings = { ...existingSettings, ...patchSettings } as any
     }
 
-    const updatedUser = await prisma.user.update({
-      where: { id: currentUserId },
-      data: updates,
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        customization: true,
-        settings: true,
-        permissions: true,
-        badges: true,
-        TOTPEnabled: true,
-        emailMfaEnabled: true,
-        publicKey: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    })
+    const updatedUser = await prisma.orm.public.User.where({ id: currentUserId }).update(updates)
+
+    if (!updatedUser) {
+      throw new NotFound('User not found')
+    }
 
     return {
       success: true,
@@ -1581,13 +1465,13 @@ export class CarinaUsersServ {
         email: updatedUser.email,
         customization: updatedUser.customization as any,
         settings: updatedUser.settings as any,
-        permissions: updatedUser.permissions,
-        badges: updatedUser.badges,
+        permissions: [...updatedUser.permissions],
+        badges: [...updatedUser.badges],
         TOTPEnabled: updatedUser.TOTPEnabled,
         emailMfaEnabled: updatedUser.emailMfaEnabled,
         publicKey: updatedUser.publicKey,
-        createdAt: updatedUser.createdAt.toISOString(),
-        updatedAt: updatedUser.updatedAt.toISOString(),
+        createdAt: toDate(updatedUser.createdAt).toISOString(),
+        updatedAt: toDate(updatedUser.updatedAt).toISOString(),
       },
     }
   }
@@ -1624,10 +1508,7 @@ export class CarinaUsersServ {
 
     // Clean up previous asset of this type
     try {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { customization: true },
-      })
+      const user = await prisma.orm.public.User.where({ id: userId }).select('customization').first()
 
       if (user) {
         const profile = getProfileCustomization(user.customization)

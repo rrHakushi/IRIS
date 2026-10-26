@@ -98,11 +98,11 @@ export const MEDIA_CATEGORIES: MediaCategoryConfig[] = [
 
 export type StatusKey =
   | "ALL"
-  | "WATCHING"
+  | "IN_PROGRESS"
   | "ON_HOLD"
   | "COMPLETED"
   | "DROPPED"
-  | "PLANNING"
+  | "PLANNED"
   | "ALBUMS"
   | "TRACKS"
 

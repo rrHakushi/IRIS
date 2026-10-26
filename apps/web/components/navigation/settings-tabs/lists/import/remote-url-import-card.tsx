@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/session-context"
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
 import { Spinner } from "@workspace/ui/components/spinner"
@@ -91,7 +91,7 @@ export function RemoteUrlImportCard(): React.JSX.Element {
                 mediaType: key as any,
                 title: entry.title || "Untitled",
                 externalIds: entry.externalIds || {},
-                status: entry.status || "PLANNING",
+                status: entry.status || "PLANNED",
                 progress: entry.progress,
                 progressVolumes: entry.progressVolumes,
                 progressPages: entry.progressPages,

@@ -1,5 +1,7 @@
+// use prisma-8
+
 model UserStats {
-    id        String    @id @default(uuid())
+    id        String    @id @onCreate(uuid())
     userId    String
     user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
     mediaType MediaType // ANIME, MANGA, MOVIE, TV, GAME, BOOK, MUSIC, OTHER
@@ -22,19 +24,19 @@ model UserStats {
     standardDeviation Float @default(0)
 
     // Distributions (JSON)
-    scoreDistribution       Json? @db.Json // { "10": 2, "20": 0, "80": 15, "100": 8 }
-    genreDistribution       Json? @db.Json // { "Action": { "count": 10, "meanScore": 85, "timeMinutes": 450 } }
-    tagDistribution         Json? @db.Json // { "Cyberpunk": { "count": 4, "meanScore": 90 } }
-    formatDistribution      Json? @db.Json // { "TV": 20, "MOVIE": 5, "OVA": 3 }
-    countryDistribution     Json? @db.Json // { "JP": 35, "KR": 5, "US": 10 }
-    releaseYearDistribution Json? @db.Json // { "2023": 8, "2024": 12 }
-    studioDistribution      Json? @db.Json // { "Kyoto Animation": { "count": 6, "meanScore": 92 } }
-    staffDistribution       Json? @db.Json // { "Hayao Miyazaki": { "count": 5, "meanScore": 95 } }
-    voiceActorDistribution  Json? @db.Json // { "Mamoru Miyano": { "count": 7, "meanScore": 88 } }
-    customStats             Json? @db.Json // Catch-all for extra computed stats
+    scoreDistribution       Json? // { "10": 2, "20": 0, "80": 15, "100": 8 }
+    genreDistribution       Json? // { "Action": { "count": 10, "meanScore": 85, "timeMinutes": 450 } }
+    tagDistribution         Json? // { "Cyberpunk": { "count": 4, "meanScore": 90 } }
+    formatDistribution      Json? // { "TV": 20, "MOVIE": 5, "OVA": 3 }
+    countryDistribution     Json? // { "JP": 35, "KR": 5, "US": 10 }
+    releaseYearDistribution Json? // { "2023": 8, "2024": 12 }
+    studioDistribution      Json? // { "Kyoto Animation": { "count": 6, "meanScore": 92 } }
+    staffDistribution       Json? // { "Hayao Miyazaki": { "count": 5, "meanScore": 95 } }
+    voiceActorDistribution  Json? // { "Mamoru Miyano": { "count": 7, "meanScore": 88 } }
+    customStats             Json? // Catch-all for extra computed stats
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     @@unique([userId, mediaType])
     @@index([userId])

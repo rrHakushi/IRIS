@@ -1,4 +1,4 @@
-import { prisma } from '@IRIS/database'
+import { prisma, countOf, toDate, and, or, normalizeListStatus, type MediaType, type ListStatus } from '@IRIS/database'
 import { NotFound, BadRequest } from '../../lib/errors'
 import { hashPassword } from '../../utils/auth-crypto'
 import { ConnectionSyncQueueManager } from '../carina/connection-sync.queue'
@@ -104,7 +104,7 @@ function emitListActivity(params: {
       ? Number(inc.progressVolumes)
       : (existing ? (existing.volumesProgress ?? existing.progressVolumes ?? 0) : 0)
 
-  const currentStatus = inc.status ?? (existing ? existing.status : 'PLANNING')
+  const currentStatus = inc.status ?? (existing ? existing.status : 'PLANNED')
   const currentScore = inc.score !== undefined ? inc.score : (existing ? existing.score : null)
   const isPrivate = inc.private !== undefined ? Boolean(inc.private) : (existing ? Boolean(existing.private) : false)
 
@@ -336,73 +336,93 @@ export class BorealisListsServ {
     const skip = (page - 1) * limit
     const order = query?.order === 'asc' ? 'asc' : 'desc'
 
-    const where: any = { userId }
+    let q = prisma.orm.public.AnimeList.where({ userId })
     if (query?.status) {
-      where.status = query.status.trim().toUpperCase()
+      q = q.where({ status: query.status.trim().toUpperCase() as any })
     }
-    const mediaWhere: any = query?.q
-      ? {
-          OR: [
-            { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
-            { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
-          ],
-        }
-      : {}
-    const animeWhere = applyListMediaFilters(mediaWhere, query, {
-      yearKey: 'startDateYear',
-      formatField: 'format',
-      formatTransform: (f) => f.toUpperCase(),
-    })
-    if (Object.keys(animeWhere).length > 0) {
-      where.anime = animeWhere
+    if (query?.q) {
+      const qPattern = `%${query.q.trim()}%`
+      q = q.where((al) => al.anime.some((a) => or(a.titlePrimary.ilike(qPattern), a.titleSecondary.ilike(qPattern))))
+    }
+    const formatStr = query?.format || query?.mediaFormat
+    if (formatStr) {
+      const formats = formatStr.split(',').map((f) => f.trim().toUpperCase()).filter(Boolean)
+      if (formats.length > 0) {
+        q = q.where((al) => al.anime.some((a) => a.format.in(formats as any)))
+      }
+    }
+    if (query?.mediaStatus) {
+      const statuses = query.mediaStatus.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean)
+      if (statuses.length > 0) {
+        q = q.where((al) => al.anime.some((a) => a.status.in(statuses as any)))
+      }
+    }
+    if (query?.genre) {
+      const genres = query.genre.split(',').map((g) => g.trim()).filter(Boolean)
+      if (genres.length > 0) {
+        q = q.where((al) => al.anime.some((a) => a.genres.some((g) => g.genre.some((ge) => ge.name.in(genres)))))
+      }
+    }
+    if (query?.year) {
+      const years = query.year.split(',').map((y) => Number(y.trim())).filter((n) => !isNaN(n))
+      if (years.length > 0) {
+        q = q.where((al) => al.anime.some((a) => a.startDateYear.in(years)))
+      }
     }
 
-    let orderBy: any = { updatedAt: order }
+    let itemsQ = q
     if (query?.sortBy === 'title') {
-      orderBy = { anime: { titlePrimary: order } }
+      itemsQ = itemsQ.orderBy((al) => (order === 'asc' ? al.anime.titlePrimary.asc() : al.anime.titlePrimary.desc()))
     } else if (query?.sortBy === 'score') {
-      orderBy = { score: order }
+      itemsQ = itemsQ.orderBy((al) => (order === 'asc' ? al.score.asc() : al.score.desc()))
     } else if (query?.sortBy === 'progress') {
-      orderBy = { progress: order }
+      itemsQ = itemsQ.orderBy((al) => (order === 'asc' ? al.progress.asc() : al.progress.desc()))
     } else if (query?.sortBy === 'createdAt') {
-      orderBy = { createdAt: order }
+      itemsQ = itemsQ.orderBy((al) => (order === 'asc' ? al.createdAt.asc() : al.createdAt.desc()))
+    } else {
+      itemsQ = itemsQ.orderBy((al) => (order === 'asc' ? al.updatedAt.asc() : al.updatedAt.desc()))
     }
 
     const [total, entries] = await Promise.all([
-      prisma.animeList.count({ where }),
-      prisma.animeList.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        include: {
-          anime: {
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              titleNative: true,
-              coverImage: true,
-              bannerImage: true,
-              format: true,
-              status: true,
-              episodeCount: true,
-              averageScore: true,
-              startDateYear: true,
-              genres: { select: { id: true, name: true } },
-            },
-          },
-        },
-      }),
+      countOf(q),
+      itemsQ
+        .offset(skip)
+        .limit(limit)
+        .include('anime', (a) =>
+          a
+            .select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'titleNative',
+              'coverImage',
+              'bannerImage',
+              'format',
+              'status',
+              'episodeCount',
+              'averageScore',
+              'startDateYear'
+            )
+            .include('genres', (g) =>
+              g.include('genre', (ge) => ge.select('id', 'name'))
+            )
+        )
+        .all(),
     ])
 
     return {
       success: true,
       items: entries.map((e) => {
         const { anime, ...entryData } = e
+        const formattedMedia = anime
+          ? {
+              ...anime,
+              genres: (anime.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
+            }
+          : null
         return {
           entry: formatEntry(entryData),
-          media: anime,
+          media: formattedMedia,
         }
       }),
       pagination: {
@@ -416,27 +436,27 @@ export class BorealisListsServ {
   }
 
   public static async getAnimeEntry(userId: string, animeId: number) {
-    const entry = await prisma.animeList.findUnique({
-      where: { userId_animeId: { userId, animeId } },
-      include: {
-        anime: {
-          select: {
-            id: true,
-            titlePrimary: true,
-            titleSecondary: true,
-            titleNative: true,
-            coverImage: true,
-            bannerImage: true,
-            format: true,
-            status: true,
-            episodeCount: true,
-            averageScore: true,
-            startDateYear: true,
-            genres: { select: { id: true, name: true } },
-          },
-        },
-      },
-    })
+    const entry = await prisma.orm.public.AnimeList.where({ userId, animeId })
+      .include('anime', (a) =>
+        a
+          .select(
+            'id',
+            'titlePrimary',
+            'titleSecondary',
+            'titleNative',
+            'coverImage',
+            'bannerImage',
+            'format',
+            'status',
+            'episodeCount',
+            'averageScore',
+            'startDateYear'
+          )
+          .include('genres', (g) =>
+            g.include('genre', (ge) => ge.select('id', 'name'))
+          )
+      )
+      .first()
 
     if (!entry) {
       return {
@@ -447,35 +467,38 @@ export class BorealisListsServ {
     }
 
     const { anime, ...entryData } = entry
+    const formattedMedia = anime
+      ? {
+          ...anime,
+          genres: (anime.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
+        }
+      : null
     return {
       success: true,
       inList: true,
       entry: formatEntry(entryData),
-      media: anime,
+      media: formattedMedia,
     }
   }
 
   public static async upsertAnimeEntry(userId: string, animeId: number, body: any) {
-    const anime = await prisma.anime.findUnique({
-      where: { id: animeId },
-      select: {
-        id: true,
-        episodeCount: true,
-        status: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        bannerImage: true,
-        format: true,
-      },
-    })
+    const anime = await prisma.orm.public.Anime.where({ id: animeId })
+      .select(
+        'id',
+        'episodeCount',
+        'status',
+        'titlePrimary',
+        'titleSecondary',
+        'coverImage',
+        'bannerImage',
+        'format'
+      )
+      .first()
     if (!anime) {
       throw new NotFound(`Anime with ID ${animeId} does not exist`)
     }
 
-    const existing = await prisma.animeList.findUnique({
-      where: { userId_animeId: { userId, animeId } },
-    })
+    const existing = await prisma.orm.public.AnimeList.where({ userId, animeId }).first()
 
     let progress = body.progress !== undefined ? Number(body.progress) : undefined
     if (progress !== undefined && anime.episodeCount && anime.episodeCount > 0) {
@@ -498,24 +521,26 @@ export class BorealisListsServ {
       ...(body.connections !== undefined ? { connections: body.connections } : {}),
     }
 
-    const entry = await prisma.animeList.upsert({
-      where: { userId_animeId: { userId, animeId } },
-      create: {
-        userId,
-        animeId,
-        status: body.status ?? 'PLANNING',
-        progress: progress ?? 0,
-        score: body.score ?? null,
-        notes: encryptNotes(body.notes, userId),
-        rewatched: body.rewatched ?? 0,
-        private: body.private ?? false,
-        startedAt: startedAt ?? null,
-        completedAt: completedAt ?? null,
-        rewatchHistory: body.rewatchHistory ?? null,
-        connections: body.connections ?? null,
-      },
-      update: updateData,
-    })
+    const entry = existing
+      ? await prisma.orm.public.AnimeList.where({ id: existing.id }).update(updateData)
+      : await prisma.orm.public.AnimeList.create({
+          userId,
+          animeId,
+          status: body.status ?? 'PLANNED',
+          progress: progress ?? 0,
+          score: body.score ?? null,
+          notes: encryptNotes(body.notes, userId),
+          rewatched: body.rewatched ?? 0,
+          private: body.private ?? false,
+          startedAt: startedAt ?? null,
+          completedAt: completedAt ?? null,
+          rewatchHistory: body.rewatchHistory ?? null,
+          connections: body.connections ?? null,
+        })
+
+    if (!entry) {
+      throw new Error('Failed to update anime list entry')
+    }
 
     await MediaStatsServ.recalculateMediaStats('ANIME', animeId)
 
@@ -556,28 +581,16 @@ export class BorealisListsServ {
   }
 
   public static async deleteAnimeEntry(userId: string, animeId: number) {
-    const existing = await prisma.animeList.findUnique({
-      where: { userId_animeId: { userId, animeId } },
-    })
+    const existing = await prisma.orm.public.AnimeList.where({ userId, animeId }).first()
     if (!existing) {
       throw new NotFound(`Anime with ID ${animeId} is not in user list`)
     }
 
-    const anime = await prisma.anime.findUnique({
-      where: { id: animeId },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        bannerImage: true,
-        format: true,
-      },
-    })
+    const anime = await prisma.orm.public.Anime.where({ id: animeId })
+      .select('id', 'titlePrimary', 'titleSecondary', 'coverImage', 'bannerImage', 'format')
+      .first()
 
-    await prisma.animeList.delete({
-      where: { id: existing.id },
-    })
+    await prisma.orm.public.AnimeList.where({ id: existing.id }).delete()
 
     await MediaStatsServ.recalculateMediaStats('ANIME', animeId)
 
@@ -600,35 +613,32 @@ export class BorealisListsServ {
   }
 
   public static async incrementAnime(userId: string, animeId: number, body?: { count?: number; status?: string; connections?: any } | null) {
-    const anime = await prisma.anime.findUnique({
-      where: { id: animeId },
-      select: {
-        id: true,
-        episodeCount: true,
-        status: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        bannerImage: true,
-        format: true,
-      },
-    })
+    const anime = await prisma.orm.public.Anime.where({ id: animeId })
+      .select(
+        'id',
+        'episodeCount',
+        'status',
+        'titlePrimary',
+        'titleSecondary',
+        'coverImage',
+        'bannerImage',
+        'format'
+      )
+      .first()
     if (!anime) {
       throw new NotFound(`Anime with ID ${animeId} does not exist`)
     }
 
-    const existing = await prisma.animeList.findUnique({
-      where: { userId_animeId: { userId, animeId } },
-    })
+    const existing = await prisma.orm.public.AnimeList.where({ userId, animeId }).first()
 
     const count = Math.max(1, body?.count ?? 1)
     const currentProgress = existing?.progress ?? 0
     let newProgress = currentProgress + count
-    let newStatus = body?.status ?? existing?.status ?? 'WATCHING'
+    let newStatus = body?.status ?? existing?.status ?? 'IN_PROGRESS'
     let completedAt = existing?.completedAt ?? null
 
-    if (newStatus === 'PLANNING') {
-      newStatus = 'WATCHING'
+    if (newStatus !== 'IN_PROGRESS') {
+      newStatus = 'IN_PROGRESS'
     }
 
     if (anime.episodeCount && anime.episodeCount > 0 && newProgress >= anime.episodeCount) {
@@ -637,27 +647,31 @@ export class BorealisListsServ {
       if (!completedAt) {
         completedAt = new Date()
       }
+    } else {
+      completedAt = null
     }
 
-    const entry = await prisma.animeList.upsert({
-      where: { userId_animeId: { userId, animeId } },
-      create: {
-        userId,
-        animeId,
-        status: newStatus as any,
-        progress: newProgress,
-        startedAt: new Date(),
-        completedAt,
-        connections: (body as any)?.connections ?? null,
-      },
-      update: {
-        status: newStatus as any,
-        progress: newProgress,
-        completedAt,
-        ...(existing?.status === 'PLANNING' ? { startedAt: new Date() } : {}),
-        ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
-      },
-    })
+    const entry = existing
+      ? await prisma.orm.public.AnimeList.where({ id: existing.id }).update({
+          status: newStatus as any,
+          progress: newProgress,
+          completedAt,
+          ...(existing?.status === 'PLANNED' || !existing?.startedAt ? { startedAt: existing?.startedAt ?? new Date() } : {}),
+          ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
+        })
+      : await prisma.orm.public.AnimeList.create({
+          userId,
+          animeId,
+          status: newStatus as any,
+          progress: newProgress,
+          startedAt: new Date(),
+          completedAt,
+          connections: (body as any)?.connections ?? null,
+        })
+
+    if (!entry) {
+      throw new Error('Failed to increment anime list entry')
+    }
 
     await MediaStatsServ.recalculateMediaStats('ANIME', animeId)
 
@@ -698,15 +712,11 @@ export class BorealisListsServ {
   }
 
   public static async getAnimeStats(userId: string, query?: any, isOwner: boolean = true) {
-    const items = await prisma.animeList.findMany({
-      where: { userId, ...(isOwner ? {} : { private: false }) },
-      select: {
-        status: true,
-        progress: true,
-        score: true,
-        rewatched: true,
-      },
-    })
+    let q = prisma.orm.public.AnimeList.where({ userId })
+    if (!isOwner) {
+      q = q.where({ private: false })
+    }
+    const items = await q.select('status', 'progress', 'score', 'rewatched').all()
     const data = await mediaStatsService.getAnimeStats(userId, isOwner, {
       year: query?.year ? Number(query.year) : undefined,
       quarter: query?.quarter ? Number(query.quarter) : undefined,
@@ -720,20 +730,27 @@ export class BorealisListsServ {
   }
 
   public static async getAnimeFilters(userId: string) {
-    const items = await prisma.animeList.findMany({
-      where: { userId },
-      select: {
-        status: true,
-        anime: {
-          select: {
-            format: true,
-            status: true,
-            startDateYear: true,
-            genres: { select: { name: true } },
-          },
-        },
-      },
-    })
+    const rawItems = await prisma.orm.public.AnimeList.where({ userId })
+      .select('status')
+      .include('anime', (a) =>
+        a
+          .select('format', 'status', 'startDateYear')
+          .include('genres', (g) =>
+            g.include('genre', (ge) => ge.select('name'))
+          )
+      )
+      .all()
+    const items = rawItems.map((item) => ({
+      status: item.status,
+      anime: item.anime
+        ? {
+            ...item.anime,
+            genres: (item.anime.genres || [])
+              .filter((g: any) => Boolean(g.genre))
+              .map((g: any) => ({ name: g.genre!.name })),
+          }
+        : null,
+    }))
     return {
       success: true,
       ...computeFilters(items, 'anime', 'startDateYear'),
@@ -750,74 +767,94 @@ export class BorealisListsServ {
     const skip = (page - 1) * limit
     const order = query?.order === 'asc' ? 'asc' : 'desc'
 
-    const where: any = { userId }
+    let q = prisma.orm.public.MangaList.where({ userId })
     if (query?.status) {
-      where.status = query.status.trim().toUpperCase()
+      q = q.where({ status: query.status.trim().toUpperCase() as any })
     }
-    const mediaWhere: any = query?.q
-      ? {
-          OR: [
-            { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
-            { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
-          ],
-        }
-      : {}
-    const mangaWhere = applyListMediaFilters(mediaWhere, query, {
-      yearKey: 'startDateYear',
-      formatField: 'format',
-      formatTransform: (f) => f.toUpperCase(),
-    })
-    if (Object.keys(mangaWhere).length > 0) {
-      where.manga = mangaWhere
+    if (query?.q) {
+      const qPattern = `%${query.q.trim()}%`
+      q = q.where((ml) => ml.manga.some((m) => or(m.titlePrimary.ilike(qPattern), m.titleSecondary.ilike(qPattern))))
+    }
+    const formatStr = query?.format || query?.mediaFormat
+    if (formatStr) {
+      const formats = formatStr.split(',').map((f) => f.trim().toUpperCase()).filter(Boolean)
+      if (formats.length > 0) {
+        q = q.where((ml) => ml.manga.some((m) => m.format.in(formats as any)))
+      }
+    }
+    if (query?.mediaStatus) {
+      const statuses = query.mediaStatus.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean)
+      if (statuses.length > 0) {
+        q = q.where((ml) => ml.manga.some((m) => m.status.in(statuses as any)))
+      }
+    }
+    if (query?.genre) {
+      const genres = query.genre.split(',').map((g) => g.trim()).filter(Boolean)
+      if (genres.length > 0) {
+        q = q.where((ml) => ml.manga.some((m) => m.genres.some((g) => g.genre.some((ge) => ge.name.in(genres)))))
+      }
+    }
+    if (query?.year) {
+      const years = query.year.split(',').map((y) => Number(y.trim())).filter((n) => !isNaN(n))
+      if (years.length > 0) {
+        q = q.where((ml) => ml.manga.some((m) => m.startDateYear.in(years)))
+      }
     }
 
-    let orderBy: any = { updatedAt: order }
+    let itemsQ = q
     if (query?.sortBy === 'title') {
-      orderBy = { manga: { titlePrimary: order } }
+      itemsQ = itemsQ.orderBy((ml) => (order === 'asc' ? ml.manga.titlePrimary.asc() : ml.manga.titlePrimary.desc()))
     } else if (query?.sortBy === 'score') {
-      orderBy = { score: order }
+      itemsQ = itemsQ.orderBy((ml) => (order === 'asc' ? ml.score.asc() : ml.score.desc()))
     } else if (query?.sortBy === 'progress') {
-      orderBy = { chaptersProgress: order }
+      itemsQ = itemsQ.orderBy((ml) => (order === 'asc' ? ml.chaptersProgress.asc() : ml.chaptersProgress.desc()))
     } else if (query?.sortBy === 'createdAt') {
-      orderBy = { createdAt: order }
+      itemsQ = itemsQ.orderBy((ml) => (order === 'asc' ? ml.createdAt.asc() : ml.createdAt.desc()))
+    } else {
+      itemsQ = itemsQ.orderBy((ml) => (order === 'asc' ? ml.updatedAt.asc() : ml.updatedAt.desc()))
     }
 
     const [total, entries] = await Promise.all([
-      prisma.mangaList.count({ where }),
-      prisma.mangaList.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        include: {
-          manga: {
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              titleNative: true,
-              coverImage: true,
-              bannerImage: true,
-              format: true,
-              status: true,
-              chapterCount: true,
-              volumeCount: true,
-              averageScore: true,
-              startDateYear: true,
-              genres: { select: { id: true, name: true } },
-            },
-          },
-        },
-      }),
+      countOf(q),
+      itemsQ
+        .offset(skip)
+        .limit(limit)
+        .include('manga', (m) =>
+          m
+            .select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'titleNative',
+              'coverImage',
+              'bannerImage',
+              'format',
+              'status',
+              'chapterCount',
+              'volumeCount',
+              'averageScore',
+              'startDateYear'
+            )
+            .include('genres', (g) =>
+              g.include('genre', (ge) => ge.select('id', 'name'))
+            )
+        )
+        .all(),
     ])
 
     return {
       success: true,
       items: entries.map((e) => {
         const { manga, ...entryData } = e
+        const formattedMedia = manga
+          ? {
+              ...manga,
+              genres: (manga.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
+            }
+          : null
         return {
           entry: formatEntry(entryData),
-          media: manga,
+          media: formattedMedia,
         }
       }),
       pagination: {
@@ -831,28 +868,28 @@ export class BorealisListsServ {
   }
 
   public static async getMangaEntry(userId: string, mangaId: number) {
-    const entry = await prisma.mangaList.findUnique({
-      where: { userId_mangaId: { userId, mangaId } },
-      include: {
-        manga: {
-          select: {
-            id: true,
-            titlePrimary: true,
-            titleSecondary: true,
-            titleNative: true,
-            coverImage: true,
-            bannerImage: true,
-            format: true,
-            status: true,
-            chapterCount: true,
-            volumeCount: true,
-            averageScore: true,
-            startDateYear: true,
-            genres: { select: { id: true, name: true } },
-          },
-        },
-      },
-    })
+    const entry = await prisma.orm.public.MangaList.where({ userId, mangaId })
+      .include('manga', (m) =>
+        m
+          .select(
+            'id',
+            'titlePrimary',
+            'titleSecondary',
+            'titleNative',
+            'coverImage',
+            'bannerImage',
+            'format',
+            'status',
+            'chapterCount',
+            'volumeCount',
+            'averageScore',
+            'startDateYear'
+          )
+          .include('genres', (g) =>
+            g.include('genre', (ge) => ge.select('id', 'name'))
+          )
+      )
+      .first()
 
     if (!entry) {
       return {
@@ -863,35 +900,38 @@ export class BorealisListsServ {
     }
 
     const { manga, ...entryData } = entry
+    const formattedMedia = manga
+      ? {
+          ...manga,
+          genres: (manga.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
+        }
+      : null
     return {
       success: true,
       inList: true,
       entry: formatEntry(entryData),
-      media: manga,
+      media: formattedMedia,
     }
   }
 
   public static async upsertMangaEntry(userId: string, mangaId: number, body: any) {
-    const manga = await prisma.manga.findUnique({
-      where: { id: mangaId },
-      select: {
-        id: true,
-        chapterCount: true,
-        volumeCount: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        bannerImage: true,
-        format: true,
-      },
-    })
+    const manga = await prisma.orm.public.Manga.where({ id: mangaId })
+      .select(
+        'id',
+        'chapterCount',
+        'volumeCount',
+        'titlePrimary',
+        'titleSecondary',
+        'coverImage',
+        'bannerImage',
+        'format'
+      )
+      .first()
     if (!manga) {
       throw new NotFound(`Manga with ID ${mangaId} does not exist`)
     }
 
-    const existing = await prisma.mangaList.findUnique({
-      where: { userId_mangaId: { userId, mangaId } },
-    })
+    const existing = await prisma.orm.public.MangaList.where({ userId, mangaId }).first()
 
     let chaptersProgress = body.chaptersProgress !== undefined ? Number(body.chaptersProgress) : undefined
     if (chaptersProgress !== undefined && manga.chapterCount && manga.chapterCount > 0) {
@@ -916,25 +956,27 @@ export class BorealisListsServ {
       ...(body.connections !== undefined ? { connections: body.connections } : {}),
     }
 
-    const entry = await prisma.mangaList.upsert({
-      where: { userId_mangaId: { userId, mangaId } },
-      create: {
-        userId,
-        mangaId,
-        status: body.status ?? 'PLANNING',
-        chaptersProgress: chaptersProgress ?? 0,
-        volumesProgress: volumesProgress ?? 0,
-        score: body.score ?? null,
-        notes: encryptNotes(body.notes, userId),
-        reread: body.reread ?? 0,
-        private: body.private ?? false,
-        startedAt: startedAt ?? null,
-        completedAt: completedAt ?? null,
-        rereadHistory: body.rereadHistory ?? null,
-        connections: body.connections ?? null,
-      },
-      update: updateData,
-    })
+    const entry = existing
+      ? await prisma.orm.public.MangaList.where({ id: existing.id }).update(updateData)
+      : await prisma.orm.public.MangaList.create({
+          userId,
+          mangaId,
+          status: body.status ?? 'PLANNED',
+          chaptersProgress: chaptersProgress ?? 0,
+          volumesProgress: volumesProgress ?? 0,
+          score: body.score ?? null,
+          notes: encryptNotes(body.notes, userId),
+          reread: body.reread ?? 0,
+          private: body.private ?? false,
+          startedAt: startedAt ?? null,
+          completedAt: completedAt ?? null,
+          rereadHistory: body.rereadHistory ?? null,
+          connections: body.connections ?? null,
+        })
+
+    if (!entry) {
+      throw new Error('Failed to update manga list entry')
+    }
 
     await MediaStatsServ.recalculateMediaStats('MANGA', mangaId)
 
@@ -975,28 +1017,16 @@ export class BorealisListsServ {
   }
 
   public static async deleteMangaEntry(userId: string, mangaId: number) {
-    const existing = await prisma.mangaList.findUnique({
-      where: { userId_mangaId: { userId, mangaId } },
-    })
+    const existing = await prisma.orm.public.MangaList.where({ userId, mangaId }).first()
     if (!existing) {
       throw new NotFound(`Manga with ID ${mangaId} is not in user list`)
     }
 
-    const manga = await prisma.manga.findUnique({
-      where: { id: mangaId },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        bannerImage: true,
-        format: true,
-      },
-    })
+    const manga = await prisma.orm.public.Manga.where({ id: mangaId })
+      .select('id', 'titlePrimary', 'titleSecondary', 'coverImage', 'bannerImage', 'format')
+      .first()
 
-    await prisma.mangaList.delete({
-      where: { id: existing.id },
-    })
+    await prisma.orm.public.MangaList.where({ id: existing.id }).delete()
 
     await MediaStatsServ.recalculateMediaStats('MANGA', mangaId)
 
@@ -1023,40 +1053,46 @@ export class BorealisListsServ {
     mangaId: number,
     body?: { count?: number; type?: 'chapter' | 'volume'; status?: string; connections?: any } | null
   ) {
-    const manga = await prisma.manga.findUnique({
-      where: { id: mangaId },
-      select: {
-        id: true,
-        chapterCount: true,
-        volumeCount: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        bannerImage: true,
-        format: true,
-      },
-    })
+    const manga = await prisma.orm.public.Manga.where({ id: mangaId })
+      .select(
+        'id',
+        'chapterCount',
+        'volumeCount',
+        'titlePrimary',
+        'titleSecondary',
+        'coverImage',
+        'bannerImage',
+        'format'
+      )
+      .first()
     if (!manga) {
       throw new NotFound(`Manga with ID ${mangaId} does not exist`)
     }
 
-    const existing = await prisma.mangaList.findUnique({
-      where: { userId_mangaId: { userId, mangaId } },
-    })
+    const existing = await prisma.orm.public.MangaList.where({ userId, mangaId }).first()
 
     const count = Math.max(1, body?.count ?? 1)
     const isVolume = body?.type === 'volume'
     let chaptersProgress = existing?.chaptersProgress ?? 0
     let volumesProgress = existing?.volumesProgress ?? 0
-    let newStatus = body?.status ?? existing?.status ?? 'READING'
+    let newStatus = body?.status ?? existing?.status ?? 'IN_PROGRESS'
     let completedAt = existing?.completedAt ?? null
 
-    if (newStatus === 'PLANNING') {
-      newStatus = 'READING'
+    if (newStatus !== 'IN_PROGRESS') {
+      newStatus = 'IN_PROGRESS'
     }
 
     if (isVolume) {
       volumesProgress += count
+      if (manga.volumeCount && manga.volumeCount > 0 && volumesProgress >= manga.volumeCount) {
+        volumesProgress = manga.volumeCount
+        newStatus = 'COMPLETED'
+        if (!completedAt) {
+          completedAt = new Date()
+        }
+      } else {
+        completedAt = null
+      }
     } else {
       chaptersProgress += count
       if (manga.chapterCount && manga.chapterCount > 0 && chaptersProgress >= manga.chapterCount) {
@@ -1065,30 +1101,34 @@ export class BorealisListsServ {
         if (!completedAt) {
           completedAt = new Date()
         }
+      } else {
+        completedAt = null
       }
     }
 
-    const entry = await prisma.mangaList.upsert({
-      where: { userId_mangaId: { userId, mangaId } },
-      create: {
-        userId,
-        mangaId,
-        status: newStatus as any,
-        chaptersProgress,
-        volumesProgress,
-        startedAt: new Date(),
-        completedAt,
-        connections: (body as any)?.connections ?? null,
-      },
-      update: {
-        status: newStatus as any,
-        chaptersProgress,
-        volumesProgress,
-        completedAt,
-        ...(existing?.status === 'PLANNING' ? { startedAt: new Date() } : {}),
-        ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
-      },
-    })
+    const entry = existing
+      ? await prisma.orm.public.MangaList.where({ id: existing.id }).update({
+          status: newStatus as any,
+          chaptersProgress,
+          volumesProgress,
+          completedAt,
+          ...(existing?.status === 'PLANNED' || !existing?.startedAt ? { startedAt: existing?.startedAt ?? new Date() } : {}),
+          ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
+        })
+      : await prisma.orm.public.MangaList.create({
+          userId,
+          mangaId,
+          status: newStatus as any,
+          chaptersProgress,
+          volumesProgress,
+          startedAt: new Date(),
+          completedAt,
+          connections: (body as any)?.connections ?? null,
+        })
+
+    if (!entry) {
+      throw new Error('Failed to increment manga list entry')
+    }
 
     await MediaStatsServ.recalculateMediaStats('MANGA', mangaId)
 
@@ -1129,16 +1169,11 @@ export class BorealisListsServ {
   }
 
   public static async getMangaStats(userId: string, query?: any, isOwner: boolean = true) {
-    const items = await prisma.mangaList.findMany({
-      where: { userId, ...(isOwner ? {} : { private: false }) },
-      select: {
-        status: true,
-        chaptersProgress: true,
-        volumesProgress: true,
-        score: true,
-        reread: true,
-      },
-    })
+    let q = prisma.orm.public.MangaList.where({ userId })
+    if (!isOwner) {
+      q = q.where({ private: false })
+    }
+    const items = await q.select('status', 'chaptersProgress', 'volumesProgress', 'score', 'reread').all()
     const data = await mediaStatsService.getMangaStats(userId, isOwner, {
       year: query?.year ? Number(query.year) : undefined,
       quarter: query?.quarter ? Number(query.quarter) : undefined,
@@ -1152,20 +1187,27 @@ export class BorealisListsServ {
   }
 
   public static async getMangaFilters(userId: string) {
-    const items = await prisma.mangaList.findMany({
-      where: { userId },
-      select: {
-        status: true,
-        manga: {
-          select: {
-            format: true,
-            status: true,
-            startDateYear: true,
-            genres: { select: { name: true } },
-          },
-        },
-      },
-    })
+    const rawItems = await prisma.orm.public.MangaList.where({ userId })
+      .select('status')
+      .include('manga', (m) =>
+        m
+          .select('format', 'status', 'startDateYear')
+          .include('genres', (g) =>
+            g.include('genre', (ge) => ge.select('name'))
+          )
+      )
+      .all()
+    const items = rawItems.map((item) => ({
+      status: item.status,
+      manga: item.manga
+        ? {
+            ...item.manga,
+            genres: (item.manga.genres || [])
+              .filter((g: any) => Boolean(g.genre))
+              .map((g: any) => ({ name: g.genre!.name })),
+          }
+        : null,
+    }))
     return {
       success: true,
       ...computeFilters(items, 'manga', 'startDateYear'),
@@ -1182,69 +1224,83 @@ export class BorealisListsServ {
     const skip = (page - 1) * limit
     const order = query?.order === 'asc' ? 'asc' : 'desc'
 
-    const where: any = { userId }
+    let q = prisma.orm.public.MovieList.where({ userId })
     if (query?.status) {
-      where.status = query.status.trim().toUpperCase()
+      q = q.where({ status: query.status.trim().toUpperCase() as any })
     }
-    const mediaWhere: any = query?.q
-      ? {
-          OR: [
-            { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
-            { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
-          ],
-        }
-      : {}
-    const movieWhere = applyListMediaFilters(mediaWhere, query, {
-      yearKey: 'releaseDateYear',
-      formatField: '',
-    })
-    if (Object.keys(movieWhere).length > 0) {
-      where.movie = movieWhere
+    if (query?.q) {
+      const qPattern = `%${query.q.trim()}%`
+      q = q.where((ml) => ml.movie.some((m) => or(m.titlePrimary.ilike(qPattern), m.titleSecondary.ilike(qPattern))))
+    }
+    if (query?.mediaStatus) {
+      const statuses = query.mediaStatus.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean)
+      if (statuses.length > 0) {
+        q = q.where((ml) => ml.movie.some((m) => m.status.in(statuses as any)))
+      }
+    }
+    if (query?.genre) {
+      const genres = query.genre.split(',').map((g) => g.trim()).filter(Boolean)
+      if (genres.length > 0) {
+        q = q.where((ml) => ml.movie.some((m) => m.genres.some((g) => g.genre.some((ge) => ge.name.in(genres)))))
+      }
+    }
+    if (query?.year) {
+      const years = query.year.split(',').map((y) => Number(y.trim())).filter((n) => !isNaN(n))
+      if (years.length > 0) {
+        q = q.where((ml) => ml.movie.some((m) => m.releaseDateYear.in(years)))
+      }
     }
 
-    let orderBy: any = { updatedAt: order }
+    let itemsQ = q
     if (query?.sortBy === 'title') {
-      orderBy = { movie: { titlePrimary: order } }
+      itemsQ = itemsQ.orderBy((ml) => (order === 'asc' ? ml.movie.titlePrimary.asc() : ml.movie.titlePrimary.desc()))
     } else if (query?.sortBy === 'score') {
-      orderBy = { score: order }
+      itemsQ = itemsQ.orderBy((ml) => (order === 'asc' ? ml.score.asc() : ml.score.desc()))
     } else if (query?.sortBy === 'createdAt') {
-      orderBy = { createdAt: order }
+      itemsQ = itemsQ.orderBy((ml) => (order === 'asc' ? ml.createdAt.asc() : ml.createdAt.desc()))
+    } else {
+      itemsQ = itemsQ.orderBy((ml) => (order === 'asc' ? ml.updatedAt.asc() : ml.updatedAt.desc()))
     }
 
     const [total, entries] = await Promise.all([
-      prisma.movieList.count({ where }),
-      prisma.movieList.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        include: {
-          movie: {
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              titleNative: true,
-              coverImage: true,
-              bannerImage: true,
-              status: true,
-              runtime: true,
-              averageScore: true,
-              releaseDateYear: true,
-              genres: { select: { id: true, name: true } },
-            },
-          },
-        },
-      }),
+      countOf(q),
+      itemsQ
+        .offset(skip)
+        .limit(limit)
+        .include('movie', (m) =>
+          m
+            .select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'titleNative',
+              'coverImage',
+              'bannerImage',
+              'status',
+              'runtime',
+              'averageScore',
+              'releaseDateYear'
+            )
+            .include('genres', (g) =>
+              g.include('genre', (ge) => ge.select('id', 'name'))
+            )
+        )
+        .all(),
     ])
 
     return {
       success: true,
       items: entries.map((e) => {
         const { movie, ...entryData } = e
+        const formattedMedia = movie
+          ? {
+              ...movie,
+              genres: (movie.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
+            }
+          : null
         return {
           entry: formatEntry(entryData),
-          media: movie,
+          media: formattedMedia,
         }
       }),
       pagination: {
@@ -1258,26 +1314,26 @@ export class BorealisListsServ {
   }
 
   public static async getMovieEntry(userId: string, movieId: number) {
-    const entry = await prisma.movieList.findUnique({
-      where: { userId_movieId: { userId, movieId } },
-      include: {
-        movie: {
-          select: {
-            id: true,
-            titlePrimary: true,
-            titleSecondary: true,
-            titleNative: true,
-            coverImage: true,
-            bannerImage: true,
-            status: true,
-            runtime: true,
-            averageScore: true,
-            releaseDateYear: true,
-            genres: { select: { id: true, name: true } },
-          },
-        },
-      },
-    })
+    const entry = await prisma.orm.public.MovieList.where({ userId, movieId })
+      .include('movie', (m) =>
+        m
+          .select(
+            'id',
+            'titlePrimary',
+            'titleSecondary',
+            'titleNative',
+            'coverImage',
+            'bannerImage',
+            'status',
+            'runtime',
+            'averageScore',
+            'releaseDateYear'
+          )
+          .include('genres', (g) =>
+            g.include('genre', (ge) => ge.select('id', 'name'))
+          )
+      )
+      .first()
 
     if (!entry) {
       return {
@@ -1288,32 +1344,29 @@ export class BorealisListsServ {
     }
 
     const { movie, ...entryData } = entry
+    const formattedMedia = movie
+      ? {
+          ...movie,
+          genres: (movie.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
+        }
+      : null
     return {
       success: true,
       inList: true,
       entry: formatEntry(entryData),
-      media: movie,
+      media: formattedMedia,
     }
   }
 
   public static async upsertMovieEntry(userId: string, movieId: number, body: any) {
-    const movie = await prisma.movie.findUnique({
-      where: { id: movieId },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        bannerImage: true,
-      },
-    })
+    const movie = await prisma.orm.public.Movie.where({ id: movieId })
+      .select('id', 'titlePrimary', 'titleSecondary', 'coverImage', 'bannerImage')
+      .first()
     if (!movie) {
       throw new NotFound(`Movie with ID ${movieId} does not exist`)
     }
 
-    const existing = await prisma.movieList.findUnique({
-      where: { userId_movieId: { userId, movieId } },
-    })
+    const existing = await prisma.orm.public.MovieList.where({ userId, movieId }).first()
 
     const startedAt = body.startedAt !== undefined ? (body.startedAt ? new Date(body.startedAt) : null) : undefined
     const completedAt = body.completedAt !== undefined ? (body.completedAt ? new Date(body.completedAt) : null) : undefined
@@ -1330,23 +1383,25 @@ export class BorealisListsServ {
       ...(body.connections !== undefined ? { connections: body.connections } : {}),
     }
 
-    const entry = await prisma.movieList.upsert({
-      where: { userId_movieId: { userId, movieId } },
-      create: {
-        userId,
-        movieId,
-        status: body.status ?? 'PLANNING',
-        score: body.score ?? null,
-        notes: encryptNotes(body.notes, userId),
-        rewatched: body.rewatched ?? 0,
-        private: body.private ?? false,
-        startedAt: startedAt ?? null,
-        completedAt: completedAt ?? null,
-        rewatchHistory: body.rewatchHistory ?? null,
-        connections: body.connections ?? null,
-      },
-      update: updateData,
-    })
+    const entry = existing
+      ? await prisma.orm.public.MovieList.where({ id: existing.id }).update(updateData)
+      : await prisma.orm.public.MovieList.create({
+          userId,
+          movieId,
+          status: body.status ?? 'PLANNED',
+          score: body.score ?? null,
+          notes: encryptNotes(body.notes, userId),
+          rewatched: body.rewatched ?? 0,
+          private: body.private ?? false,
+          startedAt: startedAt ?? null,
+          completedAt: completedAt ?? null,
+          rewatchHistory: body.rewatchHistory ?? null,
+          connections: body.connections ?? null,
+        })
+
+    if (!entry) {
+      throw new Error('Failed to update movie list entry')
+    }
 
     await MediaStatsServ.recalculateMediaStats('MOVIE', movieId)
 
@@ -1387,27 +1442,16 @@ export class BorealisListsServ {
   }
 
   public static async deleteMovieEntry(userId: string, movieId: number) {
-    const existing = await prisma.movieList.findUnique({
-      where: { userId_movieId: { userId, movieId } },
-    })
+    const existing = await prisma.orm.public.MovieList.where({ userId, movieId }).first()
     if (!existing) {
       throw new NotFound(`Movie with ID ${movieId} is not in user list`)
     }
 
-    const movie = await prisma.movie.findUnique({
-      where: { id: movieId },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        bannerImage: true,
-      },
-    })
+    const movie = await prisma.orm.public.Movie.where({ id: movieId })
+      .select('id', 'titlePrimary', 'titleSecondary', 'coverImage', 'bannerImage')
+      .first()
 
-    await prisma.movieList.delete({
-      where: { id: existing.id },
-    })
+    await prisma.orm.public.MovieList.where({ id: existing.id }).delete()
 
     await MediaStatsServ.recalculateMediaStats('MOVIE', movieId)
 
@@ -1430,44 +1474,37 @@ export class BorealisListsServ {
   }
 
   public static async incrementMovie(userId: string, movieId: number, body?: { count?: number; connections?: any } | null) {
-    const movie = await prisma.movie.findUnique({
-      where: { id: movieId },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        bannerImage: true,
-      },
-    })
+    const movie = await prisma.orm.public.Movie.where({ id: movieId })
+      .select('id', 'titlePrimary', 'titleSecondary', 'coverImage', 'bannerImage')
+      .first()
     if (!movie) {
       throw new NotFound(`Movie with ID ${movieId} does not exist`)
     }
 
-    const existing = await prisma.movieList.findUnique({
-      where: { userId_movieId: { userId, movieId } },
-    })
+    const existing = await prisma.orm.public.MovieList.where({ userId, movieId }).first()
 
     const count = Math.max(1, body?.count ?? 1)
     const newRewatched = (existing?.rewatched ?? 0) + count
 
-    const entry = await prisma.movieList.upsert({
-      where: { userId_movieId: { userId, movieId } },
-      create: {
-        userId,
-        movieId,
-        status: 'COMPLETED',
-        rewatched: newRewatched,
-        completedAt: new Date(),
-        connections: (body as any)?.connections ?? null,
-      },
-      update: {
-        status: 'COMPLETED',
-        rewatched: newRewatched,
-        completedAt: existing?.completedAt ?? new Date(),
-        ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
-      },
-    })
+    const entry = existing
+      ? await prisma.orm.public.MovieList.where({ id: existing.id }).update({
+          status: 'COMPLETED',
+          rewatched: newRewatched,
+          completedAt: existing?.completedAt ?? new Date(),
+          ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
+        })
+      : await prisma.orm.public.MovieList.create({
+          userId,
+          movieId,
+          status: 'COMPLETED',
+          rewatched: newRewatched,
+          completedAt: new Date(),
+          connections: (body as any)?.connections ?? null,
+        })
+
+    if (!entry) {
+      throw new Error('Failed to increment movie list entry')
+    }
 
     await MediaStatsServ.recalculateMediaStats('MOVIE', movieId)
 
@@ -1508,14 +1545,11 @@ export class BorealisListsServ {
   }
 
   public static async getMovieStats(userId: string, query?: any, isOwner: boolean = true) {
-    const items = await prisma.movieList.findMany({
-      where: { userId, ...(isOwner ? {} : { private: false }) },
-      select: {
-        status: true,
-        score: true,
-        rewatched: true,
-      },
-    })
+    let q = prisma.orm.public.MovieList.where({ userId })
+    if (!isOwner) {
+      q = q.where({ private: false })
+    }
+    const items = await q.select('status', 'score', 'rewatched').all()
     const data = await mediaStatsService.getMovieStats(userId, isOwner, {
       year: query?.year ? Number(query.year) : undefined,
       quarter: query?.quarter ? Number(query.quarter) : undefined,
@@ -1529,19 +1563,27 @@ export class BorealisListsServ {
   }
 
   public static async getMovieFilters(userId: string) {
-    const items = await prisma.movieList.findMany({
-      where: { userId },
-      select: {
-        status: true,
-        movie: {
-          select: {
-            status: true,
-            releaseDateYear: true,
-            genres: { select: { name: true } },
-          },
-        },
-      },
-    })
+    const rawItems = await prisma.orm.public.MovieList.where({ userId })
+      .select('status')
+      .include('movie', (m) =>
+        m
+          .select('status', 'releaseDateYear')
+          .include('genres', (g) =>
+            g.include('genre', (ge) => ge.select('name'))
+          )
+      )
+      .all()
+    const items = rawItems.map((item) => ({
+      status: item.status,
+      movie: item.movie
+        ? {
+            ...item.movie,
+            genres: (item.movie.genres || [])
+              .filter((g: any) => Boolean(g.genre))
+              .map((g: any) => ({ name: g.genre!.name })),
+          }
+        : null,
+    }))
     return {
       success: true,
       ...computeFilters(items, 'movie', 'releaseDateYear'),
@@ -1558,82 +1600,97 @@ export class BorealisListsServ {
     const skip = (page - 1) * limit
     const order = query?.order === 'asc' ? 'asc' : 'desc'
 
-    const where: any = { userId }
+    let q = prisma.orm.public.TvList.where({ userId })
     if (query?.status) {
-      where.status = query.status.trim().toUpperCase()
+      q = q.where({ status: query.status.trim().toUpperCase() as any })
     }
-    const mediaWhere: any = query?.q
-      ? {
-          OR: [
-            { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
-            { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
-          ],
-        }
-      : {}
-    const tvWhere = applyListMediaFilters(mediaWhere, query, {
-      yearKey: 'firstAiredYear',
-      formatField: '',
-    })
-    if (Object.keys(tvWhere).length > 0) {
-      where.tv = tvWhere
+    if (query?.q) {
+      const qPattern = `%${query.q.trim()}%`
+      q = q.where((tl) => tl.tv.some((t) => or(t.titlePrimary.ilike(qPattern), t.titleSecondary.ilike(qPattern))))
+    }
+    if (query?.mediaStatus) {
+      const statuses = query.mediaStatus.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean)
+      if (statuses.length > 0) {
+        q = q.where((tl) => tl.tv.some((t) => t.status.in(statuses as any)))
+      }
+    }
+    if (query?.genre) {
+      const genres = query.genre.split(',').map((g) => g.trim()).filter(Boolean)
+      if (genres.length > 0) {
+        q = q.where((tl) => tl.tv.some((t) => t.genres.some((g) => g.genre.some((ge) => ge.name.in(genres)))))
+      }
+    }
+    if (query?.year) {
+      const years = query.year.split(',').map((y) => Number(y.trim())).filter((n) => !isNaN(n))
+      if (years.length > 0) {
+        q = q.where((tl) => tl.tv.some((t) => t.firstAiredYear.in(years)))
+      }
     }
 
-    let orderBy: any = { updatedAt: order }
+    let itemsQ = q
     if (query?.sortBy === 'title') {
-      orderBy = { tv: { titlePrimary: order } }
+      itemsQ = itemsQ.orderBy((tl) => (order === 'asc' ? tl.tv.titlePrimary.asc() : tl.tv.titlePrimary.desc()))
     } else if (query?.sortBy === 'score') {
-      orderBy = { score: order }
+      itemsQ = itemsQ.orderBy((tl) => (order === 'asc' ? tl.score.asc() : tl.score.desc()))
     } else if (query?.sortBy === 'progress') {
-      orderBy = { progress: order }
+      itemsQ = itemsQ.orderBy((tl) => (order === 'asc' ? tl.progress.asc() : tl.progress.desc()))
     } else if (query?.sortBy === 'createdAt') {
-      orderBy = { createdAt: order }
+      itemsQ = itemsQ.orderBy((tl) => (order === 'asc' ? tl.createdAt.asc() : tl.createdAt.desc()))
+    } else {
+      itemsQ = itemsQ.orderBy((tl) => (order === 'asc' ? tl.updatedAt.asc() : tl.updatedAt.desc()))
     }
 
     const [total, entries] = await Promise.all([
-      prisma.tvList.count({ where }),
-      prisma.tvList.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        include: {
-          tv: {
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              titleNative: true,
-              coverImage: true,
-              bannerImage: true,
-              status: true,
-              episodeCount: true,
-              seasonCount: true,
-              averageScore: true,
-              firstAiredYear: true,
-              genres: { select: { id: true, name: true } },
-              seasons: {
-                select: {
-                  id: true,
-                  seasonNumber: true,
-                  titlePrimary: true,
-                  titleSecondary: true,
-                  episodeCount: true,
-                },
-                orderBy: { seasonNumber: 'asc' },
-              },
-            },
-          },
-        },
-      }),
+      countOf(q),
+      itemsQ
+        .offset(skip)
+        .limit(limit)
+        .include('tv', (t) =>
+          t
+            .select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'titleNative',
+              'coverImage',
+              'bannerImage',
+              'status',
+              'episodeCount',
+              'seasonCount',
+              'averageScore',
+              'firstAiredYear'
+            )
+            .include('genres', (g) =>
+              g.include('genre', (ge) => ge.select('id', 'name'))
+            )
+            .include('seasons', (s) =>
+              s
+                .select(
+                  'id',
+                  'seasonNumber',
+                  'titlePrimary',
+                  'titleSecondary',
+                  'episodeCount'
+                )
+                .orderBy((sn) => sn.seasonNumber.asc())
+            )
+        )
+        .all(),
     ])
 
     return {
       success: true,
       items: entries.map((e) => {
         const { tv, ...entryData } = e
+        const formattedMedia = tv
+          ? {
+              ...tv,
+              genres: (tv.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
+            }
+          : null
         return {
           entry: formatEntry(entryData),
-          media: tv,
+          media: formattedMedia,
         }
       }),
       pagination: {
@@ -1647,37 +1704,38 @@ export class BorealisListsServ {
   }
 
   public static async getTvEntry(userId: string, tvId: number) {
-    const entry = await prisma.tvList.findUnique({
-      where: { userId_tvId: { userId, tvId } },
-      include: {
-        tv: {
-          select: {
-            id: true,
-            titlePrimary: true,
-            titleSecondary: true,
-            titleNative: true,
-            coverImage: true,
-            bannerImage: true,
-            status: true,
-            episodeCount: true,
-            seasonCount: true,
-            averageScore: true,
-            firstAiredYear: true,
-            genres: { select: { id: true, name: true } },
-            seasons: {
-              select: {
-                id: true,
-                seasonNumber: true,
-                titlePrimary: true,
-                titleSecondary: true,
-                episodeCount: true,
-              },
-              orderBy: { seasonNumber: 'asc' },
-            },
-          },
-        },
-      },
-    })
+    const entry = await prisma.orm.public.TvList.where({ userId, tvId })
+      .include('tv', (t) =>
+        t
+          .select(
+            'id',
+            'titlePrimary',
+            'titleSecondary',
+            'titleNative',
+            'coverImage',
+            'bannerImage',
+            'status',
+            'episodeCount',
+            'seasonCount',
+            'averageScore',
+            'firstAiredYear'
+          )
+          .include('genres', (g) =>
+            g.include('genre', (ge) => ge.select('id', 'name'))
+          )
+          .include('seasons', (s) =>
+            s
+              .select(
+                'id',
+                'seasonNumber',
+                'titlePrimary',
+                'titleSecondary',
+                'episodeCount'
+              )
+              .orderBy((sn) => sn.seasonNumber.asc())
+          )
+      )
+      .first()
 
     if (!entry) {
       return {
@@ -1688,33 +1746,29 @@ export class BorealisListsServ {
     }
 
     const { tv, ...entryData } = entry
+    const formattedMedia = tv
+      ? {
+          ...tv,
+          genres: (tv.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
+        }
+      : null
     return {
       success: true,
       inList: true,
       entry: formatEntry(entryData),
-      media: tv,
+      media: formattedMedia,
     }
   }
 
   public static async upsertTvEntry(userId: string, tvId: number, body: any) {
-    const tv = await prisma.tv.findUnique({
-      where: { id: tvId },
-      select: {
-        id: true,
-        episodeCount: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        bannerImage: true,
-      },
-    })
+    const tv = await prisma.orm.public.Tv.where({ id: tvId })
+      .select('id', 'episodeCount', 'titlePrimary', 'titleSecondary', 'coverImage', 'bannerImage')
+      .first()
     if (!tv) {
       throw new NotFound(`TV series with ID ${tvId} does not exist`)
     }
 
-    const existing = await prisma.tvList.findUnique({
-      where: { userId_tvId: { userId, tvId } },
-    })
+    const existing = await prisma.orm.public.TvList.where({ userId, tvId }).first()
 
     let progress = body.progress !== undefined ? Number(body.progress) : undefined
     if (progress !== undefined && tv.episodeCount && tv.episodeCount > 0) {
@@ -1737,24 +1791,26 @@ export class BorealisListsServ {
       ...(body.connections !== undefined ? { connections: body.connections } : {}),
     }
 
-    const entry = await prisma.tvList.upsert({
-      where: { userId_tvId: { userId, tvId } },
-      create: {
-        userId,
-        tvId,
-        status: body.status ?? 'PLANNING',
-        progress: progress ?? 0,
-        score: body.score ?? null,
-        notes: encryptNotes(body.notes, userId),
-        rewatched: body.rewatched ?? 0,
-        private: body.private ?? false,
-        startedAt: startedAt ?? null,
-        completedAt: completedAt ?? null,
-        rewatchHistory: body.rewatchHistory ?? null,
-        connections: body.connections ?? null,
-      },
-      update: updateData,
-    })
+    const entry = existing
+      ? await prisma.orm.public.TvList.where({ id: existing.id }).update(updateData)
+      : await prisma.orm.public.TvList.create({
+          userId,
+          tvId,
+          status: body.status ?? 'PLANNED',
+          progress: progress ?? 0,
+          score: body.score ?? null,
+          notes: encryptNotes(body.notes, userId),
+          rewatched: body.rewatched ?? 0,
+          private: body.private ?? false,
+          startedAt: startedAt ?? null,
+          completedAt: completedAt ?? null,
+          rewatchHistory: body.rewatchHistory ?? null,
+          connections: body.connections ?? null,
+        })
+
+    if (!entry) {
+      throw new Error('Failed to update TV list entry')
+    }
 
     await MediaStatsServ.recalculateMediaStats('TV', tvId)
 
@@ -1795,27 +1851,16 @@ export class BorealisListsServ {
   }
 
   public static async deleteTvEntry(userId: string, tvId: number) {
-    const existing = await prisma.tvList.findUnique({
-      where: { userId_tvId: { userId, tvId } },
-    })
+    const existing = await prisma.orm.public.TvList.where({ userId, tvId }).first()
     if (!existing) {
       throw new NotFound(`TV show with ID ${tvId} is not in user list`)
     }
 
-    const tv = await prisma.tv.findUnique({
-      where: { id: tvId },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        bannerImage: true,
-      },
-    })
+    const tv = await prisma.orm.public.Tv.where({ id: tvId })
+      .select('id', 'titlePrimary', 'titleSecondary', 'coverImage', 'bannerImage')
+      .first()
 
-    await prisma.tvList.delete({
-      where: { id: existing.id },
-    })
+    await prisma.orm.public.TvList.where({ id: existing.id }).delete()
 
     await MediaStatsServ.recalculateMediaStats('TV', tvId)
 
@@ -1838,33 +1883,23 @@ export class BorealisListsServ {
   }
 
   public static async incrementTv(userId: string, tvId: number, body?: { count?: number; status?: string; connections?: any } | null) {
-    const tv = await prisma.tv.findUnique({
-      where: { id: tvId },
-      select: {
-        id: true,
-        episodeCount: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        bannerImage: true,
-      },
-    })
+    const tv = await prisma.orm.public.Tv.where({ id: tvId })
+      .select('id', 'episodeCount', 'titlePrimary', 'titleSecondary', 'coverImage', 'bannerImage')
+      .first()
     if (!tv) {
       throw new NotFound(`TV series with ID ${tvId} does not exist`)
     }
 
-    const existing = await prisma.tvList.findUnique({
-      where: { userId_tvId: { userId, tvId } },
-    })
+    const existing = await prisma.orm.public.TvList.where({ userId, tvId }).first()
 
     const count = Math.max(1, body?.count ?? 1)
     const currentProgress = existing?.progress ?? 0
     let newProgress = currentProgress + count
-    let newStatus = body?.status ?? existing?.status ?? 'WATCHING'
+    let newStatus = body?.status ?? existing?.status ?? 'IN_PROGRESS'
     let completedAt = existing?.completedAt ?? null
 
-    if (newStatus === 'PLANNING') {
-      newStatus = 'WATCHING'
+    if (newStatus !== 'IN_PROGRESS') {
+      newStatus = 'IN_PROGRESS'
     }
 
     if (tv.episodeCount && tv.episodeCount > 0 && newProgress >= tv.episodeCount) {
@@ -1873,27 +1908,31 @@ export class BorealisListsServ {
       if (!completedAt) {
         completedAt = new Date()
       }
+    } else {
+      completedAt = null
     }
 
-    const entry = await prisma.tvList.upsert({
-      where: { userId_tvId: { userId, tvId } },
-      create: {
-        userId,
-        tvId,
-        status: newStatus as any,
-        progress: newProgress,
-        startedAt: new Date(),
-        completedAt,
-        connections: (body as any)?.connections ?? null,
-      },
-      update: {
-        status: newStatus as any,
-        progress: newProgress,
-        completedAt,
-        ...(existing?.status === 'PLANNING' ? { startedAt: new Date() } : {}),
-        ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
-      },
-    })
+    const entry = existing
+      ? await prisma.orm.public.TvList.where({ id: existing.id }).update({
+          status: newStatus as any,
+          progress: newProgress,
+          completedAt,
+          ...(existing?.status === 'PLANNED' || !existing?.startedAt ? { startedAt: existing?.startedAt ?? new Date() } : {}),
+          ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
+        })
+      : await prisma.orm.public.TvList.create({
+          userId,
+          tvId,
+          status: newStatus as any,
+          progress: newProgress,
+          startedAt: new Date(),
+          completedAt,
+          connections: (body as any)?.connections ?? null,
+        })
+
+    if (!entry) {
+      throw new Error('Failed to increment TV list entry')
+    }
 
     await MediaStatsServ.recalculateMediaStats('TV', tvId)
 
@@ -1934,15 +1973,11 @@ export class BorealisListsServ {
   }
 
   public static async getTvStats(userId: string, query?: any, isOwner: boolean = true) {
-    const items = await prisma.tvList.findMany({
-      where: { userId, ...(isOwner ? {} : { private: false }) },
-      select: {
-        status: true,
-        progress: true,
-        score: true,
-        rewatched: true,
-      },
-    })
+    let q = prisma.orm.public.TvList.where({ userId })
+    if (!isOwner) {
+      q = q.where({ private: false })
+    }
+    const items = await q.select('status', 'progress', 'score', 'rewatched').all()
     const data = await mediaStatsService.getTvStats(userId, isOwner, {
       year: query?.year ? Number(query.year) : undefined,
       quarter: query?.quarter ? Number(query.quarter) : undefined,
@@ -1956,19 +1991,27 @@ export class BorealisListsServ {
   }
 
   public static async getTvFilters(userId: string) {
-    const items = await prisma.tvList.findMany({
-      where: { userId },
-      select: {
-        status: true,
-        tv: {
-          select: {
-            status: true,
-            firstAiredYear: true,
-            genres: { select: { name: true } },
-          },
-        },
-      },
-    })
+    const rawItems = await prisma.orm.public.TvList.where({ userId })
+      .select('status')
+      .include('tv', (t) =>
+        t
+          .select('status', 'firstAiredYear')
+          .include('genres', (g) =>
+            g.include('genre', (ge) => ge.select('name'))
+          )
+      )
+      .all()
+    const items = rawItems.map((item) => ({
+      status: item.status,
+      tv: item.tv
+        ? {
+            ...item.tv,
+            genres: (item.tv.genres || [])
+              .filter((g: any) => Boolean(g.genre))
+              .map((g: any) => ({ name: g.genre!.name })),
+          }
+        : null,
+    }))
     return {
       success: true,
       ...computeFilters(items, 'tv', 'firstAiredYear'),
@@ -1985,73 +2028,87 @@ export class BorealisListsServ {
     const skip = (page - 1) * limit
     const order = query?.order === 'asc' ? 'asc' : 'desc'
 
-    const where: any = { userId }
+    let q = prisma.orm.public.GameList.where({ userId })
     if (query?.status) {
-      where.status = query.status.trim().toUpperCase()
+      q = q.where({ status: query.status.trim().toUpperCase() as any })
     }
-    const mediaWhere: any = query?.q
-      ? {
-          OR: [
-            { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
-            { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
-          ],
-        }
-      : {}
-    const gameWhere = applyListMediaFilters(mediaWhere, query, {
-      yearKey: 'releaseDateYear',
-      formatField: '',
-    })
-    if (Object.keys(gameWhere).length > 0) {
-      where.game = gameWhere
+    if (query?.q) {
+      const qPattern = `%${query.q.trim()}%`
+      q = q.where((gl) => gl.game.some((g) => or(g.titlePrimary.ilike(qPattern), g.titleSecondary.ilike(qPattern))))
+    }
+    if (query?.mediaStatus) {
+      const statuses = query.mediaStatus.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean)
+      if (statuses.length > 0) {
+        q = q.where((gl) => gl.game.some((g) => g.status.in(statuses as any)))
+      }
+    }
+    if (query?.genre) {
+      const genres = query.genre.split(',').map((g) => g.trim()).filter(Boolean)
+      if (genres.length > 0) {
+        q = q.where((gl) => gl.game.some((g) => g.genres.some((ge) => ge.genre.some((gn) => gn.name.in(genres)))))
+      }
+    }
+    if (query?.year) {
+      const years = query.year.split(',').map((y) => Number(y.trim())).filter((n) => !isNaN(n))
+      if (years.length > 0) {
+        q = q.where((gl) => gl.game.some((g) => g.releaseDateYear.in(years)))
+      }
     }
 
-    let orderBy: any = { updatedAt: order }
+    let itemsQ = q
     if (query?.sortBy === 'title') {
-      orderBy = { game: { titlePrimary: order } }
+      itemsQ = itemsQ.orderBy((gl) => (order === 'asc' ? gl.game.titlePrimary.asc() : gl.game.titlePrimary.desc()))
     } else if (query?.sortBy === 'score') {
-      orderBy = { score: order }
+      itemsQ = itemsQ.orderBy((gl) => (order === 'asc' ? gl.score.asc() : gl.score.desc()))
     } else if (query?.sortBy === 'progress') {
-      orderBy = { progress: order }
+      itemsQ = itemsQ.orderBy((gl) => (order === 'asc' ? gl.progress.asc() : gl.progress.desc()))
     } else if (query?.sortBy === 'createdAt') {
-      orderBy = { createdAt: order }
+      itemsQ = itemsQ.orderBy((gl) => (order === 'asc' ? gl.createdAt.asc() : gl.createdAt.desc()))
+    } else {
+      itemsQ = itemsQ.orderBy((gl) => (order === 'asc' ? gl.updatedAt.asc() : gl.updatedAt.desc()))
     }
 
     const [total, entries] = await Promise.all([
-      prisma.gameList.count({ where }),
-      prisma.gameList.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        include: {
-          game: {
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              titleNative: true,
-              coverImage: true,
-              bannerImage: true,
-              status: true,
-              platforms: true,
-              developers: true,
-              publishers: true,
-              averageScore: true,
-              releaseDateYear: true,
-              genres: { select: { id: true, name: true } },
-            },
-          },
-        },
-      }),
+      countOf(q),
+      itemsQ
+        .offset(skip)
+        .limit(limit)
+        .include('game', (g) =>
+          g
+            .select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'titleNative',
+              'coverImage',
+              'bannerImage',
+              'status',
+              'platforms',
+              'developers',
+              'publishers',
+              'averageScore',
+              'releaseDateYear'
+            )
+            .include('genres', (ge) =>
+              ge.include('genre', (gn) => gn.select('id', 'name'))
+            )
+        )
+        .all(),
     ])
 
     return {
       success: true,
       items: entries.map((e) => {
         const { game, ...entryData } = e
+        const formattedMedia = game
+          ? {
+              ...game,
+              genres: (game.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
+            }
+          : null
         return {
           entry: formatEntry(entryData),
-          media: game,
+          media: formattedMedia,
         }
       }),
       pagination: {
@@ -2065,28 +2122,28 @@ export class BorealisListsServ {
   }
 
   public static async getGameEntry(userId: string, gameId: number) {
-    const entry = await prisma.gameList.findUnique({
-      where: { userId_gameId: { userId, gameId } },
-      include: {
-        game: {
-          select: {
-            id: true,
-            titlePrimary: true,
-            titleSecondary: true,
-            titleNative: true,
-            coverImage: true,
-            bannerImage: true,
-            status: true,
-            platforms: true,
-            developers: true,
-            publishers: true,
-            averageScore: true,
-            releaseDateYear: true,
-            genres: { select: { id: true, name: true } },
-          },
-        },
-      },
-    })
+    const entry = await prisma.orm.public.GameList.where({ userId, gameId })
+      .include('game', (g) =>
+        g
+          .select(
+            'id',
+            'titlePrimary',
+            'titleSecondary',
+            'titleNative',
+            'coverImage',
+            'bannerImage',
+            'status',
+            'platforms',
+            'developers',
+            'publishers',
+            'averageScore',
+            'releaseDateYear'
+          )
+          .include('genres', (ge) =>
+            ge.include('genre', (gn) => gn.select('id', 'name'))
+          )
+      )
+      .first()
 
     if (!entry) {
       return {
@@ -2097,32 +2154,29 @@ export class BorealisListsServ {
     }
 
     const { game, ...entryData } = entry
+    const formattedMedia = game
+      ? {
+          ...game,
+          genres: (game.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
+        }
+      : null
     return {
       success: true,
       inList: true,
       entry: formatEntry(entryData),
-      media: game,
+      media: formattedMedia,
     }
   }
 
   public static async upsertGameEntry(userId: string, gameId: number, body: any) {
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        bannerImage: true,
-      },
-    })
+    const game = await prisma.orm.public.Game.where({ id: gameId })
+      .select('id', 'titlePrimary', 'titleSecondary', 'coverImage', 'bannerImage')
+      .first()
     if (!game) {
       throw new NotFound(`Game with ID ${gameId} does not exist`)
     }
 
-    const existing = await prisma.gameList.findUnique({
-      where: { userId_gameId: { userId, gameId } },
-    })
+    const existing = await prisma.orm.public.GameList.where({ userId, gameId }).first()
 
     const progress = body.progress !== undefined ? Number(body.progress) : undefined
     const startedAt = body.startedAt !== undefined ? (body.startedAt ? new Date(body.startedAt) : null) : undefined
@@ -2141,24 +2195,26 @@ export class BorealisListsServ {
       ...(body.connections !== undefined ? { connections: body.connections } : {}),
     }
 
-    const entry = await prisma.gameList.upsert({
-      where: { userId_gameId: { userId, gameId } },
-      create: {
-        userId,
-        gameId,
-        status: body.status ?? 'PLANNING',
-        progress: progress ?? 0,
-        score: body.score ?? null,
-        notes: encryptNotes(body.notes, userId),
-        replayed: body.replayed ?? 0,
-        private: body.private ?? false,
-        startedAt: startedAt ?? null,
-        completedAt: completedAt ?? null,
-        replayHistory: body.replayHistory ?? null,
-        connections: body.connections ?? null,
-      },
-      update: updateData,
-    })
+    const entry = existing
+      ? await prisma.orm.public.GameList.where({ id: existing.id }).update(updateData)
+      : await prisma.orm.public.GameList.create({
+          userId,
+          gameId,
+          status: body.status ?? 'PLANNED',
+          progress: progress ?? 0,
+          score: body.score ?? null,
+          notes: encryptNotes(body.notes, userId),
+          replayed: body.replayed ?? 0,
+          private: body.private ?? false,
+          startedAt: startedAt ?? null,
+          completedAt: completedAt ?? null,
+          replayHistory: body.replayHistory ?? null,
+          connections: body.connections ?? null,
+        })
+
+    if (!entry) {
+      throw new Error('Failed to update game list entry')
+    }
 
     await MediaStatsServ.recalculateMediaStats('GAME', gameId)
 
@@ -2199,27 +2255,16 @@ export class BorealisListsServ {
   }
 
   public static async deleteGameEntry(userId: string, gameId: number) {
-    const existing = await prisma.gameList.findUnique({
-      where: { userId_gameId: { userId, gameId } },
-    })
+    const existing = await prisma.orm.public.GameList.where({ userId, gameId }).first()
     if (!existing) {
       throw new NotFound(`Game with ID ${gameId} is not in user list`)
     }
 
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        bannerImage: true,
-      },
-    })
+    const game = await prisma.orm.public.Game.where({ id: gameId })
+      .select('id', 'titlePrimary', 'titleSecondary', 'coverImage', 'bannerImage')
+      .first()
 
-    await prisma.gameList.delete({
-      where: { id: existing.id },
-    })
+    await prisma.orm.public.GameList.where({ id: existing.id }).delete()
 
     await MediaStatsServ.recalculateMediaStats('GAME', gameId)
 
@@ -2242,50 +2287,43 @@ export class BorealisListsServ {
   }
 
   public static async incrementGame(userId: string, gameId: number, body?: { count?: number; status?: string; connections?: any } | null) {
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-      select: {
-        id: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        bannerImage: true,
-      },
-    })
+    const game = await prisma.orm.public.Game.where({ id: gameId })
+      .select('id', 'titlePrimary', 'titleSecondary', 'coverImage', 'bannerImage')
+      .first()
     if (!game) {
       throw new NotFound(`Game with ID ${gameId} does not exist`)
     }
 
-    const existing = await prisma.gameList.findUnique({
-      where: { userId_gameId: { userId, gameId } },
-    })
+    const existing = await prisma.orm.public.GameList.where({ userId, gameId }).first()
 
     const count = Math.max(1, body?.count ?? 1)
     const currentProgress = existing?.progress ?? 0
     const newProgress = currentProgress + count
-    let newStatus = body?.status ?? existing?.status ?? 'PLAYING'
+    let newStatus = body?.status ?? existing?.status ?? 'IN_PROGRESS'
 
-    if (newStatus === 'PLANNING') {
-      newStatus = 'PLAYING'
+    if (newStatus !== 'IN_PROGRESS') {
+      newStatus = 'IN_PROGRESS'
     }
 
-    const entry = await prisma.gameList.upsert({
-      where: { userId_gameId: { userId, gameId } },
-      create: {
-        userId,
-        gameId,
-        status: newStatus as any,
-        progress: newProgress,
-        startedAt: new Date(),
-        connections: (body as any)?.connections ?? null,
-      },
-      update: {
-        status: newStatus as any,
-        progress: newProgress,
-        ...(existing?.status === 'PLANNING' ? { startedAt: new Date() } : {}),
-        ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
-      },
-    })
+    const entry = existing
+      ? await prisma.orm.public.GameList.where({ id: existing.id }).update({
+          status: newStatus as any,
+          progress: newProgress,
+          ...(existing?.status === 'PLANNED' || !existing?.startedAt ? { startedAt: existing?.startedAt ?? new Date() } : {}),
+          ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
+        })
+      : await prisma.orm.public.GameList.create({
+          userId,
+          gameId,
+          status: newStatus as any,
+          progress: newProgress,
+          startedAt: new Date(),
+          connections: (body as any)?.connections ?? null,
+        })
+
+    if (!entry) {
+      throw new Error('Failed to increment game list entry')
+    }
 
     await MediaStatsServ.recalculateMediaStats('GAME', gameId)
 
@@ -2326,15 +2364,11 @@ export class BorealisListsServ {
   }
 
   public static async getGameStats(userId: string, query?: any, isOwner: boolean = true) {
-    const items = await prisma.gameList.findMany({
-      where: { userId, ...(isOwner ? {} : { private: false }) },
-      select: {
-        status: true,
-        progress: true,
-        score: true,
-        replayed: true,
-      },
-    })
+    let q = prisma.orm.public.GameList.where({ userId })
+    if (!isOwner) {
+      q = q.where({ private: false })
+    }
+    const items = await q.select('status', 'progress', 'score', 'replayed').all()
     const data = await mediaStatsService.getGameStats(userId, isOwner, {
       year: query?.year ? Number(query.year) : undefined,
       quarter: query?.quarter ? Number(query.quarter) : undefined,
@@ -2348,19 +2382,27 @@ export class BorealisListsServ {
   }
 
   public static async getGameFilters(userId: string) {
-    const items = await prisma.gameList.findMany({
-      where: { userId },
-      select: {
-        status: true,
-        game: {
-          select: {
-            status: true,
-            releaseDateYear: true,
-            genres: { select: { name: true } },
-          },
-        },
-      },
-    })
+    const rawItems = await prisma.orm.public.GameList.where({ userId })
+      .select('status')
+      .include('game', (g) =>
+        g
+          .select('status', 'releaseDateYear')
+          .include('genres', (ge) =>
+            ge.include('genre', (gn) => gn.select('name'))
+          )
+      )
+      .all()
+    const items = rawItems.map((item) => ({
+      status: item.status,
+      game: item.game
+        ? {
+            ...item.game,
+            genres: (item.game.genres || [])
+              .filter((g: any) => Boolean(g.genre))
+              .map((g: any) => ({ name: g.genre!.name })),
+          }
+        : null,
+    }))
     return {
       success: true,
       ...computeFilters(items, 'game', 'releaseDateYear'),
@@ -2377,76 +2419,96 @@ export class BorealisListsServ {
     const skip = (page - 1) * limit
     const order = query?.order === 'asc' ? 'asc' : 'desc'
 
-    const where: any = { userId }
+    let q = prisma.orm.public.BookList.where({ userId })
     if (query?.status) {
-      where.status = query.status.trim().toUpperCase()
+      q = q.where({ status: query.status.trim().toUpperCase() as any })
     }
-    const mediaWhere: any = query?.q
-      ? {
-          OR: [
-            { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
-            { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
-          ],
-        }
-      : {}
-    const bookWhere = applyListMediaFilters(mediaWhere, query, {
-      yearKey: 'releaseDateYear',
-      formatField: 'format',
-      formatTransform: (f) => f,
-    })
-    if (Object.keys(bookWhere).length > 0) {
-      where.book = bookWhere
+    if (query?.q) {
+      const qPattern = `%${query.q.trim()}%`
+      q = q.where((bl) => bl.book.some((b) => or(b.titlePrimary.ilike(qPattern), b.titleSecondary.ilike(qPattern))))
+    }
+    const formatStr = query?.format || query?.mediaFormat
+    if (formatStr) {
+      const formats = formatStr.split(',').map((f) => f.trim()).filter(Boolean)
+      if (formats.length > 0) {
+        q = q.where((bl) => bl.book.some((b) => b.format.in(formats as any)))
+      }
+    }
+    if (query?.mediaStatus) {
+      const statuses = query.mediaStatus.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean)
+      if (statuses.length > 0) {
+        q = q.where((bl) => bl.book.some((b) => b.status.in(statuses as any)))
+      }
+    }
+    if (query?.genre) {
+      const genres = query.genre.split(',').map((g) => g.trim()).filter(Boolean)
+      if (genres.length > 0) {
+        q = q.where((bl) => bl.book.some((b) => b.genres.some((ge) => ge.genre.some((gn) => gn.name.in(genres)))))
+      }
+    }
+    if (query?.year) {
+      const years = query.year.split(',').map((y) => Number(y.trim())).filter((n) => !isNaN(n))
+      if (years.length > 0) {
+        q = q.where((bl) => bl.book.some((b) => b.releaseDateYear.in(years)))
+      }
     }
 
-    let orderBy: any = { updatedAt: order }
+    let itemsQ = q
     if (query?.sortBy === 'title') {
-      orderBy = { book: { titlePrimary: order } }
+      itemsQ = itemsQ.orderBy((bl) => (order === 'asc' ? bl.book.titlePrimary.asc() : bl.book.titlePrimary.desc()))
     } else if (query?.sortBy === 'score') {
-      orderBy = { score: order }
+      itemsQ = itemsQ.orderBy((bl) => (order === 'asc' ? bl.score.asc() : bl.score.desc()))
     } else if (query?.sortBy === 'progress') {
-      orderBy = { progressPages: order }
+      itemsQ = itemsQ.orderBy((bl) => (order === 'asc' ? bl.progressPages.asc() : bl.progressPages.desc()))
     } else if (query?.sortBy === 'createdAt') {
-      orderBy = { createdAt: order }
+      itemsQ = itemsQ.orderBy((bl) => (order === 'asc' ? bl.createdAt.asc() : bl.createdAt.desc()))
+    } else {
+      itemsQ = itemsQ.orderBy((bl) => (order === 'asc' ? bl.updatedAt.asc() : bl.updatedAt.desc()))
     }
 
     const [total, entries] = await Promise.all([
-      prisma.bookList.count({ where }),
-      prisma.bookList.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        include: {
-          book: {
-            select: {
-              id: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              subtitle: true,
-              coverImage: true,
-              bannerImage: true,
-              format: true,
-              status: true,
-              pageCount: true,
-              chapterCount: true,
-              volumeCount: true,
-              authors: true,
-              averageScore: true,
-              releaseDateYear: true,
-              genres: { select: { id: true, name: true } },
-            },
-          },
-        },
-      }),
+      countOf(q),
+      itemsQ
+        .offset(skip)
+        .limit(limit)
+        .include('book', (b) =>
+          b
+            .select(
+              'id',
+              'titlePrimary',
+              'titleSecondary',
+              'subtitle',
+              'coverImage',
+              'bannerImage',
+              'format',
+              'status',
+              'pageCount',
+              'chapterCount',
+              'volumeCount',
+              'authors',
+              'averageScore',
+              'releaseDateYear'
+            )
+            .include('genres', (ge) =>
+              ge.include('genre', (gn) => gn.select('id', 'name'))
+            )
+        )
+        .all(),
     ])
 
     return {
       success: true,
       items: entries.map((e) => {
         const { book, ...entryData } = e
+        const formattedMedia = book
+          ? {
+              ...book,
+              genres: (book.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
+            }
+          : null
         return {
           entry: formatEntry(entryData),
-          media: book,
+          media: formattedMedia,
         }
       }),
       pagination: {
@@ -2460,29 +2522,30 @@ export class BorealisListsServ {
   }
 
   public static async getBookEntry(userId: string, bookId: number) {
-    const entry = await prisma.bookList.findUnique({
-      where: { userId_bookId: { userId, bookId } },
-      include: {
-        book: {
-          select: {
-            id: true,
-            titlePrimary: true,
-            titleSecondary: true,
-            subtitle: true,
-            coverImage: true,
-            bannerImage: true,
-            status: true,
-            pageCount: true,
-            chapterCount: true,
-            volumeCount: true,
-            authors: true,
-            averageScore: true,
-            releaseDateYear: true,
-            genres: { select: { id: true, name: true } },
-          },
-        },
-      },
-    })
+    const entry = await prisma.orm.public.BookList.where({ userId, bookId })
+      .include('book', (b) =>
+        b
+          .select(
+            'id',
+            'titlePrimary',
+            'titleSecondary',
+            'subtitle',
+            'coverImage',
+            'bannerImage',
+            'format',
+            'status',
+            'pageCount',
+            'chapterCount',
+            'volumeCount',
+            'authors',
+            'averageScore',
+            'releaseDateYear'
+          )
+          .include('genres', (ge) =>
+            ge.include('genre', (gn) => gn.select('id', 'name'))
+          )
+      )
+      .first()
 
     if (!entry) {
       return {
@@ -2493,35 +2556,29 @@ export class BorealisListsServ {
     }
 
     const { book, ...entryData } = entry
+    const formattedMedia = book
+      ? {
+          ...book,
+          genres: (book.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
+        }
+      : null
     return {
       success: true,
       inList: true,
       entry: formatEntry(entryData),
-      media: book,
+      media: formattedMedia,
     }
   }
 
   public static async upsertBookEntry(userId: string, bookId: number, body: any) {
-    const book = await prisma.book.findUnique({
-      where: { id: bookId },
-      select: {
-        id: true,
-        pageCount: true,
-        chapterCount: true,
-        volumeCount: true,
-        titlePrimary: true,
-        titleSecondary: true,
-        coverImage: true,
-        bannerImage: true,
-      },
-    })
+    const book = await prisma.orm.public.Book.where({ id: bookId })
+      .select('id', 'pageCount', 'chapterCount', 'volumeCount', 'titlePrimary', 'titleSecondary', 'coverImage', 'bannerImage')
+      .first()
     if (!book) {
       throw new NotFound(`Book with ID ${bookId} does not exist`)
     }
 
-    const existing = await prisma.bookList.findUnique({
-      where: { userId_bookId: { userId, bookId } },
-    })
+    const existing = await prisma.orm.public.BookList.where({ userId, bookId }).first()
 
     let progressPages = body.progressPages !== undefined ? Number(body.progressPages) : undefined
     if (progressPages !== undefined && book.pageCount && book.pageCount > 0) {
@@ -2548,26 +2605,28 @@ export class BorealisListsServ {
       ...(body.connections !== undefined ? { connections: body.connections } : {}),
     }
 
-    const entry = await prisma.bookList.upsert({
-      where: { userId_bookId: { userId, bookId } },
-      create: {
-        userId,
-        bookId,
-        status: body.status ?? 'PLANNING',
-        progressPages: progressPages ?? 0,
-        progressChapters: progressChapters ?? 0,
-        progressVolumes: progressVolumes ?? 0,
-        score: body.score ?? null,
-        notes: encryptNotes(body.notes, userId),
-        reread: body.reread ?? 0,
-        private: body.private ?? false,
-        startedAt: startedAt ?? null,
-        completedAt: completedAt ?? null,
-        rereadHistory: body.rereadHistory ?? null,
-        connections: body.connections ?? null,
-      },
-      update: updateData,
-    })
+    const entry = existing
+      ? await prisma.orm.public.BookList.where({ id: existing.id }).update(updateData)
+      : await prisma.orm.public.BookList.create({
+          userId,
+          bookId,
+          status: body.status ?? 'PLANNED',
+          progressPages: progressPages ?? 0,
+          progressChapters: progressChapters ?? 0,
+          progressVolumes: progressVolumes ?? 0,
+          score: body.score ?? null,
+          notes: encryptNotes(body.notes, userId),
+          reread: body.reread ?? 0,
+          private: body.private ?? false,
+          startedAt: startedAt ?? null,
+          completedAt: completedAt ?? null,
+          rereadHistory: body.rereadHistory ?? null,
+          connections: body.connections ?? null,
+        })
+
+    if (!entry) {
+      throw new Error('Failed to update book list entry')
+    }
 
     await MediaStatsServ.recalculateMediaStats('BOOK', bookId)
 
@@ -2608,21 +2667,16 @@ export class BorealisListsServ {
   }
 
   public static async deleteBookEntry(userId: string, bookId: number) {
-    const existing = await prisma.bookList.findUnique({
-      where: { userId_bookId: { userId, bookId } },
-    })
+    const existing = await prisma.orm.public.BookList.where({ userId, bookId }).first()
     if (!existing) {
       throw new NotFound(`Book with ID ${bookId} is not in user list`)
     }
 
-    const book = await prisma.book.findUnique({
-      where: { id: bookId },
-      select: { id: true, titlePrimary: true, titleSecondary: true, coverImage: true, bannerImage: true, format: true },
-    })
+    const book = await prisma.orm.public.Book.where({ id: bookId })
+      .select('id', 'titlePrimary', 'titleSecondary', 'coverImage', 'bannerImage', 'format')
+      .first()
 
-    await prisma.bookList.delete({
-      where: { id: existing.id },
-    })
+    await prisma.orm.public.BookList.where({ id: existing.id }).delete()
 
     await MediaStatsServ.recalculateMediaStats('BOOK', bookId)
 
@@ -2646,34 +2700,49 @@ export class BorealisListsServ {
     bookId: number,
     body?: { count?: number; type?: 'page' | 'chapter' | 'volume'; status?: string; connections?: any } | null
   ) {
-    const book = await prisma.book.findUnique({
-      where: { id: bookId },
-      select: { id: true, pageCount: true, chapterCount: true, volumeCount: true, titlePrimary: true, titleSecondary: true, coverImage: true, bannerImage: true, format: true },
-    })
+    const book = await prisma.orm.public.Book.where({ id: bookId })
+      .select('id', 'pageCount', 'chapterCount', 'volumeCount', 'titlePrimary', 'titleSecondary', 'coverImage', 'bannerImage', 'format')
+      .first()
     if (!book) {
       throw new NotFound(`Book with ID ${bookId} does not exist`)
     }
 
-    const existing = await prisma.bookList.findUnique({
-      where: { userId_bookId: { userId, bookId } },
-    })
+    const existing = await prisma.orm.public.BookList.where({ userId, bookId }).first()
 
     const count = Math.max(1, body?.count ?? 1)
     const type = body?.type ?? 'page'
     let progressPages = existing?.progressPages ?? 0
     let progressChapters = existing?.progressChapters ?? 0
     let progressVolumes = existing?.progressVolumes ?? 0
-    let newStatus = body?.status ?? existing?.status ?? 'READING'
+    let newStatus = body?.status ?? existing?.status ?? 'IN_PROGRESS'
     let completedAt = existing?.completedAt ?? null
 
-    if (newStatus === 'PLANNING') {
-      newStatus = 'READING'
+    if (newStatus !== 'IN_PROGRESS') {
+      newStatus = 'IN_PROGRESS'
     }
 
     if (type === 'chapter') {
       progressChapters += count
+      if (book.chapterCount && book.chapterCount > 0 && progressChapters >= book.chapterCount) {
+        progressChapters = book.chapterCount
+        newStatus = 'COMPLETED'
+        if (!completedAt) {
+          completedAt = new Date()
+        }
+      } else {
+        completedAt = null
+      }
     } else if (type === 'volume') {
       progressVolumes += count
+      if (book.volumeCount && book.volumeCount > 0 && progressVolumes >= book.volumeCount) {
+        progressVolumes = book.volumeCount
+        newStatus = 'COMPLETED'
+        if (!completedAt) {
+          completedAt = new Date()
+        }
+      } else {
+        completedAt = null
+      }
     } else {
       progressPages += count
       if (book.pageCount && book.pageCount > 0 && progressPages >= book.pageCount) {
@@ -2682,32 +2751,36 @@ export class BorealisListsServ {
         if (!completedAt) {
           completedAt = new Date()
         }
+      } else {
+        completedAt = null
       }
     }
 
-    const entry = await prisma.bookList.upsert({
-      where: { userId_bookId: { userId, bookId } },
-      create: {
-        userId,
-        bookId,
-        status: newStatus as any,
-        progressPages,
-        progressChapters,
-        progressVolumes,
-        startedAt: new Date(),
-        completedAt,
-        connections: (body as any)?.connections ?? null,
-      },
-      update: {
-        status: newStatus as any,
-        progressPages,
-        progressChapters,
-        progressVolumes,
-        completedAt,
-        ...(existing?.status === 'PLANNING' ? { startedAt: new Date() } : {}),
-        ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
-      },
-    })
+    const entry = existing
+      ? await prisma.orm.public.BookList.where({ id: existing.id }).update({
+          status: newStatus as any,
+          progressPages,
+          progressChapters,
+          progressVolumes,
+          completedAt,
+          ...(existing?.status === 'PLANNED' || !existing?.startedAt ? { startedAt: existing?.startedAt ?? new Date() } : {}),
+          ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
+        })
+      : await prisma.orm.public.BookList.create({
+          userId,
+          bookId,
+          status: newStatus as any,
+          progressPages,
+          progressChapters,
+          progressVolumes,
+          startedAt: new Date(),
+          completedAt,
+          connections: (body as any)?.connections ?? null,
+        })
+
+    if (!entry) {
+      throw new Error('Failed to increment book list entry')
+    }
 
     await MediaStatsServ.recalculateMediaStats('BOOK', bookId)
 
@@ -2753,17 +2826,11 @@ export class BorealisListsServ {
   }
 
   public static async getBookStats(userId: string, query?: any, isOwner: boolean = true) {
-    const items = await prisma.bookList.findMany({
-      where: { userId, ...(isOwner ? {} : { private: false }) },
-      select: {
-        status: true,
-        progressPages: true,
-        progressChapters: true,
-        progressVolumes: true,
-        score: true,
-        reread: true,
-      },
-    })
+    let q = prisma.orm.public.BookList.where({ userId })
+    if (!isOwner) {
+      q = q.where({ private: false })
+    }
+    const items = await q.select('status', 'progressPages', 'progressChapters', 'progressVolumes', 'score', 'reread').all()
     const data = await mediaStatsService.getBookStats(userId, isOwner, {
       year: query?.year ? Number(query.year) : undefined,
       quarter: query?.quarter ? Number(query.quarter) : undefined,
@@ -2777,20 +2844,27 @@ export class BorealisListsServ {
   }
 
   public static async getBookFilters(userId: string) {
-    const items = await prisma.bookList.findMany({
-      where: { userId },
-      select: {
-        status: true,
-        book: {
-          select: {
-            format: true,
-            status: true,
-            releaseDateYear: true,
-            genres: { select: { name: true } },
-          },
-        },
-      },
-    })
+    const rawItems = await prisma.orm.public.BookList.where({ userId })
+      .select('status')
+      .include('book', (b) =>
+        b
+          .select('format', 'status', 'releaseDateYear')
+          .include('genres', (ge) =>
+            ge.include('genre', (gn) => gn.select('name'))
+          )
+      )
+      .all()
+    const items = rawItems.map((item) => ({
+      status: item.status,
+      book: item.book
+        ? {
+            ...item.book,
+            genres: (item.book.genres || [])
+              .filter((g: any) => Boolean(g.genre))
+              .map((g: any) => ({ name: g.genre!.name })),
+          }
+        : null,
+    }))
     return {
       success: true,
       ...computeFilters(items, 'book', 'releaseDateYear'),
@@ -2807,74 +2881,93 @@ export class BorealisListsServ {
     const skip = (page - 1) * limit
     const order = query?.order === 'asc' ? 'asc' : 'desc'
 
-    const where: any = { userId }
+    let q = prisma.orm.public.MusicList.where({ userId })
     if (query?.status) {
-      where.status = query.status.trim().toUpperCase()
+      q = q.where({ status: query.status.trim().toUpperCase() as any })
     }
-    const mediaWhere: any = query?.q
-      ? {
-          OR: [
-            { titlePrimary: { contains: query.q.trim(), mode: 'insensitive' } },
-            { titleSecondary: { contains: query.q.trim(), mode: 'insensitive' } },
-            { artistName: { contains: query.q.trim(), mode: 'insensitive' } },
-          ],
-        }
-      : {}
-    const musicWhere = applyListMediaFilters(mediaWhere, query, {
-      yearKey: 'releaseDateYear',
-      formatField: 'type',
-      formatTransform: (f) => f.toUpperCase(),
-    })
-    if (Object.keys(musicWhere).length > 0) {
-      where.music = musicWhere
+    if (query?.q) {
+      const qPattern = `%${query.q.trim()}%`
+      q = q.where((ml) => ml.music.some((m) => or(m.titlePrimary.ilike(qPattern), m.titleSecondary.ilike(qPattern), m.artistName.ilike(qPattern))))
+    }
+    const formatStr = query?.format || query?.mediaFormat
+    if (formatStr) {
+      const formats = formatStr.split(',').map((f) => f.trim().toUpperCase()).filter(Boolean)
+      if (formats.length > 0) {
+        q = q.where((ml) => ml.music.some((m) => m.type.in(formats as any)))
+      }
+    }
+    if (query?.mediaStatus) {
+      const statuses = query.mediaStatus.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean)
+      if (statuses.length > 0) {
+        q = q.where((ml) => ml.music.some((m) => m.status.in(statuses as any)))
+      }
+    }
+    if (query?.genre) {
+      const genres = query.genre.split(',').map((g) => g.trim()).filter(Boolean)
+      if (genres.length > 0) {
+        q = q.where((ml) => ml.music.some((m) => m.genres.some((ge) => ge.genre.some((gn) => gn.name.in(genres)))))
+      }
+    }
+    if (query?.year) {
+      const years = query.year.split(',').map((y) => Number(y.trim())).filter((n) => !isNaN(n))
+      if (years.length > 0) {
+        q = q.where((ml) => ml.music.some((m) => m.releaseDateYear.in(years)))
+      }
     }
 
-    let orderBy: any = { updatedAt: order }
+    let itemsQ = q
     if (query?.sortBy === 'title') {
-      orderBy = { music: { titlePrimary: order } }
+      itemsQ = itemsQ.orderBy((ml) => (order === 'asc' ? ml.music.titlePrimary.asc() : ml.music.titlePrimary.desc()))
     } else if (query?.sortBy === 'score') {
-      orderBy = { score: order }
+      itemsQ = itemsQ.orderBy((ml) => (order === 'asc' ? ml.score.asc() : ml.score.desc()))
     } else if (query?.sortBy === 'progress' || query?.sortBy === 'playCount') {
-      orderBy = { playCount: order }
+      itemsQ = itemsQ.orderBy((ml) => (order === 'asc' ? ml.playCount.asc() : ml.playCount.desc()))
     } else if (query?.sortBy === 'createdAt') {
-      orderBy = { createdAt: order }
+      itemsQ = itemsQ.orderBy((ml) => (order === 'asc' ? ml.createdAt.asc() : ml.createdAt.desc()))
+    } else {
+      itemsQ = itemsQ.orderBy((ml) => (order === 'asc' ? ml.updatedAt.asc() : ml.updatedAt.desc()))
     }
 
     const [total, entries] = await Promise.all([
-      prisma.musicList.count({ where }),
-      prisma.musicList.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        include: {
-          music: {
-            select: {
-              id: true,
-              type: true,
-              titlePrimary: true,
-              titleSecondary: true,
-              titleNative: true,
-              coverImage: true,
-              duration: true,
-              artistName: true,
-              recordType: true,
-              status: true,
-              releaseDateYear: true,
-              genres: { select: { id: true, name: true } },
-            },
-          },
-        },
-      }),
+      countOf(q),
+      itemsQ
+        .offset(skip)
+        .limit(limit)
+        .include('music', (m) =>
+          m
+            .select(
+              'id',
+              'type',
+              'titlePrimary',
+              'titleSecondary',
+              'titleNative',
+              'coverImage',
+              'duration',
+              'artistName',
+              'recordType',
+              'status',
+              'releaseDateYear'
+            )
+            .include('genres', (ge) =>
+              ge.include('genre', (gn) => gn.select('id', 'name'))
+            )
+        )
+        .all(),
     ])
 
     return {
       success: true,
       items: entries.map((e) => {
         const { music, ...entryData } = e
+        const formattedMedia = music
+          ? {
+              ...music,
+              genres: (music.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
+            }
+          : null
         return {
           entry: formatEntry(entryData),
-          media: music,
+          media: formattedMedia,
         }
       }),
       pagination: {
@@ -2888,27 +2981,27 @@ export class BorealisListsServ {
   }
 
   public static async getMusicEntry(userId: string, musicId: number) {
-    const entry = await prisma.musicList.findUnique({
-      where: { userId_musicId: { userId, musicId } },
-      include: {
-        music: {
-          select: {
-            id: true,
-            type: true,
-            titlePrimary: true,
-            titleSecondary: true,
-            titleNative: true,
-            coverImage: true,
-            duration: true,
-            artistName: true,
-            recordType: true,
-            status: true,
-            releaseDateYear: true,
-            genres: { select: { id: true, name: true } },
-          },
-        },
-      },
-    })
+    const entry = await prisma.orm.public.MusicList.where({ userId, musicId })
+      .include('music', (m) =>
+        m
+          .select(
+            'id',
+            'type',
+            'titlePrimary',
+            'titleSecondary',
+            'titleNative',
+            'coverImage',
+            'duration',
+            'artistName',
+            'recordType',
+            'status',
+            'releaseDateYear'
+          )
+          .include('genres', (ge) =>
+            ge.include('genre', (gn) => gn.select('id', 'name'))
+          )
+      )
+      .first()
 
     if (!entry) {
       return {
@@ -2919,26 +3012,29 @@ export class BorealisListsServ {
     }
 
     const { music, ...entryData } = entry
+    const formattedMedia = music
+      ? {
+          ...music,
+          genres: (music.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
+        }
+      : null
     return {
       success: true,
       inList: true,
       entry: formatEntry(entryData),
-      media: music,
+      media: formattedMedia,
     }
   }
 
   public static async upsertMusicEntry(userId: string, musicId: number, body: any) {
-    const music = await prisma.music.findUnique({
-      where: { id: musicId },
-      select: { id: true, titlePrimary: true, titleSecondary: true, titleNative: true, coverImage: true, type: true },
-    })
+    const music = await prisma.orm.public.Music.where({ id: musicId })
+      .select('id', 'titlePrimary', 'titleSecondary', 'titleNative', 'coverImage', 'type')
+      .first()
     if (!music) {
       throw new NotFound(`Music with ID ${musicId} does not exist`)
     }
 
-    const existing = await prisma.musicList.findUnique({
-      where: { userId_musicId: { userId, musicId } },
-    })
+    const existing = await prisma.orm.public.MusicList.where({ userId, musicId }).first()
 
     const startedAt = body.startedAt !== undefined ? (body.startedAt ? new Date(body.startedAt) : null) : undefined
     const completedAt = body.completedAt !== undefined ? (body.completedAt ? new Date(body.completedAt) : null) : undefined
@@ -2954,22 +3050,24 @@ export class BorealisListsServ {
       ...(body.connections !== undefined ? { connections: body.connections } : {}),
     }
 
-    const entry = await prisma.musicList.upsert({
-      where: { userId_musicId: { userId, musicId } },
-      create: {
-        userId,
-        musicId,
-        status: body.status ?? 'PLANNING',
-        score: body.score ?? null,
-        playCount: body.playCount !== undefined ? Number(body.playCount) : 0,
-        notes: encryptNotes(body.notes, userId),
-        private: body.private ?? false,
-        startedAt: startedAt ?? null,
-        completedAt: completedAt ?? null,
-        connections: body.connections ?? null,
-      },
-      update: updateData,
-    })
+    const entry = existing
+      ? await prisma.orm.public.MusicList.where({ id: existing.id }).update(updateData)
+      : await prisma.orm.public.MusicList.create({
+          userId,
+          musicId,
+          status: body.status ?? 'PLANNED',
+          score: body.score ?? null,
+          playCount: body.playCount !== undefined ? Number(body.playCount) : 0,
+          notes: encryptNotes(body.notes, userId),
+          private: body.private ?? false,
+          startedAt: startedAt ?? null,
+          completedAt: completedAt ?? null,
+          connections: body.connections ?? null,
+        })
+
+    if (!entry) {
+      throw new Error('Failed to update music list entry')
+    }
 
     await MediaStatsServ.recalculateMediaStats('MUSIC', musicId)
 
@@ -3018,21 +3116,16 @@ export class BorealisListsServ {
   }
 
   public static async deleteMusicEntry(userId: string, musicId: number) {
-    const existing = await prisma.musicList.findUnique({
-      where: { userId_musicId: { userId, musicId } },
-    })
+    const existing = await prisma.orm.public.MusicList.where({ userId, musicId }).first()
     if (!existing) {
       throw new NotFound(`Music with ID ${musicId} is not in user list`)
     }
 
-    const music = await prisma.music.findUnique({
-      where: { id: musicId },
-      select: { id: true, titlePrimary: true, titleSecondary: true, titleNative: true, coverImage: true, type: true },
-    })
+    const music = await prisma.orm.public.Music.where({ id: musicId })
+      .select('id', 'titlePrimary', 'titleSecondary', 'titleNative', 'coverImage', 'type')
+      .first()
 
-    await prisma.musicList.delete({
-      where: { id: existing.id },
-    })
+    await prisma.orm.public.MusicList.where({ id: existing.id }).delete()
 
     await MediaStatsServ.recalculateMediaStats('MUSIC', musicId)
 
@@ -3058,42 +3151,41 @@ export class BorealisListsServ {
   }
 
   public static async incrementMusic(userId: string, musicId: number, body?: { count?: number; connections?: any } | null) {
-    const music = await prisma.music.findUnique({
-      where: { id: musicId },
-      select: { id: true, titlePrimary: true, titleSecondary: true, titleNative: true, coverImage: true, type: true },
-    })
+    const music = await prisma.orm.public.Music.where({ id: musicId })
+      .select('id', 'titlePrimary', 'titleSecondary', 'titleNative', 'coverImage', 'type')
+      .first()
     if (!music) {
       throw new NotFound(`Music with ID ${musicId} does not exist`)
     }
 
-    const existing = await prisma.musicList.findUnique({
-      where: { userId_musicId: { userId, musicId } },
-    })
+    const existing = await prisma.orm.public.MusicList.where({ userId, musicId }).first()
 
     const count = Math.max(1, body?.count ?? 1)
     const newPlayCount = (existing?.playCount ?? 0) + count
-    let newStatus = existing?.status ?? 'LISTENING'
-    if (newStatus === 'PLANNING') {
-      newStatus = 'LISTENING'
+    let newStatus = existing?.status ?? 'IN_PROGRESS'
+    if (newStatus !== 'IN_PROGRESS') {
+      newStatus = 'IN_PROGRESS'
     }
 
-    const entry = await prisma.musicList.upsert({
-      where: { userId_musicId: { userId, musicId } },
-      create: {
-        userId,
-        musicId,
-        status: newStatus as any,
-        playCount: newPlayCount,
-        startedAt: new Date(),
-        connections: (body as any)?.connections ?? null,
-      },
-      update: {
-        status: newStatus as any,
-        playCount: newPlayCount,
-        ...(existing?.status === 'PLANNING' ? { startedAt: new Date() } : {}),
-        ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
-      },
-    })
+    const entry = existing
+      ? await prisma.orm.public.MusicList.where({ id: existing.id }).update({
+          status: newStatus as any,
+          playCount: newPlayCount,
+          ...(existing?.status === 'PLANNED' || !existing?.startedAt ? { startedAt: existing?.startedAt ?? new Date() } : {}),
+          ...((body as any)?.connections !== undefined ? { connections: (body as any).connections } : {}),
+        })
+      : await prisma.orm.public.MusicList.create({
+          userId,
+          musicId,
+          status: newStatus as any,
+          playCount: newPlayCount,
+          startedAt: new Date(),
+          connections: (body as any)?.connections ?? null,
+        })
+
+    if (!entry) {
+      throw new Error('Failed to increment music list entry')
+    }
 
     await MediaStatsServ.recalculateMediaStats('MUSIC', musicId)
 
@@ -3142,14 +3234,11 @@ export class BorealisListsServ {
   }
 
   public static async getMusicStats(userId: string, query?: any, isOwner: boolean = true) {
-    const items = await prisma.musicList.findMany({
-      where: { userId, ...(isOwner ? {} : { private: false }) },
-      select: {
-        status: true,
-        playCount: true,
-        score: true,
-      },
-    })
+    let q = prisma.orm.public.MusicList.where({ userId })
+    if (!isOwner) {
+      q = q.where({ private: false })
+    }
+    const items = await q.select('status', 'playCount', 'score').all()
     const data = await mediaStatsService.getMusicStats(userId, isOwner, {
       year: query?.year ? Number(query.year) : undefined,
       quarter: query?.quarter ? Number(query.quarter) : undefined,
@@ -3163,20 +3252,27 @@ export class BorealisListsServ {
   }
 
   public static async getMusicFilters(userId: string) {
-    const items = await prisma.musicList.findMany({
-      where: { userId },
-      select: {
-        status: true,
-        music: {
-          select: {
-            type: true,
-            status: true,
-            releaseDateYear: true,
-            genres: { select: { name: true } },
-          },
-        },
-      },
-    })
+    const rawItems = await prisma.orm.public.MusicList.where({ userId })
+      .select('status')
+      .include('music', (m) =>
+        m
+          .select('type', 'status', 'releaseDateYear')
+          .include('genres', (ge) =>
+            ge.include('genre', (gn) => gn.select('name'))
+          )
+      )
+      .all()
+    const items = rawItems.map((item) => ({
+      status: item.status,
+      music: item.music
+        ? {
+            ...item.music,
+            genres: (item.music.genres || [])
+              .filter((g: any) => Boolean(g.genre))
+              .map((g: any) => ({ name: g.genre!.name })),
+          }
+        : null,
+    }))
     return {
       success: true,
       ...computeFilters(items, 'music', 'releaseDateYear'),
@@ -3192,54 +3288,56 @@ export class BorealisListsServ {
     const limit = Math.max(1, Math.min(250, Number(query?.limit ?? 40)))
     const skip = (page - 1) * limit
 
-    const where: any = { userId }
+    let q = prisma.orm.public.OtherList.where({ userId })
     if (query?.status && query.status !== 'ALL') {
-      if (
-        query.status === 'WATCHING' ||
-        query.status === 'CURRENT' ||
-        query.status === 'TRACKING'
-      ) {
-        where.status = { in: ['WATCHING', 'CURRENT', 'TRACKING'] }
-      } else {
-        where.status = query.status
+      q = q.where({ status: query.status as ListStatus })
+    }
+    if (query?.q) {
+      const qPattern = `%${query.q.trim()}%`
+      q = q.where((ol) => ol.other.some((o) => o.titlePrimary.ilike(qPattern)))
+    }
+    const formatStr = query?.format || query?.mediaFormat
+    if (formatStr) {
+      const formats = formatStr.split(',').map((f) => f.trim().toLowerCase()).filter(Boolean)
+      if (formats.length > 0) {
+        q = q.where((ol) => ol.other.some((o) => o.format.in(formats as any)))
       }
     }
-    const mediaWhere: any = query?.q
-      ? { titlePrimary: { contains: query.q, mode: 'insensitive' } }
-      : {}
-    const otherWhere = applyListMediaFilters(mediaWhere, query, {
-      isDateStringYear: true,
-      formatField: 'format',
-      formatTransform: (f) => f.toLowerCase(),
-    })
-    if (Object.keys(otherWhere).length > 0) {
-      where.other = otherWhere
+    if (query?.year) {
+      const years = query.year.split(',').map((y) => Number(y.trim())).filter((n) => !isNaN(n))
+      if (years.length > 0) {
+        q = q.where((ol) =>
+          ol.other.some((o) =>
+            or(
+              ...years.map((y) =>
+                and(o.startDate.gte(new Date(y, 0, 1)), o.startDate.lte(new Date(y, 11, 31, 23, 59, 59, 999)))
+              )
+            )
+          )
+        )
+      }
     }
 
-    let orderBy: any = { updatedAt: 'desc' }
+    let itemsQ = q
     const sortField = query?.sortBy ?? 'updatedAt'
     const sortOrder = query?.order ?? 'desc'
     if (sortField === 'score') {
-      orderBy = { score: sortOrder }
+      itemsQ = itemsQ.orderBy((ol) => (sortOrder === 'asc' ? ol.score.asc() : ol.score.desc()))
     } else if (sortField === 'createdAt') {
-      orderBy = { createdAt: sortOrder }
+      itemsQ = itemsQ.orderBy((ol) => (sortOrder === 'asc' ? ol.createdAt.asc() : ol.createdAt.desc()))
     } else if (sortField === 'title') {
-      orderBy = { other: { titlePrimary: sortOrder } }
+      itemsQ = itemsQ.orderBy((ol) => (sortOrder === 'asc' ? ol.other.titlePrimary.asc() : ol.other.titlePrimary.desc()))
     } else {
-      orderBy = { [sortField]: sortOrder }
+      itemsQ = itemsQ.orderBy((ol) => (sortOrder === 'asc' ? ol.updatedAt.asc() : ol.updatedAt.desc()))
     }
 
     const [total, entries] = await Promise.all([
-      prisma.otherList.count({ where }),
-      prisma.otherList.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        include: {
-          other: true,
-        },
-      }),
+      countOf(q),
+      itemsQ
+        .offset(skip)
+        .limit(limit)
+        .include('other')
+        .all(),
     ])
 
     const totalPages = Math.ceil(total / limit) || 1
@@ -3272,10 +3370,9 @@ export class BorealisListsServ {
   }
 
   public static async getOtherEntry(userId: string, otherId: number) {
-    const existing = await prisma.otherList.findUnique({
-      where: { userId_otherId: { userId, otherId } },
-      include: { other: true },
-    })
+    const existing = await prisma.orm.public.OtherList.where({ userId, otherId })
+      .include('other')
+      .first()
 
     if (existing) {
       const incKey = existing.other?.incrementFieldKey
@@ -3294,9 +3391,7 @@ export class BorealisListsServ {
       }
     }
 
-    const item = await prisma.other.findUnique({
-      where: { id: otherId },
-    })
+    const item = await prisma.orm.public.Other.where({ id: otherId }).first()
 
     return {
       success: true,
@@ -3307,18 +3402,14 @@ export class BorealisListsServ {
   }
 
   public static async upsertOtherEntry(userId: string, otherId: number, body: any) {
-    const item = await prisma.other.findUnique({
-      where: { id: otherId },
-    })
+    const item = await prisma.orm.public.Other.where({ id: otherId }).first()
     if (!item) {
       throw new NotFound(`Custom item with ID ${otherId} does not exist`)
     }
 
-    const existing = await prisma.otherList.findUnique({
-      where: { userId_otherId: { userId, otherId } },
-    })
+    const existing = await prisma.orm.public.OtherList.where({ userId, otherId }).first()
 
-    const status = body?.status ?? existing?.status ?? 'PLANNING'
+    const status = body?.status ?? existing?.status ?? 'PLANNED'
     const incKey = item.incrementFieldKey || 'progress'
 
     let progressValues: any =
@@ -3351,32 +3442,31 @@ export class BorealisListsServ {
           ? new Date()
           : existing?.completedAt ?? null
 
-    const entry = await prisma.otherList.upsert({
-      where: { userId_otherId: { userId, otherId } },
-      create: {
-        userId,
-        otherId,
-        status,
-        progressValues,
-        score: body?.score !== undefined ? body.score : null,
-        notes: body?.notes !== undefined ? body.notes : null,
-        private: body?.private !== undefined ? Boolean(body.private) : false,
-        startedAt,
-        completedAt,
-      },
-      update: {
-        status,
-        progressValues,
-        score: body?.score !== undefined ? body.score : undefined,
-        notes: body?.notes !== undefined ? body.notes : undefined,
-        private: body?.private !== undefined ? Boolean(body.private) : undefined,
-        startedAt,
-        completedAt,
-      },
-      include: {
-        other: true,
-      },
-    })
+    const entry = existing
+      ? await prisma.orm.public.OtherList.where({ id: existing.id }).update({
+          status,
+          progressValues,
+          score: body?.score !== undefined ? body.score : undefined,
+          notes: body?.notes !== undefined ? body.notes : undefined,
+          private: body?.private !== undefined ? Boolean(body.private) : undefined,
+          startedAt,
+          completedAt,
+        })
+      : await prisma.orm.public.OtherList.create({
+          userId,
+          otherId,
+          status,
+          progressValues,
+          score: body?.score !== undefined ? body.score : null,
+          notes: body?.notes !== undefined ? body.notes : null,
+          private: body?.private !== undefined ? Boolean(body.private) : false,
+          startedAt,
+          completedAt,
+        })
+
+    if (!entry) {
+      throw new Error('Failed to update other list entry')
+    }
 
     await MediaStatsServ.recalculateMediaStats('OTHER', otherId)
 
@@ -3418,14 +3508,11 @@ export class BorealisListsServ {
   }
 
   public static async deleteOtherEntry(userId: string, otherId: number) {
-    const existing = await prisma.otherList.findUnique({
-      where: { userId_otherId: { userId, otherId } },
-      include: { other: true },
-    })
+    const existing = await prisma.orm.public.OtherList.where({ userId, otherId })
+      .include('other')
+      .first()
 
-    await prisma.otherList.deleteMany({
-      where: { userId, otherId },
-    })
+    await prisma.orm.public.OtherList.where({ userId, otherId }).deleteAll()
 
     await MediaStatsServ.recalculateMediaStats('OTHER', otherId)
 
@@ -3461,16 +3548,12 @@ export class BorealisListsServ {
     otherId: number,
     body?: { count?: number; status?: string } | null
   ) {
-    const item = await prisma.other.findUnique({
-      where: { id: otherId },
-    })
+    const item = await prisma.orm.public.Other.where({ id: otherId }).first()
     if (!item) {
       throw new NotFound(`Custom item with ID ${otherId} does not exist`)
     }
 
-    const existing = await prisma.otherList.findUnique({
-      where: { userId_otherId: { userId, otherId } },
-    })
+    const existing = await prisma.orm.public.OtherList.where({ userId, otherId }).first()
 
     const incKey =
       item.incrementFieldKey || (item.progressFields as any[])?.[0]?.key || 'progress'
@@ -3483,10 +3566,10 @@ export class BorealisListsServ {
     const currentProgValues = (existing?.progressValues as Record<string, number>) || {}
     const currentVal = Number(currentProgValues[incKey] || 0)
     let newVal = currentVal + count
-    let newStatus = body?.status ?? existing?.status ?? 'IN_PROGRESS'
+    let newStatus = (body?.status ?? existing?.status ?? 'IN_PROGRESS') as ListStatus
     let completedAt = existing?.completedAt ?? null
 
-    if (newStatus === 'PLANNING') {
+    if (newStatus !== 'IN_PROGRESS') {
       newStatus = 'IN_PROGRESS'
     }
 
@@ -3496,6 +3579,8 @@ export class BorealisListsServ {
       if (!completedAt) {
         completedAt = new Date()
       }
+    } else {
+      completedAt = null
     }
 
     const updatedProgValues = {
@@ -3503,25 +3588,25 @@ export class BorealisListsServ {
       [incKey]: newVal,
     }
 
-    const entry = await prisma.otherList.upsert({
-      where: { userId_otherId: { userId, otherId } },
-      create: {
-        userId,
-        otherId,
-        status: newStatus,
-        progressValues: updatedProgValues,
-        startedAt: new Date(),
-        completedAt,
-      },
-      update: {
-        status: newStatus,
-        progressValues: updatedProgValues,
-        completedAt,
-      },
-      include: {
-        other: true,
-      },
-    })
+    const entry = existing
+      ? await prisma.orm.public.OtherList.where({ id: existing.id }).update({
+          status: newStatus,
+          progressValues: updatedProgValues,
+          completedAt,
+          ...(existing?.status === 'PLANNED' || !existing?.startedAt ? { startedAt: existing?.startedAt ?? new Date() } : {}),
+        })
+      : await prisma.orm.public.OtherList.create({
+          userId,
+          otherId,
+          status: newStatus,
+          progressValues: updatedProgValues,
+          startedAt: new Date(),
+          completedAt,
+        })
+
+    if (!entry) {
+      throw new Error('Failed to increment other list entry')
+    }
 
     await MediaStatsServ.recalculateMediaStats('OTHER', otherId)
 
@@ -3559,10 +3644,9 @@ export class BorealisListsServ {
   }
 
   public static async getOtherStats(userId: string) {
-    const entries = await prisma.otherList.findMany({
-      where: { userId },
-      include: { other: true },
-    })
+    const entries = await prisma.orm.public.OtherList.where({ userId })
+      .include('other')
+      .all()
 
     const total = entries.length
     const statusCounts: Record<string, number> = {}
@@ -3613,18 +3697,12 @@ export class BorealisListsServ {
   }
 
   public static async getOtherFilters(userId: string) {
-    const entries = await prisma.otherList.findMany({
-      where: { userId },
-      select: {
-        status: true,
-        other: {
-          select: {
-            startDate: true,
-            format: true,
-          },
-        },
-      },
-    })
+    const entries = await prisma.orm.public.OtherList.where({ userId })
+      .select('status')
+      .include('other', (o) =>
+        o.select('startDate', 'format')
+      )
+      .all()
 
     const statusCounts: Record<string, number> = {}
     const formatCounts: Record<string, number> = {}
@@ -3661,10 +3739,9 @@ export class BorealisListsServ {
   // ===========================================================================
 
   public static async exportUserLists(userId: string, query?: { format?: string; types?: string }) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { username: true },
-    })
+    const user = await prisma.orm.public.User.where({ id: userId })
+      .select('username')
+      .first()
 
     if (!user) {
       throw new NotFound('User not found')
@@ -3697,11 +3774,10 @@ export class BorealisListsServ {
 
     // 1. Anime
     if (requestedTypes.includes('anime')) {
-      const items = await prisma.animeList.findMany({
-        where: { userId },
-        include: { anime: true },
-        orderBy: { updatedAt: 'desc' },
-      })
+      const items = await prisma.orm.public.AnimeList.where({ userId })
+        .include('anime')
+        .orderBy((al) => al.updatedAt.desc())
+        .all()
       exportData.lists.anime = items.map((item: any) => ({
         externalIds: {
           anilistId: item.anime?.anilistId,
@@ -3727,11 +3803,10 @@ export class BorealisListsServ {
 
     // 2. Manga
     if (requestedTypes.includes('manga')) {
-      const items = await prisma.mangaList.findMany({
-        where: { userId },
-        include: { manga: true },
-        orderBy: { updatedAt: 'desc' },
-      })
+      const items = await prisma.orm.public.MangaList.where({ userId })
+        .include('manga')
+        .orderBy((ml) => ml.updatedAt.desc())
+        .all()
       exportData.lists.manga = items.map((item: any) => ({
         externalIds: {
           anilistId: item.manga?.anilistId,
@@ -3757,11 +3832,10 @@ export class BorealisListsServ {
 
     // 3. TV
     if (requestedTypes.includes('tv')) {
-      const items = await prisma.tvList.findMany({
-        where: { userId },
-        include: { tv: true },
-        orderBy: { updatedAt: 'desc' },
-      })
+      const items = await prisma.orm.public.TvList.where({ userId })
+        .include('tv')
+        .orderBy((tl) => tl.updatedAt.desc())
+        .all()
       exportData.lists.tv = items.map((item: any) => ({
         externalIds: {
           tvDBId: item.tv?.tvDBId,
@@ -3786,11 +3860,10 @@ export class BorealisListsServ {
 
     // 4. Movie
     if (requestedTypes.includes('movie')) {
-      const items = await prisma.movieList.findMany({
-        where: { userId },
-        include: { movie: true },
-        orderBy: { updatedAt: 'desc' },
-      })
+      const items = await prisma.orm.public.MovieList.where({ userId })
+        .include('movie')
+        .orderBy((ml) => ml.updatedAt.desc())
+        .all()
       exportData.lists.movie = items.map((item: any) => ({
         externalIds: {
           tvDBId: item.movie?.tvDBId,
@@ -3814,11 +3887,10 @@ export class BorealisListsServ {
 
     // 5. Game
     if (requestedTypes.includes('game')) {
-      const items = await prisma.gameList.findMany({
-        where: { userId },
-        include: { game: true },
-        orderBy: { updatedAt: 'desc' },
-      })
+      const items = await prisma.orm.public.GameList.where({ userId })
+        .include('game')
+        .orderBy((gl) => gl.updatedAt.desc())
+        .all()
       exportData.lists.game = items.map((item: any) => ({
         externalIds: {
           igdbId: item.game?.igdbId,
@@ -3843,11 +3915,10 @@ export class BorealisListsServ {
 
     // 6. Book
     if (requestedTypes.includes('book')) {
-      const items = await prisma.bookList.findMany({
-        where: { userId },
-        include: { book: true },
-        orderBy: { updatedAt: 'desc' },
-      })
+      const items = await prisma.orm.public.BookList.where({ userId })
+        .include('book')
+        .orderBy((bl) => bl.updatedAt.desc())
+        .all()
       exportData.lists.book = items.map((item: any) => ({
         externalIds: {
           googleBookId: item.book?.googleBookId,
@@ -3874,11 +3945,10 @@ export class BorealisListsServ {
 
     // 7. Music
     if (requestedTypes.includes('music')) {
-      const items = await prisma.musicList.findMany({
-        where: { userId },
-        include: { music: true },
-        orderBy: { updatedAt: 'desc' },
-      })
+      const items = await prisma.orm.public.MusicList.where({ userId })
+        .include('music')
+        .orderBy((ml) => ml.updatedAt.desc())
+        .all()
       exportData.lists.music = items.map((item: any) => ({
         externalIds: {
           deezerId: item.music?.deezerId,
@@ -3901,15 +3971,12 @@ export class BorealisListsServ {
 
     // 8. Custom Lists / Playlists
     if (requestedTypes.includes('custom_lists') || requestedTypes.includes('customlists')) {
-      const customLists = await prisma.customList.findMany({
-        where: { userId },
-        include: {
-          entries: {
-            orderBy: { order: 'asc' },
-          },
-        },
-        orderBy: { order: 'asc' },
-      })
+      const customLists = await prisma.orm.public.CustomList.where({ userId })
+        .include('entries', (e) =>
+          e.orderBy((en) => en.order.asc())
+        )
+        .orderBy((cl) => cl.order.asc())
+        .all()
       exportData.lists.customLists = customLists.map((list: any) => ({
         id: list.id,
         name: list.name,
@@ -3975,7 +4042,7 @@ export class BorealisListsServ {
     for (const item of items) {
       const mediaType = (item.mediaType || '').toLowerCase()
       const title = item.title || 'Untitled'
-      const status = item.status || 'PLANNING'
+      const status = normalizeListStatus(item.status)
       const rawScore = item.score !== undefined && item.score !== null ? Number(item.score) : null
       let score: number | null = null
       if (rawScore !== null && !isNaN(rawScore)) {
@@ -3993,59 +4060,55 @@ export class BorealisListsServ {
       try {
         switch (mediaType) {
           case 'anime': {
-            let anime = await prisma.anime.findFirst({
-              where: {
-                OR: [
-                  item.externalIds?.anilistId ? { anilistId: Number(item.externalIds.anilistId) } : undefined,
-                  item.externalIds?.malId ? { malId: Number(item.externalIds.malId) } : undefined,
-                  { titlePrimary: { equals: title, mode: 'insensitive' } },
-                ].filter(Boolean) as any,
-              },
-            })
+            const anilistId = item.externalIds?.anilistId ? Number(item.externalIds.anilistId) : null
+            const malId = item.externalIds?.malId ? Number(item.externalIds.malId) : null
+            const matchers: any[] = []
+            if (anilistId) matchers.push((a: any) => a.anilistId.eq(anilistId))
+            if (malId) matchers.push((a: any) => a.malId.eq(malId))
+            matchers.push((a: any) => a.titlePrimary.ilike(title))
+
+            let anime = await prisma.orm.public.Anime.where((a) => or(...matchers.map((m) => m(a)))).first()
+
             if (!anime) {
-              anime = await prisma.anime.create({
-                data: {
-                  titlePrimary: title,
-                  anilistId: item.externalIds?.anilistId ? Number(item.externalIds.anilistId) : null,
-                  malId: item.externalIds?.malId ? Number(item.externalIds.malId) : null,
-                },
+              anime = await prisma.orm.public.Anime.create({
+                titlePrimary: title,
+                anilistId,
+                malId,
+                synonyms: [],
               })
             }
-            const existing = await prisma.animeList.findUnique({
-              where: { userId_animeId: { userId, animeId: anime.id } },
-            })
+            if (!anime) {
+              skipped++
+              break
+            }
+            const existing = await prisma.orm.public.AnimeList.where({ userId, animeId: anime.id }).first()
             if (existing) {
               if (skipExisting) {
                 skipped++
               } else {
-                await prisma.animeList.update({
-                  where: { id: existing.id },
-                  data: {
-                    status,
-                    progress: item.progress ?? existing.progress,
-                    score: score ?? existing.score,
-                    notes: notes ?? existing.notes,
-                    private: isPrivate,
-                    startedAt: startedAt ?? existing.startedAt,
-                    completedAt: completedAt ?? existing.completedAt,
-                  },
+                await prisma.orm.public.AnimeList.where({ id: existing.id }).update({
+                  status,
+                  progress: item.progress ?? existing.progress,
+                  score: score ?? existing.score,
+                  notes: notes ?? existing.notes,
+                  private: isPrivate,
+                  startedAt: startedAt ?? existing.startedAt,
+                  completedAt: completedAt ?? existing.completedAt,
                 })
                 updated++
                 touchedMedia.set(`anime:${anime.id}`, { type: 'ANIME', id: anime.id })
               }
             } else {
-              await prisma.animeList.create({
-                data: {
-                  userId,
-                  animeId: anime.id,
-                  status,
-                  progress: item.progress ?? 0,
-                  score,
-                  notes,
-                  private: isPrivate,
-                  startedAt,
-                  completedAt,
-                },
+              await prisma.orm.public.AnimeList.create({
+                userId,
+                animeId: anime.id,
+                status,
+                progress: item.progress ?? 0,
+                score,
+                notes,
+                private: isPrivate,
+                startedAt,
+                completedAt,
               })
               imported++
               touchedMedia.set(`anime:${anime.id}`, { type: 'ANIME', id: anime.id })
@@ -4053,59 +4116,55 @@ export class BorealisListsServ {
             break
           }
           case 'manga': {
-            let manga = await prisma.manga.findFirst({
-              where: {
-                OR: [
-                  item.externalIds?.anilistId ? { anilistId: Number(item.externalIds.anilistId) } : undefined,
-                  item.externalIds?.malId ? { malId: Number(item.externalIds.malId) } : undefined,
-                  { titlePrimary: { equals: title, mode: 'insensitive' } },
-                ].filter(Boolean) as any,
-              },
-            })
+            const anilistId = item.externalIds?.anilistId ? Number(item.externalIds.anilistId) : null
+            const malId = item.externalIds?.malId ? Number(item.externalIds.malId) : null
+            const matchers: any[] = []
+            if (anilistId) matchers.push((m: any) => m.anilistId.eq(anilistId))
+            if (malId) matchers.push((m: any) => m.malId.eq(malId))
+            matchers.push((m: any) => m.titlePrimary.ilike(title))
+
+            let manga = await prisma.orm.public.Manga.where((m) => or(...matchers.map((fn) => fn(m)))).first()
+
             if (!manga) {
-              manga = await prisma.manga.create({
-                data: {
-                  titlePrimary: title,
-                  anilistId: item.externalIds?.anilistId ? Number(item.externalIds.anilistId) : null,
-                  malId: item.externalIds?.malId ? Number(item.externalIds.malId) : null,
-                },
+              manga = await prisma.orm.public.Manga.create({
+                titlePrimary: title,
+                anilistId,
+                malId,
+                synonyms: [],
               })
             }
-            const existing = await prisma.mangaList.findUnique({
-              where: { userId_mangaId: { userId, mangaId: manga.id } },
-            })
+            if (!manga) {
+              skipped++
+              break
+            }
+            const existing = await prisma.orm.public.MangaList.where({ userId, mangaId: manga.id }).first()
             if (existing) {
               if (skipExisting) {
                 skipped++
               } else {
-                await prisma.mangaList.update({
-                  where: { id: existing.id },
-                  data: {
-                    status,
-                    chaptersProgress: item.progress ?? item.progressChapters ?? existing.chaptersProgress,
-                    volumesProgress: item.progressVolumes ?? existing.volumesProgress,
-                    score: score ?? existing.score,
-                    notes: notes ?? existing.notes,
-                    private: isPrivate,
-                  },
+                await prisma.orm.public.MangaList.where({ id: existing.id }).update({
+                  status,
+                  chaptersProgress: item.progress ?? item.progressChapters ?? existing.chaptersProgress,
+                  volumesProgress: item.progressVolumes ?? existing.volumesProgress,
+                  score: score ?? existing.score,
+                  notes: notes ?? existing.notes,
+                  private: isPrivate,
                 })
                 updated++
                 touchedMedia.set(`manga:${manga.id}`, { type: 'MANGA', id: manga.id })
               }
             } else {
-              await prisma.mangaList.create({
-                data: {
-                  userId,
-                  mangaId: manga.id,
-                  status,
-                  chaptersProgress: item.progress ?? item.progressChapters ?? 0,
-                  volumesProgress: item.progressVolumes ?? 0,
-                  score,
-                  notes,
-                  private: isPrivate,
-                  startedAt,
-                  completedAt,
-                },
+              await prisma.orm.public.MangaList.create({
+                userId,
+                mangaId: manga.id,
+                status,
+                chaptersProgress: item.progress ?? item.progressChapters ?? 0,
+                volumesProgress: item.progressVolumes ?? 0,
+                score,
+                notes,
+                private: isPrivate,
+                startedAt,
+                completedAt,
               })
               imported++
               touchedMedia.set(`manga:${manga.id}`, { type: 'MANGA', id: manga.id })
@@ -4113,41 +4172,50 @@ export class BorealisListsServ {
             break
           }
           case 'movie': {
-            let movie = await prisma.movie.findFirst({
-              where: {
-                OR: [
-                  item.externalIds?.tmdbId ? { tmdbId: Number(item.externalIds.tmdbId) } : undefined,
-                  item.externalIds?.imdbId ? { imdbId: String(item.externalIds.imdbId) } : undefined,
-                  { titlePrimary: { equals: title, mode: 'insensitive' } },
-                ].filter(Boolean) as any,
-              },
-            })
+            const tmdbId = item.externalIds?.tmdbId ? Number(item.externalIds.tmdbId) : null
+            const imdbId = item.externalIds?.imdbId ? String(item.externalIds.imdbId) : null
+            const matchers: any[] = []
+            if (tmdbId) matchers.push((m: any) => m.tmdbId.eq(tmdbId))
+            if (imdbId) matchers.push((m: any) => m.imdbId.eq(imdbId))
+            matchers.push((m: any) => m.titlePrimary.ilike(title))
+
+            let movie = await prisma.orm.public.Movie.where((m) => or(...matchers.map((fn) => fn(m)))).first()
+
             if (!movie) {
-              movie = await prisma.movie.create({
-                data: {
-                  titlePrimary: title,
-                  tmdbId: item.externalIds?.tmdbId ? Number(item.externalIds.tmdbId) : null,
-                  imdbId: item.externalIds?.imdbId ? String(item.externalIds.imdbId) : null,
-                },
+              movie = await prisma.orm.public.Movie.create({
+                titlePrimary: title,
+                tmdbId,
+                imdbId,
+                synonyms: [],
               })
             }
-            const existing = await prisma.movieList.findUnique({
-              where: { userId_movieId: { userId, movieId: movie.id } },
-            })
+            if (!movie) {
+              skipped++
+              break
+            }
+            const existing = await prisma.orm.public.MovieList.where({ userId, movieId: movie.id }).first()
             if (existing) {
               if (skipExisting) {
                 skipped++
               } else {
-                await prisma.movieList.update({
-                  where: { id: existing.id },
-                  data: { status, score: score ?? existing.score, notes: notes ?? existing.notes },
+                await prisma.orm.public.MovieList.where({ id: existing.id }).update({
+                  status,
+                  score: score ?? existing.score,
+                  notes: notes ?? existing.notes,
                 })
                 updated++
                 touchedMedia.set(`movie:${movie.id}`, { type: 'MOVIE', id: movie.id })
               }
             } else {
-              await prisma.movieList.create({
-                data: { userId, movieId: movie.id, status, score, notes, private: isPrivate, startedAt, completedAt },
+              await prisma.orm.public.MovieList.create({
+                userId,
+                movieId: movie.id,
+                status,
+                score,
+                notes,
+                private: isPrivate,
+                startedAt,
+                completedAt,
               })
               imported++
               touchedMedia.set(`movie:${movie.id}`, { type: 'MOVIE', id: movie.id })
@@ -4155,41 +4223,53 @@ export class BorealisListsServ {
             break
           }
           case 'tv': {
-            let tv = await prisma.tv.findFirst({
-              where: {
-                OR: [
-                  item.externalIds?.tmdbId ? { tmdbId: Number(item.externalIds.tmdbId) } : undefined,
-                  item.externalIds?.tvDBId ? { tvDBId: Number(item.externalIds.tvDBId) } : undefined,
-                  { titlePrimary: { equals: title, mode: 'insensitive' } },
-                ].filter(Boolean) as any,
-              },
-            })
+            const tmdbId = item.externalIds?.tmdbId ? Number(item.externalIds.tmdbId) : null
+            const tvDBId = item.externalIds?.tvDBId ? Number(item.externalIds.tvDBId) : null
+            const matchers: any[] = []
+            if (tmdbId) matchers.push((t: any) => t.tmdbId.eq(tmdbId))
+            if (tvDBId) matchers.push((t: any) => t.tvDBId.eq(tvDBId))
+            matchers.push((t: any) => t.titlePrimary.ilike(title))
+
+            let tv = await prisma.orm.public.Tv.where((t) => or(...matchers.map((fn) => fn(t)))).first()
+
             if (!tv) {
-              tv = await prisma.tv.create({
-                data: {
-                  titlePrimary: title,
-                  tmdbId: item.externalIds?.tmdbId ? Number(item.externalIds.tmdbId) : null,
-                  tvDBId: item.externalIds?.tvDBId ? Number(item.externalIds.tvDBId) : null,
-                },
+              tv = await prisma.orm.public.Tv.create({
+                titlePrimary: title,
+                tmdbId,
+                tvDBId,
+                broadcastDays: [],
+                networks: [],
+                synonyms: [],
               })
             }
-            const existing = await prisma.tvList.findUnique({
-              where: { userId_tvId: { userId, tvId: tv.id } },
-            })
+            if (!tv) {
+              skipped++
+              break
+            }
+            const existing = await prisma.orm.public.TvList.where({ userId, tvId: tv.id }).first()
             if (existing) {
               if (skipExisting) {
                 skipped++
               } else {
-                await prisma.tvList.update({
-                  where: { id: existing.id },
-                  data: { status, progress: item.progress ?? existing.progress, score: score ?? existing.score },
+                await prisma.orm.public.TvList.where({ id: existing.id }).update({
+                  status,
+                  progress: item.progress ?? existing.progress,
+                  score: score ?? existing.score,
                 })
                 updated++
                 touchedMedia.set(`tv:${tv.id}`, { type: 'TV', id: tv.id })
               }
             } else {
-              await prisma.tvList.create({
-                data: { userId, tvId: tv.id, status, progress: item.progress ?? 0, score, notes, private: isPrivate, startedAt, completedAt },
+              await prisma.orm.public.TvList.create({
+                userId,
+                tvId: tv.id,
+                status,
+                progress: item.progress ?? 0,
+                score,
+                notes,
+                private: isPrivate,
+                startedAt,
+                completedAt,
               })
               imported++
               touchedMedia.set(`tv:${tv.id}`, { type: 'TV', id: tv.id })
@@ -4197,40 +4277,56 @@ export class BorealisListsServ {
             break
           }
           case 'game': {
-            let game = await prisma.game.findFirst({
-              where: {
-                OR: [
-                  item.externalIds?.igdbId ? { igdbId: Number(item.externalIds.igdbId) } : undefined,
-                  item.externalIds?.steamAppId ? { steamAppId: Number(item.externalIds.steamAppId) } : undefined,
-                  { titlePrimary: { equals: title, mode: 'insensitive' } },
-                ].filter(Boolean) as any,
-              },
-            })
+            const igdbId = item.externalIds?.igdbId ? Number(item.externalIds.igdbId) : null
+            const steamAppId = item.externalIds?.steamAppId ? Number(item.externalIds.steamAppId) : null
+            const matchers: any[] = []
+            if (igdbId) matchers.push((g: any) => g.igdbId.eq(igdbId))
+            if (steamAppId) matchers.push((g: any) => g.steamAppId.eq(steamAppId))
+            matchers.push((g: any) => g.titlePrimary.ilike(title))
+
+            let game = await prisma.orm.public.Game.where((g) => or(...matchers.map((fn) => fn(g)))).first()
+
             if (!game) {
-              game = await prisma.game.create({
-                data: {
-                  titlePrimary: title,
-                  igdbId: item.externalIds?.igdbId ? Number(item.externalIds.igdbId) : null,
-                },
+              game = await prisma.orm.public.Game.create({
+                titlePrimary: title,
+                igdbId,
+                developers: [],
+                gameModes: [],
+                languages: [],
+                platforms: [],
+                playerPerspectives: [],
+                publishers: [],
+                synonyms: [],
               })
             }
-            const existing = await prisma.gameList.findUnique({
-              where: { userId_gameId: { userId, gameId: game.id } },
-            })
+            if (!game) {
+              skipped++
+              break
+            }
+            const existing = await prisma.orm.public.GameList.where({ userId, gameId: game.id }).first()
             if (existing) {
               if (skipExisting) {
                 skipped++
               } else {
-                await prisma.gameList.update({
-                  where: { id: existing.id },
-                  data: { status, progress: item.progress ?? existing.progress, score: score ?? existing.score },
+                await prisma.orm.public.GameList.where({ id: existing.id }).update({
+                  status,
+                  progress: item.progress ?? existing.progress,
+                  score: score ?? existing.score,
                 })
                 updated++
                 touchedMedia.set(`game:${game.id}`, { type: 'GAME', id: game.id })
               }
             } else {
-              await prisma.gameList.create({
-                data: { userId, gameId: game.id, status, progress: item.progress ?? 0, score, notes, private: isPrivate, startedAt, completedAt },
+              await prisma.orm.public.GameList.create({
+                userId,
+                gameId: game.id,
+                status,
+                progress: item.progress ?? 0,
+                score,
+                notes,
+                private: isPrivate,
+                startedAt,
+                completedAt,
               })
               imported++
               touchedMedia.set(`game:${game.id}`, { type: 'GAME', id: game.id })
@@ -4238,40 +4334,53 @@ export class BorealisListsServ {
             break
           }
           case 'book': {
-            let book = await prisma.book.findFirst({
-              where: {
-                OR: [
-                  item.externalIds?.googleBookId ? { googleBookId: String(item.externalIds.googleBookId) } : undefined,
-                  item.externalIds?.isbn13 ? { isbn13: String(item.externalIds.isbn13) } : undefined,
-                  { titlePrimary: { equals: title, mode: 'insensitive' } },
-                ].filter(Boolean) as any,
-              },
-            })
+            const googleBookId = item.externalIds?.googleBookId ? String(item.externalIds.googleBookId) : null
+            const isbn13 = item.externalIds?.isbn13 ? String(item.externalIds.isbn13) : null
+            const matchers: any[] = []
+            if (googleBookId) matchers.push((b: any) => b.googleBookId.eq(googleBookId))
+            if (isbn13) matchers.push((b: any) => b.isbn13.eq(isbn13))
+            matchers.push((b: any) => b.titlePrimary.ilike(title))
+
+            let book = await prisma.orm.public.Book.where((b) => or(...matchers.map((fn) => fn(b)))).first()
+
             if (!book) {
-              book = await prisma.book.create({
-                data: {
-                  titlePrimary: title,
-                  googleBookId: item.externalIds?.googleBookId ? String(item.externalIds.googleBookId) : null,
-                },
+              book = await prisma.orm.public.Book.create({
+                titlePrimary: title,
+                googleBookId,
+                subjects: [],
+                publishers: [],
+                authors: [],
+                synonyms: [],
               })
             }
-            const existing = await prisma.bookList.findUnique({
-              where: { userId_bookId: { userId, bookId: book.id } },
-            })
+            if (!book) {
+              skipped++
+              break
+            }
+            const existing = await prisma.orm.public.BookList.where({ userId, bookId: book.id }).first()
             if (existing) {
               if (skipExisting) {
                 skipped++
               } else {
-                await prisma.bookList.update({
-                  where: { id: existing.id },
-                  data: { status, progressPages: item.progressPages ?? existing.progressPages, score: score ?? existing.score },
+                await prisma.orm.public.BookList.where({ id: existing.id }).update({
+                  status,
+                  progressPages: item.progressPages ?? existing.progressPages,
+                  score: score ?? existing.score,
                 })
                 updated++
                 touchedMedia.set(`book:${book.id}`, { type: 'BOOK', id: book.id })
               }
             } else {
-              await prisma.bookList.create({
-                data: { userId, bookId: book.id, status, progressPages: item.progressPages ?? 0, score, notes, private: isPrivate, startedAt, completedAt },
+              await prisma.orm.public.BookList.create({
+                userId,
+                bookId: book.id,
+                status,
+                progressPages: item.progressPages ?? 0,
+                score,
+                notes,
+                private: isPrivate,
+                startedAt,
+                completedAt,
               })
               imported++
               touchedMedia.set(`book:${book.id}`, { type: 'BOOK', id: book.id })
@@ -4279,40 +4388,48 @@ export class BorealisListsServ {
             break
           }
           case 'music': {
-            let music = await prisma.music.findFirst({
-              where: {
-                OR: [
-                  item.externalIds?.deezerId ? { deezerId: String(item.externalIds.deezerId) } : undefined,
-                  { titlePrimary: { equals: title, mode: 'insensitive' } },
-                ].filter(Boolean) as any,
-              },
-            })
+            const deezerId = item.externalIds?.deezerId ? String(item.externalIds.deezerId) : null
+            const matchers: any[] = []
+            if (deezerId) matchers.push((m: any) => m.deezerId.eq(deezerId))
+            matchers.push((m: any) => m.titlePrimary.ilike(title))
+
+            let music = await prisma.orm.public.Music.where((m) => or(...matchers.map((fn) => fn(m)))).first()
+
             if (!music) {
-              music = await prisma.music.create({
-                data: {
-                  titlePrimary: title,
-                  artistName: item.artistName || 'Unknown Artist',
-                  deezerId: item.externalIds?.deezerId ? String(item.externalIds.deezerId) : null,
-                },
+              music = await prisma.orm.public.Music.create({
+                titlePrimary: title,
+                artistName: item.artistName || 'Unknown Artist',
+                deezerId,
               })
             }
-            const existing = await prisma.musicList.findUnique({
-              where: { userId_musicId: { userId, musicId: music.id } },
-            })
+            if (!music) {
+              skipped++
+              break
+            }
+            const existing = await prisma.orm.public.MusicList.where({ userId, musicId: music.id }).first()
             if (existing) {
               if (skipExisting) {
                 skipped++
               } else {
-                await prisma.musicList.update({
-                  where: { id: existing.id },
-                  data: { status, playCount: item.playCount ?? existing.playCount, score: score ?? existing.score },
+                await prisma.orm.public.MusicList.where({ id: existing.id }).update({
+                  status,
+                  playCount: item.playCount ?? existing.playCount,
+                  score: score ?? existing.score,
                 })
                 updated++
                 touchedMedia.set(`music:${music.id}`, { type: 'MUSIC', id: music.id })
               }
             } else {
-              await prisma.musicList.create({
-                data: { userId, musicId: music.id, status, playCount: item.playCount ?? 0, score, notes, private: isPrivate, startedAt, completedAt },
+              await prisma.orm.public.MusicList.create({
+                userId,
+                musicId: music.id,
+                status,
+                playCount: item.playCount ?? 0,
+                score,
+                notes,
+                private: isPrivate,
+                startedAt,
+                completedAt,
               })
               imported++
               touchedMedia.set(`music:${music.id}`, { type: 'MUSIC', id: music.id })
@@ -4321,17 +4438,13 @@ export class BorealisListsServ {
           }
           case 'custom_lists': {
             const listName = item.customListName || item.name || title
-            let cList = await prisma.customList.findFirst({
-              where: { userId, name: listName },
-            })
+            let cList = await prisma.orm.public.CustomList.where({ userId, name: listName }).first()
             if (!cList) {
-              cList = await prisma.customList.create({
-                data: {
-                  userId,
-                  name: listName,
-                  description: item.description ?? null,
-                  isPrivate: isPrivate,
-                },
+              cList = await prisma.orm.public.CustomList.create({
+                userId,
+                name: listName,
+                description: item.description ?? null,
+                isPrivate,
               })
             }
             imported++
@@ -4432,36 +4545,66 @@ export class BorealisListsServ {
       return true
     }
 
-    const [animeList, mangaList, tvList, movieList, gameList, bookList, musicList] = await Promise.all([
-      prisma.animeList.findMany({
-        where: { userId },
-        include: { anime: { select: { averageScore: true, genres: { select: { name: true } } } } },
-      }),
-      prisma.mangaList.findMany({
-        where: { userId },
-        include: { manga: { select: { averageScore: true, genres: { select: { name: true } } } } },
-      }),
-      prisma.tvList.findMany({
-        where: { userId },
-        include: { tv: { select: { averageScore: true, genres: { select: { name: true } } } } },
-      }),
-      prisma.movieList.findMany({
-        where: { userId },
-        include: { movie: { select: { runtime: true, averageScore: true, genres: { select: { name: true } } } } },
-      }),
-      prisma.gameList.findMany({
-        where: { userId },
-        include: { game: { select: { averageScore: true, genres: { select: { name: true } } } } },
-      }),
-      prisma.bookList.findMany({
-        where: { userId },
-        include: { book: { select: { averageScore: true, genres: { select: { name: true } } } } },
-      }),
-      prisma.musicList.findMany({
-        where: { userId },
-        include: { music: { select: { duration: true, genres: { select: { name: true } } } } },
-      }),
+    const [animeRaw, mangaRaw, tvRaw, movieRaw, gameRaw, bookRaw, musicRaw] = await Promise.all([
+      prisma.orm.public.AnimeList.where({ userId })
+        .include('anime', (a) =>
+          a.select('averageScore').include('genres', (ge) => ge.include('genre', (gn) => gn.select('name')))
+        )
+        .all(),
+      prisma.orm.public.MangaList.where({ userId })
+        .include('manga', (m) =>
+          m.select('averageScore').include('genres', (ge) => ge.include('genre', (gn) => gn.select('name')))
+        )
+        .all(),
+      prisma.orm.public.TvList.where({ userId })
+        .include('tv', (t) =>
+          t.select('averageScore').include('genres', (ge) => ge.include('genre', (gn) => gn.select('name')))
+        )
+        .all(),
+      prisma.orm.public.MovieList.where({ userId })
+        .include('movie', (m) =>
+          m.select('runtime', 'averageScore').include('genres', (ge) => ge.include('genre', (gn) => gn.select('name')))
+        )
+        .all(),
+      prisma.orm.public.GameList.where({ userId })
+        .include('game', (g) =>
+          g.select('averageScore').include('genres', (ge) => ge.include('genre', (gn) => gn.select('name')))
+        )
+        .all(),
+      prisma.orm.public.BookList.where({ userId })
+        .include('book', (b) =>
+          b.select('averageScore').include('genres', (ge) => ge.include('genre', (gn) => gn.select('name')))
+        )
+        .all(),
+      prisma.orm.public.MusicList.where({ userId })
+        .include('music', (m) =>
+          m.select('duration').include('genres', (ge) => ge.include('genre', (gn) => gn.select('name')))
+        )
+        .all(),
     ])
+
+    const normalizeGenres = (items: any[], mediaKey: string) =>
+      items.map((item) => {
+        const media = item[mediaKey]
+        if (!media) return item
+        return {
+          ...item,
+          [mediaKey]: {
+            ...media,
+            genres: (media.genres || [])
+              .filter((g: any) => Boolean(g.genre))
+              .map((g: any) => ({ name: g.genre!.name })),
+          },
+        }
+      })
+
+    const animeList = normalizeGenres(animeRaw, 'anime')
+    const mangaList = normalizeGenres(mangaRaw, 'manga')
+    const tvList = normalizeGenres(tvRaw, 'tv')
+    const movieList = normalizeGenres(movieRaw, 'movie')
+    const gameList = normalizeGenres(gameRaw, 'game')
+    const bookList = normalizeGenres(bookRaw, 'book')
+    const musicList = normalizeGenres(musicRaw, 'music')
 
     const filterEntries = (arr: any[]) =>
       isPeriodFiltered
@@ -4495,42 +4638,42 @@ export class BorealisListsServ {
     for (const e of fAnime) {
       animeMinutes += (e.progress ?? 0) * 24
       if (e.status === 'COMPLETED') completedTitles++
-      if (e.status === 'PLANNING') planningCount++
+      if (e.status === 'PLANNED') planningCount++
     }
 
     let mangaMinutes = 0
     for (const e of fManga) {
       mangaMinutes += (e.chaptersProgress ?? 0) * 8
       if (e.status === 'COMPLETED') completedTitles++
-      if (e.status === 'PLANNING') planningCount++
+      if (e.status === 'PLANNED') planningCount++
     }
 
     let tvMinutes = 0
     for (const e of fTv) {
       tvMinutes += (e.progress ?? 0) * 45
       if (e.status === 'COMPLETED') completedTitles++
-      if (e.status === 'PLANNING') planningCount++
+      if (e.status === 'PLANNED') planningCount++
     }
 
     let movieMinutes = 0
     for (const e of fMovie) {
       movieMinutes += (e.status === 'COMPLETED' ? 1 : 0) * (e.movie?.runtime ?? 110)
       if (e.status === 'COMPLETED') completedTitles++
-      if (e.status === 'PLANNING') planningCount++
+      if (e.status === 'PLANNED') planningCount++
     }
 
     let gameMinutes = 0
     for (const e of fGame) {
       gameMinutes += (e.progress ?? 0) * 60
       if (e.status === 'COMPLETED') completedTitles++
-      if (e.status === 'PLANNING') planningCount++
+      if (e.status === 'PLANNED') planningCount++
     }
 
     let bookMinutes = 0
     for (const e of fBook) {
       bookMinutes += (e.progressPages ?? 0) * 1.5
       if (e.status === 'COMPLETED') completedTitles++
-      if (e.status === 'PLANNING') planningCount++
+      if (e.status === 'PLANNED') planningCount++
     }
 
     let musicMinutes = 0
@@ -4538,7 +4681,7 @@ export class BorealisListsServ {
       const dur = e.music?.duration ? e.music.duration / 60 : 3.5
       musicMinutes += (e.playCount ?? 0) * dur
       if (e.status === 'COMPLETED') completedTitles++
-      if (e.status === 'PLANNING') planningCount++
+      if (e.status === 'PLANNED') planningCount++
     }
 
     const totalTimeMinutes = Math.round(
@@ -4682,10 +4825,9 @@ export class BorealisListsServ {
   }
 
   public static async listExportShares(userId: string) {
-    const shares = await prisma.listExportShare.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    })
+    const shares = await prisma.orm.public.ListExportShare.where({ userId })
+      .orderBy((s) => s.createdAt.desc())
+      .all()
 
     return {
       success: true,
@@ -4725,14 +4867,12 @@ export class BorealisListsServ {
       expiresAt = new Date(Date.now() + params.expiresInHours * 3600 * 1000)
     }
 
-    const share = await prisma.listExportShare.create({
-      data: {
-        userId,
-        passwordHash,
-        mediaTypes: params.mediaTypes,
-        description: params.description || null,
-        expiresAt,
-      },
+    const share = await prisma.orm.public.ListExportShare.create({
+      userId,
+      passwordHash,
+      mediaTypes: params.mediaTypes,
+      description: params.description || null,
+      expiresAt,
     })
 
     return {
@@ -4743,17 +4883,13 @@ export class BorealisListsServ {
   }
 
   public static async revokeExportShare(userId: string, shareId: string) {
-    const share = await prisma.listExportShare.findFirst({
-      where: { id: shareId, userId },
-    })
+    const share = await prisma.orm.public.ListExportShare.where({ id: shareId, userId }).first()
 
     if (!share) {
       throw new NotFound('Export share link not found')
     }
 
-    await prisma.listExportShare.delete({
-      where: { id: share.id },
-    })
+    await prisma.orm.public.ListExportShare.where({ id: share.id }).delete()
 
     return {
       success: true,
@@ -4761,4 +4897,3 @@ export class BorealisListsServ {
     }
   }
 }
-

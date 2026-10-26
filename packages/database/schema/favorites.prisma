@@ -1,3 +1,5 @@
+// use prisma-8
+
 enum FavoriteType {
     ANIME
     MANGA
@@ -15,7 +17,7 @@ enum FavoriteType {
 }
 
 model Favorite {
-    id        String       @id @default(uuid())
+    id        String       @id @onCreate(uuid())
     userId    String
     user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
     type      FavoriteType

@@ -51,7 +51,7 @@ function setupPrismaMock() {
   ]
 
   // Mock User findUnique
-  ;(prisma.user.findUnique as any) = async ({ where }: any) => {
+  ;((prisma as any).user.findUnique as any) = async ({ where }: any) => {
     return mockUsers.find((u) => u.id === where.id) ?? null
   }
 }
@@ -61,7 +61,7 @@ function setupPrismaMock() {
 // -----------------------------------------------------------------------------
 
 const app = new Elysia()
-  .error(({ error, set }) => {
+  .onError(({ error, set }) => {
     if (isHttpError(error)) {
       set.status = error.status
       return error.toResponse()
@@ -90,7 +90,7 @@ describe('Comprehensive Akaromi Encryption Test Suite', () => {
   const BOB_ID = '00000000-0000-0000-0000-000000000002'
 
   beforeEach(async () => {
-    process.env.NEXTAUTH_SECRET = 'test-iris-secret-key-at-least-32-chars!'
+    Bun.env.JWT_SECRET = 'test-iris-secret-key-at-least-32-chars!'
     setupPrismaMock()
 
     aliceToken = await signUserJwt({

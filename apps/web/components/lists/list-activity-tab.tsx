@@ -42,6 +42,7 @@ import {
 } from "@workspace/ui/components/dialog"
 import { Skeleton } from "@workspace/ui/components/skeleton"
 import { Tooltip, TooltipTrigger } from "@workspace/ui/components/tooltip"
+import { Pressable } from "react-aria-components"
 import { cn } from "@workspace/ui/lib/utils"
 import {
   getDisplayNameStyleCss,
@@ -638,12 +639,14 @@ export function ListActivityTab({
 
                     <div className="flex items-center gap-2">
                       <TooltipTrigger delay={300}>
-                        <button
-                          type="button"
-                          className="cursor-default border-0 bg-transparent p-0 text-start text-[11px] font-medium text-muted-foreground outline-none hover:underline focus-visible:underline"
-                        >
-                          {dateInfo.relative}
-                        </button>
+                        <Pressable>
+                          <button
+                            type="button"
+                            className="cursor-default border-0 bg-transparent p-0 text-start text-[11px] font-medium text-muted-foreground outline-none hover:underline focus-visible:underline"
+                          >
+                            {dateInfo.relative}
+                          </button>
+                        </Pressable>
                         <Tooltip className="rounded-xl px-2.5 py-1 text-xs">
                           {dateInfo.full}
                         </Tooltip>

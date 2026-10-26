@@ -1,9 +1,10 @@
 import { randomBytes } from 'node:crypto'
-import { prisma } from '@IRIS/database'
+import { prisma, toDate } from '@IRIS/database'
 import { cache } from '../../utils/cache'
 import { signUserJwt } from '../../utils/auth-crypto'
 import { BadRequest } from '../../lib/errors'
 import type { CarinaQcModel } from '../../api/models/carina/qc.model'
+import { getDomainConfig } from '../../utils/domain'
 
 interface QuickConnectSessionData {
   status: 'pending' | 'approved'
@@ -28,7 +29,7 @@ export abstract class CarinaQcServ {
     // Generate private 256-bit unguessable polling session token
     const sessionToken = randomBytes(32).toString('hex')
 
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    const baseUrl = getDomainConfig().url
     const qrPayload = `${baseUrl.replace(/\/$/, '')}/qc?code=${code}`
 
     const sessionData: QuickConnectSessionData = {
@@ -132,9 +133,7 @@ export abstract class CarinaQcServ {
     }
 
     // Fetch approving user
-    const user = await prisma.user.findUnique({
-      where: { id: sessionData.userId },
-    })
+    const user = await prisma.orm.public.User.where({ id: sessionData.userId }).first()
 
     if (!user) {
       await cache.del(`auth:quickconnect:session:${sessionToken}`)
@@ -152,13 +151,17 @@ export abstract class CarinaQcServ {
       30
     )
 
+    const passwordChangedDate = user.passwordChangedAt
+      ? toDate(user.passwordChangedAt)
+      : null
+
     // Issue JWT token
     const token = await signUserJwt({
       id: user.id,
       username: user.username.trim(),
       email: user.email,
-      passwordChangedAt: user.passwordChangedAt,
-      permissions: user.permissions,
+      passwordChangedAt: passwordChangedDate,
+      permissions: [...user.permissions],
     })
 
     return {
@@ -167,8 +170,8 @@ export abstract class CarinaQcServ {
         id: user.id,
         username: user.username.trim(),
         email: user.email,
-        passwordChangedAt: user.passwordChangedAt
-          ? Math.floor(user.passwordChangedAt.getTime() / 1000)
+        passwordChangedAt: passwordChangedDate
+          ? Math.floor(passwordChangedDate.getTime() / 1000)
           : null,
       },
       token,

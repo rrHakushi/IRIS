@@ -2,6 +2,7 @@ import { Elysia } from 'elysia'
 import { session } from '../../../plugins/session'
 import { CarinaPasskeysModel } from '../../models/carina/passkeys.model'
 import { CarinaPasskeysServ } from '../../../services/carina/passkeys.serv'
+import { getDomainConfig } from '../../../utils/domain'
 
 export const carinaPasskeys = new Elysia({ prefix: '/carina/auth/twofactor/passkeys' })
   .use(session())
@@ -81,8 +82,21 @@ export const carinaPasskeys = new Elysia({ prefix: '/carina/auth/twofactor/passk
         422: CarinaPasskeysModel.validationError,
       },
     },
-    async ({ body, request }) => {
-      return await CarinaPasskeysServ.verifyLogin(body, request)
+    async ({ body, request, cookie: { session: sessionCookie } }) => {
+      const res = await CarinaPasskeysServ.verifyLogin(body, request)
+      if (res.token && sessionCookie) {
+        const { isSecure, cookieDomain } = getDomainConfig()
+        sessionCookie.set({
+          value: res.token,
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+          secure: isSecure,
+          maxAge: 365 * 24 * 60 * 60,
+          ...(cookieDomain ? { domain: cookieDomain } : {}),
+        })
+      }
+      return res
     }
   )
 

@@ -1,4 +1,17 @@
 import { t, type UnwrapSchema } from 'elysia'
+import { LIST_STATUSES } from '@IRIS/database'
+
+/**
+ * Unified list status accepted/returned by every list type.
+ * IN_PROGRESS, ON_HOLD, DROPPED, COMPLETED, PLANNED
+ */
+export const ListStatusSchema = t.Union([
+  t.Literal('IN_PROGRESS'),
+  t.Literal('ON_HOLD'),
+  t.Literal('DROPPED'),
+  t.Literal('COMPLETED'),
+  t.Literal('PLANNED'),
+])
 
 /**
  * Reusable pagination metadata schema (40 per page default)
@@ -45,7 +58,7 @@ export const BorealisListsModel = {
   listQuery: t.Object({
     page: t.Optional(t.Numeric({ default: 1, minimum: 1, description: 'Page number' })),
     limit: t.Optional(t.Numeric({ default: 40, minimum: 1, maximum: 250, description: 'Items per page (default 40)' })),
-    status: t.Optional(t.String({ description: 'Filter by list status (e.g. WATCHING, COMPLETED)' })),
+    status: t.Optional(t.String({ description: 'Filter by list status (IN_PROGRESS, ON_HOLD, DROPPED, COMPLETED, PLANNED) or ALL' })),
     format: t.Optional(t.String({ description: 'Filter by format e.g. app, activity, or comma-separated' })),
     mediaFormat: t.Optional(t.String({ description: 'Filter by media format' })),
     genre: t.Optional(t.String({ description: 'Filter by genre(s) comma-separated' })),
@@ -69,7 +82,7 @@ export const BorealisListsModel = {
 
   // --- Mutation Body Schemas ---
   animeBody: t.Object({
-    status: t.Optional(t.String({ description: 'Anime list status: PLANNING, WATCHING, COMPLETED, ON_HOLD, DROPPED' })),
+    status: t.Optional(ListStatusSchema),
     progress: t.Optional(t.Number({ minimum: 0, description: 'Episodes watched' })),
     score: t.Optional(t.Nullable(t.Number({ minimum: 0, maximum: 10, description: 'Rating score (0-10)' }))),
     notes: t.Optional(t.Nullable(t.String({ description: 'Personal notes' }))),
@@ -84,13 +97,13 @@ export const BorealisListsModel = {
   animeIncrementBody: t.Optional(
     t.Object({
       count: t.Optional(t.Number({ default: 1, minimum: 1, description: 'Number of episodes to increment by' })),
-      status: t.Optional(t.String({ description: 'Optional status override' })),
+      status: t.Optional(ListStatusSchema),
       connections: t.Optional(t.Any({ description: 'Optional connection overrides' })),
     })
   ),
 
   mangaBody: t.Object({
-    status: t.Optional(t.String({ description: 'Manga list status: PLANNING, READING, COMPLETED, ON_HOLD, DROPPED' })),
+    status: t.Optional(ListStatusSchema),
     chaptersProgress: t.Optional(t.Number({ minimum: 0, description: 'Chapters read' })),
     volumesProgress: t.Optional(t.Number({ minimum: 0, description: 'Volumes read' })),
     score: t.Optional(t.Nullable(t.Number({ minimum: 0, maximum: 10, description: 'Rating score (0-10)' }))),
@@ -107,13 +120,13 @@ export const BorealisListsModel = {
     t.Object({
       count: t.Optional(t.Number({ default: 1, minimum: 1, description: 'Number of chapters/volumes to increment by' })),
       type: t.Optional(t.Union([t.Literal('chapter'), t.Literal('volume')], { default: 'chapter', description: 'Progress type' })),
-      status: t.Optional(t.String({ description: 'Optional status override' })),
+      status: t.Optional(ListStatusSchema),
       connections: t.Optional(t.Any({ description: 'Optional connection overrides' })),
     })
   ),
 
   movieBody: t.Object({
-    status: t.Optional(t.String({ description: 'Movie list status: PLANNING, WATCHING, COMPLETED, DROPPED' })),
+    status: t.Optional(ListStatusSchema),
     score: t.Optional(t.Nullable(t.Number({ minimum: 0, maximum: 10, description: 'Rating score (0-10)' }))),
     notes: t.Optional(t.Nullable(t.String({ description: 'Personal notes' }))),
     rewatched: t.Optional(t.Number({ minimum: 0, description: 'Rewatch count' })),
@@ -132,7 +145,7 @@ export const BorealisListsModel = {
   ),
 
   tvBody: t.Object({
-    status: t.Optional(t.String({ description: 'TV list status: PLANNING, WATCHING, COMPLETED, ON_HOLD, DROPPED' })),
+    status: t.Optional(ListStatusSchema),
     progress: t.Optional(t.Number({ minimum: 0, description: 'Episodes watched' })),
     score: t.Optional(t.Nullable(t.Number({ minimum: 0, maximum: 10, description: 'Rating score (0-10)' }))),
     notes: t.Optional(t.Nullable(t.String({ description: 'Personal notes' }))),
@@ -147,13 +160,13 @@ export const BorealisListsModel = {
   tvIncrementBody: t.Optional(
     t.Object({
       count: t.Optional(t.Number({ default: 1, minimum: 1, description: 'Number of episodes to increment by' })),
-      status: t.Optional(t.String({ description: 'Optional status override' })),
+      status: t.Optional(ListStatusSchema),
       connections: t.Optional(t.Any({ description: 'Optional connection overrides' })),
     })
   ),
 
   gameBody: t.Object({
-    status: t.Optional(t.String({ description: 'Game list status: PLANNING, PLAYING, COMPLETED, ON_HOLD, DROPPED' })),
+    status: t.Optional(ListStatusSchema),
     progress: t.Optional(t.Number({ minimum: 0, description: 'Hours or playtime progress' })),
     score: t.Optional(t.Nullable(t.Number({ minimum: 0, maximum: 10, description: 'Rating score (0-10)' }))),
     notes: t.Optional(t.Nullable(t.String({ description: 'Personal notes' }))),
@@ -168,13 +181,13 @@ export const BorealisListsModel = {
   gameIncrementBody: t.Optional(
     t.Object({
       count: t.Optional(t.Number({ default: 1, minimum: 1, description: 'Number of hours to increment by' })),
-      status: t.Optional(t.String({ description: 'Optional status override' })),
+      status: t.Optional(ListStatusSchema),
       connections: t.Optional(t.Any({ description: 'Optional connection overrides' })),
     })
   ),
 
   bookBody: t.Object({
-    status: t.Optional(t.String({ description: 'Book list status: PLANNING, READING, COMPLETED, ON_HOLD, DROPPED' })),
+    status: t.Optional(ListStatusSchema),
     progressPages: t.Optional(t.Number({ minimum: 0, description: 'Pages read' })),
     progressChapters: t.Optional(t.Number({ minimum: 0, description: 'Chapters read' })),
     progressVolumes: t.Optional(t.Number({ minimum: 0, description: 'Volumes read' })),
@@ -192,13 +205,13 @@ export const BorealisListsModel = {
     t.Object({
       count: t.Optional(t.Number({ default: 1, minimum: 1, description: 'Number of pages/chapters to increment by' })),
       type: t.Optional(t.Union([t.Literal('page'), t.Literal('chapter'), t.Literal('volume')], { default: 'page', description: 'Progress type' })),
-      status: t.Optional(t.String({ description: 'Optional status override' })),
+      status: t.Optional(ListStatusSchema),
       connections: t.Optional(t.Any({ description: 'Optional connection overrides' })),
     })
   ),
 
   musicBody: t.Object({
-    status: t.Optional(t.String({ description: 'Music list status: PLANNING, LISTENING, COMPLETED, ON_HOLD, DROPPED' })),
+    status: t.Optional(ListStatusSchema),
     score: t.Optional(t.Nullable(t.Number({ minimum: 0, maximum: 10, description: 'Rating score (0-10)' }))),
     playCount: t.Optional(t.Number({ minimum: 0, description: 'Number of times listened' })),
     notes: t.Optional(t.Nullable(t.String({ description: 'Personal notes' }))),
@@ -216,7 +229,7 @@ export const BorealisListsModel = {
   ),
 
   otherBody: t.Object({
-    status: t.Optional(t.String({ description: 'Status in other list' })),
+    status: t.Optional(ListStatusSchema),
     progress: t.Optional(t.Number({ minimum: 0, description: 'Single progress value for backwards-compat' })),
     progressValues: t.Optional(t.Any({ description: 'Key-value map of progress values: { [fieldKey]: number }' })),
     score: t.Optional(t.Nullable(t.Number({ minimum: 0, maximum: 10, description: 'Rating score (0-10)' }))),
@@ -229,7 +242,7 @@ export const BorealisListsModel = {
   otherIncrementBody: t.Optional(
     t.Object({
       count: t.Optional(t.Number({ default: 1, minimum: 1, description: 'Increment count' })),
-      status: t.Optional(t.String({ description: 'Optional status override' })),
+      status: t.Optional(ListStatusSchema),
       connections: t.Optional(t.Any({ description: 'Optional connection overrides' })),
     })
   ),

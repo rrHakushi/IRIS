@@ -18,7 +18,7 @@ import {
   IconListCheck,
   IconCloudDownload,
 } from "@tabler/icons-react"
-import { Session } from "next-auth"
+import type { Session } from "@/context/session-context"
 import { elysia } from "@/lib/elysia"
 
 let cachedServarrProviders: string[] | null = null

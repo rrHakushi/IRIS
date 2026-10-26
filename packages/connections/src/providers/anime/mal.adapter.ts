@@ -42,11 +42,11 @@ export class MyAnimeListAdapter extends BaseConnectionAdapter {
   };
 
   private getClientId(): string {
-    return process.env.MAL_CLIENT_ID || "";
+    return Bun.env.MAL_CLIENT_ID || "";
   }
 
   private getClientSecret(): string {
-    return process.env.MAL_CLIENT_SECRET || "";
+    return Bun.env.MAL_CLIENT_SECRET || "";
   }
 
   async getAuthUrl(options: AuthUrlOptions): Promise<AuthUrlResult> {
@@ -476,13 +476,13 @@ export class MyAnimeListAdapter extends BaseConnectionAdapter {
     });
 
     const statusMap: Record<string, LibraryItem["status"]> = {
-      watching: "CURRENT",
-      reading: "CURRENT",
+      watching: "IN_PROGRESS",
+      reading: "IN_PROGRESS",
       completed: "COMPLETED",
-      on_hold: "PAUSED",
+      on_hold: "ON_HOLD",
       dropped: "DROPPED",
-      plan_to_watch: "PLANNING",
-      plan_to_read: "PLANNING",
+      plan_to_watch: "PLANNED",
+      plan_to_read: "PLANNED",
     };
 
     return (data.data || []).map((item) => ({
@@ -491,7 +491,7 @@ export class MyAnimeListAdapter extends BaseConnectionAdapter {
       provider: "MAL",
       mediaType: isManga ? "MANGA" : "ANIME",
       title: item.node.title,
-      status: statusMap[item.list_status.status] || "CURRENT",
+      status: statusMap[item.list_status.status] || "IN_PROGRESS",
       score: item.list_status.score,
       progress: isManga ? item.list_status.num_chapters_read : item.list_status.num_episodes_watched,
       progressVolumes: item.list_status.num_volumes_read,
@@ -528,26 +528,28 @@ export class MyAnimeListAdapter extends BaseConnectionAdapter {
     if (payload.status) {
       const s = payload.status.toUpperCase();
       switch (s) {
+        case "IN_PROGRESS":
+        case "REPEATING":
         case "WATCHING":
         case "READING":
+        case "PLAYING":
+        case "LISTENING":
+        case "TRACKING":
         case "CURRENT":
-        case "REPEATING":
           malStatus = isManga ? "reading" : "watching";
           break;
         case "COMPLETED":
           malStatus = "completed";
           break;
-        case "PAUSED":
         case "ON_HOLD":
-        case "HOLD":
+        case "PAUSED":
           malStatus = "on_hold";
           break;
         case "DROPPED":
           malStatus = "dropped";
           break;
+        case "PLANNED":
         case "PLANNING":
-        case "PLAN_TO_WATCH":
-        case "PLAN_TO_READ":
           malStatus = isManga ? "plan_to_read" : "plan_to_watch";
           break;
         default:

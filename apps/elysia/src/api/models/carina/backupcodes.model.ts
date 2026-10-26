@@ -24,6 +24,11 @@ export const CarinaBackupCodesModel = {
       maxLength: 24,
       description: 'Single-use backup recovery code (formatted or unformatted)',
     }),
+    mfaTicket: t.Optional(
+      t.String({
+        description: 'Optional temporary MFA challenge ticket for login',
+      })
+    ),
   }),
 
   verifyResponse: t.Object({
@@ -32,6 +37,17 @@ export const CarinaBackupCodesModel = {
     remainingCount: t.Number({
       description: 'Count of remaining valid single-use backup recovery codes',
     }),
+    token: t.Optional(t.Nullable(t.String())),
+    user: t.Optional(
+      t.Nullable(
+        t.Object({
+          id: t.String(),
+          username: t.String(),
+          email: t.String(),
+          passwordChangedAt: t.Nullable(t.Number()),
+        })
+      )
+    ),
   }),
 
   // --- Detailed RFC 9457 Error Schemas ---

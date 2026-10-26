@@ -29,7 +29,7 @@ export class GoogleBooksProvider {
   private readonly minDelayMs = 500 // 2 req/s
 
   private getApiKey(): string {
-    return process.env.GOOGLE_BOOKS_API_KEY || ''
+    return Bun.env.GOOGLE_BOOKS_API_KEY || ''
   }
 
   private async waitForRateLimit(): Promise<void> {

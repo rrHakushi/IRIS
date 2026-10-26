@@ -1,14 +1,16 @@
+// use prisma-8
+
 model User {
-    id String @id @default(uuid())
+    id String @id @onCreate(uuid())
 
     username          String    @unique
     email             String    @unique
-    passwordHash      String    @db.Text
+    passwordHash      String
     passwordChangedAt DateTime?
 
-    customization Json? @db.Json
+    customization Json?
 
-    settings    Json? @db.Json
+    settings    Json?
     permissions Int[] @default([])
     badges      Int[] @default([])
 
@@ -84,14 +86,14 @@ model User {
     searchHistory SearchHistory[] @relation("UserSearchHistory")
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     @@index([username])
     @@index([email])
 }
 
 model Passkey {
-    id         String   @id @default(uuid())
+    id         String   @id @onCreate(uuid())
     publicKey  String // The base64url encoded public key
     counter    Int // Credential counter
     transports String[] // Transports (usb, nfc, ble, internal, hybrid)
@@ -104,14 +106,14 @@ model Passkey {
 }
 
 model ApiKey {
-    id         String    @id @default(uuid())
-    hash       String    @db.Text
+    id         String    @id @onCreate(uuid())
+    hash       String
     prefix     String
     name       String
     lastUsedAt DateTime?
     expiresAt  DateTime?
     createdAt  DateTime  @default(now())
-    updatedAt  DateTime  @updatedAt
+    updatedAt  DateTime  @onCreate(now()) @onUpdate(now())
     userId     String
     user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 

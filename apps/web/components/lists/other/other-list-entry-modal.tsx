@@ -38,6 +38,7 @@ import { useUser } from "@/context/user-context"
 import { useEncryption } from "@/context/encryption-context"
 import { deriveVaultKey, safeDecryptText, safeEncryptText } from "@/lib/client-encryption"
 import type { ListEntryData } from "../types"
+import type { MediaListStatus } from "../../media/list/types"
 import { CreateOtherItemDialog, type OtherCatalogItem } from "./create-other-item-dialog"
 
 export interface OtherListEntryModalProps {
@@ -50,8 +51,8 @@ export interface OtherListEntryModalProps {
 }
 
 const DEFAULT_STATUS_LIST = [
-  { key: "CURRENT", label: "Current", badge: "border-primary/40 bg-primary/10 text-primary" },
-  { key: "PLANNING", label: "Planning", badge: "border-border bg-muted/60 text-muted-foreground" },
+  { key: "IN_PROGRESS", label: "Tracking", badge: "border-primary/40 bg-primary/10 text-primary" },
+  { key: "PLANNED", label: "Planning", badge: "border-border bg-muted/60 text-muted-foreground" },
   { key: "COMPLETED", label: "Completed", badge: "border-emerald-500/40 bg-emerald-500/10 text-emerald-500" },
   { key: "ON_HOLD", label: "On Hold", badge: "border-amber-500/40 bg-amber-500/10 text-amber-500" },
   { key: "DROPPED", label: "Dropped", badge: "border-destructive/40 bg-destructive/10 text-destructive" },
@@ -79,7 +80,7 @@ export function OtherListEntryModal({
   const isCreator = Boolean(user?.id && media?.creatorId && user.id === media.creatorId)
 
   // Tracking form states
-  const [status, setStatus] = useState<string>("CURRENT")
+  const [status, setStatus] = useState<MediaListStatus>("IN_PROGRESS")
   const [progressValues, setProgressValues] = useState<Record<string, number>>({})
   const [score, setScore] = useState<number | null>(null)
   const [startedAt, setStartedAt] = useState<string>("")
@@ -98,7 +99,14 @@ export function OtherListEntryModal({
   // Initialize entry form state
   useEffect(() => {
     if (entry) {
-      setStatus(entry.status || "CURRENT")
+      const raw = (entry.status || "IN_PROGRESS").toUpperCase()
+      const norm: MediaListStatus =
+        raw === "CURRENT" || raw === "TRACKING" || raw === "WATCHING"
+          ? "IN_PROGRESS"
+          : raw === "PLANNING"
+            ? "PLANNED"
+            : (raw as MediaListStatus)
+      setStatus(norm)
       setScore(entry.score ?? null)
       setIsPrivate(Boolean(entry.private))
       setStartedAt(
@@ -140,7 +148,7 @@ export function OtherListEntryModal({
         setNotes(rawNotes)
       }
     } else {
-      setStatus("CURRENT")
+      setStatus("IN_PROGRESS")
       setProgressValues({})
       setScore(null)
       setStartedAt("")
@@ -165,17 +173,8 @@ export function OtherListEntryModal({
 
   // Status options from catalog item or defaults
   const statusOptions = useMemo(() => {
-    if (Array.isArray(media?.statuses) && media.statuses.length > 0) {
-      return media.statuses.map((s: any) => ({
-        key: s.key,
-        label: s.label || s.key,
-        badge: s.isCompleted
-          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-500"
-          : "border-border bg-muted/60 text-muted-foreground",
-      }))
-    }
     return DEFAULT_STATUS_LIST
-  }, [media?.statuses])
+  }, [])
 
   // Pre-update snapshot notice
   const hasSnapshot = Boolean(media?.preUpdateSnapshot)

@@ -1,4 +1,4 @@
-import { prisma, type MediaType } from '@IRIS/database'
+import { prisma, countOf, or, and, toDate, type MediaType } from '@IRIS/database'
 import { getProfileCustomization } from '@IRIS/shared'
 import { BadRequest, NotFound } from '../../lib/errors'
 import { ActivityServ } from './activity.serv'
@@ -27,68 +27,32 @@ export class CarinaFriendsServ {
     const limit = Math.max(1, Math.min(50, query?.limit ?? 10))
     const skip = (page - 1) * limit
 
-    const where = { userId: currentUserId }
+    const friendsQuery = prisma.orm.public.Friend.where((f) => f.userId.eq(currentUserId))
 
     const [total, rawFriends, rawIncoming, rawOutgoing, rawBlocked] = await Promise.all([
-      prisma.friend.count({ where }),
-      prisma.friend.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-        include: {
-          friend: {
-            select: {
-              id: true,
-              username: true,
-              customization: true,
-              badges: true,
-            },
-          },
-        },
-      }),
-      prisma.friendRequest.findMany({
-        where: { receiverId: currentUserId, status: 'PENDING' },
-        include: {
-          sender: {
-            select: {
-              id: true,
-              username: true,
-              customization: true,
-              badges: true,
-            },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.friendRequest.findMany({
-        where: { senderId: currentUserId, status: 'PENDING' },
-        include: {
-          receiver: {
-            select: {
-              id: true,
-              username: true,
-              customization: true,
-              badges: true,
-            },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.userBlock.findMany({
-        where: { blockerId: currentUserId },
-        include: {
-          blocked: {
-            select: {
-              id: true,
-              username: true,
-              customization: true,
-              badges: true,
-            },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-      }),
+      countOf(friendsQuery),
+      friendsQuery
+        .include('friend')
+        .orderBy((f) => f.createdAt.desc())
+        .offset(skip)
+        .limit(limit)
+        .all(),
+      prisma.orm.public.FriendRequest.where((r) =>
+        and(r.receiverId.eq(currentUserId), r.status.eq('PENDING'))
+      )
+        .include('sender')
+        .orderBy((r) => r.createdAt.desc())
+        .all(),
+      prisma.orm.public.FriendRequest.where((r) =>
+        and(r.senderId.eq(currentUserId), r.status.eq('PENDING'))
+      )
+        .include('receiver')
+        .orderBy((r) => r.createdAt.desc())
+        .all(),
+      prisma.orm.public.UserBlock.where((b) => b.blockerId.eq(currentUserId))
+        .include('blocked')
+        .orderBy((b) => b.createdAt.desc())
+        .all(),
     ])
 
     const totalPages = Math.max(1, Math.ceil(total / limit))
@@ -101,14 +65,14 @@ export class CarinaFriendsServ {
         friendId: f.friendId,
         nickname: f.nickname,
         isPrivate: f.isPrivate,
-        createdAt: f.createdAt.toISOString(),
+        createdAt: toDate(f.createdAt).toISOString(),
         user: {
           id: f.friend.id,
           username: f.friend.username,
           displayName: profile.displayName || null,
           avatarUrl: profile.avatarUrl || null,
           avatarFrame: profile.avatarFrame || null,
-          badges: f.friend.badges,
+          badges: [...f.friend.badges],
           customization: f.friend.customization,
         },
       }
@@ -120,14 +84,14 @@ export class CarinaFriendsServ {
         id: r.id,
         senderId: r.senderId,
         message: r.message,
-        createdAt: r.createdAt.toISOString(),
+        createdAt: toDate(r.createdAt).toISOString(),
         sender: {
           id: r.sender.id,
           username: r.sender.username,
           displayName: senderProfile.displayName || null,
           avatarUrl: senderProfile.avatarUrl || null,
           avatarFrame: senderProfile.avatarFrame || null,
-          badges: r.sender.badges,
+          badges: [...r.sender.badges],
           customization: r.sender.customization,
         },
         user: {
@@ -136,7 +100,7 @@ export class CarinaFriendsServ {
           displayName: senderProfile.displayName || null,
           avatarUrl: senderProfile.avatarUrl || null,
           avatarFrame: senderProfile.avatarFrame || null,
-          badges: r.sender.badges,
+          badges: [...r.sender.badges],
           customization: r.sender.customization,
         },
       }
@@ -148,14 +112,14 @@ export class CarinaFriendsServ {
         id: r.id,
         receiverId: r.receiverId,
         message: r.message,
-        createdAt: r.createdAt.toISOString(),
+        createdAt: toDate(r.createdAt).toISOString(),
         receiver: {
           id: r.receiver.id,
           username: r.receiver.username,
           displayName: receiverProfile.displayName || null,
           avatarUrl: receiverProfile.avatarUrl || null,
           avatarFrame: receiverProfile.avatarFrame || null,
-          badges: r.receiver.badges,
+          badges: [...r.receiver.badges],
           customization: r.receiver.customization,
         },
         user: {
@@ -164,7 +128,7 @@ export class CarinaFriendsServ {
           displayName: receiverProfile.displayName || null,
           avatarUrl: receiverProfile.avatarUrl || null,
           avatarFrame: receiverProfile.avatarFrame || null,
-          badges: r.receiver.badges,
+          badges: [...r.receiver.badges],
           customization: r.receiver.customization,
         },
       }
@@ -175,14 +139,14 @@ export class CarinaFriendsServ {
       return {
         id: b.id,
         blockedId: b.blockedId,
-        createdAt: b.createdAt.toISOString(),
+        createdAt: toDate(b.createdAt).toISOString(),
         blocked: {
           id: b.blocked.id,
           username: b.blocked.username,
           displayName: blockedProfile.displayName || null,
           avatarUrl: blockedProfile.avatarUrl || null,
           avatarFrame: blockedProfile.avatarFrame || null,
-          badges: b.blocked.badges,
+          badges: [...b.blocked.badges],
           customization: b.blocked.customization,
         },
         user: {
@@ -191,7 +155,7 @@ export class CarinaFriendsServ {
           displayName: blockedProfile.displayName || null,
           avatarUrl: blockedProfile.avatarUrl || null,
           avatarFrame: blockedProfile.avatarFrame || null,
-          badges: b.blocked.badges,
+          badges: [...b.blocked.badges],
           customization: b.blocked.customization,
         },
       }
@@ -222,25 +186,22 @@ export class CarinaFriendsServ {
     body: { isPrivate?: boolean; nickname?: string | null }
   ) {
     const trimmedId = friendId.trim()
-    const existing = await prisma.friend.findFirst({
-      where: {
-        userId: currentUserId,
-        OR: [{ id: trimmedId }, { friendId: trimmedId }],
-      },
-    })
+    const existing = await prisma.orm.public.Friend.where((f) =>
+      and(
+        f.userId.eq(currentUserId),
+        or(f.id.eq(trimmedId), f.friendId.eq(trimmedId))
+      )
+    ).first()
 
     if (!existing) {
       throw new NotFound('Friend not found')
     }
 
-    const data: any = {}
+    const data: { isPrivate?: boolean; nickname?: string | null } = {}
     if (body.isPrivate !== undefined) data.isPrivate = Boolean(body.isPrivate)
     if (body.nickname !== undefined) data.nickname = body.nickname?.trim() || null
 
-    const updated = await prisma.friend.update({
-      where: { id: existing.id },
-      data,
-    })
+    const updated = await prisma.orm.public.Friend.where((f) => f.id.eq(existing.id)).update(data)
 
     return {
       success: true,
@@ -255,12 +216,12 @@ export class CarinaFriendsServ {
     const trimmedFriendId = friendId.trim()
 
     // Verify friendship exists by friendship ID or friend user ID
-    const existing = await prisma.friend.findFirst({
-      where: {
-        userId: currentUserId,
-        OR: [{ friendId: trimmedFriendId }, { id: trimmedFriendId }],
-      },
-    })
+    const existing = await prisma.orm.public.Friend.where((f) =>
+      and(
+        f.userId.eq(currentUserId),
+        or(f.friendId.eq(trimmedFriendId), f.id.eq(trimmedFriendId))
+      )
+    ).first()
 
     if (!existing) {
       throw new NotFound('Friendship not found')
@@ -269,14 +230,12 @@ export class CarinaFriendsServ {
     const targetFriendId = existing.friendId
 
     // Bilateral deletion
-    await prisma.friend.deleteMany({
-      where: {
-        OR: [
-          { userId: currentUserId, friendId: targetFriendId },
-          { userId: targetFriendId, friendId: currentUserId },
-        ],
-      },
-    })
+    await prisma.orm.public.Friend.where((f) =>
+      or(
+        and(f.userId.eq(currentUserId), f.friendId.eq(targetFriendId)),
+        and(f.userId.eq(targetFriendId), f.friendId.eq(currentUserId))
+      )
+    ).deleteAll()
 
     return {
       success: true,
@@ -300,40 +259,26 @@ export class CarinaFriendsServ {
     const skip = (page - 1) * limit
     const type = query?.type ?? 'incoming'
 
-    let where: any = { status: 'PENDING' }
+    let requestsQuery = prisma.orm.public.FriendRequest.where((r) => r.status.eq('PENDING'))
     if (type === 'outgoing') {
-      where.senderId = currentUserId
+      requestsQuery = requestsQuery.where((r) => r.senderId.eq(currentUserId))
     } else if (type === 'all') {
-      where.OR = [{ receiverId: currentUserId }, { senderId: currentUserId }]
+      requestsQuery = requestsQuery.where((r) =>
+        or(r.receiverId.eq(currentUserId), r.senderId.eq(currentUserId))
+      )
     } else {
-      // Default: incoming
-      where.receiverId = currentUserId
+      requestsQuery = requestsQuery.where((r) => r.receiverId.eq(currentUserId))
     }
 
     const [total, rawRequests] = await Promise.all([
-      prisma.friendRequest.count({ where }),
-      prisma.friendRequest.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-        include: {
-          sender: {
-            select: {
-              id: true,
-              username: true,
-              customization: true,
-            },
-          },
-          receiver: {
-            select: {
-              id: true,
-              username: true,
-              customization: true,
-            },
-          },
-        },
-      }),
+      countOf(requestsQuery),
+      requestsQuery
+        .include('sender')
+        .include('receiver')
+        .orderBy((r) => r.createdAt.desc())
+        .offset(skip)
+        .limit(limit)
+        .all(),
     ])
 
     const totalPages = Math.max(1, Math.ceil(total / limit))
@@ -349,7 +294,7 @@ export class CarinaFriendsServ {
         receiverId: r.receiverId,
         message: r.message,
         status: r.status,
-        createdAt: r.createdAt.toISOString(),
+        createdAt: toDate(r.createdAt).toISOString(),
         sender: {
           id: r.sender.id,
           username: r.sender.username,
@@ -390,10 +335,9 @@ export class CarinaFriendsServ {
     let targetUserId = body.targetUserId?.trim()
 
     if (!targetUserId && body.targetUsername) {
-      const user = await prisma.user.findFirst({
-        where: { username: { equals: body.targetUsername.trim(), mode: 'insensitive' } },
-        select: { id: true },
-      })
+      const user = await prisma.orm.public.User.where((u) =>
+        u.username.ilike(body.targetUsername!.trim())
+      ).first()
       if (!user) {
         throw new NotFound(`User @${body.targetUsername.trim()} not found`)
       }
@@ -409,97 +353,81 @@ export class CarinaFriendsServ {
     }
 
     // Verify target user exists
-    const targetUser = await prisma.user.findUnique({
-      where: { id: targetUserId },
-    })
+    const targetUser = await prisma.orm.public.User.where((u) => u.id.eq(targetUserId)).first()
 
     if (!targetUser) {
       throw new NotFound(`User with ID "${targetUserId}" not found`)
     }
 
     // Check if either user has blocked the other
-    const isBlocked = await prisma.userBlock.findFirst({
-      where: {
-        OR: [
-          { blockerId: currentUserId, blockedId: targetUserId },
-          { blockerId: targetUserId, blockedId: currentUserId },
-        ],
-      },
-    })
+    const isBlocked = await prisma.orm.public.UserBlock.where((b) =>
+      or(
+        and(b.blockerId.eq(currentUserId), b.blockedId.eq(targetUserId)),
+        and(b.blockerId.eq(targetUserId), b.blockedId.eq(currentUserId))
+      )
+    ).first()
 
     if (isBlocked) {
       throw new BadRequest('Cannot send friend request to blocked user')
     }
 
     // Check if already friends
-    const alreadyFriends = await prisma.friend.findFirst({
-      where: {
-        OR: [
-          { userId: currentUserId, friendId: targetUserId },
-          { userId: targetUserId, friendId: currentUserId },
-        ],
-      },
-    })
+    const alreadyFriends = await prisma.orm.public.Friend.where((f) =>
+      or(
+        and(f.userId.eq(currentUserId), f.friendId.eq(targetUserId)),
+        and(f.userId.eq(targetUserId), f.friendId.eq(currentUserId))
+      )
+    ).first()
 
     if (alreadyFriends) {
       throw new BadRequest('You are already friends with this user')
     }
 
     // Check if caller already sent pending request
-    const existingOutgoing = await prisma.friendRequest.findFirst({
-      where: {
-        senderId: currentUserId,
-        receiverId: targetUserId,
-        status: 'PENDING',
-      },
-    })
+    const existingOutgoing = await prisma.orm.public.FriendRequest.where((r) =>
+      and(
+        r.senderId.eq(currentUserId),
+        r.receiverId.eq(targetUserId),
+        r.status.eq('PENDING')
+      )
+    ).first()
 
     if (existingOutgoing) {
       throw new BadRequest('Friend request already sent and pending')
     }
 
     // Check if target user already sent a pending request to caller (Mutual request)
-    const existingIncoming = await prisma.friendRequest.findFirst({
-      where: {
-        senderId: targetUserId,
-        receiverId: currentUserId,
-        status: 'PENDING',
-      },
-    })
+    const existingIncoming = await prisma.orm.public.FriendRequest.where((r) =>
+      and(
+        r.senderId.eq(targetUserId),
+        r.receiverId.eq(currentUserId),
+        r.status.eq('PENDING')
+      )
+    ).first()
 
     if (existingIncoming) {
       // Automatically establish bilateral friendship
-      await prisma.$transaction([
-        prisma.friend.upsert({
-          where: {
-            userId_friendId: {
-              userId: currentUserId,
-              friendId: targetUserId,
-            },
-          },
-          create: {
+      await prisma.transaction(async (tx) => {
+        const f1 = await tx.orm.public.Friend.where((f) =>
+          and(f.userId.eq(currentUserId), f.friendId.eq(targetUserId))
+        ).first()
+        if (!f1) {
+          await tx.orm.public.Friend.create({
             userId: currentUserId,
             friendId: targetUserId,
-          },
-          update: {},
-        }),
-        prisma.friend.upsert({
-          where: {
-            userId_friendId: {
-              userId: targetUserId,
-              friendId: currentUserId,
-            },
-          },
-          create: {
+          })
+        }
+        const f2 = await tx.orm.public.Friend.where((f) =>
+          and(f.userId.eq(targetUserId), f.friendId.eq(currentUserId))
+        ).first()
+        if (!f2) {
+          await tx.orm.public.Friend.create({
             userId: targetUserId,
             friendId: currentUserId,
-          },
-          update: {},
-        }),
-        prisma.friendRequest.delete({
-          where: { id: existingIncoming.id },
-        }),
-      ])
+          })
+        }
+        await tx.orm.public.FriendRequest.where((r) => r.id.eq(existingIncoming.id)).deleteAll()
+      })
 
       return {
         success: true,
@@ -509,13 +437,11 @@ export class CarinaFriendsServ {
     }
 
     // Create new friend request
-    const newRequest = await prisma.friendRequest.create({
-      data: {
-        senderId: currentUserId,
-        receiverId: targetUserId,
-        message: body.message?.trim() || null,
-        status: 'PENDING',
-      },
+    const newRequest = await prisma.orm.public.FriendRequest.create({
+      senderId: currentUserId,
+      receiverId: targetUserId,
+      message: body.message?.trim() || null,
+      status: 'PENDING',
     })
 
     return {
@@ -532,25 +458,12 @@ export class CarinaFriendsServ {
     currentUserId: string,
     requestId: string
   ) {
-    const friendRequest = await prisma.friendRequest.findUnique({
-      where: { id: requestId.trim() },
-      include: {
-        sender: {
-          select: {
-            id: true,
-            username: true,
-            customization: true,
-          },
-        },
-        receiver: {
-          select: {
-            id: true,
-            username: true,
-            customization: true,
-          },
-        },
-      },
-    })
+    const friendRequest = await prisma.orm.public.FriendRequest.where((r) =>
+      r.id.eq(requestId.trim())
+    )
+      .include('sender')
+      .include('receiver')
+      .first()
 
     if (!friendRequest || friendRequest.receiverId !== currentUserId) {
       throw new NotFound('Friend request not found')
@@ -561,37 +474,27 @@ export class CarinaFriendsServ {
     }
 
     // Bilateral friendship creation + remove request
-    await prisma.$transaction([
-      prisma.friend.upsert({
-        where: {
-          userId_friendId: {
-            userId: currentUserId,
-            friendId: friendRequest.senderId,
-          },
-        },
-        create: {
+    await prisma.transaction(async (tx) => {
+      const f1 = await tx.orm.public.Friend.where((f) =>
+        and(f.userId.eq(currentUserId), f.friendId.eq(friendRequest.senderId))
+      ).first()
+      if (!f1) {
+        await tx.orm.public.Friend.create({
           userId: currentUserId,
           friendId: friendRequest.senderId,
-        },
-        update: {},
-      }),
-      prisma.friend.upsert({
-        where: {
-          userId_friendId: {
-            userId: friendRequest.senderId,
-            friendId: currentUserId,
-          },
-        },
-        create: {
+        })
+      }
+      const f2 = await tx.orm.public.Friend.where((f) =>
+        and(f.userId.eq(friendRequest.senderId), f.friendId.eq(currentUserId))
+      ).first()
+      if (!f2) {
+        await tx.orm.public.Friend.create({
           userId: friendRequest.senderId,
           friendId: currentUserId,
-        },
-        update: {},
-      }),
-      prisma.friendRequest.delete({
-        where: { id: friendRequest.id },
-      }),
-    ])
+        })
+      }
+      await tx.orm.public.FriendRequest.where((r) => r.id.eq(friendRequest.id)).deleteAll()
+    })
 
     const senderProfile = friendRequest.sender ? getProfileCustomization(friendRequest.sender.customization) : null
     const receiverProfile = friendRequest.receiver ? getProfileCustomization(friendRequest.receiver.customization) : null
@@ -626,17 +529,15 @@ export class CarinaFriendsServ {
     currentUserId: string,
     requestId: string
   ) {
-    const friendRequest = await prisma.friendRequest.findUnique({
-      where: { id: requestId.trim() },
-    })
+    const friendRequest = await prisma.orm.public.FriendRequest.where((r) =>
+      r.id.eq(requestId.trim())
+    ).first()
 
     if (!friendRequest || friendRequest.receiverId !== currentUserId) {
       throw new NotFound('Friend request not found')
     }
 
-    await prisma.friendRequest.delete({
-      where: { id: friendRequest.id },
-    })
+    await prisma.orm.public.FriendRequest.where((r) => r.id.eq(friendRequest.id)).deleteAll()
 
     return {
       success: true,
@@ -661,16 +562,14 @@ export class CarinaFriendsServ {
     }
 
     if (action === 'BLOCK') {
-      const request = await prisma.friendRequest.findUnique({
-        where: { id: requestId.trim() },
-      })
+      const request = await prisma.orm.public.FriendRequest.where((r) =>
+        r.id.eq(requestId.trim())
+      ).first()
       if (!request || request.receiverId !== currentUserId) {
         throw new NotFound('Friend request not found')
       }
       const senderId = request.senderId
-      await prisma.friendRequest.delete({
-        where: { id: request.id },
-      })
+      await prisma.orm.public.FriendRequest.where((r) => r.id.eq(request.id)).deleteAll()
       await this.blockUser(currentUserId, { targetUserId: senderId })
       return {
         success: true,
@@ -688,20 +587,15 @@ export class CarinaFriendsServ {
     currentUserId: string,
     requestId: string
   ) {
-    const friendRequest = await prisma.friendRequest.findFirst({
-      where: {
-        id: requestId.trim(),
-        senderId: currentUserId,
-      },
-    })
+    const friendRequest = await prisma.orm.public.FriendRequest.where((r) =>
+      and(r.id.eq(requestId.trim()), r.senderId.eq(currentUserId))
+    ).first()
 
     if (!friendRequest) {
       throw new NotFound('Friend request not found')
     }
 
-    await prisma.friendRequest.delete({
-      where: { id: friendRequest.id },
-    })
+    await prisma.orm.public.FriendRequest.where((r) => r.id.eq(friendRequest.id)).deleteAll()
 
     return {
       success: true,
@@ -719,10 +613,9 @@ export class CarinaFriendsServ {
     let targetUserId = body.targetUserId?.trim()
 
     if (!targetUserId && body.targetUsername) {
-      const user = await prisma.user.findFirst({
-        where: { username: { equals: body.targetUsername.trim(), mode: 'insensitive' } },
-        select: { id: true },
-      })
+      const user = await prisma.orm.public.User.where((u) =>
+        u.username.ilike(body.targetUsername!.trim())
+      ).first()
       if (!user) {
         throw new NotFound(`User @${body.targetUsername.trim()} not found`)
       }
@@ -737,45 +630,37 @@ export class CarinaFriendsServ {
       throw new BadRequest('You cannot block yourself')
     }
 
-    const targetUser = await prisma.user.findUnique({
-      where: { id: targetUserId },
-      select: { id: true },
-    })
+    const targetUser = await prisma.orm.public.User.where((u) => u.id.eq(targetUserId)).first()
     if (!targetUser) {
       throw new NotFound('User not found')
     }
 
-    await prisma.$transaction([
-      prisma.friend.deleteMany({
-        where: {
-          OR: [
-            { userId: currentUserId, friendId: targetUserId },
-            { userId: targetUserId, friendId: currentUserId },
-          ],
-        },
-      }),
-      prisma.friendRequest.deleteMany({
-        where: {
-          OR: [
-            { senderId: currentUserId, receiverId: targetUserId },
-            { senderId: targetUserId, receiverId: currentUserId },
-          ],
-        },
-      }),
-      prisma.userBlock.upsert({
-        where: {
-          blockerId_blockedId: {
-            blockerId: currentUserId,
-            blockedId: targetUserId,
-          },
-        },
-        create: {
+    await prisma.transaction(async (tx) => {
+      await tx.orm.public.Friend.where((f) =>
+        or(
+          and(f.userId.eq(currentUserId), f.friendId.eq(targetUserId)),
+          and(f.userId.eq(targetUserId), f.friendId.eq(currentUserId))
+        )
+      ).deleteAll()
+
+      await tx.orm.public.FriendRequest.where((r) =>
+        or(
+          and(r.senderId.eq(currentUserId), r.receiverId.eq(targetUserId)),
+          and(r.senderId.eq(targetUserId), r.receiverId.eq(currentUserId))
+        )
+      ).deleteAll()
+
+      const existingBlock = await tx.orm.public.UserBlock.where((b) =>
+        and(b.blockerId.eq(currentUserId), b.blockedId.eq(targetUserId))
+      ).first()
+
+      if (!existingBlock) {
+        await tx.orm.public.UserBlock.create({
           blockerId: currentUserId,
           blockedId: targetUserId,
-        },
-        update: {},
-      }),
-    ])
+        })
+      }
+    })
 
     return {
       success: true,
@@ -791,20 +676,18 @@ export class CarinaFriendsServ {
     blockId: string
   ) {
     const trimmed = blockId.trim()
-    const block = await prisma.userBlock.findFirst({
-      where: {
-        blockerId: currentUserId,
-        OR: [{ id: trimmed }, { blockedId: trimmed }],
-      },
-    })
+    const block = await prisma.orm.public.UserBlock.where((b) =>
+      and(
+        b.blockerId.eq(currentUserId),
+        or(b.id.eq(trimmed), b.blockedId.eq(trimmed))
+      )
+    ).first()
 
     if (!block) {
       throw new NotFound('Blocked user record not found')
     }
 
-    await prisma.userBlock.delete({
-      where: { id: block.id },
-    })
+    await prisma.orm.public.UserBlock.where((b) => b.id.eq(block.id)).deleteAll()
 
     return {
       success: true,
@@ -829,18 +712,9 @@ export class CarinaFriendsServ {
     }
 
     // 1. Fetch caller's friends
-    const friends = await prisma.friend.findMany({
-      where: { userId: currentUserId },
-      include: {
-        friend: {
-          select: {
-            id: true,
-            username: true,
-            customization: true,
-          },
-        },
-      },
-    })
+    const friends = await prisma.orm.public.Friend.where((f) =>
+      f.userId.eq(currentUserId)
+    ).include('friend').all()
 
     if (friends.length === 0) {
       return {
@@ -878,7 +752,7 @@ export class CarinaFriendsServ {
       progress: number | null,
       progressVolumes: number | null,
       score: number | null,
-      updatedAt: Date
+      updatedAt: any
     ) => {
       const f = friendMap.get(userId)
       if (!f) return
@@ -891,7 +765,7 @@ export class CarinaFriendsServ {
         progress,
         progressVolumes,
         score,
-        updatedAt: updatedAt.toISOString(),
+        updatedAt: toDate(updatedAt).toISOString(),
         user: {
           id: f.friend.id,
           username: f.friend.username,
@@ -903,16 +777,16 @@ export class CarinaFriendsServ {
     }
 
     if (normType === 'anime') {
-      const entries = await prisma.animeList.findMany({
-        where: { userId: { in: friendIds }, animeId: mediaId, private: false },
-      })
+      const entries = await prisma.orm.public.AnimeList.where((a) =>
+        and(a.userId.in(friendIds), a.animeId.eq(mediaId), a.private.eq(false))
+      ).all()
       for (const e of entries) {
         formatEntry(e.userId, e.status, e.progress, null, e.score, e.updatedAt)
       }
     } else if (normType === 'manga') {
-      const entries = await prisma.mangaList.findMany({
-        where: { userId: { in: friendIds }, mangaId: mediaId, private: false },
-      })
+      const entries = await prisma.orm.public.MangaList.where((m) =>
+        and(m.userId.in(friendIds), m.mangaId.eq(mediaId), m.private.eq(false))
+      ).all()
       for (const e of entries) {
         formatEntry(
           e.userId,
@@ -924,30 +798,30 @@ export class CarinaFriendsServ {
         )
       }
     } else if (normType === 'movie') {
-      const entries = await prisma.movieList.findMany({
-        where: { userId: { in: friendIds }, movieId: mediaId, private: false },
-      })
+      const entries = await prisma.orm.public.MovieList.where((m) =>
+        and(m.userId.in(friendIds), m.movieId.eq(mediaId), m.private.eq(false))
+      ).all()
       for (const e of entries) {
         formatEntry(e.userId, e.status, null, null, e.score, e.updatedAt)
       }
     } else if (normType === 'tv') {
-      const entries = await prisma.tvList.findMany({
-        where: { userId: { in: friendIds }, tvId: mediaId, private: false },
-      })
+      const entries = await prisma.orm.public.TvList.where((t) =>
+        and(t.userId.in(friendIds), t.tvId.eq(mediaId), t.private.eq(false))
+      ).all()
       for (const e of entries) {
         formatEntry(e.userId, e.status, e.progress, null, e.score, e.updatedAt)
       }
     } else if (normType === 'game') {
-      const entries = await prisma.gameList.findMany({
-        where: { userId: { in: friendIds }, gameId: mediaId, private: false },
-      })
+      const entries = await prisma.orm.public.GameList.where((g) =>
+        and(g.userId.in(friendIds), g.gameId.eq(mediaId), g.private.eq(false))
+      ).all()
       for (const e of entries) {
         formatEntry(e.userId, e.status, null, null, e.score, e.updatedAt)
       }
     } else if (normType === 'book') {
-      const entries = await prisma.bookList.findMany({
-        where: { userId: { in: friendIds }, bookId: mediaId, private: false },
-      })
+      const entries = await prisma.orm.public.BookList.where((b) =>
+        and(b.userId.in(friendIds), b.bookId.eq(mediaId), b.private.eq(false))
+      ).all()
       for (const e of entries) {
         formatEntry(
           e.userId,
@@ -959,9 +833,9 @@ export class CarinaFriendsServ {
         )
       }
     } else if (normType === 'music') {
-      const entries = await prisma.musicList.findMany({
-        where: { userId: { in: friendIds }, musicId: mediaId, private: false },
-      })
+      const entries = await prisma.orm.public.MusicList.where((m) =>
+        and(m.userId.in(friendIds), m.musicId.eq(mediaId), m.private.eq(false))
+      ).all()
       for (const e of entries) {
         formatEntry(e.userId, e.status, null, null, e.score, e.updatedAt)
       }
@@ -989,13 +863,9 @@ export class CarinaFriendsServ {
       message?: string
     }
   ) {
-    const validFriends = await prisma.friend.findMany({
-      where: {
-        userId: currentUserId,
-        friendId: { in: body.friendIds },
-      },
-      select: { friendId: true },
-    })
+    const validFriends = await prisma.orm.public.Friend.where((f) =>
+      and(f.userId.eq(currentUserId), f.friendId.in(body.friendIds))
+    ).all()
 
     if (validFriends.length === 0) {
       throw new BadRequest('No valid friends selected')
@@ -1004,19 +874,17 @@ export class CarinaFriendsServ {
     // Optional activity logging
     try {
       const upperMediaType = body.mediaType.toUpperCase() as MediaType
-      await prisma.activityLog.create({
-        data: {
-          userId: currentUserId,
-          type: 'RECOMMENDATION_POSTED',
-          mediaType: upperMediaType,
-          mediaId: body.mediaId,
-          title: `Recommended "${body.mediaTitle}" to ${validFriends.length} friend(s)`,
-          content: body.message?.trim() || null,
-          metadata: {
-            mediaTitle: body.mediaTitle,
-            mediaCover: body.mediaCover,
-            recommendedToCount: validFriends.length,
-          },
+      await prisma.orm.public.ActivityLog.create({
+        userId: currentUserId,
+        type: 'RECOMMENDATION_POSTED',
+        mediaType: upperMediaType,
+        mediaId: body.mediaId,
+        title: `Recommended "${body.mediaTitle}" to ${validFriends.length} friend(s)`,
+        content: body.message?.trim() || null,
+        metadata: {
+          mediaTitle: body.mediaTitle,
+          mediaCover: body.mediaCover ?? null,
+          recommendedToCount: validFriends.length,
         },
       })
     } catch {
@@ -1030,3 +898,5 @@ export class CarinaFriendsServ {
     }
   }
 }
+
+

@@ -74,7 +74,7 @@ export class SonarrAdapter extends ServarrBaseAdapter {
       provider: "SONARR",
       mediaType: "TV" as const,
       title: s.title,
-      status: s.monitored ? ("CURRENT" as const) : ("COMPLETED" as const),
+      status: s.monitored ? ("IN_PROGRESS" as const) : ("COMPLETED" as const),
       releaseYear: s.year,
       notes: s.overview,
     }));

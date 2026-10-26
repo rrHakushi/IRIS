@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef, useCallback } from "react"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/session-context"
 import { useUser } from "@/context/user-context"
 import {
   IconBookmark,
@@ -15,6 +15,7 @@ import {
   IconPlayerPause,
   IconX,
   IconClock,
+  IconActivity,
 } from "@tabler/icons-react"
 import { Button } from "@workspace/ui/components/button"
 import { toast } from "sonner"
@@ -161,8 +162,8 @@ export function ListActionButtons({
     if (isQuickAdding) return
     setIsQuickAdding(true)
 
-    // Optimistically update entry (LISTENING for music, PLANNING for other media)
-    const initialStatus = category === "music" ? "LISTENING" : "PLANNING"
+    // Optimistically update entry with PLANNED
+    const initialStatus: MediaListStatus = "PLANNED"
     const optimisticEntry: MediaListEntryData = {
       status: initialStatus,
       progress: 0,
@@ -183,42 +184,42 @@ export function ListActionButtons({
         case "anime":
           res = await elysia.borealis.lists
             .anime({ animeId: numericId })
-            .post({ status: "PLANNING" })
+            .post({ status: "PLANNED" })
           break
         case "manga":
           res = await elysia.borealis.lists
             .manga({ mangaId: numericId })
-            .post({ status: "PLANNING" })
+            .post({ status: "PLANNED" })
           break
         case "movie":
           res = await elysia.borealis.lists
             .movies({ movieId: numericId })
-            .post({ status: "PLANNING" })
+            .post({ status: "PLANNED" })
           break
         case "tv":
           res = await elysia.borealis.lists
             .tv({ tvId: numericId })
-            .post({ status: "PLANNING" })
+            .post({ status: "PLANNED" })
           break
         case "game":
           res = await elysia.borealis.lists
             .games({ gameId: numericId })
-            .post({ status: "PLANNING" })
+            .post({ status: "PLANNED" })
           break
         case "book":
           res = await elysia.borealis.lists
             .books({ bookId: numericId })
-            .post({ status: "PLANNING" })
+            .post({ status: "PLANNED" })
           break
         case "music":
           res = await elysia.borealis.lists
             .music({ musicId: numericId })
-            .post({ status: "PLANNING" })
+            .post({ status: "PLANNED" })
           break
         case "other":
           res = await elysia.borealis.lists
             .other({ otherId: numericId })
-            .post({ status: "PLANNING" })
+            .post({ status: "PLANNED" })
           break
       }
 
@@ -258,7 +259,7 @@ export function ListActionButtons({
 
       toast.success(
         res.data?.message ||
-          `Added ${media.titlePrimary} to ${category === "music" ? "Listening" : "Planning"}`
+          `Added ${media.titlePrimary} to Planning`
       )
     } catch (err: any) {
       // Revert optimistic state
@@ -272,41 +273,47 @@ export function ListActionButtons({
   // Helper for Status Icon and Label
   const getStatusIconAndLabel = (st: MediaListStatus) => {
     switch (st) {
-      case "PLANNING":
+      case "PLANNED":
+      case "PLANNING" as any:
         return {
           icon: IconClock,
           label: "Planning",
           btnClass:
             "border-border bg-muted/60 text-muted-foreground hover:bg-muted/90",
         }
-      case "WATCHING":
+      case "IN_PROGRESS":
+      case "WATCHING" as any:
+      case "READING" as any:
+      case "PLAYING" as any:
+      case "LISTENING" as any:
+      case "TRACKING" as any: {
+        const isManga = category === "manga" || category === "book"
+        const isGame = category === "game"
+        const isMusic = category === "music"
+        const isOther = category === "other"
         return {
-          icon: IconEye,
-          label: "Watching",
+          icon: isManga
+            ? IconBook
+            : isGame
+              ? IconPlayerPlay
+              : isMusic
+                ? IconHeadphones
+                : isOther
+                  ? IconActivity
+                  : IconEye,
+          label: isManga
+            ? "Reading"
+            : isGame
+              ? "Playing"
+              : isMusic
+                ? "Listening"
+                : isOther
+                  ? "Tracking"
+                  : "Watching",
           btnClass:
             "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20",
         }
-      case "READING":
-        return {
-          icon: IconBook,
-          label: "Reading",
-          btnClass:
-            "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20",
-        }
-      case "PLAYING":
-        return {
-          icon: IconPlayerPlay,
-          label: "Playing",
-          btnClass:
-            "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20",
-        }
-      case "LISTENING":
-        return {
-          icon: IconHeadphones,
-          label: "Listening",
-          btnClass:
-            "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20",
-        }
+      }
       case "COMPLETED":
         return {
           icon: IconCheck,

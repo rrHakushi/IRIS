@@ -23,12 +23,12 @@ export class RiotGamesAdapter extends BaseConnectionAdapter {
   readonly optionalEnvVars = ["RIOT_API_KEY", "RIOT_CLIENT_ID", "RIOT_CLIENT_SECRET"] as const;
 
   get authType(): ConnectionAuthType {
-    const hasOAuth = Boolean(process.env.RIOT_CLIENT_ID && process.env.RIOT_CLIENT_SECRET);
+    const hasOAuth = Boolean(Bun.env.RIOT_CLIENT_ID && Bun.env.RIOT_CLIENT_SECRET);
     return hasOAuth ? "OAUTH2" : "API_KEY";
   }
 
   get capabilities(): ProviderCapability {
-    const hasOAuth = Boolean(process.env.RIOT_CLIENT_ID && process.env.RIOT_CLIENT_SECRET);
+    const hasOAuth = Boolean(Bun.env.RIOT_CLIENT_ID && Bun.env.RIOT_CLIENT_SECRET);
     return {
       authType: hasOAuth ? "OAUTH2" : "API_KEY",
       category: "GAMING",
@@ -43,8 +43,8 @@ export class RiotGamesAdapter extends BaseConnectionAdapter {
   }
 
   override isConfigured(): boolean {
-    const hasOAuth = Boolean(process.env.RIOT_CLIENT_ID && process.env.RIOT_CLIENT_SECRET);
-    const hasApiKey = Boolean(process.env.RIOT_API_KEY);
+    const hasOAuth = Boolean(Bun.env.RIOT_CLIENT_ID && Bun.env.RIOT_CLIENT_SECRET);
+    const hasApiKey = Boolean(Bun.env.RIOT_API_KEY);
     return hasOAuth || hasApiKey;
   }
 
@@ -54,15 +54,15 @@ export class RiotGamesAdapter extends BaseConnectionAdapter {
   }
 
   private getClientId(): string {
-    return process.env.RIOT_CLIENT_ID || "";
+    return Bun.env.RIOT_CLIENT_ID || "";
   }
 
   private getClientSecret(): string {
-    return process.env.RIOT_CLIENT_SECRET || "";
+    return Bun.env.RIOT_CLIENT_SECRET || "";
   }
 
   private getApiKey(): string {
-    return process.env.RIOT_API_KEY || "";
+    return Bun.env.RIOT_API_KEY || "";
   }
 
   async getAuthUrl(options: AuthUrlOptions): Promise<AuthUrlResult> {

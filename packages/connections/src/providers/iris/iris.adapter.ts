@@ -65,7 +65,7 @@ export class IrisAdapter extends BaseConnectionAdapter {
   }
 
   private normalizeHost(hostUrl?: string): string {
-    const raw = hostUrl || process.env.NEXTAUTH_URL || "http://localhost:4000";
+    const raw = hostUrl || Bun.env.NEXT_PUBLIC_URL || "http://localhost:4000";
     return raw.replace(/\/+$/, "");
   }
 
@@ -74,7 +74,7 @@ export class IrisAdapter extends BaseConnectionAdapter {
    */
   async getAuthUrl(options: IrisAuthUrlOptions): Promise<AuthUrlResult> {
     const host = this.normalizeHost(options.hostUrl);
-    const clientId = options.clientId || process.env.IRIS_CLIENT_ID || "iris_federation_client";
+    const clientId = options.clientId || Bun.env.IRIS_CLIENT_ID || "iris_federation_client";
     const state = options.state || Math.random().toString(36).substring(2);
     const { codeVerifier, codeChallenge } = this.generatePkcePair(options.codeVerifier);
 
@@ -108,8 +108,8 @@ export class IrisAdapter extends BaseConnectionAdapter {
     options?: { hostUrl?: string; [key: string]: unknown }
   ): Promise<OAuthTokens> {
     const host = this.normalizeHost(options?.hostUrl);
-    const clientId = process.env.IRIS_CLIENT_ID || "iris_federation_client";
-    const clientSecret = process.env.IRIS_CLIENT_SECRET;
+    const clientId = Bun.env.IRIS_CLIENT_ID || "iris_federation_client";
+    const clientSecret = Bun.env.IRIS_CLIENT_SECRET;
 
     const body: Record<string, string> = {
       grant_type: "authorization_code",
@@ -160,7 +160,7 @@ export class IrisAdapter extends BaseConnectionAdapter {
     credentials: IrisCredentials
   ): Promise<OAuthTokens> {
     const host = this.normalizeHost(credentials.hostUrl);
-    const clientId = credentials.clientId || process.env.IRIS_CLIENT_ID || "iris_federation_client";
+    const clientId = credentials.clientId || Bun.env.IRIS_CLIENT_ID || "iris_federation_client";
 
     const body: Record<string, string> = {
       grant_type: "refresh_token",

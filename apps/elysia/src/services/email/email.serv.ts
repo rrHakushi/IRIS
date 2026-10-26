@@ -14,7 +14,7 @@ import {
 const logger = new LogFactory('EmailService')
 
 // Ensure worker is initialized when service is imported (if not in test/disabled mode)
-if (process.env.NODE_ENV !== 'test') {
+if (Bun.env.NODE_ENV !== 'test') {
   try {
     getEmailWorker()
   } catch (err: any) {

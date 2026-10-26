@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeAll } from 'bun:test'
 import { Elysia, ValidationError } from 'elysia'
-import { encode } from 'next-auth/jwt'
 import { prisma } from '@IRIS/database'
 import { IRISFlags } from '@IRIS/permissions'
 import { isHttpError } from '../../src/lib/errors'
 import { borealisOther } from '../../src/api/controllers/borealis/other.ctrl'
 import { borealisLists } from '../../src/api/controllers/borealis/lists.ctrl'
+import { signUserJwt } from '../../src/utils/auth-crypto'
 
 describe('Borealis Other & Custom Item System', () => {
   let app: any
@@ -13,41 +13,32 @@ describe('Borealis Other & Custom Item System', () => {
   let bobToken: string
   let adminToken: string
 
-  const secret = process.env.NEXTAUTH_SECRET || 'iris-default-secret-key-32-chars!!'
-
   beforeAll(async () => {
-    aliceToken = await encode({
-      token: {
-        id: '00000000-0000-0000-0000-000000000001',
-        name: 'alice',
-        email: 'alice@example.com',
-        permissions: [],
-      },
-      secret,
+    Bun.env.JWT_SECRET = 'iris-default-secret-key-32-chars!!'
+
+    aliceToken = await signUserJwt({
+      id: '00000000-0000-0000-0000-000000000001',
+      username: 'alice',
+      email: 'alice@example.com',
+      permissions: [],
     })
 
-    bobToken = await encode({
-      token: {
-        id: '00000000-0000-0000-0000-000000000002',
-        name: 'bob',
-        email: 'bob@example.com',
-        permissions: [],
-      },
-      secret,
+    bobToken = await signUserJwt({
+      id: '00000000-0000-0000-0000-000000000002',
+      username: 'bob',
+      email: 'bob@example.com',
+      permissions: [],
     })
 
-    adminToken = await encode({
-      token: {
-        id: '00000000-0000-0000-0000-000000000003',
-        name: 'admin',
-        email: 'admin@example.com',
-        permissions: [1], // ADMINISTRATOR
-      },
-      secret,
+    adminToken = await signUserJwt({
+      id: '00000000-0000-0000-0000-000000000003',
+      username: 'admin',
+      email: 'admin@example.com',
+      permissions: [1], // ADMINISTRATOR
     })
 
     app = new Elysia()
-      .error(({ error, set }) => {
+      .onError(({ error, set }) => {
         if (isHttpError(error)) {
           set.status = error.status
           return error.toResponse()
@@ -67,7 +58,7 @@ describe('Borealis Other & Custom Item System', () => {
       .use(borealisLists)
 
     // Ensure mock users exist in test database
-    await prisma.user.upsert({
+    await (prisma as any).user.upsert({
       where: { id: '00000000-0000-0000-0000-000000000001' },
       create: {
         id: '00000000-0000-0000-0000-000000000001',
@@ -79,7 +70,7 @@ describe('Borealis Other & Custom Item System', () => {
       update: {},
     })
 
-    await prisma.user.upsert({
+    await (prisma as any).user.upsert({
       where: { id: '00000000-0000-0000-0000-000000000002' },
       create: {
         id: '00000000-0000-0000-0000-000000000002',
@@ -91,7 +82,7 @@ describe('Borealis Other & Custom Item System', () => {
       update: {},
     })
 
-    await prisma.user.upsert({
+    await (prisma as any).user.upsert({
       where: { id: '00000000-0000-0000-0000-000000000003' },
       create: {
         id: '00000000-0000-0000-0000-000000000003',
@@ -404,7 +395,7 @@ describe('Borealis Other & Custom Item System', () => {
     await new Promise((resolve) => setTimeout(resolve, 50))
 
     // 3. Verify ActivityLog was recorded
-    const activities = await prisma.activityLog.findMany({
+    const activities = await (prisma as any).activityLog.findMany({
       where: {
         userId: '00000000-0000-0000-0000-000000000001',
         mediaType: 'OTHER',

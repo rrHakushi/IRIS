@@ -21,7 +21,7 @@ export interface MediaListCardProps {
   mediaTitlePreference?: "primary" | "secondary" | "native"
   progressUnit?: string
   priority?: boolean
-  onOpenEditModal: (item: ListEntryData, mediaType?: MediaListType) => void
+  onOpenEditModal?: (item: ListEntryData, mediaType?: MediaListType) => void
   onIncrementProgress?: (
     item: ListEntryData,
     count: number,
@@ -378,10 +378,13 @@ function MediaListCardInner({
 
   const upperStatus = (entry.status || "").toUpperCase()
   const isWatchingOrActive =
+    upperStatus === "IN_PROGRESS" ||
     upperStatus === "WATCHING" ||
     upperStatus === "READING" ||
     upperStatus === "PLAYING" ||
-    upperStatus === "LISTENING"
+    upperStatus === "LISTENING" ||
+    upperStatus === "TRACKING" ||
+    upperStatus === "CURRENT"
 
   const handleIncrementClick = () => {
     if (!onIncrementProgress) return
@@ -424,6 +427,7 @@ function MediaListCardInner({
   const isLongPressRef = useRef<boolean>(false)
 
   const handleTouchStart = () => {
+    if (!onOpenEditModal) return
     isLongPressRef.current = false
     touchTimerRef.current = setTimeout(() => {
       isLongPressRef.current = true
@@ -500,15 +504,17 @@ function MediaListCardInner({
         </Link>
 
         {/* Top-Left: Hamburger Icon Overlay (Visible on hover) */}
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          onPress={() => onOpenEditModal(item, mediaType)}
-          aria-label="Edit list entry"
-          className="pointer-events-none absolute start-1.5 top-1.5 z-20 size-6 cursor-pointer rounded-md bg-black/70 text-white/90 opacity-0 backdrop-blur-md group-hover:pointer-events-auto group-hover:opacity-100 hover:bg-black/90 hover:text-white focus-visible:pointer-events-auto focus-visible:opacity-100"
-        >
-          <IconMenu2 className="size-3.5" aria-hidden="true" />
-        </Button>
+        {onOpenEditModal && (
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onPress={() => onOpenEditModal(item, mediaType)}
+            aria-label="Edit list entry"
+            className="pointer-events-none absolute start-1.5 top-1.5 z-20 size-6 cursor-pointer rounded-md bg-black/70 text-white/90 opacity-0 backdrop-blur-md group-hover:pointer-events-auto group-hover:opacity-100 hover:bg-black/90 hover:text-white focus-visible:pointer-events-auto focus-visible:opacity-100"
+          >
+            <IconMenu2 className="size-3.5" aria-hidden="true" />
+          </Button>
+        )}
 
         {/* Bottom-Right: Quick Increment (+) Button (Visible on hover, only when active) */}
         {isWatchingOrActive && onIncrementProgress && mediaType !== "movie" && (

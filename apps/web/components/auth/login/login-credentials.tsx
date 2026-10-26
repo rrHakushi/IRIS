@@ -75,6 +75,7 @@ export function LoginCredentials({
             placeholder={t("emailOrUsernamePlaceholder")}
             required
             disabled={loading}
+            suppressHydrationWarning
             aria-invalid={Boolean(credentialsError)}
             value={identifier}
             onChange={(e) => {
@@ -107,6 +108,7 @@ export function LoginCredentials({
               placeholder={t("passwordPlaceholder")}
               required
               disabled={loading}
+              suppressHydrationWarning
               aria-invalid={Boolean(credentialsError)}
               value={password}
               onChange={(e) => {

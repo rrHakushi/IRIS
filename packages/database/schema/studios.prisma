@@ -1,3 +1,5 @@
+// use prisma-8
+
 model Studio {
     id        Int  @id @default(autoincrement())
     anilistId Int? @unique
@@ -6,17 +8,17 @@ model Studio {
     tvDBId    Int? @unique
     bangumiId Int? @unique
 
-    name              String  @db.Text
+    name              String
     isAnimationStudio Boolean @default(false)
-    siteUrl           String? @db.Text
+    siteUrl           String?
 
     favorites   Int? @default(0)
     alFavorites Int?
 
-    sources Json? @db.JsonB
+    sources Jsonb?
 
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     mediaStudios MediaStudio[]
 

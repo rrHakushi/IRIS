@@ -173,7 +173,7 @@ describe('Borealis: Smart Freshness Evaluation & Calendar Checks', () => {
         alUpdatedAt: 1720000000,
       }
 
-      ;(prisma.anime.findUnique as any) = async ({ where }: any) => {
+      ;((prisma as any).anime.findUnique as any) = async ({ where }: any) => {
         if (where.id === 501) return mockAnimeDb
         return null
       }
@@ -196,7 +196,7 @@ describe('Borealis: Smart Freshness Evaluation & Calendar Checks', () => {
         alUpdatedAt: 1720000000,
       }
 
-      ;(prisma.anime.findUnique as any) = async ({ where }: any) => {
+      ;((prisma as any).anime.findUnique as any) = async ({ where }: any) => {
         if (where.id === 501) return mockAnimeDb
         return null
       }
@@ -212,7 +212,7 @@ describe('Borealis: Smart Freshness Evaluation & Calendar Checks', () => {
     })
 
     it('MediaPreviewSyncer returns queuedForFetch: false for fresh existing stubs', async () => {
-      ;(prisma.anime.findUnique as any) = async ({ where }: any) => {
+      ;((prisma as any).anime.findUnique as any) = async ({ where }: any) => {
         if (where.anilistId === 206949) {
           return {
             id: 603,
@@ -243,7 +243,7 @@ describe('Borealis: Smart Freshness Evaluation & Calendar Checks', () => {
     })
 
     it('MediaPreviewSyncer returns queuedForFetch: true for stale or unhydrated existing stubs', async () => {
-      ;(prisma.anime.findUnique as any) = async ({ where }: any) => {
+      ;((prisma as any).anime.findUnique as any) = async ({ where }: any) => {
         if (where.anilistId === 206949) {
           return {
             id: 603,

@@ -21,6 +21,10 @@ const LOCAL_PROVIDER_MAP: Record<string, string> = {
   DISCORD: "/icons/connections/discord.svg",
   GITHUB: "/icons/connections/github.svg",
   IRIS: "/iris512left-ring.png",
+  HIKKA: "/icons/connections/hikka.svg",
+  MANGAUPDATES: "/icons/connections/mangaupdates.svg",
+  MANGABAKA: "/icons/connections/mangabaka.svg",
+  TRAKT: "/icons/connections/trakt.svg",
 }
 
 export function getProviderIcon(

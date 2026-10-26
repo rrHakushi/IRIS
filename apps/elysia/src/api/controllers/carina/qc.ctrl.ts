@@ -2,6 +2,7 @@ import { Elysia } from 'elysia'
 import { session } from '../../../plugins/session'
 import { CarinaQcModel } from '../../models/carina/qc.model'
 import { CarinaQcServ } from '../../../services/carina/qc.serv'
+import { getDomainConfig } from '../../../utils/domain'
 
 export const carinaQc = new Elysia({ prefix: '/carina/auth/qc' })
   .use(session())
@@ -61,8 +62,21 @@ export const carinaQc = new Elysia({ prefix: '/carina/auth/qc' })
         422: CarinaQcModel.validationError,
       },
     },
-    async ({ query }) => {
-      return await CarinaQcServ.checkStatus(query.sessionToken)
+    async ({ query, cookie: { session: sessionCookie } }) => {
+      const res = await CarinaQcServ.checkStatus(query.sessionToken)
+      if (res.status === 'approved' && res.token && sessionCookie) {
+        const { isSecure, cookieDomain } = getDomainConfig()
+        sessionCookie.set({
+          value: res.token,
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+          secure: isSecure,
+          maxAge: 365 * 24 * 60 * 60,
+          ...(cookieDomain ? { domain: cookieDomain } : {}),
+        })
+      }
+      return res
     }
   )
 

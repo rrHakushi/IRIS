@@ -1,18 +1,18 @@
-import { describe, it, beforeEach, afterEach } from "node:test"
+import { describe, it, beforeEach, afterEach, expect } from "bun:test"
 import assert from "node:assert/strict"
-import { LogFactory, type LogEntry } from "../dist/index.js"
+import { LogFactory, type LogEntry } from "../src/index.js"
 
 describe("LogFactory (@Iris/logger)", () => {
-  const originalEnv = { ...process.env }
+  const originalEnv = { ...Bun.env }
 
   beforeEach(() => {
-    process.env = { ...originalEnv }
+    Object.assign(Bun.env, originalEnv)
     LogFactory.clearSink()
     LogFactory.setLevel("debug")
   })
 
   afterEach(() => {
-    process.env = { ...originalEnv }
+    Object.assign(Bun.env, originalEnv)
     LogFactory.clearSink()
   })
 
@@ -143,16 +143,16 @@ describe("LogFactory (@Iris/logger)", () => {
     LogFactory.setLevel("debug")
 
     // In development -> should log
-    process.env.NODE_ENV = "development"
+    Bun.env.NODE_ENV = "development"
     const devLogger = new LogFactory("DevModule")
     devLogger.debug("Dev debug message")
-    assert.equal(captured.length, 1)
+    expect(captured.length).toBe(1)
 
     // In production -> should NOT log debug even if level is debug
-    process.env.NODE_ENV = "production"
+    Bun.env.NODE_ENV = "production"
     const prodLogger = new LogFactory("ProdModule")
     prodLogger.debug("Prod debug message")
-    assert.equal(captured.length, 1) // unchanged
+    expect(captured.length).toBe(1) // unchanged
 
     // Info should still log in production
     prodLogger.info("Prod info message")

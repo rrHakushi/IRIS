@@ -87,77 +87,56 @@ export async function executeMediaUpdate(
     const nowUnixSeconds = Math.floor(now.getTime() / 1000)
     switch (mediaType) {
       case 'ANIME': {
-        await prisma.anime.update({
-          where: { id: mediaId },
-          data: {
-            updatedAt: now,
-            alUpdatedAt: nowUnixSeconds,
-          },
+        await prisma.orm.public.Anime.where((m) => m.id.eq(mediaId)).update({
+          updatedAt: now,
+          alUpdatedAt: nowUnixSeconds,
         })
         break
       }
 
       case 'MANGA': {
-        await prisma.manga.update({
-          where: { id: mediaId },
-          data: {
-            updatedAt: now,
-            alUpdatedAt: nowUnixSeconds,
-          },
+        await prisma.orm.public.Manga.where((m) => m.id.eq(mediaId)).update({
+          updatedAt: now,
+          alUpdatedAt: nowUnixSeconds,
         })
         break
       }
 
       case 'TV': {
-        await prisma.tv.update({
-          where: { id: mediaId },
-          data: {
-            updatedAt: now,
-            tvdbUpdatedAt: nowUnixSeconds,
-          },
+        await prisma.orm.public.Tv.where((m) => m.id.eq(mediaId)).update({
+          updatedAt: now,
+          tvdbUpdatedAt: nowUnixSeconds,
         })
         break
       }
 
       case 'MOVIE': {
-        await prisma.movie.update({
-          where: { id: mediaId },
-          data: {
-            updatedAt: now,
-            tvdbUpdatedAt: nowUnixSeconds,
-          },
+        await prisma.orm.public.Movie.where((m) => m.id.eq(mediaId)).update({
+          updatedAt: now,
+          tvdbUpdatedAt: nowUnixSeconds,
         })
         break
       }
 
       case 'BOOK': {
-        await prisma.book.update({
-          where: { id: mediaId },
-          data: {
-            updatedAt: now,
-            googleBooksUpdatedAt: nowUnixSeconds,
-          },
+        await prisma.orm.public.Book.where((m) => m.id.eq(mediaId)).update({
+          updatedAt: now,
+          googleBooksUpdatedAt: nowUnixSeconds,
         })
         break
       }
 
       case 'GAME': {
-        await prisma.game.update({
-          where: { id: mediaId },
-          data: {
-            updatedAt: now,
-            igdbUpdatedAt: nowUnixSeconds,
-          },
+        await prisma.orm.public.Game.where((m) => m.id.eq(mediaId)).update({
+          updatedAt: now,
+          igdbUpdatedAt: nowUnixSeconds,
         })
         break
       }
 
       case 'MUSIC': {
-        await prisma.music.update({
-          where: { id: mediaId },
-          data: {
-            updatedAt: now,
-          },
+        await prisma.orm.public.Music.where((m) => m.id.eq(mediaId)).update({
+          updatedAt: now,
         })
         break
       }

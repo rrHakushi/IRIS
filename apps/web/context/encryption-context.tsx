@@ -8,7 +8,7 @@ import React, {
   useCallback,
   useRef,
 } from "react"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/session-context"
 import { elysia } from "@/lib/elysia"
 import {
   getVaultRecord,

@@ -2,6 +2,7 @@ import { Elysia } from 'elysia'
 import { session } from '../../../plugins/session'
 import { CarinaTotpModel } from '../../models/carina/totp.model'
 import { CarinaTotpServ } from '../../../services/carina/totp.serv'
+import { getDomainConfig } from '../../../utils/domain'
 
 export const carinaTotp = new Elysia({ prefix: '/carina/auth/twofactor/totp' })
   .use(session())
@@ -43,9 +44,21 @@ export const carinaTotp = new Elysia({ prefix: '/carina/auth/twofactor/totp' })
         422: CarinaTotpModel.validationError,
       },
     },
-    async ({ body, session: userSession }) => {
-      const user = userSession.requireUser()
-      return await CarinaTotpServ.verifyTotp(user.id, body)
+    async ({ body, session: userSession, cookie: { session: sessionCookie } }) => {
+      const res = await CarinaTotpServ.verifyTotp(userSession.user?.id, body)
+      if (res.token && sessionCookie) {
+        const { isSecure, cookieDomain } = getDomainConfig()
+        sessionCookie.set({
+          value: res.token,
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+          secure: isSecure,
+          maxAge: 365 * 24 * 60 * 60,
+          ...(cookieDomain ? { domain: cookieDomain } : {}),
+        })
+      }
+      return res
     }
   )
 

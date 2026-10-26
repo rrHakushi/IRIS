@@ -16,6 +16,7 @@ export interface KnownModules {
   "BullMQ:ConnectionSync": true
   "BullMQ:Emails": true
   "BullMQ:MediaQueue": true
+  "CarinaAuth": true
   "CarinaNotifications": true
   "Controller": true
   "Database": true
@@ -33,7 +34,6 @@ export interface KnownModules {
   "ProdModule": true
   "Scoped": true
   "SubModule": true
-  "Test": true
   "Worker:ConnectionSync": true
   "Worker:Email": true
   "Worker:Media": true

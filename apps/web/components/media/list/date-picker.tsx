@@ -69,7 +69,18 @@ export function DatePicker({
     }
   }, [maxValue])
 
+  const sendDebugLog = (type: string, details: any) => {
+    try {
+      fetch("/api/debug-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ component: "DatePicker", type, details, time: new Date().toISOString() }),
+      }).catch(() => {})
+    } catch {}
+  }
+
   const handleSelect = (newDate: CalendarDate | null, close?: () => void) => {
+    sendDebugLog("handleSelect", { newDate: newDate?.toString(), hasClose: Boolean(close) })
     if (newDate) {
       if (minDate && newDate.compare(minDate) < 0) return
       if (maxDate && newDate.compare(maxDate) > 0) return
@@ -88,6 +99,7 @@ export function DatePicker({
   }, [minDate, maxDate])
 
   const handleSetToday = (close?: () => void) => {
+    sendDebugLog("handleSetToday", { hasClose: Boolean(close) })
     if (isTodayDisabled) return
     const todayDate = today(getLocalTimeZone())
     onChange(todayDate.toString())
@@ -95,6 +107,7 @@ export function DatePicker({
   }
 
   const handleClear = (close?: () => void) => {
+    sendDebugLog("handleClear", { hasClose: Boolean(close) })
     onChange(null)
     if (close) close()
   }
@@ -111,9 +124,12 @@ export function DatePicker({
     }
   }, [date])
 
+  const triggerRef = React.useRef<HTMLButtonElement>(null)
+
   return (
     <PopoverTrigger>
       <Button
+        ref={triggerRef}
         variant="ghost"
         disabled={disabled}
         aria-label={ariaLabel}
@@ -141,6 +157,9 @@ export function DatePicker({
           <span
             role="button"
             tabIndex={0}
+            onPointerDown={(e) => {
+              e.stopPropagation()
+            }}
             onClick={(e) => {
               e.stopPropagation()
               onChange(null)
@@ -165,47 +184,68 @@ export function DatePicker({
         containerPadding={12}
         placement={align === "end" ? "bottom end" : "bottom start"}
         className="w-auto overflow-hidden rounded-2xl border border-border bg-popover p-0 text-popover-foreground shadow-xl"
+        shouldCloseOnInteractOutside={(element) => {
+          if (!element) return true
+          const isTrigger = triggerRef.current?.contains(element)
+          const isPopover = Boolean(
+            element.closest?.(
+              '[data-slot="popover-content"], .react-aria-Popover, [data-slot="calendar"]'
+            )
+          )
+          sendDebugLog("DatePicker.shouldCloseOnInteractOutside", {
+            tag: element.tagName,
+            className: element.className,
+            isTrigger,
+            isPopover,
+            shouldClose: !isTrigger && !isPopover,
+          })
+          if (isTrigger) return false
+          if (isPopover) return false
+          return true
+        }}
       >
-        {({ close }: any) => (
-          <Dialog
-            aria-label={ariaLabel || "Choose date"}
-            className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-y-auto outline-none"
-          >
-            <Heading slot="title" className="sr-only">
-              {ariaLabel || "Choose date"}
-            </Heading>
-            <Calendar
-              aria-label={ariaLabel || "Choose date"}
-              value={date as any}
-              minValue={minDate || undefined}
-              maxValue={maxDate || undefined}
-              onChange={(val: any) => handleSelect(val as CalendarDate, close)}
-              className="bg-transparent p-3"
-            />
-            {/* Quick action buttons: Today / Clear */}
-            <div className="flex items-center justify-between border-t border-border bg-muted/30 px-3 py-2 text-xs">
-              <button
-                type="button"
-                disabled={isTodayDisabled}
-                onClick={() => handleSetToday(close)}
-                className={cn(
-                  "cursor-pointer font-medium text-primary transition-colors hover:underline",
-                  isTodayDisabled &&
-                    "cursor-not-allowed opacity-40 hover:no-underline"
-                )}
-              >
-                Today
-              </button>
-              <button
-                type="button"
-                onClick={() => handleClear(close)}
-                className="cursor-pointer text-muted-foreground transition-colors hover:text-destructive"
-              >
-                Clear
-              </button>
-            </div>
-          </Dialog>
-        )}
+        <Dialog
+          aria-label={ariaLabel || "Choose date"}
+          className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-y-auto outline-none"
+        >
+          {({ close }: any) => (
+            <>
+              <Heading slot="title" className="sr-only">
+                {ariaLabel || "Choose date"}
+              </Heading>
+              <Calendar
+                aria-label={ariaLabel || "Choose date"}
+                value={date as any}
+                minValue={minDate || undefined}
+                maxValue={maxDate || undefined}
+                onChange={(val: any) => handleSelect(val as CalendarDate, close)}
+                className="bg-transparent p-3"
+              />
+              {/* Quick action buttons: Today / Clear */}
+              <div className="flex items-center justify-between border-t border-border bg-muted/30 px-3 py-2 text-xs">
+                <button
+                  type="button"
+                  disabled={isTodayDisabled}
+                  onClick={() => handleSetToday(close)}
+                  className={cn(
+                    "cursor-pointer font-medium text-primary transition-colors hover:underline",
+                    isTodayDisabled &&
+                      "cursor-not-allowed opacity-40 hover:no-underline"
+                  )}
+                >
+                  Today
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleClear(close)}
+                  className="cursor-pointer text-muted-foreground transition-colors hover:text-destructive"
+                >
+                  Clear
+                </button>
+              </div>
+            </>
+          )}
+        </Dialog>
       </Popover>
     </PopoverTrigger>
   )

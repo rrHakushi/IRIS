@@ -10,18 +10,11 @@ import {
 function Input({
   className,
   type,
-  "aria-label": ariaLabel,
-  placeholder,
   ...props
 }: React.ComponentProps<typeof InputPrimitive>) {
-  const resolvedAriaLabel =
-    ariaLabel ?? (typeof placeholder === "string" ? placeholder : undefined)
-
   return (
     <InputPrimitive
       type={type}
-      aria-label={resolvedAriaLabel}
-      placeholder={placeholder}
       data-slot="input"
       className={composeRenderProps(className, (className) =>
         cn(

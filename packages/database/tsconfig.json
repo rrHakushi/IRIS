@@ -1,18 +1,17 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "@workspace/typescript-config/base.json",
   "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "outDir": "./dist",
     "rootDir": "./src",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "module": "node16",
-    "target": "ES2022",
-    "moduleResolution": "node16",
     "noEmit": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["bun"]
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "generated-client"]
+  "exclude": ["node_modules", "dist"]
 }
-

@@ -54,23 +54,23 @@ describe('Borealis Media Queue & Weekly Cron Worker Test Suite', () => {
 
   it('scans active/releasing/hiatus media across categories and queues them with depth 0', async () => {
     // Mock Prisma findMany queries for active items
-    ;(prisma.anime.findMany as any) = async () => [
+    ;((prisma as any).anime.findMany as any) = async () => [
       { id: 101, anilistId: 15000, status: 'RELEASING' },
       { id: 102, anilistId: 15001, status: 'HIATUS' },
     ]
-    ;(prisma.manga.findMany as any) = async () => [
+    ;((prisma as any).manga.findMany as any) = async () => [
       { id: 201, anilistId: 25000, status: 'RELEASING' },
     ]
-    ;(prisma.tv.findMany as any) = async () => [
+    ;((prisma as any).tv.findMany as any) = async () => [
       { id: 301, tvDBId: 'tv-3001', status: 'RETURNING_SERIES' },
     ]
-    ;(prisma.movie.findMany as any) = async () => [
+    ;((prisma as any).movie.findMany as any) = async () => [
       { id: 401, tvDBId: 'mov-4001', status: 'IN_PRODUCTION' },
     ]
-    ;(prisma.book.findMany as any) = async () => [
+    ;((prisma as any).book.findMany as any) = async () => [
       { id: 501, googleBookId: 'book-5001', status: 'RELEASING' },
     ]
-    ;(prisma.game.findMany as any) = async () => [
+    ;((prisma as any).game.findMany as any) = async () => [
       { id: 601, igdbId: 'game-6001', status: 'EARLY_ACCESS' },
     ]
 
@@ -134,11 +134,11 @@ describe('Borealis Media Queue & Weekly Cron Worker Test Suite', () => {
     let updatedAnimeId: number | undefined
     let updatedMangaId: number | undefined
 
-    ;(prisma.anime.update as any) = async ({ where }: any) => {
+    ;((prisma as any).anime.update as any) = async ({ where }: any) => {
       updatedAnimeId = where.id
       return {}
     }
-    ;(prisma.manga.update as any) = async ({ where }: any) => {
+    ;((prisma as any).manga.update as any) = async ({ where }: any) => {
       updatedMangaId = where.id
       return {}
     }
