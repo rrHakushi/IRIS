@@ -3,7 +3,7 @@ import { Elysia } from 'elysia'
 import { bearer } from '@elysia/bearer'
 import { jwt } from '@elysia/jwt'
 import { jwtVerify } from 'jose'
-import { prisma as defaultPrisma, type PrismaClient, toDate } from '@IRIS/database'
+import { prisma as defaultPrisma, type PrismaClient, toDate } from '@Iris/db'
 import { Unauthorized } from '../lib/errors'
 import { hashApiKey } from '../utils/auth-crypto'
 

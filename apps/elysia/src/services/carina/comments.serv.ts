@@ -1,4 +1,4 @@
-import { prisma, and, or, countOf, toDate } from '@IRIS/database'
+import { prisma, and, or, countOf, toDate } from '@Iris/db'
 import { getProfileCustomization } from '@IRIS/shared'
 import { IRISBitField, IRISFlags } from '@IRIS/permissions'
 import { NotFound, BadRequest, Forbidden } from '../../lib/errors'

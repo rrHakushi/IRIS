@@ -6,7 +6,7 @@ import {
   type NotificationType,
   type NotificationPriority,
   type NotificationActionStatus,
-} from '@IRIS/database'
+} from '@Iris/db'
 import { LogFactory } from '@Iris/logger'
 import { NotFound } from '../../lib/errors'
 import { wsHub } from '../ws.serv'

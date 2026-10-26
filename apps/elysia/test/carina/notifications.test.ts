@@ -5,7 +5,7 @@ import { carinaNotifications } from '../../src/api/controllers/carina/notificati
 import { CarinaNotificationsServ } from '../../src/services/carina/notifications.serv'
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 
 // -----------------------------------------------------------------------------
 // In-Memory Database Mock for Notifications and Users

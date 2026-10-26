@@ -3,7 +3,7 @@ import { Elysia, ValidationError } from 'elysia'
 import { akaromiCiphers } from '../../src/api/controllers/akaromi/ciphers.ctrl'
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
-import { prisma, type PassCipherType, type PassRepromptType } from '@IRIS/database'
+import { prisma, type PassCipherType, type PassRepromptType } from '@Iris/db'
 
 // -----------------------------------------------------------------------------
 // In-Memory Database Mock for PassCipher and User

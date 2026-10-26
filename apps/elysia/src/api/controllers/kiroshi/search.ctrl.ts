@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { Elysia } from 'elysia'
-import { prisma, toDate } from '@IRIS/database'
+import { prisma, toDate } from '@Iris/db'
 import { session } from '../../../plugins/session'
 import { KiroshiSearchModel } from '../../models/kiroshi/search.model'
 import { KiroshiSearchServ } from '../../../services/kiroshi/search.serv'

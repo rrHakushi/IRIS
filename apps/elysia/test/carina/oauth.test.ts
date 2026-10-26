@@ -5,7 +5,7 @@ import { carinaOAuthDiscovery } from '../../src/api/controllers/carina/oauth-dis
 import { carinaOAuth } from '../../src/api/controllers/carina/oauth.ctrl'
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt, hashPassword } from '../../src/utils/auth-crypto'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 
 // -----------------------------------------------------------------------------
 // In-Memory Database Mock for OAuth 2.0 / OIDC

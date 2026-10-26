@@ -3,7 +3,7 @@ import { Elysia, ValidationError } from 'elysia'
 import { borealisLists } from '../../src/api/controllers/borealis/lists.ctrl'
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 
 // -----------------------------------------------------------------------------
 // In-Memory Database Mock for Lists & Media

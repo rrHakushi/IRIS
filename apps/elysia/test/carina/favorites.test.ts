@@ -3,7 +3,7 @@ import { Elysia, ValidationError } from 'elysia'
 import { carinaFavorites } from '../../src/api/controllers/carina/favorites.ctrl'
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 
 // -----------------------------------------------------------------------------
 // In-Memory Database Mock for Favorites and Users

@@ -1,6 +1,6 @@
 #!/usr/bin/env -S bun
-import type { Contract as End } from '../../snapshots/e5e1acc2535dc229d5d2fac23dadb32749c5eaf9a0cb37a7ffadd397d56b4d30/contract';
-import endContract from '../../snapshots/e5e1acc2535dc229d5d2fac23dadb32749c5eaf9a0cb37a7ffadd397d56b4d30/contract.json' with { type: 'json' };
+import type { Contract as End } from '../../snapshots/dfda105c1a90ebc11f3d640b7a221d71fab6104ff155adeec20d0e44bb0e3194/contract';
+import endContract from '../../snapshots/dfda105c1a90ebc11f3d640b7a221d71fab6104ff155adeec20d0e44bb0e3194/contract.json' with { type: 'json' };
 import {
   Migration,
   MigrationCLI,
@@ -23,10 +23,10 @@ export default class M extends Migration<never, End> {
         table: 'ActivityLike',
         columns: [
           col('activityId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
@@ -38,10 +38,10 @@ export default class M extends Migration<never, End> {
         table: 'ActivityLog',
         columns: [
           col('content', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('isPrivate', 'bool', {
@@ -73,9 +73,9 @@ export default class M extends Migration<never, End> {
           col('status', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('title', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('type', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
         ],
@@ -97,10 +97,10 @@ export default class M extends Migration<never, End> {
         columns: [
           col('activityId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('content', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('likeCount', 'int4', {
@@ -108,9 +108,9 @@ export default class M extends Migration<never, End> {
             default: lit(0),
             codecRef: { codecId: 'pg/int4@1' },
           }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
         ],
@@ -134,10 +134,10 @@ export default class M extends Migration<never, End> {
           col('bannerImage', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('countryOfOrigin', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('coverImage', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('description', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('endDateDay', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
@@ -175,7 +175,7 @@ export default class M extends Migration<never, End> {
           col('malId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('malPopularity', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('malUpdatedAt', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
-          col('nextAiringAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('nextAiringAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('nextAiringEpisodeNumber', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('popularity', 'int4', {
             notNull: true,
@@ -225,9 +225,9 @@ export default class M extends Migration<never, End> {
           col('totalScoreSum', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('trailers', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
           col('tvDBId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
         ],
         constraints: [
@@ -245,8 +245,8 @@ export default class M extends Migration<never, End> {
             sql`"source" IN ('ORIGINAL', 'MANGA', 'LIGHT_NOVEL', 'VISUAL_NOVEL', 'VIDEO_GAME', 'OTHER', 'NOVEL', 'DOUJINSHI', 'ANIME', 'WEB_NOVEL', 'LIVE_ACTION', 'GAME', 'COMIC', 'MULTIMEDIA_PROJECT', 'PICTURE_BOOK', 'UNKNOWN')`,
           ),
           checkExpression(
-            'Anime_status_check_a9e63772',
-            sql`"status" IN ('FINISHED', 'RELEASING', 'NOT_YET_RELEASED', 'CANCELLED', 'HIATUS', 'UNKNOWN')`,
+            'Anime_status_check_645a4e8b',
+            sql`"status" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')`,
           ),
           checkExpression(
             'Anime_synonyms_elem_not_null_1b00b9ae',
@@ -258,22 +258,22 @@ export default class M extends Migration<never, End> {
         schema: 'public',
         table: 'AnimeAiringSchedule',
         columns: [
-          col('airingAt', 'timestamp', {
+          col('airingAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('anilistAiringId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('animeId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('episodeNumber', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('id', 'SERIAL', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
         ],
         constraints: [primaryKey(['id'])],
@@ -282,13 +282,13 @@ export default class M extends Migration<never, End> {
         schema: 'public',
         table: 'AnimeEpisode',
         columns: [
-          col('airDate', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('airDate', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('anidbEpisodeId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('animeId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('description', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('duration', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
@@ -321,9 +321,9 @@ export default class M extends Migration<never, End> {
             default: lit('REGULAR'),
             codecRef: { codecId: 'pg/text@1' },
           }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
         ],
         constraints: [
@@ -339,12 +339,12 @@ export default class M extends Migration<never, End> {
         table: 'AnimeList',
         columns: [
           col('animeId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
-          col('completedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('completedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('connections', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'SERIAL', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('notes', 'text', { codecRef: { codecId: 'pg/text@1' } }),
@@ -365,23 +365,23 @@ export default class M extends Migration<never, End> {
             codecRef: { codecId: 'pg/int4@1' },
           }),
           col('score', 'float8', { codecRef: { codecId: 'pg/float8@1' } }),
-          col('startedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('startedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('status', 'text', {
             notNull: true,
-            default: lit('PLANNING'),
+            default: lit('PLANNED'),
             codecRef: { codecId: 'pg/text@1' },
           }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
         ],
         constraints: [
           primaryKey(['id']),
           checkExpression(
-            'AnimeList_status_check_5a8afe5d',
-            sql`"status" IN ('PLANNING', 'WATCHING', 'COMPLETED', 'ON_HOLD', 'DROPPED')`,
+            'AnimeList_status_check_eb83cefb',
+            sql`"status" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')`,
           ),
         ],
       }),
@@ -391,10 +391,10 @@ export default class M extends Migration<never, End> {
         columns: [
           col('animeId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('body', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('downvotes', 'int4', {
             notNull: true,
@@ -410,9 +410,9 @@ export default class M extends Migration<never, End> {
           col('ratings', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
           col('score', 'float8', { notNull: true, codecRef: { codecId: 'pg/float8@1' } }),
           col('summary', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('upvotes', 'int4', {
             notNull: true,
@@ -427,20 +427,20 @@ export default class M extends Migration<never, End> {
         schema: 'public',
         table: 'ApiKey',
         columns: [
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
-          col('expiresAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('expiresAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('hash', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('lastUsedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('lastUsedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('name', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('prefix', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
         ],
@@ -463,10 +463,10 @@ export default class M extends Migration<never, End> {
           col('contentRatings', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
           col('countryOfOrigin', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('coverImage', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('description', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('favorites', 'int4', {
@@ -507,7 +507,7 @@ export default class M extends Migration<never, End> {
             notNull: true,
             codecRef: { codecId: 'pg/text@1', many: true },
           }),
-          col('releaseDate', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('releaseDate', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('releaseDateDay', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('releaseDateMonth', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('releaseDateYear', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
@@ -547,9 +547,9 @@ export default class M extends Migration<never, End> {
           col('titlePrimary', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('titleSecondary', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('totalScoreSum', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('volumeCount', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('website', 'text', { codecRef: { codecId: 'pg/text@1' } }),
@@ -565,8 +565,8 @@ export default class M extends Migration<never, End> {
             sql`array_position("publishers", NULL) IS NULL`,
           ),
           checkExpression(
-            'Book_status_check_7f93b93c',
-            sql`"status" IN ('PUBLISHED', 'RELEASING', 'CANCELLED', 'ON_HIATUS', 'UNKNOWN')`,
+            'Book_status_check_645a4e8b',
+            sql`"status" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')`,
           ),
           checkExpression(
             'Book_subjects_elem_not_null_ce05f898',
@@ -583,12 +583,12 @@ export default class M extends Migration<never, End> {
         table: 'BookList',
         columns: [
           col('bookId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
-          col('completedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('completedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('connections', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'SERIAL', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('notes', 'text', { codecRef: { codecId: 'pg/text@1' } }),
@@ -619,23 +619,23 @@ export default class M extends Migration<never, End> {
           }),
           col('rereadHistory', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
           col('score', 'float8', { codecRef: { codecId: 'pg/float8@1' } }),
-          col('startedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('startedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('status', 'text', {
             notNull: true,
-            default: lit('PLANNING'),
+            default: lit('PLANNED'),
             codecRef: { codecId: 'pg/text@1' },
           }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
         ],
         constraints: [
           primaryKey(['id']),
           checkExpression(
-            'BookList_status_check_97f2c647',
-            sql`"status" IN ('PLANNING', 'READING', 'COMPLETED', 'ON_HOLD', 'DROPPED')`,
+            'BookList_status_check_eb83cefb',
+            sql`"status" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')`,
           ),
         ],
       }),
@@ -645,10 +645,10 @@ export default class M extends Migration<never, End> {
         columns: [
           col('body', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('bookId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('downvotes', 'int4', {
             notNull: true,
@@ -664,9 +664,9 @@ export default class M extends Migration<never, End> {
           col('ratings', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
           col('score', 'float8', { notNull: true, codecRef: { codecId: 'pg/float8@1' } }),
           col('summary', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('upvotes', 'int4', {
             notNull: true,
@@ -683,10 +683,10 @@ export default class M extends Migration<never, End> {
         columns: [
           col('appId', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('color', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('group', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('icon', 'text', { codecRef: { codecId: 'pg/text@1' } }),
@@ -702,9 +702,9 @@ export default class M extends Migration<never, End> {
             codecRef: { codecId: 'pg/bool@1' },
           }),
           col('title', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('url', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
@@ -719,10 +719,10 @@ export default class M extends Migration<never, End> {
           col('aniDBId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('anilistId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('bangumiId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('dateOfBirthDay', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('dateOfBirthMonth', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
@@ -745,9 +745,9 @@ export default class M extends Migration<never, End> {
           col('nameNative', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('namePrimary', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('tvDBId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
         ],
         constraints: [
@@ -772,18 +772,18 @@ export default class M extends Migration<never, End> {
             codecRef: { codecId: 'pg/text@1' },
           }),
           col('avatarUrl', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('displayName', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('encryptedData', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('errorMessage', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('expiresAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('expiresAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('externalId', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('lastSyncedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('lastSyncedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('profileUrl', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('provider', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('settings', 'json', { codecRef: { codecId: 'pg/json@1' } }),
@@ -792,9 +792,9 @@ export default class M extends Migration<never, End> {
             default: lit('CONNECTED'),
             codecRef: { codecId: 'pg/text@1' },
           }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
         ],
@@ -805,8 +805,8 @@ export default class M extends Migration<never, End> {
             sql`"authType" IN ('OAUTH2', 'API_KEY', 'CREDENTIALS', 'OPENID')`,
           ),
           checkExpression(
-            'Connection_provider_check_43600405',
-            sql`"provider" IN ('ANILIST', 'MAL', 'SIMKL', 'BANGUMI', 'STEAM', 'RIOT_GAMES', 'RADARR', 'SONARR', 'READARR', 'LIDARR', 'JELLYFIN', 'PLEX', 'DEEZER', 'LASTFM', 'CUSTOM', 'IRIS')`,
+            'Connection_provider_check_537f4a65',
+            sql`"provider" IN ('ANILIST', 'MAL', 'SIMKL', 'BANGUMI', 'STEAM', 'RIOT_GAMES', 'RADARR', 'SONARR', 'READARR', 'LIDARR', 'JELLYFIN', 'PLEX', 'DEEZER', 'LASTFM', 'CUSTOM', 'IRIS', 'HIKKA', 'MANGAUPDATES', 'MANGABAKA', 'TRAKT')`,
           ),
           checkExpression(
             'Connection_status_check_597f2d5b',
@@ -819,10 +819,10 @@ export default class M extends Migration<never, End> {
         table: 'CustomList',
         columns: [
           col('coverImage', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('description', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
@@ -842,9 +842,9 @@ export default class M extends Migration<never, End> {
             default: lit(0),
             codecRef: { codecId: 'pg/int4@1' },
           }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
         ],
@@ -854,10 +854,10 @@ export default class M extends Migration<never, End> {
         schema: 'public',
         table: 'CustomListEntry',
         columns: [
-          col('addedAt', 'timestamp', {
+          col('addedAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('animeId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('bookId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
@@ -890,10 +890,10 @@ export default class M extends Migration<never, End> {
         schema: 'public',
         table: 'Favorite',
         columns: [
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('targetId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
@@ -912,10 +912,10 @@ export default class M extends Migration<never, End> {
         schema: 'public',
         table: 'Friend',
         columns: [
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('friendId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
@@ -925,9 +925,9 @@ export default class M extends Migration<never, End> {
             codecRef: { codecId: 'pg/bool@1' },
           }),
           col('nickname', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
         ],
@@ -937,10 +937,10 @@ export default class M extends Migration<never, End> {
         schema: 'public',
         table: 'FriendRequest',
         columns: [
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('message', 'character varying(50)', {
@@ -953,9 +953,9 @@ export default class M extends Migration<never, End> {
             default: lit('PENDING'),
             codecRef: { codecId: 'pg/text@1' },
           }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
         ],
         constraints: [
@@ -980,10 +980,10 @@ export default class M extends Migration<never, End> {
           col('contentRatings', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
           col('controllerSupport', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('coverImage', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('description', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('developers', 'text[]', {
@@ -1043,7 +1043,7 @@ export default class M extends Migration<never, End> {
             codecRef: { codecId: 'pg/text@1', many: true },
           }),
           col('rawgId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
-          col('releaseDate', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('releaseDate', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('releaseDateDay', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('releaseDateMonth', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('releaseDateYear', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
@@ -1084,9 +1084,9 @@ export default class M extends Migration<never, End> {
           }),
           col('totalScoreSum', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('trailers', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('vndbId', 'text', { codecRef: { codecId: 'pg/text@1' } }),
         ],
@@ -1117,8 +1117,8 @@ export default class M extends Migration<never, End> {
             sql`array_position("publishers", NULL) IS NULL`,
           ),
           checkExpression(
-            'Game_status_check_3cd1d392',
-            sql`"status" IN ('RELEASED', 'EARLY_ACCESS', 'ANNOUNCED', 'IN_DEVELOPMENT', 'DELAYED', 'CANCELLED', 'UNKNOWN')`,
+            'Game_status_check_645a4e8b',
+            sql`"status" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')`,
           ),
           checkExpression(
             'Game_synonyms_elem_not_null_1b00b9ae',
@@ -1130,12 +1130,12 @@ export default class M extends Migration<never, End> {
         schema: 'public',
         table: 'GameList',
         columns: [
-          col('completedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('completedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('connections', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('gameId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('id', 'SERIAL', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
@@ -1157,23 +1157,23 @@ export default class M extends Migration<never, End> {
             codecRef: { codecId: 'pg/int4@1' },
           }),
           col('score', 'float8', { codecRef: { codecId: 'pg/float8@1' } }),
-          col('startedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('startedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('status', 'text', {
             notNull: true,
-            default: lit('PLANNING'),
+            default: lit('PLANNED'),
             codecRef: { codecId: 'pg/text@1' },
           }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
         ],
         constraints: [
           primaryKey(['id']),
           checkExpression(
-            'GameList_status_check_65997e90',
-            sql`"status" IN ('PLANNING', 'PLAYING', 'COMPLETED', 'ON_HOLD', 'DROPPED')`,
+            'GameList_status_check_eb83cefb',
+            sql`"status" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')`,
           ),
         ],
       }),
@@ -1182,10 +1182,10 @@ export default class M extends Migration<never, End> {
         table: 'GameReview',
         columns: [
           col('body', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('downvotes', 'int4', {
             notNull: true,
@@ -1202,9 +1202,9 @@ export default class M extends Migration<never, End> {
           col('ratings', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
           col('score', 'float8', { notNull: true, codecRef: { codecId: 'pg/float8@1' } }),
           col('summary', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('upvotes', 'int4', {
             notNull: true,
@@ -1219,17 +1219,17 @@ export default class M extends Migration<never, End> {
         schema: 'public',
         table: 'Genre',
         columns: [
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'SERIAL', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('name', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('slug', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
         ],
         constraints: [primaryKey(['id'])],
@@ -1240,10 +1240,10 @@ export default class M extends Migration<never, End> {
         columns: [
           col('authorId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('content', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('isSpoiler', 'bool', {
@@ -1253,9 +1253,9 @@ export default class M extends Migration<never, End> {
           }),
           col('listOwnerId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('mediaType', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
         ],
         constraints: [primaryKey(['id'])],
@@ -1267,15 +1267,15 @@ export default class M extends Migration<never, End> {
           col('authorId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('commentId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('content', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
         ],
         constraints: [primaryKey(['id'])],
@@ -1284,23 +1284,23 @@ export default class M extends Migration<never, End> {
         schema: 'public',
         table: 'ListExportShare',
         columns: [
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('description', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('expiresAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('expiresAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('lastUsedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('lastUsedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('mediaTypes', 'text[]', {
             notNull: true,
             codecRef: { codecId: 'pg/text@1', many: true },
           }),
           col('passwordHash', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
         ],
@@ -1329,10 +1329,10 @@ export default class M extends Migration<never, End> {
           col('chapterCount', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('countryOfOrigin', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('coverImage', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('description', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('endDateDay', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
@@ -1407,9 +1407,9 @@ export default class M extends Migration<never, End> {
           col('titlePrimary', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('titleSecondary', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('totalScoreSum', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('volumeCount', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
         ],
@@ -1424,8 +1424,8 @@ export default class M extends Migration<never, End> {
             sql`"source" IN ('ORIGINAL', 'MANGA', 'LIGHT_NOVEL', 'VISUAL_NOVEL', 'VIDEO_GAME', 'OTHER', 'NOVEL', 'DOUJINSHI', 'ANIME', 'WEB_NOVEL', 'LIVE_ACTION', 'GAME', 'COMIC', 'MULTIMEDIA_PROJECT', 'PICTURE_BOOK', 'UNKNOWN')`,
           ),
           checkExpression(
-            'Manga_status_check_a9e63772',
-            sql`"status" IN ('FINISHED', 'RELEASING', 'NOT_YET_RELEASED', 'CANCELLED', 'HIATUS', 'UNKNOWN')`,
+            'Manga_status_check_645a4e8b',
+            sql`"status" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')`,
           ),
           checkExpression(
             'Manga_synonyms_elem_not_null_1b00b9ae',
@@ -1442,12 +1442,12 @@ export default class M extends Migration<never, End> {
             default: lit(0),
             codecRef: { codecId: 'pg/int4@1' },
           }),
-          col('completedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('completedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('connections', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'SERIAL', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('mangaId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
@@ -1464,15 +1464,15 @@ export default class M extends Migration<never, End> {
           }),
           col('rereadHistory', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
           col('score', 'float8', { codecRef: { codecId: 'pg/float8@1' } }),
-          col('startedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('startedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('status', 'text', {
             notNull: true,
-            default: lit('PLANNING'),
+            default: lit('PLANNED'),
             codecRef: { codecId: 'pg/text@1' },
           }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('volumesProgress', 'int4', {
@@ -1484,8 +1484,8 @@ export default class M extends Migration<never, End> {
         constraints: [
           primaryKey(['id']),
           checkExpression(
-            'MangaList_status_check_97f2c647',
-            sql`"status" IN ('PLANNING', 'READING', 'COMPLETED', 'ON_HOLD', 'DROPPED')`,
+            'MangaList_status_check_eb83cefb',
+            sql`"status" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')`,
           ),
         ],
       }),
@@ -1494,10 +1494,10 @@ export default class M extends Migration<never, End> {
         table: 'MangaReview',
         columns: [
           col('body', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('downvotes', 'int4', {
             notNull: true,
@@ -1514,9 +1514,9 @@ export default class M extends Migration<never, End> {
           col('ratings', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
           col('score', 'float8', { notNull: true, codecRef: { codecId: 'pg/float8@1' } }),
           col('summary', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('upvotes', 'int4', {
             notNull: true,
@@ -1565,10 +1565,10 @@ export default class M extends Migration<never, End> {
         table: 'MediaRecommendation',
         columns: [
           col('body', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('downvotes', 'int4', {
             notNull: true,
@@ -1585,9 +1585,9 @@ export default class M extends Migration<never, End> {
           col('sourceType', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('targetId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('targetType', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('upvotes', 'int4', {
             notNull: true,
@@ -1612,16 +1612,16 @@ export default class M extends Migration<never, End> {
         schema: 'public',
         table: 'MediaRecommendationVote',
         columns: [
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'SERIAL', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('recommendationId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('voteType', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
@@ -1740,10 +1740,10 @@ export default class M extends Migration<never, End> {
           col('budget', 'int8', { codecRef: { codecId: 'pg/int8@1' } }),
           col('countryOfOrigin', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('coverImage', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('description', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('favorites', 'int4', {
@@ -1808,16 +1808,16 @@ export default class M extends Migration<never, End> {
           col('trailers', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
           col('tvDBId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('tvdbUpdatedAt', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
         ],
         constraints: [
           primaryKey(['id']),
           checkExpression(
-            'Movie_status_check_143651cf',
-            sql`"status" IN ('RELEASED', 'IN_PRODUCTION', 'POST_PRODUCTION', 'RUMORED', 'CANCELLED', 'UNKNOWN')`,
+            'Movie_status_check_645a4e8b',
+            sql`"status" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')`,
           ),
           checkExpression(
             'Movie_synonyms_elem_not_null_1b00b9ae',
@@ -1829,12 +1829,12 @@ export default class M extends Migration<never, End> {
         schema: 'public',
         table: 'MovieList',
         columns: [
-          col('completedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('completedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('connections', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'SERIAL', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('movieId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
@@ -1851,23 +1851,23 @@ export default class M extends Migration<never, End> {
             codecRef: { codecId: 'pg/int4@1' },
           }),
           col('score', 'float8', { codecRef: { codecId: 'pg/float8@1' } }),
-          col('startedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('startedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('status', 'text', {
             notNull: true,
-            default: lit('PLANNING'),
+            default: lit('PLANNED'),
             codecRef: { codecId: 'pg/text@1' },
           }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
         ],
         constraints: [
           primaryKey(['id']),
           checkExpression(
-            'MovieList_status_check_f9116bcd',
-            sql`"status" IN ('PLANNING', 'WATCHING', 'COMPLETED', 'DROPPED')`,
+            'MovieList_status_check_eb83cefb',
+            sql`"status" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')`,
           ),
         ],
       }),
@@ -1876,10 +1876,10 @@ export default class M extends Migration<never, End> {
         table: 'MovieReview',
         columns: [
           col('body', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('downvotes', 'int4', {
             notNull: true,
@@ -1896,9 +1896,9 @@ export default class M extends Migration<never, End> {
           col('ratings', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
           col('score', 'float8', { notNull: true, codecRef: { codecId: 'pg/float8@1' } }),
           col('summary', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('upvotes', 'int4', {
             notNull: true,
@@ -1924,10 +1924,10 @@ export default class M extends Migration<never, End> {
           }),
           col('bpm', 'float8', { codecRef: { codecId: 'pg/float8@1' } }),
           col('coverImage', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('deezerArtistId', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('deezerId', 'text', { codecRef: { codecId: 'pg/text@1' } }),
@@ -1981,7 +1981,7 @@ export default class M extends Migration<never, End> {
           }),
           col('rank', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('recordType', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('releaseDate', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('releaseDate', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('releaseDateDay', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('releaseDateMonth', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('releaseDateYear', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
@@ -2004,9 +2004,9 @@ export default class M extends Migration<never, End> {
             codecRef: { codecId: 'pg/text@1' },
           }),
           col('upc', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
         ],
         constraints: [
@@ -2016,8 +2016,8 @@ export default class M extends Migration<never, End> {
             sql`array_position("availableCountries", NULL) IS NULL`,
           ),
           checkExpression(
-            'Music_status_check_f147606c',
-            sql`"status" IN ('RELEASED', 'UPCOMING', 'CANCELLED', 'UNKNOWN')`,
+            'Music_status_check_645a4e8b',
+            sql`"status" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')`,
           ),
           checkExpression('Music_type_check_010ccd74', sql`"type" IN ('TRACK', 'ALBUM')`),
         ],
@@ -2026,12 +2026,12 @@ export default class M extends Migration<never, End> {
         schema: 'public',
         table: 'MusicList',
         columns: [
-          col('completedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('completedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('connections', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'SERIAL', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('musicId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
@@ -2047,23 +2047,23 @@ export default class M extends Migration<never, End> {
             codecRef: { codecId: 'pg/bool@1' },
           }),
           col('score', 'float8', { codecRef: { codecId: 'pg/float8@1' } }),
-          col('startedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('startedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('status', 'text', {
             notNull: true,
-            default: lit('PLANNING'),
+            default: lit('PLANNED'),
             codecRef: { codecId: 'pg/text@1' },
           }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
         ],
         constraints: [
           primaryKey(['id']),
           checkExpression(
-            'MusicList_status_check_fc73b297',
-            sql`"status" IN ('PLANNING', 'LISTENING', 'COMPLETED', 'ON_HOLD', 'DROPPED')`,
+            'MusicList_status_check_eb83cefb',
+            sql`"status" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')`,
           ),
         ],
       }),
@@ -2072,10 +2072,10 @@ export default class M extends Migration<never, End> {
         table: 'MusicReview',
         columns: [
           col('body', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('downvotes', 'int4', {
             notNull: true,
@@ -2092,9 +2092,9 @@ export default class M extends Migration<never, End> {
           col('ratings', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
           col('score', 'float8', { notNull: true, codecRef: { codecId: 'pg/float8@1' } }),
           col('summary', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('upvotes', 'int4', {
             notNull: true,
@@ -2114,14 +2114,14 @@ export default class M extends Migration<never, End> {
           col('actionStatus', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('app', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('category', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('encryptedData', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('encryptedKey', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('expiresAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('expiresAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('isRead', 'bool', {
             notNull: true,
@@ -2133,15 +2133,15 @@ export default class M extends Migration<never, End> {
             default: lit('NORMAL'),
             codecRef: { codecId: 'pg/text@1' },
           }),
-          col('readAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('readAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('type', 'text', {
             notNull: true,
             default: lit('INFO'),
             codecRef: { codecId: 'pg/text@1' },
           }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
         ],
@@ -2166,17 +2166,17 @@ export default class M extends Migration<never, End> {
         table: 'OAuthAccessToken',
         columns: [
           col('clientId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
-          col('expiresAt', 'timestamp', {
+          col('expiresAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('revokedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('revokedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('scopes', 'text[]', {
             notNull: true,
             codecRef: { codecId: 'pg/text@1', many: true },
@@ -2200,14 +2200,14 @@ export default class M extends Migration<never, End> {
           col('code', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('codeChallenge', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('codeChallengeMethod', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
-          col('expiresAt', 'timestamp', {
+          col('expiresAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('redirectUri', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
@@ -2215,7 +2215,7 @@ export default class M extends Migration<never, End> {
             notNull: true,
             codecRef: { codecId: 'pg/text@1', many: true },
           }),
-          col('usedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('usedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
         ],
         constraints: [
@@ -2237,10 +2237,10 @@ export default class M extends Migration<never, End> {
           }),
           col('clientId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('clientSecret', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('description', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
@@ -2260,9 +2260,9 @@ export default class M extends Migration<never, End> {
             notNull: true,
             codecRef: { codecId: 'pg/text@1', many: true },
           }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('websiteUrl', 'text', { codecRef: { codecId: 'pg/text@1' } }),
@@ -2284,19 +2284,19 @@ export default class M extends Migration<never, End> {
         table: 'OAuthConsent',
         columns: [
           col('clientId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('scopes', 'text[]', {
             notNull: true,
             codecRef: { codecId: 'pg/text@1', many: true },
           }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
         ],
@@ -2313,17 +2313,17 @@ export default class M extends Migration<never, End> {
         table: 'OAuthRefreshToken',
         columns: [
           col('clientId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
-          col('expiresAt', 'timestamp', {
+          col('expiresAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('revokedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('revokedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('scopes', 'text[]', {
             notNull: true,
             codecRef: { codecId: 'pg/text@1', many: true },
@@ -2346,14 +2346,14 @@ export default class M extends Migration<never, End> {
           col('averageScore', 'float8', { codecRef: { codecId: 'pg/float8@1' } }),
           col('bannerImage', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('coverImage', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('creatorId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('description', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('endDate', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('endDate', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('favorites', 'int4', {
             notNull: true,
             default: lit(0),
@@ -2384,23 +2384,18 @@ export default class M extends Migration<never, End> {
             codecRef: { codecId: 'pg/jsonb@1' },
           }),
           col('scoredCount', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
-          col('startDate', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('startDate', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('statusDistribution', 'jsonb', {
             notNull: true,
             default: lit({}),
             codecRef: { codecId: 'pg/jsonb@1' },
           }),
-          col('statuses', 'jsonb', {
-            notNull: true,
-            default: lit([]),
-            codecRef: { codecId: 'pg/jsonb@1' },
-          }),
           col('titlePrimary', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('titleSecondary', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('totalScoreSum', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
         ],
         constraints: [primaryKey(['id'])],
@@ -2409,11 +2404,11 @@ export default class M extends Migration<never, End> {
         schema: 'public',
         table: 'OtherList',
         columns: [
-          col('completedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
-          col('createdAt', 'timestamp', {
+          col('completedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'SERIAL', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('notes', 'text', { codecRef: { codecId: 'pg/text@1' } }),
@@ -2429,30 +2424,36 @@ export default class M extends Migration<never, End> {
             codecRef: { codecId: 'pg/jsonb@1' },
           }),
           col('score', 'float8', { codecRef: { codecId: 'pg/float8@1' } }),
-          col('startedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('startedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('status', 'text', {
             notNull: true,
-            default: lit('PLANNING'),
+            default: lit('PLANNED'),
             codecRef: { codecId: 'pg/text@1' },
           }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
         ],
-        constraints: [primaryKey(['id'])],
+        constraints: [
+          primaryKey(['id']),
+          checkExpression(
+            'OtherList_status_check_eb83cefb',
+            sql`"status" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')`,
+          ),
+        ],
       }),
       this.createTable({
         schema: 'public',
         table: 'PassCipher',
         columns: [
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
-          col('deletedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('deletedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('encryptedData', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('encryptedTitle', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('favorite', 'bool', {
@@ -2471,9 +2472,9 @@ export default class M extends Migration<never, End> {
             default: lit('LOGIN'),
             codecRef: { codecId: 'pg/text@1' },
           }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
         ],
@@ -2491,10 +2492,10 @@ export default class M extends Migration<never, End> {
         table: 'Passkey',
         columns: [
           col('counter', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('name', 'text', { codecRef: { codecId: 'pg/text@1' } }),
@@ -2523,16 +2524,16 @@ export default class M extends Migration<never, End> {
           col('bangumiId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('birthPlace', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('bloodType', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
-          col('dateOfBirth', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('dateOfBirth', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('dateOfBirthDay', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('dateOfBirthMonth', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('dateOfBirthYear', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
-          col('dateOfDeath', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('dateOfDeath', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('dateOfDeathDay', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('dateOfDeathMonth', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('dateOfDeathYear', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
@@ -2570,9 +2571,9 @@ export default class M extends Migration<never, End> {
           col('spotifyId', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('tmdbId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('tvDBId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('yearsActive', 'int4[]', {
             notNull: true,
@@ -2600,17 +2601,17 @@ export default class M extends Migration<never, End> {
         schema: 'public',
         table: 'ReviewVote',
         columns: [
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'SERIAL', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('reviewId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('reviewType', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('voteType', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
@@ -2636,10 +2637,10 @@ export default class M extends Migration<never, End> {
             default: lit('general'),
             codecRef: { codecId: 'pg/text@1' },
           }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('encryptedQuery', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
@@ -2663,10 +2664,10 @@ export default class M extends Migration<never, End> {
           col('aniDBId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('anilistId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('bangumiId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('favorites', 'int4', { default: lit(0), codecRef: { codecId: 'pg/int4@1' } }),
           col('id', 'SERIAL', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
@@ -2680,9 +2681,9 @@ export default class M extends Migration<never, End> {
           col('siteUrl', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('sources', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
           col('tvDBId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
         ],
         constraints: [primaryKey(['id'])],
@@ -2692,18 +2693,18 @@ export default class M extends Migration<never, End> {
         table: 'Tag',
         columns: [
           col('category', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('description', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('id', 'SERIAL', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('name', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('slug', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
         ],
         constraints: [primaryKey(['id'])],
@@ -2726,10 +2727,10 @@ export default class M extends Migration<never, End> {
           col('contentRatings', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
           col('countryOfOrigin', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('coverImage', 'text', { codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('description', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('episodeCount', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
@@ -2806,9 +2807,9 @@ export default class M extends Migration<never, End> {
           col('tvmazeId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('tvmazeRating', 'float8', { codecRef: { codecId: 'pg/float8@1' } }),
           col('tvmazeUpdatedAt', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
         ],
         constraints: [
@@ -2822,8 +2823,8 @@ export default class M extends Migration<never, End> {
             sql`array_position("networks", NULL) IS NULL`,
           ),
           checkExpression(
-            'Tv_status_check_bf3dd5fe',
-            sql`"status" IN ('RETURNING_SERIES', 'ENDED', 'CANCELED', 'IN_PRODUCTION', 'UPCOMING', 'UNKNOWN')`,
+            'Tv_status_check_645a4e8b',
+            sql`"status" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')`,
           ),
           checkExpression(
             'Tv_synonyms_elem_not_null_1b00b9ae',
@@ -2835,11 +2836,11 @@ export default class M extends Migration<never, End> {
         schema: 'public',
         table: 'TvEpisode',
         columns: [
-          col('airDate', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
-          col('createdAt', 'timestamp', {
+          col('airDate', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('description', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('duration', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
@@ -2873,9 +2874,9 @@ export default class M extends Migration<never, End> {
           col('titlePrimary', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('titleSecondary', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('tvId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
         ],
         constraints: [primaryKey(['id'])],
@@ -2884,12 +2885,12 @@ export default class M extends Migration<never, End> {
         schema: 'public',
         table: 'TvList',
         columns: [
-          col('completedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('completedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('connections', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'SERIAL', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('notes', 'text', { codecRef: { codecId: 'pg/text@1' } }),
@@ -2910,24 +2911,24 @@ export default class M extends Migration<never, End> {
             codecRef: { codecId: 'pg/int4@1' },
           }),
           col('score', 'float8', { codecRef: { codecId: 'pg/float8@1' } }),
-          col('startedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('startedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('status', 'text', {
             notNull: true,
-            default: lit('PLANNING'),
+            default: lit('PLANNED'),
             codecRef: { codecId: 'pg/text@1' },
           }),
           col('tvId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
         ],
         constraints: [
           primaryKey(['id']),
           checkExpression(
-            'TvList_status_check_ee24f4a5',
-            sql`"status" IN ('WATCHING', 'PLANNING', 'COMPLETED', 'ON_HOLD', 'DROPPED')`,
+            'TvList_status_check_eb83cefb',
+            sql`"status" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')`,
           ),
         ],
       }),
@@ -2936,10 +2937,10 @@ export default class M extends Migration<never, End> {
         table: 'TvReview',
         columns: [
           col('body', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('downvotes', 'int4', {
             notNull: true,
@@ -2957,9 +2958,9 @@ export default class M extends Migration<never, End> {
           col('seasonId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('summary', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('tvId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('upvotes', 'int4', {
             notNull: true,
@@ -2977,10 +2978,10 @@ export default class M extends Migration<never, End> {
           col('airDateDay', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('airDateMonth', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
           col('airDateYear', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('description', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('episodeCount', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
@@ -2994,9 +2995,9 @@ export default class M extends Migration<never, End> {
           col('trailers', 'jsonb', { codecRef: { codecId: 'pg/jsonb@1' } }),
           col('tvId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('tvdbSeasonId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
         ],
         constraints: [primaryKey(['id'])],
@@ -3005,11 +3006,11 @@ export default class M extends Migration<never, End> {
         schema: 'public',
         table: 'TvSeasonProgress',
         columns: [
-          col('completedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
-          col('createdAt', 'timestamp', {
+          col('completedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'SERIAL', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('notes', 'text', { codecRef: { codecId: 'pg/text@1' } }),
@@ -3027,23 +3028,23 @@ export default class M extends Migration<never, End> {
           col('score', 'float8', { codecRef: { codecId: 'pg/float8@1' } }),
           col('seasonId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('seasonNumber', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
-          col('startedAt', 'timestamp', { codecRef: { codecId: 'pg/timestamp-temporal@1' } }),
+          col('startedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-date@1' } }),
           col('status', 'text', {
             notNull: true,
-            default: lit('PLANNING'),
+            default: lit('PLANNED'),
             codecRef: { codecId: 'pg/text@1' },
           }),
           col('tvListId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
         ],
         constraints: [
           primaryKey(['id']),
           checkExpression(
-            'TvSeasonProgress_status_check_ee24f4a5',
-            sql`"status" IN ('WATCHING', 'PLANNING', 'COMPLETED', 'ON_HOLD', 'DROPPED')`,
+            'TvSeasonProgress_status_check_eb83cefb',
+            sql`"status" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')`,
           ),
         ],
       }),
@@ -3056,10 +3057,10 @@ export default class M extends Migration<never, End> {
           col('id', 'SERIAL', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('seasonNumber', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
           col('tvListId', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
-          col('watchedAt', 'timestamp', {
+          col('watchedAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
         ],
         constraints: [primaryKey(['id'])],
@@ -3084,10 +3085,10 @@ export default class M extends Migration<never, End> {
             default: lit([]),
             codecRef: { codecId: 'pg/int4@1', many: true },
           }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('customization', 'json', { codecRef: { codecId: 'pg/json@1' } }),
           col('email', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
@@ -3098,8 +3099,8 @@ export default class M extends Migration<never, End> {
           }),
           col('encryptedPrivateKey', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('passwordChangedAt', 'timestamp', {
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+          col('passwordChangedAt', 'timestamptz', {
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('passwordHash', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('permissions', 'int4[]', {
@@ -3109,9 +3110,9 @@ export default class M extends Migration<never, End> {
           }),
           col('publicKey', 'text', { codecRef: { codecId: 'pg/text@1' } }),
           col('settings', 'json', { codecRef: { codecId: 'pg/json@1' } }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('username', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
         ],
@@ -3137,10 +3138,10 @@ export default class M extends Migration<never, End> {
         columns: [
           col('blockedId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('blockerId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
         ],
@@ -3156,10 +3157,10 @@ export default class M extends Migration<never, End> {
             codecRef: { codecId: 'pg/int4@1' },
           }),
           col('countryDistribution', 'json', { codecRef: { codecId: 'pg/json@1' } }),
-          col('createdAt', 'timestamp', {
+          col('createdAt', 'timestamptz', {
             notNull: true,
             default: fn(sql`now()`),
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('currentCount', 'int4', {
             notNull: true,
@@ -3221,9 +3222,9 @@ export default class M extends Migration<never, End> {
             default: lit(0),
             codecRef: { codecId: 'pg/int4@1' },
           }),
-          col('updatedAt', 'timestamp', {
+          col('updatedAt', 'timestamptz', {
             notNull: true,
-            codecRef: { codecId: 'pg/timestamp-temporal@1' },
+            codecRef: { codecId: 'pg/timestamptz-date@1' },
           }),
           col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
           col('voiceActorDistribution', 'json', { codecRef: { codecId: 'pg/json@1' } }),

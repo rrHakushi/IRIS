@@ -1,4 +1,4 @@
-import { prisma, toDate, type FavoriteType } from '@IRIS/database'
+import { prisma, toDate, type FavoriteType } from '@Iris/db'
 import { NotFound, BadRequest } from '../../lib/errors'
 import { MediaStatsServ } from '../borealis/media-stats.serv'
 import { ActivityServ } from './activity.serv'

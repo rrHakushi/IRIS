@@ -1,4 +1,4 @@
-import { prisma, type ActivityType, type MediaType } from '@IRIS/database'
+import { prisma, type ActivityType, type MediaType } from '@Iris/db'
 import { LogFactory, c } from '@Iris/logger'
 
 const logger = new LogFactory('ActivityServ')

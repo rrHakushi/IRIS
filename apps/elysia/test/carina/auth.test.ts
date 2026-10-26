@@ -9,7 +9,7 @@ import {
   signUserJwt,
   generateUserKeypair,
 } from '../../src/utils/auth-crypto'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 import { IRISFlags } from '@IRIS/permissions'
 
 // -----------------------------------------------------------------------------

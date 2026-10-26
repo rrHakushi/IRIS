@@ -1,4 +1,4 @@
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 import { cache } from '../../utils/cache'
 import { encryptConnectionData } from '@IRIS/connections'
 import { BadRequest, BadGateway, TooManyRequests } from '../../lib/errors'

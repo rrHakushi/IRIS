@@ -1,4 +1,4 @@
-import { prisma, and, not, countOf, toDate } from '@IRIS/database'
+import { prisma, and, not, countOf, toDate } from '@Iris/db'
 import { IRISFlags } from '@IRIS/permissions'
 import { BadRequest, Forbidden, NotFound, Conflict } from '../../lib/errors'
 import { uploadPublicAsset } from '../../utils/s3'

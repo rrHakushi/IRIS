@@ -1,4 +1,4 @@
-import { prisma, countOf, or, type MediaType } from '@IRIS/database'
+import { prisma, countOf, or, type MediaType } from '@Iris/db'
 import { NotFound } from '../../lib/errors'
 import { MediaQueueManager } from './queue'
 import { fetchMediaRelations } from './media-relations.helper'

@@ -6,7 +6,7 @@ import { signUserJwt, hashPassword } from '../../src/utils/auth-crypto'
 import { cache } from '../../src/utils/cache'
 import { EmailService } from '../../src/services/email/email.serv'
 import { maskEmail } from '../../src/services/carina/email-2fa.serv'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 
 // -----------------------------------------------------------------------------
 // In-Memory Database Mock for Users and Email 2FA

@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from 'bun:test'
-import { prisma, type ConnectionProvider } from '@IRIS/database'
+import { prisma, type ConnectionProvider } from '@Iris/db'
 import {
   ConnectionSyncQueueManager,
   isProviderSupportedForMediaType,

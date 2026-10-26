@@ -1,4 +1,4 @@
-import { prisma, or, toDate } from '@IRIS/database'
+import { prisma, or, toDate } from '@Iris/db'
 import {
   SUPPORTED_SCOPES,
   parseScopes,

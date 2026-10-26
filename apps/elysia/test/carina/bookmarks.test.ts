@@ -4,7 +4,7 @@ import { carinaBookmarks } from '../../src/api/controllers/carina/bookmarks.ctrl
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
 import { IRISBitField, IRISFlags } from '@IRIS/permissions'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 
 // -----------------------------------------------------------------------------
 // In-Memory Database Mock for Bookmarks and Users

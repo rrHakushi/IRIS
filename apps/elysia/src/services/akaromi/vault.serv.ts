@@ -1,4 +1,4 @@
-import { prisma, toDate, type PassCipherType } from '@IRIS/database'
+import { prisma, toDate, type PassCipherType } from '@Iris/db'
 import { AkaromiCiphersServ } from './ciphers.serv'
 
 export interface ImportCipherItem {

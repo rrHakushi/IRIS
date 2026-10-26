@@ -1,4 +1,4 @@
-import { prisma, countOf, toDate, and, or, normalizeListStatus, type MediaType, type ListStatus } from '@IRIS/database'
+import { prisma, countOf, toDate, and, or, normalizeListStatus, type MediaType, type ListStatus } from '@Iris/db'
 import { NotFound, BadRequest } from '../../lib/errors'
 import { hashPassword } from '../../utils/auth-crypto'
 import { ConnectionSyncQueueManager } from '../carina/connection-sync.queue'

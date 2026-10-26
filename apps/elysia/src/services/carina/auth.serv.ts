@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import { prisma, or, toDate, countOf } from '@IRIS/database'
+import { prisma, or, toDate, countOf } from '@Iris/db'
 import { isReservedKeyword } from '@IRIS/shared'
 import { IRISFlags } from '@IRIS/permissions'
 import { cache } from '../../utils/cache'

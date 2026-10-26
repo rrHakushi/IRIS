@@ -1,4 +1,4 @@
-import { prisma, normalizeMediaStatus } from '@IRIS/database'
+import { prisma, normalizeMediaStatus } from '@Iris/db'
 import { LogFactory, c } from '@Iris/logger'
 import { normalizeTvdbImageUrl, type TvdbSearchItem } from '../providers/tvdb.provider'
 import type { AniListAnimeSearchPreview, AniListMangaSearchPreview } from '../providers/anilist.provider'

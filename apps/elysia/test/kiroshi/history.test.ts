@@ -4,7 +4,7 @@ import { kiroshiHistory } from '../../src/api/controllers/kiroshi/history.ctrl'
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
 import { encryptConnectionData } from '@IRIS/connections'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 
 interface MockUser {
   id: string

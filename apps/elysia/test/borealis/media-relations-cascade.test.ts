@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, mock } from 'bun:test'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 import { anilistProvider, deezerProvider } from '../../src/services/borealis/providers'
 import { MediaEntitySyncer } from '../../src/services/borealis/syncer/media-entity.syncer'
 import { MediaQueueManager } from '../../src/services/borealis/queue'

@@ -1,4 +1,4 @@
-import type { Models } from '@IRIS/database'
+import type { Models } from '@Iris/db'
 
 export interface MediaRelationItem {
   id: number

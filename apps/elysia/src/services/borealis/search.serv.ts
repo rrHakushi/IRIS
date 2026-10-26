@@ -1,4 +1,4 @@
-import { prisma, countOf, or } from '@IRIS/database'
+import { prisma, countOf, or } from '@Iris/db'
 import { BadRequest } from '../../lib/errors'
 import { BorealisExternalSearchServ } from './external-search.serv'
 import type { PreviewResult } from './syncer/media-preview.syncer'

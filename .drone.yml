@@ -14,26 +14,26 @@ steps:
       - chmod 600 .env
       - bun install --frozen-lockfile
 
-  - name: Prisma Push
+  - name: Database Contract
     image: oven/bun:latest
     commands:
-      - bun run --filter=@IRIS/database db:push
+      - bun run --filter=@Iris/db contract:emit
     depends_on:
       - Environment
 
-  - name: Prisma Generation
+  - name: Database Update
     image: oven/bun:latest
     commands:
-      - bun run --filter=@IRIS/database db:generate
+      - bun run --filter=@Iris/db db:update
     depends_on:
-      - Prisma Push
+      - Database Contract
 
   - name: Packages
     image: oven/bun:latest
     commands:
       - bun x turbo run build --filter="./packages/*"
     depends_on:
-      - Prisma Generation
+      - Database Update
 
   - name: Backend
     image: docker:latest

@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import { prisma, countOf, toDate } from '@IRIS/database'
+import { prisma, countOf, toDate } from '@Iris/db'
 import { hashApiKey } from '../../utils/auth-crypto'
 import { BadRequest, NotFound } from '../../lib/errors'
 import type { CarinaApiKeysModel } from '../../api/models/carina/apikeys.model'

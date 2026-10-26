@@ -5,7 +5,7 @@ import {
   toDate,
   type ConnectionProvider,
   type MediaType,
-} from '@IRIS/database'
+} from '@Iris/db'
 import { LogFactory, c } from '@Iris/logger'
 import { getRedisConnectionOptions } from '../services/email/queue'
 import {

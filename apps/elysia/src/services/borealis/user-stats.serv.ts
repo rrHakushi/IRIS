@@ -1,4 +1,4 @@
-import { prisma } from "@IRIS/database"
+import { prisma } from "@Iris/db"
 import { cache } from "../../utils/cache"
 
 export interface PeriodFilter {

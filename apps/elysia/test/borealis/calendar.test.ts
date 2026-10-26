@@ -4,7 +4,7 @@ import { borealisCalendar } from '../../src/api/controllers/borealis/calendar.ct
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
 import { cache } from '../../src/utils/cache'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 
 // -----------------------------------------------------------------------------
 // Test App Setup

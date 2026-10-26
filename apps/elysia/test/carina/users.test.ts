@@ -3,7 +3,7 @@ import { Elysia } from 'elysia'
 import { carinaUsers } from '../../src/api/controllers/carina/users.ctrl'
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 import { IRISFlags } from '@IRIS/permissions'
 
 // -----------------------------------------------------------------------------

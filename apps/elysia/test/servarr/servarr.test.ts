@@ -4,7 +4,7 @@ import { servarrController } from '../../src/api/controllers/servarr/servarr.ctr
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
 import { encryptConnectionData, getConnectionAdapter } from '@IRIS/connections'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 
 // -----------------------------------------------------------------------------
 // Test App Setup

@@ -4,7 +4,7 @@ import { carinaQc } from '../../src/api/controllers/carina/qc.ctrl'
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
 import { cache } from '../../src/utils/cache'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 import { jwtVerify } from 'jose'
 
 // -----------------------------------------------------------------------------

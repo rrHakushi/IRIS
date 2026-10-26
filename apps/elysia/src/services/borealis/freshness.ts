@@ -1,4 +1,4 @@
-import { prisma, toDate, normalizeMediaStatus } from '@IRIS/database'
+import { prisma, toDate, normalizeMediaStatus } from '@Iris/db'
 import { LogFactory, c } from '@Iris/logger'
 import type { MediaType } from './queue'
 

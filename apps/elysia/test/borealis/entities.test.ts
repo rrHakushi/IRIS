@@ -2,7 +2,7 @@ import { describe, expect, it, beforeEach } from 'bun:test'
 import { Elysia, ValidationError } from 'elysia'
 import { borealisEntities } from '../../src/api/controllers/borealis/entities.ctrl'
 import { isHttpError } from '../../src/lib/errors'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 
 // Mock Data
 let mockCharacters: any[] = []

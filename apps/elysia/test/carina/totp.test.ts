@@ -5,7 +5,7 @@ import { carinaTotp } from '../../src/api/controllers/carina/totp.ctrl'
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt, hashPassword, encryptSecret } from '../../src/utils/auth-crypto'
 import { cache } from '../../src/utils/cache'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 
 // -----------------------------------------------------------------------------
 // In-Memory Database Mock for Users and TOTP
