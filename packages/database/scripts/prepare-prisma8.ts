@@ -38,6 +38,12 @@ async function main() {
     ["Character", "nameAlternative"],
     ["Character", "nameAlternativeSpoiler"],
     ["Game", "synonyms"],
+    ["Game", "publishers"],
+    ["Game", "gameModes"],
+    ["Game", "playerPerspectives"],
+    ["Game", "languages"],
+    ["Game", "platforms"],
+    ["Game", "developers"],
     ["Manga", "synonyms"],
     ["Movie", "synonyms"],
     ["Person", "nameAlternative"],
@@ -97,6 +103,22 @@ async function main() {
       } catch {
         // Table or column might not exist or already updated
       }
+    }
+
+    // C. Convert timestamp without time zone to timestamptz
+    const timestampColsRes = await client.query(`
+      SELECT table_name, column_name
+      FROM information_schema.columns
+      WHERE data_type = 'timestamp without time zone'
+        AND table_schema = 'public'
+      ORDER BY table_name, column_name;
+    `);
+
+    for (const row of timestampColsRes.rows) {
+      const table = `"${row.table_name}"`;
+      const col = `"${row.column_name}"`;
+      await client.query(`ALTER TABLE ${table} ALTER COLUMN ${col} TYPE timestamptz USING ${col} AT TIME ZONE 'UTC';`);
+      console.log(`  ✓ Converted ${row.table_name}.${row.column_name} timestamp -> timestamptz`);
     }
 
     // C. Verify post-conversion row counts

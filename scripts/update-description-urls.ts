@@ -40,6 +40,7 @@ async function processModel(config: ModelConfig): Promise<number> {
   const { name, model } = config
 
   const records = await model
+    .select('id', 'description')
     .where((row: any) => row.description.ilike('%iris-list%'))
     .all()
 
@@ -50,22 +51,35 @@ async function processModel(config: ModelConfig): Promise<number> {
   console.log(`\n📦 Processing ${records.length} records in ${name}...`)
 
   let updatedCount = 0
+  const toUpdate = records.filter(
+    (item: any) => item.description && item.description.toLowerCase().includes('/iris-list')
+  )
 
-  for (const item of records) {
-    if (!item.description || !URL_REGEX.test(item.description)) {
-      continue
+  const BATCH_SIZE = 50
+  for (let i = 0; i < toUpdate.length; i += BATCH_SIZE) {
+    const batch = toUpdate.slice(i, i + BATCH_SIZE)
+    if (!isDryRun) {
+      await Promise.all(
+        batch.map((item: any) => {
+          const newDescription = item.description.replace(
+            /\/iris-list(?=[\/?#\s"'<)\].]|$)/gi,
+            '/borealis'
+          )
+          if (newDescription === item.description) return Promise.resolve()
+          return model
+            .where((row: any) => row.id.eq(item.id))
+            .select('id')
+            .update({ description: newDescription })
+        })
+      )
     }
-
-    const newDescription = item.description.replace(URL_REGEX, '/borealis')
-
-    if (newDescription !== item.description) {
-      if (!isDryRun) {
-        await model
-          .where((row: any) => row.id.eq(item.id))
-          .update({ description: newDescription })
-      }
-      updatedCount++
+    updatedCount += batch.length
+    if (toUpdate.length > 100) {
+      process.stdout.write(`  Progress: ${Math.min(i + BATCH_SIZE, toUpdate.length)}/${toUpdate.length}\r`)
     }
+  }
+  if (toUpdate.length > 100) {
+    process.stdout.write('\n')
   }
 
   console.log(
@@ -104,6 +118,7 @@ main()
     console.error('Fatal script error:', err)
     process.exit(1)
   })
-  .finally(() => {
+  .finally(async () => {
+    await prisma.close()
     process.exit(0)
   })

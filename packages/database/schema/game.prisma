@@ -1,90 +1,89 @@
 // use prisma-8
-
 model Game {
-    id          Int     @id @default(autoincrement())
-    rawgId      Int?
-    igdbId      Int?    @unique
-    steamAppId  Int?
-    giantbombId String?
-    vndbId      String?
+  id                 Int               @id @default(autoincrement())
+  rawgId             Int?
+  igdbId             Int?              @unique
+  steamAppId         Int?
+  giantbombId        String?
+  vndbId             String?
 
-    titlePrimary   String
-    titleSecondary String?
-    titleNative    String?
-    slug           String?
-    tagline        String?
+  titlePrimary       String
+  titleSecondary     String?
+  titleNative        String?
+  slug               String?
+  tagline            String?
 
-    coverImage      String?
-    bannerImage     String?
-    backgroundImage String?
-    images          Jsonb?
+  coverImage         String?
+  bannerImage        String?
+  backgroundImage    String?
+  images             Jsonb?
 
-    description String?
+  description        String?
 
-    releaseDateYear  Int?
-    releaseDateMonth Int?
-    releaseDateDay   Int?
-    releaseDate      DateTime?
+  releaseDateYear    Int?
+  releaseDateMonth   Int?
+  releaseDateDay     Int?
+  releaseDate        DateTime?
 
-    genres GameGenre[]
-    tags GameTag[]
-    platforms          String[]
-    developers         String[]
-    publishers         String[]
-    franchise          String?
-    gameModes          String[]
-    playerPerspectives String[]
-    status             MediaStatus @default(UNKNOWN)
-    isAdult            Boolean    @default(false)
-    synonyms           String[]
-    trailers           Jsonb?
-    locked             Boolean    @default(false)
+  genres             GameGenre[]
+  tags               GameTag[]
+  platforms          String[]
+  developers         String[]
+  publishers         String[]
+  franchise          String?
+  gameModes          String[]
+  playerPerspectives String[]
+  status             MediaStatus       @default(UNKNOWN)
+  isAdult            Boolean           @default(false)
+  synonyms           String[]
+  trailers           Jsonb?
+  locked             Boolean           @default(false)
 
-    averageScore    Float?
-    igdbRating      Float?
-    igdbRatingCount Int?
+  averageScore       Float?
+  igdbRating         Float?
+  igdbRatingCount    Int?
 
-    requirements      Jsonb?
-    languages         String[]
-    controllerSupport String?
-    achievements      Jsonb?
+  requirements       Jsonb?
+  languages          String[]
+  controllerSupport  String?
+  achievements       Jsonb?
 
-    linuxSupport    Boolean?
-    steamDeckStatus String?
-    steamDeck       Jsonb?
+  linuxSupport       Boolean?
+  steamDeckStatus    String?
+  steamDeck          Jsonb?
 
-    favorites          Int  @default(0)
-    popularity         Int  @default(0)
-    totalScoreSum      Int?
-    scoredCount        Int?
-    statusDistribution Jsonb @default(json`{}`)
-    scoreDistribution Jsonb @default(json`{}`)
+  favorites          Int               @default(0)
+  popularity         Int               @default(0)
+  totalScoreSum      Int?
+  scoredCount        Int?
+  statusDistribution Jsonb             @default(json`{}`)
+  scoreDistribution  Jsonb             @default(json`{}`)
 
-    averagePlaytime  Float?
-    totalPlaytimeSum Float? @default(0)
-    playtimeCount    Int?   @default(0)
+  averagePlaytime    Float?
+  totalPlaytimeSum   Float?            @default(0)
+  playtimeCount      Int?              @default(0)
 
-    sources Jsonb?
+  sources            Jsonb?
 
-    esrbRating     String?
-    pegiRating     String?
-    ageRating      String?
-    ageRatingGuide String?
-    contentRatings Jsonb?
+  esrbRating         String?
+  pegiRating         String?
+  ageRating          String?
+  ageRatingGuide     String?
+  contentRatings     Jsonb?
 
-    igdbUpdatedAt  Int?
-    steamUpdatedAt Int?
+  igdbUpdatedAt      Int?
+  steamUpdatedAt     Int?
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @onCreate(now()) @onUpdate(now())
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @onCreate(now()) @onUpdate(now())
 
-    studios          MediaStudio[]
-    userLists        GameList[]
-    reviews          GameReview[]
-    customListEntries CustomListEntry[]
+  studios            MediaStudio[]
+  userLists          GameList[]
+  reviews            GameReview[]
+  customListEntries  CustomListEntry[]
 
-    @@index([titlePrimary])
-    @@index([status])
-    @@index([popularity])
-    @@index([averageScore])
+  @@index([titlePrimary])
+  @@index([status])
+  @@index([popularity])
+  @@index([averageScore])
 }

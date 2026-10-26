@@ -210,11 +210,33 @@ UPDATE "Book" SET "synonyms" = '{}' WHERE "synonyms" IS NULL;
 UPDATE "Character" SET "nameAlternative" = '{}' WHERE "nameAlternative" IS NULL;
 UPDATE "Character" SET "nameAlternativeSpoiler" = '{}' WHERE "nameAlternativeSpoiler" IS NULL;
 UPDATE "Game" SET "synonyms" = '{}' WHERE "synonyms" IS NULL;
+UPDATE "Game" SET "publishers" = '{}' WHERE "publishers" IS NULL;
+UPDATE "Game" SET "gameModes" = '{}' WHERE "gameModes" IS NULL;
+UPDATE "Game" SET "playerPerspectives" = '{}' WHERE "playerPerspectives" IS NULL;
+UPDATE "Game" SET "languages" = '{}' WHERE "languages" IS NULL;
+UPDATE "Game" SET "platforms" = '{}' WHERE "platforms" IS NULL;
+UPDATE "Game" SET "developers" = '{}' WHERE "developers" IS NULL;
 UPDATE "Manga" SET "synonyms" = '{}' WHERE "synonyms" IS NULL;
 UPDATE "Movie" SET "synonyms" = '{}' WHERE "synonyms" IS NULL;
 UPDATE "Person" SET "nameAlternative" = '{}' WHERE "nameAlternative" IS NULL;
 UPDATE "Tv" SET "broadcastDays" = '{}' WHERE "broadcastDays" IS NULL;
 UPDATE "Tv" SET "networks" = '{}' WHERE "networks" IS NULL;
 UPDATE "Tv" SET "synonyms" = '{}' WHERE "synonyms" IS NULL;
+
+-- 3. Convert timestamp without time zone to timestamptz
+DO $$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (
+        SELECT table_name, column_name
+        FROM information_schema.columns
+        WHERE data_type = 'timestamp without time zone'
+          AND table_schema = 'public'
+    ) LOOP
+        EXECUTE format('ALTER TABLE %I ALTER COLUMN %I TYPE timestamptz USING %I AT TIME ZONE ''UTC''',
+                       r.table_name, r.column_name, r.column_name);
+    END LOOP;
+END $$;
 
 COMMIT;
