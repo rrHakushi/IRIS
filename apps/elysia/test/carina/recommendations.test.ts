@@ -4,7 +4,7 @@ import { carinaRecommendations } from '../../src/api/controllers/carina/recommen
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
 import { IRISBitField, IRISFlags } from '@IRIS/permissions'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 
 // -----------------------------------------------------------------------------
 // In-Memory Database Mock for Recommendations, Votes, and Users

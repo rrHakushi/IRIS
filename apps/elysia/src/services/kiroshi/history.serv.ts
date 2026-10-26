@@ -1,4 +1,4 @@
-import { prisma, toDate } from '@IRIS/database'
+import { prisma, toDate } from '@Iris/db'
 import { decryptConnectionData, encryptConnectionData } from '@IRIS/connections'
 import { NotFound } from '../../lib/errors'
 

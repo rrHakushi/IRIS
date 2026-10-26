@@ -1,4 +1,4 @@
-import { prisma, countOf, or, and, toDate, type MediaType } from '@IRIS/database'
+import { prisma, countOf, or, and, toDate, type MediaType } from '@Iris/db'
 import { getProfileCustomization } from '@IRIS/shared'
 import { BadRequest, NotFound } from '../../lib/errors'
 import { ActivityServ } from './activity.serv'

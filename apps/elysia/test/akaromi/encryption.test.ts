@@ -4,7 +4,7 @@ import { akaromiEncryption } from '../../src/api/controllers/akaromi/encryption.
 import { isHttpError, NotFound } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
 import { AkaromiEncryptionServ } from '../../src/services/akaromi/encryption.serv'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 
 // -----------------------------------------------------------------------------
 // In-Memory Database Mock for Master Encryption Keys

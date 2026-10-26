@@ -1,4 +1,4 @@
-import { prisma, and, or, countOf, toDate, type ActivityType, type FavoriteType, type MediaType } from '@IRIS/database'
+import { prisma, and, or, countOf, toDate, type ActivityType, type FavoriteType, type MediaType } from '@Iris/db'
 import { getBadgeById, getProfileCustomization, setProfileCustomization } from '@IRIS/shared'
 import { IRISBitField, IRISFlags } from '@IRIS/permissions'
 import { BadRequest, Forbidden, NotFound } from '../../lib/errors'

@@ -1,4 +1,4 @@
-import { prisma, type FavoriteType } from '@IRIS/database'
+import { prisma, type FavoriteType } from '@Iris/db'
 
 function initScoreDistribution(): Record<string, number> {
   const dist: Record<string, number> = {}

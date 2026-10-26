@@ -6,7 +6,7 @@ import { Elysia } from 'elysia'
 import { session, resolveSessionFromRequest } from '../../src/plugins/session'
 import { signUserJwt } from '../../src/utils/auth-crypto'
 import { isHttpError, Unauthorized } from '../../src/lib/errors'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 
 interface MockUser {
   id: string

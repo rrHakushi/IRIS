@@ -3,7 +3,7 @@ import { Elysia } from 'elysia'
 import { carinaBackupCodes } from '../../src/api/controllers/carina/backupcodes.ctrl'
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt, generateBackupCodes } from '../../src/utils/auth-crypto'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 
 // -----------------------------------------------------------------------------
 // In-Memory Database Mock for Backup Codes

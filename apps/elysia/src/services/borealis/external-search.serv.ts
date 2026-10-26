@@ -1,4 +1,4 @@
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 import { LogFactory, c } from '@Iris/logger'
 import { cache } from '../../utils/cache'
 import { MediaQueueManager } from './queue'

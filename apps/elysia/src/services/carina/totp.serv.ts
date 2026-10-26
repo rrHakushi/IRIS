@@ -1,6 +1,6 @@
 import { generateSecret, generateURI, verify as verifyTotpCode } from 'otplib'
 import QRCode from 'qrcode'
-import { prisma, toDate } from '@IRIS/database'
+import { prisma, toDate } from '@Iris/db'
 import { cache } from '../../utils/cache'
 import {
   encryptSecret,

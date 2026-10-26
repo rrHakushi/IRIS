@@ -1,4 +1,4 @@
-import { prisma, normalizeMediaStatus, type RelationType } from '@IRIS/database'
+import { prisma, normalizeMediaStatus, type RelationType } from '@Iris/db'
 import { LogFactory, c } from '@Iris/logger'
 import {
   anilistProvider,

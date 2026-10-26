@@ -1,4 +1,4 @@
-import { prisma, and, or, countOf } from '@IRIS/database'
+import { prisma, and, or, countOf } from '@Iris/db'
 import { NotFound } from '../../lib/errors'
 
 export interface CharacterCatalogQuery {

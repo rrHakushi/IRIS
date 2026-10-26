@@ -1,4 +1,4 @@
-import { prisma, countOf, toDate, type MediaType } from '@IRIS/database'
+import { prisma, countOf, toDate, type MediaType } from '@Iris/db'
 import { NotFound, BadRequest, Forbidden } from '../../lib/errors'
 
 export interface ListPlaylistsQuery {

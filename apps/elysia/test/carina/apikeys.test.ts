@@ -3,7 +3,7 @@ import { Elysia } from 'elysia'
 import { carinaApiKeys } from '../../src/api/controllers/carina/apikeys.ctrl'
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt, hashApiKey } from '../../src/utils/auth-crypto'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 
 // -----------------------------------------------------------------------------
 // In-Memory Database Mock for API Keys and Users

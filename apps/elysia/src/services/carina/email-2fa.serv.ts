@@ -1,6 +1,6 @@
 import { randomInt } from 'node:crypto'
 import { verify as verifyTotpCode } from 'otplib'
-import { prisma, toDate } from '@IRIS/database'
+import { prisma, toDate } from '@Iris/db'
 import { cache } from '../../utils/cache'
 import {
   verifyPassword,

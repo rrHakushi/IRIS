@@ -7,7 +7,7 @@ import {
   type ConnectionProvider,
   type ConnectionStatus,
   type ConnectionAuthType,
-} from '@IRIS/database'
+} from '@Iris/db'
 import {
   encryptConnectionData,
   decryptConnectionData,

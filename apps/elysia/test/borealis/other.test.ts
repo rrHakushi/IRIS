@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'bun:test'
 import { Elysia, ValidationError } from 'elysia'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 import { IRISFlags } from '@IRIS/permissions'
 import { isHttpError } from '../../src/lib/errors'
 import { borealisOther } from '../../src/api/controllers/borealis/other.ctrl'

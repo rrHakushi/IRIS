@@ -4,7 +4,7 @@ import { Elysia } from 'elysia'
 import { isHttpError } from '../../src/lib/errors'
 import { signUserJwt } from '../../src/utils/auth-crypto'
 import { cache } from '../../src/utils/cache'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 
 // -----------------------------------------------------------------------------
 // Configurable WebAuthn Verification Mock

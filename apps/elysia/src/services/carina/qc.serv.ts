@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import { prisma, toDate } from '@IRIS/database'
+import { prisma, toDate } from '@Iris/db'
 import { cache } from '../../utils/cache'
 import { signUserJwt } from '../../utils/auth-crypto'
 import { BadRequest } from '../../lib/errors'

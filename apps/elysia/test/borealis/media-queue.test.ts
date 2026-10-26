@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from 'bun:test'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 import {
   MediaQueueManager,
   syncActiveMedia,

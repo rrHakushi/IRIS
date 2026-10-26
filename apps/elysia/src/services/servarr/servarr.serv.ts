@@ -7,7 +7,7 @@ import {
   type AnimeFormat,
   type ListStatus,
   type MediaStatus,
-} from '@IRIS/database'
+} from '@Iris/db'
 import {
   getConnectionAdapter,
   decryptConnectionData,

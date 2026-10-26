@@ -4,7 +4,7 @@ import {
   verifyRegistrationResponse,
   verifyAuthenticationResponse,
 } from '@simplewebauthn/server'
-import { prisma, countOf, or, toDate } from '@IRIS/database'
+import { prisma, countOf, or, toDate } from '@Iris/db'
 import { cache } from '../../utils/cache'
 import { generateBackupCodes, signUserJwt } from '../../utils/auth-crypto'
 import { BadRequest, NotFound } from '../../lib/errors'

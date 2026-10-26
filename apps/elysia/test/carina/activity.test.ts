@@ -3,7 +3,7 @@ import { Elysia } from 'elysia'
 import { carinaUsers } from '../../src/api/controllers/carina/users.ctrl'
 import { ActivityServ } from '../../src/services/carina/activity.serv'
 import { CarinaUsersServ } from '../../src/services/carina/users.serv'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 
 // -----------------------------------------------------------------------------
 // In-Memory Database Mock for Activity Testing

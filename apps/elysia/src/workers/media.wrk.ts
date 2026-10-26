@@ -1,5 +1,5 @@
 import { Worker, type Job } from 'bullmq'
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 import { LogFactory, c } from '@Iris/logger'
 import { getRedisConnectionOptions } from '../services/email/queue'
 import {

@@ -45,7 +45,7 @@
     "execute": [
       {
         "description": "create table \"ActivityLike\"",
-        "sql": "CREATE TABLE \"public\".\"ActivityLike\" (\n  \"activityId\" text NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"ActivityLike\" (\n  \"activityId\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -94,7 +94,7 @@
     "execute": [
       {
         "description": "create table \"ActivityLog\"",
-        "sql": "CREATE TABLE \"public\".\"ActivityLog\" (\n  \"content\" text,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"isPrivate\" bool DEFAULT false NOT NULL,\n  \"isSpoiler\" bool DEFAULT false NOT NULL,\n  \"likeCount\" int4 DEFAULT 0 NOT NULL,\n  \"mediaId\" int4,\n  \"mediaType\" text,\n  \"metadata\" json,\n  \"progress\" int4,\n  \"progressVolumes\" int4,\n  \"replyCount\" int4 DEFAULT 0 NOT NULL,\n  \"score\" int4,\n  \"status\" text,\n  \"title\" text,\n  \"type\" text NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"ActivityLog_mediaType_check_37ab4091\" CHECK (\"mediaType\" IN ('ANIME', 'MANGA', 'MOVIE', 'TV', 'GAME', 'BOOK', 'MUSIC', 'MUSIC_ALBUM', 'MUSIC_TRACK', 'OTHER', 'UNKNOWN')),\n  CONSTRAINT \"ActivityLog_type_check_7bbc5915\" CHECK (\"type\" IN ('LIST_ITEM_ADDED', 'LIST_STATUS_UPDATED', 'LIST_PROGRESS_UPDATED', 'LIST_SCORE_UPDATED', 'LIST_COMPLETED', 'LIST_REWATCH_STARTED', 'LIST_ITEM_REMOVED', 'REVIEW_POSTED', 'REVIEW_VOTED', 'RECOMMENDATION_POSTED', 'WATCHLIST_CREATED', 'CUSTOM_LIST_CREATED', 'FAVORITE_ADDED', 'FAVORITE_REMOVED', 'FRIEND_ADDED', 'STATUS_POST', 'USER_MILESTONE'))\n)",
+        "sql": "CREATE TABLE \"public\".\"ActivityLog\" (\n  \"content\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"isPrivate\" bool DEFAULT false NOT NULL,\n  \"isSpoiler\" bool DEFAULT false NOT NULL,\n  \"likeCount\" int4 DEFAULT 0 NOT NULL,\n  \"mediaId\" int4,\n  \"mediaType\" text,\n  \"metadata\" json,\n  \"progress\" int4,\n  \"progressVolumes\" int4,\n  \"replyCount\" int4 DEFAULT 0 NOT NULL,\n  \"score\" int4,\n  \"status\" text,\n  \"title\" text,\n  \"type\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"ActivityLog_mediaType_check_37ab4091\" CHECK (\"mediaType\" IN ('ANIME', 'MANGA', 'MOVIE', 'TV', 'GAME', 'BOOK', 'MUSIC', 'MUSIC_ALBUM', 'MUSIC_TRACK', 'OTHER', 'UNKNOWN')),\n  CONSTRAINT \"ActivityLog_type_check_7bbc5915\" CHECK (\"type\" IN ('LIST_ITEM_ADDED', 'LIST_STATUS_UPDATED', 'LIST_PROGRESS_UPDATED', 'LIST_SCORE_UPDATED', 'LIST_COMPLETED', 'LIST_REWATCH_STARTED', 'LIST_ITEM_REMOVED', 'REVIEW_POSTED', 'REVIEW_VOTED', 'RECOMMENDATION_POSTED', 'WATCHLIST_CREATED', 'CUSTOM_LIST_CREATED', 'FAVORITE_ADDED', 'FAVORITE_REMOVED', 'FRIEND_ADDED', 'STATUS_POST', 'USER_MILESTONE'))\n)",
         "params": []
       }
     ],
@@ -143,7 +143,7 @@
     "execute": [
       {
         "description": "create table \"ActivityReply\"",
-        "sql": "CREATE TABLE \"public\".\"ActivityReply\" (\n  \"activityId\" text NOT NULL,\n  \"content\" text NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"likeCount\" int4 DEFAULT 0 NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"ActivityReply\" (\n  \"activityId\" text NOT NULL,\n  \"content\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"likeCount\" int4 DEFAULT 0 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -192,7 +192,7 @@
     "execute": [
       {
         "description": "create table \"Anime\"",
-        "sql": "CREATE TABLE \"public\".\"Anime\" (\n  \"ageRating\" text,\n  \"ageRatingGuide\" text,\n  \"alAverageScore\" int4,\n  \"alFavorites\" int4,\n  \"alPopularity\" int4,\n  \"alUpdatedAt\" int4,\n  \"aniDBId\" int4,\n  \"anidbUpdatedAt\" int4,\n  \"anilistId\" int4,\n  \"averageScore\" float8,\n  \"bangumiId\" int4,\n  \"bannerImage\" text,\n  \"countryOfOrigin\" text,\n  \"coverImage\" text,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"endDateDay\" int4,\n  \"endDateMonth\" int4,\n  \"endDateYear\" int4,\n  \"episodeCount\" int4,\n  \"episodeDuration\" int4,\n  \"externalLinks\" jsonb,\n  \"favorites\" int4 DEFAULT 0 NOT NULL,\n  \"format\" text DEFAULT 'UNKNOWN' NOT NULL,\n  \"hashtag\" text,\n  \"id\" SERIAL NOT NULL,\n  \"images\" jsonb,\n  \"isAdult\" bool DEFAULT false NOT NULL,\n  \"kitsuId\" int4,\n  \"locked\" bool DEFAULT false NOT NULL,\n  \"malAverageScore\" int4,\n  \"malFavorites\" int4,\n  \"malId\" int4,\n  \"malPopularity\" int4,\n  \"malUpdatedAt\" int4,\n  \"nextAiringAt\" timestamp,\n  \"nextAiringEpisodeNumber\" int4,\n  \"popularity\" int4 DEFAULT 0 NOT NULL,\n  \"scoreDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"scoredCount\" int4,\n  \"seasonSeason\" text DEFAULT 'UNKNOWN' NOT NULL,\n  \"seasonYear\" int4,\n  \"siteUrl\" text,\n  \"source\" text DEFAULT 'UNKNOWN' NOT NULL,\n  \"sources\" jsonb,\n  \"startDateDay\" int4,\n  \"startDateMonth\" int4,\n  \"startDateYear\" int4,\n  \"status\" text DEFAULT 'UNKNOWN' NOT NULL,\n  \"statusDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"synonyms\" text[] NOT NULL,\n  \"themeSongs\" jsonb,\n  \"titleNative\" text,\n  \"titlePrimary\" text NOT NULL,\n  \"titleSecondary\" text,\n  \"totalScoreSum\" int4,\n  \"trailers\" jsonb,\n  \"tvDBId\" int4,\n  \"updatedAt\" timestamp NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Anime_format_check_7072b97a\" CHECK (\"format\" IN ('TV', 'TV_SHORT', 'MOVIE', 'SPECIAL', 'OVA', 'ONA', 'MUSIC', 'UNKNOWN')),\n  CONSTRAINT \"Anime_seasonSeason_check_e97d8350\" CHECK (\"seasonSeason\" IN ('WINTER', 'SPRING', 'SUMMER', 'FALL', 'UNKNOWN')),\n  CONSTRAINT \"Anime_source_check_e8f1402f\" CHECK (\"source\" IN ('ORIGINAL', 'MANGA', 'LIGHT_NOVEL', 'VISUAL_NOVEL', 'VIDEO_GAME', 'OTHER', 'NOVEL', 'DOUJINSHI', 'ANIME', 'WEB_NOVEL', 'LIVE_ACTION', 'GAME', 'COMIC', 'MULTIMEDIA_PROJECT', 'PICTURE_BOOK', 'UNKNOWN')),\n  CONSTRAINT \"Anime_status_check_a9e63772\" CHECK (\"status\" IN ('FINISHED', 'RELEASING', 'NOT_YET_RELEASED', 'CANCELLED', 'HIATUS', 'UNKNOWN')),\n  CONSTRAINT \"Anime_synonyms_elem_not_null_1b00b9ae\" CHECK (array_position(\"synonyms\", NULL) IS NULL)\n)",
+        "sql": "CREATE TABLE \"public\".\"Anime\" (\n  \"ageRating\" text,\n  \"ageRatingGuide\" text,\n  \"alAverageScore\" int4,\n  \"alFavorites\" int4,\n  \"alPopularity\" int4,\n  \"alUpdatedAt\" int4,\n  \"aniDBId\" int4,\n  \"anidbUpdatedAt\" int4,\n  \"anilistId\" int4,\n  \"averageScore\" float8,\n  \"bangumiId\" int4,\n  \"bannerImage\" text,\n  \"countryOfOrigin\" text,\n  \"coverImage\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"endDateDay\" int4,\n  \"endDateMonth\" int4,\n  \"endDateYear\" int4,\n  \"episodeCount\" int4,\n  \"episodeDuration\" int4,\n  \"externalLinks\" jsonb,\n  \"favorites\" int4 DEFAULT 0 NOT NULL,\n  \"format\" text DEFAULT 'UNKNOWN' NOT NULL,\n  \"hashtag\" text,\n  \"id\" SERIAL NOT NULL,\n  \"images\" jsonb,\n  \"isAdult\" bool DEFAULT false NOT NULL,\n  \"kitsuId\" int4,\n  \"locked\" bool DEFAULT false NOT NULL,\n  \"malAverageScore\" int4,\n  \"malFavorites\" int4,\n  \"malId\" int4,\n  \"malPopularity\" int4,\n  \"malUpdatedAt\" int4,\n  \"nextAiringAt\" timestamptz,\n  \"nextAiringEpisodeNumber\" int4,\n  \"popularity\" int4 DEFAULT 0 NOT NULL,\n  \"scoreDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"scoredCount\" int4,\n  \"seasonSeason\" text DEFAULT 'UNKNOWN' NOT NULL,\n  \"seasonYear\" int4,\n  \"siteUrl\" text,\n  \"source\" text DEFAULT 'UNKNOWN' NOT NULL,\n  \"sources\" jsonb,\n  \"startDateDay\" int4,\n  \"startDateMonth\" int4,\n  \"startDateYear\" int4,\n  \"status\" text DEFAULT 'UNKNOWN' NOT NULL,\n  \"statusDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"synonyms\" text[] NOT NULL,\n  \"themeSongs\" jsonb,\n  \"titleNative\" text,\n  \"titlePrimary\" text NOT NULL,\n  \"titleSecondary\" text,\n  \"totalScoreSum\" int4,\n  \"trailers\" jsonb,\n  \"tvDBId\" int4,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Anime_format_check_7072b97a\" CHECK (\"format\" IN ('TV', 'TV_SHORT', 'MOVIE', 'SPECIAL', 'OVA', 'ONA', 'MUSIC', 'UNKNOWN')),\n  CONSTRAINT \"Anime_seasonSeason_check_e97d8350\" CHECK (\"seasonSeason\" IN ('WINTER', 'SPRING', 'SUMMER', 'FALL', 'UNKNOWN')),\n  CONSTRAINT \"Anime_source_check_e8f1402f\" CHECK (\"source\" IN ('ORIGINAL', 'MANGA', 'LIGHT_NOVEL', 'VISUAL_NOVEL', 'VIDEO_GAME', 'OTHER', 'NOVEL', 'DOUJINSHI', 'ANIME', 'WEB_NOVEL', 'LIVE_ACTION', 'GAME', 'COMIC', 'MULTIMEDIA_PROJECT', 'PICTURE_BOOK', 'UNKNOWN')),\n  CONSTRAINT \"Anime_status_check_645a4e8b\" CHECK (\"status\" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')),\n  CONSTRAINT \"Anime_synonyms_elem_not_null_1b00b9ae\" CHECK (array_position(\"synonyms\", NULL) IS NULL)\n)",
         "params": []
       }
     ],
@@ -241,7 +241,7 @@
     "execute": [
       {
         "description": "create table \"AnimeAiringSchedule\"",
-        "sql": "CREATE TABLE \"public\".\"AnimeAiringSchedule\" (\n  \"airingAt\" timestamp NOT NULL,\n  \"anilistAiringId\" int4,\n  \"animeId\" int4 NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"episodeNumber\" int4 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"AnimeAiringSchedule\" (\n  \"airingAt\" timestamptz NOT NULL,\n  \"anilistAiringId\" int4,\n  \"animeId\" int4 NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"episodeNumber\" int4 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -290,7 +290,7 @@
     "execute": [
       {
         "description": "create table \"AnimeEpisode\"",
-        "sql": "CREATE TABLE \"public\".\"AnimeEpisode\" (\n  \"airDate\" timestamp,\n  \"anidbEpisodeId\" int4,\n  \"animeId\" int4 NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"duration\" int4,\n  \"edEnd\" int4,\n  \"edStart\" int4,\n  \"id\" SERIAL NOT NULL,\n  \"isFiller\" bool DEFAULT false NOT NULL,\n  \"isRecap\" bool DEFAULT false NOT NULL,\n  \"number\" int4 NOT NULL,\n  \"opEnd\" int4,\n  \"opStart\" int4,\n  \"recapEnd\" int4,\n  \"recapStart\" int4,\n  \"skipTimestamps\" jsonb,\n  \"streamingLinks\" jsonb,\n  \"thumbnail\" text,\n  \"titleNative\" text,\n  \"titlePrimary\" text NOT NULL,\n  \"titleSecondary\" text,\n  \"type\" text DEFAULT 'REGULAR' NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"AnimeEpisode_type_check_b526420c\" CHECK (\"type\" IN ('REGULAR', 'SPECIAL', 'OVA', 'ONA', 'MOVIE', 'OTHER'))\n)",
+        "sql": "CREATE TABLE \"public\".\"AnimeEpisode\" (\n  \"airDate\" timestamptz,\n  \"anidbEpisodeId\" int4,\n  \"animeId\" int4 NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"duration\" int4,\n  \"edEnd\" int4,\n  \"edStart\" int4,\n  \"id\" SERIAL NOT NULL,\n  \"isFiller\" bool DEFAULT false NOT NULL,\n  \"isRecap\" bool DEFAULT false NOT NULL,\n  \"number\" int4 NOT NULL,\n  \"opEnd\" int4,\n  \"opStart\" int4,\n  \"recapEnd\" int4,\n  \"recapStart\" int4,\n  \"skipTimestamps\" jsonb,\n  \"streamingLinks\" jsonb,\n  \"thumbnail\" text,\n  \"titleNative\" text,\n  \"titlePrimary\" text NOT NULL,\n  \"titleSecondary\" text,\n  \"type\" text DEFAULT 'REGULAR' NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"AnimeEpisode_type_check_b526420c\" CHECK (\"type\" IN ('REGULAR', 'SPECIAL', 'OVA', 'ONA', 'MOVIE', 'OTHER'))\n)",
         "params": []
       }
     ],
@@ -339,7 +339,7 @@
     "execute": [
       {
         "description": "create table \"AnimeList\"",
-        "sql": "CREATE TABLE \"public\".\"AnimeList\" (\n  \"animeId\" int4 NOT NULL,\n  \"completedAt\" timestamp,\n  \"connections\" jsonb,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"notes\" text,\n  \"private\" bool DEFAULT false NOT NULL,\n  \"progress\" int4 DEFAULT 0 NOT NULL,\n  \"rewatchHistory\" jsonb,\n  \"rewatched\" int4 DEFAULT 0 NOT NULL,\n  \"score\" float8,\n  \"startedAt\" timestamp,\n  \"status\" text DEFAULT 'PLANNING' NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"AnimeList_status_check_5a8afe5d\" CHECK (\"status\" IN ('PLANNING', 'WATCHING', 'COMPLETED', 'ON_HOLD', 'DROPPED'))\n)",
+        "sql": "CREATE TABLE \"public\".\"AnimeList\" (\n  \"animeId\" int4 NOT NULL,\n  \"completedAt\" timestamptz,\n  \"connections\" jsonb,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"notes\" text,\n  \"private\" bool DEFAULT false NOT NULL,\n  \"progress\" int4 DEFAULT 0 NOT NULL,\n  \"rewatchHistory\" jsonb,\n  \"rewatched\" int4 DEFAULT 0 NOT NULL,\n  \"score\" float8,\n  \"startedAt\" timestamptz,\n  \"status\" text DEFAULT 'PLANNED' NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"AnimeList_status_check_eb83cefb\" CHECK (\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED'))\n)",
         "params": []
       }
     ],
@@ -388,7 +388,7 @@
     "execute": [
       {
         "description": "create table \"AnimeReview\"",
-        "sql": "CREATE TABLE \"public\".\"AnimeReview\" (\n  \"animeId\" int4 NOT NULL,\n  \"body\" text NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"downvotes\" int4 DEFAULT 0 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"isSpoiler\" bool DEFAULT false NOT NULL,\n  \"ratings\" jsonb,\n  \"score\" float8 NOT NULL,\n  \"summary\" text NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"upvotes\" int4 DEFAULT 0 NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"AnimeReview\" (\n  \"animeId\" int4 NOT NULL,\n  \"body\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"downvotes\" int4 DEFAULT 0 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"isSpoiler\" bool DEFAULT false NOT NULL,\n  \"ratings\" jsonb,\n  \"score\" float8 NOT NULL,\n  \"summary\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"upvotes\" int4 DEFAULT 0 NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -437,7 +437,7 @@
     "execute": [
       {
         "description": "create table \"ApiKey\"",
-        "sql": "CREATE TABLE \"public\".\"ApiKey\" (\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"expiresAt\" timestamp,\n  \"hash\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"lastUsedAt\" timestamp,\n  \"name\" text NOT NULL,\n  \"prefix\" text NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"ApiKey\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"expiresAt\" timestamptz,\n  \"hash\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"lastUsedAt\" timestamptz,\n  \"name\" text NOT NULL,\n  \"prefix\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -486,7 +486,7 @@
     "execute": [
       {
         "description": "create table \"Book\"",
-        "sql": "CREATE TABLE \"public\".\"Book\" (\n  \"ageRating\" text,\n  \"ageRatingGuide\" text,\n  \"authors\" text[] NOT NULL,\n  \"averageScore\" float8,\n  \"bannerImage\" text,\n  \"buyLink\" text,\n  \"chapterCount\" int4,\n  \"contentRatings\" jsonb,\n  \"countryOfOrigin\" text,\n  \"coverImage\" text,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"favorites\" int4 DEFAULT 0 NOT NULL,\n  \"format\" text,\n  \"googleBookId\" text,\n  \"googleBooksRating\" float8,\n  \"googleBooksRatingsCount\" int4,\n  \"googleBooksUpdatedAt\" int4,\n  \"id\" SERIAL NOT NULL,\n  \"images\" jsonb,\n  \"infoLink\" text,\n  \"isAdult\" bool DEFAULT false NOT NULL,\n  \"isbn10\" text,\n  \"isbn13\" text,\n  \"locked\" bool DEFAULT false NOT NULL,\n  \"openLibraryId\" text,\n  \"originalLanguage\" text,\n  \"pageCount\" int4,\n  \"popularity\" int4 DEFAULT 0 NOT NULL,\n  \"previewLink\" text,\n  \"publishers\" text[] NOT NULL,\n  \"releaseDate\" timestamp,\n  \"releaseDateDay\" int4,\n  \"releaseDateMonth\" int4,\n  \"releaseDateYear\" int4,\n  \"retailPrice\" float8,\n  \"retailPriceCurrency\" text,\n  \"scoreDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"scoredCount\" int4,\n  \"series\" text,\n  \"seriesPosition\" float8,\n  \"siteUrl\" text,\n  \"slug\" text,\n  \"sources\" jsonb,\n  \"status\" text DEFAULT 'UNKNOWN' NOT NULL,\n  \"statusDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"subjects\" text[] NOT NULL,\n  \"subtitle\" text,\n  \"synonyms\" text[] NOT NULL,\n  \"tagline\" text,\n  \"titlePrimary\" text NOT NULL,\n  \"titleSecondary\" text,\n  \"totalScoreSum\" int4,\n  \"updatedAt\" timestamp NOT NULL,\n  \"volumeCount\" int4,\n  \"website\" text,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Book_authors_elem_not_null_2033f92a\" CHECK (array_position(\"authors\", NULL) IS NULL),\n  CONSTRAINT \"Book_publishers_elem_not_null_9efe1e7e\" CHECK (array_position(\"publishers\", NULL) IS NULL),\n  CONSTRAINT \"Book_status_check_7f93b93c\" CHECK (\"status\" IN ('PUBLISHED', 'RELEASING', 'CANCELLED', 'ON_HIATUS', 'UNKNOWN')),\n  CONSTRAINT \"Book_subjects_elem_not_null_ce05f898\" CHECK (array_position(\"subjects\", NULL) IS NULL),\n  CONSTRAINT \"Book_synonyms_elem_not_null_1b00b9ae\" CHECK (array_position(\"synonyms\", NULL) IS NULL)\n)",
+        "sql": "CREATE TABLE \"public\".\"Book\" (\n  \"ageRating\" text,\n  \"ageRatingGuide\" text,\n  \"authors\" text[] NOT NULL,\n  \"averageScore\" float8,\n  \"bannerImage\" text,\n  \"buyLink\" text,\n  \"chapterCount\" int4,\n  \"contentRatings\" jsonb,\n  \"countryOfOrigin\" text,\n  \"coverImage\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"favorites\" int4 DEFAULT 0 NOT NULL,\n  \"format\" text,\n  \"googleBookId\" text,\n  \"googleBooksRating\" float8,\n  \"googleBooksRatingsCount\" int4,\n  \"googleBooksUpdatedAt\" int4,\n  \"id\" SERIAL NOT NULL,\n  \"images\" jsonb,\n  \"infoLink\" text,\n  \"isAdult\" bool DEFAULT false NOT NULL,\n  \"isbn10\" text,\n  \"isbn13\" text,\n  \"locked\" bool DEFAULT false NOT NULL,\n  \"openLibraryId\" text,\n  \"originalLanguage\" text,\n  \"pageCount\" int4,\n  \"popularity\" int4 DEFAULT 0 NOT NULL,\n  \"previewLink\" text,\n  \"publishers\" text[] NOT NULL,\n  \"releaseDate\" timestamptz,\n  \"releaseDateDay\" int4,\n  \"releaseDateMonth\" int4,\n  \"releaseDateYear\" int4,\n  \"retailPrice\" float8,\n  \"retailPriceCurrency\" text,\n  \"scoreDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"scoredCount\" int4,\n  \"series\" text,\n  \"seriesPosition\" float8,\n  \"siteUrl\" text,\n  \"slug\" text,\n  \"sources\" jsonb,\n  \"status\" text DEFAULT 'UNKNOWN' NOT NULL,\n  \"statusDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"subjects\" text[] NOT NULL,\n  \"subtitle\" text,\n  \"synonyms\" text[] NOT NULL,\n  \"tagline\" text,\n  \"titlePrimary\" text NOT NULL,\n  \"titleSecondary\" text,\n  \"totalScoreSum\" int4,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"volumeCount\" int4,\n  \"website\" text,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Book_authors_elem_not_null_2033f92a\" CHECK (array_position(\"authors\", NULL) IS NULL),\n  CONSTRAINT \"Book_publishers_elem_not_null_9efe1e7e\" CHECK (array_position(\"publishers\", NULL) IS NULL),\n  CONSTRAINT \"Book_status_check_645a4e8b\" CHECK (\"status\" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')),\n  CONSTRAINT \"Book_subjects_elem_not_null_ce05f898\" CHECK (array_position(\"subjects\", NULL) IS NULL),\n  CONSTRAINT \"Book_synonyms_elem_not_null_1b00b9ae\" CHECK (array_position(\"synonyms\", NULL) IS NULL)\n)",
         "params": []
       }
     ],
@@ -535,7 +535,7 @@
     "execute": [
       {
         "description": "create table \"BookList\"",
-        "sql": "CREATE TABLE \"public\".\"BookList\" (\n  \"bookId\" int4 NOT NULL,\n  \"completedAt\" timestamp,\n  \"connections\" jsonb,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"notes\" text,\n  \"private\" bool DEFAULT false NOT NULL,\n  \"progressChapters\" int4 DEFAULT 0 NOT NULL,\n  \"progressPages\" int4 DEFAULT 0 NOT NULL,\n  \"progressVolumes\" int4 DEFAULT 0 NOT NULL,\n  \"reread\" int4 DEFAULT 0 NOT NULL,\n  \"rereadHistory\" jsonb,\n  \"score\" float8,\n  \"startedAt\" timestamp,\n  \"status\" text DEFAULT 'PLANNING' NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"BookList_status_check_97f2c647\" CHECK (\"status\" IN ('PLANNING', 'READING', 'COMPLETED', 'ON_HOLD', 'DROPPED'))\n)",
+        "sql": "CREATE TABLE \"public\".\"BookList\" (\n  \"bookId\" int4 NOT NULL,\n  \"completedAt\" timestamptz,\n  \"connections\" jsonb,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"notes\" text,\n  \"private\" bool DEFAULT false NOT NULL,\n  \"progressChapters\" int4 DEFAULT 0 NOT NULL,\n  \"progressPages\" int4 DEFAULT 0 NOT NULL,\n  \"progressVolumes\" int4 DEFAULT 0 NOT NULL,\n  \"reread\" int4 DEFAULT 0 NOT NULL,\n  \"rereadHistory\" jsonb,\n  \"score\" float8,\n  \"startedAt\" timestamptz,\n  \"status\" text DEFAULT 'PLANNED' NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"BookList_status_check_eb83cefb\" CHECK (\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED'))\n)",
         "params": []
       }
     ],
@@ -584,7 +584,7 @@
     "execute": [
       {
         "description": "create table \"BookReview\"",
-        "sql": "CREATE TABLE \"public\".\"BookReview\" (\n  \"body\" text NOT NULL,\n  \"bookId\" int4 NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"downvotes\" int4 DEFAULT 0 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"isSpoiler\" bool DEFAULT false NOT NULL,\n  \"ratings\" jsonb,\n  \"score\" float8 NOT NULL,\n  \"summary\" text NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"upvotes\" int4 DEFAULT 0 NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"BookReview\" (\n  \"body\" text NOT NULL,\n  \"bookId\" int4 NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"downvotes\" int4 DEFAULT 0 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"isSpoiler\" bool DEFAULT false NOT NULL,\n  \"ratings\" jsonb,\n  \"score\" float8 NOT NULL,\n  \"summary\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"upvotes\" int4 DEFAULT 0 NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -633,7 +633,7 @@
     "execute": [
       {
         "description": "create table \"Bookmark\"",
-        "sql": "CREATE TABLE \"public\".\"Bookmark\" (\n  \"appId\" text,\n  \"color\" text,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"group\" text,\n  \"icon\" text,\n  \"id\" text NOT NULL,\n  \"order\" int4 DEFAULT 0 NOT NULL,\n  \"pinned\" bool DEFAULT false NOT NULL,\n  \"title\" text NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"url\" text NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"Bookmark\" (\n  \"appId\" text,\n  \"color\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"group\" text,\n  \"icon\" text,\n  \"id\" text NOT NULL,\n  \"order\" int4 DEFAULT 0 NOT NULL,\n  \"pinned\" bool DEFAULT false NOT NULL,\n  \"title\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"url\" text NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -682,7 +682,7 @@
     "execute": [
       {
         "description": "create table \"Character\"",
-        "sql": "CREATE TABLE \"public\".\"Character\" (\n  \"age\" text,\n  \"aniDBId\" int4,\n  \"anilistId\" int4,\n  \"bangumiId\" int4,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"dateOfBirthDay\" int4,\n  \"dateOfBirthMonth\" int4,\n  \"dateOfBirthYear\" int4,\n  \"description\" text,\n  \"favorites\" int4 DEFAULT 0,\n  \"gender\" text,\n  \"id\" SERIAL NOT NULL,\n  \"image\" text,\n  \"images\" jsonb,\n  \"malId\" int4,\n  \"nameAlternative\" text[] NOT NULL,\n  \"nameAlternativeSpoiler\" text[] NOT NULL,\n  \"nameNative\" text,\n  \"namePrimary\" text NOT NULL,\n  \"tvDBId\" int4,\n  \"updatedAt\" timestamp NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Character_nameAlternativeSpoiler_elem_not_null_0334f96b\" CHECK (array_position(\"nameAlternativeSpoiler\", NULL) IS NULL),\n  CONSTRAINT \"Character_nameAlternative_elem_not_null_6901947b\" CHECK (array_position(\"nameAlternative\", NULL) IS NULL)\n)",
+        "sql": "CREATE TABLE \"public\".\"Character\" (\n  \"age\" text,\n  \"aniDBId\" int4,\n  \"anilistId\" int4,\n  \"bangumiId\" int4,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"dateOfBirthDay\" int4,\n  \"dateOfBirthMonth\" int4,\n  \"dateOfBirthYear\" int4,\n  \"description\" text,\n  \"favorites\" int4 DEFAULT 0,\n  \"gender\" text,\n  \"id\" SERIAL NOT NULL,\n  \"image\" text,\n  \"images\" jsonb,\n  \"malId\" int4,\n  \"nameAlternative\" text[] NOT NULL,\n  \"nameAlternativeSpoiler\" text[] NOT NULL,\n  \"nameNative\" text,\n  \"namePrimary\" text NOT NULL,\n  \"tvDBId\" int4,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Character_nameAlternativeSpoiler_elem_not_null_0334f96b\" CHECK (array_position(\"nameAlternativeSpoiler\", NULL) IS NULL),\n  CONSTRAINT \"Character_nameAlternative_elem_not_null_6901947b\" CHECK (array_position(\"nameAlternative\", NULL) IS NULL)\n)",
         "params": []
       }
     ],
@@ -731,7 +731,7 @@
     "execute": [
       {
         "description": "create table \"Connection\"",
-        "sql": "CREATE TABLE \"public\".\"Connection\" (\n  \"authType\" text DEFAULT 'OAUTH2' NOT NULL,\n  \"avatarUrl\" text,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"displayName\" text,\n  \"encryptedData\" text NOT NULL,\n  \"errorMessage\" text,\n  \"expiresAt\" timestamp,\n  \"externalId\" text,\n  \"id\" text NOT NULL,\n  \"lastSyncedAt\" timestamp,\n  \"profileUrl\" text,\n  \"provider\" text NOT NULL,\n  \"settings\" json,\n  \"status\" text DEFAULT 'CONNECTED' NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Connection_authType_check_7bdccea0\" CHECK (\"authType\" IN ('OAUTH2', 'API_KEY', 'CREDENTIALS', 'OPENID')),\n  CONSTRAINT \"Connection_provider_check_43600405\" CHECK (\"provider\" IN ('ANILIST', 'MAL', 'SIMKL', 'BANGUMI', 'STEAM', 'RIOT_GAMES', 'RADARR', 'SONARR', 'READARR', 'LIDARR', 'JELLYFIN', 'PLEX', 'DEEZER', 'LASTFM', 'CUSTOM', 'IRIS')),\n  CONSTRAINT \"Connection_status_check_597f2d5b\" CHECK (\"status\" IN ('CONNECTED', 'EXPIRED', 'REVOKED', 'ERROR', 'DISCONNECTED'))\n)",
+        "sql": "CREATE TABLE \"public\".\"Connection\" (\n  \"authType\" text DEFAULT 'OAUTH2' NOT NULL,\n  \"avatarUrl\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"displayName\" text,\n  \"encryptedData\" text NOT NULL,\n  \"errorMessage\" text,\n  \"expiresAt\" timestamptz,\n  \"externalId\" text,\n  \"id\" text NOT NULL,\n  \"lastSyncedAt\" timestamptz,\n  \"profileUrl\" text,\n  \"provider\" text NOT NULL,\n  \"settings\" json,\n  \"status\" text DEFAULT 'CONNECTED' NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Connection_authType_check_7bdccea0\" CHECK (\"authType\" IN ('OAUTH2', 'API_KEY', 'CREDENTIALS', 'OPENID')),\n  CONSTRAINT \"Connection_provider_check_537f4a65\" CHECK (\"provider\" IN ('ANILIST', 'MAL', 'SIMKL', 'BANGUMI', 'STEAM', 'RIOT_GAMES', 'RADARR', 'SONARR', 'READARR', 'LIDARR', 'JELLYFIN', 'PLEX', 'DEEZER', 'LASTFM', 'CUSTOM', 'IRIS', 'HIKKA', 'MANGAUPDATES', 'MANGABAKA', 'TRAKT')),\n  CONSTRAINT \"Connection_status_check_597f2d5b\" CHECK (\"status\" IN ('CONNECTED', 'EXPIRED', 'REVOKED', 'ERROR', 'DISCONNECTED'))\n)",
         "params": []
       }
     ],
@@ -780,7 +780,7 @@
     "execute": [
       {
         "description": "create table \"CustomList\"",
-        "sql": "CREATE TABLE \"public\".\"CustomList\" (\n  \"coverImage\" text,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"id\" text NOT NULL,\n  \"isDefault\" bool DEFAULT false NOT NULL,\n  \"isPrivate\" bool DEFAULT false NOT NULL,\n  \"name\" text NOT NULL,\n  \"order\" int4 DEFAULT 0 NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"CustomList\" (\n  \"coverImage\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"id\" text NOT NULL,\n  \"isDefault\" bool DEFAULT false NOT NULL,\n  \"isPrivate\" bool DEFAULT false NOT NULL,\n  \"name\" text NOT NULL,\n  \"order\" int4 DEFAULT 0 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -829,7 +829,7 @@
     "execute": [
       {
         "description": "create table \"CustomListEntry\"",
-        "sql": "CREATE TABLE \"public\".\"CustomListEntry\" (\n  \"addedAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"animeId\" int4,\n  \"bookId\" int4,\n  \"customNotes\" text,\n  \"gameId\" int4,\n  \"id\" text NOT NULL,\n  \"listId\" text NOT NULL,\n  \"mangaId\" int4,\n  \"mediaId\" int4 NOT NULL,\n  \"mediaType\" text NOT NULL,\n  \"movieId\" int4,\n  \"musicId\" int4,\n  \"order\" int4 DEFAULT 0 NOT NULL,\n  \"otherId\" int4,\n  \"tvId\" int4,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"CustomListEntry_mediaType_check_37ab4091\" CHECK (\"mediaType\" IN ('ANIME', 'MANGA', 'MOVIE', 'TV', 'GAME', 'BOOK', 'MUSIC', 'MUSIC_ALBUM', 'MUSIC_TRACK', 'OTHER', 'UNKNOWN'))\n)",
+        "sql": "CREATE TABLE \"public\".\"CustomListEntry\" (\n  \"addedAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"animeId\" int4,\n  \"bookId\" int4,\n  \"customNotes\" text,\n  \"gameId\" int4,\n  \"id\" text NOT NULL,\n  \"listId\" text NOT NULL,\n  \"mangaId\" int4,\n  \"mediaId\" int4 NOT NULL,\n  \"mediaType\" text NOT NULL,\n  \"movieId\" int4,\n  \"musicId\" int4,\n  \"order\" int4 DEFAULT 0 NOT NULL,\n  \"otherId\" int4,\n  \"tvId\" int4,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"CustomListEntry_mediaType_check_37ab4091\" CHECK (\"mediaType\" IN ('ANIME', 'MANGA', 'MOVIE', 'TV', 'GAME', 'BOOK', 'MUSIC', 'MUSIC_ALBUM', 'MUSIC_TRACK', 'OTHER', 'UNKNOWN'))\n)",
         "params": []
       }
     ],
@@ -878,7 +878,7 @@
     "execute": [
       {
         "description": "create table \"Favorite\"",
-        "sql": "CREATE TABLE \"public\".\"Favorite\" (\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"targetId\" int4 NOT NULL,\n  \"type\" text NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Favorite_type_check_abd0e760\" CHECK (\"type\" IN ('ANIME', 'MANGA', 'MOVIE', 'TV', 'GAME', 'BOOK', 'MUSIC_ALBUM', 'MUSIC_TRACK', 'CHARACTER', 'PERSON', 'STUDIO', 'USER', 'OTHER'))\n)",
+        "sql": "CREATE TABLE \"public\".\"Favorite\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"targetId\" int4 NOT NULL,\n  \"type\" text NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Favorite_type_check_abd0e760\" CHECK (\"type\" IN ('ANIME', 'MANGA', 'MOVIE', 'TV', 'GAME', 'BOOK', 'MUSIC_ALBUM', 'MUSIC_TRACK', 'CHARACTER', 'PERSON', 'STUDIO', 'USER', 'OTHER'))\n)",
         "params": []
       }
     ],
@@ -927,7 +927,7 @@
     "execute": [
       {
         "description": "create table \"Friend\"",
-        "sql": "CREATE TABLE \"public\".\"Friend\" (\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"friendId\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"isPrivate\" bool DEFAULT false NOT NULL,\n  \"nickname\" text,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"Friend\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"friendId\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"isPrivate\" bool DEFAULT false NOT NULL,\n  \"nickname\" text,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -976,7 +976,7 @@
     "execute": [
       {
         "description": "create table \"FriendRequest\"",
-        "sql": "CREATE TABLE \"public\".\"FriendRequest\" (\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"message\" character varying(50),\n  \"receiverId\" text NOT NULL,\n  \"senderId\" text NOT NULL,\n  \"status\" text DEFAULT 'PENDING' NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"FriendRequest_status_check_2151ad70\" CHECK (\"status\" IN ('PENDING', 'ACCEPTED', 'DECLINED', 'BLOCKED'))\n)",
+        "sql": "CREATE TABLE \"public\".\"FriendRequest\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"message\" character varying(50),\n  \"receiverId\" text NOT NULL,\n  \"senderId\" text NOT NULL,\n  \"status\" text DEFAULT 'PENDING' NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"FriendRequest_status_check_2151ad70\" CHECK (\"status\" IN ('PENDING', 'ACCEPTED', 'DECLINED', 'BLOCKED'))\n)",
         "params": []
       }
     ],
@@ -1025,7 +1025,7 @@
     "execute": [
       {
         "description": "create table \"Game\"",
-        "sql": "CREATE TABLE \"public\".\"Game\" (\n  \"achievements\" jsonb,\n  \"ageRating\" text,\n  \"ageRatingGuide\" text,\n  \"averagePlaytime\" float8,\n  \"averageScore\" float8,\n  \"backgroundImage\" text,\n  \"bannerImage\" text,\n  \"contentRatings\" jsonb,\n  \"controllerSupport\" text,\n  \"coverImage\" text,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"developers\" text[] NOT NULL,\n  \"esrbRating\" text,\n  \"favorites\" int4 DEFAULT 0 NOT NULL,\n  \"franchise\" text,\n  \"gameModes\" text[] NOT NULL,\n  \"giantbombId\" text,\n  \"id\" SERIAL NOT NULL,\n  \"igdbId\" int4,\n  \"igdbRating\" float8,\n  \"igdbRatingCount\" int4,\n  \"igdbUpdatedAt\" int4,\n  \"images\" jsonb,\n  \"isAdult\" bool DEFAULT false NOT NULL,\n  \"languages\" text[] NOT NULL,\n  \"linuxSupport\" bool,\n  \"locked\" bool DEFAULT false NOT NULL,\n  \"pegiRating\" text,\n  \"platforms\" text[] NOT NULL,\n  \"playerPerspectives\" text[] NOT NULL,\n  \"playtimeCount\" int4 DEFAULT 0,\n  \"popularity\" int4 DEFAULT 0 NOT NULL,\n  \"publishers\" text[] NOT NULL,\n  \"rawgId\" int4,\n  \"releaseDate\" timestamp,\n  \"releaseDateDay\" int4,\n  \"releaseDateMonth\" int4,\n  \"releaseDateYear\" int4,\n  \"requirements\" jsonb,\n  \"scoreDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"scoredCount\" int4,\n  \"slug\" text,\n  \"sources\" jsonb,\n  \"status\" text DEFAULT 'UNKNOWN' NOT NULL,\n  \"statusDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"steamAppId\" int4,\n  \"steamDeck\" jsonb,\n  \"steamDeckStatus\" text,\n  \"steamUpdatedAt\" int4,\n  \"synonyms\" text[] NOT NULL,\n  \"tagline\" text,\n  \"titleNative\" text,\n  \"titlePrimary\" text NOT NULL,\n  \"titleSecondary\" text,\n  \"totalPlaytimeSum\" float8 DEFAULT 0,\n  \"totalScoreSum\" int4,\n  \"trailers\" jsonb,\n  \"updatedAt\" timestamp NOT NULL,\n  \"vndbId\" text,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Game_developers_elem_not_null_1e5704c0\" CHECK (array_position(\"developers\", NULL) IS NULL),\n  CONSTRAINT \"Game_gameModes_elem_not_null_3bf04981\" CHECK (array_position(\"gameModes\", NULL) IS NULL),\n  CONSTRAINT \"Game_languages_elem_not_null_d4aa0a00\" CHECK (array_position(\"languages\", NULL) IS NULL),\n  CONSTRAINT \"Game_platforms_elem_not_null_53a1bdb5\" CHECK (array_position(\"platforms\", NULL) IS NULL),\n  CONSTRAINT \"Game_playerPerspectives_elem_not_null_56fa4c4a\" CHECK (array_position(\"playerPerspectives\", NULL) IS NULL),\n  CONSTRAINT \"Game_publishers_elem_not_null_9efe1e7e\" CHECK (array_position(\"publishers\", NULL) IS NULL),\n  CONSTRAINT \"Game_status_check_3cd1d392\" CHECK (\"status\" IN ('RELEASED', 'EARLY_ACCESS', 'ANNOUNCED', 'IN_DEVELOPMENT', 'DELAYED', 'CANCELLED', 'UNKNOWN')),\n  CONSTRAINT \"Game_synonyms_elem_not_null_1b00b9ae\" CHECK (array_position(\"synonyms\", NULL) IS NULL)\n)",
+        "sql": "CREATE TABLE \"public\".\"Game\" (\n  \"achievements\" jsonb,\n  \"ageRating\" text,\n  \"ageRatingGuide\" text,\n  \"averagePlaytime\" float8,\n  \"averageScore\" float8,\n  \"backgroundImage\" text,\n  \"bannerImage\" text,\n  \"contentRatings\" jsonb,\n  \"controllerSupport\" text,\n  \"coverImage\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"developers\" text[] NOT NULL,\n  \"esrbRating\" text,\n  \"favorites\" int4 DEFAULT 0 NOT NULL,\n  \"franchise\" text,\n  \"gameModes\" text[] NOT NULL,\n  \"giantbombId\" text,\n  \"id\" SERIAL NOT NULL,\n  \"igdbId\" int4,\n  \"igdbRating\" float8,\n  \"igdbRatingCount\" int4,\n  \"igdbUpdatedAt\" int4,\n  \"images\" jsonb,\n  \"isAdult\" bool DEFAULT false NOT NULL,\n  \"languages\" text[] NOT NULL,\n  \"linuxSupport\" bool,\n  \"locked\" bool DEFAULT false NOT NULL,\n  \"pegiRating\" text,\n  \"platforms\" text[] NOT NULL,\n  \"playerPerspectives\" text[] NOT NULL,\n  \"playtimeCount\" int4 DEFAULT 0,\n  \"popularity\" int4 DEFAULT 0 NOT NULL,\n  \"publishers\" text[] NOT NULL,\n  \"rawgId\" int4,\n  \"releaseDate\" timestamptz,\n  \"releaseDateDay\" int4,\n  \"releaseDateMonth\" int4,\n  \"releaseDateYear\" int4,\n  \"requirements\" jsonb,\n  \"scoreDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"scoredCount\" int4,\n  \"slug\" text,\n  \"sources\" jsonb,\n  \"status\" text DEFAULT 'UNKNOWN' NOT NULL,\n  \"statusDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"steamAppId\" int4,\n  \"steamDeck\" jsonb,\n  \"steamDeckStatus\" text,\n  \"steamUpdatedAt\" int4,\n  \"synonyms\" text[] NOT NULL,\n  \"tagline\" text,\n  \"titleNative\" text,\n  \"titlePrimary\" text NOT NULL,\n  \"titleSecondary\" text,\n  \"totalPlaytimeSum\" float8 DEFAULT 0,\n  \"totalScoreSum\" int4,\n  \"trailers\" jsonb,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"vndbId\" text,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Game_developers_elem_not_null_1e5704c0\" CHECK (array_position(\"developers\", NULL) IS NULL),\n  CONSTRAINT \"Game_gameModes_elem_not_null_3bf04981\" CHECK (array_position(\"gameModes\", NULL) IS NULL),\n  CONSTRAINT \"Game_languages_elem_not_null_d4aa0a00\" CHECK (array_position(\"languages\", NULL) IS NULL),\n  CONSTRAINT \"Game_platforms_elem_not_null_53a1bdb5\" CHECK (array_position(\"platforms\", NULL) IS NULL),\n  CONSTRAINT \"Game_playerPerspectives_elem_not_null_56fa4c4a\" CHECK (array_position(\"playerPerspectives\", NULL) IS NULL),\n  CONSTRAINT \"Game_publishers_elem_not_null_9efe1e7e\" CHECK (array_position(\"publishers\", NULL) IS NULL),\n  CONSTRAINT \"Game_status_check_645a4e8b\" CHECK (\"status\" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')),\n  CONSTRAINT \"Game_synonyms_elem_not_null_1b00b9ae\" CHECK (array_position(\"synonyms\", NULL) IS NULL)\n)",
         "params": []
       }
     ],
@@ -1074,7 +1074,7 @@
     "execute": [
       {
         "description": "create table \"GameList\"",
-        "sql": "CREATE TABLE \"public\".\"GameList\" (\n  \"completedAt\" timestamp,\n  \"connections\" jsonb,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"gameId\" int4 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"notes\" text,\n  \"private\" bool DEFAULT false NOT NULL,\n  \"progress\" int4 DEFAULT 0 NOT NULL,\n  \"replayHistory\" jsonb,\n  \"replayed\" int4 DEFAULT 0 NOT NULL,\n  \"score\" float8,\n  \"startedAt\" timestamp,\n  \"status\" text DEFAULT 'PLANNING' NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"GameList_status_check_65997e90\" CHECK (\"status\" IN ('PLANNING', 'PLAYING', 'COMPLETED', 'ON_HOLD', 'DROPPED'))\n)",
+        "sql": "CREATE TABLE \"public\".\"GameList\" (\n  \"completedAt\" timestamptz,\n  \"connections\" jsonb,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"gameId\" int4 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"notes\" text,\n  \"private\" bool DEFAULT false NOT NULL,\n  \"progress\" int4 DEFAULT 0 NOT NULL,\n  \"replayHistory\" jsonb,\n  \"replayed\" int4 DEFAULT 0 NOT NULL,\n  \"score\" float8,\n  \"startedAt\" timestamptz,\n  \"status\" text DEFAULT 'PLANNED' NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"GameList_status_check_eb83cefb\" CHECK (\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED'))\n)",
         "params": []
       }
     ],
@@ -1123,7 +1123,7 @@
     "execute": [
       {
         "description": "create table \"GameReview\"",
-        "sql": "CREATE TABLE \"public\".\"GameReview\" (\n  \"body\" text NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"downvotes\" int4 DEFAULT 0 NOT NULL,\n  \"gameId\" int4 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"isSpoiler\" bool DEFAULT false NOT NULL,\n  \"ratings\" jsonb,\n  \"score\" float8 NOT NULL,\n  \"summary\" text NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"upvotes\" int4 DEFAULT 0 NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"GameReview\" (\n  \"body\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"downvotes\" int4 DEFAULT 0 NOT NULL,\n  \"gameId\" int4 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"isSpoiler\" bool DEFAULT false NOT NULL,\n  \"ratings\" jsonb,\n  \"score\" float8 NOT NULL,\n  \"summary\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"upvotes\" int4 DEFAULT 0 NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -1172,7 +1172,7 @@
     "execute": [
       {
         "description": "create table \"Genre\"",
-        "sql": "CREATE TABLE \"public\".\"Genre\" (\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"name\" text NOT NULL,\n  \"slug\" text NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"Genre\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"name\" text NOT NULL,\n  \"slug\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -1221,7 +1221,7 @@
     "execute": [
       {
         "description": "create table \"ListComment\"",
-        "sql": "CREATE TABLE \"public\".\"ListComment\" (\n  \"authorId\" text NOT NULL,\n  \"content\" text NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"isSpoiler\" bool DEFAULT false NOT NULL,\n  \"listOwnerId\" text NOT NULL,\n  \"mediaType\" text NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"ListComment\" (\n  \"authorId\" text NOT NULL,\n  \"content\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"isSpoiler\" bool DEFAULT false NOT NULL,\n  \"listOwnerId\" text NOT NULL,\n  \"mediaType\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -1270,7 +1270,7 @@
     "execute": [
       {
         "description": "create table \"ListCommentReply\"",
-        "sql": "CREATE TABLE \"public\".\"ListCommentReply\" (\n  \"authorId\" text NOT NULL,\n  \"commentId\" text NOT NULL,\n  \"content\" text NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"ListCommentReply\" (\n  \"authorId\" text NOT NULL,\n  \"commentId\" text NOT NULL,\n  \"content\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -1319,7 +1319,7 @@
     "execute": [
       {
         "description": "create table \"ListExportShare\"",
-        "sql": "CREATE TABLE \"public\".\"ListExportShare\" (\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"expiresAt\" timestamp,\n  \"id\" text NOT NULL,\n  \"lastUsedAt\" timestamp,\n  \"mediaTypes\" text[] NOT NULL,\n  \"passwordHash\" text NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"ListExportShare_mediaTypes_elem_not_null_4fba9b4b\" CHECK (array_position(\"mediaTypes\", NULL) IS NULL)\n)",
+        "sql": "CREATE TABLE \"public\".\"ListExportShare\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"expiresAt\" timestamptz,\n  \"id\" text NOT NULL,\n  \"lastUsedAt\" timestamptz,\n  \"mediaTypes\" text[] NOT NULL,\n  \"passwordHash\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"ListExportShare_mediaTypes_elem_not_null_4fba9b4b\" CHECK (array_position(\"mediaTypes\", NULL) IS NULL)\n)",
         "params": []
       }
     ],
@@ -1368,7 +1368,7 @@
     "execute": [
       {
         "description": "create table \"Manga\"",
-        "sql": "CREATE TABLE \"public\".\"Manga\" (\n  \"ageRating\" text,\n  \"ageRatingGuide\" text,\n  \"alAverageScore\" int4,\n  \"alFavorites\" int4,\n  \"alPopularity\" int4,\n  \"alUpdatedAt\" int4,\n  \"anilistId\" int4,\n  \"averageScore\" float8,\n  \"bangumiId\" int4,\n  \"bannerImage\" text,\n  \"chapterCount\" int4,\n  \"countryOfOrigin\" text,\n  \"coverImage\" text,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"endDateDay\" int4,\n  \"endDateMonth\" int4,\n  \"endDateYear\" int4,\n  \"externalLinks\" jsonb,\n  \"favorites\" int4 DEFAULT 0 NOT NULL,\n  \"format\" text DEFAULT 'UNKNOWN' NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"images\" jsonb,\n  \"isAdult\" bool DEFAULT false NOT NULL,\n  \"kitsuId\" int4,\n  \"locked\" bool DEFAULT false NOT NULL,\n  \"malAverageScore\" int4,\n  \"malFavorites\" int4,\n  \"malId\" int4,\n  \"malPopularity\" int4,\n  \"malUpdatedAt\" int4,\n  \"mangaUpdatesId\" text,\n  \"popularity\" int4 DEFAULT 0 NOT NULL,\n  \"scoreDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"scoredCount\" int4,\n  \"siteUrl\" text,\n  \"source\" text DEFAULT 'UNKNOWN' NOT NULL,\n  \"sources\" jsonb,\n  \"startDateDay\" int4,\n  \"startDateMonth\" int4,\n  \"startDateYear\" int4,\n  \"status\" text DEFAULT 'UNKNOWN' NOT NULL,\n  \"statusDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"synonyms\" text[] NOT NULL,\n  \"titleNative\" text,\n  \"titlePrimary\" text NOT NULL,\n  \"titleSecondary\" text,\n  \"totalScoreSum\" int4,\n  \"updatedAt\" timestamp NOT NULL,\n  \"volumeCount\" int4,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Manga_format_check_56f7875a\" CHECK (\"format\" IN ('MANGA', 'NOVEL', 'LIGHT_NOVEL', 'ONE_SHOT', 'MANHWA', 'MANHUA', 'UNKNOWN')),\n  CONSTRAINT \"Manga_source_check_e8f1402f\" CHECK (\"source\" IN ('ORIGINAL', 'MANGA', 'LIGHT_NOVEL', 'VISUAL_NOVEL', 'VIDEO_GAME', 'OTHER', 'NOVEL', 'DOUJINSHI', 'ANIME', 'WEB_NOVEL', 'LIVE_ACTION', 'GAME', 'COMIC', 'MULTIMEDIA_PROJECT', 'PICTURE_BOOK', 'UNKNOWN')),\n  CONSTRAINT \"Manga_status_check_a9e63772\" CHECK (\"status\" IN ('FINISHED', 'RELEASING', 'NOT_YET_RELEASED', 'CANCELLED', 'HIATUS', 'UNKNOWN')),\n  CONSTRAINT \"Manga_synonyms_elem_not_null_1b00b9ae\" CHECK (array_position(\"synonyms\", NULL) IS NULL)\n)",
+        "sql": "CREATE TABLE \"public\".\"Manga\" (\n  \"ageRating\" text,\n  \"ageRatingGuide\" text,\n  \"alAverageScore\" int4,\n  \"alFavorites\" int4,\n  \"alPopularity\" int4,\n  \"alUpdatedAt\" int4,\n  \"anilistId\" int4,\n  \"averageScore\" float8,\n  \"bangumiId\" int4,\n  \"bannerImage\" text,\n  \"chapterCount\" int4,\n  \"countryOfOrigin\" text,\n  \"coverImage\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"endDateDay\" int4,\n  \"endDateMonth\" int4,\n  \"endDateYear\" int4,\n  \"externalLinks\" jsonb,\n  \"favorites\" int4 DEFAULT 0 NOT NULL,\n  \"format\" text DEFAULT 'UNKNOWN' NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"images\" jsonb,\n  \"isAdult\" bool DEFAULT false NOT NULL,\n  \"kitsuId\" int4,\n  \"locked\" bool DEFAULT false NOT NULL,\n  \"malAverageScore\" int4,\n  \"malFavorites\" int4,\n  \"malId\" int4,\n  \"malPopularity\" int4,\n  \"malUpdatedAt\" int4,\n  \"mangaUpdatesId\" text,\n  \"popularity\" int4 DEFAULT 0 NOT NULL,\n  \"scoreDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"scoredCount\" int4,\n  \"siteUrl\" text,\n  \"source\" text DEFAULT 'UNKNOWN' NOT NULL,\n  \"sources\" jsonb,\n  \"startDateDay\" int4,\n  \"startDateMonth\" int4,\n  \"startDateYear\" int4,\n  \"status\" text DEFAULT 'UNKNOWN' NOT NULL,\n  \"statusDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"synonyms\" text[] NOT NULL,\n  \"titleNative\" text,\n  \"titlePrimary\" text NOT NULL,\n  \"titleSecondary\" text,\n  \"totalScoreSum\" int4,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"volumeCount\" int4,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Manga_format_check_56f7875a\" CHECK (\"format\" IN ('MANGA', 'NOVEL', 'LIGHT_NOVEL', 'ONE_SHOT', 'MANHWA', 'MANHUA', 'UNKNOWN')),\n  CONSTRAINT \"Manga_source_check_e8f1402f\" CHECK (\"source\" IN ('ORIGINAL', 'MANGA', 'LIGHT_NOVEL', 'VISUAL_NOVEL', 'VIDEO_GAME', 'OTHER', 'NOVEL', 'DOUJINSHI', 'ANIME', 'WEB_NOVEL', 'LIVE_ACTION', 'GAME', 'COMIC', 'MULTIMEDIA_PROJECT', 'PICTURE_BOOK', 'UNKNOWN')),\n  CONSTRAINT \"Manga_status_check_645a4e8b\" CHECK (\"status\" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')),\n  CONSTRAINT \"Manga_synonyms_elem_not_null_1b00b9ae\" CHECK (array_position(\"synonyms\", NULL) IS NULL)\n)",
         "params": []
       }
     ],
@@ -1417,7 +1417,7 @@
     "execute": [
       {
         "description": "create table \"MangaList\"",
-        "sql": "CREATE TABLE \"public\".\"MangaList\" (\n  \"chaptersProgress\" int4 DEFAULT 0 NOT NULL,\n  \"completedAt\" timestamp,\n  \"connections\" jsonb,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"mangaId\" int4 NOT NULL,\n  \"notes\" text,\n  \"private\" bool DEFAULT false NOT NULL,\n  \"reread\" int4 DEFAULT 0 NOT NULL,\n  \"rereadHistory\" jsonb,\n  \"score\" float8,\n  \"startedAt\" timestamp,\n  \"status\" text DEFAULT 'PLANNING' NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  \"volumesProgress\" int4 DEFAULT 0 NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"MangaList_status_check_97f2c647\" CHECK (\"status\" IN ('PLANNING', 'READING', 'COMPLETED', 'ON_HOLD', 'DROPPED'))\n)",
+        "sql": "CREATE TABLE \"public\".\"MangaList\" (\n  \"chaptersProgress\" int4 DEFAULT 0 NOT NULL,\n  \"completedAt\" timestamptz,\n  \"connections\" jsonb,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"mangaId\" int4 NOT NULL,\n  \"notes\" text,\n  \"private\" bool DEFAULT false NOT NULL,\n  \"reread\" int4 DEFAULT 0 NOT NULL,\n  \"rereadHistory\" jsonb,\n  \"score\" float8,\n  \"startedAt\" timestamptz,\n  \"status\" text DEFAULT 'PLANNED' NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  \"volumesProgress\" int4 DEFAULT 0 NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"MangaList_status_check_eb83cefb\" CHECK (\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED'))\n)",
         "params": []
       }
     ],
@@ -1466,7 +1466,7 @@
     "execute": [
       {
         "description": "create table \"MangaReview\"",
-        "sql": "CREATE TABLE \"public\".\"MangaReview\" (\n  \"body\" text NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"downvotes\" int4 DEFAULT 0 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"isSpoiler\" bool DEFAULT false NOT NULL,\n  \"mangaId\" int4 NOT NULL,\n  \"ratings\" jsonb,\n  \"score\" float8 NOT NULL,\n  \"summary\" text NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"upvotes\" int4 DEFAULT 0 NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"MangaReview\" (\n  \"body\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"downvotes\" int4 DEFAULT 0 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"isSpoiler\" bool DEFAULT false NOT NULL,\n  \"mangaId\" int4 NOT NULL,\n  \"ratings\" jsonb,\n  \"score\" float8 NOT NULL,\n  \"summary\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"upvotes\" int4 DEFAULT 0 NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -1564,7 +1564,7 @@
     "execute": [
       {
         "description": "create table \"MediaRecommendation\"",
-        "sql": "CREATE TABLE \"public\".\"MediaRecommendation\" (\n  \"body\" text,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"downvotes\" int4 DEFAULT 0 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"score\" int4 DEFAULT 0 NOT NULL,\n  \"sourceId\" int4 NOT NULL,\n  \"sourceType\" text NOT NULL,\n  \"targetId\" int4 NOT NULL,\n  \"targetType\" text NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"upvotes\" int4 DEFAULT 0 NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"MediaRecommendation_sourceType_check_465c0510\" CHECK (\"sourceType\" IN ('ANIME', 'MANGA', 'MOVIE', 'TV', 'GAME', 'BOOK', 'MUSIC', 'MUSIC_ALBUM', 'MUSIC_TRACK', 'OTHER', 'UNKNOWN')),\n  CONSTRAINT \"MediaRecommendation_targetType_check_45a45c57\" CHECK (\"targetType\" IN ('ANIME', 'MANGA', 'MOVIE', 'TV', 'GAME', 'BOOK', 'MUSIC', 'MUSIC_ALBUM', 'MUSIC_TRACK', 'OTHER', 'UNKNOWN'))\n)",
+        "sql": "CREATE TABLE \"public\".\"MediaRecommendation\" (\n  \"body\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"downvotes\" int4 DEFAULT 0 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"score\" int4 DEFAULT 0 NOT NULL,\n  \"sourceId\" int4 NOT NULL,\n  \"sourceType\" text NOT NULL,\n  \"targetId\" int4 NOT NULL,\n  \"targetType\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"upvotes\" int4 DEFAULT 0 NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"MediaRecommendation_sourceType_check_465c0510\" CHECK (\"sourceType\" IN ('ANIME', 'MANGA', 'MOVIE', 'TV', 'GAME', 'BOOK', 'MUSIC', 'MUSIC_ALBUM', 'MUSIC_TRACK', 'OTHER', 'UNKNOWN')),\n  CONSTRAINT \"MediaRecommendation_targetType_check_45a45c57\" CHECK (\"targetType\" IN ('ANIME', 'MANGA', 'MOVIE', 'TV', 'GAME', 'BOOK', 'MUSIC', 'MUSIC_ALBUM', 'MUSIC_TRACK', 'OTHER', 'UNKNOWN'))\n)",
         "params": []
       }
     ],
@@ -1613,7 +1613,7 @@
     "execute": [
       {
         "description": "create table \"MediaRecommendationVote\"",
-        "sql": "CREATE TABLE \"public\".\"MediaRecommendationVote\" (\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"recommendationId\" int4 NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  \"voteType\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"MediaRecommendationVote_voteType_check_a85dbebc\" CHECK (\"voteType\" IN ('UPVOTE', 'DOWNVOTE'))\n)",
+        "sql": "CREATE TABLE \"public\".\"MediaRecommendationVote\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"recommendationId\" int4 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  \"voteType\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"MediaRecommendationVote_voteType_check_a85dbebc\" CHECK (\"voteType\" IN ('UPVOTE', 'DOWNVOTE'))\n)",
         "params": []
       }
     ],
@@ -1809,7 +1809,7 @@
     "execute": [
       {
         "description": "create table \"Movie\"",
-        "sql": "CREATE TABLE \"public\".\"Movie\" (\n  \"ageRating\" text,\n  \"ageRatingGuide\" text,\n  \"averageScore\" float8,\n  \"bannerImage\" text,\n  \"budget\" int8,\n  \"countryOfOrigin\" text,\n  \"coverImage\" text,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"favorites\" int4 DEFAULT 0 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"images\" jsonb,\n  \"imdbId\" text,\n  \"imdbRating\" float8,\n  \"imdbUpdatedAt\" int4,\n  \"imdbVotes\" int4,\n  \"isAdult\" bool DEFAULT false NOT NULL,\n  \"locked\" bool DEFAULT false NOT NULL,\n  \"originalLanguage\" text,\n  \"popularity\" int4 DEFAULT 0 NOT NULL,\n  \"releaseDateDay\" int4,\n  \"releaseDateMonth\" int4,\n  \"releaseDateYear\" int4,\n  \"revenue\" int8,\n  \"runtime\" int4,\n  \"scoreDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"scoredCount\" int4,\n  \"simklId\" int4,\n  \"sources\" jsonb,\n  \"status\" text DEFAULT 'RELEASED' NOT NULL,\n  \"statusDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"synonyms\" text[] NOT NULL,\n  \"titleNative\" text,\n  \"titlePrimary\" text NOT NULL,\n  \"titleSecondary\" text,\n  \"tmdbId\" int4,\n  \"totalScoreSum\" int4,\n  \"trailers\" jsonb,\n  \"tvDBId\" int4,\n  \"tvdbUpdatedAt\" int4,\n  \"updatedAt\" timestamp NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Movie_status_check_143651cf\" CHECK (\"status\" IN ('RELEASED', 'IN_PRODUCTION', 'POST_PRODUCTION', 'RUMORED', 'CANCELLED', 'UNKNOWN')),\n  CONSTRAINT \"Movie_synonyms_elem_not_null_1b00b9ae\" CHECK (array_position(\"synonyms\", NULL) IS NULL)\n)",
+        "sql": "CREATE TABLE \"public\".\"Movie\" (\n  \"ageRating\" text,\n  \"ageRatingGuide\" text,\n  \"averageScore\" float8,\n  \"bannerImage\" text,\n  \"budget\" int8,\n  \"countryOfOrigin\" text,\n  \"coverImage\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"favorites\" int4 DEFAULT 0 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"images\" jsonb,\n  \"imdbId\" text,\n  \"imdbRating\" float8,\n  \"imdbUpdatedAt\" int4,\n  \"imdbVotes\" int4,\n  \"isAdult\" bool DEFAULT false NOT NULL,\n  \"locked\" bool DEFAULT false NOT NULL,\n  \"originalLanguage\" text,\n  \"popularity\" int4 DEFAULT 0 NOT NULL,\n  \"releaseDateDay\" int4,\n  \"releaseDateMonth\" int4,\n  \"releaseDateYear\" int4,\n  \"revenue\" int8,\n  \"runtime\" int4,\n  \"scoreDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"scoredCount\" int4,\n  \"simklId\" int4,\n  \"sources\" jsonb,\n  \"status\" text DEFAULT 'RELEASED' NOT NULL,\n  \"statusDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"synonyms\" text[] NOT NULL,\n  \"titleNative\" text,\n  \"titlePrimary\" text NOT NULL,\n  \"titleSecondary\" text,\n  \"tmdbId\" int4,\n  \"totalScoreSum\" int4,\n  \"trailers\" jsonb,\n  \"tvDBId\" int4,\n  \"tvdbUpdatedAt\" int4,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Movie_status_check_645a4e8b\" CHECK (\"status\" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')),\n  CONSTRAINT \"Movie_synonyms_elem_not_null_1b00b9ae\" CHECK (array_position(\"synonyms\", NULL) IS NULL)\n)",
         "params": []
       }
     ],
@@ -1858,7 +1858,7 @@
     "execute": [
       {
         "description": "create table \"MovieList\"",
-        "sql": "CREATE TABLE \"public\".\"MovieList\" (\n  \"completedAt\" timestamp,\n  \"connections\" jsonb,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"movieId\" int4 NOT NULL,\n  \"notes\" text,\n  \"private\" bool DEFAULT false NOT NULL,\n  \"rewatchHistory\" jsonb,\n  \"rewatched\" int4 DEFAULT 0 NOT NULL,\n  \"score\" float8,\n  \"startedAt\" timestamp,\n  \"status\" text DEFAULT 'PLANNING' NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"MovieList_status_check_f9116bcd\" CHECK (\"status\" IN ('PLANNING', 'WATCHING', 'COMPLETED', 'DROPPED'))\n)",
+        "sql": "CREATE TABLE \"public\".\"MovieList\" (\n  \"completedAt\" timestamptz,\n  \"connections\" jsonb,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"movieId\" int4 NOT NULL,\n  \"notes\" text,\n  \"private\" bool DEFAULT false NOT NULL,\n  \"rewatchHistory\" jsonb,\n  \"rewatched\" int4 DEFAULT 0 NOT NULL,\n  \"score\" float8,\n  \"startedAt\" timestamptz,\n  \"status\" text DEFAULT 'PLANNED' NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"MovieList_status_check_eb83cefb\" CHECK (\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED'))\n)",
         "params": []
       }
     ],
@@ -1907,7 +1907,7 @@
     "execute": [
       {
         "description": "create table \"MovieReview\"",
-        "sql": "CREATE TABLE \"public\".\"MovieReview\" (\n  \"body\" text NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"downvotes\" int4 DEFAULT 0 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"isSpoiler\" bool DEFAULT false NOT NULL,\n  \"movieId\" int4 NOT NULL,\n  \"ratings\" jsonb,\n  \"score\" float8 NOT NULL,\n  \"summary\" text NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"upvotes\" int4 DEFAULT 0 NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"MovieReview\" (\n  \"body\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"downvotes\" int4 DEFAULT 0 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"isSpoiler\" bool DEFAULT false NOT NULL,\n  \"movieId\" int4 NOT NULL,\n  \"ratings\" jsonb,\n  \"score\" float8 NOT NULL,\n  \"summary\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"upvotes\" int4 DEFAULT 0 NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -1956,7 +1956,7 @@
     "execute": [
       {
         "description": "create table \"Music\"",
-        "sql": "CREATE TABLE \"public\".\"Music\" (\n  \"albumId\" int4,\n  \"artistId\" int4,\n  \"artistName\" text,\n  \"audioPreviewUrl\" text,\n  \"availableCountries\" text[] DEFAULT '{}' NOT NULL,\n  \"bpm\" float8,\n  \"coverImage\" text,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"deezerArtistId\" text,\n  \"deezerId\" text,\n  \"deezerUpdatedAt\" int4,\n  \"description\" text,\n  \"diskNumber\" int4 DEFAULT 1,\n  \"duration\" int4,\n  \"explicitContentCover\" int4 DEFAULT 0,\n  \"explicitContentLyrics\" int4 DEFAULT 0,\n  \"explicitLyrics\" bool DEFAULT false NOT NULL,\n  \"fans\" int4 DEFAULT 0,\n  \"favorites\" int4 DEFAULT 0 NOT NULL,\n  \"gain\" float8,\n  \"id\" SERIAL NOT NULL,\n  \"images\" jsonb,\n  \"isrc\" text,\n  \"label\" text,\n  \"link\" text,\n  \"listeners\" int4 DEFAULT 0 NOT NULL,\n  \"lyrics\" text,\n  \"lyricsSource\" text,\n  \"md5Image\" text,\n  \"nbTracks\" int4,\n  \"playCount\" int4 DEFAULT 0 NOT NULL,\n  \"popularity\" int4 DEFAULT 0 NOT NULL,\n  \"rank\" int4,\n  \"recordType\" text,\n  \"releaseDate\" timestamp,\n  \"releaseDateDay\" int4,\n  \"releaseDateMonth\" int4,\n  \"releaseDateYear\" int4,\n  \"share\" text,\n  \"sources\" jsonb,\n  \"status\" text DEFAULT 'RELEASED' NOT NULL,\n  \"syncedLyrics\" text,\n  \"titleNative\" text,\n  \"titlePrimary\" text NOT NULL,\n  \"titleSecondary\" text,\n  \"titleVersion\" text,\n  \"trackPosition\" int4,\n  \"type\" text DEFAULT 'TRACK' NOT NULL,\n  \"upc\" text,\n  \"updatedAt\" timestamp NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Music_availableCountries_elem_not_null_83b62632\" CHECK (array_position(\"availableCountries\", NULL) IS NULL),\n  CONSTRAINT \"Music_status_check_f147606c\" CHECK (\"status\" IN ('RELEASED', 'UPCOMING', 'CANCELLED', 'UNKNOWN')),\n  CONSTRAINT \"Music_type_check_010ccd74\" CHECK (\"type\" IN ('TRACK', 'ALBUM'))\n)",
+        "sql": "CREATE TABLE \"public\".\"Music\" (\n  \"albumId\" int4,\n  \"artistId\" int4,\n  \"artistName\" text,\n  \"audioPreviewUrl\" text,\n  \"availableCountries\" text[] DEFAULT '{}' NOT NULL,\n  \"bpm\" float8,\n  \"coverImage\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"deezerArtistId\" text,\n  \"deezerId\" text,\n  \"deezerUpdatedAt\" int4,\n  \"description\" text,\n  \"diskNumber\" int4 DEFAULT 1,\n  \"duration\" int4,\n  \"explicitContentCover\" int4 DEFAULT 0,\n  \"explicitContentLyrics\" int4 DEFAULT 0,\n  \"explicitLyrics\" bool DEFAULT false NOT NULL,\n  \"fans\" int4 DEFAULT 0,\n  \"favorites\" int4 DEFAULT 0 NOT NULL,\n  \"gain\" float8,\n  \"id\" SERIAL NOT NULL,\n  \"images\" jsonb,\n  \"isrc\" text,\n  \"label\" text,\n  \"link\" text,\n  \"listeners\" int4 DEFAULT 0 NOT NULL,\n  \"lyrics\" text,\n  \"lyricsSource\" text,\n  \"md5Image\" text,\n  \"nbTracks\" int4,\n  \"playCount\" int4 DEFAULT 0 NOT NULL,\n  \"popularity\" int4 DEFAULT 0 NOT NULL,\n  \"rank\" int4,\n  \"recordType\" text,\n  \"releaseDate\" timestamptz,\n  \"releaseDateDay\" int4,\n  \"releaseDateMonth\" int4,\n  \"releaseDateYear\" int4,\n  \"share\" text,\n  \"sources\" jsonb,\n  \"status\" text DEFAULT 'RELEASED' NOT NULL,\n  \"syncedLyrics\" text,\n  \"titleNative\" text,\n  \"titlePrimary\" text NOT NULL,\n  \"titleSecondary\" text,\n  \"titleVersion\" text,\n  \"trackPosition\" int4,\n  \"type\" text DEFAULT 'TRACK' NOT NULL,\n  \"upc\" text,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Music_availableCountries_elem_not_null_83b62632\" CHECK (array_position(\"availableCountries\", NULL) IS NULL),\n  CONSTRAINT \"Music_status_check_645a4e8b\" CHECK (\"status\" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')),\n  CONSTRAINT \"Music_type_check_010ccd74\" CHECK (\"type\" IN ('TRACK', 'ALBUM'))\n)",
         "params": []
       }
     ],
@@ -2005,7 +2005,7 @@
     "execute": [
       {
         "description": "create table \"MusicList\"",
-        "sql": "CREATE TABLE \"public\".\"MusicList\" (\n  \"completedAt\" timestamp,\n  \"connections\" jsonb,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"musicId\" int4 NOT NULL,\n  \"notes\" text,\n  \"playCount\" int4 DEFAULT 0 NOT NULL,\n  \"private\" bool DEFAULT false NOT NULL,\n  \"score\" float8,\n  \"startedAt\" timestamp,\n  \"status\" text DEFAULT 'PLANNING' NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"MusicList_status_check_fc73b297\" CHECK (\"status\" IN ('PLANNING', 'LISTENING', 'COMPLETED', 'ON_HOLD', 'DROPPED'))\n)",
+        "sql": "CREATE TABLE \"public\".\"MusicList\" (\n  \"completedAt\" timestamptz,\n  \"connections\" jsonb,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"musicId\" int4 NOT NULL,\n  \"notes\" text,\n  \"playCount\" int4 DEFAULT 0 NOT NULL,\n  \"private\" bool DEFAULT false NOT NULL,\n  \"score\" float8,\n  \"startedAt\" timestamptz,\n  \"status\" text DEFAULT 'PLANNED' NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"MusicList_status_check_eb83cefb\" CHECK (\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED'))\n)",
         "params": []
       }
     ],
@@ -2054,7 +2054,7 @@
     "execute": [
       {
         "description": "create table \"MusicReview\"",
-        "sql": "CREATE TABLE \"public\".\"MusicReview\" (\n  \"body\" text NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"downvotes\" int4 DEFAULT 0 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"isSpoiler\" bool DEFAULT false NOT NULL,\n  \"musicId\" int4 NOT NULL,\n  \"ratings\" jsonb,\n  \"score\" float8 NOT NULL,\n  \"summary\" text NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"upvotes\" int4 DEFAULT 0 NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"MusicReview\" (\n  \"body\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"downvotes\" int4 DEFAULT 0 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"isSpoiler\" bool DEFAULT false NOT NULL,\n  \"musicId\" int4 NOT NULL,\n  \"ratings\" jsonb,\n  \"score\" float8 NOT NULL,\n  \"summary\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"upvotes\" int4 DEFAULT 0 NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -2103,7 +2103,7 @@
     "execute": [
       {
         "description": "create table \"Notification\"",
-        "sql": "CREATE TABLE \"public\".\"Notification\" (\n  \"actionHandler\" text,\n  \"actionPayload\" json,\n  \"actionStatus\" text,\n  \"app\" text NOT NULL,\n  \"category\" text NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"encryptedData\" text NOT NULL,\n  \"encryptedKey\" text NOT NULL,\n  \"expiresAt\" timestamp,\n  \"id\" text NOT NULL,\n  \"isRead\" bool DEFAULT false NOT NULL,\n  \"priority\" text DEFAULT 'NORMAL' NOT NULL,\n  \"readAt\" timestamp,\n  \"type\" text DEFAULT 'INFO' NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Notification_actionStatus_check_75c536f9\" CHECK (\"actionStatus\" IN ('PENDING', 'CONFIRMED', 'REJECTED', 'SUBMITTED', 'EXPIRED')),\n  CONSTRAINT \"Notification_priority_check_72dbae57\" CHECK (\"priority\" IN ('LOW', 'NORMAL', 'HIGH', 'URGENT')),\n  CONSTRAINT \"Notification_type_check_f1d595c4\" CHECK (\"type\" IN ('INFO', 'ACTION_CONFIRM', 'ACTION_INPUT', 'ACTION_SELECT'))\n)",
+        "sql": "CREATE TABLE \"public\".\"Notification\" (\n  \"actionHandler\" text,\n  \"actionPayload\" json,\n  \"actionStatus\" text,\n  \"app\" text NOT NULL,\n  \"category\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"encryptedData\" text NOT NULL,\n  \"encryptedKey\" text NOT NULL,\n  \"expiresAt\" timestamptz,\n  \"id\" text NOT NULL,\n  \"isRead\" bool DEFAULT false NOT NULL,\n  \"priority\" text DEFAULT 'NORMAL' NOT NULL,\n  \"readAt\" timestamptz,\n  \"type\" text DEFAULT 'INFO' NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Notification_actionStatus_check_75c536f9\" CHECK (\"actionStatus\" IN ('PENDING', 'CONFIRMED', 'REJECTED', 'SUBMITTED', 'EXPIRED')),\n  CONSTRAINT \"Notification_priority_check_72dbae57\" CHECK (\"priority\" IN ('LOW', 'NORMAL', 'HIGH', 'URGENT')),\n  CONSTRAINT \"Notification_type_check_f1d595c4\" CHECK (\"type\" IN ('INFO', 'ACTION_CONFIRM', 'ACTION_INPUT', 'ACTION_SELECT'))\n)",
         "params": []
       }
     ],
@@ -2152,7 +2152,7 @@
     "execute": [
       {
         "description": "create table \"OAuthAccessToken\"",
-        "sql": "CREATE TABLE \"public\".\"OAuthAccessToken\" (\n  \"clientId\" text NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"expiresAt\" timestamp NOT NULL,\n  \"id\" text NOT NULL,\n  \"revokedAt\" timestamp,\n  \"scopes\" text[] NOT NULL,\n  \"token\" text NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"OAuthAccessToken_scopes_elem_not_null_de6fcc8e\" CHECK (array_position(\"scopes\", NULL) IS NULL)\n)",
+        "sql": "CREATE TABLE \"public\".\"OAuthAccessToken\" (\n  \"clientId\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"expiresAt\" timestamptz NOT NULL,\n  \"id\" text NOT NULL,\n  \"revokedAt\" timestamptz,\n  \"scopes\" text[] NOT NULL,\n  \"token\" text NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"OAuthAccessToken_scopes_elem_not_null_de6fcc8e\" CHECK (array_position(\"scopes\", NULL) IS NULL)\n)",
         "params": []
       }
     ],
@@ -2201,7 +2201,7 @@
     "execute": [
       {
         "description": "create table \"OAuthAuthorizationCode\"",
-        "sql": "CREATE TABLE \"public\".\"OAuthAuthorizationCode\" (\n  \"clientId\" text NOT NULL,\n  \"code\" text NOT NULL,\n  \"codeChallenge\" text,\n  \"codeChallengeMethod\" text,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"expiresAt\" timestamp NOT NULL,\n  \"id\" text NOT NULL,\n  \"redirectUri\" text NOT NULL,\n  \"scopes\" text[] NOT NULL,\n  \"usedAt\" timestamp,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"OAuthAuthorizationCode_scopes_elem_not_null_de6fcc8e\" CHECK (array_position(\"scopes\", NULL) IS NULL)\n)",
+        "sql": "CREATE TABLE \"public\".\"OAuthAuthorizationCode\" (\n  \"clientId\" text NOT NULL,\n  \"code\" text NOT NULL,\n  \"codeChallenge\" text,\n  \"codeChallengeMethod\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"expiresAt\" timestamptz NOT NULL,\n  \"id\" text NOT NULL,\n  \"redirectUri\" text NOT NULL,\n  \"scopes\" text[] NOT NULL,\n  \"usedAt\" timestamptz,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"OAuthAuthorizationCode_scopes_elem_not_null_de6fcc8e\" CHECK (array_position(\"scopes\", NULL) IS NULL)\n)",
         "params": []
       }
     ],
@@ -2250,7 +2250,7 @@
     "execute": [
       {
         "description": "create table \"OAuthClient\"",
-        "sql": "CREATE TABLE \"public\".\"OAuthClient\" (\n  \"allowedScopes\" text[] DEFAULT ARRAY['identify', 'profile']::text[] NOT NULL,\n  \"clientId\" text NOT NULL,\n  \"clientSecret\" text,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"id\" text NOT NULL,\n  \"isPublic\" bool DEFAULT false NOT NULL,\n  \"isTrusted\" bool DEFAULT false NOT NULL,\n  \"logoUrl\" text,\n  \"name\" text NOT NULL,\n  \"redirectUris\" text[] NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  \"websiteUrl\" text,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"OAuthClient_allowedScopes_elem_not_null_161e9a52\" CHECK (array_position(\"allowedScopes\", NULL) IS NULL),\n  CONSTRAINT \"OAuthClient_redirectUris_elem_not_null_57e7d982\" CHECK (array_position(\"redirectUris\", NULL) IS NULL)\n)",
+        "sql": "CREATE TABLE \"public\".\"OAuthClient\" (\n  \"allowedScopes\" text[] DEFAULT ARRAY['identify', 'profile']::text[] NOT NULL,\n  \"clientId\" text NOT NULL,\n  \"clientSecret\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"id\" text NOT NULL,\n  \"isPublic\" bool DEFAULT false NOT NULL,\n  \"isTrusted\" bool DEFAULT false NOT NULL,\n  \"logoUrl\" text,\n  \"name\" text NOT NULL,\n  \"redirectUris\" text[] NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  \"websiteUrl\" text,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"OAuthClient_allowedScopes_elem_not_null_161e9a52\" CHECK (array_position(\"allowedScopes\", NULL) IS NULL),\n  CONSTRAINT \"OAuthClient_redirectUris_elem_not_null_57e7d982\" CHECK (array_position(\"redirectUris\", NULL) IS NULL)\n)",
         "params": []
       }
     ],
@@ -2299,7 +2299,7 @@
     "execute": [
       {
         "description": "create table \"OAuthConsent\"",
-        "sql": "CREATE TABLE \"public\".\"OAuthConsent\" (\n  \"clientId\" text NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"scopes\" text[] NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"OAuthConsent_scopes_elem_not_null_de6fcc8e\" CHECK (array_position(\"scopes\", NULL) IS NULL)\n)",
+        "sql": "CREATE TABLE \"public\".\"OAuthConsent\" (\n  \"clientId\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"scopes\" text[] NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"OAuthConsent_scopes_elem_not_null_de6fcc8e\" CHECK (array_position(\"scopes\", NULL) IS NULL)\n)",
         "params": []
       }
     ],
@@ -2348,7 +2348,7 @@
     "execute": [
       {
         "description": "create table \"OAuthRefreshToken\"",
-        "sql": "CREATE TABLE \"public\".\"OAuthRefreshToken\" (\n  \"clientId\" text NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"expiresAt\" timestamp NOT NULL,\n  \"id\" text NOT NULL,\n  \"revokedAt\" timestamp,\n  \"scopes\" text[] NOT NULL,\n  \"token\" text NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"OAuthRefreshToken_scopes_elem_not_null_de6fcc8e\" CHECK (array_position(\"scopes\", NULL) IS NULL)\n)",
+        "sql": "CREATE TABLE \"public\".\"OAuthRefreshToken\" (\n  \"clientId\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"expiresAt\" timestamptz NOT NULL,\n  \"id\" text NOT NULL,\n  \"revokedAt\" timestamptz,\n  \"scopes\" text[] NOT NULL,\n  \"token\" text NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"OAuthRefreshToken_scopes_elem_not_null_de6fcc8e\" CHECK (array_position(\"scopes\", NULL) IS NULL)\n)",
         "params": []
       }
     ],
@@ -2397,7 +2397,7 @@
     "execute": [
       {
         "description": "create table \"Other\"",
-        "sql": "CREATE TABLE \"public\".\"Other\" (\n  \"averageScore\" float8,\n  \"bannerImage\" text,\n  \"coverImage\" text,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"creatorId\" text NOT NULL,\n  \"description\" text,\n  \"endDate\" timestamp,\n  \"favorites\" int4 DEFAULT 0 NOT NULL,\n  \"format\" text,\n  \"id\" SERIAL NOT NULL,\n  \"incrementFieldKey\" text,\n  \"isPublished\" bool DEFAULT false NOT NULL,\n  \"popularity\" int4 DEFAULT 0 NOT NULL,\n  \"preUpdateSnapshot\" jsonb,\n  \"progressFields\" jsonb DEFAULT '[]'::jsonb NOT NULL,\n  \"scoreDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"scoredCount\" int4,\n  \"startDate\" timestamp,\n  \"statusDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"statuses\" jsonb DEFAULT '[]'::jsonb NOT NULL,\n  \"titlePrimary\" text NOT NULL,\n  \"titleSecondary\" text,\n  \"totalScoreSum\" int4,\n  \"updatedAt\" timestamp NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"Other\" (\n  \"averageScore\" float8,\n  \"bannerImage\" text,\n  \"coverImage\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"creatorId\" text NOT NULL,\n  \"description\" text,\n  \"endDate\" timestamptz,\n  \"favorites\" int4 DEFAULT 0 NOT NULL,\n  \"format\" text,\n  \"id\" SERIAL NOT NULL,\n  \"incrementFieldKey\" text,\n  \"isPublished\" bool DEFAULT false NOT NULL,\n  \"popularity\" int4 DEFAULT 0 NOT NULL,\n  \"preUpdateSnapshot\" jsonb,\n  \"progressFields\" jsonb DEFAULT '[]'::jsonb NOT NULL,\n  \"scoreDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"scoredCount\" int4,\n  \"startDate\" timestamptz,\n  \"statusDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"titlePrimary\" text NOT NULL,\n  \"titleSecondary\" text,\n  \"totalScoreSum\" int4,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -2446,7 +2446,7 @@
     "execute": [
       {
         "description": "create table \"OtherList\"",
-        "sql": "CREATE TABLE \"public\".\"OtherList\" (\n  \"completedAt\" timestamp,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"notes\" text,\n  \"otherId\" int4 NOT NULL,\n  \"private\" bool DEFAULT false NOT NULL,\n  \"progressValues\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"score\" float8,\n  \"startedAt\" timestamp,\n  \"status\" text DEFAULT 'PLANNING' NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"OtherList\" (\n  \"completedAt\" timestamptz,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"notes\" text,\n  \"otherId\" int4 NOT NULL,\n  \"private\" bool DEFAULT false NOT NULL,\n  \"progressValues\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"score\" float8,\n  \"startedAt\" timestamptz,\n  \"status\" text DEFAULT 'PLANNED' NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"OtherList_status_check_eb83cefb\" CHECK (\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED'))\n)",
         "params": []
       }
     ],
@@ -2495,7 +2495,7 @@
     "execute": [
       {
         "description": "create table \"PassCipher\"",
-        "sql": "CREATE TABLE \"public\".\"PassCipher\" (\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"deletedAt\" timestamp,\n  \"encryptedData\" text NOT NULL,\n  \"encryptedTitle\" text NOT NULL,\n  \"favorite\" bool DEFAULT false NOT NULL,\n  \"id\" text NOT NULL,\n  \"reprompt\" text DEFAULT 'NONE' NOT NULL,\n  \"type\" text DEFAULT 'LOGIN' NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"PassCipher_reprompt_check_3e3cbaa3\" CHECK (\"reprompt\" IN ('NONE', 'REQUIRE_MASTER_PASSWORD')),\n  CONSTRAINT \"PassCipher_type_check_48108769\" CHECK (\"type\" IN ('LOGIN', 'SSH_KEY'))\n)",
+        "sql": "CREATE TABLE \"public\".\"PassCipher\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"deletedAt\" timestamptz,\n  \"encryptedData\" text NOT NULL,\n  \"encryptedTitle\" text NOT NULL,\n  \"favorite\" bool DEFAULT false NOT NULL,\n  \"id\" text NOT NULL,\n  \"reprompt\" text DEFAULT 'NONE' NOT NULL,\n  \"type\" text DEFAULT 'LOGIN' NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"PassCipher_reprompt_check_3e3cbaa3\" CHECK (\"reprompt\" IN ('NONE', 'REQUIRE_MASTER_PASSWORD')),\n  CONSTRAINT \"PassCipher_type_check_48108769\" CHECK (\"type\" IN ('LOGIN', 'SSH_KEY'))\n)",
         "params": []
       }
     ],
@@ -2544,7 +2544,7 @@
     "execute": [
       {
         "description": "create table \"Passkey\"",
-        "sql": "CREATE TABLE \"public\".\"Passkey\" (\n  \"counter\" int4 NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"name\" text,\n  \"publicKey\" text NOT NULL,\n  \"transports\" text[] NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Passkey_transports_elem_not_null_59ec2476\" CHECK (array_position(\"transports\", NULL) IS NULL)\n)",
+        "sql": "CREATE TABLE \"public\".\"Passkey\" (\n  \"counter\" int4 NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"name\" text,\n  \"publicKey\" text NOT NULL,\n  \"transports\" text[] NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Passkey_transports_elem_not_null_59ec2476\" CHECK (array_position(\"transports\", NULL) IS NULL)\n)",
         "params": []
       }
     ],
@@ -2593,7 +2593,7 @@
     "execute": [
       {
         "description": "create table \"Person\"",
-        "sql": "CREATE TABLE \"public\".\"Person\" (\n  \"age\" int4,\n  \"aniDBId\" int4,\n  \"anilistId\" int4,\n  \"bangumiId\" int4,\n  \"birthPlace\" text,\n  \"bloodType\" text,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"dateOfBirth\" timestamp,\n  \"dateOfBirthDay\" int4,\n  \"dateOfBirthMonth\" int4,\n  \"dateOfBirthYear\" int4,\n  \"dateOfDeath\" timestamp,\n  \"dateOfDeathDay\" int4,\n  \"dateOfDeathMonth\" int4,\n  \"dateOfDeathYear\" int4,\n  \"deezerId\" text,\n  \"deezerLink\" text,\n  \"deezerShare\" text,\n  \"description\" text,\n  \"familyName\" text,\n  \"favorites\" int4 DEFAULT 0,\n  \"gender\" text,\n  \"givenName\" text,\n  \"hasRadio\" bool DEFAULT false,\n  \"homeTown\" text,\n  \"id\" SERIAL NOT NULL,\n  \"image\" text,\n  \"images\" jsonb,\n  \"imdbId\" text,\n  \"language\" text,\n  \"lastFmUrl\" text,\n  \"malId\" int4,\n  \"nameAlternative\" text[] NOT NULL,\n  \"nameNative\" text,\n  \"namePrimary\" text NOT NULL,\n  \"nbAlbum\" int4 DEFAULT 0,\n  \"nbFan\" int4 DEFAULT 0,\n  \"primaryOccupations\" text[] DEFAULT '{}' NOT NULL,\n  \"sources\" jsonb,\n  \"spotifyId\" text,\n  \"tmdbId\" int4,\n  \"tvDBId\" int4,\n  \"updatedAt\" timestamp NOT NULL,\n  \"yearsActive\" int4[] DEFAULT '{}' NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Person_nameAlternative_elem_not_null_6901947b\" CHECK (array_position(\"nameAlternative\", NULL) IS NULL),\n  CONSTRAINT \"Person_primaryOccupations_elem_not_null_4cbee081\" CHECK (array_position(\"primaryOccupations\", NULL) IS NULL),\n  CONSTRAINT \"Person_yearsActive_elem_not_null_c2919d98\" CHECK (array_position(\"yearsActive\", NULL) IS NULL)\n)",
+        "sql": "CREATE TABLE \"public\".\"Person\" (\n  \"age\" int4,\n  \"aniDBId\" int4,\n  \"anilistId\" int4,\n  \"bangumiId\" int4,\n  \"birthPlace\" text,\n  \"bloodType\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"dateOfBirth\" timestamptz,\n  \"dateOfBirthDay\" int4,\n  \"dateOfBirthMonth\" int4,\n  \"dateOfBirthYear\" int4,\n  \"dateOfDeath\" timestamptz,\n  \"dateOfDeathDay\" int4,\n  \"dateOfDeathMonth\" int4,\n  \"dateOfDeathYear\" int4,\n  \"deezerId\" text,\n  \"deezerLink\" text,\n  \"deezerShare\" text,\n  \"description\" text,\n  \"familyName\" text,\n  \"favorites\" int4 DEFAULT 0,\n  \"gender\" text,\n  \"givenName\" text,\n  \"hasRadio\" bool DEFAULT false,\n  \"homeTown\" text,\n  \"id\" SERIAL NOT NULL,\n  \"image\" text,\n  \"images\" jsonb,\n  \"imdbId\" text,\n  \"language\" text,\n  \"lastFmUrl\" text,\n  \"malId\" int4,\n  \"nameAlternative\" text[] NOT NULL,\n  \"nameNative\" text,\n  \"namePrimary\" text NOT NULL,\n  \"nbAlbum\" int4 DEFAULT 0,\n  \"nbFan\" int4 DEFAULT 0,\n  \"primaryOccupations\" text[] DEFAULT '{}' NOT NULL,\n  \"sources\" jsonb,\n  \"spotifyId\" text,\n  \"tmdbId\" int4,\n  \"tvDBId\" int4,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"yearsActive\" int4[] DEFAULT '{}' NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Person_nameAlternative_elem_not_null_6901947b\" CHECK (array_position(\"nameAlternative\", NULL) IS NULL),\n  CONSTRAINT \"Person_primaryOccupations_elem_not_null_4cbee081\" CHECK (array_position(\"primaryOccupations\", NULL) IS NULL),\n  CONSTRAINT \"Person_yearsActive_elem_not_null_c2919d98\" CHECK (array_position(\"yearsActive\", NULL) IS NULL)\n)",
         "params": []
       }
     ],
@@ -2642,7 +2642,7 @@
     "execute": [
       {
         "description": "create table \"ReviewVote\"",
-        "sql": "CREATE TABLE \"public\".\"ReviewVote\" (\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"reviewId\" int4 NOT NULL,\n  \"reviewType\" text NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  \"voteType\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"ReviewVote_reviewType_check_b4279e38\" CHECK (\"reviewType\" IN ('ANIME', 'MANGA', 'MOVIE', 'TV', 'GAME', 'BOOK', 'MUSIC', 'MUSIC_ALBUM', 'MUSIC_TRACK', 'OTHER', 'UNKNOWN')),\n  CONSTRAINT \"ReviewVote_voteType_check_a85dbebc\" CHECK (\"voteType\" IN ('UPVOTE', 'DOWNVOTE'))\n)",
+        "sql": "CREATE TABLE \"public\".\"ReviewVote\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"reviewId\" int4 NOT NULL,\n  \"reviewType\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  \"voteType\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"ReviewVote_reviewType_check_b4279e38\" CHECK (\"reviewType\" IN ('ANIME', 'MANGA', 'MOVIE', 'TV', 'GAME', 'BOOK', 'MUSIC', 'MUSIC_ALBUM', 'MUSIC_TRACK', 'OTHER', 'UNKNOWN')),\n  CONSTRAINT \"ReviewVote_voteType_check_a85dbebc\" CHECK (\"voteType\" IN ('UPVOTE', 'DOWNVOTE'))\n)",
         "params": []
       }
     ],
@@ -2691,7 +2691,7 @@
     "execute": [
       {
         "description": "create table \"SearchHistory\"",
-        "sql": "CREATE TABLE \"public\".\"SearchHistory\" (\n  \"category\" text DEFAULT 'general' NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"encryptedQuery\" text,\n  \"id\" text NOT NULL,\n  \"thumbnail\" text,\n  \"title\" text,\n  \"type\" text DEFAULT 'query' NOT NULL,\n  \"url\" text,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"SearchHistory\" (\n  \"category\" text DEFAULT 'general' NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"encryptedQuery\" text,\n  \"id\" text NOT NULL,\n  \"thumbnail\" text,\n  \"title\" text,\n  \"type\" text DEFAULT 'query' NOT NULL,\n  \"url\" text,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -2740,7 +2740,7 @@
     "execute": [
       {
         "description": "create table \"Studio\"",
-        "sql": "CREATE TABLE \"public\".\"Studio\" (\n  \"alFavorites\" int4,\n  \"aniDBId\" int4,\n  \"anilistId\" int4,\n  \"bangumiId\" int4,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"favorites\" int4 DEFAULT 0,\n  \"id\" SERIAL NOT NULL,\n  \"isAnimationStudio\" bool DEFAULT false NOT NULL,\n  \"malId\" int4,\n  \"name\" text NOT NULL,\n  \"siteUrl\" text,\n  \"sources\" jsonb,\n  \"tvDBId\" int4,\n  \"updatedAt\" timestamp NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"Studio\" (\n  \"alFavorites\" int4,\n  \"aniDBId\" int4,\n  \"anilistId\" int4,\n  \"bangumiId\" int4,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"favorites\" int4 DEFAULT 0,\n  \"id\" SERIAL NOT NULL,\n  \"isAnimationStudio\" bool DEFAULT false NOT NULL,\n  \"malId\" int4,\n  \"name\" text NOT NULL,\n  \"siteUrl\" text,\n  \"sources\" jsonb,\n  \"tvDBId\" int4,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -2789,7 +2789,7 @@
     "execute": [
       {
         "description": "create table \"Tag\"",
-        "sql": "CREATE TABLE \"public\".\"Tag\" (\n  \"category\" text,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"id\" SERIAL NOT NULL,\n  \"name\" text NOT NULL,\n  \"slug\" text NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"Tag\" (\n  \"category\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"id\" SERIAL NOT NULL,\n  \"name\" text NOT NULL,\n  \"slug\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -2838,7 +2838,7 @@
     "execute": [
       {
         "description": "create table \"Tv\"",
-        "sql": "CREATE TABLE \"public\".\"Tv\" (\n  \"ageRating\" text,\n  \"ageRatingGuide\" text,\n  \"averageRuntime\" int4,\n  \"averageScore\" float8,\n  \"awards\" text,\n  \"bannerImage\" text,\n  \"broadcastDays\" text[] NOT NULL,\n  \"broadcastTime\" text,\n  \"contentRatings\" jsonb,\n  \"countryOfOrigin\" text,\n  \"coverImage\" text,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"episodeCount\" int4,\n  \"favorites\" int4 DEFAULT 0 NOT NULL,\n  \"firstAiredDay\" int4,\n  \"firstAiredMonth\" int4,\n  \"firstAiredYear\" int4,\n  \"id\" SERIAL NOT NULL,\n  \"images\" jsonb,\n  \"imdbId\" text,\n  \"imdbRating\" float8,\n  \"imdbUpdatedAt\" int4,\n  \"imdbVotes\" int4,\n  \"isAdult\" bool DEFAULT false NOT NULL,\n  \"lastAiredDay\" int4,\n  \"lastAiredMonth\" int4,\n  \"lastAiredYear\" int4,\n  \"locked\" bool DEFAULT false NOT NULL,\n  \"networks\" text[] NOT NULL,\n  \"originalLanguage\" text,\n  \"popularity\" int4 DEFAULT 0 NOT NULL,\n  \"rottenTomatoesScore\" float8,\n  \"scoreDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"scoredCount\" int4,\n  \"seasonCount\" int4,\n  \"showType\" text,\n  \"simklId\" int4,\n  \"sources\" jsonb,\n  \"status\" text DEFAULT 'UNKNOWN' NOT NULL,\n  \"statusDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"synonyms\" text[] NOT NULL,\n  \"titleNative\" text,\n  \"titlePrimary\" text NOT NULL,\n  \"titleSecondary\" text,\n  \"tmdbId\" int4,\n  \"totalScoreSum\" int4,\n  \"trailers\" jsonb,\n  \"tvDBId\" int4,\n  \"tvdbUpdatedAt\" int4,\n  \"tvmazeId\" int4,\n  \"tvmazeRating\" float8,\n  \"tvmazeUpdatedAt\" int4,\n  \"updatedAt\" timestamp NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Tv_broadcastDays_elem_not_null_5dd622b6\" CHECK (array_position(\"broadcastDays\", NULL) IS NULL),\n  CONSTRAINT \"Tv_networks_elem_not_null_a20a6562\" CHECK (array_position(\"networks\", NULL) IS NULL),\n  CONSTRAINT \"Tv_status_check_bf3dd5fe\" CHECK (\"status\" IN ('RETURNING_SERIES', 'ENDED', 'CANCELED', 'IN_PRODUCTION', 'UPCOMING', 'UNKNOWN')),\n  CONSTRAINT \"Tv_synonyms_elem_not_null_1b00b9ae\" CHECK (array_position(\"synonyms\", NULL) IS NULL)\n)",
+        "sql": "CREATE TABLE \"public\".\"Tv\" (\n  \"ageRating\" text,\n  \"ageRatingGuide\" text,\n  \"averageRuntime\" int4,\n  \"averageScore\" float8,\n  \"awards\" text,\n  \"bannerImage\" text,\n  \"broadcastDays\" text[] NOT NULL,\n  \"broadcastTime\" text,\n  \"contentRatings\" jsonb,\n  \"countryOfOrigin\" text,\n  \"coverImage\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"episodeCount\" int4,\n  \"favorites\" int4 DEFAULT 0 NOT NULL,\n  \"firstAiredDay\" int4,\n  \"firstAiredMonth\" int4,\n  \"firstAiredYear\" int4,\n  \"id\" SERIAL NOT NULL,\n  \"images\" jsonb,\n  \"imdbId\" text,\n  \"imdbRating\" float8,\n  \"imdbUpdatedAt\" int4,\n  \"imdbVotes\" int4,\n  \"isAdult\" bool DEFAULT false NOT NULL,\n  \"lastAiredDay\" int4,\n  \"lastAiredMonth\" int4,\n  \"lastAiredYear\" int4,\n  \"locked\" bool DEFAULT false NOT NULL,\n  \"networks\" text[] NOT NULL,\n  \"originalLanguage\" text,\n  \"popularity\" int4 DEFAULT 0 NOT NULL,\n  \"rottenTomatoesScore\" float8,\n  \"scoreDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"scoredCount\" int4,\n  \"seasonCount\" int4,\n  \"showType\" text,\n  \"simklId\" int4,\n  \"sources\" jsonb,\n  \"status\" text DEFAULT 'UNKNOWN' NOT NULL,\n  \"statusDistribution\" jsonb DEFAULT '{}'::jsonb NOT NULL,\n  \"synonyms\" text[] NOT NULL,\n  \"titleNative\" text,\n  \"titlePrimary\" text NOT NULL,\n  \"titleSecondary\" text,\n  \"tmdbId\" int4,\n  \"totalScoreSum\" int4,\n  \"trailers\" jsonb,\n  \"tvDBId\" int4,\n  \"tvdbUpdatedAt\" int4,\n  \"tvmazeId\" int4,\n  \"tvmazeRating\" float8,\n  \"tvmazeUpdatedAt\" int4,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Tv_broadcastDays_elem_not_null_5dd622b6\" CHECK (array_position(\"broadcastDays\", NULL) IS NULL),\n  CONSTRAINT \"Tv_networks_elem_not_null_a20a6562\" CHECK (array_position(\"networks\", NULL) IS NULL),\n  CONSTRAINT \"Tv_status_check_645a4e8b\" CHECK (\"status\" IN ('RELEASED', 'RELEASING', 'UPCOMING', 'CANCELLED', 'HIATUS', 'UNKNOWN')),\n  CONSTRAINT \"Tv_synonyms_elem_not_null_1b00b9ae\" CHECK (array_position(\"synonyms\", NULL) IS NULL)\n)",
         "params": []
       }
     ],
@@ -2887,7 +2887,7 @@
     "execute": [
       {
         "description": "create table \"TvEpisode\"",
-        "sql": "CREATE TABLE \"public\".\"TvEpisode\" (\n  \"airDate\" timestamp,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"duration\" int4,\n  \"edEnd\" int4,\n  \"edStart\" int4,\n  \"episodeNumber\" int4 NOT NULL,\n  \"episodeType\" text,\n  \"id\" SERIAL NOT NULL,\n  \"isFiller\" bool DEFAULT false NOT NULL,\n  \"isRecap\" bool DEFAULT false NOT NULL,\n  \"opEnd\" int4,\n  \"opStart\" int4,\n  \"rating\" float8,\n  \"recapEnd\" int4,\n  \"recapStart\" int4,\n  \"seasonId\" int4,\n  \"seasonNumber\" int4 NOT NULL,\n  \"skipTimestamps\" jsonb,\n  \"sources\" jsonb,\n  \"streamingLinks\" jsonb,\n  \"thumbnail\" text,\n  \"titleNative\" text,\n  \"titlePrimary\" text NOT NULL,\n  \"titleSecondary\" text,\n  \"tvId\" int4 NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"TvEpisode\" (\n  \"airDate\" timestamptz,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"duration\" int4,\n  \"edEnd\" int4,\n  \"edStart\" int4,\n  \"episodeNumber\" int4 NOT NULL,\n  \"episodeType\" text,\n  \"id\" SERIAL NOT NULL,\n  \"isFiller\" bool DEFAULT false NOT NULL,\n  \"isRecap\" bool DEFAULT false NOT NULL,\n  \"opEnd\" int4,\n  \"opStart\" int4,\n  \"rating\" float8,\n  \"recapEnd\" int4,\n  \"recapStart\" int4,\n  \"seasonId\" int4,\n  \"seasonNumber\" int4 NOT NULL,\n  \"skipTimestamps\" jsonb,\n  \"sources\" jsonb,\n  \"streamingLinks\" jsonb,\n  \"thumbnail\" text,\n  \"titleNative\" text,\n  \"titlePrimary\" text NOT NULL,\n  \"titleSecondary\" text,\n  \"tvId\" int4 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -2936,7 +2936,7 @@
     "execute": [
       {
         "description": "create table \"TvList\"",
-        "sql": "CREATE TABLE \"public\".\"TvList\" (\n  \"completedAt\" timestamp,\n  \"connections\" jsonb,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"notes\" text,\n  \"private\" bool DEFAULT false NOT NULL,\n  \"progress\" int4 DEFAULT 0 NOT NULL,\n  \"rewatchHistory\" jsonb,\n  \"rewatched\" int4 DEFAULT 0 NOT NULL,\n  \"score\" float8,\n  \"startedAt\" timestamp,\n  \"status\" text DEFAULT 'PLANNING' NOT NULL,\n  \"tvId\" int4 NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"TvList_status_check_ee24f4a5\" CHECK (\"status\" IN ('WATCHING', 'PLANNING', 'COMPLETED', 'ON_HOLD', 'DROPPED'))\n)",
+        "sql": "CREATE TABLE \"public\".\"TvList\" (\n  \"completedAt\" timestamptz,\n  \"connections\" jsonb,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"notes\" text,\n  \"private\" bool DEFAULT false NOT NULL,\n  \"progress\" int4 DEFAULT 0 NOT NULL,\n  \"rewatchHistory\" jsonb,\n  \"rewatched\" int4 DEFAULT 0 NOT NULL,\n  \"score\" float8,\n  \"startedAt\" timestamptz,\n  \"status\" text DEFAULT 'PLANNED' NOT NULL,\n  \"tvId\" int4 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"TvList_status_check_eb83cefb\" CHECK (\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED'))\n)",
         "params": []
       }
     ],
@@ -2985,7 +2985,7 @@
     "execute": [
       {
         "description": "create table \"TvReview\"",
-        "sql": "CREATE TABLE \"public\".\"TvReview\" (\n  \"body\" text NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"downvotes\" int4 DEFAULT 0 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"isSpoiler\" bool DEFAULT false NOT NULL,\n  \"ratings\" jsonb,\n  \"score\" float8 NOT NULL,\n  \"seasonId\" int4,\n  \"summary\" text NOT NULL,\n  \"tvId\" int4 NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"upvotes\" int4 DEFAULT 0 NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"TvReview\" (\n  \"body\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"downvotes\" int4 DEFAULT 0 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"isSpoiler\" bool DEFAULT false NOT NULL,\n  \"ratings\" jsonb,\n  \"score\" float8 NOT NULL,\n  \"seasonId\" int4,\n  \"summary\" text NOT NULL,\n  \"tvId\" int4 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"upvotes\" int4 DEFAULT 0 NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -3034,7 +3034,7 @@
     "execute": [
       {
         "description": "create table \"TvSeason\"",
-        "sql": "CREATE TABLE \"public\".\"TvSeason\" (\n  \"airDateDay\" int4,\n  \"airDateMonth\" int4,\n  \"airDateYear\" int4,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"episodeCount\" int4,\n  \"id\" SERIAL NOT NULL,\n  \"posterImage\" text,\n  \"seasonNumber\" int4 NOT NULL,\n  \"sources\" jsonb,\n  \"titlePrimary\" text,\n  \"titleSecondary\" text,\n  \"tmdbSeasonId\" int4,\n  \"trailers\" jsonb,\n  \"tvId\" int4 NOT NULL,\n  \"tvdbSeasonId\" int4,\n  \"updatedAt\" timestamp NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"TvSeason\" (\n  \"airDateDay\" int4,\n  \"airDateMonth\" int4,\n  \"airDateYear\" int4,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"episodeCount\" int4,\n  \"id\" SERIAL NOT NULL,\n  \"posterImage\" text,\n  \"seasonNumber\" int4 NOT NULL,\n  \"sources\" jsonb,\n  \"titlePrimary\" text,\n  \"titleSecondary\" text,\n  \"tmdbSeasonId\" int4,\n  \"trailers\" jsonb,\n  \"tvId\" int4 NOT NULL,\n  \"tvdbSeasonId\" int4,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -3083,7 +3083,7 @@
     "execute": [
       {
         "description": "create table \"TvSeasonProgress\"",
-        "sql": "CREATE TABLE \"public\".\"TvSeasonProgress\" (\n  \"completedAt\" timestamp,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"notes\" text,\n  \"progress\" int4 DEFAULT 0 NOT NULL,\n  \"rewatchHistory\" jsonb,\n  \"rewatched\" int4 DEFAULT 0 NOT NULL,\n  \"score\" float8,\n  \"seasonId\" int4 NOT NULL,\n  \"seasonNumber\" int4 NOT NULL,\n  \"startedAt\" timestamp,\n  \"status\" text DEFAULT 'PLANNING' NOT NULL,\n  \"tvListId\" int4 NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"TvSeasonProgress_status_check_ee24f4a5\" CHECK (\"status\" IN ('WATCHING', 'PLANNING', 'COMPLETED', 'ON_HOLD', 'DROPPED'))\n)",
+        "sql": "CREATE TABLE \"public\".\"TvSeasonProgress\" (\n  \"completedAt\" timestamptz,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"notes\" text,\n  \"progress\" int4 DEFAULT 0 NOT NULL,\n  \"rewatchHistory\" jsonb,\n  \"rewatched\" int4 DEFAULT 0 NOT NULL,\n  \"score\" float8,\n  \"seasonId\" int4 NOT NULL,\n  \"seasonNumber\" int4 NOT NULL,\n  \"startedAt\" timestamptz,\n  \"status\" text DEFAULT 'PLANNED' NOT NULL,\n  \"tvListId\" int4 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"TvSeasonProgress_status_check_eb83cefb\" CHECK (\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED'))\n)",
         "params": []
       }
     ],
@@ -3132,7 +3132,7 @@
     "execute": [
       {
         "description": "create table \"TvWatchedEpisode\"",
-        "sql": "CREATE TABLE \"public\".\"TvWatchedEpisode\" (\n  \"episodeId\" int4,\n  \"episodeNumber\" int4 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"seasonNumber\" int4 NOT NULL,\n  \"tvListId\" int4 NOT NULL,\n  \"watchedAt\" timestamp DEFAULT (now()) NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"TvWatchedEpisode\" (\n  \"episodeId\" int4,\n  \"episodeNumber\" int4 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"seasonNumber\" int4 NOT NULL,\n  \"tvListId\" int4 NOT NULL,\n  \"watchedAt\" timestamptz DEFAULT (now()) NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -3181,7 +3181,7 @@
     "execute": [
       {
         "description": "create table \"User\"",
-        "sql": "CREATE TABLE \"public\".\"User\" (\n  \"TOTPEnabled\" bool DEFAULT false NOT NULL,\n  \"TOTPSecret\" text,\n  \"backupCodes\" text[] DEFAULT '{}' NOT NULL,\n  \"badges\" int4[] DEFAULT '{}' NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"customization\" json,\n  \"email\" text NOT NULL,\n  \"emailMfaEnabled\" bool DEFAULT false NOT NULL,\n  \"encryptedPrivateKey\" text,\n  \"id\" text NOT NULL,\n  \"passwordChangedAt\" timestamp,\n  \"passwordHash\" text NOT NULL,\n  \"permissions\" int4[] DEFAULT '{}' NOT NULL,\n  \"publicKey\" text,\n  \"settings\" json,\n  \"updatedAt\" timestamp NOT NULL,\n  \"username\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"User_backupCodes_elem_not_null_f106ce84\" CHECK (array_position(\"backupCodes\", NULL) IS NULL),\n  CONSTRAINT \"User_badges_elem_not_null_6fdc1213\" CHECK (array_position(\"badges\", NULL) IS NULL),\n  CONSTRAINT \"User_permissions_elem_not_null_318e2952\" CHECK (array_position(\"permissions\", NULL) IS NULL)\n)",
+        "sql": "CREATE TABLE \"public\".\"User\" (\n  \"TOTPEnabled\" bool DEFAULT false NOT NULL,\n  \"TOTPSecret\" text,\n  \"backupCodes\" text[] DEFAULT '{}' NOT NULL,\n  \"badges\" int4[] DEFAULT '{}' NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"customization\" json,\n  \"email\" text NOT NULL,\n  \"emailMfaEnabled\" bool DEFAULT false NOT NULL,\n  \"encryptedPrivateKey\" text,\n  \"id\" text NOT NULL,\n  \"passwordChangedAt\" timestamptz,\n  \"passwordHash\" text NOT NULL,\n  \"permissions\" int4[] DEFAULT '{}' NOT NULL,\n  \"publicKey\" text,\n  \"settings\" json,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"username\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"User_backupCodes_elem_not_null_f106ce84\" CHECK (array_position(\"backupCodes\", NULL) IS NULL),\n  CONSTRAINT \"User_badges_elem_not_null_6fdc1213\" CHECK (array_position(\"badges\", NULL) IS NULL),\n  CONSTRAINT \"User_permissions_elem_not_null_318e2952\" CHECK (array_position(\"permissions\", NULL) IS NULL)\n)",
         "params": []
       }
     ],
@@ -3230,7 +3230,7 @@
     "execute": [
       {
         "description": "create table \"UserBlock\"",
-        "sql": "CREATE TABLE \"public\".\"UserBlock\" (\n  \"blockedId\" text NOT NULL,\n  \"blockerId\" text NOT NULL,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "sql": "CREATE TABLE \"public\".\"UserBlock\" (\n  \"blockedId\" text NOT NULL,\n  \"blockerId\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
         "params": []
       }
     ],
@@ -3279,7 +3279,7 @@
     "execute": [
       {
         "description": "create table \"UserStats\"",
-        "sql": "CREATE TABLE \"public\".\"UserStats\" (\n  \"completedCount\" int4 DEFAULT 0 NOT NULL,\n  \"countryDistribution\" json,\n  \"createdAt\" timestamp DEFAULT (now()) NOT NULL,\n  \"currentCount\" int4 DEFAULT 0 NOT NULL,\n  \"customStats\" json,\n  \"droppedCount\" int4 DEFAULT 0 NOT NULL,\n  \"formatDistribution\" json,\n  \"genreDistribution\" json,\n  \"id\" text NOT NULL,\n  \"meanScore\" float8 DEFAULT 0 NOT NULL,\n  \"mediaType\" text NOT NULL,\n  \"onHoldCount\" int4 DEFAULT 0 NOT NULL,\n  \"planningCount\" int4 DEFAULT 0 NOT NULL,\n  \"releaseYearDistribution\" json,\n  \"scoreDistribution\" json,\n  \"staffDistribution\" json,\n  \"standardDeviation\" float8 DEFAULT 0 NOT NULL,\n  \"studioDistribution\" json,\n  \"tagDistribution\" json,\n  \"totalCount\" int4 DEFAULT 0 NOT NULL,\n  \"totalRewatches\" int4 DEFAULT 0 NOT NULL,\n  \"totalTimeMinutes\" int8 DEFAULT '0'::int8 NOT NULL,\n  \"totalUnits\" int4 DEFAULT 0 NOT NULL,\n  \"updatedAt\" timestamp NOT NULL,\n  \"userId\" text NOT NULL,\n  \"voiceActorDistribution\" json,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"UserStats_mediaType_check_37ab4091\" CHECK (\"mediaType\" IN ('ANIME', 'MANGA', 'MOVIE', 'TV', 'GAME', 'BOOK', 'MUSIC', 'MUSIC_ALBUM', 'MUSIC_TRACK', 'OTHER', 'UNKNOWN'))\n)",
+        "sql": "CREATE TABLE \"public\".\"UserStats\" (\n  \"completedCount\" int4 DEFAULT 0 NOT NULL,\n  \"countryDistribution\" json,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"currentCount\" int4 DEFAULT 0 NOT NULL,\n  \"customStats\" json,\n  \"droppedCount\" int4 DEFAULT 0 NOT NULL,\n  \"formatDistribution\" json,\n  \"genreDistribution\" json,\n  \"id\" text NOT NULL,\n  \"meanScore\" float8 DEFAULT 0 NOT NULL,\n  \"mediaType\" text NOT NULL,\n  \"onHoldCount\" int4 DEFAULT 0 NOT NULL,\n  \"planningCount\" int4 DEFAULT 0 NOT NULL,\n  \"releaseYearDistribution\" json,\n  \"scoreDistribution\" json,\n  \"staffDistribution\" json,\n  \"standardDeviation\" float8 DEFAULT 0 NOT NULL,\n  \"studioDistribution\" json,\n  \"tagDistribution\" json,\n  \"totalCount\" int4 DEFAULT 0 NOT NULL,\n  \"totalRewatches\" int4 DEFAULT 0 NOT NULL,\n  \"totalTimeMinutes\" int8 DEFAULT '0'::int8 NOT NULL,\n  \"totalUnits\" int4 DEFAULT 0 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  \"voiceActorDistribution\" json,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"UserStats_mediaType_check_37ab4091\" CHECK (\"mediaType\" IN ('ANIME', 'MANGA', 'MOVIE', 'TV', 'GAME', 'BOOK', 'MUSIC', 'MUSIC_ALBUM', 'MUSIC_TRACK', 'OTHER', 'UNKNOWN'))\n)",
         "params": []
       }
     ],

@@ -1,4 +1,4 @@
-import { prisma } from '@IRIS/database'
+import { prisma } from '@Iris/db'
 import { NotFound } from '../../lib/errors'
 
 export class KiroshiSettingsServ {
