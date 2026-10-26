@@ -88,10 +88,10 @@
 
 
 TODO AFTER UPDATNG TO LATEST
-  run migrate-passwords
-  run vault:migrate-keys
-  run update-description-urls
-  run db:prepare-prisma8
-  run db:unify-status
+  run migrate-passwords  #done
+  run vault:migrate-keys # done
+  run update-description-urls  #done
+  run db:prepare-prisma8   #done
+  run db:unify-status  #done
 
   update oauth callback urls https://[url]/carina/connections/[provider]/callback

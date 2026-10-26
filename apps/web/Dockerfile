@@ -3,6 +3,11 @@
 # ==========================================
 FROM oven/bun:latest AS base
 
+# Shim npm/npx to bun for tools (e.g. Next.js) expecting them in PATH
+RUN printf '#!/bin/sh\nexec bun "$@"\n' > /usr/local/bin/npm && chmod +x /usr/local/bin/npm && \
+    printf '#!/bin/sh\nexec bun x "$@"\n' > /usr/local/bin/npx && chmod +x /usr/local/bin/npx
+
+
 # ==========================================
 # Prune Stage (Turborepo)
 # ==========================================

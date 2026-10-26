@@ -294,6 +294,7 @@ export async function migrateUserVault(
       const newEncData = encryptVaultData(item.data, newVaultKey)
       await prisma.orm.public.PassCipher
         .where({ id: item.id })
+        .select('id')
         .update({
           encryptedTitle: newEncTitle,
           encryptedData: newEncData,
@@ -305,6 +306,7 @@ export async function migrateUserVault(
   // 7. Update user keys in DB
   await prisma.orm.public.User
     .where({ id: user.id })
+    .select('id')
     .update({
       publicKey: newPublicKey,
       encryptedPrivateKey: newEncryptedPrivateKey,
@@ -339,6 +341,7 @@ async function main() {
 
   if (usernameArg) {
     await migrateUserVault(usernameArg, oldPassArg, newPassArg)
+    await prisma.close()
     process.exit(0)
   }
 
@@ -364,16 +367,19 @@ ${c.bold}${c.cyan}╔═══════════════════�
   const targetUser = await promptLine(`Enter username to migrate (or 'q' to quit): `)
   if (targetUser.toLowerCase() === 'q' || !targetUser.trim()) {
     console.log('Exiting.')
+    await prisma.close()
     process.exit(0)
   }
 
   await migrateUserVault(targetUser.trim())
+  await prisma.close()
   process.exit(0)
 }
 
 if (import.meta.main) {
-  main().catch((err) => {
+  main().catch(async (err) => {
     console.error('Migration failed:', err)
+    await prisma.close()
     process.exit(1)
   })
 }

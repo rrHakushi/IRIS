@@ -8,6 +8,9 @@ import { getLocale, getMessages } from "next-intl/server"
 import { Providers } from "@/components/providers"
 import { Metadata } from "next"
 
+export const dynamic = "force-dynamic"
+
+
 const oxaniumHeading = Oxanium({
   subsets: ["latin"],
   variable: "--font-heading",

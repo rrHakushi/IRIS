@@ -117,21 +117,14 @@ ${c.bold}${c.cyan}╔═══════════════════�
 `)
 
   console.log(`${c.gray}Connecting to database...${c.reset}`)
-  const users = await prisma.user.findMany({
-    select: {
-      id: true,
-      username: true,
-      email: true,
-      passwordHash: true,
-    },
-    orderBy: {
-      createdAt: 'asc',
-    },
-  })
+  const users = await prisma.orm.public.User
+    .select('id', 'username', 'email', 'passwordHash')
+    .orderBy((u) => u.createdAt.asc())
+    .all()
 
   if (users.length === 0) {
     console.log(`${c.yellow}No users found in database.${c.reset}`)
-    await prisma.$disconnect()
+    await prisma.close()
     return
   }
 
@@ -163,7 +156,7 @@ ${c.bold}${c.cyan}╔═══════════════════�
       if (normalized === 'q') {
         console.log(`\n${c.yellow}Exiting migration...${c.reset}`)
         printSummary(updatedCount, skippedCount, users.length)
-        await prisma.$disconnect()
+        await prisma.close()
         process.exit(0)
       }
 
@@ -208,10 +201,10 @@ ${c.bold}${c.cyan}╔═══════════════════�
             algorithm: 'argon2id',
           })
 
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { passwordHash: hashedPassword },
-          })
+          await prisma.orm.public.User
+            .where({ id: user.id })
+            .select('id')
+            .update({ passwordHash: hashedPassword })
 
           console.log(`${c.green}✓ Password successfully updated and verified for ${user.username}!${c.reset}\n`)
           updatedCount++
@@ -225,7 +218,7 @@ ${c.bold}${c.cyan}╔═══════════════════�
   }
 
   printSummary(updatedCount, skippedCount, users.length)
-  await prisma.$disconnect()
+  await prisma.close()
 }
 
 function printSummary(updated: number, skipped: number, total: number) {
@@ -241,6 +234,6 @@ ${c.bold}${c.cyan}╔═══════════════════�
 
 main().catch(async (err) => {
   console.error(`\n${c.red}${c.bold}Migration Error:${c.reset}`, err)
-  await prisma.$disconnect()
+  await prisma.close()
   process.exit(1)
 })
