@@ -73,7 +73,7 @@ export class MediaPreviewSyncer {
       'Unknown Anime'
     const titleSecondary = item.title.romaji || item.title.english || null
     const titleNative = item.title.native || null
-    const coverImage = item.coverImage?.medium || item.coverImage?.large || null
+    const coverImage = item.coverImage?.extraLarge || item.coverImage?.large || item.coverImage?.medium || null
     const format = mapAnimeFormat(item.format)
     const seasonSeason = (
       item.season && ['WINTER', 'SPRING', 'SUMMER', 'FALL'].includes(item.season)
@@ -147,7 +147,7 @@ export class MediaPreviewSyncer {
       'Unknown Manga'
     const titleSecondary = item.title.romaji || item.title.english || null
     const titleNative = item.title.native || null
-    const coverImage = item.coverImage?.medium || item.coverImage?.large || null
+    const coverImage = item.coverImage?.extraLarge || item.coverImage?.large || item.coverImage?.medium || null
     const format = mapMangaFormat(item.format)
 
     const existing = await prisma.orm.public.Manga.where({ anilistId: item.id })

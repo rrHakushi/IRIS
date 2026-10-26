@@ -164,7 +164,7 @@ export class MediaEntitySyncer {
     for (const edge of characters.edges) {
       if (!edge?.node?.name?.full) continue
       const anilistCharId = edge.node.id
-      const charImage = edge.node.image?.medium || edge.node.image?.large || null
+      const charImage = edge.node.image?.large || edge.node.image?.medium || null
 
       try {
         let char = await prisma.orm.public.Character.where({ anilistId: anilistCharId })
@@ -201,7 +201,7 @@ export class MediaEntitySyncer {
         if (voiceActors && Array.isArray(voiceActors) && voiceActors.length > 0) {
           for (const va of voiceActors) {
             if (!va?.name?.full) continue
-            const vaImage = va.image?.medium || va.image?.large || null
+            const vaImage = va.image?.large || va.image?.medium || null
             let person = await prisma.orm.public.Person.where({ anilistId: va.id })
               .select('id', 'image')
               .first()
@@ -289,7 +289,7 @@ export class MediaEntitySyncer {
     for (const edge of staff.edges) {
       if (!edge?.node?.name?.full) continue
       const anilistPersonId = edge.node.id
-      const staffImage = edge.node.image?.medium || edge.node.image?.large || null
+      const staffImage = edge.node.image?.large || edge.node.image?.medium || null
 
       try {
         let person = await prisma.orm.public.Person.where({ anilistId: anilistPersonId })
@@ -392,7 +392,7 @@ export class MediaEntitySyncer {
         titleSecondary: alData.title.romaji || alData.title.english || undefined,
         titleNative: alData.title.native || undefined,
         description: alData.description || undefined,
-        coverImage: alData.coverImage?.medium || alData.coverImage?.large || undefined,
+        coverImage: alData.coverImage?.extraLarge || alData.coverImage?.large || alData.coverImage?.medium || undefined,
         bannerImage: alData.bannerImage || undefined,
         episodeCount: alData.episodes || undefined,
         alAverageScore: alData.averageScore || undefined,
@@ -415,7 +415,7 @@ export class MediaEntitySyncer {
         }
       }
 
-      // Sync Characters, Voice Actors, and Staff with medium image (fallback to large)
+      // Sync Characters, Voice Actors, and Staff with large image (fallback to medium)
       await this.syncMediaCharacters('ANIME', animeId, alData.characters)
       await this.syncMediaStaff('ANIME', animeId, alData.staff)
 
@@ -458,7 +458,7 @@ export class MediaEntitySyncer {
                 titlePrimary: targetTitle,
                 titleSecondary: edge.node.title?.romaji || edge.node.title?.english || null,
                 titleNative: edge.node.title?.native || null,
-                coverImage: edge.node.coverImage?.medium || edge.node.coverImage?.large || null,
+                coverImage: edge.node.coverImage?.extraLarge || edge.node.coverImage?.large || edge.node.coverImage?.medium || null,
                 format: mapAnimeFormat(edge.node.format),
                 synonyms: [],
               })
@@ -479,7 +479,7 @@ export class MediaEntitySyncer {
                 titlePrimary: targetTitle,
                 titleSecondary: edge.node.title?.romaji || edge.node.title?.english || null,
                 titleNative: edge.node.title?.native || null,
-                coverImage: edge.node.coverImage?.medium || edge.node.coverImage?.large || null,
+                coverImage: edge.node.coverImage?.extraLarge || edge.node.coverImage?.large || edge.node.coverImage?.medium || null,
                 format: mapMangaFormat(edge.node.format),
                 synonyms: [],
               })
@@ -576,7 +576,7 @@ export class MediaEntitySyncer {
         titleSecondary: alData.title.romaji || alData.title.english || undefined,
         titleNative: alData.title.native || undefined,
         description: alData.description || undefined,
-        coverImage: alData.coverImage?.medium || alData.coverImage?.large || undefined,
+        coverImage: alData.coverImage?.extraLarge || alData.coverImage?.large || alData.coverImage?.medium || undefined,
         bannerImage: alData.bannerImage || undefined,
         chapterCount: alData.chapters || undefined,
         volumeCount: alData.volumes || undefined,
@@ -599,7 +599,7 @@ export class MediaEntitySyncer {
         }
       }
 
-      // Sync Characters and Staff with medium image (fallback to large)
+      // Sync Characters and Staff with large image (fallback to medium)
       await this.syncMediaCharacters('MANGA', mangaId, alData.characters)
       await this.syncMediaStaff('MANGA', mangaId, alData.staff)
 
@@ -642,7 +642,7 @@ export class MediaEntitySyncer {
                 titlePrimary: targetTitle,
                 titleSecondary: edge.node.title?.romaji || edge.node.title?.english || null,
                 titleNative: edge.node.title?.native || null,
-                coverImage: edge.node.coverImage?.medium || edge.node.coverImage?.large || null,
+                coverImage: edge.node.coverImage?.extraLarge || edge.node.coverImage?.large || edge.node.coverImage?.medium || null,
                 format: mapAnimeFormat(edge.node.format),
                 synonyms: [],
               })
@@ -663,7 +663,7 @@ export class MediaEntitySyncer {
                 titlePrimary: targetTitle,
                 titleSecondary: edge.node.title?.romaji || edge.node.title?.english || null,
                 titleNative: edge.node.title?.native || null,
-                coverImage: edge.node.coverImage?.medium || edge.node.coverImage?.large || null,
+                coverImage: edge.node.coverImage?.extraLarge || edge.node.coverImage?.large || edge.node.coverImage?.medium || null,
                 format: mapMangaFormat(edge.node.format),
                 synonyms: [],
               })

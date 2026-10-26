@@ -172,7 +172,7 @@ export class AniListAdapter extends BaseConnectionAdapter {
       id: String(data.Viewer.id),
       username: data.Viewer.name,
       displayName: data.Viewer.name,
-      avatarUrl: data.Viewer.avatar?.medium || data.Viewer.avatar?.large,
+      avatarUrl: data.Viewer.avatar?.large || data.Viewer.avatar?.medium,
       profileUrl: data.Viewer.siteUrl || `https://anilist.co/user/${data.Viewer.name}`,
     };
   }
@@ -221,8 +221,9 @@ export class AniListAdapter extends BaseConnectionAdapter {
               native
             }
             coverImage {
-              medium
+              extraLarge
               large
+              medium
               color
             }
             bannerImage
@@ -257,8 +258,9 @@ export class AniListAdapter extends BaseConnectionAdapter {
             native?: string;
           };
           coverImage?: {
-            medium?: string;
+            extraLarge?: string;
             large?: string;
+            medium?: string;
             color?: string;
           };
           bannerImage?: string;

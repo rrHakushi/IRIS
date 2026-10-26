@@ -309,12 +309,12 @@ describe('Borealis: Media Relations Cascade & Deezer Queueing', () => {
     expect(enqueuedJobs.length).toBe(0)
   })
 
-  it('prefers medium coverImage over large when both are available from AniList relation', async () => {
+  it('prefers large coverImage over medium when both are available from AniList relation', async () => {
     createdMangaStubs = []
     anilistProvider.fetchAnime = async () =>
       ({
         id: 206949,
-        title: { userPreferred: 'Nia Liston Medium Test' },
+        title: { userPreferred: 'Nia Liston Large Test' },
         relations: {
           edges: [
             {
@@ -323,7 +323,7 @@ describe('Borealis: Media Relations Cascade & Deezer Queueing', () => {
                 id: 999999,
                 type: 'MANGA',
                 format: 'MANGA',
-                title: { userPreferred: 'Nia Liston Medium Manga' },
+                title: { userPreferred: 'Nia Liston Large Manga' },
                 coverImage: {
                   medium: 'https://example.com/nia-medium.jpg',
                   large: 'https://example.com/nia-large.jpg',
@@ -337,7 +337,7 @@ describe('Borealis: Media Relations Cascade & Deezer Queueing', () => {
     const result = await MediaEntitySyncer.syncAnime(603, 206949)
     expect(result.synced).toBe(true)
     expect(createdMangaStubs.length).toBe(1)
-    expect(createdMangaStubs[0]!.coverImage).toBe('https://example.com/nia-medium.jpg')
+    expect(createdMangaStubs[0]!.coverImage).toBe('https://example.com/nia-large.jpg')
   })
 
   it('exposes AniList character and staff fetching methods', () => {

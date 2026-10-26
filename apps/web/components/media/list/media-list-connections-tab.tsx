@@ -193,8 +193,9 @@ async function fetchRemoteMediaDetails(
       ) {
         const item = res.data.results[0]
         const coverUrl =
-          item.coverImage?.medium ||
+          item.coverImage?.extraLarge ||
           item.coverImage?.large ||
+          item.coverImage?.medium ||
           (typeof item.coverImage === "string" ? item.coverImage : null)
         const primaryTitle =
           item.title?.userPreferred ||
@@ -253,8 +254,9 @@ async function fetchRemoteMediaDetails(
       ) {
         const item = res.data.results[0]
         const coverUrl =
-          item.coverImage?.medium ||
+          item.coverImage?.extraLarge ||
           item.coverImage?.large ||
+          item.coverImage?.medium ||
           (typeof item.coverImage === "string" ? item.coverImage : null)
         const primaryTitle =
           item.title?.userPreferred ||
@@ -311,8 +313,9 @@ async function fetchRemoteMediaDetails(
                   romaji
                 }
                 coverImage {
-                  medium
+                  extraLarge
                   large
+                  medium
                 }
               }
             }
@@ -323,7 +326,11 @@ async function fetchRemoteMediaDetails(
       const json = await resp.json()
       const m = json?.data?.Media
       if (!m) return null
-      const coverUrl = m.coverImage?.medium || m.coverImage?.large || null
+      const coverUrl =
+        m.coverImage?.extraLarge ||
+        m.coverImage?.large ||
+        m.coverImage?.medium ||
+        null
       return {
         title: m.title?.userPreferred || m.title?.english || m.title?.romaji,
         cover: coverUrl,
@@ -358,8 +365,9 @@ async function fetchRemoteMediaDetails(
       ) {
         const item = res.data.results[0]
         const coverUrl =
-          item.coverImage?.medium ||
+          item.coverImage?.extraLarge ||
           item.coverImage?.large ||
+          item.coverImage?.medium ||
           (typeof item.coverImage === "string" ? item.coverImage : null)
         const primaryTitle =
           item.title?.userPreferred ||
@@ -904,8 +912,9 @@ export function MediaListConnectionsTab({
                       ? r.title?.english
                       : r.title?.romaji || null,
                   coverImage:
-                    r.coverImage?.medium ||
+                    r.coverImage?.extraLarge ||
                     r.coverImage?.large ||
+                    r.coverImage?.medium ||
                     (typeof r.coverImage === "string" ? r.coverImage : null),
                   releaseYear: r.releaseYear ?? r.year ?? null,
                   format: r.format ?? null,
@@ -948,8 +957,9 @@ export function MediaListConnectionsTab({
                     romaji
                   }
                   coverImage {
-                    medium
+                    extraLarge
                     large
+                    medium
                   }
                 }
               }
@@ -980,7 +990,11 @@ export function MediaListConnectionsTab({
                 m.title?.english && m.title?.english !== m.title?.userPreferred
                   ? m.title?.english
                   : m.title?.romaji || null,
-              coverImage: m.coverImage?.medium || m.coverImage?.large || null,
+              coverImage:
+                m.coverImage?.extraLarge ||
+                m.coverImage?.large ||
+                m.coverImage?.medium ||
+                null,
               releaseYear: m.seasonYear ?? null,
               format: m.format ?? null,
               episodes: m.episodes ?? m.chapters ?? null,

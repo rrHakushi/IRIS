@@ -265,7 +265,7 @@ export class BorealisExternalSearchServ {
         )
         for (const item of items) {
           try {
-            const charImage = item.image?.medium || item.image?.large || null
+            const charImage = item.image?.large || item.image?.medium || null
             let existing = await prisma.orm.public.Character
               .where({ anilistId: item.id })
               .first()
@@ -304,7 +304,7 @@ export class BorealisExternalSearchServ {
         )
         for (const item of items) {
           try {
-            const staffImage = item.image?.medium || item.image?.large || null
+            const staffImage = item.image?.large || item.image?.medium || null
             let existing = await prisma.orm.public.Person
               .where({ anilistId: item.id })
               .first()
