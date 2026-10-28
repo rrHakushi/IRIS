@@ -1,0 +1,124 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Zinc Monochrome Palette from globals.css (.dark) -->
+  <Color x:Key="BgDarkColor">#09090B</Color>
+  <Color x:Key="CardBgColor">#18181B</Color>
+  <Color x:Key="SurfaceBgColor">#27272A</Color>
+  <Color x:Key="BorderDarkColor">#27272A</Color>
+  <Color x:Key="BorderSubtleColor">#222226</Color>
+  <Color x:Key="InputBgColor">#1E1E22</Color>
+  <Color x:Key="TextPrimaryColor">#FAFAFA</Color>
+  <Color x:Key="TextMutedColor">#A1A1AA</Color>
+  <Color x:Key="PrimaryAccentColor">#FAFAFA</Color>
+  <Color x:Key="PrimaryAccentHoverColor">#E4E4E7</Color>
+  <Color x:Key="PrimaryAccentTextColor">#09090B</Color>
+  <Color x:Key="StatusTrackingColor">#10B981</Color>
+  <Color x:Key="StatusPausedColor">#EAB308</Color>
+  <Color x:Key="StatusStoppedColor">#71717A</Color>
+  <Color x:Key="DestructiveColor">#EF4444</Color>
+  <Color x:Key="DestructiveBgColor">#2A1417</Color>
+
+  <SolidColorBrush x:Key="BgDarkBrush" Color="{StaticResource BgDarkColor}" />
+  <SolidColorBrush x:Key="CardBgBrush" Color="{StaticResource CardBgColor}" />
+  <SolidColorBrush x:Key="SurfaceBgBrush" Color="{StaticResource SurfaceBgColor}" />
+  <SolidColorBrush x:Key="BorderDarkBrush" Color="{StaticResource BorderDarkColor}" />
+  <SolidColorBrush x:Key="BorderSubtleBrush" Color="{StaticResource BorderSubtleColor}" />
+  <SolidColorBrush x:Key="InputBgBrush" Color="{StaticResource InputBgColor}" />
+  <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
+  <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}" />
+  <SolidColorBrush x:Key="PrimaryAccentBrush" Color="{StaticResource PrimaryAccentColor}" />
+  <SolidColorBrush x:Key="PrimaryAccentHoverBrush" Color="{StaticResource PrimaryAccentHoverColor}" />
+  <SolidColorBrush x:Key="PrimaryAccentTextBrush" Color="{StaticResource PrimaryAccentTextColor}" />
+  <SolidColorBrush x:Key="StatusTrackingBrush" Color="{StaticResource StatusTrackingColor}" />
+  <SolidColorBrush x:Key="StatusPausedBrush" Color="{StaticResource StatusPausedColor}" />
+  <SolidColorBrush x:Key="StatusStoppedBrush" Color="{StaticResource StatusStoppedColor}" />
+  <SolidColorBrush x:Key="DestructiveBrush" Color="{StaticResource DestructiveColor}" />
+  <SolidColorBrush x:Key="DestructiveBgBrush" Color="{StaticResource DestructiveBgColor}" />
+
+  <!-- Tabler Icon StreamGeometries (Clean 24x24 vector stroke paths) -->
+  <StreamGeometry x:Key="IconSearch">M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0 M21 21l-6 -6</StreamGeometry>
+  <StreamGeometry x:Key="IconPlus">M12 5l0 14 M5 12l14 0</StreamGeometry>
+  <StreamGeometry x:Key="IconX">M18 6l-12 12 M6 6l12 12</StreamGeometry>
+  <StreamGeometry x:Key="IconArrowLeft">M5 12l14 0 M5 12l6 6 M5 12l6 -6</StreamGeometry>
+  <StreamGeometry x:Key="IconSettings">M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0</StreamGeometry>
+  <StreamGeometry x:Key="IconSync">M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -5v5h5 M4 13a8.1 8.1 0 0 0 15.5 2m.5 5v-5h-5</StreamGeometry>
+  <StreamGeometry x:Key="IconLogout">M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2 M9 12h12l-3 -3 M18 15l3 -3</StreamGeometry>
+  <StreamGeometry x:Key="IconTrash">M4 7l16 0 M10 11l0 6 M14 11l0 6 M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12 M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3</StreamGeometry>
+  <StreamGeometry x:Key="IconFolder">M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2</StreamGeometry>
+  <StreamGeometry x:Key="IconCheck">M5 12l5 5l10 -10</StreamGeometry>
+  <StreamGeometry x:Key="IconClock">M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0 M12 7v5l3 3</StreamGeometry>
+  <StreamGeometry x:Key="IconDeviceGamepad">M2 6m0 2a2 2 0 0 1 2 -2h16a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-16a2 2 0 0 1 -2 -2z M6 12h4m-2 -2v4 M15 11l0 .01 M18 13l0 .01</StreamGeometry>
+  <StreamGeometry x:Key="IconUser">M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0 M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2</StreamGeometry>
+  <StreamGeometry x:Key="IconEdit">M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4 M13.5 6.5l4 4</StreamGeometry>
+  <StreamGeometry x:Key="IconRefresh">M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -5v5h5 M4 13a8.1 8.1 0 0 0 15.5 2m.5 5v-5h-5</StreamGeometry>
+  <StreamGeometry x:Key="IconHourglass">M6.5 7h11 M6.5 17h11 M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z</StreamGeometry>
+
+  <!-- Global PathIcon ControlTheme: ensures Tabler 24x24 stroke geometries render as clean 2px line art -->
+  <ControlTheme x:Key="{x:Type PathIcon}" TargetType="PathIcon">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}">
+          <Viewbox Width="{TemplateBinding Width}" Height="{TemplateBinding Height}">
+            <Path Data="{TemplateBinding Data}"
+                  Fill="{x:Null}"
+                  Stroke="{TemplateBinding Foreground}"
+                  StrokeThickness="2"
+                  StrokeLineCap="Round"
+                  StrokeJoin="Round"
+                  Stretch="Uniform" />
+          </Viewbox>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <!-- Global Clean Button ControlTheme Override (bypasses ShadUI HoverBackground bug completely) -->
+  <ControlTheme x:Key="{x:Type Button}" TargetType="Button">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Background" Value="{StaticResource SurfaceBgBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource BorderDarkBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="12,6" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border x:Name="PART_ButtonBorder"
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                CornerRadius="{TemplateBinding CornerRadius}"
+                Padding="{TemplateBinding Padding}">
+          <ContentPresenter x:Name="PART_ContentPresenter"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                            RecognizesAccessKey="True" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover /template/ Border#PART_ButtonBorder">
+      <Setter Property="Background" Value="#3F3F46" />
+      <Setter Property="BorderBrush" Value="{StaticResource TextMutedBrush}" />
+    </Style>
+
+    <Style Selector="^:pressed">
+      <Setter Property="RenderTransform" Value="scale(0.97)" />
+    </Style>
+
+    <Style Selector="^:disabled">
+      <Setter Property="Opacity" Value="0.5" />
+    </Style>
+  </ControlTheme>
+
+</ResourceDictionary>

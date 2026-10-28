@@ -108,6 +108,12 @@ public class GameMediaInfo
     [JsonPropertyName("titleSecondary")]
     public string? TitleSecondary { get; set; }
 
+    [JsonPropertyName("titleNative")]
+    public string? TitleNative { get; set; }
+
+    [JsonPropertyName("synonyms")]
+    public List<string>? Synonyms { get; set; }
+
     [JsonPropertyName("coverImage")]
     public string? CoverImage { get; set; }
 
@@ -121,9 +127,9 @@ public class GameMediaInfo
     public double? AverageScore { get; set; }
 
     [JsonIgnore]
-    public string DisplayTitle => string.IsNullOrWhiteSpace(TitlePrimary)
-        ? (TitleSecondary ?? $"Game #{Id}")
-        : TitlePrimary;
+    public string DisplayTitle => !string.IsNullOrWhiteSpace(TitlePrimary)
+        ? TitlePrimary
+        : (!string.IsNullOrWhiteSpace(TitleSecondary) ? TitleSecondary : (!string.IsNullOrWhiteSpace(TitleNative) ? TitleNative : $"Game #{Id}"));
 }
 
 public class GameListEntryInfo
@@ -244,4 +250,97 @@ public class IncrementResponse
 
     [JsonPropertyName("entry")]
     public GameListEntryInfo? Entry { get; set; }
+}
+
+public class UpsertGameRequest
+{
+    [JsonPropertyName("status")]
+    public string? Status { get; set; }
+
+    [JsonPropertyName("progress")]
+    public int? Progress { get; set; }
+
+    [JsonPropertyName("score")]
+    public double? Score { get; set; }
+
+    [JsonPropertyName("notes")]
+    public string? Notes { get; set; }
+}
+
+public class UserProfileDetails
+{
+    [JsonPropertyName("displayName")]
+    public string? DisplayName { get; set; }
+
+    [JsonPropertyName("avatarUrl")]
+    public string? AvatarUrl { get; set; }
+
+    [JsonPropertyName("avatarFrame")]
+    public string? AvatarFrame { get; set; }
+
+    [JsonPropertyName("nameplateUrl")]
+    public string? NameplateUrl { get; set; }
+
+    [JsonPropertyName("sidebarBannerUrl")]
+    public string? SidebarBannerUrl { get; set; }
+
+    [JsonPropertyName("sidebarCardBackgroundUrl")]
+    public string? SidebarCardBackgroundUrl { get; set; }
+
+    [JsonPropertyName("bannerUrl")]
+    public string? BannerUrl { get; set; }
+}
+
+public class UserCustomization
+{
+    [JsonPropertyName("displayName")]
+    public string? DisplayName { get; set; }
+
+    [JsonPropertyName("avatar")]
+    public string? Avatar { get; set; }
+
+    [JsonPropertyName("avatarUrl")]
+    public string? AvatarUrl { get; set; }
+
+    [JsonPropertyName("avatarFrame")]
+    public string? AvatarFrame { get; set; }
+
+    [JsonPropertyName("nameplate")]
+    public string? Nameplate { get; set; }
+
+    [JsonPropertyName("nameplateUrl")]
+    public string? NameplateUrl { get; set; }
+
+    [JsonPropertyName("sidebarCardBackgroundUrl")]
+    public string? SidebarCardBackgroundUrl { get; set; }
+
+    [JsonPropertyName("bannerUrl")]
+    public string? BannerUrl { get; set; }
+
+    [JsonPropertyName("profile")]
+    public UserProfileDetails? Profile { get; set; }
+}
+
+public class UserAccountDetail
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("username")]
+    public string Username { get; set; } = string.Empty;
+
+    [JsonPropertyName("email")]
+    public string Email { get; set; } = string.Empty;
+
+    [JsonPropertyName("customization")]
+    public UserCustomization? Customization { get; set; }
+}
+
+public class CurrentUserResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("user")]
+    public UserAccountDetail? User { get; set; }
 }

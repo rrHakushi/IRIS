@@ -82,7 +82,6 @@
 
 # Borealis Extra
     - Add support for other list
-    - https://github.com/accntech/shad-ui  for the UI
 
 
 
@@ -94,4 +93,4 @@ TODO AFTER UPDATNG TO LATEST
   run db:prepare-prisma8   #done
   run db:unify-status  #done
 
-  update oauth callback urls https://[url]/carina/connections/[provider]/callback
+  update oauth callback urls https://[url]/carina/connections/[provider]/callback #done

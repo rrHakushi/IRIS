@@ -159,9 +159,28 @@ public class BorealisApiClient
         return result ?? throw new Exception("Failed to check quick connect status");
     }
 
-    public async Task<UserGameListResponse> GetUserGameListAsync(string? username = null)
+    public async Task<CurrentUserResponse?> GetCurrentUserAsync()
     {
-        var url = $"{BaseUrl}/borealis/lists/games?limit=100";
+        var url = $"{BaseUrl}/carina/users/me";
+        var response = await _http.GetAsync(url);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<CurrentUserResponse>(json, JsonOptions);
+    }
+
+    public async Task<UserGameListResponse> GetUserGameListAsync(string? username = null, string? query = null, int limit = 250, int page = 1)
+    {
+        var urlBuilder = new StringBuilder($"{BaseUrl}/borealis/lists/games?limit={limit}&page={page}");
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            urlBuilder.Append($"&q={Uri.EscapeDataString(query.Trim())}");
+        }
+
+        var url = urlBuilder.ToString();
         var response = await _http.GetAsync(url);
         if (!response.IsSuccessStatusCode)
         {
@@ -173,14 +192,14 @@ public class BorealisApiClient
         return JsonSerializer.Deserialize<UserGameListResponse>(json, JsonOptions) ?? new UserGameListResponse();
     }
 
-    public async Task<SearchGamesResponse> SearchGamesAsync(string query)
+    public async Task<SearchGamesResponse> SearchGamesAsync(string query, bool external = true)
     {
-        if (string.IsNullOrWhiteSpace(query) || query.Trim().Length < 2)
+        if (string.IsNullOrWhiteSpace(query) || query.Trim().Length < 1)
         {
             return new SearchGamesResponse { Success = true };
         }
 
-        var url = $"{BaseUrl}/borealis/search?q={Uri.EscapeDataString(query.Trim())}&category=games&limit=30";
+        var url = $"{BaseUrl}/borealis/search?q={Uri.EscapeDataString(query.Trim())}&category=games&limit=30&external={external.ToString().ToLowerInvariant()}";
         var response = await _http.GetAsync(url);
         if (!response.IsSuccessStatusCode)
         {
@@ -189,6 +208,16 @@ public class BorealisApiClient
 
         var json = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<SearchGamesResponse>(json, JsonOptions) ?? new SearchGamesResponse();
+    }
+
+    public async Task<bool> UpsertGameListEntryAsync(int gameId, UpsertGameRequest request)
+    {
+        var url = $"{BaseUrl}/borealis/lists/games/{gameId}";
+        var payload = JsonSerializer.Serialize(request, JsonOptions);
+        using var content = new StringContent(payload, Encoding.UTF8, "application/json");
+
+        var response = await _http.PostAsync(url, content);
+        return response.IsSuccessStatusCode;
     }
 
     public async Task<IncrementResponse> IncrementGameProgressAsync(string username, int gameId, int count = 1)
