@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react"
 import { useSession } from "@/context/session-context"
-import { useListSidebarConfig } from "@/config/sidebars/listSidebarConfig"
+import { useBorealisSidebarConfig } from "@/config/sidebars/borealisSidebarConfig"
 import { IrisSidebar } from "@/components/navigation/iris-sidebar"
 import { useIrisSidebar } from "@/components/navigation/sidebar-provider"
 import { SidebarInset, useSidebar } from "@workspace/ui/components/sidebar"
@@ -17,7 +17,7 @@ export default function IrisListNavProvider({
   children,
 }: IrisListNavProviderProps): React.JSX.Element {
   const { data: session } = useSession()
-  const rawConfig = useListSidebarConfig(session)
+  const rawConfig = useBorealisSidebarConfig(session)
   const { position } = useIrisSidebar()
   const { state } = useSidebar()
 

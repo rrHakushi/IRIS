@@ -9,7 +9,7 @@ import {
   IconUsers,
 } from "@tabler/icons-react"
 
-export interface AccountUserSidebarOptions {
+export interface CarinaUserSidebarOptions {
   username?: string
   userId?: string
   activeTab?: string
@@ -17,7 +17,7 @@ export interface AccountUserSidebarOptions {
   t?: (key: string) => string
 }
 
-export const ACCOUNT_USER_TABS = [
+export const CARINA_USER_TABS = [
   { id: "overview", defaultName: "Overview", icon: IconLayoutDashboard },
   { id: "activity", defaultName: "Activity", icon: IconPlayerPlay },
   { id: "lists", defaultName: "Lists", icon: IconList },
@@ -26,13 +26,13 @@ export const ACCOUNT_USER_TABS = [
   { id: "stats", defaultName: "Stats", icon: IconChartBar },
 ] as const
 
-export function getAccountUserSidebarConfig({
+export function getCarinaUserSidebarConfig({
   username,
   userId,
   activeTab = "overview",
   onSelectTab,
   t,
-}: AccountUserSidebarOptions): SidebarConfig {
+}: CarinaUserSidebarOptions): SidebarConfig {
   const tr = (key: string, fallback: string): string => {
     if (!t) return fallback
     try {
@@ -53,7 +53,7 @@ export function getAccountUserSidebarConfig({
     {
       section: "#$Phone",
       dataKey: "mobile-dock",
-      items: ACCOUNT_USER_TABS.slice(0, 4).map((tab, idx) => {
+      items: CARINA_USER_TABS.slice(0, 4).map((tab, idx) => {
         const Icon = tab.icon
         const isSelected = activeTab === tab.id
         return {
@@ -75,7 +75,7 @@ export function getAccountUserSidebarConfig({
     {
       section: "",
       dataKey: "account-user-tabs",
-      items: ACCOUNT_USER_TABS.map((tab, idx) => {
+      items: CARINA_USER_TABS.map((tab, idx) => {
         const Icon = tab.icon
         const isSelected = activeTab === tab.id
         return {
@@ -92,8 +92,8 @@ export function getAccountUserSidebarConfig({
   ]
 }
 
-export function useAccountUserSidebarConfig(
-  options: AccountUserSidebarOptions
+export function useCarinaUserSidebarConfig(
+  options: CarinaUserSidebarOptions
 ): SidebarConfig {
   const onSelectTabRef = React.useRef(options.onSelectTab)
   onSelectTabRef.current = options.onSelectTab
@@ -107,7 +107,7 @@ export function useAccountUserSidebarConfig(
 
   return useMemo(
     () =>
-      getAccountUserSidebarConfig({
+      getCarinaUserSidebarConfig({
         username: options.username,
         userId: options.userId,
         activeTab: options.activeTab,
@@ -117,3 +117,9 @@ export function useAccountUserSidebarConfig(
     [options.username, options.userId, options.activeTab, stableOnSelectTab]
   )
 }
+
+// Aliases for backwards compatibility
+export type AccountUserSidebarOptions = CarinaUserSidebarOptions
+export const ACCOUNT_USER_TABS = CARINA_USER_TABS
+export const getAccountUserSidebarConfig = getCarinaUserSidebarConfig
+export const useAccountUserSidebarConfig = useCarinaUserSidebarConfig

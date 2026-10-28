@@ -14,7 +14,7 @@ import { FavoritesTab } from "./tabs/favorites-tab"
 import { StatsTab } from "./tabs/stats-tab"
 import { ProfileFriendsTab } from "./tabs/friends-tab"
 import { useTranslations } from "next-intl"
-import { useAccountUserSidebarConfig } from "@/config/sidebars"
+import { useCarinaUserSidebarConfig } from "@/config/sidebars"
 import { SidebarInset, useSidebar } from "@workspace/ui/components/sidebar"
 import { cn } from "@workspace/ui/lib/utils"
 import type { UserProfileCustomization } from "@IRIS/shared"
@@ -59,7 +59,7 @@ export function UserProfileView({
   }, [])
 
   // Account custom sidebar config generated from @/config/sidebars
-  const accountSidebarConfig = useAccountUserSidebarConfig({
+  const accountSidebarConfig = useCarinaUserSidebarConfig({
     username: user.username,
     userId: user.id,
     activeTab,

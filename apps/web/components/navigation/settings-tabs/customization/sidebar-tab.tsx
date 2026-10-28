@@ -98,9 +98,14 @@ export function SidebarSettingsTab({
   // Multi-app navigation configurations registry
   const baseAppConfigs = useAllAppSidebarConfigs(session)
 
-  // Resolve currently active app with priority: pathname match -> active config match -> default 'iris-list'
+  // Resolve currently active app with priority: pathname match -> active config match -> default 'borealis'
   const defaultActiveAppId = useMemo(() => {
-    if (pathname.startsWith("/iris-pass")) return "iris-pass"
+    if (pathname.startsWith("/akaromi") || pathname.startsWith("/iris-pass"))
+      return "akaromi"
+    if (pathname.startsWith("/kiroshi") || pathname.startsWith("/iris-search"))
+      return "kiroshi"
+    if (pathname.startsWith("/carina") || pathname.startsWith("/iris-account"))
+      return "carina"
     if (currentActiveConfig && currentActiveConfig.length > 0) {
       const match = baseAppConfigs.find((app) =>
         app.config.some((sec) =>
@@ -109,7 +114,7 @@ export function SidebarSettingsTab({
       )
       if (match) return match.appId
     }
-    return "iris-list"
+    return "borealis"
   }, [pathname, currentActiveConfig, baseAppConfigs])
 
   const [activeAppId, setActiveAppId] = useState<string>(defaultActiveAppId)

@@ -24,7 +24,7 @@ import { elysia } from "@/lib/elysia"
 let cachedServarrProviders: string[] | null = null
 let inFlightConnectionsPromise: Promise<string[] | null> | null = null
 
-export function getListSidebarConfig(
+export function getBorealisSidebarConfig(
   session: Session | null,
   t: (key: string) => string,
   connectedServarr: string[] = []
@@ -171,63 +171,62 @@ export function getListSidebarConfig(
           icon: <IconCalendar className="size-5" />,
           position: 3,
         },
-        ...(userId
-          ? [
-              {
-                label: t("myLists"),
-                dataKey: "phone-my-lists",
-                icon: <IconList className="size-5" />,
-                position: 4,
-                children: [
-                  {
-                    label: t("anime"),
-                    href: `/borealis/lists/${userId}/anime`,
-                    icon: <IconTheater className="size-4" />,
-                  },
-                  {
-                    label: t("manga"),
-                    href: `/borealis/lists/${userId}/manga`,
-                    icon: <IconBook className="size-4" />,
-                  },
-                  {
-                    label: t("movie"),
-                    href: `/borealis/lists/${userId}/movie`,
-                    icon: <IconMovie className="size-4" />,
-                  },
-                  {
-                    label: t("tv"),
-                    href: `/borealis/lists/${userId}/tv`,
-                    icon: <IconDeviceTv className="size-4" />,
-                  },
-                  {
-                    label: t("game"),
-                    href: `/borealis/lists/${userId}/game`,
-                    icon: <IconDeviceGamepad className="size-4" />,
-                  },
-                  {
-                    label: t("music"),
-                    href: `/borealis/lists/${userId}/music`,
-                    icon: <IconMusic className="size-4" />,
-                  },
-                  {
-                    label: t("book"),
-                    href: `/borealis/lists/${userId}/book`,
-                    icon: <IconBook2 className="size-4" />,
-                  },
-                  {
-                    label: t("other"),
-                    href: `/borealis/lists/${userId}/other`,
-                    icon: <IconList className="size-4" />,
-                  },
-                  {
-                    label: t("customLists"),
-                    href: `/borealis/lists/${userId}/custom-lists`,
-                    icon: <IconListDetails className="size-4" />,
-                  },
-                ],
-              },
-            ]
-          : []),
+        {
+          label: t("myLists"),
+          dataKey: "phone-my-lists",
+          href: userId ? `/borealis/lists/${userId}/anime` : "/borealis/browse",
+          icon: <IconList className="size-5" />,
+          position: 4,
+          children: userId
+            ? [
+                {
+                  label: t("anime"),
+                  href: `/borealis/lists/${userId}/anime`,
+                  icon: <IconTheater className="size-4" />,
+                },
+                {
+                  label: t("manga"),
+                  href: `/borealis/lists/${userId}/manga`,
+                  icon: <IconBook className="size-4" />,
+                },
+                {
+                  label: t("movie"),
+                  href: `/borealis/lists/${userId}/movie`,
+                  icon: <IconMovie className="size-4" />,
+                },
+                {
+                  label: t("tv"),
+                  href: `/borealis/lists/${userId}/tv`,
+                  icon: <IconDeviceTv className="size-4" />,
+                },
+                {
+                  label: t("game"),
+                  href: `/borealis/lists/${userId}/game`,
+                  icon: <IconDeviceGamepad className="size-4" />,
+                },
+                {
+                  label: t("music"),
+                  href: `/borealis/lists/${userId}/music`,
+                  icon: <IconMusic className="size-4" />,
+                },
+                {
+                  label: t("book"),
+                  href: `/borealis/lists/${userId}/book`,
+                  icon: <IconBook2 className="size-4" />,
+                },
+                {
+                  label: t("other"),
+                  href: `/borealis/lists/${userId}/other`,
+                  icon: <IconList className="size-4" />,
+                },
+                {
+                  label: t("customLists"),
+                  href: `/borealis/lists/${userId}/custom-lists`,
+                  icon: <IconListDetails className="size-4" />,
+                },
+              ]
+            : undefined,
+        },
       ],
     },
 
@@ -347,7 +346,7 @@ export function getListSidebarConfig(
   ]
 }
 
-export function useListSidebarConfig(
+export function useBorealisSidebarConfig(
   session: Session | null,
   initialConnectedServarr?: string[]
 ): SidebarConfig {
@@ -441,7 +440,12 @@ export function useListSidebarConfig(
   }, [userId])
 
   return useMemo(
-    () => getListSidebarConfig(session, t, connectedServarr),
+    () => getBorealisSidebarConfig(session, t, connectedServarr),
     [session, t, connectedServarr]
   )
 }
+
+// Aliases for backwards compatibility
+export const getListSidebarConfig = getBorealisSidebarConfig
+export const useListSidebarConfig = useBorealisSidebarConfig
+

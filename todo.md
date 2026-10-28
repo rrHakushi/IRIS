@@ -21,7 +21,6 @@
     - Dev tools (floating popup like nextjs has), onclick open sidebar with tools [metadata viewer, send notification, trigger events/workers... ]
     - .md version of every single page
     - mcp server for all the apps
-    - create missing sidebar configs
     - Default banner image for all apps (each different) to be used in server metadata 
 
 
