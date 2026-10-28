@@ -23,13 +23,13 @@
     "db:unify-status": "bun --bun --env-file=../../.env run scripts/unify-status.ts"
   },
   "dependencies": {
-    "@prisma/orm-postgres": "^8.0.0-rc.20"
+    "@prisma/orm-postgres": "^8.0.0-rc.21"
   },
   "devDependencies": {
     "@types/bun": "^1.4.4",
     "@types/pg": "^8.23.1",
     "pg": "^8.23.1",
-    "prisma": "8.0.0-rc.27",
+    "prisma": "8.0.0-rc.28",
     "typescript": "^7.0.2"
   }
 }
