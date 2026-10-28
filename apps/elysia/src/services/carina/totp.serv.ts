@@ -89,11 +89,20 @@ export abstract class CarinaTotpServ {
       }
 
       if (!isCodeValid) {
-        throw new Unauthorized('Invalid verification code.')
+        const attemptKey = `auth:mfa-ticket:attempts:${body.mfaTicket}`
+        const attempts = (await cache.get<number>(attemptKey)) || 0
+        if (attempts >= 4) {
+          await cache.del(`auth:mfa-ticket:${body.mfaTicket}`)
+          await cache.del(attemptKey)
+          throw new Unauthorized('Too many failed verification attempts. Please log in again.')
+        }
+        await cache.set(attemptKey, attempts + 1, 300)
+        throw new Unauthorized(`Invalid verification code. ${4 - attempts} attempt(s) remaining.`)
       }
 
-      // Cleanup single-use ticket
+      // Cleanup single-use ticket and attempt counter
       await cache.del(`auth:mfa-ticket:${body.mfaTicket}`)
+      await cache.del(`auth:mfa-ticket:attempts:${body.mfaTicket}`)
 
       // Issue authenticated JWT session token
       const pwdChangedAt = toDate(user.passwordChangedAt)
@@ -130,8 +139,7 @@ export abstract class CarinaTotpServ {
       throw new NotFound(`User with ID '${userId}' was not found.`)
     }
 
-    const cachedSecret = await cache.get<string>(`auth:totp:pending:${user.id}`)
-    const secretToVerify = cachedSecret || body.secret
+    const secretToVerify = await cache.get<string>(`auth:totp:pending:${user.id}`)
 
     if (!secretToVerify) {
       throw new BadRequest(

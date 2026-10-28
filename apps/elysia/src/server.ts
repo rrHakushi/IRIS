@@ -4,6 +4,7 @@ import { Elysia, NotFound, ValidationError } from 'elysia'
 import { openapi } from '@elysia/openapi'
 import { cors } from '@elysia/cors'
 import { rateLimiter, generateControllersManifest } from './plugins'
+import { resolveSessionFromRequest } from './plugins/session'
 import { isHttpError } from './lib/errors'
 import { LogFactory, c } from '@Iris/logger'
 import { wsHub } from './services/ws.serv'
@@ -36,8 +37,38 @@ if (Bun.env.NODE_ENV !== 'production' && Bun.env.NODE_ENV !== 'test') {
   }
 }
 
+const isDev = Bun.env.NODE_ENV !== 'production'
+const allowedOrigins = new Set<string>()
+if (Bun.env.NEXT_PUBLIC_URL) {
+  try {
+    allowedOrigins.add(new URL(Bun.env.NEXT_PUBLIC_URL).origin)
+  } catch {}
+}
+if (Bun.env.NEXT_PUBLIC_API_URL) {
+  try {
+    allowedOrigins.add(new URL(Bun.env.NEXT_PUBLIC_API_URL).origin)
+  } catch {}
+}
+if (isDev) {
+  allowedOrigins.add('http://localhost:3000')
+  allowedOrigins.add('http://127.0.0.1:3000')
+  allowedOrigins.add('http://localhost:4000')
+  allowedOrigins.add('http://127.0.0.1:4000')
+}
+
 export const app = new Elysia()
-  .use(cors())
+  .use(
+    cors({
+      origin: (request: Request): boolean => {
+        const origin = request.headers.get('origin')
+        if (!origin) return true
+        return allowedOrigins.has(origin)
+      },
+      credentials: true,
+      methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key', 'apikey', 'x-device-id'],
+    })
+  )
   .use(rateLimiter())
   .onRequest(({ request }) => {
     if (request.url.startsWith(`${Bun.env.NEXT_PUBLIC_API_URL}/ws`)) return
@@ -113,7 +144,12 @@ export const app = new Elysia()
       title: 'Internal Server Error',
       status: 500,
       code: 'internal-server-error',
-      detail: error instanceof Error ? error.message : String(error),
+      detail:
+        Bun.env.NODE_ENV === 'production'
+          ? 'An unexpected internal server error occurred.'
+          : error instanceof Error
+            ? error.message
+            : String(error),
     }
   })
   .use(controllers as any)
@@ -143,25 +179,27 @@ export const app = new Elysia()
     async open(ws: any) {
       const conn = ws.raw ?? ws
       const request = ws.request
-      let userId: string | null = (ws.query as Record<string, string> | undefined)?.userId ?? null
+      let authenticatedUserId: string | null = null
 
-      if (!userId && request) {
+      if (request) {
         try {
           const rawUrl = typeof request.url === 'string' ? request.url : ''
+          let token: string | undefined
           if (rawUrl) {
             const parsedUrl = new URL(rawUrl, 'http://localhost:4000')
-            const queryUserId = parsedUrl.searchParams.get('userId')
-            if (queryUserId && queryUserId.trim()) {
-              userId = queryUserId.trim()
-            }
+            token = parsedUrl.searchParams.get('token') || parsedUrl.searchParams.get('bearer') || undefined
           }
-        } catch { }
+          const { user } = await resolveSessionFromRequest(request, undefined, token)
+          if (user?.id) {
+            authenticatedUserId = user.id
+          }
+        } catch {}
       }
 
-      if (userId) {
-        wsHub.register(conn as any, userId)
-        logger.info(`WebSocket connected: user ${userId}`)
-        wsHub.send(conn as any, 'auth:success', { userId })
+      if (authenticatedUserId) {
+        wsHub.register(conn as any, authenticatedUserId)
+        logger.info(`WebSocket connected: user ${authenticatedUserId}`)
+        wsHub.send(conn as any, 'auth:success', { userId: authenticatedUserId })
       } else {
         // Allow a 5-second grace period for client to authenticate via auth message frame
         const authTimeout = setTimeout(() => {
@@ -174,9 +212,9 @@ export const app = new Elysia()
         authTimeouts.set(conn, authTimeout)
       }
     },
-    message(ws: any, message: any) {
+    async message(ws: any, message: any) {
       const conn = ws.raw ?? ws
-      wsHub.handleMessage(conn as any, message)
+      await wsHub.handleMessage(conn as any, message)
     },
     close(ws: any) {
       const conn = ws.raw ?? ws

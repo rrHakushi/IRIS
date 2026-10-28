@@ -83,6 +83,24 @@ export function resolveRateLimitKey(ctx?: RateLimitContext): string {
         .slice(0, 16)
       return `key:${hash}`
     }
+
+    // Authenticated Bearer Token bucket
+    const authHeader = request.headers.get("authorization")
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.slice(7).trim()
+      const tokenHash = createHash("sha256").update(token).digest("hex").slice(0, 16)
+      return `tok:${tokenHash}`
+    }
+
+    // Authenticated Session Cookie bucket
+    const cookieHeader = request.headers.get("cookie")
+    if (cookieHeader && cookieHeader.includes("session=")) {
+      const sessionMatch = cookieHeader.match(/(?:^|;\s*)session=([^;]+)/)
+      if (sessionMatch && sessionMatch[1]) {
+        const cookieHash = createHash("sha256").update(sessionMatch[1]).digest("hex").slice(0, 16)
+        return `ses:${cookieHash}`
+      }
+    }
   }
 
   // Priority 3: IP + Device ID or User-Agent fingerprint

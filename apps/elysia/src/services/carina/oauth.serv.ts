@@ -500,15 +500,10 @@ export abstract class CarinaOAuthServ {
     body: CarinaOAuthModel['registerClientBody'],
     sessionUser: SessionUser | null
   ) {
-    let ownerUserId = sessionUser?.id
-
-    if (!ownerUserId) {
-      const firstUser = await prisma.orm.public.User.select('id').first()
-      if (!firstUser) {
-        throw new BadRequest('No user accounts available to associate client registration.')
-      }
-      ownerUserId = firstUser.id
+    if (!sessionUser?.id) {
+      throw new Unauthorized('Authentication required to register an OAuth application.')
     }
+    const ownerUserId = sessionUser.id
 
     const clientId = generateClientId()
     const isPublic = Boolean(body.is_public)

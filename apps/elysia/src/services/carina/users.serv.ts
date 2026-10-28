@@ -1493,11 +1493,10 @@ export class CarinaUsersServ {
       'image/png',
       'image/webp',
       'image/gif',
-      'image/svg+xml',
     ]
 
     if (!allowedTypes.includes(file.type)) {
-      throw new BadRequest('Unsupported file format. Please upload JPEG, PNG, WebP, GIF, or SVG.')
+      throw new BadRequest('Unsupported file format. Please upload JPEG, PNG, WebP, or GIF.')
     }
 
     // Max size: 10MB
@@ -1536,7 +1535,6 @@ export class CarinaUsersServ {
     if (file.type === 'image/jpeg') ext = 'jpg'
     else if (file.type === 'image/webp') ext = 'webp'
     else if (file.type === 'image/gif') ext = 'gif'
-    else if (file.type === 'image/svg+xml') ext = 'svg'
 
     const key = `users/${userId}/${assetType}-${Date.now()}.${ext}`
     const buffer = Buffer.from(await file.arrayBuffer())
