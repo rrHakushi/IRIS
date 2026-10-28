@@ -2034,7 +2034,15 @@ export class BorealisListsServ {
     }
     if (query?.q) {
       const qPattern = `%${query.q.trim()}%`
-      q = q.where((gl) => gl.game.some((g) => or(g.titlePrimary.ilike(qPattern), g.titleSecondary.ilike(qPattern))))
+      q = q.where((gl) =>
+        gl.game.some((g) =>
+          or(
+            g.titlePrimary.ilike(qPattern),
+            g.titleSecondary.ilike(qPattern),
+            g.titleNative.ilike(qPattern)
+          )
+        )
+      )
     }
     if (query?.mediaStatus) {
       const statuses = query.mediaStatus.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean)

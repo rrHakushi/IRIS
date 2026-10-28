@@ -348,7 +348,8 @@ export class BorealisSearchServ {
         const q = prisma.orm.public.Game.where((g) =>
           or(
             g.titlePrimary.ilike(`%${cleanQuery}%`),
-            g.titleSecondary.ilike(`%${cleanQuery}%`)
+            g.titleSecondary.ilike(`%${cleanQuery}%`),
+            g.titleNative.ilike(`%${cleanQuery}%`)
           )
         )
         const [total, items] = await Promise.all([
@@ -360,6 +361,7 @@ export class BorealisSearchServ {
               'id',
               'titlePrimary',
               'titleSecondary',
+              'titleNative',
               'coverImage',
               'bannerImage',
               'platforms',
