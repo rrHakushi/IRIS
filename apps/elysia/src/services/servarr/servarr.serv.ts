@@ -866,7 +866,18 @@ export class ServarrServ {
     // Fallback to local database lists
     if (app === 'radarr') {
       const localList = await prisma.orm.public.MovieList.where((m) => m.userId.eq(userId))
-        .include('movie')
+        .include('movie', (m) =>
+          m.select(
+            'id',
+            'titlePrimary',
+            'titleSecondary',
+            'releaseDateYear',
+            'description',
+            'coverImage',
+            'bannerImage',
+            'imdbId'
+          )
+        )
         .orderBy((m) => m.createdAt.desc())
         .limit(100)
         .all()
@@ -903,7 +914,19 @@ export class ServarrServ {
       }
     } else {
       const localList = await prisma.orm.public.TvList.where((t) => t.userId.eq(userId))
-        .include('tv')
+        .include('tv', (t) =>
+          t.select(
+            'id',
+            'titlePrimary',
+            'titleSecondary',
+            'firstAiredYear',
+            'description',
+            'coverImage',
+            'bannerImage',
+            'tvDBId',
+            'imdbId'
+          )
+        )
         .orderBy((t) => t.createdAt.desc())
         .limit(100)
         .all()
@@ -912,7 +935,7 @@ export class ServarrServ {
         id: entry.tv.id,
         title: entry.tv.titlePrimary,
         originalTitle: entry.tv.titleSecondary || null,
-        year: entry.tv.releaseDateYear || null,
+        year: entry.tv.firstAiredYear || null,
         overview: entry.tv.description || null,
         monitored: true,
         hasFile: entry.status === 'COMPLETED',
@@ -1744,11 +1767,21 @@ export class ServarrServ {
         m.status.in(config.listStatuses)
       )
     )
-      .include('movie')
+      .include('movie', (m) =>
+        m.select(
+          'id',
+          'status',
+          'tmdbId',
+          'sources',
+          'titlePrimary',
+          'imdbId',
+          'releaseDateYear'
+        )
+      )
       .all()
 
-    const filteredEntries = movieEntries.filter((e) =>
-      config.movieStatuses.includes(e.movie.status)
+    const filteredEntries = movieEntries.filter(
+      (e) => !!e.movie && config.movieStatuses.includes(e.movie.status)
     )
 
     const results: Array<{
@@ -1761,6 +1794,7 @@ export class ServarrServ {
     }> = []
 
     for (const entry of filteredEntries) {
+      if (!entry.movie) continue
       const tmdbId = resolveMovieTmdbId(entry.movie)
       if (!tmdbId) continue
 
@@ -1792,11 +1826,21 @@ export class ServarrServ {
         a.status.in(config.listStatuses)
       )
     )
-      .include('anime')
+      .include('anime', (a) =>
+        a.select(
+          'id',
+          'format',
+          'status',
+          'sources',
+          'titlePrimary',
+          'startDateYear'
+        )
+      )
       .all()
 
     const filteredEntries = animeEntries.filter(
       (e) =>
+        !!e.anime &&
         config.animeMovieFormats.includes(e.anime.format) &&
         config.animeStatuses.includes(e.anime.status)
     )
@@ -1811,6 +1855,7 @@ export class ServarrServ {
     }> = []
 
     for (const entry of filteredEntries) {
+      if (!entry.anime) continue
       const tmdbId = resolveAnimeTmdbId(entry.anime)
       const imdbId = resolveAnimeImdbId(entry.anime)
 
@@ -1969,11 +2014,22 @@ export class ServarrServ {
         a.status.in(config.listStatuses)
       )
     )
-      .include('anime')
+      .include('anime', (a) =>
+        a.select(
+          'id',
+          'format',
+          'status',
+          'tvDBId',
+          'sources',
+          'titlePrimary',
+          'startDateYear'
+        )
+      )
       .all()
 
     const filteredEntries = animeEntries.filter(
       (e) =>
+        !!e.anime &&
         config.animeFormats.includes(e.anime.format) &&
         config.animeStatuses.includes(e.anime.status)
     )
@@ -1989,6 +2045,7 @@ export class ServarrServ {
     }> = []
 
     for (const entry of filteredEntries) {
+      if (!entry.anime) continue
       const tvdbId = resolveAnimeTvdbId(entry.anime)
       if (!tvdbId) continue
 
@@ -2023,11 +2080,21 @@ export class ServarrServ {
         t.status.in(config.listStatuses)
       )
     )
-      .include('tv')
+      .include('tv', (t) =>
+        t.select(
+          'id',
+          'status',
+          'tvDBId',
+          'sources',
+          'titlePrimary',
+          'imdbId',
+          'firstAiredYear'
+        )
+      )
       .all()
 
-    const filteredEntries = tvEntries.filter((e) =>
-      config.tvStatuses.includes(e.tv.status)
+    const filteredEntries = tvEntries.filter(
+      (e) => !!e.tv && config.tvStatuses.includes(e.tv.status)
     )
 
     const results: Array<{
@@ -2041,6 +2108,7 @@ export class ServarrServ {
     }> = []
 
     for (const entry of filteredEntries) {
+      if (!entry.tv) continue
       const tvdbId = resolveTvTvdbId(entry.tv)
       if (!tvdbId) continue
 
