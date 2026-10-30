@@ -52,11 +52,11 @@ export function mapMangaFormat(fmt?: string): any {
   return (fmt && map[fmt.toUpperCase()]) || 'UNKNOWN'
 }
 
-function mapTvStatus(st?: string): any {
+export function mapTvStatus(st?: string): any {
   return st ? normalizeMediaStatus(st) : 'UNKNOWN'
 }
 
-function mapMovieStatus(st?: string): any {
+export function mapMovieStatus(st?: string): any {
   const mapped = st ? normalizeMediaStatus(st) : 'UNKNOWN'
   return mapped === 'UNKNOWN' ? 'RELEASED' : mapped
 }

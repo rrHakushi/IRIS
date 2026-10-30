@@ -11,6 +11,38 @@ export function normalizeTvdbImageUrl(url?: string | null): string | null {
   return `https://artworks.thetvdb.com/${trimmed}`
 }
 
+export interface TvdbCharacter {
+  id: number
+  name: string
+  peopleId?: number
+  personName?: string
+  personImgURL?: string
+  image?: string
+  isFeatured?: boolean
+  typeName?: string
+  peopleType?: string
+  type?: number
+}
+
+export interface TvdbEpisode {
+  id: number
+  seriesId?: number
+  name?: string
+  aired?: string
+  runtime?: number
+  overview?: string
+  image?: string
+  seasonNumber: number
+  number: number
+  finaleType?: string
+}
+
+export interface TvdbCompany {
+  id: number
+  name: string
+  slug?: string
+}
+
 export interface TvdbSearchItem {
   objectID?: string
   id?: string | number
@@ -41,6 +73,54 @@ export interface TvdbSeriesPayload {
   averageRuntime?: number
   translations?: Record<string, string>
   overviews?: Record<string, string>
+  artworks?: Array<{ image?: string; type?: number; language?: string }>
+  companies?: {
+    studio?: TvdbCompany[]
+    network?: TvdbCompany[]
+    production?: TvdbCompany[]
+    distributor?: TvdbCompany[]
+  }
+  trailers?: Array<{ id: number; url: string; language?: string }>
+  contentRatings?: Array<{
+    name: string
+    country: string
+    description?: string
+    fullname?: string
+  }>
+  originalLanguage?: string
+  originalCountry?: string
+  production_countries?: Array<{ id?: number; country?: string; name?: string }>
+  remoteIds?: Array<{ id: string; type: number; sourceName: string }>
+  characters?: TvdbCharacter[]
+  nameTranslations?: string[]
+  overviewTranslations?: string[]
+  aliases?: Array<{ language?: string; name?: string } | string>
+  seasons?: Array<{
+    id: number
+    seriesId?: number
+    type?: { id: number; name: string }
+    number: number
+    name?: string
+    image?: string
+    year?: string
+  }>
+  airsDays?: {
+    sunday?: boolean
+    monday?: boolean
+    tuesday?: boolean
+    wednesday?: boolean
+    thursday?: boolean
+    friday?: boolean
+    saturday?: boolean
+  }
+  airsTime?: string
+  tags?: Array<string | { name?: string; tag?: string; tagName?: string; helpText?: string }>
+  engTranslation?: {
+    name?: string
+    overview?: string
+    language?: string
+    aliases?: string[]
+  }
 }
 
 export interface TvdbMoviePayload {
@@ -48,12 +128,53 @@ export interface TvdbMoviePayload {
   name: string
   slug?: string
   image?: string
+  artworks?: Array<{ image?: string; type?: number; language?: string }>
   runtime?: number
   first_release_date?: string
+  first_release?: {
+    country?: string
+    date?: string
+    detail?: string | null
+  }
+  releases?: Array<{
+    country?: string
+    date?: string
+    detail?: string | null
+  }>
   overview?: string
   status?: { id?: number; name?: string }
   score?: number
   genres?: Array<{ id: number; name: string }>
+  companies?: {
+    studio?: TvdbCompany[]
+    production?: TvdbCompany[]
+    distributor?: TvdbCompany[]
+    network?: TvdbCompany[]
+    special_effects?: TvdbCompany[]
+  }
+  trailers?: Array<{ id: number; url: string; language?: string }>
+  contentRatings?: Array<{
+    name: string
+    country: string
+    description?: string
+    fullname?: string
+  }>
+  budget?: string
+  boxOffice?: string
+  originalLanguage?: string
+  production_countries?: Array<{ id?: number; country?: string; name?: string }>
+  remoteIds?: Array<{ id: string; type: number; sourceName: string }>
+  characters?: TvdbCharacter[]
+  nameTranslations?: string[]
+  overviewTranslations?: string[]
+  aliases?: Array<{ language?: string; name?: string } | string>
+  tags?: Array<string | { name?: string; tag?: string; tagName?: string; helpText?: string }>
+  engTranslation?: {
+    name?: string
+    overview?: string
+    language?: string
+    aliases?: string[]
+  }
 }
 
 export class TheTVDBProvider {
@@ -182,16 +303,145 @@ export class TheTVDBProvider {
   }
 
   /**
+   * Fetches translation for a Movie (e.g. English name & overview).
+   */
+  async fetchMovieTranslation(
+    tvdbId: number,
+    language: string = 'eng'
+  ): Promise<{
+    name?: string
+    overview?: string
+    language?: string
+    aliases?: string[]
+  } | null> {
+    try {
+      return await this.fetchJson<{
+        name?: string
+        overview?: string
+        language?: string
+        aliases?: string[]
+      }>(`/movies/${tvdbId}/translations/${language}`)
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * Fetches translation for a TV series (e.g. English name & overview).
+   */
+  async fetchTvSeriesTranslation(
+    tvdbId: number,
+    language: string = 'eng'
+  ): Promise<{
+    name?: string
+    overview?: string
+    language?: string
+    aliases?: string[]
+  } | null> {
+    try {
+      return await this.fetchJson<{
+        name?: string
+        overview?: string
+        language?: string
+        aliases?: string[]
+      }>(`/series/${tvdbId}/translations/${language}`)
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * Fetches all characters & cast for a TV series.
+   */
+  async fetchTvCharacters(tvdbId: number): Promise<TvdbCharacter[]> {
+    try {
+      const chars = await this.fetchJson<TvdbCharacter[]>(`/series/${tvdbId}/characters`)
+      return Array.isArray(chars) ? chars : []
+    } catch {
+      return []
+    }
+  }
+
+  /**
+   * Fetches all episodes across all seasons for a TV series (paginated).
+   */
+  async fetchTvEpisodes(
+    tvdbId: number,
+    language: string = 'eng'
+  ): Promise<TvdbEpisode[]> {
+    const allEpisodes: TvdbEpisode[] = []
+    let page = 0
+    let hasMore = true
+
+    while (hasMore && page < 20) {
+      try {
+        let res: { episodes?: TvdbEpisode[] } | null = null
+        if (language) {
+          try {
+            res = await this.fetchJson<{
+              episodes?: TvdbEpisode[]
+            }>(`/series/${tvdbId}/episodes/default/${language}?page=${page}`)
+          } catch {
+            res = null
+          }
+        }
+
+        if (!res || !res.episodes || res.episodes.length === 0) {
+          res = await this.fetchJson<{
+            episodes?: TvdbEpisode[]
+          }>(`/series/${tvdbId}/episodes/default?page=${page}`)
+        }
+
+        const episodes = res?.episodes || []
+        if (episodes.length === 0) {
+          hasMore = false
+        } else {
+          allEpisodes.push(...episodes)
+          page++
+        }
+      } catch {
+        hasMore = false
+      }
+    }
+
+    return allEpisodes
+  }
+
+  /**
    * Fetches full details for a TV Series.
    */
   async fetchTvSeries(tvdbId: number): Promise<TvdbSeriesPayload | null> {
-    return this.fetchJson<TvdbSeriesPayload>(`/series/${tvdbId}/extended`)
+    const series = await this.fetchJson<TvdbSeriesPayload>(`/series/${tvdbId}/extended`)
+    if (
+      series &&
+      (series.originalLanguage?.toLowerCase() !== 'eng' ||
+        series.nameTranslations?.includes('eng') ||
+        series.overviewTranslations?.includes('eng'))
+    ) {
+      const eng = await this.fetchTvSeriesTranslation(tvdbId, 'eng').catch(() => null)
+      if (eng) {
+        series.engTranslation = eng
+      }
+    }
+    return series
   }
 
   /**
    * Fetches full details for a Movie.
    */
   async fetchMovie(tvdbId: number): Promise<TvdbMoviePayload | null> {
-    return this.fetchJson<TvdbMoviePayload>(`/movies/${tvdbId}/extended`)
+    const movie = await this.fetchJson<TvdbMoviePayload>(`/movies/${tvdbId}/extended`)
+    if (
+      movie &&
+      (movie.originalLanguage?.toLowerCase() !== 'eng' ||
+        movie.nameTranslations?.includes('eng') ||
+        movie.overviewTranslations?.includes('eng'))
+    ) {
+      const eng = await this.fetchMovieTranslation(tvdbId, 'eng').catch(() => null)
+      if (eng) {
+        movie.engTranslation = eng
+      }
+    }
+    return movie
   }
 }
