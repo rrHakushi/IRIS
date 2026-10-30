@@ -13,7 +13,14 @@ export interface CatalogQuery {
   statuses?: string
   years?: string
   season?: string
-  sortBy?: 'popularity' | 'score' | 'title' | 'releaseDate' | 'trending'
+  sortBy?:
+    | 'popularity'
+    | 'score'
+    | 'title'
+    | 'releaseDate'
+    | 'trending'
+    | 'favorites'
+    | 'updatedAt'
   sortOrder?: 'asc' | 'desc'
 }
 
@@ -84,7 +91,8 @@ export class BorealisMediaServ {
     if (sortBy === 'score') orderBy = { averageScore: sortOrder }
     if (sortBy === 'title') orderBy = { titlePrimary: sortOrder }
     if (sortBy === 'releaseDate') orderBy = { seasonYear: sortOrder }
-    if (sortBy === 'trending') orderBy = { favorites: sortOrder }
+    if (sortBy === 'trending' || sortBy === 'favorites') orderBy = { favorites: sortOrder }
+    if (sortBy === 'updatedAt') orderBy = { updatedAt: sortOrder }
 
     let q = prisma.orm.public.Anime
     if (search) {
@@ -127,9 +135,13 @@ export class BorealisMediaServ {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.seasonYear.asc() : x.seasonYear.desc()
       )
-    } else if (sortBy === 'trending') {
+    } else if (sortBy === 'trending' || sortBy === 'favorites') {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else if (sortBy === 'updatedAt') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.updatedAt.asc() : x.updatedAt.desc()
       )
     } else {
       itemsQ = itemsQ.orderBy((x) =>
@@ -508,7 +520,8 @@ export class BorealisMediaServ {
     if (sortBy === 'score') orderBy = { averageScore: sortOrder }
     if (sortBy === 'title') orderBy = { titlePrimary: sortOrder }
     if (sortBy === 'releaseDate') orderBy = { startDateYear: sortOrder }
-    if (sortBy === 'trending') orderBy = { favorites: sortOrder }
+    if (sortBy === 'trending' || sortBy === 'favorites') orderBy = { favorites: sortOrder }
+    if (sortBy === 'updatedAt') orderBy = { updatedAt: sortOrder }
 
     let q = prisma.orm.public.Manga
     if (search) {
@@ -548,9 +561,13 @@ export class BorealisMediaServ {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.startDateYear.asc() : x.startDateYear.desc()
       )
-    } else if (sortBy === 'trending') {
+    } else if (sortBy === 'trending' || sortBy === 'favorites') {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else if (sortBy === 'updatedAt') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.updatedAt.asc() : x.updatedAt.desc()
       )
     } else {
       itemsQ = itemsQ.orderBy((x) =>
@@ -909,7 +926,8 @@ export class BorealisMediaServ {
     if (sortBy === 'score') orderBy = { averageScore: sortOrder }
     if (sortBy === 'title') orderBy = { titlePrimary: sortOrder }
     if (sortBy === 'releaseDate') orderBy = { releaseDateYear: sortOrder }
-    if (sortBy === 'trending') orderBy = { favorites: sortOrder }
+    if (sortBy === 'trending' || sortBy === 'favorites') orderBy = { favorites: sortOrder }
+    if (sortBy === 'updatedAt') orderBy = { updatedAt: sortOrder }
 
     let q = prisma.orm.public.Movie
     if (search) {
@@ -946,9 +964,13 @@ export class BorealisMediaServ {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.releaseDateYear.asc() : x.releaseDateYear.desc()
       )
-    } else if (sortBy === 'trending') {
+    } else if (sortBy === 'trending' || sortBy === 'favorites') {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else if (sortBy === 'updatedAt') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.updatedAt.asc() : x.updatedAt.desc()
       )
     } else {
       itemsQ = itemsQ.orderBy((x) =>
@@ -1316,7 +1338,8 @@ export class BorealisMediaServ {
     if (sortBy === 'score') orderBy = { averageScore: sortOrder }
     if (sortBy === 'title') orderBy = { titlePrimary: sortOrder }
     if (sortBy === 'releaseDate') orderBy = { firstAiredYear: sortOrder }
-    if (sortBy === 'trending') orderBy = { favorites: sortOrder }
+    if (sortBy === 'trending' || sortBy === 'favorites') orderBy = { favorites: sortOrder }
+    if (sortBy === 'updatedAt') orderBy = { updatedAt: sortOrder }
 
     let q = prisma.orm.public.Tv
     if (search) {
@@ -1356,9 +1379,13 @@ export class BorealisMediaServ {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.firstAiredYear.asc() : x.firstAiredYear.desc()
       )
-    } else if (sortBy === 'trending') {
+    } else if (sortBy === 'trending' || sortBy === 'favorites') {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else if (sortBy === 'updatedAt') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.updatedAt.asc() : x.updatedAt.desc()
       )
     } else {
       itemsQ = itemsQ.orderBy((x) =>
@@ -1737,7 +1764,8 @@ export class BorealisMediaServ {
     if (sortBy === 'score') orderBy = { averageScore: sortOrder }
     if (sortBy === 'title') orderBy = { titlePrimary: sortOrder }
     if (sortBy === 'releaseDate') orderBy = { releaseDateYear: sortOrder }
-    if (sortBy === 'trending') orderBy = { favorites: sortOrder }
+    if (sortBy === 'trending' || sortBy === 'favorites') orderBy = { favorites: sortOrder }
+    if (sortBy === 'updatedAt') orderBy = { updatedAt: sortOrder }
 
     let q = prisma.orm.public.Book
     if (search) {
@@ -1776,9 +1804,13 @@ export class BorealisMediaServ {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.releaseDateYear.asc() : x.releaseDateYear.desc()
       )
-    } else if (sortBy === 'trending') {
+    } else if (sortBy === 'trending' || sortBy === 'favorites') {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else if (sortBy === 'updatedAt') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.updatedAt.asc() : x.updatedAt.desc()
       )
     } else {
       itemsQ = itemsQ.orderBy((x) =>
@@ -2139,7 +2171,8 @@ export class BorealisMediaServ {
     if (sortBy === 'score') orderBy = { averageScore: sortOrder }
     if (sortBy === 'title') orderBy = { titlePrimary: sortOrder }
     if (sortBy === 'releaseDate') orderBy = { releaseDateYear: sortOrder }
-    if (sortBy === 'trending') orderBy = { favorites: sortOrder }
+    if (sortBy === 'trending' || sortBy === 'favorites') orderBy = { favorites: sortOrder }
+    if (sortBy === 'updatedAt') orderBy = { updatedAt: sortOrder }
 
     let q = prisma.orm.public.Game
     if (search) {
@@ -2175,9 +2208,13 @@ export class BorealisMediaServ {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.releaseDateYear.asc() : x.releaseDateYear.desc()
       )
-    } else if (sortBy === 'trending') {
+    } else if (sortBy === 'trending' || sortBy === 'favorites') {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else if (sortBy === 'updatedAt') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.updatedAt.asc() : x.updatedAt.desc()
       )
     } else {
       itemsQ = itemsQ.orderBy((x) =>
@@ -2516,7 +2553,8 @@ export class BorealisMediaServ {
     if (sortBy === 'score') orderBy = { popularity: sortOrder }
     if (sortBy === 'title') orderBy = { titlePrimary: sortOrder }
     if (sortBy === 'releaseDate') orderBy = { releaseDateYear: sortOrder }
-    if (sortBy === 'trending') orderBy = { favorites: sortOrder }
+    if (sortBy === 'trending' || sortBy === 'favorites') orderBy = { favorites: sortOrder }
+    if (sortBy === 'updatedAt') orderBy = { updatedAt: sortOrder }
 
     let q = prisma.orm.public.Music
     if (search) {
@@ -2556,9 +2594,13 @@ export class BorealisMediaServ {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.releaseDateYear.asc() : x.releaseDateYear.desc()
       )
-    } else if (sortBy === 'trending') {
+    } else if (sortBy === 'trending' || sortBy === 'favorites') {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else if (sortBy === 'updatedAt') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.updatedAt.asc() : x.updatedAt.desc()
       )
     } else {
       itemsQ = itemsQ.orderBy((x) =>

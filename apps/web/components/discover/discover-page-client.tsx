@@ -415,6 +415,12 @@ const mapMediaItem = (x: any): DiscoverItem => ({
       lastFetchedItemsKeyRef.current = queryKey
       isFetchingRef.current = true
       setIsLoading(true)
+      setHasMore(false)
+      setNextCursor(null)
+
+      if (typeof window !== "undefined" && window.scrollY > 0) {
+        window.scrollTo({ top: 0, behavior: "instant" })
+      }
 
       try {
         if (category === "characters") {

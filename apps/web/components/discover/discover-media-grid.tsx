@@ -40,20 +40,37 @@ export function DiscoverMediaGrid({
   useEffect(() => {
     if (!hasMore || isLoading || isLoadingMore || !onLoadMore) return
 
+    let userScrolled = false
+    const onScroll = () => {
+      userScrolled = true
+      if (sentinelRef.current) {
+        const rect = sentinelRef.current.getBoundingClientRect()
+        if (rect.top <= window.innerHeight + 200) {
+          onLoadMore()
+        }
+      }
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true })
+
     const observer = new IntersectionObserver(
       (entries) => {
         const first = entries[0]
         if (first?.isIntersecting) {
+          if (!userScrolled && window.scrollY === 0) {
+            return
+          }
           onLoadMore()
         }
       },
-      { rootMargin: "400px" }
+      { rootMargin: "200px" }
     )
 
     const el = sentinelRef.current
     if (el) observer.observe(el)
 
     return () => {
+      window.removeEventListener("scroll", onScroll)
       if (el) observer.unobserve(el)
     }
   }, [hasMore, isLoading, isLoadingMore, onLoadMore])
