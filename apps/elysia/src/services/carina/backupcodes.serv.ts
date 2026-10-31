@@ -113,7 +113,15 @@ export abstract class CarinaBackupCodesServ {
       const matchedIndex = await verifyBackupCode(body.code, user.backupCodes)
 
       if (matchedIndex === -1) {
-        throw new Unauthorized('Invalid or previously used backup recovery code.')
+        const attemptKey = `auth:mfa-ticket:attempts:${body.mfaTicket}`
+        const attempts = (await cache.get<number>(attemptKey)) || 0
+        if (attempts >= 4) {
+          await cache.del(`auth:mfa-ticket:${body.mfaTicket}`)
+          await cache.del(attemptKey)
+          throw new Unauthorized('Too many failed verification attempts. Please log in again.')
+        }
+        await cache.set(attemptKey, attempts + 1, 300)
+        throw new Unauthorized(`Invalid or previously used backup recovery code. ${4 - attempts} attempt(s) remaining.`)
       }
 
       // Consume the matched single-use code
@@ -125,6 +133,7 @@ export abstract class CarinaBackupCodesServ {
 
       // Invalidate ticket & caches
       await cache.del(`auth:mfa-ticket:${body.mfaTicket}`)
+      await cache.del(`auth:mfa-ticket:attempts:${body.mfaTicket}`)
       await cache.del(`users:me:user:${user.id}`)
       await cache.del(`user:${user.id}`)
 

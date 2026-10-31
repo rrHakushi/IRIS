@@ -14,7 +14,6 @@ export class PublicAssetsServ {
       '.jpeg': 'image/jpeg',
       '.webp': 'image/webp',
       '.gif': 'image/gif',
-      '.svg': 'image/svg+xml',
       '.ico': 'image/x-icon',
       '.avif': 'image/avif',
       '.mp4': 'video/mp4',

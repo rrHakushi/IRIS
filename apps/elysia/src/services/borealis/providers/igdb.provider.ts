@@ -16,11 +16,27 @@ export interface IgdbGamePayload {
   summary?: string
   storyline?: string
   cover?: { id: number; image_id: string }
+  screenshots?: Array<{ id: number; image_id: string }>
+  artworks?: Array<{ id: number; image_id: string }>
   first_release_date?: number
+  release_dates?: Array<{ date?: number; human?: string; region?: number }>
   genres?: Array<{ id: number; name: string }>
   platforms?: Array<{ id: number; name: string; abbreviation?: string }>
+  themes?: Array<{ id: number; name: string }>
+  game_modes?: Array<{ id: number; name: string }>
+  involved_companies?: Array<{
+    id: number
+    developer?: boolean
+    publisher?: boolean
+    company: { id: number; name: string }
+  }>
   rating?: number
+  rating_count?: number
   aggregated_rating?: number
+  aggregated_rating_count?: number
+  status?: number
+  websites?: Array<{ id: number; category: number; url: string }>
+  alternative_names?: Array<{ id: number; name: string; comment?: string }>
 }
 
 export class IGDBProvider {
@@ -135,11 +151,16 @@ export class IGDBProvider {
     const query = `
       fields 
         name, slug, summary, storyline,
-        cover.image_id,
-        first_release_date,
+        cover.image_id, screenshots.image_id, artworks.image_id,
+        first_release_date, release_dates.date, release_dates.human, release_dates.region,
         genres.name,
         platforms.name, platforms.abbreviation,
-        rating, aggregated_rating;
+        themes.name, game_modes.name,
+        involved_companies.developer, involved_companies.publisher, involved_companies.company.name,
+        rating, rating_count, aggregated_rating, aggregated_rating_count,
+        status,
+        websites.url, websites.category,
+        alternative_names.name;
       where id = ${igdbId};
     `
 

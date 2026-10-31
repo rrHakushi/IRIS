@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react"
 import { useSession } from "@/context/session-context"
-import { usePassSidebarConfig } from "@/config/sidebars/passSidebarConfig"
+import { useAkaromiSidebarConfig } from "@/config/sidebars/akaromiSidebarConfig"
 import { IrisSidebar } from "@/components/navigation/iris-sidebar"
 import { useIrisSidebar } from "@/components/navigation/sidebar-provider"
 import { SidebarInset, useSidebar } from "@workspace/ui/components/sidebar"
@@ -17,7 +17,7 @@ export default function IrisPassNavProvider({
   children,
 }: IrisPassNavProviderProps): React.JSX.Element {
   const { data: session } = useSession()
-  const rawConfig = usePassSidebarConfig(session)
+  const rawConfig = useAkaromiSidebarConfig(session)
   const { position } = useIrisSidebar()
   const { state } = useSidebar()
 

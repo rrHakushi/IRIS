@@ -2034,7 +2034,15 @@ export class BorealisListsServ {
     }
     if (query?.q) {
       const qPattern = `%${query.q.trim()}%`
-      q = q.where((gl) => gl.game.some((g) => or(g.titlePrimary.ilike(qPattern), g.titleSecondary.ilike(qPattern))))
+      q = q.where((gl) =>
+        gl.game.some((g) =>
+          or(
+            g.titlePrimary.ilike(qPattern),
+            g.titleSecondary.ilike(qPattern),
+            g.titleNative.ilike(qPattern)
+          )
+        )
+      )
     }
     if (query?.mediaStatus) {
       const statuses = query.mediaStatus.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean)
@@ -3775,7 +3783,17 @@ export class BorealisListsServ {
     // 1. Anime
     if (requestedTypes.includes('anime')) {
       const items = await prisma.orm.public.AnimeList.where({ userId })
-        .include('anime')
+        .include('anime', (a) =>
+          a.select(
+            'anilistId',
+            'malId',
+            'aniDBId',
+            'tvDBId',
+            'bangumiId',
+            'kitsuId',
+            'titlePrimary'
+          )
+        )
         .orderBy((al) => al.updatedAt.desc())
         .all()
       exportData.lists.anime = items.map((item: any) => ({
@@ -3804,7 +3822,16 @@ export class BorealisListsServ {
     // 2. Manga
     if (requestedTypes.includes('manga')) {
       const items = await prisma.orm.public.MangaList.where({ userId })
-        .include('manga')
+        .include('manga', (m) =>
+          m.select(
+            'anilistId',
+            'malId',
+            'mangaUpdatesId',
+            'bangumiId',
+            'kitsuId',
+            'titlePrimary'
+          )
+        )
         .orderBy((ml) => ml.updatedAt.desc())
         .all()
       exportData.lists.manga = items.map((item: any) => ({
@@ -3833,7 +3860,16 @@ export class BorealisListsServ {
     // 3. TV
     if (requestedTypes.includes('tv')) {
       const items = await prisma.orm.public.TvList.where({ userId })
-        .include('tv')
+        .include('tv', (t) =>
+          t.select(
+            'tvDBId',
+            'tmdbId',
+            'imdbId',
+            'simklId',
+            'tvmazeId',
+            'titlePrimary'
+          )
+        )
         .orderBy((tl) => tl.updatedAt.desc())
         .all()
       exportData.lists.tv = items.map((item: any) => ({
@@ -3861,7 +3897,15 @@ export class BorealisListsServ {
     // 4. Movie
     if (requestedTypes.includes('movie')) {
       const items = await prisma.orm.public.MovieList.where({ userId })
-        .include('movie')
+        .include('movie', (m) =>
+          m.select(
+            'tvDBId',
+            'tmdbId',
+            'imdbId',
+            'simklId',
+            'titlePrimary'
+          )
+        )
         .orderBy((ml) => ml.updatedAt.desc())
         .all()
       exportData.lists.movie = items.map((item: any) => ({

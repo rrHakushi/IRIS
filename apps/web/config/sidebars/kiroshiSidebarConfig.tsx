@@ -11,7 +11,7 @@ import {
 } from "@tabler/icons-react"
 import type { Session } from "@/context/session-context"
 
-export function getSearchSidebarConfig(
+export function getKiroshiSidebarConfig(
   session: Session | null,
   t?: (key: string) => string
 ): SidebarConfig {
@@ -128,6 +128,11 @@ export function getSearchSidebarConfig(
   ]
 }
 
-export function useSearchSidebarConfig(session: Session | null): SidebarConfig {
-  return useMemo(() => getSearchSidebarConfig(session), [session])
+export function useKiroshiSidebarConfig(session: Session | null): SidebarConfig {
+  return useMemo(() => getKiroshiSidebarConfig(session), [session])
 }
+
+// Aliases for backwards compatibility
+export const getSearchSidebarConfig = getKiroshiSidebarConfig
+export const useSearchSidebarConfig = useKiroshiSidebarConfig
+

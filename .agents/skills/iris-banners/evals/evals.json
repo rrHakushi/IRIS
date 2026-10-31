@@ -1,0 +1,18 @@
+{
+  "skill_name": "iris-banners",
+  "evals": [
+    {
+      "id": "generate-single-banner",
+      "prompt": "Create an OpenGraph banner image for our new app Zenith and add it to the public banners"
+    },
+    {
+      "id": "wire-app-metadata",
+      "prompt": "Set up the OpenGraph and Twitter layout metadata for Zenith in apps/web/app/(APPS)/zenith/layout.tsx using the 1200x630 banner"
+    },
+    {
+      "id": "batch-regenerate",
+      "prompt": "Regenerate all suite banner images in apps/web/public/banners"
+    }
+  ]
+}
+

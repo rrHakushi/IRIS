@@ -5,6 +5,9 @@ import {
   type AniListAnimePayload,
   type AniListMangaPayload,
   tvdbProvider,
+  normalizeTvdbImageUrl,
+  type TvdbCharacter,
+  type TvdbEpisode,
   igdbProvider,
   googleBooksProvider,
   deezerProvider,
@@ -13,6 +16,8 @@ import {
   MediaPreviewSyncer,
   mapAnimeFormat,
   mapMangaFormat,
+  mapMovieStatus,
+  mapTvStatus,
   type PreviewResult,
 } from './media-preview.syncer'
 import { MediaQueueManager, type MediaType } from '../queue'
@@ -81,6 +86,237 @@ export class MediaEntitySyncer {
       } catch {}
     }
     return results
+  }
+
+  private static async upsertTags(
+    tags?: Array<string | { name?: string; tag?: string; tagName?: string; category?: string; description?: string; helpText?: string }>
+  ): Promise<Array<{ id: number }>> {
+    if (!tags || tags.length === 0) return []
+    const results: Array<{ id: number }> = []
+    const seen = new Set<string>()
+
+    for (const item of tags) {
+      const rawName = typeof item === 'string' ? item : item.name || item.tag || item.tagName
+      const name = rawName?.trim()
+      if (!name || !isNaN(Number(name))) continue
+      const key = name.toLowerCase()
+      if (seen.has(key)) continue
+      seen.add(key)
+
+      const slug = key.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'tag'
+      const category = typeof item === 'object' ? item.category?.trim() || item.tagName?.trim() : undefined
+      const description = typeof item === 'object' ? item.description?.trim() || item.helpText?.trim() : undefined
+
+      try {
+        let tag = await prisma.orm.public.Tag.where({ name }).select('id').first()
+        if (!tag) {
+          tag = await prisma.orm.public.Tag.create({
+            name,
+            slug,
+            category: category || null,
+            description: description || null,
+          })
+        }
+        results.push({ id: tag.id })
+      } catch {
+        try {
+          const fallback = await prisma.orm.public.Tag.where({ name }).select('id').first()
+          if (fallback) results.push({ id: fallback.id })
+        } catch {}
+      }
+    }
+    return results
+  }
+
+  private static async upsertStudio(data: {
+    name: string
+    anilistId?: number
+    tvDBId?: number
+    isAnimationStudio?: boolean
+    siteUrl?: string
+  }): Promise<{ id: number }> {
+    const cleanName = data.name.trim()
+    try {
+      if (data.tvDBId) {
+        const existing = await prisma.orm.public.Studio.where({ tvDBId: data.tvDBId }).select('id').first()
+        if (existing) return existing
+      }
+      if (data.anilistId) {
+        const existing = await prisma.orm.public.Studio.where({ anilistId: data.anilistId }).select('id').first()
+        if (existing) return existing
+      }
+      const existingByName = await prisma.orm.public.Studio.where({ name: cleanName }).select('id').first()
+      if (existingByName) return existingByName
+
+      return await prisma.orm.public.Studio.create({
+        name: cleanName,
+        tvDBId: data.tvDBId || null,
+        anilistId: data.anilistId || null,
+        isAnimationStudio: data.isAnimationStudio || false,
+        siteUrl: data.siteUrl || null,
+      })
+    } catch {
+      const fallback = await prisma.orm.public.Studio.where({ name: cleanName }).select('id').first()
+      if (fallback) return fallback
+      throw new Error(`Failed to upsert studio "${cleanName}"`)
+    }
+  }
+
+  private static async linkMediaStudio(
+    mediaType: 'ANIME' | 'MOVIE' | 'TV' | 'GAME' | 'BOOK',
+    mediaId: number,
+    studioId: number,
+    isMain = false
+  ): Promise<void> {
+    try {
+      const existing = await prisma.orm.public.MediaStudio.where({
+        mediaType,
+        mediaId,
+        studioId,
+      }).select('id').first()
+
+      if (!existing) {
+        await prisma.orm.public.MediaStudio.create({
+          mediaType,
+          mediaId,
+          studioId,
+          isMain,
+          animeId: mediaType === 'ANIME' ? mediaId : null,
+          movieId: mediaType === 'MOVIE' ? mediaId : null,
+          tvId: mediaType === 'TV' ? mediaId : null,
+          gameId: mediaType === 'GAME' ? mediaId : null,
+          bookId: mediaType === 'BOOK' ? mediaId : null,
+        })
+      }
+    } catch {}
+  }
+
+  private static async syncTvdbCharactersAndStaff(
+    mediaType: 'MOVIE' | 'TV',
+    mediaId: number,
+    characters?: TvdbCharacter[]
+  ): Promise<void> {
+    if (!characters || !Array.isArray(characters) || characters.length === 0) return
+
+    const seenCast = new Set<string>()
+    for (const c of characters) {
+      const key = `${c.id}_${c.peopleId}_${c.name}_${c.personName}`
+      if (seenCast.has(key)) continue
+      seenCast.add(key)
+
+      const isActor =
+        !c.peopleType ||
+        c.peopleType.toLowerCase() === 'actor' ||
+        c.type === 3 ||
+        (c.typeName && c.typeName.toLowerCase() === 'actor')
+
+      let personRecord: { id: number; image?: string | null } | null = null
+      if (c.personName || c.peopleId) {
+        const pName = (c.personName || 'Unknown Person').trim()
+        const pImg = normalizeTvdbImageUrl(c.personImgURL)
+        if (c.peopleId) {
+          personRecord = await prisma.orm.public.Person.where({ tvDBId: c.peopleId }).select('id', 'image').first()
+        }
+        if (!personRecord) {
+          personRecord = await prisma.orm.public.Person.where({ namePrimary: pName }).select('id', 'image').first()
+        }
+        if (!personRecord) {
+          personRecord = await prisma.orm.public.Person.create({
+            tvDBId: c.peopleId || null,
+            namePrimary: pName,
+            nameAlternative: [],
+            image: pImg,
+            primaryOccupations: [],
+            yearsActive: [],
+          }).catch(() => null)
+        } else if (!personRecord.image && pImg) {
+          await prisma.orm.public.Person.where({ id: personRecord.id }).update({ image: pImg }).catch(() => {})
+        }
+      }
+
+      let charRecord: { id: number; image?: string | null } | null = null
+      if (c.name && isActor) {
+        const cName = c.name.trim()
+        const cImg = normalizeTvdbImageUrl(c.image)
+        if (c.id) {
+          charRecord = await prisma.orm.public.Character.where({ tvDBId: c.id }).select('id', 'image').first()
+        }
+        if (!charRecord) {
+          charRecord = await prisma.orm.public.Character.where({ namePrimary: cName }).select('id', 'image').first()
+        }
+        if (!charRecord) {
+          charRecord = await prisma.orm.public.Character.create({
+            tvDBId: c.id || null,
+            namePrimary: cName,
+            nameAlternative: [],
+            nameAlternativeSpoiler: [],
+            image: cImg,
+            favorites: 0,
+          }).catch(() => null)
+        } else if (!charRecord.image && cImg) {
+          await prisma.orm.public.Character.where({ id: charRecord.id }).update({ image: cImg }).catch(() => {})
+        }
+      }
+
+      if (isActor && charRecord) {
+        const role = c.isFeatured ? 'MAIN' : 'SUPPORTING'
+        const existingMC = await prisma.orm.public.MediaCharacter.where({
+          mediaType,
+          mediaId,
+          characterId: charRecord.id,
+        }).select('id', 'actorId').first()
+
+        if (existingMC) {
+          if (personRecord && existingMC.actorId !== personRecord.id) {
+            await prisma.orm.public.MediaCharacter.where({ id: existingMC.id }).update({
+              actorId: personRecord.id,
+              role,
+              movieId: mediaType === 'MOVIE' ? mediaId : null,
+              tvId: mediaType === 'TV' ? mediaId : null,
+            }).catch(() => {})
+          }
+        } else {
+          await prisma.orm.public.MediaCharacter.create({
+            mediaType,
+            mediaId,
+            characterId: charRecord.id,
+            actorId: personRecord?.id || null,
+            role,
+            movieId: mediaType === 'MOVIE' ? mediaId : null,
+            tvId: mediaType === 'TV' ? mediaId : null,
+          }).catch(() => {})
+        }
+      } else if (personRecord) {
+        const rawRole = (c.typeName || c.peopleType || (isActor ? 'CAST' : 'OTHER')).toUpperCase()
+        let staffRole: any = 'OTHER'
+        if (rawRole.includes('DIRECTOR')) staffRole = 'DIRECTOR'
+        else if (rawRole.includes('WRITER') || rawRole.includes('SCRIPT')) staffRole = 'SCRIPT'
+        else if (rawRole.includes('PRODUCER')) staffRole = rawRole.includes('EXEC') ? 'EXECUTIVE_PRODUCER' : 'PRODUCER'
+        else if (rawRole.includes('MUSIC') || rawRole.includes('COMPOSER')) staffRole = 'COMPOSER'
+        else if (rawRole.includes('ACTOR') || rawRole.includes('CAST')) staffRole = 'CAST'
+        else if (rawRole.includes('AUTHOR')) staffRole = 'AUTHOR'
+        else if (rawRole.includes('ART') || rawRole.includes('ILLUSTRAT')) staffRole = 'ILLUSTRATOR'
+
+        const existingMS = await prisma.orm.public.MediaStaff.where({
+          mediaType,
+          mediaId,
+          personId: personRecord.id,
+          role: staffRole,
+        }).select('id').first()
+
+        if (!existingMS) {
+          await prisma.orm.public.MediaStaff.create({
+            mediaType,
+            mediaId,
+            personId: personRecord.id,
+            role: staffRole,
+            customRole: c.typeName || c.peopleType || null,
+            movieId: mediaType === 'MOVIE' ? mediaId : null,
+            tvId: mediaType === 'TV' ? mediaId : null,
+          }).catch(() => {})
+        }
+      }
+    }
   }
 
   private static async handleMusicRelation(
@@ -402,6 +638,15 @@ export class MediaEntitySyncer {
         seasonSeason: (alData.season as any) || undefined,
         format: (alData.format as any) || undefined,
         status: alData.status ? normalizeMediaStatus(alData.status) : undefined,
+        startDateYear: alData.startDate?.year || undefined,
+        startDateMonth: alData.startDate?.month || undefined,
+        startDateDay: alData.startDate?.day || undefined,
+        endDateYear: alData.endDate?.year || undefined,
+        endDateMonth: alData.endDate?.month || undefined,
+        endDateDay: alData.endDate?.day || undefined,
+        countryOfOrigin: alData.countryOfOrigin || undefined,
+        synonyms: alData.synonyms && alData.synonyms.length > 0 ? alData.synonyms : undefined,
+        trailers: alData.trailer ? [alData.trailer] : undefined,
         alUpdatedAt: nowUnix,
         updatedAt: now,
       })
@@ -412,6 +657,35 @@ export class MediaEntitySyncer {
         } catch {}
         for (const g of genreRecords) {
           await prisma.orm.public.AnimeGenre.create({ animeId, genreId: g.id }).catch(() => {})
+        }
+      }
+
+      // Sync tags
+      if ((alData as any).tags && Array.isArray((alData as any).tags)) {
+        const tagRecords = await this.upsertTags((alData as any).tags)
+        if (tagRecords.length > 0) {
+          try {
+            await prisma.orm.public.AnimeTag.where({ animeId }).deleteAll()
+          } catch {}
+          for (const t of tagRecords) {
+            await prisma.orm.public.AnimeTag.create({ animeId, tagId: t.id }).catch(() => {})
+          }
+        }
+      }
+
+      // Sync studios
+      if (alData.studios?.edges && Array.isArray(alData.studios.edges)) {
+        for (const edge of alData.studios.edges) {
+          if (!edge?.node?.name) continue
+          try {
+            const studio = await this.upsertStudio({
+              name: edge.node.name,
+              anilistId: edge.node.id,
+              isAnimationStudio: edge.node.isAnimationStudio,
+              siteUrl: edge.node.siteUrl,
+            })
+            await this.linkMediaStudio('ANIME', animeId, studio.id, Boolean(edge.isMain))
+          } catch {}
         }
       }
 
@@ -584,6 +858,13 @@ export class MediaEntitySyncer {
         alPopularity: alData.popularity || undefined,
         alFavorites: alData.favourites || undefined,
         startDateYear: alData.startDate?.year || undefined,
+        startDateMonth: alData.startDate?.month || undefined,
+        startDateDay: alData.startDate?.day || undefined,
+        endDateYear: alData.endDate?.year || undefined,
+        endDateMonth: alData.endDate?.month || undefined,
+        endDateDay: alData.endDate?.day || undefined,
+        countryOfOrigin: alData.countryOfOrigin || undefined,
+        synonyms: alData.synonyms && alData.synonyms.length > 0 ? alData.synonyms : undefined,
         format: (alData.format as any) || undefined,
         status: alData.status ? normalizeMediaStatus(alData.status) : undefined,
         alUpdatedAt: nowUnix,
@@ -596,6 +877,19 @@ export class MediaEntitySyncer {
         } catch {}
         for (const g of genreRecords) {
           await prisma.orm.public.MangaGenre.create({ mangaId, genreId: g.id }).catch(() => {})
+        }
+      }
+
+      // Sync tags
+      if ((alData as any).tags && Array.isArray((alData as any).tags)) {
+        const tagRecords = await this.upsertTags((alData as any).tags)
+        if (tagRecords.length > 0) {
+          try {
+            await prisma.orm.public.MangaTag.where({ mangaId }).deleteAll()
+          } catch {}
+          for (const t of tagRecords) {
+            await prisma.orm.public.MangaTag.create({ mangaId, tagId: t.id }).catch(() => {})
+          }
         }
       }
 
@@ -740,26 +1034,202 @@ export class MediaEntitySyncer {
         return false
       }
 
-      const displayTitle = series.name || 'Unknown TV Series'
+      const resolvedEng = series.engTranslation
+      const titlePrimary = resolvedEng?.name?.trim() || series.name || 'Unknown TV Series'
+      const titleSecondary = resolvedEng?.name && resolvedEng.name !== series.name ? series.name : undefined
+      const titleNative =
+        series.originalLanguage &&
+        ['kor', 'jpn', 'zho', 'zhtw', 'ko', 'ja', 'zh'].includes(series.originalLanguage.toLowerCase())
+          ? series.name
+          : undefined
+
+      const description = resolvedEng?.overview?.trim() || series.overview || undefined
+
       const genreNames = series.genres?.map((g) => g.name).filter(Boolean)
       const genreRecords = await this.upsertGenres(genreNames)
+      const tagRecords = await this.upsertTags(series.tags)
+
       logger.info(
-        `${c.blue('📥 [1/2]')} TVDB received Series: "${c.bold(displayTitle)}" (firstAired=${series.firstAired || 'N/A'}, score=${series.score || 'N/A'}, genres=${genreRecords.length})`
+        `${c.blue('📥 [1/2]')} TVDB received Series: "${c.bold(titlePrimary)}" (firstAired=${series.firstAired || 'N/A'}, score=${series.score || 'N/A'}, genres=${genreRecords.length})`
       )
+
+      // Fetch episodes and characters in parallel
+      const [episodes, tvCharacters] = await Promise.all([
+        tvdbProvider.fetchTvEpisodes(tvdbId).catch(() => []),
+        tvdbProvider.fetchTvCharacters(tvdbId).catch(() => []),
+      ])
 
       const now = new Date()
       const nowUnix = Math.floor(now.getTime() / 1000)
 
+      // First & Last Aired
+      let firstAiredYear: number | undefined
+      let firstAiredMonth: number | undefined
+      let firstAiredDay: number | undefined
+      if (series.firstAired) {
+        const parts = series.firstAired.split('T')[0]?.split('-').map((s) => parseInt(s, 10)) || []
+        if (parts[0] && !isNaN(parts[0])) firstAiredYear = parts[0]
+        if (parts[1] && !isNaN(parts[1])) firstAiredMonth = parts[1]
+        if (parts[2] && !isNaN(parts[2])) firstAiredDay = parts[2]
+      }
+
+      let lastAiredYear: number | undefined
+      let lastAiredMonth: number | undefined
+      let lastAiredDay: number | undefined
+      if (series.lastAired) {
+        const parts = series.lastAired.split('T')[0]?.split('-').map((s) => parseInt(s, 10)) || []
+        if (parts[0] && !isNaN(parts[0])) lastAiredYear = parts[0]
+        if (parts[1] && !isNaN(parts[1])) lastAiredMonth = parts[1]
+        if (parts[2] && !isNaN(parts[2])) lastAiredDay = parts[2]
+      }
+
+      // Remote IDs
+      let imdbId: string | undefined
+      let tmdbId: number | undefined
+      if (series.remoteIds && Array.isArray(series.remoteIds)) {
+        for (const r of series.remoteIds) {
+          if (r.sourceName?.toUpperCase() === 'IMDB' || r.type === 2) {
+            imdbId = r.id
+          } else if (
+            r.sourceName?.toLowerCase().includes('themoviedb') ||
+            r.type === 12 ||
+            r.type === 10
+          ) {
+            const p = parseInt(r.id, 10)
+            if (!isNaN(p)) tmdbId = p
+          }
+        }
+      }
+
+      // Age Rating
+      let ageRating: string | undefined
+      let ageRatingGuide: string | undefined
+      if (series.contentRatings && Array.isArray(series.contentRatings) && series.contentRatings.length > 0) {
+        const usaRating =
+          series.contentRatings.find((r) => r.country?.toLowerCase() === 'usa') ||
+          series.contentRatings[0]
+        if (usaRating) {
+          ageRating = usaRating.name || usaRating.fullname || undefined
+          ageRatingGuide = usaRating.description || undefined
+        }
+      }
+
+      // Artworks
+      const seriesImages: string[] = []
+      if (series.image) {
+        const norm = normalizeTvdbImageUrl(series.image)
+        if (norm) seriesImages.push(norm)
+      }
+      if (series.artworks && Array.isArray(series.artworks)) {
+        for (const art of series.artworks) {
+          const norm = normalizeTvdbImageUrl(art.image)
+          if (norm && !seriesImages.includes(norm)) seriesImages.push(norm)
+        }
+      }
+
+      let bannerImage: string | undefined
+      const backgroundArtworks = (series.artworks || []).filter(
+        (a) => a.type === 3 || (a.image && a.image.includes('/backgrounds/'))
+      )
+      if (backgroundArtworks.length > 0) {
+        bannerImage = normalizeTvdbImageUrl(backgroundArtworks[0]?.image) || undefined
+      } else if (seriesImages.length > 1) {
+        bannerImage = seriesImages[1]
+      }
+
+      // Synonyms
+      const synonymsSet = new Set<string>()
+      if (Array.isArray(series.aliases)) {
+        for (const a of series.aliases as any[]) {
+          if (typeof a === 'string' && a.trim()) {
+            synonymsSet.add(a.trim())
+          } else if (a && typeof a.name === 'string' && a.name.trim()) {
+            synonymsSet.add(a.name.trim())
+          }
+        }
+      }
+      if (titleSecondary && titleSecondary !== titlePrimary) synonymsSet.add(titleSecondary)
+      if (titleNative && titleNative !== titlePrimary) synonymsSet.add(titleNative)
+      synonymsSet.delete(titlePrimary)
+      const synonyms = Array.from(synonymsSet)
+
+      // Sources
+      const sources: Record<string, unknown> = {
+        thetvdb: {
+          id: series.id,
+          slug: series.slug,
+          url: series.slug
+            ? `https://thetvdb.com/series/${series.slug}`
+            : `https://thetvdb.com/dereferrer/series/${series.id}`,
+        },
+      }
+      if (imdbId) {
+        sources.imdb = { id: imdbId, url: `https://www.imdb.com/title/${imdbId}` }
+      }
+      if (tmdbId) {
+        sources.tmdb = { id: tmdbId, url: `https://www.themoviedb.org/tv/${tmdbId}` }
+      }
+
+      // Broadcast days
+      const broadcastDays: string[] = []
+      if (series.airsDays) {
+        for (const [day, active] of Object.entries(series.airsDays)) {
+          if (active) broadcastDays.push(day.charAt(0).toUpperCase() + day.slice(1))
+        }
+      }
+
+      const countryOfOrigin =
+        series.production_countries?.[0]?.name ||
+        (series.originalLanguage ? series.originalLanguage.toUpperCase() : undefined)
+
+      // Filter valid non-special episodes
+      const validEpisodes = episodes.filter((e) => e.seasonNumber > 0)
+      const seasonNumbers = new Set<number>()
+      if (series.seasons && Array.isArray(series.seasons)) {
+        for (const s of series.seasons) {
+          if (s.number > 0) seasonNumbers.add(s.number)
+        }
+      }
+      for (const ep of validEpisodes) {
+        seasonNumbers.add(ep.seasonNumber)
+      }
+
       logger.info(`${c.blue('💾 [2/2]')} Upserting TV Series #${tvId} record to database...`)
       await prisma.orm.public.Tv.where({ id: tvId }).update({
-        titlePrimary: series.name || undefined,
-        description: series.overview || undefined,
-        coverImage: series.image || undefined,
-        firstAiredYear: series.firstAired ? parseInt(series.firstAired.slice(0, 4), 10) : undefined,
+        titlePrimary,
+        titleSecondary: titleSecondary || undefined,
+        titleNative: titleNative || undefined,
+        description: description || undefined,
+        coverImage: series.image ? normalizeTvdbImageUrl(series.image) || undefined : undefined,
+        bannerImage: bannerImage || undefined,
+        images: seriesImages.length > 0 ? { thetvdb: seriesImages } : undefined,
+        sources: sources as any,
+        firstAiredYear,
+        firstAiredMonth,
+        firstAiredDay,
+        lastAiredYear,
+        lastAiredMonth,
+        lastAiredDay,
+        averageRuntime: series.averageRuntime || undefined,
+        episodeCount: validEpisodes.length || undefined,
+        seasonCount: seasonNumbers.size || undefined,
+        networks: series.networks?.map((n) => n.name).filter(Boolean) || undefined,
+        broadcastTime: series.airsTime || undefined,
+        broadcastDays: broadcastDays.length > 0 ? broadcastDays : undefined,
+        countryOfOrigin,
+        originalLanguage: series.originalLanguage,
+        status: mapTvStatus(series.status?.name),
+        ageRating,
+        ageRatingGuide,
+        imdbId,
+        tmdbId,
+        synonyms,
+        trailers: series.trailers || undefined,
         tvdbUpdatedAt: nowUnix,
         updatedAt: now,
       })
 
+      // Sync genres
       if (genreRecords.length > 0) {
         try {
           await prisma.orm.public.TvGenre.where({ tvId }).deleteAll()
@@ -769,8 +1239,140 @@ export class MediaEntitySyncer {
         }
       }
 
+      // Sync tags
+      if (tagRecords.length > 0) {
+        try {
+          await prisma.orm.public.TvTag.where({ tvId }).deleteAll()
+        } catch {}
+        for (const t of tagRecords) {
+          await prisma.orm.public.TvTag.create({ tvId, tagId: t.id }).catch(() => {})
+        }
+      }
+
+      // Upsert TV seasons and episodes
+      const seasonMap = new Map<number, number>()
+      for (const sNum of seasonNumbers) {
+        const seasonMeta = series.seasons?.find((s) => s.number === sNum)
+        const seasonEpisodes = validEpisodes.filter((e) => e.seasonNumber === sNum)
+
+        let airDateYear: number | undefined
+        let airDateMonth: number | undefined
+        let airDateDay: number | undefined
+
+        const firstEp = seasonEpisodes[0]
+        if (firstEp?.aired) {
+          const parts = firstEp.aired.split('-').map((s) => parseInt(s, 10))
+          if (parts[0]) airDateYear = parts[0]
+          if (parts[1]) airDateMonth = parts[1]
+          if (parts[2]) airDateDay = parts[2]
+        } else if (seasonMeta?.year) {
+          airDateYear = parseInt(seasonMeta.year, 10) || undefined
+        }
+
+        const seasonPoster = seasonMeta?.image ? normalizeTvdbImageUrl(seasonMeta.image) : undefined
+
+        let localSeason = await prisma.orm.public.TvSeason.where({
+          tvId,
+          seasonNumber: sNum,
+        }).select('id').first()
+
+        if (localSeason) {
+          await prisma.orm.public.TvSeason.where({ id: localSeason.id }).update({
+            tvdbSeasonId: seasonMeta?.id || undefined,
+            titlePrimary: seasonMeta?.name || `Season ${sNum}`,
+            posterImage: seasonPoster || undefined,
+            airDateYear: airDateYear || undefined,
+            airDateMonth: airDateMonth || undefined,
+            airDateDay: airDateDay || undefined,
+            episodeCount: seasonEpisodes.length || undefined,
+          }).catch(() => {})
+        } else {
+          localSeason = await prisma.orm.public.TvSeason.create({
+            tvId,
+            seasonNumber: sNum,
+            tvdbSeasonId: seasonMeta?.id || null,
+            titlePrimary: seasonMeta?.name || `Season ${sNum}`,
+            posterImage: seasonPoster || null,
+            airDateYear: airDateYear || null,
+            airDateMonth: airDateMonth || null,
+            airDateDay: airDateDay || null,
+            episodeCount: seasonEpisodes.length || 0,
+          }).catch(() => null)
+        }
+
+        if (localSeason) {
+          seasonMap.set(sNum, localSeason.id)
+        }
+      }
+
+      for (const ep of validEpisodes) {
+        const localSeasonId = seasonMap.get(ep.seasonNumber) || null
+        let epAirDate: Date | undefined
+        if (ep.aired) {
+          const parsed = new Date(ep.aired)
+          if (!isNaN(parsed.getTime())) epAirDate = parsed
+        }
+
+        const existingEp = await prisma.orm.public.TvEpisode.where({
+          tvId,
+          seasonNumber: ep.seasonNumber,
+          episodeNumber: ep.number,
+        }).select('id').first()
+
+        const epTitle = ep.name || `Episode ${ep.number}`
+        const epThumb = ep.image ? normalizeTvdbImageUrl(ep.image) : undefined
+
+        if (existingEp) {
+          await prisma.orm.public.TvEpisode.where({ id: existingEp.id }).update({
+            seasonId: localSeasonId,
+            titlePrimary: epTitle,
+            description: ep.overview || undefined,
+            duration: ep.runtime || undefined,
+            thumbnail: epThumb || undefined,
+            airDate: epAirDate || undefined,
+          }).catch(() => {})
+        } else {
+          await prisma.orm.public.TvEpisode.create({
+            tvId,
+            seasonId: localSeasonId,
+            seasonNumber: ep.seasonNumber,
+            episodeNumber: ep.number,
+            titlePrimary: epTitle,
+            description: ep.overview || null,
+            duration: ep.runtime || null,
+            thumbnail: epThumb || null,
+            airDate: epAirDate || null,
+          }).catch(() => {})
+        }
+      }
+
+      // Sync Studios / Companies
+      const allCompanies = [
+        ...(series.companies?.studio || []),
+        ...(series.companies?.network || []),
+        ...(series.companies?.production || []),
+        ...(series.companies?.distributor || []),
+      ]
+      for (const comp of allCompanies) {
+        if (!comp.name?.trim()) continue
+        const studio = await this.upsertStudio({
+          name: comp.name.trim(),
+          tvDBId: comp.id,
+        })
+        await this.linkMediaStudio('TV', tvId, studio.id)
+      }
+
+      // Sync Characters, Cast, Staff
+      const allCastAndStaff = [
+        ...(tvCharacters || []),
+        ...(series.characters || []),
+      ]
+      if (allCastAndStaff.length > 0) {
+        await this.syncTvdbCharactersAndStaff('TV', tvId, allCastAndStaff)
+      }
+
       logger.info(
-        `${c.green('✅ [Sync Complete]')} Successfully synced TV Series #${tvId} ("${displayTitle}")`
+        `${c.green('✅ [Sync Complete]')} Successfully synced TV Series #${tvId} ("${titlePrimary}") with ${validEpisodes.length} episodes across ${seasonNumbers.size} seasons`
       )
       return true
     } catch (err: any) {
@@ -808,9 +1410,10 @@ export class MediaEntitySyncer {
         return false
       }
 
-      const displayTitle = movie.name || 'Unknown Movie'
+      const displayTitle = movie.engTranslation?.name?.trim() || movie.name || 'Unknown Movie'
       const genreNames = movie.genres?.map((g) => g.name).filter(Boolean)
       const genreRecords = await this.upsertGenres(genreNames)
+      const tagRecords = await this.upsertTags(movie.tags)
       logger.info(
         `${c.blue('📥 [1/2]')} TVDB received Movie: "${c.bold(displayTitle)}" (runtime=${movie.runtime || 'N/A'}m, score=${movie.score || 'N/A'}, genres=${genreRecords.length})`
       )
@@ -818,17 +1421,166 @@ export class MediaEntitySyncer {
       const now = new Date()
       const nowUnix = Math.floor(now.getTime() / 1000)
 
+      // Remote IDs (IMDb, TMDb)
+      let imdbId: string | undefined
+      let tmdbId: number | undefined
+      if (movie.remoteIds && Array.isArray(movie.remoteIds)) {
+        for (const r of movie.remoteIds) {
+          if (r.sourceName?.toUpperCase() === 'IMDB' || r.type === 2) {
+            imdbId = r.id
+          } else if (
+            r.sourceName?.toLowerCase().includes('themoviedb') ||
+            r.type === 10
+          ) {
+            const p = parseInt(r.id, 10)
+            if (!isNaN(p)) tmdbId = p
+          }
+        }
+      }
+
+      // Release Date
+      let releaseDateYear: number | undefined
+      let releaseDateMonth: number | undefined
+      let releaseDateDay: number | undefined
+      const rawReleaseDate =
+        movie.first_release_date ||
+        movie.first_release?.date ||
+        (movie.releases && movie.releases.length > 0 ? movie.releases[0]?.date : undefined)
+
+      if (rawReleaseDate) {
+        const parts = rawReleaseDate.split('-').map((s) => parseInt(s, 10))
+        if (parts[0] && !isNaN(parts[0])) releaseDateYear = parts[0]
+        if (parts[1] && !isNaN(parts[1])) releaseDateMonth = parts[1]
+        if (parts[2] && !isNaN(parts[2])) releaseDateDay = parts[2]
+      }
+
+      // Budget & Revenue
+      let budget: bigint | undefined
+      if (movie.budget) {
+        const num = BigInt(String(movie.budget).replace(/[^0-9]/g, '') || 0)
+        if (num > 0n) budget = num
+      }
+      let revenue: bigint | undefined
+      if (movie.boxOffice) {
+        const num = BigInt(String(movie.boxOffice).replace(/[^0-9]/g, '') || 0)
+        if (num > 0n) revenue = num
+      }
+
+      // Age Rating
+      let ageRating: string | undefined
+      let ageRatingGuide: string | undefined
+      if (movie.contentRatings && Array.isArray(movie.contentRatings) && movie.contentRatings.length > 0) {
+        const usaRating =
+          movie.contentRatings.find((r) => r.country?.toLowerCase() === 'usa') ||
+          movie.contentRatings[0]
+        if (usaRating) {
+          ageRating = usaRating.name || usaRating.fullname || undefined
+          ageRatingGuide = usaRating.description || undefined
+        }
+      }
+
+      // Artworks, Cover, Banner, Images
+      const movieImages: string[] = []
+      if (movie.image) {
+        const norm = normalizeTvdbImageUrl(movie.image)
+        if (norm) movieImages.push(norm)
+      }
+      if (movie.artworks && Array.isArray(movie.artworks)) {
+        for (const art of movie.artworks) {
+          const norm = normalizeTvdbImageUrl(art.image)
+          if (norm && !movieImages.includes(norm)) movieImages.push(norm)
+        }
+      }
+
+      let bannerImage: string | undefined
+      const backgroundArtworks = (movie.artworks || []).filter(
+        (a) => a.type === 3 || (a.image && a.image.includes('/backgrounds/'))
+      )
+      if (backgroundArtworks.length > 0) {
+        bannerImage = normalizeTvdbImageUrl(backgroundArtworks[0]?.image) || undefined
+      } else if (movieImages.length > 1) {
+        bannerImage = movieImages[1]
+      }
+
+      // Titles
+      const resolvedEng = movie.engTranslation
+      const titlePrimary = resolvedEng?.name?.trim() || movie.name || 'Unknown Movie'
+      const titleSecondary = resolvedEng?.name && resolvedEng.name !== movie.name ? movie.name : undefined
+      const titleNative =
+        movie.originalLanguage &&
+        ['kor', 'jpn', 'zho', 'zhtw', 'ko', 'ja', 'zh'].includes(movie.originalLanguage.toLowerCase())
+          ? movie.name
+          : undefined
+
+      const description = resolvedEng?.overview?.trim() || movie.overview || undefined
+
+      // Synonyms
+      const synonymsSet = new Set<string>()
+      if (Array.isArray(movie.aliases)) {
+        for (const a of movie.aliases as any[]) {
+          if (typeof a === 'string' && a.trim()) {
+            synonymsSet.add(a.trim())
+          } else if (a && typeof a.name === 'string' && a.name.trim()) {
+            synonymsSet.add(a.name.trim())
+          }
+        }
+      }
+      if (titleSecondary && titleSecondary !== titlePrimary) synonymsSet.add(titleSecondary)
+      if (titleNative && titleNative !== titlePrimary) synonymsSet.add(titleNative)
+      synonymsSet.delete(titlePrimary)
+      const synonyms = Array.from(synonymsSet)
+
+      // Sources
+      const sources: Record<string, unknown> = {
+        thetvdb: {
+          id: movie.id,
+          slug: movie.slug,
+          url: movie.slug
+            ? `https://thetvdb.com/movies/${movie.slug}`
+            : `https://thetvdb.com/dereferrer/movie/${movie.id}`,
+        },
+      }
+      if (imdbId) {
+        sources.imdb = { id: imdbId, url: `https://www.imdb.com/title/${imdbId}` }
+      }
+      if (tmdbId) {
+        sources.tmdb = { id: tmdbId, url: `https://www.themoviedb.org/movie/${tmdbId}` }
+      }
+
+      const countryOfOrigin =
+        movie.production_countries?.[0]?.name ||
+        (movie.originalLanguage ? movie.originalLanguage.toUpperCase() : undefined)
+
       logger.info(`${c.blue('💾 [2/2]')} Upserting Movie #${movieId} record to database...`)
       await prisma.orm.public.Movie.where({ id: movieId }).update({
-        titlePrimary: movie.name || undefined,
-        description: movie.overview || undefined,
-        coverImage: movie.image || undefined,
+        titlePrimary,
+        titleSecondary: titleSecondary || undefined,
+        titleNative: titleNative || undefined,
+        description: description || undefined,
+        coverImage: movie.image ? normalizeTvdbImageUrl(movie.image) || undefined : undefined,
+        bannerImage: bannerImage || undefined,
+        images: movieImages.length > 0 ? { thetvdb: movieImages } : undefined,
+        sources: sources as any,
         runtime: movie.runtime || undefined,
-        releaseDateYear: movie.first_release_date ? parseInt(movie.first_release_date.slice(0, 4), 10) : undefined,
+        releaseDateYear,
+        releaseDateMonth,
+        releaseDateDay,
+        budget,
+        revenue,
+        status: mapMovieStatus(movie.status?.name),
+        countryOfOrigin,
+        originalLanguage: movie.originalLanguage,
+        ageRating,
+        ageRatingGuide,
+        imdbId,
+        tmdbId,
+        synonyms,
+        trailers: movie.trailers || undefined,
         tvdbUpdatedAt: nowUnix,
         updatedAt: now,
       })
 
+      // Sync genres
       if (genreRecords.length > 0) {
         try {
           await prisma.orm.public.MovieGenre.where({ movieId }).deleteAll()
@@ -838,8 +1590,38 @@ export class MediaEntitySyncer {
         }
       }
 
+      // Sync tags
+      if (tagRecords.length > 0) {
+        try {
+          await prisma.orm.public.MovieTag.where({ movieId }).deleteAll()
+        } catch {}
+        for (const t of tagRecords) {
+          await prisma.orm.public.MovieTag.create({ movieId, tagId: t.id }).catch(() => {})
+        }
+      }
+
+      // Sync Studios / Companies
+      const allCompanies = [
+        ...(movie.companies?.studio || []),
+        ...(movie.companies?.production || []),
+        ...(movie.companies?.distributor || []),
+      ]
+      for (const comp of allCompanies) {
+        if (!comp.name?.trim()) continue
+        const studio = await this.upsertStudio({
+          name: comp.name.trim(),
+          tvDBId: comp.id,
+        })
+        await this.linkMediaStudio('MOVIE', movieId, studio.id)
+      }
+
+      // Sync Characters, Cast, Staff
+      if (movie.characters && Array.isArray(movie.characters)) {
+        await this.syncTvdbCharactersAndStaff('MOVIE', movieId, movie.characters)
+      }
+
       logger.info(
-        `${c.green('✅ [Sync Complete]')} Successfully synced Movie #${movieId} ("${displayTitle}")`
+        `${c.green('✅ [Sync Complete]')} Successfully synced Movie #${movieId} ("${titlePrimary}")`
       )
       return true
     } catch (err: any) {
@@ -880,6 +1662,21 @@ export class MediaEntitySyncer {
       const displayTitle = game.name || 'Unknown Game'
       const genreNames = game.genres?.map((g) => g.name).filter(Boolean)
       const genreRecords = await this.upsertGenres(genreNames)
+
+      // Tags from themes and game modes
+      const rawTags: Array<{ name: string; category?: string }> = []
+      if (game.themes && Array.isArray(game.themes)) {
+        for (const th of game.themes) {
+          if (th.name) rawTags.push({ name: th.name, category: 'Theme' })
+        }
+      }
+      if (game.game_modes && Array.isArray(game.game_modes)) {
+        for (const gm of game.game_modes) {
+          if (gm.name) rawTags.push({ name: gm.name, category: 'Game Mode' })
+        }
+      }
+      const tagRecords = await this.upsertTags(rawTags)
+
       const platforms = game.platforms?.map((p) => p.name).filter(Boolean) || []
       logger.info(
         `${c.magenta('📥 [1/2]')} IGDB received Game: "${c.bold(displayTitle)}" (rating=${game.rating ? Math.round(game.rating) : 'N/A'}, platforms=${platforms.length}, genres=${genreRecords.length})`
@@ -888,6 +1685,40 @@ export class MediaEntitySyncer {
       const now = new Date()
       const nowUnix = Math.floor(now.getTime() / 1000)
 
+      let releaseDateMonth: number | undefined
+      let releaseDateDay: number | undefined
+      if (game.first_release_date) {
+        const d = new Date(game.first_release_date * 1000)
+        releaseDateMonth = d.getUTCMonth() + 1
+        releaseDateDay = d.getUTCDate()
+      }
+
+      const gameImages: string[] = []
+      if (game.screenshots && Array.isArray(game.screenshots)) {
+        for (const sc of game.screenshots) {
+          if (sc.image_id) gameImages.push(`https://images.igdb.com/igdb/image/upload/t_screenshot_huge/${sc.image_id}.jpg`)
+        }
+      }
+      if (game.artworks && Array.isArray(game.artworks)) {
+        for (const art of game.artworks) {
+          if (art.image_id) gameImages.push(`https://images.igdb.com/igdb/image/upload/t_1080p/${art.image_id}.jpg`)
+        }
+      }
+      const bannerImage = gameImages[0] || undefined
+
+      const synonyms = (game.alternative_names || []).map((a) => a.name).filter(Boolean)
+      const sources: Record<string, unknown> = {
+        igdb: {
+          id: game.id,
+          url: game.slug ? `https://www.igdb.com/games/${game.slug}` : `https://www.igdb.com/games/${game.id}`,
+        },
+      }
+      if (game.websites && Array.isArray(game.websites)) {
+        for (const ws of game.websites) {
+          if (ws.url) sources[`website_${ws.category}`] = { url: ws.url }
+        }
+      }
+
       logger.info(`${c.blue('💾 [2/2]')} Upserting Game #${gameId} record to database...`)
       await prisma.orm.public.Game.where({ id: gameId }).update({
         titlePrimary: game.name || undefined,
@@ -895,12 +1726,18 @@ export class MediaEntitySyncer {
         coverImage: game.cover?.image_id
           ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.jpg`
           : undefined,
+        bannerImage,
+        images: gameImages.length > 0 ? { igdb: gameImages } : undefined,
         releaseDateYear: game.first_release_date
           ? new Date(game.first_release_date * 1000).getUTCFullYear()
           : undefined,
+        releaseDateMonth,
+        releaseDateDay,
         igdbRating: game.rating ? Math.round(game.rating * 10) / 10 : undefined,
         igdbRatingCount: (game as any).rating_count || undefined,
         platforms,
+        synonyms: synonyms.length > 0 ? synonyms : undefined,
+        sources: sources as any,
         igdbUpdatedAt: nowUnix,
         updatedAt: now,
       })
@@ -911,6 +1748,26 @@ export class MediaEntitySyncer {
         } catch {}
         for (const g of genreRecords) {
           await prisma.orm.public.GameGenre.create({ gameId, genreId: g.id }).catch(() => {})
+        }
+      }
+
+      if (tagRecords.length > 0) {
+        try {
+          await prisma.orm.public.GameTag.where({ gameId }).deleteAll()
+        } catch {}
+        for (const t of tagRecords) {
+          await prisma.orm.public.GameTag.create({ gameId, tagId: t.id }).catch(() => {})
+        }
+      }
+
+      // Sync studios from involved companies
+      if (game.involved_companies && Array.isArray(game.involved_companies)) {
+        for (const ic of game.involved_companies) {
+          if (!ic.company?.name?.trim()) continue
+          try {
+            const studio = await this.upsertStudio({ name: ic.company.name.trim() })
+            await this.linkMediaStudio('GAME', gameId, studio.id, Boolean(ic.developer))
+          } catch {}
         }
       }
 
@@ -957,6 +1814,7 @@ export class MediaEntitySyncer {
       const displayTitle = info.title || 'Unknown Book'
       const genreNames = info.categories?.filter(Boolean)
       const genreRecords = await this.upsertGenres(genreNames)
+      const tagRecords = await this.upsertTags(genreNames)
       logger.info(
         `${c.yellow('📥 [1/2]')} Google Books received: "${c.bold(displayTitle)}" (pages=${info.pageCount || 'N/A'}, authors=${info.authors?.join(', ') || 'N/A'}, genres=${genreRecords.length})`
       )
@@ -965,22 +1823,49 @@ export class MediaEntitySyncer {
       const nowUnix = Math.floor(now.getTime() / 1000)
 
       let releaseDateYear: number | undefined
+      let releaseDateMonth: number | undefined
+      let releaseDateDay: number | undefined
       if (info.publishedDate) {
-        const yr = parseInt(info.publishedDate.slice(0, 4), 10)
-        if (!isNaN(yr)) releaseDateYear = yr
+        const parts = info.publishedDate.split('-').map((s) => parseInt(s, 10))
+        if (parts[0] && !isNaN(parts[0])) releaseDateYear = parts[0]
+        if (parts[1] && !isNaN(parts[1])) releaseDateMonth = parts[1]
+        if (parts[2] && !isNaN(parts[2])) releaseDateDay = parts[2]
+      }
+
+      const cleanDescription = info.description ? info.description.replace(/<[^>]*>/g, '').trim() : undefined
+      const imageLinks = (info as any).imageLinks
+      const coverImage =
+        imageLinks?.extraLarge ||
+        imageLinks?.large ||
+        imageLinks?.medium ||
+        imageLinks?.thumbnail ||
+        undefined
+
+      const sources: Record<string, unknown> = {
+        googleBooks: { id: volumeId, url: `https://books.google.com/books?id=${volumeId}` },
+      }
+      const industryIdentifiers = (info as any).industryIdentifiers
+      if (industryIdentifiers && Array.isArray(industryIdentifiers)) {
+        for (const idObj of industryIdentifiers) {
+          if (idObj?.identifier) sources[idObj.type || 'identifier'] = idObj.identifier
+        }
       }
 
       logger.info(`${c.blue('💾 [2/2]')} Upserting Book #${bookId} record to database...`)
       await prisma.orm.public.Book.where({ id: bookId }).update({
         titlePrimary: info.title || undefined,
         titleSecondary: info.subtitle || undefined,
-        description: info.description || undefined,
+        description: cleanDescription,
+        coverImage,
         pageCount: info.pageCount || undefined,
         authors: info.authors || undefined,
         publishers: info.publisher ? [info.publisher] : undefined,
         releaseDateYear,
+        releaseDateMonth,
+        releaseDateDay,
         googleBooksRating: (info as any).averageRating || undefined,
         googleBooksRatingsCount: (info as any).ratingsCount || undefined,
+        sources: sources as any,
         googleBooksUpdatedAt: nowUnix,
         updatedAt: now,
       })
@@ -991,6 +1876,15 @@ export class MediaEntitySyncer {
         } catch {}
         for (const g of genreRecords) {
           await prisma.orm.public.BookGenre.create({ bookId, genreId: g.id }).catch(() => {})
+        }
+      }
+
+      if (tagRecords.length > 0) {
+        try {
+          await prisma.orm.public.BookTag.where({ bookId }).deleteAll()
+        } catch {}
+        for (const t of tagRecords) {
+          await prisma.orm.public.BookTag.create({ bookId, tagId: t.id }).catch(() => {})
         }
       }
 

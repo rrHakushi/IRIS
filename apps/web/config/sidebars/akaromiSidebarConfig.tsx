@@ -13,7 +13,7 @@ import {
 } from "@tabler/icons-react"
 import type { Session } from "@/context/session-context"
 
-export function getPassSidebarConfig(
+export function getAkaromiSidebarConfig(
   session: Session | null,
   t?: (key: string) => string
 ): SidebarConfig {
@@ -158,6 +158,11 @@ export function getPassSidebarConfig(
   ]
 }
 
-export function usePassSidebarConfig(session: Session | null): SidebarConfig {
-  return useMemo(() => getPassSidebarConfig(session), [session])
+export function useAkaromiSidebarConfig(session: Session | null): SidebarConfig {
+  return useMemo(() => getAkaromiSidebarConfig(session), [session])
 }
+
+// Aliases for backwards compatibility
+export const getPassSidebarConfig = getAkaromiSidebarConfig
+export const usePassSidebarConfig = useAkaromiSidebarConfig
+

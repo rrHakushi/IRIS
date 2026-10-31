@@ -19,8 +19,13 @@ function getMasterSecret(): Buffer {
   const secret =
     Bun.env.CONNECTIONS_SECRET ||
     Bun.env.JWT_SECRET ||
-    Bun.env.APP_SECRET ||
-    "iris-default-connections-master-key-32chars";
+    Bun.env.APP_SECRET;
+
+  if (!secret) {
+    throw new Error(
+      "CONNECTIONS_SECRET, JWT_SECRET, or APP_SECRET environment variable is required for connection encryption."
+    );
+  }
   return createHash("sha256").update(secret).digest();
 }
 

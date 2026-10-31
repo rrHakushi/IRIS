@@ -22,6 +22,11 @@ const instrumentSans = Instrument_Sans({
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "http://localhost:3000"
+  ),
   title: "IRIS",
   description:
     "Collection of self hosted apps https://github.com/rrHakushi/IRIS",

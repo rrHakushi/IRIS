@@ -1,10 +1,14 @@
 # Borealis [Media tracker]
     - Stremio plugin for borealis
     - In media pages (anime, manga etc) add tab People in which it will list all users who have that media in list (that is public and media is not private)
+    - Movies are not fetching/saving full data
    
 # Akaromi [Password manager]
     - Clicking unlock in the inline fill doesnt open the modal on android
     - Fix scan QR code (doesnt detect them)
+    - make dashboard page (/), move current / page to /vault
+    - password sharing, to another user's vault, by url (one time use / expiry time), custom expiration times
+    - add sensitive notes (content visible on focus/active input)
     
 # Kiroshi [Web search]
     - 
@@ -21,7 +25,6 @@
     - Dev tools (floating popup like nextjs has), onclick open sidebar with tools [metadata viewer, send notification, trigger events/workers... ]
     - .md version of every single page
     - mcp server for all the apps
-    - create missing sidebar configs
     - Default banner image for all apps (each different) to be used in server metadata 
 
 
@@ -62,6 +65,7 @@
 
 # Elysia [Backend powering all this]
     --- Elysia 2 docs https://next.elysiajs.com/at-glance/
+    - disable ws and public route logs (show only in dev)
 
 # Next
     - pnpm add @elysia/eden@next if not already
@@ -77,12 +81,14 @@
 # JellyBorealis 
     - Add support for other list (idk we'll see)
     - detect music button in the player ui (next to borealis icon) to detect currently playing music in the playback
+
 # Akaromi For Firefox
+    - inline fill doesnt filter by detection method
+    - add search ti inline fill which will not filter out by website (just search normally like in the ui)
     - 
 
 # Borealis Extra
     - Add support for other list
-    - https://github.com/accntech/shad-ui  for the UI
 
 
 
@@ -94,4 +100,4 @@ TODO AFTER UPDATNG TO LATEST
   run db:prepare-prisma8   #done
   run db:unify-status  #done
 
-  update oauth callback urls https://[url]/carina/connections/[provider]/callback
+  update oauth callback urls https://[url]/carina/connections/[provider]/callback #done

@@ -19,6 +19,8 @@ export const BorealisMediaModel = {
             t.Literal('title'),
             t.Literal('releaseDate'),
             t.Literal('trending'),
+            t.Literal('favorites'),
+            t.Literal('updatedAt'),
           ],
           { default: 'popularity' }
         )

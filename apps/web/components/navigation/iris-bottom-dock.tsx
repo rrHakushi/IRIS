@@ -25,6 +25,7 @@ import { useIrisApps, renderIrisAppIcon } from "@/config/irisApps"
 
 export interface IrisBottomDockProps {
   pathname: string
+  appId?: string
   searchParams?:
     | URLSearchParams
     | { get: (name: string) => string | null; toString: () => string }
@@ -156,6 +157,7 @@ function useDockScrollVisibility(
 
 export function IrisBottomDock({
   pathname,
+  appId: appIdProp,
   searchParams: searchParamsProp,
   navConfig,
   setOpenMobile,
@@ -183,12 +185,16 @@ export function IrisBottomDock({
   const allAppConfigs = useAllAppSidebarConfigs(null)
   const irisApps = useIrisApps()
   const activeApp = useMemo(() => {
+    if (appIdProp) {
+      const found = irisApps.find((app) => app.id === appIdProp)
+      if (found) return found
+    }
     const current = irisApps.find((app) =>
       app.href !== "/" ? pathname.startsWith(app.href) : pathname === "/"
     )
     return current || irisApps[0]
-  }, [pathname, irisApps])
-  const activeAppId = activeApp?.id || "default"
+  }, [pathname, irisApps, appIdProp])
+  const activeAppId = appIdProp || activeApp?.id || "default"
 
   const [localMap, setLocalMap] = useState<Record<
     string,

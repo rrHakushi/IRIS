@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react"
 import { useSession } from "@/context/session-context"
-import { useSearchSidebarConfig } from "@/config/sidebars/searchSidebarConfig"
+import { useKiroshiSidebarConfig } from "@/config/sidebars/kiroshiSidebarConfig"
 import { IrisSidebar } from "@/components/navigation/iris-sidebar"
 import { useIrisSidebar } from "@/components/navigation/sidebar-provider"
 import { SidebarInset, useSidebar } from "@workspace/ui/components/sidebar"
@@ -17,7 +17,7 @@ export default function IrisSearchNavProvider({
   children,
 }: IrisSearchNavProviderProps): React.JSX.Element {
   const { data: session } = useSession()
-  const rawConfig = useSearchSidebarConfig(session)
+  const rawConfig = useKiroshiSidebarConfig(session)
   const { position } = useIrisSidebar()
   const { state } = useSidebar()
 

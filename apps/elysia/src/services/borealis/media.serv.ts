@@ -2,6 +2,7 @@ import { prisma, countOf, or, type MediaType } from '@Iris/db'
 import { NotFound } from '../../lib/errors'
 import { MediaQueueManager } from './queue'
 import { fetchMediaRelations } from './media-relations.helper'
+import { MediaEntitySyncer } from './syncer/media-entity.syncer'
 
 export interface CatalogQuery {
   page?: number
@@ -12,7 +13,14 @@ export interface CatalogQuery {
   statuses?: string
   years?: string
   season?: string
-  sortBy?: 'popularity' | 'score' | 'title' | 'releaseDate' | 'trending'
+  sortBy?:
+    | 'popularity'
+    | 'score'
+    | 'title'
+    | 'releaseDate'
+    | 'trending'
+    | 'favorites'
+    | 'updatedAt'
   sortOrder?: 'asc' | 'desc'
 }
 
@@ -83,7 +91,8 @@ export class BorealisMediaServ {
     if (sortBy === 'score') orderBy = { averageScore: sortOrder }
     if (sortBy === 'title') orderBy = { titlePrimary: sortOrder }
     if (sortBy === 'releaseDate') orderBy = { seasonYear: sortOrder }
-    if (sortBy === 'trending') orderBy = { favorites: sortOrder }
+    if (sortBy === 'trending' || sortBy === 'favorites') orderBy = { favorites: sortOrder }
+    if (sortBy === 'updatedAt') orderBy = { updatedAt: sortOrder }
 
     let q = prisma.orm.public.Anime
     if (search) {
@@ -126,9 +135,13 @@ export class BorealisMediaServ {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.seasonYear.asc() : x.seasonYear.desc()
       )
-    } else if (sortBy === 'trending') {
+    } else if (sortBy === 'trending' || sortBy === 'favorites') {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else if (sortBy === 'updatedAt') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.updatedAt.asc() : x.updatedAt.desc()
       )
     } else {
       itemsQ = itemsQ.orderBy((x) =>
@@ -243,6 +256,34 @@ export class BorealisMediaServ {
 
     if (!anime) {
       throw new NotFound(`Anime with ID ${id} not found`)
+    }
+
+    if (anime.alUpdatedAt == null && anime.anilistId) {
+      await MediaEntitySyncer.syncAnime(id, anime.anilistId).catch(() => {})
+      const updated = await prisma.orm.public.Anime.where({ id })
+        .include('genres', (g) => g.include('genre'))
+        .include('tags', (t) => t.include('tag'))
+        .include('characters', (c) =>
+          c.include('character').include('actor')
+        )
+        .include('staff', (s) => s.include('person'))
+        .include('studios', (st) => st.include('studio'))
+        .include('episodes', (e) =>
+          e.orderBy((ep) => ep.number.asc()).limit(50)
+        )
+        .first()
+      if (updated) {
+        const relations = await fetchMediaRelations('ANIME' as MediaType, id)
+        return {
+          success: true,
+          media: {
+            ...updated,
+            genres: (updated.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+            tags: (updated.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
+            relations,
+          },
+        }
+      }
     }
 
     // Fetch relations
@@ -479,7 +520,8 @@ export class BorealisMediaServ {
     if (sortBy === 'score') orderBy = { averageScore: sortOrder }
     if (sortBy === 'title') orderBy = { titlePrimary: sortOrder }
     if (sortBy === 'releaseDate') orderBy = { startDateYear: sortOrder }
-    if (sortBy === 'trending') orderBy = { favorites: sortOrder }
+    if (sortBy === 'trending' || sortBy === 'favorites') orderBy = { favorites: sortOrder }
+    if (sortBy === 'updatedAt') orderBy = { updatedAt: sortOrder }
 
     let q = prisma.orm.public.Manga
     if (search) {
@@ -519,9 +561,13 @@ export class BorealisMediaServ {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.startDateYear.asc() : x.startDateYear.desc()
       )
-    } else if (sortBy === 'trending') {
+    } else if (sortBy === 'trending' || sortBy === 'favorites') {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else if (sortBy === 'updatedAt') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.updatedAt.asc() : x.updatedAt.desc()
       )
     } else {
       itemsQ = itemsQ.orderBy((x) =>
@@ -627,6 +673,30 @@ export class BorealisMediaServ {
 
     if (!manga) {
       throw new NotFound(`Manga with ID ${id} not found`)
+    }
+
+    if (manga.alUpdatedAt == null && manga.anilistId) {
+      await MediaEntitySyncer.syncManga(id, manga.anilistId).catch(() => {})
+      const updated = await prisma.orm.public.Manga.where({ id })
+        .include('genres', (g) => g.include('genre'))
+        .include('tags', (t) => t.include('tag'))
+        .include('characters', (c) =>
+          c.include('character').include('actor')
+        )
+        .include('staff', (s) => s.include('person'))
+        .first()
+      if (updated) {
+        const relations = await fetchMediaRelations('MANGA' as MediaType, id)
+        return {
+          success: true,
+          media: {
+            ...updated,
+            genres: (updated.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+            tags: (updated.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
+            relations,
+          },
+        }
+      }
     }
 
     const relations = await fetchMediaRelations('MANGA' as MediaType, id)
@@ -856,7 +926,8 @@ export class BorealisMediaServ {
     if (sortBy === 'score') orderBy = { averageScore: sortOrder }
     if (sortBy === 'title') orderBy = { titlePrimary: sortOrder }
     if (sortBy === 'releaseDate') orderBy = { releaseDateYear: sortOrder }
-    if (sortBy === 'trending') orderBy = { favorites: sortOrder }
+    if (sortBy === 'trending' || sortBy === 'favorites') orderBy = { favorites: sortOrder }
+    if (sortBy === 'updatedAt') orderBy = { updatedAt: sortOrder }
 
     let q = prisma.orm.public.Movie
     if (search) {
@@ -893,9 +964,13 @@ export class BorealisMediaServ {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.releaseDateYear.asc() : x.releaseDateYear.desc()
       )
-    } else if (sortBy === 'trending') {
+    } else if (sortBy === 'trending' || sortBy === 'favorites') {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else if (sortBy === 'updatedAt') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.updatedAt.asc() : x.updatedAt.desc()
       )
     } else {
       itemsQ = itemsQ.orderBy((x) =>
@@ -997,6 +1072,33 @@ export class BorealisMediaServ {
 
     if (!movie) {
       throw new NotFound(`Movie with ID ${id} not found`)
+    }
+
+    if (movie.tvdbUpdatedAt == null && movie.tvDBId) {
+      await MediaEntitySyncer.syncMovie(id, movie.tvDBId).catch(() => {})
+      const updated = await prisma.orm.public.Movie.where({ id })
+        .include('genres', (g) => g.include('genre'))
+        .include('tags', (t) => t.include('tag'))
+        .include('characters', (c) =>
+          c.include('character').include('actor')
+        )
+        .include('staff', (s) => s.include('person'))
+        .include('studios', (st) => st.include('studio'))
+        .first()
+      if (updated) {
+        const relations = await fetchMediaRelations('MOVIE' as MediaType, id)
+        return {
+          success: true,
+          media: {
+            ...updated,
+            genres: (updated.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+            tags: (updated.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
+            budget: updated.budget != null ? Number(updated.budget) : null,
+            revenue: updated.revenue != null ? Number(updated.revenue) : null,
+            relations,
+          },
+        }
+      }
     }
 
     const relations = await fetchMediaRelations('MOVIE' as MediaType, id)
@@ -1236,7 +1338,8 @@ export class BorealisMediaServ {
     if (sortBy === 'score') orderBy = { averageScore: sortOrder }
     if (sortBy === 'title') orderBy = { titlePrimary: sortOrder }
     if (sortBy === 'releaseDate') orderBy = { firstAiredYear: sortOrder }
-    if (sortBy === 'trending') orderBy = { favorites: sortOrder }
+    if (sortBy === 'trending' || sortBy === 'favorites') orderBy = { favorites: sortOrder }
+    if (sortBy === 'updatedAt') orderBy = { updatedAt: sortOrder }
 
     let q = prisma.orm.public.Tv
     if (search) {
@@ -1276,9 +1379,13 @@ export class BorealisMediaServ {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.firstAiredYear.asc() : x.firstAiredYear.desc()
       )
-    } else if (sortBy === 'trending') {
+    } else if (sortBy === 'trending' || sortBy === 'favorites') {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else if (sortBy === 'updatedAt') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.updatedAt.asc() : x.updatedAt.desc()
       )
     } else {
       itemsQ = itemsQ.orderBy((x) =>
@@ -1387,6 +1494,33 @@ export class BorealisMediaServ {
 
     if (!tv) {
       throw new NotFound(`TV series with ID ${id} not found`)
+    }
+
+    if (tv.tvdbUpdatedAt == null && tv.tvDBId) {
+      await MediaEntitySyncer.syncTv(id, tv.tvDBId).catch(() => {})
+      const updated = await prisma.orm.public.Tv.where({ id })
+        .include('genres', (g) => g.include('genre'))
+        .include('tags', (t) => t.include('tag'))
+        .include('characters', (c) =>
+          c.include('character').include('actor')
+        )
+        .include('staff', (s) => s.include('person'))
+        .include('studios', (st) => st.include('studio'))
+        .include('seasons', (s) => s.orderBy((sn) => sn.seasonNumber.asc()))
+        .include('episodes', (e) => e.orderBy([(ep) => ep.seasonNumber.asc(), (ep) => ep.episodeNumber.asc()]))
+        .first()
+      if (updated) {
+        const relations = await fetchMediaRelations('TV' as MediaType, id)
+        return {
+          success: true,
+          media: {
+            ...updated,
+            genres: (updated.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+            tags: (updated.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
+            relations,
+          },
+        }
+      }
     }
 
     const relations = await fetchMediaRelations('TV' as MediaType, id)
@@ -1630,7 +1764,8 @@ export class BorealisMediaServ {
     if (sortBy === 'score') orderBy = { averageScore: sortOrder }
     if (sortBy === 'title') orderBy = { titlePrimary: sortOrder }
     if (sortBy === 'releaseDate') orderBy = { releaseDateYear: sortOrder }
-    if (sortBy === 'trending') orderBy = { favorites: sortOrder }
+    if (sortBy === 'trending' || sortBy === 'favorites') orderBy = { favorites: sortOrder }
+    if (sortBy === 'updatedAt') orderBy = { updatedAt: sortOrder }
 
     let q = prisma.orm.public.Book
     if (search) {
@@ -1669,9 +1804,13 @@ export class BorealisMediaServ {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.releaseDateYear.asc() : x.releaseDateYear.desc()
       )
-    } else if (sortBy === 'trending') {
+    } else if (sortBy === 'trending' || sortBy === 'favorites') {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else if (sortBy === 'updatedAt') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.updatedAt.asc() : x.updatedAt.desc()
       )
     } else {
       itemsQ = itemsQ.orderBy((x) =>
@@ -1777,6 +1916,31 @@ export class BorealisMediaServ {
 
     if (!book) {
       throw new NotFound(`Book with ID ${id} not found`)
+    }
+
+    if (book.googleBooksUpdatedAt == null && book.googleBookId) {
+      await MediaEntitySyncer.syncBook(id, book.googleBookId).catch(() => {})
+      const updated = await prisma.orm.public.Book.where({ id })
+        .include('genres', (g) => g.include('genre'))
+        .include('tags', (t) => t.include('tag'))
+        .include('characters', (c) =>
+          c.include('character')
+        )
+        .include('staff', (s) => s.include('person'))
+        .include('studios', (st) => st.include('studio'))
+        .first()
+      if (updated) {
+        const relations = await fetchMediaRelations('BOOK' as MediaType, id)
+        return {
+          success: true,
+          media: {
+            ...updated,
+            genres: (updated.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+            tags: (updated.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
+            relations,
+          },
+        }
+      }
     }
 
     const relations = await fetchMediaRelations('BOOK' as MediaType, id)
@@ -2007,7 +2171,8 @@ export class BorealisMediaServ {
     if (sortBy === 'score') orderBy = { averageScore: sortOrder }
     if (sortBy === 'title') orderBy = { titlePrimary: sortOrder }
     if (sortBy === 'releaseDate') orderBy = { releaseDateYear: sortOrder }
-    if (sortBy === 'trending') orderBy = { favorites: sortOrder }
+    if (sortBy === 'trending' || sortBy === 'favorites') orderBy = { favorites: sortOrder }
+    if (sortBy === 'updatedAt') orderBy = { updatedAt: sortOrder }
 
     let q = prisma.orm.public.Game
     if (search) {
@@ -2043,9 +2208,13 @@ export class BorealisMediaServ {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.releaseDateYear.asc() : x.releaseDateYear.desc()
       )
-    } else if (sortBy === 'trending') {
+    } else if (sortBy === 'trending' || sortBy === 'favorites') {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else if (sortBy === 'updatedAt') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.updatedAt.asc() : x.updatedAt.desc()
       )
     } else {
       itemsQ = itemsQ.orderBy((x) =>
@@ -2141,6 +2310,27 @@ export class BorealisMediaServ {
 
     if (!game) {
       throw new NotFound(`Game with ID ${id} not found`)
+    }
+
+    if (game.igdbUpdatedAt == null && game.igdbId) {
+      await MediaEntitySyncer.syncGame(id, game.igdbId).catch(() => {})
+      const updated = await prisma.orm.public.Game.where({ id })
+        .include('genres', (g) => g.include('genre'))
+        .include('tags', (t) => t.include('tag'))
+        .include('studios', (st) => st.include('studio'))
+        .first()
+      if (updated) {
+        const relations = await fetchMediaRelations('GAME' as MediaType, id)
+        return {
+          success: true,
+          media: {
+            ...updated,
+            genres: (updated.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+            tags: (updated.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
+            relations,
+          },
+        }
+      }
     }
 
     const relations = await fetchMediaRelations('GAME' as MediaType, id)
@@ -2363,7 +2553,8 @@ export class BorealisMediaServ {
     if (sortBy === 'score') orderBy = { popularity: sortOrder }
     if (sortBy === 'title') orderBy = { titlePrimary: sortOrder }
     if (sortBy === 'releaseDate') orderBy = { releaseDateYear: sortOrder }
-    if (sortBy === 'trending') orderBy = { favorites: sortOrder }
+    if (sortBy === 'trending' || sortBy === 'favorites') orderBy = { favorites: sortOrder }
+    if (sortBy === 'updatedAt') orderBy = { updatedAt: sortOrder }
 
     let q = prisma.orm.public.Music
     if (search) {
@@ -2403,9 +2594,13 @@ export class BorealisMediaServ {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.releaseDateYear.asc() : x.releaseDateYear.desc()
       )
-    } else if (sortBy === 'trending') {
+    } else if (sortBy === 'trending' || sortBy === 'favorites') {
       itemsQ = itemsQ.orderBy((x) =>
         sortOrder === 'asc' ? x.favorites.asc() : x.favorites.desc()
+      )
+    } else if (sortBy === 'updatedAt') {
+      itemsQ = itemsQ.orderBy((x) =>
+        sortOrder === 'asc' ? x.updatedAt.asc() : x.updatedAt.desc()
       )
     } else {
       itemsQ = itemsQ.orderBy((x) =>
@@ -2514,6 +2709,35 @@ export class BorealisMediaServ {
 
     if (!music) {
       throw new NotFound(`Music with ID ${id} not found`)
+    }
+
+    if (music.deezerUpdatedAt == null && music.deezerId) {
+      await MediaEntitySyncer.syncMusic(id, music.deezerId).catch(() => {})
+      const updated = await prisma.orm.public.Music.where({ id })
+        .include('genres', (g) => g.include('genre'))
+        .include('tags', (t) => t.include('tag'))
+        .include('artist')
+        .include('album', (al) => al.select('id', 'titlePrimary', 'coverImage'))
+        .include('tracks', (tr) =>
+          tr
+            .select('id', 'titlePrimary', 'duration', 'trackPosition')
+            .orderBy((tp) => tp.trackPosition.asc())
+            .limit(50)
+        )
+        .include('staff', (s) => s.include('person'))
+        .first()
+      if (updated) {
+        const relations = await fetchMediaRelations('MUSIC' as MediaType, id)
+        return {
+          success: true,
+          media: {
+            ...updated,
+            genres: (updated.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
+            tags: (updated.tags || []).filter((t: any) => Boolean(t.tag)).map((t: any) => t.tag!),
+            relations,
+          },
+        }
+      }
     }
 
     const relations = await fetchMediaRelations('MUSIC' as MediaType, id)

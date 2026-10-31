@@ -4,8 +4,31 @@ import IrisPassNavProvider from "@/components/navigation/providers/iris-pass-nav
 import { PassProvider } from "@/context/pass-context"
 
 export const metadata: Metadata = {
-  title: "Akaromi | Vault",
-  description: "Encrypted password manager and more.",
+  title: {
+    default: "Akaromi | Vault",
+    template: "%s | Akaromi",
+  },
+  description: "Password manager",
+  openGraph: {
+    title: "Akaromi | Vault",
+    description: "Password manager",
+    siteName: "IRIS",
+    images: [
+      {
+        url: "/banners/akaromi.png",
+        width: 1200,
+        height: 630,
+        alt: "Akaromi",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Akaromi | Vault",
+    description: "Password manager",
+    images: ["/banners/akaromi.png"],
+  },
 }
 
 export default function PassLayout({

@@ -1,4 +1,5 @@
 import { LogFactory } from '@Iris/logger'
+import { jwtVerify } from 'jose'
 
 const logger = new LogFactory('Elysia:WebSocket')
 
@@ -204,7 +205,7 @@ export class WsServ {
   /**
    * Handles incoming message frames from clients.
    */
-  public handleMessage(ws: IrisWebSocket, rawMessage: unknown): void {
+  public async handleMessage(ws: IrisWebSocket, rawMessage: unknown): Promise<void> {
     try {
       let parsed: unknown = rawMessage
       if (typeof rawMessage === 'string') {
@@ -215,20 +216,33 @@ export class WsServ {
 
       const msg = parsed as Record<string, unknown>
 
+      // Authenticate via signed JWT token frame
       if (
         msg.type === 'auth' &&
-        typeof msg.userId === 'string' &&
-        msg.userId.trim().length > 0
+        typeof msg.token === 'string' &&
+        msg.token.trim().length > 0
       ) {
-        const uid = msg.userId.trim()
-        const conn = (ws as any).raw ?? ws
-        const alreadyRegistered = this.connectionUsers.get(conn) === uid
-        this.register(conn, uid)
-        this.send(conn, 'auth:success', { userId: uid })
-        if (!alreadyRegistered) {
-          logger.info(`Client authenticated: user ${uid}`)
+        const secret = Bun.env.JWT_SECRET
+        if (secret) {
+          try {
+            const secretKey = new TextEncoder().encode(secret)
+            const { payload } = await jwtVerify(msg.token.trim(), secretKey)
+            if (payload && payload.id && typeof payload.id === 'string') {
+              const uid = payload.id.trim()
+              const conn = (ws as any).raw ?? ws
+              const alreadyRegistered = this.connectionUsers.get(conn) === uid
+              this.register(conn, uid)
+              this.send(conn, 'auth:success', { userId: uid })
+              if (!alreadyRegistered) {
+                logger.info(`Client authenticated via token: user ${uid}`)
+              }
+              return
+            }
+          } catch {
+            this.send(ws, 'auth:error', { message: 'Invalid or expired authentication token' })
+            return
+          }
         }
-        return
       }
 
       if (msg.type === 'ping') {
@@ -237,8 +251,18 @@ export class WsServ {
       }
 
       if (msg.type === 'subscribe' && typeof msg.channel === 'string') {
-        this.subscribe(ws, msg.channel)
-        this.send(ws, 'subscribed', { channel: msg.channel })
+        const channel = msg.channel.trim()
+        const currentUid = this.getUserId(ws)
+        // Restrict private user channels strictly to the authenticated user
+        if (channel.startsWith('user:')) {
+          const targetUid = channel.slice(5)
+          if (!currentUid || currentUid !== targetUid) {
+            this.send(ws, 'error', { message: 'Unauthorized channel subscription' })
+            return
+          }
+        }
+        this.subscribe(ws, channel)
+        this.send(ws, 'subscribed', { channel })
         return
       }
 

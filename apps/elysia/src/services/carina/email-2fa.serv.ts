@@ -267,11 +267,20 @@ export abstract class CarinaEmail2faServ {
       }
 
       if (!isVerified) {
-        throw new Unauthorized('Invalid verification code.')
+        const attemptKey = `auth:mfa-ticket:attempts:${body.mfaTicket}`
+        const attempts = (await cache.get<number>(attemptKey)) || 0
+        if (attempts >= 4) {
+          await cache.del(`auth:mfa-ticket:${body.mfaTicket}`)
+          await cache.del(attemptKey)
+          throw new Unauthorized('Too many failed verification attempts. Please log in again.')
+        }
+        await cache.set(attemptKey, attempts + 1, 300)
+        throw new Unauthorized(`Invalid verification code. ${4 - attempts} attempt(s) remaining.`)
       }
 
-      // Cleanup single-use ticket
+      // Cleanup single-use ticket and attempt counter
       await cache.del(`auth:mfa-ticket:${body.mfaTicket}`)
+      await cache.del(`auth:mfa-ticket:attempts:${body.mfaTicket}`)
 
       // Issue authenticated JWT session token
       const pwdChangedAt = toDate(user.passwordChangedAt)
@@ -374,13 +383,14 @@ export abstract class CarinaEmail2faServ {
       )
     }
 
-    // Optional confirmation verification
-    if (body?.password) {
-      if (user.passwordHash) {
-        const isPasswordValid = await verifyPassword(body.password, user.passwordHash)
-        if (!isPasswordValid) {
-          throw new Unauthorized('Incorrect password confirmation.')
-        }
+    // Enforce password confirmation to prevent unauthorized 2FA disablement
+    if (user.passwordHash) {
+      if (!body?.password) {
+        throw new BadRequest('Account password confirmation is required to disable Email 2FA.')
+      }
+      const isPasswordValid = await verifyPassword(body.password, user.passwordHash)
+      if (!isPasswordValid) {
+        throw new Unauthorized('Incorrect password confirmation.')
       }
     }
 

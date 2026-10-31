@@ -1,9 +1,22 @@
 import { useMemo } from "react"
 import type { Session } from "@/context/session-context"
 import type { SidebarConfig } from "@/types/sidebar-config"
-import { useListSidebarConfig, getListSidebarConfig } from "./listSidebarConfig"
-import { usePassSidebarConfig, getPassSidebarConfig } from "./passSidebarConfig"
-import { useSearchSidebarConfig, getSearchSidebarConfig } from "./searchSidebarConfig"
+import {
+  useBorealisSidebarConfig,
+  getBorealisSidebarConfig,
+} from "./borealisSidebarConfig"
+import {
+  useAkaromiSidebarConfig,
+  getAkaromiSidebarConfig,
+} from "./akaromiSidebarConfig"
+import {
+  useKiroshiSidebarConfig,
+  getKiroshiSidebarConfig,
+} from "./kiroshiSidebarConfig"
+import {
+  useCarinaSidebarConfig,
+  getCarinaSidebarConfig,
+} from "./carinaSidebarConfig"
 
 export interface AppSidebarRegistryEntry {
   appId: string
@@ -18,29 +31,35 @@ export interface AppSidebarRegistryEntry {
 export function useAllAppSidebarConfigs(
   session: Session | null
 ): AppSidebarRegistryEntry[] {
-  const listConfig = useListSidebarConfig(session)
-  const passConfig = usePassSidebarConfig(session)
-  const searchConfig = useSearchSidebarConfig(session)
+  const borealisConfig = useBorealisSidebarConfig(session)
+  const akaromiConfig = useAkaromiSidebarConfig(session)
+  const kiroshiConfig = useKiroshiSidebarConfig(session)
+  const carinaConfig = useCarinaSidebarConfig(session)
 
   return useMemo(
     () => [
       {
         appId: "borealis",
         appName: "Borealis",
-        config: listConfig,
+        config: borealisConfig,
       },
       {
         appId: "akaromi",
         appName: "Akaromi",
-        config: passConfig,
+        config: akaromiConfig,
       },
       {
         appId: "kiroshi",
         appName: "Kiroshi",
-        config: searchConfig,
+        config: kiroshiConfig,
+      },
+      {
+        appId: "carina",
+        appName: "Carina",
+        config: carinaConfig,
       },
     ],
-    [listConfig, passConfig, searchConfig]
+    [borealisConfig, akaromiConfig, kiroshiConfig, carinaConfig]
   )
 }
 
@@ -49,29 +68,39 @@ export function useAllAppSidebarConfigs(
  */
 export function getAllAppSidebarConfigs(
   session: Session | null,
-  tList: (key: string) => string,
+  tList?: (key: string) => string,
   connectedServarr?: string[]
 ): AppSidebarRegistryEntry[] {
   return [
     {
       appId: "borealis",
       appName: "Borealis",
-      config: getListSidebarConfig(session, tList, connectedServarr),
+      config: getBorealisSidebarConfig(
+        session,
+        tList ?? ((k: string) => k),
+        connectedServarr
+      ),
     },
     {
       appId: "akaromi",
       appName: "Akaromi",
-      config: getPassSidebarConfig(session),
+      config: getAkaromiSidebarConfig(session),
     },
     {
       appId: "kiroshi",
       appName: "Kiroshi",
-      config: getSearchSidebarConfig(session),
+      config: getKiroshiSidebarConfig(session),
+    },
+    {
+      appId: "carina",
+      appName: "Carina",
+      config: getCarinaSidebarConfig(session),
     },
   ]
 }
 
-export * from "./listSidebarConfig"
-export * from "./passSidebarConfig"
-export * from "./searchSidebarConfig"
-export * from "./accountUserSidebarConfig"
+export * from "./borealisSidebarConfig"
+export * from "./akaromiSidebarConfig"
+export * from "./kiroshiSidebarConfig"
+export * from "./carinaSidebarConfig"
+export * from "./carinaUserSidebarConfig"

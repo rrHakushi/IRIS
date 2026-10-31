@@ -3,8 +3,31 @@ import React from "react"
 import IrisSearchNavProvider from "@/components/navigation/providers/iris-search-nav-provider"
 
 export const metadata: Metadata = {
-  title: "Kiroshi | Search",
-  description: "Web & Meta Search.",
+  title: {
+    default: "Kiroshi | Search",
+    template: "%s | Kiroshi",
+  },
+  description: "Web search engine",
+  openGraph: {
+    title: "Kiroshi | Search",
+    description: "Web search engine",
+    siteName: "IRIS",
+    images: [
+      {
+        url: "/banners/kiroshi.png",
+        width: 1200,
+        height: 630,
+        alt: "Kiroshi - Web search engine",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Kiroshi | Search",
+    description: "Web search engine",
+    images: ["/banners/kiroshi.png"],
+  },
   other: {
     "search-opensearch": "/opensearch.xml",
   },

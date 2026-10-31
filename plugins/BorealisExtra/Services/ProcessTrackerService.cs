@@ -100,6 +100,11 @@ public class ProcessTrackerService
         SaveNow();
     }
 
+    public void UpdateInterval(int seconds)
+    {
+        _trackerTimer.Interval = TimeSpan.FromSeconds(Math.Max(1, seconds));
+    }
+
     public void AddEntry(LinkedProcessEntry entry)
     {
         Entries.Add(entry);

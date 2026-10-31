@@ -2,127 +2,504 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:models="using:BorealisExtra.Models"
              xmlns:controls="using:BorealisExtra.Controls"
-             x:Class="BorealisExtra.Views.TrackerView">
+             x:Class="BorealisExtra.Views.TrackerView"
+             Background="{StaticResource BgDarkBrush}">
 
-  <Grid RowDefinitions="Auto,Auto,*" Background="{StaticResource BgDarkBrush}">
+  <Grid>
 
-    <!-- Top App Header -->
-    <Border Grid.Row="0" Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="0,0,0,1" Padding="16,12">
-      <Grid ColumnDefinitions="Auto,*,Auto">
-        
-        <!-- Branding -->
-        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-          <Border Background="{StaticResource RosePrimaryBrush}" Width="10" Height="10" CornerRadius="5" VerticalAlignment="Center" />
-          <TextBlock Text="Borealis Extra" FontWeight="Bold" FontSize="15" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
-        </StackPanel>
+    <!-- Main Application Canvas -->
+    <Grid RowDefinitions="Auto,Auto,*" Background="{StaticResource BgDarkBrush}">
 
-        <!-- User Info & Actions -->
-        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-          <Border Background="{StaticResource SurfaceBgBrush}" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1" CornerRadius="6" Padding="10,4" VerticalAlignment="Center">
-            <TextBlock x:Name="TxtLoggedInUser" Text="@user" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+      <!-- Top Header (Akaromi Layout: Icon + Title, Center Search Bar, Right Sync & Add Buttons) -->
+      <Border Grid.Row="0" Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="0,0,0,1" Padding="14,10">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+
+          <!-- Left Brand Trigger (Clicking opens Left Drawer) -->
+          <Button x:Name="BtnBrandTrigger" Grid.Column="0" Classes="btn-ghost" Padding="6,4" ToolTip.Tip="Open account &amp; settings menu" Click="BtnBrandTrigger_Click">
+            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+              <Image Source="/Assets/iris.png" Width="20" Height="20" VerticalAlignment="Center" />
+              <TextBlock Text="Borealis Extra" FontWeight="Bold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
+
+          <!-- Center Search Bar (Live filtering of tracked games) -->
+          <Border Grid.Column="1" HorizontalAlignment="Center" Width="400" MaxWidth="520" Height="34" Background="{StaticResource InputBgBrush}" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1" CornerRadius="17" Padding="12,0">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <PathIcon Grid.Column="0" Data="{StaticResource IconSearch}" Width="14" Height="14" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+              <TextBox x:Name="TxtHeaderSearch" Grid.Column="1" Watermark="Search in all items..." Background="Transparent" BorderThickness="0" Padding="0,0" VerticalAlignment="Center" FontSize="12" />
+              <Button x:Name="BtnSearchClear" Grid.Column="2" Classes="btn-icon-circle" Width="22" Height="22" IsVisible="False" ToolTip.Tip="Clear search" Click="BtnSearchClear_Click">
+                <PathIcon Data="{StaticResource IconX}" Width="11" Height="11" Foreground="{StaticResource TextMutedBrush}" />
+              </Button>
+            </Grid>
           </Border>
-          
-          <Button x:Name="BtnSyncAll" Content="Sync" Classes="btn-secondary" ToolTip.Tip="Sync pending hours and refresh game list" Click="BtnSyncAll_Click" />
-          <Button x:Name="BtnSettings" Content="Settings" Classes="btn-secondary" Click="BtnSettings_Click" />
-          <Button x:Name="BtnLogout" Content="Log Out" Classes="btn-ghost" Click="BtnLogout_Click" />
-        </StackPanel>
 
-      </Grid>
-    </Border>
+          <!-- Right Header Actions (Sync pill button + Solid white + button) -->
+          <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+            <Button x:Name="BtnHeaderSync" Classes="btn-pill-sync" ToolTip.Tip="Sync playtime with Borealis" Click="BtnHeaderSync_Click">
+              <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                <PathIcon Data="{StaticResource IconSync}" Width="13" Height="13" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                <TextBlock Text="Sync" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+            <Button x:Name="BtnHeaderAdd" Classes="btn-circle-add" ToolTip.Tip="Link Game" Click="BtnHeaderAdd_Click">
+              <PathIcon Data="{StaticResource IconPlus}" Width="15" Height="15" Foreground="#09090B" />
+            </Button>
+          </StackPanel>
 
-    <!-- Offline Sync Banner -->
-    <Border x:Name="BannerOffline" Grid.Row="1" Background="#261E14" BorderBrush="#5C4217" BorderThickness="0,0,0,1" Padding="16,8" IsVisible="False">
-      <StackPanel Orientation="Horizontal" Spacing="8">
-        <TextBlock Text="⏳" VerticalAlignment="Center" />
-        <TextBlock x:Name="TxtOfflineStatus" Text="Offline progress queued." FontSize="12" Foreground="#F59E0B" VerticalAlignment="Center" />
-      </StackPanel>
-    </Border>
+        </Grid>
+      </Border>
 
-    <!-- Main Body Area -->
-    <Grid Grid.Row="2" RowDefinitions="Auto,*" Margin="20,16,20,20">
-
-      <!-- Section Title & Link Game Action -->
-      <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,14">
-        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-          <TextBlock Text="TRACKED GAMES" FontWeight="Bold" FontSize="13" LetterSpacing="1" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
-          <Border Background="{StaticResource SurfaceBgBrush}" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1" CornerRadius="10" Padding="8,2" VerticalAlignment="Center">
-            <TextBlock x:Name="TxtGamesCountBadge" Text="0" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
-          </Border>
-        </StackPanel>
-
-        <Button x:Name="BtnLinkGame" Grid.Column="2" Content="+ Link Game" Classes="btn-primary" Click="BtnLinkGame_Click" />
-      </Grid>
-
-      <!-- Empty State -->
-      <Border x:Name="CardEmptyState" Grid.Row="1" Classes="card" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="40" MaxWidth="500" IsVisible="False">
-        <StackPanel Spacing="16" HorizontalAlignment="Center">
-          <TextBlock Text="🎮" FontSize="36" HorizontalAlignment="Center" />
-          <TextBlock Text="No Games Linked" FontSize="17" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
-          <TextBlock Text="Link a Borealis game from your library to automatically track playtime while playing on this machine." FontSize="13" Foreground="{StaticResource TextMutedBrush}" TextAlignment="Center" TextWrapping="Wrap" />
-          <Button Content="+ Link Your First Game" Classes="btn-primary" HorizontalAlignment="Center" Click="BtnLinkGame_Click" Margin="0,8,0,0" />
+      <!-- Offline Sync Banner -->
+      <Border x:Name="BannerOffline" Grid.Row="1" Background="#261E14" BorderBrush="#5C4217" BorderThickness="0,0,0,1" Padding="16,8" IsVisible="False">
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <PathIcon Data="{StaticResource IconHourglass}" Width="14" Height="14" Foreground="#F59E0B" VerticalAlignment="Center" />
+          <TextBlock x:Name="TxtOfflineStatus" Text="Offline progress queued." FontSize="12" Foreground="#F59E0B" VerticalAlignment="Center" />
         </StackPanel>
       </Border>
 
-      <!-- Games List -->
-      <ScrollViewer x:Name="ScrollGamesList" Grid.Row="1" VerticalScrollBarVisibility="Auto">
-        <ItemsControl x:Name="ItemsGamesList">
-          <ItemsControl.ItemTemplate>
-            <DataTemplate DataType="models:LinkedProcessEntry">
-              <Border Classes="card" Margin="0,0,0,12" Padding="14" Cursor="Hand" PointerPressed="GameCard_PointerPressed">
-                <Grid ColumnDefinitions="Auto,*,Auto">
+      <!-- Main Body Area -->
+      <Grid Grid.Row="2" RowDefinitions="Auto,*" Margin="20,16,20,20">
 
-                  <!-- Cover Art -->
-                  <Border Grid.Column="0" Width="64" Height="90" CornerRadius="6" ClipToBounds="True" Background="{StaticResource SurfaceBgBrush}" Margin="0,0,16,0">
-                    <controls:AsyncImage Url="{Binding CoverImage}" Stretch="UniformToFill" />
-                  </Border>
+        <!-- Section Header -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,14">
+          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+            <TextBlock Text="TRACKED GAMES" FontWeight="Bold" FontSize="12" LetterSpacing="1" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+            <Border Background="{StaticResource SurfaceBgBrush}" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1" CornerRadius="10" Padding="8,2" VerticalAlignment="Center">
+              <TextBlock x:Name="TxtGamesCountBadge" Text="0" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+            </Border>
+          </StackPanel>
+        </Grid>
 
-                  <!-- Game Details & Progress -->
-                  <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto" VerticalAlignment="Center">
-                    
-                    <!-- Title & Hours Logged -->
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
-                      <TextBlock Text="{Binding GameTitle}" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" MaxWidth="400" TextTrimming="CharacterEllipsis" />
-                      <Border Background="{StaticResource SurfaceBgBrush}" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1" CornerRadius="4" Padding="6,1" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding TotalLoggedHoursText}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
-                      </Border>
-                    </StackPanel>
+        <!-- Empty State -->
+        <Border x:Name="CardEmptyState" Grid.Row="1" Classes="card" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="40" MaxWidth="480" IsVisible="False">
+          <StackPanel Spacing="14" HorizontalAlignment="Center">
+            <PathIcon Data="{StaticResource IconDeviceGamepad}" Width="36" Height="36" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" />
+            <TextBlock Text="No Games Linked" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+            <TextBlock Text="Link a Borealis game from your library or catalog to automatically track playtime while playing on this machine." FontSize="12" Foreground="{StaticResource TextMutedBrush}" TextAlignment="Center" TextWrapping="Wrap" />
+            <Button Content="+ Link Your First Game" Classes="btn-primary" HorizontalAlignment="Center" Click="BtnHeaderAdd_Click" Margin="0,6,0,0" />
+          </StackPanel>
+        </Border>
 
-                    <!-- Tracked Executables Display -->
-                    <TextBlock Grid.Row="1" Text="{Binding ExecutablesDisplay}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" MaxWidth="450" TextTrimming="CharacterEllipsis" Margin="0,0,0,8" />
+        <!-- Games List -->
+        <ScrollViewer x:Name="ScrollGamesList" Grid.Row="1" VerticalScrollBarVisibility="Auto">
+          <ItemsControl x:Name="ItemsGamesList">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="models:LinkedProcessEntry">
+                <Border Classes="card" Margin="0,0,0,10" Padding="14" Cursor="Hand" PointerPressed="GameCard_PointerPressed">
+                  <Grid ColumnDefinitions="Auto,*,Auto">
 
-                    <!-- Progress Bar -->
-                    <ProgressBar Grid.Row="2" Minimum="0" Maximum="3600" Value="{Binding AccumulatedSeconds}" Margin="0,0,0,4" />
-
-                    <!-- Progress Text & Remaining -->
-                    <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
-                      <TextBlock Grid.Column="0" Text="{Binding ProgressText}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
-                      <TextBlock Grid.Column="1" Text="{Binding RemainingTimeText}" FontSize="11" Foreground="{StaticResource RosePrimaryBrush}" FontWeight="SemiBold" />
-                    </Grid>
-
-                  </Grid>
-
-                  <!-- Right Actions: Status & Pause/Resume -->
-                  <StackPanel Grid.Column="2" Spacing="10" VerticalAlignment="Center" Margin="16,0,0,0">
-                    <!-- Status Badge -->
-                    <Border CornerRadius="4" Padding="8,4" HorizontalAlignment="Right" Background="{StaticResource SurfaceBgBrush}">
-                      <StackPanel Orientation="Horizontal" Spacing="6">
-                        <Border Width="6" Height="6" CornerRadius="3" Background="{Binding StatusColor}" VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding StatusBadgeText}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                      </StackPanel>
+                    <!-- Cover Art -->
+                    <Border Grid.Column="0" Width="64" Height="90" CornerRadius="6" ClipToBounds="True" Background="{StaticResource SurfaceBgBrush}" Margin="0,0,16,0">
+                      <controls:AsyncImage Url="{Binding CoverImage}" Stretch="UniformToFill" />
                     </Border>
 
-                    <!-- Pause / Resume Button -->
-                    <Button Content="{Binding PauseResumeButtonText}" Classes="btn-secondary" FontSize="11" Padding="10,4" HorizontalAlignment="Right" Click="BtnCardPauseToggle_Click" Tag="{Binding}" />
-                  </StackPanel>
+                    <!-- Game Details & Progress -->
+                    <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto" VerticalAlignment="Center">
 
-                </Grid>
-              </Border>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-      </ScrollViewer>
+                      <!-- Title & Hours Logged -->
+                      <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
+                        <TextBlock Text="{Binding GameTitle}" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" MaxWidth="400" TextTrimming="CharacterEllipsis" />
+                        <Border Background="{StaticResource SurfaceBgBrush}" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1" CornerRadius="4" Padding="6,1" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding TotalLoggedHoursText}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
+                        </Border>
+                      </StackPanel>
+
+                      <!-- Tracked Executables Display -->
+                      <TextBlock Grid.Row="1" Text="{Binding ExecutablesDisplay}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" MaxWidth="450" TextTrimming="CharacterEllipsis" Margin="0,0,0,8" />
+
+                      <!-- Progress Bar -->
+                      <ProgressBar Grid.Row="2" Minimum="0" Maximum="3600" Value="{Binding AccumulatedSeconds}" Margin="0,0,0,4" />
+
+                      <!-- Progress Text & Remaining -->
+                      <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" Text="{Binding ProgressText}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+                        <TextBlock Grid.Column="1" Text="{Binding RemainingTimeText}" FontSize="11" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" />
+                      </Grid>
+
+                    </Grid>
+
+                    <!-- Right Actions: Status & Pause/Resume -->
+                    <StackPanel Grid.Column="2" Spacing="10" VerticalAlignment="Center" Margin="16,0,0,0">
+                      <!-- Status Badge -->
+                      <Border CornerRadius="4" Padding="8,4" HorizontalAlignment="Right" Background="{StaticResource SurfaceBgBrush}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                          <Border Width="6" Height="6" CornerRadius="3" Background="{Binding StatusColor}" VerticalAlignment="Center" />
+                          <TextBlock Text="{Binding StatusBadgeText}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                        </StackPanel>
+                      </Border>
+
+                      <!-- Pause / Resume Button -->
+                      <Button Content="{Binding PauseResumeButtonText}" Classes="btn-secondary" FontSize="11" Padding="10,4" HorizontalAlignment="Right" Click="BtnCardPauseToggle_Click" Tag="{Binding}" />
+                    </StackPanel>
+
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+
+      </Grid>
 
     </Grid>
+
+    <!-- Global Dim Backdrop Overlay with Fade Transition -->
+    <Border x:Name="OverlayBackdrop" Background="#B3000000" IsVisible="False" Opacity="0" PointerPressed="Backdrop_PointerPressed">
+      <Border.Transitions>
+        <Transitions>
+          <DoubleTransition Property="Opacity" Duration="0:0:0.25" Easing="CubicEaseOut" />
+        </Transitions>
+      </Border.Transitions>
+    </Border>
+
+    <!-- Left Navigation & Settings Drawer with Slide Transition -->
+    <Border x:Name="DrawerLeft" HorizontalAlignment="Left" Width="320" Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="0,0,1,0" IsVisible="False">
+      <Border.RenderTransform>
+        <TranslateTransform X="-320" />
+      </Border.RenderTransform>
+      <Border.Transitions>
+        <Transitions>
+          <DoubleTransition Property="(TranslateTransform.X)" Duration="0:0:0.25" Easing="CubicEaseOut" />
+        </Transitions>
+      </Border.Transitions>
+      <Grid>
+
+        <!-- Subpanel A: Account Card & Main Menu -->
+        <Grid x:Name="PanelLeftMenu" RowDefinitions="Auto,*,Auto" IsVisible="True">
+
+          <!-- Top Account Card Container -->
+          <Border Grid.Row="0" Margin="14,14,14,12" CornerRadius="10" ClipToBounds="True" Background="#141417" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+            <Grid>
+              <!-- Nameplate Image & Dark Gradient Overlay -->
+              <Image x:Name="ImgNameplate" Height="78" VerticalAlignment="Top" Stretch="UniformToFill" IsVisible="False" />
+              <Border Height="78" VerticalAlignment="Top">
+                <Border.Background>
+                  <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                    <GradientStop Color="#26000000" Offset="0" />
+                    <GradientStop Color="#E6141417" Offset="1" />
+                  </LinearGradientBrush>
+                </Border.Background>
+              </Border>
+
+              <!-- Card Content (Avatar + Name Info) -->
+              <StackPanel Margin="14,14,14,14" Spacing="10">
+                <!-- Avatar & Frame Stack -->
+                <Grid Width="50" Height="50" HorizontalAlignment="Left">
+                  <!-- Circular Avatar -->
+                  <Border Width="46" Height="46" CornerRadius="23" ClipToBounds="True" Background="{StaticResource SurfaceBgBrush}">
+                    <Grid>
+                      <Image x:Name="ImgAvatar" Stretch="UniformToFill" IsVisible="False" />
+                      <TextBlock x:Name="TxtAvatarFallback" Text="U" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                  </Border>
+                  <!-- Avatar Frame Overlay -->
+                  <Image x:Name="ImgAvatarFrame" Width="52" Height="52" Stretch="Uniform" IsVisible="False" />
+                </Grid>
+
+                <!-- Name & Server Handles -->
+                <StackPanel Spacing="3">
+                  <TextBlock x:Name="TxtUserDisplayName" Text="User" FontWeight="Bold" FontSize="15" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                  <TextBlock x:Name="TxtUserHandle" Text="@user" FontSize="12" Foreground="{StaticResource TextMutedBrush}" TextTrimming="CharacterEllipsis" />
+                  <TextBlock x:Name="TxtUserDomain" Text="api.runerra.org" FontSize="11" Foreground="#71717A" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+              </StackPanel>
+            </Grid>
+          </Border>
+
+          <!-- Drawer Navigation Items -->
+          <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="4" Margin="14,0,14,12">
+              <!-- Settings -->
+              <Button x:Name="BtnNavSettings" Classes="btn-ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12,10" Click="BtnNavSettings_Click">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                  <PathIcon Data="{StaticResource IconSettings}" Width="16" Height="16" Foreground="{StaticResource TextPrimaryBrush}" />
+                  <TextBlock Text="Settings" FontSize="13" FontWeight="Medium" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+
+              <!-- Sync Playtime (Corrected from Sync Vault Now) -->
+              <Button x:Name="BtnNavSync" Classes="btn-ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12,10" Click="BtnNavSync_Click">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                  <PathIcon Data="{StaticResource IconSync}" Width="16" Height="16" Foreground="{StaticResource TextPrimaryBrush}" />
+                  <TextBlock Text="Sync Playtime" FontSize="13" FontWeight="Medium" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+
+              <!-- Divider -->
+              <Border Height="1" Background="{StaticResource BorderDarkBrush}" Margin="0,8" />
+
+              <!-- Log out (Danger style) -->
+              <Button x:Name="BtnNavLogout" Classes="btn-ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12,10" Click="BtnNavLogout_Click">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                  <PathIcon Data="{StaticResource IconLogout}" Width="16" Height="16" Foreground="{StaticResource DestructiveBrush}" />
+                  <TextBlock Text="Log out" FontSize="13" FontWeight="Medium" Foreground="{StaticResource DestructiveBrush}" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+            </StackPanel>
+          </ScrollViewer>
+
+          <!-- Drawer Footer -->
+          <Border Grid.Row="2" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="0,1,0,0" Padding="14,12">
+            <TextBlock Text="Borealis Extra v2.0.0" FontSize="11" Foreground="#52525B" HorizontalAlignment="Center" />
+          </Border>
+
+        </Grid>
+
+        <!-- Subpanel B: Settings Panel (Integrated inside Left Sidebar) -->
+        <Grid x:Name="PanelLeftSettings" RowDefinitions="Auto,*,Auto" IsVisible="False">
+          <!-- Settings Header with Back button and Save pill button -->
+          <Border Grid.Row="0" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="0,0,0,1" Padding="14,10">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <Button Classes="btn-icon-circle" Click="BtnSettingsBack_Click" ToolTip.Tip="Back to menu">
+                <PathIcon Data="{StaticResource IconArrowLeft}" Width="15" Height="15" Foreground="{StaticResource TextMutedBrush}" />
+              </Button>
+              <TextBlock Grid.Column="1" Text="Settings" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+              <Button Grid.Column="2" Content="Save" Classes="btn-pill-save" Click="BtnSettingsSave_Click" />
+            </Grid>
+          </Border>
+
+          <!-- Settings Body -->
+          <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="12,10,12,32">
+            <StackPanel Spacing="10">
+
+              <!-- Connection Settings -->
+              <Border Classes="grouped-box" Padding="12,10">
+                <StackPanel Spacing="8">
+                  <TextBlock Text="CONNECTION" FontSize="10" FontWeight="Bold" LetterSpacing="1" Foreground="{StaticResource TextMutedBrush}" />
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="Borealis Server Base URL" FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
+                    <TextBox x:Name="TxtSettingsApiUrl" Watermark="http://localhost:4000" Padding="8,5" FontSize="11" />
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+
+              <!-- Tracking Settings -->
+              <Border Classes="grouped-box" Padding="12,10">
+                <StackPanel Spacing="8">
+                  <TextBlock Text="TRACKING PREFERENCES" FontSize="10" FontWeight="Bold" LetterSpacing="1" Foreground="{StaticResource TextMutedBrush}" />
+
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="Process Polling Interval (seconds)" FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
+                    <TextBox x:Name="TxtSettingsPolling" Watermark="1" Padding="8,5" FontSize="11" />
+                  </StackPanel>
+
+                  <CheckBox x:Name="ChkSettingsNotify" Content="Notify on hour progress increment" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,2,0,0" FontSize="11" />
+                  <CheckBox x:Name="ChkSettingsStartup" Content="Start Borealis Extra on system boot" Foreground="{StaticResource TextPrimaryBrush}" FontSize="11" />
+                </StackPanel>
+              </Border>
+
+            </StackPanel>
+          </ScrollViewer>
+        </Grid>
+
+      </Grid>
+    </Border>
+
+    <!-- Right Sidebar Container (Roomy 450px Width Sheet for Edit & Link Game) with Slide Transition -->
+    <Border x:Name="DrawerRight" HorizontalAlignment="Right" Width="450" Background="{StaticResource CardBgBrush}" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1,0,0,0" IsVisible="False">
+      <Border.RenderTransform>
+        <TranslateTransform X="450" />
+      </Border.RenderTransform>
+      <Border.Transitions>
+        <Transitions>
+          <DoubleTransition Property="(TranslateTransform.X)" Duration="0:0:0.25" Easing="CubicEaseOut" />
+        </Transitions>
+      </Border.Transitions>
+      <Grid>
+
+        <!-- 1. EDIT GAME PANEL (Akaromi style: [✕] cancel, 'Edit Item', 'Save' pill button) -->
+        <Grid x:Name="PanelEditGame" RowDefinitions="Auto,*" IsVisible="False">
+          <!-- Header -->
+          <Border Grid.Row="0" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="0,0,0,1" Padding="16,10">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <Button Classes="btn-icon-circle" Click="CloseRightDrawer_Click" ToolTip.Tip="Cancel">
+                <PathIcon Data="{StaticResource IconX}" Width="14" Height="14" Foreground="{StaticResource TextMutedBrush}" />
+              </Button>
+              <TextBlock Grid.Column="1" Text="Edit Item" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+              <Button Grid.Column="2" Content="Save" Classes="btn-pill-save" Click="BtnEditSave_Click" />
+            </Grid>
+          </Border>
+
+          <!-- Edit Body -->
+          <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="14,10,14,32">
+            <StackPanel Spacing="10">
+
+              <!-- Group 1: Game Details & Playtime -->
+              <Border Classes="grouped-box" Padding="12,10">
+                <StackPanel Spacing="8">
+                  <!-- Title -->
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="Title" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+                    <TextBox x:Name="TxtEditTitle" Watermark="Game Title" FontSize="12" Padding="8,5" />
+                  </StackPanel>
+
+                  <!-- Status & Score (Side-by-side) -->
+                  <Grid ColumnDefinitions="*,10,110">
+                    <StackPanel Grid.Column="0" Spacing="4">
+                      <TextBlock Text="Status" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+                      <ComboBox x:Name="CmbEditStatus" HorizontalAlignment="Stretch">
+                        <ComboBoxItem Content="Playing (IN_PROGRESS)" Tag="IN_PROGRESS" />
+                        <ComboBoxItem Content="Completed" Tag="COMPLETED" />
+                        <ComboBoxItem Content="On Hold" Tag="ON_HOLD" />
+                        <ComboBoxItem Content="Plan to Play" Tag="PLANNED" />
+                        <ComboBoxItem Content="Dropped" Tag="DROPPED" />
+                      </ComboBox>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" Spacing="4">
+                      <TextBlock Text="Score (0-10)" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+                      <TextBox x:Name="TxtEditScore" Watermark="8.5" Padding="8,5" />
+                    </StackPanel>
+                  </Grid>
+
+                  <!-- Playtime (Hours) with Quick +/- -->
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="Logged Playtime (Hours)" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+                    <Grid ColumnDefinitions="*,Auto,Auto">
+                      <TextBox x:Name="TxtEditHours" Watermark="0" Grid.Column="0" Padding="8,5" />
+                      <Button Content="−" Classes="btn-secondary" Grid.Column="1" Margin="6,0,0,0" Width="32" Padding="0" Height="30" Click="BtnEditHoursDecrement_Click" />
+                      <Button Content="+" Classes="btn-secondary" Grid.Column="2" Margin="6,0,0,0" Width="32" Padding="0" Height="30" Click="BtnEditHoursIncrement_Click" />
+                    </Grid>
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+
+              <!-- Group 2: Process & Executables Tracking -->
+              <Border Classes="grouped-box" Padding="12,10">
+                <StackPanel Spacing="8">
+                  <TextBlock Text="TRACKED EXECUTABLES" FontSize="10" FontWeight="Bold" LetterSpacing="1" Foreground="{StaticResource TextMutedBrush}" />
+
+                  <!-- Active Executables Chips -->
+                  <ItemsControl x:Name="ListEditExes">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Background="{StaticResource SurfaceBgBrush}" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1" CornerRadius="5" Padding="8,4" Margin="0,0,0,4">
+                          <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="{Binding}" FontSize="11" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            <Button Grid.Column="1" Classes="btn-icon-circle" Width="20" Height="20" Click="BtnEditRemoveExe_Click" Tag="{Binding}" ToolTip.Tip="Remove executable">
+                              <PathIcon Data="{StaticResource IconX}" Width="9" Height="9" Foreground="{StaticResource DestructiveBrush}" />
+                            </Button>
+                          </Grid>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+
+                  <TextBlock x:Name="TxtEditNoExes" Text="No executables linked." FontSize="11" Foreground="{StaticResource TextMutedBrush}" IsVisible="False" Margin="0,2" />
+
+                  <!-- Unified Add Process Row: Dropdown + Add + Browse -->
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="Add from Running Processes" FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
+                    <Grid ColumnDefinitions="*,Auto,Auto">
+                      <ComboBox x:Name="CmbEditRunningProcesses" Grid.Column="0" HorizontalAlignment="Stretch" />
+                      <Button Content="Add" Classes="btn-secondary" Grid.Column="1" Margin="6,0,0,0" Padding="10,4" Click="BtnEditAddRunning_Click" />
+                      <Button Content="Browse..." Classes="btn-secondary" Grid.Column="2" Margin="6,0,0,0" Padding="10,4" Click="BtnEditBrowse_Click" />
+                    </Grid>
+                  </StackPanel>
+
+                  <!-- Manual Binary Input -->
+                  <Grid ColumnDefinitions="*,Auto" Margin="0,2,0,0">
+                    <TextBox x:Name="TxtEditNewExe" Grid.Column="0" Watermark="Or enter custom binary (e.g. game.exe)" Padding="8,5" FontSize="11" />
+                    <Button Content="Add" Classes="btn-secondary" Grid.Column="1" Margin="6,0,0,0" Padding="10,4" Click="BtnEditAddManual_Click" />
+                  </Grid>
+
+                  <!-- Window Title Pattern -->
+                  <StackPanel Spacing="4" Margin="0,2,0,0">
+                    <TextBlock Text="Window Title Pattern (Optional)" FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
+                    <TextBox x:Name="TxtEditWindowTitle" Watermark="Leave blank to match any window" Padding="8,5" FontSize="11" />
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+
+              <!-- Danger Action (Unlink) -->
+              <Button Content="Unlink Game" Classes="btn-danger" HorizontalAlignment="Stretch" Click="BtnEditUnlink_Click" Margin="0,2,0,10" />
+
+            </StackPanel>
+          </ScrollViewer>
+        </Grid>
+
+        <!-- 2. LINK GAME PANEL -->
+        <Grid x:Name="PanelLinkGame" RowDefinitions="Auto,*" IsVisible="False">
+          <!-- Header -->
+          <Border Grid.Row="0" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="0,0,0,1" Padding="16,10">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <Button Classes="btn-icon-circle" Click="CloseRightDrawer_Click" ToolTip.Tip="Cancel">
+                <PathIcon Data="{StaticResource IconX}" Width="14" Height="14" Foreground="{StaticResource TextMutedBrush}" />
+              </Button>
+              <TextBlock Grid.Column="1" Text="Link Game" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+              <Button x:Name="BtnLinkSubmit" Grid.Column="2" Content="Link" Classes="btn-pill-save" Click="BtnLinkSubmit_Click" IsEnabled="False" />
+            </Grid>
+          </Border>
+
+          <!-- Link Body -->
+          <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="14,10,14,32">
+            <StackPanel Spacing="10">
+
+              <!-- Step 1: Select Game -->
+              <Border Classes="grouped-box" Padding="12,10">
+                <StackPanel Spacing="6">
+                  <TextBlock Text="1. SELECT GAME (LIBRARY &amp; CATALOG)" FontSize="10" FontWeight="Bold" LetterSpacing="1" Foreground="{StaticResource TextMutedBrush}" />
+                  <TextBox x:Name="TxtLinkSearch" Watermark="Search games..." Padding="8,5" FontSize="11" />
+
+                  <!-- Results List (Compact max-height so Step 2 stays on-screen) -->
+                  <Border MaxHeight="120" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1" CornerRadius="5" Background="{StaticResource SurfaceBgBrush}">
+                    <ListBox x:Name="ListLinkGames" SelectionChanged="ListLinkGames_SelectionChanged" Background="Transparent">
+                      <ListBox.ItemTemplate>
+                        <DataTemplate DataType="models:UserGameListItem">
+                          <Grid ColumnDefinitions="Auto,*" Margin="2">
+                            <Border Grid.Column="0" Width="30" Height="42" CornerRadius="3" ClipToBounds="True" Background="#18181B" Margin="0,0,8,0">
+                              <controls:AsyncImage Url="{Binding CoverImage}" Stretch="UniformToFill" />
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                              <TextBlock Text="{Binding DisplayTitle}" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                              <TextBlock Text="{Binding ProgressDisplay}" FontSize="9" Foreground="{StaticResource TextMutedBrush}" />
+                            </StackPanel>
+                          </Grid>
+                        </DataTemplate>
+                      </ListBox.ItemTemplate>
+                    </ListBox>
+                  </Border>
+                  <TextBlock x:Name="TxtLinkNoGames" Text="No matching games found." FontSize="10" Foreground="{StaticResource TextMutedBrush}" IsVisible="False" HorizontalAlignment="Center" />
+                </StackPanel>
+              </Border>
+
+              <!-- Step 2: Match Executable(s) -->
+              <Border Classes="grouped-box" Padding="12,10">
+                <StackPanel Spacing="8">
+                  <TextBlock Text="2. MATCH EXECUTABLE(S)" FontSize="10" FontWeight="Bold" LetterSpacing="1" Foreground="{StaticResource TextMutedBrush}" />
+
+                  <!-- Running Processes + Refresh + Browse in unified row -->
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="Detect from Running Processes" FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
+                    <Grid ColumnDefinitions="*,Auto,Auto">
+                      <ComboBox x:Name="CmbLinkRunningProcesses" Grid.Column="0" HorizontalAlignment="Stretch" SelectionChanged="CmbLinkRunningProcesses_SelectionChanged" />
+                      <Button Grid.Column="1" Classes="btn-secondary" Margin="6,0,0,0" Padding="8,4" ToolTip.Tip="Refresh running processes" Click="BtnLinkRefreshProcesses_Click">
+                        <PathIcon Data="{StaticResource IconRefresh}" Width="12" Height="12" Foreground="{StaticResource TextPrimaryBrush}" />
+                      </Button>
+                      <Button Content="Browse..." Classes="btn-secondary" Grid.Column="2" Margin="6,0,0,0" Padding="10,4" Click="BtnLinkBrowseExe_Click" />
+                    </Grid>
+                  </StackPanel>
+
+                  <!-- Target Executable Name -->
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="Target Executable Name(s)" FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
+                    <TextBox x:Name="TxtLinkExecutableName" Watermark="e.g. game, game.exe" Padding="8,5" FontSize="11" />
+                  </StackPanel>
+
+                  <!-- Window Title Pattern -->
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="Window Title Pattern (Optional)" FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
+                    <TextBox x:Name="TxtLinkWindowTitlePattern" Watermark="Leave blank to match any window" Padding="8,5" FontSize="11" />
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+
+            </StackPanel>
+          </ScrollViewer>
+        </Grid>
+
+      </Grid>
+    </Border>
 
   </Grid>
 </UserControl>

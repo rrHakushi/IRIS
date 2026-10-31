@@ -325,6 +325,8 @@ function GooglePreview({ metadata }: { metadata: PageMetadataInfo }) {
     .filter(Boolean)
     .join(" › ")}`
 
+  const image = metadata.openGraph.image || metadata.twitter.image
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -382,22 +384,44 @@ function GooglePreview({ metadata }: { metadata: PageMetadataInfo }) {
           </div>
         </div>
 
-        {/* Title link */}
-        <div
-          className={`mb-1 line-clamp-1 cursor-pointer text-[18px] leading-snug font-normal hover:underline ${
-            isDarkMode ? "text-[#8ab4f8]" : "text-[#1a0dab]"
-          }`}
-        >
-          {title}
-        </div>
+        {/* Title link & snippet with thumbnail */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            {/* Title link */}
+            <div
+              className={`mb-1 line-clamp-1 cursor-pointer text-[18px] leading-snug font-normal hover:underline ${
+                isDarkMode ? "text-[#8ab4f8]" : "text-[#1a0dab]"
+              }`}
+            >
+              {title}
+            </div>
 
-        {/* Snippet */}
-        <div
-          className={`line-clamp-2 text-xs leading-relaxed ${
-            isDarkMode ? "text-[#bdc1c6]" : "text-[#4d5156]"
-          }`}
-        >
-          {description}
+            {/* Snippet */}
+            <div
+              className={`line-clamp-2 text-xs leading-relaxed ${
+                isDarkMode ? "text-[#bdc1c6]" : "text-[#4d5156]"
+              }`}
+            >
+              {description}
+            </div>
+          </div>
+
+          {image && (
+            <div
+              className={`relative size-20 shrink-0 overflow-hidden rounded-xl border ${
+                isDarkMode
+                  ? "border-[#3c4043] bg-[#303134]"
+                  : "border-[#dadce0] bg-[#f1f3f4]"
+              }`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={image}
+                alt={title}
+                className="h-full w-full object-cover"
+              />
+            </div>
+          )}
         </div>
       </div>
 

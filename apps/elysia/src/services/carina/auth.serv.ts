@@ -150,38 +150,16 @@ export abstract class CarinaAuthServ {
       .all()
 
     if (conflicts.length > 0) {
-      const isEmailTaken = conflicts.some(
-        (u) => u.email.trim().toLowerCase() === lowerEmail
+      throw new Conflict(
+        'An account with the provided username or email address already exists. Please choose another username or sign in.'
       )
-      const isUsernameTaken = conflicts.some(
-        (u) => u.username.trim().toLowerCase() === lowerUsername
-      )
-
-      if (isEmailTaken && isUsernameTaken) {
-        throw new Conflict(
-          `Both the username '${sanitizedUsername}' and email address '${lowerEmail}' are already registered.`
-        )
-      } else if (isEmailTaken) {
-        throw new Conflict(
-          `An account with the email address '${lowerEmail}' already exists. Please sign in or use password recovery.`
-        )
-      } else {
-        throw new Conflict(
-          `The username '${sanitizedUsername}' is already taken. Please choose another username.`
-        )
-      }
     }
 
-    // 3. Admin initialization check
-    if (hasAdminCached === null) {
-      const userCount = await countOf(prisma.orm.public.User)
-      hasAdminCached = userCount > 0
-    }
-
+    // 3. Admin initialization check (first registered user receives ADMINISTRATOR flag)
+    const userCount = await countOf(prisma.orm.public.User)
     const permissions: number[] = []
-    if (!hasAdminCached) {
+    if (userCount === 0) {
       permissions.push(Number(IRISFlags.ADMINISTRATOR))
-      hasAdminCached = true
     }
 
     // 4. Secure password hash via scrypt
