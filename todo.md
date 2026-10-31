@@ -1,7 +1,6 @@
 # Borealis [Media tracker]
     - Stremio plugin for borealis
     - In media pages (anime, manga etc) add tab People in which it will list all users who have that media in list (that is public and media is not private)
-    - Movies are not fetching/saving full data
    
 # Akaromi [Password manager]
     - Clicking unlock in the inline fill doesnt open the modal on android
@@ -25,7 +24,6 @@
     - Dev tools (floating popup like nextjs has), onclick open sidebar with tools [metadata viewer, send notification, trigger events/workers... ]
     - .md version of every single page
     - mcp server for all the apps
-    - Default banner image for all apps (each different) to be used in server metadata 
 
 
 # Apertune [Music player]
