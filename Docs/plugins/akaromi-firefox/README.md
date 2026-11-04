@@ -2,7 +2,7 @@
 
 > **Document Type:** Diátaxis Documentation Index & Navigation Map  
 > **Target:** Mozilla Firefox Extension (`plugins/akaromi-firefox`)  
-> **Version:** 2.1.0  
+> **Version:** 2.1.1  
 
 ---
 

@@ -48,20 +48,6 @@
     storage.remove("akaromi_search_query").catch(() => {})
   })
 
-  // Search Filter Chips
-  document.querySelectorAll("#popup-search-chips .search-chip").forEach((chip) => {
-    chip.addEventListener("click", () => {
-      const prefix = chip.getAttribute("data-prefix")
-      if (!prefix || !vaultSearchInput) return
-      vaultSearchInput.value = prefix
-      vaultSearchInput.focus()
-      state.currentSearchQuery = prefix
-      if (btnSearchClear) btnSearchClear.style.display = "flex"
-      global.AkaromiVault?.renderCiphersList()
-    })
-  })
-
-
   // ----------------------------------------------------
   // Header Add (+) Menu
   // ----------------------------------------------------

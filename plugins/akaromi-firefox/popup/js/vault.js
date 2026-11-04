@@ -216,7 +216,7 @@
       } else if (q.startsWith("domain:") || q.startsWith("url:") || q.startsWith("host:")) {
         const val = q.replace(/^(domain|url|host):/, "").trim()
         filtered = filtered.filter((c) => {
-          const uris = (c.data?.uris || []).map((u) => (typeof u === "string" ? u : u.uri || "")).join(" ").toLowerCase()
+          const uris = (c.data?.uris || c.login?.uris || c.data?.websites || []).map((u) => (typeof u === "string" ? u : u.uri || "")).join(" ").toLowerCase()
           return uris.includes(val)
         })
       } else if (q.startsWith("title:")) {
@@ -224,13 +224,13 @@
         filtered = filtered.filter((c) => (c.title || "").toLowerCase().includes(val))
       } else if (q.startsWith("note:") || q.startsWith("notes:")) {
         const val = q.replace(/^notes?:/, "").trim()
-        filtered = filtered.filter((c) => (c.data?.notes || "").toLowerCase().includes(val))
+        filtered = filtered.filter((c) => (c.data?.notes || c.data?.noteBody || "").toLowerCase().includes(val))
       } else {
         filtered = filtered.filter((c) => {
           const title = (c.title || "").toLowerCase()
           const user = (c.data?.username || c.data?.email || "").toLowerCase()
-          const uris = (c.data?.uris || []).map((u) => (typeof u === "string" ? u : u.uri || "")).join(" ").toLowerCase()
-          const notes = (c.data?.notes || "").toLowerCase()
+          const uris = (c.data?.uris || c.login?.uris || c.data?.websites || []).map((u) => (typeof u === "string" ? u : u.uri || "")).join(" ").toLowerCase()
+          const notes = (c.data?.notes || c.data?.noteBody || "").toLowerCase()
           return title.includes(q) || user.includes(q) || uris.includes(q) || notes.includes(q)
         })
       }

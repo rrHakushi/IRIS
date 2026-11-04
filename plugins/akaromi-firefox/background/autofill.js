@@ -20,16 +20,16 @@ function getMatchingLogins(targetUrl) {
 
   for (const cipher of inMemoryCiphers) {
     if (cipher.deletedAt) continue
-    if (cipher.type && cipher.type !== "LOGIN" && !cipher.data?.uris?.length) continue
+    if (cipher.type === "SSH_KEY" || cipher.type === 2) continue
 
     const candidates = []
 
     // 1. Array of explicit URIs
-    const uris = cipher.data?.uris || cipher.login?.uris || []
+    const uris = cipher.data?.uris || cipher.login?.uris || cipher.data?.websites || []
     if (Array.isArray(uris) && uris.length > 0) {
       for (const u of uris) {
         const uriStr = typeof u === "string" ? u : u?.uri
-        const matchType = typeof u === "object" && u?.match !== undefined ? u.match : 0
+        const matchType = typeof u === "object" && u?.match !== undefined && u?.match !== null ? u.match : 0
         if (uriStr && uriStr.trim()) {
           candidates.push({ uri: uriStr.trim(), matchType })
         }
@@ -58,32 +58,43 @@ function getMatchingLogins(targetUrl) {
       }
     }
 
-    // Evaluate candidates strictly
-    let isMatched = false
+    // Evaluate candidates
     let isExactHost = false
+    let isBaseMatched = false
 
     for (const { uri, matchType } of candidates) {
-      if (IrisMatching.isUriMatch(targetUrl, uri, matchType)) {
-        isMatched = true
-        const candHost = IrisMatching.extractHost(uri)
-        const candBase = IrisMatching.extractBaseDomain(uri)
+      const normStrategy = IrisMatching.normalizeMatchStrategy(matchType)
+      if (normStrategy === IrisMatching.BitwardenUriMatch.NEVER) {
+        continue
+      }
 
-                // Step 2: Strict Strategy Evaluation & Match Tier Ranking
-        // Step 2.1: Exact Domain vs Base Domain Tier Ranking
-        // Exact match tier: host matches target host, or exact URL match
+      const candHost = IrisMatching.extractHost(uri)
+      const candBase = IrisMatching.extractBaseDomain(uri)
+
+      // Exact match tier: host matches target host, or exact URL match
+      if (candHost && targetHost && candHost === targetHost) {
+        isExactHost = true
+        break
+      }
+
+      if (IrisMatching.isUriMatch(targetUrl, uri, matchType)) {
         if (candHost && targetHost && candHost === targetHost) {
           isExactHost = true
           break
         }
+        isBaseMatched = true
+      }
+
+      // Base domain match tier: base domain matches target base domain
+      if (candBase && targetBase && candBase === targetBase) {
+        isBaseMatched = true
       }
     }
 
-    if (isMatched) {
-      if (isExactHost) {
-        exactMatches.push({ ...cipher, _matchTier: "exact" })
-      } else {
-        baseMatches.push({ ...cipher, _matchTier: "base" })
-      }
+    if (isExactHost) {
+      exactMatches.push({ ...cipher, _matchTier: "exact" })
+    } else if (isBaseMatched) {
+      baseMatches.push({ ...cipher, _matchTier: "base" })
     }
   }
 

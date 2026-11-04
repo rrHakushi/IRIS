@@ -2,6 +2,34 @@
  * Akaromi for Firefox — Floating Dropdown & In-Page Autofill Menu
  */
 ;(function (global) {
+  "use strict"
+
+  const ext = typeof browser !== "undefined" ? browser : (typeof chrome !== "undefined" ? chrome : global.AkaromiExt || global.browser || global.chrome)
+
+  const domParser = new DOMParser()
+  function safeSetTemplate(element, htmlString) {
+    element.replaceChildren()
+    const doc = domParser.parseFromString(htmlString, "text/html")
+    while (doc.body.firstChild) {
+      element.appendChild(doc.body.firstChild)
+    }
+  }
+
+  function getOrCreatePortal() {
+    let portal = document.getElementById("akaromi-portal") || document.getElementById("iris-pass-portal")
+    if (!portal) {
+      portal = document.createElement("div")
+      portal.id = "akaromi-portal"
+      portal.setAttribute("data-akaromi-portal", "true")
+      portal.className = "akaromi-portal-root iris-pass-portal-root"
+    }
+    const targetParent = document.body || document.documentElement
+    if (portal.parentElement !== targetParent) {
+      targetParent.appendChild(portal)
+    }
+    return portal
+  }
+
   let activeDropdown = null
   let currentTargetInput = null
 
@@ -10,6 +38,7 @@
       activeDropdown.remove()
       activeDropdown = null
       currentTargetInput = null
+      global.AkaromiBadge?.setActiveDropdownTarget(null)
     }
   }
 
@@ -41,14 +70,15 @@
     }
     if (q.startsWith("note:") || q.startsWith("notes:")) {
       const val = q.replace(/^notes?:/, "").trim()
-      return ciphers.filter((c) => (c.data?.notes || "").toLowerCase().includes(val))
+      return ciphers.filter((c) => (c.data?.notes || c.data?.noteBody || "").toLowerCase().includes(val))
     }
 
     return ciphers.filter((c) => {
       const title = (c.title || "").toLowerCase()
       const user = (c.data?.username || c.data?.email || "").toLowerCase()
       const uris = (c.data?.uris?.map((u) => (typeof u === "string" ? u : u.uri)).join(" ") || "").toLowerCase()
-      return title.includes(q) || user.includes(q) || uris.includes(q)
+      const notes = (c.data?.notes || c.data?.noteBody || "").toLowerCase()
+      return title.includes(q) || user.includes(q) || uris.includes(q) || notes.includes(q)
     })
   }
 
@@ -60,15 +90,34 @@
 
     removeDropdown()
     currentTargetInput = targetInput
+    global.AkaromiBadge?.setActiveDropdownTarget(targetInput)
 
     const rect = targetInput.getBoundingClientRect()
     const dropdown = document.createElement("div")
     dropdown.className = "iris-pass-dropdown akaromi-dropdown"
     dropdown.setAttribute("data-akaromi-ignore", "true")
 
-    // Position directly beneath input
-    dropdown.style.top = `${Math.round(rect.bottom + window.scrollY + 6)}px`
-    dropdown.style.left = `${Math.round(rect.left + window.scrollX)}px`
+    // Position directly beneath or above input using viewport coordinates
+    const dropdownWidth = 280
+    const estimatedHeight = 320
+    let top = rect.bottom + 6
+    let left = rect.left
+
+    if (top + estimatedHeight > window.innerHeight && rect.top > estimatedHeight) {
+      top = Math.max(10, rect.top - estimatedHeight - 6)
+    } else {
+      top = Math.min(top, Math.max(10, window.innerHeight - 80))
+    }
+
+    if (left + dropdownWidth > window.innerWidth - 12) {
+      left = Math.max(12, window.innerWidth - dropdownWidth - 12)
+    } else if (left < 12) {
+      left = 12
+    }
+
+    dropdown.style.position = "fixed"
+    dropdown.style.top = `${Math.round(top)}px`
+    dropdown.style.left = `${Math.round(left)}px`
 
     // Loading State
     safeSetTemplate(
@@ -137,7 +186,7 @@
       )
       dropdown.appendChild(header)
 
-      // 2. Search Container with Toggle and Filter Chips
+      // 2. Search Container with Toggle
       const searchBox = document.createElement("div")
       searchBox.className = "iris-pass-search-container"
       safeSetTemplate(
@@ -151,7 +200,7 @@
             type="text"
             class="iris-pass-search-field"
             id="iris-pass-search-input"
-            placeholder="Search logins..."
+            placeholder="Search logins (e.g. user:, domain:)..."
             autocomplete="off"
             spellcheck="false"
           />
@@ -169,19 +218,12 @@
             </svg>
             <span class="toggle-label">All</span>
           </button>
-        </div>
-        <div class="iris-pass-chips-row">
-          <button type="button" class="iris-pass-filter-chip" data-prefix="user:">user:</button>
-          <button type="button" class="iris-pass-filter-chip" data-prefix="domain:">domain:</button>
-          <button type="button" class="iris-pass-filter-chip" data-prefix="email:">email:</button>
-          <button type="button" class="iris-pass-filter-chip" data-prefix="title:">title:</button>
         </div>`
       )
       dropdown.appendChild(searchBox)
 
       const searchInput = searchBox.querySelector("#iris-pass-search-input")
       const toggleAllBtn = searchBox.querySelector("#iris-pass-toggle-all")
-      const chips = searchBox.querySelectorAll(".iris-pass-filter-chip")
 
       // List container
       const list = document.createElement("div")
@@ -402,23 +444,10 @@
         return item
       }
 
-      // Event Listeners for Search & Chips
+      // Event Listeners for Search
       searchInput?.addEventListener("input", (e) => {
         currentQuery = e.target.value
         renderList()
-      })
-
-      chips.forEach((chip) => {
-        chip.addEventListener("click", () => {
-          const prefix = chip.getAttribute("data-prefix")
-          if (!prefix) return
-          if (searchInput) {
-            searchInput.value = prefix
-            searchInput.focus()
-            currentQuery = prefix
-            renderList()
-          }
-        })
       })
 
       toggleAllBtn?.addEventListener("click", async () => {
@@ -465,6 +494,35 @@
       showFieldDropdown(currentTargetInput)
     }
   })
+
+  function updateDropdownPosition() {
+    if (!activeDropdown || !currentTargetInput) return
+    const rect = currentTargetInput.getBoundingClientRect()
+    if (rect.width === 0 || rect.height === 0 || !document.body.contains(currentTargetInput)) {
+      removeDropdown()
+      return
+    }
+    const dropdownWidth = 280
+    const dropdownHeight = activeDropdown.offsetHeight || 320
+    let top = rect.bottom + 6
+    let left = rect.left
+
+    if (top + dropdownHeight > window.innerHeight && rect.top > dropdownHeight) {
+      top = Math.max(10, rect.top - dropdownHeight - 6)
+    }
+
+    if (left + dropdownWidth > window.innerWidth - 12) {
+      left = Math.max(12, window.innerWidth - dropdownWidth - 12)
+    } else if (left < 12) {
+      left = 12
+    }
+
+    activeDropdown.style.top = `${Math.round(top)}px`
+    activeDropdown.style.left = `${Math.round(left)}px`
+  }
+
+  window.addEventListener("scroll", updateDropdownPosition, { passive: true })
+  window.addEventListener("resize", updateDropdownPosition, { passive: true })
 
   global.AkaromiMenu = {
     showFieldDropdown,

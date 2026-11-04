@@ -634,7 +634,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           _matchTier: c._matchTier || "exact",
           data: {
             username: c.login?.username || c.data?.username || c.data?.email || "",
-            uris: c.data?.uris || [],
+            uris: c.data?.uris || c.login?.uris || c.data?.websites || [],
             additionalPasswords: (c.data?.additionalPasswords || []).map((ap, idx) => ({
               id: ap.id || String(idx),
               name: ap.name || ap.title || `Password ${idx + 1}`,
@@ -668,7 +668,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
           _matchTier: "all",
           data: {
             username: c.login?.username || c.data?.username || c.data?.email || "",
-            uris: c.data?.uris || [],
+            uris: c.data?.uris || c.login?.uris || c.data?.websites || [],
             additionalPasswords: (c.data?.additionalPasswords || []).map((ap, idx) => ({
               id: ap.id || String(idx),
               name: ap.name || ap.title || `Password ${idx + 1}`,

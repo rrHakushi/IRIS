@@ -132,6 +132,12 @@
       setTimeout(hideIcon, 120)
     })
 
+    icon.addEventListener("mousedown", (e) => {
+      // Prevent input blur when clicking badge in Firefox
+      e.preventDefault()
+      e.stopPropagation()
+    })
+
     icon.addEventListener("click", (e) => {
       e.preventDefault()
       e.stopPropagation()
