@@ -41,13 +41,17 @@
 /* Modal Backdrop */
 #borealis-modal-backdrop {
     position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
     inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
     width: 100vw !important;
     height: 100vh !important;
-    background: rgba(0, 0, 0, 0.75) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    z-index: 9999999 !important;
+    background-color: rgba(9, 9, 11, 0.88) !important;
+    z-index: 99999999 !important;
     display: none;
     align-items: center !important;
     justify-content: center !important;
@@ -57,6 +61,14 @@
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace !important;
     pointer-events: auto !important;
     touch-action: none !important;
+}
+
+@supports (backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px)) {
+    #borealis-modal-backdrop {
+        background-color: rgba(0, 0, 0, 0.75) !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+    }
 }
 
 #borealis-modal-backdrop.borealis-show {
@@ -79,6 +91,7 @@
     max-height: 90vh !important;
     width: 92vw !important;
     max-width: 700px !important;
+    margin: auto !important;
     padding: 0 !important;
     overflow: hidden !important;
     background-color: #0b0b0e !important;
@@ -88,6 +101,8 @@
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
     pointer-events: auto !important;
     touch-action: auto !important;
+    box-sizing: border-box !important;
+    z-index: 100000000 !important;
 }
 
 /* Injection Button in Jellyfin Web */
@@ -168,8 +183,7 @@
     width: 2rem !important;
     height: 2rem !important;
     border-radius: 9999px !important;
-    background: rgba(18, 18, 22, 0.8) !important;
-    backdrop-filter: blur(8px) !important;
+    background: rgba(28, 28, 34, 0.95) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     color: #ffffff !important;
     display: flex !important;
@@ -536,6 +550,10 @@
 }
 .borealis-date-picker-hidden {
     position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
     inset: 0 !important;
     width: 100% !important;
     height: 100% !important;
@@ -799,13 +817,13 @@
 
 #borealis-modal-backdrop .relative { position: relative !important; }
 #borealis-modal-backdrop .absolute { position: absolute !important; }
-#borealis-modal-backdrop .inset-0 { inset: 0 !important; }
-#borealis-modal-backdrop .inset-x-0 { inset-inline: 0 !important; }
+#borealis-modal-backdrop .inset-0 { top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; inset: 0 !important; }
+#borealis-modal-backdrop .inset-x-0 { left: 0 !important; right: 0 !important; inset-inline: 0 !important; }
 #borealis-modal-backdrop .bottom-0 { bottom: 0 !important; }
 #borealis-modal-backdrop .top-1\.5 { top: 0.375rem !important; }
 #borealis-modal-backdrop .top-3\.5 { top: 0.875rem !important; }
-#borealis-modal-backdrop .right-1\.5 { inset-inline-end: 0.375rem !important; }
-#borealis-modal-backdrop .right-3\.5 { inset-inline-end: 0.875rem !important; }
+#borealis-modal-backdrop .right-1\.5 { right: 0.375rem !important; inset-inline-end: 0.375rem !important; }
+#borealis-modal-backdrop .right-3\.5 { right: 0.875rem !important; inset-inline-end: 0.875rem !important; }
 #borealis-modal-backdrop .z-20 { z-index: 20 !important; }
 #borealis-modal-backdrop .z-30 { z-index: 30 !important; }
 
