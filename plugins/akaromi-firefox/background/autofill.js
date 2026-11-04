@@ -3,58 +3,99 @@
  */
 
 /**
- * Filter decrypted ciphers matching a specific URL using Bitwarden match algorithm
+ * Filter decrypted ciphers matching a specific URL using Bitwarden match algorithm.
+ * Strictly enforces detection method (e.g. HOST matches only exact host).
+ * Returns ranked matches: exact domain matches first, followed by base domain matches.
  */
+// Step 1: Active Tab Candidate Collection & Heuristics
+// Step 1.1: Target Host & Base Domain Resolution
 function getMatchingLogins(targetUrl) {
   if (!inMemoryVaultKey || !inMemoryCiphers || !targetUrl) return []
 
-  return inMemoryCiphers.filter((cipher) => {
-    if (cipher.deletedAt) return false
-    if (cipher.type && cipher.type !== "LOGIN" && !cipher.data?.uris?.length) return false
+  const targetHost = IrisMatching.extractHost(targetUrl)
+  const targetBase = IrisMatching.extractBaseDomain(targetUrl)
+
+  const exactMatches = []
+  const baseMatches = []
+
+  for (const cipher of inMemoryCiphers) {
+    if (cipher.deletedAt) continue
+    if (cipher.type && cipher.type !== "LOGIN" && !cipher.data?.uris?.length) continue
 
     const candidates = []
 
-    // 1. Array of URIs in cipher.data?.uris or cipher.login?.uris
+    // 1. Array of explicit URIs
     const uris = cipher.data?.uris || cipher.login?.uris || []
-    if (Array.isArray(uris)) {
+    if (Array.isArray(uris) && uris.length > 0) {
       for (const u of uris) {
         const uriStr = typeof u === "string" ? u : u?.uri
         const matchType = typeof u === "object" && u?.match !== undefined ? u.match : 0
-        if (uriStr) candidates.push({ uri: uriStr, matchType })
+        if (uriStr && uriStr.trim()) {
+          candidates.push({ uri: uriStr.trim(), matchType })
+        }
       }
     }
 
-    // 2. Singular uri, url, website
-    if (cipher.data?.uri) candidates.push({ uri: cipher.data.uri, matchType: 0 })
-    if (cipher.data?.url) candidates.push({ uri: cipher.data.url, matchType: 0 })
-    if (cipher.data?.website) candidates.push({ uri: cipher.data.website, matchType: 0 })
-
-    // 3. Passkey rpId
+    // 2. Passkey rpId (host matching)
     if (cipher.data?.passkey?.rpId) {
       candidates.push({ uri: cipher.data.passkey.rpId, matchType: 1 })
     }
 
-    // 4. Fallback: match by title if it looks like a domain, IP, or hostname
-    if (cipher.title) {
-      const cleanTitle = cipher.title.trim()
-      if (cleanTitle.includes(".") || cleanTitle.includes("localhost") || cleanTitle.includes(":")) {
-        const firstWord = cleanTitle.split(/\s+/)[0]
-        if (firstWord.includes(".") || firstWord.includes(":")) {
-          candidates.push({ uri: firstWord, matchType: 0 })
+    // 3. Fallback candidates ONLY if no explicit URIs or passkey rpId exist
+    if (candidates.length === 0) {
+      if (cipher.data?.uri) candidates.push({ uri: cipher.data.uri, matchType: 0 })
+      if (cipher.data?.url) candidates.push({ uri: cipher.data.url, matchType: 0 })
+      if (cipher.data?.website) candidates.push({ uri: cipher.data.website, matchType: 0 })
+
+      if (cipher.title) {
+        const cleanTitle = cipher.title.trim()
+        if (cleanTitle.includes(".") || cleanTitle.includes("localhost") || cleanTitle.includes(":")) {
+          const firstWord = cleanTitle.split(/\s+/)[0]
+          if (firstWord.includes(".") || firstWord.includes(":")) {
+            candidates.push({ uri: firstWord, matchType: 0 })
+          }
         }
-        candidates.push({ uri: cleanTitle, matchType: 0 })
       }
     }
 
-    return candidates.some(({ uri, matchType }) => {
-      return IrisMatching.isUriMatch(targetUrl, uri, matchType)
-    })
-  })
+    // Evaluate candidates strictly
+    let isMatched = false
+    let isExactHost = false
+
+    for (const { uri, matchType } of candidates) {
+      if (IrisMatching.isUriMatch(targetUrl, uri, matchType)) {
+        isMatched = true
+        const candHost = IrisMatching.extractHost(uri)
+        const candBase = IrisMatching.extractBaseDomain(uri)
+
+                // Step 2: Strict Strategy Evaluation & Match Tier Ranking
+        // Step 2.1: Exact Domain vs Base Domain Tier Ranking
+        // Exact match tier: host matches target host, or exact URL match
+        if (candHost && targetHost && candHost === targetHost) {
+          isExactHost = true
+          break
+        }
+      }
+    }
+
+    if (isMatched) {
+      if (isExactHost) {
+        exactMatches.push({ ...cipher, _matchTier: "exact" })
+      } else {
+        baseMatches.push({ ...cipher, _matchTier: "base" })
+      }
+    }
+  }
+
+  // Exact host matches on top, followed by base domain matches
+  return [...exactMatches, ...baseMatches]
 }
 
 /**
  * Updates extension action badge based on match count or lock state
  */
+// Step 3: Extension Action Toolbar Badging
+// Step 3.1: Badge Counter Query & Text Setting
 async function updateBadge() {
   try {
     const { authToken, apiKey } = await IrisApi.getToken().catch(() => ({}))

@@ -1,19 +1,10 @@
 "use client"
 
 import React, { Suspense } from "react"
-import { useParams } from "next/navigation"
 import Image from "next/image"
 import { AkaromiVaultView } from "../components/akaromi-vault-view"
 
-function FilteredVault() {
-  const params = useParams()
-  const rawFilter = params?.filter as string | undefined
-  const filter = rawFilter ? decodeURIComponent(rawFilter) : "all"
-
-  return <AkaromiVaultView filter={filter} />
-}
-
-export default function PassFilterPage() {
+export default function VaultPage() {
   return (
     <Suspense
       fallback={
@@ -26,12 +17,12 @@ export default function PassFilterPage() {
               height={16}
               className="animate-pulse object-contain"
             />
-            <span>Loading Akaromi...</span>
+            <span>Loading Akaromi Vault...</span>
           </div>
         </div>
       }
     >
-      <FilteredVault />
+      <AkaromiVaultView filter="all" />
     </Suspense>
   )
 }

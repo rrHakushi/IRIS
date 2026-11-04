@@ -11,6 +11,8 @@
   /**
    * Checks if an input element is a search box (should NEVER have autofill button)
    */
+    // Step 1: Search & Irrelevant Field Exclusion Heuristics
+  // Step 1.1: Search Box & Promo Code Filtering
   function isSearchInput(el) {
     if (!el || el.tagName !== "INPUT") return false
     const type = (el.type || "").toLowerCase()
@@ -40,6 +42,8 @@
    * Determines if an element is a valid credential input (username, email, or password)
    * Follows strict Bitwarden heuristics to prevent unwanted badges on non-credential inputs.
    */
+    // Step 2: Credential Field Identification Heuristics
+  // Step 2.1: Username, Email & Password Field Detection
   function isCredentialInput(el) {
     if (!el || el.tagName !== "INPUT") return false
 

@@ -363,6 +363,8 @@
     if (serverConfigBody) serverConfigBody.style.display = "none"
   })
 
+    // Step 1: Server Authentication & API Key Login
+  // Step 1.1: Identifier/Password and API Key Submission
   formLogin?.addEventListener("submit", async (e) => {
     e.preventDefault()
     if (loginError) loginError.style.display = "none"
@@ -589,6 +591,8 @@
   // ----------------------------------------------------
   // MFA Form Submit
   // ----------------------------------------------------
+    // Step 2: Multi-Factor Authentication Verification
+  // Step 2.1: 6-Box OTP Verification & Backup Code Fallback
   formMfa?.addEventListener("submit", async (e) => {
     e.preventDefault()
     if (mfaError) mfaError.style.display = "none"

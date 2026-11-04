@@ -11,6 +11,8 @@
   const inputIconMap = new Map()
   let activeDropdownTarget = null
 
+    // Step 2: Trailing Button Collision Avoidance & Absolute Positioning
+  // Step 2.1: Native Eye Icon Collision Detection & Viewport Tracking
   function getTrailingButtonOffset(input, icon, rect) {
     let offset = 26
     try {

@@ -6,6 +6,8 @@
 
   const ext = typeof browser !== "undefined" ? browser : (typeof chrome !== "undefined" ? chrome : global.AkaromiExt)
 
+    // Step 2: Synthetic Event Dispatching
+  // Step 2.1: Full Bubbling Event Chain Dispatch (focus -> input -> change -> blur)
   function dispatchInputEvents(element) {
     if (!element) return
     try {
@@ -16,6 +18,8 @@
     } catch {}
   }
 
+    // Step 1: Prototype Value Setter Invocation
+  // Step 1.1: Native Prototype Setter Execution
   function setNativeValue(element, value) {
     const valueSetter = Object.getOwnPropertyDescriptor(element, "value")?.set
     const prototype = Object.getPrototypeOf(element)
@@ -30,6 +34,8 @@
     }
   }
 
+    // Step 3: Multi-Field Credential Injection
+  // Step 3.1: Username, Password & 2FA OTP Automatic Discovery
   function fillCredential(cipher, specificPassword = null, initialCode = "") {
     if (!cipher) return
     const data = cipher.data || {}

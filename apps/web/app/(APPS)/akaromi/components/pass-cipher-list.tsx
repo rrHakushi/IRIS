@@ -4,6 +4,7 @@ import React, { useState } from "react"
 import { usePass } from "@/context/pass-context"
 import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
+import { cn } from "@workspace/ui/lib/utils"
 import {
   IconSearch,
   IconKey,
@@ -43,6 +44,7 @@ export function PassCipherList({
     setSelectedCipherId,
     activeFilter,
     searchQuery,
+    setSearchQuery,
     sortOption,
     setSortOption,
     toggleFavorite,
@@ -85,30 +87,68 @@ export function PassCipherList({
     return true
   })
 
-  // 2. Filter by search query
+  // 2. Filter by search query (supports user:, domain:, email:, title:, note: prefixes)
   if (searchQuery.trim()) {
-    const q = searchQuery.toLowerCase().trim()
+    const rawQ = searchQuery.trim().toLowerCase()
     filtered = filtered.filter((c) => {
-      if (c.title.toLowerCase().includes(q)) return true
       const subtype = c.data?.itemType || (c.type === "SSH_KEY" ? "ssh" : "login")
+      const title = (c.title || "").toLowerCase()
+      const notes = ((c.data as any)?.notes || "").toLowerCase()
+
+      let username = ""
+      let email = ""
+      let uris: string[] = []
 
       if (subtype === "login") {
         const d = c.data as DecryptedLoginData
-        if (d.username && d.username.toLowerCase().includes(q)) return true
-        if (d.email && d.email.toLowerCase().includes(q)) return true
-        if (d.uris?.some((u) => u.uri.toLowerCase().includes(q))) return true
-      } else if (subtype === "card") {
-        const d = c.data as DecryptedCardData
-        if (d.cardHolder && d.cardHolder.toLowerCase().includes(q)) return true
-        if (d.cardNumber && d.cardNumber.includes(q)) return true
-      } else if (subtype === "ssh") {
-        const d = c.data as DecryptedSshKeyData
-        if (d.fingerprint && d.fingerprint.toLowerCase().includes(q)) return true
+        username = (d.username || "").toLowerCase()
+        email = (d.email || "").toLowerCase()
+        uris = (d.uris || []).map((u) => u.uri.toLowerCase())
       } else if (subtype === "identity") {
         const d = c.data as DecryptedIdentityData
-        if (d.fullName && d.fullName.toLowerCase().includes(q)) return true
-        if (d.email && d.email.toLowerCase().includes(q)) return true
+        username = (d.fullName || "").toLowerCase()
+        email = (d.email || "").toLowerCase()
+      } else if (subtype === "card") {
+        const d = c.data as DecryptedCardData
+        username = (d.cardHolder || "").toLowerCase()
       }
+
+      if (rawQ.startsWith("user:") || rawQ.startsWith("username:")) {
+        const v = rawQ.replace(/^user(name)?:/, "").trim()
+        return username.includes(v)
+      }
+      if (rawQ.startsWith("email:")) {
+        const v = rawQ.replace(/^email:/, "").trim()
+        return email.includes(v) || username.includes(v)
+      }
+      if (rawQ.startsWith("domain:") || rawQ.startsWith("url:") || rawQ.startsWith("host:")) {
+        const v = rawQ.replace(/^(domain|url|host):/, "").trim()
+        return uris.some((u) => u.includes(v))
+      }
+      if (rawQ.startsWith("title:")) {
+        const v = rawQ.replace(/^title:/, "").trim()
+        return title.includes(v)
+      }
+      if (rawQ.startsWith("note:") || rawQ.startsWith("notes:")) {
+        const v = rawQ.replace(/^notes?:/, "").trim()
+        return notes.includes(v)
+      }
+
+      // Default: match all fields
+      if (title.includes(rawQ)) return true
+      if (username.includes(rawQ)) return true
+      if (email.includes(rawQ)) return true
+      if (uris.some((u) => u.includes(rawQ))) return true
+      if (notes.includes(rawQ)) return true
+
+      if (subtype === "card") {
+        const d = c.data as DecryptedCardData
+        if (d.cardNumber && d.cardNumber.includes(rawQ)) return true
+      } else if (subtype === "ssh") {
+        const d = c.data as DecryptedSshKeyData
+        if (d.fingerprint && d.fingerprint.toLowerCase().includes(rawQ)) return true
+      }
+
       return false
     })
   }
@@ -224,6 +264,52 @@ export function PassCipherList({
             </>
           )}
         </div>
+      </div>
+
+      {/* Search Filter Syntax Chips */}
+      <div className="flex items-center gap-1.5 overflow-x-auto border-b border-border/60 bg-card/10 px-3 py-1.5 scrollbar-none">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider shrink-0 me-0.5">
+          Filter:
+        </span>
+        {[
+          { label: "user:", prefix: "user:" },
+          { label: "domain:", prefix: "domain:" },
+          { label: "email:", prefix: "email:" },
+          { label: "title:", prefix: "title:" },
+          { label: "note:", prefix: "note:" },
+        ].map(({ label, prefix }) => {
+          const isActive = searchQuery.toLowerCase().startsWith(prefix)
+          return (
+            <button
+              key={prefix}
+              type="button"
+              onClick={() => {
+                if (isActive) {
+                  setSearchQuery("")
+                } else {
+                  setSearchQuery(prefix)
+                }
+              }}
+              className={cn(
+                "inline-flex h-5 items-center rounded-md border px-1.5 font-mono text-[10px] transition-colors shrink-0 cursor-pointer",
+                isActive
+                  ? "border-primary bg-primary text-primary-foreground font-semibold"
+                  : "border-border/60 bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              {label}
+            </button>
+          )
+        })}
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={() => setSearchQuery("")}
+            className="text-[10px] text-muted-foreground hover:text-foreground underline underline-offset-2 shrink-0 ms-1 cursor-pointer"
+          >
+            Clear
+          </button>
+        )}
       </div>
 
       {/* List Content */}

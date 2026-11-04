@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react"
 import Image from "next/image"
 import { usePass } from "@/context/pass-context"
+import { cn } from "@workspace/ui/lib/utils"
 import { PassCipherList } from "./pass-cipher-list"
 import { PassCipherDetail } from "./pass-cipher-detail"
 import { PassCipherModal } from "./pass-cipher-modal"
@@ -48,6 +49,7 @@ export function AkaromiVaultView({ filter = "all" }: AkaromiVaultViewProps) {
     refreshData,
     emptyTrash,
     selectedCipherId,
+    setSelectedCipherId,
     searchQuery,
     setSearchQuery,
     copySensitiveText,
@@ -507,7 +509,12 @@ export function AkaromiVaultView({ filter = "all" }: AkaromiVaultViewProps) {
       {/* Main Dual-Pane Content */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* Left Column: Items List */}
-        <div className="flex h-full w-full shrink-0 flex-col overflow-hidden border-e border-border sm:w-80 md:w-96 lg:w-[420px]">
+        <div
+          className={cn(
+            "h-full w-full shrink-0 flex-col overflow-hidden border-e border-border sm:w-80 md:w-96 lg:w-[420px]",
+            selectedCipherId ? "hidden sm:flex" : "flex"
+          )}
+        >
           <PassCipherList
             onOpenNewCipher={(sub) => {
               setEditCipherId(null)
@@ -518,12 +525,18 @@ export function AkaromiVaultView({ filter = "all" }: AkaromiVaultViewProps) {
         </div>
 
         {/* Right Column: Item Detail Pane */}
-        <div className="hidden h-full flex-1 overflow-y-auto bg-card/10 sm:flex">
+        <div
+          className={cn(
+            "h-full flex-1 overflow-y-auto bg-card/10",
+            selectedCipherId ? "flex" : "hidden sm:flex"
+          )}
+        >
           <PassCipherDetail
             onEditCipher={(id) => {
               setEditCipherId(id)
               setModalOpen(true)
             }}
+            onBack={() => setSelectedCipherId(null)}
           />
         </div>
       </div>

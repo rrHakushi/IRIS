@@ -15,6 +15,8 @@
   /**
    * Helper to attempt one-time legacy IndexedDB migration to browser.storage.local
    */
+    // Step 1: Storage Migration & Compatibility
+  // Step 1.1: One-Time IndexedDB Legacy Migration
   async function checkAndMigrateLegacyIndexedDB() {
     if (hasMigratedFromIndexedDB) return
     hasMigratedFromIndexedDB = true

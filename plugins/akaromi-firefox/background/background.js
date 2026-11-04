@@ -9,6 +9,8 @@ let pinLockoutUntil = 0
 /**
  * Schedules wiping sensitive text from system clipboard after specified seconds
  */
+// Step 1: Sensitive Clipboard Auto-Wipe Timer
+// Step 1.1: System Clipboard Sanitation Timer & Tab Message Dispatch
 function scheduleClipboardWipe(text, seconds = 30) {
   if (!text || !seconds || seconds <= 0) return
   if (clipboardClearTimer) clearTimeout(clipboardClearTimer)
@@ -52,6 +54,8 @@ function scheduleClipboardWipe(text, seconds = 30) {
 /**
  * Message Handler
  */
+// Step 2: Runtime Message Dispatcher & Action Router
+// Step 2.1: Vault Status, Auth, Unlock & Cipher CRUD Dispatchers
 ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const { action, payload } = message
 
@@ -494,6 +498,8 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   // 3j. Default Password Manager Toggle
+    // Step 4: Native Firefox Privacy Service Integration
+  // Step 4.1: Native Password Saving & Form Autofill Handover
   if (action === "SET_DEFAULT_PASSWORD_MANAGER" || action === "SET_DEFAULT_PM") {
     ;(async () => {
       try {
@@ -625,8 +631,10 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
         responseMatches = matches.map((c) => ({
           id: c.id,
           title: c.title,
+          _matchTier: c._matchTier || "exact",
           data: {
             username: c.login?.username || c.data?.username || c.data?.email || "",
+            uris: c.data?.uris || [],
             additionalPasswords: (c.data?.additionalPasswords || []).map((ap, idx) => ({
               id: ap.id || String(idx),
               name: ap.name || ap.title || `Password ${idx + 1}`,
@@ -639,6 +647,38 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
 
       sendResponse({ matches: responseMatches, url: targetUrl, isUnlocked: Boolean(inMemoryVaultKey) })
+    })()
+    return true
+  }
+
+  // 6a2. Get All Decrypted Logins for Inline Fill Global Search
+  if (action === "GET_ALL_LOGINS_FOR_INLINE_FILL") {
+    ;(async () => {
+      await ensureVaultActive()
+      resetAutoLock()
+      if (!inMemoryVaultKey || !inMemoryCiphers) {
+        sendResponse({ ciphers: [], isUnlocked: Boolean(inMemoryVaultKey) })
+        return
+      }
+      const logins = inMemoryCiphers
+        .filter((c) => !c.deletedAt && (c.type === "LOGIN" || c.data?.itemType === "login"))
+        .map((c) => ({
+          id: c.id,
+          title: c.title,
+          _matchTier: "all",
+          data: {
+            username: c.login?.username || c.data?.username || c.data?.email || "",
+            uris: c.data?.uris || [],
+            additionalPasswords: (c.data?.additionalPasswords || []).map((ap, idx) => ({
+              id: ap.id || String(idx),
+              name: ap.name || ap.title || `Password ${idx + 1}`,
+            })),
+          },
+          hasPassword: Boolean(c.login?.password || c.data?.password),
+          hasTotp: Boolean(c.login?.totp || c.data?.totp || c.data?.totpSecret),
+          hasPasskey: Boolean(c.data?.passkey || c.passkey),
+        }))
+      sendResponse({ ciphers: logins, isUnlocked: true })
     })()
     return true
   }
@@ -819,22 +859,40 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (action === "OPEN_UNLOCK_WINDOW") {
     ;(async () => {
       try {
+        const targetTabId = sender.tab?.id
+        if (targetTabId) {
+          try {
+            await ext.tabs.sendMessage(targetTabId, { action: "SHOW_IN_PAGE_UNLOCK_MODAL" })
+            sendResponse({ success: true, method: "in_page_modal" })
+            return
+          } catch (e) {
+            // In-page message failed, fall through to extension window / popup
+          }
+        }
         if (ext.action?.openPopup) {
           try {
             await ext.action.openPopup()
-            sendResponse({ success: true })
+            sendResponse({ success: true, method: "popup" })
             return
           } catch (e) {}
         }
         const popupUrl = ext.runtime.getURL("popup/popup.html")
-        await ext.windows.create({
-          url: popupUrl,
-          type: "popup",
-          width: 650,
-          height: 446,
-          focused: true,
-        })
-        sendResponse({ success: true })
+        if (ext.windows?.create) {
+          try {
+            await ext.windows.create({
+              url: popupUrl,
+              type: "popup",
+              width: 650,
+              height: 446,
+              focused: true,
+            })
+            sendResponse({ success: true, method: "window" })
+            return
+          } catch (e) {}
+        }
+        // Fallback for Android & platforms where ext.windows is unsupported
+        await ext.tabs.create({ url: popupUrl })
+        sendResponse({ success: true, method: "tab" })
       } catch (err) {
         sendResponse({ success: false, error: err.message })
       }
@@ -1427,6 +1485,8 @@ ext.tabs.onUpdated.addListener((tabId, changeInfo) => {
 updateBadge()
 
 // Browser startup event: ensure active session and badges initialize immediately
+// Step 5: Extension Lifecycle & Tab Script Auto-Reinjection
+// Step 5.1: Browser Startup Event Handler & Tab Script Reinjection
 ext.runtime.onStartup?.addListener(async () => {
   try {
     await ensureVaultActive()

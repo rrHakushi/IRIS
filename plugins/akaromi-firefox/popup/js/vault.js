@@ -11,6 +11,9 @@
   const vaultCardsList = document.getElementById("vault-cards-list")
   const matchingCardsList = document.getElementById("matching-cards-list")
   const sectionMatching = document.getElementById("section-matching")
+  const sectionMatchingBase = document.getElementById("section-matching-base")
+  const matchingBaseCardsList = document.getElementById("matching-base-cards-list")
+  const matchingBaseTabLabel = document.getElementById("matching-base-tab-label")
   const sectionAll = document.getElementById("section-all")
   const matchingTabLabel = document.getElementById("matching-tab-label")
   const vaultEmptyState = document.getElementById("vault-empty-state")
@@ -195,52 +198,88 @@
   // ----------------------------------------------------
   // Render Left Master List
   // ----------------------------------------------------
+    // Step 2: Tiered Match Section Rendering
+  // Step 2.1: Exact Domain, Base Domain & All Items Rendering
   function renderCiphersList() {
     let filtered = state.allCiphers.filter((c) => !c.deletedAt)
 
-    // Search query filter
-    const query = state.currentSearchQuery.trim().toLowerCase()
-    if (query) {
-      filtered = filtered.filter((c) => {
-        const title = (c.title || "").toLowerCase()
-        const user = (c.data?.username || c.data?.email || "").toLowerCase()
-        const uris = (c.data?.uris || []).map((u) => (typeof u === "string" ? u : u.uri || "")).join(" ").toLowerCase()
-        const notes = (c.data?.notes || "").toLowerCase()
-        return title.includes(query) || user.includes(query) || uris.includes(query) || notes.includes(query)
-      })
+    // Search query filter with prefix support
+    const rawQuery = state.currentSearchQuery.trim()
+    if (rawQuery) {
+      const q = rawQuery.toLowerCase()
+      if (q.startsWith("user:") || q.startsWith("username:")) {
+        const val = q.replace(/^user(name)?:/, "").trim()
+        filtered = filtered.filter((c) => (c.data?.username || "").toLowerCase().includes(val))
+      } else if (q.startsWith("email:")) {
+        const val = q.replace(/^email:/, "").trim()
+        filtered = filtered.filter((c) => (c.data?.email || c.data?.username || "").toLowerCase().includes(val))
+      } else if (q.startsWith("domain:") || q.startsWith("url:") || q.startsWith("host:")) {
+        const val = q.replace(/^(domain|url|host):/, "").trim()
+        filtered = filtered.filter((c) => {
+          const uris = (c.data?.uris || []).map((u) => (typeof u === "string" ? u : u.uri || "")).join(" ").toLowerCase()
+          return uris.includes(val)
+        })
+      } else if (q.startsWith("title:")) {
+        const val = q.replace(/^title:/, "").trim()
+        filtered = filtered.filter((c) => (c.title || "").toLowerCase().includes(val))
+      } else if (q.startsWith("note:") || q.startsWith("notes:")) {
+        const val = q.replace(/^notes?:/, "").trim()
+        filtered = filtered.filter((c) => (c.data?.notes || "").toLowerCase().includes(val))
+      } else {
+        filtered = filtered.filter((c) => {
+          const title = (c.title || "").toLowerCase()
+          const user = (c.data?.username || c.data?.email || "").toLowerCase()
+          const uris = (c.data?.uris || []).map((u) => (typeof u === "string" ? u : u.uri || "")).join(" ").toLowerCase()
+          const notes = (c.data?.notes || "").toLowerCase()
+          return title.includes(q) || user.includes(q) || uris.includes(q) || notes.includes(q)
+        })
+      }
     }
 
     filtered = sortCiphersList(filtered, state.activeSortOption)
 
-    // Matching section for current tab
-    const showMatching = state.matchingCiphers.length > 0 && !query
+    // Matching sections for current tab (Exact Domain vs Base Domain vs Rest)
+    const exactMatches = state.matchingCiphers.filter((c) => c._matchTier === "exact")
+    const baseMatches = state.matchingCiphers.filter((c) => c._matchTier === "base")
+    const showMatching = state.matchingCiphers.length > 0 && !rawQuery
 
-    if (showMatching) {
-      if (sectionMatching) sectionMatching.style.display = "block"
-      if (matchingTabLabel) {
-        if (state.currentTab?.url) {
-          try {
-            const u = new URL(state.currentTab.url)
-            matchingTabLabel.textContent = u.hostname ? `Matching ${u.hostname}` : "Matching current site"
-          } catch {
-            matchingTabLabel.textContent = "Matching current site"
-          }
-        } else {
-          matchingTabLabel.textContent = "Matching current site"
+    let currentHostname = "current site"
+    let currentBaseDomain = ""
+    if (state.currentTab?.url) {
+      try {
+        const u = new URL(state.currentTab.url)
+        currentHostname = u.hostname || "current site"
+        if (typeof IrisMatching !== "undefined") {
+          currentBaseDomain = IrisMatching.extractBaseDomain(state.currentTab.url)
         }
-      }
+      } catch {}
+    }
 
+    // 1. Exact Host / Domain Matching
+    if (showMatching && exactMatches.length > 0) {
+      if (sectionMatching) sectionMatching.style.display = "block"
+      if (matchingTabLabel) matchingTabLabel.textContent = `Matching ${currentHostname}`
       if (matchingCardsList) {
         matchingCardsList.replaceChildren()
-        state.matchingCiphers.forEach((c) => {
-          matchingCardsList.appendChild(createItemCard(c))
-        })
+        exactMatches.forEach((c) => matchingCardsList.appendChild(createItemCard(c)))
       }
     } else {
       if (sectionMatching) sectionMatching.style.display = "none"
     }
 
-    // Vault cards list: remove items already shown under matching section
+    // 2. Base Domain Matching
+    if (showMatching && baseMatches.length > 0) {
+      if (sectionMatchingBase) sectionMatchingBase.style.display = "block"
+      if (matchingBaseTabLabel) matchingBaseTabLabel.textContent = `Matching base domain ${currentBaseDomain || currentHostname}`
+      if (matchingBaseCardsList) {
+        matchingBaseCardsList.replaceChildren()
+        baseMatches.forEach((c) => matchingBaseCardsList.appendChild(createItemCard(c)))
+      }
+    } else {
+      if (sectionMatchingBase) sectionMatchingBase.style.display = "none"
+    }
+
+    // Vault cards list: remove items already shown under matching sections
     let allList = filtered
     if (showMatching) {
       const matchingIds = new Set(state.matchingCiphers.map((c) => c.id))
@@ -690,11 +729,17 @@
       rowDetailPasskey.style.display = data.passkey ? "flex" : "none"
     }
 
-    // Notes
+    // Notes (Sensitive: masked by default, reveals on click or focus)
     if (rowDetailNotes) {
       if (data.notes) {
         rowDetailNotes.style.display = "flex"
-        if (detailValNotes) detailValNotes.textContent = data.notes
+        if (detailValNotes) {
+          detailValNotes.textContent = data.notes
+          detailValNotes.classList.add("sensitive-masked")
+          detailValNotes.classList.remove("revealed")
+          detailValNotes.title = "Click or focus to reveal sensitive note"
+          detailValNotes.setAttribute("tabindex", "0")
+        }
       } else {
         rowDetailNotes.style.display = "none"
       }
@@ -803,6 +848,11 @@
   btnCopyTotp?.addEventListener("click", (e) => {
     e.stopPropagation()
     handleCopyTotp()
+  })
+
+  // Sensitive note reveal toggle on click
+  detailValNotes?.addEventListener("click", () => {
+    detailValNotes.classList.toggle("revealed")
   })
 
   btnDetailShare?.addEventListener("click", () => {

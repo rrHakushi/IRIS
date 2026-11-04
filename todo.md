@@ -3,17 +3,14 @@
     - In media pages (anime, manga etc) add tab People in which it will list all users who have that media in list (that is public and media is not private)
    
 # Akaromi [Password manager]
-    - Clicking unlock in the inline fill doesnt open the modal on android
-    - Fix scan QR code (doesnt detect them)
-    - make dashboard page (/), move current / page to /vault
     - password sharing, to another user's vault, by url (one time use / expiry time), custom expiration times
-    - add sensitive notes (content visible on focus/active input)
     
 # Kiroshi [Web search]
     - 
 
 # Carina [Account management]
     - Web extension for managing and using bookmarks
+    - Update login/register pages
 
 
 # Lynx [Discord bot]
@@ -81,8 +78,6 @@
     - detect music button in the player ui (next to borealis icon) to detect currently playing music in the playback
 
 # Akaromi For Firefox
-    - inline fill doesnt filter by detection method
-    - add search ti inline fill which will not filter out by website (just search normally like in the ui)
     - 
 
 # Borealis Extra

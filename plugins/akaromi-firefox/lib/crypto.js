@@ -33,6 +33,8 @@
   /**
    * Securely overwrites Uint8Array buffers in memory with zeroes
    */
+    // Step 1: Cryptographic Memory Zeroization & Ephemeral Key Generation
+  // Step 1.1: Secure In-Memory Buffer Overwriting
   IrisCrypto.zeroize = function (buf) {
     if (buf && (buf instanceof Uint8Array || ArrayBuffer.isView(buf))) {
       buf.fill(0)
@@ -42,6 +44,7 @@
   /**
    * Generates a 256-bit cryptographically secure ephemeral key for session isolation
    */
+  // Step 1.2: Ephemeral 256-Bit Session Key Generation
   IrisCrypto.generateEphemeralKey = function () {
     return crypto.getRandomValues(new Uint8Array(32))
   }
@@ -55,6 +58,8 @@
    * Exactly matching apps/web/lib/encryption-vault.ts: decryptPrivateKeyClient()
    * and apps/elysia/src/utils/auth-crypto.ts: encryptPrivateKey()
    */
+    // Step 2: Key Derivation Pipelines (Scrypt & HKDF)
+  // Step 2.1: Master Private Key Decryption via Scrypt + AES-256-GCM
   IrisCrypto.decryptPrivateKey = function (encryptedPayload, password) {
     if (!noble) throw new Error("Cryptographic module (noble) not loaded")
 
@@ -96,6 +101,7 @@
    * Derives 256-bit vault key from raw secret key bytes via HKDF-SHA256
    * Exactly matching apps/web/lib/pass-crypto.ts: deriveVaultKey()
    */
+  // Step 2.2: Vault Symmetric Key Derivation via HKDF-SHA256
   IrisCrypto.deriveVaultKey = function (unlockedSecretKey) {
     if (!noble) throw new Error("Cryptographic module (noble) not loaded")
     return noble.hkdf(
@@ -112,6 +118,8 @@
    * Format: ivHex:authTagHex:cipherHex
    * Exactly matching apps/web/lib/pass-crypto.ts: encryptVaultData()
    */
+    // Step 3: Authenticated Symmetrical Encryption & Decryption (AES-256-GCM)
+  // Step 3.1: Plaintext String Encryption & Tag Packing
   IrisCrypto.encryptVaultData = function (plainText, vaultKeyBytes) {
     if (!noble) throw new Error("Cryptographic module (noble) not loaded")
 
@@ -131,6 +139,7 @@
    * Decrypts ivHex:authTagHex:cipherHex using AES-256-GCM and VaultKey
    * Exactly matching apps/web/lib/pass-crypto.ts: decryptVaultData()
    */
+  // Step 3.2: Ciphertext Verification & Decryption
   IrisCrypto.decryptVaultData = function (encryptedPayload, vaultKeyBytes) {
     if (!noble) throw new Error("Cryptographic module (noble) not loaded")
 
@@ -176,6 +185,8 @@
   /**
    * Unbiased random password generator
    */
+    // Step 5: Cryptographically Secure Credential Generators
+  // Step 5.1: Unbiased Random Password Generator with Ambiguity Filter
   IrisCrypto.generatePassword = function (options = {}) {
     const {
       length = 24,
@@ -518,6 +529,7 @@
   /**
    * Diceware passphrase generator
    */
+  // Step 5.2: Diceware EFF Passphrase Generator with Separators & Digits
   IrisCrypto.generatePassphrase = function (options = {}) {
     const {
       wordCount = 4,
@@ -553,6 +565,8 @@
   /**
    * Calculate Shannon entropy in bits
    */
+    // Step 6: Shannon Password Entropy & In-Browser SSH Keypair Generation
+  // Step 6.1: Shannon Entropy Calculation in Bits
   IrisCrypto.calculateEntropy = function (password) {
     if (!password) return 0
     let pool = 0
@@ -567,6 +581,7 @@
   /**
    * Generates Ed25519 or RSA SSH keypair in-browser using WebCrypto
    */
+  // Step 6.2: OpenSSH-Compatible Ed25519 & RSA Keypair Generation
   IrisCrypto.generateSshKeypair = async function (algorithm = "ED25519", comment = "user@iris") {
     function encodeSshString(data) {
       const bytes = typeof data === "string" ? new TextEncoder().encode(data) : data
@@ -654,6 +669,8 @@
   /**
    * Set up PIN unlock: derives key via scrypt and encrypts the 256-bit vault key
    */
+    // Step 4: Cryptographic PIN Unlock Envelope
+  // Step 4.1: PIN Scrypt Key Derivation & Vault Key Wrapping
   IrisCrypto.setupPinUnlock = function (pin, vaultKey) {
     if (!noble) throw new Error("Cryptographic module not loaded")
     if (!pin || pin.length < 4) throw new Error("PIN must be at least 4 characters")
@@ -685,6 +702,7 @@
   /**
    * Unlocks vault key using PIN and saved PIN unlock data
    */
+  // Step 4.2: PIN Unwrapping & Key Authentication
   IrisCrypto.unlockWithPin = function (pin, pinData) {
     if (!noble) throw new Error("Cryptographic module not loaded")
     if (!pinData?.saltHex || !pinData?.ivHex || !pinData?.authTagHex || !pinData?.cipherHex) {

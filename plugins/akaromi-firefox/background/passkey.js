@@ -2,6 +2,8 @@
  * Akaromi for Firefox — Background Passkey / WebAuthn Cryptography
  */
 
+// Step 1: Binary Buffer Encoding & Decoding Utilities
+// Step 1.1: ArrayBuffer to Base64URL Conversion & Decoding
 function bufferToBase64Url(buf) {
   if (!buf) return ""
   let bytes
@@ -43,6 +45,8 @@ function base64UrlToBuffer(str) {
   return bytes.buffer
 }
 
+// Step 2: CBOR Attestation Object Structuring
+// Step 2.1: RFC 8949 CBOR Map Generation for WebAuthn
 function encodeCborAttestation(authData) {
   const parts = []
   parts.push(0xa3) // map(3)
@@ -69,6 +73,8 @@ function encodeCborAttestation(authData) {
   return new Uint8Array(parts).buffer
 }
 
+// Step 3: ECDSA Signature Formatting
+// Step 3.1: IEEE P1363 Raw to ASN.1 DER Signature Conversion
 function rawToDerSignature(rawSig) {
   const r = rawSig.slice(0, 32)
   const s = rawSig.slice(32, 64)

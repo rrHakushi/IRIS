@@ -67,6 +67,117 @@
   border-radius: 9999px !important;
 }
 
+/* Inline Search Box */
+.iris-pass-search-container {
+  padding: 6px 8px 4px 8px !important;
+  border-bottom: 1px solid #27272a !important;
+  background: #141418 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+.iris-pass-search-input-wrap {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+.iris-pass-search-icon {
+  position: absolute !important;
+  left: 8px !important;
+  color: #71717a !important;
+  pointer-events: none !important;
+}
+
+.iris-pass-search-field {
+  width: 100% !important;
+  height: 28px !important;
+  background: #18181b !important;
+  border: 1px solid #27272a !important;
+  border-radius: 6px !important;
+  color: #fafafa !important;
+  font-size: 11px !important;
+  padding: 0 46px 0 26px !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+}
+
+.iris-pass-search-field:focus {
+  border-color: #3f3f46 !important;
+}
+
+.iris-pass-toggle-all-btn {
+  position: absolute !important;
+  right: 4px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  padding: 2px 6px !important;
+  height: 20px !important;
+  background: #27272a !important;
+  border: 1px solid #3f3f46 !important;
+  border-radius: 4px !important;
+  color: #a1a1aa !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.12s ease !important;
+}
+
+.iris-pass-toggle-all-btn.active {
+  background: #fafafa !important;
+  color: #09090b !important;
+  border-color: #ffffff !important;
+}
+
+.iris-pass-chips-row {
+  display: flex !important;
+  gap: 4px !important;
+  overflow-x: auto !important;
+  padding-bottom: 2px !important;
+}
+
+.iris-pass-filter-chip {
+  padding: 1px 6px !important;
+  background: #18181b !important;
+  border: 1px solid #27272a !important;
+  border-radius: 4px !important;
+  color: #71717a !important;
+  font-size: 10px !important;
+  font-family: ui-monospace, monospace !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.1s ease !important;
+}
+
+.iris-pass-filter-chip:hover {
+  background: #27272a !important;
+  color: #e4e4e7 !important;
+}
+
+.iris-pass-section-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 4px 8px !important;
+  margin-top: 4px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: #71717a !important;
+}
+
+.iris-pass-section-header .sec-count {
+  font-size: 9px !important;
+  background: #27272a !important;
+  color: #a1a1aa !important;
+  padding: 0 4px !important;
+  border-radius: 4px !important;
+}
+
 .iris-pass-dropdown-loading,
 .iris-pass-dropdown-empty {
   padding: 16px 12px !important;

@@ -4,7 +4,9 @@ import React, { useState, useEffect, useMemo } from "react"
 import { usePass } from "@/context/pass-context"
 import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
+import { cn } from "@workspace/ui/lib/utils"
 import {
+  IconArrowLeft,
   IconKey,
   IconNote,
   IconCreditCard,
@@ -42,8 +44,10 @@ import { CipherIcon } from "./pass-cipher-icon"
 
 export function PassCipherDetail({
   onEditCipher,
+  onBack,
 }: {
   onEditCipher: (id: string) => void
+  onBack?: () => void
 }) {
   const {
     ciphers,
@@ -55,6 +59,7 @@ export function PassCipherDetail({
   } = usePass()
 
   const [revealPassword, setRevealPassword] = useState(false)
+  const [revealNotes, setRevealNotes] = useState(false)
   const [revealPrivateKey, setRevealPrivateKey] = useState(false)
   const [revealCardNumber, setRevealCardNumber] = useState(false)
   const [revealCardCvv, setRevealCardCvv] = useState(false)
@@ -81,6 +86,7 @@ export function PassCipherDetail({
     setRevealCardPin(false)
     setRevealedAdditional({})
     setRevealedCustom({})
+    setRevealNotes(false)
   }, [selectedCipherId])
 
   // Live TOTP countdown timer
@@ -160,6 +166,21 @@ export function PassCipherDetail({
 
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col overflow-y-auto bg-card/10">
+      {/* Mobile Back Button (Screen < sm) */}
+      {onBack && (
+        <div className="flex items-center gap-2 border-b border-border/60 bg-card/60 px-4 py-2 sm:hidden">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            className="h-8 gap-1.5 rounded-full px-2.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <IconArrowLeft className="size-4" />
+            <span>Back to list</span>
+          </Button>
+        </div>
+      )}
+
       {/* Detail Header matching Screenshot 1 & 5 */}
       <div className="flex flex-col gap-4 border-b border-border/80 bg-card/40 p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
@@ -613,17 +634,40 @@ export function PassCipherDetail({
               <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Secure Note
               </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => copySensitiveText(noteData.notes, "Note")}
-                className="h-7 gap-1 rounded-lg text-xs text-muted-foreground hover:text-foreground"
-              >
-                <IconCopy className="size-3" />
-                <span>Copy</span>
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setRevealNotes(!revealNotes)}
+                  className="h-7 gap-1 rounded-lg text-xs text-muted-foreground hover:text-foreground"
+                  aria-label={revealNotes ? "Hide note content" : "Reveal note content"}
+                >
+                  {revealNotes ? (
+                    <IconEyeOff className="size-3.5" />
+                  ) : (
+                    <IconEye className="size-3.5" />
+                  )}
+                  <span>{revealNotes ? "Hide" : "Reveal"}</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copySensitiveText(noteData.notes, "Note")}
+                  className="h-7 gap-1 rounded-lg text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <IconCopy className="size-3" />
+                  <span>Copy</span>
+                </Button>
+              </div>
             </div>
-            <div className="whitespace-pre-wrap rounded-xl border border-border/50 bg-background/50 p-4 font-mono text-xs leading-relaxed text-foreground">
+            <div
+              tabIndex={0}
+              onClick={() => setRevealNotes(true)}
+              className={cn(
+                "whitespace-pre-wrap rounded-xl border border-border/50 bg-background/50 p-4 font-mono text-xs leading-relaxed text-foreground transition-all duration-200 outline-none",
+                revealNotes ? "blur-none select-text" : "blur-sm select-none cursor-pointer hover:blur-none focus:blur-none active:blur-none"
+              )}
+            >
               {noteData.notes || "(Empty note)"}
             </div>
           </div>
@@ -1053,10 +1097,44 @@ export function PassCipherDetail({
         {/* Notes (if present for non-note types) */}
         {subtype !== "note" && (item.data as any)?.notes && (
           <div className="space-y-2 rounded-2xl border border-border/80 bg-card/60 p-4 shadow-xs">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Notes
-            </span>
-            <div className="whitespace-pre-wrap rounded-xl border border-border/40 bg-muted/20 p-3 text-xs leading-relaxed text-foreground">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Notes
+              </span>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setRevealNotes(!revealNotes)}
+                  className="h-7 gap-1 rounded-lg text-xs text-muted-foreground hover:text-foreground"
+                  aria-label={revealNotes ? "Hide note content" : "Reveal note content"}
+                >
+                  {revealNotes ? (
+                    <IconEyeOff className="size-3.5" />
+                  ) : (
+                    <IconEye className="size-3.5" />
+                  )}
+                  <span>{revealNotes ? "Hide" : "Reveal"}</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copySensitiveText((item.data as any).notes, "Note")}
+                  className="h-7 gap-1 rounded-lg text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <IconCopy className="size-3" />
+                  <span>Copy</span>
+                </Button>
+              </div>
+            </div>
+            <div
+              tabIndex={0}
+              onClick={() => setRevealNotes(true)}
+              className={cn(
+                "whitespace-pre-wrap rounded-xl border border-border/40 bg-muted/20 p-3 text-xs leading-relaxed text-foreground transition-all duration-200 outline-none",
+                revealNotes ? "blur-none select-text" : "blur-sm select-none cursor-pointer hover:blur-none focus:blur-none active:blur-none"
+              )}
+            >
               {(item.data as any).notes}
             </div>
           </div>

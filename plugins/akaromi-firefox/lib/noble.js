@@ -1,4 +1,6 @@
+// Step 1: Binary Encoding, Hex/Base64 Conversion & Constant-Time Buffers
 ;(() => {
+    // Step 1.1: Byte Arrays, Hex String Serialization & Parsing
   function Kt(t) {
     return (
       t instanceof Uint8Array ||
@@ -151,6 +153,8 @@
     if ((Nt(t, "defaults"), e !== void 0)) Nt(e, n)
     return Object.assign(Object.create(null), t, e)
   }
+    // Step 2: Cryptographic Hash Functions & HMAC Engines (SHA-256, SHA-512)
+  // Step 2.1: Block Compression & Digest State
   function Ft(t, e = {}) {
     if (typeof t !== "function")
       throw TypeError('"hashCons" expected function, got type=' + typeof t)

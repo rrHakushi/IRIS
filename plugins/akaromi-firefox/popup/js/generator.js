@@ -129,6 +129,8 @@
   })
 
   // "Use in Field" Action (when opened from login form or additional passwords)
+    // Step 2: Target Field Insertion & Clipboard Copy
+  // Step 2.1: Target Field Injection & Clipboard Copy with Scheduled Sanitation
   btnGenUse?.addEventListener("click", () => {
     const password = genOutputText?.textContent || ""
     if (!password) return

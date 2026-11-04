@@ -6,6 +6,8 @@
   "use strict"
 
   // Font presets matching @IRIS/shared
+    // Step 1: Typography Presets & Asset Resolution
+  // Step 1.1: Embedded Font Family Presets & Media URL Resolution
   const FONT_PRESETS = [
     { id: "default", family: "var(--font-sans, inherit)" },
     { id: "inter", family: "'Inter', sans-serif" },

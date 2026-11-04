@@ -19,6 +19,12 @@
       "skillPath": "skills/data-encryption/SKILL.md",
       "computedHash": "78f45efcae4037f3ec9760dc6c2690bd774560dc587fa88ac46a9ccb6a817b08"
     },
+    "documentation-writer": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/documentation-writer/SKILL.md",
+      "computedHash": "ee53d65b163cd7eb953a930c95841cfe398cc2c0bd24c06508bbaa07c432be35"
+    },
     "dotnet-best-practices": {
       "source": "github/awesome-copilot",
       "sourceType": "github",
