@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "plugins/akaromi-firefox/lib/api.md",
+                "file": "plugins/akaromi-firefox/lib/crypto.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "api"
+              "title": "crypto"
             }
           }
         ]
@@ -189,6 +189,8 @@
   },
   "active": "5339bc15b0f10c68",
   "lastOpenFiles": [
+    "plugins/akaromi-firefox/lib/icons.md",
+    "plugins/akaromi-firefox/lib/api.md",
     "plugins/akaromi-firefox/README.md",
     "plugins/akaromi-firefox.md",
     "plugins/akaromi-firefox/popup/js/vault.md",
@@ -206,9 +208,7 @@
     "plugins/akaromi-firefox/lib/qr-decoder.md",
     "plugins/akaromi-firefox/lib/noble.md",
     "plugins/akaromi-firefox/lib/matching.md",
-    "plugins/akaromi-firefox/lib/icons.md",
     "plugins/akaromi-firefox/lib/crypto.md",
-    "plugins/akaromi-firefox/lib/api.md",
     "plugins/akaromi-firefox/content/passkey-injected.md",
     "plugins/akaromi-firefox/content/menu.md",
     "plugins/akaromi-firefox/content/fill.md",
