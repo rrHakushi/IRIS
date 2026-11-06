@@ -11,6 +11,7 @@ import {
   igdbProvider,
   googleBooksProvider,
   deezerProvider,
+  animeMappingProvider,
 } from '../providers'
 import {
   MediaPreviewSyncer,
@@ -615,6 +616,68 @@ export class MediaEntitySyncer {
         `${c.magenta('📥 [1/2]')} AniList received: "${c.bold(displayTitle)}" (episodes=${alData.episodes || 'N/A'}, duration=${alData.duration || 'N/A'}m, genres=${genreRecords.length})`
       )
 
+      // Cross-site ID mapping (TheTVDB, AniDB, Bangumi, Kitsu, IMDb, TMDB)
+      const mappedIds = await animeMappingProvider
+        .lookup({ anilistId, malId: alData.idMal || undefined })
+        .catch(() => ({} as any))
+
+      const sources: Record<string, any> = {
+        anilist: {
+          id: alData.id,
+          url: alData.siteUrl || `https://anilist.co/anime/${alData.id}`,
+        },
+      }
+      if (alData.idMal) {
+        sources.myanimelist = {
+          id: alData.idMal,
+          url: `https://myanimelist.net/anime/${alData.idMal}`,
+        }
+      }
+      if (mappedIds?.anidbId) {
+        sources.anidb = {
+          id: mappedIds.anidbId,
+          url: `https://anidb.net/anime/${mappedIds.anidbId}`,
+        }
+      }
+      if (mappedIds?.tvdbId) {
+        sources.thetvdb = {
+          id: mappedIds.tvdbId,
+          url: `https://thetvdb.com/dereferrer/series/${mappedIds.tvdbId}`,
+        }
+      }
+      if (mappedIds?.bangumiId) {
+        sources.bangumi = {
+          id: mappedIds.bangumiId,
+          url: `https://bgm.tv/subject/${mappedIds.bangumiId}`,
+        }
+      }
+      if (mappedIds?.kitsuId) {
+        sources.kitsu = {
+          id: mappedIds.kitsuId,
+          url: `https://kitsu.app/anime/${mappedIds.kitsuId}`,
+        }
+      }
+      if (mappedIds?.imdbId) {
+        sources.imdb = {
+          id: mappedIds.imdbId,
+          url: `https://www.imdb.com/title/${mappedIds.imdbId}`,
+        }
+      }
+      if (mappedIds?.tmdbId) {
+        sources.tmdb = {
+          id: mappedIds.tmdbId,
+          url: `https://www.themoviedb.org/tv/${mappedIds.tmdbId}`,
+        }
+      }
+
+      // Fetch TheTVDB artworks if tvdbId is available
+      let tvdbImages: string[] = []
+      if (mappedIds?.tvdbId) {
+        try {
+          tvdbImages = await tvdbProvider.fetchTvSeriesArtworks(mappedIds.tvdbId)
+        } catch {}
+      }
+
       const now = new Date()
       const nowUnix = Math.floor(now.getTime() / 1000)
 
@@ -647,6 +710,13 @@ export class MediaEntitySyncer {
         countryOfOrigin: alData.countryOfOrigin || undefined,
         synonyms: alData.synonyms && alData.synonyms.length > 0 ? alData.synonyms : undefined,
         trailers: alData.trailer ? [alData.trailer] : undefined,
+        malId: alData.idMal || undefined,
+        tvDBId: mappedIds?.tvdbId || undefined,
+        aniDBId: mappedIds?.anidbId || undefined,
+        bangumiId: mappedIds?.bangumiId || undefined,
+        kitsuId: mappedIds?.kitsuId || undefined,
+        sources: sources as any,
+        images: tvdbImages.length > 0 ? (tvdbImages as any) : undefined,
         alUpdatedAt: nowUnix,
         updatedAt: now,
       })
@@ -837,6 +907,16 @@ export class MediaEntitySyncer {
         `${c.magenta('📥 [1/2]')} AniList received: "${c.bold(displayTitle)}" (chapters=${alData.chapters || 'N/A'}, volumes=${alData.volumes || 'N/A'}, genres=${genreRecords.length})`
       )
 
+      // Cross-site Manga ID mapping (MangaUpdates, Kitsu, Bangumi)
+      const mappedIds = await animeMappingProvider
+        .lookupManga({
+          anilistId,
+          malId: alData.idMal || undefined,
+          title: alData.title.english || alData.title.userPreferred || alData.title.romaji || '',
+          titleNative: alData.title.native || undefined,
+        })
+        .catch(() => ({} as any))
+
       const now = new Date()
       const nowUnix = Math.floor(now.getTime() / 1000)
 
@@ -867,6 +947,10 @@ export class MediaEntitySyncer {
         synonyms: alData.synonyms && alData.synonyms.length > 0 ? alData.synonyms : undefined,
         format: (alData.format as any) || undefined,
         status: alData.status ? normalizeMediaStatus(alData.status) : undefined,
+        malId: alData.idMal || undefined,
+        mangaUpdatesId: mappedIds?.mangaUpdatesId || undefined,
+        kitsuId: mappedIds?.kitsuId || undefined,
+        bangumiId: mappedIds?.bangumiId || undefined,
         alUpdatedAt: nowUnix,
         updatedAt: now,
       })

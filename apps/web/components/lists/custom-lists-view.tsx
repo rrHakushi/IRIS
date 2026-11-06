@@ -132,11 +132,6 @@ export function CustomListsView({
   const [newListIsPrivate, setNewListIsPrivate] = useState(false)
   const [creating, setCreating] = useState(false)
 
-  // Deezer Import Dialog State
-  const [deezerImportOpen, setDeezerImportOpen] = useState(false)
-  const [deezerPlaylistInput, setDeezerPlaylistInput] = useState("")
-  const [deezerImporting, setDeezerImporting] = useState(false)
-
   // Delete State
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
@@ -258,12 +253,6 @@ export function CustomListsView({
     } finally {
       setDeletingId(null)
     }
-  }
-
-  const handleImportDeezerPlaylist = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setDeezerImportOpen(false)
-    toast.info("Deezer playlist import is managed via Connections settings.")
   }
 
   const handleRemoveEntry = async (item: CustomListEntryItem) => {
@@ -388,15 +377,6 @@ export function CustomListsView({
 
             {isOwner && !selectedList && (
               <div className="flex items-center gap-2">
-                <Button
-                  onClick={() => setDeezerImportOpen(true)}
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 rounded-xl border-border/60 hover:bg-muted/50"
-                >
-                  <IconMusic className="size-4 text-rose-500" />
-                  <span>Import Deezer</span>
-                </Button>
                 <Button
                   onClick={() => setCreateDialogOpen(true)}
                   size="sm"
@@ -756,61 +736,6 @@ export function CustomListsView({
                 <IconLoader2 className="size-4 animate-spin" />
               ) : (
                 "Create List"
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
-      </Dialog>
-
-      {/* Import Deezer Playlist Dialog */}
-      <Dialog isOpen={deezerImportOpen} onOpenChange={setDeezerImportOpen}>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base font-bold">
-            <IconMusic className="size-5 text-rose-500" />
-            Import Deezer Playlist
-          </DialogTitle>
-        </DialogHeader>
-
-        <form onSubmit={handleImportDeezerPlaylist} className="space-y-4 pt-2">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">
-              Deezer Playlist URL or ID
-            </label>
-            <Input
-              placeholder="e.g. https://www.deezer.com/playlist/3008109866 or 3008109866"
-              value={deezerPlaylistInput}
-              onChange={(e) => setDeezerPlaylistInput(e.target.value)}
-              required
-              className="rounded-xl text-xs"
-            />
-            <p className="text-[11px] text-muted-foreground">
-              Tracks will be saved to your Music library (with synced lyrics
-              from LRCLIB if available), artists to Person, and a new Custom
-              List will be created.
-            </p>
-          </div>
-
-          <DialogFooter className="pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setDeezerImportOpen(false)}
-              className="rounded-xl"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              isDisabled={!deezerPlaylistInput.trim() || deezerImporting}
-              className="rounded-xl bg-rose-500 font-semibold text-white hover:bg-rose-600"
-            >
-              {deezerImporting ? (
-                <div className="flex items-center gap-1.5">
-                  <IconLoader2 className="size-4 animate-spin" />
-                  <span>Importing...</span>
-                </div>
-              ) : (
-                "Import Playlist"
               )}
             </Button>
           </DialogFooter>

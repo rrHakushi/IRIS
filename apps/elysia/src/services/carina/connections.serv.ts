@@ -669,9 +669,17 @@ export class CarinaConnectionsServ {
       try {
         const mappedItems = rawItems.map((item: any) => {
           const prov = (item.provider || connection.provider || '').toUpperCase()
-          const externalIds: Record<string, any> = {}
+          const externalIds: Record<string, any> = {
+            ...(item.externalIds || {}),
+          }
           if (prov.includes('ANILIST')) externalIds.anilistId = item.externalId
           else if (prov.includes('MAL')) externalIds.malId = item.externalId
+          else if (prov.includes('SIMKL')) externalIds.simklId = item.externalId
+          else if (prov.includes('BANGUMI')) externalIds.bangumiId = item.externalId
+          else if (prov.includes('MANGAUPDATES')) externalIds.mangaUpdatesId = item.externalId
+          else if (prov.includes('MANGABAKA')) externalIds.mangabakaId = item.externalId
+          else if (prov.includes('TRAKT')) externalIds.traktId = item.externalId
+          else if (prov.includes('HIKKA')) externalIds.hikkaId = item.externalId
           else if (prov.includes('TMDB') || prov.includes('RADARR')) externalIds.tmdbId = item.externalId
           else if (prov.includes('TVDB') || prov.includes('SONARR')) externalIds.tvDBId = item.externalId
           else if (prov.includes('IGDB')) externalIds.igdbId = item.externalId

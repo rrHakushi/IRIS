@@ -11,6 +11,7 @@ export const ListStatusSchema = t.Union([
   t.Literal('DROPPED'),
   t.Literal('COMPLETED'),
   t.Literal('PLANNED'),
+  t.Literal('MAYBE'),
 ])
 
 /**

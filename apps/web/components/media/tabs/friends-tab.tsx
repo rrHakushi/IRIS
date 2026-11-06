@@ -144,6 +144,12 @@ export function FriendsMediaTab({
             <span>Dropped</span>
           </Badge>
         )
+      case "MAYBE":
+        return (
+          <Badge className="gap-1 rounded-lg border-purple-500/30 bg-purple-500/15 text-[10px] font-bold text-purple-400">
+            <span>Maybe</span>
+          </Badge>
+        )
       case "PLANNED":
       case "PLANNING":
       default:

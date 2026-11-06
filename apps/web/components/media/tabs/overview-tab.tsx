@@ -993,7 +993,7 @@ export function OverviewTab({
                     <h3 className="mb-2.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                       Opening Themes
                     </h3>
-                    <ul className="flex flex-col gap-1.5">
+                    <ul className="flex flex-col gap-1.5 max-h-[240px] overflow-y-auto pe-1.5">
                       {opSongs.map((op, idx) => (
                         <ThemeSongRow
                           key={idx}
@@ -1012,7 +1012,7 @@ export function OverviewTab({
                     <h3 className="mb-2.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                       Ending Themes
                     </h3>
-                    <ul className="flex flex-col gap-1.5">
+                    <ul className="flex flex-col gap-1.5 max-h-[240px] overflow-y-auto pe-1.5">
                       {edSongs.map((ed, idx) => (
                         <ThemeSongRow
                           key={idx}

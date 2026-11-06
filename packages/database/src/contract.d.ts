@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'dfda105c1a90ebc11f3d640b7a221d71fab6104ff155adeec20d0e44bb0e3194'>;
+  StorageHashBase<'a6ff4a8881bce26834e440c01de162a95fc0ac379df9391e3dc4a3b162646a50'>;
 export type ExecutionHash =
   ExecutionHashBase<'b7640b0fcc81eff6f25706df08d8b4535a1b5e11bd21a8168ea15ca60dc18af0'>;
 export type ProfileHash =
@@ -401,8 +401,9 @@ type FieldTypeOverrides = {
       };
       readonly AnimeList: {
         readonly status: {
-          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly output:
+            'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
         };
       };
       readonly Book: {
@@ -415,8 +416,9 @@ type FieldTypeOverrides = {
       };
       readonly BookList: {
         readonly status: {
-          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly output:
+            'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
         };
       };
       readonly Connection: {
@@ -549,8 +551,9 @@ type FieldTypeOverrides = {
       };
       readonly GameList: {
         readonly status: {
-          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly output:
+            'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
         };
       };
       readonly Manga: {
@@ -605,8 +608,9 @@ type FieldTypeOverrides = {
       };
       readonly MangaList: {
         readonly status: {
-          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly output:
+            'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
         };
       };
       readonly MediaCharacter: {
@@ -891,8 +895,9 @@ type FieldTypeOverrides = {
       };
       readonly MovieList: {
         readonly status: {
-          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly output:
+            'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
         };
       };
       readonly Music: {
@@ -906,8 +911,9 @@ type FieldTypeOverrides = {
       };
       readonly MusicList: {
         readonly status: {
-          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly output:
+            'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
         };
       };
       readonly Notification: {
@@ -926,8 +932,9 @@ type FieldTypeOverrides = {
       };
       readonly OtherList: {
         readonly status: {
-          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly output:
+            'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
         };
       };
       readonly PassCipher: {
@@ -982,14 +989,16 @@ type FieldTypeOverrides = {
       };
       readonly TvList: {
         readonly status: {
-          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly output:
+            'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
         };
       };
       readonly TvSeasonProgress: {
         readonly status: {
-          readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+          readonly output:
+            'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+          readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
         };
       };
       readonly UserStats: {
@@ -1165,8 +1174,8 @@ type ColumnTypeOverrides = {
     };
     readonly AnimeList: {
       readonly status: {
-        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
       };
     };
     readonly Book: {
@@ -1177,8 +1186,8 @@ type ColumnTypeOverrides = {
     };
     readonly BookList: {
       readonly status: {
-        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
       };
     };
     readonly Connection: {
@@ -1309,8 +1318,8 @@ type ColumnTypeOverrides = {
     };
     readonly GameList: {
       readonly status: {
-        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
       };
     };
     readonly Manga: {
@@ -1363,8 +1372,8 @@ type ColumnTypeOverrides = {
     };
     readonly MangaList: {
       readonly status: {
-        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
       };
     };
     readonly MediaCharacter: {
@@ -1647,8 +1656,8 @@ type ColumnTypeOverrides = {
     };
     readonly MovieList: {
       readonly status: {
-        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
       };
     };
     readonly Music: {
@@ -1660,8 +1669,8 @@ type ColumnTypeOverrides = {
     };
     readonly MusicList: {
       readonly status: {
-        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
       };
     };
     readonly Notification: {
@@ -1680,8 +1689,8 @@ type ColumnTypeOverrides = {
     };
     readonly OtherList: {
       readonly status: {
-        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
       };
     };
     readonly PassCipher: {
@@ -1731,14 +1740,14 @@ type ColumnTypeOverrides = {
     };
     readonly TvList: {
       readonly status: {
-        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
       };
     };
     readonly TvSeasonProgress: {
       readonly status: {
-        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
-        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED';
+        readonly output: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
+        readonly input: 'IN_PROGRESS' | 'ON_HOLD' | 'DROPPED' | 'COMPLETED' | 'PLANNED' | 'MAYBE';
       };
     };
     readonly UserStats: {
@@ -15652,6 +15661,7 @@ type ContractBase = Omit<
                 'DROPPED',
                 'COMPLETED',
                 'PLANNED',
+                'MAYBE',
               ];
             };
             readonly MangaFormat: {
@@ -26345,6 +26355,7 @@ type ContractBase = Omit<
               { readonly name: 'DROPPED'; readonly value: 'DROPPED' },
               { readonly name: 'COMPLETED'; readonly value: 'COMPLETED' },
               { readonly name: 'PLANNED'; readonly value: 'PLANNED' },
+              { readonly name: 'MAYBE'; readonly value: 'MAYBE' },
             ];
           };
           readonly MangaFormat: {
@@ -26635,6 +26646,7 @@ type ContractBase = Omit<
             { readonly name: 'DROPPED'; readonly value: 'DROPPED' },
             { readonly name: 'COMPLETED'; readonly value: 'COMPLETED' },
             { readonly name: 'PLANNED'; readonly value: 'PLANNED' },
+            { readonly name: 'MAYBE'; readonly value: 'MAYBE' },
           ];
           readonly MangaFormat: readonly [
             { readonly name: 'MANGA'; readonly value: 'MANGA' },

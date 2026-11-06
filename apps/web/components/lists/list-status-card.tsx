@@ -127,6 +127,7 @@ export function ListStatusCard({
       COMPLETED: 0,
       DROPPED: 0,
       PLANNED: 0,
+      MAYBE: 0,
     }
 
     facets.statuses.forEach((item) => {
@@ -149,6 +150,8 @@ export function ListStatusCard({
         map.DROPPED = item.count
       } else if (upper === "PLANNED" || upper === "PLANNING") {
         map.PLANNED = item.count
+      } else if (upper === "MAYBE" || upper === "CONSIDERING") {
+        map.MAYBE = item.count
       }
     })
 
@@ -189,6 +192,7 @@ export function ListStatusCard({
       },
       { key: "DROPPED", label: "DROPPED", count: statusCounts.DROPPED ?? 0 },
       { key: "PLANNED", label: "PLANNING", count: statusCounts.PLANNED ?? 0 },
+      { key: "MAYBE", label: "MAYBE", count: statusCounts.MAYBE ?? 0 },
     ]
   }, [mediaType, statusCounts, facets.formats, activeVerb])
 

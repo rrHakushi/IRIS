@@ -444,4 +444,49 @@ export class TheTVDBProvider {
     }
     return movie
   }
+
+  /**
+   * Fetches all discovered artwork/image URLs for a series.
+   */
+  async fetchTvSeriesArtworks(tvdbId: number): Promise<string[]> {
+    const urls = new Set<string>()
+
+    // 1. Fetch /series/{id}/extended to get main image, artworks array, and season images
+    try {
+      const series = await this.fetchTvSeries(tvdbId)
+      if (series?.image) {
+        const img = normalizeTvdbImageUrl(series.image)
+        if (img) urls.add(img)
+      }
+      if (series?.artworks && Array.isArray(series.artworks)) {
+        for (const art of series.artworks) {
+          const img = normalizeTvdbImageUrl(art.image)
+          if (img) urls.add(img)
+        }
+      }
+      if (series?.seasons && Array.isArray(series.seasons)) {
+        for (const s of series.seasons) {
+          if (s.image) {
+            const img = normalizeTvdbImageUrl(s.image)
+            if (img) urls.add(img)
+          }
+        }
+      }
+    } catch {}
+
+    // 2. Fetch /series/{id}/artworks
+    try {
+      const res = await this.fetchJson<{ artworks?: Array<{ image?: string; thumbnail?: string }> }>(
+        `/series/${tvdbId}/artworks`
+      )
+      if (res?.artworks && Array.isArray(res.artworks)) {
+        for (const art of res.artworks) {
+          const img = normalizeTvdbImageUrl(art.image || art.thumbnail)
+          if (img) urls.add(img)
+        }
+      }
+    } catch {}
+
+    return Array.from(urls)
+  }
 }

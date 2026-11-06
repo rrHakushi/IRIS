@@ -14,6 +14,7 @@ export type MediaListStatus =
   | "COMPLETED"
   | "ON_HOLD"
   | "DROPPED"
+  | "MAYBE"
 
 export interface StatusConfig {
   value: MediaListStatus
@@ -133,6 +134,12 @@ export function getAvailableStatuses(
       label: "Dropped",
       color: "destructive",
       badgeClass: "border-destructive/40 bg-destructive/10 text-destructive",
+    },
+    {
+      value: "MAYBE",
+      label: "Maybe",
+      color: "secondary",
+      badgeClass: "border-purple-500/40 bg-purple-500/10 text-purple-600 dark:text-purple-400",
     },
   ]
 }

@@ -187,6 +187,8 @@ export function toMediaListEntry(
     status = "COMPLETED"
   } else if (raw === "DROPPED") {
     status = "DROPPED"
+  } else if (raw === "MAYBE" || raw === "CONSIDERING") {
+    status = "MAYBE"
   } else {
     status = "PLANNED"
   }
@@ -263,6 +265,7 @@ export function MediaListGrid({
       COMPLETED: 0,
       DROPPED: 0,
       PLANNED: 0,
+      MAYBE: 0,
     }
 
     if (!facets?.statuses) return map
@@ -291,6 +294,8 @@ export function MediaListGrid({
         map.DROPPED = (map.DROPPED || 0) + item.count
       } else if (upper === "PLANNED" || upper === "PLANNING") {
         map.PLANNED = (map.PLANNED || 0) + item.count
+      } else if (upper === "MAYBE" || upper === "CONSIDERING") {
+        map.MAYBE = (map.MAYBE || 0) + item.count
       }
     })
 
@@ -303,6 +308,7 @@ export function MediaListGrid({
   // 3. Completed
   // 4. Dropped
   // 5. Planned
+  // 6. Maybe
   const groupedSections = useMemo(() => {
     if (activeStatus && activeStatus !== "ALL") {
       return null
@@ -338,6 +344,12 @@ export function MediaListGrid({
       expectedCount: statusExpectedCounts.PLANNED ?? 0,
       items: [] as ListEntryData[],
     }
+    const maybeSection = {
+      key: "MAYBE",
+      title: "Maybe",
+      expectedCount: statusExpectedCounts.MAYBE ?? 0,
+      items: [] as ListEntryData[],
+    }
 
     for (const item of items) {
       const upperStatus = (item.entry.status || "").toUpperCase()
@@ -361,6 +373,8 @@ export function MediaListGrid({
         completedSection.items.push(item)
       } else if (upperStatus === "DROPPED") {
         droppedSection.items.push(item)
+      } else if (upperStatus === "MAYBE" || upperStatus === "CONSIDERING") {
+        maybeSection.items.push(item)
       } else {
         plannedSection.items.push(item)
       }
@@ -372,6 +386,7 @@ export function MediaListGrid({
       completedSection,
       droppedSection,
       plannedSection,
+      maybeSection,
     ]
 
     const hasFilter = Boolean(searchQuery?.trim())

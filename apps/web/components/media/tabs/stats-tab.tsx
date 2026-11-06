@@ -64,6 +64,7 @@ export function StatsTab({ media }: StatsTabProps) {
       onhold: "bg-orange-500",
       dropped: "bg-rose-500",
       repeating: "bg-purple-500",
+      maybe: "bg-violet-500",
     }
 
     const defaultStatuses = [
@@ -72,6 +73,7 @@ export function StatsTab({ media }: StatsTabProps) {
       "planning",
       "paused",
       "dropped",
+      "maybe",
     ]
     const rawKeys = Object.keys(rawDist).map((k) => k.toLowerCase())
     const keys = Array.from(new Set([...defaultStatuses, ...rawKeys]))

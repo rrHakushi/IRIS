@@ -169,6 +169,12 @@ export async function processMediaJob(job: Job<MediaJobData>): Promise<boolean> 
   )
 
   if (data.type === 'weekly-active-sync') {
+    if (process.env.NODE_ENV !== 'production') {
+      logger.info(
+        `${c.yellow('⏩ [Cron Skipped]')}: Weekly active media sync is disabled in development mode (NODE_ENV=${process.env.NODE_ENV || 'development'})`
+      )
+      return true
+    }
     logger.info(`${c.blue('🔄 [Cron Trigger]')} Triggering weekly active media sync...`)
     const stats = await syncActiveMedia()
     const elapsed = Math.round(performance.now() - jobStart)

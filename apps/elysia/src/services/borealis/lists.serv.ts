@@ -4106,9 +4106,11 @@ export class BorealisListsServ {
           case 'anime': {
             const anilistId = item.externalIds?.anilistId ? Number(item.externalIds.anilistId) : null
             const malId = item.externalIds?.malId ? Number(item.externalIds.malId) : null
+            const tvDBId = item.externalIds?.tvDBId ? Number(item.externalIds.tvDBId) : null
             const matchers: any[] = []
             if (anilistId) matchers.push((a: any) => a.anilistId.eq(anilistId))
             if (malId) matchers.push((a: any) => a.malId.eq(malId))
+            if (tvDBId) matchers.push((a: any) => a.tvDBId.eq(tvDBId))
             matchers.push((a: any) => a.titlePrimary.ilike(title))
 
             let anime = await prisma.orm.public.Anime.where((a) => or(...matchers.map((m) => m(a)))).first()
@@ -4118,6 +4120,7 @@ export class BorealisListsServ {
                 titlePrimary: title,
                 anilistId,
                 malId,
+                tvDBId,
                 synonyms: [],
               })
             }
@@ -4162,9 +4165,11 @@ export class BorealisListsServ {
           case 'manga': {
             const anilistId = item.externalIds?.anilistId ? Number(item.externalIds.anilistId) : null
             const malId = item.externalIds?.malId ? Number(item.externalIds.malId) : null
+            const mangaUpdatesId = item.externalIds?.mangaUpdatesId ? String(item.externalIds.mangaUpdatesId) : null
             const matchers: any[] = []
             if (anilistId) matchers.push((m: any) => m.anilistId.eq(anilistId))
             if (malId) matchers.push((m: any) => m.malId.eq(malId))
+            if (mangaUpdatesId) matchers.push((m: any) => m.mangaUpdatesId.eq(mangaUpdatesId))
             matchers.push((m: any) => m.titlePrimary.ilike(title))
 
             let manga = await prisma.orm.public.Manga.where((m) => or(...matchers.map((fn) => fn(m)))).first()
@@ -4174,6 +4179,7 @@ export class BorealisListsServ {
                 titlePrimary: title,
                 anilistId,
                 malId,
+                mangaUpdatesId,
                 synonyms: [],
               })
             }
@@ -4503,7 +4509,11 @@ export class BorealisListsServ {
     }
 
     for (const item of touchedMedia.values()) {
-      await MediaStatsServ.recalculateMediaStats(item.type, item.id)
+      try {
+        await MediaStatsServ.recalculateMediaStats(item.type, item.id)
+      } catch (err: any) {
+        console.error(`Failed to recalculate stats for ${item.type} #${item.id}:`, err?.message || err)
+      }
     }
 
     return {

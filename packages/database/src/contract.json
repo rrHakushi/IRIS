@@ -814,6 +814,10 @@
               {
                 "name": "PLANNED",
                 "value": "PLANNED"
+              },
+              {
+                "name": "MAYBE",
+                "value": "MAYBE"
               }
             ]
           },
@@ -19576,8 +19580,8 @@
             "AnimeList": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')",
-                  "name": "AnimeList_status_check_eb83cefb",
+                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED', 'MAYBE')",
+                  "name": "AnimeList_status_check_700d0082",
                   "prefix": "AnimeList_status_check"
                 }
               ],
@@ -20467,8 +20471,8 @@
             "BookList": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')",
-                  "name": "BookList_status_check_eb83cefb",
+                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED', 'MAYBE')",
+                  "name": "BookList_status_check_700d0082",
                   "prefix": "BookList_status_check"
                 }
               ],
@@ -22689,8 +22693,8 @@
             "GameList": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')",
-                  "name": "GameList_status_check_eb83cefb",
+                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED', 'MAYBE')",
+                  "name": "GameList_status_check_700d0082",
                   "prefix": "GameList_status_check"
                 }
               ],
@@ -23859,8 +23863,8 @@
             "MangaList": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')",
-                  "name": "MangaList_status_check_eb83cefb",
+                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED', 'MAYBE')",
+                  "name": "MangaList_status_check_700d0082",
                   "prefix": "MangaList_status_check"
                 }
               ],
@@ -25899,8 +25903,8 @@
             "MovieList": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')",
-                  "name": "MovieList_status_check_eb83cefb",
+                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED', 'MAYBE')",
+                  "name": "MovieList_status_check_700d0082",
                   "prefix": "MovieList_status_check"
                 }
               ],
@@ -26724,8 +26728,8 @@
             "MusicList": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')",
-                  "name": "MusicList_status_check_eb83cefb",
+                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED', 'MAYBE')",
+                  "name": "MusicList_status_check_700d0082",
                   "prefix": "MusicList_status_check"
                 }
               ],
@@ -28201,8 +28205,8 @@
             "OtherList": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')",
-                  "name": "OtherList_status_check_eb83cefb",
+                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED', 'MAYBE')",
+                  "name": "OtherList_status_check_700d0082",
                   "prefix": "OtherList_status_check"
                 }
               ],
@@ -30081,8 +30085,8 @@
             "TvList": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')",
-                  "name": "TvList_status_check_eb83cefb",
+                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED', 'MAYBE')",
+                  "name": "TvList_status_check_700d0082",
                   "prefix": "TvList_status_check"
                 }
               ],
@@ -30629,8 +30633,8 @@
             "TvSeasonProgress": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED')",
-                  "name": "TvSeasonProgress_status_check_eb83cefb",
+                  "expression": "\"status\" IN ('IN_PROGRESS', 'ON_HOLD', 'DROPPED', 'COMPLETED', 'PLANNED', 'MAYBE')",
+                  "name": "TvSeasonProgress_status_check_700d0082",
                   "prefix": "TvSeasonProgress_status_check"
                 }
               ],
@@ -32728,7 +32732,8 @@
                 "ON_HOLD",
                 "DROPPED",
                 "COMPLETED",
-                "PLANNED"
+                "PLANNED",
+                "MAYBE"
               ]
             },
             "MangaFormat": {
@@ -32888,7 +32893,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "dfda105c1a90ebc11f3d640b7a221d71fab6104ff155adeec20d0e44bb0e3194"
+    "storageHash": "a6ff4a8881bce26834e440c01de162a95fc0ac379df9391e3dc4a3b162646a50"
   },
   "execution": {
     "executionHash": "b7640b0fcc81eff6f25706df08d8b4535a1b5e11bd21a8168ea15ca60dc18af0",

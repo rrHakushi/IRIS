@@ -116,6 +116,7 @@ function formatStatusLabel(
   if (upper === "COMPLETED") return "Completed"
   if (upper === "ON_HOLD" || upper === "PAUSED") return "On Hold"
   if (upper === "DROPPED") return "Dropped"
+  if (upper === "MAYBE" || upper === "CONSIDERING") return "Maybe"
   return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
 }
 
@@ -166,7 +167,7 @@ async function fetchRemoteMediaDetails(
   if (proxyProviders.includes(providerKey)) {
     try {
       const searchType =
-        category === "manga"
+        category === "manga" || category === "book"
           ? "MANGA"
           : category === "tv"
             ? "TV"
@@ -208,7 +209,7 @@ async function fetchRemoteMediaDetails(
           providerKey === "bangumi" || providerKey === "bgm"
             ? `https://bgm.tv/subject/${strId}`
             : providerKey === "hikka"
-              ? `https://hikka.io/${category === "manga" ? "manga" : "anime"}/${strId}`
+              ? `https://hikka.io/${category === "manga" || category === "book" ? "manga" : "anime"}/${strId}`
               : providerKey === "mangaupdates"
                 ? `https://www.mangaupdates.com/series/${strId}`
                 : providerKey === "mangabaka"
@@ -339,7 +340,7 @@ async function fetchRemoteMediaDetails(
         format: m.format ?? null,
         externalUrl:
           m.siteUrl ||
-          `https://anilist.co/${category === "manga" ? "manga" : "anime"}/${m.id}`,
+          `https://anilist.co/${category === "manga" || category === "book" ? "manga" : "anime"}/${m.id}`,
       }
     } catch {
       return null
@@ -349,7 +350,7 @@ async function fetchRemoteMediaDetails(
   // 3. MAL: Query via server proxy with fallback to Jikan API
   if (providerKey === "mal") {
     try {
-      const searchType = category === "manga" ? "MANGA" : "ANIME"
+      const searchType = category === "manga" || category === "book" ? "MANGA" : "ANIME"
       const res = await elysia.carina.connections.search.get({
         query: {
           provider: "MAL",
@@ -384,7 +385,7 @@ async function fetchRemoteMediaDetails(
           format: item.format ?? null,
           externalUrl:
             item.url ||
-            `https://myanimelist.net/${category === "manga" ? "manga" : "anime"}/${strId}`,
+            `https://myanimelist.net/${category === "manga" || category === "book" ? "manga" : "anime"}/${strId}`,
         }
       }
     } catch {
@@ -392,7 +393,7 @@ async function fetchRemoteMediaDetails(
     }
 
     try {
-      const malType = category === "manga" ? "manga" : "anime"
+      const malType = category === "manga" || category === "book" ? "manga" : "anime"
       const resp = await fetch(`https://api.jikan.moe/v4/${malType}/${numId}`)
       const json = await resp.json()
       const d = json?.data
@@ -490,7 +491,7 @@ export function MediaListConnectionsTab({
             : null,
         }
       )
-    } else if (category === "manga") {
+    } else if (category === "manga" || category === "book") {
       list.push(
         {
           key: "anilist",
@@ -541,6 +542,17 @@ export function MediaListConnectionsTab({
             : null,
         }
       )
+      if (category === "book") {
+        const googleBookId = (media as any).googleBookId ?? null
+        list.push({
+          key: "googlebooks",
+          name: "Google Books",
+          detectedId: googleBookId,
+          externalUrl: googleBookId
+            ? `https://books.google.com/books?id=${googleBookId}`
+            : null,
+        })
+      }
     } else if (category === "tv" || category === "movie") {
       list.push(
         {
@@ -818,6 +830,7 @@ export function MediaListConnectionsTab({
       { value: "COMPLETED", label: "Completed" },
       { value: "ON_HOLD", label: "On Hold" },
       { value: "DROPPED", label: "Dropped" },
+      { value: "MAYBE", label: "Maybe" },
     ]
   }, [category])
 
@@ -833,7 +846,7 @@ export function MediaListConnectionsTab({
       try {
         // 1. Primary approach: Eden Treaty API search route
         const searchType =
-          category === "manga"
+          category === "manga" || category === "book"
             ? "MANGA"
             : category === "tv"
               ? "TV"
@@ -965,7 +978,7 @@ export function MediaListConnectionsTab({
               }
             }
           `
-          const mediaType = category === "manga" ? "MANGA" : "ANIME"
+          const mediaType = category === "manga" || category === "book" ? "MANGA" : "ANIME"
           const resp = await fetch("https://graphql.anilist.co", {
             method: "POST",
             headers: {
@@ -1001,7 +1014,7 @@ export function MediaListConnectionsTab({
               status: m.status ?? null,
               url:
                 m.siteUrl ||
-                `https://anilist.co/${category === "manga" ? "manga" : "anime"}/${m.id}`,
+                `https://anilist.co/${category === "manga" || category === "book" ? "manga" : "anime"}/${m.id}`,
             }))
             setSearchResults(mapped)
             setIsSearching(false)
@@ -1011,7 +1024,7 @@ export function MediaListConnectionsTab({
 
         // 3. Client-side direct fallback for MyAnimeList (Jikan)
         if (provider.key === "mal") {
-          const malType = category === "manga" ? "manga" : "anime"
+          const malType = category === "manga" || category === "book" ? "manga" : "anime"
           const cleanMalId =
             idPrefixMatch?.[1] || malUrlMatch?.[1] || (isNumeric ? q : null)
 
@@ -1762,7 +1775,7 @@ export function MediaListConnectionsTab({
                                 />
                               ) : (
                                 <div className="flex h-14 w-10 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground">
-                                  {category === "manga" ? (
+                                  {category === "manga" || category === "book" ? (
                                     <IconBook className="size-4" />
                                   ) : (
                                     <IconDeviceTv className="size-4" />
@@ -1795,7 +1808,7 @@ export function MediaListConnectionsTab({
                                   {result.episodes && (
                                     <span>
                                       {result.episodes}{" "}
-                                      {category === "manga"
+                                      {category === "manga" || category === "book"
                                         ? "chapters"
                                         : "episodes"}
                                     </span>

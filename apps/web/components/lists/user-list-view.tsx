@@ -144,6 +144,8 @@ const STATUS_PRIORITY_ORDER: Record<string, number> = {
   DROPPED: 4,
   PLANNED: 5,
   PLANNING: 5,
+  MAYBE: 6,
+  CONSIDERING: 6,
 }
 
 function getStatusOrder(status?: string): number {
@@ -962,7 +964,9 @@ export function UserListView({
                     upperStatus === "LISTENING" ||
                     upperStatus === "TRACKING")) ||
                 ((upperActive === "PLANNED" || upperActive === "PLANNING") &&
-                  (upperStatus === "PLANNED" || upperStatus === "PLANNING"))
+                  (upperStatus === "PLANNED" || upperStatus === "PLANNING")) ||
+                ((upperActive === "MAYBE" || upperActive === "CONSIDERING") &&
+                  (upperStatus === "MAYBE" || upperStatus === "CONSIDERING"))
               if (!isMatch) {
                 next = next.filter((i) => i.entry.id !== entryId)
               }

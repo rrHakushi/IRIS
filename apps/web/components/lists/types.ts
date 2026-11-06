@@ -103,6 +103,7 @@ export type StatusKey =
   | "COMPLETED"
   | "DROPPED"
   | "PLANNED"
+  | "MAYBE"
   | "ALBUMS"
   | "TRACKS"
 

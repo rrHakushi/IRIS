@@ -81,6 +81,7 @@ export const LIST_STATUSES = [
   "DROPPED",
   "COMPLETED",
   "PLANNED",
+  "MAYBE",
 ] as const satisfies readonly ListStatus[];
 
 export const MEDIA_STATUSES = [
@@ -102,6 +103,7 @@ const LEGACY_LIST_STATUS: Record<string, ListStatus> = {
   CURRENT: "IN_PROGRESS",
   REPEATING: "IN_PROGRESS",
   PAUSED: "ON_HOLD",
+  CONSIDERING: "MAYBE",
 };
 
 const LEGACY_MEDIA_STATUS: Record<string, MediaStatus> = {

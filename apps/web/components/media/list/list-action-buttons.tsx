@@ -16,6 +16,7 @@ import {
   IconX,
   IconClock,
   IconActivity,
+  IconHelpCircle,
 } from "@tabler/icons-react"
 import { Button } from "@workspace/ui/components/button"
 import { toast } from "sonner"
@@ -334,6 +335,13 @@ export function ListActionButtons({
           label: "Dropped",
           btnClass:
             "border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20",
+        }
+      case "MAYBE":
+        return {
+          icon: IconHelpCircle,
+          label: "Maybe",
+          btnClass:
+            "border-purple-500/40 bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20",
         }
     }
   }

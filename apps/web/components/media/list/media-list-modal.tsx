@@ -27,6 +27,7 @@ import {
   IconAlertCircle,
   IconTrash,
   IconLock,
+  IconHelpCircle,
 } from "@tabler/icons-react"
 import {
   ModalOverlay as AriaModalOverlay,
@@ -393,6 +394,9 @@ export function MediaListModal({
       if (raw === "PLANNING" || raw === "PLANNED") {
         return "PLANNED"
       }
+      if (raw === "MAYBE" || raw === "CONSIDERING") {
+        return "MAYBE"
+      }
       return raw as MediaListStatus
     }
     return "PLANNED"
@@ -674,6 +678,8 @@ export function MediaListModal({
           setStatus("IN_PROGRESS")
         } else if (raw === "PLANNING" || raw === "PLANNED") {
           setStatus("PLANNED")
+        } else if (raw === "MAYBE" || raw === "CONSIDERING") {
+          setStatus("MAYBE")
         } else {
           setStatus(initialEntry.status as MediaListStatus)
         }
@@ -1018,7 +1024,7 @@ export function MediaListModal({
 
     if (maxLimit !== undefined && clamped >= maxLimit) {
       handleStatusChange("COMPLETED")
-    } else if (clamped > 0 && (status === "PLANNED" || (status as any) === "PLANNING")) {
+    } else if (clamped > 0 && (status === "PLANNED" || (status as any) === "PLANNING" || status === "MAYBE")) {
       handleStatusChange(inProgressStatus)
     }
   }
@@ -1377,6 +1383,8 @@ export function MediaListModal({
         return IconPlayerPause
       case "DROPPED":
         return IconX
+      case "MAYBE":
+        return IconHelpCircle
       default:
         return IconClock
     }
@@ -2470,7 +2478,7 @@ export function MediaListModal({
               )
               if (totalTvEpisodes > 0 && newWatched.length >= totalTvEpisodes) {
                 handleStatusChange("COMPLETED")
-              } else if (newWatched.length > 0 && (status === "PLANNED" || (status as any) === "PLANNING")) {
+              } else if (newWatched.length > 0 && (status === "PLANNED" || (status as any) === "PLANNING" || status === "MAYBE")) {
                 handleStatusChange(inProgressStatus)
               }
             }}

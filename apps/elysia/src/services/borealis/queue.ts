@@ -378,6 +378,13 @@ export const MediaQueueManager = {
       return null
     }
 
+    if (process.env.NODE_ENV !== 'production') {
+      logger.info(
+        `${c.yellow('⏩ [Schedule Cron Skipped]')}: Weekly active media sync cron is disabled in development mode (NODE_ENV=${process.env.NODE_ENV || 'development'})`
+      )
+      return null
+    }
+
     try {
       const queue = this.getQueue()
       let res: any
