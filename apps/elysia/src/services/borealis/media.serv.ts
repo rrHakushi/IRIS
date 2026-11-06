@@ -1,5 +1,6 @@
-import { prisma, countOf, or, type MediaType } from '@Iris/db'
-import { NotFound } from '../../lib/errors'
+import { prisma, countOf, or, toDate, type MediaType } from '@Iris/db'
+import { NotFound, BadRequest } from '../../lib/errors'
+import { getProfileCustomization } from '@IRIS/shared'
 import { MediaQueueManager } from './queue'
 import { fetchMediaRelations } from './media-relations.helper'
 import { MediaEntitySyncer } from './syncer/media-entity.syncer'
@@ -2913,6 +2914,205 @@ export class BorealisMediaServ {
       success: true,
       sourceId: id,
       items,
+    }
+  }
+
+  /**
+   * Get all users who have a specific media item in their list (that is public and entry is not private).
+   */
+  public static async getMediaPeople(
+    mediaType: string,
+    mediaId: number,
+    query?: { page?: number; limit?: number; status?: string }
+  ) {
+    let normType = mediaType.toLowerCase().trim()
+    if (normType === 'movies') normType = 'movie'
+    if (normType === 'books') normType = 'book'
+    if (normType === 'games') normType = 'game'
+    const page = Math.max(1, Number(query?.page ?? 1))
+    const limit = Math.max(1, Math.min(100, Number(query?.limit ?? 40)))
+    const skip = (page - 1) * limit
+    const filterStatus = query?.status?.toUpperCase()?.trim()
+
+    let baseQuery: any
+    let mapEntry: (e: any) => any
+
+    switch (normType) {
+      case 'anime': {
+        let q = prisma.orm.public.AnimeList.where({ animeId: mediaId, private: false })
+        if (filterStatus) q = q.where({ status: filterStatus as any })
+        baseQuery = q
+        mapEntry = (e) => ({
+          id: e.id,
+          userId: e.userId,
+          status: e.status,
+          score: e.score,
+          progress: e.progress,
+          volumesProgress: null,
+          updatedAt: toDate(e.updatedAt).toISOString(),
+          user: e.user,
+        })
+        break
+      }
+      case 'manga': {
+        let q = prisma.orm.public.MangaList.where({ mangaId: mediaId, private: false })
+        if (filterStatus) q = q.where({ status: filterStatus as any })
+        baseQuery = q
+        mapEntry = (e) => ({
+          id: e.id,
+          userId: e.userId,
+          status: e.status,
+          score: e.score,
+          progress: e.chaptersProgress,
+          volumesProgress: e.volumesProgress,
+          updatedAt: toDate(e.updatedAt).toISOString(),
+          user: e.user,
+        })
+        break
+      }
+      case 'tv': {
+        let q = prisma.orm.public.TvList.where({ tvId: mediaId, private: false })
+        if (filterStatus) q = q.where({ status: filterStatus as any })
+        baseQuery = q
+        mapEntry = (e) => ({
+          id: e.id,
+          userId: e.userId,
+          status: e.status,
+          score: e.score,
+          progress: e.progress,
+          volumesProgress: null,
+          updatedAt: toDate(e.updatedAt).toISOString(),
+          user: e.user,
+        })
+        break
+      }
+      case 'movie': {
+        let q = prisma.orm.public.MovieList.where({ movieId: mediaId, private: false })
+        if (filterStatus) q = q.where({ status: filterStatus as any })
+        baseQuery = q
+        mapEntry = (e) => ({
+          id: e.id,
+          userId: e.userId,
+          status: e.status,
+          score: e.score,
+          progress: null,
+          volumesProgress: null,
+          updatedAt: toDate(e.updatedAt).toISOString(),
+          user: e.user,
+        })
+        break
+      }
+      case 'game': {
+        let q = prisma.orm.public.GameList.where({ gameId: mediaId, private: false })
+        if (filterStatus) q = q.where({ status: filterStatus as any })
+        baseQuery = q
+        mapEntry = (e) => ({
+          id: e.id,
+          userId: e.userId,
+          status: e.status,
+          score: e.score,
+          progress: e.progress,
+          volumesProgress: null,
+          updatedAt: toDate(e.updatedAt).toISOString(),
+          user: e.user,
+        })
+        break
+      }
+      case 'book': {
+        let q = prisma.orm.public.BookList.where({ bookId: mediaId, private: false })
+        if (filterStatus) q = q.where({ status: filterStatus as any })
+        baseQuery = q
+        mapEntry = (e) => ({
+          id: e.id,
+          userId: e.userId,
+          status: e.status,
+          score: e.score,
+          progress: e.progressChapters,
+          volumesProgress: e.progressVolumes,
+          updatedAt: toDate(e.updatedAt).toISOString(),
+          user: e.user,
+        })
+        break
+      }
+      case 'music': {
+        let q = prisma.orm.public.MusicList.where({ musicId: mediaId, private: false })
+        if (filterStatus) q = q.where({ status: filterStatus as any })
+        baseQuery = q
+        mapEntry = (e) => ({
+          id: e.id,
+          userId: e.userId,
+          status: e.status,
+          score: e.score,
+          progress: e.playCount,
+          volumesProgress: null,
+          updatedAt: toDate(e.updatedAt).toISOString(),
+          user: e.user,
+        })
+        break
+      }
+      case 'other': {
+        let q = prisma.orm.public.OtherList.where({ otherId: mediaId, private: false })
+        if (filterStatus) q = q.where({ status: filterStatus as any })
+        baseQuery = q
+        mapEntry = (e) => ({
+          id: e.id,
+          userId: e.userId,
+          status: e.status,
+          score: e.score,
+          progress: e.progress,
+          volumesProgress: null,
+          updatedAt: toDate(e.updatedAt).toISOString(),
+          user: e.user,
+        })
+        break
+      }
+      default:
+        throw new BadRequest(`Unsupported media type: ${mediaType}`)
+    }
+
+    const [total, rawEntries] = await Promise.all([
+      countOf(baseQuery),
+      baseQuery
+        .orderBy((item: any) => item.updatedAt.desc())
+        .offset(skip)
+        .limit(limit)
+        .include('user', (u: any) => u.select('id', 'username', 'customization'))
+        .all(),
+    ])
+
+    const people = rawEntries.map((raw: any) => {
+      const entry = mapEntry(raw)
+      const profile = getProfileCustomization(entry.user?.customization)
+      return {
+        id: entry.id,
+        userId: entry.userId,
+        status: entry.status,
+        score: entry.score,
+        progress: entry.progress,
+        volumesProgress: entry.volumesProgress,
+        updatedAt: entry.updatedAt,
+        user: {
+          id: entry.user?.id || entry.userId,
+          username: entry.user?.username || 'Unknown',
+          customization: entry.user?.customization || null,
+          displayName: profile.displayName || entry.user?.username || 'Unknown',
+          avatarUrl: profile.avatarUrl || null,
+          avatarFrame: profile.avatarFrame || null,
+          displayNameStyle: profile.displayNameStyle || null,
+        },
+      }
+    })
+
+    return {
+      success: true,
+      mediaType: normType,
+      mediaId,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+      hasMore: page * limit < total,
+      people,
     }
   }
 }

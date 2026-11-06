@@ -1918,12 +1918,15 @@ export class MediaEntitySyncer {
 
       const cleanDescription = info.description ? info.description.replace(/<[^>]*>/g, '').trim() : undefined
       const imageLinks = (info as any).imageLinks
-      const coverImage =
+      let coverImage =
         imageLinks?.extraLarge ||
         imageLinks?.large ||
         imageLinks?.medium ||
         imageLinks?.thumbnail ||
         undefined
+      if (coverImage && coverImage.startsWith('http://')) {
+        coverImage = coverImage.replace('http://', 'https://')
+      }
 
       const sources: Record<string, unknown> = {
         googleBooks: { id: volumeId, url: `https://books.google.com/books?id=${volumeId}` },

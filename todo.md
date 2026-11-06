@@ -2,24 +2,21 @@
     - Stremio plugin for borealis
     - In media pages (anime, manga etc) add tab People in which it will list all users who have that media in list (that is public and media is not private)
     - Link manga list entries to books since its kinda the same
-    - Media card doesnt render book images (only alt text)
-    - Rework media cards (mangabaka inspiration)
     - Rework customs lits
     - Rework homepage
-    - remove relations from overview
-    - Add Relations tab (separate by type(anime, manga etc) and by relation(prequel, sequel, spin-off etc.))
-    - rework character/staff tab (make cards similar to media card)
-
-    - Change scale to 0-100 scale everywhere (script to update existing ones)
-    - Add rating precision settings (still saved as 0-100)
-        - Step 1: Similar to 10 point scale wtih decimals eg 7.3
-        - Step 5: Similar to 10 pont scale with half steps eg 7.5
-        - Step 10: Similar to classic 10 point sclae eg 7
-        - Step 25: Similar to 4 tier scale eg bad, average, good, perfect 
-    - Helpter util to render score according to prefference
-    - New media edit modal
     - Rework list pages
-    - remove progressPages from books
+
+    // both placed in apps/borelais/components
+    - Single borealisCard to render all media types, characters, staff etc 
+        - Image as a whole card
+        - On hover expand the card to show title and other info
+        - use this in: Browse, homepage, media pages[characters, similar, relations, staff, theme songs{maybe?? need rework}], favorites (carina), recommendations...
+
+    - borealisCardGroup 
+        - both horizontally/vertically scrollable (configureable)
+        - colum/row count configureable
+        - scroll controlls (only shown if scrollable and its overflowing)
+        - use this in: overview tab, characters/staff tab, relations tab
 
    
 # Akaromi [Password manager]

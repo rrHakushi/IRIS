@@ -42,6 +42,7 @@ export function MediaTabNav({
 
   const navContent = (
     <nav
+      suppressHydrationWarning
       className={cn(
         "no-scrollbar flex items-center gap-1 overflow-x-auto py-1",
         className
@@ -54,6 +55,7 @@ export function MediaTabNav({
           <button
             key={tab.key}
             type="button"
+            suppressHydrationWarning
             onClick={() => handleTabClick(tab.key)}
             className={cn(
               "inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors outline-none select-none",

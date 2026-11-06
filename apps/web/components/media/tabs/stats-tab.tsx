@@ -105,12 +105,6 @@ export function StatsTab({ media }: StatsTabProps) {
 
   return (
     <div className="flex flex-col gap-8">
-      <div>
-        <h2 className="text-base font-semibold text-foreground">
-          Rankings & Community Stats
-        </h2>
-      </div>
-
       {/* 1. Score Overview Cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {/* Local IRIS Score */}

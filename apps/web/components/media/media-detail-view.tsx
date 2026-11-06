@@ -5,15 +5,17 @@ import { useSearchParams } from "next/navigation"
 import { MediaHero } from "./media-hero"
 import { MediaTabNav } from "./media-tab-nav"
 import { OverviewTab } from "./tabs/overview-tab"
+import { RelationsTab } from "./tabs/relations-tab"
 import { CharactersTab } from "./tabs/characters-tab"
 import { StaffTab } from "./tabs/staff-tab"
 import { EpisodesTab } from "./tabs/episodes-tab"
 import { TracksTab } from "./tabs/tracks-tab"
 import { LyricsTab } from "./tabs/lyrics-tab"
-import { ImagesTab } from "./tabs/images-tab"
+import { ImagesTab, extractMediaImages } from "./tabs/images-tab"
 import { TrailersTab } from "./tabs/trailers-tab"
 import { StatsTab } from "./tabs/stats-tab"
 import { FriendsMediaTab } from "./tabs/friends-tab"
+import { PeopleTab } from "./tabs/people-tab"
 import { RecommendationsMediaTab } from "./tabs/recommendations-tab"
 import { MediaFooter } from "./media-footer"
 import type {
@@ -63,6 +65,15 @@ export function MediaDetailView({
       .size
 
     const tabs: MediaTabItem[] = [{ key: "overview", label: "Overview" }]
+
+    // Relations tab (if relations exist)
+    if (media.relations && media.relations.length > 0) {
+      tabs.push({
+        key: "relations",
+        label: "Relations",
+        count: media.relations.length,
+      })
+    }
 
     // Music: Tracks tab for albums
     if (media.category === "music" && media.tracks && media.tracks.length > 0) {
@@ -116,12 +127,12 @@ export function MediaDetailView({
 
     // Images tab (not for other media)
     if (media.category !== "other") {
-      const imageCount = media.images
-        ? Object.values(media.images).reduce(
-            (acc, arr) => acc + (Array.isArray(arr) ? arr.length : 0),
-            0
-          )
-        : 0
+      const extracted = extractMediaImages(
+        media.coverImage,
+        media.bannerImage,
+        media.images
+      )
+      const imageCount = extracted.length
       tabs.push({
         key: "images",
         label: "Images",
@@ -141,10 +152,11 @@ export function MediaDetailView({
       }
     }
 
-    // Stats, Friends, Recommendations
+    // Stats, Friends, People, Recommendations
     tabs.push(
       { key: "stats", label: "Stats" },
       { key: "friends", label: "Friends" },
+      { key: "people", label: "People" },
       { key: "recommendations", label: "Recommendations" }
     )
 
@@ -177,6 +189,13 @@ export function MediaDetailView({
             onViewAllCharacters={() => setActiveTab("characters")}
             onViewAllTracks={() => setActiveTab("tracks")}
             onViewAllLyrics={() => setActiveTab("lyrics")}
+          />
+        )}
+
+        {validActiveTab === "relations" && (
+          <RelationsTab
+            relations={media.relations ?? []}
+            titlePreference={media.mediaTitlePreference}
           />
         )}
 
@@ -230,6 +249,10 @@ export function MediaDetailView({
 
         {validActiveTab === "friends" && (
           <FriendsMediaTab mediaCategory={media.category} mediaId={media.id} />
+        )}
+
+        {validActiveTab === "people" && (
+          <PeopleTab mediaCategory={media.category} mediaId={media.id} />
         )}
 
         {validActiveTab === "recommendations" && (

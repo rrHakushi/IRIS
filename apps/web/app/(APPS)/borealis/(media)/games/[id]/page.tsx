@@ -130,7 +130,7 @@ export default async function GameDetailPage({ params, searchParams }: Props) {
     characters: [],
     staff: [],
     studios: game.studios,
-    relations: game.relations,
+    relations: game.relations ?? [],
     updatedAt: game.updatedAt,
   }
 

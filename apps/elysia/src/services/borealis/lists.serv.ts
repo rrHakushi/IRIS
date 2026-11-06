@@ -2467,7 +2467,7 @@ export class BorealisListsServ {
     } else if (query?.sortBy === 'score') {
       itemsQ = itemsQ.orderBy((bl) => (order === 'asc' ? bl.score.asc() : bl.score.desc()))
     } else if (query?.sortBy === 'progress') {
-      itemsQ = itemsQ.orderBy((bl) => (order === 'asc' ? bl.progressPages.asc() : bl.progressPages.desc()))
+      itemsQ = itemsQ.orderBy((bl) => (order === 'asc' ? bl.progressChapters.asc() : bl.progressChapters.desc()))
     } else if (query?.sortBy === 'createdAt') {
       itemsQ = itemsQ.orderBy((bl) => (order === 'asc' ? bl.createdAt.asc() : bl.createdAt.desc()))
     } else {
@@ -2718,7 +2718,7 @@ export class BorealisListsServ {
     const existing = await prisma.orm.public.BookList.where({ userId, bookId }).first()
 
     const count = Math.max(1, body?.count ?? 1)
-    const type = body?.type ?? 'page'
+    const type = body?.type ?? 'chapter'
     let progressPages = existing?.progressPages ?? 0
     let progressChapters = existing?.progressChapters ?? 0
     let progressVolumes = existing?.progressVolumes ?? 0
@@ -2847,7 +2847,7 @@ export class BorealisListsServ {
     return {
       success: true,
       data,
-      stats: computeStats(items, 'progressPages'),
+      stats: computeStats(items, 'progressChapters'),
     }
   }
 

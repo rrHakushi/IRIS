@@ -60,76 +60,119 @@ function classifyImageUrl(
   return "posters"
 }
 
+export interface ProcessedMediaImage {
+  url: string
+  category: Exclude<ImageCategoryKey, "all">
+}
+
+export function extractMediaImages(
+  coverImage?: string | null,
+  bannerImage?: string | null,
+  images?: any
+): ProcessedMediaImage[] {
+  const result: ProcessedMediaImage[] = []
+  const seen = new Set<string>()
+
+  const collectCandidate = (
+    url?: string | null,
+    context?: "cover" | "banner"
+  ) => {
+    if (!url || typeof url !== "string") return
+    const trimmed = url.trim()
+    if (!trimmed) return
+    const normalized = trimmed.replace(/^http:\/\//i, "https://")
+    if (seen.has(normalized)) return
+    seen.add(normalized)
+    result.push({
+      url: normalized,
+      category: classifyImageUrl(normalized, context),
+    })
+  }
+
+  // 1. Cover and banner first
+  if (coverImage) collectCandidate(coverImage, "cover")
+  if (bannerImage) collectCandidate(bannerImage, "banner")
+
+  // 2. Extra images (array or object)
+  if (images) {
+    if (Array.isArray(images)) {
+      for (const item of images) {
+        if (typeof item === "string") {
+          collectCandidate(item)
+        } else if (item && typeof item === "object") {
+          const u =
+            (item as any).url || (item as any).image || (item as any).original
+          if (typeof u === "string") collectCandidate(u)
+        }
+      }
+    } else if (typeof images === "object") {
+      for (const [key, val] of Object.entries(images)) {
+        let context: "cover" | "banner" | undefined
+        const lKey = key.toLowerCase()
+        if (lKey.includes("banner")) context = "banner"
+        if (lKey.includes("cover") || lKey.includes("poster")) context = "cover"
+
+        if (Array.isArray(val)) {
+          for (const item of val) {
+            if (typeof item === "string") {
+              collectCandidate(item, context)
+            } else if (item && typeof item === "object") {
+              const u =
+                (item as any).url ||
+                (item as any).image ||
+                (item as any).original
+              if (typeof u === "string") collectCandidate(u, context)
+            }
+          }
+        } else if (typeof val === "string") {
+          collectCandidate(val, context)
+        }
+      }
+    }
+  }
+
+  // 3. Deduplicate lower resolution variants ONLY when higher resolution exists in the set
+  const filtered = result.filter((item) => {
+    // MAL: if ...l.jpg exists, drop ...jpg or ...m.jpg
+    if (item.url.endsWith(".jpg") && !item.url.endsWith("l.jpg")) {
+      const highRes = item.url.slice(0, -4) + "l.jpg"
+      if (seen.has(highRes)) return false
+    }
+    // AniList: if /cover/large/ or /cover/extra-large/ exists, drop /cover/medium/
+    if (item.url.includes("/cover/medium/")) {
+      const largeRes = item.url.replace("/cover/medium/", "/cover/large/")
+      const extraLargeRes = item.url.replace(
+        "/cover/medium/",
+        "/cover/extra-large/"
+      )
+      if (seen.has(largeRes) || seen.has(extraLargeRes)) return false
+    }
+    return true
+  })
+
+  return filtered
+}
+
 export function ImagesTab({ coverImage, bannerImage, images }: ImagesTabProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [activeCategory, setActiveCategory] = useState<ImageCategoryKey>("all")
 
   // Categorize and deduplicate images
   const categorizedImages = useMemo(() => {
-    const rawAll: Array<{
-      url: string
-      category: Exclude<ImageCategoryKey, "all">
-    }> = []
-    const seen = new Set<string>()
-
-    const add = (url?: string | null, context?: "cover" | "banner") => {
-      if (!url || typeof url !== "string") return
-
-      // Deduplicate lower resolution variants
-      if (url.includes("/cover/medium/") || url.includes("/cover/small/"))
-        return
-      if (url.endsWith(".jpg") && !url.endsWith("l.jpg")) {
-        const higherRes = url.slice(0, -4) + "l.jpg"
-        if (seen.has(higherRes)) return
-      }
-
-      if (seen.has(url)) return
-      seen.add(url)
-
-      const category = classifyImageUrl(url, context)
-      rawAll.push({ url, category })
-    }
-
-    // Add cover and banner first
-    add(coverImage, "cover")
-    add(bannerImage, "banner")
-
-    // Add provider galleries
-    if (images && typeof images === "object") {
-      for (const [providerKey, urls] of Object.entries(images)) {
-        if (Array.isArray(urls)) {
-          for (const u of urls) {
-            let context: "cover" | "banner" | undefined
-            const lowerKey = providerKey.toLowerCase()
-            if (lowerKey.includes("banner")) context = "banner"
-            if (lowerKey.includes("cover") || lowerKey.includes("poster"))
-              context = "cover"
-            add(u, context)
-          }
-        } else if (typeof urls === "string") {
-          let context: "cover" | "banner" | undefined
-          const lowerKey = providerKey.toLowerCase()
-          if (lowerKey.includes("banner")) context = "banner"
-          if (lowerKey.includes("cover") || lowerKey.includes("poster"))
-            context = "cover"
-          add(urls, context)
-        }
-      }
-    }
-
-    const posters = rawAll
+    const list = extractMediaImages(coverImage, bannerImage, images)
+    const posters = list
       .filter((i) => i.category === "posters")
       .map((i) => i.url)
-    const backgrounds = rawAll
+    const backgrounds = list
       .filter((i) => i.category === "backgrounds")
       .map((i) => i.url)
-    const banners = rawAll
+    const banners = list
       .filter((i) => i.category === "banners")
       .map((i) => i.url)
-    const screencaps = rawAll
+    const screencaps = list
       .filter((i) => i.category === "screencaps")
       .map((i) => i.url)
-    const all = rawAll.map((i) => i.url)
+    const all = list.map((i) => i.url)
 
     return {
       all,

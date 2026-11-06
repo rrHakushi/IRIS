@@ -3,6 +3,7 @@
 import React, { useMemo } from "react"
 import Link from "next/link"
 import { IconPhotoOff } from "@tabler/icons-react"
+import { Badge } from "@workspace/ui/components/badge"
 import type { StaffMemberItem } from "../media-types"
 
 interface StaffTabProps {
@@ -84,6 +85,15 @@ const ROLE_LABELS: Record<string, string> = {
   OTHER: "Other Staff",
 }
 
+function cleanRoleForGrouping(rawRole: string): string {
+  // Strip parentheses and brackets and their contents, e.g. "Script (eps 1-5, 7-11)" -> "Script"
+  const stripped = rawRole
+    .replace(/\s*\([^)]*\)/g, "")
+    .replace(/\s*\[[^\]]*\]/g, "")
+    .trim()
+  return stripped || rawRole
+}
+
 function normalizeRole(str: string): string {
   if (!str) return "Staff"
   return str
@@ -102,16 +112,18 @@ function normalizeRole(str: string): string {
 function getStaffRoleTitle(member: StaffMemberItem): string {
   const custom = member.customRole?.trim()
   if (custom) {
-    return normalizeRole(custom)
+    const cleaned = cleanRoleForGrouping(custom)
+    return normalizeRole(cleaned)
   }
 
   const role = (member.role || "Staff").trim()
-  const normalizedKey = role.toUpperCase()
+  const cleanedRole = cleanRoleForGrouping(role)
+  const normalizedKey = cleanedRole.toUpperCase()
   if (ROLE_LABELS[normalizedKey]) {
     return ROLE_LABELS[normalizedKey]
   }
 
-  return normalizeRole(role)
+  return normalizeRole(cleanedRole)
 }
 
 export function StaffTab({ staff }: StaffTabProps) {
@@ -165,15 +177,8 @@ export function StaffTab({ staff }: StaffTabProps) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-base font-semibold text-foreground">
-          Staff ({staff.length})
-        </h2>
-      </div>
-
-      <div className="flex flex-col gap-8">
-        {groupedStaff.map((group) => (
+    <div className="flex flex-col gap-8">
+      {groupedStaff.map((group) => (
           <section
             key={group.key}
             aria-labelledby={`staff-role-${group.key}`}
@@ -191,8 +196,8 @@ export function StaffTab({ staff }: StaffTabProps) {
               </span>
             </div>
 
-            {/* Denser staff grid allowing more items per row */}
-            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 min-[2200px]:grid-cols-7">
+            {/* Staff media cards grid */}
+            <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-3 sm:gap-4">
               {group.items.map((member) => {
                 const roleLabel =
                   member.customRole || getStaffRoleTitle(member)
@@ -200,39 +205,41 @@ export function StaffTab({ staff }: StaffTabProps) {
                 return (
                   <div
                     key={member.id}
-                    className="flex items-center gap-2.5 rounded-xl border border-border/40 bg-card p-2"
+                    className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card hover:border-primary/40 transition-colors"
                   >
+                    {/* Staff Person Image */}
                     <Link
                       href={`/borealis/people/${member.person.id}`}
-                      className="relative size-10 shrink-0 overflow-hidden rounded-lg bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="relative aspect-2/3 w-full overflow-hidden bg-muted outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-hidden"
                     >
                       {member.person.image ? (
                         <img
                           src={member.person.image}
                           alt={member.person.namePrimary}
                           loading="lazy"
-                          className="h-full w-full object-cover"
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-muted-foreground/50">
-                          <IconPhotoOff className="size-4" aria-hidden="true" />
+                          <IconPhotoOff className="size-6" aria-hidden="true" />
                         </div>
                       )}
                     </Link>
 
-                    <div className="flex min-w-0 flex-1 flex-col">
+                    {/* Staff Details Under Image */}
+                    <div className="flex flex-1 flex-col gap-0.5 p-2">
                       <Link
                         href={`/borealis/people/${member.person.id}`}
-                        className="truncate text-[11px] font-semibold text-foreground outline-none hover:underline focus-visible:underline"
+                        className="line-clamp-2 text-xs font-semibold text-foreground group-hover:underline"
                       >
                         {member.person.namePrimary}
                       </Link>
                       {member.person.nameNative && (
-                        <span className="font-japanese truncate text-[9px] text-muted-foreground opacity-75">
+                        <span className="font-japanese truncate text-[10px] text-muted-foreground opacity-80">
                           {member.person.nameNative}
                         </span>
                       )}
-                      <span className="mt-0.5 truncate text-[9px] text-muted-foreground">
+                      <span className="mt-1 line-clamp-2 text-[10px] font-medium text-muted-foreground">
                         {roleLabel}
                       </span>
                     </div>
@@ -243,6 +250,5 @@ export function StaffTab({ staff }: StaffTabProps) {
           </section>
         ))}
       </div>
-    </div>
-  )
-}
+    )
+  }

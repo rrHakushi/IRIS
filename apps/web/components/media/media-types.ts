@@ -1,5 +1,6 @@
 export type MediaTabKey =
   | "overview"
+  | "relations"
   | "characters"
   | "staff"
   | "episodes"
@@ -9,6 +10,7 @@ export type MediaTabKey =
   | "trailers"
   | "stats"
   | "friends"
+  | "people"
   | "recommendations"
 
 export interface MusicTrackItem {

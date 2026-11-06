@@ -88,6 +88,45 @@ export const BorealisMediaModel = {
     })
   ),
 
+  mediaPeopleQuery: t.Optional(
+    t.Object({
+      page: t.Optional(t.Numeric({ default: 1, minimum: 1, description: 'Page number' })),
+      limit: t.Optional(t.Numeric({ default: 40, minimum: 1, maximum: 100, description: 'Items per page' })),
+      status: t.Optional(t.String({ description: 'Filter by list status (e.g. COMPLETED, IN_PROGRESS)' })),
+    })
+  ),
+
+  mediaPeopleResponse: t.Object({
+    success: t.Boolean(),
+    mediaType: t.String(),
+    mediaId: t.Number(),
+    total: t.Number(),
+    page: t.Number(),
+    limit: t.Number(),
+    totalPages: t.Number(),
+    hasMore: t.Boolean(),
+    people: t.Array(
+      t.Object({
+        id: t.Number(),
+        userId: t.String(),
+        status: t.String(),
+        score: t.Nullable(t.Number()),
+        progress: t.Nullable(t.Number()),
+        volumesProgress: t.Nullable(t.Number()),
+        updatedAt: t.String(),
+        user: t.Object({
+          id: t.String(),
+          username: t.String(),
+          displayName: t.String(),
+          avatarUrl: t.Nullable(t.String()),
+          avatarFrame: t.Nullable(t.String()),
+          displayNameStyle: t.Optional(t.Any()),
+          customization: t.Optional(t.Any()),
+        }),
+      })
+    ),
+  }),
+
   similarResponse: t.Object({
     success: t.Boolean(),
     sourceId: t.Number(),

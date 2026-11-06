@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react"
 import Link from "next/link"
 import { IconPhotoOff, IconWorld } from "@tabler/icons-react"
 import { Badge } from "@workspace/ui/components/badge"
+import { cn } from "@workspace/ui/lib/utils"
 import type { CharacterItem } from "../media-types"
 
 interface CharactersTabProps {
@@ -132,40 +133,32 @@ export function CharactersTab({ characters }: CharactersTabProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header & Language Switcher */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-base font-semibold text-foreground">
-            All Characters ({uniqueCharacters.length})
-          </h2>
-        </div>
-
-        {availableLanguages.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            <div className="me-1 flex items-center gap-1 text-xs text-muted-foreground">
-              <IconWorld className="size-3.5" aria-hidden="true" />
-              <span>Voice:</span>
-            </div>
-            {availableLanguages.map((lang) => {
-              const isActive = selectedLanguage === lang
-              return (
-                <button
-                  key={lang}
-                  type="button"
-                  onClick={() => setSelectedLanguage(lang)}
-                  className={`rounded-xl px-2.5 py-1 text-xs font-medium outline-none select-none ${
-                    isActive
-                      ? "bg-primary text-primary-foreground shadow-xs"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                  }`}
-                >
-                  {lang}
-                </button>
-              )
-            })}
+      {/* Voice Language Filter */}
+      {availableLanguages.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <div className="me-1 flex items-center gap-1 text-xs text-muted-foreground">
+            <IconWorld className="size-3.5" aria-hidden="true" />
+            <span>Voice:</span>
           </div>
-        )}
-      </div>
+          {availableLanguages.map((lang) => {
+            const isActive = selectedLanguage === lang
+            return (
+              <button
+                key={lang}
+                type="button"
+                onClick={() => setSelectedLanguage(lang)}
+                className={`rounded-xl px-2.5 py-1 text-xs font-medium outline-none select-none ${
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                }`}
+              >
+                {lang}
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       {/* Characters Sections split by Role */}
       {groupedCharacters.length === 0 ? (
@@ -192,104 +185,104 @@ export function CharactersTab({ characters }: CharactersTabProps) {
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 min-[2200px]:grid-cols-7">
+              <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-3 sm:gap-4">
                 {group.items.map((char) => {
                   const currentActor =
                     char.actorsByLang.get(selectedLanguage) ??
                     (selectedLanguage === "All" ? char.defaultActor : null)
 
+                  const roleUpper = char.role.toUpperCase()
+
                   return (
                     <div
                       key={char.characterId}
-                      className="flex items-center justify-between rounded-xl border border-border/40 bg-card p-2"
+                      className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card hover:border-primary/40 transition-colors"
                     >
-                      {/* Character Side */}
-                      <div className="flex min-w-0 flex-1 items-center gap-2">
-                        <Link
-                          href={`/borealis/characters/${char.characterId}`}
-                          className="relative size-10 shrink-0 overflow-hidden rounded-lg bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        >
-                          {char.image ? (
-                            <img
-                              src={char.image}
-                              alt={char.namePrimary}
-                              loading="lazy"
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-muted-foreground/50">
-                              <IconPhotoOff
-                                className="size-4"
-                                aria-hidden="true"
-                              />
-                            </div>
-                          )}
-                        </Link>
+                      {/* Character Poster Image */}
+                      <Link
+                        href={`/borealis/characters/${char.characterId}`}
+                        className="relative aspect-2/3 w-full overflow-hidden bg-muted outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-hidden"
+                      >
+                        {char.image ? (
+                          <img
+                            src={char.image}
+                            alt={char.namePrimary}
+                            loading="lazy"
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-muted-foreground/50">
+                            <IconPhotoOff className="size-6" aria-hidden="true" />
+                          </div>
+                        )}
 
-                        <div className="flex min-w-0 flex-col">
-                          <Link
-                            href={`/borealis/characters/${char.characterId}`}
-                            className="truncate text-[11px] font-semibold text-foreground outline-none hover:underline focus-visible:underline"
-                          >
-                            {char.namePrimary}
-                          </Link>
-                          {char.nameNative && (
-                            <span className="font-japanese truncate text-[9px] text-muted-foreground opacity-75">
-                              {char.nameNative}
-                            </span>
-                          )}
+                        {/* Character Type Badge */}
+                        <div className="absolute start-1.5 bottom-1.5 z-10 flex flex-wrap gap-1">
                           <Badge
-                            variant={char.role === "MAIN" ? "default" : "outline"}
-                            className="mt-0.5 w-fit px-1 py-0 text-[8px] uppercase"
+                            variant={roleUpper === "MAIN" ? "default" : "secondary"}
+                            className={cn(
+                              "h-4 px-1.5 py-0 text-[8px] font-bold uppercase tracking-wider backdrop-blur-md",
+                              roleUpper === "MAIN"
+                                ? "bg-primary text-primary-foreground shadow-xs"
+                                : roleUpper === "SUPPORTING"
+                                  ? "bg-black/80 text-white/90"
+                                  : "bg-black/80 text-white/70"
+                            )}
                           >
-                            {char.role}
+                            {roleUpper === "MAIN"
+                              ? "Main"
+                              : roleUpper === "SUPPORTING"
+                                ? "Supporting"
+                                : roleUpper === "BACKGROUND"
+                                  ? "Background"
+                                  : char.role}
                           </Badge>
                         </div>
-                      </div>
+                      </Link>
 
-                      {/* Voice Actor Side */}
-                      <div className="flex min-w-0 flex-1 items-center justify-end gap-2 ps-2 text-end">
-                        {currentActor ? (
-                          <>
-                            <div className="flex min-w-0 flex-col">
+                      {/* Character Details Under Image */}
+                      <div className="flex flex-1 flex-col gap-0.5 p-2">
+                        <Link
+                          href={`/borealis/characters/${char.characterId}`}
+                          className="line-clamp-2 text-xs font-semibold text-foreground group-hover:underline"
+                        >
+                          {char.namePrimary}
+                        </Link>
+                        {char.nameNative && (
+                          <span className="font-japanese truncate text-[10px] text-muted-foreground opacity-80">
+                            {char.nameNative}
+                          </span>
+                        )}
+
+                        {/* Voice Actor Underneath */}
+                        {currentActor && (
+                          <div className="mt-auto flex items-center gap-1.5 border-t border-border/40 pt-1.5 text-[10px]">
+                            {currentActor.image ? (
+                              <img
+                                src={currentActor.image}
+                                alt={currentActor.namePrimary}
+                                loading="lazy"
+                                className="size-4 shrink-0 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-muted text-[8px] font-bold text-muted-foreground">
+                                VA
+                              </div>
+                            )}
+                            <div className="flex min-w-0 flex-1 flex-col">
                               <Link
                                 href={`/borealis/people/${currentActor.id}`}
-                                className="truncate text-[11px] font-medium text-foreground outline-none hover:underline focus-visible:underline"
+                                className="truncate font-medium text-muted-foreground hover:text-foreground hover:underline"
                               >
                                 {currentActor.namePrimary}
                               </Link>
                               {currentActor.language && (
-                                <span className="text-[9px] text-muted-foreground">
+                                <span className="text-[9px] text-muted-foreground/70">
                                   {currentActor.language}
                                 </span>
                               )}
                             </div>
-
-                            <Link
-                              href={`/borealis/people/${currentActor.id}`}
-                              className="relative size-10 shrink-0 overflow-hidden rounded-lg bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            >
-                              {currentActor.image ? (
-                                <img
-                                  src={currentActor.image}
-                                  alt={currentActor.namePrimary}
-                                  loading="lazy"
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <div className="flex h-full w-full items-center justify-center text-muted-foreground/50">
-                                  <IconPhotoOff
-                                    className="size-4"
-                                    aria-hidden="true"
-                                  />
-                                </div>
-                              )}
-                            </Link>
-                          </>
-                        ) : (
-                          <span className="pe-1 text-[9px] text-muted-foreground/60 italic">
-                            No {selectedLanguage} VA
-                          </span>
+                          </div>
                         )}
                       </div>
                     </div>

@@ -958,10 +958,10 @@ export function WatchingDashboard(): React.JSX.Element {
             return (item.media as any).chapterCount
           }
           if (
-            typeof (item.media as any).pageCount === "number" &&
-            (item.media as any).pageCount > 0
+            typeof (item.media as any).chapters === "number" &&
+            (item.media as any).chapters > 0
           ) {
-            return (item.media as any).pageCount
+            return (item.media as any).chapters
           }
           return null
         }
@@ -1106,7 +1106,7 @@ export function WatchingDashboard(): React.JSX.Element {
           const nextProg = (item.entry.progress ?? 0) + count
           const isCompleted = maxCount && maxCount > 0 && nextProg >= maxCount
           toast.success(
-            isCompleted ? "Completed book!" : `Page ${nextProg} marked as read`
+            isCompleted ? "Completed book!" : `Chapter ${nextProg} marked as read`
           )
         } else if (type === "other") {
           const { error } = await elysia.borealis.lists

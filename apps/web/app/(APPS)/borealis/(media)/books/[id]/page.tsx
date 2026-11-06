@@ -157,7 +157,7 @@ export default async function BookDetailPage({ params, searchParams }: Props) {
       },
     })),
     studios: book.studios,
-    relations: book.relations,
+    relations: book.relations ?? [],
     updatedAt: book.updatedAt,
   }
 

@@ -53,7 +53,13 @@ export function resolveMediaTitle(
 export function resolveCoverImage(
   media: ListEntryData["media"]
 ): string | null {
-  return media.coverImage || media.posterImage || media.bannerImage || null
+  const raw =
+    media.coverImage || media.posterImage || media.bannerImage || null
+  if (!raw) return null
+  if (raw.startsWith("http://")) {
+    return raw.replace(/^http:\/\//i, "https://")
+  }
+  return raw
 }
 
 export function getConnectedCount(connections: unknown): number {
@@ -212,6 +218,11 @@ function MediaListCardInner({
   const { entry, media } = item
   const title = resolveMediaTitle(media, mediaTitlePreference)
   const cover = resolveCoverImage(media)
+  const [imageError, setImageError] = useState(false)
+
+  useEffect(() => {
+    setImageError(false)
+  }, [cover])
 
   const isMusic = mediaType === "music"
   const isTrack =
@@ -292,10 +303,10 @@ function MediaListCardInner({
         return (media as any).chapterCount
       }
       if (
-        typeof (media as any).pageCount === "number" &&
-        (media as any).pageCount > 0
+        typeof (media as any).chapters === "number" &&
+        (media as any).chapters > 0
       ) {
-        return (media as any).pageCount
+        return (media as any).chapters
       }
       return undefined
     }
@@ -303,7 +314,7 @@ function MediaListCardInner({
   })()
 
   const maxVolumes: number | undefined = (() => {
-    if (mediaType === "manga") {
+    if (mediaType === "manga" || mediaType === "book") {
       if (
         typeof (media as any).volumeCount === "number" &&
         (media as any).volumeCount > 0
@@ -321,7 +332,7 @@ function MediaListCardInner({
   })()
 
   const currentProgress =
-    mediaType === "manga"
+    mediaType === "manga" || mediaType === "book"
       ? (entry.chaptersProgress ?? entry.progress ?? 0)
       : (entry.progress ?? 0)
 
@@ -485,7 +496,7 @@ function MediaListCardInner({
           }}
           className="absolute inset-0 block size-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-hidden"
         >
-          {cover ? (
+          {cover && !imageError ? (
             <Image
               src={cover}
               alt={title}
@@ -494,6 +505,12 @@ function MediaListCardInner({
               priority={priority}
               loading={priority ? "eager" : "lazy"}
               decoding="async"
+              unoptimized={
+                cover.includes("books.google.com") ||
+                cover.includes("google") ||
+                cover.startsWith("http://")
+              }
+              onError={() => setImageError(true)}
               className="object-cover"
             />
           ) : (
@@ -579,7 +596,7 @@ function MediaListCardInner({
                 </span>
               ) : null}
             </div>
-          ) : mediaType === "manga" ? (
+          ) : mediaType === "manga" || mediaType === "book" ? (
             <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 tabular-nums shadow-xs backdrop-blur-md">
               {typeof maxVolumes === "number" || volumesProgress > 0 ? (
                 <span className="font-semibold text-white">
@@ -602,15 +619,6 @@ function MediaListCardInner({
           ) : mediaType === "game" ? (
             <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 tabular-nums shadow-xs backdrop-blur-md">
               <span>{displayedProgress} Hrs</span>
-            </div>
-          ) : mediaType === "book" ? (
-            <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 tabular-nums shadow-xs backdrop-blur-md">
-              <span>P {displayedProgress}</span>
-              {typeof maxProgress === "number" && maxProgress > 0 ? (
-                <span className="font-semibold text-primary">
-                  /{maxProgress}
-                </span>
-              ) : null}
             </div>
           ) : mediaType === "music" ? (
             <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 tabular-nums shadow-xs backdrop-blur-md">

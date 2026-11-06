@@ -1,4 +1,4 @@
-import { Elysia } from 'elysia'
+import { Elysia, t } from 'elysia'
 import { BorealisMediaModel } from '../../models/borealis/media.model'
 import { BorealisMediaServ } from '../../../services/borealis/media.serv'
 
@@ -749,6 +749,34 @@ export const borealisMedia = new Elysia({ prefix: '/borealis/media' })
     },
     async ({ params: { id } }) => {
       return await BorealisMediaServ.getMusicById(id)
+    }
+  )
+
+  // ===========================================================================
+  // 8. Media Community: People
+  // ===========================================================================
+
+  // GET /borealis/media/:type/:id/people (Get all users who have this media in their list)
+  .get(
+    '/:type/:id/people',
+    {
+      params: t.Object({
+        type: t.String({ description: 'Media type (anime, manga, tv, movie, game, book, music, other)' }),
+        id: t.Numeric({ minimum: 1, description: 'Media ID' }),
+      }),
+      query: BorealisMediaModel.mediaPeopleQuery,
+      detail: {
+        summary: 'Get all public users tracking this media item',
+        description: 'Returns all public users who have this media item in their list with score and progress.',
+        tags: ['Borealis Media - People'],
+      },
+      response: {
+        200: BorealisMediaModel.mediaPeopleResponse,
+        422: BorealisMediaModel.validationError,
+      },
+    },
+    async ({ params: { type, id }, query }) => {
+      return await BorealisMediaServ.getMediaPeople(type, Number(id), query)
     }
   )
 

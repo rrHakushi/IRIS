@@ -154,7 +154,7 @@ export default async function AnimeDetailPage({ params, searchParams }: Props) {
     airingSchedule: anime.airingSchedule,
     nextAiringEpisodeNumber: anime.nextAiringEpisodeNumber,
     nextAiringAt: anime.nextAiringAt,
-    relations: anime.relations,
+    relations: anime.relations ?? [],
     themeSongs: anime.themeSongs as ThemeSongsData | null,
     trailers: anime.trailers as NormalizedMediaData["trailers"],
     images: anime.images as Record<string, string[]> | null,

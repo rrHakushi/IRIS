@@ -165,7 +165,7 @@ export function OverviewTab({
       return (a.order ?? 999) - (b.order ?? 999)
     })
 
-    return uniqueList.slice(0, 12)
+    return uniqueList.slice(0, 24)
   }, [media.characters, media.category])
 
   // Parse description cleanly
@@ -176,42 +176,6 @@ export function OverviewTab({
       .replace(/<[^>]*>/g, "")
       .trim()
   }, [media.description])
-
-  // Group relations by targetType (e.g. ANIME, MANGA, MOVIE, TV, BOOK, GAME)
-  const relationsByType = useMemo(() => {
-    const map = new Map<string, RelationItem[]>()
-    for (const rel of media.relations) {
-      const typeKey = rel.targetType.toUpperCase()
-      const list = map.get(typeKey) ?? []
-      list.push(rel)
-      map.set(typeKey, list)
-    }
-
-    const formatTypeHeading = (type: string) => {
-      switch (type) {
-        case "ANIME":
-          return "Related Anime"
-        case "MANGA":
-          return "Related Manga"
-        case "MOVIE":
-          return "Related Movies"
-        case "TV":
-          return "Related TV Shows"
-        case "BOOK":
-          return "Related Light Novels & Books"
-        case "GAME":
-          return "Related Games"
-        default:
-          return `Related ${type.charAt(0) + type.slice(1).toLowerCase()}`
-      }
-    }
-
-    return Array.from(map.entries()).map(([rawType, items]) => ({
-      rawType,
-      heading: formatTypeHeading(rawType),
-      items,
-    }))
-  }, [media.relations])
 
   // Helper to format full dates
   const formatFullDate = (
@@ -850,7 +814,7 @@ export function OverviewTab({
               />
             )}
 
-          {/* 2. Featured Characters (MAX 2 next to each other) */}
+          {/* 2. Featured Characters (1 row scrollable) */}
           {featuredCharacters.length > 0 && (
             <section aria-labelledby="characters-preview-heading">
               <div className="mb-3.5 flex items-center justify-between">
@@ -864,19 +828,9 @@ export function OverviewTab({
                       ? "Characters & Cast"
                       : "Characters & Voice Actors"}
                 </h2>
-                {onViewAllCharacters && media.characters.length > 12 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onViewAllCharacters}
-                    className="h-7 text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    View All ({media.characters.length})
-                  </Button>
-                )}
               </div>
 
-              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[2200px]:grid-cols-6">
+              <div className="no-scrollbar flex gap-3 overflow-x-auto pb-2">
                 {featuredCharacters.map((item) => {
                   const charName =
                     titlePref === "native" && item.nameNative
@@ -886,87 +840,100 @@ export function OverviewTab({
                     titlePref === "native" && item.actor?.nameNative
                       ? item.actor.nameNative
                       : item.actor?.namePrimary
+                  const roleUpper = item.role.toUpperCase()
 
                   return (
                     <div
                       key={item.characterId}
-                      className="flex items-center justify-between rounded-xl border border-border/40 bg-card p-2"
+                      className="group relative flex w-[140px] shrink-0 flex-col overflow-hidden rounded-xl border border-border/50 bg-card hover:border-primary/40 transition-colors"
                     >
-                      {/* Character Side */}
-                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                      {/* Character Poster Image */}
+                      <Link
+                        href={`/borealis/characters/${item.characterId}`}
+                        className="relative aspect-2/3 w-full overflow-hidden bg-muted outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-hidden"
+                      >
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={charName}
+                            loading="lazy"
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-muted-foreground/50">
+                            <IconPhotoOff className="size-6" aria-hidden="true" />
+                          </div>
+                        )}
+
+                        {/* Character Type Badge */}
+                        <div className="absolute start-1.5 bottom-1.5 z-10 flex flex-wrap gap-1">
+                          <Badge
+                            variant={roleUpper === "MAIN" ? "default" : "secondary"}
+                            className={cn(
+                              "h-4 px-1.5 py-0 text-[8px] font-bold uppercase tracking-wider backdrop-blur-md",
+                              roleUpper === "MAIN"
+                                ? "bg-primary text-primary-foreground shadow-xs"
+                                : roleUpper === "SUPPORTING"
+                                  ? "bg-black/80 text-white/90"
+                                  : "bg-black/80 text-white/70"
+                            )}
+                          >
+                            {roleUpper === "MAIN"
+                              ? "Main"
+                              : roleUpper === "SUPPORTING"
+                                ? "Supporting"
+                                : roleUpper === "BACKGROUND"
+                                  ? "Background"
+                                  : item.role}
+                          </Badge>
+                        </div>
+                      </Link>
+
+                      {/* Character Details Under Image */}
+                      <div className="flex flex-1 flex-col gap-0.5 p-2">
                         <Link
                           href={`/borealis/characters/${item.characterId}`}
-                          className="relative size-10 shrink-0 overflow-hidden rounded-lg bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="line-clamp-2 text-xs font-semibold text-foreground group-hover:underline"
                         >
-                          {item.image ? (
-                            <img
-                              src={item.image}
-                              alt={charName}
-                              loading="lazy"
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-muted-foreground/50">
-                              <IconPhotoOff
-                                className="size-4"
-                                aria-hidden="true"
-                              />
-                            </div>
-                          )}
+                          {charName}
                         </Link>
-
-                        <div className="flex min-w-0 flex-col">
-                          <Link
-                            href={`/borealis/characters/${item.characterId}`}
-                            className="truncate text-[11px] font-medium text-foreground outline-none hover:underline focus-visible:underline"
-                          >
-                            {charName}
-                          </Link>
-                          <span className="text-[9px] text-muted-foreground uppercase">
-                            {item.role}
+                        {item.nameNative && (
+                          <span className="font-japanese truncate text-[10px] text-muted-foreground opacity-80">
+                            {item.nameNative}
                           </span>
-                        </div>
-                      </div>
+                        )}
 
-                      {/* Voice Actor Side */}
-                      {item.actor && (
-                        <div className="flex min-w-0 flex-1 items-center justify-end gap-2 ps-2 text-end">
-                          <div className="flex min-w-0 flex-col">
-                            <Link
-                              href={`/borealis/people/${item.actor.id}`}
-                              className="truncate text-[11px] font-medium text-foreground outline-none hover:underline focus-visible:underline"
-                            >
-                              {actorName}
-                            </Link>
-                            {item.actor.language && (
-                              <span className="text-[9px] text-muted-foreground">
-                                {item.actor.language}
-                              </span>
-                            )}
-                          </div>
-
-                          <Link
-                            href={`/borealis/people/${item.actor.id}`}
-                            className="relative size-10 shrink-0 overflow-hidden rounded-lg bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                          >
+                        {/* Voice Actor Underneath */}
+                        {item.actor && (
+                          <div className="mt-auto flex items-center gap-1.5 border-t border-border/40 pt-1.5 text-[10px]">
                             {item.actor.image ? (
                               <img
                                 src={item.actor.image}
                                 alt={actorName ?? "Actor"}
                                 loading="lazy"
-                                className="h-full w-full object-cover"
+                                className="size-4 shrink-0 rounded-full object-cover"
                               />
                             ) : (
-                              <div className="flex h-full w-full items-center justify-center text-muted-foreground/50">
-                                <IconPhotoOff
-                                  className="size-4"
-                                  aria-hidden="true"
-                                />
+                              <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-muted text-[8px] font-bold text-muted-foreground">
+                                VA
                               </div>
                             )}
-                          </Link>
-                        </div>
-                      )}
+                            <div className="flex min-w-0 flex-1 flex-col">
+                              <Link
+                                href={`/borealis/people/${item.actor.id}`}
+                                className="truncate font-medium text-muted-foreground hover:text-foreground hover:underline"
+                              >
+                                {actorName}
+                              </Link>
+                              {item.actor.language && (
+                                <span className="text-[9px] text-muted-foreground/70">
+                                  {item.actor.language}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )
                 })}
@@ -1029,107 +996,7 @@ export function OverviewTab({
             </section>
           )}
 
-          {/* 4. Relations split by targetType - side by side if <= 4 items and multiple types to save space */}
-          {relationsByType.length > 0 && (
-            <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
-              {relationsByType.map(({ rawType, heading, items }) => {
-                const isSmall = relationsByType.length > 1 && items.length <= 4
-
-                return (
-                  <section
-                    key={rawType}
-                    aria-labelledby={`relation-${rawType}`}
-                    className={isSmall ? "col-span-1" : "col-span-full"}
-                  >
-                    <div className="mb-2.5 flex items-center gap-2">
-                      <IconLink
-                        className="size-4 text-primary"
-                        aria-hidden="true"
-                      />
-                      <h2
-                        id={`relation-${rawType}`}
-                        className="text-base font-semibold text-foreground"
-                      >
-                        {heading}
-                      </h2>
-                    </div>
-
-                    {/* Denser grid with fixed 120px cards allowing more per row */}
-                    <div className="grid grid-cols-[repeat(auto-fill,120px)] gap-2.5">
-                      {items.map((rel) => {
-                        const targetTitle = rel.target
-                          ? formatMediaTitle(rel.target, titlePref)
-                          : `Media #${rel.targetId}`
-                        const targetCover = rel.target?.coverImage ?? null
-                        const targetFormat = rel.target?.format ?? null
-                        const href = getMediaDetailHref(
-                          rel.targetType,
-                          rel.targetId
-                        )
-
-                        return (
-                          <Link
-                            key={`${rel.id}-${rel.targetType}-${rel.targetId}`}
-                            href={href}
-                            className="group flex flex-col overflow-hidden rounded-xl border border-border/40 bg-card outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                          >
-                            <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted">
-                              {targetCover ? (
-                                <img
-                                  src={targetCover}
-                                  alt={targetTitle}
-                                  loading="lazy"
-                                  className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                                />
-                              ) : (
-                                <div className="flex h-full w-full items-center justify-center text-muted-foreground/50">
-                                  <IconPhotoOff
-                                    className="size-6"
-                                    aria-hidden="true"
-                                  />
-                                </div>
-                              )}
-
-                              {/* Inline Badges at the bottom of the cover image */}
-                              <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-center gap-1 bg-gradient-to-t from-black/85 via-black/50 to-transparent p-1.5">
-                                <Badge
-                                  variant="secondary"
-                                  className="h-3.5 px-1 py-0 text-[8px] leading-none font-bold tracking-wider uppercase backdrop-blur-xs"
-                                >
-                                  {rel.type.replace(/_/g, " ")}
-                                </Badge>
-                                {targetFormat && (
-                                  <Badge
-                                    variant="outline"
-                                    className="h-3.5 bg-background/80 px-1 py-0 text-[8px] leading-none font-semibold uppercase backdrop-blur-xs"
-                                  >
-                                    {targetFormat}
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="flex flex-col gap-0.5 p-1.5">
-                              <span className="line-clamp-2 text-[11px] leading-tight font-medium text-foreground group-hover:underline">
-                                {targetTitle}
-                              </span>
-                              {rel.target?.seasonYear && (
-                                <span className="text-[9px] text-muted-foreground">
-                                  {rel.target.seasonYear}
-                                </span>
-                              )}
-                            </div>
-                          </Link>
-                        )
-                      })}
-                    </div>
-                  </section>
-                )
-              })}
-            </div>
-          )}
-
-          {/* 5. Similar Titles (horizontally scrollable row with compact 120px cards) */}
+          {/* 4. Similar Titles (horizontally scrollable row with compact 120px cards) */}
           {similarListItems.length > 0 && (
             <section aria-labelledby="similar-heading">
               <div className="mb-3 flex items-center justify-between">
