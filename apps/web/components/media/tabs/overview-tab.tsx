@@ -843,6 +843,9 @@ export function OverviewTab({
                     image: item.image,
                     role: item.role,
                     actor: item.actor,
+                    description: item.description,
+                    gender: item.gender,
+                    age: item.age,
                   }}
                 />
               ))}
@@ -916,7 +919,7 @@ export function OverviewTab({
               {similarListItems.map((item) => (
                 <BorealisCard
                   key={item.id}
-                  type={media.category as any}
+                  type={(item.type ?? media.category) as any}
                   titlePreference={titlePref}
                   data={{
                     id: item.id,
@@ -924,9 +927,15 @@ export function OverviewTab({
                     titleSecondary: item.titleSecondary,
                     titleNative: item.titleNative,
                     coverImage: item.coverImage,
+                    bannerImage: item.bannerImage,
+                    description: item.description,
                     format: item.format,
+                    status: item.status,
                     seasonYear: item.year,
+                    year: item.year,
                     score: item.score,
+                    averageScore: item.score,
+                    genres: item.genres,
                   }}
                 />
               ))}

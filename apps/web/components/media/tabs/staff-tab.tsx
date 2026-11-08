@@ -199,6 +199,7 @@ export function StaffTab({ staff }: StaffTabProps) {
                 nameNative: member.person.nameNative,
                 image: member.person.image,
                 role: member.customRole || getStaffRoleTitle(member),
+                description: member.person.description,
               }}
             />
           ))}

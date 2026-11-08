@@ -20,6 +20,7 @@ import { FriendsMediaTab } from "./tabs/friends-tab"
 import { PeopleTab } from "./tabs/people-tab"
 import { RecommendationsMediaTab } from "./tabs/recommendations-tab"
 import { MediaFooter } from "./media-footer"
+import { addBrowseVisitToStore, type BrowseCategory } from "@/lib/browse-history"
 import type {
   MediaTabItem,
   MediaTabKey,
@@ -63,6 +64,64 @@ export function MediaDetailView({
     const tabParam = (searchParams.get("tab") as MediaTabKey) || "overview"
     setActiveTab(tabParam)
   }, [searchParams])
+
+  // Track page visit in Browse recently visited
+  useEffect(() => {
+    if (!media?.id || !media?.category) return
+
+    const isMusic = media.category === "music"
+    const isAlbum =
+      isMusic &&
+      (media.format?.toUpperCase() === "ALBUM" ||
+        Boolean(media.tracks && media.tracks.length > 0))
+
+    const year =
+      media.seasonYear ??
+      media.startDateYear ??
+      media.releaseDateYear ??
+      null
+
+    addBrowseVisitToStore(media.category as BrowseCategory, {
+      id: media.id,
+      title: media.titlePrimary,
+      titlePrimary: media.titlePrimary,
+      titleSecondary: media.titleSecondary,
+      titleNative: media.titleNative,
+      coverImage: media.coverImage,
+      bannerImage: media.bannerImage,
+      description: media.description,
+      format: media.format,
+      status: media.status,
+      year,
+      seasonYear: media.seasonYear ?? year,
+      averageScore: media.averageScore,
+      episodeCount: media.episodeCount,
+      genres: media.genres ?? [],
+      studios: media.studios ?? [],
+      queuedForFetch: Boolean(isQueuedFetch),
+      type: isMusic ? (isAlbum ? "ALBUM" : "TRACK") : undefined,
+    })
+  }, [
+    media.id,
+    media.category,
+    media.titlePrimary,
+    media.titleSecondary,
+    media.titleNative,
+    media.coverImage,
+    media.bannerImage,
+    media.description,
+    media.format,
+    media.status,
+    media.seasonYear,
+    media.startDateYear,
+    media.releaseDateYear,
+    media.averageScore,
+    media.episodeCount,
+    media.genres,
+    media.studios,
+    media.tracks,
+    isQueuedFetch,
+  ])
 
   // Compute available tabs according to media category and available data
   const availableTabs = useMemo(() => {

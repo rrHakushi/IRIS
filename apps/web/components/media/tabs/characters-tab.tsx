@@ -49,6 +49,9 @@ export function CharactersTab({ characters }: CharactersTabProps) {
         image: string | null
         role: string
         order: number | null
+        description?: string | null
+        gender?: string | null
+        age?: string | null
         actorsByLang: Map<string, CharacterItem["actor"]>
         defaultActor: CharacterItem["actor"]
       }
@@ -64,6 +67,9 @@ export function CharactersTab({ characters }: CharactersTabProps) {
           image: item.image,
           role: item.role,
           order: item.order,
+          description: item.description,
+          gender: item.gender,
+          age: item.age,
           actorsByLang: new Map(),
           defaultActor: item.actor,
         }
@@ -194,6 +200,9 @@ export function CharactersTab({ characters }: CharactersTabProps) {
                       image: char.image,
                       role: char.role,
                       actor: currentActor,
+                      description: char.description,
+                      gender: char.gender,
+                      age: char.age,
                     }}
                   />
                 )

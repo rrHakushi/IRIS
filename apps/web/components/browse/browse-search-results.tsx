@@ -35,6 +35,8 @@ export interface SearchResultItem {
   audioPreviewUrl?: string | null
   explicitLyrics?: boolean | null
   description?: string | null
+  gender?: string | null
+  age?: string | number | null
   raw?: any
 }
 
@@ -121,22 +123,37 @@ export function BrowseSearchResults({
 
     const handleVisitClick = () => {
       onVisit({
-        ...item,
         id: item.id,
         title: item.title,
-        coverImage: item.coverImage,
-        bannerImage: item.bannerImage,
-        description: item.description,
-        format: item.format,
-        year: item.year,
-        queuedForFetch: item.queuedForFetch,
+        titlePrimary: item.titlePrimary ?? item.title,
+        titleNative: item.titleNative ?? null,
+        titleSecondary: item.titleSecondary ?? null,
+        coverImage: item.coverImage ?? null,
+        bannerImage: item.bannerImage ?? null,
+        description: item.description ?? null,
+        format: item.format ?? null,
+        status: item.status ?? null,
+        year: item.year ?? null,
+        seasonYear:
+          item.seasonYear ??
+          (typeof item.year === "number" ? item.year : null),
+        averageScore: item.averageScore ?? null,
+        chapterCount: item.chapterCount ?? null,
+        episodeCount: item.episodeCount ?? null,
+        volumeCount: item.volumeCount ?? null,
+        genres: item.genres ?? [],
+        studios: item.studios ?? [],
+        queuedForFetch: Boolean(item.queuedForFetch),
         type: item.type,
-        artist: item.artist,
-        album: item.album,
-        audioPreviewUrl: item.audioPreviewUrl,
-        explicitLyrics: item.explicitLyrics,
+        artist: item.artist ?? null,
+        album: item.album ?? null,
+        duration: item.duration ?? null,
+        audioPreviewUrl: item.audioPreviewUrl ?? null,
+        explicitLyrics: item.explicitLyrics ?? null,
+        gender: item.gender ?? null,
+        age: item.age ?? null,
         visitedAt: Date.now(),
-        raw: item.raw,
+        raw: item.raw ?? item,
       })
     }
 
@@ -144,12 +161,20 @@ export function BrowseSearchResults({
     const cardData = {
       ...rawData,
       id: item.id,
-      titlePrimary: rawData.titlePrimary ?? item.title,
+      titlePrimary: item.titlePrimary ?? rawData.titlePrimary ?? item.title,
+      titleSecondary: item.titleSecondary ?? rawData.titleSecondary,
+      titleNative: item.titleNative ?? rawData.titleNative,
       coverImage: item.coverImage ?? rawData.coverImage,
       bannerImage: item.bannerImage ?? rawData.bannerImage,
       description: item.description ?? rawData.description,
+      gender: item.gender ?? rawData.gender,
+      age: item.age ?? rawData.age,
       format: item.format ?? rawData.format,
-      seasonYear: item.year ?? rawData.seasonYear ?? rawData.startDateYear,
+      seasonYear:
+        item.seasonYear ??
+        item.year ??
+        rawData.seasonYear ??
+        rawData.startDateYear,
       averageScore: item.averageScore ?? rawData.averageScore,
       chapterCount: item.chapterCount ?? rawData.chapterCount,
       episodeCount: item.episodeCount ?? rawData.episodeCount,

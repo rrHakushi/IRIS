@@ -38,6 +38,9 @@ export interface CharacterItem {
   image: string | null
   role: string
   order: number | null
+  description?: string | null
+  gender?: string | null
+  age?: string | null
   actor: {
     id: number
     namePrimary: string
@@ -58,6 +61,9 @@ export interface StaffMemberItem {
     nameNative: string | null
     image: string | null
     language: string | null
+    description?: string | null
+    gender?: string | null
+    age?: string | null
   }
 }
 
@@ -106,8 +112,13 @@ export interface RelationItem {
     titleSecondary?: string | null
     titleNative?: string | null
     coverImage?: string | null
+    bannerImage?: string | null
+    description?: string | null
     format?: string | null
+    status?: string | null
     seasonYear?: number | null
+    averageScore?: number | null
+    genres?: Array<{ id: number; name: string }> | string[]
   } | null
 }
 
@@ -116,11 +127,15 @@ export interface SimilarMediaCardItem {
   type?: string | null
   format: string | null
   coverImage: string | null
+  bannerImage?: string | null
+  description?: string | null
+  status?: string | null
   titlePrimary: string
   titleSecondary: string | null
   titleNative?: string | null
   year: number | null
   score: number | null
+  genres?: Array<{ id: number; name: string }> | string[]
 }
 
 export interface TrailerItem {

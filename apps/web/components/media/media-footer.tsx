@@ -185,9 +185,9 @@ export function MediaFooter({ media }: MediaFooterProps) {
           )}
 
           {updatedFormatted && (
-            <div className="flex items-center gap-1.5 text-muted-foreground">
+            <div className="flex items-center gap-1.5 text-muted-foreground" suppressHydrationWarning>
               <IconClock className="size-3.5" aria-hidden="true" />
-              <span>Last updated: {updatedFormatted}</span>
+              <span suppressHydrationWarning>Last updated: {updatedFormatted}</span>
             </div>
           )}
         </div>

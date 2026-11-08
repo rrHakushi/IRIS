@@ -3652,6 +3652,13 @@ export function BorealisCardHoverContent({
 
       {/* Banner Backdrop or blurred scaled coverImage fallback */}
       {(() => {
+        const isPersonOrCharacter =
+          data.type === "character" ||
+          data.type === "characters" ||
+          data.type === "staff" ||
+          data.type === "people"
+        if (isPersonOrCharacter) return null
+
         const heroBanner = details?.bannerImage
         const heroCover =
           data.image ||
@@ -3818,7 +3825,7 @@ export function BorealisCardHoverContent({
             {/* Title Header */}
             <div className="flex flex-col gap-0.5">
               <div className="flex items-start justify-between gap-2">
-                <h4 className="line-clamp-2 text-sm sm:text-base font-extrabold text-white">
+                <h4 className="line-clamp-2 text-sm sm:text-base font-extrabold text-white font-mono">
                   {data.title}
                 </h4>
                 {config.canEdit && !config.showTabNav && (
@@ -3891,6 +3898,20 @@ export function BorealisCardHoverContent({
                   <span>{details.year}</span>
                 </div>
               )}
+
+              {/* Gender badge for characters/people */}
+              {details?.gender && (
+                <span className="inline-flex items-center rounded-md border border-frost bg-frost px-1.5 py-0.5 font-mono text-[10px] font-bold text-zinc-100 uppercase">
+                  {details.gender}
+                </span>
+              )}
+
+              {/* Age badge for characters/people */}
+              {details?.age && (
+                <span className="inline-flex items-center rounded-md border border-frost bg-frost px-1.5 py-0.5 font-mono text-[10px] font-bold text-zinc-300">
+                  {details.age.toLowerCase().includes("age") ? details.age : `Age: ${details.age}`}
+                </span>
+              )}
             </div>
 
             {/* User List Entry Details: Dates, Private, Notes */}
@@ -3932,7 +3953,7 @@ export function BorealisCardHoverContent({
             {details?.description ? (
               <BorealisFormattedText
                 text={details.description}
-                className="select-text"
+                className="select-text font-mono text-xs text-zinc-300 leading-relaxed"
               />
             ) : null}
 

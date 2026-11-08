@@ -6,8 +6,13 @@ export interface HydratedMediaTarget {
   titleSecondary?: string | null
   titleNative?: string | null
   coverImage?: string | null
+  bannerImage?: string | null
+  description?: string | null
   format?: string | null
+  status?: string | null
   seasonYear?: number | null
+  averageScore?: number | null
+  genres?: Array<{ id: number; name: string }> | string[]
 }
 
 export interface HydratedMediaRelationItem {
@@ -147,10 +152,15 @@ export async function fetchMediaRelations(
           'titleSecondary',
           'titleNative',
           'coverImage',
+          'bannerImage',
+          'description',
           'format',
+          'status',
+          'averageScore',
           'seasonYear',
           'startDateYear'
         )
+        .include('genres', (g) => g.include('genre', (ge) => ge.select('id', 'name')))
         .all()
         .then((items) => {
           for (const item of items) {
@@ -160,8 +170,13 @@ export async function fetchMediaRelations(
               titleSecondary: item.titleSecondary,
               titleNative: item.titleNative,
               coverImage: item.coverImage,
-              format: item.format,
+              bannerImage: item.bannerImage,
+              description: item.description,
+              format: item.format ? String(item.format) : null,
+              status: item.status ? String(item.status) : null,
+              averageScore: item.averageScore,
               seasonYear: item.seasonYear ?? item.startDateYear ?? null,
+              genres: (item.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
             })
           }
         })
@@ -178,9 +193,14 @@ export async function fetchMediaRelations(
           'titleSecondary',
           'titleNative',
           'coverImage',
+          'bannerImage',
+          'description',
           'format',
+          'status',
+          'averageScore',
           'startDateYear'
         )
+        .include('genres', (g) => g.include('genre', (ge) => ge.select('id', 'name')))
         .all()
         .then((items) => {
           for (const item of items) {
@@ -190,8 +210,13 @@ export async function fetchMediaRelations(
               titleSecondary: item.titleSecondary,
               titleNative: item.titleNative,
               coverImage: item.coverImage,
-              format: item.format,
+              bannerImage: item.bannerImage,
+              description: item.description,
+              format: item.format ? String(item.format) : null,
+              status: item.status ? String(item.status) : null,
+              averageScore: item.averageScore,
               seasonYear: item.startDateYear ?? null,
+              genres: (item.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
             })
           }
         })
@@ -208,8 +233,13 @@ export async function fetchMediaRelations(
           'titleSecondary',
           'titleNative',
           'coverImage',
+          'bannerImage',
+          'description',
+          'status',
+          'averageScore',
           'releaseDateYear'
         )
+        .include('genres', (g) => g.include('genre', (ge) => ge.select('id', 'name')))
         .all()
         .then((items) => {
           for (const item of items) {
@@ -219,8 +249,13 @@ export async function fetchMediaRelations(
               titleSecondary: item.titleSecondary,
               titleNative: item.titleNative,
               coverImage: item.coverImage,
+              bannerImage: item.bannerImage,
+              description: item.description,
               format: 'MOVIE',
+              status: item.status ? String(item.status) : null,
+              averageScore: item.averageScore,
               seasonYear: item.releaseDateYear ?? null,
+              genres: (item.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
             })
           }
         })
@@ -237,9 +272,14 @@ export async function fetchMediaRelations(
           'titleSecondary',
           'titleNative',
           'coverImage',
+          'bannerImage',
+          'description',
           'showType',
+          'status',
+          'averageScore',
           'firstAiredYear'
         )
+        .include('genres', (g) => g.include('genre', (ge) => ge.select('id', 'name')))
         .all()
         .then((items) => {
           for (const item of items) {
@@ -249,8 +289,13 @@ export async function fetchMediaRelations(
               titleSecondary: item.titleSecondary,
               titleNative: item.titleNative,
               coverImage: item.coverImage,
+              bannerImage: item.bannerImage,
+              description: item.description,
               format: item.showType || 'TV',
+              status: item.status ? String(item.status) : null,
+              averageScore: item.averageScore,
               seasonYear: item.firstAiredYear ?? null,
+              genres: (item.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
             })
           }
         })
@@ -267,8 +312,14 @@ export async function fetchMediaRelations(
           'titleSecondary',
           'titleNative',
           'coverImage',
+          'bannerImage',
+          'backgroundImage',
+          'description',
+          'status',
+          'averageScore',
           'releaseDateYear'
         )
+        .include('genres', (ge) => ge.include('genre', (gen) => gen.select('id', 'name')))
         .all()
         .then((items) => {
           for (const item of items) {
@@ -278,8 +329,13 @@ export async function fetchMediaRelations(
               titleSecondary: item.titleSecondary,
               titleNative: item.titleNative,
               coverImage: item.coverImage,
+              bannerImage: item.bannerImage || item.backgroundImage,
+              description: item.description,
               format: 'GAME',
+              status: item.status ? String(item.status) : null,
+              averageScore: item.averageScore,
               seasonYear: item.releaseDateYear ?? null,
+              genres: (item.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
             })
           }
         })
@@ -295,9 +351,14 @@ export async function fetchMediaRelations(
           'titlePrimary',
           'titleSecondary',
           'coverImage',
+          'bannerImage',
+          'description',
           'format',
+          'status',
+          'averageScore',
           'releaseDateYear'
         )
+        .include('genres', (g) => g.include('genre', (ge) => ge.select('id', 'name')))
         .all()
         .then((items) => {
           for (const item of items) {
@@ -307,8 +368,13 @@ export async function fetchMediaRelations(
               titleSecondary: item.titleSecondary,
               titleNative: null,
               coverImage: item.coverImage,
+              bannerImage: item.bannerImage,
+              description: item.description,
               format: item.format || 'BOOK',
+              status: item.status ? String(item.status) : null,
+              averageScore: item.averageScore,
               seasonYear: item.releaseDateYear ?? null,
+              genres: (item.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
             })
           }
         })
@@ -326,9 +392,12 @@ export async function fetchMediaRelations(
           'titleSecondary',
           'titleNative',
           'coverImage',
+          'description',
+          'status',
           'type',
           'releaseDateYear'
         )
+        .include('genres', (g) => g.include('genre', (ge) => ge.select('id', 'name')))
         .all()
         .then((items) => {
           for (const item of items) {
@@ -338,8 +407,13 @@ export async function fetchMediaRelations(
               titleSecondary: item.titleSecondary,
               titleNative: item.titleNative,
               coverImage: item.coverImage,
+              bannerImage: null,
+              description: item.description,
               format: item.type || 'MUSIC',
+              status: item.status ? String(item.status) : null,
+              averageScore: null,
               seasonYear: item.releaseDateYear ?? null,
+              genres: (item.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => g.genre!),
             }
             targetMap.set(`MUSIC:${item.id}`, entry)
             targetMap.set(`MUSIC_TRACK:${item.id}`, entry)

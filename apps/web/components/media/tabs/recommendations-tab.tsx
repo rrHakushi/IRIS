@@ -204,8 +204,15 @@ export function RecommendationsMediaTab({
                 titleSecondary: rel.target?.titleSecondary,
                 titleNative: rel.target?.titleNative,
                 coverImage: rel.target?.coverImage,
+                bannerImage: rel.target?.bannerImage,
+                description: rel.target?.description,
                 format: rel.target?.format,
+                status: rel.target?.status,
                 seasonYear: rel.target?.seasonYear,
+                year: rel.target?.seasonYear,
+                score: rel.target?.averageScore,
+                averageScore: rel.target?.averageScore,
+                genres: rel.target?.genres,
                 badges: [
                   {
                     label: rel.type.replace(/_/g, " "),

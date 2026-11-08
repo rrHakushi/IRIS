@@ -49,12 +49,20 @@ export function BrowseVisitedGrid({
     const cardData = {
       ...rawData,
       id: item.id,
-      titlePrimary: rawData.titlePrimary ?? item.title,
+      titlePrimary: item.titlePrimary ?? rawData.titlePrimary ?? item.title,
+      titleSecondary: item.titleSecondary ?? rawData.titleSecondary,
+      titleNative: item.titleNative ?? rawData.titleNative,
       coverImage: item.coverImage ?? rawData.coverImage,
       bannerImage: item.bannerImage ?? rawData.bannerImage,
       description: item.description ?? rawData.description,
+      gender: item.gender ?? rawData.gender,
+      age: item.age ?? rawData.age,
       format: item.format ?? rawData.format,
-      seasonYear: item.year ?? rawData.seasonYear ?? rawData.startDateYear,
+      seasonYear:
+        item.seasonYear ??
+        item.year ??
+        rawData.seasonYear ??
+        rawData.startDateYear,
       averageScore: item.averageScore ?? rawData.averageScore,
       chapterCount: item.chapterCount ?? rawData.chapterCount,
       episodeCount: item.episodeCount ?? rawData.episodeCount,

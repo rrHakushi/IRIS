@@ -421,9 +421,12 @@ export class MediaEntitySyncer {
             age: edge.node.age || null,
             favorites: edge.node.favourites || 0,
           })
-        } else if (!char.image && charImage) {
+        } else {
           await prisma.orm.public.Character.where({ id: char.id }).update({
-            image: charImage,
+            ...(!char.image && charImage ? { image: charImage } : {}),
+            ...(edge.node.description ? { description: edge.node.description } : {}),
+            ...(edge.node.gender ? { gender: edge.node.gender } : {}),
+            ...(edge.node.age ? { age: edge.node.age } : {}),
           }).catch(() => {})
         }
 
@@ -544,9 +547,10 @@ export class MediaEntitySyncer {
             primaryOccupations: edge.node.primaryOccupations || [],
             yearsActive: [],
           })
-        } else if (!person.image && staffImage) {
+        } else {
           await prisma.orm.public.Person.where({ id: person.id }).update({
-            image: staffImage,
+            ...(!person.image && staffImage ? { image: staffImage } : {}),
+            ...(edge.node.description ? { description: edge.node.description } : {}),
           }).catch(() => {})
         }
 

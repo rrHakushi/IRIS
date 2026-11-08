@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useMemo, useState } from "react"
+import React, { useMemo, useState, useEffect } from "react"
 import Link from "next/link"
 import {
   IconBriefcase,
@@ -24,6 +24,7 @@ import type { PersonDetails } from "@IRIS/elysia"
 import { FormattedDescription } from "@/components/media/formatted-description"
 import { FavoriteButton } from "../favorite-button"
 import { getMediaDetailHref } from "@/lib/media-routes"
+import { addBrowseVisitToStore } from "@/lib/browse-history"
 
 interface PersonDetailViewProps {
   person: PersonDetails
@@ -104,6 +105,31 @@ export function PersonDetailView({ person }: PersonDetailViewProps) {
     useState<MediaFilterKey>("ALL")
   const [selectedStaffMediaType, setSelectedStaffMediaType] =
     useState<MediaFilterKey>("ALL")
+
+  // Track page visit in Browse recently visited
+  useEffect(() => {
+    if (!person?.id) return
+    addBrowseVisitToStore("people", {
+      id: person.id,
+      title: person.namePrimary,
+      titlePrimary: person.namePrimary,
+      titleNative: person.nameNative,
+      coverImage: person.image,
+      description: person.description,
+      gender: person.gender,
+      age: person.age,
+      format: person.language || "Person",
+    })
+  }, [
+    person.id,
+    person.namePrimary,
+    person.nameNative,
+    person.image,
+    person.description,
+    person.gender,
+    person.age,
+    person.language,
+  ])
 
   // Deduplicate and process voiced characters
   const deduplicatedVoicedRoles = useMemo(() => {

@@ -113,6 +113,9 @@ export default async function TvDetailPage({ params, searchParams }: Props) {
         image: c.character.image,
         role: c.role,
         order: c.order,
+        description: (c.character as any)?.description ?? null,
+        gender: (c.character as any)?.gender ?? null,
+        age: (c.character as any)?.age ?? null,
         actor: c.actor
           ? {
               id: c.actor.id,
@@ -135,6 +138,7 @@ export default async function TvDetailPage({ params, searchParams }: Props) {
         nameNative: s.person.nameNative,
         image: s.person.image,
         language: s.person.language,
+        description: (s.person as any)?.description ?? null,
       },
     })),
     seasons: (tv.seasons ?? []).map((s: TvDetails["seasons"][number]) => ({
@@ -199,11 +203,15 @@ export default async function TvDetailPage({ params, searchParams }: Props) {
     type: item.type ?? item.mediaType ?? "tv",
     format: item.format,
     coverImage: item.coverImage,
+    bannerImage: item.bannerImage ?? null,
+    description: item.description ?? null,
+    status: item.status ?? null,
     titlePrimary: item.titles?.primary ?? item.titlePrimary ?? "",
     titleSecondary: item.titles?.secondary ?? item.titleSecondary ?? null,
     titleNative: item.titles?.native ?? item.titleNative ?? null,
     year: item.year ?? null,
     score: item.averageScore ?? null,
+    genres: item.genres ?? [],
   }))
 
   return (

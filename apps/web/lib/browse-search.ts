@@ -87,6 +87,7 @@ export interface RawSearchResult extends FormattableMediaTitle {
   queuedForFetch?: boolean
   isAnimationStudio?: boolean
   gender?: string | null
+  age?: string | number | null
   language?: string | null
   startDate?: string | Date | null
   authors?: string[] | null
@@ -191,6 +192,13 @@ function normalizeSearchResults(
       audioPreviewUrl: item.audioPreviewUrl || item.preview || null,
       explicitLyrics: Boolean(item.explicitLyrics || item.explicit_lyrics),
       description: item.description ?? null,
+      gender: item.gender ?? (item as any).gender ?? null,
+      age:
+        item.age != null
+          ? String(item.age)
+          : (item as any).age != null
+            ? String((item as any).age)
+            : null,
       raw: item,
     }
   })

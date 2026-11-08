@@ -164,11 +164,15 @@ export default async function TrackDetailPage({ params, searchParams }: Props) {
     type: item.type ?? item.mediaType ?? "music",
     format: item.format ?? null,
     coverImage: item.coverImage ?? null,
+    bannerImage: item.bannerImage ?? null,
+    description: item.description ?? null,
+    status: item.status ?? null,
     titlePrimary: item.titles?.primary ?? item.titlePrimary ?? "",
     titleSecondary: item.titles?.secondary ?? item.titleSecondary ?? null,
     titleNative: item.titles?.native ?? item.titleNative ?? null,
     year: item.year ?? null,
     score: item.averageScore ?? null,
+    genres: item.genres ?? [],
   }))
 
   return (

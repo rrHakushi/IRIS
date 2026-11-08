@@ -33,6 +33,7 @@ import { FavoriteButton } from "../favorite-button"
 import { getMediaDetailHref } from "@/lib/media-routes"
 import { useUser } from "@/context/user-context"
 import { getMediaPreferences } from "@IRIS/shared"
+import { addBrowseVisitToStore } from "@/lib/browse-history"
 
 interface StudioDetailViewProps {
   studio: StudioDetails
@@ -66,6 +67,17 @@ export function StudioDetailView({
   const { user } = useUser()
   const mediaTitlePreference =
     getMediaPreferences(user?.customization).title || "primary"
+
+  // Track page visit in Browse recently visited
+  useEffect(() => {
+    if (!studio?.id) return
+    addBrowseVisitToStore("studios", {
+      id: studio.id,
+      title: studio.name,
+      titlePrimary: studio.name,
+      format: studio.isAnimationStudio ? "Anime Studio" : "Studio",
+    })
+  }, [studio.id, studio.name, studio.isAnimationStudio])
 
   // Data & Pagination state
   const [creations, setCreations] = useState<StudioCreationItem[]>(

@@ -473,16 +473,16 @@ export function normalizeBorealisData(
 
       const hoverDetails: BorealisHoverDetails = {
         bannerImage: character.bannerImage ?? item.bannerImage ?? null,
-        description: cleanDescription(character.description ?? item.description),
-        gender: character.gender ?? null,
-        age: character.age ? String(character.age) : null,
+        description: cleanDescription(character.description ?? item.description ?? raw?.description),
+        gender: character.gender ?? item.gender ?? raw?.gender ?? null,
+        age: character.age ? String(character.age) : item.age ? String(item.age) : raw?.age ? String(raw.age) : null,
         dateOfBirth: dobParts.length > 0 ? dobParts.join("/") : null,
         actor,
         roles: [roleLabel],
         isQueued,
         extraStats: [
-          ...(character.gender ? [{ label: "Gender", value: character.gender }] : []),
-          ...(character.age ? [{ label: "Age", value: String(character.age) }] : []),
+          ...(character.gender || item.gender ? [{ label: "Gender", value: character.gender ?? item.gender }] : []),
+          ...(character.age || item.age ? [{ label: "Age", value: String(character.age ?? item.age) }] : []),
           ...(character.favorites ? [{ label: "Favorites", value: Number(character.favorites).toLocaleString() }] : []),
         ],
       }
@@ -541,10 +541,10 @@ export function normalizeBorealisData(
 
         const hoverDetails: BorealisHoverDetails = {
           bannerImage: person.bannerImage ?? item.bannerImage ?? null,
-          description: cleanDescription(person.description ?? item.description),
+          description: cleanDescription(person.description ?? item.description ?? raw?.description),
           primaryOccupations: Array.isArray(person.primaryOccupations) ? person.primaryOccupations : [],
-          gender: person.gender ?? null,
-          age: person.age ? String(person.age) : null,
+          gender: person.gender ?? item.gender ?? raw?.gender ?? null,
+          age: person.age ? String(person.age) : item.age ? String(item.age) : raw?.age ? String(raw.age) : null,
           roles: [role],
           isQueued,
           extraStats: [

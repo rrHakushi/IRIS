@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useMemo, useState } from "react"
+import React, { useMemo, useState, useEffect } from "react"
 import Link from "next/link"
 import {
   IconCalendar,
@@ -21,6 +21,7 @@ import type { CharacterDetails } from "@IRIS/elysia"
 import { FormattedDescription } from "@/components/media/formatted-description"
 import { FavoriteButton } from "../favorite-button"
 import { getMediaDetailHref } from "@/lib/media-routes"
+import { addBrowseVisitToStore } from "@/lib/browse-history"
 
 interface CharacterDetailViewProps {
   character: CharacterDetails
@@ -72,6 +73,30 @@ export function CharacterDetailView({ character }: CharacterDetailViewProps) {
   const [selectedMediaType, setSelectedMediaType] =
     useState<MediaFilterKey>("ALL")
   const [isBioExpanded, setIsBioExpanded] = useState(false)
+
+  // Track page visit in Browse recently visited
+  useEffect(() => {
+    if (!character?.id) return
+    addBrowseVisitToStore("characters", {
+      id: character.id,
+      title: character.namePrimary,
+      titlePrimary: character.namePrimary,
+      titleNative: character.nameNative,
+      coverImage: character.image,
+      description: character.description,
+      gender: character.gender,
+      age: character.age,
+      format: character.gender || "Character",
+    })
+  }, [
+    character.id,
+    character.namePrimary,
+    character.nameNative,
+    character.image,
+    character.description,
+    character.gender,
+    character.age,
+  ])
 
   // Format Birthday
   const formattedBirthday = useMemo(() => {
