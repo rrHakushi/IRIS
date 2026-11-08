@@ -26,6 +26,20 @@ function getConnectedCount(connections: unknown): number {
   return 0
 }
 
+function formatAirDate(dateVal: unknown): string | null {
+  if (!dateVal) return null
+  if (typeof dateVal === "string" && !/^\d{4}-\d{2}/.test(dateVal)) {
+    return dateVal
+  }
+  const d = new Date(dateVal as string | number | Date)
+  if (isNaN(d.getTime())) return typeof dateVal === "string" ? dateVal : null
+  return d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  })
+}
+
 function resolveMediaTitle(
   media: any,
   pref: "primary" | "secondary" | "native" = "primary"
@@ -328,6 +342,9 @@ function resolveDetailHref(type: BorealisEntityType, id: number | string): strin
     case "studio":
     case "studios":
       return `/borealis/studios/${id}`
+    case "episode":
+    case "episodes":
+      return "#"
     default:
       return `/borealis/${type}/${id}`
   }
@@ -614,6 +631,68 @@ export function normalizeBorealisData(
                 ...(studio.favorites ? [{ label: "Favorites", value: Number(studio.favorites).toLocaleString() }] : []),
               ],
             },
+            raw,
+          }
+        }
+
+        // Episode items
+        if (type === "episode" || (type as string) === "episodes") {
+          const epId = item.id ?? item.number ?? 0
+          const epNum = item.number ?? item.episodeNumber
+          const epTitle = item.titlePrimary || item.title || (epNum ? `Episode ${epNum}` : "Episode")
+          const epTitleSecondary = item.titleSecondary ?? null
+          const epTitleNative = item.titleNative ?? null
+          const image = item.thumbnail ?? item.image ?? item.coverImage ?? null
+          const airDateFormatted = formatAirDate(item.airDate ?? item.airingAt)
+
+          const badges: BorealisBadge[] = Array.isArray(item.badges) ? [...item.badges] : []
+          if (badges.length === 0 && epNum !== undefined) {
+            badges.push({
+              label: item.seasonNumber !== undefined && item.seasonNumber !== null && item.seasonNumber > 0
+                ? `S${item.seasonNumber} · E${epNum}`
+                : `EP ${epNum}`,
+              variant: "secondary",
+              className: "bg-frost border border-frost text-zinc-100 font-mono text-[10px] font-bold tracking-wider shadow-md backdrop-blur-md",
+            })
+            if (item.isFiller) {
+              badges.push({
+                label: "Filler",
+                variant: "outline",
+                className: "border-amber-500/50 bg-amber-500/20 text-amber-300 font-mono text-[10px] font-bold backdrop-blur-md",
+              })
+            }
+            if (item.isRecap) {
+              badges.push({
+                label: "Recap",
+                variant: "outline",
+                className: "border-blue-500/50 bg-blue-500/20 text-blue-300 font-mono text-[10px] font-bold backdrop-blur-md",
+              })
+            }
+          }
+
+          const hoverDetails: BorealisHoverDetails = {
+            bannerImage: item.bannerImage ?? image,
+            coverImage: image,
+            description: cleanDescription(item.description),
+            airDate: airDateFormatted ?? (item.airDate ? String(item.airDate) : null),
+            year: airDateFormatted ?? (item.airDate ? String(item.airDate) : null),
+            duration: item.duration ?? null,
+            format: epNum ? (item.seasonNumber ? `S${item.seasonNumber} · E${epNum}` : `EP ${epNum}`) : null,
+            ...(item.hoverDetails || {}),
+          }
+
+          return {
+            id: epId,
+            type: "episode",
+            href: hrefOverride ?? item.href ?? "#",
+            title: epTitle,
+            titleNative: epTitleNative,
+            titleSecondary: epTitleSecondary,
+            description: cleanDescription(item.description),
+            image,
+            aspectRatio: "video",
+            badges,
+            hoverDetails,
             raw,
           }
         }

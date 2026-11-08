@@ -94,7 +94,7 @@ export function OverviewTab({
     }
   }
 
-  // Top 10 characters prioritized by MAIN, with Japanese VA for anime
+  // Top 16 characters prioritized by MAIN, with Japanese VA for anime
   const featuredCharacters = useMemo(() => {
     const isAnime = media.category === "anime"
 
@@ -166,7 +166,7 @@ export function OverviewTab({
       return (a.order ?? 999) - (b.order ?? 999)
     })
 
-    return uniqueList.slice(0, 24)
+    return uniqueList.slice(0, 16)
   }, [media.characters, media.category])
 
   // Parse description cleanly
@@ -818,14 +818,7 @@ export function OverviewTab({
           {/* 2. Featured Characters (1 row scrollable) */}
           {featuredCharacters.length > 0 && (
             <BorealisCardGroup
-              title={
-                media.category === "anime"
-                  ? "Characters & Voice Actors"
-                  : media.category === "movies" || media.format === "MOVIE"
-                    ? "Characters & Cast"
-                    : "Characters & Voice Actors"
-              }
-              subtitle={`${featuredCharacters.length} featured characters`}
+              title="Characters"
               rowCount={1}
               dragFree
               variant="none"
@@ -835,6 +828,7 @@ export function OverviewTab({
                   key={item.characterId}
                   type="character"
                   titlePreference={titlePref}
+                  showSubtitle={false}
                   data={{
                     id: item.characterId,
                     characterId: item.characterId,
@@ -911,7 +905,6 @@ export function OverviewTab({
           {similarListItems.length > 0 && (
             <BorealisCardGroup
               title="Similar Titles"
-              subtitle={`${similarListItems.length} similar titles`}
               rowCount={1}
               dragFree
               variant="none"
@@ -921,6 +914,8 @@ export function OverviewTab({
                   key={item.id}
                   type={(item.type ?? media.category) as any}
                   titlePreference={titlePref}
+                  showSubtitle={false}
+                  showExtras={false}
                   data={{
                     id: item.id,
                     titlePrimary: item.titlePrimary,

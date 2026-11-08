@@ -189,7 +189,6 @@ export function RecommendationsMediaTab({
       {media.relations && media.relations.length > 0 ? (
         <BorealisCardGroup
           title="Related & Recommended Titles"
-          subtitle={`${media.relations.length} titles`}
           rowCount={1}
           dragFree
           variant="none"
@@ -198,6 +197,8 @@ export function RecommendationsMediaTab({
             <BorealisCard
               key={`${rel.id}-${rel.targetType}-${rel.targetId}`}
               type={rel.targetType.toLowerCase() as any}
+              showSubtitle={false}
+              showExtras={false}
               data={{
                 id: rel.targetId,
                 titlePrimary: rel.target?.titlePrimary,

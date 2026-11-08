@@ -206,7 +206,6 @@ export function RelationsTab({
                 <BorealisCardGroup
                   key={relKey}
                   title={relLabel}
-                  subtitle={`${items.length} titles`}
                   rowCount={1}
                   dragFree
                   variant="none"
@@ -221,6 +220,8 @@ export function RelationsTab({
                         type={rawType}
                         href={href}
                         titlePreference={titlePreference}
+                        showSubtitle={false}
+                        showExtras={false}
                         data={{
                           id: rel.targetId,
                           titlePrimary: rel.target?.titlePrimary,

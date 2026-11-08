@@ -78,6 +78,7 @@ import {
   type ListStatus,
 } from "./media-list-status-text"
 import type {
+  BorealisCardExpandedContentProps,
   BorealisCardExtrasProps,
   BorealisCardHoverContentProps,
   BorealisCardImageProps,
@@ -125,6 +126,8 @@ function getEntityFallbackIcon(type: BorealisEntityType) {
 // -----------------------------------------------------------------------------
 export function BorealisCardRoot({
   data,
+  expanded = false,
+  imagePosition = "left",
   showExtras = true,
   showBadges = true,
   showSubtitle = true,
@@ -194,6 +197,8 @@ export function BorealisCardRoot({
   }
 
   const config = {
+    expanded,
+    imagePosition,
     showExtras,
     showBadges,
     showSubtitle,
@@ -243,11 +248,21 @@ export function BorealisCardRoot({
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         className={cn(
-          "group/bcard relative flex flex-col rounded-2xl border border-border/60 bg-card p-1.5 text-card-foreground transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5",
+          "group/bcard relative flex rounded-2xl border border-border/60 bg-card text-card-foreground transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5",
+          expanded
+            ? cn(
+                "w-full p-2 items-center gap-3 sm:gap-4",
+                imagePosition === "right" || imagePosition === "end"
+                  ? "flex-row-reverse text-start"
+                  : "flex-row text-start"
+              )
+            : cn(
+                "flex-col p-1.5",
+                size === "sm" && "w-32 text-xs",
+                size === "md" && "w-40 text-sm",
+                size === "lg" && "w-48 text-base"
+              ),
           isHovered ? "z-40" : "z-10",
-          size === "sm" && "w-32 text-xs",
-          size === "md" && "w-40 text-sm",
-          size === "lg" && "w-48 text-base",
           className
         )}
       >
@@ -274,12 +289,25 @@ export function BorealisCardImage({
   const shouldShowBadges = overrideShowBadges ?? config.showBadges ?? true
 
   const scoreFormatted = data.hoverDetails?.scoreFormatted
-  const isEntity = data.type === "character" || data.type === "staff" || data.type === "studio"
+  const isEntity =
+    data.type === "character" ||
+    data.type === "characters" ||
+    data.type === "staff" ||
+    data.type === "people" ||
+    data.type === "studio" ||
+    data.type === "studios" ||
+    data.type === "episode" ||
+    data.type === "episodes"
   const effectiveOnScoreChange = onScoreChange ?? config.onScoreChange
 
   return (
     <a
-      href={data.href}
+      href={data.href && data.href !== "#" ? data.href : undefined}
+      onClick={(e) => {
+        if (!data.href || data.href === "#") {
+          e.preventDefault()
+        }
+      }}
       className={cn(
         "relative block w-full overflow-hidden rounded-xl bg-muted outline-none focus-visible:ring-2 focus-visible:ring-primary select-none",
         effectiveRatio === "square" && "aspect-square",
@@ -498,7 +526,12 @@ export function BorealisCardTitle({
   return (
     <div className={cn("flex flex-col gap-0.5 px-1 py-1.5 min-w-0", className)}>
       <a
-        href={data.href}
+        href={data.href && data.href !== "#" ? data.href : undefined}
+        onClick={(e) => {
+          if (!data.href || data.href === "#") {
+            e.preventDefault()
+          }
+        }}
         title={data.title}
         className={cn(
           "block truncate text-xs sm:text-sm font-bold text-foreground transition-colors group-hover/bcard:text-primary group-hover/bcard:underline",
@@ -3891,11 +3924,19 @@ export function BorealisCardHoverContent({
                 />
               )}
 
-              {/* Year or Release Period */}
-              {details?.year && (
+              {/* Air Date / Year or Release Period */}
+              {(details?.airDate || details?.year) && (
                 <div className="inline-flex items-center gap-1 font-mono text-[11px] text-zinc-400">
                   <IconCalendar className="size-3 text-zinc-500" />
-                  <span>{details.year}</span>
+                  <span>{details.airDate ?? details.year}</span>
+                </div>
+              )}
+
+              {/* Duration */}
+              {details?.duration && (
+                <div className="inline-flex items-center gap-1 font-mono text-[11px] text-zinc-400">
+                  <IconClock className="size-3 text-zinc-500" />
+                  <span>{typeof details.duration === "number" ? `${details.duration}m` : details.duration}</span>
                 </div>
               )}
 
@@ -4078,12 +4119,158 @@ export function BorealisCardHoverContent({
 }
 
 // -----------------------------------------------------------------------------
+// 5.5 BorealisCard.ExpandedContent
+// -----------------------------------------------------------------------------
+export function BorealisCardExpandedContent({
+  imagePosition,
+  priority = false,
+  showHoverCard = true,
+  className,
+}: BorealisCardExpandedContentProps) {
+  const { data, config } = useBorealisCard()
+  const [imageError, setImageError] = useState(false)
+
+  const effectiveRatio = config.aspectRatio ?? data.aspectRatio ?? "video"
+  const details = data.hoverDetails
+  const shouldShowSubtitle = config.showSubtitle ?? true
+  const shouldShowDescription = config.showDescription ?? false
+  const descriptionText = data.description || details?.description
+
+  return (
+    <>
+      {/* 1. Thumbnail Image on Left or Right */}
+      <div
+        className={cn(
+          "relative overflow-hidden rounded-xl bg-muted shrink-0 select-none",
+          effectiveRatio === "video" && "w-32 sm:w-44 md:w-52 aspect-video",
+          effectiveRatio === "poster" && "w-20 sm:w-28 aspect-2/3",
+          effectiveRatio === "square" && "w-20 sm:w-28 aspect-square",
+          className
+        )}
+      >
+        <a
+          href={data.href && data.href !== "#" ? data.href : undefined}
+          onClick={(e) => {
+            if (!data.href || data.href === "#") {
+              e.preventDefault()
+            }
+          }}
+          tabIndex={-1}
+          aria-hidden="true"
+          className="block size-full outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          {data.image && !imageError ? (
+            <img
+              src={data.image}
+              alt={data.title}
+              loading={priority ? "eager" : "lazy"}
+              onError={() => setImageError(true)}
+              className="size-full rounded-xl object-cover transition-transform duration-300 group-hover/bcard:scale-105"
+            />
+          ) : (
+            <div className="flex size-full flex-col items-center justify-center gap-1 p-2 text-muted-foreground/60">
+              {getEntityFallbackIcon(data.type)}
+              <span className="text-center text-[10px] font-medium capitalize">
+                {data.type}
+              </span>
+            </div>
+          )}
+        </a>
+      </div>
+
+      {/* 2. Header Content next to Image (matching hoverCard header) */}
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 pe-1">
+        {/* Title */}
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <a
+            href={data.href && data.href !== "#" ? data.href : undefined}
+            onClick={(e) => {
+              if (!data.href || data.href === "#") {
+                e.preventDefault()
+              }
+            }}
+            title={data.title}
+            className="line-clamp-2 font-mono text-sm sm:text-base font-bold tracking-tight text-foreground transition-colors group-hover/bcard:text-primary group-hover/bcard:underline"
+          >
+            {data.title}
+          </a>
+
+          {shouldShowSubtitle && (data.titleNative || data.titleSecondary) && (
+            <span
+              title={data.titleNative ?? data.titleSecondary ?? ""}
+              className="line-clamp-1 font-mono text-xs text-muted-foreground/80 tracking-tight"
+            >
+              {data.titleNative ?? data.titleSecondary}
+            </span>
+          )}
+        </div>
+
+        {/* Quick Meta Row: Badges, Air Date, Duration */}
+        <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] text-muted-foreground">
+          {/* Badges (EP badge, Airing, Upcoming, Filler, Recap, Format, Queued, etc.) */}
+          {data.badges && data.badges.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1">
+              {data.badges.map((b, idx) => (
+                <span
+                  key={idx}
+                  className={cn(
+                    "inline-flex items-center justify-center rounded-md px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-wider uppercase shadow-xs select-none",
+                    b.className || "border border-border/60 bg-muted/50 text-foreground"
+                  )}
+                >
+                  {b.label}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Air Date / Year with Calendar Icon */}
+          {(details?.airDate || details?.year) && (
+            <span className="inline-flex items-center gap-1 select-none text-muted-foreground">
+              <IconCalendar className="size-3.5 shrink-0 text-muted-foreground/80" aria-hidden="true" />
+              <span>{details.airDate ?? details.year}</span>
+            </span>
+          )}
+
+          {/* Duration with Clock Icon */}
+          {details?.duration && (
+            <span className="inline-flex items-center gap-1 select-none text-muted-foreground">
+              <IconClock className="size-3.5 shrink-0 text-muted-foreground/80" aria-hidden="true" />
+              <span>
+                {typeof details.duration === "number"
+                  ? `${details.duration}m`
+                  : details.duration}
+              </span>
+            </span>
+          )}
+        </div>
+
+        {/* Optional Description / Synopsis */}
+        {shouldShowDescription && descriptionText && (
+          <p
+            title={descriptionText}
+            className="line-clamp-2 text-xs text-muted-foreground/80 leading-relaxed mt-0.5 select-none"
+          >
+            {descriptionText}
+          </p>
+        )}
+      </div>
+
+      {/* 3. Hover Card popover */}
+      {showHoverCard && <BorealisCardHoverContent />}
+    </>
+  )
+}
+
+// -----------------------------------------------------------------------------
 // 6. Main Compound Component: BorealisCard
 // -----------------------------------------------------------------------------
 export function BorealisCard({
   type,
   data,
   href,
+  expanded = false,
+  imagePosition = "left",
   showExtras = true,
   showBadges = true,
   showSubtitle = true,
@@ -4119,6 +4306,8 @@ export function BorealisCard({
   return (
     <BorealisCardRoot
       data={normalized}
+      expanded={expanded}
+      imagePosition={imagePosition}
       showExtras={showExtras}
       showBadges={showBadges}
       showSubtitle={showSubtitle}
@@ -4144,6 +4333,12 @@ export function BorealisCard({
     >
       {children ? (
         children
+      ) : expanded ? (
+        <BorealisCardExpandedContent
+          imagePosition={imagePosition}
+          priority={priority}
+          showHoverCard={showHoverCard}
+        />
       ) : (
         <>
           <BorealisCardImage priority={priority} />
@@ -4156,12 +4351,18 @@ export function BorealisCard({
   )
 }
 
+export function BorealisCardExpanded(props: BorealisCardProps) {
+  return <BorealisCard {...props} expanded />
+}
+
 // Compound API Attachments
 BorealisCard.Root = BorealisCardRoot
 BorealisCard.Image = BorealisCardImage
 BorealisCard.Title = BorealisCardTitle
 BorealisCard.Extras = BorealisCardExtras
 BorealisCard.HoverContent = BorealisCardHoverContent
+BorealisCard.ExpandedContent = BorealisCardExpandedContent
+BorealisCard.Expanded = BorealisCardExpanded
 BorealisCard.StatusBadge = StatusBadge
 BorealisCard.MediaStatusBadge = MediaStatusBadge
 BorealisCard.MediaListStatusBadge = MediaListStatusBadge

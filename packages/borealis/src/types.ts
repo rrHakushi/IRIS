@@ -18,6 +18,8 @@ export type BorealisEntityType =
   | "people"
   | "studio"
   | "studios"
+  | "episode"
+  | "episodes"
   | "other"
 
 export type BorealisAspectRatio = "poster" | "square" | "video"
@@ -82,6 +84,8 @@ export interface BorealisHoverDetails {
   listStatusText?: string | null
   format?: string | null
   year?: number | string | null
+  airDate?: string | null
+  duration?: number | string | null
   season?: string | null
   episodeCount?: number | null
   chapterCount?: number | null
@@ -125,6 +129,10 @@ export interface BorealisNormalizedData {
 }
 
 export interface BorealisCardConfig {
+  /** Whether to render the card in expanded horizontal layout */
+  expanded?: boolean
+  /** Placement of the image in expanded mode: 'left' (default) or 'right' */
+  imagePosition?: "left" | "right" | "start" | "end"
   showExtras?: boolean
   showBadges?: boolean
   showSubtitle?: boolean
@@ -198,5 +206,12 @@ export interface BorealisCardHoverContentProps {
   className?: string
   placement?: "top" | "bottom" | "left" | "right"
   offset?: number
+}
+
+export interface BorealisCardExpandedContentProps {
+  imagePosition?: "left" | "right" | "start" | "end"
+  priority?: boolean
+  showHoverCard?: boolean
+  className?: string
 }
 

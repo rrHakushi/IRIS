@@ -183,7 +183,6 @@ export function StaffTab({ staff }: StaffTabProps) {
         <BorealisCardGroup
           key={group.key}
           title={group.title}
-          subtitle={`${group.items.length} staff members`}
           rowCount={1}
           dragFree
           variant="none"
@@ -192,6 +191,7 @@ export function StaffTab({ staff }: StaffTabProps) {
             <BorealisCard
               key={member.id}
               type="staff"
+              showSubtitle={false}
               data={{
                 id: member.person.id,
                 personId: member.person.id,

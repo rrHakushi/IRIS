@@ -399,9 +399,11 @@ export function BorealisCardGroup({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: columnCount
-              ? `repeat(${columnCount}, minmax(0, 1fr))`
-              : "repeat(auto-fill, minmax(9.5rem, 1fr))",
+            ...(columnCount
+              ? { gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))` }
+              : contentClassName?.includes("grid-cols")
+                ? undefined
+                : { gridTemplateColumns: "repeat(auto-fill, minmax(9.5rem, 1fr))" }),
           }}
           className={cn(
             "w-full",

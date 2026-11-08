@@ -1,15 +1,20 @@
 "use client"
 
-import React, { useMemo, useState, useEffect } from "react"
-import {
-  IconCalendar,
-  IconChevronDown,
-  IconClock,
-  IconFileText,
-  IconPhotoOff,
-} from "@tabler/icons-react"
+import React, { useMemo, useState } from "react"
+import { IconCheck, IconChevronDown, IconClock } from "@tabler/icons-react"
 import { Badge } from "@workspace/ui/components/badge"
+import { Button } from "@workspace/ui/components/button"
+import {
+  DropdownMenu,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@workspace/ui/components/dropdown-menu"
 import { cn } from "@workspace/ui/lib/utils"
+import {
+  BorealisCard,
+  BorealisCardGroup,
+  type BorealisBadge,
+} from "@Runa/borealis"
 import type {
   AiringScheduleItem,
   EpisodeItem,
@@ -23,6 +28,7 @@ interface EpisodesTabProps {
   nextAiringEpisodeNumber?: number | null
   nextAiringAt?: string | Date | null
   status?: string | null
+  imagePosition?: "left" | "right"
 }
 
 export function EpisodesTab({
@@ -32,12 +38,140 @@ export function EpisodesTab({
   nextAiringEpisodeNumber,
   nextAiringAt,
   status,
+  imagePosition = "left",
 }: EpisodesTabProps) {
-  const [expandedId, setExpandedId] = useState<number | null>(null)
+  // Format date helper with time if available
+  const formatDateWithTime = (dateVal: string | Date | null | undefined) => {
+    if (!dateVal) return null
+    const d = new Date(dateVal)
+    if (isNaN(d.getTime())) return null
+    const dateStr = d.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    })
+    const hasTime = d.getUTCHours() !== 0 || d.getUTCMinutes() !== 0
+    if (hasTime) {
+      const timeStr = d.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+      return `${dateStr} • ${timeStr}`
+    }
+    return dateStr
+  }
 
-  const isReleasing = status?.toUpperCase() === "RELEASING"
+  // Format countdown string
+  const formatCountdown = (targetDate: string | Date | null | undefined): string | null => {
+    if (!targetDate) return null
+    const d = new Date(targetDate)
+    const diff = d.getTime() - Date.now()
+    if (diff <= 0) return null
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24)
+    const minutes = Math.floor((diff / (1000 * 60)) % 60)
+    if (days > 0) return `${days}d ${hours}h`
+    if (hours > 0) return `${hours}h ${minutes}m`
+    return `${minutes}m`
+  }
 
-  // Detect distinct seasons either from seasons prop or from episodes' seasonNumber
+  // Next airing info banner helper
+  const nextAiringInfo = useMemo(() => {
+    const targetDate = nextAiringAt
+    if (!targetDate) return null
+    const countdown = formatCountdown(targetDate)
+    const formattedDate = formatDateWithTime(targetDate)
+    return {
+      episodeNumber: nextAiringEpisodeNumber,
+      formattedDate,
+      countdown,
+    }
+  }, [nextAiringAt, nextAiringEpisodeNumber])
+
+  // Merge episodes with airing schedule items
+  const mergedEpisodes = useMemo(() => {
+    const episodeMap = new Map<
+      string,
+      EpisodeItem & {
+        isUpcoming?: boolean
+        isAiringNow?: boolean
+        airingAt?: string | Date | null
+      }
+    >()
+
+    const now = Date.now()
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000
+
+    // 1. Seed with known episodes
+    for (const ep of episodes) {
+      const sNum = ep.seasonNumber ?? 1
+      const key = `${sNum}-${ep.number}`
+
+      const airTimestamp = ep.airDate ? new Date(ep.airDate).getTime() : null
+      const isValid = airTimestamp !== null && !isNaN(airTimestamp)
+      const diff = isValid ? now - airTimestamp : null
+      const isAiringNow = diff !== null && diff >= 0 && diff < ONE_DAY_MS
+      const isUpcoming = isValid && airTimestamp > now
+
+      episodeMap.set(key, {
+        ...ep,
+        isUpcoming,
+        isAiringNow,
+        airingAt: ep.airDate,
+      })
+    }
+
+    // 2. Merge or append entries from airingSchedule
+    if (airingSchedule && airingSchedule.length > 0) {
+      for (const item of airingSchedule) {
+        const sNum = item.seasonNumber ?? 1
+        const key = `${sNum}-${item.episodeNumber}`
+
+        const airDate = new Date(item.airingAt)
+        const isValid = !isNaN(airDate.getTime())
+        const diff = isValid ? now - airDate.getTime() : null
+        const isAiringNow = diff !== null && diff >= 0 && diff < ONE_DAY_MS
+        const isUpcoming = isValid && airDate.getTime() > now
+
+        const existing = episodeMap.get(key)
+        if (existing) {
+          if (!existing.airDate || isUpcoming) {
+            existing.airDate = existing.airDate ?? item.airingAt
+            existing.airingAt = item.airingAt
+            existing.isUpcoming = isUpcoming
+            existing.isAiringNow = isAiringNow
+          }
+        } else {
+          // Scheduled episode that isn't in episodes array yet
+          episodeMap.set(key, {
+            id: item.id ?? -item.episodeNumber,
+            number: item.episodeNumber,
+            seasonNumber: item.seasonNumber,
+            titlePrimary: `Episode ${item.episodeNumber}`,
+            titleSecondary: null,
+            titleNative: null,
+            description: null,
+            duration: null,
+            airDate: item.airingAt,
+            airingAt: item.airingAt,
+            thumbnail: null,
+            isFiller: false,
+            isRecap: false,
+            isUpcoming,
+            isAiringNow,
+          })
+        }
+      }
+    }
+
+    // Sort by seasonNumber then episodeNumber
+    return Array.from(episodeMap.values()).sort(
+      (a, b) =>
+        (a.seasonNumber ?? 0) - (b.seasonNumber ?? 0) || a.number - b.number
+    )
+  }, [episodes, airingSchedule])
+
+  // Detect distinct seasons
   const availableSeasons = useMemo(() => {
     const seasonMap = new Map<
       number,
@@ -56,447 +190,313 @@ export function EpisodesTab({
       })
     }
 
-    episodes.forEach((ep) => {
-      if (typeof ep.seasonNumber === "number") {
-        if (!seasonMap.has(ep.seasonNumber)) {
-          seasonMap.set(ep.seasonNumber, {
-            id: ep.seasonNumber,
-            seasonNumber: ep.seasonNumber,
-            title:
-              ep.seasonNumber === 0 ? "Specials" : `Season ${ep.seasonNumber}`,
-          })
-        }
+    mergedEpisodes.forEach((ep) => {
+      const sNum = typeof ep.seasonNumber === "number" ? ep.seasonNumber : 1
+      if (!seasonMap.has(sNum)) {
+        seasonMap.set(sNum, {
+          id: sNum,
+          seasonNumber: sNum,
+          title: sNum === 0 ? "Specials" : `Season ${sNum}`,
+        })
       }
     })
+
+    if (seasonMap.size === 0) {
+      seasonMap.set(1, { id: 1, seasonNumber: 1, title: "Season 1" })
+    }
 
     return Array.from(seasonMap.values()).sort(
       (a, b) => a.seasonNumber - b.seasonNumber
     )
-  }, [seasons, episodes])
+  }, [seasons, mergedEpisodes])
 
   const hasMultipleSeasons = availableSeasons.length > 1
 
-  // Default to Season 1 if present, otherwise lowest non-zero or first
-  const defaultSeason = useMemo(() => {
-    const s1 = availableSeasons.find((s) => s.seasonNumber === 1)
-    if (s1) return 1
-    const nonZero = availableSeasons.find((s) => s.seasonNumber > 0)
-    if (nonZero) return nonZero.seasonNumber
-    return availableSeasons[0]?.seasonNumber ?? 1
-  }, [availableSeasons])
+  const [selectedSeason, setSelectedSeason] = useState<number | "all">("all")
 
-  const [selectedSeason, setSelectedSeason] = useState<number | "all">(
-    defaultSeason
-  )
-
-  useEffect(() => {
-    if (hasMultipleSeasons) {
-      setSelectedSeason(defaultSeason)
+  // Group episodes by season
+  const episodesBySeason = useMemo(() => {
+    const map = new Map<number, typeof mergedEpisodes>()
+    for (const ep of mergedEpisodes) {
+      const sNum = typeof ep.seasonNumber === "number" ? ep.seasonNumber : 1
+      const list = map.get(sNum) ?? []
+      list.push(ep)
+      map.set(sNum, list)
     }
-  }, [defaultSeason, hasMultipleSeasons])
+    return map
+  }, [mergedEpisodes])
 
-  // Resolve full schedule list from airingSchedule or falling back to episode air dates
-  const resolvedSchedule = useMemo(() => {
-    if (airingSchedule && airingSchedule.length > 0) {
-      return [...airingSchedule].sort(
-        (a, b) =>
-          (a.seasonNumber ?? 0) - (b.seasonNumber ?? 0) ||
-          a.episodeNumber - b.episodeNumber
+  const seasonsToDisplay = useMemo(() => {
+    if (!hasMultipleSeasons) {
+      return availableSeasons
+    }
+    if (selectedSeason === "all") {
+      return availableSeasons.filter(
+        (s) => (episodesBySeason.get(s.seasonNumber)?.length ?? 0) > 0
       )
     }
-    return episodes
-      .filter((ep) => ep.airDate)
-      .map((ep) => ({
-        id: ep.id,
-        episodeNumber: ep.number,
-        seasonNumber: ep.seasonNumber,
-        airingAt: ep.airDate as string | Date,
-      }))
-      .sort(
-        (a, b) =>
-          (a.seasonNumber ?? 0) - (b.seasonNumber ?? 0) ||
-          a.episodeNumber - b.episodeNumber
-      )
-  }, [airingSchedule, episodes])
+    return availableSeasons.filter((s) => s.seasonNumber === selectedSeason)
+  }, [availableSeasons, hasMultipleSeasons, selectedSeason, episodesBySeason])
 
-  // Filter episodes by season
-  const filteredEpisodes = useMemo(() => {
-    if (!hasMultipleSeasons || selectedSeason === "all") {
-      return [...episodes].sort(
-        (a, b) =>
-          (a.seasonNumber ?? 0) - (b.seasonNumber ?? 0) || a.number - b.number
-      )
-    }
-    return episodes
-      .filter((ep) => ep.seasonNumber === selectedSeason)
-      .sort((a, b) => a.number - b.number)
-  }, [episodes, hasMultipleSeasons, selectedSeason])
-
-  // Filter schedule by season
-  const filteredSchedule = useMemo(() => {
-    if (!hasMultipleSeasons || selectedSeason === "all") {
-      return resolvedSchedule
-    }
-    return resolvedSchedule.filter(
-      (item) => item.seasonNumber === selectedSeason
+  const totalDisplayEpisodes = useMemo(() => {
+    return seasonsToDisplay.reduce(
+      (sum, s) => sum + (episodesBySeason.get(s.seasonNumber)?.length ?? 0),
+      0
     )
-  }, [resolvedSchedule, hasMultipleSeasons, selectedSeason])
+  }, [seasonsToDisplay, episodesBySeason])
 
-  const formatDate = (dateVal: string | Date | null) => {
-    if (!dateVal) return null
-    const d = new Date(dateVal)
-    if (isNaN(d.getTime())) return null
-    return d.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    })
-  }
-
-  const selectedSeasonObj = availableSeasons.find(
-    (s) => s.seasonNumber === selectedSeason
-  )
-  const currentSeasonLabel =
-    selectedSeason === "all"
-      ? "All Seasons"
-      : selectedSeasonObj?.title || `Season ${selectedSeason}`
+  const currentSeasonInfo = useMemo(() => {
+    if (selectedSeason === "all") {
+      return {
+        label: "All Seasons",
+        count: mergedEpisodes.length,
+      }
+    }
+    const found = availableSeasons.find(
+      (s) => s.seasonNumber === selectedSeason
+    )
+    const count = episodesBySeason.get(selectedSeason)?.length ?? 0
+    return {
+      label: found?.title || `Season ${selectedSeason}`,
+      count,
+    }
+  }, [selectedSeason, mergedEpisodes.length, availableSeasons, episodesBySeason])
 
   return (
-    <div className="flex flex-col gap-5">
-      {/* Season Selector Pills (when multiple seasons exist) */}
-      {hasMultipleSeasons && (
-        <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto pb-1">
-          {availableSeasons.map((season) => {
-            const count = episodes.filter(
-              (e) => e.seasonNumber === season.seasonNumber
-            ).length
-            const isSelected = selectedSeason === season.seasonNumber
-            return (
-              <button
-                key={season.seasonNumber}
-                type="button"
-                onClick={() => setSelectedSeason(season.seasonNumber)}
-                className={cn(
-                  "inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  isSelected
-                    ? "bg-primary text-primary-foreground shadow-xs"
-                    : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <span>{season.title}</span>
-                {count > 0 && (
-                  <span
-                    className={cn(
-                      "py-0.2 rounded-full px-1.5 text-[10px] font-bold",
-                      isSelected
-                        ? "bg-primary-foreground/20 text-primary-foreground"
-                        : "bg-background/80 text-muted-foreground"
-                    )}
-                  >
-                    {count}
-                  </span>
-                )}
-              </button>
-            )
-          })}
-          <button
-            type="button"
-            onClick={() => setSelectedSeason("all")}
-            className={cn(
-              "inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              selectedSeason === "all"
-                ? "bg-primary text-primary-foreground shadow-xs"
-                : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
+    <div className="flex flex-col gap-6">
+      {/* Next Airing Banner (for ongoing / releasing series) */}
+      {nextAiringInfo && nextAiringInfo.countdown && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/10 p-3.5 sm:px-5 backdrop-blur-md">
+          <div className="flex items-center gap-3">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary">
+              <IconClock className="size-4.5" aria-hidden="true" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold text-foreground">
+                {nextAiringInfo.episodeNumber
+                  ? `Episode ${nextAiringInfo.episodeNumber} Airing Soon`
+                  : "Next Episode Airing Soon"}
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                {nextAiringInfo.formattedDate}
+              </span>
+            </div>
+          </div>
+          <Badge
+            variant="default"
+            className="font-mono text-xs font-bold tracking-wide uppercase px-2.5 py-1"
           >
-            <span>All Seasons</span>
-            <span
-              className={cn(
-                "py-0.2 rounded-full px-1.5 text-[10px] font-bold",
-                selectedSeason === "all"
-                  ? "bg-primary-foreground/20 text-primary-foreground"
-                  : "bg-background/80 text-muted-foreground"
-              )}
-            >
-              {episodes.length}
-            </span>
-          </button>
+            In {nextAiringInfo.countdown}
+          </Badge>
         </div>
       )}
 
-      {/* 2-Column Split: Episodes (Left) and Airing Schedule (Right) */}
-      <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
-        {/* 1. Left (Yellow Area): Scrollable List of Episodes - 6 visible at once, expandable descriptions */}
-        <section
-          aria-labelledby="episodes-list-heading"
-          className="flex min-w-0 flex-col gap-3"
-        >
-          <div className="flex items-center justify-between">
-            <h2
-              id="episodes-list-heading"
-              className="text-base font-semibold text-foreground"
+      {/* Season Selector Dropdown (when multiple seasons exist) */}
+      {hasMultipleSeasons && (
+        <div className="flex items-center">
+          <DropdownMenuTrigger>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-2 rounded-xl border-border/60 bg-card/60 px-3 text-xs font-semibold backdrop-blur-md transition-colors hover:bg-muted cursor-pointer"
             >
-              {hasMultipleSeasons && selectedSeason !== "all"
-                ? `${currentSeasonLabel} `
-                : ""}
-              Episodes
-            </h2>
-            {filteredEpisodes.length > 12 && (
-              <span className="text-[11px] text-muted-foreground">
-                Scroll for more
+              <span>{currentSeasonInfo.label}</span>
+              <span className="rounded-full bg-muted/80 px-1.5 py-0.2 font-mono text-[10px] font-bold text-muted-foreground">
+                {currentSeasonInfo.count}
               </span>
-            )}
-          </div>
-
-          {filteredEpisodes.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border/60 p-8 text-center text-sm text-muted-foreground">
-              No episode data available for this season.
-            </div>
-          ) : (
-            /* Expands to use the full available viewport height; remainder is scrollable */
-            <div className="no-scrollbar flex max-h-[65vh] flex-col gap-2 overflow-y-auto pe-1 md:max-h-[calc(100vh-14rem)]">
-              {filteredEpisodes.map((ep) => {
-                const formattedDate = formatDate(ep.airDate)
-                const isExpanded = expandedId === ep.id
-                const hasDescription = Boolean(
-                  ep.description && ep.description.trim().length > 0
-                )
-
-                return (
-                  <div
-                    key={`${ep.seasonNumber ?? 0}-${ep.id}`}
-                    onClick={() => {
-                      if (hasDescription) {
-                        setExpandedId((prev) => (prev === ep.id ? null : ep.id))
-                      }
-                    }}
-                    className={cn(
-                      "flex shrink-0 flex-col justify-center rounded-xl border border-border/40 bg-card/70 px-3 transition-colors",
-                      isExpanded ? "min-h-[52px] py-2" : "h-[52px]",
-                      hasDescription &&
-                        "cursor-pointer hover:border-border/60 hover:bg-card",
-                      isExpanded && "border-primary/40 bg-card shadow-xs"
-                    )}
-                  >
-                    {/* Main Card Row */}
-                    <div className="flex w-full items-center justify-between gap-3">
-                      {/* Left: Thumbnail & Details */}
-                      <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                        {/* Compact Episode Thumbnail */}
-                        <div className="relative aspect-video w-14 shrink-0 overflow-hidden rounded-lg bg-muted">
-                          {ep.thumbnail ? (
-                            <img
-                              src={ep.thumbnail}
-                              alt={`EP ${ep.number}`}
-                              loading="lazy"
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-muted-foreground/50">
-                              <IconPhotoOff
-                                className="size-3.5"
-                                aria-hidden="true"
-                              />
-                            </div>
-                          )}
-                          <span className="absolute start-0.5 bottom-0.5 rounded bg-background/90 px-1 py-0 text-[8px] font-bold tabular-nums">
-                            {hasMultipleSeasons &&
-                            typeof ep.seasonNumber === "number"
-                              ? `S${ep.seasonNumber}E${ep.number}`
-                              : ep.number}
-                          </span>
-                        </div>
-
-                        <div className="flex min-w-0 flex-col">
-                          <div className="flex min-w-0 items-center gap-1.5">
-                            <span className="truncate text-xs font-medium text-foreground">
-                              {ep.titlePrimary || `Episode ${ep.number}`}
-                            </span>
-                            {ep.isFiller && (
-                              <Badge
-                                variant="outline"
-                                className="h-3.5 border-amber-500/40 px-1 py-0 text-[8px] text-amber-600 dark:text-amber-400"
-                              >
-                                Filler
-                              </Badge>
-                            )}
-                            {ep.isRecap && (
-                              <Badge
-                                variant="outline"
-                                className="h-3.5 border-blue-500/40 px-1 py-0 text-[8px] text-blue-600 dark:text-blue-400"
-                              >
-                                Recap
-                              </Badge>
-                            )}
-                          </div>
-
-                          {ep.titleSecondary &&
-                          ep.titleSecondary !== ep.titlePrimary ? (
-                            <span className="truncate text-[10px] text-muted-foreground">
-                              {ep.titleSecondary}
-                            </span>
-                          ) : ep.titleNative ? (
-                            <span className="font-japanese truncate text-[10px] text-muted-foreground opacity-75">
-                              {ep.titleNative}
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-
-                      {/* Right: Air Date, Duration, and Description Expand Icon */}
-                      <div className="flex shrink-0 items-center gap-2 text-end text-[10px] text-muted-foreground">
-                        {formattedDate && <span>{formattedDate}</span>}
-                        {typeof ep.duration === "number" && ep.duration > 0 && (
-                          <span className="font-medium tabular-nums">
-                            {ep.duration}m
-                          </span>
-                        )}
-                        {hasDescription && (
-                          <div
-                            className={cn(
-                              "flex size-5 items-center justify-center rounded-md bg-muted/70 text-muted-foreground transition-colors",
-                              isExpanded && "bg-primary text-primary-foreground"
-                            )}
-                            title={
-                              isExpanded
-                                ? "Collapse description"
-                                : "View episode description"
-                            }
-                            aria-label={
-                              isExpanded
-                                ? "Collapse description"
-                                : "View episode description"
-                            }
-                          >
-                            <IconChevronDown
-                              className={cn(
-                                "size-3.5 transition-transform duration-150",
-                                isExpanded && "rotate-180"
-                              )}
-                              aria-hidden="true"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Expandable Episode Description */}
-                    {isExpanded && ep.description && (
-                      <div className="mt-2 border-t border-border/30 pt-2 text-xs leading-relaxed whitespace-pre-line text-foreground/85 select-text">
-                        <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
-                          <IconFileText
-                            className="size-3 text-primary"
-                            aria-hidden="true"
-                          />
-                          <span>Episode Synopsis</span>
-                        </div>
-                        <p className="text-xs leading-relaxed text-muted-foreground">
-                          {ep.description}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </section>
-
-        {/* 2. Right (Green Area): Airing Schedule */}
-        <section
-          aria-labelledby="airing-schedule-heading"
-          className="flex min-w-0 flex-col gap-3"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <IconCalendar className="size-4 text-primary" aria-hidden="true" />
-              <h2
-                id="airing-schedule-heading"
-                className="text-base font-semibold text-foreground"
+              <IconChevronDown
+                className="size-3.5 text-muted-foreground shrink-0"
+                aria-hidden="true"
+              />
+            </Button>
+            <DropdownMenu
+              placement="bottom start"
+              className="w-52 rounded-2xl p-1 backdrop-blur-xl"
+            >
+              <DropdownMenuItem
+                onAction={() => setSelectedSeason("all")}
+                className="flex items-center justify-between gap-2 cursor-pointer rounded-xl px-2.5 py-1.5"
               >
-                {hasMultipleSeasons && selectedSeason !== "all"
-                  ? `${currentSeasonLabel} `
-                  : ""}
-                Schedule
-              </h2>
-            </div>
-            {filteredSchedule.length > 12 && (
-              <span className="text-[11px] text-muted-foreground">
-                Scroll for more
-              </span>
-            )}
-          </div>
-
-          {filteredSchedule.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border/60 p-8 text-center text-sm text-muted-foreground">
-              No airing schedule available for this season.
-            </div>
-          ) : (
-            /* Expands to use the full available viewport height; remainder is scrollable */
-            <div className="no-scrollbar flex max-h-[65vh] flex-col gap-2 overflow-y-auto pe-1 md:max-h-[calc(100vh-14rem)]">
-              {/* List of Scheduled/Aired Episodes */}
-              {filteredSchedule.map((item) => {
-                const airDate = new Date(item.airingAt)
-                const isValid = !isNaN(airDate.getTime())
-                const diff = isValid ? Date.now() - airDate.getTime() : 0
-                const ONE_DAY_MS = 24 * 60 * 60 * 1000
-                const isAiringNow = isValid && diff >= 0 && diff < ONE_DAY_MS
-                const isPast = isValid && diff >= ONE_DAY_MS
-
-                return (
-                  <div
-                    key={`${item.seasonNumber ?? 0}-${item.id}`}
-                    className="flex h-[52px] shrink-0 items-center justify-between gap-3 rounded-xl border border-border/40 bg-card/70 px-3 py-1.5 transition-colors hover:bg-card"
+                <div className="flex items-center gap-2">
+                  {selectedSeason === "all" ? (
+                    <IconCheck
+                      className="size-3.5 text-primary shrink-0"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <span className="size-3.5 shrink-0" aria-hidden="true" />
+                  )}
+                  <span
+                    className={cn(
+                      "text-xs",
+                      selectedSeason === "all"
+                        ? "font-bold text-foreground"
+                        : "font-medium text-muted-foreground"
+                    )}
                   >
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <Badge
-                        variant="secondary"
-                        className="shrink-0 px-2 py-0.5 text-[10px] font-bold tabular-nums"
-                      >
-                        {hasMultipleSeasons &&
-                        typeof item.seasonNumber === "number"
-                          ? `S${item.seasonNumber} · E${item.episodeNumber}`
-                          : `EP ${item.episodeNumber}`}
-                      </Badge>
-                      <div className="flex min-w-0 flex-col">
-                        <span className="truncate text-xs font-medium text-foreground">
-                          {isValid
-                            ? airDate.toLocaleDateString("en-US", {
-                                weekday: "short",
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                              })
-                            : "Scheduled date TBA"}
-                        </span>
-                        {isValid && (
-                          <span className="text-[10px] text-muted-foreground">
-                            {airDate.toLocaleTimeString("en-US", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                    All Seasons
+                  </span>
+                </div>
+                <span className="rounded-full bg-muted/80 px-1.5 py-0.2 font-mono text-[10px] font-bold text-muted-foreground">
+                  {mergedEpisodes.length}
+                </span>
+              </DropdownMenuItem>
 
-                    <Badge
-                      variant={isPast || isAiringNow ? "outline" : "secondary"}
-                      className={cn(
-                        "py-0.2 shrink-0 px-1.5 text-[9px] font-semibold uppercase",
-                        (isPast || isAiringNow) &&
-                          "border-border/60 text-muted-foreground"
+              {availableSeasons.map((season) => {
+                const count =
+                  episodesBySeason.get(season.seasonNumber)?.length ?? 0
+                if (count === 0) return null
+                const isSelected = selectedSeason === season.seasonNumber
+                return (
+                  <DropdownMenuItem
+                    key={season.seasonNumber}
+                    onAction={() => setSelectedSeason(season.seasonNumber)}
+                    className="flex items-center justify-between gap-2 cursor-pointer rounded-xl px-2.5 py-1.5"
+                  >
+                    <div className="flex items-center gap-2">
+                      {isSelected ? (
+                        <IconCheck
+                          className="size-3.5 text-primary shrink-0"
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <span className="size-3.5 shrink-0" aria-hidden="true" />
                       )}
-                    >
-                      {isPast || isAiringNow ? "Aired" : "Upcoming"}
-                    </Badge>
-                  </div>
+                      <span
+                        className={cn(
+                          "text-xs",
+                          isSelected
+                            ? "font-bold text-foreground"
+                            : "font-medium text-muted-foreground"
+                        )}
+                      >
+                        {season.title}
+                      </span>
+                    </div>
+                    <span className="rounded-full bg-muted/80 px-1.5 py-0.2 font-mono text-[10px] font-bold text-muted-foreground">
+                      {count}
+                    </span>
+                  </DropdownMenuItem>
                 )
               })}
-            </div>
-          )}
-        </section>
-      </div>
+            </DropdownMenu>
+          </DropdownMenuTrigger>
+        </div>
+      )}
+
+  {/* Episodes Grid Grouped by Season */ }
+{
+  totalDisplayEpisodes === 0 ? (
+    <div className="rounded-2xl border border-dashed border-border/60 p-12 text-center text-sm text-muted-foreground">
+      No episode data available for this season.
+    </div>
+  ) : (
+  <div className="flex flex-col gap-8">
+    {seasonsToDisplay.map((season) => {
+      const seasonEpisodes =
+        episodesBySeason.get(season.seasonNumber) ?? []
+      if (seasonEpisodes.length === 0) return null
+
+      const groupTitle = hasMultipleSeasons
+        ? season.title
+        : (seasons?.[0]?.titlePrimary || "Episodes")
+
+      return (
+        <BorealisCardGroup
+          key={season.seasonNumber}
+          title={groupTitle}
+          grid
+          variant="none"
+          gap="md"
+          contentClassName="grid-cols-1 md:grid-cols-2 2xl:grid-cols-3"
+          className="w-full"
+        >
+          {seasonEpisodes.map((ep) => {
+            const formattedDate = formatDateWithTime(ep.airDate)
+            const epBadge =
+              hasMultipleSeasons &&
+                typeof ep.seasonNumber === "number" &&
+                ep.seasonNumber > 0
+                ? `S${ep.seasonNumber} · E${ep.number}`
+                : `EP ${ep.number}`
+
+            const badges: BorealisBadge[] = [
+              {
+                label: epBadge,
+                variant: "secondary",
+                className:
+                  "bg-frost border border-frost text-zinc-100 font-mono text-[10px] font-bold tracking-wider shadow-md backdrop-blur-md",
+              },
+            ]
+
+            if (ep.isAiringNow) {
+              badges.push({
+                label: "Airing Now",
+                variant: "default",
+                className:
+                  "bg-emerald-500/80 text-white font-mono text-[10px] font-bold backdrop-blur-md animate-pulse",
+              })
+            } else if (ep.isUpcoming) {
+              badges.push({
+                label: "Upcoming",
+                variant: "outline",
+                className:
+                  "border-cyan-500/50 bg-cyan-500/20 text-cyan-300 font-mono text-[10px] font-bold backdrop-blur-md",
+              })
+            }
+
+            if (ep.isFiller) {
+              badges.push({
+                label: "Filler",
+                variant: "outline",
+                className:
+                  "border-amber-500/50 bg-amber-500/20 text-amber-300 font-mono text-[10px] font-bold backdrop-blur-md",
+              })
+            }
+
+            if (ep.isRecap) {
+              badges.push({
+                label: "Recap",
+                variant: "outline",
+                className:
+                  "border-blue-500/50 bg-blue-500/20 text-blue-300 font-mono text-[10px] font-bold backdrop-blur-md",
+              })
+            }
+
+                  return (
+                    <BorealisCard
+                      key={`${ep.seasonNumber ?? 0}-${ep.id}`}
+                      expanded
+                      imagePosition={imagePosition}
+                      type="episode"
+                      aspectRatio="video"
+                      showExtras={false}
+                      showSubtitle={false}
+                      data={{
+                        id: ep.id,
+                        number: ep.number,
+                        seasonNumber: ep.seasonNumber,
+                        titlePrimary: ep.titlePrimary || `Episode ${ep.number}`,
+                        titleSecondary: ep.titleSecondary,
+                        titleNative: ep.titleNative,
+                        thumbnail: ep.thumbnail,
+                        coverImage: ep.thumbnail,
+                        bannerImage: ep.thumbnail,
+                        image: ep.thumbnail,
+                        description: ep.description,
+                        airDate: formattedDate,
+                        year: formattedDate,
+                        duration: ep.duration,
+                        badges,
+                      }}
+                    />
+                  )
+                })}
+              </BorealisCardGroup>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

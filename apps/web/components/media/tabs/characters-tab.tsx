@@ -178,7 +178,6 @@ export function CharactersTab({ characters }: CharactersTabProps) {
             <BorealisCardGroup
               key={group.key}
               title={group.title}
-              subtitle={`${group.items.length} characters`}
               rowCount={1}
               dragFree
               variant="none"
@@ -192,6 +191,7 @@ export function CharactersTab({ characters }: CharactersTabProps) {
                   <BorealisCard
                     key={char.characterId}
                     type="character"
+                    showSubtitle={false}
                     data={{
                       id: char.characterId,
                       characterId: char.characterId,
