@@ -15,7 +15,8 @@ import {
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { resolveUserId } from "@/lib/user-profile"
-import { MediaListCard } from "@/components/lists/media-list-card"
+import { BorealisCard, BorealisCardGroup } from "@Runa/borealis"
+import { saveListEntry } from "@/lib/save-list-entry"
 import {
   toNormalizedMedia,
   toMediaListEntry,
@@ -341,7 +342,12 @@ export function ListsTab({ username, userId, isOwner }: ListsTabProps): React.JS
             </LinkButton>
           </div>
         ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2.5 sm:gap-3">
+          <BorealisCardGroup
+            rowCount={1}
+            dragFree
+            variant="ghost"
+            className="w-full"
+          >
             {items.map((item, idx) => {
               const normalizedItem: ListEntryData =
                 item.entry && item.media
@@ -361,17 +367,50 @@ export function ListsTab({ username, userId, isOwner }: ListsTabProps): React.JS
                     }
 
               return (
-                <MediaListCard
+                <BorealisCard
                   key={`${normalizedItem.entry?.id ?? idx}-${normalizedItem.media?.id ?? idx}`}
-                  item={normalizedItem}
-                  mediaType={activeType}
-                  onOpenEditModal={handleOpenEditModal}
-                  onIncrementProgress={isOwner ? handleIncrementProgress : undefined}
+                  type={activeType}
+                  data={normalizedItem}
+                  showSubtitle={false}
+                  showHoverSubtitle={false}
+                  showTabNav={true}
+                  showExtras={false}
+                  canEdit={isOwner}
+                  onEdit={() => handleOpenEditModal(normalizedItem)}
+                  onSaveEntry={
+                    isOwner
+                      ? async (payload) => {
+                          const mediaId = Number(
+                            normalizedItem.media?.id ||
+                              (normalizedItem.entry as any)?.animeId ||
+                              (normalizedItem.entry as any)?.mangaId ||
+                              (normalizedItem.entry as any)?.movieId ||
+                              (normalizedItem.entry as any)?.tvId ||
+                              (normalizedItem.entry as any)?.gameId ||
+                              (normalizedItem.entry as any)?.bookId ||
+                              (normalizedItem.entry as any)?.musicId ||
+                              (normalizedItem.entry as any)?.otherId
+                          )
+                          await saveListEntry(activeType, mediaId, payload)
+                          handleItemUpdated(normalizedItem.entry.id, payload)
+                        }
+                      : undefined
+                  }
+                  onIncrement={
+                    isOwner
+                      ? (count) =>
+                          handleIncrementProgress(
+                            normalizedItem,
+                            count,
+                            activeType
+                          )
+                      : undefined
+                  }
                   priority={idx < 4}
                 />
               )
             })}
-          </div>
+          </BorealisCardGroup>
         )}
       </div>
 

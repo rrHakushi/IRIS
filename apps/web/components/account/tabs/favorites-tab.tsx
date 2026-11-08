@@ -17,7 +17,7 @@ import {
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { resolveUserId } from "@/lib/user-profile"
-import { MediaListCard } from "@/components/lists/media-list-card"
+import { BorealisCard, type BorealisEntityType } from "@Runa/borealis"
 import type { ListEntryData, MediaListType } from "@/components/lists/types"
 import { getMediaDetailHref } from "@/lib/media-routes"
 
@@ -192,128 +192,97 @@ export function FavoritesTab({ username, userId, isOwner }: FavoritesTabProps): 
             const title = entity.title || `${fav.type} #${fav.targetId}`
             const subtitle = entity.subtitle
             const coverImage = entity.coverImage
-            const formatBadge = entity.format || fav.type
 
-            // 1. Media Items: Use MediaListCard
-            if (currentMediaType) {
-              const mediaType =
-                fav.type === "MUSIC_TRACK" || fav.type === "MUSIC_ALBUM" || fav.type === "MUSIC"
-                  ? "music"
-                  : CATEGORY_TO_MEDIA_TYPE[fav.type] || currentMediaType
-
-              const normalizedItem: ListEntryData = {
-                entry: {
-                  id: fav.targetId,
-                  status: "FAVORITE",
-                  score: typeof entity.score === "number" ? entity.score : null,
-                  notes: null,
-                  private: false,
-                  itemType:
-                    fav.type === "MUSIC_TRACK"
-                      ? "TRACK"
-                      : fav.type === "MUSIC_ALBUM"
-                        ? "ALBUM"
-                        : undefined,
-                  trackId: fav.type === "MUSIC_TRACK" ? fav.targetId : undefined,
-                  albumId: fav.type === "MUSIC_ALBUM" ? fav.targetId : undefined,
-                  createdAt: fav.createdAt,
-                  updatedAt: fav.createdAt,
-                },
-                media: {
-                  id: fav.targetId,
-                  titlePrimary: title,
-                  title,
-                  titleSecondary: subtitle,
-                  coverImage,
-                  format: entity.format,
-                  artistName: subtitle,
-                  updatedAt: fav.createdAt,
-                },
-              }
-
+            if (fav.type === "CHARACTER") {
               return (
-                <MediaListCard
+                <BorealisCard
                   key={`${fav.id}-${fav.targetId}`}
-                  item={normalizedItem}
-                  mediaType={mediaType}
+                  type="character"
+                  data={{
+                    id: fav.targetId,
+                    namePrimary: title,
+                    image: coverImage,
+                    role: "FAVORITE",
+                  }}
                   priority={idx < 4}
                 />
               )
             }
 
-            // 2. Non-media items (Characters, People, Studios): Matching card design
-            const link = getMediaDetailHref(fav.type, fav.targetId)
+            if (fav.type === "PERSON") {
+              return (
+                <BorealisCard
+                  key={`${fav.id}-${fav.targetId}`}
+                  type="staff"
+                  data={{
+                    id: fav.targetId,
+                    namePrimary: title,
+                    image: coverImage,
+                    customRole: subtitle || "Staff",
+                  }}
+                  priority={idx < 4}
+                />
+              )
+            }
+
+            if (fav.type === "STUDIO") {
+              return (
+                <BorealisCard
+                  key={`${fav.id}-${fav.targetId}`}
+                  type="studio"
+                  data={{
+                    id: fav.targetId,
+                    name: title,
+                    image: coverImage,
+                  }}
+                  priority={idx < 4}
+                />
+              )
+            }
+
+            // Media Items
+            const rawType =
+              fav.type === "MUSIC_TRACK" || fav.type === "MUSIC_ALBUM" || fav.type === "MUSIC"
+                ? "music"
+                : CATEGORY_TO_MEDIA_TYPE[fav.type] || currentMediaType || "anime"
+
+            const normalizedItem: ListEntryData = {
+              entry: {
+                id: fav.targetId,
+                status: "FAVORITE",
+                score: typeof entity.score === "number" ? entity.score : null,
+                notes: null,
+                private: false,
+                itemType:
+                  fav.type === "MUSIC_TRACK"
+                    ? "TRACK"
+                    : fav.type === "MUSIC_ALBUM"
+                      ? "ALBUM"
+                      : undefined,
+                trackId: fav.type === "MUSIC_TRACK" ? fav.targetId : undefined,
+                albumId: fav.type === "MUSIC_ALBUM" ? fav.targetId : undefined,
+                createdAt: fav.createdAt,
+                updatedAt: fav.createdAt,
+              },
+              media: {
+                id: fav.targetId,
+                titlePrimary: title,
+                title,
+                titleSecondary: subtitle,
+                coverImage,
+                format: entity.format,
+                artistName: subtitle,
+                updatedAt: fav.createdAt,
+              },
+            }
 
             return (
-              <div
+              <BorealisCard
                 key={`${fav.id}-${fav.targetId}`}
-                className="group media-card-contain relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card hover:border-primary/40"
-              >
-                {/* Cover Image Container */}
-                <div className="relative aspect-2/3 w-full overflow-hidden bg-muted select-none">
-                  <Link
-                    href={link}
-                    prefetch={false}
-                    className="absolute inset-0 block size-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-hidden"
-                  >
-                    {coverImage ? (
-                      <Image
-                        src={coverImage}
-                        alt={title}
-                        fill
-                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1536px) 25vw, 384px"
-                        priority={idx < 4}
-                        unoptimized
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex size-full flex-col items-center justify-center gap-1.5 p-2 text-muted-foreground/50">
-                        {fav.type === "STUDIO" ? (
-                          <IconBuildingCommunity className="size-8 stroke-[1.5]" />
-                        ) : fav.type === "PERSON" ? (
-                          <IconUser className="size-8 stroke-[1.5]" />
-                        ) : (
-                          <IconSparkles className="size-8 stroke-[1.5]" />
-                        )}
-                        <span className="line-clamp-2 text-center text-[10px] font-medium text-muted-foreground/70">
-                          {title}
-                        </span>
-                      </div>
-                    )}
-                  </Link>
-
-                  {/* Format badge bottom left */}
-                  <div className="pointer-events-none absolute start-1.5 bottom-1.5 z-10 flex max-w-[calc(100%-2rem)] flex-col items-start gap-1 select-none">
-                    <div className="flex items-center rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white/90 tabular-nums shadow-xs backdrop-blur-md">
-                      <span>{formatBadge}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card Meta */}
-                <div className="flex flex-1 flex-col p-2">
-                  <Link
-                    href={link}
-                    prefetch={false}
-                    title={title}
-                    className="line-clamp-2 text-[11px] leading-tight font-semibold text-foreground hover:text-primary sm:text-xs"
-                  >
-                    {title}
-                  </Link>
-                  {subtitle ? (
-                    <p
-                      className="mt-0.5 line-clamp-1 text-[10px] text-muted-foreground"
-                      title={subtitle}
-                    >
-                      {subtitle}
-                    </p>
-                  ) : (
-                    <span className="mt-0.5 text-[10px] text-muted-foreground/70">
-                      Favorite
-                    </span>
-                  )}
-                </div>
-              </div>
+                type={rawType as BorealisEntityType}
+                data={normalizedItem}
+                priority={idx < 4}
+              />
             )
           })}
         </div>

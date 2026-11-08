@@ -982,6 +982,39 @@ export function UserListView({
     [activeStatus, sortBy, sortOrder, fetchFacets]
   )
 
+  const handleScoreChange = useCallback(
+    async (item: ListEntryData, newScore: number | null) => {
+      const entryId = item.entry.id
+      const mediaId = item.media.id
+
+      handleItemUpdated(entryId, {
+        ...item.entry,
+        score: newScore,
+      })
+
+      try {
+        const payload = {
+          mediaId,
+          score: newScore,
+        }
+        const endpoint = (elysia.borealis.lists as any)[mediaType]
+        const res = await endpoint.post(payload)
+        if (res.error) {
+          toast.error(res.error.value?.message || "Failed to update score")
+          fetchItems(true)
+          return
+        }
+        toast.success(newScore !== null ? `Score updated to ${newScore}/10` : "Rating cleared")
+        invalidateClientStats(username, mediaType)
+      } catch (err) {
+        console.error("[UserListView] Failed to update score:", err)
+        toast.error("Failed to update score")
+        fetchItems(true)
+      }
+    },
+    [handleItemUpdated, mediaType, username, fetchItems]
+  )
+
   // ---------------------------------------------------------------------------
   // 6. Optimistic Client Filtering & Server Search State
   // ---------------------------------------------------------------------------
@@ -1133,6 +1166,7 @@ export function UserListView({
             isOwner={isOwner}
             onItemUpdated={handleItemUpdated}
             onIncrementProgress={isOwner ? handleIncrementProgress : undefined}
+            onScoreChange={isOwner ? handleScoreChange : undefined}
             mediaTitlePreference={mediaTitlePreference}
             searchQuery={searchQuery.trim()}
             facets={facets}

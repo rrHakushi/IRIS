@@ -27,7 +27,8 @@ import {
   type ListFilterFacets,
   MEDIA_CATEGORIES,
 } from "./types"
-import { MediaListCard } from "./media-list-card"
+import { BorealisCard, BorealisCardGroup } from "@Runa/borealis"
+import { saveListEntry } from "@/lib/save-list-entry"
 
 export function MediaListCardSkeleton({
   isMusic = false,
@@ -64,6 +65,7 @@ export interface MediaListGridProps {
     updatedEntry: MediaListEntryData | null
   ) => void
   onIncrementProgress?: (item: ListEntryData, count: number) => Promise<void>
+  onScoreChange?: (item: ListEntryData, newScore: number | null) => Promise<void>
   mediaTitlePreference?: "primary" | "secondary" | "native"
   searchQuery?: string
   facets?: ListFilterFacets
@@ -240,6 +242,7 @@ export function MediaListGrid({
   isOwner = false,
   onItemUpdated,
   onIncrementProgress,
+  onScoreChange,
   mediaTitlePreference = "primary",
   searchQuery,
   facets,
@@ -487,73 +490,90 @@ export function MediaListGrid({
                 ? section.expectedCount
                 : section.items.length
 
-            // Skeleton placeholders for pending items (capped at 12)
-            const skeletonCount = isSectionLoading
-              ? Math.min(
-                  12,
-                  Math.max(
-                    section.items.length === 0 ? 4 : 2,
-                    section.expectedCount - section.items.length
-                  )
-                )
-              : 0
-
             return (
-              <div key={section.key} className="flex flex-col gap-3">
-                {/* Section Header with Title & Count */}
-                <div className="flex items-center gap-2">
-                  <h2 className="font-heading text-sm font-semibold tracking-tight text-foreground sm:text-base">
-                    {section.title}
-                  </h2>
-                  <span className="rounded-full bg-muted/80 px-2 py-0.5 font-mono text-[11px] font-medium text-muted-foreground tabular-nums">
-                    {displayCount}
-                  </span>
-                </div>
-
-                {/* Fixed-Size Auto-Fill Grid */}
-                <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
-                  {section.items.map((item, idx) => (
-                    <MediaListCard
-                      key={`${item.entry.id}-${item.media.id}`}
-                      item={item}
-                      mediaType={mediaType}
-                      mediaTitlePreference={mediaTitlePreference}
-                      progressUnit={progressUnit}
-                      onOpenEditModal={handleOpenEditModal}
-                      onIncrementProgress={
-                        isOwner ? onIncrementProgress : undefined
-                      }
-                      priority={sectionIdx === 0 && idx === 0}
-                    />
-                  ))}
-
-                  {/* Skeleton Placeholders while pending items stream in */}
-                  {Array.from({ length: skeletonCount }).map((_, sIdx) => (
-                    <MediaListCardSkeleton
-                      key={`skeleton-${section.key}-${sIdx}`}
-                      isMusic={mediaType === "music"}
-                    />
-                  ))}
-                </div>
-              </div>
+              <BorealisCardGroup
+                key={section.key}
+                title={section.title}
+                rowCount={1}
+                dragFree
+                variant="ghost"
+              >
+                {section.items.map((item, idx) => (
+                  <BorealisCard
+                    key={`${item.entry.id}-${item.media.id}`}
+                    type={mediaType}
+                    data={item}
+                    titlePreference={mediaTitlePreference}
+                    showSubtitle={false}
+                    showHoverSubtitle={false}
+                    showTabNav={true}
+                    showExtras={false}
+                    canEdit={isOwner}
+                    onEdit={isOwner ? () => handleOpenEditModal(item) : undefined}
+                    onScoreChange={
+                      isOwner && onScoreChange
+                        ? (newScore) => onScoreChange(item, newScore)
+                        : undefined
+                    }
+                    onSaveEntry={
+                      isOwner
+                        ? async (payload) => {
+                            await saveListEntry(mediaType, item.media.id, payload)
+                            onItemUpdated?.(item.entry.id, {
+                              ...item.entry,
+                              ...payload,
+                              private: payload.isPrivate ?? item.entry.private,
+                            } as any)
+                          }
+                        : undefined
+                    }
+                    priority={sectionIdx === 0 && idx === 0}
+                  />
+                ))}
+              </BorealisCardGroup>
             )
           })}
         </div>
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
+        <BorealisCardGroup
+          rowCount={1}
+          dragFree
+          variant="ghost"
+          className="w-full"
+        >
           {items.map((item, idx) => (
-            <MediaListCard
+            <BorealisCard
               key={`${item.entry.id}-${item.media.id}`}
-              item={item}
-              mediaType={mediaType}
-              mediaTitlePreference={mediaTitlePreference}
-              progressUnit={progressUnit}
-              onOpenEditModal={handleOpenEditModal}
-              onIncrementProgress={isOwner ? onIncrementProgress : undefined}
+              type={mediaType}
+              data={item}
+              titlePreference={mediaTitlePreference}
+              showSubtitle={false}
+              showHoverSubtitle={false}
+              showTabNav={true}
+              showExtras={false}
+              canEdit={isOwner}
+              onEdit={isOwner ? () => handleOpenEditModal(item) : undefined}
+              onScoreChange={
+                isOwner && onScoreChange
+                  ? (newScore) => onScoreChange(item, newScore)
+                  : undefined
+              }
+              onSaveEntry={
+                isOwner
+                  ? async (payload) => {
+                      await saveListEntry(mediaType, item.media.id, payload)
+                      onItemUpdated?.(item.entry.id, {
+                        ...item.entry,
+                        ...payload,
+                        private: payload.isPrivate ?? item.entry.private,
+                      } as any)
+                    }
+                  : undefined
+              }
               priority={idx === 0}
             />
           ))}
-        </div>
+        </BorealisCardGroup>
       )}
 
       {/* Edit List Modal */}

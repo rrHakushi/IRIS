@@ -105,9 +105,21 @@ export function parseCategoryTag(input: string): {
 export interface VisitedMediaItem {
   id: number | string
   title: string
+  titleNative?: string | null
+  titleSecondary?: string | null
   coverImage?: string | null
+  bannerImage?: string | null
+  description?: string | null
   format?: string | null
+  status?: string | null
   year?: number | string | null
+  seasonYear?: number | null
+  averageScore?: number | null
+  chapterCount?: number | null
+  episodeCount?: number | null
+  volumeCount?: number | null
+  genres?: any[]
+  studios?: any[]
   queuedForFetch?: boolean
   visitedAt: number
   type?: "TRACK" | "ALBUM"
@@ -115,6 +127,7 @@ export interface VisitedMediaItem {
   album?: string | null
   audioPreviewUrl?: string | null
   explicitLyrics?: boolean | null
+  raw?: any
 }
 
 export interface CategoryBrowseHistory {

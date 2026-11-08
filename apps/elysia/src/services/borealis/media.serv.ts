@@ -162,15 +162,22 @@ export class BorealisMediaServ {
           'titleNative',
           'coverImage',
           'bannerImage',
+          'description',
+          'source',
           'format',
           'status',
           'seasonYear',
           'seasonSeason',
           'episodeCount',
-          'averageScore'
+          'averageScore',
+          'popularity',
+          'favorites'
         )
         .include('genres', (g) =>
           g.include('genre', (ge) => ge.select('id', 'name'))
+        )
+        .include('studios', (st) =>
+          st.include('studio', (s) => s.select('id', 'name'))
         )
         .all(),
     ])
@@ -185,13 +192,21 @@ export class BorealisMediaServ {
         titleNative: x.titleNative,
         coverImage: x.coverImage,
         bannerImage: x.bannerImage,
+        description: x.description,
+        source: x.source,
         format: String(x.format),
         status: String(x.status),
         year: x.seasonYear,
         season: x.seasonSeason ? String(x.seasonSeason) : null,
         unitsCount: x.episodeCount,
+        episodeCount: x.episodeCount,
         averageScore: x.averageScore,
+        popularity: x.popularity,
+        favorites: x.favorites,
         genres: (x.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
+        studios: (x.studios || [])
+          .filter((s: any) => Boolean(s.studio))
+          .map((s: any) => ({ id: s.studio!.id, name: s.studio!.name })),
       })),
       pagination: {
         page,
@@ -588,12 +603,16 @@ export class BorealisMediaServ {
           'titleNative',
           'coverImage',
           'bannerImage',
+          'description',
+          'source',
           'format',
           'status',
           'startDateYear',
           'chapterCount',
           'volumeCount',
-          'averageScore'
+          'averageScore',
+          'popularity',
+          'favorites'
         )
         .include('genres', (g) =>
           g.include('genre', (ge) => ge.select('id', 'name'))
@@ -611,11 +630,17 @@ export class BorealisMediaServ {
         titleNative: x.titleNative,
         coverImage: x.coverImage,
         bannerImage: x.bannerImage,
+        description: x.description,
+        source: x.source,
         format: String(x.format),
         status: String(x.status),
         year: x.startDateYear,
         unitsCount: x.chapterCount,
+        chapterCount: x.chapterCount,
+        volumeCount: x.volumeCount,
         averageScore: x.averageScore,
+        popularity: x.popularity,
+        favorites: x.favorites,
         genres: (x.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
       })),
       pagination: {
@@ -991,13 +1016,19 @@ export class BorealisMediaServ {
           'titleNative',
           'coverImage',
           'bannerImage',
+          'description',
           'runtime',
           'releaseDateYear',
           'averageScore',
+          'popularity',
+          'favorites',
           'status'
         )
         .include('genres', (g) =>
           g.include('genre', (ge) => ge.select('id', 'name'))
+        )
+        .include('studios', (st) =>
+          st.include('studio', (s) => s.select('id', 'name'))
         )
         .all(),
     ])
@@ -1012,12 +1043,19 @@ export class BorealisMediaServ {
         titleNative: x.titleNative,
         coverImage: x.coverImage,
         bannerImage: x.bannerImage,
+        description: x.description,
         format: 'MOVIE',
         status: String(x.status),
         year: x.releaseDateYear,
         unitsCount: x.runtime,
+        duration: x.runtime,
         averageScore: x.averageScore,
+        popularity: x.popularity,
+        favorites: x.favorites,
         genres: (x.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
+        studios: (x.studios || [])
+          .filter((s: any) => Boolean(s.studio))
+          .map((s: any) => ({ id: s.studio!.id, name: s.studio!.name })),
       })),
       pagination: {
         page,
@@ -1406,14 +1444,20 @@ export class BorealisMediaServ {
           'titleNative',
           'coverImage',
           'bannerImage',
+          'description',
           'episodeCount',
           'firstAiredYear',
           'averageScore',
           'showType',
+          'popularity',
+          'favorites',
           'status'
         )
         .include('genres', (g) =>
           g.include('genre', (ge) => ge.select('id', 'name'))
+        )
+        .include('studios', (st) =>
+          st.include('studio', (s) => s.select('id', 'name'))
         )
         .all(),
     ])
@@ -1428,12 +1472,19 @@ export class BorealisMediaServ {
         titleNative: x.titleNative,
         coverImage: x.coverImage,
         bannerImage: x.bannerImage,
+        description: x.description,
         format: x.showType || 'TV',
         status: String(x.status),
         year: x.firstAiredYear,
         unitsCount: x.episodeCount,
+        episodeCount: x.episodeCount,
         averageScore: x.averageScore,
+        popularity: x.popularity,
+        favorites: x.favorites,
         genres: (x.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
+        studios: (x.studios || [])
+          .filter((s: any) => Boolean(s.studio))
+          .map((s: any) => ({ id: s.studio!.id, name: s.studio!.name })),
       })),
       pagination: {
         page,
@@ -1830,14 +1881,20 @@ export class BorealisMediaServ {
           'titleSecondary',
           'coverImage',
           'bannerImage',
+          'description',
           'pageCount',
           'releaseDateYear',
           'averageScore',
           'format',
+          'popularity',
+          'favorites',
           'status'
         )
         .include('genres', (g) =>
           g.include('genre', (ge) => ge.select('id', 'name'))
+        )
+        .include('studios', (st) =>
+          st.include('studio', (s) => s.select('id', 'name'))
         )
         .all(),
     ])
@@ -1852,12 +1909,19 @@ export class BorealisMediaServ {
         titleNative: null,
         coverImage: x.coverImage,
         bannerImage: x.bannerImage,
+        description: x.description,
         format: x.format || 'BOOK',
         status: String(x.status),
         year: x.releaseDateYear,
         unitsCount: x.pageCount,
+        pageCount: x.pageCount,
         averageScore: x.averageScore,
+        popularity: x.popularity,
+        favorites: x.favorites,
         genres: (x.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
+        studios: (x.studios || [])
+          .filter((s: any) => Boolean(s.studio))
+          .map((s: any) => ({ id: s.studio!.id, name: s.studio!.name })),
       })),
       pagination: {
         page,
@@ -2234,12 +2298,19 @@ export class BorealisMediaServ {
           'titleSecondary',
           'coverImage',
           'bannerImage',
+          'description',
+          'platforms',
           'releaseDateYear',
           'averageScore',
+          'popularity',
+          'favorites',
           'status'
         )
         .include('genres', (g) =>
           g.include('genre', (ge) => ge.select('id', 'name'))
+        )
+        .include('studios', (st) =>
+          st.include('studio', (s) => s.select('id', 'name'))
         )
         .all(),
     ])
@@ -2254,12 +2325,19 @@ export class BorealisMediaServ {
         titleNative: null,
         coverImage: x.coverImage,
         bannerImage: x.bannerImage,
+        description: x.description,
         format: 'GAME',
         status: String(x.status),
         year: x.releaseDateYear,
         unitsCount: null,
         averageScore: x.averageScore,
+        popularity: x.popularity,
+        favorites: x.favorites,
+        platforms: [...x.platforms],
         genres: (x.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
+        studios: (x.studios || [])
+          .filter((s: any) => Boolean(s.studio))
+          .map((s: any) => ({ id: s.studio!.id, name: s.studio!.name })),
       })),
       pagination: {
         page,
@@ -2621,9 +2699,12 @@ export class BorealisMediaServ {
           'titleNative',
           'artistName',
           'coverImage',
+          'description',
           'type',
           'duration',
           'releaseDateYear',
+          'popularity',
+          'favorites',
           'status'
         )
         .include('genres', (g) =>
@@ -2640,13 +2721,18 @@ export class BorealisMediaServ {
         titlePrimary: x.titlePrimary,
         titleSecondary: x.titleSecondary,
         titleNative: x.titleNative,
+        artistName: x.artistName,
         coverImage: x.coverImage,
         bannerImage: null,
+        description: x.description,
         format: String(x.type),
         status: String(x.status),
         year: x.releaseDateYear,
         unitsCount: x.duration,
+        duration: x.duration,
         averageScore: null,
+        popularity: x.popularity,
+        favorites: x.favorites,
         genres: (x.genres || []).filter((g: any) => Boolean(g.genre)).map((g: any) => ({ id: g.genre!.id, name: g.genre!.name })),
       })),
       pagination: {

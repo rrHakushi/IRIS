@@ -38,10 +38,11 @@ export function BrowsePageClient() {
   const searchParams = useSearchParams()
 
   // Category state (synced with URL ?category=...)
-  const urlCategory =
-    (searchParams.get("category") as BrowseCategory) || "anime"
-  const isValidCategory = BROWSE_CATEGORIES.some((c) => c.key === urlCategory)
-  const initialCategory = isValidCategory ? urlCategory : "anime"
+  const rawUrlCategory = (searchParams.get("category") || "").toLowerCase()
+  const matchedCategory = BROWSE_CATEGORIES.find(
+    (c) => c.key.toLowerCase() === rawUrlCategory
+  )?.key
+  const initialCategory: BrowseCategory = matchedCategory ?? "anime"
   const initialQuery = searchParams.get("q") || ""
 
   const urlType = searchParams.get("type") as MusicBrowseType | null
@@ -146,12 +147,15 @@ export function BrowsePageClient() {
 
   // Restore state when user navigates with browser Back / Forward buttons
   useEffect(() => {
-    const catParam = searchParams.get("category") as BrowseCategory
+    const rawCatParam = (searchParams.get("category") || "").toLowerCase()
+    const matchedCat = BROWSE_CATEGORIES.find(
+      (c) => c.key.toLowerCase() === rawCatParam
+    )?.key
     const qParam = searchParams.get("q") || ""
     const typeParam = searchParams.get("type") as MusicBrowseType | null
 
-    if (catParam && BROWSE_CATEGORIES.some((c) => c.key === catParam)) {
-      setActiveCategory((prev) => (prev !== catParam ? catParam : prev))
+    if (matchedCat) {
+      setActiveCategory((prev) => (prev !== matchedCat ? matchedCat : prev))
     }
 
     if (typeParam === "tracks" || typeParam === "albums") {

@@ -11,6 +11,7 @@ import {
   IconPlayerPause,
   IconX,
   IconFilter,
+  IconUsers,
 } from "@tabler/icons-react"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"

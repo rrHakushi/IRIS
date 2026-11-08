@@ -41,6 +41,7 @@ import type {
 import { MusicTracklist } from "../music/music-tracklist"
 import { MusicPlayerPreview } from "../music/music-player-preview"
 import { MusicLyrics } from "../music/music-lyrics"
+import { BorealisCard, BorealisCardGroup } from "@Runa/borealis"
 
 interface OverviewTabProps {
   media: NormalizedMediaData
@@ -816,129 +817,36 @@ export function OverviewTab({
 
           {/* 2. Featured Characters (1 row scrollable) */}
           {featuredCharacters.length > 0 && (
-            <section aria-labelledby="characters-preview-heading">
-              <div className="mb-3.5 flex items-center justify-between">
-                <h2
-                  id="characters-preview-heading"
-                  className="text-base font-semibold text-foreground"
-                >
-                  {media.category === "anime"
-                    ? "Characters & Voice Actors"
-                    : media.category === "movies" || media.format === "MOVIE"
-                      ? "Characters & Cast"
-                      : "Characters & Voice Actors"}
-                </h2>
-              </div>
-
-              <div className="no-scrollbar flex gap-3 overflow-x-auto pb-2">
-                {featuredCharacters.map((item) => {
-                  const charName =
-                    titlePref === "native" && item.nameNative
-                      ? item.nameNative
-                      : item.namePrimary
-                  const actorName =
-                    titlePref === "native" && item.actor?.nameNative
-                      ? item.actor.nameNative
-                      : item.actor?.namePrimary
-                  const roleUpper = item.role.toUpperCase()
-
-                  return (
-                    <div
-                      key={item.characterId}
-                      className="group relative flex w-[140px] shrink-0 flex-col overflow-hidden rounded-xl border border-border/50 bg-card hover:border-primary/40 transition-colors"
-                    >
-                      {/* Character Poster Image */}
-                      <Link
-                        href={`/borealis/characters/${item.characterId}`}
-                        className="relative aspect-2/3 w-full overflow-hidden bg-muted outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-hidden"
-                      >
-                        {item.image ? (
-                          <img
-                            src={item.image}
-                            alt={charName}
-                            loading="lazy"
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-muted-foreground/50">
-                            <IconPhotoOff className="size-6" aria-hidden="true" />
-                          </div>
-                        )}
-
-                        {/* Character Type Badge */}
-                        <div className="absolute start-1.5 bottom-1.5 z-10 flex flex-wrap gap-1">
-                          <Badge
-                            variant={roleUpper === "MAIN" ? "default" : "secondary"}
-                            className={cn(
-                              "h-4 px-1.5 py-0 text-[8px] font-bold uppercase tracking-wider backdrop-blur-md",
-                              roleUpper === "MAIN"
-                                ? "bg-primary text-primary-foreground shadow-xs"
-                                : roleUpper === "SUPPORTING"
-                                  ? "bg-black/80 text-white/90"
-                                  : "bg-black/80 text-white/70"
-                            )}
-                          >
-                            {roleUpper === "MAIN"
-                              ? "Main"
-                              : roleUpper === "SUPPORTING"
-                                ? "Supporting"
-                                : roleUpper === "BACKGROUND"
-                                  ? "Background"
-                                  : item.role}
-                          </Badge>
-                        </div>
-                      </Link>
-
-                      {/* Character Details Under Image */}
-                      <div className="flex flex-1 flex-col gap-0.5 p-2">
-                        <Link
-                          href={`/borealis/characters/${item.characterId}`}
-                          className="line-clamp-2 text-xs font-semibold text-foreground group-hover:underline"
-                        >
-                          {charName}
-                        </Link>
-                        {item.nameNative && (
-                          <span className="font-japanese truncate text-[10px] text-muted-foreground opacity-80">
-                            {item.nameNative}
-                          </span>
-                        )}
-
-                        {/* Voice Actor Underneath */}
-                        {item.actor && (
-                          <div className="mt-auto flex items-center gap-1.5 border-t border-border/40 pt-1.5 text-[10px]">
-                            {item.actor.image ? (
-                              <img
-                                src={item.actor.image}
-                                alt={actorName ?? "Actor"}
-                                loading="lazy"
-                                className="size-4 shrink-0 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-muted text-[8px] font-bold text-muted-foreground">
-                                VA
-                              </div>
-                            )}
-                            <div className="flex min-w-0 flex-1 flex-col">
-                              <Link
-                                href={`/borealis/people/${item.actor.id}`}
-                                className="truncate font-medium text-muted-foreground hover:text-foreground hover:underline"
-                              >
-                                {actorName}
-                              </Link>
-                              {item.actor.language && (
-                                <span className="text-[9px] text-muted-foreground/70">
-                                  {item.actor.language}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </section>
+            <BorealisCardGroup
+              title={
+                media.category === "anime"
+                  ? "Characters & Voice Actors"
+                  : media.category === "movies" || media.format === "MOVIE"
+                    ? "Characters & Cast"
+                    : "Characters & Voice Actors"
+              }
+              subtitle={`${featuredCharacters.length} featured characters`}
+              rowCount={1}
+              dragFree
+              variant="none"
+            >
+              {featuredCharacters.map((item) => (
+                <BorealisCard
+                  key={item.characterId}
+                  type="character"
+                  titlePreference={titlePref}
+                  data={{
+                    id: item.characterId,
+                    characterId: item.characterId,
+                    namePrimary: item.namePrimary,
+                    nameNative: item.nameNative,
+                    image: item.image,
+                    role: item.role,
+                    actor: item.actor,
+                  }}
+                />
+              ))}
+            </BorealisCardGroup>
           )}
 
           {/* 3. Theme Songs */}
@@ -996,126 +904,33 @@ export function OverviewTab({
             </section>
           )}
 
-          {/* 4. Similar Titles (horizontally scrollable row with compact 120px cards) */}
+          {/* 4. Similar Titles (rendered via smooth BorealisCardGroup carousel) */}
           {similarListItems.length > 0 && (
-            <section aria-labelledby="similar-heading">
-              <div className="mb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <IconSparkles
-                    className="size-4 text-primary"
-                    aria-hidden="true"
-                  />
-                  <h2
-                    id="similar-heading"
-                    className="text-base font-semibold text-foreground"
-                  >
-                    Similar Titles
-                  </h2>
-                </div>
-                {similarListItems.length > 4 && (
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="size-7 rounded-lg"
-                      onClick={() => scrollSimilar("left")}
-                      aria-label="Scroll similar titles left"
-                    >
-                      <IconChevronLeft
-                        className="size-3.5"
-                        aria-hidden="true"
-                      />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="size-7 rounded-lg"
-                      onClick={() => scrollSimilar("right")}
-                      aria-label="Scroll similar titles right"
-                    >
-                      <IconChevronRight
-                        className="size-3.5"
-                        aria-hidden="true"
-                      />
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              {/* Single horizontal scrollable row with compact 120px cards */}
-              <div
-                ref={similarScrollRef}
-                className="no-scrollbar flex gap-2.5 overflow-x-auto scroll-smooth pt-1 pb-1"
-              >
-                {similarListItems.map((item) => {
-                  const itemTitle = formatMediaTitle(
-                    {
-                      titlePrimary: item.titlePrimary,
-                      titleSecondary: item.titleSecondary,
-                      titleNative: item.titleNative,
-                    },
-                    titlePref
-                  )
-
-                  return (
-                    <Link
-                      key={item.id}
-                      href={`/borealis/${media.category}/${item.id}`}
-                      className="group flex w-[120px] shrink-0 flex-col overflow-hidden rounded-xl border border-border/40 bg-card outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted">
-                        {item.coverImage ? (
-                          <img
-                            src={item.coverImage}
-                            alt={itemTitle}
-                            loading="lazy"
-                            className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-muted-foreground/50">
-                            <IconPhotoOff
-                              className="size-8"
-                              aria-hidden="true"
-                            />
-                          </div>
-                        )}
-
-                        {/* Inline Badges at the bottom of the cover image like relations */}
-                        <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-center gap-1 bg-gradient-to-t from-black/85 via-black/50 to-transparent p-1.5">
-                          {item.type && (
-                            <Badge
-                              variant="secondary"
-                              className="h-3.5 px-1 py-0 text-[8px] leading-none font-bold tracking-wider uppercase backdrop-blur-xs"
-                            >
-                              {item.type.replace(/_/g, " ")}
-                            </Badge>
-                          )}
-                          {item.format && (
-                            <Badge
-                              variant="outline"
-                              className="h-3.5 bg-background/80 px-1 py-0 text-[8px] leading-none font-semibold uppercase backdrop-blur-xs"
-                            >
-                              {item.format}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-0.5 p-1.5">
-                        <span className="line-clamp-2 text-[11px] leading-tight font-medium text-foreground group-hover:underline">
-                          {itemTitle}
-                        </span>
-                        {item.year && (
-                          <span className="text-[9px] text-muted-foreground">
-                            {item.year}
-                          </span>
-                        )}
-                      </div>
-                    </Link>
-                  )
-                })}
-              </div>
-            </section>
+            <BorealisCardGroup
+              title="Similar Titles"
+              subtitle={`${similarListItems.length} similar titles`}
+              rowCount={1}
+              dragFree
+              variant="none"
+            >
+              {similarListItems.map((item) => (
+                <BorealisCard
+                  key={item.id}
+                  type={media.category as any}
+                  titlePreference={titlePref}
+                  data={{
+                    id: item.id,
+                    titlePrimary: item.titlePrimary,
+                    titleSecondary: item.titleSecondary,
+                    titleNative: item.titleNative,
+                    coverImage: item.coverImage,
+                    format: item.format,
+                    seasonYear: item.year,
+                    score: item.score,
+                  }}
+                />
+              ))}
+            </BorealisCardGroup>
           )}
         </div>
 

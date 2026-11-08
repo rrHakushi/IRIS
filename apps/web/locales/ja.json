@@ -954,5 +954,33 @@
     "allDay": "終日",
     "releasesCount": "{count} 件のリリース",
     "loginToFilterLists": "マイリストで絞り込むにはログインしてください"
+  },
+  "borealis": {
+    "components": {
+      "media": {
+        "status": {
+          "RELEASED": "リリース済",
+          "RELEASING": "公開中",
+          "UPCOMING": "公開予定",
+          "CANCELLED": "中止",
+          "HIATUS": "休載・休止",
+          "UNKNOWN": "不明"
+        },
+        "list": {
+          "status": {
+            "IN_PROGRESS": "進行中",
+            "WATCHING": "視聴中",
+            "PLAYING": "プレイ中",
+            "READING": "読書中",
+            "LISTENING": "聴取中",
+            "ON_HOLD": "一時停止",
+            "DROPPED": "中断",
+            "COMPLETED": "完了",
+            "PLANNED": "予定",
+            "MAYBE": "検討中"
+          }
+        }
+      }
+    }
   }
 }

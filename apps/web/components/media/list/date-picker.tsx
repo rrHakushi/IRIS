@@ -69,18 +69,7 @@ export function DatePicker({
     }
   }, [maxValue])
 
-  const sendDebugLog = (type: string, details: any) => {
-    try {
-      fetch("/api/debug-log", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ component: "DatePicker", type, details, time: new Date().toISOString() }),
-      }).catch(() => {})
-    } catch {}
-  }
-
   const handleSelect = (newDate: CalendarDate | null, close?: () => void) => {
-    sendDebugLog("handleSelect", { newDate: newDate?.toString(), hasClose: Boolean(close) })
     if (newDate) {
       if (minDate && newDate.compare(minDate) < 0) return
       if (maxDate && newDate.compare(maxDate) > 0) return
@@ -99,7 +88,6 @@ export function DatePicker({
   }, [minDate, maxDate])
 
   const handleSetToday = (close?: () => void) => {
-    sendDebugLog("handleSetToday", { hasClose: Boolean(close) })
     if (isTodayDisabled) return
     const todayDate = today(getLocalTimeZone())
     onChange(todayDate.toString())
@@ -107,7 +95,6 @@ export function DatePicker({
   }
 
   const handleClear = (close?: () => void) => {
-    sendDebugLog("handleClear", { hasClose: Boolean(close) })
     onChange(null)
     if (close) close()
   }
@@ -192,13 +179,7 @@ export function DatePicker({
               '[data-slot="popover-content"], .react-aria-Popover, [data-slot="calendar"]'
             )
           )
-          sendDebugLog("DatePicker.shouldCloseOnInteractOutside", {
-            tag: element.tagName,
-            className: element.className,
-            isTrigger,
-            isPopover,
-            shouldClose: !isTrigger && !isPopover,
-          })
+
           if (isTrigger) return false
           if (isPopover) return false
           return true
@@ -230,7 +211,7 @@ export function DatePicker({
                   className={cn(
                     "cursor-pointer font-medium text-primary transition-colors hover:underline",
                     isTodayDisabled &&
-                      "cursor-not-allowed opacity-40 hover:no-underline"
+                    "cursor-not-allowed opacity-40 hover:no-underline"
                   )}
                 >
                   Today

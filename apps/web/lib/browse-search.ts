@@ -66,6 +66,7 @@ export interface RawSearchResult extends FormattableMediaTitle {
   coverImage?: string | null
   image?: string | null
   bannerImage?: string | null
+  description?: string | null
   format?: string | null
   type?: "TRACK" | "ALBUM" | string | null
   itemType?: "TRACK" | "ALBUM" | string | null
@@ -165,11 +166,23 @@ function normalizeSearchResults(
       null
 
     return {
+      ...item,
       id: item.id ?? 0,
       title,
       coverImage,
+      bannerImage: item.bannerImage ?? null,
+      titleNative: item.titleNative ?? null,
+      titleSecondary: item.titleSecondary ?? null,
       format,
       year,
+      seasonYear: year,
+      averageScore: (item as any).averageScore ?? null,
+      chapterCount: (item as any).chapterCount ?? null,
+      episodeCount: (item as any).episodeCount ?? null,
+      volumeCount: (item as any).volumeCount ?? null,
+      status: (item as any).status ?? null,
+      genres: (item as any).genres ?? [],
+      studios: (item as any).studios ?? [],
       queuedForFetch: Boolean(item.queuedForFetch),
       type,
       artist: item.artist || item.artistName || null,
@@ -177,6 +190,8 @@ function normalizeSearchResults(
       duration: item.duration ?? null,
       audioPreviewUrl: item.audioPreviewUrl || item.preview || null,
       explicitLyrics: Boolean(item.explicitLyrics || item.explicit_lyrics),
+      description: item.description ?? null,
+      raw: item,
     }
   })
 }

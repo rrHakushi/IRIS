@@ -6,15 +6,27 @@ import { IconSearchOff, IconMusic, IconDisc } from "@tabler/icons-react"
 import { Skeleton } from "@workspace/ui/components/skeleton"
 import { Badge } from "@workspace/ui/components/badge"
 import { cn } from "@workspace/ui/lib/utils"
-import { BrowseMediaCard } from "./browse-media-card"
+import { BorealisCard, BorealisCardGroup, type BorealisEntityType } from "@Runa/borealis"
 import type { BrowseCategory, VisitedMediaItem } from "@/lib/browse-history"
 
 export interface SearchResultItem {
   id: number | string
   title: string
+  titlePrimary?: string | null
+  titleNative?: string | null
+  titleSecondary?: string | null
   coverImage?: string | null
+  bannerImage?: string | null
   format?: string | null
+  status?: string | null
   year?: number | string | null
+  seasonYear?: number | null
+  averageScore?: number | null
+  episodeCount?: number | null
+  chapterCount?: number | null
+  volumeCount?: number | null
+  genres?: any[]
+  studios?: any[]
   queuedForFetch?: boolean
   type?: "TRACK" | "ALBUM"
   artist?: string | null
@@ -22,6 +34,8 @@ export interface SearchResultItem {
   duration?: number | null
   audioPreviewUrl?: string | null
   explicitLyrics?: boolean | null
+  description?: string | null
+  raw?: any
 }
 
 interface BrowseSearchResultsProps {
@@ -51,11 +65,11 @@ export function BrowseSearchResults({
   if (isLoading) {
     return (
       <section aria-label="Search Results Loading" className={className}>
-        <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
-          {Array.from({ length: 12 }).map((_, i) => (
+        <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-4 w-full">
+          {Array.from({ length: 14 }).map((_, i) => (
             <div
               key={i}
-              className="flex flex-col gap-2 rounded-2xl border border-border/40 p-2"
+              className="flex flex-col gap-2 rounded-2xl border border-frost bg-frost p-2 shadow-xs backdrop-blur-md"
             >
               <Skeleton
                 className={cn(
@@ -64,7 +78,7 @@ export function BrowseSearchResults({
                 )}
               />
               <Skeleton className="h-4 w-3/4 rounded-md" />
-              <Skeleton className="h-3 w-1/2 rounded-md" />
+              <Skeleton className="h-3 w-full rounded-md" />
             </div>
           ))}
         </div>
@@ -91,6 +105,77 @@ export function BrowseSearchResults({
           {t("noResultsDesc")}
         </p>
       </section>
+    )
+  }
+
+  const renderItemCard = (item: SearchResultItem) => {
+    const isAlbum = item.type?.toUpperCase() === "ALBUM"
+    const musicSubpath = isAlbum ? "albums" : "tracks"
+    const queuedParam = item.queuedForFetch ? "?queuedFetch=true" : ""
+    const href =
+      category === "music"
+        ? `/borealis/music/${musicSubpath}/${item.id}${queuedParam}`
+        : item.queuedForFetch
+          ? `/borealis/${category}/${item.id}?queuedFetch=true`
+          : `/borealis/${category}/${item.id}`
+
+    const handleVisitClick = () => {
+      onVisit({
+        ...item,
+        id: item.id,
+        title: item.title,
+        coverImage: item.coverImage,
+        bannerImage: item.bannerImage,
+        description: item.description,
+        format: item.format,
+        year: item.year,
+        queuedForFetch: item.queuedForFetch,
+        type: item.type,
+        artist: item.artist,
+        album: item.album,
+        audioPreviewUrl: item.audioPreviewUrl,
+        explicitLyrics: item.explicitLyrics,
+        visitedAt: Date.now(),
+        raw: item.raw,
+      })
+    }
+
+    const rawData = item.raw ?? item
+    const cardData = {
+      ...rawData,
+      id: item.id,
+      titlePrimary: rawData.titlePrimary ?? item.title,
+      coverImage: item.coverImage ?? rawData.coverImage,
+      bannerImage: item.bannerImage ?? rawData.bannerImage,
+      description: item.description ?? rawData.description,
+      format: item.format ?? rawData.format,
+      seasonYear: item.year ?? rawData.seasonYear ?? rawData.startDateYear,
+      averageScore: item.averageScore ?? rawData.averageScore,
+      chapterCount: item.chapterCount ?? rawData.chapterCount,
+      episodeCount: item.episodeCount ?? rawData.episodeCount,
+      volumeCount: item.volumeCount ?? rawData.volumeCount,
+      status: item.status ?? rawData.status,
+      genres: item.genres ?? rawData.genres ?? [],
+      studios: item.studios ?? rawData.studios ?? [],
+      queuedForFetch: item.queuedForFetch ?? rawData.queuedForFetch,
+      subtext: item.artist
+        ? !isAlbum && item.album
+          ? `${item.artist} • ${item.album}`
+          : item.artist
+        : rawData.subtext,
+    }
+
+    return (
+      <div key={item.id} onClick={handleVisitClick} className="w-full">
+        <BorealisCard
+          type={category as BorealisEntityType}
+          href={href}
+          data={cardData}
+          showSubtitle={false}
+          showExtras={false}
+          className="w-full"
+        />
+      </div>
     )
   }
 
@@ -124,16 +209,9 @@ export function BrowseSearchResults({
 
       return (
         <section aria-label="Track Search Results" className={className}>
-          <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
-            {trackResults.map((item) => (
-              <BrowseMediaCard
-                key={`track-${item.id}`}
-                item={item}
-                category={category}
-                onVisit={onVisit}
-              />
-            ))}
-          </div>
+          <BorealisCardGroup grid variant="none" gap="md" className="w-full">
+            {trackResults.map((item) => renderItemCard(item))}
+          </BorealisCardGroup>
         </section>
       )
     }
@@ -163,16 +241,9 @@ export function BrowseSearchResults({
 
       return (
         <section aria-label="Album Search Results" className={className}>
-          <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
-            {albumResults.map((item) => (
-              <BrowseMediaCard
-                key={`album-${item.id}`}
-                item={item}
-                category={category}
-                onVisit={onVisit}
-              />
-            ))}
-          </div>
+          <BorealisCardGroup grid variant="none" gap="md" className="w-full">
+            {albumResults.map((item) => renderItemCard(item))}
+          </BorealisCardGroup>
         </section>
       )
     }
@@ -198,16 +269,9 @@ export function BrowseSearchResults({
                 {trackResults.length}
               </Badge>
             </div>
-            <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
-              {trackResults.map((item) => (
-                <BrowseMediaCard
-                  key={`track-${item.id}`}
-                  item={item}
-                  category={category}
-                  onVisit={onVisit}
-                />
-              ))}
-            </div>
+            <BorealisCardGroup grid variant="none" gap="md" className="w-full">
+              {trackResults.map((item) => renderItemCard(item))}
+            </BorealisCardGroup>
           </div>
         )}
 
@@ -226,16 +290,9 @@ export function BrowseSearchResults({
                 {albumResults.length}
               </Badge>
             </div>
-            <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
-              {albumResults.map((item) => (
-                <BrowseMediaCard
-                  key={`album-${item.id}`}
-                  item={item}
-                  category={category}
-                  onVisit={onVisit}
-                />
-              ))}
-            </div>
+            <BorealisCardGroup grid variant="none" gap="md" className="w-full">
+              {albumResults.map((item) => renderItemCard(item))}
+            </BorealisCardGroup>
           </div>
         )}
       </section>
@@ -245,16 +302,9 @@ export function BrowseSearchResults({
   // Generic non-music search results
   return (
     <section aria-label="Search Results" className={className}>
-      <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
-        {results.map((item) => (
-          <BrowseMediaCard
-            key={item.id}
-            item={item}
-            category={category}
-            onVisit={onVisit}
-          />
-        ))}
-      </div>
+      <BorealisCardGroup grid variant="none" gap="md" className="w-full">
+        {results.map((item) => renderItemCard(item))}
+      </BorealisCardGroup>
     </section>
   )
 }

@@ -2,10 +2,11 @@
 
 import React from "react"
 import { useTranslations } from "next-intl"
-import { IconHistory, IconMusic, IconDisc } from "@tabler/icons-react"
+import { IconHistory, IconMusic, IconDisc, IconX } from "@tabler/icons-react"
 import { Badge } from "@workspace/ui/components/badge"
+import { Button } from "@workspace/ui/components/button"
 import { cn } from "@workspace/ui/lib/utils"
-import { BrowseMediaCard } from "./browse-media-card"
+import { BorealisCard, BorealisCardGroup, type BorealisEntityType } from "@Runa/borealis"
 import type { BrowseCategory, VisitedMediaItem } from "@/lib/browse-history"
 
 interface BrowseVisitedGridProps {
@@ -33,6 +34,72 @@ export function BrowseVisitedGrid({
     return null
   }
 
+  const renderVisitedCard = (item: VisitedMediaItem) => {
+    const isAlbum = item.type?.toUpperCase() === "ALBUM"
+    const musicSubpath = isAlbum ? "albums" : "tracks"
+    const queuedParam = item.queuedForFetch ? "?queuedFetch=true" : ""
+    const href =
+      category === "music"
+        ? `/borealis/music/${musicSubpath}/${item.id}${queuedParam}`
+        : item.queuedForFetch
+          ? `/borealis/${category}/${item.id}?queuedFetch=true`
+          : `/borealis/${category}/${item.id}`
+
+    const rawData = item.raw ?? item
+    const cardData = {
+      ...rawData,
+      id: item.id,
+      titlePrimary: rawData.titlePrimary ?? item.title,
+      coverImage: item.coverImage ?? rawData.coverImage,
+      bannerImage: item.bannerImage ?? rawData.bannerImage,
+      description: item.description ?? rawData.description,
+      format: item.format ?? rawData.format,
+      seasonYear: item.year ?? rawData.seasonYear ?? rawData.startDateYear,
+      averageScore: item.averageScore ?? rawData.averageScore,
+      chapterCount: item.chapterCount ?? rawData.chapterCount,
+      episodeCount: item.episodeCount ?? rawData.episodeCount,
+      volumeCount: item.volumeCount ?? rawData.volumeCount,
+      status: item.status ?? rawData.status,
+      genres: item.genres ?? rawData.genres ?? [],
+      studios: item.studios ?? rawData.studios ?? [],
+      queuedForFetch: item.queuedForFetch ?? rawData.queuedForFetch,
+      subtext: item.artist
+        ? !isAlbum && item.album
+          ? `${item.artist} • ${item.album}`
+          : item.artist
+        : rawData.subtext,
+    }
+
+    return (
+      <div
+        key={`${item.id}-${item.visitedAt}`}
+        className="group relative flex flex-col w-full"
+        onClick={() => onVisit(item)}
+      >
+        <BorealisCard
+          type={category as BorealisEntityType}
+          href={href}
+          data={cardData}
+          showSubtitle={false}
+          showExtras={false}
+          className="w-full"
+        />
+        {onRemove && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            onPress={() => onRemove(item.id, item.type)}
+            aria-label={t("removeFromVisited", { title: item.title })}
+            className="hover:text-destructive-foreground absolute end-2 top-2 z-30 size-6 cursor-pointer rounded-full bg-background/80 text-muted-foreground opacity-0 backdrop-blur-xs transition-opacity duration-150 group-hover:opacity-100 hover:bg-destructive focus-visible:opacity-100"
+          >
+            <IconX className="size-3.5" aria-hidden="true" />
+          </Button>
+        )}
+      </div>
+    )
+  }
+
   // Music-specific separated view
   if (category === "music") {
     const visitedTracks = items.filter((item) => item.type !== "ALBUM")
@@ -57,18 +124,9 @@ export function BrowseVisitedGrid({
             </div>
           </div>
 
-          <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
-            {visitedTracks.map((item) => (
-              <BrowseMediaCard
-                key={`visited-track-${item.id}-${item.visitedAt}`}
-                item={item}
-                category={category}
-                onVisit={onVisit}
-                onRemove={onRemove}
-                showRemoveButton={true}
-              />
-            ))}
-          </div>
+          <BorealisCardGroup grid variant="none" gap="md" className="w-full">
+            {visitedTracks.map((item) => renderVisitedCard(item))}
+          </BorealisCardGroup>
         </section>
       )
     }
@@ -92,18 +150,9 @@ export function BrowseVisitedGrid({
             </div>
           </div>
 
-          <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
-            {visitedAlbums.map((item) => (
-              <BrowseMediaCard
-                key={`visited-album-${item.id}-${item.visitedAt}`}
-                item={item}
-                category={category}
-                onVisit={onVisit}
-                onRemove={onRemove}
-                showRemoveButton={true}
-              />
-            ))}
-          </div>
+          <BorealisCardGroup grid variant="none" gap="md" className="w-full">
+            {visitedAlbums.map((item) => renderVisitedCard(item))}
+          </BorealisCardGroup>
         </section>
       )
     }
@@ -128,18 +177,9 @@ export function BrowseVisitedGrid({
                 {visitedTracks.length}
               </Badge>
             </div>
-            <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
-              {visitedTracks.map((item) => (
-                <BrowseMediaCard
-                  key={`visited-track-${item.id}-${item.visitedAt}`}
-                  item={item}
-                  category={category}
-                  onVisit={onVisit}
-                  onRemove={onRemove}
-                  showRemoveButton={true}
-                />
-              ))}
-            </div>
+            <BorealisCardGroup grid variant="none" gap="md" className="w-full">
+              {visitedTracks.map((item) => renderVisitedCard(item))}
+            </BorealisCardGroup>
           </div>
         )}
 
@@ -157,18 +197,9 @@ export function BrowseVisitedGrid({
                 {visitedAlbums.length}
               </Badge>
             </div>
-            <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
-              {visitedAlbums.map((item) => (
-                <BrowseMediaCard
-                  key={`visited-album-${item.id}-${item.visitedAt}`}
-                  item={item}
-                  category={category}
-                  onVisit={onVisit}
-                  onRemove={onRemove}
-                  showRemoveButton={true}
-                />
-              ))}
-            </div>
+            <BorealisCardGroup grid variant="none" gap="md" className="w-full">
+              {visitedAlbums.map((item) => renderVisitedCard(item))}
+            </BorealisCardGroup>
           </div>
         )}
       </section>
@@ -189,18 +220,9 @@ export function BrowseVisitedGrid({
         </div>
       </div>
 
-      <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
-        {items.map((item) => (
-          <BrowseMediaCard
-            key={`${item.id}-${item.visitedAt}`}
-            item={item}
-            category={category}
-            onVisit={onVisit}
-            onRemove={onRemove}
-            showRemoveButton={true}
-          />
-        ))}
-      </div>
+      <BorealisCardGroup grid variant="none" gap="md" className="w-full">
+        {items.map((item) => renderVisitedCard(item))}
+      </BorealisCardGroup>
     </section>
   )
 }

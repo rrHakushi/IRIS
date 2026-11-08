@@ -5,6 +5,7 @@ import Link from "next/link"
 import { IconPhotoOff, IconWorld } from "@tabler/icons-react"
 import { Badge } from "@workspace/ui/components/badge"
 import { cn } from "@workspace/ui/lib/utils"
+import { BorealisCard, BorealisCardGroup } from "@Runa/borealis"
 import type { CharacterItem } from "../media-types"
 
 interface CharactersTabProps {
@@ -168,128 +169,36 @@ export function CharactersTab({ characters }: CharactersTabProps) {
       ) : (
         <div className="flex flex-col gap-8">
           {groupedCharacters.map((group) => (
-            <section
+            <BorealisCardGroup
               key={group.key}
-              aria-labelledby={`characters-role-${group.key}`}
-              className="flex flex-col gap-3"
+              title={group.title}
+              subtitle={`${group.items.length} characters`}
+              rowCount={1}
+              dragFree
+              variant="none"
             >
-              <div className="flex items-center gap-2">
-                <h3
-                  id={`characters-role-${group.key}`}
-                  className="text-sm font-semibold text-foreground"
-                >
-                  {group.title}
-                </h3>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground tabular-nums">
-                  {group.items.length}
-                </span>
-              </div>
+              {group.items.map((char) => {
+                const currentActor =
+                  char.actorsByLang.get(selectedLanguage) ??
+                  (selectedLanguage === "All" ? char.defaultActor : null)
 
-              <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-3 sm:gap-4">
-                {group.items.map((char) => {
-                  const currentActor =
-                    char.actorsByLang.get(selectedLanguage) ??
-                    (selectedLanguage === "All" ? char.defaultActor : null)
-
-                  const roleUpper = char.role.toUpperCase()
-
-                  return (
-                    <div
-                      key={char.characterId}
-                      className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card hover:border-primary/40 transition-colors"
-                    >
-                      {/* Character Poster Image */}
-                      <Link
-                        href={`/borealis/characters/${char.characterId}`}
-                        className="relative aspect-2/3 w-full overflow-hidden bg-muted outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-hidden"
-                      >
-                        {char.image ? (
-                          <img
-                            src={char.image}
-                            alt={char.namePrimary}
-                            loading="lazy"
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-muted-foreground/50">
-                            <IconPhotoOff className="size-6" aria-hidden="true" />
-                          </div>
-                        )}
-
-                        {/* Character Type Badge */}
-                        <div className="absolute start-1.5 bottom-1.5 z-10 flex flex-wrap gap-1">
-                          <Badge
-                            variant={roleUpper === "MAIN" ? "default" : "secondary"}
-                            className={cn(
-                              "h-4 px-1.5 py-0 text-[8px] font-bold uppercase tracking-wider backdrop-blur-md",
-                              roleUpper === "MAIN"
-                                ? "bg-primary text-primary-foreground shadow-xs"
-                                : roleUpper === "SUPPORTING"
-                                  ? "bg-black/80 text-white/90"
-                                  : "bg-black/80 text-white/70"
-                            )}
-                          >
-                            {roleUpper === "MAIN"
-                              ? "Main"
-                              : roleUpper === "SUPPORTING"
-                                ? "Supporting"
-                                : roleUpper === "BACKGROUND"
-                                  ? "Background"
-                                  : char.role}
-                          </Badge>
-                        </div>
-                      </Link>
-
-                      {/* Character Details Under Image */}
-                      <div className="flex flex-1 flex-col gap-0.5 p-2">
-                        <Link
-                          href={`/borealis/characters/${char.characterId}`}
-                          className="line-clamp-2 text-xs font-semibold text-foreground group-hover:underline"
-                        >
-                          {char.namePrimary}
-                        </Link>
-                        {char.nameNative && (
-                          <span className="font-japanese truncate text-[10px] text-muted-foreground opacity-80">
-                            {char.nameNative}
-                          </span>
-                        )}
-
-                        {/* Voice Actor Underneath */}
-                        {currentActor && (
-                          <div className="mt-auto flex items-center gap-1.5 border-t border-border/40 pt-1.5 text-[10px]">
-                            {currentActor.image ? (
-                              <img
-                                src={currentActor.image}
-                                alt={currentActor.namePrimary}
-                                loading="lazy"
-                                className="size-4 shrink-0 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-muted text-[8px] font-bold text-muted-foreground">
-                                VA
-                              </div>
-                            )}
-                            <div className="flex min-w-0 flex-1 flex-col">
-                              <Link
-                                href={`/borealis/people/${currentActor.id}`}
-                                className="truncate font-medium text-muted-foreground hover:text-foreground hover:underline"
-                              >
-                                {currentActor.namePrimary}
-                              </Link>
-                              {currentActor.language && (
-                                <span className="text-[9px] text-muted-foreground/70">
-                                  {currentActor.language}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </section>
+                return (
+                  <BorealisCard
+                    key={char.characterId}
+                    type="character"
+                    data={{
+                      id: char.characterId,
+                      characterId: char.characterId,
+                      namePrimary: char.namePrimary,
+                      nameNative: char.nameNative,
+                      image: char.image,
+                      role: char.role,
+                      actor: currentActor,
+                    }}
+                  />
+                )
+              })}
+            </BorealisCardGroup>
           ))}
         </div>
       )}

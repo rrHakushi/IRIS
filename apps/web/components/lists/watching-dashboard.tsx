@@ -35,7 +35,14 @@ import { toast } from "sonner"
 import { elysia } from "@/lib/elysia"
 import { useUser } from "@/context/user-context"
 import { getMediaPreferences } from "@IRIS/shared"
-import { MediaListCard } from "@/components/lists/media-list-card"
+import {
+  BorealisCard,
+  BorealisCardGroup,
+  getMediaListStatusText,
+  type ListStatus,
+  type BorealisCardSavePayload,
+} from "@Runa/borealis"
+import { saveListEntry } from "@/lib/save-list-entry"
 import {
   toNormalizedMedia,
   toMediaListEntry,
@@ -104,21 +111,21 @@ const CATEGORY_META: Record<
     statusParam: "IN_PROGRESS",
     label: "Games",
     activeVerb: "Playing",
-    progressUnit: "Hrs",
+    progressUnit: "Hours",
     icon: IconDeviceGamepad,
   },
   book: {
     statusParam: "IN_PROGRESS",
     label: "Books",
     activeVerb: "Reading",
-    progressUnit: "Pages",
+    progressUnit: "Ch",
     icon: IconBook,
   },
   other: {
     statusParam: "IN_PROGRESS",
     label: "Other",
     activeVerb: "Tracking",
-    progressUnit: "Progress",
+    progressUnit: "Hours",
     icon: IconCategory,
   },
 }
@@ -221,88 +228,6 @@ function useGridColumns(
 }
 
 // -----------------------------------------------------------------------------
-// Row Virtualization: only render visible rows + 1 row buffer
-// -----------------------------------------------------------------------------
-interface VirtualRowProps {
-  items: ListEntryData[]
-  mediaType: WatchingMediaListType
-  mediaTitlePreference: "primary" | "secondary" | "native"
-  progressUnit: string
-  onOpenEditModal: (item: ListEntryData, mediaType?: MediaListType) => void
-  onIncrementProgress: (
-    item: ListEntryData,
-    count: number,
-    mediaType?: MediaListType
-  ) => Promise<void>
-  priority?: boolean
-}
-
-function VirtualRow({
-  items,
-  mediaType,
-  mediaTitlePreference,
-  progressUnit,
-  onOpenEditModal,
-  onIncrementProgress,
-  priority = false,
-}: VirtualRowProps) {
-  const [isVisible, setIsVisible] = useState(priority)
-  const rowRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (priority || isVisible) return
-    const el = rowRef.current
-    if (!el) return
-
-    // 500px rootMargin eagerly loads rows before they enter view; once loaded they stay mounted
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0]
-        if (entry?.isIntersecting) {
-          setIsVisible(true)
-        }
-      },
-      { rootMargin: "500px 0px" }
-    )
-
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [priority, isVisible])
-
-  return (
-    <div
-      ref={rowRef}
-      className="grid min-h-[220px] grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:min-h-[260px] md:min-h-[280px]"
-    >
-      {isVisible
-        ? items.map((item, idx) => (
-            <MediaListCard
-              key={`${item.entry.id}-${item.media.id}`}
-              item={item}
-              mediaType={mediaType}
-              mediaTitlePreference={mediaTitlePreference}
-              progressUnit={progressUnit}
-              onOpenEditModal={onOpenEditModal}
-              onIncrementProgress={onIncrementProgress}
-              priority={priority && idx === 0}
-            />
-          ))
-        : items.map((item) => (
-            <div
-              key={`placeholder-${item.entry.id}-${item.media.id}`}
-              aria-hidden="true"
-              className="pointer-events-none flex flex-col gap-2"
-            >
-              <div className="aspect-2/3 w-full rounded-2xl border border-border/20 bg-muted/20" />
-              <div className="h-3 w-3/4 rounded bg-muted/20" />
-              <div className="h-2.5 w-1/2 rounded bg-muted/15" />
-            </div>
-          ))}
-    </div>
-  )
-}
-
-// -----------------------------------------------------------------------------
 // Category Section with Sentinel for Progressive Fetching & Collapse
 // -----------------------------------------------------------------------------
 interface WatchingCategorySectionProps {
@@ -324,6 +249,26 @@ interface WatchingCategorySectionProps {
     count: number,
     mediaType?: MediaListType
   ) => Promise<void>
+  onStatusChange: (
+    item: ListEntryData,
+    newStatus: ListStatus,
+    mediaType: WatchingMediaListType
+  ) => Promise<void>
+  onScoreChange: (
+    item: ListEntryData,
+    newScore: number | null,
+    mediaType: WatchingMediaListType
+  ) => Promise<void>
+  onIncrementVolume?: (
+    item: ListEntryData,
+    count: number,
+    mediaType: WatchingMediaListType
+  ) => Promise<void>
+  onSaveEntry?: (
+    item: ListEntryData,
+    payload: BorealisCardSavePayload,
+    mediaType: WatchingMediaListType
+  ) => Promise<void>
   prioritySection?: boolean
 }
 
@@ -338,6 +283,10 @@ function WatchingCategorySection({
   mediaTitlePreference,
   onOpenEditModal,
   onIncrementProgress,
+  onStatusChange,
+  onScoreChange,
+  onIncrementVolume,
+  onSaveEntry,
   prioritySection = false,
 }: WatchingCategorySectionProps) {
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -392,12 +341,6 @@ function WatchingCategorySection({
   // Loaded but 0 items: collapse completely
   if (data.items.length === 0) {
     return null
-  }
-
-  // Chunk items into rows based on column count
-  const rows: ListEntryData[][] = []
-  for (let i = 0; i < data.items.length; i += cols) {
-    rows.push(data.items.slice(i, i + cols))
   }
 
   return (
@@ -455,22 +398,46 @@ function WatchingCategorySection({
         </button>
       </div>
 
-      {/* Row-virtualized items: only visible rows + 1 row buffer are rendered with images */}
+      {/* Media cards in smooth BorealisCardGroup carousel */}
       {!isCollapsed && (
-        <div className="flex flex-col gap-2 sm:gap-2.5 md:gap-3">
-          {rows.map((row, rIdx) => (
-            <VirtualRow
-              key={rIdx}
-              items={row}
-              mediaType={type}
-              mediaTitlePreference={mediaTitlePreference}
-              progressUnit={meta.progressUnit}
-              onOpenEditModal={onOpenEditModal}
-              onIncrementProgress={onIncrementProgress}
-              priority={prioritySection && rIdx === 0}
+        <BorealisCardGroup
+          rowCount={1}
+          dragFree
+          className="w-full"
+        >
+          {data.items.map((item, idx) => (
+            <BorealisCard
+              key={`${item.entry.id}-${item.media.id}`}
+              type={type}
+              data={item}
+              titlePreference={mediaTitlePreference}
+              showSubtitle={false}
+              showHoverSubtitle={false}
+              showTabNav={true}
+              canEdit={true}
+              statusIconOnly
+              onStatusChange={(newStatus) =>
+                onStatusChange(item, newStatus, type)
+              }
+              onScoreChange={(newScore) =>
+                onScoreChange(item, newScore, type)
+              }
+              onSaveEntry={
+                onSaveEntry
+                  ? (payload) => onSaveEntry(item, payload, type)
+                  : undefined
+              }
+              onEdit={() => onOpenEditModal(item, type)}
+              onIncrement={(count) => onIncrementProgress(item, count, type)}
+              onIncrementVolume={
+                onIncrementVolume
+                  ? (count) => onIncrementVolume(item, count, type)
+                  : undefined
+              }
+              priority={prioritySection && idx === 0}
             />
           ))}
-        </div>
+        </BorealisCardGroup>
       )}
     </section>
   )
@@ -1171,6 +1138,232 @@ export function WatchingDashboard(): React.JSX.Element {
     })
   }, [])
 
+  const handleStatusChange = useCallback(
+    async (
+      item: ListEntryData,
+      newStatus: ListStatus,
+      mediaType: WatchingMediaListType
+    ) => {
+      const entryId = item.entry.id
+      const numMediaId = Number(
+        item.media?.id ||
+          (item.entry as any)?.animeId ||
+          (item.entry as any)?.mangaId ||
+          (item.entry as any)?.tvId ||
+          (item.entry as any)?.movieId ||
+          (item.entry as any)?.gameId ||
+          (item.entry as any)?.bookId
+      )
+
+      // Optimistically update local dashboard state
+      handleEntryUpdated(entryId, { status: newStatus })
+
+      try {
+        let res: { error?: any }
+        switch (mediaType) {
+          case "anime":
+            res = await elysia.borealis.lists
+              .anime({ animeId: numMediaId })
+              .post({ status: newStatus })
+            break
+          case "manga":
+            res = await elysia.borealis.lists
+              .manga({ mangaId: numMediaId })
+              .post({ status: newStatus })
+            break
+          case "movie":
+            res = await elysia.borealis.lists
+              .movies({ movieId: numMediaId })
+              .post({ status: newStatus })
+            break
+          case "tv":
+            res = await elysia.borealis.lists
+              .tv({ tvId: numMediaId })
+              .post({ status: newStatus })
+            break
+          case "game":
+            res = await elysia.borealis.lists
+              .games({ gameId: numMediaId })
+              .post({ status: newStatus })
+            break
+          case "book":
+            res = await elysia.borealis.lists
+              .books({ bookId: numMediaId })
+              .post({ status: newStatus })
+            break
+          case "other":
+            res = await elysia.borealis.lists
+              .other({ otherId: numMediaId })
+              .post({ status: newStatus })
+            break
+        }
+
+        if (res?.error) {
+          throw new Error(
+            res.error.value?.message || "Failed to update status"
+          )
+        }
+        toast.success(
+          `Status changed to ${getMediaListStatusText(newStatus, mediaType)}`
+        )
+      } catch (err) {
+        console.error("[WatchingDashboard] Failed to update status:", err)
+        toast.error("Failed to update status")
+        fetchCategory(mediaType)
+      }
+    },
+    [handleEntryUpdated, fetchCategory]
+  )
+
+  const handleScoreChange = useCallback(
+    async (
+      item: ListEntryData,
+      newScore: number | null,
+      mediaType: WatchingMediaListType
+    ) => {
+      if (!userId || !mediaType) return
+
+      const entryId = item.entry.id
+      const mediaId = Number(
+        item.media?.id ||
+          (item.entry as any)?.animeId ||
+          (item.entry as any)?.mangaId ||
+          (item.entry as any)?.tvId ||
+          (item.entry as any)?.movieId ||
+          (item.entry as any)?.gameId ||
+          (item.entry as any)?.bookId ||
+          (item.entry as any)?.otherId
+      )
+
+      handleEntryUpdated(entryId, { score: newScore ?? 0 })
+
+      try {
+        const numMediaId = Number(mediaId)
+        let res: { error?: any }
+
+        switch (mediaType) {
+          case "anime":
+            res = await elysia.borealis.lists.anime({ animeId: numMediaId }).post({ score: newScore ?? 0 })
+            break
+          case "manga":
+            res = await elysia.borealis.lists.manga({ mangaId: numMediaId }).post({ score: newScore ?? 0 })
+            break
+          case "movie":
+            res = await elysia.borealis.lists.movies({ movieId: numMediaId }).post({ score: newScore ?? 0 })
+            break
+          case "tv":
+            res = await elysia.borealis.lists.tv({ tvId: numMediaId }).post({ score: newScore ?? 0 })
+            break
+          case "game":
+            res = await elysia.borealis.lists.games({ gameId: numMediaId }).post({ score: newScore ?? 0 })
+            break
+          case "book":
+            res = await elysia.borealis.lists.books({ bookId: numMediaId }).post({ score: newScore ?? 0 })
+            break
+          case "other":
+            res = await elysia.borealis.lists.other({ otherId: numMediaId }).post({ score: newScore ?? 0 })
+            break
+        }
+
+        if (res?.error) {
+          throw new Error(res.error.value?.message || "Failed to update score")
+        }
+        toast.success(newScore ? `Rated ${newScore}/10` : "Rating cleared")
+      } catch (err) {
+        console.error("[WatchingDashboard] Failed to update score:", err)
+        toast.error("Failed to update score")
+        fetchCategory(mediaType)
+      }
+    },
+    [handleEntryUpdated, fetchCategory, userId]
+  )
+
+  const handleIncrementVolume = useCallback(
+    async (
+      item: ListEntryData,
+      count: number,
+      mediaType: WatchingMediaListType
+    ) => {
+      if (!userId || !mediaType) return
+      const entryId = item.entry.id
+      const mediaId = Number(
+        item.media?.id ||
+          (item.entry as any)?.mangaId ||
+          (item.entry as any)?.bookId
+      )
+      const nowIso = new Date().toISOString()
+      const currentVol = Number(item.entry.volumesProgress ?? 0)
+      const nextVol = currentVol + count
+
+      setCategoryData((prev) => {
+        const cat = prev[mediaType]
+        const updatedItems = cat.items.map((it) => {
+          if (it.entry.id === entryId) {
+            return {
+              ...it,
+              entry: {
+                ...it.entry,
+                volumesProgress: nextVol,
+                updatedAt: nowIso,
+              },
+            }
+          }
+          return it
+        })
+        return {
+          ...prev,
+          [mediaType]: { ...cat, items: updatedItems },
+        }
+      })
+
+      try {
+        const numMediaId = Number(mediaId)
+        if (mediaType === "manga") {
+          const { error } = await elysia.borealis.lists
+            .manga({ mangaId: numMediaId })
+            .increment.post({ count, type: "volume" })
+          if (error) throw new Error("Failed to increment volume")
+          toast.success(`Volume ${nextVol} marked as read`)
+        } else if (mediaType === "book") {
+          const { error } = await elysia.borealis.lists
+            .books({ bookId: numMediaId })
+            .increment.post({ count, type: "volume" })
+          if (error) throw new Error("Failed to increment volume")
+          toast.success(`Volume ${nextVol} marked as read`)
+        }
+      } catch (err) {
+        console.error("[WatchingDashboard] Failed to increment volume:", err)
+        toast.error("Failed to increment volume")
+        fetchCategory(mediaType)
+      }
+    },
+    [fetchCategory, userId]
+  )
+
+  const handleSaveEntry = useCallback(
+    async (
+      item: ListEntryData,
+      payload: BorealisCardSavePayload,
+      mediaType: WatchingMediaListType
+    ) => {
+      const mediaId = Number(
+        item.media?.id ||
+          (item.entry as any)?.animeId ||
+          (item.entry as any)?.mangaId ||
+          (item.entry as any)?.movieId ||
+          (item.entry as any)?.tvId ||
+          (item.entry as any)?.gameId ||
+          (item.entry as any)?.bookId ||
+          (item.entry as any)?.musicId ||
+          (item.entry as any)?.otherId
+      )
+      await saveListEntry(mediaType, mediaId, payload)
+      handleEntryUpdated(item.entry.id, payload)
+      toast.success("List entry updated")
+    },
+    [handleEntryUpdated]
+  )
+
   // ---------------------------------------------------------------------------
   // Unauthenticated State
   // ---------------------------------------------------------------------------
@@ -1279,6 +1472,10 @@ export function WatchingDashboard(): React.JSX.Element {
             mediaTitlePreference={mediaTitlePreference}
             onOpenEditModal={handleOpenEditModal}
             onIncrementProgress={handleIncrementProgress}
+            onStatusChange={handleStatusChange}
+            onScoreChange={handleScoreChange}
+            onIncrementVolume={handleIncrementVolume}
+            onSaveEntry={handleSaveEntry}
             prioritySection={idx === 0}
           />
         ))}

@@ -81,6 +81,10 @@ export class BorealisEntitiesServ {
           'image',
           'gender',
           'age',
+          'description',
+          'dateOfBirthYear',
+          'dateOfBirthMonth',
+          'dateOfBirthDay',
           'favorites'
         )
         .all(),
@@ -95,6 +99,10 @@ export class BorealisEntitiesServ {
         image: c.image,
         gender: c.gender,
         age: c.age,
+        description: c.description,
+        dateOfBirthYear: c.dateOfBirthYear,
+        dateOfBirthMonth: c.dateOfBirthMonth,
+        dateOfBirthDay: c.dateOfBirthDay,
         favorites: c.favorites,
       })),
       pagination: {
@@ -273,6 +281,13 @@ export class BorealisEntitiesServ {
           'primaryOccupations',
           'language',
           'gender',
+          'description',
+          'bloodType',
+          'homeTown',
+          'birthPlace',
+          'dateOfBirthYear',
+          'dateOfBirthMonth',
+          'dateOfBirthDay',
           'favorites'
         )
         .all(),
@@ -288,6 +303,13 @@ export class BorealisEntitiesServ {
         primaryOccupations: [...p.primaryOccupations],
         language: p.language,
         gender: p.gender,
+        description: p.description,
+        bloodType: p.bloodType,
+        homeTown: p.homeTown,
+        birthPlace: p.birthPlace,
+        dateOfBirthYear: p.dateOfBirthYear,
+        dateOfBirthMonth: p.dateOfBirthMonth,
+        dateOfBirthDay: p.dateOfBirthDay,
         favorites: p.favorites,
       })),
       pagination: {

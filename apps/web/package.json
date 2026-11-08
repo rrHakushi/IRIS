@@ -19,6 +19,7 @@
     "@IRIS/elysia": "workspace:*",
     "@IRIS/permissions": "workspace:*",
     "@IRIS/shared": "workspace:*",
+    "@Runa/borealis": "workspace:*",
     "@base-ui/react": "^1.9.0",
     "@elysia/eden": "^2.0.0-rc.1",
     "@internationalized/date": "^3.12.4",

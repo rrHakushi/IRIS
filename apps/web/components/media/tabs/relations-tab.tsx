@@ -6,6 +6,7 @@ import { IconPhotoOff, IconFilter } from "@tabler/icons-react"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import { getMediaDetailHref } from "@/lib/media-routes"
+import { BorealisCard, BorealisCardGroup, type BorealisEntityType } from "@Runa/borealis"
 import type { RelationItem } from "../media-types"
 
 interface RelationsTabProps {
@@ -202,87 +203,45 @@ export function RelationsTab({
             {/* Relation Sub-sections */}
             <div className="flex flex-col gap-6">
               {relGroups.map(({ relKey, relLabel, items }) => (
-                <div key={relKey} className="flex flex-col gap-3">
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      variant="outline"
-                      className="border-primary/30 bg-primary/10 text-primary text-[11px] font-semibold tracking-wide uppercase px-2 py-0.5"
-                    >
-                      {relLabel}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground tabular-nums">
-                      ({items.length})
-                    </span>
-                  </div>
+                <BorealisCardGroup
+                  key={relKey}
+                  title={relLabel}
+                  subtitle={`${items.length} titles`}
+                  rowCount={1}
+                  dragFree
+                  variant="none"
+                >
+                  {items.map((rel) => {
+                    const rawType = rel.targetType.toLowerCase() as BorealisEntityType
+                    const href = getMediaDetailHref(rel.targetType, rel.targetId)
 
-                  {/* Media Card Grid */}
-                  <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-3 sm:gap-4">
-                    {items.map((rel) => {
-                      const targetTitle = formatTitle(rel.target, titlePreference)
-                      const targetCover = rel.target?.coverImage ?? null
-                      const targetFormat = rel.target?.format ?? null
-                      const href = getMediaDetailHref(rel.targetType, rel.targetId)
-
-                      return (
-                        <Link
-                          key={`${rel.id}-${rel.targetType}-${rel.targetId}`}
-                          href={href}
-                          className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card hover:border-primary/40 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-hidden"
-                        >
-                          {/* Poster Image */}
-                          <div className="relative aspect-2/3 w-full overflow-hidden bg-muted">
-                            {targetCover ? (
-                              <img
-                                src={targetCover}
-                                alt={targetTitle}
-                                loading="lazy"
-                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center text-muted-foreground/50">
-                                <IconPhotoOff className="size-6" aria-hidden="true" />
-                              </div>
-                            )}
-
-                            {/* Top Badges */}
-                            <div className="absolute start-1.5 top-1.5 flex flex-wrap gap-1">
-                              {targetFormat && (
-                                <Badge
-                                  variant="secondary"
-                                  className="h-4 bg-black/80 px-1.5 py-0 text-[9px] font-semibold text-white/90 uppercase backdrop-blur-md"
-                                >
-                                  {targetFormat}
-                                </Badge>
-                              )}
-                            </div>
-
-                            {/* Bottom Relation Badge */}
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-1.5 pt-4">
-                              <Badge
-                                variant="secondary"
-                                className="h-4 px-1.5 py-0 text-[8px] font-bold tracking-wider text-white uppercase backdrop-blur-xs"
-                              >
-                                {rel.type.replace(/_/g, " ")}
-                              </Badge>
-                            </div>
-                          </div>
-
-                          {/* Card Meta */}
-                          <div className="flex flex-1 flex-col gap-0.5 p-2">
-                            <span className="line-clamp-2 text-xs font-medium text-foreground group-hover:underline">
-                              {targetTitle}
-                            </span>
-                            {rel.target?.seasonYear && (
-                              <span className="text-[10px] text-muted-foreground">
-                                {rel.target.seasonYear}
-                              </span>
-                            )}
-                          </div>
-                        </Link>
-                      )
-                    })}
-                  </div>
-                </div>
+                    return (
+                      <BorealisCard
+                        key={`${rel.id}-${rel.targetType}-${rel.targetId}`}
+                        type={rawType}
+                        href={href}
+                        titlePreference={titlePreference}
+                        data={{
+                          id: rel.targetId,
+                          titlePrimary: rel.target?.titlePrimary,
+                          titleSecondary: rel.target?.titleSecondary,
+                          titleNative: rel.target?.titleNative,
+                          coverImage: rel.target?.coverImage,
+                          format: rel.target?.format,
+                          seasonYear: rel.target?.seasonYear,
+                          badges: [
+                            {
+                              label: rel.type.replace(/_/g, " "),
+                              variant: "secondary",
+                              className:
+                                "bg-frost border border-frost text-zinc-100 font-mono text-[10px] font-bold tracking-wider uppercase shadow-md backdrop-blur-md",
+                            },
+                          ],
+                        }}
+                      />
+                    )
+                  })}
+                </BorealisCardGroup>
               ))}
             </div>
           </section>

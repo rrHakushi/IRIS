@@ -6,8 +6,8 @@ import { cn } from "@workspace/ui/lib/utils"
 import { Button } from "@workspace/ui/components/button"
 import { Spinner } from "@workspace/ui/components/spinner"
 import { Skeleton } from "@workspace/ui/components/skeleton"
+import { BorealisCard, BorealisCardGroup, type BorealisEntityType } from "@Runa/borealis"
 import type { DiscoverCategory, DiscoverItem } from "./discover-types"
-import { DiscoverMediaCard } from "./discover-media-card"
 
 export interface DiscoverMediaGridProps {
   category: DiscoverCategory
@@ -36,41 +36,36 @@ export function DiscoverMediaGrid({
 }: DiscoverMediaGridProps): React.JSX.Element {
   const sentinelRef = useRef<HTMLDivElement | null>(null)
 
-  // Infinite Scroll IntersectionObserver
+  // Infinite Scroll IntersectionObserver & Scroll Listener
   useEffect(() => {
     if (!hasMore || isLoading || isLoadingMore || !onLoadMore) return
 
-    let userScrolled = false
-    const onScroll = () => {
-      userScrolled = true
+    const handleCheck = () => {
       if (sentinelRef.current) {
         const rect = sentinelRef.current.getBoundingClientRect()
-        if (rect.top <= window.innerHeight + 200) {
+        if (rect.top <= window.innerHeight + 400) {
           onLoadMore()
         }
       }
     }
 
-    window.addEventListener("scroll", onScroll, { passive: true })
+    // Capture phase catches scroll from any nested overflow-y container (e.g. SidebarInset)
+    window.addEventListener("scroll", handleCheck, true)
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const first = entries[0]
-        if (first?.isIntersecting) {
-          if (!userScrolled && window.scrollY === 0) {
-            return
-          }
+        if (entries[0]?.isIntersecting) {
           onLoadMore()
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: "400px" }
     )
 
     const el = sentinelRef.current
     if (el) observer.observe(el)
 
     return () => {
-      window.removeEventListener("scroll", onScroll)
+      window.removeEventListener("scroll", handleCheck, true)
       if (el) observer.unobserve(el)
     }
   }, [hasMore, isLoading, isLoadingMore, onLoadMore])
@@ -81,14 +76,14 @@ export function DiscoverMediaGrid({
     return (
       <div
         className={cn(
-          "grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3",
+          "grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3 sm:gap-4 w-full",
           className
         )}
       >
         {Array.from({ length: 24 }).map((_, i) => (
           <div
             key={i}
-            className="flex flex-col gap-2 rounded-2xl border border-border/40 p-2"
+            className="flex flex-col gap-2 rounded-2xl border border-frost bg-frost p-2 shadow-xs backdrop-blur-md"
           >
             <Skeleton
               className={cn(
@@ -97,7 +92,7 @@ export function DiscoverMediaGrid({
               )}
             />
             <Skeleton className="h-4 w-3/4 rounded-md" />
-            <Skeleton className="h-3 w-1/2 rounded-md" />
+            <Skeleton className="h-3 w-full rounded-md" />
           </div>
         ))}
       </div>
@@ -136,20 +131,30 @@ export function DiscoverMediaGrid({
     )
   }
 
+  const cardType: BorealisEntityType =
+    category === "characters"
+      ? "character"
+      : category === "studios"
+        ? "studio"
+        : (category as BorealisEntityType)
+
   return (
     <div className={cn("flex flex-col gap-6", className)}>
-      {/* Fixed 140px Auto-Fill Media Grid */}
-      <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
+      {/* Borealis Card Group Grid */}
+      <BorealisCardGroup grid variant="none" gap="md" className="w-full">
         {items.map((item, idx) => (
-          <DiscoverMediaCard
+          <BorealisCard
             key={`${item.id}-${idx}`}
-            item={item}
-            category={category}
-            mediaTitlePreference={mediaTitlePreference}
+            type={cardType}
+            data={(item as any).raw ?? item}
+            titlePreference={mediaTitlePreference}
+            showSubtitle={false}
+            showExtras={false}
             priority={idx < 8}
+            className="w-full"
           />
         ))}
-      </div>
+      </BorealisCardGroup>
 
       {/* Infinite Scroll Sentinel & Loading Indicator */}
       <div

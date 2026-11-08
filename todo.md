@@ -6,19 +6,12 @@
     - Rework homepage
     - Rework list pages
 
-    // both placed in apps/borelais/components
-    - Single borealisCard to render all media types, characters, staff etc 
-        - Image as a whole card
-        - On hover expand the card to show title and other info
-        - use this in: Browse, homepage, media pages[characters, similar, relations, staff, theme songs{maybe?? need rework}], favorites (carina), recommendations...
+    - Update calendar to use hoverCard from borealisCard
+    - homepage and list pages
+        - hoverCard add stuff from edit modal and remove edit modal
+    - test phone/touch experience with new borealisCard
 
-    - borealisCardGroup 
-        - both horizontally/vertically scrollable (configureable)
-        - colum/row count configureable
-        - scroll controlls (only shown if scrollable and its overflowing)
-        - use this in: overview tab, characters/staff tab, relations tab
-
-   
+    
 # Akaromi [Password manager]
     - password sharing, to another user's vault, by url (one time use / expiry time), custom expiration times
     

@@ -1,3 +1,30 @@
+@source "../../../packages/borealis/src/**/*.{ts,tsx}";
+
+:root {
+  --frost: rgba(9, 9, 11, 0.85);
+  --frost-border: rgba(63, 63, 70, 0.75);
+}
+
+.dark {
+  --frost: rgba(9, 9, 11, 0.85);
+  --frost-border: rgba(63, 63, 70, 0.75);
+}
+
+@theme inline {
+  --color-frost: var(--frost);
+  --color-frost-border: var(--frost-border);
+}
+
+@utility bg-frost {
+  background-color: var(--frost);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+@utility border-frost {
+  border-color: var(--frost-border);
+}
+
 /* Hide scrollbars everywhere globally while preserving scroll functionality */
 *,
 *::before,
@@ -30,3 +57,4 @@ body::-webkit-scrollbar {
   content-visibility: auto;
   contain-intrinsic-size: auto 280px;
 }
+

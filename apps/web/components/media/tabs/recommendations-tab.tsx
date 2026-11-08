@@ -33,6 +33,7 @@ import {
 } from "@IRIS/shared"
 import { toast } from "sonner"
 import { cn } from "@workspace/ui/lib/utils"
+import { BorealisCard, BorealisCardGroup } from "@Runa/borealis"
 import type { NormalizedMediaData } from "../media-types"
 
 export interface RecommendationsMediaTabProps {
@@ -185,17 +186,51 @@ export function RecommendationsMediaTab({
       </div>
 
       {/* Community Recommendations Section */}
-      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-card/20 p-12 text-center">
-        <div className="mb-3 flex size-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground/60">
-          <IconSparkles className="size-6" />
+      {media.relations && media.relations.length > 0 ? (
+        <BorealisCardGroup
+          title="Related & Recommended Titles"
+          subtitle={`${media.relations.length} titles`}
+          rowCount={1}
+          dragFree
+          variant="none"
+        >
+          {media.relations.map((rel) => (
+            <BorealisCard
+              key={`${rel.id}-${rel.targetType}-${rel.targetId}`}
+              type={rel.targetType.toLowerCase() as any}
+              data={{
+                id: rel.targetId,
+                titlePrimary: rel.target?.titlePrimary,
+                titleSecondary: rel.target?.titleSecondary,
+                titleNative: rel.target?.titleNative,
+                coverImage: rel.target?.coverImage,
+                format: rel.target?.format,
+                seasonYear: rel.target?.seasonYear,
+                badges: [
+                  {
+                    label: rel.type.replace(/_/g, " "),
+                    variant: "secondary",
+                    className:
+                      "bg-frost border border-frost text-zinc-100 font-mono text-[10px] font-bold tracking-wider uppercase shadow-md backdrop-blur-md",
+                  },
+                ],
+              }}
+            />
+          ))}
+        </BorealisCardGroup>
+      ) : (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-card/20 p-12 text-center">
+          <div className="mb-3 flex size-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground/60">
+            <IconSparkles className="size-6" />
+          </div>
+          <h3 className="font-heading text-sm font-semibold text-foreground">
+            Community Recommendations
+          </h3>
+          <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+            Cross-media recommendations and user-voted pairings will appear here.
+          </p>
         </div>
-        <h3 className="font-heading text-sm font-semibold text-foreground">
-          Community Recommendations
-        </h3>
-        <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-          Cross-media recommendations and user-voted pairings will appear here.
-        </p>
-      </div>
+      )}
 
       {/* ========================================================================= */}
       {/* RECOMMEND TO A FRIEND DIALOG                                              */}

@@ -4,6 +4,7 @@ import React, { useMemo } from "react"
 import Link from "next/link"
 import { IconPhotoOff } from "@tabler/icons-react"
 import { Badge } from "@workspace/ui/components/badge"
+import { BorealisCard, BorealisCardGroup } from "@Runa/borealis"
 import type { StaffMemberItem } from "../media-types"
 
 interface StaffTabProps {
@@ -179,76 +180,30 @@ export function StaffTab({ staff }: StaffTabProps) {
   return (
     <div className="flex flex-col gap-8">
       {groupedStaff.map((group) => (
-          <section
-            key={group.key}
-            aria-labelledby={`staff-role-${group.key}`}
-            className="flex flex-col gap-3"
-          >
-            <div className="flex items-center gap-2">
-              <h3
-                id={`staff-role-${group.key}`}
-                className="text-sm font-semibold text-foreground"
-              >
-                {group.title}
-              </h3>
-              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground tabular-nums">
-                {group.items.length}
-              </span>
-            </div>
-
-            {/* Staff media cards grid */}
-            <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-3 sm:gap-4">
-              {group.items.map((member) => {
-                const roleLabel =
-                  member.customRole || getStaffRoleTitle(member)
-
-                return (
-                  <div
-                    key={member.id}
-                    className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-card hover:border-primary/40 transition-colors"
-                  >
-                    {/* Staff Person Image */}
-                    <Link
-                      href={`/borealis/people/${member.person.id}`}
-                      className="relative aspect-2/3 w-full overflow-hidden bg-muted outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-hidden"
-                    >
-                      {member.person.image ? (
-                        <img
-                          src={member.person.image}
-                          alt={member.person.namePrimary}
-                          loading="lazy"
-                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-muted-foreground/50">
-                          <IconPhotoOff className="size-6" aria-hidden="true" />
-                        </div>
-                      )}
-                    </Link>
-
-                    {/* Staff Details Under Image */}
-                    <div className="flex flex-1 flex-col gap-0.5 p-2">
-                      <Link
-                        href={`/borealis/people/${member.person.id}`}
-                        className="line-clamp-2 text-xs font-semibold text-foreground group-hover:underline"
-                      >
-                        {member.person.namePrimary}
-                      </Link>
-                      {member.person.nameNative && (
-                        <span className="font-japanese truncate text-[10px] text-muted-foreground opacity-80">
-                          {member.person.nameNative}
-                        </span>
-                      )}
-                      <span className="mt-1 line-clamp-2 text-[10px] font-medium text-muted-foreground">
-                        {roleLabel}
-                      </span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </section>
-        ))}
-      </div>
+        <BorealisCardGroup
+          key={group.key}
+          title={group.title}
+          subtitle={`${group.items.length} staff members`}
+          rowCount={1}
+          dragFree
+          variant="none"
+        >
+          {group.items.map((member) => (
+            <BorealisCard
+              key={member.id}
+              type="staff"
+              data={{
+                id: member.person.id,
+                personId: member.person.id,
+                namePrimary: member.person.namePrimary,
+                nameNative: member.person.nameNative,
+                image: member.person.image,
+                role: member.customRole || getStaffRoleTitle(member),
+              }}
+            />
+          ))}
+        </BorealisCardGroup>
+      ))}
+    </div>
     )
   }

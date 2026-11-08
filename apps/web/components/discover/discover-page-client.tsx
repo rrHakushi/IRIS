@@ -253,6 +253,8 @@ const mapCharacterItem = (c: any): DiscoverItem => ({
   favorites: c.favorites,
   genres: c.age ? [`Age: ${c.age}`] : [],
   isAdult: false,
+  ...c,
+  raw: c,
 })
 
 const mapPersonItem = (p: any): DiscoverItem => ({
@@ -264,6 +266,8 @@ const mapPersonItem = (p: any): DiscoverItem => ({
   favorites: p.favorites,
   genres: p.primaryOccupations || [],
   isAdult: false,
+  ...p,
+  raw: p,
 })
 
 const mapStudioItem = (s: any): DiscoverItem => ({
@@ -274,10 +278,13 @@ const mapStudioItem = (s: any): DiscoverItem => ({
   favorites: s.favorites,
   genres: s.isAnimationStudio ? ["Animation"] : ["Production"],
   isAdult: false,
+  ...s,
+  raw: s,
 })
 
 const mapMediaItem = (x: any): DiscoverItem => ({
   ...x,
+  raw: x,
   genres: Array.isArray(x.genres)
     ? x.genres
         .map((g: any) =>

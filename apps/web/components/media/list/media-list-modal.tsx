@@ -162,8 +162,8 @@ export function MediaListModal({
     typeof media.chapterCount === "number" && media.chapterCount > 0
       ? media.chapterCount
       : (category === "manga" || category === "book") &&
-          typeof media.episodeCount === "number" &&
-          media.episodeCount > 0
+        typeof media.episodeCount === "number" &&
+        media.episodeCount > 0
         ? media.episodeCount
         : null
   const maxVolumes =
@@ -302,11 +302,11 @@ export function MediaListModal({
           s.episodes && s.episodes.length > 0
             ? s.episodes
             : allTvEpisodes.filter(
-                (ep: any) =>
-                  ep.seasonNumber === s.seasonNumber ||
-                  ep.season === s.seasonNumber ||
-                  (s.id && ep.seasonId === s.id)
-              )
+              (ep: any) =>
+                ep.seasonNumber === s.seasonNumber ||
+                ep.season === s.seasonNumber ||
+                (s.id && ep.seasonId === s.id)
+            )
         ).map((ep: any) => ({
           id: ep.id,
           episodeNumber: ep.episodeNumber ?? ep.number,
@@ -446,8 +446,8 @@ export function MediaListModal({
           : category === "music"
             ? (initialEntry as any)?.playCount ?? initialEntry?.rewatched
             : initialEntry?.rewatched ??
-              (initialEntry as any)?.reread ??
-              (initialEntry as any)?.replayed
+            (initialEntry as any)?.reread ??
+            (initialEntry as any)?.replayed
     return Math.max(0, typeof raw === "number" ? raw : Number(raw) || 0)
   })
   const [rewatchHistory, setRewatchHistory] = useState<RewatchHistoryItem[]>(
@@ -456,15 +456,15 @@ export function MediaListModal({
       return parseRewatchHistory(
         category === "manga" || category === "book"
           ? (initialEntry as any)?.rereadHistory ??
-              initialEntry?.rewatchHistory ??
-              (initialEntry as any)?.replayHistory
+          initialEntry?.rewatchHistory ??
+          (initialEntry as any)?.replayHistory
           : category === "game"
             ? (initialEntry as any)?.replayHistory ??
-                initialEntry?.rewatchHistory ??
-                (initialEntry as any)?.rereadHistory
+            initialEntry?.rewatchHistory ??
+            (initialEntry as any)?.rereadHistory
             : initialEntry?.rewatchHistory ??
-                (initialEntry as any)?.rereadHistory ??
-                (initialEntry as any)?.replayHistory
+            (initialEntry as any)?.rereadHistory ??
+            (initialEntry as any)?.replayHistory
       ) as RewatchHistoryItem[]
     }
   )
@@ -723,8 +723,8 @@ export function MediaListModal({
               : category === "music"
                 ? (initialEntry as any)?.playCount ?? initialEntry.rewatched
                 : initialEntry.rewatched ??
-                  (initialEntry as any)?.reread ??
-                  (initialEntry as any)?.replayed
+                (initialEntry as any)?.reread ??
+                (initialEntry as any)?.replayed
         setRewatched(
           Math.max(
             0,
@@ -737,18 +737,18 @@ export function MediaListModal({
           category === "music"
             ? []
             : (parseRewatchHistory(
-                category === "manga" || category === "book"
-                  ? (initialEntry as any)?.rereadHistory ??
-                      initialEntry.rewatchHistory ??
-                      (initialEntry as any)?.replayHistory
-                  : category === "game"
-                    ? (initialEntry as any)?.replayHistory ??
-                        initialEntry.rewatchHistory ??
-                        (initialEntry as any)?.rereadHistory
-                    : initialEntry.rewatchHistory ??
-                        (initialEntry as any)?.rereadHistory ??
-                        (initialEntry as any)?.replayHistory
-              ) as RewatchHistoryItem[])
+              category === "manga" || category === "book"
+                ? (initialEntry as any)?.rereadHistory ??
+                initialEntry.rewatchHistory ??
+                (initialEntry as any)?.replayHistory
+                : category === "game"
+                  ? (initialEntry as any)?.replayHistory ??
+                  initialEntry.rewatchHistory ??
+                  (initialEntry as any)?.rereadHistory
+                  : initialEntry.rewatchHistory ??
+                  (initialEntry as any)?.rereadHistory ??
+                  (initialEntry as any)?.replayHistory
+            ) as RewatchHistoryItem[])
         )
         let initialWatched: WatchedEpisodeItem[] =
           initialEntry.watchedEpisodes || []
@@ -872,7 +872,7 @@ export function MediaListModal({
         .then((fav) => {
           if (isMounted) setIsFavorited(fav)
         })
-        .catch(() => {})
+        .catch(() => { })
       return () => {
         isMounted = false
       }
@@ -1050,12 +1050,12 @@ export function MediaListModal({
 
       const { data, error } = isFavorited
         ? await elysia.carina
-            .favorites({ category: favCategory })({ targetId: numericTargetId })
-            .delete()
+          .favorites({ category: favCategory })({ targetId: numericTargetId })
+          .delete()
         : await elysia.carina.favorites.post({
-            category: favCategory,
-            targetId: numericTargetId,
-          })
+          category: favCategory,
+          targetId: numericTargetId,
+        })
 
       if (error || !data) {
         setIsFavorited(prev)
@@ -1096,18 +1096,18 @@ export function MediaListModal({
   const isInvalidDates =
     Boolean(
       startedAt &&
-        completedAt &&
-        category !== "movie" &&
-        formatDateToYmd(completedAt) < formatDateToYmd(startedAt)
+      completedAt &&
+      category !== "movie" &&
+      formatDateToYmd(completedAt) < formatDateToYmd(startedAt)
     ) ||
     Boolean(
       rewatched > 0 &&
-        category !== "music" &&
-        rewatchHistory.some((item) => {
-          const s = formatDateToYmd(item?.startedAt)
-          const e = formatDateToYmd(item?.completedAt)
-          return Boolean(s && e && e < s)
-        })
+      category !== "music" &&
+      rewatchHistory.some((item) => {
+        const s = formatDateToYmd(item?.startedAt)
+        const e = formatDateToYmd(item?.completedAt)
+        return Boolean(s && e && e < s)
+      })
     )
 
   const isSaveDisabled = isSaving || isCompletedWithoutScore || isInvalidDates
@@ -1354,9 +1354,9 @@ export function MediaListModal({
     (st) => st.value === status
   ) ??
     availableStatuses[0] ?? {
-      value: status,
-      label: status,
-    }
+    value: status,
+    label: status,
+  }
 
   // Status icon mapping
   const getStatusIcon = (st: MediaListStatus) => {
@@ -1461,11 +1461,10 @@ export function MediaListModal({
               type="button"
               onClick={handleToggleFavorite}
               disabled={isTogglingFavorite}
-              className={`flex size-9 cursor-pointer items-center justify-center rounded-2xl border backdrop-blur-md transition-all ${
-                isFavorited
-                  ? "border-primary/60 bg-primary/20 text-primary"
-                  : "border-border/40 bg-background/60 text-foreground/80 hover:border-border hover:text-foreground"
-              }`}
+              className={`flex size-9 cursor-pointer items-center justify-center rounded-2xl border backdrop-blur-md transition-all ${isFavorited
+                ? "border-primary/60 bg-primary/20 text-primary"
+                : "border-border/40 bg-background/60 text-foreground/80 hover:border-border hover:text-foreground"
+                }`}
               aria-label={
                 isFavorited ? "Remove from favorites" : "Add to favorites"
               }
@@ -1499,11 +1498,10 @@ export function MediaListModal({
           <button
             type="button"
             onClick={() => setActiveTab("general")}
-            className={`cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
-              activeTab === "general"
-                ? "bg-background text-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            className={`cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${activeTab === "general"
+              ? "bg-background text-foreground shadow-xs"
+              : "text-muted-foreground hover:text-foreground"
+              }`}
           >
             General
           </button>
@@ -1511,11 +1509,10 @@ export function MediaListModal({
             <button
               type="button"
               onClick={() => setActiveTab("episodes")}
-              className={`cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
-                activeTab === "episodes"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              className={`cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${activeTab === "episodes"
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+                }`}
             >
               Episodes ({currentWatchedEpisodesCount}/
               {totalEpisodesCount ?? "?"})
@@ -1525,11 +1522,10 @@ export function MediaListModal({
             <button
               type="button"
               onClick={() => setActiveTab("repeats")}
-              className={`cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
-                activeTab === "repeats"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              className={`cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${activeTab === "repeats"
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+                }`}
             >
               {repeatLabel.plural}
               {effectiveRepeatCount > 0 && (
@@ -1543,11 +1539,10 @@ export function MediaListModal({
             <button
               type="button"
               onClick={() => setActiveTab("connections")}
-              className={`cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
-                activeTab === "connections"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              className={`cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${activeTab === "connections"
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+                }`}
             >
               Connections
             </button>
@@ -1555,11 +1550,10 @@ export function MediaListModal({
           <button
             type="button"
             onClick={() => setActiveTab("watchlists")}
-            className={`cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
-              activeTab === "watchlists"
-                ? "bg-background text-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            className={`cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${activeTab === "watchlists"
+              ? "bg-background text-foreground shadow-xs"
+              : "text-muted-foreground hover:text-foreground"
+              }`}
           >
             Custom Lists
           </button>
@@ -1605,11 +1599,10 @@ export function MediaListModal({
                                 handleStatusChange(st.value)
                                 setStatusDropdownOpen(false)
                               }}
-                              className={`flex w-full cursor-pointer items-center justify-between rounded-lg px-2.5 py-1.5 text-start text-xs font-medium transition-colors ${
-                                status === st.value
-                                  ? "bg-primary/15 font-semibold text-primary"
-                                  : "text-foreground hover:bg-muted/40"
-                              }`}
+                              className={`flex w-full cursor-pointer items-center justify-between rounded-lg px-2.5 py-1.5 text-start text-xs font-medium transition-colors ${status === st.value
+                                ? "bg-primary/15 font-semibold text-primary"
+                                : "text-foreground hover:bg-muted/40"
+                                }`}
                             >
                               <div className="flex items-center gap-2">
                                 <IconComp className="size-3 text-muted-foreground" />
@@ -1636,11 +1629,10 @@ export function MediaListModal({
                     )}
                   </label>
                   <div
-                    className={`flex items-center justify-between rounded-xl border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition-colors ${
-                      isCompletedWithoutScore
-                        ? "border-destructive focus-within:ring-1 focus-within:ring-destructive"
-                        : "border-border hover:border-border/80"
-                    }`}
+                    className={`flex items-center justify-between rounded-xl border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition-colors ${isCompletedWithoutScore
+                      ? "border-destructive focus-within:ring-1 focus-within:ring-destructive"
+                      : "border-border hover:border-border/80"
+                      }`}
                   >
                     <input
                       type="number"
@@ -1915,7 +1907,7 @@ export function MediaListModal({
                         min={0}
                         max={
                           typeof media.episodeCount === "number" &&
-                          media.episodeCount > 0
+                            media.episodeCount > 0
                             ? media.episodeCount
                             : undefined
                         }
@@ -1936,10 +1928,10 @@ export function MediaListModal({
                         typeof media.episodeCount === "number" &&
                         media.episodeCount > 0
                       ) && (
-                        <span className="shrink-0 pe-1.5 text-[11px] font-medium text-muted-foreground">
-                          / {media.episodeCount}
-                        </span>
-                      )}
+                          <span className="shrink-0 pe-1.5 text-[11px] font-medium text-muted-foreground">
+                            / {media.episodeCount}
+                          </span>
+                        )}
                       <div className="flex flex-col gap-0.5 ps-2 text-muted-foreground">
                         <button
                           type="button"
@@ -1976,7 +1968,7 @@ export function MediaListModal({
                         const curVal =
                           progressValues[f.key] ??
                           (f.key ===
-                          (media.incrementFieldKey || "progress")
+                            (media.incrementFieldKey || "progress")
                             ? progress
                             : 0)
                         const maxVal =
@@ -2008,7 +2000,7 @@ export function MediaListModal({
                                   }))
                                   if (
                                     f.key ===
-                                      (media.incrementFieldKey || "progress") ||
+                                    (media.incrementFieldKey || "progress") ||
                                     customProgressFields.length === 1
                                   ) {
                                     setProgress(clamped)
@@ -2036,8 +2028,8 @@ export function MediaListModal({
                                     }))
                                     if (
                                       f.key ===
-                                        (media.incrementFieldKey ||
-                                          "progress") ||
+                                      (media.incrementFieldKey ||
+                                        "progress") ||
                                       customProgressFields.length === 1
                                     ) {
                                       setProgress(clamped)
@@ -2058,8 +2050,8 @@ export function MediaListModal({
                                     }))
                                     if (
                                       f.key ===
-                                        (media.incrementFieldKey ||
-                                          "progress") ||
+                                      (media.incrementFieldKey ||
+                                        "progress") ||
                                       customProgressFields.length === 1
                                     ) {
                                       setProgress(clamped)
@@ -2300,8 +2292,8 @@ export function MediaListModal({
                   const itemCompletedAt = formatDateToYmd(item.completedAt)
                   const isItemInvalidDate = Boolean(
                     itemStartedAt &&
-                      itemCompletedAt &&
-                      itemCompletedAt < itemStartedAt
+                    itemCompletedAt &&
+                    itemCompletedAt < itemStartedAt
                   )
 
                   return (
@@ -2509,23 +2501,7 @@ export function MediaListModal({
     </div>
   )
 
-  const sendDebugLog = (type: string, details: any) => {
-    try {
-      fetch("/api/debug-log", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, details, time: new Date().toISOString() }),
-      }).catch(() => {})
-    } catch {}
-  }
 
-  const handleOpenChangeWrapped = useCallback((open: boolean) => {
-    sendDebugLog("onOpenChangeWrapped", {
-      open,
-      stack: new Error().stack,
-    })
-    onOpenChange(open)
-  }, [onOpenChange])
 
   const handleModalInteractOutside = useCallback((element: Element) => {
     if (!element) return true
@@ -2534,13 +2510,6 @@ export function MediaListModal({
         '[data-slot="popover-content"], [data-slot="calendar"], .react-aria-Popover, [data-testid="underlay"], [data-trigger="DialogTrigger"], [role="listbox"], [role="tooltip"], [data-react-aria-top-layer]'
       )
     )
-    sendDebugLog("handleModalInteractOutside", {
-      tag: element.tagName,
-      className: element.className,
-      id: element.id,
-      isInsideOverlay,
-      shouldClose: !isInsideOverlay,
-    })
     return !isInsideOverlay
   }, [])
 
@@ -2548,7 +2517,6 @@ export function MediaListModal({
     return (
       <AriaModalOverlay
         isOpen={isOpen}
-        onOpenChange={handleOpenChangeWrapped}
         isDismissable
         shouldCloseOnInteractOutside={handleModalInteractOutside}
         className="fixed inset-0 z-50 bg-black/40 transition-opacity duration-150 data-entering:opacity-0 data-exiting:opacity-0 supports-backdrop-filter:backdrop-blur-sm"
@@ -2569,7 +2537,6 @@ export function MediaListModal({
   return (
     <AriaModalOverlay
       isOpen={isOpen}
-      onOpenChange={handleOpenChangeWrapped}
       isDismissable
       shouldCloseOnInteractOutside={handleModalInteractOutside}
       className="fixed inset-0 isolate z-50 bg-black/40 duration-100 data-entering:animate-in data-entering:fade-in-0 data-exiting:animate-out data-exiting:fade-out-0 supports-backdrop-filter:backdrop-blur-sm"

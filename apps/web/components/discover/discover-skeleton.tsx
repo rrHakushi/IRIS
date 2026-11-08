@@ -30,15 +30,15 @@ export function DiscoverSkeleton() {
       </div>
 
       {/* Media Grid Skeleton */}
-      <div className="grid grid-cols-[repeat(auto-fill,140px)] gap-2.5 sm:gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3 sm:gap-4 w-full">
         {Array.from({ length: 24 }).map((_, i) => (
           <div
             key={i}
-            className="flex flex-col gap-2 rounded-2xl border border-border/40 p-2"
+            className="flex flex-col gap-2 rounded-2xl border border-frost bg-frost p-2 shadow-xs backdrop-blur-md"
           >
             <Skeleton className="aspect-[2/3] w-full rounded-xl" />
             <Skeleton className="h-4 w-3/4 rounded-md" />
-            <Skeleton className="h-3 w-1/2 rounded-md" />
+            <Skeleton className="h-3 w-full rounded-md" />
           </div>
         ))}
       </div>

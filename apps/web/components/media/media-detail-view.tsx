@@ -2,6 +2,8 @@
 
 import React, { useMemo, useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
+import { useUser } from "@/context/user-context"
+import { getMediaPreferences } from "@IRIS/shared"
 import { MediaHero } from "./media-hero"
 import { MediaTabNav } from "./media-tab-nav"
 import { OverviewTab } from "./tabs/overview-tab"
@@ -36,6 +38,9 @@ export function MediaDetailView({
   similarList,
   isQueuedFetch,
 }: MediaDetailViewProps) {
+  const { user } = useUser()
+  const titlePreference =
+    getMediaPreferences(user?.customization).title || "primary"
   const searchParams = useSearchParams()
   const initialTabFromUrl =
     (searchParams.get("tab") as MediaTabKey) || "overview"
@@ -195,7 +200,7 @@ export function MediaDetailView({
         {validActiveTab === "relations" && (
           <RelationsTab
             relations={media.relations ?? []}
-            titlePreference={media.mediaTitlePreference}
+            titlePreference={titlePreference}
           />
         )}
 
