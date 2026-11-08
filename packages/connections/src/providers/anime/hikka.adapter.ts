@@ -208,63 +208,93 @@ export class HikkaAdapter extends BaseConnectionAdapter {
     credentials?: ConnectionCredentials,
     options?: SearchOptions
   ): Promise<MediaSearchResult[]> {
+    const cleanQuery = query.trim();
+    if (!cleanQuery) return [];
+
+    // 1. Check for explicit Hikka slug/ID prefixes or URLs (e.g., "id:some-slug", "hikka:some-slug", "#some-slug", or "https://hikka.io/anime/some-slug")
+    const explicitSlugMatch = cleanQuery.match(
+      /^(?:id:|hikka:|#|https?:\/\/(?:www\.)?hikka\.io\/(?:anime|manga)\/)([^/?#\s]+)/i
+    );
+    if (explicitSlugMatch && explicitSlugMatch[1]) {
+      const item = await this.getMediaById(cleanQuery, credentials, options);
+      return item ? [item] : [];
+    }
+
     const isManga = options?.type === "MANGA" || options?.type === "BOOK";
     const endpoint = isManga ? "/manga" : "/anime";
     const page = options?.page || 1;
     const size = Math.min(options?.perPage || 20, 50);
 
-    const data = await this.fetchJson<{
-      list: Array<{
-        slug: string;
-        title_en?: string;
-        title_ua?: string;
-        title_ja?: string;
-        title_native?: string;
-        image?: string;
-        episodes_total?: number;
-        chapters_total?: number;
-        volumes_total?: number;
-        score?: number;
-        year?: number;
-        synopsis_en?: string;
-        synopsis_ua?: string;
-      }>;
-      pagination: {
-        page: number;
-        size: number;
-        total: number;
-      };
-    }>(`${HikkaAdapter.BASE_URL}${endpoint}?page=${page}&size=${size}`, {
-      method: "POST",
-      headers: {
-        ...this.buildHeaders(credentials),
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        query: query.trim(),
-      }),
-    });
+    const fetchTextSearch = async (): Promise<MediaSearchResult[]> => {
+      const data = await this.fetchJson<{
+        list: Array<{
+          slug: string;
+          title_en?: string;
+          title_ua?: string;
+          title_ja?: string;
+          title_native?: string;
+          image?: string;
+          episodes_total?: number;
+          chapters_total?: number;
+          volumes_total?: number;
+          score?: number;
+          year?: number;
+          synopsis_en?: string;
+          synopsis_ua?: string;
+        }>;
+        pagination: {
+          page: number;
+          size: number;
+          total: number;
+        };
+      }>(`${HikkaAdapter.BASE_URL}${endpoint}?page=${page}&size=${size}`, {
+        method: "POST",
+        headers: {
+          ...this.buildHeaders(credentials),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: cleanQuery,
+        }),
+      });
 
-    return (data.list || []).map((item) => ({
-      id: item.slug,
-      externalId: item.slug,
-      provider: "HIKKA",
-      mediaType: isManga ? "MANGA" : "ANIME",
-      title: {
-        userPreferred: item.title_en || item.title_ua || item.title_ja || item.title_native || item.slug,
-        english: item.title_en,
-        romaji: item.title_ja,
-        native: item.title_native,
-      },
-      description: item.synopsis_en || item.synopsis_ua,
-      coverImage: item.image ? { large: item.image, medium: item.image } : undefined,
-      episodes: item.episodes_total,
-      chapters: item.chapters_total,
-      volumes: item.volumes_total,
-      averageScore: item.score ? Math.round(item.score * 10) : undefined,
-      releaseYear: item.year,
-      url: `https://hikka.io/${isManga ? "manga" : "anime"}/${item.slug}`,
-    }));
+      return (data.list || []).map((item) => ({
+        id: item.slug,
+        externalId: item.slug,
+        provider: "HIKKA",
+        mediaType: isManga ? "MANGA" : "ANIME",
+        title: {
+          userPreferred: item.title_en || item.title_ua || item.title_ja || item.title_native || item.slug,
+          english: item.title_en,
+          romaji: item.title_ja,
+          native: item.title_native,
+        },
+        description: item.synopsis_en || item.synopsis_ua,
+        coverImage: item.image ? { large: item.image, medium: item.image } : undefined,
+        episodes: item.episodes_total,
+        chapters: item.chapters_total,
+        volumes: item.volumes_total,
+        averageScore: item.score ? Math.round(item.score * 10) : undefined,
+        releaseYear: item.year,
+        url: `https://hikka.io/${isManga ? "manga" : "anime"}/${item.slug}`,
+      }));
+    };
+
+    const isSlugCandidate = /^[a-z0-9]+(?:-[a-z0-9]+)+$/i.test(cleanQuery);
+    if (isSlugCandidate) {
+      const [idResult, textResults] = await Promise.all([
+        this.getMediaById(cleanQuery, credentials, options).catch(() => null),
+        fetchTextSearch().catch(() => [] as MediaSearchResult[]),
+      ]);
+
+      if (idResult) {
+        const deduped = textResults.filter((r) => r.externalId !== idResult.externalId);
+        return [idResult, ...deduped];
+      }
+      return textResults;
+    }
+
+    return fetchTextSearch();
   }
 
   async getMediaById(
@@ -272,8 +302,17 @@ export class HikkaAdapter extends BaseConnectionAdapter {
     credentials?: ConnectionCredentials,
     options?: SearchOptions
   ): Promise<MediaSearchResult | null> {
-    const isManga = options?.type === "MANGA" || options?.type === "BOOK";
-    const slug = externalId.trim();
+    const raw = externalId.trim();
+    const urlMatch = raw.match(
+      /^https?:\/\/(?:www\.)?hikka\.io\/(anime|manga)\/([^/?#\s]+)/i
+    );
+    const isManga =
+      urlMatch?.[1]?.toLowerCase() === "manga" ||
+      options?.type === "MANGA" ||
+      options?.type === "BOOK";
+    const slug = (
+      urlMatch?.[2] || raw.replace(/^(?:id:|hikka:|#)/i, "")
+    ).trim();
     if (!slug) return null;
 
     try {

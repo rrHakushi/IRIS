@@ -44,6 +44,8 @@ export const BorealisPlaylistsModel = {
     limit: t.Optional(t.Numeric({ default: 20, minimum: 1, maximum: 100, description: 'Playlists per page' })),
     q: t.Optional(t.String({ description: 'Search playlist by name' })),
     isPrivate: t.Optional(t.Boolean({ description: 'Filter by privacy flag' })),
+    mediaType: t.Optional(t.String({ description: 'With mediaId: flag playlists that contain this media (containsMedia)' })),
+    mediaId: t.Optional(t.Numeric({ description: 'With mediaType: flag playlists that contain this media (containsMedia)' })),
   }),
 
   listPlaylistsResponse: t.Object({
@@ -59,6 +61,7 @@ export const BorealisPlaylistsModel = {
         coverImage: t.Nullable(t.String()),
         order: t.Number(),
         entriesCount: t.Number(),
+        containsMedia: t.Optional(t.Boolean()),
         createdAt: t.String(),
         updatedAt: t.String(),
       })

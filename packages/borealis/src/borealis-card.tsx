@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useContext, useEffect, useMemo, useRef, useState } from "react"
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import {
   OverlayTriggerStateContext,
@@ -37,6 +37,7 @@ import {
   IconPhotoOff,
   IconPlus,
   IconRotate2,
+  IconSearch,
   IconSend,
   IconStar,
   IconTrash,
@@ -2120,16 +2121,6 @@ function BorealisCardHoverRewatchesTab({
     setDraftHistory(updated)
   }
 
-  const handleAddSession = () => {
-    if (!config.canEdit) return
-    onEditStart?.()
-    const today = new Date().toISOString().slice(0, 10)
-    const newSession = { startedAt: today, completedAt: today, notes: "" }
-    const updated = [...sessions, newSession]
-    setDraftHistory(updated)
-    setDraftRewatched(updated.length)
-  }
-
   const handleRemoveSession = (idx: number) => {
     if (!config.canEdit) return
     onEditStart?.()
@@ -2140,19 +2131,6 @@ function BorealisCardHoverRewatchesTab({
 
   return (
     <div className="flex flex-col gap-3 p-4 shrink-0">
-      {isHoverCardEditing && config.canEdit && (
-        <div className="flex items-center justify-end">
-          <button
-            type="button"
-            onClick={handleAddSession}
-            className="flex items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-[11px] font-semibold text-zinc-200 hover:bg-zinc-700 hover:text-white transition-colors cursor-pointer"
-          >
-            <IconPlus className="size-3" />
-            <span>Add {repeatLabel.singular}</span>
-          </button>
-        </div>
-      )}
-
       {sessions.length > 0 ? (
         <div className="max-h-60 overflow-y-auto overscroll-contain flex flex-col gap-2 pe-1 [scrollbar-width:thin]">
           {sessions.map((item: any, idx: number) => (
@@ -2238,15 +2216,6 @@ function BorealisCardHoverRewatchesTab({
           <span className="text-xs font-medium text-zinc-400">
             No {repeatLabel.plural.toLowerCase()} recorded yet
           </span>
-          {config.canEdit && !isHoverCardEditing && (
-            <button
-              type="button"
-              onClick={onEditStart}
-              className="mt-2 text-xs font-semibold text-primary hover:underline cursor-pointer"
-            >
-              Add {repeatLabel.singular}
-            </button>
-          )}
         </div>
       )}
     </div>
@@ -2281,7 +2250,14 @@ function BorealisCardHoverConnectionsTab({
       detectedId: string | number | null
       externalUrl: string | null
     }> = []
-    const cat = data.type
+    const cat =
+      data.type === "movies"
+        ? "movie"
+        : data.type === "books"
+          ? "book"
+          : data.type === "games"
+            ? "game"
+            : data.type
 
     if (cat === "anime") {
       list.push(
@@ -2487,17 +2463,148 @@ function BorealisCardHoverConnectionsTab({
     return availableProviders.filter((p) => !connections[p.key])
   }, [availableProviders, connections])
 
-  const handleConnect = (provider: any) => {
+  // Inline provider search state
+  const [searchProvider, setSearchProvider] = useState<any | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
+
+  const searchCategoryType = useMemo(() => {
+    switch (data.type) {
+      case "manga":
+      case "book":
+      case "books":
+      case "novel":
+      case "light_novel":
+        return "MANGA"
+      case "tv":
+        return "TV"
+      case "movie":
+      case "movies":
+        return "MOVIE"
+      case "game":
+      case "games":
+        return "GAME"
+      case "music":
+        return rawMedia.format === "TRACK" ? "TRACK" : "ALBUM"
+      default:
+        return "ANIME"
+    }
+  }, [data.type, rawMedia.format])
+
+  const executeSearch = useCallback(
+    async (provider: any, queryText: string) => {
+      const q = queryText.trim()
+      if (!q) return
+      setIsSearching(true)
+      setSearchError(null)
+      try {
+        // Explicit ID / URL detection (title search is the default)
+        const prefixMatch = q.match(
+          /^(?:id:|anilist:|al:|mal:|simkl:|bgm:|bangumi:|hikka:|mu:|mangaupdates:|mb:|mangabaka:|trakt:|imdb:|gb:|googlebooks:|lastfm:|mbid:|#)\s*([^\s/#?]+)$/i
+        )
+        const urlMatch =
+          q.match(/(?:anilist\.co|myanimelist\.net|simkl\.com|hikka\.io|trakt\.tv)\/(?:anime|manga|tv|movies|shows)\/([^/?#\s]+)/i) ||
+          q.match(/(?:bgm|bangumi|chii)\.(?:tv|in)\/subject\/(\d+)/i) ||
+          q.match(/(?:mangaupdates\.com|mangabaka\.org)\/series\/(\d+)/i) ||
+          q.match(/[?&]id=([^&#\s]+)/i)
+        const explicitId =
+          prefixMatch?.[1] ||
+          urlMatch?.[1] ||
+          (/^\d+$/.test(q) || /^tt\d+$/i.test(q) ? q : undefined)
+
+        const params = new URLSearchParams({
+          provider: provider.key.toUpperCase(),
+          q,
+          type: searchCategoryType,
+        })
+        if (explicitId) params.set("id", explicitId)
+
+        const res = await fetch(`/elysia/carina/connections/search?${params.toString()}`, {
+          credentials: "include",
+        })
+        if (!res.ok) throw new Error(`Search failed (${res.status})`)
+        const json = await res.json()
+        const raw: any[] = Array.isArray(json?.results) ? json.results : []
+
+        const mapped = raw
+          .map((r: any, idx: number) => {
+            const resolved = r.externalId ?? r.id
+            const extId =
+              resolved != null && !["", "undefined", "null"].includes(String(resolved).trim())
+                ? String(resolved)
+                : String(idx)
+            const t = r.title
+            const title =
+              (typeof t === "string" ? t : t?.userPreferred || t?.english || t?.romaji) || "Untitled"
+            return {
+              externalId: extId,
+              title,
+              titleSecondary:
+                typeof t === "object" && t?.english && t.english !== title
+                  ? t.english
+                  : typeof t === "object"
+                    ? (t?.romaji ?? null)
+                    : null,
+              coverImage:
+                r.coverImage?.extraLarge ||
+                r.coverImage?.large ||
+                r.coverImage?.medium ||
+                (typeof r.coverImage === "string" ? r.coverImage : null),
+              releaseYear: r.releaseYear ?? r.year ?? null,
+              format: r.format ?? null,
+              episodes: r.episodes ?? r.chapters ?? null,
+              url: r.url ?? null,
+            }
+          })
+          .filter((r) => r.externalId !== "undefined")
+
+        setSearchResults(mapped)
+        if (mapped.length === 0) setSearchError(`No results found on ${provider.name} for "${q}".`)
+      } catch (err: any) {
+        setSearchResults([])
+        setSearchError(err?.message || "Failed to search provider.")
+      } finally {
+        setIsSearching(false)
+      }
+    },
+    [searchCategoryType]
+  )
+
+  const openSearch = (provider: any) => {
     onEditStart?.()
-    const idVal = provider.detectedId ? String(provider.detectedId) : "linked"
+    const initial =
+      connections[provider.key]?.title || rawMedia.titlePrimary || data.title || ""
+    setSearchProvider(provider)
+    setSearchQuery(initial)
+    setSearchResults([])
+    setSearchError(null)
+    if (initial) void executeSearch(provider, initial)
+  }
+
+  const handleSelectResult = (provider: any, result: any) => {
+    const current = connections[provider.key] || {}
+    const coverUrl =
+      result.coverImage || current.cover || current.coverImage || data.image || null
     onConnectionsChange?.({
       ...connections,
       [provider.key]: {
-        id: idVal,
-        title: rawMedia.titlePrimary || data.title,
-        externalUrl: provider.externalUrl,
+        ...current,
+        id: result.externalId,
+        title: result.title,
+        cover: coverUrl,
+        coverImage: coverUrl,
+        year: result.releaseYear ?? current.year ?? data.hoverDetails?.year ?? null,
+        format: result.format ?? current.format ?? rawMedia.format ?? data.hoverDetails?.format ?? null,
+        externalUrl: result.url || provider.externalUrl,
+        extra: {
+          ...(current.extra || {}),
+          fetchedExternally: true,
+        },
       },
     })
+    setSearchProvider(null)
   }
 
   const handleDisconnect = (key: string) => {
@@ -2505,6 +2612,122 @@ function BorealisCardHoverConnectionsTab({
     const next = { ...connections }
     delete next[key]
     onConnectionsChange?.(next)
+  }
+
+  if (searchProvider) {
+    const activeId = connections[searchProvider.key]?.id
+    return (
+      <div className="flex flex-col gap-3 p-4 shrink-0">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setSearchProvider(null)}
+            className="flex size-7 items-center justify-center rounded-lg border border-zinc-700/60 bg-zinc-800/80 text-zinc-300 hover:text-white transition-colors cursor-pointer shrink-0"
+            aria-label="Back"
+          >
+            <IconChevronLeft className="size-3.5" />
+          </button>
+          <span className={cn("inline-flex items-center rounded-md border px-2 py-0.5 font-mono text-[10px] font-bold uppercase shrink-0", searchProvider.badgeColor)}>
+            {searchProvider.name}
+          </span>
+        </div>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            void executeSearch(searchProvider, searchQuery)
+          }}
+          className="flex items-center gap-2"
+        >
+          <div className="relative min-w-0 flex-1">
+            <IconSearch className="absolute top-1/2 start-2.5 size-3.5 -translate-y-1/2 text-zinc-500" />
+            <input
+              type="text"
+              autoFocus
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by title, ID (id:123) or URL..."
+              className="h-8 w-full rounded-lg border border-zinc-700 bg-zinc-950 ps-8 pe-2 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-primary/60"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isSearching || !searchQuery.trim()}
+            className="h-8 shrink-0 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 cursor-pointer"
+          >
+            {isSearching ? <IconLoader2 className="size-3.5 animate-spin" /> : "Search"}
+          </button>
+        </form>
+
+        <div className="max-h-64 overflow-y-auto overscroll-contain flex flex-col gap-1.5 pe-1 [scrollbar-width:thin]">
+          {isSearching && (
+            <div className="flex items-center justify-center py-6 text-zinc-400">
+              <IconLoader2 className="size-5 animate-spin text-primary" />
+            </div>
+          )}
+          {!isSearching && searchError && (
+            <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-2.5 text-xs text-red-400">
+              <IconAlertCircle className="size-4 shrink-0" />
+              <span>{searchError}</span>
+            </div>
+          )}
+          {!isSearching &&
+            searchResults.map((result, idx) => {
+              const isCurrent =
+                activeId != null && String(activeId) === String(result.externalId)
+              return (
+                <div
+                  key={`${result.externalId}-${idx}`}
+                  className={cn(
+                    "flex items-center justify-between gap-2 rounded-xl border p-2",
+                    isCurrent ? "border-primary/50 bg-primary/10" : "border-zinc-800 bg-zinc-900/60"
+                  )}
+                >
+                  <div className="flex min-w-0 items-center gap-2">
+                    {result.coverImage ? (
+                      <img
+                        src={result.coverImage}
+                        alt={result.title}
+                        loading="lazy"
+                        className="h-12 w-8 shrink-0 rounded-md border border-zinc-700 bg-zinc-800 object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-12 w-8 shrink-0 items-center justify-center rounded-md border border-zinc-700 bg-zinc-800 text-zinc-500">
+                        <IconPhotoOff className="size-3.5" />
+                      </div>
+                    )}
+                    <div className="flex min-w-0 flex-col">
+                      <span className="truncate text-xs font-semibold text-zinc-100">{result.title}</span>
+                      {result.titleSecondary && (
+                        <span className="truncate text-[10px] text-zinc-400">{result.titleSecondary}</span>
+                      )}
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5 font-mono text-[10px] text-zinc-400">
+                        {result.format && <span className="uppercase">{result.format}</span>}
+                        {result.releaseYear && <span>{result.releaseYear}</span>}
+                        <span className="text-zinc-500">#{result.externalId}</span>
+                      </div>
+                    </div>
+                  </div>
+                  {isCurrent ? (
+                    <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold text-primary">
+                      <IconCheck className="size-3" />
+                      Linked
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleSelectResult(searchProvider, result)}
+                      className="shrink-0 rounded-md bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-primary/90 cursor-pointer"
+                    >
+                      Select
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -2575,15 +2798,39 @@ function BorealisCardHoverConnectionsTab({
                     className="flex items-center justify-between gap-2 rounded-xl border border-primary/30 bg-primary/5 p-2 transition-colors"
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className={cn("inline-flex items-center rounded-md border px-2 py-0.5 font-mono text-[10px] font-bold uppercase shrink-0", prov.badgeColor)}>
-                        {prov.name}
-                      </span>
-                      <span className="truncate text-xs font-medium text-zinc-300">
-                        {prov.connData?.title || (prov.detectedId ? `ID: ${prov.connData?.id || prov.detectedId}` : "Linked")}
-                      </span>
+                      {(prov.connData?.cover || prov.connData?.coverImage) && (
+                        <img
+                          src={prov.connData.cover || prov.connData.coverImage}
+                          alt=""
+                          loading="lazy"
+                          className="h-9 w-6 shrink-0 rounded border border-zinc-700 object-cover"
+                        />
+                      )}
+                      <div className="flex min-w-0 flex-col gap-0.5">
+                        <span className={cn("inline-flex w-fit items-center rounded-md border px-2 py-0.5 font-mono text-[10px] font-bold uppercase shrink-0", prov.badgeColor)}>
+                          {prov.name}
+                        </span>
+                        <span className="truncate text-xs font-medium text-zinc-300">
+                          {prov.connData?.title || (prov.detectedId ? `ID: ${prov.connData?.id || prov.detectedId}` : "Linked")}
+                        </span>
+                        {prov.connData?.id && prov.connData.id !== "linked" && (
+                          <span className="truncate font-mono text-[10px] text-zinc-500">
+                            {[prov.connData.format, prov.connData.year, `#${prov.connData.id}`].filter(Boolean).join(" · ")}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => openSearch(prov)}
+                        className="flex size-6 items-center justify-center rounded-md border border-zinc-700 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                        title={`Change ${prov.name} link`}
+                        aria-label={`Change ${prov.name} link`}
+                      >
+                        <IconSearch className="size-3" />
+                      </button>
                       {prov.url && (
                         <a
                           href={prov.url}
@@ -2600,11 +2847,11 @@ function BorealisCardHoverConnectionsTab({
                       <button
                         type="button"
                         onClick={() => handleDisconnect(prov.key)}
-                        className="flex items-center gap-1 rounded-md border border-red-500/40 bg-red-500/10 px-2 py-1 text-[11px] font-medium text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer"
+                        className="flex size-6 items-center justify-center rounded-md border border-red-500/40 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer"
                         title={`Disconnect ${prov.name}`}
+                        aria-label={`Disconnect ${prov.name}`}
                       >
                         <IconX className="size-3" />
-                        <span>Disconnect</span>
                       </button>
                     </div>
                   </div>
@@ -2635,7 +2882,7 @@ function BorealisCardHoverConnectionsTab({
 
                     <button
                       type="button"
-                      onClick={() => handleConnect(prov)}
+                      onClick={() => openSearch(prov)}
                       className="flex items-center gap-1 rounded-md border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-[11px] font-semibold text-zinc-200 hover:bg-zinc-700 hover:text-white transition-colors cursor-pointer shrink-0"
                     >
                       <IconPlus className="size-3" />
@@ -2655,34 +2902,218 @@ function BorealisCardHoverConnectionsTab({
 // -----------------------------------------------------------------------------
 // 5f. BorealisCardHoverWatchlistsTab
 // -----------------------------------------------------------------------------
-function BorealisCardHoverWatchlistsTab({ data }: { data: any }) {
-  const rawEntry = data.raw?.entry ?? data.raw
-  const watchlists: any[] = Array.isArray(rawEntry?.watchlists)
-    ? rawEntry.watchlists
-    : Array.isArray(rawEntry?.customLists)
-      ? rawEntry.customLists
-      : []
+function toBackendMediaType(type: string): string {
+  switch (type) {
+    case "anime":
+      return "ANIME"
+    case "manga":
+      return "MANGA"
+    case "movie":
+    case "movies":
+      return "MOVIE"
+    case "tv":
+      return "TV"
+    case "game":
+    case "games":
+      return "GAME"
+    case "book":
+    case "books":
+      return "BOOK"
+    case "music":
+      return "MUSIC"
+    default:
+      return "OTHER"
+  }
+}
+
+function getBackendMediaId(data: any): number {
+  const rawMedia = data.raw?.media ?? data.raw ?? {}
+  return Number(rawMedia?.id ?? data.id)
+}
+
+function BorealisCardHoverWatchlistsTab({
+  data,
+  config,
+  isHoverCardEditing = false,
+  onEditStart,
+  listChanges,
+  setListChanges,
+  newLists,
+  setNewLists,
+  refreshKey = 0,
+}: {
+  data: any
+  config: any
+  isHoverCardEditing?: boolean
+  onEditStart?: () => void
+  listChanges: Record<string, boolean>
+  setListChanges: (c: Record<string, boolean>) => void
+  newLists: string[]
+  setNewLists: (n: string[]) => void
+  refreshKey?: number
+}) {
+  const mediaId = getBackendMediaId(data)
+  const backendMediaType = toBackendMediaType(data.type)
+
+  const [lists, setLists] = useState<
+    Array<{ id: string; name: string; isPrivate: boolean; entriesCount: number; containsMedia?: boolean }>
+  >([])
+  const [loading, setLoading] = useState(true)
+  const [newName, setNewName] = useState("")
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      if (!mediaId || Number.isNaN(mediaId)) {
+        setLoading(false)
+        return
+      }
+      try {
+        const params = new URLSearchParams({
+          limit: "100",
+          mediaType: backendMediaType,
+          mediaId: String(mediaId),
+        })
+        const res = await fetch(`/elysia/borealis/playlists?${params.toString()}`, {
+          credentials: "include",
+        })
+        if (!res.ok) throw new Error(String(res.status))
+        const json = await res.json()
+        if (!cancelled) setLists(Array.isArray(json?.playlists) ? json.playlists : [])
+      } catch {
+        if (!cancelled) setError("Failed to load custom lists")
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    void load()
+    return () => {
+      cancelled = true
+    }
+  }, [mediaId, backendMediaType, refreshKey])
+
+  const isChecked = (l: (typeof lists)[number]) =>
+    l.id in listChanges ? listChanges[l.id] : Boolean(l.containsMedia)
+
+  // Changes are only staged in draft state; they are applied when the entry is saved.
+  const toggle = (list: (typeof lists)[number]) => {
+    onEditStart?.()
+    const next = !isChecked(list)
+    const updated = { ...listChanges }
+    if (next === Boolean(list.containsMedia)) delete updated[list.id]
+    else updated[list.id] = next
+    setListChanges(updated)
+  }
+
+  const handleCreate = (e: React.FormEvent) => {
+    e.preventDefault()
+    const name = newName.trim()
+    if (!name || newLists.includes(name)) return
+    onEditStart?.()
+    setNewLists([...newLists, name])
+    setNewName("")
+  }
+
+  const canEdit = Boolean(config?.canEdit) && isHoverCardEditing
+  const visible = canEdit ? lists : lists.filter((l) => l.containsMedia)
+  const pendingNew = canEdit ? newLists : []
 
   return (
     <div className="flex flex-col gap-2 p-4 shrink-0">
-      {watchlists.length > 0 ? (
+      {canEdit && (
+        <form onSubmit={handleCreate} className="flex items-center gap-2">
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="New list name..."
+            className="h-8 min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-2.5 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-primary/60"
+          />
+          <button
+            type="submit"
+            disabled={!newName.trim()}
+            className="flex h-8 shrink-0 items-center gap-1 rounded-lg bg-primary px-2.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 cursor-pointer"
+          >
+            <IconPlus className="size-3.5" />
+            <span>Create</span>
+          </button>
+        </form>
+      )}
+
+      {error && (
+        <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-2 text-xs text-red-400">
+          <IconAlertCircle className="size-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <IconLoader2 className="size-5 animate-spin text-primary" />
+        </div>
+      ) : visible.length > 0 || pendingNew.length > 0 ? (
         <div className="max-h-60 overflow-y-auto overscroll-contain flex flex-col gap-1.5 pe-1 [scrollbar-width:thin]">
-          {watchlists.map((wl: any, idx: number) => (
+          {pendingNew.map((name) => (
             <div
-              key={wl.id ?? idx}
-              className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/60 p-2.5"
+              key={`new-${name}`}
+              className="flex items-center justify-between gap-2 rounded-xl border border-primary/40 bg-primary/5 p-2.5"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <IconFolder className="size-4 text-primary shrink-0" />
-                <span className="truncate text-xs font-semibold text-white">
-                  {wl.name || "Custom List"}
-                </span>
+                <span className="truncate text-xs font-semibold text-white">{name}</span>
+                <span className="font-mono text-[10px] text-primary shrink-0">New</span>
               </div>
-              <span className="font-mono text-[10px] text-zinc-400 shrink-0">
-                {wl.entriesCount ?? wl.count ?? 0} items
-              </span>
+              <button
+                type="button"
+                aria-label={`Remove ${name}`}
+                onClick={() => setNewLists(newLists.filter((n) => n !== name))}
+                className="flex size-6 shrink-0 items-center justify-center rounded-md border border-zinc-700 bg-zinc-800 text-zinc-400 hover:text-red-400 transition-colors cursor-pointer"
+              >
+                <IconX className="size-3" />
+              </button>
             </div>
           ))}
+          {visible.map((wl) => {
+            const checked = isChecked(wl)
+            return (
+              <div
+                key={wl.id}
+                className={cn(
+                  "flex items-center justify-between gap-2 rounded-xl border p-2.5",
+                  checked ? "border-primary/40 bg-primary/5" : "border-zinc-800 bg-zinc-900/60"
+                )}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <IconFolder className="size-4 text-primary shrink-0" />
+                  <span className="truncate text-xs font-semibold text-white">{wl.name}</span>
+                  {wl.isPrivate && <IconLock className="size-3 text-zinc-500 shrink-0" />}
+                  <span className="font-mono text-[10px] text-zinc-400 shrink-0">{wl.entriesCount}</span>
+                </div>
+                {canEdit ? (
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={checked}
+                    aria-label={`Include in ${wl.name}`}
+                    onClick={() => toggle(wl)}
+                    className={cn(
+                      "flex size-6 shrink-0 items-center justify-center rounded-md border transition-colors cursor-pointer disabled:opacity-60",
+                      checked
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-zinc-700 bg-zinc-800 text-zinc-500 hover:text-white"
+                    )}
+                  >
+                    {checked ? (
+                      <IconCheck className="size-3.5 stroke-[3]" />
+                    ) : (
+                      <IconPlus className="size-3.5" />
+                    )}
+                  </button>
+                ) : null}
+              </div>
+            )
+          })}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-8 text-center text-zinc-500">
@@ -2861,6 +3292,10 @@ export function BorealisCardHoverContent({
     return {}
   })
 
+  const [draftListChanges, setDraftListChanges] = useState<Record<string, boolean>>({})
+  const [draftNewLists, setDraftNewLists] = useState<string[]>([])
+  const [playlistRefreshKey, setPlaylistRefreshKey] = useState<number>(0)
+
   const [isSaving, setIsSaving] = useState(false)
 
   // Only auto-complete when progress is actively increased by the user to reach or exceed maxCount
@@ -2909,6 +3344,55 @@ export function BorealisCardHoverContent({
         await config.onSaveEntry(payload)
       }
 
+      // Persist custom list changes and creations
+      const mediaId = getBackendMediaId(data)
+      const backendMediaType = toBackendMediaType(data.type)
+      if (mediaId && !Number.isNaN(mediaId)) {
+        if (draftNewLists.length > 0) {
+          for (const name of draftNewLists) {
+            try {
+              const res = await fetch("/elysia/borealis/playlists", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, isPrivate: false }),
+              })
+              if (res.ok) {
+                const json = await res.json()
+                const pid = json?.playlist?.id
+                if (pid) {
+                  await fetch(`/elysia/borealis/playlists/${pid}/entries`, {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ mediaType: backendMediaType, mediaId }),
+                  })
+                }
+              }
+            } catch (e) {
+              console.error("Failed to create custom list and add media:", e)
+            }
+          }
+        }
+        if (Object.keys(draftListChanges).length > 0) {
+          for (const [listId, shouldContain] of Object.entries(draftListChanges)) {
+            try {
+              await fetch(`/elysia/borealis/playlists/${listId}/entries`, {
+                method: shouldContain ? "POST" : "DELETE",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ mediaType: backendMediaType, mediaId }),
+              })
+            } catch (e) {
+              console.error(`Failed to update custom list ${listId}:`, e)
+            }
+          }
+        }
+        setDraftListChanges({})
+        setDraftNewLists([])
+        setPlaylistRefreshKey((k) => k + 1)
+      }
+
       setLocalScore?.(payload.score)
       setLocalStatus?.(payload.status)
       setLocalProgress?.(payload.progress)
@@ -2936,6 +3420,8 @@ export function BorealisCardHoverContent({
     setDraftWatchedEpisodes(Array.isArray(rawEntry?.watchedEpisodes) ? rawEntry.watchedEpisodes : [])
     const c = rawEntry?.connections ?? data.hoverDetails?.connections
     setDraftConnections(c && typeof c === "object" && !Array.isArray(c) ? { ...c } : {})
+    setDraftListChanges({})
+    setDraftNewLists([])
     setIsHoverCardEditing?.(false)
   }
 
@@ -3096,6 +3582,43 @@ export function BorealisCardHoverContent({
 
   const totalEpisodeCount = data.hoverDetails?.episodeCount ?? rawMedia?.episodeCount ?? data.progress?.max
 
+  const editActions = (
+    <div className="flex items-center gap-1.5">
+      <button
+        type="button"
+        disabled={isSaving}
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          handleSave()
+        }}
+        className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+        aria-label="Save"
+        title="Save"
+      >
+        {isSaving ? (
+          <IconLoader2 className="size-3.5 animate-spin" />
+        ) : (
+          <IconCheck className="size-3.5 stroke-[2.5]" />
+        )}
+      </button>
+      <button
+        type="button"
+        disabled={isSaving}
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          handleCancel()
+        }}
+        className="flex size-7 items-center justify-center rounded-lg border border-zinc-700/60 bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+        aria-label="Cancel"
+        title="Cancel"
+      >
+        <IconX className="size-3.5" />
+      </button>
+    </div>
+  )
+
   const content = (
     <div
       ref={popoverRef}
@@ -3241,14 +3764,13 @@ export function BorealisCardHoverContent({
             </button>
           </div>
 
-          {/* Edit button to the right of the tabs */}
+          {/* Edit button (pencil) -> save + cancel icons while editing */}
           {config.canEdit && !isHoverCardEditing && (
             <button
               type="button"
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
-                setActiveTab("general")
                 setIsHoverCardEditing?.(true)
               }}
               className="relative z-20 ms-auto flex size-7 items-center justify-center rounded-lg border border-zinc-700/60 bg-zinc-800/80 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-700 hover:text-white transition-colors cursor-pointer shrink-0"
@@ -3257,6 +3779,9 @@ export function BorealisCardHoverContent({
             >
               <IconPencil className="size-3.5" />
             </button>
+          )}
+          {config.canEdit && isHoverCardEditing && (
+            <div className="relative z-20 ms-auto">{editActions}</div>
           )}
         </div>
       )}
@@ -3506,34 +4031,23 @@ export function BorealisCardHoverContent({
 
       {/* Tab 5: Custom Lists */}
       {activeTab === "watchlists" && (
-        <BorealisCardHoverWatchlistsTab data={data} />
+        <BorealisCardHoverWatchlistsTab
+          data={data}
+          config={config}
+          isHoverCardEditing={isHoverCardEditing}
+          onEditStart={() => setIsHoverCardEditing?.(true)}
+          listChanges={draftListChanges}
+          setListChanges={setDraftListChanges}
+          newLists={draftNewLists}
+          setNewLists={setDraftNewLists}
+          refreshKey={playlistRefreshKey}
+        />
       )}
 
-      {/* Sticky Bottom Footer for Save / Cancel when in edit mode */}
-      {isHoverCardEditing && (
-        <div className="sticky bottom-0 z-30 mt-auto flex items-center justify-end gap-2 border-t border-zinc-800 bg-zinc-950 p-3 shadow-2xl">
-          <button
-            type="button"
-            disabled={isSaving}
-            onClick={handleCancel}
-            className="flex items-center gap-1.5 rounded-lg border border-zinc-700/60 bg-zinc-800/80 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-700 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
-          >
-            <IconX className="size-3.5" />
-            <span>Cancel</span>
-          </button>
-          <button
-            type="button"
-            disabled={isSaving}
-            onClick={handleSave}
-            className="flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-xs cursor-pointer disabled:opacity-50"
-          >
-            {isSaving ? (
-              <IconLoader2 className="size-3.5 animate-spin" />
-            ) : (
-              <IconCheck className="size-3.5 stroke-[2.5]" />
-            )}
-            <span>Save</span>
-          </button>
+      {/* Edit mode actions: replace pencil with save (check) + cancel (x) */}
+      {isHoverCardEditing && !config.showTabNav && (
+        <div className="flex items-center justify-end border-b border-zinc-800 px-3 py-2">
+          {editActions}
         </div>
       )}
     </div>

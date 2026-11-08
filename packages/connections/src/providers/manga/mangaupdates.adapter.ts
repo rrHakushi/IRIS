@@ -176,56 +176,86 @@ export class MangaUpdatesAdapter extends BaseConnectionAdapter {
     credentials?: ConnectionCredentials,
     options?: SearchOptions
   ): Promise<MediaSearchResult[]> {
+    const cleanQuery = query.trim();
+    if (!cleanQuery) return [];
+
+    // 1. Check for explicit MangaUpdates ID prefixes or URLs (e.g., "id:12345", "mu:12345", "mangaupdates:12345", "#12345", or "https://www.mangaupdates.com/series/12345/...")
+    const explicitIdMatch = cleanQuery.match(
+      /^(?:id:|mu:|mangaupdates:|#|https?:\/\/(?:www\.)?mangaupdates\.com\/series\/)(\d+)/i
+    );
+    if (explicitIdMatch && explicitIdMatch[1]) {
+      const item = await this.getMediaById(explicitIdMatch[1], credentials, options);
+      return item ? [item] : [];
+    }
+
+    const isPlainNumeric = /^\d+$/.test(cleanQuery);
     const limit = Math.min(options?.perPage || 20, 50);
     const page = options?.page || 1;
 
-    const data = await this.fetchJson<{
-      total_hits: number;
-      page: number;
-      per_page: number;
-      results: Array<{
-        record: {
-          series_id: number;
-          title: string;
-          description?: string;
-          year?: string;
-          type?: string;
-          image?: { url?: { original?: string; thumb?: string } };
-          associated?: Array<{ title: string }>;
+    const fetchTextSearch = async (): Promise<MediaSearchResult[]> => {
+      const data = await this.fetchJson<{
+        total_hits: number;
+        page: number;
+        per_page: number;
+        results: Array<{
+          record: {
+            series_id: number;
+            title: string;
+            description?: string;
+            year?: string;
+            type?: string;
+            image?: { url?: { original?: string; thumb?: string } };
+            associated?: Array<{ title: string }>;
+          };
+        }>;
+      }>(`${MangaUpdatesAdapter.BASE_URL}/series/search`, {
+        method: "POST",
+        headers: this.buildHeaders(credentials),
+        body: JSON.stringify({
+          search: cleanQuery,
+          stype: "title",
+          perpage: limit,
+          page,
+        }),
+      });
+
+      return (data.results || []).map((hit) => {
+        const rec = hit.record;
+        const releaseYear = rec.year ? parseInt(rec.year, 10) : undefined;
+        const coverUrl = rec.image?.url?.original || rec.image?.url?.thumb;
+
+        return {
+          id: String(rec.series_id),
+          externalId: String(rec.series_id),
+          provider: "MANGAUPDATES",
+          mediaType: "MANGA",
+          title: {
+            userPreferred: rec.title,
+            english: rec.title,
+          },
+          description: rec.description,
+          coverImage: coverUrl ? { large: coverUrl, medium: coverUrl } : undefined,
+          format: rec.type,
+          releaseYear: Number.isNaN(releaseYear) ? undefined : releaseYear,
+          url: `https://www.mangaupdates.com/series/${rec.series_id}`,
         };
-      }>;
-    }>(`${MangaUpdatesAdapter.BASE_URL}/series/search`, {
-      method: "POST",
-      headers: this.buildHeaders(credentials),
-      body: JSON.stringify({
-        search: query.trim(),
-        stype: "title",
-        perpage: limit,
-        page,
-      }),
-    });
+      });
+    };
 
-    return (data.results || []).map((hit) => {
-      const rec = hit.record;
-      const releaseYear = rec.year ? parseInt(rec.year, 10) : undefined;
-      const coverUrl = rec.image?.url?.original || rec.image?.url?.thumb;
+    if (isPlainNumeric) {
+      const [idResult, textResults] = await Promise.all([
+        this.getMediaById(cleanQuery, credentials, options).catch(() => null),
+        fetchTextSearch().catch(() => [] as MediaSearchResult[]),
+      ]);
 
-      return {
-        id: String(rec.series_id),
-        externalId: String(rec.series_id),
-        provider: "MANGAUPDATES",
-        mediaType: "MANGA",
-        title: {
-          userPreferred: rec.title,
-          english: rec.title,
-        },
-        description: rec.description,
-        coverImage: coverUrl ? { large: coverUrl, medium: coverUrl } : undefined,
-        format: rec.type,
-        releaseYear: Number.isNaN(releaseYear) ? undefined : releaseYear,
-        url: `https://www.mangaupdates.com/series/${rec.series_id}`,
-      };
-    });
+      if (idResult) {
+        const deduped = textResults.filter((r) => r.externalId !== idResult.externalId);
+        return [idResult, ...deduped];
+      }
+      return textResults;
+    }
+
+    return fetchTextSearch();
   }
 
   async getMediaById(
@@ -233,7 +263,12 @@ export class MangaUpdatesAdapter extends BaseConnectionAdapter {
     credentials?: ConnectionCredentials,
     _options?: SearchOptions
   ): Promise<MediaSearchResult | null> {
-    const numId = Number(externalId);
+    const cleanId = externalId
+      .trim()
+      .replace(/^(?:id:|mu:|mangaupdates:|#)/i, "")
+      .replace(/^https?:\/\/(?:www\.)?mangaupdates\.com\/series\/(\d+).*$/i, "$1")
+      .trim();
+    const numId = Number(cleanId);
     if (Number.isNaN(numId) || numId <= 0) return null;
 
     try {

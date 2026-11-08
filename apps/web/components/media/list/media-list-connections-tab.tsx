@@ -860,12 +860,23 @@ export function MediaListConnectionsTab({
                       : "ALBUM"
                     : "ANIME"
 
-        // Check if query is an explicit ID pattern (e.g. id:25623, mal:25623, #25623, or full MAL URL)
-        const idPrefixMatch = q.match(/^(?:id:|mal:|#)\s*(\d+)$/i)
-        const malUrlMatch = q.match(/myanimelist\.net\/(?:anime|manga)\/(\d+)/i)
+        // Check if query is an explicit ID/URL pattern across providers
+        const idPrefixMatch = q.match(
+          /^(?:id:|anilist:|al:|mal:|simkl:|bgm:|bangumi:|hikka:|mu:|mangaupdates:|mb:|mangabaka:|trakt:|imdb:|gb:|googlebooks:|lastfm:|mbid:|#)\s*([^\s/#?]+)$/i
+        )
+        const urlIdMatch =
+          q.match(/(?:anilist\.co|myanimelist\.net|simkl\.com|hikka\.io|trakt\.tv)\/(?:anime|manga|tv|movies|shows)\/([^/?#\s]+)/i) ||
+          q.match(/(?:bgm|bangumi|chii)\.(?:tv|in)\/subject\/(\d+)/i) ||
+          q.match(/(?:mangaupdates\.com|mangabaka\.org)\/series\/(\d+)/i) ||
+          q.match(/[?&]id=([^&#\s]+)/i) ||
+          q.match(/\/volumes\/([^/?#\s]+)/i)
         const isNumeric = /^\d+$/.test(q)
+        const isImdbId = /^tt\d+$/i.test(q)
         const explicitId =
-          idPrefixMatch?.[1] || malUrlMatch?.[1] || (isNumeric ? q : undefined)
+          idPrefixMatch?.[1] ||
+          urlIdMatch?.[1] ||
+          (isNumeric || isImdbId ? q : undefined)
+        const isExplicitOnly = Boolean(idPrefixMatch || urlIdMatch || isImdbId)
 
         try {
           const res = await elysia.carina.connections.search.get({
@@ -953,32 +964,60 @@ export function MediaListConnectionsTab({
 
         // 2. Client-side direct fallback for AniList
         if (provider.key === "anilist") {
-          const gqlQuery = `
-            query ($search: String, $type: MediaType) {
-              Page(page: 1, perPage: 15) {
-                media(search: $search, type: $type, sort: POPULARITY_DESC) {
-                  id
-                  format
-                  status
-                  episodes
-                  chapters
-                  seasonYear
-                  siteUrl
-                  title {
-                    userPreferred
-                    english
-                    romaji
-                  }
-                  coverImage {
-                    extraLarge
-                    large
-                    medium
+          const mediaType = category === "manga" || category === "book" ? "MANGA" : "ANIME"
+          const numAnilistId = explicitId && /^\d+$/.test(explicitId) ? Number(explicitId) : null
+
+          const gqlQuery = isExplicitOnly && numAnilistId
+            ? `
+              query ($id: Int, $type: MediaType) {
+                Page(page: 1, perPage: 1) {
+                  media(id: $id, type: $type) {
+                    id
+                    format
+                    status
+                    episodes
+                    chapters
+                    seasonYear
+                    siteUrl
+                    title {
+                      userPreferred
+                      english
+                      romaji
+                    }
+                    coverImage {
+                      extraLarge
+                      large
+                      medium
+                    }
                   }
                 }
               }
-            }
-          `
-          const mediaType = category === "manga" || category === "book" ? "MANGA" : "ANIME"
+            `
+            : `
+              query ($search: String, $type: MediaType) {
+                Page(page: 1, perPage: 15) {
+                  media(search: $search, type: $type, sort: POPULARITY_DESC) {
+                    id
+                    format
+                    status
+                    episodes
+                    chapters
+                    seasonYear
+                    siteUrl
+                    title {
+                      userPreferred
+                      english
+                      romaji
+                    }
+                    coverImage {
+                      extraLarge
+                      large
+                      medium
+                    }
+                  }
+                }
+              }
+            `
           const resp = await fetch("https://graphql.anilist.co", {
             method: "POST",
             headers: {
@@ -987,10 +1026,10 @@ export function MediaListConnectionsTab({
             },
             body: JSON.stringify({
               query: gqlQuery,
-              variables: {
-                search: q,
-                type: mediaType,
-              },
+              variables:
+                isExplicitOnly && numAnilistId
+                  ? { id: numAnilistId, type: mediaType }
+                  : { search: q, type: mediaType },
             }),
           })
           const json = await resp.json()
@@ -1026,10 +1065,10 @@ export function MediaListConnectionsTab({
         if (provider.key === "mal") {
           const malType = category === "manga" || category === "book" ? "manga" : "anime"
           const cleanMalId =
-            idPrefixMatch?.[1] || malUrlMatch?.[1] || (isNumeric ? q : null)
+            explicitId && /^\d+$/.test(explicitId) ? explicitId : null
 
           let jikanUrl = `https://api.jikan.moe/v4/${malType}?q=${encodeURIComponent(q)}&limit=15`
-          if (cleanMalId) {
+          if (cleanMalId && isExplicitOnly) {
             jikanUrl = `https://api.jikan.moe/v4/${malType}/${cleanMalId}`
           }
 
@@ -1068,6 +1107,52 @@ export function MediaListConnectionsTab({
             setSearchResults(mapped)
             setIsSearching(false)
             return
+          }
+        }
+
+        // 4. Client-side direct fallback for Google Books
+        if (provider.key === "googlebooks") {
+          const gbUrl =
+            isExplicitOnly && explicitId
+              ? `https://www.googleapis.com/books/v1/volumes/${encodeURIComponent(explicitId)}`
+              : `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=15`
+          const resp = await fetch(gbUrl)
+          if (resp.ok) {
+            const json = await resp.json()
+            const rawItems = Array.isArray(json?.items)
+              ? json.items
+              : json?.id
+                ? [json]
+                : []
+            if (rawItems.length > 0) {
+              const mapped: ProviderSearchResult[] = rawItems.map((b: any) => {
+                const info = b.volumeInfo || {}
+                const rawCover =
+                  info.imageLinks?.large ||
+                  info.imageLinks?.medium ||
+                  info.imageLinks?.thumbnail ||
+                  info.imageLinks?.smallThumbnail ||
+                  null
+                const cover = rawCover ? String(rawCover).replace(/^http:\/\//i, "https://") : null
+                const year = info.publishedDate
+                  ? parseInt(String(info.publishedDate).substring(0, 4), 10)
+                  : null
+                return {
+                  externalId: String(b.id),
+                  title: info.title || "Untitled",
+                  titleSecondary: Array.isArray(info.authors) ? info.authors.join(", ") : null,
+                  coverImage: cover,
+                  releaseYear: year && !Number.isNaN(year) ? year : null,
+                  format: "BOOK",
+                  episodes: info.pageCount ?? null,
+                  status: null,
+                  url: `https://books.google.com/books?id=${b.id}`,
+                }
+              })
+              setSearchResults(mapped)
+              setIsSearching(false)
+              return
+            }
           }
         }
 
@@ -1675,14 +1760,10 @@ export function MediaListConnectionsTab({
                     className="flex w-full min-w-0 items-center gap-2"
                   >
                     <div className="relative min-w-0 flex-1">
-                      <IconSearch className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                      <IconSearch className="absolute top-1/2 start-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         type="text"
-                        placeholder={
-                          searchModalProvider.key === "mal"
-                            ? "Search title or id:25623..."
-                            : `Search ${searchModalProvider.name}...`
-                        }
+                        placeholder={`Search ${searchModalProvider.name} by title, ID (e.g. id:123), or URL...`}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="h-8 w-full min-w-0 rounded-xl border-border bg-background ps-9 pe-3 text-xs text-foreground"

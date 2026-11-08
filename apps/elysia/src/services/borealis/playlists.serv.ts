@@ -6,6 +6,8 @@ export interface ListPlaylistsQuery {
   limit?: number
   q?: string
   isPrivate?: boolean
+  mediaType?: string
+  mediaId?: number
 }
 
 export interface GetEntriesQuery {
@@ -92,9 +94,26 @@ export class BorealisPlaylistsServ {
         .all(),
     ])
 
+    let containing = new Set<string>()
+    if (query?.mediaType && query?.mediaId && playlists.length > 0) {
+      const mType = String(query.mediaType).toUpperCase() as MediaType
+      const mId = Number(query.mediaId)
+      const entries = await prisma.orm.public.CustomListEntry
+        .where({ mediaType: mType, mediaId: mId })
+        .all()
+      const ids = new Set(playlists.map((p: any) => p.id))
+      containing = new Set(
+        entries.map((e: any) => e.listId).filter((id: string) => ids.has(id))
+      )
+    }
+    const checkMembership = Boolean(query?.mediaType && query?.mediaId)
+
     return {
       success: true,
-      playlists: playlists.map((p) => formatPlaylist(p)),
+      playlists: playlists.map((p) => ({
+        ...formatPlaylist(p),
+        ...(checkMembership ? { containsMedia: containing.has(p.id) } : {}),
+      })),
       pagination: {
         page,
         limit,

@@ -278,55 +278,85 @@ export class MangaBakaAdapter extends BaseConnectionAdapter {
     credentials?: ConnectionCredentials,
     options?: SearchOptions
   ): Promise<MediaSearchResult[]> {
+    const cleanQuery = query.trim();
+    if (!cleanQuery) return [];
+
+    // 1. Check for explicit MangaBaka ID prefixes or URLs (e.g., "id:123", "mb:123", "mangabaka:123", "#123", or "https://mangabaka.org/series/123")
+    const explicitIdMatch = cleanQuery.match(
+      /^(?:id:|mb:|mangabaka:|#|https?:\/\/(?:www\.)?mangabaka\.org\/(?:series\/)?)(\d+)/i
+    );
+    if (explicitIdMatch && explicitIdMatch[1]) {
+      const item = await this.getMediaById(explicitIdMatch[1], credentials, options);
+      return item ? [item] : [];
+    }
+
+    const isPlainNumeric = /^\d+$/.test(cleanQuery);
     const limit = Math.min(options?.perPage || 20, 50);
     const page = options?.page || 1;
 
-    const url = new URL(`${MangaBakaAdapter.API_BASE}/v1/series/search`);
-    url.searchParams.set("q", query.trim());
-    url.searchParams.set("page", String(page));
-    url.searchParams.set("limit", String(limit));
+    const fetchTextSearch = async (): Promise<MediaSearchResult[]> => {
+      const url = new URL(`${MangaBakaAdapter.API_BASE}/v1/series/search`);
+      url.searchParams.set("q", cleanQuery);
+      url.searchParams.set("page", String(page));
+      url.searchParams.set("limit", String(limit));
 
-    const res = await this.fetchJson<{
-      status: number;
-      pagination?: { count: number; page: number; limit: number };
-      data: Array<{
-        id: number;
-        title: string;
-        native_title?: string;
-        romanized_title?: string;
-        canonical_url?: string;
-        description?: string;
-        year?: number;
-        cover?: { url?: string };
-        covers?: Array<{ url?: string; is_primary?: boolean }>;
-      }>;
-    }>(url.toString(), {
-      headers: this.buildHeaders(credentials),
-    });
+      const res = await this.fetchJson<{
+        status: number;
+        pagination?: { count: number; page: number; limit: number };
+        data: Array<{
+          id: number;
+          title: string;
+          native_title?: string;
+          romanized_title?: string;
+          canonical_url?: string;
+          description?: string;
+          year?: number;
+          cover?: { url?: string };
+          covers?: Array<{ url?: string; is_primary?: boolean }>;
+        }>;
+      }>(url.toString(), {
+        headers: this.buildHeaders(credentials),
+      });
 
-    return (res.data || []).map((series) => {
-      const coverUrl =
-        series.cover?.url ||
-        series.covers?.find((c) => c.is_primary)?.url ||
-        series.covers?.[0]?.url;
+      return (res.data || []).map((series) => {
+        const coverUrl =
+          series.cover?.url ||
+          series.covers?.find((c) => c.is_primary)?.url ||
+          series.covers?.[0]?.url;
 
-      return {
-        id: String(series.id),
-        externalId: String(series.id),
-        provider: "MANGABAKA",
-        mediaType: "MANGA",
-        title: {
-          userPreferred: series.title,
-          english: series.title,
-          romaji: series.romanized_title,
-          native: series.native_title,
-        },
-        description: series.description,
-        coverImage: coverUrl ? { large: coverUrl, medium: coverUrl } : undefined,
-        releaseYear: series.year,
-        url: series.canonical_url || `https://mangabaka.org/series/${series.id}`,
-      };
-    });
+        return {
+          id: String(series.id),
+          externalId: String(series.id),
+          provider: "MANGABAKA",
+          mediaType: "MANGA",
+          title: {
+            userPreferred: series.title,
+            english: series.title,
+            romaji: series.romanized_title,
+            native: series.native_title,
+          },
+          description: series.description,
+          coverImage: coverUrl ? { large: coverUrl, medium: coverUrl } : undefined,
+          releaseYear: series.year,
+          url: series.canonical_url || `https://mangabaka.org/series/${series.id}`,
+        };
+      });
+    };
+
+    if (isPlainNumeric) {
+      const [idResult, textResults] = await Promise.all([
+        this.getMediaById(cleanQuery, credentials, options).catch(() => null),
+        fetchTextSearch().catch(() => [] as MediaSearchResult[]),
+      ]);
+
+      if (idResult) {
+        const deduped = textResults.filter((r) => r.externalId !== idResult.externalId);
+        return [idResult, ...deduped];
+      }
+      return textResults;
+    }
+
+    return fetchTextSearch();
   }
 
   async getMediaById(
@@ -334,7 +364,12 @@ export class MangaBakaAdapter extends BaseConnectionAdapter {
     credentials?: ConnectionCredentials,
     _options?: SearchOptions
   ): Promise<MediaSearchResult | null> {
-    const numId = Number(externalId);
+    const cleanId = externalId
+      .trim()
+      .replace(/^(?:id:|mb:|mangabaka:|#)/i, "")
+      .replace(/^https?:\/\/(?:www\.)?mangabaka\.org\/(?:series\/)?(\d+).*$/i, "$1")
+      .trim();
+    const numId = Number(cleanId);
     if (Number.isNaN(numId) || numId <= 0) return null;
 
     try {
