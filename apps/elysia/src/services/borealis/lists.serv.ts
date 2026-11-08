@@ -20,24 +20,10 @@ export interface ListQuery {
   q?: string
 }
 
-function encryptNotes(notes: string | null | undefined, _userId?: string): string | null {
-  if (notes === null || notes === undefined) return null
-  const trimmed = notes.trim()
-  return trimmed || null
-}
-
-function decryptNotes(notes: string | null | undefined, _userId?: string | null): string | null {
-  return notes ?? null
-}
-
 function formatEntry(entry: any) {
   if (!entry) return null
-  const notes = entry.notes !== undefined
-    ? decryptNotes(entry.notes, entry.userId)
-    : undefined
   return {
     ...entry,
-    ...(notes !== undefined ? { notes } : {}),
     startedAt: entry.startedAt ? (entry.startedAt instanceof Date ? entry.startedAt.toISOString() : String(entry.startedAt)) : null,
     completedAt: entry.completedAt ? (entry.completedAt instanceof Date ? entry.completedAt.toISOString() : String(entry.completedAt)) : null,
     createdAt: entry.createdAt ? (entry.createdAt instanceof Date ? entry.createdAt.toISOString() : String(entry.createdAt)) : new Date().toISOString(),
@@ -401,7 +387,8 @@ export class BorealisListsServ {
               'status',
               'episodeCount',
               'averageScore',
-              'startDateYear'
+              'startDateYear',
+              'description'
             )
             .include('genres', (g) =>
               g.include('genre', (ge) => ge.select('id', 'name'))
@@ -450,7 +437,8 @@ export class BorealisListsServ {
             'status',
             'episodeCount',
             'averageScore',
-            'startDateYear'
+            'startDateYear',
+            'description'
           )
           .include('genres', (g) =>
             g.include('genre', (ge) => ge.select('id', 'name'))
@@ -512,7 +500,7 @@ export class BorealisListsServ {
       ...(body.status ? { status: body.status } : {}),
       ...(progress !== undefined ? { progress } : {}),
       ...(body.score !== undefined ? { score: body.score } : {}),
-      ...(body.notes !== undefined ? { notes: encryptNotes(body.notes, userId) } : {}),
+      ...(body.notes !== undefined ? { notes: body.notes } : {}),
       ...(body.rewatched !== undefined ? { rewatched: Number(body.rewatched) } : {}),
       ...(body.private !== undefined ? { private: Boolean(body.private) } : {}),
       ...(startedAt !== undefined ? { startedAt } : {}),
@@ -529,7 +517,7 @@ export class BorealisListsServ {
           status: body.status ?? 'PLANNED',
           progress: progress ?? 0,
           score: body.score ?? null,
-          notes: encryptNotes(body.notes, userId),
+          notes: body.notes,
           rewatched: body.rewatched ?? 0,
           private: body.private ?? false,
           startedAt: startedAt ?? null,
@@ -564,7 +552,7 @@ export class BorealisListsServ {
           status: entry.status,
           progress: entry.progress,
           score: entry.score,
-          notes: decryptNotes(entry.notes, userId),
+          notes: entry.notes,
           rewatched: entry.rewatched,
           startedAt: entry.startedAt,
           completedAt: entry.completedAt,
@@ -695,7 +683,7 @@ export class BorealisListsServ {
           status: entry.status,
           progress: entry.progress,
           score: existing?.score ?? null,
-          notes: decryptNotes(existing?.notes, userId),
+          notes: existing?.notes,
           rewatched: existing?.rewatched ?? 0,
           startedAt: entry.startedAt,
           completedAt: entry.completedAt,
@@ -833,7 +821,8 @@ export class BorealisListsServ {
               'chapterCount',
               'volumeCount',
               'averageScore',
-              'startDateYear'
+              'startDateYear',
+              'description'
             )
             .include('genres', (g) =>
               g.include('genre', (ge) => ge.select('id', 'name'))
@@ -883,7 +872,8 @@ export class BorealisListsServ {
             'chapterCount',
             'volumeCount',
             'averageScore',
-            'startDateYear'
+            'startDateYear',
+            'description'
           )
           .include('genres', (g) =>
             g.include('genre', (ge) => ge.select('id', 'name'))
@@ -947,7 +937,7 @@ export class BorealisListsServ {
       ...(chaptersProgress !== undefined ? { chaptersProgress } : {}),
       ...(volumesProgress !== undefined ? { volumesProgress } : {}),
       ...(body.score !== undefined ? { score: body.score } : {}),
-      ...(body.notes !== undefined ? { notes: encryptNotes(body.notes, userId) } : {}),
+      ...(body.notes !== undefined ? { notes: body.notes } : {}),
       ...(body.reread !== undefined ? { reread: Number(body.reread) } : {}),
       ...(body.private !== undefined ? { private: Boolean(body.private) } : {}),
       ...(startedAt !== undefined ? { startedAt } : {}),
@@ -965,7 +955,7 @@ export class BorealisListsServ {
           chaptersProgress: chaptersProgress ?? 0,
           volumesProgress: volumesProgress ?? 0,
           score: body.score ?? null,
-          notes: encryptNotes(body.notes, userId),
+          notes: body.notes,
           reread: body.reread ?? 0,
           private: body.private ?? false,
           startedAt: startedAt ?? null,
@@ -1000,7 +990,7 @@ export class BorealisListsServ {
           status: entry.status,
           progress: entry.chaptersProgress,
           score: entry.score,
-          notes: decryptNotes(entry.notes, userId),
+          notes: entry.notes,
           rewatched: entry.reread,
           startedAt: entry.startedAt,
           completedAt: entry.completedAt,
@@ -1152,7 +1142,7 @@ export class BorealisListsServ {
           status: entry.status,
           progress: entry.chaptersProgress,
           score: existing?.score ?? null,
-          notes: decryptNotes(existing?.notes, userId),
+          notes: existing?.notes,
           rewatched: existing?.reread ?? 0,
           startedAt: entry.startedAt,
           completedAt: entry.completedAt,
@@ -1374,7 +1364,7 @@ export class BorealisListsServ {
     const updateData: any = {
       ...(body.status ? { status: body.status } : {}),
       ...(body.score !== undefined ? { score: body.score } : {}),
-      ...(body.notes !== undefined ? { notes: encryptNotes(body.notes, userId) } : {}),
+      ...(body.notes !== undefined ? { notes: body.notes } : {}),
       ...(body.rewatched !== undefined ? { rewatched: Number(body.rewatched) } : {}),
       ...(body.private !== undefined ? { private: Boolean(body.private) } : {}),
       ...(startedAt !== undefined ? { startedAt } : {}),
@@ -1390,7 +1380,7 @@ export class BorealisListsServ {
           movieId,
           status: body.status ?? 'PLANNED',
           score: body.score ?? null,
-          notes: encryptNotes(body.notes, userId),
+          notes: body.notes,
           rewatched: body.rewatched ?? 0,
           private: body.private ?? false,
           startedAt: startedAt ?? null,
@@ -1425,7 +1415,7 @@ export class BorealisListsServ {
           status: entry.status,
           progress: entry.status === 'COMPLETED' ? 1 : 0,
           score: entry.score,
-          notes: decryptNotes(entry.notes, userId),
+          notes: entry.notes,
           rewatched: entry.rewatched,
           startedAt: entry.startedAt,
           completedAt: entry.completedAt,
@@ -1528,7 +1518,7 @@ export class BorealisListsServ {
           status: entry.status,
           progress: 1,
           score: existing?.score ?? null,
-          notes: decryptNotes(existing?.notes, userId),
+          notes: existing?.notes,
           rewatched: entry.rewatched,
           startedAt: entry.startedAt,
           completedAt: entry.completedAt,
@@ -1782,7 +1772,7 @@ export class BorealisListsServ {
       ...(body.status ? { status: body.status } : {}),
       ...(progress !== undefined ? { progress } : {}),
       ...(body.score !== undefined ? { score: body.score } : {}),
-      ...(body.notes !== undefined ? { notes: encryptNotes(body.notes, userId) } : {}),
+      ...(body.notes !== undefined ? { notes: body.notes } : {}),
       ...(body.rewatched !== undefined ? { rewatched: Number(body.rewatched) } : {}),
       ...(body.private !== undefined ? { private: Boolean(body.private) } : {}),
       ...(startedAt !== undefined ? { startedAt } : {}),
@@ -1799,7 +1789,7 @@ export class BorealisListsServ {
           status: body.status ?? 'PLANNED',
           progress: progress ?? 0,
           score: body.score ?? null,
-          notes: encryptNotes(body.notes, userId),
+          notes: body.notes,
           rewatched: body.rewatched ?? 0,
           private: body.private ?? false,
           startedAt: startedAt ?? null,
@@ -1834,7 +1824,7 @@ export class BorealisListsServ {
           status: entry.status,
           progress: entry.progress,
           score: entry.score,
-          notes: decryptNotes(entry.notes, userId),
+          notes: entry.notes,
           rewatched: entry.rewatched,
           startedAt: entry.startedAt,
           completedAt: entry.completedAt,
@@ -1956,7 +1946,7 @@ export class BorealisListsServ {
           status: entry.status,
           progress: entry.progress,
           score: existing?.score ?? null,
-          notes: decryptNotes(existing?.notes, userId),
+          notes: existing?.notes,
           rewatched: existing?.rewatched ?? 0,
           startedAt: entry.startedAt,
           completedAt: entry.completedAt,
@@ -2194,7 +2184,7 @@ export class BorealisListsServ {
       ...(body.status ? { status: body.status } : {}),
       ...(progress !== undefined ? { progress } : {}),
       ...(body.score !== undefined ? { score: body.score } : {}),
-      ...(body.notes !== undefined ? { notes: encryptNotes(body.notes, userId) } : {}),
+      ...(body.notes !== undefined ? { notes: body.notes } : {}),
       ...(body.replayed !== undefined ? { replayed: Number(body.replayed) } : {}),
       ...(body.private !== undefined ? { private: Boolean(body.private) } : {}),
       ...(startedAt !== undefined ? { startedAt } : {}),
@@ -2211,7 +2201,7 @@ export class BorealisListsServ {
           status: body.status ?? 'PLANNED',
           progress: progress ?? 0,
           score: body.score ?? null,
-          notes: encryptNotes(body.notes, userId),
+          notes: body.notes,
           replayed: body.replayed ?? 0,
           private: body.private ?? false,
           startedAt: startedAt ?? null,
@@ -2246,7 +2236,7 @@ export class BorealisListsServ {
           status: entry.status,
           progress: entry.progress,
           score: entry.score,
-          notes: decryptNotes(entry.notes, userId),
+          notes: entry.notes,
           rewatched: entry.replayed,
           startedAt: entry.startedAt,
           completedAt: entry.completedAt,
@@ -2355,7 +2345,7 @@ export class BorealisListsServ {
           status: entry.status,
           progress: entry.progress,
           score: existing?.score ?? null,
-          notes: decryptNotes(existing?.notes, userId),
+          notes: existing?.notes,
           rewatched: existing?.replayed ?? 0,
           startedAt: entry.startedAt,
           completedAt: entry.completedAt,
@@ -2604,7 +2594,7 @@ export class BorealisListsServ {
       ...(progressChapters !== undefined ? { progressChapters } : {}),
       ...(progressVolumes !== undefined ? { progressVolumes } : {}),
       ...(body.score !== undefined ? { score: body.score } : {}),
-      ...(body.notes !== undefined ? { notes: encryptNotes(body.notes, userId) } : {}),
+      ...(body.notes !== undefined ? { notes: body.notes } : {}),
       ...(body.reread !== undefined ? { reread: Number(body.reread) } : {}),
       ...(body.private !== undefined ? { private: Boolean(body.private) } : {}),
       ...(startedAt !== undefined ? { startedAt } : {}),
@@ -2623,7 +2613,7 @@ export class BorealisListsServ {
           progressChapters: progressChapters ?? 0,
           progressVolumes: progressVolumes ?? 0,
           score: body.score ?? null,
-          notes: encryptNotes(body.notes, userId),
+          notes: body.notes,
           reread: body.reread ?? 0,
           private: body.private ?? false,
           startedAt: startedAt ?? null,
@@ -2658,7 +2648,7 @@ export class BorealisListsServ {
           status: entry.status,
           progress: entry.progressChapters || entry.progressPages || entry.progressVolumes || 0,
           score: entry.score,
-          notes: decryptNotes(entry.notes, userId),
+          notes: entry.notes,
           rewatched: entry.reread,
           startedAt: entry.startedAt,
           completedAt: entry.completedAt,
@@ -2817,7 +2807,7 @@ export class BorealisListsServ {
           status: entry.status,
           progress: entry.progressChapters || entry.progressPages || entry.progressVolumes || 0,
           score: existing?.score ?? null,
-          notes: decryptNotes(existing?.notes, userId),
+          notes: existing?.notes,
           rewatched: existing?.reread ?? 0,
           startedAt: entry.startedAt,
           completedAt: entry.completedAt,
@@ -3051,7 +3041,7 @@ export class BorealisListsServ {
       ...(body.status ? { status: body.status } : {}),
       ...(body.score !== undefined ? { score: body.score } : {}),
       ...(body.playCount !== undefined ? { playCount: Number(body.playCount) } : {}),
-      ...(body.notes !== undefined ? { notes: encryptNotes(body.notes, userId) } : {}),
+      ...(body.notes !== undefined ? { notes: body.notes } : {}),
       ...(body.private !== undefined ? { private: Boolean(body.private) } : {}),
       ...(startedAt !== undefined ? { startedAt } : {}),
       ...(completedAt !== undefined ? { completedAt } : {}),
@@ -3066,7 +3056,7 @@ export class BorealisListsServ {
           status: body.status ?? 'PLANNED',
           score: body.score ?? null,
           playCount: body.playCount !== undefined ? Number(body.playCount) : 0,
-          notes: encryptNotes(body.notes, userId),
+          notes: body.notes,
           private: body.private ?? false,
           startedAt: startedAt ?? null,
           completedAt: completedAt ?? null,
@@ -3108,7 +3098,7 @@ export class BorealisListsServ {
           status: entry.status,
           progress: entry.playCount,
           score: entry.score,
-          notes: decryptNotes(entry.notes, userId),
+          notes: entry.notes,
           startedAt: entry.startedAt,
           completedAt: entry.completedAt,
         },
@@ -3226,7 +3216,7 @@ export class BorealisListsServ {
           status: entry.status,
           progress: entry.playCount,
           score: existing?.score ?? null,
-          notes: decryptNotes(existing?.notes, userId),
+          notes: existing?.notes,
           startedAt: entry.startedAt,
           completedAt: entry.completedAt,
         },
@@ -3809,7 +3799,7 @@ export class BorealisListsServ {
         status: item.status,
         progress: item.progress,
         score: item.score,
-        notes: decryptNotes(item.notes, userId),
+        notes: item.notes,
         rewatched: item.rewatched,
         private: item.private,
         startedAt: item.startedAt ? item.startedAt.toISOString() : null,
@@ -3847,7 +3837,7 @@ export class BorealisListsServ {
         progress: item.chaptersProgress,
         progressVolumes: item.volumesProgress,
         score: item.score,
-        notes: decryptNotes(item.notes, userId),
+        notes: item.notes,
         reread: item.reread,
         private: item.private,
         startedAt: item.startedAt ? item.startedAt.toISOString() : null,
@@ -3884,7 +3874,7 @@ export class BorealisListsServ {
         status: item.status,
         progress: item.progress,
         score: item.score,
-        notes: decryptNotes(item.notes, userId),
+        notes: item.notes,
         rewatched: item.rewatched,
         private: item.private,
         startedAt: item.startedAt ? item.startedAt.toISOString() : null,
@@ -3919,7 +3909,7 @@ export class BorealisListsServ {
         status: item.status,
         progress: item.status === 'COMPLETED' ? 1 : 0,
         score: item.score,
-        notes: decryptNotes(item.notes, userId),
+        notes: item.notes,
         rewatched: item.rewatched,
         private: item.private,
         startedAt: item.startedAt ? item.startedAt.toISOString() : null,
@@ -3947,7 +3937,7 @@ export class BorealisListsServ {
         status: item.status,
         progress: item.progress,
         score: item.score,
-        notes: decryptNotes(item.notes, userId),
+        notes: item.notes,
         replayed: item.replayed,
         private: item.private,
         startedAt: item.startedAt ? item.startedAt.toISOString() : null,
@@ -3977,7 +3967,7 @@ export class BorealisListsServ {
         progressChapters: item.progressChapters,
         progressVolumes: item.progressVolumes,
         score: item.score,
-        notes: decryptNotes(item.notes, userId),
+        notes: item.notes,
         reread: item.reread,
         private: item.private,
         startedAt: item.startedAt ? item.startedAt.toISOString() : null,
@@ -4005,7 +3995,7 @@ export class BorealisListsServ {
         progress: item.playCount,
         playCount: item.playCount,
         score: item.score,
-        notes: decryptNotes(item.notes, userId),
+        notes: item.notes,
         private: item.private,
         startedAt: item.startedAt ? item.startedAt.toISOString() : null,
         completedAt: item.completedAt ? item.completedAt.toISOString() : null,
@@ -4032,7 +4022,7 @@ export class BorealisListsServ {
           mediaType: entry.mediaType,
           mediaId: entry.mediaId,
           order: entry.order,
-          customNotes: decryptNotes(entry.customNotes, userId),
+          customNotes: entry.customNotes,
           addedAt: entry.addedAt ? entry.addedAt.toISOString() : null,
         })),
       }))
@@ -4096,7 +4086,7 @@ export class BorealisListsServ {
         if (s > 10) s = 10
         score = Math.round(s * 10) / 10
       }
-      const notes = item.notes ? encryptNotes(item.notes, userId) : null
+      const notes = item.notes ?? null
       const isPrivate = Boolean(item.private)
       const startedAt = item.startedAt ? new Date(item.startedAt) : null
       const completedAt = item.completedAt ? new Date(item.completedAt) : null

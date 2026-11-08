@@ -2,7 +2,11 @@
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import dynamic from "next/dynamic"
-import { IconInbox } from "@tabler/icons-react"
+import {
+  IconInbox,
+  IconChevronDown,
+  IconChevronRight,
+} from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { Button } from "@workspace/ui/components/button"
 import { Spinner } from "@workspace/ui/components/spinner"
@@ -27,8 +31,10 @@ import {
   type ListFilterFacets,
   MEDIA_CATEGORIES,
 } from "./types"
-import { BorealisCard, BorealisCardGroup } from "@Runa/borealis"
+import { BorealisCard, BorealisCardGroup, BorealisSectionHeader, type ListStatus } from "@Runa/borealis"
 import { saveListEntry } from "@/lib/save-list-entry"
+import { useEncryption } from "@/context/encryption-context"
+import { deriveVaultKey, safeDecryptText, safeEncryptText } from "@/lib/client-encryption"
 
 export function MediaListCardSkeleton({
   isMusic = false,
@@ -60,11 +66,14 @@ export interface MediaListGridProps {
   hasMore?: boolean
   onLoadMore?: () => void
   isOwner?: boolean
+  viewMode?: "standard" | "compact" | "covers"
   onItemUpdated?: (
     entryId: number,
     updatedEntry: MediaListEntryData | null
   ) => void
   onIncrementProgress?: (item: ListEntryData, count: number) => Promise<void>
+  onIncrementVolume?: (item: ListEntryData, count: number) => Promise<void>
+  onStatusChange?: (item: ListEntryData, newStatus: ListStatus) => Promise<void>
   onScoreChange?: (item: ListEntryData, newScore: number | null) => Promise<void>
   mediaTitlePreference?: "primary" | "secondary" | "native"
   searchQuery?: string
@@ -240,8 +249,11 @@ export function MediaListGrid({
   hasMore = false,
   onLoadMore,
   isOwner = false,
+  viewMode = "standard",
   onItemUpdated,
   onIncrementProgress,
+  onIncrementVolume,
+  onStatusChange,
   onScoreChange,
   mediaTitlePreference = "primary",
   searchQuery,
@@ -255,6 +267,15 @@ export function MediaListGrid({
 
   // Edit Modal State
   const [editingItem, setEditingItem] = useState<ListEntryData | null>(null)
+  // Collapsed sections in grouped view
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({})
+
+  const toggleSection = useCallback((key: string) => {
+    setCollapsedSections((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }))
+  }, [])
 
   const handleOpenEditModal = useCallback((target: ListEntryData) => {
     setEditingItem(target)
@@ -304,6 +325,29 @@ export function MediaListGrid({
 
     return map
   }, [facets?.statuses])
+
+  // Client-side zero-knowledge decryption/encryption
+  const { secretKey, isActive: isVaultActive } = useEncryption()
+  const vaultKey = useMemo(
+    () => (isVaultActive && secretKey ? deriveVaultKey(secretKey) : null),
+    [isVaultActive, secretKey]
+  )
+
+  const prepareCardItem = useCallback(
+    (item: ListEntryData): ListEntryData => {
+      if (!item?.entry?.notes) return item
+      const decrypted = safeDecryptText(item.entry.notes, vaultKey)
+      if (decrypted === item.entry.notes) return item
+      return {
+        ...item,
+        entry: {
+          ...item.entry,
+          notes: decrypted,
+        },
+      }
+    },
+    [vaultKey]
+  )
 
   // When All is selected, separate entries by status in this exact order:
   // 1. In Progress (Watching, Reading, Playing, etc.)
@@ -442,33 +486,36 @@ export function MediaListGrid({
     }
   }, [hasMore, isLoading, isLoadingMore, onLoadMore])
 
-  // Initial Loading
+  // Initial Loading Skeleton Grid
   if (isLoading) {
+    const isMusic = mediaType === "music"
     return (
       <div
         className={cn(
-          "flex min-h-[360px] w-full items-center justify-center py-20",
+          "grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3 sm:gap-4 w-full",
           className
         )}
       >
-        <Spinner className="size-8 text-primary" />
+        {Array.from({ length: 18 }).map((_, i) => (
+          <MediaListCardSkeleton key={i} isMusic={isMusic} />
+        ))}
       </div>
     )
   }
 
-  // Empty State
+  // Empty State with Frosted Glass Container
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/70 py-16 text-center">
-        <div className="flex size-14 items-center justify-center rounded-2xl bg-muted/50 text-muted-foreground">
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-frost bg-frost/60 p-12 text-center backdrop-blur-xl shadow-xl">
+        <div className="flex size-14 items-center justify-center rounded-2xl border border-frost bg-zinc-900/80 text-zinc-400">
           <IconInbox className="size-7" />
         </div>
-        <h3 className="mt-4 font-heading text-base font-semibold text-foreground">
+        <h3 className="mt-4 font-heading text-base font-semibold text-zinc-100">
           {searchQuery
             ? `No entries found matching "${searchQuery}"`
             : "No entries found"}
         </h3>
-        <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+        <p className="mt-1 max-w-sm text-xs text-zinc-400">
           {searchQuery
             ? "No items in this list match your search query or synonyms. Try another keyword or clear the search."
             : "There are no items matching the selected status or filters in this list."}
@@ -482,77 +529,127 @@ export function MediaListGrid({
       {groupedSections ? (
         <div className="flex flex-col gap-8">
           {groupedSections.map((section, sectionIdx) => {
-            const isSectionLoading =
-              (hasMore || isLoadingMore) &&
-              section.items.length < section.expectedCount
+            const isCollapsed = Boolean(collapsedSections[section.key])
             const displayCount =
               section.expectedCount > 0 && (hasMore || isLoadingMore)
                 ? section.expectedCount
                 : section.items.length
 
             return (
-              <BorealisCardGroup
-                key={section.key}
-                title={section.title}
-                rowCount={1}
-                dragFree
-                variant="ghost"
-              >
-                {section.items.map((item, idx) => (
-                  <BorealisCard
-                    key={`${item.entry.id}-${item.media.id}`}
-                    type={mediaType}
-                    data={item}
-                    titlePreference={mediaTitlePreference}
-                    showSubtitle={false}
-                    showHoverSubtitle={false}
-                    showTabNav={true}
-                    showExtras={false}
-                    canEdit={isOwner}
-                    onEdit={isOwner ? () => handleOpenEditModal(item) : undefined}
-                    onScoreChange={
-                      isOwner && onScoreChange
-                        ? (newScore) => onScoreChange(item, newScore)
-                        : undefined
-                    }
-                    onSaveEntry={
-                      isOwner
-                        ? async (payload) => {
-                            await saveListEntry(mediaType, item.media.id, payload)
-                            onItemUpdated?.(item.entry.id, {
-                              ...item.entry,
-                              ...payload,
-                              private: payload.isPrivate ?? item.entry.private,
-                            } as any)
-                          }
-                        : undefined
-                    }
-                    priority={sectionIdx === 0 && idx === 0}
-                  />
-                ))}
-              </BorealisCardGroup>
+              <div key={section.key} className="flex flex-col gap-3">
+                <BorealisSectionHeader
+                  title={section.title}
+                  count={displayCount}
+                  isCollapsed={isCollapsed}
+                  onToggle={() => toggleSection(section.key)}
+                />
+
+                {/* Items Grid (if not collapsed) */}
+                {!isCollapsed && (
+                  <BorealisCardGroup
+                    grid
+                    variant="none"
+                    gap={viewMode === "compact" ? "sm" : "md"}
+                    className="w-full"
+                  >
+                    {section.items.map((item, idx) => (
+                      <BorealisCard
+                        key={`${item.entry.id}-${item.media.id}`}
+                        type={mediaType}
+                        data={prepareCardItem(item)}
+                        titlePreference={mediaTitlePreference}
+                        showSubtitle={false}
+                        showHoverSubtitle={false}
+                        showTabNav={true}
+                        showExtras={true}
+                        statusIconOnly={true}
+                        size={viewMode === "compact" ? "sm" : "md"}
+                        canEdit={isOwner}
+                        onEdit={isOwner ? () => handleOpenEditModal(item) : undefined}
+                        onStatusChange={
+                          isOwner && onStatusChange
+                            ? (newStatus) => onStatusChange(item, newStatus)
+                            : undefined
+                        }
+                        onIncrement={
+                          isOwner && onIncrementProgress
+                            ? (count) => onIncrementProgress(item, count)
+                            : undefined
+                        }
+                        onIncrementVolume={
+                          isOwner && onIncrementVolume
+                            ? (count) => onIncrementVolume(item, count)
+                            : undefined
+                        }
+                        onScoreChange={
+                          isOwner && onScoreChange
+                            ? (newScore) => onScoreChange(item, newScore)
+                            : undefined
+                        }
+                        onSaveEntry={
+                          isOwner
+                            ? async (payload) => {
+                                const encryptedPayload = {
+                                  ...payload,
+                                  notes: payload.notes
+                                    ? safeEncryptText(payload.notes, vaultKey)
+                                    : payload.notes,
+                                }
+                                await saveListEntry(mediaType, item.media.id, encryptedPayload)
+                                onItemUpdated?.(item.entry.id, {
+                                  ...item.entry,
+                                  ...payload,
+                                  private: payload.isPrivate ?? item.entry.private,
+                                } as any)
+                              }
+                            : undefined
+                        }
+                        priority={sectionIdx === 0 && idx < 6}
+                        className="w-full"
+                      />
+                    ))}
+                  </BorealisCardGroup>
+                )}
+              </div>
             )
           })}
         </div>
       ) : (
         <BorealisCardGroup
-          rowCount={1}
-          dragFree
-          variant="ghost"
+          grid
+          variant="none"
+          gap={viewMode === "compact" ? "sm" : "md"}
           className="w-full"
         >
           {items.map((item, idx) => (
             <BorealisCard
               key={`${item.entry.id}-${item.media.id}`}
               type={mediaType}
-              data={item}
+              data={prepareCardItem(item)}
               titlePreference={mediaTitlePreference}
               showSubtitle={false}
               showHoverSubtitle={false}
               showTabNav={true}
-              showExtras={false}
+              showExtras={true}
+              statusIconOnly={true}
+              size={viewMode === "compact" ? "sm" : "md"}
               canEdit={isOwner}
               onEdit={isOwner ? () => handleOpenEditModal(item) : undefined}
+              onStatusChange={
+                isOwner && onStatusChange
+                  ? (newStatus) => onStatusChange(item, newStatus)
+                  : undefined
+              }
+              onIncrement={
+                isOwner && onIncrementProgress
+                  ? (count) => onIncrementProgress(item, count)
+                  : undefined
+              }
+              onIncrementVolume={
+                isOwner && onIncrementVolume
+                  ? (count) => onIncrementVolume(item, count)
+                  : undefined
+              }
               onScoreChange={
                 isOwner && onScoreChange
                   ? (newScore) => onScoreChange(item, newScore)
@@ -561,7 +658,13 @@ export function MediaListGrid({
               onSaveEntry={
                 isOwner
                   ? async (payload) => {
-                      await saveListEntry(mediaType, item.media.id, payload)
+                      const encryptedPayload = {
+                        ...payload,
+                        notes: payload.notes
+                          ? safeEncryptText(payload.notes, vaultKey)
+                          : payload.notes,
+                      }
+                      await saveListEntry(mediaType, item.media.id, encryptedPayload)
                       onItemUpdated?.(item.entry.id, {
                         ...item.entry,
                         ...payload,
@@ -570,7 +673,8 @@ export function MediaListGrid({
                     }
                   : undefined
               }
-              priority={idx === 0}
+              priority={idx < 8}
+              className="w-full"
             />
           ))}
         </BorealisCardGroup>

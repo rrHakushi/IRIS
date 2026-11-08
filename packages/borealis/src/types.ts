@@ -102,6 +102,8 @@ export interface BorealisHoverDetails {
   extraStats?: Array<{ label: string; value: string | number }>
   isQueued?: boolean
   relations?: any[]
+  recommendations?: any[]
+  similar?: any[]
   connections?: Record<string, any> | null
   episodes?: any[]
   seasons?: any[]

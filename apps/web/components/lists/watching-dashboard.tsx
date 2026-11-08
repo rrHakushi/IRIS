@@ -38,11 +38,14 @@ import { getMediaPreferences } from "@IRIS/shared"
 import {
   BorealisCard,
   BorealisCardGroup,
+  BorealisSectionHeader,
   getMediaListStatusText,
   type ListStatus,
   type BorealisCardSavePayload,
 } from "@Runa/borealis"
 import { saveListEntry } from "@/lib/save-list-entry"
+import { useEncryption } from "@/context/encryption-context"
+import { deriveVaultKey, safeDecryptText, safeEncryptText } from "@/lib/client-encryption"
 import {
   toNormalizedMedia,
   toMediaListEntry,
@@ -292,6 +295,29 @@ function WatchingCategorySection({
   const sentinelRef = useRef<HTMLDivElement>(null)
   const SectionIcon = meta.icon
 
+  // Client-side zero-knowledge decryption
+  const { secretKey, isActive: isVaultActive } = useEncryption()
+  const vaultKey = useMemo(
+    () => (isVaultActive && secretKey ? deriveVaultKey(secretKey) : null),
+    [isVaultActive, secretKey]
+  )
+
+  const prepareCardItem = useCallback(
+    (item: ListEntryData): ListEntryData => {
+      if (!item?.entry?.notes) return item
+      const decrypted = safeDecryptText(item.entry.notes, vaultKey)
+      if (decrypted === item.entry.notes) return item
+      return {
+        ...item,
+        entry: {
+          ...item.entry,
+          notes: decrypted,
+        },
+      }
+    },
+    [vaultKey]
+  )
+
   // Viewport trigger to fetch data for this section when near viewport
   useEffect(() => {
     if (data.isLoaded || data.isLoading) return
@@ -348,55 +374,13 @@ function WatchingCategorySection({
       aria-label={`${meta.label} in progress`}
       className="flex flex-col gap-3"
     >
-      {/* Section Header */}
-      <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-2.5 select-none">
-        <div className="flex items-center gap-2">
-          {/* Clicking icon will hide/show section */}
-          <button
-            type="button"
-            onClick={() => onToggleCollapse(type)}
-            className="-m-1 flex cursor-pointer items-center justify-center rounded-lg p-1 transition-colors hover:bg-muted/60"
-            title={isCollapsed ? `Show ${meta.label}` : `Hide ${meta.label}`}
-            aria-label={
-              isCollapsed ? `Show ${meta.label}` : `Hide ${meta.label}`
-            }
-          >
-            <SectionIcon
-              className={cn(
-                "size-4.5 shrink-0 transition-all",
-                isCollapsed
-                  ? "text-muted-foreground/60 opacity-60"
-                  : "text-primary"
-              )}
-            />
-          </button>
-          <button
-            type="button"
-            onClick={() => onToggleCollapse(type)}
-            className="cursor-pointer text-start font-heading text-base font-semibold tracking-tight text-foreground transition-colors hover:text-primary sm:text-lg"
-          >
-            {meta.label}
-          </button>
-          <span className="rounded-full bg-muted/80 px-2 py-0.5 font-mono text-[11px] font-medium text-muted-foreground tabular-nums">
-            {data.items.length}
-          </span>
-        </div>
-
-        {/* Chevron toggle indicator */}
-        <button
-          type="button"
-          onClick={() => onToggleCollapse(type)}
-          className="flex size-7 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-          aria-label={isCollapsed ? `Show ${meta.label}` : `Hide ${meta.label}`}
-        >
-          <IconChevronDown
-            className={cn(
-              "size-4 transition-transform duration-200",
-              isCollapsed && "-rotate-90"
-            )}
-          />
-        </button>
-      </div>
+      <BorealisSectionHeader
+        title={meta.label}
+        count={data.items.length}
+        icon={SectionIcon}
+        isCollapsed={isCollapsed}
+        onToggle={() => onToggleCollapse(type)}
+      />
 
       {/* Media cards in smooth BorealisCardGroup carousel */}
       {!isCollapsed && (
@@ -409,7 +393,7 @@ function WatchingCategorySection({
             <BorealisCard
               key={`${item.entry.id}-${item.media.id}`}
               type={type}
-              data={item}
+              data={prepareCardItem(item)}
               titlePreference={mediaTitlePreference}
               showSubtitle={false}
               showHoverSubtitle={false}
@@ -618,6 +602,12 @@ export function WatchingDashboard(): React.JSX.Element {
 
   const mediaTitlePreference =
     getMediaPreferences(currentUser?.customization).title || "primary"
+
+  const { secretKey, isActive: isVaultActive } = useEncryption()
+  const vaultKey = useMemo(
+    () => (isVaultActive && secretKey ? deriveVaultKey(secretKey) : null),
+    [isVaultActive, secretKey]
+  )
 
   // ---------------------------------------------------------------------------
   // Category Order & Customization State
@@ -1357,11 +1347,17 @@ export function WatchingDashboard(): React.JSX.Element {
           (item.entry as any)?.musicId ||
           (item.entry as any)?.otherId
       )
-      await saveListEntry(mediaType, mediaId, payload)
+      const encryptedPayload = {
+        ...payload,
+        notes: payload.notes
+          ? safeEncryptText(payload.notes, vaultKey)
+          : payload.notes,
+      }
+      await saveListEntry(mediaType, mediaId, encryptedPayload)
       handleEntryUpdated(item.entry.id, payload)
       toast.success("List entry updated")
     },
-    [handleEntryUpdated]
+    [handleEntryUpdated, vaultKey]
   )
 
   // ---------------------------------------------------------------------------

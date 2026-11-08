@@ -292,7 +292,7 @@ export function ListStatusCard({
   return (
     <div
       className={cn(
-        "flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/90 shadow-sm backdrop-blur-xl transition-all",
+        "flex flex-col overflow-hidden rounded-2xl border border-frost bg-frost text-zinc-100 shadow-xl backdrop-blur-2xl transition-all",
         className
       )}
     >
@@ -320,7 +320,7 @@ export function ListStatusCard({
                   "group h-7 shrink-0 gap-2 rounded-full px-3.5 text-xs font-semibold tracking-wider uppercase transition-all duration-200 select-none",
                   isActive
                     ? "bg-primary text-primary-foreground shadow-sm shadow-primary/30"
-                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                    : "text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100"
                 )}
               >
                 <span>{st.label}</span>
@@ -328,8 +328,8 @@ export function ListStatusCard({
                   className={cn(
                     "rounded-full px-1.5 py-0.5 font-mono text-[11px] leading-none font-medium transition-colors",
                     isActive
-                      ? "bg-black/20 text-primary-foreground dark:bg-black/30"
-                      : "bg-muted text-muted-foreground group-hover:bg-muted/90 group-hover:text-foreground"
+                      ? "bg-black/25 text-primary-foreground"
+                      : "border border-frost/60 bg-zinc-900/60 text-zinc-400 group-hover:text-zinc-200"
                   )}
                 >
                   {st.count}
@@ -351,29 +351,29 @@ export function ListStatusCard({
           >
             <TabsList
               aria-label="View Switcher"
-              className="h-7 gap-0.5 rounded-full border border-border/40 bg-muted/40 p-0.5"
+              className="h-7 gap-0.5 rounded-full border border-frost bg-frost/80 p-0.5 backdrop-blur-md"
             >
               <TabsTrigger
                 id="list"
-                className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
+                className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all text-zinc-400 hover:text-zinc-100 data-selected:bg-zinc-800/90 data-selected:text-white data-selected:shadow-xs"
               >
                 List
               </TabsTrigger>
               <TabsTrigger
                 id="comments"
-                className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
+                className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all text-zinc-400 hover:text-zinc-100 data-selected:bg-zinc-800/90 data-selected:text-white data-selected:shadow-xs"
               >
                 Comments
               </TabsTrigger>
               <TabsTrigger
                 id="stats"
-                className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
+                className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all text-zinc-400 hover:text-zinc-100 data-selected:bg-zinc-800/90 data-selected:text-white data-selected:shadow-xs"
               >
                 Stats
               </TabsTrigger>
               <TabsTrigger
                 id="activity"
-                className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all hover:text-foreground data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs"
+                className="rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-all text-zinc-400 hover:text-zinc-100 data-selected:bg-zinc-800/90 data-selected:text-white data-selected:shadow-xs"
               >
                 Activity
               </TabsTrigger>
@@ -386,7 +386,7 @@ export function ListStatusCard({
       {currentTab === "list" && (
         <>
           {/* Subtle Divider */}
-          <Separator className="bg-border/40" />
+          <Separator className="bg-frost/40" />
 
           {/* ================================================================== */}
           {/* 2. BOTTOM ROW: Search Bar & Multi-Select Filter Controls           */}
@@ -404,7 +404,7 @@ export function ListStatusCard({
                 placeholder={`Search ${mediaType}...`}
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="h-9 w-full rounded-2xl border border-border/50 bg-background/50 ps-9 pe-8 text-xs text-foreground transition-all placeholder:text-muted-foreground focus-visible:border-ring focus-visible:bg-background focus-visible:ring-3 focus-visible:ring-ring/20"
+                className="h-9 w-full rounded-2xl border border-frost bg-zinc-900/60 ps-9 pe-8 text-xs text-zinc-100 transition-all placeholder:text-zinc-500 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary backdrop-blur-md"
               />
               {searchQuery && (
                 <Button
@@ -412,7 +412,7 @@ export function ListStatusCard({
                   size="icon-xs"
                   onPress={() => onSearchChange("")}
                   aria-label="Clear search"
-                  className="absolute end-2 top-1/2 z-10 size-6 -translate-y-1/2 rounded-full text-muted-foreground hover:text-foreground"
+                  className="absolute end-2 top-1/2 z-10 size-6 -translate-y-1/2 rounded-full text-zinc-400 hover:text-white"
                 >
                   <IconX className="size-3.5" />
                 </Button>
@@ -497,7 +497,7 @@ export function ListStatusCard({
               {/* Sort Dropdown Trigger with RAC Button */}
               <DialogTrigger>
                 <RACButton
-                  className="inline-flex shrink-0 items-center justify-center font-medium transition-all outline-hidden select-none focus-visible:ring-3 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:opacity-50 h-8 gap-1.5 rounded-2xl border border-border/60 bg-card/60 px-3 text-xs text-foreground select-none hover:bg-muted hover:text-foreground"
+                  className="inline-flex shrink-0 items-center justify-center font-medium transition-all outline-hidden select-none focus-visible:ring-3 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:opacity-50 h-8 gap-1.5 rounded-2xl border border-frost bg-frost/80 px-3 text-xs text-zinc-200 select-none hover:border-zinc-500 hover:bg-zinc-800 hover:text-white backdrop-blur-md"
                 >
                   <span>{currentSortLabel}</span>
                   <IconChevronDown className="size-3.5 shrink-0 opacity-60" />
@@ -506,7 +506,7 @@ export function ListStatusCard({
                 <Popover
                   placement="bottom end"
                   offset={6}
-                  className="z-50 w-48 overflow-hidden rounded-2xl border border-border/70 bg-popover/95 p-1 text-popover-foreground shadow-2xl outline-hidden backdrop-blur-2xl duration-100 data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:fade-out-0 data-exiting:zoom-out-95"
+                  className="z-50 w-48 overflow-hidden rounded-2xl border border-frost bg-frost p-1 text-zinc-100 shadow-2xl outline-hidden backdrop-blur-2xl duration-100 data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:fade-out-0 data-exiting:zoom-out-95"
                 >
                   <Dialog className="flex flex-col gap-0.5 outline-hidden">
                     {SORT_OPTIONS.map((opt) => {
@@ -520,8 +520,8 @@ export function ListStatusCard({
                           className={cn(
                             "flex h-auto w-full items-center justify-between rounded-xl px-2.5 py-1.5 text-start text-xs select-none",
                             isSelected
-                              ? "bg-primary/10 font-semibold text-primary hover:bg-primary/15"
-                              : "text-foreground hover:bg-muted/60"
+                              ? "bg-primary/20 font-semibold text-primary hover:bg-primary/25"
+                              : "text-zinc-300 hover:bg-zinc-800/60 hover:text-white"
                           )}
                         >
                           <span>{opt.label}</span>
@@ -545,7 +545,7 @@ export function ListStatusCard({
                 aria-label={
                   sortOrder === "asc" ? "Sort Ascending" : "Sort Descending"
                 }
-                className="size-8 rounded-2xl border border-border/60 bg-card/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="size-8 rounded-2xl border border-frost bg-frost/80 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-800 hover:text-white backdrop-blur-md"
               >
                 {sortOrder === "asc" ? (
                   <IconSortAscending className="size-4" />

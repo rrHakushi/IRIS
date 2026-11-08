@@ -71,10 +71,10 @@ export function MultiSelectFilterPopover({
       <RACButton
         className={cn(
           "inline-flex shrink-0 items-center justify-center font-medium transition-all outline-hidden select-none focus-visible:ring-3 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:opacity-50",
-          "h-8 gap-1.5 rounded-2xl border px-3 text-xs",
+          "h-8 gap-1.5 rounded-2xl border px-3 text-xs backdrop-blur-md",
           hasSelection
-            ? "border-primary/50 bg-primary/10 text-primary hover:bg-primary/15"
-            : "border-border/60 bg-card/60 text-muted-foreground hover:bg-muted hover:text-foreground",
+            ? "border-primary/50 bg-primary/20 text-primary hover:bg-primary/25"
+            : "border-frost bg-frost/80 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-800 hover:text-white",
           className
         )}
       >
@@ -86,14 +86,14 @@ export function MultiSelectFilterPopover({
         placement="bottom start"
         offset={6}
         className={cn(
-          "z-50 w-64 overflow-hidden rounded-2xl border border-border/70 bg-popover/95 p-0 text-popover-foreground shadow-2xl outline-hidden backdrop-blur-2xl duration-100",
+          "z-50 w-64 overflow-hidden rounded-2xl border border-frost bg-frost p-0 text-zinc-100 shadow-2xl outline-hidden backdrop-blur-2xl duration-100",
           "data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:fade-out-0 data-exiting:zoom-out-95"
         )}
       >
         <Dialog className="flex flex-col outline-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-border/50 px-3 py-2">
-            <span className="text-xs font-semibold text-foreground">
+          <div className="flex items-center justify-between border-b border-frost/50 px-3 py-2">
+            <span className="text-xs font-semibold text-zinc-100">
               {label}
             </span>
             {hasSelection && (
@@ -110,15 +110,15 @@ export function MultiSelectFilterPopover({
 
           {/* Search bar inside popover */}
           {searchable && options.length > 7 && (
-            <div className="relative border-b border-border/40 p-2">
-              <IconSearch className="pointer-events-none absolute start-4 top-1/2 z-10 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <div className="relative border-b border-frost/40 p-2">
+              <IconSearch className="pointer-events-none absolute start-4 top-1/2 z-10 size-3.5 -translate-y-1/2 text-zinc-500" />
               <Input
                 type="text"
                 aria-label={`Filter ${label.toLowerCase()}`}
                 placeholder={`Filter ${label.toLowerCase()}...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-7 w-full rounded-xl border-none bg-muted/40 ps-7 pe-6 text-xs text-foreground placeholder:text-muted-foreground focus-visible:bg-muted/70 focus-visible:ring-1 focus-visible:ring-ring/30"
+                className="h-7 w-full rounded-xl border border-frost bg-zinc-900/80 ps-7 pe-6 text-xs text-zinc-100 placeholder:text-zinc-500 focus-visible:bg-zinc-900 focus-visible:ring-1 focus-visible:ring-primary backdrop-blur-md"
               />
               {searchTerm && (
                 <Button
@@ -126,7 +126,7 @@ export function MultiSelectFilterPopover({
                   size="icon-xs"
                   onPress={clearAll}
                   aria-label="Clear filter search"
-                  className="absolute end-3.5 top-1/2 z-10 size-5 -translate-y-1/2 rounded-full text-muted-foreground hover:text-foreground"
+                  className="absolute end-3.5 top-1/2 z-10 size-5 -translate-y-1/2 rounded-full text-zinc-400 hover:text-white"
                 >
                   <IconX className="size-3" />
                 </Button>
@@ -137,7 +137,7 @@ export function MultiSelectFilterPopover({
           {/* Options List */}
           <div className="no-scrollbar max-h-60 overflow-y-auto p-1">
             {filteredOptions.length === 0 ? (
-              <div className="p-3 text-center text-xs text-muted-foreground">
+              <div className="p-3 text-center text-xs text-zinc-500">
                 No matching options
               </div>
             ) : (
@@ -152,8 +152,8 @@ export function MultiSelectFilterPopover({
                     className={cn(
                       "flex h-auto w-full items-center justify-between rounded-xl px-2.5 py-1.5 text-start text-xs select-none",
                       isChecked
-                        ? "bg-primary/10 font-medium text-primary hover:bg-primary/15"
-                        : "text-foreground hover:bg-muted/60"
+                        ? "bg-primary/20 font-medium text-primary hover:bg-primary/25"
+                        : "text-zinc-300 hover:bg-zinc-800/60 hover:text-white"
                     )}
                   >
                     <div className="flex items-center gap-2">
@@ -162,7 +162,7 @@ export function MultiSelectFilterPopover({
                           "flex size-4 shrink-0 items-center justify-center rounded-md border text-[10px] transition-colors",
                           isChecked
                             ? "border-primary bg-primary text-primary-foreground"
-                            : "border-border/80 bg-background/50"
+                            : "border-zinc-700 bg-zinc-900/60"
                         )}
                       >
                         {isChecked && <IconCheck className="size-3" />}
@@ -176,7 +176,7 @@ export function MultiSelectFilterPopover({
                           "font-mono text-[11px]",
                           isChecked
                             ? "text-primary/80"
-                            : "text-muted-foreground"
+                            : "text-zinc-500"
                         )}
                       >
                         {opt.count}

@@ -127,7 +127,7 @@ export function BorealisDatePicker({
         disabled={disabled}
         aria-label={ariaLabel}
         className={cn(
-          "relative flex h-8 w-full cursor-pointer items-center justify-between rounded-lg border border-zinc-700 bg-zinc-950 px-2 py-1 text-xs font-normal text-white transition-colors hover:border-zinc-600 hover:bg-zinc-900 focus-visible:ring-1 focus-visible:ring-primary focus-visible:outline-none",
+          "relative flex h-8 w-full cursor-pointer items-center justify-between rounded-lg border border-frost bg-frost/80 px-2 py-1 text-xs font-normal text-white transition-colors hover:border-zinc-500 hover:bg-zinc-900/80 focus-visible:ring-1 focus-visible:ring-primary focus-visible:outline-none backdrop-blur-md",
           disabled && "cursor-not-allowed opacity-50",
           className
         )}
@@ -174,7 +174,7 @@ export function BorealisDatePicker({
         shouldFlip
         containerPadding={12}
         placement={align === "end" ? "bottom end" : "bottom start"}
-        className="w-auto overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 p-0 text-zinc-100 shadow-2xl backdrop-blur-xl z-[10000]"
+        className="w-auto overflow-hidden rounded-xl border border-frost bg-frost p-0 text-zinc-100 shadow-2xl backdrop-blur-2xl z-[10000]"
         shouldCloseOnInteractOutside={(element) => {
           if (!element) return true
           const isTrigger = triggerRef.current?.contains(element)
@@ -205,7 +205,7 @@ export function BorealisDatePicker({
                 onChange={(val: any) => handleSelect(val as CalendarDate, close)}
                 className="bg-transparent p-3"
               />
-              <div className="flex items-center justify-between border-t border-zinc-800 bg-zinc-900/40 px-3 py-2 text-xs">
+              <div className="flex items-center justify-between border-t border-frost/60 bg-frost/40 px-3 py-2 text-xs">
                 <button
                   type="button"
                   disabled={isTodayDisabled}

@@ -68,6 +68,10 @@
       "model": "CustomList",
       "namespace": "public"
     },
+    "CustomListCollaborator": {
+      "model": "CustomListCollaborator",
+      "namespace": "public"
+    },
     "CustomListEntry": {
       "model": "CustomListEntry",
       "namespace": "public"
@@ -551,6 +555,19 @@
               {
                 "name": "BACKGROUND",
                 "value": "BACKGROUND"
+              }
+            ]
+          },
+          "CollaboratorRole": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "EDITOR",
+                "value": "EDITOR"
+              },
+              {
+                "name": "VIEWER",
+                "value": "VIEWER"
               }
             ]
           },
@@ -5319,6 +5336,36 @@
               }
             },
             "relations": {
+              "collaborators": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "listId"
+                  ]
+                },
+                "to": {
+                  "model": "CustomListCollaborator",
+                  "namespace": "public"
+                }
+              },
+              "comments": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "customListId"
+                  ]
+                },
+                "to": {
+                  "model": "ListComment",
+                  "namespace": "public"
+                }
+              },
               "entries": {
                 "cardinality": "1:N",
                 "on": {
@@ -5386,6 +5433,106 @@
               },
               "namespaceId": "public",
               "table": "CustomList"
+            }
+          },
+          "CustomListCollaborator": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "listId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "role": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "CollaboratorRole",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "list": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "listId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "CustomList",
+                  "namespace": "public"
+                }
+              },
+              "user": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "listId": {
+                  "column": "listId"
+                },
+                "role": {
+                  "column": "role"
+                },
+                "userId": {
+                  "column": "userId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "CustomListCollaborator"
             }
           },
           "CustomListEntry": {
@@ -7432,6 +7579,13 @@
                   "kind": "scalar"
                 }
               },
+              "customListId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "id": {
                 "nullable": false,
                 "type": {
@@ -7485,6 +7639,22 @@
                   "namespace": "public"
                 }
               },
+              "customList": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "customListId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "CustomList",
+                  "namespace": "public"
+                }
+              },
               "listOwner": {
                 "cardinality": "N:1",
                 "nullable": false,
@@ -7528,6 +7698,9 @@
                 },
                 "createdAt": {
                   "column": "createdAt"
+                },
+                "customListId": {
+                  "column": "customListId"
                 },
                 "id": {
                   "column": "id"
@@ -17386,6 +17559,21 @@
                   "namespace": "public"
                 }
               },
+              "collaborations": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "CustomListCollaborator",
+                  "namespace": "public"
+                }
+              },
               "connections": {
                 "cardinality": "1:N",
                 "on": {
@@ -21490,6 +21678,129 @@
               },
               "uniques": []
             },
+            "CustomListCollaborator": {
+              "checks": [
+                {
+                  "expression": "\"role\" IN ('EDITOR', 'VIEWER')",
+                  "name": "CustomListCollaborator_role_check_6cfd078f",
+                  "prefix": "CustomListCollaborator_role_check"
+                }
+              ],
+              "columns": {
+                "createdAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "listId": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "role": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "EDITOR"
+                  },
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "CollaboratorRole",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "userId": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "index": {
+                    "name": "CustomListCollaborator_listId_idx_0033d367"
+                  },
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "listId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "CustomListCollaborator"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "CustomList"
+                  }
+                },
+                {
+                  "index": {
+                    "name": "CustomListCollaborator_userId_idx_a489d58a"
+                  },
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "CustomListCollaborator"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "User"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "listId"
+                  ],
+                  "name": "CustomListCollaborator_listId_idx_0033d367",
+                  "prefix": "CustomListCollaborator_listId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "userId"
+                  ],
+                  "name": "CustomListCollaborator_userId_idx_a489d58a",
+                  "prefix": "CustomListCollaborator_userId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "listId",
+                    "userId"
+                  ]
+                }
+              ]
+            },
             "CustomListEntry": {
               "checks": [
                 {
@@ -23147,6 +23458,11 @@
                   },
                   "nullable": false
                 },
+                "customListId": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
                 "id": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -23217,6 +23533,26 @@
                     "namespaceId": "public",
                     "tableName": "User"
                   }
+                },
+                {
+                  "index": {
+                    "name": "ListComment_customListId_idx_b1b1fd15"
+                  },
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "customListId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "ListComment"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "CustomList"
+                  }
                 }
               ],
               "indexes": [
@@ -23226,6 +23562,23 @@
                   ],
                   "name": "ListComment_authorId_idx_e47547ed",
                   "prefix": "ListComment_authorId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "customListId",
+                    "createdAt"
+                  ],
+                  "name": "ListComment_customListId_createdAt_idx_93d03413",
+                  "prefix": "ListComment_customListId_createdAt_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "customListId"
+                  ],
+                  "name": "ListComment_customListId_idx_b1b1fd15",
+                  "prefix": "ListComment_customListId_idx",
                   "unique": false
                 },
                 {
@@ -32643,6 +32996,13 @@
                 "BACKGROUND"
               ]
             },
+            "CollaboratorRole": {
+              "kind": "valueSet",
+              "values": [
+                "EDITOR",
+                "VIEWER"
+              ]
+            },
             "ConnectionAuthType": {
               "kind": "valueSet",
               "values": [
@@ -32893,10 +33253,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "a6ff4a8881bce26834e440c01de162a95fc0ac379df9391e3dc4a3b162646a50"
+    "storageHash": "6af71be254d5260b9e4a3c9620253e01422dee5bc0990918c30f6ed991091493"
   },
   "execution": {
-    "executionHash": "b7640b0fcc81eff6f25706df08d8b4535a1b5e11bd21a8168ea15ca60dc18af0",
+    "executionHash": "badedc9bf9c9e244076dcf05953b220b0f6de5a376999c55f32d4164bd8124ba",
     "mutations": {
       "defaults": [
         {
@@ -33198,6 +33558,17 @@
           "ref": {
             "entry": "CustomList",
             "field": "updatedAt",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "entry": "CustomListCollaborator",
+            "field": "id",
             "namespace": "public"
           }
         },

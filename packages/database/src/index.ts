@@ -68,6 +68,7 @@ export type StaffRole = EnumValues<"StaffRole">;
 export type CharacterRole = EnumValues<"CharacterRole">;
 export type MediaStatus = EnumValues<"MediaStatus">;
 export type ListStatus = EnumValues<"ListStatus">;
+export type CollaboratorRole = EnumValues<"CollaboratorRole">;
 export type AnimeSeason = EnumValues<"AnimeSeason">;
 export type AnimeSource = EnumValues<"AnimeSource">;
 export type AnimeFormat = EnumValues<"AnimeFormat">;

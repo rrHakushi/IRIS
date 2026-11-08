@@ -498,7 +498,7 @@ export function ListActivityTab({
           </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="relative border-s border-frost ps-5 ms-3 space-y-6">
           {activities.map((activity) => {
             const phrasing = getActivityActionPhrasing(activity, mediaType)
             const dateInfo = formatActivityDate(activity.createdAt)
@@ -540,80 +540,51 @@ export function ListActivityTab({
             return (
               <div
                 key={activity.id}
-                className="group relative flex flex-col rounded-2xl border border-border/50 bg-card/60 p-4 shadow-xs backdrop-blur-md transition-all hover:border-border/80 hover:bg-card/80 sm:flex-row sm:items-start sm:gap-4"
+                className="group relative flex items-start gap-3"
               >
+                {/* Timeline dot */}
+                <span className="absolute -start-[27px] top-2 size-3 rounded-full bg-primary ring-4 ring-background" />
+
                 {/* User Avatar with Profile Popover */}
-                <div className="flex items-center justify-between sm:block">
-                  <div className="flex items-center gap-2.5">
-                    <UserProfilePopover
-                      profile={authorProfile}
-                      username={author.username}
-                      userId={author.id}
-                      isOwner={isUserOwner}
-                      placement="right top"
-                      className="group/avatar relative flex shrink-0 cursor-pointer items-center justify-center rounded-full transition-transform hover:scale-105 focus:outline-hidden"
-                    >
-                      <Avatar className="size-9 border border-border/80 bg-background shadow-xs sm:size-10">
-                        {author.avatarUrl ? (
-                          <AvatarImage
-                            src={author.avatarUrl}
-                            alt={authorDisplayName}
-                          />
-                        ) : null}
-                        <AvatarFallback className="bg-primary/15 text-xs font-black text-primary uppercase">
-                          {authorDisplayName.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      {isValidFrameUrl(author.avatarFrame) && (
-                        <div className="pointer-events-none absolute -inset-1.5 z-10 size-12 select-none">
-                          <Image
-                            src={author.avatarFrame}
-                            alt="Avatar Frame"
-                            fill
-                            sizes="48px"
-                            unoptimized
-                            className="object-contain"
-                          />
-                        </div>
-                      )}
-                    </UserProfilePopover>
-
-                    {/* Mobile username and timestamp display */}
-                    <div className="sm:hidden">
-                      <UserProfilePopover
-                        profile={authorProfile}
-                        username={author.username}
-                        userId={author.id}
-                        isOwner={isUserOwner}
-                        placement="bottom start"
-                        className="cursor-pointer text-xs font-bold text-foreground hover:underline"
-                      >
-                        {authorDisplayName}
-                      </UserProfilePopover>
-                      <span className="ms-1.5 text-[11px] text-muted-foreground">
-                        {dateInfo.relative}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Mobile delete button */}
-                  {(activity.canDelete || isOwner) && (
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      onPress={() => setDeleteTarget(activity)}
-                      className="size-7 rounded-full text-muted-foreground opacity-70 hover:bg-destructive/10 hover:text-destructive sm:hidden"
-                      aria-label="Delete activity"
-                    >
-                      <IconTrash className="size-3.5" />
-                    </Button>
-                  )}
+                <div className="shrink-0 pt-0.5">
+                  <UserProfilePopover
+                    profile={authorProfile}
+                    username={author.username}
+                    userId={author.id}
+                    isOwner={isUserOwner}
+                    placement="right top"
+                    className="group/avatar relative flex shrink-0 cursor-pointer items-center justify-center rounded-full transition-transform hover:scale-105 focus:outline-hidden"
+                  >
+                    <Avatar className="size-8 border border-border/80 bg-background shadow-xs sm:size-9">
+                      {author.avatarUrl ? (
+                        <AvatarImage
+                          src={author.avatarUrl}
+                          alt={authorDisplayName}
+                        />
+                      ) : null}
+                      <AvatarFallback className="bg-primary/15 text-xs font-black text-primary uppercase">
+                        {authorDisplayName.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    {isValidFrameUrl(author.avatarFrame) && (
+                      <div className="pointer-events-none absolute -inset-1.5 z-10 size-11 select-none">
+                        <Image
+                          src={author.avatarFrame}
+                          alt="Avatar Frame"
+                          fill
+                          sizes="44px"
+                          unoptimized
+                          className="object-contain"
+                        />
+                      </div>
+                    )}
+                  </UserProfilePopover>
                 </div>
 
                 {/* Main Activity Content */}
-                <div className="mt-3 min-w-0 flex-1 sm:mt-0">
+                <div className="min-w-0 flex-1">
                   {/* Top Row: Action Phrase & Time & Delete */}
-                  <div className="hidden items-center justify-between gap-2 sm:flex">
+                  <div className="flex items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1.5 text-xs">
                       <UserProfilePopover
                         profile={authorProfile}
@@ -637,7 +608,7 @@ export function ListActivityTab({
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <TooltipTrigger delay={300}>
                         <Pressable>
                           <button
@@ -666,20 +637,8 @@ export function ListActivityTab({
                     </div>
                   </div>
 
-                  {/* Mobile phrase details */}
-                  <div className="mb-2.5 flex items-center gap-1.5 text-xs sm:hidden">
-                    <span className="font-normal text-muted-foreground">
-                      {phrasing.actionText}
-                    </span>
-                    {phrasing.detailText && (
-                      <span className={cn("font-medium", phrasing.colorClass)}>
-                        {phrasing.detailText}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Media Reference Card (AniList Style) */}
-                  <div className="mt-2.5 flex items-center gap-3 rounded-xl border border-border/40 bg-background/50 p-2.5 transition-colors hover:bg-background/80">
+                  {/* Media Reference Card (Frosted Style matching custom lists) */}
+                  <div className="mt-2 flex items-center gap-3 rounded-xl border border-frost bg-card/60 p-2.5 backdrop-blur-md transition-colors hover:bg-card/80">
                     {/* Media Poster Thumbnail */}
                     <Link
                       href={mediaLink}

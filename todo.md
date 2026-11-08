@@ -2,13 +2,9 @@
     - Stremio plugin for borealis
     - In media pages (anime, manga etc) add tab People in which it will list all users who have that media in list (that is public and media is not private)
     - Link manga list entries to books since its kinda the same
-    - Rework customs lits
-    - Rework homepage
-    - Rework list pages
+
 
     - Update calendar to use hoverCard from borealisCard
-    - homepage and list pages
-        - hoverCard add stuff from edit modal and remove edit modal
     - test phone/touch experience with new borealisCard
 
     

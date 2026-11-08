@@ -39,6 +39,7 @@ import {
   IconRotate2,
   IconSearch,
   IconSend,
+  IconSparkles,
   IconStar,
   IconTrash,
   IconUser,
@@ -442,7 +443,7 @@ export function BorealisCardImage({
                       />
                       <span>{displayScore}</span>
                     </Button>
-                      <DropdownMenu placement="bottom start" className="max-h-[108px] overflow-y-auto overscroll-contain [scrollbar-width:thin] w-auto min-w-[115px] text-[10px] bg-zinc-950 z-[100] border border-zinc-800 shadow-2xl">
+                      <DropdownMenu placement="bottom start" className="max-h-[108px] overflow-y-auto overscroll-contain [scrollbar-width:thin] w-auto min-w-[115px] text-[10px] border border-frost bg-frost text-zinc-100 shadow-2xl backdrop-blur-2xl z-[100]">
                         {SCORE_OPTIONS.map((scoreVal) => {
                           const isSelected = currentScoreNum !== null && (currentScoreNum === scoreVal || currentScoreNum / 10 === scoreVal || currentScoreNum === scoreVal * 10)
                           return (
@@ -534,7 +535,7 @@ export function BorealisCardTitle({
         }}
         title={data.title}
         className={cn(
-          "block truncate text-xs sm:text-sm font-bold text-foreground transition-colors group-hover/bcard:text-primary group-hover/bcard:underline",
+          "block truncate font-mono text-xs sm:text-sm font-bold text-foreground transition-colors group-hover/bcard:text-primary group-hover/bcard:underline",
           titleClassName
         )}
       >
@@ -656,7 +657,7 @@ function BorealisProgressCustomInput({
           }
         }}
         placeholder={typeof max === "number" && max > 0 ? `1-${max}` : "Num"}
-        className="h-5 w-14 rounded border border-zinc-700 bg-zinc-950 px-1 font-mono text-[10px] text-white focus:border-primary focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        className="h-5 w-14 rounded border border-frost bg-frost/80 px-1 font-mono text-[10px] text-white backdrop-blur-md focus:border-primary focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
       {unit ? (
         <span className="font-mono text-[9px] text-zinc-400 select-none">{unit}</span>
@@ -1239,6 +1240,165 @@ function getRepeatLabel(category: string): { singular: string; plural: string } 
   }
 }
 
+function toBackendMediaType(type: string): string {
+  switch (type) {
+    case "anime":
+      return "ANIME"
+    case "manga":
+      return "MANGA"
+    case "movie":
+    case "movies":
+      return "MOVIE"
+    case "tv":
+      return "TV"
+    case "game":
+    case "games":
+      return "GAME"
+    case "book":
+    case "books":
+      return "BOOK"
+    case "music":
+      return "MUSIC"
+    default:
+      return "OTHER"
+  }
+}
+
+function getBackendMediaId(data: any): number {
+  if (!data) return 0
+  const raw = data.raw ?? {}
+  const rawMedia = raw.media ?? raw
+  const possible =
+    data.media?.id ??
+    data.entry?.mediaId ??
+    data.entry?.animeId ??
+    data.entry?.mangaId ??
+    data.entry?.tvId ??
+    data.entry?.movieId ??
+    data.entry?.gameId ??
+    data.entry?.bookId ??
+    data.entry?.musicId ??
+    rawMedia?.id ??
+    raw.mediaId ??
+    raw.entry?.mediaId ??
+    raw.entry?.animeId ??
+    raw.entry?.mangaId ??
+    raw.entry?.tvId ??
+    raw.entry?.movieId ??
+    raw.entry?.gameId ??
+    raw.entry?.bookId ??
+    raw.entry?.musicId ??
+    raw.animeId ??
+    raw.mangaId ??
+    raw.tvId ??
+    raw.movieId ??
+    raw.gameId ??
+    raw.bookId ??
+    raw.musicId ??
+    data.mediaId ??
+    data.animeId ??
+    data.mangaId ??
+    data.tvId ??
+    data.movieId ??
+    data.gameId ??
+    data.bookId ??
+    data.musicId ??
+    data.id
+
+  if (typeof possible === "number") return possible
+  if (typeof possible === "string") {
+    // If string is e.g. "anime-17" or "17"
+    const cleaned = possible.includes("-") ? possible.split("-").pop()! : possible
+    const num = parseInt(cleaned, 10)
+    return isNaN(num) ? 0 : num
+  }
+  return 0
+}
+
+function getBorealisBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    const custom = (window as any).__IRIS_API_URL__
+    if (custom) return custom
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      return "http://localhost:4000"
+    }
+  }
+  const envApi = typeof process !== "undefined" ? process.env?.NEXT_PUBLIC_API_URL : undefined
+  if (envApi) return envApi
+  return ""
+}
+
+async function safeBorealisFetch(path: string, init?: RequestInit): Promise<Response> {
+  const base = getBorealisBaseUrl()
+  const cleanPath = path.startsWith("/") ? path : `/${path}`
+
+  // 1. Try direct API base if configured
+  if (base) {
+    try {
+      const res = await fetch(`${base}${cleanPath}`, {
+        credentials: "include",
+        ...init,
+      })
+      if (res.ok) {
+        return res
+      }
+    } catch {
+      // Direct call failed, fall through to relative proxy
+    }
+  }
+
+  // 2. Try relative Next.js proxy (/elysia/...)
+  try {
+    const res = await fetch(`/elysia${cleanPath}`, {
+      credentials: "include",
+      ...init,
+    })
+    if (res.ok) {
+      return res
+    }
+  } catch {
+    // Proxy failed
+  }
+
+  // 3. Fallback direct attempt if not already done
+  return fetch(`${base || "http://localhost:4000"}${cleanPath}`, {
+    credentials: "include",
+    ...init,
+  })
+}
+
+interface CachedEpisodesData {
+  episodes: any[]
+  seasons: any[]
+  timestamp: number
+}
+
+const HOVER_EPISODES_CACHE = new Map<string, CachedEpisodesData>()
+const HOVER_EPISODES_INFLIGHT = new Map<string, Promise<{ episodes: any[]; seasons: any[] }>>()
+const HOVER_EPISODES_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+interface MediaHoverExtra {
+  relations?: any[]
+  similar?: any[]
+  description?: string
+}
+
+const mediaHoverExtraCache = new Map<string, MediaHoverExtra>()
+const inFlightMediaHoverExtra = new Map<string, Promise<MediaHoverExtra>>()
+
+function getMediaApiPath(type?: string): string {
+  if (!type) return "anime"
+  const norm = type.toLowerCase()
+  if (norm === "movie" || norm === "movies") return "movies"
+  if (norm === "book" || norm === "books") return "books"
+  if (norm === "game" || norm === "games") return "games"
+  if (norm === "anime") return "anime"
+  if (norm === "manga") return "manga"
+  if (norm === "tv") return "tv"
+  if (norm === "music") return "music"
+  return norm
+}
+
 function formatEpisodeTitle(
   title: string | null | undefined,
   epNum: number
@@ -1247,14 +1407,14 @@ function formatEpisodeTitle(
   const trimmed = title.trim()
   if (!trimmed) return null
   const prefixRegex = new RegExp(
-    `^(?:Episode|Ep\\.?|#)\\s*0*${epNum}\\s*[:\\-–—.]\\s*`,
+    `^(?:Episode|Ep\\.?|#|s\\d+e|\\d+x)\\s*0*${epNum}\\s*[:\\-–—.]\\s*`,
     "i"
   )
   let cleaned = trimmed.replace(prefixRegex, "").trim()
   const numPrefixRegex = new RegExp(`^0*${epNum}\\s*[:\\-–—.]\\s*`)
   cleaned = cleaned.replace(numPrefixRegex, "").trim()
   const exactRegex = new RegExp(
-    `^(?:(?:Episode|Ep\\.?|#)\\s*)?0*${epNum}$`,
+    `^(?:(?:Episode|Ep\\.?|#|s\\d+e|\\d+x)\\s*)?0*${epNum}$`,
     "i"
   )
   if (exactRegex.test(cleaned) || exactRegex.test(trimmed)) {
@@ -1467,7 +1627,7 @@ function BorealisCardHoverEditForm({
             <IconStar className="size-3 text-zinc-400 shrink-0" />
             <span className="truncate">Score</span>
           </label>
-          <div className="flex h-8 items-center justify-between rounded-lg border border-zinc-700 bg-zinc-950 px-2">
+          <div className="flex h-8 items-center justify-between rounded-lg border border-frost bg-frost/80 px-2 backdrop-blur-md">
             <input
               type="number"
               min={0}
@@ -1518,7 +1678,7 @@ function BorealisCardHoverEditForm({
             <IconRotate2 className="size-3 text-zinc-400 shrink-0" />
             <span className="truncate">{repeatLabel}</span>
           </label>
-          <div className="flex h-8 items-center justify-between rounded-lg border border-zinc-700 bg-zinc-950 px-2">
+          <div className="flex h-8 items-center justify-between rounded-lg border border-frost bg-frost/80 px-2 backdrop-blur-md">
             <input
               type="number"
               min={0}
@@ -1557,7 +1717,7 @@ function BorealisCardHoverEditForm({
               <IconBook className="size-3 shrink-0" />
               <span className="truncate">Chapters</span>
             </label>
-            <div className="flex h-8 items-center justify-between rounded-lg border border-zinc-700 bg-zinc-950 px-2">
+            <div className="flex h-8 items-center justify-between rounded-lg border border-frost bg-frost/80 px-2 backdrop-blur-md">
               <input
                 type="number"
                 min={0}
@@ -1610,7 +1770,7 @@ function BorealisCardHoverEditForm({
               <IconBook2 className="size-3 shrink-0" />
               <span className="truncate">Volumes</span>
             </label>
-            <div className="flex h-8 items-center justify-between rounded-lg border border-zinc-700 bg-zinc-950 px-2">
+            <div className="flex h-8 items-center justify-between rounded-lg border border-frost bg-frost/80 px-2 backdrop-blur-md">
               <input
                 type="number"
                 min={0}
@@ -1655,7 +1815,7 @@ function BorealisCardHoverEditForm({
             <IconClock className="size-3" />
             <span>Playtime (Hours)</span>
           </label>
-          <div className="flex h-8 items-center justify-between rounded-lg border border-zinc-700 bg-zinc-950 px-2">
+          <div className="flex h-8 items-center justify-between rounded-lg border border-frost bg-frost/80 px-2 backdrop-blur-md">
             <input
               type="number"
               min={0}
@@ -1691,7 +1851,7 @@ function BorealisCardHoverEditForm({
             <IconDeviceTv className="size-3" />
             <span>{isTvOrAnime ? "Episodes" : "Progress"}</span>
           </label>
-          <div className="flex h-8 items-center justify-between rounded-lg border border-zinc-700 bg-zinc-950 px-2">
+          <div className="flex h-8 items-center justify-between rounded-lg border border-frost bg-frost/80 px-2 backdrop-blur-md">
             <input
               type="number"
               min={0}
@@ -1769,7 +1929,7 @@ function BorealisCardHoverEditForm({
       </div>
 
       {/* Row 4: Privacy Toggle */}
-      <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950/80 px-2.5 py-1.5 relative z-0">
+      <div className="flex items-center justify-between rounded-lg border border-frost bg-frost/80 px-2.5 py-1.5 relative z-0 backdrop-blur-md">
         <div className="flex items-center gap-1.5">
           <IconLock className="size-3.5 text-zinc-400" />
           <span className="text-[11px] font-semibold text-zinc-200">Private Entry</span>
@@ -1793,7 +1953,7 @@ function BorealisCardHoverEditForm({
           onChange={(e) => setDraftNotes(e.target.value)}
           placeholder="Personal thoughts or notes..."
           rows={2}
-          className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-950 p-2 text-xs text-white placeholder:text-zinc-600 focus:border-primary focus:outline-none"
+          className="w-full resize-none rounded-lg border border-frost bg-frost/80 p-2 text-xs text-white placeholder:text-zinc-500 focus:border-primary focus:outline-none backdrop-blur-md"
         />
       </div>
     </div>
@@ -1803,6 +1963,8 @@ function BorealisCardHoverEditForm({
 // -----------------------------------------------------------------------------
 // 5c. BorealisCardHoverEpisodesTab
 // -----------------------------------------------------------------------------
+const EMPTY_ARRAY: any[] = []
+
 function BorealisCardHoverEpisodesTab({
   data,
   config,
@@ -1822,17 +1984,104 @@ function BorealisCardHoverEpisodesTab({
   setDraftStatus?: (st: ListStatus) => void
   onEditStart?: () => void
 }) {
+  const mediaId = getBackendMediaId(data)
+  const backendMediaType = toBackendMediaType(data.type)
+  const cacheKey = `${backendMediaType}:${mediaId || 0}`
+
   const rawMedia = data.raw?.media ?? data.raw
-  const seasons: any[] = Array.isArray(rawMedia?.seasons)
-    ? rawMedia.seasons
-    : Array.isArray(data.hoverDetails?.seasons)
-      ? data.hoverDetails.seasons
-      : []
-  const episodes: any[] = Array.isArray(rawMedia?.episodes)
-    ? rawMedia.episodes
-    : Array.isArray(data.hoverDetails?.episodes)
-      ? data.hoverDetails.episodes
-      : []
+  const initialSeasons: any[] = useMemo(() => {
+    if (Array.isArray(rawMedia?.seasons)) return rawMedia.seasons
+    if (Array.isArray(data.hoverDetails?.seasons)) return data.hoverDetails.seasons
+    return EMPTY_ARRAY
+  }, [rawMedia?.seasons, data.hoverDetails?.seasons])
+
+  const initialEpisodes: any[] = useMemo(() => {
+    if (Array.isArray(rawMedia?.episodes)) return rawMedia.episodes
+    if (Array.isArray(data.hoverDetails?.episodes)) return data.hoverDetails.episodes
+    return EMPTY_ARRAY
+  }, [rawMedia?.episodes, data.hoverDetails?.episodes])
+
+  const [fetchedData, setFetchedData] = useState<{ episodes: any[]; seasons: any[] }>(() => {
+    const cached = HOVER_EPISODES_CACHE.get(cacheKey)
+    if (cached && Date.now() - cached.timestamp < HOVER_EPISODES_CACHE_TTL) {
+      return { episodes: cached.episodes, seasons: cached.seasons }
+    }
+    return { episodes: [], seasons: [] }
+  })
+  const [loadingEpisodes, setLoadingEpisodes] = useState(false)
+
+  useEffect(() => {
+    let isMounted = true
+    if (!mediaId || mediaId <= 0) return
+    if (backendMediaType !== "ANIME" && backendMediaType !== "TV") return
+
+    // If initial data already has episode titles, no need to fetch
+    const hasTitles = initialEpisodes.some((e) => Boolean(e.titlePrimary || e.title || e.name))
+    if (hasTitles) return
+
+    // Check cache
+    const cached = HOVER_EPISODES_CACHE.get(cacheKey)
+    if (cached && Date.now() - cached.timestamp < HOVER_EPISODES_CACHE_TTL) {
+      setFetchedData((prev) => {
+        if (prev.episodes === cached.episodes && prev.seasons === cached.seasons) {
+          return prev
+        }
+        return { episodes: cached.episodes, seasons: cached.seasons }
+      })
+      return
+    }
+
+    let promise = HOVER_EPISODES_INFLIGHT.get(cacheKey)
+    if (!promise) {
+      const endpoint =
+        backendMediaType === "TV"
+          ? `/borealis/media/tv/${mediaId}`
+          : `/borealis/media/anime/${mediaId}`
+
+      promise = safeBorealisFetch(endpoint)
+        .then(async (res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`)
+          return res.json()
+        })
+        .then((json) => {
+          const media = json?.media ?? {}
+          const epList = Array.isArray(media.episodes) ? media.episodes : []
+          const seasonList = Array.isArray(media.seasons) ? media.seasons : []
+          const result = { episodes: epList, seasons: seasonList }
+          HOVER_EPISODES_CACHE.set(cacheKey, { ...result, timestamp: Date.now() })
+          return result
+        })
+        .finally(() => {
+          HOVER_EPISODES_INFLIGHT.delete(cacheKey)
+        })
+
+      HOVER_EPISODES_INFLIGHT.set(cacheKey, promise)
+    }
+
+    setLoadingEpisodes(true)
+    promise
+      .then((result) => {
+        if (!isMounted) return
+        setFetchedData(result)
+      })
+      .catch((err) => {
+        console.warn("[BorealisCard] Failed to fetch episodes:", err)
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoadingEpisodes(false)
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [mediaId, backendMediaType, cacheKey])
+
+  const seasons: any[] =
+    fetchedData.seasons.length > 0 ? fetchedData.seasons : initialSeasons
+  const episodes: any[] =
+    fetchedData.episodes.length > 0 ? fetchedData.episodes : initialEpisodes
 
   const regularSeasons = seasons.filter((s) => s.seasonNumber > 0)
   const candidateSeasons = regularSeasons.length > 0 ? regularSeasons : seasons
@@ -1930,7 +2179,7 @@ function BorealisCardHoverEpisodesTab({
   return (
     <div className="flex flex-col gap-2 p-3 shrink-0">
       {hasMultipleSeasons ? (
-        <div className="max-h-[380px] overflow-y-auto overscroll-contain flex flex-col gap-2 pe-1 [scrollbar-width:thin]">
+        <div className="max-h-[380px] overflow-y-auto flex flex-col gap-2 pe-1 [scrollbar-width:thin]">
           {candidateSeasons.map((season) => {
             const seasonNum = season.seasonNumber
             const isExpanded = expandedSeasonNum === seasonNum
@@ -1983,7 +2232,7 @@ function BorealisCardHoverEpisodesTab({
                 {/* Episodes inside expanded season - Scrollable list */}
                 {isExpanded && (
                   count > 0 ? (
-                    <div className="max-h-64 overflow-y-auto overscroll-contain flex flex-col gap-1.5 border-t border-frost bg-zinc-950/40 p-2 pe-1 [scrollbar-width:thin]">
+                    <div className="max-h-64 overflow-y-auto flex flex-col gap-1.5 border-t border-frost bg-zinc-950/40 p-2 pe-1 [scrollbar-width:thin]">
                       {Array.from({ length: count }, (_, idx) => {
                         const epNum = idx + 1
                         const ep =
@@ -1992,7 +2241,8 @@ function BorealisCardHoverEpisodesTab({
                           ) ||
                           seasonEps.find(
                             (e: any) => (e.number ?? e.episodeNumber) === epNum
-                          )
+                          ) ||
+                          episodeMap.get(epNum)
                         const watched = isEpisodeWatched(seasonNum, epNum)
                         const cleanTitle = formatEpisodeTitle(
                           ep?.titlePrimary || ep?.title || ep?.name,
@@ -2008,24 +2258,20 @@ function BorealisCardHoverEpisodesTab({
                               "flex w-full items-center justify-between gap-2 rounded-lg border p-2 text-xs font-medium transition-colors select-none text-start",
                               config.canEdit ? "cursor-pointer" : "cursor-default",
                               watched
-                                ? "border-primary/40 bg-primary/10 text-primary"
-                                : "border-zinc-800/80 bg-zinc-900/50 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                                ? "border-primary/40 bg-primary/10"
+                                : "border-zinc-800/80 bg-zinc-900/50 hover:border-zinc-700 hover:bg-zinc-800/40"
                             )}
                           >
-                            <div className="flex min-w-0 items-center gap-2.5">
-                              <span className="font-mono text-xs font-bold text-zinc-500 shrink-0">
-                                Ep {epNum}
+                            <div className="flex min-w-0 items-center gap-2">
+                              <span
+                                className={cn(
+                                  "truncate font-mono text-xs text-primary",
+                                  watched ? "font-bold" : "font-semibold"
+                                )}
+                                title={`#${epNum}${cleanTitle ? ` - ${cleanTitle}` : ""}`}
+                              >
+                                #{epNum}{cleanTitle ? ` - ${cleanTitle}` : ""}
                               </span>
-                              {cleanTitle && (
-                                <span
-                                  className={cn(
-                                    "truncate text-xs",
-                                    watched ? "font-semibold text-foreground" : "text-zinc-300"
-                                  )}
-                                >
-                                  {cleanTitle}
-                                </span>
-                              )}
                             </div>
                             <div
                               className={cn(
@@ -2052,13 +2298,13 @@ function BorealisCardHoverEpisodesTab({
           })}
         </div>
       ) : totalEpisodeCount && totalEpisodeCount > 0 ? (
-        <div className="max-h-[380px] overflow-y-auto overscroll-contain flex flex-col gap-1.5 pe-1 [scrollbar-width:thin]">
+        <div className="max-h-[380px] overflow-y-auto flex flex-col gap-1.5 pe-1 [scrollbar-width:thin]">
           {Array.from({ length: totalEpisodeCount }, (_, idx) => {
             const epNum = idx + 1
             const watched = epNum <= draftProgress
             const epItem = episodeMap.get(epNum)
             const cleanTitle = formatEpisodeTitle(
-              epItem?.titlePrimary || epItem?.titleSecondary || epItem?.title,
+              epItem?.titlePrimary || epItem?.titleSecondary || epItem?.title || epItem?.name,
               epNum
             )
 
@@ -2071,24 +2317,20 @@ function BorealisCardHoverEpisodesTab({
                   "flex w-full items-center justify-between gap-2 rounded-lg border p-2 text-xs font-medium transition-colors select-none text-start",
                   config.canEdit ? "cursor-pointer" : "cursor-default",
                   watched
-                    ? "border-primary/40 bg-primary/10 text-primary"
-                    : "border-zinc-800/80 bg-zinc-900/50 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                    ? "border-primary/40 bg-primary/10"
+                    : "border-zinc-800/80 bg-zinc-900/50 hover:border-zinc-700 hover:bg-zinc-800/40"
                 )}
               >
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <span className="font-mono text-xs font-bold text-zinc-500 shrink-0">
-                    Ep {epNum}
+                <div className="flex min-w-0 items-center gap-2">
+                  <span
+                    className={cn(
+                      "truncate font-mono text-xs text-primary",
+                      watched ? "font-bold" : "font-semibold"
+                    )}
+                    title={`#${epNum}${cleanTitle ? ` - ${cleanTitle}` : ""}`}
+                  >
+                    #{epNum}{cleanTitle ? ` - ${cleanTitle}` : ""}
                   </span>
-                  {cleanTitle && (
-                    <span
-                      className={cn(
-                        "truncate text-xs",
-                        watched ? "font-semibold text-foreground" : "text-zinc-300"
-                      )}
-                    >
-                      {cleanTitle}
-                    </span>
-                  )}
                 </div>
                 <div
                   className={cn(
@@ -2222,7 +2464,7 @@ function BorealisCardHoverRewatchesTab({
                     value={item.notes || ""}
                     onChange={(e) => handleUpdateSession(idx, { notes: e.target.value })}
                     placeholder="Optional notes for this session..."
-                    className="w-full rounded-lg border border-zinc-700/60 bg-zinc-950 px-2 py-1 text-xs text-white placeholder:text-zinc-600 focus:border-primary focus:outline-none"
+                    className="w-full rounded-lg border border-frost bg-frost/80 px-2 py-1 text-xs text-white placeholder:text-zinc-500 backdrop-blur-md focus:border-primary focus:outline-none"
                   />
                 </>
               ) : (
@@ -2680,7 +2922,7 @@ function BorealisCardHoverConnectionsTab({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by title, ID (id:123) or URL..."
-              className="h-8 w-full rounded-lg border border-zinc-700 bg-zinc-950 ps-8 pe-2 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-primary/60"
+              className="h-8 w-full rounded-lg border border-frost bg-frost/80 ps-8 pe-2 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-primary/60 backdrop-blur-md"
             />
           </div>
           <button
@@ -2692,7 +2934,7 @@ function BorealisCardHoverConnectionsTab({
           </button>
         </form>
 
-        <div className="max-h-64 overflow-y-auto overscroll-contain flex flex-col gap-1.5 pe-1 [scrollbar-width:thin]">
+        <div className="max-h-64 overflow-y-auto flex flex-col gap-1.5 pe-1 [scrollbar-width:thin]">
           {isSearching && (
             <div className="flex items-center justify-center py-6 text-zinc-400">
               <IconLoader2 className="size-5 animate-spin text-primary" />
@@ -2734,10 +2976,10 @@ function BorealisCardHoverConnectionsTab({
                       {result.titleSecondary && (
                         <span className="truncate text-[10px] text-zinc-400">{result.titleSecondary}</span>
                       )}
-                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5 font-mono text-[10px] text-zinc-400">
-                        {result.format && <span className="uppercase">{result.format}</span>}
-                        {result.releaseYear && <span>{result.releaseYear}</span>}
-                        <span className="text-zinc-500">#{result.externalId}</span>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5 font-mono text-[10px] font-medium text-zinc-300">
+                        {result.format && <span className="uppercase text-zinc-300">{result.format}</span>}
+                        {result.releaseYear && <span className="text-zinc-300">{result.releaseYear}</span>}
+                        <span className="text-zinc-400">#{result.externalId}</span>
                       </div>
                     </div>
                   </div>
@@ -2764,24 +3006,39 @@ function BorealisCardHoverConnectionsTab({
   }
 
   return (
-    <div className="flex flex-col gap-3 p-4 shrink-0">
-      {/* View mode: Render currently connected ones */}
+    <div className="flex flex-col gap-3 p-4 min-h-0">
+      {/* View mode: Render currently connected ones with full details */}
       {!isHoverCardEditing && (
-        <div className="flex flex-col gap-2">
+        <div className="max-h-[380px] overflow-y-auto overscroll-contain flex flex-col gap-2 pe-1 [scrollbar-width:thin]">
           {connectedProviders.length > 0 ? (
-            <div className="max-h-60 overflow-y-auto overscroll-contain flex flex-col gap-2 pe-1 [scrollbar-width:thin]">
+            <div className="flex flex-col gap-1.5">
               {connectedProviders.map((prov) => (
                 <div
                   key={prov.key}
                   className="flex items-center justify-between gap-2.5 rounded-xl border border-zinc-800 bg-zinc-900/60 p-2.5 hover:border-zinc-700 transition-colors"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className={cn("inline-flex items-center rounded-md border px-2 py-0.5 font-mono text-[10px] font-bold uppercase shrink-0", prov.badgeColor)}>
-                      {prov.name}
-                    </span>
-                    <span className="truncate text-xs font-semibold text-zinc-200">
-                      {prov.connData?.title || (prov.detectedId ? `ID: ${prov.connData?.id || prov.detectedId}` : "Connected")}
-                    </span>
+                  <div className="flex items-center gap-2 min-w-0">
+                    {(prov.connData?.cover || prov.connData?.coverImage) && (
+                      <img
+                        src={prov.connData.cover || prov.connData.coverImage}
+                        alt=""
+                        loading="lazy"
+                        className="h-9 w-6 shrink-0 rounded border border-zinc-700 object-cover"
+                      />
+                    )}
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <span className={cn("inline-flex w-fit items-center rounded-md border px-2 py-0.5 font-mono text-[10px] font-bold uppercase shrink-0", prov.badgeColor)}>
+                        {prov.name}
+                      </span>
+                      <span className="truncate text-xs font-semibold text-zinc-100">
+                        {prov.connData?.title || (prov.detectedId ? `ID: ${prov.connData?.id || prov.detectedId}` : "Connected")}
+                      </span>
+                      {((prov.connData?.id && prov.connData.id !== "linked") || prov.detectedId || prov.connData?.year || prov.connData?.format) && (
+                        <span className="truncate font-mono text-[10px] font-medium text-zinc-300">
+                          {[prov.connData?.format, prov.connData?.year, prov.connData?.id && prov.connData.id !== "linked" ? `#${prov.connData.id}` : (prov.detectedId ? `#${prov.detectedId}` : null)].filter(Boolean).join(" · ")}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {prov.url && (
@@ -2790,7 +3047,7 @@ function BorealisCardHoverConnectionsTab({
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="flex size-7 items-center justify-center rounded-lg border border-zinc-700/60 bg-zinc-800/80 text-zinc-400 hover:border-zinc-500 hover:text-white transition-colors shrink-0 cursor-pointer"
+                      className="flex size-7 items-center justify-center rounded-lg border border-zinc-700/60 bg-zinc-800/80 text-zinc-300 hover:border-zinc-500 hover:text-white transition-colors shrink-0 cursor-pointer"
                       title={`Open ${prov.name}`}
                       aria-label={`Open ${prov.name}`}
                     >
@@ -2804,15 +3061,6 @@ function BorealisCardHoverConnectionsTab({
             <div className="flex flex-col items-center justify-center py-8 text-center text-zinc-500">
               <IconLink className="size-6 text-zinc-600 mb-1" />
               <span className="text-xs font-medium text-zinc-400">No active connections</span>
-              {config.canEdit && (
-                <button
-                  type="button"
-                  onClick={onEditStart}
-                  className="mt-2 text-xs font-semibold text-primary hover:underline cursor-pointer"
-                >
-                  Connect third-party accounts
-                </button>
-              )}
             </div>
           )}
         </div>
@@ -2820,110 +3068,108 @@ function BorealisCardHoverConnectionsTab({
 
       {/* Edit mode: Render currently connected ones + all available ones with Connect/Disconnect options */}
       {isHoverCardEditing && (
-        <div className="flex flex-col gap-3">
+        <div className="max-h-[380px] overflow-y-auto overscroll-contain flex flex-col gap-2.5 pe-1 [scrollbar-width:thin]">
           {connectedProviders.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Connected Services</span>
-              <div className="max-h-40 overflow-y-auto overscroll-contain flex flex-col gap-1.5 pe-1 [scrollbar-width:thin]">
-                {connectedProviders.map((prov) => (
-                  <div
-                    key={prov.key}
-                    className="flex items-center justify-between gap-2 rounded-xl border border-primary/30 bg-primary/5 p-2 transition-colors"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      {(prov.connData?.cover || prov.connData?.coverImage) && (
-                        <img
-                          src={prov.connData.cover || prov.connData.coverImage}
-                          alt=""
-                          loading="lazy"
-                          className="h-9 w-6 shrink-0 rounded border border-zinc-700 object-cover"
-                        />
-                      )}
-                      <div className="flex min-w-0 flex-col gap-0.5">
-                        <span className={cn("inline-flex w-fit items-center rounded-md border px-2 py-0.5 font-mono text-[10px] font-bold uppercase shrink-0", prov.badgeColor)}>
-                          {prov.name}
+              {connectedProviders.map((prov) => (
+                <div
+                  key={prov.key}
+                  className="flex items-center justify-between gap-2.5 rounded-xl border border-zinc-800 bg-zinc-900/60 p-2.5 hover:border-zinc-700 transition-colors"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    {(prov.connData?.cover || prov.connData?.coverImage) && (
+                      <img
+                        src={prov.connData.cover || prov.connData.coverImage}
+                        alt=""
+                        loading="lazy"
+                        className="h-9 w-6 shrink-0 rounded border border-zinc-700 object-cover"
+                      />
+                    )}
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <span className={cn("inline-flex w-fit items-center rounded-md border px-2 py-0.5 font-mono text-[10px] font-bold uppercase shrink-0", prov.badgeColor)}>
+                        {prov.name}
+                      </span>
+                      <span className="truncate text-xs font-semibold text-zinc-100">
+                        {prov.connData?.title || (prov.detectedId ? `ID: ${prov.connData?.id || prov.detectedId}` : "Linked")}
+                      </span>
+                      {((prov.connData?.id && prov.connData.id !== "linked") || prov.detectedId || prov.connData?.year || prov.connData?.format) && (
+                        <span className="truncate font-mono text-[10px] font-medium text-zinc-300">
+                          {[prov.connData?.format, prov.connData?.year, prov.connData?.id && prov.connData.id !== "linked" ? `#${prov.connData.id}` : (prov.detectedId ? `#${prov.detectedId}` : null)].filter(Boolean).join(" · ")}
                         </span>
-                        <span className="truncate text-xs font-medium text-zinc-300">
-                          {prov.connData?.title || (prov.detectedId ? `ID: ${prov.connData?.id || prov.detectedId}` : "Linked")}
-                        </span>
-                        {prov.connData?.id && prov.connData.id !== "linked" && (
-                          <span className="truncate font-mono text-[10px] text-zinc-500">
-                            {[prov.connData.format, prov.connData.year, `#${prov.connData.id}`].filter(Boolean).join(" · ")}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => openSearch(prov)}
-                        className="flex size-6 items-center justify-center rounded-md border border-zinc-700 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-                        title={`Change ${prov.name} link`}
-                        aria-label={`Change ${prov.name} link`}
-                      >
-                        <IconSearch className="size-3" />
-                      </button>
-                      {prov.url && (
-                        <a
-                          href={prov.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="flex size-6 items-center justify-center rounded-md border border-zinc-700 text-zinc-400 hover:text-white transition-colors"
-                          title={`Open ${prov.name}`}
-                          aria-label={`Open ${prov.name}`}
-                        >
-                          <IconExternalLink className="size-3" />
-                        </a>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => handleDisconnect(prov.key)}
-                        className="flex size-6 items-center justify-center rounded-md border border-red-500/40 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer"
-                        title={`Disconnect ${prov.name}`}
-                        aria-label={`Disconnect ${prov.name}`}
-                      >
-                        <IconX className="size-3" />
-                      </button>
                     </div>
                   </div>
-                ))}
-              </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => openSearch(prov)}
+                      className="flex size-7 items-center justify-center rounded-lg border border-zinc-700/60 bg-zinc-800/80 text-zinc-300 hover:border-zinc-500 hover:text-white transition-colors cursor-pointer"
+                      title={`Change ${prov.name} link`}
+                      aria-label={`Change ${prov.name} link`}
+                    >
+                      <IconSearch className="size-3.5" />
+                    </button>
+                    {prov.url && (
+                      <a
+                        href={prov.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex size-7 items-center justify-center rounded-lg border border-zinc-700/60 bg-zinc-800/80 text-zinc-300 hover:border-zinc-500 hover:text-white transition-colors shrink-0"
+                        title={`Open ${prov.name}`}
+                        aria-label={`Open ${prov.name}`}
+                      >
+                        <IconExternalLink className="size-3.5" />
+                      </a>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleDisconnect(prov.key)}
+                      className="flex size-7 items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:border-red-500/50 transition-colors cursor-pointer"
+                      title={`Disconnect ${prov.name}`}
+                      aria-label={`Disconnect ${prov.name}`}
+                    >
+                      <IconX className="size-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
+          )}
+
+          {connectedProviders.length > 0 && unconnectedProviders.length > 0 && (
+            <div className="border-t border-zinc-800 my-0.5" />
           )}
 
           {unconnectedProviders.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Available to Connect</span>
-              <div className="max-h-48 overflow-y-auto overscroll-contain flex flex-col gap-1.5 pe-1 [scrollbar-width:thin]">
-                {unconnectedProviders.map((prov) => (
-                  <div
-                    key={prov.key}
-                    className="flex items-center justify-between gap-2 rounded-xl border border-zinc-800 bg-zinc-900/40 p-2 hover:border-zinc-700 transition-colors"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className={cn("inline-flex items-center rounded-md border px-2 py-0.5 font-mono text-[10px] font-bold uppercase shrink-0", prov.badgeColor)}>
-                        {prov.name}
+              {unconnectedProviders.map((prov) => (
+                <div
+                  key={prov.key}
+                  className="flex items-center justify-between gap-2.5 rounded-xl border border-zinc-800 bg-zinc-900/60 p-2.5 hover:border-zinc-700 transition-colors"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={cn("inline-flex items-center rounded-md border px-2 py-0.5 font-mono text-[10px] font-bold uppercase shrink-0", prov.badgeColor)}>
+                      {prov.name}
+                    </span>
+                    {prov.detectedId && (
+                      <span className="truncate font-mono text-[11px] text-zinc-300 font-medium">
+                        Detected: {prov.detectedId}
                       </span>
-                      {prov.detectedId && (
-                        <span className="truncate font-mono text-[11px] text-zinc-400">
-                          Detected: {prov.detectedId}
-                        </span>
-                      )}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => openSearch(prov)}
-                      className="flex items-center gap-1 rounded-md border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-[11px] font-semibold text-zinc-200 hover:bg-zinc-700 hover:text-white transition-colors cursor-pointer shrink-0"
-                    >
-                      <IconPlus className="size-3" />
-                      <span>Connect</span>
-                    </button>
+                    )}
                   </div>
-                ))}
-              </div>
+
+                  <button
+                    type="button"
+                    onClick={() => openSearch(prov)}
+                    className="flex h-7 items-center gap-1 rounded-lg border border-zinc-700/60 bg-zinc-800/80 px-2.5 text-xs font-semibold text-zinc-200 hover:border-zinc-500 hover:bg-zinc-700 hover:text-white transition-colors cursor-pointer shrink-0"
+                  >
+                    <IconPlus className="size-3.5" />
+                    <span>Connect</span>
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -2935,34 +3181,14 @@ function BorealisCardHoverConnectionsTab({
 // -----------------------------------------------------------------------------
 // 5f. BorealisCardHoverWatchlistsTab
 // -----------------------------------------------------------------------------
-function toBackendMediaType(type: string): string {
-  switch (type) {
-    case "anime":
-      return "ANIME"
-    case "manga":
-      return "MANGA"
-    case "movie":
-    case "movies":
-      return "MOVIE"
-    case "tv":
-      return "TV"
-    case "game":
-    case "games":
-      return "GAME"
-    case "book":
-    case "books":
-      return "BOOK"
-    case "music":
-      return "MUSIC"
-    default:
-      return "OTHER"
-  }
+interface CachedPlaylistsData {
+  lists: Array<{ id: string; name: string; isPrivate: boolean; entriesCount: number; containsMedia?: boolean }>
+  timestamp: number
 }
 
-function getBackendMediaId(data: any): number {
-  const rawMedia = data.raw?.media ?? data.raw ?? {}
-  return Number(rawMedia?.id ?? data.id)
-}
+const HOVER_PLAYLISTS_CACHE = new Map<string, CachedPlaylistsData>()
+const HOVER_PLAYLISTS_INFLIGHT = new Map<string, Promise<any[]>>()
+const HOVER_PLAYLISTS_CACHE_TTL = 60 * 1000 // 60 seconds
 
 function BorealisCardHoverWatchlistsTab({
   data,
@@ -2987,88 +3213,231 @@ function BorealisCardHoverWatchlistsTab({
 }) {
   const mediaId = getBackendMediaId(data)
   const backendMediaType = toBackendMediaType(data.type)
+  const cacheKey = `${backendMediaType}:${mediaId || 0}`
 
   const [lists, setLists] = useState<
     Array<{ id: string; name: string; isPrivate: boolean; entriesCount: number; containsMedia?: boolean }>
-  >([])
-  const [loading, setLoading] = useState(true)
+  >(() => {
+    const cached = HOVER_PLAYLISTS_CACHE.get(cacheKey)
+    if (cached && Date.now() - cached.timestamp < HOVER_PLAYLISTS_CACHE_TTL) {
+      return cached.lists
+    }
+    return []
+  })
+  const [loading, setLoading] = useState(() => {
+    const cached = HOVER_PLAYLISTS_CACHE.get(cacheKey)
+    return !(cached && Date.now() - cached.timestamp < HOVER_PLAYLISTS_CACHE_TTL)
+  })
   const [newName, setNewName] = useState("")
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      if (!mediaId || Number.isNaN(mediaId)) {
-        setLoading(false)
-        return
-      }
-      try {
-        const params = new URLSearchParams({
-          limit: "100",
-          mediaType: backendMediaType,
-          mediaId: String(mediaId),
-        })
-        const res = await fetch(`/elysia/borealis/playlists?${params.toString()}`, {
-          credentials: "include",
-        })
-        if (!res.ok) throw new Error(String(res.status))
-        const json = await res.json()
-        if (!cancelled) setLists(Array.isArray(json?.playlists) ? json.playlists : [])
-      } catch {
-        if (!cancelled) setError("Failed to load custom lists")
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
+    let isMounted = true
+
+    // Check TTL cache
+    const cached = HOVER_PLAYLISTS_CACHE.get(cacheKey)
+    if (cached && Date.now() - cached.timestamp < HOVER_PLAYLISTS_CACHE_TTL && refreshKey === 0) {
+      setLists(cached.lists)
+      setLoading(false)
+      return
     }
-    void load()
+
+    setLoading(true)
+    setError(null)
+
+    // Deduplicate concurrent in-flight fetches for the same media
+    let fetchPromise = HOVER_PLAYLISTS_INFLIGHT.get(cacheKey)
+    if (!fetchPromise) {
+      const params = new URLSearchParams({ limit: "100" })
+      if (mediaId && mediaId > 0) {
+        params.set("mediaType", backendMediaType)
+        params.set("mediaId", String(mediaId))
+      }
+
+      fetchPromise = safeBorealisFetch(`/borealis/playlists?${params.toString()}`)
+        .then(async (res) => {
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`)
+          }
+          return res.json()
+        })
+        .then((json) => {
+          const rawLists = Array.isArray(json?.playlists)
+            ? json.playlists
+            : Array.isArray(json?.data?.playlists)
+              ? json.data.playlists
+              : []
+          HOVER_PLAYLISTS_CACHE.set(cacheKey, { lists: rawLists, timestamp: Date.now() })
+          return rawLists
+        })
+        .finally(() => {
+          HOVER_PLAYLISTS_INFLIGHT.delete(cacheKey)
+        })
+
+      HOVER_PLAYLISTS_INFLIGHT.set(cacheKey, fetchPromise)
+    }
+
+    fetchPromise
+      .then((rawLists) => {
+        if (!isMounted) return
+        setLists(rawLists)
+      })
+      .catch((err) => {
+        if (!isMounted) return
+        console.error("[BorealisCard] Failed to load custom lists:", err)
+        setError("Failed to load custom lists")
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoading(false)
+        }
+      })
+
     return () => {
-      cancelled = true
+      isMounted = false
     }
-  }, [mediaId, backendMediaType, refreshKey])
+  }, [mediaId, backendMediaType, refreshKey, cacheKey])
+
+  const [operatingIds, setOperatingIds] = useState<Record<string, boolean>>({})
+  const [isCreatingList, setIsCreatingList] = useState(false)
 
   const isChecked = (l: (typeof lists)[number]) =>
-    l.id in listChanges ? listChanges[l.id] : Boolean(l.containsMedia)
+    Boolean(l.containsMedia)
 
-  // Changes are only staged in draft state; they are applied when the entry is saved.
-  const toggle = (list: (typeof lists)[number]) => {
-    onEditStart?.()
-    const next = !isChecked(list)
-    const updated = { ...listChanges }
-    if (next === Boolean(list.containsMedia)) delete updated[list.id]
-    else updated[list.id] = next
-    setListChanges(updated)
+  const toggle = async (list: (typeof lists)[number]) => {
+    if (operatingIds[list.id]) return
+    const currentlyChecked = isChecked(list)
+    const next = !currentlyChecked
+
+    // Optimistically update
+    const updated = lists.map((l) =>
+      l.id === list.id
+        ? {
+            ...l,
+            containsMedia: next,
+            entriesCount: next ? l.entriesCount + 1 : Math.max(0, l.entriesCount - 1),
+          }
+        : l
+    )
+    setLists(updated)
+    HOVER_PLAYLISTS_CACHE.set(cacheKey, { lists: updated, timestamp: Date.now() })
+
+    setOperatingIds((prev) => ({ ...prev, [list.id]: true }))
+    try {
+      if (next) {
+        await safeBorealisFetch(`/borealis/playlists/${list.id}/entries`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mediaType: backendMediaType, mediaId }),
+        })
+      } else {
+        await safeBorealisFetch(
+          `/borealis/playlists/${list.id}/entries?mediaType=${backendMediaType}&mediaId=${mediaId}`,
+          {
+            method: "DELETE",
+          }
+        )
+      }
+    } catch (err) {
+      console.error("Failed to toggle playlist entry:", err)
+      // Rollback
+      const reverted = lists.map((l) =>
+        l.id === list.id
+          ? {
+              ...l,
+              containsMedia: currentlyChecked,
+              entriesCount: currentlyChecked ? l.entriesCount + 1 : Math.max(0, l.entriesCount - 1),
+            }
+          : l
+      )
+      setLists(reverted)
+      HOVER_PLAYLISTS_CACHE.set(cacheKey, { lists: reverted, timestamp: Date.now() })
+    } finally {
+      setOperatingIds((prev) => {
+        const copy = { ...prev }
+        delete copy[list.id]
+        return copy
+      })
+    }
   }
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     const name = newName.trim()
-    if (!name || newLists.includes(name)) return
-    onEditStart?.()
-    setNewLists([...newLists, name])
-    setNewName("")
+    if (!name || isCreatingList) return
+
+    setIsCreatingList(true)
+    setError(null)
+    try {
+      const res = await safeBorealisFetch("/borealis/playlists", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, isPrivate: false }),
+      })
+      if (!res.ok) throw new Error("Failed to create list")
+      const json = await res.json()
+      const newList = json?.playlist
+      if (newList?.id) {
+        if (mediaId && mediaId > 0) {
+          // Add current item to the newly created playlist
+          await safeBorealisFetch(`/borealis/playlists/${newList.id}/entries`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ mediaType: backendMediaType, mediaId }),
+          })
+        }
+        const updated = [
+          {
+            id: newList.id,
+            name: newList.name,
+            isPrivate: Boolean(newList.isPrivate),
+            entriesCount: mediaId && mediaId > 0 ? 1 : 0,
+            containsMedia: Boolean(mediaId && mediaId > 0),
+          },
+          ...lists,
+        ]
+        setLists(updated)
+        HOVER_PLAYLISTS_CACHE.set(cacheKey, { lists: updated, timestamp: Date.now() })
+        // Clear other media cache entries so newly created list is visible on other cards
+        for (const k of HOVER_PLAYLISTS_CACHE.keys()) {
+          if (k !== cacheKey) {
+            HOVER_PLAYLISTS_CACHE.delete(k)
+          }
+        }
+        setNewName("")
+      }
+    } catch (err) {
+      console.error("Failed to create list:", err)
+      setError("Failed to create list")
+    } finally {
+      setIsCreatingList(false)
+    }
   }
 
-  const canEdit = Boolean(config?.canEdit) && isHoverCardEditing
-  const visible = canEdit ? lists : lists.filter((l) => l.containsMedia)
-  const pendingNew = canEdit ? newLists : []
+  const canEdit = config?.canEdit !== false
 
   return (
     <div className="flex flex-col gap-2 p-4 shrink-0">
-      {canEdit && (
+      {canEdit && isHoverCardEditing && (
         <form onSubmit={handleCreate} className="flex items-center gap-2">
           <input
             type="text"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="New list name..."
-            className="h-8 min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-2.5 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-primary/60"
+            disabled={isCreatingList}
+            className="h-8 min-w-0 flex-1 rounded-lg border border-frost bg-frost/80 px-2.5 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-primary/60 backdrop-blur-md"
           />
           <button
             type="submit"
-            disabled={!newName.trim()}
+            disabled={!newName.trim() || isCreatingList}
             className="flex h-8 shrink-0 items-center gap-1 rounded-lg bg-primary px-2.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 cursor-pointer"
           >
-            <IconPlus className="size-3.5" />
+            {isCreatingList ? (
+              <IconLoader2 className="size-3.5 animate-spin" />
+            ) : (
+              <IconPlus className="size-3.5" />
+            )}
             <span>Create</span>
           </button>
         </form>
@@ -3085,64 +3454,52 @@ function BorealisCardHoverWatchlistsTab({
         <div className="flex items-center justify-center py-8">
           <IconLoader2 className="size-5 animate-spin text-primary" />
         </div>
-      ) : visible.length > 0 || pendingNew.length > 0 ? (
-        <div className="max-h-60 overflow-y-auto overscroll-contain flex flex-col gap-1.5 pe-1 [scrollbar-width:thin]">
-          {pendingNew.map((name) => (
-            <div
-              key={`new-${name}`}
-              className="flex items-center justify-between gap-2 rounded-xl border border-primary/40 bg-primary/5 p-2.5"
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <IconFolder className="size-4 text-primary shrink-0" />
-                <span className="truncate text-xs font-semibold text-white">{name}</span>
-                <span className="font-mono text-[10px] text-primary shrink-0">New</span>
-              </div>
-              <button
-                type="button"
-                aria-label={`Remove ${name}`}
-                onClick={() => setNewLists(newLists.filter((n) => n !== name))}
-                className="flex size-6 shrink-0 items-center justify-center rounded-md border border-zinc-700 bg-zinc-800 text-zinc-400 hover:text-red-400 transition-colors cursor-pointer"
-              >
-                <IconX className="size-3" />
-              </button>
-            </div>
-          ))}
-          {visible.map((wl) => {
+      ) : lists.length > 0 ? (
+        <div className="flex flex-col gap-1.5 pe-1">
+          {lists.map((wl) => {
             const checked = isChecked(wl)
+            const isOperating = Boolean(operatingIds[wl.id])
             return (
               <div
                 key={wl.id}
-                className={cn(
-                  "flex items-center justify-between gap-2 rounded-xl border p-2.5",
-                  checked ? "border-primary/40 bg-primary/5" : "border-zinc-800 bg-zinc-900/60"
-                )}
+                className="flex items-center justify-between gap-2.5 rounded-xl border border-zinc-800 bg-zinc-900/60 p-2.5 hover:border-zinc-700 transition-colors"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <IconFolder className="size-4 text-primary shrink-0" />
-                  <span className="truncate text-xs font-semibold text-white">{wl.name}</span>
-                  {wl.isPrivate && <IconLock className="size-3 text-zinc-500 shrink-0" />}
-                  <span className="font-mono text-[10px] text-zinc-400 shrink-0">{wl.entriesCount}</span>
+                  <span className="truncate text-xs font-semibold text-zinc-100">{wl.name}</span>
+                  {wl.isPrivate && <IconLock className="size-3 text-zinc-400 shrink-0" />}
+                  <span className="font-mono text-[10px] text-zinc-300 font-medium shrink-0">{wl.entriesCount}</span>
                 </div>
-                {canEdit ? (
+                {canEdit && isHoverCardEditing ? (
                   <button
                     type="button"
                     role="switch"
                     aria-checked={checked}
                     aria-label={`Include in ${wl.name}`}
+                    disabled={isOperating}
                     onClick={() => toggle(wl)}
                     className={cn(
-                      "flex size-6 shrink-0 items-center justify-center rounded-md border transition-colors cursor-pointer disabled:opacity-60",
+                      "flex size-7 shrink-0 items-center justify-center rounded-lg border transition-colors cursor-pointer disabled:opacity-50",
                       checked
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-zinc-700 bg-zinc-800 text-zinc-500 hover:text-white"
+                        ? "border-primary bg-primary text-primary-foreground shadow-xs hover:bg-primary/90"
+                        : "border-zinc-700/60 bg-zinc-800/80 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-700 hover:text-white"
                     )}
                   >
-                    {checked ? (
+                    {isOperating ? (
+                      <IconLoader2 className="size-3.5 animate-spin" />
+                    ) : checked ? (
                       <IconCheck className="size-3.5 stroke-[3]" />
                     ) : (
                       <IconPlus className="size-3.5" />
                     )}
                   </button>
+                ) : checked ? (
+                  <div
+                    className="flex size-7 shrink-0 items-center justify-center text-primary"
+                    title="Included in list"
+                  >
+                    <IconCheck className="size-4 stroke-[2.5]" />
+                  </div>
                 ) : null}
               </div>
             )
@@ -3352,6 +3709,22 @@ export function BorealisCardHoverContent({
     }
   }, [draftProgress, draftChaptersProgress, maxUnits, maxChapters, draftStatus, draftCompletedAt, draftStartedAt])
 
+  useEffect(() => {
+    if (!isHoverCardEditing) {
+      setDraftNotes(rawEntry?.notes ?? "")
+      setDraftStartedAt(formatDateToYmd(rawEntry?.startedAt))
+      setDraftCompletedAt(formatDateToYmd(rawEntry?.completedAt))
+      setDraftIsPrivate(Boolean(rawEntry?.private ?? rawEntry?.isPrivate ?? false))
+    }
+  }, [
+    isHoverCardEditing,
+    rawEntry?.notes,
+    rawEntry?.startedAt,
+    rawEntry?.completedAt,
+    rawEntry?.private,
+    rawEntry?.isPrivate,
+  ])
+
   const handleSave = async () => {
     if (isSaving) return
     setIsSaving(true)
@@ -3384,9 +3757,8 @@ export function BorealisCardHoverContent({
         if (draftNewLists.length > 0) {
           for (const name of draftNewLists) {
             try {
-              const res = await fetch("/elysia/borealis/playlists", {
+              const res = await safeBorealisFetch("/borealis/playlists", {
                 method: "POST",
-                credentials: "include",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name, isPrivate: false }),
               })
@@ -3394,9 +3766,8 @@ export function BorealisCardHoverContent({
                 const json = await res.json()
                 const pid = json?.playlist?.id
                 if (pid) {
-                  await fetch(`/elysia/borealis/playlists/${pid}/entries`, {
+                  await safeBorealisFetch(`/borealis/playlists/${pid}/entries`, {
                     method: "POST",
-                    credentials: "include",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ mediaType: backendMediaType, mediaId }),
                   })
@@ -3410,12 +3781,20 @@ export function BorealisCardHoverContent({
         if (Object.keys(draftListChanges).length > 0) {
           for (const [listId, shouldContain] of Object.entries(draftListChanges)) {
             try {
-              await fetch(`/elysia/borealis/playlists/${listId}/entries`, {
-                method: shouldContain ? "POST" : "DELETE",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ mediaType: backendMediaType, mediaId }),
-              })
+              if (shouldContain) {
+                await safeBorealisFetch(`/borealis/playlists/${listId}/entries`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ mediaType: backendMediaType, mediaId }),
+                })
+              } else {
+                await safeBorealisFetch(
+                  `/borealis/playlists/${listId}/entries?mediaType=${backendMediaType}&mediaId=${mediaId}`,
+                  {
+                    method: "DELETE",
+                  }
+                )
+              }
             } catch (e) {
               console.error(`Failed to update custom list ${listId}:`, e)
             }
@@ -3457,6 +3836,106 @@ export function BorealisCardHoverContent({
     setDraftNewLists([])
     setIsHoverCardEditing?.(false)
   }
+
+  const mediaId = Number(
+    rawMedia?.id ||
+    data.id ||
+    (rawEntry as any)?.animeId ||
+    (rawEntry as any)?.mangaId ||
+    (rawEntry as any)?.movieId ||
+    (rawEntry as any)?.tvId ||
+    (rawEntry as any)?.gameId ||
+    (rawEntry as any)?.bookId ||
+    (rawEntry as any)?.musicId ||
+    (rawEntry as any)?.otherId
+  )
+
+  const [fetchedExtra, setFetchedExtra] = useState<MediaHoverExtra | null>(() => {
+    const key = `${data.type}:${mediaId}`
+    return mediaHoverExtraCache.get(key) || null
+  })
+
+  useEffect(() => {
+    if (config.showTabNav || (!isHovered && !isHoverCardEditing) || !mediaId || isNaN(mediaId)) {
+      return
+    }
+
+    const key = `${data.type}:${mediaId}`
+    if (mediaHoverExtraCache.has(key)) {
+      setFetchedExtra(mediaHoverExtraCache.get(key)!)
+      return
+    }
+
+    let isMounted = true
+    let promise = inFlightMediaHoverExtra.get(key)
+
+    if (!promise) {
+      promise = (async (): Promise<MediaHoverExtra> => {
+        const pathPrefix = getMediaApiPath(data.type)
+        if (!pathPrefix || pathPrefix === "other" || pathPrefix === "studio" || pathPrefix === "character" || pathPrefix === "staff") {
+          return {}
+        }
+
+        const result: MediaHoverExtra = {}
+        try {
+          const detailRes = await safeBorealisFetch(`/borealis/media/${pathPrefix}/${mediaId}`)
+          if (detailRes.ok) {
+            const json = await detailRes.json()
+            if (json.media) {
+              if (Array.isArray(json.media.relations)) {
+                result.relations = json.media.relations
+              }
+              if (json.media.description) {
+                result.description = json.media.description
+              }
+            }
+          }
+        } catch {}
+
+        try {
+          const similarRes = await safeBorealisFetch(`/borealis/media/${pathPrefix}/${mediaId}/similar?limit=6`)
+          if (similarRes.ok) {
+            const json = await similarRes.json()
+            if (Array.isArray(json.similar)) {
+              result.similar = json.similar
+            }
+          }
+        } catch {}
+
+        mediaHoverExtraCache.set(key, result)
+        return result
+      })().finally(() => {
+        inFlightMediaHoverExtra.delete(key)
+      })
+
+      inFlightMediaHoverExtra.set(key, promise)
+    }
+
+    promise.then((res) => {
+      if (isMounted) {
+        setFetchedExtra(res)
+      }
+    })
+
+    return () => {
+      isMounted = false
+    }
+  }, [config.showTabNav, isHovered, isHoverCardEditing, data.type, mediaId])
+
+  const effectiveSimilar = useMemo(() => {
+    if (Array.isArray(data.hoverDetails?.recommendations) && data.hoverDetails.recommendations.length > 0) {
+      return data.hoverDetails.recommendations
+    }
+    if (Array.isArray(rawMedia?.recommendations) && rawMedia.recommendations.length > 0) {
+      return rawMedia.recommendations
+    }
+    if (Array.isArray(rawMedia?.similar) && rawMedia.similar.length > 0) {
+      return rawMedia.similar
+    }
+    return fetchedExtra?.similar || []
+  }, [data.hoverDetails?.recommendations, rawMedia?.recommendations, rawMedia?.similar, fetchedExtra?.similar])
+
+  const effectiveDescription = data.hoverDetails?.description || rawMedia?.description || fetchedExtra?.description
 
   const [mounted, setMounted] = useState(false)
   const [coords, setCoords] = useState<{
@@ -3625,7 +4104,8 @@ export function BorealisCardHoverContent({
           e.stopPropagation()
           handleSave()
         }}
-        className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+        className="flex size-7 items-center justify-center rounded-lg !bg-white !text-zinc-950 font-bold hover:!bg-zinc-200 transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+        style={{ backgroundColor: "#ffffff", color: "#09090b" }}
         aria-label="Save"
         title="Save"
       >
@@ -3643,7 +4123,7 @@ export function BorealisCardHoverContent({
           e.stopPropagation()
           handleCancel()
         }}
-        className="flex size-7 items-center justify-center rounded-lg border border-zinc-700/60 bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+        className="flex size-7 items-center justify-center rounded-lg border border-frost bg-frost/80 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer disabled:opacity-50 backdrop-blur-md"
         aria-label="Cancel"
         title="Cancel"
       >
@@ -3719,7 +4199,7 @@ export function BorealisCardHoverContent({
 
       {/* Tabs Icon Navigation Bar - Active tab expands icon with text label (only visible when showTabNav is true) */}
       {config.showTabNav && (
-        <div className="relative z-20 flex items-center justify-between gap-1 border-b border-zinc-800/80 bg-zinc-950/80 px-2.5 py-1.5 shrink-0">
+        <div className="relative z-20 flex items-center justify-between gap-1 border-b border-frost bg-frost/80 px-2.5 py-1.5 shrink-0 backdrop-blur-md">
           <div className="flex items-center gap-1 overflow-x-auto [scrollbar-width:none] min-w-0">
             <button
               type="button"
@@ -3727,10 +4207,10 @@ export function BorealisCardHoverContent({
               title="General"
               aria-label="General"
               className={cn(
-                "relative z-20 flex h-7 items-center gap-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 cursor-pointer border select-none",
+                "relative z-20 flex h-7 items-center gap-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 cursor-pointer border select-none backdrop-blur-md",
                 activeTab === "general"
-                  ? "border-primary/60 bg-primary/20 text-primary shadow-xs px-2.5"
-                  : "border-transparent text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 px-2"
+                  ? "border-zinc-700/80 bg-zinc-800/80 text-zinc-100 shadow-xs px-2.5"
+                  : "border-transparent text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100 px-2"
               )}
             >
               <IconLayoutGrid className="size-4 shrink-0" />
@@ -3743,10 +4223,10 @@ export function BorealisCardHoverContent({
                 title="Episodes"
                 aria-label="Episodes"
                 className={cn(
-                  "relative z-20 flex h-7 items-center gap-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 cursor-pointer border select-none",
+                  "relative z-20 flex h-7 items-center gap-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 cursor-pointer border select-none backdrop-blur-md",
                   activeTab === "episodes"
-                    ? "border-primary/60 bg-primary/20 text-primary shadow-xs px-2.5"
-                    : "border-transparent text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 px-2"
+                    ? "border-zinc-700/80 bg-zinc-800/80 text-zinc-100 shadow-xs px-2.5"
+                    : "border-transparent text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100 px-2"
                 )}
               >
                 <IconDeviceTv className="size-4 shrink-0" />
@@ -3760,10 +4240,10 @@ export function BorealisCardHoverContent({
                 title={repeatLabel.plural}
                 aria-label={repeatLabel.plural}
                 className={cn(
-                  "relative z-20 flex h-7 items-center gap-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 cursor-pointer border select-none",
+                  "relative z-20 flex h-7 items-center gap-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 cursor-pointer border select-none backdrop-blur-md",
                   activeTab === "repeats"
-                    ? "border-primary/60 bg-primary/20 text-primary shadow-xs px-2.5"
-                    : "border-transparent text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 px-2"
+                    ? "border-zinc-700/80 bg-zinc-800/80 text-zinc-100 shadow-xs px-2.5"
+                    : "border-transparent text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100 px-2"
                 )}
               >
                 <IconRotate2 className="size-4 shrink-0" />
@@ -3777,10 +4257,10 @@ export function BorealisCardHoverContent({
                 title="Connections"
                 aria-label="Connections"
                 className={cn(
-                  "relative z-20 flex h-7 items-center gap-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 cursor-pointer border select-none",
+                  "relative z-20 flex h-7 items-center gap-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 cursor-pointer border select-none backdrop-blur-md",
                   activeTab === "connections"
-                    ? "border-primary/60 bg-primary/20 text-primary shadow-xs px-2.5"
-                    : "border-transparent text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 px-2"
+                    ? "border-zinc-700/80 bg-zinc-800/80 text-zinc-100 shadow-xs px-2.5"
+                    : "border-transparent text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100 px-2"
                 )}
               >
                 <IconLink className="size-4 shrink-0" />
@@ -3793,10 +4273,10 @@ export function BorealisCardHoverContent({
               title="Custom Lists"
               aria-label="Custom Lists"
               className={cn(
-                "relative z-20 flex h-7 items-center gap-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 cursor-pointer border select-none",
+                "relative z-20 flex h-7 items-center gap-1.5 rounded-lg text-xs font-semibold transition-all duration-150 shrink-0 cursor-pointer border select-none backdrop-blur-md",
                 activeTab === "watchlists"
-                  ? "border-primary/60 bg-primary/20 text-primary shadow-xs px-2.5"
-                  : "border-transparent text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 px-2"
+                  ? "border-zinc-700/80 bg-zinc-800/80 text-zinc-100 shadow-xs px-2.5"
+                  : "border-transparent text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100 px-2"
               )}
             >
               <IconFolder className="size-4 shrink-0" />
@@ -3813,7 +4293,7 @@ export function BorealisCardHoverContent({
                 e.stopPropagation()
                 setIsHoverCardEditing?.(true)
               }}
-              className="relative z-20 ms-auto flex size-7 items-center justify-center rounded-lg border border-zinc-700/60 bg-zinc-800/80 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-700 hover:text-white transition-colors cursor-pointer shrink-0"
+              className="relative z-20 ms-auto flex size-7 items-center justify-center rounded-lg border border-frost bg-frost/80 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer shrink-0 backdrop-blur-md"
               aria-label="Edit list entry"
               title="Edit list entry"
             >
@@ -3869,7 +4349,7 @@ export function BorealisCardHoverContent({
                       e.stopPropagation()
                       setIsHoverCardEditing?.(true)
                     }}
-                    className="flex size-7 items-center justify-center rounded-lg border border-zinc-700/60 bg-zinc-800/80 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-700 hover:text-white transition-colors cursor-pointer shrink-0"
+                    className="flex size-7 items-center justify-center rounded-lg border border-frost bg-frost/80 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer shrink-0 backdrop-blur-md"
                     aria-label="Edit list entry"
                     title="Edit list entry"
                   >
@@ -3955,9 +4435,9 @@ export function BorealisCardHoverContent({
               )}
             </div>
 
-            {/* User List Entry Details: Dates, Private, Notes */}
-            {(draftStartedAt || draftCompletedAt || draftIsPrivate || draftNotes) && (
-              <div className="flex flex-col gap-2 rounded-xl border border-zinc-800/80 bg-zinc-950/60 p-2.5 text-xs">
+            {/* User List Entry Details: Dates, Private, Notes (Owner only) */}
+            {config.canEdit && (draftStartedAt || draftCompletedAt || draftIsPrivate || draftNotes) && (
+              <div className="flex flex-col gap-2 rounded-xl border border-frost bg-frost/70 p-2.5 text-xs backdrop-blur-md">
                 <div className="flex items-center justify-between gap-2">
                   {(draftStartedAt || draftCompletedAt) ? (
                     <div className="flex items-center gap-1.5 font-mono text-[11px] text-zinc-300">
@@ -3969,7 +4449,7 @@ export function BorealisCardHoverContent({
                   ) : <span />}
 
                   {draftIsPrivate && (
-                    <span className="inline-flex items-center gap-1 rounded-md border border-zinc-700/60 bg-zinc-900/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-zinc-300">
+                    <span className="inline-flex items-center gap-1 rounded-md border border-frost bg-frost/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-zinc-300 backdrop-blur-md">
                       <IconLock className="size-3 text-zinc-400" />
                       Private
                     </span>
@@ -3977,7 +4457,7 @@ export function BorealisCardHoverContent({
                 </div>
 
                 {draftNotes && (
-                  <div className="flex flex-col gap-0.5 border-t border-zinc-800/80 pt-1.5">
+                  <div className="flex flex-col gap-0.5 border-t border-frost/60 pt-1.5">
                     <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
                       <IconFileText className="size-3" />
                       Notes
@@ -3990,10 +4470,10 @@ export function BorealisCardHoverContent({
               </div>
             )}
 
-            {/* Formatted Description */}
-            {details?.description ? (
+            {/* Formatted Description (only render if user is not the owner) */}
+            {!config.canEdit && effectiveDescription ? (
               <BorealisFormattedText
-                text={details.description}
+                text={effectiveDescription}
                 className="select-text font-mono text-xs text-zinc-300 leading-relaxed"
               />
             ) : null}
@@ -4045,6 +4525,61 @@ export function BorealisCardHoverContent({
                     {genre}
                   </span>
                 ))}
+              </div>
+            )}
+
+            {/* Similar Series / Recommendations */}
+            {effectiveSimilar.length > 0 && (
+              <div className="flex flex-col gap-2 border-t border-zinc-800/80 pt-3">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-zinc-300 font-mono">
+                  <IconSparkles className="size-3.5 text-amber-400" />
+                  <span>Similar Series</span>
+                  <span className="rounded-full bg-zinc-800 px-1.5 py-0.2 font-mono text-[10px] text-zinc-400">
+                    {effectiveSimilar.length}
+                  </span>
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+                  {effectiveSimilar.slice(0, 8).map((item: any, idx: number) => {
+                    const simMedia = item.media || item.target || item
+                    const simId = simMedia.id || item.id
+                    const simTitle = simMedia.titlePrimary || simMedia.title?.romaji || simMedia.title || "Untitled"
+                    const simCover = simMedia.coverImage || simMedia.image
+                    const simScore = simMedia.averageScore
+                    const simType = (simMedia.type || data.type || "anime").toLowerCase()
+
+                    return (
+                      <a
+                        key={item.id ?? `${simId}-${idx}`}
+                        href={`/borealis/${simType === "movies" ? "movie" : simType}/${simId}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="group/sim flex w-20 shrink-0 flex-col gap-1 rounded-lg transition-all"
+                      >
+                        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg border border-frost bg-zinc-900 ring-1 ring-white/5">
+                          {simCover ? (
+                            <img
+                              src={simCover}
+                              alt=""
+                              className="size-full object-cover transition-transform duration-200 group-hover/sim:scale-105"
+                            />
+                          ) : (
+                            <div className="flex size-full items-center justify-center text-[10px] text-zinc-500">
+                              N/A
+                            </div>
+                          )}
+                          {simScore && (
+                            <div className="absolute bottom-1 start-1 flex items-center gap-0.5 rounded bg-black/80 px-1 py-0.2 font-mono text-[9px] font-bold text-amber-300 backdrop-blur-md">
+                              <IconStar className="size-2.5 fill-amber-300" />
+                              <span>{Number(simScore).toFixed(1)}</span>
+                            </div>
+                          )}
+                        </div>
+                        <span className="line-clamp-2 text-[11px] font-medium leading-tight text-zinc-300 group-hover/sim:text-primary transition-colors">
+                          {simTitle}
+                        </span>
+                      </a>
+                    )
+                  })}
+                </div>
               </div>
             )}
           </div>
@@ -4108,7 +4643,7 @@ export function BorealisCardHoverContent({
 
       {/* Edit mode actions: replace pencil with save (check) + cancel (x) */}
       {isHoverCardEditing && !config.showTabNav && (
-        <div className="flex items-center justify-end border-b border-zinc-800 px-3 py-2">
+        <div className="flex items-center justify-end border-b border-frost/60 bg-frost/60 px-3 py-2 backdrop-blur-md">
           {editActions}
         </div>
       )}

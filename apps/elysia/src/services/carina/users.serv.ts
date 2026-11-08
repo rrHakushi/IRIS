@@ -936,32 +936,32 @@ export class CarinaUsersServ {
     ] = await Promise.all([
       animeIds.length
         ? prisma.orm.public.Anime.where((m) => m.id.in(animeIds))
-            .select('id', 'titlePrimary', 'titleSecondary', 'titleNative', 'coverImage', 'format')
+            .select('id', 'titlePrimary', 'titleSecondary', 'titleNative', 'coverImage', 'bannerImage', 'format', 'description', 'averageScore', 'status', 'startDateYear', 'episodeCount')
             .all()
         : [],
       mangaIds.length
         ? prisma.orm.public.Manga.where((m) => m.id.in(mangaIds))
-            .select('id', 'titlePrimary', 'titleSecondary', 'titleNative', 'coverImage', 'format')
+            .select('id', 'titlePrimary', 'titleSecondary', 'titleNative', 'coverImage', 'bannerImage', 'format', 'description', 'averageScore', 'status', 'startDateYear', 'chapterCount', 'volumeCount')
             .all()
         : [],
       movieIds.length
         ? prisma.orm.public.Movie.where((m) => m.id.in(movieIds))
-            .select('id', 'titlePrimary', 'titleSecondary', 'titleNative', 'coverImage')
+            .select('id', 'titlePrimary', 'titleSecondary', 'titleNative', 'coverImage', 'bannerImage', 'description', 'averageScore', 'status', 'releaseDateYear')
             .all()
         : [],
       tvIds.length
         ? prisma.orm.public.Tv.where((m) => m.id.in(tvIds))
-            .select('id', 'titlePrimary', 'titleSecondary', 'titleNative', 'coverImage')
+            .select('id', 'titlePrimary', 'titleSecondary', 'titleNative', 'coverImage', 'bannerImage', 'description', 'averageScore', 'status', 'firstAiredYear', 'episodeCount')
             .all()
         : [],
       gameIds.length
         ? prisma.orm.public.Game.where((m) => m.id.in(gameIds))
-            .select('id', 'titlePrimary', 'titleSecondary', 'coverImage')
+            .select('id', 'titlePrimary', 'titleSecondary', 'coverImage', 'bannerImage', 'description', 'averageScore', 'status', 'releaseDateYear')
             .all()
         : [],
       bookIds.length
         ? prisma.orm.public.Book.where((m) => m.id.in(bookIds))
-            .select('id', 'titlePrimary', 'titleSecondary', 'coverImage')
+            .select('id', 'titlePrimary', 'titleSecondary', 'coverImage', 'bannerImage', 'description', 'averageScore', 'status', 'releaseDateYear')
             .all()
         : [],
       musicIds.length

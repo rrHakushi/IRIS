@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useMemo } from "react"
 import dynamic from "next/dynamic"
 import { elysia } from "@/lib/elysia"
 import { LinkButton } from "@workspace/ui/components/button"
@@ -17,6 +17,8 @@ import { cn } from "@workspace/ui/lib/utils"
 import { resolveUserId } from "@/lib/user-profile"
 import { BorealisCard, BorealisCardGroup } from "@Runa/borealis"
 import { saveListEntry } from "@/lib/save-list-entry"
+import { useEncryption } from "@/context/encryption-context"
+import { deriveVaultKey, safeDecryptText, safeEncryptText } from "@/lib/client-encryption"
 import {
   toNormalizedMedia,
   toMediaListEntry,
@@ -236,6 +238,28 @@ export function ListsTab({ username, userId, isOwner }: ListsTabProps): React.JS
     [activeType]
   )
 
+  const { secretKey, isActive: isVaultActive } = useEncryption()
+  const vaultKey = useMemo(
+    () => (isVaultActive && secretKey ? deriveVaultKey(secretKey) : null),
+    [isVaultActive, secretKey]
+  )
+
+  const prepareCardItem = useCallback(
+    (item: ListEntryData): ListEntryData => {
+      if (!item?.entry?.notes || !isOwner) return item
+      const decrypted = safeDecryptText(item.entry.notes, vaultKey)
+      if (decrypted === item.entry.notes) return item
+      return {
+        ...item,
+        entry: {
+          ...item.entry,
+          notes: decrypted,
+        },
+      }
+    },
+    [vaultKey, isOwner]
+  )
+
   const handleItemUpdated = useCallback(
     (entryId: number, updated: any) => {
       if (!updated) {
@@ -259,6 +283,56 @@ export function ListsTab({ username, userId, isOwner }: ListsTabProps): React.JS
       invalidateClientLists(username, activeType)
     },
     [username, activeType]
+  )
+
+  const handleStatusChange = useCallback(
+    async (item: ListEntryData, newStatus: any) => {
+      if (!isOwner) return
+      const entryId = item.entry.id
+      const mediaId = Number(
+        item.media?.id ||
+          (item.entry as any)?.animeId ||
+          (item.entry as any)?.mangaId ||
+          (item.entry as any)?.movieId ||
+          (item.entry as any)?.tvId ||
+          (item.entry as any)?.gameId ||
+          (item.entry as any)?.bookId ||
+          (item.entry as any)?.musicId ||
+          (item.entry as any)?.otherId
+      )
+      handleItemUpdated(entryId, { status: newStatus })
+      try {
+        await saveListEntry(activeType, mediaId, { status: newStatus } as any)
+      } catch (err) {
+        console.error("[ListsTab] Failed to update status:", err)
+      }
+    },
+    [isOwner, activeType, handleItemUpdated]
+  )
+
+  const handleScoreChange = useCallback(
+    async (item: ListEntryData, newScore: number | null) => {
+      if (!isOwner) return
+      const entryId = item.entry.id
+      const mediaId = Number(
+        item.media?.id ||
+          (item.entry as any)?.animeId ||
+          (item.entry as any)?.mangaId ||
+          (item.entry as any)?.movieId ||
+          (item.entry as any)?.tvId ||
+          (item.entry as any)?.gameId ||
+          (item.entry as any)?.bookId ||
+          (item.entry as any)?.musicId ||
+          (item.entry as any)?.otherId
+      )
+      handleItemUpdated(entryId, { score: newScore ?? 0 })
+      try {
+        await saveListEntry(activeType, mediaId, { score: newScore } as any)
+      } catch (err) {
+        console.error("[ListsTab] Failed to update score:", err)
+      }
+    },
+    [isOwner, activeType, handleItemUpdated]
   )
 
   return (
@@ -343,9 +417,9 @@ export function ListsTab({ username, userId, isOwner }: ListsTabProps): React.JS
           </div>
         ) : (
           <BorealisCardGroup
-            rowCount={1}
-            dragFree
-            variant="ghost"
+            grid
+            variant="none"
+            gap="md"
             className="w-full"
           >
             {items.map((item, idx) => {
@@ -366,17 +440,30 @@ export function ListsTab({ username, userId, isOwner }: ListsTabProps): React.JS
                         {},
                     }
 
+              const cardData = prepareCardItem(normalizedItem)
+
               return (
                 <BorealisCard
                   key={`${normalizedItem.entry?.id ?? idx}-${normalizedItem.media?.id ?? idx}`}
                   type={activeType}
-                  data={normalizedItem}
+                  data={cardData}
                   showSubtitle={false}
                   showHoverSubtitle={false}
-                  showTabNav={true}
-                  showExtras={false}
+                  showTabNav={isOwner}
+                  showExtras={true}
+                  statusIconOnly={true}
                   canEdit={isOwner}
-                  onEdit={() => handleOpenEditModal(normalizedItem)}
+                  onStatusChange={
+                    isOwner
+                      ? (newStatus) => handleStatusChange(cardData, newStatus)
+                      : undefined
+                  }
+                  onScoreChange={
+                    isOwner
+                      ? (newScore) => handleScoreChange(cardData, newScore)
+                      : undefined
+                  }
+                  onEdit={isOwner ? () => handleOpenEditModal(cardData) : undefined}
                   onSaveEntry={
                     isOwner
                       ? async (payload) => {
@@ -391,7 +478,13 @@ export function ListsTab({ username, userId, isOwner }: ListsTabProps): React.JS
                               (normalizedItem.entry as any)?.musicId ||
                               (normalizedItem.entry as any)?.otherId
                           )
-                          await saveListEntry(activeType, mediaId, payload)
+                          const encryptedPayload = {
+                            ...payload,
+                            notes: payload.notes
+                              ? safeEncryptText(payload.notes, vaultKey)
+                              : payload.notes,
+                          }
+                          await saveListEntry(activeType, mediaId, encryptedPayload)
                           handleItemUpdated(normalizedItem.entry.id, payload)
                         }
                       : undefined

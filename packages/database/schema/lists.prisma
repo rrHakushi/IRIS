@@ -34,6 +34,11 @@ enum ListStatus {
     MAYBE
 }
 
+enum CollaboratorRole {
+    EDITOR
+    VIEWER
+}
+
 model CustomList {
     id          String   @id @onCreate(uuid())
     userId      String
@@ -45,13 +50,29 @@ model CustomList {
     coverImage  String?
     order       Int      @default(0)
 
-    entries CustomListEntry[]
+    entries       CustomListEntry[]
+    collaborators CustomListCollaborator[]
+    comments      ListComment[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
     @@index([userId])
     @@index([userId, isDefault])
+}
+
+model CustomListCollaborator {
+    id        String           @id @onCreate(uuid())
+    listId    String
+    list      CustomList       @relation(fields: [listId], references: [id], onDelete: Cascade)
+    userId    String
+    user      User             @relation("UserCollaborations", fields: [userId], references: [id], onDelete: Cascade)
+    role      CollaboratorRole @default(EDITOR)
+    createdAt DateTime         @default(now())
+
+    @@unique([listId, userId])
+    @@index([userId])
+    @@index([listId])
 }
 
 model CustomListEntry {
@@ -334,19 +355,22 @@ model MusicList {
 }
 
 model ListComment {
-    id          String             @id @onCreate(uuid())
-    listOwnerId String
-    listOwner   User               @relation("ListOwnerComments", fields: [listOwnerId], references: [id], onDelete: Cascade)
-    mediaType   String             // "anime" | "manga" | "movie" | "tv" | "game" | "book" | "music"
-    authorId    String
-    author      User               @relation("AuthorListComments", fields: [authorId], references: [id], onDelete: Cascade)
-    content     String
-    isSpoiler   Boolean            @default(false)
-    reply       ListCommentReply?
-    createdAt   DateTime           @default(now())
-    updatedAt   DateTime           @onCreate(now()) @onUpdate(now())
+    id           String            @id @onCreate(uuid())
+    listOwnerId  String
+    listOwner    User              @relation("ListOwnerComments", fields: [listOwnerId], references: [id], onDelete: Cascade)
+    mediaType    String // "anime" | "manga" | "movie" | "tv" | "game" | "book" | "music" | "custom"
+    authorId     String
+    author       User              @relation("AuthorListComments", fields: [authorId], references: [id], onDelete: Cascade)
+    content      String
+    isSpoiler    Boolean           @default(false)
+    reply        ListCommentReply?
+    customListId String?
+    customList   CustomList?       @relation(fields: [customListId], references: [id], onDelete: Cascade)
+    createdAt    DateTime          @default(now())
+    updatedAt    DateTime          @onCreate(now()) @onUpdate(now())
 
     @@index([listOwnerId, mediaType, createdAt])
+    @@index([customListId, createdAt])
     @@index([authorId])
 }
 

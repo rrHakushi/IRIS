@@ -403,7 +403,7 @@ export function BorealisCardGroup({
               ? { gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))` }
               : contentClassName?.includes("grid-cols")
                 ? undefined
-                : { gridTemplateColumns: "repeat(auto-fill, minmax(9.5rem, 1fr))" }),
+                : { gridTemplateColumns: "repeat(auto-fill, minmax(10rem, 1fr))" }),
           }}
           className={cn(
             "w-full",

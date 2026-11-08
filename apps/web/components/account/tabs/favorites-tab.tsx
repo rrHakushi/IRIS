@@ -17,7 +17,7 @@ import {
 } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { resolveUserId } from "@/lib/user-profile"
-import { BorealisCard, type BorealisEntityType } from "@Runa/borealis"
+import { BorealisCard, BorealisCardGroup, type BorealisEntityType } from "@Runa/borealis"
 import type { ListEntryData, MediaListType } from "@/components/lists/types"
 import { getMediaDetailHref } from "@/lib/media-routes"
 
@@ -186,7 +186,7 @@ export function FavoritesTab({ username, userId, isOwner }: FavoritesTabProps): 
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2.5 sm:gap-3">
+        <BorealisCardGroup grid variant="none" gap="md" className="w-full">
           {filteredFavorites.map((fav, idx) => {
             const entity = fav.entity || {}
             const title = entity.title || `${fav.type} #${fav.targetId}`
@@ -246,6 +246,7 @@ export function FavoritesTab({ username, userId, isOwner }: FavoritesTabProps): 
                 ? "music"
                 : CATEGORY_TO_MEDIA_TYPE[fav.type] || currentMediaType || "anime"
 
+            const rawMediaData = entity.raw || {}
             const normalizedItem: ListEntryData = {
               entry: {
                 id: fav.targetId,
@@ -265,12 +266,13 @@ export function FavoritesTab({ username, userId, isOwner }: FavoritesTabProps): 
                 updatedAt: fav.createdAt,
               },
               media: {
+                ...rawMediaData,
                 id: fav.targetId,
                 titlePrimary: title,
                 title,
                 titleSecondary: subtitle,
                 coverImage,
-                format: entity.format,
+                format: entity.format || rawMediaData.format,
                 artistName: subtitle,
                 updatedAt: fav.createdAt,
               },
@@ -281,11 +283,15 @@ export function FavoritesTab({ username, userId, isOwner }: FavoritesTabProps): 
                 key={`${fav.id}-${fav.targetId}`}
                 type={rawType as BorealisEntityType}
                 data={normalizedItem}
+                showTabNav={isOwner}
+                showExtras={true}
+                statusIconOnly={true}
+                canEdit={isOwner}
                 priority={idx < 4}
               />
             )
           })}
-        </div>
+        </BorealisCardGroup>
       )}
     </div>
   )

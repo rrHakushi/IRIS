@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef, useCallback } from "react"
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useSession } from "@/context/session-context"
 import { toast } from "sonner"
 import { elysia } from "@/lib/elysia"
@@ -14,6 +14,7 @@ import {
 import { UserListBanner } from "./user-list-banner"
 import { ListStatusCard } from "./list-status-card"
 import { MediaListGrid } from "./media-list-grid"
+import { type ListStatus, getMediaListStatusText } from "@Runa/borealis"
 
 const ListCommentsTab = dynamic(
   () => import("./list-comments-tab").then((m) => m.ListCommentsTab),
@@ -37,6 +38,8 @@ const CreateOtherItemDialog = dynamic(
 import { IconPlus } from "@tabler/icons-react"
 import { Button } from "@workspace/ui/components/button"
 import { invalidateClientStats } from "./stats/media-stats-tab"
+import { useEncryption } from "@/context/encryption-context"
+import { deriveVaultKey, safeDecryptText } from "@/lib/client-encryption"
 import type {
   MediaListType,
   StatusKey,
@@ -406,6 +409,42 @@ export function UserListView({
   const lastFetchedFacetsKeyRef = useRef<string | null>(null)
   const isFetchingFacetsRef = useRef(false)
 
+  // Client-side zero-knowledge decryption
+  const { secretKey, isActive: isVaultActive } = useEncryption()
+  const vaultKey = useMemo(
+    () => (isVaultActive && secretKey ? deriveVaultKey(secretKey) : null),
+    [isVaultActive, secretKey]
+  )
+
+  const decryptListItems = useCallback(
+    (rawItems: ListEntryData[]): ListEntryData[] => {
+      if (!vaultKey) return rawItems
+      return rawItems.map((item) => {
+        if (item.entry?.notes) {
+          const decrypted = safeDecryptText(item.entry.notes, vaultKey)
+          if (decrypted !== item.entry.notes) {
+            return {
+              ...item,
+              entry: {
+                ...item.entry,
+                notes: decrypted,
+              },
+            }
+          }
+        }
+        return item
+      })
+    },
+    [vaultKey]
+  )
+
+  // Re-decrypt items if vault is unlocked after data was already fetched
+  useEffect(() => {
+    if (vaultKey && items.length > 0) {
+      setItems((prev) => decryptListItems(prev))
+    }
+  }, [vaultKey, decryptListItems])
+
   // ---------------------------------------------------------------------------
   // 1. Fetch Filter Facets & Counts (Guarded against double-fetching on mount)
   // ---------------------------------------------------------------------------
@@ -510,7 +549,8 @@ export function UserListView({
         })
 
         if (!error && data && data.success) {
-          setItems((data.items as ListEntryData[]) || [])
+          const rawItems = (data.items as ListEntryData[]) || []
+          setItems(decryptListItems(rawItems))
           setPage(1)
           setHasMore(Boolean(data.pagination?.hasMore))
           setTotalCount(data.pagination?.total ?? 0)
@@ -539,6 +579,7 @@ export function UserListView({
       sortBy,
       sortOrder,
       debouncedSearch,
+      decryptListItems,
     ]
   )
 
@@ -593,7 +634,7 @@ export function UserListView({
 
       if (!error && data && data.success) {
         const newItems = (data.items as ListEntryData[]) || []
-        setItems((prev) => [...prev, ...newItems])
+        setItems((prev) => [...prev, ...decryptListItems(newItems)])
         setPage(nextPage)
         setHasMore(Boolean(data.pagination?.hasMore))
       } else {
@@ -913,7 +954,9 @@ export function UserListView({
                     updatedEntry.chaptersProgress ?? updatedEntry.progress,
                   volumesProgress: updatedEntry.volumesProgress,
                   score: updatedEntry.score,
-                  notes: updatedEntry.notes,
+                  notes: updatedEntry.notes
+                    ? safeDecryptText(updatedEntry.notes, vaultKey)
+                    : updatedEntry.notes,
                   rewatched: rewatchedCount,
                   reread: updatedEntry.reread ?? rewatchedCount,
                   replayed: (updatedEntry as any).replayed ?? rewatchedCount,
@@ -1009,6 +1052,102 @@ export function UserListView({
       } catch (err) {
         console.error("[UserListView] Failed to update score:", err)
         toast.error("Failed to update score")
+        fetchItems(true)
+      }
+    },
+    [handleItemUpdated, mediaType, username, fetchItems]
+  )
+
+  const handleStatusChange = useCallback(
+    async (item: ListEntryData, newStatus: ListStatus) => {
+      const entryId = item.entry.id
+      const numMediaId = Number(
+        item.media?.id ||
+          (item.entry as any)?.animeId ||
+          (item.entry as any)?.mangaId ||
+          (item.entry as any)?.tvId ||
+          (item.entry as any)?.movieId ||
+          (item.entry as any)?.gameId ||
+          (item.entry as any)?.bookId
+      )
+
+      handleItemUpdated(entryId, {
+        ...item.entry,
+        status: newStatus,
+      })
+
+      try {
+        let res: { error?: any }
+        switch (mediaType) {
+          case "anime":
+            res = await elysia.borealis.lists.anime({ animeId: numMediaId }).post({ status: newStatus })
+            break
+          case "manga":
+            res = await elysia.borealis.lists.manga({ mangaId: numMediaId }).post({ status: newStatus })
+            break
+          case "movie":
+            res = await elysia.borealis.lists.movies({ movieId: numMediaId }).post({ status: newStatus })
+            break
+          case "tv":
+            res = await elysia.borealis.lists.tv({ tvId: numMediaId }).post({ status: newStatus })
+            break
+          case "game":
+            res = await elysia.borealis.lists.games({ gameId: numMediaId }).post({ status: newStatus })
+            break
+          case "book":
+            res = await elysia.borealis.lists.books({ bookId: numMediaId }).post({ status: newStatus })
+            break
+          case "other":
+            res = await elysia.borealis.lists.other({ otherId: numMediaId }).post({ status: newStatus })
+            break
+          default:
+            res = {}
+            break
+        }
+
+        if (res?.error) {
+          throw new Error(res.error.value?.message || "Failed to update status")
+        }
+        toast.success(`Status changed to ${getMediaListStatusText(newStatus, mediaType)}`)
+        invalidateClientStats(username, mediaType)
+        fetchFacets(true)
+      } catch (err) {
+        console.error("[UserListView] Failed to update status:", err)
+        toast.error("Failed to update status")
+        fetchItems(true)
+      }
+    },
+    [handleItemUpdated, mediaType, username, fetchFacets, fetchItems]
+  )
+
+  const handleIncrementVolume = useCallback(
+    async (item: ListEntryData, count: number) => {
+      const entryId = item.entry.id
+      const mediaId = Number(item.media.id)
+      const currentVol = item.entry.volumesProgress ?? 0
+      const nextVol = currentVol + count
+
+      handleItemUpdated(entryId, {
+        ...item.entry,
+        volumesProgress: nextVol,
+      })
+
+      try {
+        if (mediaType === "manga") {
+          const { error } = await elysia.borealis.lists
+            .manga({ mangaId: mediaId })
+            .increment.post({ count, type: "volume" })
+          if (error) throw new Error("Failed to increment volume")
+        } else if (mediaType === "book") {
+          const { error } = await elysia.borealis.lists
+            .books({ bookId: mediaId })
+            .increment.post({ count, type: "volume" })
+          if (error) throw new Error("Failed to increment volume")
+        }
+        toast.success(`Volume updated (+${count})`)
+        invalidateClientStats(username, mediaType)
+      } catch {
+        toast.error("Failed to update volume")
         fetchItems(true)
       }
     },
@@ -1166,6 +1305,8 @@ export function UserListView({
             isOwner={isOwner}
             onItemUpdated={handleItemUpdated}
             onIncrementProgress={isOwner ? handleIncrementProgress : undefined}
+            onIncrementVolume={isOwner ? handleIncrementVolume : undefined}
+            onStatusChange={isOwner ? handleStatusChange : undefined}
             onScoreChange={isOwner ? handleScoreChange : undefined}
             mediaTitlePreference={mediaTitlePreference}
             searchQuery={searchQuery.trim()}

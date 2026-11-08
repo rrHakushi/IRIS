@@ -46,27 +46,42 @@ export function decryptVaultData(
   vaultKey: Uint8Array
 ): string {
   const parts = encryptedPayload.split(":")
-  if (parts.length !== 3) {
-    throw new Error("Invalid encrypted payload format")
+  if (parts.length === 3) {
+    const [ivHex, authTagHex, cipherHex] = parts
+    if (!ivHex || !authTagHex || !cipherHex) {
+      throw new Error("Missing encrypted payload segments")
+    }
+
+    const iv = hexToBytes(ivHex)
+    const authTag = hexToBytes(authTagHex)
+    const cipher = hexToBytes(cipherHex)
+
+    const ciphertextWithTag = new Uint8Array(cipher.length + authTag.length)
+    ciphertextWithTag.set(cipher, 0)
+    ciphertextWithTag.set(authTag, cipher.length)
+
+    const aes = gcm(vaultKey, iv)
+    const decryptedBytes = aes.decrypt(ciphertextWithTag)
+
+    return new TextDecoder().decode(decryptedBytes)
   }
 
-  const [ivHex, authTagHex, cipherHex] = parts
-  if (!ivHex || !authTagHex || !cipherHex) {
-    throw new Error("Missing encrypted payload segments")
+  if (parts.length === 2) {
+    const [ivHex, cipherTagHex] = parts
+    if (!ivHex || !cipherTagHex) {
+      throw new Error("Missing encrypted payload segments")
+    }
+
+    const iv = hexToBytes(ivHex)
+    const ciphertextWithTag = hexToBytes(cipherTagHex)
+
+    const aes = gcm(vaultKey, iv)
+    const decryptedBytes = aes.decrypt(ciphertextWithTag)
+
+    return new TextDecoder().decode(decryptedBytes)
   }
 
-  const iv = hexToBytes(ivHex)
-  const authTag = hexToBytes(authTagHex)
-  const cipher = hexToBytes(cipherHex)
-
-  const ciphertextWithTag = new Uint8Array(cipher.length + authTag.length)
-  ciphertextWithTag.set(cipher, 0)
-  ciphertextWithTag.set(authTag, cipher.length)
-
-  const aes = gcm(vaultKey, iv)
-  const decryptedBytes = aes.decrypt(ciphertextWithTag)
-
-  return new TextDecoder().decode(decryptedBytes)
+  throw new Error("Invalid encrypted payload format")
 }
 
 /**
